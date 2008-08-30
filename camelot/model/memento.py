@@ -31,7 +31,7 @@ import base
 
 __metadata__ = base.metadata
 
-from cantate.view.elixir_admin import EntityAdmin
+from camelot.view.elixir_admin import EntityAdmin
 from elixir import *
 import datetime
 
