@@ -156,7 +156,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         generic_delegate.insertColumnDelegate(i, delegate)
         self.widgets.append((field_name, delegate.createEditor))    
       elif type_ == str:
-        from canate.view.controls.delegates import PlainTextColumnDelegate
+        from camelot.view.controls.delegates import PlainTextColumnDelegate
         delegate = PlainTextColumnDelegate()
         generic_delegate.insertColumnDelegate(i, delegate)
         self.widgets.append((field_name, delegate.createEditor))

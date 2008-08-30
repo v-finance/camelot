@@ -32,9 +32,6 @@ import os
 import sys
 import logging
 
-FORMAT = '[%(levelname)-7s] [%(name)-35s] - %(message)s' 
-logging.basicConfig(level=logging.DEBUG, format=FORMAT)
-
 logger = logging.getLogger('mainwindow')
 logger.setLevel(logging.INFO)
 
@@ -126,7 +123,7 @@ class MainWindow(QtGui.QMainWindow):
 
   def about(self):
     logger.debug('showing about message box')
-    abtmsg = """<b>Cantate Project</b> v %s
+    abtmsg = """<b>Camelot Project</b> v %s
                 <p>
                 Copyright &copy; 2008 Conceptive Engineering.
                 All right reserved.
@@ -623,63 +620,3 @@ class MainWindow(QtGui.QMainWindow):
       self.writeSettings()
       event.accept()
 
-def main():
-  
-  logger.debug('qt version %s, pyqt version %s' % (QtCore.QT_VERSION_STR, 
-                                                   QtCore.PYQT_VERSION_STR))
-
-  logger.debug('qt major version %f' % QT_MAJOR_VERSION)
-  
-  app = QtGui.QApplication(sys.argv)
-  app.setOrganizationName('Conceptive Engineering')
-  app.setOrganizationDomain('Conceptive.be')
-  app.setApplicationName('Project Cantate')
-  app.setWindowIcon(QtGui.QIcon(art.icon32('apps/system-users')))
-
-  style = """
-  QMainWindow::separator {
-    border-right: 1px solid rgb%(BorderColor)s;
-  }
-  """ % schemer.styledict
-
-  app.setStyleSheet(style)
-
-  logger.debug('loading splashscreen')
-  splash = QtGui.QSplashScreen(QtGui.QPixmap(art.file_('splashscreen.png')))
-  splash.show()
-  app.processEvents()
-  
-  #
-  # Start the model thread
-  #
-  
-  rh = ResponseHandler()
-  
-  construct_model_thread(rh)
-  construct_signal_handler()
-  get_model_thread().start()
-  
-  # 
-  # Do some slow imports to prevent glitches later on
-  #
-  from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-  from matplotlib.figure import Figure
-  from camelot.view.application_admin import ApplicationAdmin
-
-  admin = ApplicationAdmin([('sales',('Sales', art.icon24('mimetypes/x-office-presentation'))),
-                            ('purchase',('Purchase', art.icon24('mimetypes/package-x-generic'))),
-                            ('production',('Production', art.icon24('categories/applications-development'))),
-                            ('invoice',('Invoice', art.icon24('mimetypes/text-x-generic'))),
-                            ('configuration',('Configuration', art.icon24('categories/preferences-system'))),]
-                           )
-  mainwindow = MainWindow(admin)
-  mainwindow.connect(rh, rh.start_signal, mainwindow.throbber.process_working)
-  mainwindow.connect(rh, rh.stop_signal, mainwindow.throbber.process_idle)
-  #import time
-  #time.sleep(5)
-  mainwindow.show()
-  splash.finish(mainwindow)
-  sys.exit(app.exec_())
-
-if __name__ == '__main__':
-  main()

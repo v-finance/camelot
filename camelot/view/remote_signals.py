@@ -40,11 +40,11 @@ from PyQt4.QtCore import *
   
 class SignalHandler(QObject):
   def __init__(self):
-    from stomp import stomp
     QObject.__init__(self)
     self.entity_signal = SIGNAL("entity()")
-    if hasattr(settings, 'CANTATE_SERVER') and settings.CANTATE_SERVER:
-      self.connection = stomp.Connection(host_and_ports = [ (settings.CANTATE_SERVER, 61613) ])
+    if hasattr(settings, 'CAMELOT_SERVER') and settings.CANTATE_SERVER:
+      from stomp import stomp
+      self.connection = stomp.Connection(host_and_ports = [ (settings.CAMELOT_SERVER, 61613) ])
       self.connection.add_listener(self)
       self.connection.start()
       self.connection.connect()

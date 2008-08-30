@@ -464,7 +464,7 @@ class EntityAdmin(object):
           'columns': [c[0] for c in admin.getColumns()],
         }
         from jinja import Environment, FileSystemLoader
-        e = Environment(loader=FileSystemLoader(settings.CANTATE_TEMPLATES_DIRECTORY))
+        e = Environment(loader=FileSystemLoader(settings.CAMELOT_TEMPLATES_DIRECTORY))
         t = e.get_template('table_view.html')
         return t.render(context)
       

@@ -27,12 +27,10 @@
 """Set of classes to keep track of changes to objects and
 be able to restore their state"""
 
-import base
-
-__metadata__ = base.metadata
+from camelot.model import *
+__metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
-from elixir import *
 import datetime
 
 class Memento(Entity):

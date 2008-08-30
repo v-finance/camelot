@@ -70,12 +70,8 @@ class ModelThread(threading.Thread):
   def run(self):
     logger.debug('model thread started')
     try:
-      from camelot.model.base import *
-      from camelot.model.carpentry import *
-      from camelot.model.venice_orm import *
-      from camelot.model.memento import *
-      
-      setup_all(create_tables=True)
+      from settings import setup_model
+      setup_model()
       logger.debug('start handling requests')
       while True:
         try:
