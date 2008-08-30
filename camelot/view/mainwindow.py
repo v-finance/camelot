@@ -360,26 +360,32 @@ class MainWindow(QtGui.QMainWindow):
     pass
 
   def exportToExcel(self):
-    import os
-    import tempfile
-    from export.excel import clsExcel
-    title = self.activeMdiChild().getTitle()
-    columns = self.activeMdiChild().getColumns()
-    data = [d for d in self.activeMdiChild().getData()]
-    objExcel = clsExcel()
-    xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
-    objExcel.createExcel( xls_fn, title, columns, data )
+      
+    mt = get_model_thread()
     
-    try:
-      import win32com.client
-      excel_app = win32com.client.Dispatch("Excel.Application")
-    except:
-      """We're probably not running windows, so try gnumeric"""
-      os.system('gnumeric "%s"'%xls_fn)
-      return
-
-    excel_app.Visible = True
-    excel_app.Workbooks.Open(xls_fn)
+    def export():
+        import os
+        import tempfile
+        from export.excel import clsExcel
+        title = self.activeMdiChild().getTitle()
+        columns = self.activeMdiChild().getColumns()
+        data = [d for d in self.activeMdiChild().getData()]
+        objExcel = clsExcel()
+        xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
+        objExcel.createExcel( xls_fn, title, columns, data )
+        
+        try:
+          import win32com.client
+          excel_app = win32com.client.Dispatch("Excel.Application")
+        except:
+          """We're probably not running windows, so try gnumeric"""
+          os.system('gnumeric "%s"'%xls_fn)
+          return
+    
+        excel_app.Visible = True
+        excel_app.Workbooks.Open(xls_fn)
+    
+    mt.post(export)
     
   def exportToWord(self):
     """Use windows COM to export the active child window to MS word,
