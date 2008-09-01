@@ -366,13 +366,13 @@ class MainWindow(QtGui.QMainWindow):
     def export():
         import os
         import tempfile
-        from export.excel import clsExcel
+        from export.excel import ExcelExport
         title = self.activeMdiChild().getTitle()
         columns = self.activeMdiChild().getColumns()
         data = [d for d in self.activeMdiChild().getData()]
-        objExcel = clsExcel()
+        objExcel = ExcelExport()
         xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
-        objExcel.createExcel( xls_fn, title, columns, data )
+        objExcel.exportToFile( xls_fn, title, columns, data )
         
         try:
           import win32com.client
