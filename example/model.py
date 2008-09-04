@@ -1,3 +1,8 @@
+# 
+# Example model file, populate this file with your own models
+# to get started quickly
+#
+
 from datetime               import datetime
 
 from camelot.model import *
@@ -5,33 +10,57 @@ __metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
 
-#
-# application model
-#
-
 class Director(Entity):
     name = Field(Unicode(60))
     movies = OneToMany('Movie', inverse='director')
     using_options(tablename='directors')
 
+    def __repr__(self):
+      return self.name
+    
+    # 
+    # Each Entity subclass can have a subclass of EntityAdmin as
+    # its inner class.  The EntityAdmin class defines how the Entity
+    # class will be displayed in the GUI.  Its behaviour can be steered
+    # by specifying some class attributes
+    #
+    # To fully customize the way the entity is visualized, the EntityAdmin
+    # subclass should overrule some of the EntityAdmin's methods
+    #
     class Admin(EntityAdmin):
         name = 'Directors'
+        # the section attributed specifies where in the left panel of the
+        # main window a link to a list of this entities will appear.  Have
+        # a look in main.py for the definition of the sections
         section = 'movies'
+        # the list_display attribute specifies which entity attributes should
+        # be visible in the table view
         list_display = ['name']
-    
+        # the fields attribute specifies which entity attributes should be visible
+        # in the form view
+        fields = ['name', 'movies']
 
 class Movie(Entity):
     title = Field(Unicode(60))
     description = Field(Unicode(512))
-    releasedate = Field(DateTime)
+    releasedate = Field(Date)
     director = ManyToOne('Director', inverse='movies')
     actors = ManyToMany('Actor', inverse='movies', tablename='movie_casting')
     using_options(tablename='movies')
 
+    def burn_to_disk(self):
+      print 'burn burn burn'
+      
     class Admin(EntityAdmin):
         name = 'Movies'
         section = 'movies'
         list_display = ['title', 'releasedate', 'director']
+        fields = ['title', 'releasedate', 'director', 'actors']
+        #
+        # create a list of actions available for the user on the form view
+        # those actions will be executed within the model thread
+        # 
+        form_actions = [('Burn to disk',lambda o:o.burn_to_disk())]
 
 class Actor(Entity):
     name = Field(Unicode(60))
@@ -42,6 +71,7 @@ class Actor(Entity):
         name = 'Actor'
         section = 'movies'
         list_display = ['name',]
+        fields = ['name', 'movies']
 #
 # identity model
 # 

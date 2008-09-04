@@ -48,47 +48,36 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   usable for fast visualisation in a QTableView 
   """
   
-  def __init__(self, admin, table, collection_getter, max_number_of_rows=10, edits=None):
+  def __init__(self, admin, table, collection_getter, columns_getter, max_number_of_rows=10, edits=None):
     """"
     @param admin: the admin interface for the items in the collection
     @param table: the QTableView this model is connected to
     @param collection_getter: a function that takes no arguments and returns the collection
     that will be visualized.  This function will be called inside the model thread, to prevent
-    delays when this function causes the database to be hit.   
+    delays when this function causes the database to be hit.
+    @param columns_getter: a function that takes no arguments and returns the columns that will
+    be cached in the proxy.  This function will be called inside the model thread.   
     """
-
     logger.debug('initialize query table')
     QtCore.QAbstractTableModel.__init__(self)
     self.table = table
     self.admin = admin
     self.collection_getter = collection_getter
     self.mt = admin.getModelThread()
-    
     # Set database connection and load data
     self.rows = 0
     self.columns = []
     self.limit = 50
     self.max_number_of_rows = max_number_of_rows
     self.cache = fifo(10*self.limit)
-    
     # The rows in the table for which a cache refill is under request
     self.rows_under_request = set()
-
     self.widgets = []
-
     # Set edits
     self.edits = edits or []
     self.rsh = get_signal_handler()
     self.rsh.connect(self.rsh, self.rsh.entity_signal, self.handleEntitySignal)
-    
-    # we want to now which columns the table should have for doing so,
-    # we'd like to call admin.getColumns() but, this is an interogation
-    # of the model, which might take a long time, so we cannot do that
-    # in the gui thread, when this widget is being constructed so we post
-    # a request to the model thread and then the response of the model
-    # thread, is handled back by the gui thread, which creates the columns
-    self.mt.post(lambda :self.admin.getColumns(),
-                 lambda columns:self.setColumns(columns))
+    self.mt.post(columns_getter, lambda columns:self.setColumns(columns))
     # in that way the number of rows is requested as well
     self.mt.post(self._getRowCount,  self.setRowCount)
     logger.debug('initialization finished')
@@ -101,7 +90,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     def refresh_content(rows):
       self.setRowCount(rows)
       self.cache = fifo(10*self.limit)
-      self.table.updateEditorData()
+      if self.table:
+        self.table.updateEditorData()
       
     self.mt.post(self._getRowCount, refresh_content )
     
@@ -186,7 +176,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         generic_delegate.insertColumnDelegate(i, delegate)
         self.widgets.append((field_name, delegate.createEditor))
 
-    self.table.setItemDelegate(generic_delegate)    
+    if self.table:
+      self.table.setItemDelegate(generic_delegate)    
     #self.endInsertColumns(None)
     #self.emit(QtCore.SIGNAL('layoutChanged()'))
     

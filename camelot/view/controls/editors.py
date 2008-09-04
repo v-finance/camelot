@@ -179,10 +179,10 @@ class One2ManyEditor(QtGui.QWidget):
                  QtCore.SIGNAL('sectionClicked(int)'),
                  self.createFormForIndex)
     
-    from proxy.collection_proxy import CollectionProxy
+    from camelot.view.proxy.collection_proxy import CollectionProxy
     self.field_name = field_name
     self.admin = entity_admin
-    self.model = CollectionProxy(entity_admin, self.table, lambda:[], max_number_of_rows=10, edits=None)
+    self.model = CollectionProxy(entity_admin, self.table, lambda:[], entity_admin.getColumns, max_number_of_rows=10, edits=None)
     self.table.setModel(self.model)
     #
     # Setup buttons

@@ -104,7 +104,7 @@ class EntityAdmin(object):
         elif property.direction == orm.sync.MANYTOONE:
           attributes = dict(python_type=str, length=None, editable=True, widget='many2one', admin=self.getRelatedEntityAdmin(target))
         elif property.direction == orm.sync.MANYTOMANY:
-          attributes = dict(python_type=str, length=None, editable=True, widget='many2many', admin=self.getRelatedEntityAdmin(target))
+          attributes = dict(python_type=str, length=None, editable=True, widget='one2many', admin=self.getRelatedEntityAdmin(target))
         else:
           raise Exception('PropertyLoader has unknown direction')
     except InvalidRequestError, e:
@@ -157,42 +157,38 @@ class EntityAdmin(object):
       
     return [(attr, getOptions(attr)) for attr in self.list_filter]
 
-  def createFormView(admin, title, model, index, parent):
+  def createFormView(admin, title, query, index, parent):
     """Creates a Qt widget containing a form view, for a specific row of the 
     passed query; uses the Admin class
     """
-    
     logger.debug('creating form view')
 
     from PyQt4 import QtCore
     from PyQt4 import QtGui
     from PyQt4.QtCore import Qt
+    from proxy.queryproxy import QueryTableProxy
 
     class FormView(QtGui.QWidget):
       
       def __init__(self):
         super(FormView, self).__init__(None)
         self.setWindowTitle(title)
-        
         self.widget_layout = QtGui.QHBoxLayout()
-        self.widgets = model.widgets
         self.widget_mapper = QtGui.QDataWidgetMapper()
-        self.widget_mapper.setModel(model)
-
-        form_layout = QtGui.QFormLayout()
-        for i, (name, functor) in enumerate(self.widgets):
-          parent = None # layout manager will set the parent
-          option = None # we won't use any option
-          widget = functor(parent, option, model.index(index,0))
-          form_layout.addRow(name, widget)
-          self.widget_mapper.addMapping(widget, i)
-
+        self.model = QueryTableProxy(admin, self.widget_mapper, query, admin.getFields)
+        self.widget_mapper.setModel(self.model)
+        self.form_layout = QtGui.QFormLayout()
         self.widget_mapper.setCurrentIndex(index)
-        self.widget_layout.insertLayout(0, form_layout)
+        self.widget_layout.insertLayout(0, self.form_layout)
         self.setLayout(self.widget_layout)
+      
+        def getWidgets():
+          return self.model.widgets
+        
+        admin.mt.post(getWidgets, self.setWidgets)
         
         def getEntityAndActions():
-          entity = model._get_object(index)
+          entity = self.model._get_object(index)
           actions = admin.getFormActions(entity)
           return entity, actions
         
@@ -204,7 +200,15 @@ class EntityAdmin(object):
         key = 'Form View: %s' % str(title)
         parent.childwindows.pop(key)
         event.accept()
-      
+
+      def setWidgets(self, widgets):
+        for i, (name, functor) in enumerate(widgets):
+          parent = None # layout manager will set the parent
+          option = None # we won't use any option
+          widget = functor(parent, option, self.model.index(index,0))
+          self.form_layout.addRow(name, widget)
+          self.widget_mapper.addMapping(widget, i)
+                  
       def setEntityAndActions(self, result):
         entity, actions = result
         if actions:
@@ -238,40 +242,17 @@ class EntityAdmin(object):
     
     from PyQt4 import QtCore, QtGui
     from PyQt4.QtCore import Qt
+    from proxy.queryproxy import QueryTableProxy
 
     class QueryTable(QtGui.QTableView):
       def __init__(self):
         QtGui.QTableView.__init__(self)
         logger.debug('create querytable')
+        # place holder for the form model, which we can recycle
+        # for different forms opened from within this table view.
+        self.form_model = None        
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                           QtGui.QSizePolicy.Expanding)
-
-        self.connect(self.verticalHeader(),
-                     QtCore.SIGNAL('sectionClicked(int)'),
-                     self.createFormForIndex)
-
-      def createFormForIndex(self, index):
-        title = 'Row %s - %s' % (index, admin.getName()) 
-        
-        existing = parent.findMdiChild(title)
-        if existing is not None:
-          parent.workspace.setActiveWindow(existing)
-          return
-
-        model = self.model()
-        form = admin.createFormView(title, model, index, parent)
-
-        width = int(parent.width() / 2)
-        height = int(parent.height() / 2)
-        form.resize(width, height)
-        
-        parent.workspace.addWindow(form)
-        
-        key = 'Form View: %s' % str(title)
-        parent.childwindows[key] = form
-
-        form.show()
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
       def __del__(self):
         logger.debug('delete querytable')
@@ -280,7 +261,6 @@ class EntityAdmin(object):
       def __init__(self, admin, parent):
         from controls.search import SimpleSearchControl
         from controls.inheritance import SubclassTree
-        
         QtGui.QWidget.__init__(self, parent)
         self.setWindowTitle(admin.getName())
         self.widget_layout = QtGui.QHBoxLayout()
@@ -294,7 +274,6 @@ class EntityAdmin(object):
         self.filters = None
         self.admin = admin
         self.table_layout.insertWidget(0, self.search_control)
-        
         self.setSubclass(admin)
         self.class_tree = SubclassTree(admin, self)
         self.widget_layout.insertWidget(0, self.class_tree )
@@ -304,35 +283,47 @@ class EntityAdmin(object):
         self.connect(self.class_tree, QtCore.SIGNAL('subclasssClicked'), self.setSubclass)
         self.search_filter = lambda q:q
         self.setLayout(self.widget_layout)
-
-        # should occupy 1/4 of parent space
-        if parent:
-          width = int(parent.width() / 2)
-          height = int(parent.height() / 2)
-          self.resize(width, height)
+#        # should occupy 1/4 of parent space
+#        if parent:
+#          width = int(parent.width() / 2)
+#          height = int(parent.height() / 2)
+#          self.resize(width, height)
 
       def setSubclass(self, admin):
         """Switch to a different subclass, where admin is the admin object of the
         subclass"""
-        from proxy.queryproxy import QueryTableProxy
         self.admin = admin
         if self.table:
-          #self.table_layout.removeWidget(self.table)
-          #self.table.setModel(None)
           self.table_model.setTable(None)
           self.table.deleteLater()
           self.table_model.deleteLater()
         self.table = QueryTable()
+        self.connect(self.table.verticalHeader(), QtCore.SIGNAL('sectionClicked(int)'), self.createFormForIndex)         
         # We create the table first with only 10 rows, to be able resize the columns to
         # the contents without much processing
-        self.table_model = QueryTableProxy(admin, self.table, admin.entity.query.limit(10))
+        self.table_model = QueryTableProxy(admin, self.table, admin.entity.query.limit(10), admin.getColumns)
         self.table.setModel(self.table_model)
         self.table_layout.insertWidget(1, self.table)
         # Once those are loaded, rebuild the query to get the actual number of rows
         admin.mt.post(lambda:self.table_model._extend_cache(0, 10), lambda x:self.resizeColumnsAndRebuildQuery())
         admin.mt.post(lambda:admin.getFilters(), lambda items:self.setFilters(items))
         admin.mt.post(lambda:admin.getListCharts(), lambda charts:self.setCharts(charts))
-                
+             
+      def createFormForIndex(self, index):
+        title = 'Row %s - %s' % (index, admin.getName()) 
+        existing = parent.findMdiChild(title)
+        if existing is not None:
+          parent.workspace.setActiveWindow(existing)
+          return
+        form = admin.createFormView(title, self.table_model.query, index, parent)
+        width = int(parent.width() / 2)
+        height = int(parent.height() / 2)
+        form.resize(width, height)
+        parent.workspace.addWindow(form)
+        key = 'Form View: %s' % str(title)
+        parent.childwindows[key] = form
+        form.show()
+           
       def setCharts(self, charts):
         if charts:
           
@@ -360,7 +351,6 @@ class EntityAdmin(object):
                   self.compute_initial_figure()
                   FigureCanvas.__init__(self, fig)
                   self.setParent(parent)
-          
                   FigureCanvas.setSizePolicy(self,
                                              QtGui.QSizePolicy.Expanding,
                                              QtGui.QSizePolicy.Expanding)

@@ -39,10 +39,10 @@ class QueryTableProxy(CollectionProxy):
   QTableView
   """
 
-  def __init__(self, admin, table, query, max_number_of_rows=10, edits=None):
+  def __init__(self, admin, table, query, columns_getter, max_number_of_rows=10, edits=None):
     logger.debug('initialize query table')
     self.query = query
-    CollectionProxy.__init__(self, admin, table, lambda :[], max_number_of_rows=10, edits=None)
+    CollectionProxy.__init__(self, admin, table, lambda :[], columns_getter, max_number_of_rows=10, edits=None)
 
   def _getRowCount(self):
     return self.query.count()
