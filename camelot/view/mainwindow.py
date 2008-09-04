@@ -390,30 +390,35 @@ class MainWindow(QtGui.QMainWindow):
   def exportToWord(self):
     """Use windows COM to export the active child window to MS word,
     by using its toHtml function"""
-    import tempfile
-    html = self.activeMdiChild().toHtml()
-    html_fd, html_fn = tempfile.mkstemp(suffix='.html')
-    html_file = os.fdopen(html_fd, 'wb')
-    html_file.write(html)
-    html_file.close()
     
-    try:
-      import win32com.client
-      word_app = win32com.client.Dispatch("Word.Application")
-    except:
-      """We're probably not running windows, so try abiword"""
-      os.system('abiword "%s"'%html_fn)
-      return
+    mt = get_model_thread()
     
-    from integration.COM.word_constants import constants
-    doc_fd, doc_fn = tempfile.mkstemp(suffix='.doc')
-    os.close(doc_fd)    
-    word_app.Visible = True
-    doc = word_app.Documents.Open(art.file_('empty_document.doc'))
-    word_app.ActiveDocument.SaveAs(doc_fn)
-    section = doc.Sections(1)
-    section.Range.InsertFile(FileName=html_fn)
+    def export():    
+        import tempfile
+        html = self.activeMdiChild().toHtml()
+        html_fd, html_fn = tempfile.mkstemp(suffix='.html')
+        html_file = os.fdopen(html_fd, 'wb')
+        html_file.write(html)
+        html_file.close()
+        
+        try:
+          import win32com.client
+          word_app = win32com.client.Dispatch("Word.Application")
+        except:
+          """We're probably not running windows, so try abiword"""
+          os.system('abiword "%s"'%html_fn)
+          return
+        
+        from integration.COM.word_constants import constants
+        doc_fd, doc_fn = tempfile.mkstemp(suffix='.doc')
+        os.close(doc_fd)    
+        word_app.Visible = True
+        doc = word_app.Documents.Open(art.file_('empty_document.doc'))
+        word_app.ActiveDocument.SaveAs(doc_fn)
+        section = doc.Sections(1)
+        section.Range.InsertFile(FileName=html_fn)
 
+    mt.post(export)
   # Menus
 
   def createMenus(self):
