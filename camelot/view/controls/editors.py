@@ -184,6 +184,11 @@ class One2ManyEditor(QtGui.QWidget):
     self.admin = entity_admin
     self.model = CollectionProxy(entity_admin, self.table, lambda:[], entity_admin.getColumns, max_number_of_rows=10, edits=None)
     self.table.setModel(self.model)
+    
+    def update_delegates(*args):
+      self.table.setItemDelegate(self.model.getItemDelegate())
+      
+    entity_admin.mt.post(lambda:None, update_delegates)
     #
     # Setup buttons
     #

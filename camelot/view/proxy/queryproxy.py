@@ -62,14 +62,14 @@ class QueryTableProxy(CollectionProxy):
     
   def getData(self):
     """Generator for all the data queried by this proxy"""
-    columns = [c[0] for c in self.admin.getColumns()]
+    columns = [c[0] for c in self.columns_getter()]
     for o in self.query.all():
       yield RowDataFromObject(o, columns)
       
   def _extend_cache(self, offset, limit):
     """Extend the cache around row"""
     #@TODO : also store the primary key, here we just saved the id
-    columns = [c[0] for c in self.admin.getColumns()] + ['id']
+    columns = [c[0] for c in self.columns_getter()] + ['id']
     q = self.query.offset(offset).limit(limit)
     for i,o in enumerate(q.all()):
         self.cache[i+offset] = RowDataFromObject(o, columns)

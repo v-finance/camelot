@@ -161,7 +161,7 @@ class EntityAdmin(object):
     """Creates a Qt widget containing a form view, for a specific row of the 
     passed query; uses the Admin class
     """
-    logger.debug('creating form view')
+    logger.debug('creating form view for index %s'%index)
 
     from PyQt4 import QtCore
     from PyQt4 import QtGui
@@ -176,16 +176,12 @@ class EntityAdmin(object):
         self.widget_layout = QtGui.QHBoxLayout()
         self.widget_mapper = QtGui.QDataWidgetMapper()
         self.model = QueryTableProxy(admin, self.widget_mapper, query, admin.getFields)
+        self.connect(self.model, QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), self.dataChanged)
         self.widget_mapper.setModel(self.model)
         self.form_layout = QtGui.QFormLayout()
-        self.widget_mapper.setCurrentIndex(index)
         self.widget_layout.insertLayout(0, self.form_layout)
         self.setLayout(self.widget_layout)
-      
-        def getWidgets():
-          return self.model.widgets
-        
-        admin.mt.post(getWidgets, self.setWidgets)
+        admin.mt.post(lambda:None, lambda *args:self.setColumnsAndDelegate(self.model.columns_getter(), self.model.getItemDelegate()))
         
         def getEntityAndActions():
           entity = self.model._get_object(index)
@@ -194,6 +190,10 @@ class EntityAdmin(object):
         
         admin.mt.post(getEntityAndActions, self.setEntityAndActions)
 
+      def dataChanged(self, index_from, index_to):
+        #@todo: only revert if this form is in the changed range
+        self.widget_mapper.revert()
+        
       def closeEvent(self, event):
         # remove from parent mapping
         logger.debug('removing form view %s from parent mapping' % title)
@@ -201,13 +201,13 @@ class EntityAdmin(object):
         parent.childwindows.pop(key)
         event.accept()
 
-      def setWidgets(self, widgets):
-        for i, (name, functor) in enumerate(widgets):
-          parent = None # layout manager will set the parent
-          option = None # we won't use any option
-          widget = functor(parent, option, self.model.index(index,0))
-          self.form_layout.addRow(name, widget)
+      def setColumnsAndDelegate(self, columns, delegate):
+        for i,column in enumerate(columns):
+          widget = delegate.createEditor(None, None, self.model.index(index,i))
+          self.form_layout.addRow(column[1]['name'], widget)
           self.widget_mapper.addMapping(widget, i)
+        self.widget_mapper.setCurrentIndex(index)
+        self.widget_mapper.setItemDelegate(delegate)
                   
       def setEntityAndActions(self, result):
         entity, actions = result
@@ -247,10 +247,7 @@ class EntityAdmin(object):
     class QueryTable(QtGui.QTableView):
       def __init__(self):
         QtGui.QTableView.__init__(self)
-        logger.debug('create querytable')
-        # place holder for the form model, which we can recycle
-        # for different forms opened from within this table view.
-        self.form_model = None        
+        logger.debug('create querytable')      
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
@@ -304,6 +301,11 @@ class EntityAdmin(object):
         self.table_model = QueryTableProxy(admin, self.table, admin.entity.query.limit(10), admin.getColumns)
         self.table.setModel(self.table_model)
         self.table_layout.insertWidget(1, self.table)
+        
+        def update_delegates(*args):
+          self.table.setItemDelegate(self.table_model.getItemDelegate())
+          
+        admin.mt.post(lambda:None, update_delegates)
         # Once those are loaded, rebuild the query to get the actual number of rows
         admin.mt.post(lambda:self.table_model._extend_cache(0, 10), lambda x:self.resizeColumnsAndRebuildQuery())
         admin.mt.post(lambda:admin.getFilters(), lambda items:self.setFilters(items))

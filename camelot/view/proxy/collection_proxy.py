@@ -58,21 +58,22 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     @param columns_getter: a function that takes no arguments and returns the columns that will
     be cached in the proxy.  This function will be called inside the model thread.   
     """
+    self.logger = logger
     logger.debug('initialize query table')
     QtCore.QAbstractTableModel.__init__(self)
     self.table = table
     self.admin = admin
     self.collection_getter = collection_getter
+    self.column_count = 0
     self.mt = admin.getModelThread()
     # Set database connection and load data
     self.rows = 0
-    self.columns = []
+    self.columns_getter = columns_getter
     self.limit = 50
     self.max_number_of_rows = max_number_of_rows
     self.cache = fifo(10*self.limit)
     # The rows in the table for which a cache refill is under request
     self.rows_under_request = set()
-    self.widgets = []
     # Set edits
     self.edits = edits or []
     self.rsh = get_signal_handler()
@@ -81,6 +82,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     # in that way the number of rows is requested as well
     self.mt.post(self._getRowCount,  self.setRowCount)
     logger.debug('initialization finished')
+    self.item_delegate = None
     
   def _getRowCount(self):
     return len(self.collection_getter())
@@ -88,10 +90,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def refresh(self):
     
     def refresh_content(rows):
-      self.setRowCount(rows)
       self.cache = fifo(10*self.limit)
-      if self.table:
-        self.table.updateEditorData()
+      self.setRowCount(rows)
       
     self.mt.post(self._getRowCount, refresh_content )
     
@@ -114,20 +114,22 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.rows = rows
     self.emit(QtCore.SIGNAL('layoutChanged()'))
     
+  def getItemDelegate(self):
+    logger.debug('getItemDelegate')
+    if not self.item_delegate:
+      raise Exception('Item delegate not yet available')
+    return self.item_delegate 
+    
   def setColumns(self, columns):
     """Callback method to set the columns
     @param columns a list with fields to be displayed
     """
-    logger.debug('columns set to %s'%str(columns))
-    self.columns = columns
-    
     """Set custom delegates"""
+    self.column_count = len(columns)
     logger.debug('setting up custom delegates')
     from camelot.view.controls import delegates
     import datetime
-
-    generic_delegate = delegates.GenericDelegate(self)
-    
+    self.item_delegate = delegates.GenericDelegate(self)
     for i, c in enumerate(columns):
       field_name = c[0]
       type_ = c[1]['python_type']
@@ -137,50 +139,38 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         from camelot.view.controls.delegates import Many2OneColumnDelegate
         entity_admin = c[1]['admin']
         delegate = Many2OneColumnDelegate(entity_admin)
-        generic_delegate.insertColumnDelegate(i, delegate)
-        self.widgets.append((field_name, delegate.createEditor))
+        self.item_delegate.insertColumnDelegate(i, delegate)
       elif widget_ == 'one2many':
         from camelot.view.controls.delegates import One2ManyColumnDelegate
         entity_admin = c[1]['admin']
         delegate = One2ManyColumnDelegate(entity_admin, field_name)
-        generic_delegate.insertColumnDelegate(i, delegate)
-        self.widgets.append((field_name, delegate.createEditor))    
+        self.item_delegate.insertColumnDelegate(i, delegate)    
       elif type_ == str:
         from camelot.view.controls.delegates import PlainTextColumnDelegate
         delegate = PlainTextColumnDelegate()
-        generic_delegate.insertColumnDelegate(i, delegate)
-        self.widgets.append((field_name, delegate.createEditor))
+        self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == int:
         from camelot.view.controls.delegates import IntegerColumnDelegate
         delegate = IntegerColumnDelegate(0, 100000)
-        generic_delegate.insertColumnDelegate(i, delegate)
-        self.widgets.append((field_name, delegate.createEditor))
+        self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == datetime.date:
         from camelot.view.controls.delegates import DateColumnDelegate
         delegate = DateColumnDelegate(datetime.date.min, datetime.date.max, 'dd/MM/yyyy')
-        generic_delegate.insertColumnDelegate(i, delegate)
-        self.widgets.append((field_name, delegate.createEditor))
+        self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == float:
         from camelot.view.controls.delegates import FloatColumnDelegate
         delegate = FloatColumnDelegate(-100000.0, 100000.0)
-        generic_delegate.insertColumnDelegate(i, delegate)
-        self.widgets.append((field_name, delegate.createEditor))
+        self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == bool:
         from camelot.view.controls.delegates import BoolColumnDelegate
         delegate = BoolColumnDelegate()
-        generic_delegate.insertColumnDelegate(i, delegate)
-        self.widgets.append((field_name, delegate.createEditor))
+        self.item_delegate.insertColumnDelegate(i, delegate)
       else:
         from camelot.view.controls.delegates import PlainTextColumnDelegate
         delegate = PlainTextColumnDelegate()
-        generic_delegate.insertColumnDelegate(i, delegate)
-        self.widgets.append((field_name, delegate.createEditor))
-
-    if self.table:
-      self.table.setItemDelegate(generic_delegate)    
-    #self.endInsertColumns(None)
-    #self.emit(QtCore.SIGNAL('layoutChanged()'))
-    
+        self.item_delegate.insertColumnDelegate(i, delegate)
+    self.emit(QtCore.SIGNAL('layoutChanged()'))
+           
   def unset_max_number_of_rows(self):
     if self.max_number_of_rows:
       if self.max_number_of_rows < self.rows:
@@ -193,12 +183,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     return self.rows
   
   def columnCount(self, index=None):
-    return len(self.columns)
+    return self.column_count
   
   def headerData(self, section, orientation, role):
     if role == Qt.DisplayRole:
       if orientation == Qt.Horizontal:
-        return QtCore.QVariant(self.columns[section][1]['name'])
+        return QtCore.QVariant(self.columns_getter()[section][1]['name'])
       elif orientation == Qt.Vertical:
         #return QtCore.QVariant(int(section+1))
         # we don't want anything to be displayed
@@ -232,7 +222,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     logger.debug('set data col %s, row %s to %s'%(index.row(), index.column(), value))
     if role==Qt.EditRole:
       
-      if self.columns[index.column()][1]['widget']=='many2one':
+      if self.columns_getter()[index.column()][1]['widget']=='many2one':
         return True
       
       def make_update_function(row, column, value):
@@ -240,20 +230,19 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         def update_model_and_cache():
           from camelot.model.memento import BeforeUpdate
           o = self._get_object(row)
-          attribute = self.columns[column][0]
+          attribute = self.columns_getter()[column][0]
           old_value = getattr(o, attribute)
           if value!=old_value:
             # save the state before the update
             history = BeforeUpdate(model=self.admin.entity.__name__, primary_key=o.id, previous_attributes={attribute:old_value})
             # update the model
-            print o, attribute, value
             setattr(o, attribute, value)
             # update the cache
-            columns = [c[0] for c in self.admin.getColumns()] + ['id']
+            columns = [c[0] for c in self.columns_getter()] + ['id']
             self.cache[row] = RowDataFromObject(o, columns)
             session.flush([o, history])
             self.rsh.sendEntityUpdate(o)
-            return ((row,0), (row,len(self.columns)))
+            return ((row,0), (row,len(self.columns_getter())))
         
         return update_model_and_cache
       
@@ -268,14 +257,14 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   
   def flags(self, index):
     flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
-    if self.columns[index.column()][1]['editable']:
+    if self.columns_getter()[index.column()][1]['editable']:
      flags = flags | Qt.ItemIsEditable
     return flags
 
   def _extend_cache(self, offset, limit):
     """Extend the cache around row"""
     #@TODO : also store the primary key, here we just saved the id
-    columns = [c[0] for c in self.admin.getColumns()] + ['id']
+    columns = [c[0] for c in self.columns_getter()] + ['id']
     for i,o in enumerate(self.collection_getter()[offset:offset+limit+1]):
         self.cache[i+offset] = RowDataFromObject(o, columns)
     return (offset, limit)
@@ -287,7 +276,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def _cache_extended(self, offset, limit):
     self.rows_under_request.difference_update(set(range(offset, offset+limit)))
     self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), 
-              self.index(offset,0), self.index(offset+limit,len(self.columns)))
+              self.index(offset,0), self.index(offset+limit,self.column_count))
     
   def _get_row_data(self, row):
     """Get the data which is to be visualized at a certain row of the
@@ -313,7 +302,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
  
   def removeRow(self, row, parent):
     logger.debug('remove row %s'%row)
-    pk = self.cache[row][len(self.columns)]
+    pk = self.cache[row][len(self.columns_getter())]
     
     def make_delete_function(pk):
       

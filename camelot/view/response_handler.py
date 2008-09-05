@@ -34,6 +34,7 @@ import threading
 import logging
 
 logger = logging.getLogger('response_handler')
+logger.setLevel(logging.INFO)
 
 from PyQt4.QtCore import *
 
