@@ -13,6 +13,6 @@ CAMELOT_ART_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY, 'art')
 CAMELOT_TEMPLATES_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY,
                                            'view', 'templates')
 CAMELOT_ATTACHMENTS = 'G:\Data\Attachments'
-CAMELOT_MEDIA_ROOT = 'C:\\temp'
+CAMELOT_MEDIA_ROOT = 'media'
 
 ENGINE = lambda:'sqlite:///videostore.sqlite'

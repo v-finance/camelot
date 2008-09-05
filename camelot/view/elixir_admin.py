@@ -24,6 +24,7 @@ logger = logging.getLogger('entity_admin')
 logger.setLevel(logging.DEBUG)
 
 import sqlalchemy.types
+import camelot.types
 import datetime
 
 _sqlalchemy_to_python_type_ = {
@@ -36,6 +37,7 @@ _sqlalchemy_to_python_type_ = {
   sqlalchemy.types.String : lambda f:{'python_type':str, 'length':f.length, 'editable':True, 'widget':'str'},
   sqlalchemy.types.TEXT : lambda f:{'python_type':str, 'length':f.length, 'editable':True, 'widget':'str'},
   sqlalchemy.types.Unicode : lambda f:{'python_type':str, 'length':f.length, 'editable':True, 'widget':'str'},
+  camelot.types.Image : lambda f:{'python_type':str, 'editable':True, 'widget':'image'},
 }
  
 class EntityAdmin(object):

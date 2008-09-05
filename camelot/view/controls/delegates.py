@@ -250,3 +250,23 @@ class BoolColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, QtCore.QVariant(editor.isChecked()))
 
+class ImageColumnDelegate(QtGui.QItemDelegate):
+
+  def createEditor(self, parent, option, index):
+    from camelot.view.controls.editors import ImageEditor
+    return ImageEditor(parent)
+
+  def setEditorData(self, editor, index):
+    import StringIO
+    s = StringIO.StringIO()
+    data = index.model().data(index, Qt.DisplayRole).toPyObject()
+    data.thumbnail((100,100))
+    data.save(s, 'png')
+    s.seek(0)
+    pixmap = QtGui.QPixmap()
+    pixmap.loadFromData(s.read())
+    s.close()
+    editor.setPixmap(pixmap)
+
+  def setModelData(self, editor, model, index):
+    pass

@@ -242,7 +242,8 @@ class BoolEditor(QtGui.QCheckBox):
   """Widget for editing boolean values"""
   def __init__(self, parent=None):
     super(BoolEditor, self).__init__(parent)
-#    self.addItems(['false', 'true'])
-#    self.setEditable(True)
+
+class ImageEditor(QtGui.QLabel):
+  pass
 
     

@@ -9,6 +9,12 @@ logger.setLevel(logging.DEBUG)
 
 from sqlalchemy import types
 
+# Try to import PIL in various ways
+try:
+  from PIL import Image as PILImage
+except:
+  import Image as PILImage
+        
 class Image(types.TypeDecorator):
   """
   Sqlalchemy column type to store images
@@ -21,7 +27,7 @@ class Image(types.TypeDecorator):
   impl = types.Unicode
   
   def __init__(self, max_length=100, upload_to='', prefix='image-', format='png', **kwargs):
-    self.upload_to = os.path.join(settings.MEDIA_ROOT, upload_to)
+    self.upload_to = os.path.join(settings.CAMELOT_MEDIA_ROOT, upload_to)
     self.prefix = prefix
     self.format = format
     self.max_length = max_length
@@ -53,10 +59,13 @@ class Image(types.TypeDecorator):
       impl_processor = lambda x:x
       
     def processor(value):
-      import PIL
+
       import os
-      value = impl_processor(value)
-      if value is not None:
-        return PIL.Image.open( os.path.join(self.upload_to, value) )
+      if value:
+        value = os.path.join(self.upload_to, impl_processor(value))
+        if os.path.exists(value):
+          return PILImage.open( value )
+        else:
+          logger.warn('Image at %s does not exist'%value)
       
     return processor

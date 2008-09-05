@@ -5,7 +5,9 @@
 
 from datetime               import datetime
 
+import camelot.types
 from camelot.model import *
+
 __metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
@@ -46,6 +48,11 @@ class Movie(Entity):
     releasedate = Field(Date)
     director = ManyToOne('Director', inverse='movies')
     actors = ManyToMany('Actor', inverse='movies', tablename='movie_casting')
+    #
+    # Camelot includes custom sqlalchemy types, like Image, which stores an PIL image
+    # on disk and keeps the reference to it in the database.
+    #
+    cover = Field(camelot.types.Image(upload_to='covers'))
     using_options(tablename='movies')
 
     def burn_to_disk(self):
@@ -55,12 +62,12 @@ class Movie(Entity):
         name = 'Movies'
         section = 'movies'
         list_display = ['title', 'releasedate', 'director']
-        fields = ['title', 'releasedate', 'director', 'actors']
+        fields = ['title', 'releasedate', 'director', 'cover', 'actors']
         #
         # create a list of actions available for the user on the form view
         # those actions will be executed within the model thread
         # 
-        form_actions = [('Burn to disk',lambda o:o.burn_to_disk())]
+        form_actions = [('Burn DVD',lambda o:o.burn_to_disk())]
 
 class Actor(Entity):
     name = Field(Unicode(60))

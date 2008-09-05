@@ -135,6 +135,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       type_ = c[1]['python_type']
       widget_ = c[1]['widget']
       logger.debug('%s : creating delegate for type %s, using widget %s'%(field_name, type_, widget_))
+      if widget_ == 'image':
+        from camelot.view.controls.delegates import ImageColumnDelegate
+        delegate = ImageColumnDelegate()
+        self.item_delegate.insertColumnDelegate(i, delegate)
+        continue   
       if widget_ == 'many2one':
         from camelot.view.controls.delegates import Many2OneColumnDelegate
         entity_admin = c[1]['admin']
