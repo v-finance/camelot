@@ -61,6 +61,7 @@ class SignalHandler(QObject):
   def sendEntityUpdate(self, entity):
     if self.connection:
       self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.update'%entity.__class__.__name__)
+    self.emit(self.entity_signal)
   def sendEntityDelete(self, entity):
     if self.connection:
       self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.delete'%entity.__class__.__name__)
