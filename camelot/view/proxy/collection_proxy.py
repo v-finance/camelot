@@ -48,10 +48,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   usable for fast visualisation in a QTableView 
   """
   
-  def __init__(self, admin, table, collection_getter, columns_getter, max_number_of_rows=10, edits=None):
+  def __init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10, edits=None):
     """"
     @param admin: the admin interface for the items in the collection
-    @param table: the QTableView this model is connected to
     @param collection_getter: a function that takes no arguments and returns the collection
     that will be visualized.  This function will be called inside the model thread, to prevent
     delays when this function causes the database to be hit.
@@ -61,7 +60,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.logger = logger
     logger.debug('initialize query table')
     QtCore.QAbstractTableModel.__init__(self)
-    self.table = table
     self.admin = admin
     self.collection_getter = collection_getter
     self.column_count = 0
@@ -103,9 +101,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     """Handles the entity signal, indicating that the model is out of date"""
     logger.debug('received entity signal')
     self.refresh()
-    
-  def setTable(self, table):
-    self.table = table
     
   def setRowCount(self, rows):
     """Callback method to set the number of rows

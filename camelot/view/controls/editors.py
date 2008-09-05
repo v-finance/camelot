@@ -182,7 +182,7 @@ class One2ManyEditor(QtGui.QWidget):
     from camelot.view.proxy.collection_proxy import CollectionProxy
     self.field_name = field_name
     self.admin = entity_admin
-    self.model = CollectionProxy(entity_admin, self.table, lambda:[], entity_admin.getColumns, max_number_of_rows=10, edits=None)
+    self.model = CollectionProxy(entity_admin, lambda:[], entity_admin.getColumns, max_number_of_rows=10, edits=None)
     self.table.setModel(self.model)
     
     def update_delegates(*args):

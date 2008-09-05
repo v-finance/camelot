@@ -177,7 +177,7 @@ class EntityAdmin(object):
         self.setWindowTitle(title)
         self.widget_layout = QtGui.QHBoxLayout()
         self.widget_mapper = QtGui.QDataWidgetMapper()
-        self.model = QueryTableProxy(admin, self.widget_mapper, query, admin.getFields)
+        self.model = QueryTableProxy(admin, query, admin.getFields)
         self.connect(self.model, QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), self.dataChanged)
         self.widget_mapper.setModel(self.model)
         self.form_layout = QtGui.QFormLayout()
@@ -252,9 +252,6 @@ class EntityAdmin(object):
         logger.debug('create querytable')      
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-
-      def __del__(self):
-        logger.debug('delete querytable')
                                
     class TableView(QtGui.QWidget):
       def __init__(self, admin, parent):
@@ -293,14 +290,13 @@ class EntityAdmin(object):
         subclass"""
         self.admin = admin
         if self.table:
-          self.table_model.setTable(None)
           self.table.deleteLater()
           self.table_model.deleteLater()
         self.table = QueryTable()
         self.connect(self.table.verticalHeader(), QtCore.SIGNAL('sectionClicked(int)'), self.createFormForIndex)         
         # We create the table first with only 10 rows, to be able resize the columns to
         # the contents without much processing
-        self.table_model = QueryTableProxy(admin, self.table, admin.entity.query.limit(10), admin.getColumns)
+        self.table_model = QueryTableProxy(admin, admin.entity.query.limit(10), admin.getColumns)
         self.table.setModel(self.table_model)
         self.table_layout.insertWidget(1, self.table)
         
