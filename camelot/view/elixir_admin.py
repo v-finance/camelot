@@ -264,16 +264,8 @@ class EntityAdmin(object):
         form.show()
         
       return openForm
-             
-    def createRemoveFromDesktop(self, tableview):
-      
-      def removeFromDesktop(o):
-        print 'destroy called'
-        
-      return removeFromDesktop
         
     tableview.connect(tableview.table.verticalHeader(), QtCore.SIGNAL('sectionClicked(int)'), createOpenForm(self, tableview) )
-    tableview.connect(tableview, QtCore.SIGNAL('destroyed()'), createRemoveFromDesktop(self, tableview) )
     
     return tableview
   

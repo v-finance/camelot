@@ -111,6 +111,7 @@ class Many2OneEditor(QtGui.QWidget):
   def __init__(self, entity_admin, parent=None):
     super(Many2OneEditor, self).__init__(parent)
     self.admin = entity_admin
+    self.entity_instance_getter = None
     layout = QtGui.QHBoxLayout()
     layout.setSpacing(0)
     layout.setMargin(0)
@@ -122,7 +123,8 @@ class Many2OneEditor(QtGui.QWidget):
     # Open button
     self.open_button = QtGui.QToolButton()
     self.open_button.setIcon(QtGui.QIcon(art.icon16('places/folder')))
-    self.open_button.setAutoRaise(True)    
+    self.open_button.setAutoRaise(True)
+    self.connect(self.open_button, QtCore.SIGNAL('clicked()'), self.createFormView)
     # Search input
     self.search_input = QtGui.QLineEdit()
     self.search_input.setReadOnly(True)
@@ -132,8 +134,23 @@ class Many2OneEditor(QtGui.QWidget):
     layout.addWidget(self.open_button)
     layout.addWidget(self.search_button)
     self.setLayout(layout)
+    
+  def createFormView(self):
+    from camelot.view.proxy.collection_proxy import CollectionProxy
+    if self.entity_instance_getter:
+      
+      def create_collection_getter(instance_getter):
+        return lambda:[instance_getter()]
+      
+      parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
+      model = CollectionProxy(self.admin, create_collection_getter(self.entity_instance_getter), self.admin.getFields)
+      form = self.admin.createFormView('', model, 0, parent)
+      parent.workspace.addWindow(form)
+      form.show()
+    
   def setEntity(self, entity_instance_getter):
     
+    self.entity_instance_getter = entity_instance_getter
     def get_unicode():
       """Get unicode representation of instance"""
       return unicode(entity_instance_getter())
