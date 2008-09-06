@@ -118,7 +118,7 @@ class Printer:
       }
 
       from jinja import Environment, FileSystemLoader
-      fileloader = FileSystemLoader(settings.CANTATE_TEMPLATES_DIRECTORY) 
+      fileloader = FileSystemLoader(settings.CAMELOT_TEMPLATES_DIRECTORY) 
       e = Environment(loader=fileloader)
       t = e.get_template('base.html')
       html = t.render(context)

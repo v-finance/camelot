@@ -159,7 +159,7 @@ class EntityAdmin(object):
       
     return [(attr, getOptions(attr)) for attr in self.list_filter]
 
-  def createFormView(admin, title, query, index, parent):
+  def createFormView(admin, title, model, index, parent):
     """Creates a Qt widget containing a form view, for a specific row of the 
     passed query; uses the Admin class
     """
@@ -167,8 +167,7 @@ class EntityAdmin(object):
 
     from PyQt4 import QtCore
     from PyQt4 import QtGui
-    from PyQt4.QtCore import Qt
-    from proxy.queryproxy import QueryTableProxy
+    
 
     class FormView(QtGui.QWidget):
       
@@ -177,7 +176,7 @@ class EntityAdmin(object):
         self.setWindowTitle(title)
         self.widget_layout = QtGui.QHBoxLayout()
         self.widget_mapper = QtGui.QDataWidgetMapper()
-        self.model = QueryTableProxy(admin, query, admin.getFields)
+        self.model = model
         self.connect(self.model, QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), self.dataChanged)
         self.widget_mapper.setModel(self.model)
         self.form_layout = QtGui.QFormLayout()
@@ -226,96 +225,36 @@ class EntityAdmin(object):
 
     return FormView()
 
-  def createSelectView(admin, query, parent=None):
+  def createSelectView(self, query, parent=None):
     """returns a QT widget that can be used to select an element form a query,
     
     @param query: sqlalchemy query object
     @param parent: the widget that will contain this select view
     """
-    return admin.createTableView(query, parent)
+    return self.createTableView(query, parent)
     
-  def createTableView(admin, query, parent=None):
+  def createTableView(self, query, parent=None):
     """returns a QT widget containing a table view, for a certain query, using
     this Admin class; the table widget contains a model QueryTableModel
 
     @param query: sqlalchemy query object
     @param parent: the workspace widget that will contain the table view
     """
-    
-    from PyQt4 import QtCore, QtGui
-    from PyQt4.QtCore import Qt
+    from controls.tableview import TableView
     from proxy.queryproxy import QueryTableProxy
-
-    class QueryTable(QtGui.QTableView):
-      def __init__(self):
-        QtGui.QTableView.__init__(self)
-        logger.debug('create querytable')      
-        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-                               
-    class TableView(QtGui.QWidget):
-      def __init__(self, admin, parent):
-        from controls.search import SimpleSearchControl
-        from controls.inheritance import SubclassTree
-        QtGui.QWidget.__init__(self, parent)
-        self.setWindowTitle(admin.getName())
-        self.widget_layout = QtGui.QHBoxLayout()
-        self.widget_layout.setSpacing(0)
-        self.widget_layout.setMargin(0)
-        self.table_layout = QtGui.QVBoxLayout()
-        self.table_layout.setSpacing(0)
-        self.table_layout.setMargin(0)
-        self.search_control = SimpleSearchControl()
-        self.table = None
-        self.filters = None
-        self.admin = admin
-        self.table_layout.insertWidget(0, self.search_control)
-        self.setSubclass(admin)
-        self.class_tree = SubclassTree(admin, self)
-        self.widget_layout.insertWidget(0, self.class_tree )
-        self.widget_layout.insertLayout(1, self.table_layout)
-        self.connect(self.search_control, QtCore.SIGNAL('search'), self.startSearch)
-        self.connect(self.search_control, QtCore.SIGNAL('cancel'), self.cancelSearch)
-        self.connect(self.class_tree, QtCore.SIGNAL('subclasssClicked'), self.setSubclass)
-        self.search_filter = lambda q:q
-        self.setLayout(self.widget_layout)
-#        # should occupy 1/4 of parent space
-#        if parent:
-#          width = int(parent.width() / 2)
-#          height = int(parent.height() / 2)
-#          self.resize(width, height)
-
-      def setSubclass(self, admin):
-        """Switch to a different subclass, where admin is the admin object of the
-        subclass"""
-        self.admin = admin
-        if self.table:
-          self.table.deleteLater()
-          self.table_model.deleteLater()
-        self.table = QueryTable()
-        self.connect(self.table.verticalHeader(), QtCore.SIGNAL('sectionClicked(int)'), self.createFormForIndex)         
-        # We create the table first with only 10 rows, to be able resize the columns to
-        # the contents without much processing
-        self.table_model = QueryTableProxy(admin, admin.entity.query.limit(10), admin.getColumns)
-        self.table.setModel(self.table_model)
-        self.table_layout.insertWidget(1, self.table)
-        
-        def update_delegates(*args):
-          self.table.setItemDelegate(self.table_model.getItemDelegate())
-          
-        admin.mt.post(lambda:None, update_delegates)
-        # Once those are loaded, rebuild the query to get the actual number of rows
-        admin.mt.post(lambda:self.table_model._extend_cache(0, 10), lambda x:self.resizeColumnsAndRebuildQuery())
-        admin.mt.post(lambda:admin.getFilters(), lambda items:self.setFilters(items))
-        admin.mt.post(lambda:admin.getListCharts(), lambda charts:self.setCharts(charts))
-             
-      def createFormForIndex(self, index):
-        title = 'Row %s - %s' % (index, admin.getName()) 
+    from PyQt4 import QtCore
+    
+    tableview = TableView(self, parent)
+    
+    def createOpenForm(self, tableview):
+      
+      def openForm(index):
+        title = 'Row %s - %s' % (index, self.getName()) 
         existing = parent.findMdiChild(title)
         if existing is not None:
           parent.workspace.setActiveWindow(existing)
           return
-        form = admin.createFormView(title, self.table_model.query, index, parent)
+        form = self.createFormView(title, QueryTableProxy(self, tableview.table_model.query, self.getFields), index, parent)
         width = int(parent.width() / 2)
         height = int(parent.height() / 2)
         form.resize(width, height)
@@ -323,152 +262,20 @@ class EntityAdmin(object):
         key = 'Form View: %s' % str(title)
         parent.childwindows[key] = form
         form.show()
-           
-      def setCharts(self, charts):
-        if charts:
-          
-          from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-          from matplotlib.figure import Figure
-          
-          chart = charts[0]
-          
-          def getData():
-            from sqlalchemy.sql import select, func
-            from elixir import session
-            xcol = getattr(self.admin.entity, chart['x'])
-            ycol = getattr(self.admin.entity, chart['y'])
-            session.bind = self.admin.entity.table.metadata.bind
-            summary = session.execute(select([xcol, func.sum(ycol)]).group_by(xcol)).fetchall()
-            return [s[0] for s in summary],[s[1] for s in summary]
+        
+      return openForm
+             
+    def createRemoveFromDesktop(self, tableview):
       
-          class MyMplCanvas(FigureCanvas):
-              """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
-              def __init__(self, parent=None, width=5, height=4, dpi=100):
-                  fig = Figure(figsize=(width, height), dpi=dpi, facecolor='w')
-                  self.axes = fig.add_subplot(111, axisbg='w')
-                  # We want the axes cleared every time plot() is called
-                  self.axes.hold(False)
-                  self.compute_initial_figure()
-                  FigureCanvas.__init__(self, fig)
-                  self.setParent(parent)
-                  FigureCanvas.setSizePolicy(self,
-                                             QtGui.QSizePolicy.Expanding,
-                                             QtGui.QSizePolicy.Expanding)
-                  FigureCanvas.updateGeometry(self)
-          
-              def compute_initial_figure(self):
-                  pass
-          
-          def setData(data):
-            
-            class MyStaticMplCanvas(MyMplCanvas):
-                """Simple canvas with a sine plot."""
-                def compute_initial_figure(self):
-                    x, y = data
-                    bar_positions = [i-0.25 for i in range(1,len(x)+1)]
-                    width = 0.5
-                    self.axes.bar(bar_positions, y, width, color='b')
-                    self.axes.set_xlabel('Year')
-                    self.axes.set_ylabel('Sales')
-                    self.axes.set_xticks(range(len(x)+1))
-                    self.axes.set_xticklabels(['']+[str(d) for d in x])
-                  
-            sc = MyStaticMplCanvas(self, width=5, height=4, dpi=100)
-            self.table_layout.addWidget( sc )
-            
-          admin.mt.post(getData, setData)
-      
-      def resizeColumnsAndRebuildQuery(self):
-        logger.debug('resizeColumnsAndRebuildQuery')
-        self.table.resizeColumnsToContents()
-        self.rebuildQuery()
+      def removeFromDesktop(o):
+        print 'destroy called'
         
-      def deleteSelectedRows(self):
-        """Delete the selected rows in this tableview"""
-        logger.debug('delete selected rows called')
-        for row in set(map(lambda x: x.row(), self.table.selectedIndexes())):
-          self.table_model.removeRow(row, None)
-          
-      def newRow(self):
-        """Create a new row in the tableview"""
-        self.table_model.insertRow(0, None)
-                
-      def getColumns(self):
-        return self.admin.getColumns()
+      return removeFromDesktop
         
-      def getData(self):
-        for d in self.table_model.getData():
-          yield d
-        
-      def getTitle(self):
-        return self.admin.getName()
-        
-      def rebuildQuery(self):
-        query = self.admin.entity.query
-        if self.filters:
-          query = self.filters.decorate_query(query)
-        self.table_model.setQuery( self.search_filter(query) )
-        
-      def startSearch(self, text):
-        logger.debug('search %s' % text)
-          
-        def create_search_filter():
-          if len(text.strip()):
-            from sqlalchemy import Unicode, or_
-            args = []
-            for c in self.admin.entity.table._columns:
-                if isinstance(c.type, Unicode):
-                    logger.debug('look in column : %s'%c.name)
-                    args.append( c.like('%'+text+'%') )
-            if len(args):
-                if len(args)>1:
-                    return lambda q:q.filter(or_(*args))
-                else:
-                    return lambda q:q.filter(args[0])
-          return lambda q:q
-
-        self.search_filter = create_search_filter()
-        self.rebuildQuery()
-  
-      def cancelSearch(self):
-        logger.debug('cancel search')
-        self.search_filter = lambda q:q
-        self.rebuildQuery()
-
-      def setFilters(self, items):
-        from controls.filter import FilterList
-        logger.debug('setFilters %s'%str(items))
-        if self.filters:
-          self.filters.deleteLater()
-          self.filters = None
-        if items:
-          self.filters = FilterList(items, self)
-          self.widget_layout.insertWidget(2, self.filters)
-          self.connect(self.filters, QtCore.SIGNAL('filters_changed'), self.rebuildQuery)
-      
-      def toHtml(self):
-        table = [[getattr(row,col[0]) for col in admin.getColumns()] for row in self.admin.entity.query.all()]
-        context = {
-          'title': admin.getName(),
-          'table': table,
-          'columns': [c[0] for c in admin.getColumns()],
-        }
-        from jinja import Environment, FileSystemLoader
-        e = Environment(loader=FileSystemLoader(settings.CAMELOT_TEMPLATES_DIRECTORY))
-        t = e.get_template('table_view.html')
-        return t.render(context)
-      
-      def closeEvent(self, event):
-        # remove from parent mapping
-        logger.debug('removing table view %s from parent mapping' % str(admin))
-        key = 'Table View: %s' % str(admin)
-        parent.childwindows.pop(key)
-        event.accept()
-
-      def __del__(self):
-        logger.debug('delete TableView')
-                
-    return TableView(admin, parent)
+    tableview.connect(tableview.table.verticalHeader(), QtCore.SIGNAL('sectionClicked(int)'), createOpenForm(self, tableview) )
+    tableview.connect(tableview, QtCore.SIGNAL('destroyed()'), createRemoveFromDesktop(self, tableview) )
+    
+    return tableview
   
   def __str__(self):
     return 'Admin %s'%str(self.entity.__name__)

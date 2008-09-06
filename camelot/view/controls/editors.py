@@ -217,25 +217,21 @@ class One2ManyEditor(QtGui.QWidget):
       self.model.removeRow(row, None)
           
   def createFormForIndex(self, index):
+    from camelot.view.proxy.collection_proxy import CollectionProxy
     title = 'Row %s - %s' % (index, self.admin.getName())
     parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
-    
     existing = parent.findMdiChild(title)
     if existing is not None:
       parent.workspace.setActiveWindow(existing)
       return
-
-    form = self.admin.createFormView(title, self.model, index, parent)
-
+    model = CollectionProxy(self.admin, self.model.collection_getter, self.admin.getFields, max_number_of_rows=10, edits=None)
+    form = self.admin.createFormView(title, model, index, parent)
     width = int(parent.width() / 2)
     height = int(parent.height() / 2)
     form.resize(width, height)
-    
     parent.workspace.addWindow(form)
-    
     key = 'Form View: %s' % str(title)
     parent.childwindows[key] = form
-
     form.show()
 
 class BoolEditor(QtGui.QCheckBox):
