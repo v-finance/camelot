@@ -137,6 +137,7 @@ class Many2OneEditor(QtGui.QWidget):
     
   def createFormView(self):
     from camelot.view.proxy.collection_proxy import CollectionProxy
+    from camelot.view.workspace import get_workspace
     if self.entity_instance_getter:
       
       def create_collection_getter(instance_getter):
@@ -145,7 +146,12 @@ class Many2OneEditor(QtGui.QWidget):
       parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
       model = CollectionProxy(self.admin, create_collection_getter(self.entity_instance_getter), self.admin.getFields)
       form = self.admin.createFormView('', model, 0, parent)
-      parent.workspace.addWindow(form)
+      workspace = get_workspace()
+      parent = workspace.parent()
+      width = int(parent.width() / 2)
+      height = int(parent.height() / 2)
+      form.resize(width, height)      
+      workspace.addWindow(form)
       form.show()
     
   def setEntity(self, entity_instance_getter):
@@ -161,10 +167,15 @@ class Many2OneEditor(QtGui.QWidget):
     self.admin.mt.post(get_unicode, set_unicode)
     
   def createSelectView(self):
+    from camelot.view.workspace import get_workspace
     parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
     select = self.admin.createSelectView(self.admin.entity.query, parent)
-    parent.workspace.addWindow(select)
+    self.connect(select, select.entity_selected_signal, self.selectEntity)
+    get_workspace().addWindow(select)
     select.show()
+    
+  def selectEntity(self, entity):
+    print 'entity selected', entity
     
   def createForm(self):
     pass
@@ -235,6 +246,7 @@ class One2ManyEditor(QtGui.QWidget):
           
   def createFormForIndex(self, index):
     from camelot.view.proxy.collection_proxy import CollectionProxy
+    from camelot.view.workspace import get_workspace
     title = 'Row %s - %s' % (index, self.admin.getName())
     parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
     existing = parent.findMdiChild(title)
@@ -246,7 +258,7 @@ class One2ManyEditor(QtGui.QWidget):
     width = int(parent.width() / 2)
     height = int(parent.height() / 2)
     form.resize(width, height)
-    parent.workspace.addWindow(form)
+    get_workspace().addWindow(form)
     key = 'Form View: %s' % str(title)
     parent.childwindows[key] = form
     form.show()

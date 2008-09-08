@@ -229,9 +229,23 @@ class EntityAdmin(object):
     """returns a QT widget that can be used to select an element form a query,
     
     @param query: sqlalchemy query object
-    @param parent: the widget that will contain this select view
+    @param parent: the widget that will contain this select view, the returned
+    widget has an entity_selected_signal signal that will be fired when a entity
+    has been selected.
     """
-    return self.createTableView(query, parent)
+    from controls.tableview import TableView
+    from PyQt4 import QtCore
+    
+    class SelectView(TableView):
+      def __init__(self, admin, parent):
+        TableView.__init__(self, admin, parent)
+        self.entity_selected_signal = QtCore.SIGNAL("entity_selected(entity)")
+        self.connect(self.table.verticalHeader(), QtCore.SIGNAL('sectionClicked(int)'), self.sectionClicked )
+      def sectionClicked(self, index):
+        print 'entity has been selected'
+        self.emit(self.entity_selected_signal, index)
+        
+    return SelectView(self, parent)
     
   def createTableView(self, query, parent=None):
     """returns a QT widget containing a table view, for a certain query, using
@@ -249,16 +263,17 @@ class EntityAdmin(object):
     def createOpenForm(self, tableview):
       
       def openForm(index):
+        from camelot.view.workspace import get_workspace
         title = 'Row %s - %s' % (index, self.getName()) 
         existing = parent.findMdiChild(title)
         if existing is not None:
-          parent.workspace.setActiveWindow(existing)
+          get_workspace().setActiveWindow(existing)
           return
         form = self.createFormView(title, QueryTableProxy(self, tableview.table_model.query, self.getFields), index, parent)
         width = int(parent.width() / 2)
         height = int(parent.height() / 2)
         form.resize(width, height)
-        parent.workspace.addWindow(form)
+        get_workspace().addWindow(form)
         key = 'Form View: %s' % str(title)
         parent.childwindows[key] = form
         form.show()

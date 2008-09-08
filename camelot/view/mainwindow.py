@@ -65,13 +65,14 @@ _ = lambda x:x
 
 class MainWindow(QtGui.QMainWindow):
   def __init__(self, app_admin, parent=None):
+    from workspace import construct_workspace
     logger.debug('initializing main window')
     super(MainWindow, self).__init__(parent)
     
     self.app_admin = app_admin
     
     logger.debug('setting up workspace')
-    self.workspace = QtGui.QWorkspace()
+    self.workspace = construct_workspace(self)
 
     logger.debug('setting child windows dictionary')
     self.childwindows = {}
