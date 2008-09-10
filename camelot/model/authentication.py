@@ -1,0 +1,59 @@
+#  ==================================================================================
+#
+#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ==================================================================================
+"""Set of classes to store users, groups and permissions"""
+
+import camelot
+from camelot.model import *
+__metadata__ = metadata
+
+from camelot.view.elixir_admin import EntityAdmin
+import datetime
+
+class User(Entity):
+  """Username is required, other fields are optional, there is no password because
+  authentication is supposed to happen through the operating system services or other.
+  """
+  using_options(tablename='user')
+  username = Field(Unicode(30), required=True, index=True, unique=True)
+  first_name = Field(Unicode(30))
+  last_name =  Field(Unicode(30))
+  email = Field(Unicode(100))
+  phone = Field(Unicode(100))
+  mobile = Field(Unicode(100))
+  is_staff = Field(Boolean, default=False, index=True)
+  is_active = Field(Boolean, default=True, index=True)
+  is_superuser = Field(Boolean, default=False, index=True)
+  last_login = Field(DateTime(), default=datetime.datetime.now)
+  date_joined = Field(DateTime(), default=datetime.datetime.now)
+  picture = Field(camelot.types.Image(upload_to='user-pictures'), deferred=True)
+
+  class Admin(EntityAdmin):
+    name = 'Users'
+    section = 'configuration'
+    list_display = ['username', 'email', 'phone', 'mobile']
+    fields = ['username', 'first_name', 'last_name', 'email', 'is_staff', 'is_active', 'is_superuser', 'last_login', 'date_joined']
+    list_filter = ['is_active', 'is_staff', 'is_superuser']
