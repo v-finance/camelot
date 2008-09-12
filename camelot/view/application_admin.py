@@ -32,6 +32,7 @@ Admin class, specify how the main window should look like
 class ApplicationAdmin(object):
   
   sections = []
+  admins = {}
   
   def __init__(self, main_sections):
     """The main sections to be used in the navigation pane of the application,
@@ -41,15 +42,20 @@ class ApplicationAdmin(object):
     """
     if main_sections:
       self.sections = main_sections
-      
+  
+  def register(self, entity, admin_class):
+    self.admins[entity] = admin_class
+        
   def getSections(self):
     return self.sections
   
   def getEntityAdmin(self, entity):
     """Get the default entity admin for this entity, return None, if not
     existant"""
-    if hasattr(entity, 'Admin'):
-      return entity.Admin(self, entity)
+    try:
+      return self.admins[entity](self, entity)
+    except KeyError:
+      pass
   
   def getEntityQuery(self, entity):
     """Get the root query for an entity"""
@@ -60,8 +66,16 @@ class ApplicationAdmin(object):
     @return: a list of tuples of (admin,query) instances related to
     the entities in this section.
     """
-    from elixir import entities
-    return [(self.getEntityAdmin(e),self.getEntityQuery(e)) for e in entities \
-                                                            if hasattr(e, 'Admin') \
-                                                            and hasattr(e.Admin, 'section') \
-                                                            and e.Admin.section == section]
+    return [(self.getEntityAdmin(e),self.getEntityQuery(e)) for e,a in self.admins.items() if a.section==section ]
+  
+  def getName(self):
+    """@return: the name of the application"""
+    return "Project Camelot"
+  
+  def getAbout(self):
+    """@return: the content of the About dialog"""
+    return """<b>Camelot Project</b>
+                <p>
+                Copyright &copy; 2008 Conceptive Engineering.
+                All right reserved.
+                </p>"""

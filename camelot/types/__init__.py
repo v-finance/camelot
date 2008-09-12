@@ -9,6 +9,52 @@ logger.setLevel(logging.DEBUG)
 
 from sqlalchemy import types
 
+class Code(types.TypeDecorator):
+  """
+  Sqlalchemy column type to store codes
+  
+  This column type accepts and returns a list of strings and stores them as a
+  string joined with points.
+  
+  eg: ['08', 'AB'] is stored as 08.AB
+  
+  @param parts: a list of dictionaries specifying the various parts of the code, required element
+  of the dictionary is length, specifying the maximum length of each part 
+  """
+  
+  impl = types.Unicode
+  
+  def __init__(self, parts, **kwargs):
+    self.parts = parts
+    max_length = sum(part['length'] for part in parts) + len(parts)
+    types.TypeDecorator.__init__(self, length=max_length, **kwargs)
+    
+  def bind_processor(self, dialect):
+
+    impl_processor = self.impl.bind_processor(dialect)
+    if not impl_processor:
+      impl_processor = lambda x:x
+    
+    def processor(value):
+      if value is not None:
+        value = '.'.join(value)
+      return impl_processor(value)
+    
+    return processor
+
+  def result_processor(self, dialect):
+    
+    impl_processor = self.impl.result_processor(dialect)
+    if not impl_processor:
+      impl_processor = lambda x:x
+      
+    def processor(value):
+
+      if value:
+        return value.split('.')
+      
+    return processor
+  
 # Try to import PIL in various ways
 try:
   from PIL import Image as PILImage

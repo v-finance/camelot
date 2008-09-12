@@ -112,7 +112,7 @@ class MainWindow(QtGui.QMainWindow):
     self.printer = Printer()
 
     logger.debug('setting up window title')
-    self.setWindowTitle(_('Main Window'))
+    self.setWindowTitle(self.app_admin.getName())
     
     logger.debug("setting window's icon")
     self.setWindowIcon(QtGui.QIcon(art.icon32('apps/system-users'))) 
@@ -124,13 +124,8 @@ class MainWindow(QtGui.QMainWindow):
 
   def about(self):
     logger.debug('showing about message box')
-    abtmsg = """<b>Camelot Project</b> v %s
-                <p>
-                Copyright &copy; 2008 Conceptive Engineering.
-                All right reserved.
-                </p>""" % (__version__)
-
-    QtGui.QMessageBox.about(self, _('About Cantate Project'), _(abtmsg))
+    abtmsg = self.app_admin.getAbout()
+    QtGui.QMessageBox.about(self, _('About'), _(abtmsg))
     logger.debug('about message closed')
 
   #def doInitialization(self):
