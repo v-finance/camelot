@@ -70,8 +70,8 @@ class Person(Party):
   comment = Field(Unicode())
 
   class Admin(EntityAdmin):
-    name = 'Users'
+    name = 'Persons'
     section = 'configuration'
-    list_display = ['username', 'email', 'phone', 'mobile']
-    fields = ['username', 'first_name', 'last_name', 'email', 'is_staff', 'is_active', 'is_superuser', 'last_login', 'date_joined']
+    list_display = ['username', 'first_name', 'last_name']
+    fields = ['username', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser', 'last_login', 'date_joined']
     list_filter = ['is_active', 'is_staff', 'is_superuser']
