@@ -137,7 +137,7 @@ class Many2OneEditor(QtGui.QWidget):
     
   def createFormView(self):
     from camelot.view.proxy.collection_proxy import CollectionProxy
-    from camelot.view.workspace import get_workspace
+    from camelot.view.workspace import get_workspace, key_from_entity
     if self.entity_instance_getter:
       
       def create_collection_getter(instance_getter):
@@ -146,12 +146,8 @@ class Many2OneEditor(QtGui.QWidget):
       parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
       model = CollectionProxy(self.admin, create_collection_getter(self.entity_instance_getter), self.admin.getFields)
       form = self.admin.createFormView('', model, 0, parent)
-      workspace = get_workspace()
-      parent = workspace.parent()
-      width = int(parent.width() / 2)
-      height = int(parent.height() / 2)
-      form.resize(width, height)      
-      workspace.addWindow(form)
+      workspace = get_workspace()  
+      workspace.addWindow(key_from_entity(self.admin.entity, 0), form)
       form.show()
     
   def setEntity(self, entity_instance_getter):
@@ -171,7 +167,7 @@ class Many2OneEditor(QtGui.QWidget):
     parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
     select = self.admin.createSelectView(self.admin.entity.query, parent)
     self.connect(select, select.entity_selected_signal, self.selectEntity)
-    get_workspace().addWindow(select)
+    get_workspace().addWindow('select', select)
     select.show()
     
   def selectEntity(self, entity):
@@ -255,10 +251,7 @@ class One2ManyEditor(QtGui.QWidget):
       return
     model = CollectionProxy(self.admin, self.model.collection_getter, self.admin.getFields, max_number_of_rows=10, edits=None)
     form = self.admin.createFormView(title, model, index, parent)
-    width = int(parent.width() / 2)
-    height = int(parent.height() / 2)
-    form.resize(width, height)
-    get_workspace().addWindow(form)
+    get_workspace().addWindow('createFormForIndex', form)
     key = 'Form View: %s' % str(title)
     parent.childwindows[key] = form
     form.show()

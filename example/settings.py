@@ -4,6 +4,7 @@ import os
 def setup_model():
   from model import *
   from camelot.model.memento import *
+  from camelot.model.authentication import *
   setup_all(create_tables=True)
       
 CAMELOT_MAIN_DIRECTORY = os.path.join(os.path.dirname(__file__), '..', 'camelot')

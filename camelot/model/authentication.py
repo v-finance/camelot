@@ -27,29 +27,47 @@
 """Set of classes to store users, groups and permissions"""
 
 import camelot
+import camelot.types
+
 from camelot.model import *
+
 __metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
 import datetime
 
-class User(Entity):
-  """Username is required, other fields are optional, there is no password because
+class Party(Entity):
+  """Base class for persons and organizations.  Use this base class to refer to either persons or
+  organisations in building authentication systems, contact management or CRM"""
+  using_options(tablename='party')
+  
+class Person(Party):
+  """Person represents natural persons, these can be given access to the system, and
+  as such require a username.
+  
+  Username is required, other fields are optional, there is no password because
   authentication is supposed to happen through the operating system services or other.
   """
-  using_options(tablename='user')
-  username = Field(Unicode(30), required=True, index=True, unique=True)
-  first_name = Field(Unicode(30))
-  last_name =  Field(Unicode(30))
-  email = Field(Unicode(100))
-  phone = Field(Unicode(100))
-  mobile = Field(Unicode(100))
+  using_options(tablename='person', inheritance='multi')
+  username = Field(Unicode(40), required=True, index=True, unique=True)
+  first_name = Field(Unicode(40))
+  last_name =  Field(Unicode(40))
+  middle_name = Field(Unicode(40))
+  personal_title = Field(Unicode(10))
+  suffix = Field(Unicode(3))
+  sex = Field(Unicode(1))
+  birthdate = Field(Date())
+  martial_status = Field(Unicode(1))
+  social_security_number = Field(Unicode(12))
+  passport_number = Field(Unicode(20))
+  passport_expiry_date = Field(Date())
   is_staff = Field(Boolean, default=False, index=True)
   is_active = Field(Boolean, default=True, index=True)
   is_superuser = Field(Boolean, default=False, index=True)
   last_login = Field(DateTime(), default=datetime.datetime.now)
   date_joined = Field(DateTime(), default=datetime.datetime.now)
-  picture = Field(camelot.types.Image(upload_to='user-pictures'), deferred=True)
+  picture = Field(camelot.types.Image(upload_to='person-pictures'), deferred=True)
+  comment = Field(Unicode())
 
   class Admin(EntityAdmin):
     name = 'Users'

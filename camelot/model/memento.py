@@ -40,14 +40,14 @@ class Memento(Entity):
   model = Field(Unicode(256), index=True, required=True)
   primary_key = Field(INT(), index=True, required=True)
   creation_date = Field(DateTime(), default=datetime.datetime.now)
-  user = Field(INT(), default=0, index=True)
+  person = Field(INT(), default=0, index=True)
   
   description = property(lambda self:'Change')
  
   class Admin(EntityAdmin):
     name = 'History'
     section = 'configuration'
-    list_display = ['creation_date', 'user', 'model', 'primary_key', 'description']
+    list_display = ['creation_date', 'person', 'model', 'primary_key', 'description']
     list_filter = ['model']
      
 class BeforeUpdate(Memento):

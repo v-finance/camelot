@@ -263,17 +263,14 @@ class EntityAdmin(object):
     def createOpenForm(self, tableview):
       
       def openForm(index):
-        from camelot.view.workspace import get_workspace
+        from camelot.view.workspace import get_workspace, key_from_query
         title = 'Row %s - %s' % (index, self.getName()) 
         existing = parent.findMdiChild(title)
         if existing is not None:
           get_workspace().setActiveWindow(existing)
           return
         form = self.createFormView(title, QueryTableProxy(self, tableview.table_model.query, self.getFields), index, parent)
-        width = int(parent.width() / 2)
-        height = int(parent.height() / 2)
-        form.resize(width, height)
-        get_workspace().addWindow(form)
+        get_workspace().addWindow(key_from_query(self.entity, query), form)
         key = 'Form View: %s' % str(title)
         parent.childwindows[key] = form
         form.show()

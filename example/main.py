@@ -52,6 +52,14 @@ def main():
   admin = ApplicationAdmin([('movies',('Movies', art.icon24('mimetypes/x-office-presentation'))),
                             ('configuration',('Configuration', art.icon24('categories/preferences-system'))),]
                            )
+  from camelot.model.memento import Memento
+  from camelot.model.authentication import Person
+  from model import Director, Movie, Actor
+  admin.register(Memento, Memento.Admin)
+  admin.register(Person, Person.Admin)
+  admin.register(Director, Director.Admin)
+  admin.register(Movie, Movie.Admin)
+  admin.register(Actor, Actor.Admin)
   from camelot.view.mainwindow import MainWindow
   mainwindow = MainWindow(admin)
 #  mainwindow.connect(rh, rh.start_signal, mainwindow.throbber.process_working)
