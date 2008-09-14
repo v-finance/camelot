@@ -36,6 +36,23 @@ __metadata__ = metadata
 from camelot.view.elixir_admin import EntityAdmin
 import datetime
 
+_current_person_ = None
+
+def getCurrentPerson():
+  """Get the currently logged in person"""
+  global _current_person_
+  if not _current_person_:
+    import getpass
+    _current_person_ = Person.getOrCreatePerson(getpass.getuser())
+  return _current_person_
+
+def updateLastLogin():
+  """Update the last login of the current person to now"""
+  from elixir import session
+  person = getCurrentPerson()
+  person.last_login = datetime.datetime.now()
+  session.flush([person])
+  
 class Party(Entity):
   """Base class for persons and organizations.  Use this base class to refer to either persons or
   organisations in building authentication systems, contact management or CRM"""
@@ -68,10 +85,22 @@ class Person(Party):
   date_joined = Field(DateTime(), default=datetime.datetime.now)
   picture = Field(camelot.types.Image(upload_to='person-pictures'), deferred=True)
   comment = Field(Unicode())
+  
+  def __unicode__(self):
+    return self.username
+  
+  @classmethod
+  def getOrCreatePerson(cls, username):
+    person = cls.query.filter_by(username=username).first()
+    if not person:
+      person = cls(username=username)
+      from elixir import session
+      session.flush([person])
+    return person
 
   class Admin(EntityAdmin):
     name = 'Persons'
     section = 'configuration'
-    list_display = ['username', 'first_name', 'last_name']
+    list_display = ['username', 'first_name', 'last_name', 'last_login']
     fields = ['username', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser', 'last_login', 'date_joined']
     list_filter = ['is_active', 'is_staff', 'is_superuser']

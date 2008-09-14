@@ -11,7 +11,7 @@ def key_from_entity(entity, primary_key):
   return ('entity', entity, primary_key)
 
 def key_from_query(entity, query):
-  return ('query', entity, unicode(query))
+  return ('query', entity, unicode(query()))
 
 class DesktopWorkspace(QtGui.QWorkspace):
   def __init__(self, *args):

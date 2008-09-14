@@ -229,12 +229,16 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         
         def update_model_and_cache():
           from camelot.model.memento import BeforeUpdate
+          from camelot.model.authentication import getCurrentPerson
           o = self._get_object(row)
           attribute = self.columns_getter()[column][0]
           old_value = getattr(o, attribute)
           if value!=old_value:
             # save the state before the update
-            history = BeforeUpdate(model=self.admin.entity.__name__, primary_key=o.id, previous_attributes={attribute:old_value})
+            history = BeforeUpdate(model=self.admin.entity.__name__, 
+                                   primary_key=o.id, 
+                                   previous_attributes={attribute:old_value},
+                                   person = getCurrentPerson())
             # update the model
             setattr(o, attribute, value)
             # update the cache
@@ -309,10 +313,14 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       def delete_function():
         from elixir import session
         from camelot.model.memento import BeforeDelete
+        from camelot.model.authentication import getCurrentPerson
         o = self._get_object(row)
         self.remove(o)
         # save the state before the update
-        history = BeforeDelete(model=self.admin.entity.__name__, primary_key=pk, previous_attributes={})
+        history = BeforeDelete(model=self.admin.entity.__name__, 
+                               primary_key=pk, 
+                               previous_attributes={},
+                               person = getCurrentPerson() )
         self.rsh.sendEntityDelete(o)        
         o.delete()
         session.flush([history, o])   
@@ -330,10 +338,13 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     def create_function():
       from elixir import session
       from camelot.model.memento import Create
+      from camelot.model.authentication import getCurrentPerson
       o = self.admin.entity()
       self.append(o)
       session.flush([o])
-      history = Create(model=self.admin.entity.__name__, primary_key=o.id)
+      history = Create(model=self.admin.entity.__name__, 
+                       primary_key=o.id,
+                       person = getCurrentPerson() )
       session.flush([history])
       self.rsh.sendEntityCreate(o)
       

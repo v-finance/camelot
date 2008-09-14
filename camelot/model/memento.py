@@ -28,6 +28,7 @@
 be able to restore their state"""
 
 from camelot.model import *
+from authentication import getCurrentPerson, Person
 __metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
@@ -40,7 +41,7 @@ class Memento(Entity):
   model = Field(Unicode(256), index=True, required=True)
   primary_key = Field(INT(), index=True, required=True)
   creation_date = Field(DateTime(), default=datetime.datetime.now)
-  person = Field(INT(), default=0, index=True)
+  person = ManyToOne('Person', required=True, ondelete='restrict', onupdate='cascade')
   
   description = property(lambda self:'Change')
  

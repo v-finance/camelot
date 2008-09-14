@@ -40,6 +40,7 @@ class TableView(QtGui.QWidget):
     self.connect(self.class_tree, QtCore.SIGNAL('subclasssClicked'), self.setSubclass)
     self.search_filter = lambda q:q
     self.setLayout(self.widget_layout)
+    self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 #        # should occupy 1/4 of parent space
 #        if parent:
 #          width = int(parent.width() / 2)
@@ -209,3 +210,4 @@ class TableView(QtGui.QWidget):
     key = 'Table View: %s' % str(self.admin)
     self.parent.childwindows.pop(key)
     event.accept()
+    
