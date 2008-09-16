@@ -240,11 +240,14 @@ class EntityAdmin(object):
     class SelectView(TableView):
       def __init__(self, admin, parent):
         TableView.__init__(self, admin, parent)
-        self.entity_selected_signal = QtCore.SIGNAL("entity_selected(entity)")
+        self.entity_selected_signal = QtCore.SIGNAL("entity_selected")
         self.connect(self.table.verticalHeader(), QtCore.SIGNAL('sectionClicked(int)'), self.sectionClicked )
       def sectionClicked(self, index):
-        print 'entity has been selected'
-        self.emit(self.entity_selected_signal, index)
+        
+        def create_instance_getter(index):
+          return lambda:self.table_model._get_object(index)
+        
+        self.emit(self.entity_selected_signal, create_instance_getter(index))
         
     return SelectView(self, parent)
     

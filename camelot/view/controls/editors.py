@@ -201,13 +201,14 @@ class Many2OneEditor(QtGui.QWidget):
   def createSelectView(self):
     from camelot.view.workspace import get_workspace
     parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
-    select = self.admin.createSelectView(self.admin.entity.query, parent)
-    self.connect(select, select.entity_selected_signal, self.selectEntity)
-    get_workspace().addWindow('select', select)
-    select.show()
+    self.select = self.admin.createSelectView(self.admin.entity.query, parent)
+    self.connect(self.select, self.select.entity_selected_signal, self.selectEntity)
+    get_workspace().addWindow('select', self.select)
+    self.select.show()
     
-  def selectEntity(self, entity):
-    print 'entity selected', entity
+  def selectEntity(self, entity_instance_getter):
+    self.setEntity(entity_instance_getter)
+    self.select.close()
     
   def createForm(self):
     pass

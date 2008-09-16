@@ -220,6 +220,7 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     editor.setEntity(lambda:index.data(Qt.EditRole).toPyObject())
 
   def setModelData(self, editor, model, index):
+    print 'setModelData called'
     #print 'current index is :', editor.currentIndex()
     pass  
 
