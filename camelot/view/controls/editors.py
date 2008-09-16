@@ -130,9 +130,9 @@ class Many2OneEditor(QtGui.QWidget):
     super(Many2OneEditor, self).__init__(parent)
     self.admin = entity_admin
     self.entity_instance_getter = None
-    layout = QtGui.QHBoxLayout()
-    layout.setSpacing(0)
-    layout.setMargin(0)
+    self.layout = QtGui.QHBoxLayout()
+    self.layout.setSpacing(0)
+    self.layout.setMargin(0)
     # Search button
     self.search_button = QtGui.QToolButton()
     self.search_button.setIcon(QtGui.QIcon(art.icon16('actions/system-search')))
@@ -140,19 +140,21 @@ class Many2OneEditor(QtGui.QWidget):
     self.connect(self.search_button, QtCore.SIGNAL('clicked()'), self.createSelectView)
     # Open button
     self.open_button = QtGui.QToolButton()
-    self.open_button.setIcon(QtGui.QIcon(art.icon16('places/folder')))
-    self.open_button.setAutoRaise(True)
-    self.connect(self.open_button, QtCore.SIGNAL('clicked()'), self.createFormView)
+    self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
+    self.open_button.setAutoRaise(True) 
     # Search input
     self.search_input = QtGui.QLineEdit()
     self.search_input.setReadOnly(True)
     #self.connect(self.search_input, QtCore.SIGNAL('returnPressed()'), self.emit_search)
     # Setup layout
-    layout.addWidget(self.search_input)
-    layout.addWidget(self.open_button)
-    layout.addWidget(self.search_button)
-    self.setLayout(layout)
+    self.layout.addWidget(self.search_input)
+    self.layout.addWidget(self.open_button)
+    self.layout.addWidget(self.search_button)
+    self.setLayout(self.layout)
     
+  def createNew(self):
+    pass
+  
   def createFormView(self):
     from camelot.view.proxy.collection_proxy import CollectionProxy
     from camelot.view.workspace import get_workspace, key_from_entity
@@ -171,17 +173,30 @@ class Many2OneEditor(QtGui.QWidget):
   def setEntity(self, entity_instance_getter):
     
     self.entity_instance_getter = entity_instance_getter
-    def get_unicode():
-      """Get unicode representation of instance"""
+    
+    def get_instance_represenation():
+      """Get a representation of the instance
+      @return: (unicode, pk) its unicode representation and its primary key or ('', False) if the instance was None
+      """
       entity = entity_instance_getter()
       if entity:
-        return unicode(entity)
-      return ''
+        return (unicode(entity), entity.id)
+      return ('', False)
     
-    def set_unicode(txt):
-      self.search_input.setText(txt)
+    def set_instance_represenation(representation):
+      """Update the gui"""
+      desc, pk = representation
+      self.search_input.setText(desc)
+      if pk:
+        self.open_button.setIcon(QtGui.QIcon(art.icon16('places/folder')))
+        self.connect(self.open_button, QtCore.SIGNAL('clicked()'), self.createFormView)
+        self.disconnect(self.open_button, QtCore.SIGNAL('clicked()'), self.createNew)
+      else:
+        self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
+        self.connect(self.open_button, QtCore.SIGNAL('clicked()'), self.createNew)
+        self.disconnect(self.open_button, QtCore.SIGNAL('clicked()'), self.createFormView)  
       
-    self.admin.mt.post(get_unicode, set_unicode)
+    self.admin.mt.post(get_instance_represenation, set_instance_represenation)
     
   def createSelectView(self):
     from camelot.view.workspace import get_workspace
