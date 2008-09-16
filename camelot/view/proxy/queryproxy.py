@@ -72,7 +72,9 @@ class QueryTableProxy(CollectionProxy):
     columns = [c[0] for c in self.columns_getter()] + ['id']
     q = self.query.offset(offset).limit(limit)
     for i,o in enumerate(q.all()):
-        self.cache[i+offset] = RowDataFromObject(o, columns)
+      row_data = RowDataFromObject(o, columns)
+      self.cache[Qt.EditRole][i+offset] = row_data
+      self.cache[Qt.DisplayRole][i+offset] = RowDataAsUnicode(row_data)
     return (offset, limit)
         
   def _get_object(self, row):

@@ -104,6 +104,24 @@ class Many2OneComboBox(QtGui.QComboBox):
     """Sets the current entity in the combo box"""
     self.model.setFirstRow(entity_instance_getter)
 
+class CodeEditor(QtGui.QWidget):
+  
+  def __init__(self, parts, parent=None):
+    super(CodeEditor, self).__init__(parent)
+    self.setFocusPolicy(Qt.StrongFocus)
+    self.parts = parts
+    self.part_editors = []
+    layout = QtGui.QHBoxLayout()
+    #layout.setSpacing(0)
+    layout.setMargin(0)
+    for part in parts:
+      editor = QtGui.QLineEdit()
+      editor.setInputMask(part)
+      self.part_editors.append(editor)
+      layout.addWidget(editor)
+      self.setFocusProxy(editor)
+    self.setLayout(layout)
+        
 class Many2OneEditor(QtGui.QWidget):
   """Widget for editing many 2 one relations
   @param entity_admin : The Admin interface for the object on the one side of the relation

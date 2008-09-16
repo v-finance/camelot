@@ -18,15 +18,17 @@ class Code(types.TypeDecorator):
   
   eg: ['08', 'AB'] is stored as 08.AB
   
-  @param parts: a list of dictionaries specifying the various parts of the code, required element
-  of the dictionary is length, specifying the maximum length of each part 
+  @param parts: a list of input masks specifying the mask for each part, eg ['99', 'AA'], for
+  valid input masks, see the docs of qlineedit
   """
   
   impl = types.Unicode
   
   def __init__(self, parts, **kwargs):
+    import string
+    translator = string.maketrans('', '')
     self.parts = parts
-    max_length = sum(part['length'] for part in parts) + len(parts)
+    max_length = sum(len(part.translate(translator, '<>!')) for part in parts) + len(parts)
     types.TypeDecorator.__init__(self, length=max_length, **kwargs)
     
   def bind_processor(self, dialect):
@@ -48,13 +50,23 @@ class Code(types.TypeDecorator):
     if not impl_processor:
       impl_processor = lambda x:x
       
+    class code(list):
+      def __unicode__(self):
+        return '.'.join(self)
+      
     def processor(value):
 
       if value:
-        return value.split('.')
+        return code(value.split('.'))
+      return code(['' for p in self.parts])
       
     return processor
   
+class IPAddress(Code):
+  
+  def __init__(self, **kwargs):
+    super(IPAddress, self).__init__(parts=['900','900','900','900'])
+    
 # Try to import PIL in various ways
 try:
   from PIL import Image as PILImage

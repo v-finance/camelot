@@ -163,7 +163,7 @@ class TableView(QtGui.QWidget):
         from sqlalchemy import Unicode, or_
         args = []
         for c in self.admin.entity.table._columns:
-            if isinstance(c.type, Unicode):
+            if issubclass(c.type.__class__, (Unicode,)) or (hasattr(c.type, 'impl') and issubclass(c.type.impl.__class__, (Unicode,))):
                 logger.debug('look in column : %s'%c.name)
                 args.append( c.like('%'+text+'%') )
         if len(args):

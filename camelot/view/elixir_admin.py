@@ -38,6 +38,7 @@ _sqlalchemy_to_python_type_ = {
   sqlalchemy.types.TEXT : lambda f:{'python_type':str, 'length':f.length, 'editable':True, 'widget':'str'},
   sqlalchemy.types.Unicode : lambda f:{'python_type':str, 'length':f.length, 'editable':True, 'widget':'str'},
   camelot.types.Image : lambda f:{'python_type':str, 'editable':True, 'widget':'image'},
+  camelot.types.Code : lambda f:{'python_type':list, 'editable':True, 'widget':'code', 'parts':f.parts}
 }
  
 class EntityAdmin(object):

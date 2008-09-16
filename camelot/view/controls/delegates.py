@@ -37,6 +37,7 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 import datetime
+from camelot.view.controls import editors
 
 class GenericDelegate(QtGui.QItemDelegate):
   """Manages custom delegates"""
@@ -105,7 +106,7 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
     return editor
 
   def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.DisplayRole).toInt()[0]
+    value = index.model().data(index, Qt.EditRole).toInt()[0]
     editor.setValue(value)
 
   def setModelData(self, editor, model, index):
@@ -124,7 +125,7 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
     return editor
 
   def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.DisplayRole).toString()
+    value = index.model().data(index, Qt.EditRole).toString()
     editor.setText(value)
 
   def setModelData(self, editor, model, index):
@@ -150,12 +151,34 @@ class DateColumnDelegate(QtGui.QItemDelegate):
     return editor
 
   def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.DisplayRole).toDate()
+    value = index.model().data(index, Qt.EditRole).toDate()
     editor.setDate(value)
 
   def setModelData(self, editor, model, index):
-    model.setData(index, QtCore.QVariant(editor.date()))
+    value = editor.date()
+    model.setData(index, QtCore.QVariant(datetime.date(value.year(), value.month(), value.day())))
 
+class CodeColumnDelegate(QtGui.QItemDelegate):
+  
+  def __init__(self, parts, parent=None):
+    super(CodeColumnDelegate, self).__init__(parent)
+    self.parts = parts
+    
+  def createEditor(self, parent, option, index):
+    return editors.CodeEditor(self.parts, parent)
+
+  def setEditorData(self, editor, index):
+    value = index.data(Qt.EditRole).toPyObject()
+    for part_editor,part in zip(editor.part_editors,value):
+      part_editor.setText(unicode(part))
+     
+  def setModelData(self, editor, model, index):
+    value = []
+    for part in editor.part_editors:
+      value.append(unicode(part.text()))
+    print value
+    model.setData(index, QtCore.QVariant(value))
+    
 class FloatColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for float values"""
 
@@ -171,7 +194,7 @@ class FloatColumnDelegate(QtGui.QItemDelegate):
     return editor
 
   def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.DisplayRole).toDouble()[0]
+    value = index.model().data(index, Qt.EditRole).toDouble()[0]
     editor.setValue(value)
 
   def setModelData(self, editor, model, index):
@@ -186,10 +209,6 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     assert entity_admin!=None
     super(Many2OneColumnDelegate, self).__init__(parent)
     self.entity_admin = entity_admin
-
-  def paint(self, painter, option, index):
-    data = index.data().toPyObject()
-    painter.drawText(option.rect, Qt.AlignLeft | Qt.AlignVCenter, unicode(data))
     
   def createEditor(self, parent, option, index):
     from camelot.view.controls.editors import Many2OneEditor
@@ -198,7 +217,7 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     return editor
 
   def setEditorData(self, editor, index):
-    editor.setEntity(lambda:index.data().toPyObject())
+    editor.setEntity(lambda:index.data(Qt.EditRole).toPyObject())
 
   def setModelData(self, editor, model, index):
     #print 'current index is :', editor.currentIndex()
@@ -244,7 +263,7 @@ class BoolColumnDelegate(QtGui.QItemDelegate):
     return editor
 
   def setEditorData(self, editor, index):
-    checked = index.model().data(index, Qt.DisplayRole).toBool()
+    checked = index.model().data(index, Qt.EditRole).toBool()
     editor.setChecked(checked)
 
   def setModelData(self, editor, model, index):
@@ -259,7 +278,7 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
   def setEditorData(self, editor, index):
     import StringIO
     s = StringIO.StringIO()
-    data = index.model().data(index, Qt.DisplayRole).toPyObject()
+    data = index.model().data(index, Qt.EditRole).toPyObject()
     data.thumbnail((100,100))
     data.save(s, 'png')
     s.seek(0)

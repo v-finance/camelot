@@ -19,6 +19,15 @@ def RowDataFromObject(obj, attrs):
   """Create row data from an object, by fetching its attributes"""
   return [getattr(obj,attr) for (k,attr) in enumerate(attrs)]
   
+def RowDataAsUnicode(row_data):
+  
+  def unicode_or_none(data):
+    if data:
+      return unicode(data)
+    return data
+  
+  return [unicode_or_none(col) for col in row_data]
+
 class EmptyRowData(object):
   def __getitem__(self, column):
     return None
@@ -69,7 +78,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.columns_getter = columns_getter
     self.limit = 50
     self.max_number_of_rows = max_number_of_rows
-    self.cache = fifo(10*self.limit)
+    self.cache = {Qt.DisplayRole:fifo(10*self.limit), Qt.EditRole:fifo(10*self.limit)}
     # The rows in the table for which a cache refill is under request
     self.rows_under_request = set()
     # Set edits
@@ -88,7 +97,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def refresh(self):
     
     def refresh_content(rows):
-      self.cache = fifo(10*self.limit)
+      self.cache = {Qt.DisplayRole:fifo(10*self.limit), Qt.EditRole:fifo(10*self.limit)}
       self.setRowCount(rows)
       
     self.mt.post(self._getRowCount, refresh_content )
@@ -130,44 +139,39 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       type_ = c[1]['python_type']
       widget_ = c[1]['widget']
       logger.debug('%s : creating delegate for type %s, using widget %s'%(field_name, type_, widget_))
+      if widget_ == 'code':
+        delegate = delegates.CodeColumnDelegate(c[1]['parts'])
+        self.item_delegate.insertColumnDelegate(i, delegate)
+        continue        
       if widget_ == 'image':
-        from camelot.view.controls.delegates import ImageColumnDelegate
-        delegate = ImageColumnDelegate()
+        delegate =delegates. ImageColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
         continue   
       if widget_ == 'many2one':
-        from camelot.view.controls.delegates import Many2OneColumnDelegate
         entity_admin = c[1]['admin']
-        delegate = Many2OneColumnDelegate(entity_admin)
+        delegate = delegates.Many2OneColumnDelegate(entity_admin)
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif widget_ == 'one2many':
-        from camelot.view.controls.delegates import One2ManyColumnDelegate
         entity_admin = c[1]['admin']
-        delegate = One2ManyColumnDelegate(entity_admin, field_name)
+        delegate = delegates.One2ManyColumnDelegate(entity_admin, field_name)
         self.item_delegate.insertColumnDelegate(i, delegate)    
       elif type_ == str:
-        from camelot.view.controls.delegates import PlainTextColumnDelegate
-        delegate = PlainTextColumnDelegate()
+        delegate = delegates.PlainTextColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == int:
-        from camelot.view.controls.delegates import IntegerColumnDelegate
-        delegate = IntegerColumnDelegate(0, 100000)
+        delegate = delegates.IntegerColumnDelegate(0, 100000)
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == datetime.date:
-        from camelot.view.controls.delegates import DateColumnDelegate
-        delegate = DateColumnDelegate(datetime.date.min, datetime.date.max, 'dd/MM/yyyy')
+        delegate =delegates. DateColumnDelegate(datetime.date.min, datetime.date.max, 'dd/MM/yyyy')
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == float:
-        from camelot.view.controls.delegates import FloatColumnDelegate
-        delegate = FloatColumnDelegate(-100000.0, 100000.0)
+        delegate = delegates.FloatColumnDelegate(-100000.0, 100000.0)
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == bool:
-        from camelot.view.controls.delegates import BoolColumnDelegate
-        delegate = BoolColumnDelegate()
+        delegate = delegates.BoolColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
       else:
-        from camelot.view.controls.delegates import PlainTextColumnDelegate
-        delegate = PlainTextColumnDelegate()
+        delegate =delegates.PlainTextColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
     self.emit(QtCore.SIGNAL('layoutChanged()'))
            
@@ -204,7 +208,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
        not (0 <= index.column() <= self.columnCount(index)):
       return QtCore.QVariant()
     if role in (Qt.DisplayRole, Qt.EditRole):
-      data = self._get_row_data(index.row())
+      data = self._get_row_data(index.row(), role)
       try:
         value = data[index.column()]
       except KeyError, e:
@@ -218,7 +222,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
 
   def setData(self, index, value, role=Qt.EditRole):
     from elixir import session
-    value = unicode(value.toString())
+    import datetime
     logger.debug('set data col %s, row %s to %s'%(index.row(), index.column(), value))
     if role==Qt.EditRole:
       
@@ -228,22 +232,47 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       def make_update_function(row, column, value):
         
         def update_model_and_cache():
+          type = value.type()
+          if type==QtCore.QMetaType.Bool:
+            new_value = bool(value.toBool())
+          elif type==QtCore.QMetaType.QString:
+            new_value = unicode(value.toString())
+          elif type in (QtCore.QMetaType.Int, QtCore.QMetaType.UInt, QtCore.QMetaType.ULongLong,):
+            new_value = int(value.toInt()[0])
+          elif type in (QtCore.QMetaType.Short, QtCore.QMetaType.UShort,):
+            new_value = int(value.toShort()[0])
+          elif type in (QtCore.QMetaType.Long, QtCore.QMetaType.ULong,):
+            new_value = int(value.toLong()[0])
+          elif type==QtCore.QMetaType.Double:
+            new_value = float(value.toDouble()[0])          
+          elif type==QtCore.QMetaType.QDate:
+            new_value = value.toDate()
+            new_value = datetime.date(new_value.year(), new_value.month(), new_value.day())
+          elif type==QtCore.QMetaType.QDateTime:
+            new_value = value.toDateTime()
+            new_value = datetime.datetime(year=new_value.date().year(), month=new_value.date().month(), day=new_value.date().day(), 
+                                          hour=new_value.time().hour(), minute=new_value.time().minute(), second=new_value.time().second())            
+          else:
+            new_value = value.toPyObject()
+            
           from camelot.model.memento import BeforeUpdate
           from camelot.model.authentication import getCurrentPerson
           o = self._get_object(row)
           attribute = self.columns_getter()[column][0]
           old_value = getattr(o, attribute)
-          if value!=old_value:
+          if new_value!=old_value:
             # save the state before the update
             history = BeforeUpdate(model=self.admin.entity.__name__, 
                                    primary_key=o.id, 
                                    previous_attributes={attribute:old_value},
                                    person = getCurrentPerson())
             # update the model
-            setattr(o, attribute, value)
+            setattr(o, attribute, new_value)
             # update the cache
             columns = [c[0] for c in self.columns_getter()] + ['id']
-            self.cache[row] = RowDataFromObject(o, columns)
+            row_data = RowDataFromObject(o, columns)
+            self.cache[Qt.EditRole][row] = row_data
+            self.cache[Qt.DisplayRole][row] = RowDataAsUnicode(row_data)
             session.flush([o, history])
             self.rsh.sendEntityUpdate(o)
             return ((row,0), (row,len(self.columns_getter())))
@@ -270,7 +299,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     #@TODO : also store the primary key, here we just saved the id
     columns = [c[0] for c in self.columns_getter()] + ['id']
     for i,o in enumerate(self.collection_getter()[offset:offset+limit+1]):
-        self.cache[i+offset] = RowDataFromObject(o, columns)
+      row_data = RowDataFromObject(o, columns)
+      self.cache[Qt.EditRole][i+offset] = row_data
+      self.cache[Qt.DisplayRole][i+offset] = RowDataAsUnicode(row_data)
     return (offset, limit)
         
   def _get_object(self, row):
@@ -282,13 +313,15 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), 
               self.index(offset,0), self.index(offset+limit,self.column_count))
     
-  def _get_row_data(self, row):
+  def _get_row_data(self, row, role):
     """Get the data which is to be visualized at a certain row of the
     table, if needed, post a refill request the cache to get the object
     and its neighbours in the cache, meanwhile, return an empty object
+    @param role: Qt.EditRole or Qt.DisplayRole 
     """
+    role_cache = self.cache[role]
     try:
-      return self.cache[row]
+      return role_cache[row]
     except KeyError:
       if row not in self.rows_under_request:
         offset = max(row-self.limit/2,0)
@@ -306,7 +339,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
  
   def removeRow(self, row, parent):
     logger.debug('remove row %s'%row)
-    pk = self.cache[row][len(self.columns_getter())]
+    pk = self.cache[Qt.EditRole][row][len(self.columns_getter())]
     
     def make_delete_function(pk):
       
