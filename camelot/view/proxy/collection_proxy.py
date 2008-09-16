@@ -211,10 +211,10 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       data = self._get_row_data(index.row(), role)
       try:
         value = data[index.column()]
-      except KeyError, e:
+      except KeyError:
         logger.error('Programming error, could not find data of column %s in %s'%(index.column(), str(data)))
         value = None
-      return QtCore.QVariant(value or '')
+      return QtCore.QVariant(value)
     elif role == Qt.BackgroundColorRole:
       pass
       #return QtCore.QVariant(QueryTableModel.COLORS[index.row() % 2])

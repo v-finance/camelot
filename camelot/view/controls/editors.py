@@ -173,7 +173,10 @@ class Many2OneEditor(QtGui.QWidget):
     self.entity_instance_getter = entity_instance_getter
     def get_unicode():
       """Get unicode representation of instance"""
-      return unicode(entity_instance_getter())
+      entity = entity_instance_getter()
+      if entity:
+        return unicode(entity)
+      return ''
     
     def set_unicode(txt):
       self.search_input.setText(txt)

@@ -278,14 +278,18 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
   def setEditorData(self, editor, index):
     import StringIO
     s = StringIO.StringIO()
-    data = index.model().data(index, Qt.EditRole).toPyObject()
-    data.thumbnail((100,100))
-    data.save(s, 'png')
-    s.seek(0)
-    pixmap = QtGui.QPixmap()
-    pixmap.loadFromData(s.read())
-    s.close()
-    editor.setPixmap(pixmap)
+    data = index.data(Qt.EditRole).toPyObject()
+    if data:
+      data.thumbnail((100,100))
+      data.save(s, 'png')
+      s.seek(0)
+      pixmap = QtGui.QPixmap()
+      pixmap.loadFromData(s.read())
+      s.close()
+      editor.setPixmap(pixmap)
+    else:
+      #@todo: clear pixmap
+      pass
 
   def setModelData(self, editor, model, index):
     pass

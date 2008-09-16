@@ -4,9 +4,11 @@
 <pydev_project>
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.5</pydev_property>
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
-<path>/Camelot</path>
+<path>/camelot</path>
+<path>/camelot/example</path>
 </pydev_pathproperty>
 <pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
-<path>C:\Documents and Settings\Erik Janssens\Mijn documenten\eribel\python\cantate\libraries</path>
+<path>/home/tw55413/sandbox/cantate/libraries</path>
+<path>/home/tw55413/sandbox/cantate/libraries/sqlalchemy</path>
 </pydev_pathproperty>
 </pydev_project>

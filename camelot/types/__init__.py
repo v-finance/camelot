@@ -102,7 +102,6 @@ class Image(types.TypeDecorator):
     def processor(value):
       if value is not None:
         import tempfile
-        import os
         (handle, name) = tempfile.mkstemp(suffix='.%s'%self.format, prefix=self.prefix, dir=os.path.join(self.upload_to))
         value.save(os.fdopen(handle, 'wb'), 'png')
         value = os.path.basename(name)
@@ -118,7 +117,6 @@ class Image(types.TypeDecorator):
       
     def processor(value):
 
-      import os
       if value:
         value = os.path.join(self.upload_to, impl_processor(value))
         if os.path.exists(value):
