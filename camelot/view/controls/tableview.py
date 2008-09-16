@@ -157,15 +157,21 @@ class TableView(QtGui.QWidget):
     
   def startSearch(self, text):
     logger.debug('search %s' % text)
+    import camelot.types
       
     def create_search_filter():
       if len(text.strip()):
         from sqlalchemy import Unicode, or_
         args = []
         for c in self.admin.entity.table._columns:
-            if issubclass(c.type.__class__, (Unicode,)) or (hasattr(c.type, 'impl') and issubclass(c.type.impl.__class__, (Unicode,))):
-                logger.debug('look in column : %s'%c.name)
-                args.append( c.like('%'+text+'%') )
+            if issubclass(c.type.__class__, camelot.types.Code):
+              codes = text.split('.')
+              args.append( c.like(['%'] + codes + ['%']) )
+              args.append( c.like(['%'] + codes) )
+              args.append( c.like(codes + ['%']) )
+            elif issubclass(c.type.__class__, (Unicode,)) or (hasattr(c.type, 'impl') and issubclass(c.type.impl.__class__, (Unicode,))):
+              logger.debug('look in column : %s'%c.name)
+              args.append( c.like('%'+text+'%') )
         if len(args):
             if len(args)>1:
                 return lambda q:q.filter(or_(*args))
