@@ -127,9 +127,12 @@ class EntityAdmin(object):
       """If the field name is not a property of the mapper, then use the default stuff"""
       pass
     attributes.update(dict(blank=True, validator_list=[], name=field_name.replace('_',' ').capitalize()))
-    for k,v in self.field_attributes.items():
-      if k!='admin':
-        attributes[k] = v
+    try:
+      for k,v in self.field_attributes[field_name].items():
+        if k!='admin':
+          attributes[k] = v
+    except KeyError:
+      pass
     return attributes
   
   def getColumns(self):
