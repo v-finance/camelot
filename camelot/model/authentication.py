@@ -24,7 +24,11 @@
 #  project-camelot@conceptive.be
 #
 #  ==================================================================================
-"""Set of classes to store persons, organizations and permissions"""
+"""Set of classes to store persons, organizations, relationships and permissions
+
+These structures are modeled like described in 'The Data Model Resource Book' by
+Len Silverston, Chapter 2
+"""
 
 import camelot
 import camelot.types
