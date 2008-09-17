@@ -62,7 +62,8 @@ def updateLastLogin():
 # the value is a tuple containing the (from_role, to_role, from_type, to_type) role of the relationship.  Eventually
 # this structure could be put into the database as well, but this would have serious
 # implications for the GUI
-party_relationship_types = {1:('supplier', 'customer', 'Organization', 'Party'),
+party_relationship_types = {
+#                            1:('supplier', 'customer', 'Organization', 'Person'),
                             2:('employer', 'employee', 'Organization', 'Person'),
                             }
   
@@ -83,13 +84,20 @@ class PartyRelationship(Entity):
   def from_role(self):
     return party_relationship_types[self.party_relationship_type][0]
     
-  class Admin(EntityAdmin):
+  class FromAdmin(EntityAdmin):
     name = 'Relationships'
-    list_display = ['to', 'to_role', 'comment',]
-    fields = ['to', 'to_role', 'comment', 'valid_time_start', 'valid_time_end']
+    list_display = ['established_to', 'valid_time_start', 'valid_time_end']
+    fields = ['established_to', 'comment', 'valid_time_start', 'valid_time_end']
+    field_attributes = {'established_to':{'name':'Name'}}
+    
+  class ToAdmin(EntityAdmin):
+    name = 'Relationships'
+    list_display = ['established_from', 'valid_time_start', 'valid_time_end']
+    fields = ['established_from', 'comment', 'valid_time_start', 'valid_time_end']
+    field_attributes = {'established_from':{'name':'Name'}}
   
 def relationships(entity_names):
-  """Generate a list of relationshipt types applicable for a certain entity names
+  """Generate a list of relationship types applicable for a certain entity names
   @return: [(relationship_type_id, field_name, inverse), ...]"""
   for key,value in party_relationship_types.items():
     if value[2] in entity_names:
@@ -99,19 +107,25 @@ def relationships(entity_names):
 
 def relationship_type_filter(type_id):
   """Closure to generate a ClauseElement to filter relationships on their type"""
-  filter_function = lambda c:PartyRelationship.party_relationship_type==type_id
+  
+  def filter_function(c):
+    return c.party_relationship_type_id==type_id
+  
   return filter_function
 
 class Party(Entity):
   """Base class for persons and organizations.  Use this base class to refer to either persons or
   organisations in building authentication systems, contact management or CRM"""
   using_options(tablename='party')
-  for id, field, inverse in relationships(('Party', 'Organization', 'Person',)):
-    has_many(field, of_kind='PartyRelationship', inverse=inverse, filter=relationship_type_filter(id))
+  for type_id, field, inverse in relationships(('Party', 'Organization', 'Person',)):
+    filter_function = relationship_type_filter(type_id)
+    has_many(field, of_kind='PartyRelationship', inverse=inverse, filter=filter_function)
     
   class Admin(EntityAdmin):
     name = 'Parties'
     fields = [r[1] for r in relationships(('Party',))]
+    field_attributes = dict((field_name,{'admin':{'established_from':PartyRelationship.FromAdmin, 'established_to':PartyRelationship.ToAdmin}[inverse]}) 
+                            for relationship_type_id, field_name, inverse in relationships(('Party', 'Organization', 'Person'))  )
       
 class Organization(Party):
   """An organization represents any internal or external organization.  Organizations can include
@@ -120,7 +134,10 @@ class Organization(Party):
   name = Field(Unicode(40), default='name', required=True, index=True)
   tax_id = Field(Unicode(15))  
   
-  class Admin(EntityAdmin):
+  def __unicode__(self):
+    return self.name
+  
+  class Admin(Party.Admin):
     name = 'Organizations'
     section = 'configuration'
     list_display = ['name', 'tax_id',]
@@ -166,7 +183,7 @@ class Person(Party):
       session.flush([person])
     return person
 
-  class Admin(EntityAdmin):
+  class Admin(Party.Admin):
     name = 'Persons'
     section = 'configuration'
     list_display = ['username', 'first_name', 'last_name', 'last_login']

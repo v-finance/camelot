@@ -50,6 +50,7 @@ class EntityAdmin(object):
   list_charts = []
   list_actions = []
   form_actions = []
+  field_attributes = {}
   
   def __init__(self, app_admin, entity):
     """
@@ -72,7 +73,11 @@ class EntityAdmin(object):
     return self.form_actions
   
   def getRelatedEntityAdmin(self, entity):
-    return self.app_admin.getEntityAdmin(entity)
+    """Get the related admin class for an entity, optionally specify for which field of this admin's entity"""
+    related_admin = self.app_admin.getEntityAdmin(entity)
+    if not related_admin:
+      logger.warn('no related admin found for %s'%(entity.__name__))
+    return related_admin
   
   def getSubclasses(self):
     """Return admin objects for the subclasses of the Entity represented by
@@ -95,6 +100,14 @@ class EntityAdmin(object):
     default = lambda x:dict(python_type=str, length=None, editable=False, widget='str')
     attributes = default(field_name)
     mapper = orm.class_mapper(self.entity)
+    
+    def get_entity_admin(target):
+      try:
+        admin_class = self.field_attributes[field_name]['admin']
+        return admin_class(self.app_admin, target)
+      except KeyError:
+        return self.getRelatedEntityAdmin(target)
+
     try:
       property = mapper.get_property(field_name, resolve_synonyms=True)
       if isinstance(property, orm.properties.ColumnProperty):
@@ -103,17 +116,20 @@ class EntityAdmin(object):
       elif isinstance(property, orm.properties.PropertyLoader):
         target = property._get_target_class()
         if property.direction == orm.sync.ONETOMANY:
-          attributes = dict(python_type=str, length=None, editable=True, widget='one2many', admin=self.getRelatedEntityAdmin(target))
+          attributes = dict(python_type=str, length=None, editable=True, widget='one2many', admin=get_entity_admin(target))
         elif property.direction == orm.sync.MANYTOONE:
-          attributes = dict(python_type=str, length=None, editable=True, widget='many2one', admin=self.getRelatedEntityAdmin(target))
+          attributes = dict(python_type=str, length=None, editable=True, widget='many2one', admin=get_entity_admin(target))
         elif property.direction == orm.sync.MANYTOMANY:
-          attributes = dict(python_type=str, length=None, editable=True, widget='one2many', admin=self.getRelatedEntityAdmin(target))
+          attributes = dict(python_type=str, length=None, editable=True, widget='one2many', admin=get_entity_admin(target))
         else:
           raise Exception('PropertyLoader has unknown direction')
-    except InvalidRequestError, e:
+    except InvalidRequestError:
       """If the field name is not a property of the mapper, then use the default stuff"""
       pass
     attributes.update(dict(blank=True, validator_list=[], name=field_name.replace('_',' ').capitalize()))
+    for k,v in self.field_attributes.items():
+      if k!='admin':
+        attributes[k] = v
     return attributes
   
   def getColumns(self):

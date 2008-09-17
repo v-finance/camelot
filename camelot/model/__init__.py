@@ -1,5 +1,10 @@
+import elixir
 from elixir import *
 from sqlalchemy import *
+from sqlalchemy.orm import scoped_session, create_session
+
+elixir.session = scoped_session(create_session)
+
 import settings
 
 metadata = MetaData()
