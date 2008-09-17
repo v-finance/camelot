@@ -66,7 +66,7 @@ class ApplicationAdmin(object):
     @return: a list of tuples of (admin,query) instances related to
     the entities in this section.
     """
-    return [(self.getEntityAdmin(e),self.getEntityQuery(e)) for e,a in self.admins.items() if a.section==section ]
+    return [(self.getEntityAdmin(e),self.getEntityQuery(e)) for e,a in self.admins.items() if hasattr(a,'section') and a.section==section ]
   
   def getName(self):
     """@return: the name of the application"""

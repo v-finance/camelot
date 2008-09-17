@@ -24,7 +24,7 @@
 #  project-camelot@conceptive.be
 #
 #  ==================================================================================
-"""Set of classes to store users, groups and permissions"""
+"""Set of classes to store persons, organizations and permissions"""
 
 import camelot
 import camelot.types
@@ -57,7 +57,22 @@ class Party(Entity):
   """Base class for persons and organizations.  Use this base class to refer to either persons or
   organisations in building authentication systems, contact management or CRM"""
   using_options(tablename='party')
+  relationships_from = OneToMany('PartyRelationship', inverse='established_from')
+  relationships_to = OneToMany('PartyRelationship', inverse='established_to')
   
+class Organization(Party):
+  """An organization represents any internal or external organization.  Organizations can include
+  businesses and groups of individuals"""
+  using_options(tablename='organization', inheritance='multi')
+  name = Field(Unicode(40), default='name', required=True, index=True)
+  tax_id = Field(Unicode(15))
+  
+  class Admin(EntityAdmin):
+    name = 'Organizations'
+    section = 'configuration'
+    list_display = ['name', 'tax_id',]
+    fields = ['name', 'tax_id', 'relationships_from']
+      
 class Person(Party):
   """Person represents natural persons, these can be given access to the system, and
   as such require a username.
@@ -102,5 +117,37 @@ class Person(Party):
     name = 'Persons'
     section = 'configuration'
     list_display = ['username', 'first_name', 'last_name', 'last_login']
-    fields = ['username', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser', 'last_login', 'date_joined']
+    fields = ['username', 'first_name', 'last_name', 'birthdate', 'social_security_number', 'passport_number', 'passport_expiry_date', 'is_staff', 'is_active', 'is_superuser', 'last_login', 'date_joined', 'comment']
     list_filter = ['is_active', 'is_staff', 'is_superuser']
+
+# Enumeration of the different types of relationships that are covered, the key
+# in the dictionary is the value that should be in party_relationship_type,
+# the value is a tuple containing the (from, to) role of the relationship.  Eventually
+# this structure could be put into the database as well, but this would have serious
+# implications for the GUI
+party_relationship_types = {1:('supplier', 'customer'),
+                            2:('employer', 'employee'),
+                            }
+                            
+class PartyRelationship(Entity):
+  using_options(tablename='party_relationship')
+  established_from = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
+  established_to = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
+  party_relationship_type = Field(Integer(), colname='party_relationship_type_id', required=True)
+  valid_time_start = Field(Date(), default=datetime.date.today, required=True, index=True)
+  valid_time_end = Field(Date(), default=datetime.date(year=2400, month=12, day=31), required=True, index=True)
+  comment = Field(Unicode())
+  
+  @property
+  def to_role(self):
+    return party_relationship_types[self.party_relationship_type][1]
+
+  @property
+  def from_role(self):
+    return party_relationship_types[self.party_relationship_type][0]
+    
+  class Admin(EntityAdmin):
+    name = 'Relationships'
+    list_display = ['to', 'to_role', 'comment',]
+    fields = ['to', 'to_role', 'comment', 'valid_time_start', 'valid_time_end']
+      
