@@ -346,24 +346,28 @@ class MainWindow(QtGui.QMainWindow):
     pass
 
   def viewFirst(self):
-    pass
+    active = self.activeMdiChild()
+    if isinstance(active, TableView):
+      active.selectTableRow(0)
 
   def viewLast(self):
-    pass
+    active = self.activeMdiChild()
+    if isinstance(active, TableView):
+      active.selectTableRow(active.table_model.rowCount()-1)
 
   def viewNext(self):
     active = self.activeMdiChild()
     if isinstance(active, TableView):
       first = active.selectedTableIndexes()[0]
-      #TODO: we should know how many rows are currently displayed
-      active.selectTableRow(first.row()+1)
+      next = (first.row()+1) % active.table_model.rowCount()
+      active.selectTableRow(next)
 
   def viewPrevious(self):
     active = self.activeMdiChild()
     if isinstance(active, TableView):
       first = active.selectedTableIndexes()[0]
-      #TODO: we should know how many rows are currently displayed
-      active.selectTableRow(first.row()-1)
+      prev = (first.row()-1) % active.table_model.rowCount()
+      active.selectTableRow(prev)
 
   def exportToExcel(self):
       
