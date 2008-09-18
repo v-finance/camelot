@@ -128,6 +128,9 @@ class TableView(QtGui.QWidget):
     logger.debug('resizeColumnsAndRebuildQuery')
     self.table.resizeColumnsToContents()
     self.rebuildQuery()
+
+    logger.debug('Selecting first row in table')
+    self.table.selectRow(0)
     
   def deleteSelectedRows(self):
     """Delete the selected rows in this tableview"""
@@ -139,6 +142,12 @@ class TableView(QtGui.QWidget):
     """Create a new row in the tableview"""
     self.table_model.insertRow(0, None)
             
+  def selectTableRow(self, row):
+    self.table.selectRow(row)
+
+  def selectedTableIndexes(self):
+    return self.table.selectedIndexes()
+  
   def getColumns(self):
     return self.admin.getColumns()
     
