@@ -41,7 +41,7 @@ class SubclassTree(ModelTree):
     self.connect(self, QtCore.SIGNAL('clicked(const QModelIndex&)'), self.emitSubclassClicked)
         
   def setSubclasses(self, subclasses):
-    logger.debug('set subclasses')
+    logger.debug('set subclass tree')
     self.subclasses = subclasses
     if len(subclasses) > 1:
       self.clear_model_items()
