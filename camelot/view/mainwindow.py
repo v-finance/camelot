@@ -57,6 +57,8 @@ from camelot.view.model_thread import get_model_thread, construct_model_thread
 from camelot.view.response_handler import ResponseHandler
 from camelot.view.remote_signals import construct_signal_handler
 
+from camelot.view.controls.tableview import TableView
+
 __version__ = '0.1.0'
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
@@ -350,10 +352,18 @@ class MainWindow(QtGui.QMainWindow):
     pass
 
   def viewNext(self):
-    pass
+    active = self.activeMdiChild()
+    if isinstance(active, TableView):
+      first = active.selectedTableIndexes()[0]
+      #TODO: we should know how many rows are currently displayed
+      active.selectTableRow(first.row()+1)
 
   def viewPrevious(self):
-    pass
+    active = self.activeMdiChild()
+    if isinstance(active, TableView):
+      first = active.selectedTableIndexes()[0]
+      #TODO: we should know how many rows are currently displayed
+      active.selectTableRow(first.row()-1)
 
   def exportToExcel(self):
       
