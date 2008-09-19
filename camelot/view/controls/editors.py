@@ -300,9 +300,10 @@ class One2ManyEditor(QtGui.QWidget):
   def createFormForIndex(self, index):
     from camelot.view.proxy.collection_proxy import CollectionProxy
     from camelot.view.workspace import get_workspace
-    title = 'Row %s - %s' % (index, self.admin.getName())
     parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
     model = CollectionProxy(self.admin, self.model.collection_getter, self.admin.getFields, max_number_of_rows=10, edits=None)
+    entity = model._get_object(index) 
+    title = '%s - %s' % (entity, self.admin.getName())
     form = self.admin.createFormView(title, model, index, parent)
     get_workspace().addWindow('createFormForIndex', form)
     form.show()
