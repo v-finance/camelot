@@ -149,7 +149,12 @@ class TableView(QtGui.QWidget):
 
   def newRow(self):
     """Create a new row in the tableview"""
-    self.table_model.insertRow(0, None)
+    from camelot.view.workspace import get_workspace
+    workspace = get_workspace()
+    form = self.admin.createNewView(workspace)
+    workspace.addWindow('new', form)
+    self.connect(form, form.entity_created_signal, lambda entity_instance_getter:self.table_model.insertRow(0, entity_instance_getter))
+    form.show()
 
   def selectTableRow(self, row):
     self.table.selectRow(row)

@@ -130,6 +130,7 @@ class Many2OneEditor(QtGui.QWidget):
     super(Many2OneEditor, self).__init__(parent)
     self.admin = entity_admin
     self.entity_instance_getter = None
+    self.entity_set = False
     self.layout = QtGui.QHBoxLayout()
     self.layout.setSpacing(0)
     self.layout.setMargin(0)
@@ -141,7 +142,13 @@ class Many2OneEditor(QtGui.QWidget):
     # Open button
     self.open_button = QtGui.QToolButton()
     self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
-    self.open_button.setAutoRaise(True) 
+    self.connect(self.open_button, QtCore.SIGNAL('clicked()'), self.openButtonClicked)
+    self.open_button.setAutoRaise(True)
+    # Trash button
+    self.trash_button = QtGui.QToolButton()
+    self.trash_button.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
+    self.connect(self.trash_button, QtCore.SIGNAL('clicked()'), self.trashButtonClicked)
+    self.trash_button.setAutoRaise(True)     
     # Search input
     self.search_input = QtGui.QLineEdit()
     self.search_input.setReadOnly(True)
@@ -150,11 +157,26 @@ class Many2OneEditor(QtGui.QWidget):
     self.layout.addWidget(self.search_input)
     self.layout.addWidget(self.open_button)
     self.layout.addWidget(self.search_button)
+    self.layout.addWidget(self.trash_button)
     self.setLayout(self.layout)
     
+  def openButtonClicked(self):
+    if self.entity_set:
+      return self.createFormView()
+    else:
+      return self.createNew()
+    
+  def trashButtonClicked(self):
+    self.setEntity(lambda:None)
+    
   def createNew(self):
-    pass
-  
+    from camelot.view.workspace import get_workspace, key_from_entity
+    workspace = get_workspace()
+    form = self.admin.createNewView(workspace)
+    workspace.addWindow('new', form)
+    self.connect(form, form.entity_created_signal, self.selectEntity)
+    form.show()
+        
   def createFormView(self):
     from camelot.view.proxy.collection_proxy import CollectionProxy
     from camelot.view.workspace import get_workspace, key_from_entity
@@ -163,10 +185,9 @@ class Many2OneEditor(QtGui.QWidget):
       def create_collection_getter(instance_getter):
         return lambda:[instance_getter()]
       
-      parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
-      model = CollectionProxy(self.admin, create_collection_getter(self.entity_instance_getter), self.admin.getFields)
-      form = self.admin.createFormView('', model, 0, parent)
       workspace = get_workspace()  
+      model = CollectionProxy(self.admin, create_collection_getter(self.entity_instance_getter), self.admin.getFields)
+      form = self.admin.createFormView('', model, 0, workspace)
       workspace.addWindow(key_from_entity(self.admin.entity, 0), form)
       form.show()
     
@@ -187,31 +208,25 @@ class Many2OneEditor(QtGui.QWidget):
       """Update the gui"""
       desc, pk = representation
       self.search_input.setText(desc)
-      if pk:
+      if pk!=False:
         self.open_button.setIcon(QtGui.QIcon(art.icon16('places/folder')))
-        self.connect(self.open_button, QtCore.SIGNAL('clicked()'), self.createFormView)
-        self.disconnect(self.open_button, QtCore.SIGNAL('clicked()'), self.createNew)
+        self.entity_set = True
       else:
         self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
-        self.connect(self.open_button, QtCore.SIGNAL('clicked()'), self.createNew)
-        self.disconnect(self.open_button, QtCore.SIGNAL('clicked()'), self.createFormView)  
+        self.entity_set = False 
       
     self.admin.mt.post(get_instance_represenation, set_instance_represenation)
     
   def createSelectView(self):
     from camelot.view.workspace import get_workspace
-    parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
-    self.select = self.admin.createSelectView(self.admin.entity.query, parent)
-    self.connect(self.select, self.select.entity_selected_signal, self.selectEntity)
-    get_workspace().addWindow('select', self.select)
-    self.select.show()
+    workspace = get_workspace()
+    select = self.admin.createSelectView(self.admin.entity.query, workspace)
+    self.connect(select, select.entity_selected_signal, self.selectEntity)
+    workspace.addWindow('select', select)
+    select.show()
     
   def selectEntity(self, entity_instance_getter):
     self.setEntity(entity_instance_getter)
-    self.select.close()
-    
-  def createForm(self):
-    pass
     
 class One2ManyEditor(QtGui.QWidget):
   
@@ -269,7 +284,12 @@ class One2ManyEditor(QtGui.QWidget):
     self.model.setCollectionGetter(lambda:getattr(entity_instance_getter(), self.field_name))
     
   def newRow(self):
-    self.model.insertRow(0, None)
+    from camelot.view.workspace import get_workspace
+    workspace = get_workspace()
+    form = self.admin.createNewView(workspace)
+    workspace.addWindow('new', form)
+    self.connect(form, form.entity_created_signal, lambda entity_instance_getter:self.model.insertRow(0, entity_instance_getter))
+    form.show()
   
   def deleteSelectedRows(self):
     """Delete the selected rows in this tableview"""

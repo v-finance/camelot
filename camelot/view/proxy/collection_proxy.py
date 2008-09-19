@@ -57,14 +57,15 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   usable for fast visualisation in a QTableView 
   """
   
-  def __init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10, edits=None):
+  def __init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10, edits=None, eager_flush=True):
     """"
     @param admin: the admin interface for the items in the collection
     @param collection_getter: a function that takes no arguments and returns the collection
     that will be visualized.  This function will be called inside the model thread, to prevent
     delays when this function causes the database to be hit.
     @param columns_getter: a function that takes no arguments and returns the columns that will
-    be cached in the proxy.  This function will be called inside the model thread.   
+    be cached in the proxy.  This function will be called inside the model thread.
+    @param eager_flush: in case of changes, will they be flushed as soon as possible to the database    
     """
     self.logger = logger
     logger.debug('initialize query table')
@@ -72,6 +73,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.admin = admin
     self.collection_getter = collection_getter
     self.column_count = 0
+    self.eager_flush = eager_flush
     self.mt = admin.getModelThread()
     # Set database connection and load data
     self.rows = 0
@@ -261,20 +263,21 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           attribute = self.columns_getter()[column][0]
           old_value = getattr(o, attribute)
           if new_value!=old_value:
-            # save the state before the update
-            history = BeforeUpdate(model=self.admin.entity.__name__, 
-                                   primary_key=o.id, 
-                                   previous_attributes={attribute:old_value},
-                                   person = getCurrentPerson())
             # update the model
             setattr(o, attribute, new_value)
             # update the cache
             columns = [c[0] for c in self.columns_getter()] + ['id']
             row_data = RowDataFromObject(o, columns)
             self.cache[Qt.EditRole][row] = row_data
-            self.cache[Qt.DisplayRole][row] = RowDataAsUnicode(row_data)
-            session.flush([o, history])
-            self.rsh.sendEntityUpdate(o)
+            self.cache[Qt.DisplayRole][row] = RowDataAsUnicode(row_data)            
+            if self.eager_flush:
+              # save the state before the update
+              history = BeforeUpdate(model=self.admin.entity.__name__, 
+                                     primary_key=o.id, 
+                                     previous_attributes={attribute:old_value},
+                                     person = getCurrentPerson())                          
+              session.flush([o, history])
+              self.rsh.sendEntityUpdate(o)
             return ((row,0), (row,len(self.columns_getter())))
         
         return update_model_and_cache
@@ -366,20 +369,21 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.mt.post(make_delete_function(pk), emit_changes)
     return True
        
-  def insertRow(self, row, parent):
+  def insertRow(self, row, entity_instance_getter):
     
     def create_function():
       from elixir import session
       from camelot.model.memento import Create
       from camelot.model.authentication import getCurrentPerson
-      o = self.admin.entity()
+      o = entity_instance_getter()
       self.append(o)
-      session.flush([o])
-      history = Create(model=self.admin.entity.__name__, 
-                       primary_key=o.id,
-                       person = getCurrentPerson() )
-      session.flush([history])
-      self.rsh.sendEntityCreate(o)
+      if self.eager_flush:
+        session.flush([o])
+        history = Create(model=self.admin.entity.__name__, 
+                         primary_key=o.id,
+                         person = getCurrentPerson() )
+        session.flush([history])
+        self.rsh.sendEntityCreate(o)
       
     def emit_changes(*args):
       self.refresh()

@@ -180,6 +180,64 @@ class EntityAdmin(object):
       
     return [(attr, getOptions(attr)) for attr in self.list_filter]
 
+  def createNewView(admin, parent=None):
+    """Create a QT widget containing a form to create a new instance of the entity
+    related to this admin class
+    
+    The returned class has an 'entity_created_signal' that will be fired when a
+    a valid new entity was created by th form
+    """
+
+    from PyQt4 import QtCore
+    from PyQt4 import QtGui
+        
+    from proxy.collection_proxy import CollectionProxy
+    
+    new_object = []
+    
+    def collection_getter():
+      if not new_object:
+        new_object.append(admin.entity())
+      return new_object
+    
+    model = CollectionProxy(admin, collection_getter, admin.getFields, max_number_of_rows=1, eager_flush=False) 
+    
+    class NewForm(QtGui.QWidget):
+      
+      def __init__(self, parent):
+        super(NewForm, self).__init__(parent)
+        self.setWindowTitle('New %s'%(admin.getName()))
+        self.widget_layout = QtGui.QVBoxLayout()
+        self.buttons = QtGui.QDialogButtonBox(self)
+        ok_button = self.buttons.addButton(QtGui.QDialogButtonBox.Ok)
+        cancel_button = self.buttons.addButton(QtGui.QDialogButtonBox.Cancel)
+        self.widget_layout.insertWidget(0, admin.createFormView('New', model, 0, parent) )
+        self.widget_layout.insertWidget(1, self.buttons)
+        self.setLayout(self.widget_layout)
+        self.connect(ok_button, QtCore.SIGNAL('clicked()'), self.okButtonClicked)
+        self.connect(cancel_button, QtCore.SIGNAL('clicked()'), self.cancelButtonClicked)
+        self.entity_created_signal = QtCore.SIGNAL("entity_created")
+        
+      def cancelButtonClicked(self):
+        
+        def expunge_new_object():
+          from elixir import session
+          for o in new_object:
+            session.expunge(o)
+          
+        admin.mt.post(expunge_new_object)
+        self.close()
+        
+      def okButtonClicked(self):
+        
+        def create_instance_getter(new_object):
+          return lambda:new_object[0]
+                
+        self.emit(self.entity_created_signal, create_instance_getter(new_object))
+        self.close()
+      
+    return NewForm(parent)
+    
   def createFormView(admin, title, model, index, parent):
     """Creates a Qt widget containing a form view, for a specific row of the 
     passed query; uses the Admin class
@@ -190,7 +248,6 @@ class EntityAdmin(object):
     from PyQt4.QtCore import SIGNAL
     from PyQt4 import QtGui
     
-
     class FormView(QtGui.QWidget):
       
       def __init__(self):
@@ -221,7 +278,7 @@ class EntityAdmin(object):
 
       def setColumnsAndDelegate(self, columns, delegate):
         for i,column in enumerate(columns):
-          widget = delegate.createEditor(None, None, self.model.index(index,i))
+          widget = delegate.createEditor(parent, None, self.model.index(index,i))
           self.form_layout.addRow(column[1]['name'], widget)
           self.widget_mapper.addMapping(widget, i)
         self.widget_mapper.setCurrentIndex(index)
@@ -236,9 +293,6 @@ class EntityAdmin(object):
           self.actions_widget.setActions(actions)
           self.actions_widget.setEntity(entity)
           self.widget_layout.insertWidget(1, self.actions_widget)        
-
-      def __del__(self):
-        logger.debug('deleting form view')
 
     return FormView()
 
@@ -267,6 +321,8 @@ class EntityAdmin(object):
           return lambda:self.table_model._get_object(index)
         
         self.emit(self.entity_selected_signal, create_instance_getter(index))
+        
+        self.close()
         
     return SelectView(self, parent)
     
