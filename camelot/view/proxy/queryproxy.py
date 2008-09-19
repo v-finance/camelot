@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,7 +23,7 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
 """Proxies representing the results of a query"""
 import logging
@@ -32,26 +32,29 @@ from collection_proxy import *
 
 logger = logging.getLogger('proxy.queryproxy')
 logger.setLevel(logging.DEBUG)
-    
+
+
 class QueryTableProxy(CollectionProxy):
   """The QueryTableProxy contains a limited copy of the data in the Elixir
   model, which is fetched from the database to be used as the model for a
   QTableView
   """
 
-  def __init__(self, admin, query, columns_getter, max_number_of_rows=10, edits=None):
+  def __init__(self, admin, query, columns_getter,
+               max_number_of_rows=10, edits=None):
     logger.debug('initialize query table')
     self.query = query
-    CollectionProxy.__init__(self, admin, lambda :[], columns_getter, max_number_of_rows=10, edits=None)
+    CollectionProxy.__init__(self, admin, lambda: [], columns_getter,
+                             max_number_of_rows=10, edits=None)
 
   def _getRowCount(self):
     return self.query.count()
-  
+
   def setQuery(self, query):
     """Set the query and refresh the view"""
     self.query = query
     self.refresh()
-    
+
   def append(self, o):
     """Add an object to this collection, used when inserting a new
     row, overwrite this method for specific behaviour in subclasses"""
@@ -71,7 +74,7 @@ class QueryTableProxy(CollectionProxy):
     #@TODO : also store the primary key, here we just saved the id
     columns = [c[0] for c in self.columns_getter()] + ['id']
     q = self.query.offset(offset).limit(limit)
-    for i,o in enumerate(q.all()):
+    for i, o in enumerate(q.all()):
       row_data = RowDataFromObject(o, columns)
       self.cache[Qt.EditRole][i+offset] = row_data
       self.cache[Qt.DisplayRole][i+offset] = RowDataAsUnicode(row_data)
@@ -80,6 +83,3 @@ class QueryTableProxy(CollectionProxy):
   def _get_object(self, row):
     """Get the object corresponding to row"""
     return self.query.offset(row).limit(1).first()
-
-
-
