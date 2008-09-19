@@ -156,7 +156,6 @@ class MainWindow(QtGui.QMainWindow):
                                 art.icon16('actions/document-save'),
                                 _('Save'))
 
-    # TODO: change status tip
     temp = art.icon16('actions/document-properties')
     self.pageSetupAct = createAction(self,
                                      _('Page Setup...'),
@@ -164,7 +163,6 @@ class MainWindow(QtGui.QMainWindow):
                                      actionicon=temp,
                                      tip=_('Page Setup...'))
 
-    # TODO: change status tip
     self.printAct = createAction(self,
                                  _('Print...'),
                                  self.printDoc,
@@ -172,7 +170,6 @@ class MainWindow(QtGui.QMainWindow):
                                  art.icon16('actions/document-print'),
                                  _('Print...'))
 
-    # TODO: change status tip
     temp = art.icon16('actions/document-print-preview')
     self.previewAct = createAction(self,
                                    _('Print Preview'),
@@ -185,7 +182,6 @@ class MainWindow(QtGui.QMainWindow):
                                 self.close,
                                 tip=_('Exit the application'))
 
-    # TODO: change status tip
     tip = _("Cut the current selection's contents to the clipboard")
     self.cutAct = createAction(self,
                                _('Cu&t'),
@@ -194,7 +190,6 @@ class MainWindow(QtGui.QMainWindow):
                                art.icon16('actions/edit-cut'),
                                tip)
 
-    # TODO: change status tip
     tip = _("Copy the current selection's contents to the clipboard")
     self.copyAct = createAction(self,
                                 _('&Copy'),
@@ -203,7 +198,6 @@ class MainWindow(QtGui.QMainWindow):
                                 art.icon16('actions/edit-copy'),
                                 tip)
 
-    # TODO: change status tip
     tip = _("Paste the clipboard's contents into the current selection")
     self.pasteAct = createAction(self,
                                  _('&Paste'),
@@ -212,7 +206,6 @@ class MainWindow(QtGui.QMainWindow):
                                  art.icon16('actions/edit-paste'),
                                  tip)
 
-    # TODO: change status tip
     self.closeAct = createAction(self,
                                  _('Cl&ose'),
                                  self.workspace.closeActiveWindow,
@@ -305,10 +298,6 @@ class MainWindow(QtGui.QMainWindow):
                                         self.exportToWord,
                                         actionicon=temp,
                                         tip=_('Export to MS Word'))
-
-    # TODO: add following actions:
-    #   clear
-    #   replace
 
   # QAction slots and methods implementations
 
@@ -551,7 +540,6 @@ class MainWindow(QtGui.QMainWindow):
     self.editToolBar.setObjectName('EditToolBar')
     self.editToolBar.setMovable(False)
     self.editToolBar.setFloatable(False)
-    # TODO: add actions: undo, new, delete
     addActions(self.editToolBar, (self.cutAct,
                                   self.copyAct,
                                   self.pasteAct))
