@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,7 +23,7 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
 """ Main window GUI """
 
@@ -53,7 +53,7 @@ from camelot.view.controls.schemer import schemer
 from camelot.view.controls.navpane import PaneButton, NavigationPane
 from camelot.view.controls.printer import Printer
 from camelot.view.controls.animation import Throbber
-from camelot.view.model_thread import get_model_thread, construct_model_thread 
+from camelot.view.model_thread import get_model_thread, construct_model_thread
 from camelot.view.response_handler import ResponseHandler
 from camelot.view.remote_signals import construct_signal_handler
 
@@ -63,16 +63,18 @@ __version__ = '0.1.0'
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
-_ = lambda x:x
+_ = lambda x: x
+
 
 class MainWindow(QtGui.QMainWindow):
+
   def __init__(self, app_admin, parent=None):
     from workspace import construct_workspace
     logger.debug('initializing main window')
     super(MainWindow, self).__init__(parent)
-    
+
     self.app_admin = app_admin
-    
+
     logger.debug('setting up workspace')
     self.workspace = construct_workspace(self)
 
@@ -80,14 +82,14 @@ class MainWindow(QtGui.QMainWindow):
 
     logger.debug('setting central widget to our workspace')
     self.setCentralWidget(self.workspace)
-    
+
     self.connect(self.workspace, QtCore.SIGNAL('windowActivated(QWidget *)'),
                  self.updateMenus)
-    
+
     self.windowMapper = QtCore.QSignalMapper(self)
     self.connect(self.windowMapper, QtCore.SIGNAL('mapped(QWidget *)'),
                  self.workspace, QtCore.SLOT('setActiveWindow(QWidget *)'))
-    
+
     logger.debug('creating navigation pane')
     self.createNavigationPane()
 
@@ -114,9 +116,9 @@ class MainWindow(QtGui.QMainWindow):
 
     logger.debug('setting up window title')
     self.setWindowTitle(self.app_admin.getName())
-    
+
     logger.debug("setting window's icon")
-    self.setWindowIcon(QtGui.QIcon(art.icon32('apps/system-users'))) 
+    self.setWindowIcon(QtGui.QIcon(art.icon32('apps/system-users')))
 
     #QtCore.QTimer.singleShot(0, self.doInitialization)
     logger.debug('initialization complete')
@@ -129,15 +131,12 @@ class MainWindow(QtGui.QMainWindow):
     QtGui.QMessageBox.about(self, _('About'), _(abtmsg))
     logger.debug('about message closed')
 
-  #def doInitialization(self):
-    #pass
-      
   def readSettings(self):
     # TODO: improve settings reading
     settings = QtCore.QSettings()
     self.restoreGeometry(settings.value('geometry').toByteArray())
     self.restoreState(settings.value('state').toByteArray())
-      
+
   def writeSettings(self):
     # TODO: improve settings saving
     logger.debug('writing application settings')
@@ -145,16 +144,16 @@ class MainWindow(QtGui.QMainWindow):
     settings.setValue('geometry', QtCore.QVariant(self.saveGeometry()))
     settings.setValue('state', QtCore.QVariant(self.saveState()))
     logger.debug('settings written')
-    
+
   # QAction objects creation methods
 
   def createActions(self):
     # TODO: change status tip
-    self.saveAct = createAction(self, 
+    self.saveAct = createAction(self,
                                 _('&Save'),
                                 self.save,
-                                QtGui.QKeySequence.Save, 
-                                art.icon16('actions/document-save'), 
+                                QtGui.QKeySequence.Save,
+                                art.icon16('actions/document-save'),
                                 _('Save'))
 
     # TODO: change status tip
@@ -244,7 +243,7 @@ class MainWindow(QtGui.QMainWindow):
                                  _('&About'),
                                  self.about,
                                  tip=_("Show the application's About box"))
-    
+
     self.newAct = createAction(self,
                                _('New'),
                                self.new,
@@ -258,7 +257,7 @@ class MainWindow(QtGui.QMainWindow):
                                   QtGui.QKeySequence.Delete,
                                   art.icon16('places/user-trash'),
                                   _('Delete'))
-    
+
     self.viewFirstAct = createAction(self,
                                      _('First'),
                                      self.viewFirst,
@@ -286,7 +285,7 @@ class MainWindow(QtGui.QMainWindow):
                                         QtGui.QKeySequence.MoveToPreviousPage,
                                         art.icon16('actions/go-previous'),
                                         _('Previous'))
-    
+
     if QT_MAJOR_VERSION > 4.3:
       self.viewFirstAct.setIconVisibleInMenu(False)
       self.viewLastAct.setIconVisibleInMenu(False)
@@ -299,7 +298,7 @@ class MainWindow(QtGui.QMainWindow):
                                          self.exportToExcel,
                                          actionicon=temp,
                                          tip=_('Export to MS Excel'))
-    
+
     temp = art.icon16('mimetypes/x-office-document')
     self.exportToWordAct = createAction(self,
                                         _('Export to MS Word'),
@@ -321,7 +320,7 @@ class MainWindow(QtGui.QMainWindow):
 
   def cut(self):
     pass
-      
+
   def copy(self):
     pass
 
@@ -337,10 +336,10 @@ class MainWindow(QtGui.QMainWindow):
 
   def new(self):
     self.activeMdiChild().newRow()
-  
+
   def delete(self):
     self.activeMdiChild().deleteSelectedRows()
-  
+
   def pageSetup(self):
     pass
 
@@ -369,9 +368,9 @@ class MainWindow(QtGui.QMainWindow):
       active.selectTableRow(prev)
 
   def exportToExcel(self):
-      
+
     mt = get_model_thread()
-    
+
     def export():
         import os
         import tempfile
@@ -381,8 +380,8 @@ class MainWindow(QtGui.QMainWindow):
         data = [d for d in self.activeMdiChild().getData()]
         objExcel = ExcelExport()
         xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
-        objExcel.exportToFile( xls_fn, title, columns, data )
-        
+        objExcel.exportToFile(xls_fn, title, columns, data)
+
         try:
           import win32com.client
           excel_app = win32com.client.Dispatch("Excel.Application")
@@ -390,26 +389,26 @@ class MainWindow(QtGui.QMainWindow):
           """We're probably not running windows, so try gnumeric"""
           os.system('gnumeric "%s"'%xls_fn)
           return
-    
+
         excel_app.Visible = True
         excel_app.Workbooks.Open(xls_fn)
-    
+
     mt.post(export)
-    
+
   def exportToWord(self):
     """Use windows COM to export the active child window to MS word,
     by using its toHtml function"""
-    
+
     mt = get_model_thread()
-    
-    def export():    
+
+    def export():
         import tempfile
         html = self.activeMdiChild().toHtml()
         html_fd, html_fn = tempfile.mkstemp(suffix='.html')
         html_file = os.fdopen(html_fd, 'wb')
         html_file.write(html)
         html_file.close()
-        
+
         try:
           import win32com.client
           word_app = win32com.client.Dispatch("Word.Application")
@@ -417,10 +416,10 @@ class MainWindow(QtGui.QMainWindow):
           """We're probably not running windows, so try abiword"""
           os.system('abiword "%s"'%html_fn)
           return
-        
+
         from integration.COM.word_constants import constants
         doc_fd, doc_fn = tempfile.mkstemp(suffix='.doc')
-        os.close(doc_fd)    
+        os.close(doc_fd)
         word_app.Visible = True
         doc = word_app.Documents.Open(art.file_('empty_document.doc'))
         word_app.ActiveDocument.SaveAs(doc_fn)
@@ -428,6 +427,7 @@ class MainWindow(QtGui.QMainWindow):
         section.Range.InsertFile(FileName=html_fn)
 
     mt.post(export)
+
   # Menus
 
   def createMenus(self):
@@ -437,17 +437,16 @@ class MainWindow(QtGui.QMainWindow):
                                None, self.pageSetupAct,
                                self.previewAct,
                                self.printAct, None))
-    
+
     self.exportMenu = QtGui.QMenu(_('Export To'))
     addActions(self.exportMenu, (self.exportToExcelAct,
                                  self.exportToWordAct))
     self.fileMenu.addMenu(self.exportMenu)
-    
+
     addActions(self.fileMenu, (None, self.exitAct))
 
     self.editMenu = self.menuBar().addMenu(_('&Edit'))
-    # TODO: add actions: undo, redo, new, delete, select,
-    #                    select All, find, replace
+
     addActions(self.editMenu, (self.cutAct,
                                self.copyAct,
                                self.pasteAct))
@@ -466,7 +465,7 @@ class MainWindow(QtGui.QMainWindow):
     self.menuBar().addSeparator()
 
     self.helpMenu = self.menuBar().addMenu(_('&Help'))
-    addActions(self.helpMenu, (self.aboutAct,))
+    addActions(self.helpMenu, (self.aboutAct, ))
 
     self.throbber = Throbber(self.menuBar())
 
@@ -483,7 +482,7 @@ class MainWindow(QtGui.QMainWindow):
     self.saveAct.setEnabled(hasMdiChild)
     self.pasteAct.setEnabled(hasMdiChild)
     self.closeAct.setEnabled(hasMdiChild)
-    
+
     self.closeAllAct.setEnabled(hasMdiChild)
     self.cascadeAct.setEnabled(hasMdiChild)
     self.arrangeAct.setEnabled(hasMdiChild)
@@ -554,9 +553,9 @@ class MainWindow(QtGui.QMainWindow):
     self.editToolBar.setFloatable(False)
     # TODO: add actions: undo, new, delete
     addActions(self.editToolBar, (self.cutAct,
-                                  self.copyAct, 
+                                  self.copyAct,
                                   self.pasteAct))
-    
+
     self.viewToolBar = self.addToolBar(_('View'))
     self.viewToolBar.setObjectName('ViewToolBar')
     self.viewToolBar.setMovable(False)
@@ -578,7 +577,7 @@ class MainWindow(QtGui.QMainWindow):
   # Navigation Pane
 
   def createNavigationPane(self):
-    self.navpane = NavigationPane(self.app_admin, parent=self)   
+    self.navpane = NavigationPane(self.app_admin, parent=self)
     self.addDockWidget(Qt.LeftDockWidgetArea, self.navpane)
 
     self.connect(self.navpane.treewidget,
@@ -588,7 +587,7 @@ class MainWindow(QtGui.QMainWindow):
     # use QTest to auto select first button :)
     firstbutton = self.navpane.buttons[0]
     QTest.mousePress(firstbutton, Qt.LeftButton)
-    
+
   # Interface for child windows
 
   def createMdiChild(self, item):
@@ -596,13 +595,19 @@ class MainWindow(QtGui.QMainWindow):
     index = self.navpane.treewidget.indexFromItem(item)
     model = self.navpane.models[index.row()]
     logger.debug('creating model %s' % str(model[0]))
-    
+
+<<<<<<< .mine
+    existing = self.findMdiChild(str(model[0]))
+    if existing is not None:
+      self.workspace.setActiveWindow(existing)
+      return
+
     child = model[0].createTableView(model[1], parent=self)
     self.workspace.addWindow(key_from_query(model[0].entity,model[1]), child)
 
     self.connect(child, QtCore.SIGNAL("copyAvailable(bool)"),
            self.cutAct.setEnabled)
-    self.connect(child, QtCore.SIGNAL("copyAvailable(bool)"), 
+    self.connect(child, QtCore.SIGNAL("copyAvailable(bool)"),
            self.copyAct.setEnabled)
     child.show()
 
@@ -610,13 +615,13 @@ class MainWindow(QtGui.QMainWindow):
     return self.workspace.activeWindow()
 
   # Statusbar
-      
+
   def createStatusBar(self):
     self.status = self.statusBar()
     self.status.showMessage(_('Ready'), 5000)
 
   # Events (re)implementations
-  
+
   def closeEvent(self, event):
     self.workspace.closeAllWindows()
     if self.activeMdiChild():
@@ -624,4 +629,3 @@ class MainWindow(QtGui.QMainWindow):
     else:
       self.writeSettings()
       event.accept()
-
