@@ -50,6 +50,7 @@ class EntityAdmin(object):
   list_charts = []
   list_actions = []
   form_actions = []
+  form_title_column = None
   field_attributes = {}
   
   def __init__(self, app_admin, entity):
@@ -186,6 +187,7 @@ class EntityAdmin(object):
     logger.debug('creating form view for index %s'%index)
 
     from PyQt4 import QtCore
+    from PyQt4.QtCore import SIGNAL
     from PyQt4 import QtGui
     
 
@@ -197,7 +199,9 @@ class EntityAdmin(object):
         self.widget_layout = QtGui.QHBoxLayout()
         self.widget_mapper = QtGui.QDataWidgetMapper()
         self.model = model
-        self.connect(self.model, QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), self.dataChanged)
+        self.connect(self.model,
+                     SIGNAL('dataChanged(QModelIndex &, QModelIndex &)'),
+                     self.dataChanged)
         self.widget_mapper.setModel(self.model)
         self.form_layout = QtGui.QFormLayout()
         self.widget_layout.insertLayout(0, self.form_layout)
@@ -212,7 +216,7 @@ class EntityAdmin(object):
         admin.mt.post(getEntityAndActions, self.setEntityAndActions)
 
       def dataChanged(self, index_from, index_to):
-        #@todo: only revert if this form is in the changed range
+        #@TODO: only revert if this form is in the changed range
         self.widget_mapper.revert()
 
       def setColumnsAndDelegate(self, columns, delegate):
@@ -243,17 +247,20 @@ class EntityAdmin(object):
     
     @param query: sqlalchemy query object
     @param parent: the widget that will contain this select view, the returned
-    widget has an entity_selected_signal signal that will be fired when a entity
-    has been selected.
+    widget has an entity_selected_signal signal that will be fired when a
+    entity has been selected.
     """
     from controls.tableview import TableView
     from PyQt4 import QtCore
+    from PyQt4.QtCore import SIGNAL
     
     class SelectView(TableView):
       def __init__(self, admin, parent):
         TableView.__init__(self, admin, parent)
-        self.entity_selected_signal = QtCore.SIGNAL("entity_selected")
-        self.connect(self.table.verticalHeader(), QtCore.SIGNAL('sectionClicked(int)'), self.sectionClicked )
+        self.entity_selected_signal = SIGNAL("entity_selected")
+        self.connect(self.table.verticalHeader(),
+                     SIGNAL('sectionClicked(int)'),
+                     self.sectionClicked)
       def sectionClicked(self, index):
         
         def create_instance_getter(index):
@@ -273,6 +280,7 @@ class EntityAdmin(object):
     from controls.tableview import TableView
     from proxy.queryproxy import QueryTableProxy
     from PyQt4 import QtCore
+    from PyQt4.QtCore import SIGNAL
     
     tableview = TableView(self, parent)
     
@@ -280,14 +288,20 @@ class EntityAdmin(object):
       
       def openForm(index):
         from camelot.view.workspace import get_workspace, key_from_query
-        title = 'Row %s - %s' % (index, self.getName()) 
-        form = self.createFormView(title, QueryTableProxy(self, tableview.table_model.query, self.getFields), index, parent)
+        model = QueryTableProxy(self,
+                                tableview.table_model.query,
+                                self.getFields)
+        entity = model._get_object(index)
+        title = '%s - %s' % (entity or '', self.getName())
+        form = self.createFormView(title, model, index, parent)
         get_workspace().addWindow(key_from_query(self.entity, query), form)
         form.show()
         
       return openForm
         
-    tableview.connect(tableview.table.verticalHeader(), QtCore.SIGNAL('sectionClicked(int)'), createOpenForm(self, tableview) )
+    tableview.connect(tableview.table.verticalHeader(),
+                      SIGNAL('sectionClicked(int)'),
+                      createOpenForm(self, tableview))
     
     return tableview
   
