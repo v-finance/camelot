@@ -78,6 +78,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     # Set database connection and load data
     self.rows = 0
     self.columns_getter = columns_getter
+    self.columns = []
     self.limit = 50
     self.max_number_of_rows = max_number_of_rows
     self.cache = {Qt.DisplayRole:fifo(10*self.limit), Qt.EditRole:fifo(10*self.limit)}
@@ -132,6 +133,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     """
     """Set custom delegates"""
     self.column_count = len(columns)
+    self.columns = columns
     logger.debug('setting up custom delegates')
     from camelot.view.controls import delegates
     import datetime
@@ -369,6 +371,18 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.mt.post(make_delete_function(pk), emit_changes)
     return True
        
+  def isValid(self, row):
+    """Verify if a row in a collection is 'valid', meaning it could be flushed to the database"""
+    try:
+      cached_row_data = self.cache[Qt.EditRole][row]
+      for column,value in zip(self.columns, cached_row_data):
+        if value==None and column[1]['nullable']!=True:
+          print 'row not valid'
+          return False
+    except KeyError:
+      # If the row is not in the cache any more, it should be valid by definition
+      return True
+    
   def insertRow(self, row, entity_instance_getter):
     
     def create_function():

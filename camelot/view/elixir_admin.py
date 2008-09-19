@@ -157,6 +157,7 @@ class EntityAdmin(object):
     default = lambda x: dict(python_type=str,
                              length=None,
                              editable=False,
+                             nullable=True,
                              widget='str')
     attributes = default(field_name)
     mapper = orm.class_mapper(self.entity)
@@ -174,6 +175,7 @@ class EntityAdmin(object):
         type = property.columns[0].type
         python_type = _sqlalchemy_to_python_type_.get(type.__class__, default)
         attributes = python_type(type)
+        attributes['nullable'] = property.columns[0].nullable
       elif isinstance(property, orm.properties.PropertyLoader):
         target = property._get_target_class()
         if property.direction == orm.sync.ONETOMANY:
@@ -323,8 +325,8 @@ class EntityAdmin(object):
       def okButtonClicked(self):
 
         def create_instance_getter(new_object):
-          return lambda: new_object[0]
-
+          return lambda:new_object[0]
+                
         self.emit(self.entity_created_signal,
                   create_instance_getter(new_object))
         self.close()
