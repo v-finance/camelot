@@ -269,13 +269,13 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             columns = [c[0] for c in self.columns_getter()] + ['id']
             row_data = RowDataFromObject(o, columns)
             self.cache[Qt.EditRole][row] = row_data
-            self.cache[Qt.DisplayRole][row] = RowDataAsUnicode(row_data)            
+            self.cache[Qt.DisplayRole][row] = RowDataAsUnicode(row_data)
             if self.eager_flush:
               # save the state before the update
               history = BeforeUpdate(model=self.admin.entity.__name__, 
                                      primary_key=o.id, 
                                      previous_attributes={attribute:old_value},
-                                     person = getCurrentPerson())                          
+                                     person = getCurrentPerson())
               session.flush([o, history])
               self.rsh.sendEntityUpdate(o)
             return ((row,0), (row,len(self.columns_getter())))
