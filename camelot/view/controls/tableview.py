@@ -3,7 +3,7 @@ import settings
 logger = logging.getLogger('view.controls.tableview')
 
 from PyQt4 import QtCore, QtGui
-from QtGui import QSizePolicy
+from PyQt4.QtGui import QSizePolicy
 from PyQt4.QtCore import Qt, SIGNAL
 from camelot.view.proxy.queryproxy import QueryTableProxy
 
