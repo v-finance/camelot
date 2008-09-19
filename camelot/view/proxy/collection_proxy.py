@@ -1,3 +1,29 @@
+#  ==================================================================================
+#
+#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ==================================================================================
 """Proxy representing a collection of entities that live in the model thread.
 
    The proxy represents them in the gui thread and provides access to the data
@@ -370,18 +396,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   
     self.mt.post(make_delete_function(pk), emit_changes)
     return True
-       
-  def isValid(self, row):
-    """Verify if a row in a collection is 'valid', meaning it could be flushed to the database"""
-    try:
-      cached_row_data = self.cache[Qt.EditRole][row]
-      for column,value in zip(self.columns, cached_row_data):
-        if value==None and column[1]['nullable']!=True:
-          print 'row not valid'
-          return False
-    except KeyError:
-      # If the row is not in the cache any more, it should be valid by definition
-      return True
     
   def insertRow(self, row, entity_instance_getter):
     

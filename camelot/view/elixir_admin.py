@@ -267,6 +267,10 @@ class EntityAdmin(object):
 
     return [(attr, getOptions(attr)) for attr in self.list_filter]
 
+  def createValidator(self, model):
+    from validator import *
+    return Validator(self, model)
+  
   def createNewView(admin, parent=None):
     """
     Create a QT widget containing a form to create a new instance of the entity
@@ -291,6 +295,7 @@ class EntityAdmin(object):
 
     model = CollectionProxy(admin, collection_getter, admin.getFields,
                             max_number_of_rows=1, eager_flush=False)
+    validator = admin.createValidator(model)
 
     class NewForm(QtGui.QWidget):
 
@@ -324,12 +329,20 @@ class EntityAdmin(object):
 
       def okButtonClicked(self):
 
-        def create_instance_getter(new_object):
-          return lambda:new_object[0]
-                
-        self.emit(self.entity_created_signal,
-                  create_instance_getter(new_object))
-        self.close()
+        def validate():
+          return validator.isValid(0)
+        
+        def processValidation(valid):
+          if valid:
+            def create_instance_getter(new_object):
+              return lambda:new_object[0] 
+            self.emit(self.entity_created_signal,
+                      create_instance_getter(new_object))
+            self.close()
+          else:
+            QtGui.QMessageBox.information(parent, 'Unfinished input', 'Please complete the form')
+            
+        admin.mt.post(validate, processValidation)
 
     return NewForm(parent)
 
