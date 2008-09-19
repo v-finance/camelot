@@ -19,7 +19,7 @@ class Director(Entity):
 
     def __repr__(self):
       return self.name
-    
+
     # 
     # Each Entity subclass can have a subclass of EntityAdmin as
     # its inner class.  The EntityAdmin class defines how the Entity
@@ -69,6 +69,9 @@ class Movie(Entity):
         # 
         form_actions = [('Burn DVD',lambda o:o.burn_to_disk())]
 
+    def __repr__(self):
+      return self.title
+  
 class Actor(Entity):
     name = Field(Unicode(60))
     movies = ManyToMany('Movie', inverse='actors', tablename='movie_casting')
@@ -80,4 +83,5 @@ class Actor(Entity):
         list_display = ['name',]
         fields = ['name', 'movies']
 
-                        
+    def __repr__(self):
+      return self.name
