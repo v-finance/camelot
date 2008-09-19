@@ -596,14 +596,8 @@ class MainWindow(QtGui.QMainWindow):
     model = self.navpane.models[index.row()]
     logger.debug('creating model %s' % str(model[0]))
 
-<<<<<<< .mine
-    existing = self.findMdiChild(str(model[0]))
-    if existing is not None:
-      self.workspace.setActiveWindow(existing)
-      return
-
     child = model[0].createTableView(model[1], parent=self)
-    self.workspace.addWindow(key_from_query(model[0].entity,model[1]), child)
+    self.workspace.addWindow(key_from_query(model[0].entity, model[1]), child)
 
     self.connect(child, QtCore.SIGNAL("copyAvailable(bool)"),
            self.cutAct.setEnabled)
