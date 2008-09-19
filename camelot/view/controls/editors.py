@@ -282,15 +282,9 @@ class One2ManyEditor(QtGui.QWidget):
     from camelot.view.workspace import get_workspace
     title = 'Row %s - %s' % (index, self.admin.getName())
     parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
-    existing = parent.findMdiChild(title)
-    if existing is not None:
-      parent.workspace.setActiveWindow(existing)
-      return
     model = CollectionProxy(self.admin, self.model.collection_getter, self.admin.getFields, max_number_of_rows=10, edits=None)
     form = self.admin.createFormView(title, model, index, parent)
     get_workspace().addWindow('createFormForIndex', form)
-    key = 'Form View: %s' % str(title)
-    parent.childwindows[key] = form
     form.show()
 
 class BoolEditor(QtGui.QCheckBox):

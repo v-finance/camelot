@@ -218,11 +218,5 @@ class TableView(QtGui.QWidget):
     e = Environment(loader=FileSystemLoader(settings.CAMELOT_TEMPLATES_DIRECTORY))
     t = e.get_template('table_view.html')
     return t.render(context)
-  
-  def closeEvent(self, event):
-    # remove from parent mapping
-    logger.debug('removing table view %s from parent mapping' % str(self.admin))
-    key = 'Table View: %s' % str(self.admin)
-    self.parent.childwindows.pop(key)
-    event.accept()
+
     

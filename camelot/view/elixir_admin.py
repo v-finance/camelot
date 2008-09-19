@@ -214,13 +214,6 @@ class EntityAdmin(object):
       def dataChanged(self, index_from, index_to):
         #@todo: only revert if this form is in the changed range
         self.widget_mapper.revert()
-        
-      def closeEvent(self, event):
-        # remove from parent mapping
-        logger.debug('removing form view %s from parent mapping' % title)
-        key = 'Form View: %s' % str(title)
-        parent.childwindows.pop(key)
-        event.accept()
 
       def setColumnsAndDelegate(self, columns, delegate):
         for i,column in enumerate(columns):
@@ -288,14 +281,8 @@ class EntityAdmin(object):
       def openForm(index):
         from camelot.view.workspace import get_workspace, key_from_query
         title = 'Row %s - %s' % (index, self.getName()) 
-        existing = parent.findMdiChild(title)
-        if existing is not None:
-          get_workspace().setActiveWindow(existing)
-          return
         form = self.createFormView(title, QueryTableProxy(self, tableview.table_model.query, self.getFields), index, parent)
         get_workspace().addWindow(key_from_query(self.entity, query), form)
-        key = 'Form View: %s' % str(title)
-        parent.childwindows[key] = form
         form.show()
         
       return openForm

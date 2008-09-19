@@ -16,7 +16,6 @@ def key_from_query(entity, query):
 class DesktopWorkspace(QtGui.QWorkspace):
   def __init__(self, *args):
     QtGui.QWorkspace.__init__(self, *args)
-    self._keys = dict()
     
   def addWindow(self, key, widget, *args):
     """Add a widget as a window to the workspace, each window
@@ -30,8 +29,6 @@ class DesktopWorkspace(QtGui.QWorkspace):
     height = int(parent.height() / 2)
     widget.resize(width, height)    
     window = QtGui.QWorkspace.addWindow(self, widget, *args)
-    self._keys[key] = window
-    logger.debug(u'added window with key : %s'%unicode(key))
     return window
 
 _workspace_ = []

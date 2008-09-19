@@ -77,7 +77,6 @@ class MainWindow(QtGui.QMainWindow):
     self.workspace = construct_workspace(self)
 
     logger.debug('setting child windows dictionary')
-    self.childwindows = {}
 
     logger.debug('setting central widget to our workspace')
     self.setCentralWidget(self.workspace)
@@ -598,16 +597,8 @@ class MainWindow(QtGui.QMainWindow):
     model = self.navpane.models[index.row()]
     logger.debug('creating model %s' % str(model[0]))
     
-    existing = self.findMdiChild(str(model[0]))
-    if existing is not None:
-      self.workspace.setActiveWindow(existing)
-      return
-    
     child = model[0].createTableView(model[1], parent=self)
     self.workspace.addWindow(key_from_query(model[0].entity,model[1]), child)
-    
-    key = 'Table View: %s' % str(model[0])
-    self.childwindows[key] = child
 
     self.connect(child, QtCore.SIGNAL("copyAvailable(bool)"),
            self.cutAct.setEnabled)
@@ -617,14 +608,6 @@ class MainWindow(QtGui.QMainWindow):
 
   def activeMdiChild(self):
     return self.workspace.activeWindow()
-
-  def findMdiChild(self, modelname):
-    logger.debug('searching for existing childwindow')
-    for key in self.childwindows:
-      if key in ['Table View: %s' % modelname, 'Form View: %s' % modelname]:
-        return self.childwindows[key]
-    return None
-
 
   # Statusbar
       
