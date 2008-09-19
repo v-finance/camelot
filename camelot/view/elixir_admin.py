@@ -18,7 +18,7 @@ import logging
 
 import settings
 
-_ = lambda x:x
+_ = lambda x: x
 
 logger = logging.getLogger('entity_admin')
 logger.setLevel(logging.DEBUG)
@@ -28,21 +28,68 @@ import camelot.types
 import datetime
 
 _sqlalchemy_to_python_type_ = {
-  sqlalchemy.types.Boolean : lambda f:{'python_type':bool, 'editable':True, 'widget':'bool'},
-  sqlalchemy.types.BOOLEAN : lambda f:{'python_type':bool, 'editable':True, 'widget':'bool'},
-  sqlalchemy.types.Date : lambda f:{'python_type':datetime.date, 'format':'dd-mm-YYYY', 'editable':True, 'min':None, 'max':None, 'widget':'date'},
-  sqlalchemy.types.Float : lambda f:{'python_type':float, 'precision':f.precision, 'editable':True, 'min':None, 'max':None, 'widget':'float'},
-  sqlalchemy.types.Integer : lambda f:{'python_type':int, 'editable':True, 'min':None, 'max':None, 'widget':'int'},
-  sqlalchemy.types.INT : lambda f:{'python_type':int, 'editable':True, 'min':None, 'max':None, 'widget':'int'},
-  sqlalchemy.types.String : lambda f:{'python_type':str, 'length':f.length, 'editable':True, 'widget':'str'},
-  sqlalchemy.types.TEXT : lambda f:{'python_type':str, 'length':f.length, 'editable':True, 'widget':'str'},
-  sqlalchemy.types.Unicode : lambda f:{'python_type':str, 'length':f.length, 'editable':True, 'widget':'str'},
-  camelot.types.Image : lambda f:{'python_type':str, 'editable':True, 'widget':'image'},
-  camelot.types.Code : lambda f:{'python_type':list, 'editable':True, 'widget':'code', 'parts':f.parts}
+  sqlalchemy.types.Boolean: lambda f: {'python_type': bool,
+                                       'editable': True,
+                                       'widget': 'bool'},
+
+  sqlalchemy.types.BOOLEAN: lambda f: {'python_type': bool,
+                                       'editable': True,
+                                       'widget': 'bool'},
+
+  sqlalchemy.types.Date: lambda f: {'python_type': datetime.date,
+                                    'format': 'dd-mm-YYYY',
+                                    'editable': True,
+                                    'min': None,
+                                    'max': None,
+                                    'widget': 'date'},
+
+  sqlalchemy.types.Float: lambda f: {'python_type': float,
+                                     'precision': f.precision,
+                                     'editable': True,
+                                     'min': None,
+                                     'max': None,
+                                     'widget': 'float'},
+
+  sqlalchemy.types.Integer: lambda f: {'python_type': int,
+                                       'editable': True,
+                                       'min': None,
+                                       'max': None,
+                                       'widget': 'int'},
+
+  sqlalchemy.types.INT: lambda f: {'python_type': int,
+                                   'editable': True,
+                                   'min': None,
+                                   'max': None,
+                                   'widget': 'int'},
+
+  sqlalchemy.types.String: lambda f: {'python_type': str,
+                                      'length': f.length,
+                                      'editable': True,
+                                      'widget': 'str'},
+
+  sqlalchemy.types.TEXT: lambda f: {'python_type': str,
+                                    'length': f.length,
+                                    'editable': True,
+                                    'widget': 'str'},
+
+  sqlalchemy.types.Unicode: lambda f: {'python_type': str,
+                                       'length': f.length,
+                                       'editable': True,
+                                       'widget': 'str'},
+
+  camelot.types.Image: lambda f: {'python_type': str,
+                                  'editable': True,
+                                  'widget': 'image'},
+
+  camelot.types.Code: lambda f: {'python_type': list,
+                                 'editable': True,
+                                 'widget': 'code',
+                                 'parts': f.parts},
 }
- 
+
+
 class EntityAdmin(object):
-  
+
   name = None
   list_display = []
   fields = []
@@ -52,42 +99,51 @@ class EntityAdmin(object):
   form_actions = []
   form_title_column = None
   field_attributes = {}
-  
+
   def __init__(self, app_admin, entity):
     """
     @param app_admin: the application admin object for this application
     @param entity: the entity class for which this admin instance is to be used
-    """ 
+    """
     self.app_admin = app_admin
     if entity:
       from model_thread import get_model_thread
       self.entity = entity
       self.mt = get_model_thread()
-  
+
   def getName(self):
     return (self.name or self.entity.__name__)
-  
+
   def getModelThread(self):
     return self.mt
-  
+
   def getFormActions(self, entity):
     return self.form_actions
-  
+
   def getRelatedEntityAdmin(self, entity):
-    """Get the related admin class for an entity, optionally specify for which field of this admin's entity"""
+    """
+    Get the related admin class for an entity, optionally specify for which
+    field of this admin's entity
+    """
     related_admin = self.app_admin.getEntityAdmin(entity)
     if not related_admin:
       logger.warn('no related admin found for %s'%(entity.__name__))
     return related_admin
-  
+
   def getSubclasses(self):
-    """Return admin objects for the subclasses of the Entity represented by
-    this admin object"""
+    """
+    Return admin objects for the subclasses of the Entity represented by this
+    admin object
+    """
     from elixir import entities
-    return [e.Admin(self.app_admin, e) for e in entities if issubclass(e, (self.entity,)) if hasattr(e,'Admin')]
-    
+    return [e.Admin(self.app_admin, e)
+            for e in entities
+            if issubclass(e, (self.entity, ))
+            if hasattr(e, 'Admin')]
+
   def getFieldAttributes(self, field_name):
-    """Get the attributes needed to visualize the field field_name
+    """
+    Get the attributes needed to visualize the field field_name
     @param field_name : the name of the field
     @return: a dictionary of attributes needed to visualize the field, those
     attributes can be:
@@ -98,10 +154,13 @@ class EntityAdmin(object):
     """
     from sqlalchemy import orm
     from sqlalchemy.exceptions import InvalidRequestError
-    default = lambda x:dict(python_type=str, length=None, editable=False, widget='str')
+    default = lambda x: dict(python_type=str,
+                             length=None,
+                             editable=False,
+                             widget='str')
     attributes = default(field_name)
     mapper = orm.class_mapper(self.entity)
-    
+
     def get_entity_admin(target):
       try:
         admin_class = self.field_attributes[field_name]['admin']
@@ -113,55 +172,80 @@ class EntityAdmin(object):
       property = mapper.get_property(field_name, resolve_synonyms=True)
       if isinstance(property, orm.properties.ColumnProperty):
         type = property.columns[0].type
-        attributes = _sqlalchemy_to_python_type_.get(type.__class__, default)(type)
+        python_type = _sqlalchemy_to_python_type_.get(type.__class__, default)
+        attributes = python_type(type)
       elif isinstance(property, orm.properties.PropertyLoader):
         target = property._get_target_class()
         if property.direction == orm.sync.ONETOMANY:
-          attributes = dict(python_type=str, length=None, editable=True, widget='one2many', admin=get_entity_admin(target))
+          attributes = dict(python_type=str,
+                            length=None,
+                            editable=True,
+                            widget='one2many',
+                            admin=get_entity_admin(target))
         elif property.direction == orm.sync.MANYTOONE:
-          attributes = dict(python_type=str, length=None, editable=True, widget='many2one', admin=get_entity_admin(target))
+          attributes = dict(python_type=str,
+                            length=None,
+                            editable=True,
+                            widget='many2one',
+                            admin=get_entity_admin(target))
         elif property.direction == orm.sync.MANYTOMANY:
-          attributes = dict(python_type=str, length=None, editable=True, widget='one2many', admin=get_entity_admin(target))
+          attributes = dict(python_type=str,
+                            length=None,
+                            editable=True,
+                            widget='one2many',
+                            admin=get_entity_admin(target))
         else:
           raise Exception('PropertyLoader has unknown direction')
     except InvalidRequestError:
-      """If the field name is not a property of the mapper, then use the default stuff"""
+      """
+      If the field name is not a property of the mapper, then use the default
+      stuff
+      """
       pass
-    attributes.update(dict(blank=True, validator_list=[], name=field_name.replace('_',' ').capitalize()))
+    attributes.update(dict(blank=True,
+                           validator_list=[],
+                           name=field_name.replace('_', ' ').capitalize()))
     try:
-      for k,v in self.field_attributes[field_name].items():
+      for k, v in self.field_attributes[field_name].items():
         if k!='admin':
           attributes[k] = v
     except KeyError:
       pass
     return attributes
-  
+
   def getColumns(self):
-    """The columns to be displayed in the list view, returns a list of pairs of
-    the name of the field and its attributes needed to display it properly
-    
-    @return: [(field_name, 
-                {'widget': widget_type, 'editable': True or False,
-                 'blank': True or False, 'validator_list':[...], 'name':'Field name'}
-              ), ...]
     """
-    return [(field,self.getFieldAttributes(field)) for field in self.list_display]
-  
+    The columns to be displayed in the list view, returns a list of pairs of
+    the name of the field and its attributes needed to display it properly
+
+    @return: [(field_name,
+              {'widget': widget_type,
+               'editable': True or False,
+               'blank': True or False,
+               'validator_list':[...],
+               'name':'Field name'}),
+             ...]
+    """
+    return [(field, self.getFieldAttributes(field))
+            for field in self.list_display]
+
   def getFields(self):
     if self.fields:
-      return [(field,self.getFieldAttributes(field)) for field in self.fields]
+      return [(field, self.getFieldAttributes(field)) for field in self.fields]
     else:
-      return [(field,self.getFieldAttributes(field)) for field in self.list_display]
-    
+      return [(field, self.getFieldAttributes(field))
+              for field in self.list_display]
+
   def getListCharts(self):
     return self.list_charts
-  
+
   def getFilters(self):
-    """Return the filters applicable for these entities each filter is a tuple
+    """
+    Return the filters applicable for these entities each filter is a tuple
     of the name of the filter and a list of options that can be selected. Each
     option is a tuple of the name of the option, and a filter function to
     decorate a query
-     
+
     @return: [(filter_name, [(option_name, query_decorator), ...), ... ]
     """
 
@@ -171,39 +255,43 @@ class EntityAdmin(object):
       col = getattr(self.entity, attr)
       session.bind = self.entity.table.metadata.bind
       query = select([col], distinct=True, order_by=col.asc())
-      
+
       def decorator(col, value):
-        return lambda q:q.filter(col==value)
-      
-      options = [(value[0], decorator(col, value[0])) for value in session.execute(query)]
-      return [('All', lambda q:q)] + options 
-      
+        return lambda q: q.filter(col==value)
+
+      options = [(value[0], decorator(col, value[0]))
+                 for value in session.execute(query)]
+      return [('All', lambda q: q)] + options
+
     return [(attr, getOptions(attr)) for attr in self.list_filter]
 
   def createNewView(admin, parent=None):
-    """Create a QT widget containing a form to create a new instance of the entity
+    """
+    Create a QT widget containing a form to create a new instance of the entity
     related to this admin class
-    
+
     The returned class has an 'entity_created_signal' that will be fired when a
     a valid new entity was created by th form
     """
 
     from PyQt4 import QtCore
     from PyQt4 import QtGui
-        
+    from PyQt4.QtCore import SIGNAL
+
     from proxy.collection_proxy import CollectionProxy
-    
+
     new_object = []
-    
+
     def collection_getter():
       if not new_object:
         new_object.append(admin.entity())
       return new_object
-    
-    model = CollectionProxy(admin, collection_getter, admin.getFields, max_number_of_rows=1, eager_flush=False) 
-    
+
+    model = CollectionProxy(admin, collection_getter, admin.getFields,
+                            max_number_of_rows=1, eager_flush=False)
+
     class NewForm(QtGui.QWidget):
-      
+
       def __init__(self, parent):
         super(NewForm, self).__init__(parent)
         self.setWindowTitle('New %s'%(admin.getName()))
@@ -211,35 +299,41 @@ class EntityAdmin(object):
         self.buttons = QtGui.QDialogButtonBox(self)
         ok_button = self.buttons.addButton(QtGui.QDialogButtonBox.Ok)
         cancel_button = self.buttons.addButton(QtGui.QDialogButtonBox.Cancel)
-        self.widget_layout.insertWidget(0, admin.createFormView('New', model, 0, parent) )
+        self.widget_layout.insertWidget(0, admin.createFormView('New',
+                                                                model,
+                                                                0, parent))
         self.widget_layout.insertWidget(1, self.buttons)
         self.setLayout(self.widget_layout)
-        self.connect(ok_button, QtCore.SIGNAL('clicked()'), self.okButtonClicked)
-        self.connect(cancel_button, QtCore.SIGNAL('clicked()'), self.cancelButtonClicked)
-        self.entity_created_signal = QtCore.SIGNAL("entity_created")
-        
+        self.connect(ok_button, SIGNAL('clicked()'), self.okButtonClicked)
+        self.connect(cancel_button,
+                     SIGNAL('clicked()'),
+                     self.cancelButtonClicked)
+        self.entity_created_signal = SIGNAL("entity_created")
+
       def cancelButtonClicked(self):
-        
+
         def expunge_new_object():
           from elixir import session
           for o in new_object:
             session.expunge(o)
-          
+
         admin.mt.post(expunge_new_object)
         self.close()
-        
+
       def okButtonClicked(self):
-        
+
         def create_instance_getter(new_object):
-          return lambda:new_object[0]
-                
-        self.emit(self.entity_created_signal, create_instance_getter(new_object))
+          return lambda: new_object[0]
+
+        self.emit(self.entity_created_signal,
+                  create_instance_getter(new_object))
         self.close()
-      
+
     return NewForm(parent)
-    
+
   def createFormView(admin, title, model, index, parent):
-    """Creates a Qt widget containing a form view, for a specific row of the 
+    """
+    Creates a Qt widget containing a form view, for a specific row of the
     passed query; uses the Admin class
     """
     logger.debug('creating form view for index %s'%index)
@@ -247,9 +341,9 @@ class EntityAdmin(object):
     from PyQt4 import QtCore
     from PyQt4.QtCore import SIGNAL
     from PyQt4 import QtGui
-    
+
     class FormView(QtGui.QWidget):
-      
+
       def __init__(self):
         super(FormView, self).__init__(None)
         self.setWindowTitle(title)
@@ -263,13 +357,16 @@ class EntityAdmin(object):
         self.form_layout = QtGui.QFormLayout()
         self.widget_layout.insertLayout(0, self.form_layout)
         self.setLayout(self.widget_layout)
-        admin.mt.post(lambda:None, lambda *args:self.setColumnsAndDelegate(self.model.columns_getter(), self.model.getItemDelegate()))
-        
+        admin.mt.post(lambda: None,
+                      lambda *args: self.setColumnsAndDelegate(
+                                      self.model.columns_getter(),
+                                      self.model.getItemDelegate()))
+
         def getEntityAndActions():
           entity = self.model._get_object(index)
           actions = admin.getFormActions(entity)
           return entity, actions
-        
+
         admin.mt.post(getEntityAndActions, self.setEntityAndActions)
 
       def dataChanged(self, index_from, index_to):
@@ -277,13 +374,15 @@ class EntityAdmin(object):
         self.widget_mapper.revert()
 
       def setColumnsAndDelegate(self, columns, delegate):
-        for i,column in enumerate(columns):
-          widget = delegate.createEditor(parent, None, self.model.index(index,i))
+        for i, column in enumerate(columns):
+          widget = delegate.createEditor(parent,
+                                         None,
+                                         self.model.index(index, i))
           self.form_layout.addRow(column[1]['name'], widget)
           self.widget_mapper.addMapping(widget, i)
         self.widget_mapper.setCurrentIndex(index)
         self.widget_mapper.setItemDelegate(delegate)
-                  
+
       def setEntityAndActions(self, result):
         entity, actions = result
         if actions:
@@ -292,13 +391,14 @@ class EntityAdmin(object):
           self.actions_widget = ActionsBox(self, admin.mt)
           self.actions_widget.setActions(actions)
           self.actions_widget.setEntity(entity)
-          self.widget_layout.insertWidget(1, self.actions_widget)        
+          self.widget_layout.insertWidget(1, self.actions_widget)
 
     return FormView()
 
   def createSelectView(self, query, parent=None):
-    """returns a QT widget that can be used to select an element form a query,
-    
+    """
+    Returns a QT widget that can be used to select an element form a query,
+
     @param query: sqlalchemy query object
     @param parent: the widget that will contain this select view, the returned
     widget has an entity_selected_signal signal that will be fired when a
@@ -307,27 +407,30 @@ class EntityAdmin(object):
     from controls.tableview import TableView
     from PyQt4 import QtCore
     from PyQt4.QtCore import SIGNAL
-    
+
     class SelectView(TableView):
+
       def __init__(self, admin, parent):
         TableView.__init__(self, admin, parent)
         self.entity_selected_signal = SIGNAL("entity_selected")
         self.connect(self.table.verticalHeader(),
                      SIGNAL('sectionClicked(int)'),
                      self.sectionClicked)
+
       def sectionClicked(self, index):
-        
+
         def create_instance_getter(index):
-          return lambda:self.table_model._get_object(index)
-        
+          return lambda: self.table_model._get_object(index)
+
         self.emit(self.entity_selected_signal, create_instance_getter(index))
-        
+
         self.close()
-        
+
     return SelectView(self, parent)
-    
+
   def createTableView(self, query, parent=None):
-    """returns a QT widget containing a table view, for a certain query, using
+    """
+    Returns a QT widget containing a table view, for a certain query, using
     this Admin class; the table widget contains a model QueryTableModel
 
     @param query: sqlalchemy query object
@@ -337,11 +440,11 @@ class EntityAdmin(object):
     from proxy.queryproxy import QueryTableProxy
     from PyQt4 import QtCore
     from PyQt4.QtCore import SIGNAL
-    
+
     tableview = TableView(self, parent)
-    
+
     def createOpenForm(self, tableview):
-      
+
       def openForm(index):
         from camelot.view.workspace import get_workspace, key_from_query
         model = QueryTableProxy(self,
@@ -352,15 +455,14 @@ class EntityAdmin(object):
         form = self.createFormView(title, model, index, parent)
         get_workspace().addWindow(key_from_query(self.entity, query), form)
         form.show()
-        
+
       return openForm
-        
+
     tableview.connect(tableview.table.verticalHeader(),
                       SIGNAL('sectionClicked(int)'),
                       createOpenForm(self, tableview))
-    
+
     return tableview
-  
+
   def __str__(self):
     return 'Admin %s'%str(self.entity.__name__)
-
