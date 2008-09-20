@@ -28,6 +28,8 @@
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
 
+from proxy.collection_proxy import fifo
+
 class Validator(QtCore.QObject):
   """A validator class validates an entity before flushing it to the database and
   provides the user with feedback if the entity is not ready to flush"""
@@ -35,12 +37,24 @@ class Validator(QtCore.QObject):
   def __init__(self, admin, model):
     self.admin = admin
     self.model = model
+    self.message_cache = fifo(10)
     
   def isValid(self, row):
     """Verify if a row in a model is 'valid', meaning it could be flushed to the database"""
     entity_instance = self.model._get_object(row)
-    for column in self.model.columns:
+    messages = []
+    for column in self.model.getColumns():
       value = getattr(entity_instance, column[0])
       if value==None and column[1]['nullable']!=True:
-        return False
-    return True
+        messages.append(u'%s is a required field'%(column[1]['name']))
+    self.message_cache[row] = messages
+    return len(messages)==0
+  
+  def validityMessage(self, row, parent):
+    """Inform the user about the validity of the data at row, by showing a message box, this function can only
+    be called if isValid has been called and is finished within the model thread"""
+    try:
+      messages = self.message_cache[row]
+      QtGui.QMessageBox.information(parent, u'Validation', u'\n'.join(messages))
+    except KeyError:
+      raise Exception('Programming error : isValid should be called before calling validityMessage')

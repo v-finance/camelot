@@ -106,7 +106,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     # Set database connection and load data
     self.rows = 0
     self.columns_getter = columns_getter
-    self.columns = []
     self.limit = 50
     self.max_number_of_rows = max_number_of_rows
     self.cache = {Qt.DisplayRole:fifo(10*self.limit), Qt.EditRole:fifo(10*self.limit)}
@@ -115,7 +114,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     # Set edits
     self.edits = edits or []
     self.rsh = get_signal_handler()
-    self.rsh.connect(self.rsh, self.rsh.entity_signal, self.handleEntitySignal)
+    self.rsh.connect(self.rsh, self.rsh.entity_update_signal, self.handleEntityUpdate)
+    self.rsh.connect(self.rsh, self.rsh.entity_delete_signal, self.handleEntityDelete)
+    self.rsh.connect(self.rsh, self.rsh.entity_create_signal, self.handleEntityCreate)
     self.mt.post(columns_getter, lambda columns:self.setColumns(columns))
     # in that way the number of rows is requested as well
     self.mt.post(self._getRowCount,  self.setRowCount)
@@ -137,11 +138,21 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.collection_getter = collection_getter
     self.refresh()
     
-  def handleEntitySignal(self):
+  def handleEntityUpdate(self, entity, primary_keys):
     """Handles the entity signal, indicating that the model is out of date"""
-    logger.debug('received entity signal')
+    logger.debug('received entity update signal')
     self.refresh()
-    
+
+  def handleEntityDelete(self, entity, primary_keys):
+    """Handles the entity signal, indicating that the model is out of date"""
+    logger.debug('received entity delete signal')
+    self.refresh()
+                 
+  def handleEntityCreate(self, entity, primary_keys):
+    """Handles the entity signal, indicating that the model is out of date"""
+    logger.debug('received entity create signal')
+    self.refresh()
+                 
   def setRowCount(self, rows):
     """Callback method to set the number of rows
     @param rows the new number of rows
@@ -155,6 +166,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       raise Exception('Item delegate not yet available')
     return self.item_delegate 
     
+  def getColumns(self):
+    return self.columns_getter()
+  
   def setColumns(self, columns):
     """
     Callback method to set the columns
@@ -214,14 +228,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         delegate = delegates.PlainTextColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
     self.emit(QtCore.SIGNAL('layoutChanged()'))
-           
-  def unset_max_number_of_rows(self):
-    if self.max_number_of_rows:
-      if self.max_number_of_rows < self.rows:
-        #msg = wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, self.rows-self.max_number_of_rows)
-        self.max_number_of_rows = None
-        #self.grid.ProcessTableMessage(msg)
-      self.max_number_of_rows = None
 
   def rowCount(self, index=None):
     return self.rows

@@ -132,7 +132,7 @@ class Organization(Party):
   businesses and groups of individuals"""
   using_options(tablename='organization', inheritance='multi')
   name = Field(Unicode(40), required=True, index=True)
-  tax_id = Field(Unicode(15))  
+  tax_id = Field(Unicode(15))
   
   def __unicode__(self):
     return self.name
@@ -191,6 +191,3 @@ class Person(Party):
               'passport_expiry_date', 'is_staff', 'is_active', 'is_superuser', 'last_login', 'date_joined', 
               'comment'] + Party.Admin.fields  + [r[1] for r in relationships(('Person',))]
     list_filter = ['is_active', 'is_staff', 'is_superuser']
-                            
-
-      

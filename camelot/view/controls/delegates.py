@@ -175,7 +175,7 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
   def createEditor(self, parent, option, index):
     from camelot.view.controls.editors import PlainTextEditor
     editor = PlainTextEditor(parent)
-    if not self.parent().columnsdesc[index.column()][1]['nullable']:
+    if not self.parent().columnsdesc[index.column()][1]['editable']:
       editor.setEnabled(False)
     return editor
 

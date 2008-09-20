@@ -340,7 +340,7 @@ class EntityAdmin(object):
                       create_instance_getter(new_object))
             self.close()
           else:
-            QtGui.QMessageBox.information(parent, 'Unfinished input', 'Please complete the form')
+            validator.validityMessage(0, parent)
             
         admin.mt.post(validate, processValidation)
 
@@ -366,7 +366,7 @@ class EntityAdmin(object):
         self.widget_mapper = QtGui.QDataWidgetMapper()
         self.model = model
         self.connect(self.model,
-                     SIGNAL('dataChanged(QModelIndex &, QModelIndex &)'),
+                     SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                      self.dataChanged)
         self.widget_mapper.setModel(self.model)
         self.form_layout = QtGui.QFormLayout()
@@ -395,8 +395,8 @@ class EntityAdmin(object):
                                          self.model.index(index, i))
           self.form_layout.addRow(column[1]['name'], widget)
           self.widget_mapper.addMapping(widget, i)
-        self.widget_mapper.setCurrentIndex(index)
         self.widget_mapper.setItemDelegate(delegate)
+        self.widget_mapper.setCurrentIndex(index)
 
       def setEntityAndActions(self, result):
         entity, actions = result
@@ -465,10 +465,9 @@ class EntityAdmin(object):
         model = QueryTableProxy(self,
                                 tableview.table_model.query,
                                 self.getFields)
-        entity = model._get_object(index)
-        title = '%s - %s' % (entity or '', self.getName())
+        title = u'%s'%(self.getName())
         form = self.createFormView(title, model, index, parent)
-        get_workspace().addWindow(key_from_query(self.entity, query), form)
+        get_workspace().addWindow('form', form)
         form.show()
 
       return openForm

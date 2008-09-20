@@ -41,7 +41,9 @@ from PyQt4.QtCore import *
 class SignalHandler(QObject):
   def __init__(self):
     QObject.__init__(self)
-    self.entity_signal = SIGNAL("entity()")
+    self.entity_update_signal = SIGNAL("entity_update")
+    self.entity_delete_signal = SIGNAL("entity_delete")
+    self.entity_create_signal = SIGNAL("entity_create")
     if hasattr(settings, 'CAMELOT_SERVER') and settings.CANTATE_SERVER:
       from stomp import stomp
       self.connection = stomp.Connection(host_and_ports = [ (settings.CAMELOT_SERVER, 61613) ])
@@ -61,7 +63,7 @@ class SignalHandler(QObject):
   def sendEntityUpdate(self, entity):
     if self.connection:
       self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.update'%entity.__class__.__name__)
-    self.emit(self.entity_signal)
+    self.emit(self.entity_update_signal, entity.__class__, [entity.id])
   def sendEntityDelete(self, entity):
     if self.connection:
       self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.delete'%entity.__class__.__name__)
