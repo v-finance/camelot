@@ -50,11 +50,14 @@ class Validator(QtCore.QObject):
     self.message_cache[row] = messages
     return len(messages)==0
   
+  def validityMessages(self, row):
+    try:
+      return self.message_cache[row]
+    except KeyError:
+      raise Exception('Programming error : isValid should be called before calling validityMessage')
+        
   def validityMessage(self, row, parent):
     """Inform the user about the validity of the data at row, by showing a message box, this function can only
     be called if isValid has been called and is finished within the model thread"""
-    try:
-      messages = self.message_cache[row]
-      QtGui.QMessageBox.information(parent, u'Validation', u'\n'.join(messages))
-    except KeyError:
-      raise Exception('Programming error : isValid should be called before calling validityMessage')
+    messages = self.validityMessages(row)
+    QtGui.QMessageBox.information(parent, u'Validation', u'\n'.join(messages))

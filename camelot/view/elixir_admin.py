@@ -294,8 +294,7 @@ class EntityAdmin(object):
       return new_object
 
     model = CollectionProxy(admin, collection_getter, admin.getFields,
-                            max_number_of_rows=1, eager_flush=False)
-    validator = admin.createValidator(model)
+                            max_number_of_rows=1)
 
     class NewForm(QtGui.QWidget):
 
@@ -303,46 +302,23 @@ class EntityAdmin(object):
         super(NewForm, self).__init__(parent)
         self.setWindowTitle('New %s'%(admin.getName()))
         self.widget_layout = QtGui.QVBoxLayout()
-        self.buttons = QtGui.QDialogButtonBox(self)
-        ok_button = self.buttons.addButton(QtGui.QDialogButtonBox.Ok)
-        cancel_button = self.buttons.addButton(QtGui.QDialogButtonBox.Cancel)
-        self.widget_layout.insertWidget(0, admin.createFormView('New',
-                                                                model,
-                                                                0, parent))
-        self.widget_layout.insertWidget(1, self.buttons)
+        self.form_view = admin.createFormView('New', model, 0, parent)
+        self.widget_layout.insertWidget(0, self.form_view)
         self.setLayout(self.widget_layout)
-        self.connect(ok_button, SIGNAL('clicked()'), self.okButtonClicked)
-        self.connect(cancel_button,
-                     SIGNAL('clicked()'),
-                     self.cancelButtonClicked)
         self.entity_created_signal = SIGNAL("entity_created")
-
-      def cancelButtonClicked(self):
-
-        def expunge_new_object():
-          from elixir import session
-          for o in new_object:
-            session.expunge(o)
-
-        admin.mt.post(expunge_new_object)
-        self.close()
-
-      def okButtonClicked(self):
-
-        def validate():
-          return validator.isValid(0)
         
-        def processValidation(valid):
-          if valid:
-            def create_instance_getter(new_object):
-              return lambda:new_object[0] 
+      def closeEvent(self, event):
+        if self.form_view.validateClose(self):
+          event.accept()
+        else:
+          event.ignore()
+        
+      def close(self):
+        for o in new_object:
+          if o.id:
             self.emit(self.entity_created_signal,
                       create_instance_getter(new_object))
-            self.close()
-          else:
-            validator.validityMessage(0, parent)
-            
-        admin.mt.post(validate, processValidation)
+        QtGui.QWidget.close(self)
 
     return NewForm(parent)
 
@@ -357,6 +333,8 @@ class EntityAdmin(object):
     from PyQt4.QtCore import SIGNAL
     from PyQt4 import QtGui
 
+    validator = admin.createValidator(model)
+    
     class FormView(QtGui.QWidget):
 
       def __init__(self):
@@ -372,6 +350,7 @@ class EntityAdmin(object):
         self.form_layout = QtGui.QFormLayout()
         self.widget_layout.insertLayout(0, self.form_layout)
         self.setLayout(self.widget_layout)
+        self.validate_before_close = True
         admin.mt.post(lambda: None,
                       lambda *args: self.setColumnsAndDelegate(
                                       self.model.columns_getter(),
@@ -408,6 +387,44 @@ class EntityAdmin(object):
           self.actions_widget.setEntity(entity)
           self.widget_layout.insertWidget(1, self.actions_widget)
 
+      def validateClose(self, window_to_close):
+        self.widget_mapper.submit()
+        if self.validate_before_close and model.hasUnflushedRows():
+          
+          def validate():
+            return validator.isValid(self.widget_mapper.currentIndex())
+          
+          def expunge_object():
+            from elixir import session
+            o = model._get_object(self.widget_mapper.currentIndex())
+            if o.id:
+              session.expire(o)
+            else:
+              session.expunge(o)
+                              
+          def showMessage(valid):
+            if not valid:
+              messages = u'\n'.join(validator.validityMessages(self.widget_mapper.currentIndex()))
+              reply = QtGui.QMessageBox.question(self, u'Unsaved changes',
+              u"Changes in this window could not be saved :\n%s\n Do you want to lose your changes ?"%messages, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+              if reply == QtGui.QMessageBox.Yes:
+                admin.mt.post(expunge_object)
+                self.validate_before_close = False
+                window_to_close.close()
+            else:            
+              raise Exception('Programming Error : model has unflushed changes while it is valid')          
+          
+          admin.mt.post(validate, showMessage)
+          return False
+        else:
+          return True
+                  
+      def closeEvent(self, event):
+        if self.validateClose(self):
+          event.accept()
+        else:
+          event.ignore()
+          
     return FormView()
 
   def createSelectView(self, query, parent=None):

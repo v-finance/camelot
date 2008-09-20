@@ -99,6 +99,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     logger.debug('initialize query table')
     QtCore.QAbstractTableModel.__init__(self)
     self.admin = admin
+    self.validator = admin.createValidator(self)
     self.collection_getter = collection_getter
     self.column_count = 0
     self.eager_flush = eager_flush
@@ -111,6 +112,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.cache = {Qt.DisplayRole:fifo(10*self.limit), Qt.EditRole:fifo(10*self.limit)}
     # The rows in the table for which a cache refill is under request
     self.rows_under_request = set()
+    # The rows that have unflushed changes
+    self.unflushed_rows = set()
     # Set edits
     self.edits = edits or []
     self.rsh = get_signal_handler()
@@ -123,6 +126,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     logger.debug('initialization finished')
     self.item_delegate = None
     
+  def hasUnflushedRows(self):
+    """The model has rows that have not been flushed to the database yet, because the row
+    is invalid"""
+    return len(self.unflushed_rows)>0
+  
   def _getRowCount(self):
     return len(self.collection_getter())
   
@@ -289,6 +297,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             new_value = bool(value.toBool())
           elif type==QtCore.QMetaType.QString:
             new_value = unicode(value.toString())
+            if not len(new_value):
+              new_value = None
           elif type in (QtCore.QMetaType.Int, QtCore.QMetaType.UInt, QtCore.QMetaType.ULongLong,):
             new_value = int(value.toInt()[0])
           elif type in (QtCore.QMetaType.Short, QtCore.QMetaType.UShort,):
@@ -320,13 +330,16 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             row_data = RowDataFromObject(o, columns)
             self.cache[Qt.EditRole][row] = row_data
             self.cache[Qt.DisplayRole][row] = RowDataAsUnicode(row_data)
-            if self.eager_flush:
+            self.unflushed_rows.add(row)
+            if self.eager_flush and self.validator.isValid(row):
               # save the state before the update
+              session.flush([o])
+              self.unflushed_rows.remove(row)
               history = BeforeUpdate(model=self.admin.entity.__name__, 
                                      primary_key=o.id, 
                                      previous_attributes={attribute:old_value},
                                      person = getCurrentPerson())
-              session.flush([o, history])
+              session.flush([history])              
               self.rsh.sendEntityUpdate(o)
             return ((row,0), (row,len(self.columns_getter())))
         
