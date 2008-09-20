@@ -286,6 +286,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     logger.debug('set data col %s, row %s to %s'%(index.row(), index.column(), value))
     if role==Qt.EditRole:
       
+      self.unflushed_rows.add(index.row())
+      
       if self.columns_getter()[index.column()][1]['widget']=='many2one':
         return True
       
@@ -330,7 +332,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             row_data = RowDataFromObject(o, columns)
             self.cache[Qt.EditRole][row] = row_data
             self.cache[Qt.DisplayRole][row] = RowDataAsUnicode(row_data)
-            self.unflushed_rows.add(row)
             if self.eager_flush and self.validator.isValid(row):
               # save the state before the update
               session.flush([o])
@@ -342,6 +343,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
               session.flush([history])              
               self.rsh.sendEntityUpdate(o)
             return ((row,0), (row,len(self.columns_getter())))
+          else:
+            self.unflushed_rows.remove(row)
         
         return update_model_and_cache
       

@@ -12,5 +12,5 @@ metadata = MetaData()
 __metadata__ = metadata
 
 __metadata__.bind = settings.ENGINE()
-__metadata__.autoflush = True
+__metadata__.autoflush = False
 __metadata__.transactional = False

@@ -105,7 +105,9 @@ class EntityAdmin(object):
     @param app_admin: the application admin object for this application
     @param entity: the entity class for which this admin instance is to be used
     """
+    from camelot.view.remote_signals import get_signal_handler
     self.app_admin = app_admin
+    self.rsh = get_signal_handler()
     if entity:
       from model_thread import get_model_thread
       self.entity = entity
@@ -388,36 +390,38 @@ class EntityAdmin(object):
           self.widget_layout.insertWidget(1, self.actions_widget)
 
       def validateClose(self, window_to_close):
-        self.widget_mapper.submit()
-        if self.validate_before_close and model.hasUnflushedRows():
+        if self.validate_before_close:
+          # submit should not happen a second time, since then we don't want the widgets data to
+          # be written to the model
+          self.widget_mapper.submit()
+          if model.hasUnflushedRows():
           
-          def validate():
-            return validator.isValid(self.widget_mapper.currentIndex())
-          
-          def expunge_object():
-            from elixir import session
-            o = model._get_object(self.widget_mapper.currentIndex())
-            if o.id:
-              session.expire(o)
-            else:
-              session.expunge(o)
-                              
-          def showMessage(valid):
-            if not valid:
-              messages = u'\n'.join(validator.validityMessages(self.widget_mapper.currentIndex()))
-              reply = QtGui.QMessageBox.question(self, u'Unsaved changes',
-              u"Changes in this window could not be saved :\n%s\n Do you want to lose your changes ?"%messages, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-              if reply == QtGui.QMessageBox.Yes:
-                admin.mt.post(expunge_object)
-                self.validate_before_close = False
-                window_to_close.close()
-            else:            
-              raise Exception('Programming Error : model has unflushed changes while it is valid')          
-          
-          admin.mt.post(validate, showMessage)
-          return False
-        else:
-          return True
+            def validate():
+              return validator.isValid(self.widget_mapper.currentIndex())
+            
+            def expunge_object():
+              from elixir import session
+              o = model._get_object(self.widget_mapper.currentIndex())
+              if o.id:
+                session.refresh(o)
+              else:
+                session.expunge(o)
+                                
+            def showMessage(valid):
+              if not valid:
+                messages = u'\n'.join(validator.validityMessages(self.widget_mapper.currentIndex()))
+                reply = QtGui.QMessageBox.question(self, u'Unsaved changes',
+                u"Changes in this window could not be saved :\n%s\n Do you want to lose your changes ?"%messages, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                if reply == QtGui.QMessageBox.Yes:
+                  admin.mt.post(expunge_object)
+                  self.validate_before_close = False
+                  window_to_close.close()
+            
+            admin.mt.post(validate, showMessage)
+            return False
+          else:
+            return True
+        return True
                   
       def closeEvent(self, event):
         if self.validateClose(self):
