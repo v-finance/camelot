@@ -13,8 +13,7 @@ __metadata__ = metadata
 
 
 class Director(Entity):
-
-    name = Field(Unicode(60))
+    name = Field(Unicode(60), required=True)
     movies = OneToMany('Movie', inverse='director')
     using_options(tablename='directors')
 
