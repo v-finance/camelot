@@ -46,6 +46,9 @@ class GenericDelegate(QtGui.QItemDelegate):
     super(GenericDelegate, self).__init__(parent)
     self.delegates = {}
 
+  def set_columns_desc(self, columnsdesc):
+    self.columnsdesc = columnsdesc
+
   def insertColumnDelegate(self, column, delegate):
     """Inserts a custom column delegate"""
     logger.debug('inserting a new custom column delegate')
@@ -118,6 +121,42 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
     
   def __init__(self, parent=None):
     super(PlainTextColumnDelegate, self).__init__(parent)
+
+  def paint(self, painter, option, index):
+    if (option.state & QtGui.QStyle.State_Selected):
+      QtGui.QItemDelegate.paint(self, painter, option, index)
+    elif not self.parent().columnsdesc[index.column()][1]['editable']: 
+      text = index.model().data(index, Qt.DisplayRole).toString()
+      color = QtGui.QColor(235, 233, 237)
+      painter.save()
+
+      painter.fillRect(option.rect, color)
+      painter.setPen(QtGui.QColor(Qt.darkGray))
+      painter.drawText(option.rect.x()+2,
+                       option.rect.y(),
+                       option.rect.width(),
+                       option.rect.height(),
+                       Qt.AlignVCenter,
+                       text)
+
+      painter.restore()
+    elif not self.parent().columnsdesc[index.column()][1]['nullable']: 
+      text = index.model().data(index, Qt.DisplayRole).toString()
+      color = QtGui.QColor(235, 233, 237)
+      painter.save()
+
+      painter.fillRect(option.rect, color)
+      painter.setPen(QtGui.QColor(Qt.darkGray))
+      painter.drawText(option.rect.x()+2,
+                       option.rect.y(),
+                       option.rect.width(),
+                       option.rect.height(),
+                       Qt.AlignVCenter,
+                       text)
+
+      painter.restore()
+    else:
+      QtGui.QItemDelegate.paint(self, painter, option, index)
 
   def createEditor(self, parent, option, index):
     from camelot.view.controls.editors import PlainTextEditor
