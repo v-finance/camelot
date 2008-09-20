@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,12 +23,14 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
-"""Proxy representing a collection of entities that live in the model thread.
+#  ============================================================================
 
-   The proxy represents them in the gui thread and provides access to the data
-   with zero delay.  If the data is not yet present in the proxy, dummy data is
-   returned and an update signal is emitted when the correct data is available.
+"""
+Proxy representing a collection of entities that live in the model thread.
+
+The proxy represents them in the gui thread and provides access to the data
+with zero delay.  If the data is not yet present in the proxy, dummy data is
+returned and an update signal is emitted when the correct data is available.
 """
 import logging
 
@@ -154,27 +156,35 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     return self.item_delegate 
     
   def setColumns(self, columns):
-    """Callback method to set the columns
+    """
+    Callback method to set the columns
     @param columns a list with fields to be displayed
     """
-    """Set custom delegates"""
+
     self.column_count = len(columns)
-    self.columns = columns
     logger.debug('setting up custom delegates')
+    
     from camelot.view.controls import delegates
     import datetime
+    
     self.item_delegate = delegates.GenericDelegate(self)
+    self.item_delegate.set_columns_desc(columns)
+
     for i, c in enumerate(columns):
+      
       field_name = c[0]
       type_ = c[1]['python_type']
       widget_ = c[1]['widget']
-      logger.debug('%s : creating delegate for type %s, using widget %s'%(field_name, type_, widget_))
+
+      logger.debug('%s : creating delegate for type %s, using widget %s' % \
+                   (field_name, type_, widget_))
+      
       if widget_ == 'code':
         delegate = delegates.CodeColumnDelegate(c[1]['parts'])
         self.item_delegate.insertColumnDelegate(i, delegate)
         continue        
       if widget_ == 'image':
-        delegate =delegates. ImageColumnDelegate()
+        delegate = delegates. ImageColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
         continue   
       if widget_ == 'many2one':
@@ -184,7 +194,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       elif widget_ == 'one2many':
         entity_admin = c[1]['admin']
         delegate = delegates.One2ManyColumnDelegate(entity_admin, field_name)
-        self.item_delegate.insertColumnDelegate(i, delegate)    
+        self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == str:
         delegate = delegates.PlainTextColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
@@ -201,7 +211,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         delegate = delegates.BoolColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
       else:
-        delegate =delegates.PlainTextColumnDelegate()
+        delegate = delegates.PlainTextColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
     self.emit(QtCore.SIGNAL('layoutChanged()'))
            
@@ -245,9 +255,15 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         logger.error('Programming error, could not find data of column %s in %s'%(index.column(), str(data)))
         value = None
       return QtCore.QVariant(value)
-    elif role == Qt.BackgroundColorRole:
+    elif role == Qt.ForegroundRole:
+      #if not self.columns_getter()[index.column()][1]['nullable']==True:
+      #  return QtCore.QVariant(QtGui.QColor(Qt.red))
       pass
-      #return QtCore.QVariant(QueryTableModel.COLORS[index.row() % 2])
+    elif role == Qt.BackgroundRole:
+      #if not self.columns_getter()[index.column()][1]['editable']:
+      #  logger.debug('Setting background for non-editable column')
+      #  return QtCore.QVariant(QtGui.QColor(Qt.lightGray))
+      pass
     return QtCore.QVariant()
 
   def setData(self, index, value, role=Qt.EditRole):
@@ -341,7 +357,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   
   def _cache_extended(self, offset, limit):
     self.rows_under_request.difference_update(set(range(offset, offset+limit)))
-    self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), 
+    self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
               self.index(offset,0), self.index(offset+limit,self.column_count))
     
   def _get_row_data(self, row, role):
