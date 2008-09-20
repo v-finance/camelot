@@ -39,6 +39,43 @@ from PyQt4.QtCore import Qt
 import datetime
 from camelot.view.controls import editors
 
+
+def _paint_required(painter, option, index):
+  text = index.model().data(index, Qt.DisplayRole).toString()
+  painter.save()
+
+  #painter.setPen(QtGui.QColor(Qt.red))
+  
+  font = painter.font()
+  font.setBold(True)
+  painter.setFont(font)
+
+  painter.drawText(option.rect.x()+2,
+                   option.rect.y(),
+                   option.rect.width()-4,
+                   option.rect.height(),
+                   Qt.AlignVCenter,
+                   text)
+
+  painter.restore()
+
+def _paint_not_editable(painter, option, index):
+  text = index.model().data(index, Qt.DisplayRole).toString()
+  color = QtGui.QColor(235, 233, 237)
+  painter.save()
+
+  painter.fillRect(option.rect, color)
+  painter.setPen(QtGui.QColor(Qt.darkGray))
+  painter.drawText(option.rect.x()+2,
+                   option.rect.y(),
+                   option.rect.width()-4,
+                   option.rect.height(),
+                   Qt.AlignVCenter,
+                   text)
+
+  painter.restore()
+
+
 class GenericDelegate(QtGui.QItemDelegate):
   """Manages custom delegates"""
   
@@ -125,36 +162,10 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
   def paint(self, painter, option, index):
     if (option.state & QtGui.QStyle.State_Selected):
       QtGui.QItemDelegate.paint(self, painter, option, index)
-    elif not self.parent().columnsdesc[index.column()][1]['editable']: 
-      text = index.model().data(index, Qt.DisplayRole).toString()
-      color = QtGui.QColor(235, 233, 237)
-      painter.save()
-
-      painter.fillRect(option.rect, color)
-      painter.setPen(QtGui.QColor(Qt.darkGray))
-      painter.drawText(option.rect.x()+2,
-                       option.rect.y(),
-                       option.rect.width(),
-                       option.rect.height(),
-                       Qt.AlignVCenter,
-                       text)
-
-      painter.restore()
-    elif not self.parent().columnsdesc[index.column()][1]['nullable']: 
-      text = index.model().data(index, Qt.DisplayRole).toString()
-      color = QtGui.QColor(235, 233, 237)
-      painter.save()
-
-      painter.fillRect(option.rect, color)
-      painter.setPen(QtGui.QColor(Qt.darkGray))
-      painter.drawText(option.rect.x()+2,
-                       option.rect.y(),
-                       option.rect.width(),
-                       option.rect.height(),
-                       Qt.AlignVCenter,
-                       text)
-
-      painter.restore()
+    elif not self.parent().columnsdesc[index.column()][1]['editable']:
+      _paint_not_editable(painter, option, index)
+    elif self.parent().columnsdesc[index.column()][1]['editable']:
+      _paint_required(painter, option, index)
     else:
       QtGui.QItemDelegate.paint(self, painter, option, index)
 
