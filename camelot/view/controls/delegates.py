@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,7 +23,7 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
 """Contains classes for using custom delegates"""
 
@@ -45,7 +45,7 @@ def _paint_required(painter, option, index):
   painter.save()
 
   #painter.setPen(QtGui.QColor(Qt.red))
-  
+
   font = painter.font()
   font.setBold(True)
   painter.setFont(font)
@@ -58,6 +58,7 @@ def _paint_required(painter, option, index):
                    text)
 
   painter.restore()
+
 
 def _paint_not_editable(painter, option, index):
   text = index.model().data(index, Qt.DisplayRole).toString()
@@ -78,7 +79,7 @@ def _paint_not_editable(painter, option, index):
 
 class GenericDelegate(QtGui.QItemDelegate):
   """Manages custom delegates"""
-  
+
   def __init__(self, parent=None):
     super(GenericDelegate, self).__init__(parent)
     self.delegates = {}
@@ -132,6 +133,7 @@ class GenericDelegate(QtGui.QItemDelegate):
     else:
       QtGui.QItemDelegate.setModelData(self, editor, model, index)
 
+
 class IntegerColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for integer values"""
 
@@ -153,9 +155,10 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
     editor.interpretText()
     model.setData(index, QtCore.QVariant(editor.value()))
 
+
 class PlainTextColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for simple string values"""
-    
+
   def __init__(self, parent=None):
     super(PlainTextColumnDelegate, self).__init__(parent)
 
@@ -164,7 +167,7 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
       QtGui.QItemDelegate.paint(self, painter, option, index)
     elif not self.parent().columnsdesc[index.column()][1]['editable']:
       _paint_not_editable(painter, option, index)
-    elif self.parent().columnsdesc[index.column()][1]['editable']:
+    elif not self.parent().columnsdesc[index.column()][1]['nullable']:
       _paint_required(painter, option, index)
     else:
       QtGui.QItemDelegate.paint(self, painter, option, index)
@@ -172,6 +175,8 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
   def createEditor(self, parent, option, index):
     from camelot.view.controls.editors import PlainTextEditor
     editor = PlainTextEditor(parent)
+    if not self.parent().columnsdesc[index.column()][1]['nullable']:
+      editor.setEnabled(False)
     return editor
 
   def setEditorData(self, editor, index):
@@ -181,9 +186,10 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, QtCore.QVariant(editor.text()))
 
+
 class DateColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for date values"""
-  
+
   def __init__(self,
                minimum=datetime.date.min,
                maximum=datetime.date.max,
@@ -191,7 +197,7 @@ class DateColumnDelegate(QtGui.QItemDelegate):
                parent=None):
 
     super(DateColumnDelegate, self).__init__(parent)
-    self.minimum = minimum 
+    self.minimum = minimum
     self.maximum = maximum
     self.format = format
 
@@ -206,29 +212,32 @@ class DateColumnDelegate(QtGui.QItemDelegate):
 
   def setModelData(self, editor, model, index):
     value = editor.date()
-    model.setData(index, QtCore.QVariant(datetime.date(value.year(), value.month(), value.day())))
+    d = datetime.date(value.year(), value.month(), value.day())
+    model.setData(index, QtCore.QVariant(d))
+
 
 class CodeColumnDelegate(QtGui.QItemDelegate):
-  
+
   def __init__(self, parts, parent=None):
     super(CodeColumnDelegate, self).__init__(parent)
     self.parts = parts
-    
+
   def createEditor(self, parent, option, index):
     return editors.CodeEditor(self.parts, parent)
 
   def setEditorData(self, editor, index):
     value = index.data(Qt.EditRole).toPyObject()
-    for part_editor,part in zip(editor.part_editors,value):
+    for part_editor, part in zip(editor.part_editors, value):
       part_editor.setText(unicode(part))
-     
+
   def setModelData(self, editor, model, index):
     value = []
     for part in editor.part_editors:
       value.append(unicode(part.text()))
     print value
     model.setData(index, QtCore.QVariant(value))
-    
+
+
 class FloatColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for float values"""
 
@@ -251,15 +260,16 @@ class FloatColumnDelegate(QtGui.QItemDelegate):
     editor.interpretText()
     model.setData(index, QtCore.QVariant(editor.value()))
 
+
 class Many2OneColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
-  
+
   def __init__(self, entity_admin, parent=None):
     logger.info('create many2onecolumn delegate')
     assert entity_admin!=None
     super(Many2OneColumnDelegate, self).__init__(parent)
     self.entity_admin = entity_admin
-    
+
   def createEditor(self, parent, option, index):
     from camelot.view.controls.editors import Many2OneEditor
     editor = Many2OneEditor(self.entity_admin, parent)
@@ -267,16 +277,17 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     return editor
 
   def setEditorData(self, editor, index):
-    editor.setEntity(lambda:index.data(Qt.EditRole).toPyObject())
+    editor.setEntity(lambda: index.data(Qt.EditRole).toPyObject())
 
   def setModelData(self, editor, model, index):
     print 'setModelData called'
     #print 'current index is :', editor.currentIndex()
-    pass  
+    pass
+
 
 class One2ManyColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
-  
+
   def __init__(self, entity_admin, field_name, parent=None):
     logger.info('create one2manycolumn delegate')
     assert entity_admin!=None
@@ -293,15 +304,17 @@ class One2ManyColumnDelegate(QtGui.QItemDelegate):
 
   def setEditorData(self, editor, index):
     logger.info('set one2many editor data')
-    
+
     def create_entity_instance_getter(model, row):
-      return lambda:model._get_object(row)
-    
-    editor.setEntityInstance(create_entity_instance_getter(index.model(), index.row()))
+      return lambda: model._get_object(row)
+
+    editor.setEntityInstance(create_entity_instance_getter(index.model(),
+                                                           index.row()))
 
   def setModelData(self, editor, model, index):
-    pass  
-  
+    pass
+
+
 class BoolColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for boolean values"""
 
@@ -320,6 +333,7 @@ class BoolColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, QtCore.QVariant(editor.isChecked()))
 
+
 class ImageColumnDelegate(QtGui.QItemDelegate):
 
   def createEditor(self, parent, option, index):
@@ -331,7 +345,7 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
     s = StringIO.StringIO()
     data = index.data(Qt.EditRole).toPyObject()
     if data:
-      data.thumbnail((100,100))
+      data.thumbnail((100, 100))
       data.save(s, 'png')
       s.seek(0)
       pixmap = QtGui.QPixmap()
