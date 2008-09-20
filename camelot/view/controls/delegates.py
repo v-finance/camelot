@@ -227,8 +227,9 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
 
   def setEditorData(self, editor, index):
     value = index.data(Qt.EditRole).toPyObject()
-    for part_editor, part in zip(editor.part_editors, value):
-      part_editor.setText(unicode(part))
+    if value:
+      for part_editor, part in zip(editor.part_editors, value):
+        part_editor.setText(unicode(part))
 
   def setModelData(self, editor, model, index):
     value = []

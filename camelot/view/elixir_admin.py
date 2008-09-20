@@ -416,6 +416,8 @@ class EntityAdmin(object):
                   admin.mt.post(expunge_object)
                   self.validate_before_close = False
                   window_to_close.close()
+              else:
+                window_to_close.close()
             
             admin.mt.post(validate, showMessage)
             return False

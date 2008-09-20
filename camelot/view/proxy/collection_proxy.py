@@ -335,7 +335,10 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             if self.eager_flush and self.validator.isValid(row):
               # save the state before the update
               session.flush([o])
-              self.unflushed_rows.remove(row)
+              try:
+                self.unflushed_rows.remove(row)
+              except KeyError:
+                pass
               history = BeforeUpdate(model=self.admin.entity.__name__, 
                                      primary_key=o.id, 
                                      previous_attributes={attribute:old_value},
@@ -344,7 +347,10 @@ class CollectionProxy(QtCore.QAbstractTableModel):
               self.rsh.sendEntityUpdate(o)
             return ((row,0), (row,len(self.columns_getter())))
           else:
-            self.unflushed_rows.remove(row)
+            try:
+              self.unflushed_rows.remove(row)
+            except KeyError:
+              pass
         
         return update_model_and_cache
       
