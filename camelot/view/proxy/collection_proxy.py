@@ -251,6 +251,16 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         #return QtCore.QVariant(int(section+1))
         # we don't want anything to be displayed
         return QtCore.QVariant()
+    if role == Qt.FontRole:
+      if orientation == Qt.Horizontal:
+        font = QtGui.QApplication.font()
+        if ('nullable' in self.columns_getter()[section][1]) and \
+           (self.columns_getter()[section][1]['nullable']==False):
+          font.setBold(True)
+          return QtCore.QVariant(font)
+        else:
+          font.setBold(False)
+          return QtCore.QVariant(font)
     if role == Qt.DecorationRole:
       if orientation == Qt.Vertical:
         return form_icon 
@@ -270,7 +280,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         value = None
       return QtCore.QVariant(value)
     elif role == Qt.ForegroundRole:
-      #if not self.columns_getter()[index.column()][1]['nullable']==True:
+      #if not self.columns_getter()[index.column()][1]['nullable']:
       #  return QtCore.QVariant(QtGui.QColor(Qt.red))
       pass
     elif role == Qt.BackgroundRole:
