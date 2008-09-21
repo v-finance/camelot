@@ -57,8 +57,6 @@ from camelot.view.model_thread import get_model_thread, construct_model_thread
 from camelot.view.response_handler import ResponseHandler
 from camelot.view.remote_signals import construct_signal_handler
 
-from camelot.view.controls.tableview import TableView
-
 __version__ = '0.1.0'
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
@@ -334,27 +332,39 @@ class MainWindow(QtGui.QMainWindow):
 
   def viewFirst(self):
     active = self.activeMdiChild()
-    if isinstance(active, TableView):
+    cls = active.__class__.__name__
+    if cls == 'TableView':
       active.selectTableRow(0)
+    elif cls == 'FormView':
+      active.widget_mapper.toFirst()
 
   def viewLast(self):
     active = self.activeMdiChild()
-    if isinstance(active, TableView):
+    cls = active.__class__.__name__
+    if cls == 'TableView':
       active.selectTableRow(active.table_model.rowCount()-1)
+    elif cls == 'FormView':
+      active.widget_mapper.toLast()
 
   def viewNext(self):
     active = self.activeMdiChild()
-    if isinstance(active, TableView):
+    cls = active.__class__.__name__
+    if cls == 'TableView':
       first = active.selectedTableIndexes()[0]
       next = (first.row()+1) % active.table_model.rowCount()
       active.selectTableRow(next)
+    elif active.__class__.__name__ == 'FormView':
+      active.widget_mapper.toNext()
 
   def viewPrevious(self):
     active = self.activeMdiChild()
-    if isinstance(active, TableView):
+    cls = active.__class__.__name__
+    if cls == 'TableView':
       first = active.selectedTableIndexes()[0]
       prev = (first.row()-1) % active.table_model.rowCount()
       active.selectTableRow(prev)
+    elif cls == 'FormView':
+      active.widget_mapper.toPrevious()
 
   def exportToExcel(self):
 
