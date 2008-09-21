@@ -167,8 +167,8 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
       QtGui.QItemDelegate.paint(self, painter, option, index)
     elif not self.parent().columnsdesc[index.column()][1]['editable']:
       _paint_not_editable(painter, option, index)
-    elif not self.parent().columnsdesc[index.column()][1]['nullable']:
-      _paint_required(painter, option, index)
+  #  elif not self.parent().columnsdesc[index.column()][1]['nullable']:
+  #    _paint_required(painter, option, index)
     else:
       QtGui.QItemDelegate.paint(self, painter, option, index)
 
