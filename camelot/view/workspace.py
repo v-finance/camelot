@@ -27,6 +27,8 @@ class DesktopWorkspace(QtGui.QWorkspace):
     parent = self.parent()
     width = int(parent.width() / 2)
     height = int(parent.height() / 2)
+    #if widget.__class__.__name__ == 'FormView':
+    #  height = widget.height() 
     widget.resize(width, height)    
     window = QtGui.QWorkspace.addWindow(self, widget, *args)
     return window
