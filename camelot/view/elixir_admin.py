@@ -374,7 +374,12 @@ class EntityAdmin(object):
           widget = delegate.createEditor(parent,
                                          None,
                                          self.model.index(index, i))
-          self.form_layout.addRow(column[1]['name'], widget)
+          label = QtGui.QLabel(column[1]['name'])
+          if ('nullable' in column[1]) and (not column[1]['nullable']):
+            font = QtGui.QApplication.font()
+            font.setBold(True)
+            label.setFont(font)
+          self.form_layout.addRow(label, widget)
           self.widget_mapper.addMapping(widget, i)
         self.widget_mapper.setItemDelegate(delegate)
         self.widget_mapper.setCurrentIndex(index)
