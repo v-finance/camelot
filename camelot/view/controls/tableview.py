@@ -15,7 +15,7 @@ class QueryTable(QtGui.QTableView):
     logger.debug('create querytable')
     self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
     self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
+    self.horizontalHeader().setClickable(False)
 
 class TableView(QtGui.QWidget):
 
