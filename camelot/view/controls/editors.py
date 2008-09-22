@@ -258,7 +258,7 @@ class One2ManyEditor(QtGui.QWidget):
     from camelot.view.proxy.collection_proxy import CollectionProxy
     self.field_name = field_name
     self.admin = entity_admin
-    self.model = CollectionProxy(entity_admin, lambda:[], entity_admin.getColumns, max_number_of_rows=10, edits=None)
+    self.model = CollectionProxy(entity_admin, lambda:[], entity_admin.getColumns)
     self.table.setModel(self.model)
     
     def update_delegates(*args):
@@ -301,7 +301,7 @@ class One2ManyEditor(QtGui.QWidget):
     from camelot.view.proxy.collection_proxy import CollectionProxy
     from camelot.view.workspace import get_workspace
     parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
-    model = CollectionProxy(self.admin, self.model.collection_getter, self.admin.getFields, max_number_of_rows=10, edits=None)
+    model = CollectionProxy(self.admin, self.model.collection_getter, self.admin.getFields, max_number_of_rows=1, edits=None)
     entity = model._get_object(index) 
     title = '%s - %s' % (entity, self.admin.getName())
     form = self.admin.createFormView(title, model, index, parent)

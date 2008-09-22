@@ -336,7 +336,10 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           old_value = getattr(o, attribute)
           if new_value!=old_value:
             # update the model
-            setattr(o, attribute, new_value)
+            try:
+              setattr(o, attribute, new_value)
+            except AttributeError:
+              logger.error("Can't set attribute %s to %s"%(attribute, str(value)))
             # update the cache
             columns = [c[0] for c in self.columns_getter()] + ['id']
             row_data = RowDataFromObject(o, columns)
