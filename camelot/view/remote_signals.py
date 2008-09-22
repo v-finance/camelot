@@ -49,24 +49,24 @@ class SignalHandler(QObject):
       self.connection = stomp.Connection(host_and_ports = [ (settings.CAMELOT_SERVER, 61613) ])
       self.connection.add_listener(self)
       self.connection.start()
-      self.connection.connect()
       logger.debug('connection to servers started')
     else:
       self.connection = None
       logger.warn('not connected to a server')
   def on_error(self, headers, message):
-      logger.error('received an error %s'%message)
+    logger.error('received an error %s'%message)
   def on_message(self, headers, message):
-      logger.debug('received a message %s : %s'%(str(headers),message))
-      #@todo: properly decode message and transform into update signal
-      self.emit(self.entity_update_signal, None, None)
+    logger.debug('received a message %s : %s'%(str(headers),message))
+    #@todo: properly decode message and transform into update signal
+    self.emit(self.entity_update_signal, None, None)
   def on_connecting(self, server):
     logger.debug('try to connect to message service')
+    self.connection.connect()
   def on_connected(self, *args, **kwargs):
     logger.debug('connected to message service %s, %s'%((str(args), str(kwargs))))
     self.connection.subscribe(destination='/topic/Camelot.Entity.>', ack='auto')
   def on_disconnected(self):
-    print 'disconnected'
+    logger.debug('stomp service disconnected')
   def sendEntityUpdate(self, entity):
     if self.connection:
       self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.update'%entity.__class__.__name__)
