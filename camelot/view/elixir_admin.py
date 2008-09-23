@@ -316,6 +316,10 @@ class EntityAdmin(object):
           event.ignore()
         
       def close(self):
+        
+        def create_instance_getter(new_object):
+          return lambda:new_object[0]
+        
         for o in new_object:
           if o.id:
             self.emit(self.entity_created_signal,

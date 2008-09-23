@@ -29,12 +29,17 @@
 Classes to connect the QT event loop with a messaging
 server.  To enable multiple clients to push model updates
 to each other or messages for the users.
+
+As a messaging server, Apache active MQ was tested in combination
+with the stomp library (http://docs.codehaus.org/display/STOMP/Python)
 """
 
 import settings
 import logging
+import re
 
-logger = logging.getLogger('response_signals')
+logger = logging.getLogger('remote_signals')
+logger.setLevel(logging.DEBUG)
 
 from PyQt4.QtCore import *
   
@@ -44,6 +49,7 @@ class SignalHandler(QObject):
     self.entity_update_signal = SIGNAL("entity_update")
     self.entity_delete_signal = SIGNAL("entity_delete")
     self.entity_create_signal = SIGNAL("entity_create")
+    self.update_expression = re.compile(r'^/topic/Camelot.Entity.(?P<entity>.*).update$')
     if hasattr(settings, 'CAMELOT_SERVER') and settings.CAMELOT_SERVER:
       from stomp import stomp
       self.connection = stomp.Connection(host_and_ports = [ (settings.CAMELOT_SERVER, 61613) ])
@@ -56,9 +62,13 @@ class SignalHandler(QObject):
   def on_error(self, headers, message):
     logger.error('received an error %s'%message)
   def on_message(self, headers, message):
+    from elixir import entities
     logger.debug('received a message %s : %s'%(str(headers),message))
-    #@todo: properly decode message and transform into update signal
-    self.emit(self.entity_update_signal, None, None)
+    match = self.update_expression.match(headers['destination'])
+    if match:
+      entity = match.group('entity')
+      logger.debug(' decoded as update signal for entity %s'%entity)
+      self.emit(self.entity_update_signal, [e for e in entities if e.__name__==entity][0], eval(message))
   def on_connecting(self, server):
     logger.debug('try to connect to message service')
     self.connection.connect()

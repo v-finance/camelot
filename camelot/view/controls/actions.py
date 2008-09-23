@@ -69,10 +69,10 @@ class ActionsBox(QtGui.QGroupBox):
       from elixir import session
       self.actions[button_id][1](self.entity)
       session.flush([self.entity])
+      self.rsh.sendEntityUpdate(self.entity)
       
     def executed(result):
       logger.debug('action %i executed'%button_id)
-      self.rsh.on_message(None, None)
       
     self.mt.post(execute_and_flush, executed )
  

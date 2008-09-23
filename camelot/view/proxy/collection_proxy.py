@@ -63,22 +63,43 @@ class EmptyRowData(object):
 empty_row_data = EmptyRowData()
 form_icon = QtCore.QVariant(QtGui.QIcon(art.icon16('places/folder')))
 
-class fifo(dict):
+class fifo(object):
   """fifo, is the actual cache containing a limited set of copies of row data
   so the data in fifo, is always immediately accessible to the gui thread,
   with zero delay as you scroll down the table view, fifo is filled and
   refilled with data queried from the database
+  
+  the cache can be queried either by the row number or by the primary key
+  of the object represented by the row data.
   """
   def __init__(self, max_entries):
     self.max_entries = max_entries
-    self.keys = []
-  def __setitem__(self, key, value):
-    if key in self:
-      self.keys.remove(key)
-    dict.__setitem__(self, key, value)
-    self.keys.append(key)
-    if len(self.keys)>self.max_entries:
-      del self[self.keys.pop(0)] 
+    self.primary_keys = []
+    self.data_by_rows = dict()
+    self.rows_by_primary_keys = dict()
+  def add_data(self, row, primary_key, value):
+    try:
+      row = self.delete_by_primary_key(primary_key)
+    except KeyError:
+      pass   
+    self.data_by_rows[row] = value
+    self.rows_by_primary_keys[primary_key] = row
+    self.primary_keys.append(primary_key)
+    if len(self.primary_keys)>self.max_entries:
+      primary_key = self.primary_keys.pop(0)
+      row = self.rows_by_primary_keys[primary_key]
+      del self.data_by_rows[row]
+      del self.rows_by_primary_keys[primary_key]
+  def delete_by_primary_key(self, primary_key):
+    row = self.rows_by_primary_keys[primary_key]
+    self.primary_keys.remove(primary_key)
+    del self.data_by_rows[row]
+    del self.rows_by_primary_keys[primary_key]
+    return row    
+  def get_data_at_row(self, row):
+    return self.data_by_rows[row]
+  def get_row_by_primary_key(self, primary_key):
+    return self.rows_by_primary_keys[primary_key]
       
 class CollectionProxy(QtCore.QAbstractTableModel):
   """The CollectionProxy contains a limited copy of the data in the actual collection,
@@ -148,8 +169,17 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     
   def handleEntityUpdate(self, entity, primary_keys):
     """Handles the entity signal, indicating that the model is out of date"""
-    logger.debug('received entity update signal')
-    self.refresh()
+    if entity is self.admin.entity:
+      logger.debug('received entity update signal for %s : %s'%(entity.__name__, str(primary_keys)))
+      for pk in primary_keys:
+        try:
+          row = self.cache[Qt.DisplayRole].delete_by_primary_key(pk)
+          row = self.cache[Qt.EditRole].delete_by_primary_key(pk)
+          logger.debug('update row %i'%row)
+          self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                    self.index(row,0), self.index(row,self.column_count))
+        except KeyError:
+          pass
 
   def handleEntityDelete(self, entity, primary_keys):
     """Handles the entity signal, indicating that the model is out of date"""
@@ -343,8 +373,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             # update the cache
             columns = [c[0] for c in self.columns_getter()] + ['id']
             row_data = RowDataFromObject(o, columns)
-            self.cache[Qt.EditRole][row] = row_data
-            self.cache[Qt.DisplayRole][row] = RowDataAsUnicode(row_data)
+            self.cache[Qt.EditRole].add_data(row, o.id, row_data)
+            self.cache[Qt.DisplayRole].add_data(row, o.id,  RowDataAsUnicode(row_data))
             if self.eager_flush and self.validator.isValid(row):
               # save the state before the update
               session.flush([o])
@@ -388,8 +418,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     columns = [c[0] for c in self.columns_getter()] + ['id']
     for i,o in enumerate(self.collection_getter()[offset:offset+limit+1]):
       row_data = RowDataFromObject(o, columns)
-      self.cache[Qt.EditRole][i+offset] = row_data
-      self.cache[Qt.DisplayRole][i+offset] = RowDataAsUnicode(row_data)
+      self.cache[Qt.EditRole].add_data(i+offset, o.id, row_data)
+      self.cache[Qt.DisplayRole].add_data(i+offset, o.id, RowDataAsUnicode(row_data))
     return (offset, limit)
         
   def _get_object(self, row):
@@ -409,7 +439,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     """
     role_cache = self.cache[role]
     try:
-      return role_cache[row]
+      return role_cache.get_data_at_row(row)
     except KeyError:
       if row not in self.rows_under_request:
         offset = max(row-self.limit/2,0)
@@ -427,15 +457,15 @@ class CollectionProxy(QtCore.QAbstractTableModel):
  
   def removeRow(self, row, parent):
     logger.debug('remove row %s'%row)
-    pk = self.cache[Qt.EditRole][row][len(self.columns_getter())]
     
-    def make_delete_function(pk):
+    def make_delete_function():
       
       def delete_function():
         from elixir import session
         from camelot.model.memento import BeforeDelete
         from camelot.model.authentication import getCurrentPerson
         o = self._get_object(row)
+        pk = o.id
         self.remove(o)
         # save the state before the update
         history = BeforeDelete(model=self.admin.entity.__name__, 
@@ -451,7 +481,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     def emit_changes(*args):
       self.refresh()
   
-    self.mt.post(make_delete_function(pk), emit_changes)
+    self.mt.post(make_delete_function(), emit_changes)
     return True
     
   def insertRow(self, row, entity_instance_getter):

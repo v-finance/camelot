@@ -47,7 +47,7 @@ class Validator(QtCore.QObject):
       value = getattr(entity_instance, column[0])
       if value==None and column[1]['nullable']!=True:
         messages.append(u'%s is a required field'%(column[1]['name']))
-    self.message_cache[row] = messages
+    self.message_cache.add_data(row, entity_instance.id, messages)
     return len(messages)==0
   
   def validityMessages(self, row):
@@ -59,5 +59,5 @@ class Validator(QtCore.QObject):
   def validityMessage(self, row, parent):
     """Inform the user about the validity of the data at row, by showing a message box, this function can only
     be called if isValid has been called and is finished within the model thread"""
-    messages = self.validityMessages(row)
+    messages = self.validityMessages.get_data_at_row(row)
     QtGui.QMessageBox.information(parent, u'Validation', u'\n'.join(messages))
