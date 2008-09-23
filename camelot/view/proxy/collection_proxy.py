@@ -82,7 +82,7 @@ class fifo(object):
       row = self.delete_by_primary_key(primary_key)
     except KeyError:
       pass   
-    self.data_by_rows[row] = value
+    self.data_by_rows[row] = (primary_key, value)
     self.rows_by_primary_keys[primary_key] = row
     self.primary_keys.append(primary_key)
     if len(self.primary_keys)>self.max_entries:
@@ -97,9 +97,11 @@ class fifo(object):
     del self.rows_by_primary_keys[primary_key]
     return row    
   def get_data_at_row(self, row):
-    return self.data_by_rows[row]
+    return self.data_by_rows[row][1]
   def get_row_by_primary_key(self, primary_key):
     return self.rows_by_primary_keys[primary_key]
+  def get_primary_key_at_row(self, row):
+    return self.data_by_rows[row][0]
       
 class CollectionProxy(QtCore.QAbstractTableModel):
   """The CollectionProxy contains a limited copy of the data in the actual collection,
@@ -128,9 +130,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     # Set database connection and load data
     self.rows = 0
     self.columns_getter = columns_getter
-    self.limit = 50
     self.max_number_of_rows = max_number_of_rows
-    self.cache = {Qt.DisplayRole:fifo(10*self.limit), Qt.EditRole:fifo(10*self.limit)}
+    self.cache = {Qt.DisplayRole:fifo(10*self.max_number_of_rows), Qt.EditRole:fifo(10*self.max_number_of_rows)}
     # The rows in the table for which a cache refill is under request
     self.rows_under_request = set()
     # The rows that have unflushed changes
@@ -158,7 +159,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def refresh(self):
     
     def refresh_content(rows):
-      self.cache = {Qt.DisplayRole:fifo(10*self.limit), Qt.EditRole:fifo(10*self.limit)}
+      self.cache = {Qt.DisplayRole:fifo(10*self.max_number_of_rows), Qt.EditRole:fifo(10*self.max_number_of_rows)}
       self.setRowCount(rows)
       
     self.mt.post(self._getRowCount, refresh_content )
@@ -424,7 +425,14 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         
   def _get_object(self, row):
     """Get the object corresponding to row"""
-    return self.collection_getter()[row]
+    try:
+      # first try to get the primary key out of the cache, if it's not
+      # there, query the collection_getter
+      from elixir import session
+      pk = self.cache[Qt.EditRole].get_primary_key_at_row(row)
+      return session.get(pk)
+    except KeyError:
+      return self.collection_getter()[row]
   
   def _cache_extended(self, offset, limit):
     self.rows_under_request.difference_update(set(range(offset, offset+limit)))
@@ -442,8 +450,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       return role_cache.get_data_at_row(row)
     except KeyError:
       if row not in self.rows_under_request:
-        offset = max(row-self.limit/2,0)
-        limit = self.limit
+        offset = max(row-self.max_number_of_rows/2,0)
+        limit = self.max_number_of_rows
         self.rows_under_request.update(set(range(offset, offset+limit)))
         self.mt.post(lambda :self._extend_cache(offset, limit),
                      lambda interval:self._cache_extended(*interval))

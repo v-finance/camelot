@@ -82,4 +82,10 @@ class QueryTableProxy(CollectionProxy):
         
   def _get_object(self, row):
     """Get the object corresponding to row"""
-    return self.query.offset(row).limit(1).first()
+    try:
+      # first try to get the primary key out of the cache, if it's not
+      # there, query the collection_getter
+      pk = self.cache[Qt.EditRole].get_primary_key_at_row(row)
+      return self.admin.entity.get(pk)
+    except KeyError:
+      return self.query.offset(row).limit(1).first()

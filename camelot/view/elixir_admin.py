@@ -177,25 +177,28 @@ class EntityAdmin(object):
         type = property.columns[0].type
         python_type = _sqlalchemy_to_python_type_.get(type.__class__, default)
         attributes = python_type(type)
-        attributes['nullable'] = property.columns[0].nullable
+        attributes['nullable'] = property.columns[0].nullable 
       elif isinstance(property, orm.properties.PropertyLoader):
         target = property._get_target_class()
         if property.direction == orm.sync.ONETOMANY:
           attributes = dict(python_type=str,
                             length=None,
                             editable=True,
+                            nullable=True,
                             widget='one2many',
                             admin=get_entity_admin(target))
         elif property.direction == orm.sync.MANYTOONE:
           attributes = dict(python_type=str,
                             length=None,
                             editable=True,
+                            nullable=True,
                             widget='many2one',
                             admin=get_entity_admin(target))
         elif property.direction == orm.sync.MANYTOMANY:
           attributes = dict(python_type=str,
                             length=None,
                             editable=True,
+                            nullable=True,
                             widget='one2many',
                             admin=get_entity_admin(target))
         else:
@@ -500,7 +503,8 @@ class EntityAdmin(object):
         from camelot.view.workspace import get_workspace, key_from_query
         model = QueryTableProxy(self,
                                 tableview.table_model.query,
-                                self.getFields)
+                                self.getFields,
+                                max_number_of_rows=1)
         title = u'%s'%(self.getName())
         form = self.createFormView(title, model, index, parent)
         get_workspace().addWindow('form', form)

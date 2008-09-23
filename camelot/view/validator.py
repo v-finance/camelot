@@ -45,19 +45,25 @@ class Validator(QtCore.QObject):
     messages = []
     for column in self.model.getColumns():
       value = getattr(entity_instance, column[0])
-      if value==None and column[1]['nullable']!=True:
-        messages.append(u'%s is a required field'%(column[1]['name']))
+      if column[1]['nullable']!=True:
+        is_null = False
+        if value==None:
+          is_null = True
+        elif (column[1]['widget']=='code') and (sum(len(c) for c in value)==0):
+          is_null = True
+        if is_null:
+          messages.append(u'%s is a required field'%(column[1]['name'])) 
     self.message_cache.add_data(row, entity_instance.id, messages)
     return len(messages)==0
   
   def validityMessages(self, row):
     try:
-      return self.message_cache[row]
+      return self.message_cache.get_data_at_row(row)
     except KeyError:
       raise Exception('Programming error : isValid should be called before calling validityMessage')
         
   def validityMessage(self, row, parent):
     """Inform the user about the validity of the data at row, by showing a message box, this function can only
     be called if isValid has been called and is finished within the model thread"""
-    messages = self.validityMessages.get_data_at_row(row)
+    messages = self.validityMessages(row)
     QtGui.QMessageBox.information(parent, u'Validation', u'\n'.join(messages))
