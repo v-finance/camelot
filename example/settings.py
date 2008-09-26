@@ -4,6 +4,7 @@ import os
 def setup_model():
   from model import *
   from camelot.model.memento import *
+  from camelot.model.synchronization import *
   from camelot.model.authentication import *
   setup_all(create_tables=True)
   updateLastLogin()
