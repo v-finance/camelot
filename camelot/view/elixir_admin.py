@@ -444,6 +444,7 @@ class EntityAdmin(object):
         self.form_widget = QtGui.QWidget()
         self.form_widget.setLayout(self.form_layout)
         self.scroll_area.setWidget(self.form_widget)
+        self.scroll_area.setWidgetResizable(True)
 
       def setEntityAndActions(self, result):
         entity, actions = result
