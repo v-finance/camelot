@@ -35,6 +35,7 @@ class TableView(QtGui.QWidget):
     self.table = None
     self.filters = None
     self.admin = admin
+    self.table_model = None
     self.table_layout.insertWidget(0, self.search_control)
     self.setSubclass(admin)
     self.class_tree = SubclassTree(admin, self)

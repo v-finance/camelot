@@ -234,12 +234,11 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
         part_editor.setText(unicode(part))
 
   def setModelData(self, editor, model, index):
-    value = []
+    from camelot.types import Code
+    value = Code.code()
     for part in editor.part_editors:
       value.append(unicode(part.text()))
-    print value
     model.setData(index, create_constant_function(value))
-
 
 class FloatColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for float values"""

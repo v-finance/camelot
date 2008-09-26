@@ -108,7 +108,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   usable for fast visualisation in a QTableView 
   """
   
-  def __init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10, edits=None):
+  def __init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10, edits=None, flush_changes=True):
     """"
     @param admin: the admin interface for the items in the collection
     @param collection_getter: a function that takes no arguments and returns the collection
@@ -124,6 +124,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.validator = admin.createValidator(self)
     self.collection_getter = collection_getter
     self.column_count = 0
+    self.flush_changes = flush_changes
     self.mt = admin.getModelThread()
     # Set database connection and load data
     self.rows = 0
@@ -352,7 +353,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             row_data = RowDataFromObject(o, columns)
             self.cache[Qt.EditRole].add_data(row, o.id, row_data)
             self.cache[Qt.DisplayRole].add_data(row, o.id,  RowDataAsUnicode(row_data))
-            if self.validator.isValid(row):
+            if self.flush_changes and self.validator.isValid(row):
               # save the state before the update
               session.flush([o])
               try:

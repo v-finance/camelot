@@ -278,7 +278,7 @@ class EntityAdmin(object):
     from validator import *
     return Validator(self, model)
   
-  def createNewView(admin, parent=None, delta_on_new=None):
+  def createNewView(admin, parent=None):
     """
     Create a QT widget containing a form to create a new instance of the entity
     related to this admin class
@@ -301,13 +301,12 @@ class EntityAdmin(object):
     def collection_getter():
       if not new_object:
         entity_instance = admin.entity()
-        if delta_on_new:
-          delta_on_new(entity_instance)
         new_object.append(entity_instance)
       return new_object
 
     model = CollectionProxy(admin, collection_getter, admin.getFields,
-                            max_number_of_rows=1)
+                            max_number_of_rows=1, flush_changes=False)
+    validator = admin.createValidator(model)
 
     class NewForm(QtGui.QWidget):
 
@@ -318,24 +317,52 @@ class EntityAdmin(object):
         self.form_view = admin.createFormView('New', model, 0, parent)
         self.widget_layout.insertWidget(0, self.form_view)
         self.setLayout(self.widget_layout)
+        self.validate_before_close = True
         self.entity_created_signal = SIGNAL("entity_created")
         
+      def validateClose(self):
+        if self.validate_before_close:
+          self.form_view.widget_mapper.submit()
+          if model.hasUnflushedRows():
+          
+            def validate():
+              return validator.isValid(0)
+            
+            def expunge_object():
+              from elixir import session
+              for o in new_object:
+                session.expunge(o)
+                                
+            def showMessage(valid):
+              if not valid:
+                messages = u'\n'.join(validator.validityMessages(0))
+                reply = QtGui.QMessageBox.question(self, u'Could not create new %s'%admin.getName(),
+                u"\n%s\n Do you want to lose your changes ?"%messages, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                if reply == QtGui.QMessageBox.Yes:
+                  admin.mt.post(expunge_object)
+                  self.validate_before_close = False
+                  self.close()
+              else:
+                def create_instance_getter(new_object):
+                  return lambda:new_object[0]
+                
+                for o in new_object:
+                  self.emit(self.entity_created_signal,
+                            create_instance_getter(new_object))                
+                self.validate_before_close = False
+                self.close()
+            
+            admin.mt.post(validate, showMessage)
+            return False
+          else:
+            return True
+        return True
+      
       def closeEvent(self, event):
-        if self.form_view.validateClose(self):
+        if self.validateClose():
           event.accept()
         else:
           event.ignore()
-        
-      def close(self):
-        
-        def create_instance_getter(new_object):
-          return lambda:new_object[0]
-        
-        for o in new_object:
-          if o.id:
-            self.emit(self.entity_created_signal,
-                      create_instance_getter(new_object))
-        QtGui.QWidget.close(self)
 
     return NewForm(parent)
 
@@ -428,7 +455,7 @@ class EntityAdmin(object):
           self.actions_widget.setEntity(entity)
           self.widget_layout.insertWidget(1, self.actions_widget)
 
-      def validateClose(self, window_to_close):
+      def validateClose(self):
         logger.debug('validate before close : %s'%self.validate_before_close)
         if self.validate_before_close:
           # submit should not happen a second time, since then we don't want the widgets data to
@@ -439,13 +466,10 @@ class EntityAdmin(object):
             def validate():
               return validator.isValid(self.widget_mapper.currentIndex())
             
-            def expunge_object():
+            def refresh_object():
               from elixir import session
               o = model._get_object(self.widget_mapper.currentIndex())
-              if o.id:
-                session.refresh(o)
-              else:
-                session.expunge(o)
+              session.refresh(o)
                                 
             def showMessage(valid):
               if not valid:
@@ -453,12 +477,12 @@ class EntityAdmin(object):
                 reply = QtGui.QMessageBox.question(self, u'Unsaved changes',
                 u"Changes in this window could not be saved :\n%s\n Do you want to lose your changes ?"%messages, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
                 if reply == QtGui.QMessageBox.Yes:
-                  admin.mt.post(expunge_object)
+                  admin.mt.post(refresh_object)
                   self.validate_before_close = False
-                  window_to_close.close()
+                  self.close()
               else:
                 self.validate_before_close = False
-                window_to_close.close()
+                self.close()
             
             admin.mt.post(validate, showMessage)
             return False
@@ -468,7 +492,7 @@ class EntityAdmin(object):
                   
       def closeEvent(self, event):
         logger.debug('close event')
-        if self.validateClose(self):
+        if self.validateClose():
           event.accept()
         else:
           event.ignore()
@@ -498,13 +522,15 @@ class EntityAdmin(object):
                      self.sectionClicked)
 
       def sectionClicked(self, index):
-
-        def create_instance_getter(index):
-          return lambda: self.table_model._get_object(index)
-
-        self.emit(self.entity_selected_signal, create_instance_getter(index))
-
-        self.close()
+        # table model will be set by the model thread, we can't decently select
+        # if it has not been set yet
+        if self.table_model:
+          def create_instance_getter(index):
+            return lambda: self.table_model._get_object(index)
+  
+          self.emit(self.entity_selected_signal, create_instance_getter(index))
+  
+          self.close()
 
     return SelectView(self, parent)
 

@@ -23,7 +23,11 @@ class Code(types.TypeDecorator):
   """
   
   impl = types.Unicode
-  
+
+  class code(list):
+    def __unicode__(self):
+      return '.'.join(self)
+        
   def __init__(self, parts, **kwargs):
     import string
     translator = string.maketrans('', '')
@@ -49,16 +53,12 @@ class Code(types.TypeDecorator):
     impl_processor = self.impl.result_processor(dialect)
     if not impl_processor:
       impl_processor = lambda x:x
-      
-    class code(list):
-      def __unicode__(self):
-        return '.'.join(self)
-      
+
     def processor(value):
 
       if value:
-        return code(value.split('.'))
-      return code(['' for p in self.parts])
+        return self.code(value.split('.'))
+      return self.code(['' for p in self.parts])
       
     return processor
   
