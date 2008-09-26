@@ -253,7 +253,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         delegate = delegates.IntegerColumnDelegate(0, 100000)
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == datetime.date:
-        delegate =delegates. DateColumnDelegate(datetime.date.min, datetime.date.max, 'dd/MM/yyyy')
+        delegate = delegates. DateColumnDelegate(datetime.date.min, datetime.date.max, 'dd/MM/yyyy')
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == float:
         delegate = delegates.FloatColumnDelegate(-100000.0, 100000.0)
