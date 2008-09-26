@@ -193,13 +193,15 @@ class Many2OneEditor(QtGui.QWidget):
     
   def setEntity(self, entity_instance_getter):
     
-    self.entity_instance_getter = entity_instance_getter
+    def create_instance_getter(entity_instance):
+      return lambda:entity_instance
     
     def get_instance_represenation():
       """Get a representation of the instance
       @return: (unicode, pk) its unicode representation and its primary key or ('', False) if the instance was None
       """
       entity = entity_instance_getter()
+      self.entity_instance_getter = create_instance_getter(entity)
       if entity:
         return (unicode(entity), entity.id)
       return ('', False)

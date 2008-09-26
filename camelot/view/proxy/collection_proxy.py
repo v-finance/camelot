@@ -108,7 +108,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   usable for fast visualisation in a QTableView 
   """
   
-  def __init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10, edits=None, eager_flush=True):
+  def __init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10, edits=None):
     """"
     @param admin: the admin interface for the items in the collection
     @param collection_getter: a function that takes no arguments and returns the collection
@@ -116,7 +116,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     delays when this function causes the database to be hit.
     @param columns_getter: a function that takes no arguments and returns the columns that will
     be cached in the proxy.  This function will be called inside the model thread.
-    @param eager_flush: in case of changes, will they be flushed as soon as possible to the database    
     """
     self.logger = logger
     logger.debug('initialize query table')
@@ -125,7 +124,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.validator = admin.createValidator(self)
     self.collection_getter = collection_getter
     self.column_count = 0
-    self.eager_flush = eager_flush
     self.mt = admin.getModelThread()
     # Set database connection and load data
     self.rows = 0
@@ -322,43 +320,44 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     return QtCore.QVariant()
 
   def setData(self, index, value, role=Qt.EditRole):
+    """Value should be a function taking no arguments that returns the data to be set
+    This function will then be called in the model_thread
+    """
     from elixir import session
     import datetime
-    logger.debug('set data col %s, row %s to %s'%(index.row(), index.column(), value))
     if role==Qt.EditRole:
       
       self.unflushed_rows.add(index.row())
       
-      if self.columns_getter()[index.column()][1]['widget']=='many2one':
-        return True
-      
       def make_update_function(row, column, value):
         
         def update_model_and_cache():
-          type = value.type()
-          if type==QtCore.QMetaType.Bool:
-            new_value = bool(value.toBool())
-          elif type==QtCore.QMetaType.QString:
-            new_value = unicode(value.toString())
-            if not len(new_value):
-              new_value = None
-          elif type in (QtCore.QMetaType.Int, QtCore.QMetaType.UInt, QtCore.QMetaType.ULongLong,):
-            new_value = int(value.toInt()[0])
-          elif type in (QtCore.QMetaType.Short, QtCore.QMetaType.UShort,):
-            new_value = int(value.toShort()[0])
-          elif type in (QtCore.QMetaType.Long, QtCore.QMetaType.ULong,):
-            new_value = int(value.toLong()[0])
-          elif type==QtCore.QMetaType.Double:
-            new_value = float(value.toDouble()[0])          
-          elif type==QtCore.QMetaType.QDate:
-            new_value = value.toDate()
-            new_value = datetime.date(new_value.year(), new_value.month(), new_value.day())
-          elif type==QtCore.QMetaType.QDateTime:
-            new_value = value.toDateTime()
-            new_value = datetime.datetime(year=new_value.date().year(), month=new_value.date().month(), day=new_value.date().day(), 
-                                          hour=new_value.time().hour(), minute=new_value.time().minute(), second=new_value.time().second())            
-          else:
-            new_value = value.toPyObject()
+          new_value = value()
+          logger.debug('set data col %s, row %s to %s'%(row, column, new_value))
+#          type = value.type()
+#          if type==QtCore.QMetaType.Bool:
+#            new_value = bool(value.toBool())
+#          elif type==QtCore.QMetaType.QString:
+#            new_value = unicode(value.toString())
+#            if not len(new_value):
+#              new_value = None
+#          elif type in (QtCore.QMetaType.Int, QtCore.QMetaType.UInt, QtCore.QMetaType.ULongLong,):
+#            new_value = int(value.toInt()[0])
+#          elif type in (QtCore.QMetaType.Short, QtCore.QMetaType.UShort,):
+#            new_value = int(value.toShort()[0])
+#          elif type in (QtCore.QMetaType.Long, QtCore.QMetaType.ULong,):
+#            new_value = int(value.toLong()[0])
+#          elif type==QtCore.QMetaType.Double:
+#            new_value = float(value.toDouble()[0])          
+#          elif type==QtCore.QMetaType.QDate:
+#            new_value = value.toDate()
+#            new_value = datetime.date(new_value.year(), new_value.month(), new_value.day())
+#          elif type==QtCore.QMetaType.QDateTime:
+#            new_value = value.toDateTime()
+#            new_value = datetime.datetime(year=new_value.date().year(), month=new_value.date().month(), day=new_value.date().day(), 
+#                                          hour=new_value.time().hour(), minute=new_value.time().minute(), second=new_value.time().second())            
+#          else:
+#            new_value = value.toPyObject()
             
           from camelot.model.memento import BeforeUpdate
           from camelot.model.authentication import getCurrentPerson
@@ -376,7 +375,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             row_data = RowDataFromObject(o, columns)
             self.cache[Qt.EditRole].add_data(row, o.id, row_data)
             self.cache[Qt.DisplayRole].add_data(row, o.id,  RowDataAsUnicode(row_data))
-            if self.eager_flush and self.validator.isValid(row):
+            if self.validator.isValid(row):
               # save the state before the update
               session.flush([o])
               try:
@@ -428,11 +427,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     try:
       # first try to get the primary key out of the cache, if it's not
       # there, query the collection_getter
-      from elixir import session
       pk = self.cache[Qt.EditRole].get_primary_key_at_row(row)
-      return session.get(pk)
+      if pk:
+        return self.admin.entity.get(pk)
     except KeyError:
-      return self.collection_getter()[row]
+      pass
+    return self.collection_getter()[row]
   
   def _cache_extended(self, offset, limit):
     self.rows_under_request.difference_update(set(range(offset, offset+limit)))
@@ -500,13 +500,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       from camelot.model.authentication import getCurrentPerson
       o = entity_instance_getter()
       self.append(o)
-      if self.eager_flush:
-        session.flush([o])
-        history = Create(model=self.admin.entity.__name__, 
-                         primary_key=o.id,
-                         person = getCurrentPerson() )
-        session.flush([history])
-        self.rsh.sendEntityCreate(o)
+      session.flush([o])
+      history = Create(model=self.admin.entity.__name__, 
+                       primary_key=o.id,
+                       person = getCurrentPerson() )
+      session.flush([history])
+      self.rsh.sendEntityCreate(o)
       
     def emit_changes(*args):
       self.refresh()
@@ -514,4 +513,4 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.mt.post(create_function, emit_changes)
         
   def __del__(self):
-    logger.debug('delete CollectionProxy')
+    logger.warn('delete CollectionProxy')

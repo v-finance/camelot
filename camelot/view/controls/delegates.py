@@ -76,6 +76,8 @@ def _paint_not_editable(painter, option, index):
 
   painter.restore()
 
+def create_constant_function(constant):
+  return lambda:constant
 
 class GenericDelegate(QtGui.QItemDelegate):
   """Manages custom delegates"""
@@ -153,7 +155,7 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
 
   def setModelData(self, editor, model, index):
     editor.interpretText()
-    model.setData(index, QtCore.QVariant(editor.value()))
+    model.setData(index, create_constant_function(editor.value()))
 
 
 class PlainTextColumnDelegate(QtGui.QItemDelegate):
@@ -184,7 +186,7 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
     editor.setText(value)
 
   def setModelData(self, editor, model, index):
-    model.setData(index, QtCore.QVariant(editor.text()))
+    model.setData(index, create_constant_function(unicode(editor.text())))
 
 
 class DateColumnDelegate(QtGui.QItemDelegate):
@@ -213,7 +215,7 @@ class DateColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     value = editor.date()
     d = datetime.date(value.year(), value.month(), value.day())
-    model.setData(index, QtCore.QVariant(d))
+    model.setData(index, create_constant_function(d))
 
 
 class CodeColumnDelegate(QtGui.QItemDelegate):
@@ -236,7 +238,7 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
     for part in editor.part_editors:
       value.append(unicode(part.text()))
     print value
-    model.setData(index, QtCore.QVariant(value))
+    model.setData(index, create_constant_function(value))
 
 
 class FloatColumnDelegate(QtGui.QItemDelegate):
@@ -259,7 +261,7 @@ class FloatColumnDelegate(QtGui.QItemDelegate):
 
   def setModelData(self, editor, model, index):
     editor.interpretText()
-    model.setData(index, QtCore.QVariant(editor.value()))
+    model.setData(index, create_constant_function(editor.value()))
 
 
 class Many2OneColumnDelegate(QtGui.QItemDelegate):
@@ -281,9 +283,7 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     editor.setEntity(lambda: index.data(Qt.EditRole).toPyObject())
 
   def setModelData(self, editor, model, index):
-    print 'setModelData called'
-    #print 'current index is :', editor.currentIndex()
-    pass
+    model.setData(index, editor.entity_instance_getter)
 
 
 class One2ManyColumnDelegate(QtGui.QItemDelegate):
@@ -332,7 +332,7 @@ class BoolColumnDelegate(QtGui.QItemDelegate):
     editor.setChecked(checked)
 
   def setModelData(self, editor, model, index):
-    model.setData(index, QtCore.QVariant(editor.isChecked()))
+    model.setData(index, create_constant_function(editor.isChecked()))
 
 
 class ImageColumnDelegate(QtGui.QItemDelegate):

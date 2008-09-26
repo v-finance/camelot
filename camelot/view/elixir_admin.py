@@ -495,7 +495,7 @@ class EntityAdmin(object):
     from PyQt4 import QtCore
     from PyQt4.QtCore import SIGNAL
 
-    tableview = TableView(self, parent)
+    tableview = TableView(self)
 
     def createOpenForm(self, tableview):
 

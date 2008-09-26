@@ -1,12 +1,13 @@
 import logging
 import settings
-logger = logging.getLogger('view.controls.tableview')
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QSizePolicy
 from PyQt4.QtCore import Qt, SIGNAL
 from camelot.view.proxy.queryproxy import QueryTableProxy
 
+logger = logging.getLogger('view.controls.tableview')
+logger.setLevel(logging.DEBUG)
 
 class QueryTable(QtGui.QTableView):
 
@@ -19,11 +20,10 @@ class QueryTable(QtGui.QTableView):
 
 class TableView(QtGui.QWidget):
 
-  def __init__(self, admin, parent):
+  def __init__(self, admin, parent=None):
     from search import SimpleSearchControl
     from inheritance import SubclassTree
     QtGui.QWidget.__init__(self, parent)
-    self.parent = parent
     self.setWindowTitle(admin.getName())
     self.widget_layout = QtGui.QHBoxLayout()
     self.widget_layout.setSpacing(0)
@@ -51,9 +51,9 @@ class TableView(QtGui.QWidget):
     """Switch to a different subclass, where admin is the admin object of the
     subclass"""
     self.admin = admin
-    if self.table:
-      self.table.deleteLater()
-      self.table_model.deleteLater()
+#    if self.table:
+#      self.table.deleteLater()
+#      self.table_model.deleteLater()
     self.table = QueryTable()
     # We create the table first with only 10 rows, to be able resize
     # the columns to the contents without much processing
@@ -236,3 +236,18 @@ class TableView(QtGui.QWidget):
     env = Environment(loader=ld)
     tp = env.get_template('table_view.html')
     return tp.render(context)
+
+  def closeEvent(self, event):
+    logger.debug('tableview closed')
+    # remove all references we hold, to enable proper garbage collection
+    del self.widget_layout
+    del self.table_layout
+    del self.search_control
+    del self.table
+    del self.filters
+    del self.class_tree
+    del self.table_model
+    event.accept()
+    
+  def __del__(self):
+    logger.debug('tableview deleted')

@@ -34,6 +34,7 @@ import camelot
 import camelot.types
 
 from camelot.model import *
+from camelot.model.synchronization import *
 
 __metadata__ = metadata
 
@@ -41,6 +42,9 @@ from camelot.view.elixir_admin import EntityAdmin
 import datetime
 
 _current_person_ = None
+
+def end_of_times():
+  return datetime.date(year=2400, month=12, day=31)
 
 def getCurrentPerson():
   """Get the currently logged in person"""
@@ -57,75 +61,62 @@ def updateLastLogin():
   person.last_login = datetime.datetime.now()
   session.flush([person])
 
-# Enumeration of the different types of relationships that are covered, the key
-# in the dictionary is the value that should be in party_relationship_type,
-# the value is a tuple containing the (from_role, to_role, from_type, to_type) role of the relationship.  Eventually
-# this structure could be put into the database as well, but this would have serious
-# implications for the GUI
-party_relationship_types = {
-#                            1:('supplier', 'customer', 'Organization', 'Person'),
-                            2:('employer', 'employee', 'Organization', 'Person'),
-                            }
-  
 class PartyRelationship(Entity):
   using_options(tablename='party_relationship')
-  established_from = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
-  established_to = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
-  party_relationship_type = Field(Integer(), colname='party_relationship_type_id', required=True)
-  valid_time_start = Field(Date(), default=datetime.date.today, required=True, index=True)
-  valid_time_end = Field(Date(), default=datetime.date(year=2400, month=12, day=31), required=True, index=True)
+  from_date = Field(Date(), default=datetime.date.today, required=True, index=True)
+  thru_date = Field(Date(), default=end_of_times, required=True, index=True)
   comment = Field(Unicode())
-
-  @property
-  def to_role(self):
-    return party_relationship_types[self.party_relationship_type][1]
-
-  @property
-  def from_role(self):
-    return party_relationship_types[self.party_relationship_type][0]
-    
-  class FromAdmin(EntityAdmin):
-    name = 'Relationships'
-    list_display = ['established_to', 'valid_time_start', 'valid_time_end']
-    fields = ['established_to', 'comment', 'valid_time_start', 'valid_time_end']
+  is_synchronized('synchronized', lazy=True)
+  
+class EmployerEmployee(PartyRelationship):
+  """Relation from employer to employee"""
+  established_from = ManyToOne('Organization', required=True, ondelete='cascade', onupdate='cascade')
+  established_to = ManyToOne('Person', required=True, ondelete='cascade', onupdate='cascade')
+  
+  class EmployeeAdmin(EntityAdmin):
+    name = 'Employees'
+    list_display = ['established_to', 'from_date', 'thru_date']
+    fields = ['established_to', 'comment', 'from_date', 'thru_date']
     field_attributes = {'established_to':{'name':'Name'}}
     
-  class ToAdmin(EntityAdmin):
-    name = 'Relationships'
-    list_display = ['established_from', 'valid_time_start', 'valid_time_end']
-    fields = ['established_from', 'comment', 'valid_time_start', 'valid_time_end']
+  class EmployerAdmin(EntityAdmin):
+    name = 'Employers'
+    list_display = ['established_from', 'from_date', 'thru_date']
+    fields = ['established_from', 'comment', 'from_date', 'thru_date']
     field_attributes = {'established_from':{'name':'Name'}}
+    
+class SupplierCustomer(PartyRelationship):
+  """Relation from supplier to customer"""
+  established_from = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
+  established_to = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
   
-def relationships(entity_names):
-  """Generate a list of relationship types applicable for a certain entity names
-  @return: [(relationship_type_id, field_name, inverse), ...]"""
-  for key,value in party_relationship_types.items():
-    if value[2] in entity_names:
-      yield (key, '%ss'%value[1], 'established_from')
-    if value[3] in entity_names:
-      yield (key, '%ss'%value[0], 'established_to')
-
-def relationship_type_filter(type_id):
-  """Closure to generate a ClauseElement to filter relationships on their type"""
-  
-  def filter_function(c):
-    return c.party_relationship_type_id==type_id
-  
-  return filter_function
-
+  class CustomerAdmin(EntityAdmin):
+    name = 'Customers'
+    list_display = ['established_to', 'from_date', 'thru_date']
+    fields = ['established_to', 'comment', 'from_date', 'thru_date']
+    field_attributes = {'established_to':{'name':'Name'}}
+    
+  class SupplierAdmin(EntityAdmin):
+    name = 'Suppliers'
+    list_display = ['established_from', 'from_date', 'thru_date']
+    fields = ['established_from', 'comment', 'from_date', 'thru_date']
+    field_attributes = {'established_from':{'name':'Name'}}
+    
 class Party(Entity):
   """Base class for persons and organizations.  Use this base class to refer to either persons or
   organisations in building authentication systems, contact management or CRM"""
   using_options(tablename='party')
-  for type_id, field, inverse in relationships(('Party', 'Organization', 'Person',)):
-    filter_function = relationship_type_filter(type_id)
-    has_many(field, of_kind='PartyRelationship', inverse=inverse, filter=filter_function)
+  suppliers = OneToMany('SupplierCustomer', inverse='established_to')
+  customers = OneToMany('SupplierCustomer', inverse='established_from')
+  is_synchronized('synchronized', lazy=True)
     
   class Admin(EntityAdmin):
     name = 'Parties'
-    fields = [r[1] for r in relationships(('Party',))]
-    field_attributes = dict((field_name,{'admin':{'established_from':PartyRelationship.FromAdmin, 'established_to':PartyRelationship.ToAdmin}[inverse]}) 
-                            for relationship_type_id, field_name, inverse in relationships(('Party', 'Organization', 'Person'))  )
+    fields = ['suppliers', 'customers']
+    field_attributes = dict(suppliers={'admin':SupplierCustomer.SupplierAdmin}, 
+                            customers={'admin':SupplierCustomer.CustomerAdmin},
+                            employers={'admin':EmployerEmployee.EmployerAdmin},
+                            employees={'admin':EmployerEmployee.EmployeeAdmin})
       
 class Organization(Party):
   """An organization represents any internal or external organization.  Organizations can include
@@ -133,6 +124,7 @@ class Organization(Party):
   using_options(tablename='organization', inheritance='multi')
   name = Field(Unicode(40), required=True, index=True)
   tax_id = Field(Unicode(15))
+  employees = OneToMany('EmployerEmployee', inverse='established_from')
   
   def __unicode__(self):
     return self.name
@@ -141,7 +133,7 @@ class Organization(Party):
     name = 'Organizations'
     section = 'configuration'
     list_display = ['name', 'tax_id',]
-    fields = ['name', 'tax_id',] + Party.Admin.fields + [r[1] for r in relationships(('Organization',))]
+    fields = ['name', 'tax_id',] + Party.Admin.fields + ['employees']
       
 class Person(Party):
   """Person represents natural persons, these can be given access to the system, and
@@ -170,6 +162,7 @@ class Person(Party):
   date_joined = Field(DateTime(), default=datetime.datetime.now)
   picture = Field(camelot.types.Image(upload_to='person-pictures'), deferred=True)
   comment = Field(Unicode())
+  employers = OneToMany('EmployerEmployee', inverse='established_to')
       
   def __unicode__(self):
     return self.username
@@ -189,5 +182,5 @@ class Person(Party):
     list_display = ['username', 'first_name', 'last_name', 'last_login']
     fields = ['username', 'first_name', 'last_name', 'birthdate', 'social_security_number', 'passport_number', 
               'passport_expiry_date', 'is_staff', 'is_active', 'is_superuser', 'last_login', 'date_joined', 
-              'comment'] + Party.Admin.fields  + [r[1] for r in relationships(('Person',))]
+              'comment', 'employers'] + Party.Admin.fields
     list_filter = ['is_active', 'is_staff', 'is_superuser']
