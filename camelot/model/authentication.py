@@ -122,8 +122,8 @@ class Organization(Party):
   """An organization represents any internal or external organization.  Organizations can include
   businesses and groups of individuals"""
   using_options(tablename='organization', inheritance='multi')
-  name = Field(Unicode(40), required=True, index=True)
-  tax_id = Field(Unicode(15))
+  name = Field(Unicode(50), required=True, index=True)
+  tax_id = Field(Unicode(20))
   employees = OneToMany('EmployerEmployee', inverse='established_from')
   
   def __unicode__(self):

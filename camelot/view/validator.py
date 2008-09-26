@@ -25,10 +25,13 @@
 #
 #  ==================================================================================
 
+import logging
+logger = logging.getLogger('camelot.view.validator')
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
 
 from proxy.collection_proxy import fifo
+logger.setLevel(logging.DEBUG)
 
 class Validator(QtCore.QObject):
   """A validator class validates an entity before flushing it to the database and
@@ -43,6 +46,7 @@ class Validator(QtCore.QObject):
     """Verify if a row in a model is 'valid', meaning it could be flushed to the database"""
     entity_instance = self.model._get_object(row)
     messages = []
+    logger.debug('is valid for row %s'%row)
     for column in self.model.getColumns():
       value = getattr(entity_instance, column[0])
       if column[1]['nullable']!=True:

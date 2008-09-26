@@ -327,6 +327,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     import datetime
     if role==Qt.EditRole:
       
+      flushed = (index.row() not in self.unflushed_rows)
       self.unflushed_rows.add(index.row())
       
       def make_update_function(row, column, value):
@@ -334,30 +335,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         def update_model_and_cache():
           new_value = value()
           logger.debug('set data col %s, row %s to %s'%(row, column, new_value))
-#          type = value.type()
-#          if type==QtCore.QMetaType.Bool:
-#            new_value = bool(value.toBool())
-#          elif type==QtCore.QMetaType.QString:
-#            new_value = unicode(value.toString())
-#            if not len(new_value):
-#              new_value = None
-#          elif type in (QtCore.QMetaType.Int, QtCore.QMetaType.UInt, QtCore.QMetaType.ULongLong,):
-#            new_value = int(value.toInt()[0])
-#          elif type in (QtCore.QMetaType.Short, QtCore.QMetaType.UShort,):
-#            new_value = int(value.toShort()[0])
-#          elif type in (QtCore.QMetaType.Long, QtCore.QMetaType.ULong,):
-#            new_value = int(value.toLong()[0])
-#          elif type==QtCore.QMetaType.Double:
-#            new_value = float(value.toDouble()[0])          
-#          elif type==QtCore.QMetaType.QDate:
-#            new_value = value.toDate()
-#            new_value = datetime.date(new_value.year(), new_value.month(), new_value.day())
-#          elif type==QtCore.QMetaType.QDateTime:
-#            new_value = value.toDateTime()
-#            new_value = datetime.datetime(year=new_value.date().year(), month=new_value.date().month(), day=new_value.date().day(), 
-#                                          hour=new_value.time().hour(), minute=new_value.time().minute(), second=new_value.time().second())            
-#          else:
-#            new_value = value.toPyObject()
             
           from camelot.model.memento import BeforeUpdate
           from camelot.model.authentication import getCurrentPerson
@@ -389,7 +366,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
               session.flush([history])              
               self.rsh.sendEntityUpdate(o)
             return ((row,0), (row,len(self.columns_getter())))
-          else:
+          elif flushed:
             try:
               self.unflushed_rows.remove(row)
             except KeyError:

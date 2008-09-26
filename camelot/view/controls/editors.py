@@ -288,9 +288,9 @@ class One2ManyEditor(QtGui.QWidget):
   def newRow(self):
     from camelot.view.workspace import get_workspace
     workspace = get_workspace()
-    form = self.admin.createNewView(workspace)
+    form = self.admin.createNewView(workspace, delta_on_new=lambda e:self.model.insertRow(0, lambda:e))
     workspace.addWindow('new', form)
-    self.connect(form, form.entity_created_signal, lambda entity_instance_getter:self.model.insertRow(0, entity_instance_getter))
+    #self.connect(form, form.entity_created_signal, lambda entity_instance_getter:)
     form.show()
   
   def deleteSelectedRows(self):

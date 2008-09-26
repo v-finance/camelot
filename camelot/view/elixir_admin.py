@@ -180,6 +180,7 @@ class EntityAdmin(object):
         attributes['nullable'] = property.columns[0].nullable 
       elif isinstance(property, orm.properties.PropertyLoader):
         target = property._get_target_class()
+        fk = property.foreign_keys
         if property.direction == orm.sync.ONETOMANY:
           attributes = dict(python_type=str,
                             length=None,
@@ -191,7 +192,8 @@ class EntityAdmin(object):
           attributes = dict(python_type=str,
                             length=None,
                             editable=True,
-                            nullable=True,
+                            #@todo: take into account all foreign keys instead of only the first one
+                            nullable=fk[0].nullable,
                             widget='many2one',
                             admin=get_entity_admin(target))
         elif property.direction == orm.sync.MANYTOMANY:
@@ -276,13 +278,16 @@ class EntityAdmin(object):
     from validator import *
     return Validator(self, model)
   
-  def createNewView(admin, parent=None):
+  def createNewView(admin, parent=None, delta_on_new=None):
     """
     Create a QT widget containing a form to create a new instance of the entity
     related to this admin class
 
     The returned class has an 'entity_created_signal' that will be fired when a
-    a valid new entity was created by th form
+    a valid new entity was created by the form
+    
+    @param delta_on_new: a function with as single argument the newly created
+    entity instance, this one will be called after a new entity was created 
     """
 
     from PyQt4 import QtCore
@@ -295,7 +300,10 @@ class EntityAdmin(object):
 
     def collection_getter():
       if not new_object:
-        new_object.append(admin.entity())
+        entity_instance = admin.entity()
+        if delta_on_new:
+          delta_on_new(entity_instance)
+        new_object.append(entity_instance)
       return new_object
 
     model = CollectionProxy(admin, collection_getter, admin.getFields,
@@ -421,6 +429,7 @@ class EntityAdmin(object):
           self.widget_layout.insertWidget(1, self.actions_widget)
 
       def validateClose(self, window_to_close):
+        logger.debug('validate before close : %s'%self.validate_before_close)
         if self.validate_before_close:
           # submit should not happen a second time, since then we don't want the widgets data to
           # be written to the model
@@ -458,6 +467,7 @@ class EntityAdmin(object):
         return True
                   
       def closeEvent(self, event):
+        logger.debug('close event')
         if self.validateClose(self):
           event.accept()
         else:
