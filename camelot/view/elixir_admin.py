@@ -351,15 +351,24 @@ class EntityAdmin(object):
         self.setWindowTitle(title)
         self.widget_layout = QtGui.QHBoxLayout()
         self.widget_mapper = QtGui.QDataWidgetMapper()
+
         self.model = model
         self.connect(self.model,
                      SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                      self.dataChanged)
         self.widget_mapper.setModel(self.model)
+        
         self.form_layout = QtGui.QFormLayout()
-        self.widget_layout.insertLayout(0, self.form_layout)
+        self.scroll_area = QtGui.QScrollArea()
+
+        self.widget_layout.insertWidget(0, self.scroll_area)
+        self.widget_layout.setContentsMargins(0,0,0,0)
+        #self.widget_layout.insertLayout(0, self.form_layout)
+
         self.setLayout(self.widget_layout)
+        
         self.validate_before_close = True
+        
         admin.mt.post(lambda: None,
                       lambda *args: self.setColumnsAndDelegate(
                                       self.model.columns_getter(),
@@ -393,6 +402,13 @@ class EntityAdmin(object):
         
         self.widget_mapper.setItemDelegate(delegate)
         self.widget_mapper.setCurrentIndex(index)
+
+        # This should really be here so that the widgets inside the
+        # dummy widget get displayed
+        # QFormLayout accepts only QWidgets
+        self.form_widget = QtGui.QWidget()
+        self.form_widget.setLayout(self.form_layout)
+        self.scroll_area.setWidget(self.form_widget)
 
       def setEntityAndActions(self, result):
         entity, actions = result
@@ -506,9 +522,10 @@ class EntityAdmin(object):
                                 self.getFields,
                                 max_number_of_rows=1)
         title = u'%s'%(self.getName())
-        form = self.createFormView(title, model, index, parent)
-        get_workspace().addWindow('form', form)
-        form.show()
+
+        formview = self.createFormView(title, model, index, parent)
+        get_workspace().addWindow('form', formview)
+        formview.show()
 
       return openForm
 
