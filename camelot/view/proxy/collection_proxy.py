@@ -63,6 +63,8 @@ def RowDataAsUnicode(row_data):
   
   def unicode_or_none(data):
     if data:
+      if isinstance(data, list):
+        return '.'.join(data)
       return unicode(data)
     return data
   

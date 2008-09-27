@@ -23,10 +23,6 @@ class Code(types.TypeDecorator):
   """
   
   impl = types.Unicode
-
-  class code(list):
-    def __unicode__(self):
-      return '.'.join(self)
         
   def __init__(self, parts, **kwargs):
     import string
@@ -57,8 +53,8 @@ class Code(types.TypeDecorator):
     def processor(value):
 
       if value:
-        return self.code(value.split('.'))
-      return self.code(['' for p in self.parts])
+        return value.split('.')
+      return ['' for p in self.parts]
       
     return processor
   

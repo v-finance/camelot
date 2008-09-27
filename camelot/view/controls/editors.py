@@ -106,11 +106,12 @@ class Many2OneComboBox(QtGui.QComboBox):
 
 class CodeEditor(QtGui.QWidget):
   
-  def __init__(self, parts, parent=None):
+  def __init__(self, parts, delegate, parent=None):
     super(CodeEditor, self).__init__(parent)
     self.setFocusPolicy(Qt.StrongFocus)
     self.parts = parts
     self.part_editors = []
+    self.delegate = delegate
     layout = QtGui.QHBoxLayout()
     #layout.setSpacing(0)
     layout.setMargin(0)
@@ -119,14 +120,16 @@ class CodeEditor(QtGui.QWidget):
       editor.setInputMask(part)
       self.part_editors.append(editor)
       layout.addWidget(editor)
-      self.setFocusProxy(editor)
+      self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
     self.setLayout(layout)
+  def editingFinished(self):
+    self.delegate.editingFinished(self)
         
 class Many2OneEditor(QtGui.QWidget):
   """Widget for editing many 2 one relations
   @param entity_admin : The Admin interface for the object on the one side of the relation
   """
-  def __init__(self, entity_admin, parent=None):
+  def __init__(self, entity_admin, delegate, parent=None):
     super(Many2OneEditor, self).__init__(parent)
     self.admin = entity_admin
     self.entity_instance_getter = None
@@ -134,6 +137,7 @@ class Many2OneEditor(QtGui.QWidget):
     self.layout = QtGui.QHBoxLayout()
     self.layout.setSpacing(0)
     self.layout.setMargin(0)
+    self.delegate = delegate
     # Search button
     self.search_button = QtGui.QToolButton()
     self.search_button.setIcon(QtGui.QIcon(art.icon16('actions/system-search')))
@@ -215,7 +219,8 @@ class Many2OneEditor(QtGui.QWidget):
         self.entity_set = True
       else:
         self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
-        self.entity_set = False 
+        self.entity_set = False
+      self.delegate.commit(self)
       
     self.admin.mt.post(get_instance_represenation, set_instance_represenation)
     

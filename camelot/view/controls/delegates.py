@@ -225,7 +225,7 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
     self.parts = parts
 
   def createEditor(self, parent, option, index):
-    return editors.CodeEditor(self.parts, parent)
+    return editors.CodeEditor(self.parts, self, parent)
 
   def setEditorData(self, editor, index):
     value = index.data(Qt.EditRole).toPyObject()
@@ -234,11 +234,15 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
         part_editor.setText(unicode(part))
 
   def setModelData(self, editor, model, index):
+    print 'Set model data called !!!'
     from camelot.types import Code
-    value = Code.code()
+    value = []
     for part in editor.part_editors:
       value.append(unicode(part.text()))
     model.setData(index, create_constant_function(value))
+    
+  def editingFinished(self, widget):
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), widget)
 
 class FloatColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for float values"""
@@ -274,7 +278,7 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
 
   def createEditor(self, parent, option, index):
     from camelot.view.controls.editors import Many2OneEditor
-    editor = Many2OneEditor(self.entity_admin, parent)
+    editor = Many2OneEditor(self.entity_admin, self, parent)
     self.setEditorData(editor, index)
     return editor
 
@@ -283,7 +287,9 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
 
   def setModelData(self, editor, model, index):
     model.setData(index, editor.entity_instance_getter)
-
+    
+  def commit(self, widget):
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), widget)
 
 class One2ManyColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
