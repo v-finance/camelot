@@ -46,10 +46,14 @@ from camelot.view import art
 def RowDataFromObject(obj, columns):
   """Create row data from an object, by fetching its attributes"""
   row_data = []
+  
+  def create_collection_getter(o,attr):
+    return lambda:getattr(o,attr)
+  
   for col in columns:
     field_attributes = col[1]
     if field_attributes['python_type']==list:
-      row_data.append( CollectionProxy(field_attributes['admin'], lambda:getattr(obj,col[0]),
+      row_data.append( CollectionProxy(field_attributes['admin'], create_collection_getter(obj,col[0]),
                                        field_attributes['admin'].getColumns) )
     else:
       row_data.append(getattr(obj,col[0]))

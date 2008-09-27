@@ -81,7 +81,7 @@ _sqlalchemy_to_python_type_ = {
                                   'editable': True,
                                   'widget': 'image'},
 
-  camelot.types.Code: lambda f: {'python_type': list,
+  camelot.types.Code: lambda f: {'python_type': str,
                                  'editable': True,
                                  'widget': 'code',
                                  'parts': f.parts},

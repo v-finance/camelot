@@ -278,10 +278,14 @@ class One2ManyEditor(QtGui.QWidget):
     self.model = model
     self.table.setModel(model)
     
-    def update_delegates(*args):
-      self.table.setItemDelegate(model.getItemDelegate())
+    def create_delegate_updater(model):
       
-    self.admin.mt.post(lambda:None, update_delegates)
+      def update_delegates(*args):
+        self.table.setItemDelegate(model.getItemDelegate())
+        
+      return update_delegates
+      
+    self.admin.mt.post(lambda:None, create_delegate_updater(model))
     
   def newRow(self):
     from camelot.view.workspace import get_workspace
