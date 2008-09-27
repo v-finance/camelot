@@ -526,10 +526,13 @@ class EntityAdmin(object):
         # table model will be set by the model thread, we can't decently select
         # if it has not been set yet
         if self.table_model:
-          def create_instance_getter(index):
-            return lambda: self.table_model._get_object(index)
+          
+          # table model needs to be in a closure, otherwise it will be deleted from
+          # the tableview upon closure of this one
+          def create_instance_getter(table_model, index):
+            return lambda: table_model._get_object(index)
   
-          self.emit(self.entity_selected_signal, create_instance_getter(index))
+          self.emit(self.entity_selected_signal, create_instance_getter(self.table_model, index))
   
           self.close()
 

@@ -181,6 +181,6 @@ class Person(Party):
     section = 'configuration'
     list_display = ['username', 'first_name', 'last_name', ]
     fields = ['username', 'first_name', 'last_name', 'birthdate', 'social_security_number', 'passport_number', 
-              'passport_expiry_date', 'is_staff', 'is_active', 'is_superuser', 'date_joined', 
+              'passport_expiry_date', 'is_staff', 'is_active', 'is_superuser',
               'comment', 'employers'] + Party.Admin.fields
     list_filter = ['is_active', 'is_staff', 'is_superuser']
