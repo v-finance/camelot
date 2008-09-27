@@ -70,6 +70,7 @@ class PartyRelationship(Entity):
   
 class EmployerEmployee(PartyRelationship):
   """Relation from employer to employee"""
+  using_options(tablename='party_relationship_employer_employee', inheritance='multi')
   established_from = ManyToOne('Organization', required=True, ondelete='cascade', onupdate='cascade')
   established_to = ManyToOne('Person', required=True, ondelete='cascade', onupdate='cascade')
   
@@ -87,6 +88,7 @@ class EmployerEmployee(PartyRelationship):
     
 class SupplierCustomer(PartyRelationship):
   """Relation from supplier to customer"""
+  using_options(tablename='party_relationship_supplier_customer', inheritance='multi')
   established_from = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
   established_to = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
   
@@ -106,8 +108,6 @@ class Party(Entity):
   """Base class for persons and organizations.  Use this base class to refer to either persons or
   organisations in building authentication systems, contact management or CRM"""
   using_options(tablename='party')
-  suppliers = OneToMany('SupplierCustomer', inverse='established_to')
-  customers = OneToMany('SupplierCustomer', inverse='established_from')
   is_synchronized('synchronized', lazy=True)
     
   class Admin(EntityAdmin):
@@ -125,6 +125,8 @@ class Organization(Party):
   name = Field(Unicode(50), required=True, index=True)
   tax_id = Field(Unicode(20))
   employees = OneToMany('EmployerEmployee', inverse='established_from')
+  suppliers = OneToMany('SupplierCustomer', inverse='established_to')
+  customers = OneToMany('SupplierCustomer', inverse='established_from')  
   
   def __unicode__(self):
     return self.name
@@ -182,5 +184,5 @@ class Person(Party):
     list_display = ['username', 'first_name', 'last_name', ]
     fields = ['username', 'first_name', 'last_name', 'birthdate', 'social_security_number', 'passport_number', 
               'passport_expiry_date', 'is_staff', 'is_active', 'is_superuser',
-              'comment', 'employers'] + Party.Admin.fields
+              'comment', 'employers']
     list_filter = ['is_active', 'is_staff', 'is_superuser']
