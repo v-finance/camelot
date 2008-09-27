@@ -47,17 +47,18 @@ class Validator(QtCore.QObject):
     entity_instance = self.model._get_object(row)
     messages = []
     logger.debug('is valid for row %s'%row)
-    for column in self.model.getColumns():
-      value = getattr(entity_instance, column[0])
-      if column[1]['nullable']!=True:
-        is_null = False
-        if value==None:
-          is_null = True
-        elif (column[1]['widget']=='code') and (sum(len(c) for c in value)==0):
-          is_null = True
-        if is_null:
-          messages.append(u'%s is a required field'%(column[1]['name'])) 
-    self.message_cache.add_data(row, entity_instance.id, messages)
+    if entity_instance:
+      for column in self.model.getColumns():
+        value = getattr(entity_instance, column[0])
+        if column[1]['nullable']!=True:
+          is_null = False
+          if value==None:
+            is_null = True
+          elif (column[1]['widget']=='code') and (sum(len(c) for c in value)==0):
+            is_null = True
+          if is_null:
+            messages.append(u'%s is a required field'%(column[1]['name'])) 
+      self.message_cache.add_data(row, entity_instance.id, messages)
     return len(messages)==0
   
   def validityMessages(self, row):

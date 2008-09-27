@@ -304,16 +304,12 @@ class One2ManyColumnDelegate(QtGui.QItemDelegate):
 
   def setEditorData(self, editor, index):
     logger.info('set one2many editor data')
-
-    def create_entity_instance_getter(model, row):
-      return lambda: model._get_object(row)
-
-    editor.setEntityInstance(create_entity_instance_getter(index.model(),
-                                                           index.row()))
+    model = index.data(Qt.EditRole).toPyObject()
+    if model:
+      editor.setModel(model)
 
   def setModelData(self, editor, model, index):
     pass
-
 
 class BoolColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for boolean values"""

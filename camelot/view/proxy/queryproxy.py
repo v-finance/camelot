@@ -65,15 +65,13 @@ class QueryTableProxy(CollectionProxy):
     
   def getData(self):
     """Generator for all the data queried by this proxy"""
-    columns = [c[0] for c in self.columns_getter()]
     for o in self.query.all():
-      yield RowDataFromObject(o, columns)
+      yield RowDataFromObject(o, self.columns_getter())
       
   def _extend_cache(self, offset, limit):
     """Extend the cache around row"""
-    #@TODO : also store the primary key, here we just saved the id
-    columns = [c[0] for c in self.columns_getter()] + ['id']
     q = self.query.offset(offset).limit(limit)
+    columns = self.columns_getter()
     for i, o in enumerate(q.all()):
       row_data = RowDataFromObject(o, columns)
       self.cache[Qt.EditRole].add_data(i+offset, o.id, row_data)

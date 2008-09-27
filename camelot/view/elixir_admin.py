@@ -182,7 +182,7 @@ class EntityAdmin(object):
         target = property._get_target_class()
         fk = property.foreign_keys
         if property.direction == orm.sync.ONETOMANY:
-          attributes = dict(python_type=str,
+          attributes = dict(python_type=list,
                             length=None,
                             editable=True,
                             nullable=True,
@@ -197,7 +197,7 @@ class EntityAdmin(object):
                             widget='many2one',
                             admin=get_entity_admin(target))
         elif property.direction == orm.sync.MANYTOMANY:
-          attributes = dict(python_type=str,
+          attributes = dict(python_type=list,
                             length=None,
                             editable=True,
                             nullable=True,

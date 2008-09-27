@@ -256,17 +256,8 @@ class One2ManyEditor(QtGui.QWidget):
     self.connect(self.table.verticalHeader(),
                  QtCore.SIGNAL('sectionClicked(int)'),
                  self.createFormForIndex)
-    
-    from camelot.view.proxy.collection_proxy import CollectionProxy
-    self.field_name = field_name
+
     self.admin = entity_admin
-    self.model = CollectionProxy(entity_admin, lambda:[], entity_admin.getColumns)
-    self.table.setModel(self.model)
-    
-    def update_delegates(*args):
-      self.table.setItemDelegate(self.model.getItemDelegate())
-      
-    entity_admin.mt.post(lambda:None, update_delegates)
     #
     # Setup buttons
     #
@@ -281,9 +272,16 @@ class One2ManyEditor(QtGui.QWidget):
     button_layout.addWidget(delete_button)      
     self.layout.addLayout(button_layout)
     self.setLayout(self.layout)
+    self.model = None
   
-  def setEntityInstance(self, entity_instance_getter):
-    self.model.setCollectionGetter(lambda:getattr(entity_instance_getter(), self.field_name))
+  def setModel(self, model):
+    self.model = model
+    self.table.setModel(model)
+    
+    def update_delegates(*args):
+      self.table.setItemDelegate(model.getItemDelegate())
+      
+    self.admin.mt.post(lambda:None, update_delegates)
     
   def newRow(self):
     from camelot.view.workspace import get_workspace
@@ -305,11 +303,9 @@ class One2ManyEditor(QtGui.QWidget):
   def createFormForIndex(self, index):
     from camelot.view.proxy.collection_proxy import CollectionProxy
     from camelot.view.workspace import get_workspace
-    parent = self.parentWidget().parentWidget().parentWidget().parentWidget()
     model = CollectionProxy(self.admin, self.model.collection_getter, self.admin.getFields, max_number_of_rows=1, edits=None)
-    entity = model._get_object(index) 
-    title = '%s - %s' % (entity, self.admin.getName())
-    form = self.admin.createFormView(title, model, index, parent)
+    title = self.admin.getName()
+    form = self.admin.createFormView(title, model, index, get_workspace())
     get_workspace().addWindow('createFormForIndex', form)
     form.show()
 

@@ -43,9 +43,17 @@ from PyQt4.QtCore import Qt
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view import art
    
-def RowDataFromObject(obj, attrs):
+def RowDataFromObject(obj, columns):
   """Create row data from an object, by fetching its attributes"""
-  return [getattr(obj,attr) for (k,attr) in enumerate(attrs)]
+  row_data = []
+  for col in columns:
+    field_attributes = col[1]
+    if field_attributes['python_type']==list:
+      row_data.append( CollectionProxy(field_attributes['admin'], lambda:getattr(obj,col[0]),
+                                       field_attributes['admin'].getColumns) )
+    else:
+      row_data.append(getattr(obj,col[0]))
+  return row_data
   
 def RowDataAsUnicode(row_data):
   
@@ -219,7 +227,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     from camelot.view.controls import delegates
     import datetime
     
-    self.item_delegate = delegates.GenericDelegate(self)
+    self.item_delegate = delegates.GenericDelegate()
     self.item_delegate.set_columns_desc(columns)
 
     for i, c in enumerate(columns):
@@ -349,8 +357,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             except AttributeError:
               logger.error("Can't set attribute %s to %s"%(attribute, str(value)))
             # update the cache
-            columns = [c[0] for c in self.columns_getter()] + ['id']
-            row_data = RowDataFromObject(o, columns)
+            row_data = RowDataFromObject(o, self.columns_getter())
             self.cache[Qt.EditRole].add_data(row, o.id, row_data)
             self.cache[Qt.DisplayRole].add_data(row, o.id,  RowDataAsUnicode(row_data))
             if self.flush_changes and self.validator.isValid(row):
@@ -393,7 +400,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def _extend_cache(self, offset, limit):
     """Extend the cache around row"""
     #@TODO : also store the primary key, here we just saved the id
-    columns = [c[0] for c in self.columns_getter()] + ['id']
+    columns = self.columns_getter()
     for i,o in enumerate(self.collection_getter()[offset:offset+limit+1]):
       row_data = RowDataFromObject(o, columns)
       self.cache[Qt.EditRole].add_data(i+offset, o.id, row_data)
@@ -478,12 +485,13 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       from camelot.model.authentication import getCurrentPerson
       o = entity_instance_getter()
       self.append(o)
-      session.flush([o])
-      history = Create(model=self.admin.entity.__name__, 
-                       primary_key=o.id,
-                       person = getCurrentPerson() )
-      session.flush([history])
-      self.rsh.sendEntityCreate(o)
+      if self.flush_changes:
+        session.flush([o])
+        history = Create(model=self.admin.entity.__name__, 
+                         primary_key=o.id,
+                         person = getCurrentPerson() )
+        session.flush([history])
+        self.rsh.sendEntityCreate(o)
       
     def emit_changes(*args):
       self.refresh()
