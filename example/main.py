@@ -31,7 +31,7 @@ def main():
   app.setStyleSheet(style)
 
   logger.debug('loading splashscreen')
-  splash = QtGui.QSplashScreen(QtGui.QPixmap(('camelot.png')))
+  splash = QtGui.QSplashScreen(QtGui.QPixmap(('camelot-proposal.png')))
   splash.show()
   app.processEvents()
   
