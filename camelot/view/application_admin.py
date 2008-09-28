@@ -56,6 +56,8 @@ class ApplicationAdmin(object):
       return self.admins[entity](self, entity)
     except KeyError:
       pass
+    if hasattr(entity, 'Admin'):
+      return entity.Admin(self, entity)
   
   def getEntityQuery(self, entity):
     """Get the root query for an entity"""

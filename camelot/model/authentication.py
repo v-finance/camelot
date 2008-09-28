@@ -109,10 +109,11 @@ class Party(Entity):
   organisations in building authentication systems, contact management or CRM"""
   using_options(tablename='party')
   is_synchronized('synchronized', lazy=True)
+  addresses = OneToMany('PartyAddress')
     
   class Admin(EntityAdmin):
     name = 'Parties'
-    fields = ['suppliers', 'customers']
+    fields = ['suppliers', 'customers', 'addresses']
     field_attributes = dict(suppliers={'admin':SupplierCustomer.SupplierAdmin}, 
                             customers={'admin':SupplierCustomer.CustomerAdmin},
                             employers={'admin':EmployerEmployee.EmployerAdmin},
@@ -184,5 +185,59 @@ class Person(Party):
     list_display = ['username', 'first_name', 'last_name', ]
     fields = ['username', 'first_name', 'last_name', 'birthdate', 'social_security_number', 'passport_number', 
               'passport_expiry_date', 'is_staff', 'is_active', 'is_superuser',
-              'comment', 'employers']
+              'comment', 'addresses', 'employers']
     list_filter = ['is_active', 'is_staff', 'is_superuser']
+    
+class GeographicBoundary(Entity):
+  using_options(tablename='geographic_boundary')
+  code = Field(Unicode(10))
+  name = Field(Unicode(40), required=True)
+
+  def __unicode__(self):
+    return u'%s %s'%(self.code, self.name)
+    
+class Country(GeographicBoundary):
+  using_options(tablename='geographic_boundary_country', inheritance='multi')
+    
+  class Admin(EntityAdmin):
+    name = 'Countries'
+    list_display = ['name', 'code']
+    
+class City(GeographicBoundary):
+  using_options(tablename='geographic_boundary_city', inheritance='multi')
+  country = ManyToOne('Country', required=True, ondelete='cascade', onupdate='cascade')
+  
+  class Admin(EntityAdmin):
+    name = 'Cities'
+    list_display = ['code', 'name', 'country']
+    
+class Address(Entity):
+  using_options(tablename='address')
+  street1 = Field(Unicode('128'), required=True)
+  street2 = Field(Unicode('128'))
+  city = ManyToOne('City', required=True, ondelete='cascade', onupdate='cascade')
+  
+  def __unicode__(self):
+    return u'%s, %s'%(self.street1, self.city)
+  
+  class Admin(EntityAdmin):
+    name = 'Addresses'
+    list_display = ['street1', 'street2', 'city']
+  
+class PartyAddressRoleType(Entity):
+  using_options(tablename='party_address_role_type')
+  code = Field(Unicode(10))
+  description = Field(Unicode(40))
+  
+class PartyAddress(Entity):
+  using_options(tablename='party_address')
+  party = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
+  address = ManyToOne('Address', required=True, ondelete='cascade', onupdate='cascade')
+  from_date = Field(Date(), default=datetime.date.today, required=True, index=True)
+  thru_date = Field(Date(), default=end_of_times, required=True, index=True)
+  comment = Field(Unicode('256'))
+  
+  class Admin(EntityAdmin):
+    name = 'Address'
+    list_display = ['address', 'comment']
+    fields = ['address', 'comment', 'from_date', 'thru_date']    
