@@ -75,7 +75,7 @@ class ModelThread(threading.Thread):
       logger.debug('start handling requests')
       while True:
         try:
-          (event, request, response) = self._request_queue.get()
+          (event, request, response, exception) = self._request_queue.get()
           logger.debug('start handling request')
           self._response_signaler.startProcessingRequest()
           result = request()
@@ -87,6 +87,9 @@ class ModelThread(threading.Thread):
           logger.debug('finished handling request')
         except Exception, e:
           logger.exception(e)
+          self._response_queue.put((e, exception))
+          self._response_signaler.responseAvailable()
+          
     except Exception, e:
       logger.exception(e)
     except:
@@ -105,7 +108,7 @@ class ModelThread(threading.Thread):
     except Queue.Empty, e:
       pass
       
-  def post(self, request, response=lambda result:None):
+  def post(self, request, response=lambda result:None, exception=lambda exc:None):
     """Post a request to the model thread, request should be
     a function that takes no arguments.  The request function
     will be called within the model thread.  When the request
@@ -116,11 +119,13 @@ class ModelThread(threading.Thread):
     @param response: function to be called within the gui thread, when
     the request function is finished, the response function takes
     as its argument the result of the request function
+    @param exception: function to be called in case of an exception in the
+    request function
     @return a threading Event object which will be set to True when the
     request function is finished and the response has been put on the queue
     """
     event = threading.Event()
-    self._request_queue.put_nowait((event, request, response))
+    self._request_queue.put_nowait((event, request, response, exception))
     return event
 
 _model_thread_ = []

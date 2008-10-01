@@ -82,7 +82,7 @@ def okToContinue(widget, func):
   """
   if widget.changed:
     reply = QtGui.QMessageBox.question(widget,
-                  widget.tr('Cantate Project - Unsaved Changes'),
+                  widget.tr('Unsaved Changes'),
                   widget.tr('Save unsaved changes?'),
                   QtGui.QMessageBox.Yes|
                   QtGui.QMessageBox.No|

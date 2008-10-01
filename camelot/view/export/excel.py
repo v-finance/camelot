@@ -137,48 +137,44 @@ class ExcelExport:
       ws.write(0, 0, title, titleStyle)                   # Writing Title
       ws.col(0).width = len(title) * 400                  # Setting cell width
       ## Writing Header
-      ws.write(2, 0 , 'Serial No.', topleftCellStyle)
-      if ( ws.col(0).width < ws.col(0).width * 300):
-          ws.col(0).width = len('Serial No.') * 300       # Setting cell width
       myDataTypeDict = {}            # dictionary of datatype, {columnnumber, Datatype}
       myPrecisionDict = {}        # dictionary of precision , {columnnumber, Precision}
       myLengthDict = {}           # dictionary of length , {columnnumber, length}
       myFormatDict = {}           # dictionary of dateformat , {columnnumber, format}
-      n = 0
-      for desc in headerList:
+      for n,desc in enumerate(headerList):
           lst =  desc[1]
-          if n+1 != len(headerList):      # Setting Border
-              ws.write(2, n + 1, lst['name'], headerStyle)
+          if n==0:
+            ws.write(2, n, lst['name'], topleftCellStyle)
+          elif n==len(headerList)-1:
+            ws.write(2, n, lst['name'], toprightCellStyle)
           else:
-              ws.write(2, n + 1, lst['name'], toprightCellStyle)
+              ws.write(2, n, lst['name'], headerStyle)
           if len(lst['name']) < 8:
-              ws.col(n + 1).width = 8 *  375
+              ws.col(n).width = 8 *  375
           else:
-              ws.col(n + 1).width = len(lst['name']) *  375
-          myDataTypeDict[ n + 1 ] = lst["python_type"]
+              ws.col(n).width = len(lst['name']) *  375
+          myDataTypeDict[ n ] = lst["python_type"]
           if lst["python_type"] == float:
-              myPrecisionDict [ n + 1 ] = lst["precision"]    #Populating precision dictionary
+              myPrecisionDict [ n ] = lst["precision"]    #Populating precision dictionary
           elif lst["python_type"] == datetime.date:
-              myFormatDict [ n + 1 ] = lst["format"]          #Populating date Format dictionary
+              myFormatDict [ n ] = lst["format"]          #Populating date Format dictionary
           elif lst["python_type"] == str:
-              myLengthDict [ n + 1 ] = lst["length"]          #Populating Column Length dictionary
-          n = n + 1
+              myLengthDict [ n ] = lst["length"]          #Populating Column Length dictionary
       ## Writing Data
       row = 3
-      column = 1
+      column = 0
       valueAddedInSize = 0
       formatStr = '0'
       for dictCounter in dataList:                       # iterating the dataList, having dictionary
-          column = 1
+          column = 0
           cellStyle.num_format_str = '0'
-          if row - 2 != len(dataList):
-              ws.write(row , 0, row - 2 , leftCellStyle)
-          else:
-              ws.write(row , 0, row - 2 , bottomleftCellStyle)
           for i in range( 0 , len(dictCounter)): #for i in dictCounter:
               valueAddedInSize = 0
               val = dictCounter[i]
               if val != None:
+                  if not isinstance(val,(str,unicode,int,float,datetime.datetime,datetime.time,datetime.date,
+                                         ExcelFormula.Formula) ):
+                    val = unicode(val)
                   if myDataTypeDict.has_key(column) == True:
                       if myLengthDict.get(column) != None:
                           if len(val) > myLengthDict[ column ]:
@@ -203,17 +199,25 @@ class ExcelExport:
                   bottomCellStyle.num_format_str = formatStr
                   rightCellStyle.num_format_str = formatStr
                   bottomrightCellStyle.num_format_str = formatStr
+                  leftCellStyle.num_format_str = formatStr
+                  bottomleftCellStyle.num_format_str = formatStr
               elif val == None:
                   val = ' '
-              if  i + 1 == len(dictCounter) and row - 2 != len(dataList):            #right column
-                  ws.write(row , column, val , rightCellStyle)
-              elif row - 2  == len(dataList)  and i  < len(dictCounter) - 1:         #Bottom Row
-                  ws.write(row , column, val , bottomCellStyle)
-              elif row - 2  == len(dataList)  and i  == len(dictCounter) - 1 :       #Bottom Right
+              if row - 2  == len(dataList):
+                #we re at the bottom row
+                if i==0:
+                  ws.write(row , column, val , bottomleftCellStyle)
+                elif i  == len(dictCounter)-1:
                   ws.write(row , column, val , bottomrightCellStyle)
+                else:
+                  ws.write(row , column, val , bottomCellStyle)
               else:
-                  if val != None:
-                      ws.write(row , column, val , cellStyle)
+                if i==0:
+                  ws.write(row , column, val , leftCellStyle)
+                elif  i + 1 == len(dictCounter) and row - 2 != len(dataList):            #right column
+                  ws.write(row , column, val , rightCellStyle)
+                else:
+                  ws.write(row , column, val , cellStyle)
               if ws.col(column).width < (len(unicode( val )) )* 300:
                   ws.col(column).width = (len(unicode( val )) + valueAddedInSize )* 300
               column = column + 1

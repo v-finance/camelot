@@ -134,7 +134,7 @@ class Organization(Party):
   
   class Admin(Party.Admin):
     name = 'Organizations'
-    section = 'configuration'
+    section = 'relations'
     list_display = ['name', 'tax_id',]
     fields = ['name', 'tax_id',] + Party.Admin.fields + ['employees']
       
@@ -181,7 +181,7 @@ class Person(Party):
 
   class Admin(Party.Admin):
     name = 'Persons'
-    section = 'configuration'
+    section = 'relations'
     list_display = ['username', 'first_name', 'last_name', ]
     fields = ['username', 'first_name', 'last_name', 'birthdate', 'social_security_number', 'passport_number', 
               'passport_expiry_date', 'is_staff', 'is_active', 'is_superuser',
