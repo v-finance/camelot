@@ -198,7 +198,16 @@ class GeographicBoundary(Entity):
     
 class Country(GeographicBoundary):
   using_options(tablename='geographic_boundary_country', inheritance='multi')
-    
+  
+  @classmethod
+  def getOrCreate(cls, code, name):
+    country = Country.query.filter_by(code=code).first()
+    if not country:
+      from elixir import session
+      country = Country(code=code, name=name)
+      session.flush([country])
+    return country
+  
   class Admin(EntityAdmin):
     name = 'Countries'
     list_display = ['name', 'code']
@@ -206,6 +215,15 @@ class Country(GeographicBoundary):
 class City(GeographicBoundary):
   using_options(tablename='geographic_boundary_city', inheritance='multi')
   country = ManyToOne('Country', required=True, ondelete='cascade', onupdate='cascade')
+  
+  @classmethod
+  def getOrCreate(cls, country, code, name):
+    city = City.query.filter_by(code=code, country=country).first()
+    if not city:
+      from elixir import session
+      city = City(code=code, name=name, country=country)
+      session.flush([city])
+    return city
   
   class Admin(EntityAdmin):
     name = 'Cities'
@@ -216,6 +234,7 @@ class Address(Entity):
   street1 = Field(Unicode('128'), required=True)
   street2 = Field(Unicode('128'))
   city = ManyToOne('City', required=True, ondelete='cascade', onupdate='cascade')
+  is_synchronized('synchronized', lazy=True)
   
   def __unicode__(self):
     return u'%s, %s'%(self.street1, self.city)
