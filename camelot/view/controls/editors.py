@@ -63,7 +63,7 @@ class DateEditor(QtGui.QDateEdit):
     self.setCalendarPopup(True)
 
   def python_to_qt(self, value):
-    return QtCore.QDate(value.day, value.month, value.year)
+    return QtCore.QDate(value.year, value.month, value.day)
 
   def qt_to_python(self, value):
     import datetime

@@ -178,6 +178,7 @@ class EntityAdmin(object):
         python_type = _sqlalchemy_to_python_type_.get(type.__class__, default)
         attributes = python_type(type)
         attributes['nullable'] = property.columns[0].nullable 
+        attributes['default'] = property.columns[0].default
       elif isinstance(property, orm.properties.PropertyLoader):
         target = property._get_target_class()
         fk = property.foreign_keys

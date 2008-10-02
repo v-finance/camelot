@@ -196,12 +196,14 @@ class DateColumnDelegate(QtGui.QItemDelegate):
                minimum=datetime.date.min,
                maximum=datetime.date.max,
                format='dd/MM/yyyy',
+               default=None,
                parent=None):
 
     super(DateColumnDelegate, self).__init__(parent)
     self.minimum = minimum
     self.maximum = maximum
     self.format = format
+    self.default = default
 
   def createEditor(self, parent, option, index):
     from camelot.view.controls.editors import DateEditor
@@ -210,18 +212,19 @@ class DateColumnDelegate(QtGui.QItemDelegate):
 
   def setEditorData(self, editor, index):
     value = index.model().data(index, Qt.EditRole).toDate()
-    print value
     if value:
       editor.setDate(value)
     else:
-      print 'got no date'
-      editor.setDate(QtCore.QDate(0,0,0))
+      if self.default:
+        value = self.default.execute()
+        editor.setDate(QtCore.QDate(value.year,value.month,value.day))
+      else:
+        editor.setDate(QtCore.QDate(0,0,0))
 
   def setModelData(self, editor, model, index):
     value = editor.date()
     d = datetime.date(value.year(), value.month(), value.day())
     model.setData(index, create_constant_function(d))
-
 
 class CodeColumnDelegate(QtGui.QItemDelegate):
 
@@ -292,7 +295,6 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     editor.setEntity(lambda: index.data(Qt.EditRole).toPyObject())
 
   def setModelData(self, editor, model, index):
-    print 'Many2OneColumnDelegate Set model data called'
     model.setData(index, editor.entity_instance_getter)
 
 class One2ManyColumnDelegate(QtGui.QItemDelegate):
