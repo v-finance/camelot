@@ -409,12 +409,10 @@ class EntityAdmin(object):
                                       self.model.columns_getter(),
                                       self.model.getItemDelegate()))
 
-        def getEntityAndActions():
-          entity = self.model._get_object(index)
-          actions = admin.getFormActions(entity)
-          return entity, actions
+        def getActions():
+          return admin.getFormActions(None)
 
-        admin.mt.post(getEntityAndActions, self.setEntityAndActions)
+        admin.mt.post(getActions, self.setActions)
 
       def dataChanged(self, index_from, index_to):
         #@TODO: only revert if this form is in the changed range
@@ -446,14 +444,15 @@ class EntityAdmin(object):
         self.scroll_area.setWidget(self.form_widget)
         self.scroll_area.setWidgetResizable(True)
 
-      def setEntityAndActions(self, result):
-        entity, actions = result
+      def entity_getter(self):
+        return self.model._get_object(self.widget_mapper.currentIndex())
+      
+      def setActions(self, actions):
         if actions:
           from controls.actions import ActionsBox
           logger.debug('setting Actions')
-          self.actions_widget = ActionsBox(self, admin.mt)
+          self.actions_widget = ActionsBox(self, admin.mt, self.entity_getter)
           self.actions_widget.setActions(actions)
-          self.actions_widget.setEntity(entity)
           self.widget_layout.insertWidget(1, self.actions_widget)
 
       def validateClose(self):
@@ -516,11 +515,9 @@ class EntityAdmin(object):
     class SelectView(TableView):
 
       def __init__(self, admin, parent):
-        TableView.__init__(self, admin, parent)
+        tableview = TableView.__init__(self, admin, parent)
         self.entity_selected_signal = SIGNAL("entity_selected")
-        self.connect(self.table.verticalHeader(),
-                     SIGNAL('sectionClicked(int)'),
-                     self.sectionClicked)
+        self.connect(tableview, SIGNAL('row_selected'), self.sectionClicked)
 
       def sectionClicked(self, index):
         # table model will be set by the model thread, we can't decently select
@@ -557,21 +554,19 @@ class EntityAdmin(object):
 
       def openForm(index):
         from camelot.view.workspace import get_workspace, key_from_query
-        model = QueryTableProxy(self,
+        model = QueryTableProxy(tableview.admin,
                                 tableview.table_model.query,
-                                self.getFields,
+                                tableview.admin.getFields,
                                 max_number_of_rows=1)
         title = u'%s'%(self.getName())
 
-        formview = self.createFormView(title, model, index, parent)
+        formview = tableview.admin.createFormView(title, model, index, parent)
         get_workspace().addWindow('form', formview)
         formview.show()
 
       return openForm
 
-    tableview.connect(tableview.table.verticalHeader(),
-                      SIGNAL('sectionClicked(int)'),
-                      createOpenForm(self, tableview))
+    tableview.connect(tableview, SIGNAL('row_selected'), createOpenForm(self, tableview))
 
     return tableview
 

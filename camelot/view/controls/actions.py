@@ -40,16 +40,17 @@ from camelot.view.remote_signals import get_signal_handler
 class ActionsBox(QtGui.QGroupBox):
   """A box containing actions to be applied to a form view"""
 
-  def __init__(self, parent, model_thread):
+  def __init__(self, parent, model_thread, entity_getter):
     logger.debug('create actions box')
     QtGui.QGroupBox.__init__(self, _('Actions'), parent)
     self.group = QtGui.QButtonGroup()
     self.mt = model_thread
     self.rsh = get_signal_handler()
+    self.entity_getter = entity_getter
     self.connect(self.group, QtCore.SIGNAL('buttonPressed(int)'), self.executeAction)
 
   def setActions(self, actions):
-    logger.debug('setting actions')
+    logger.debug('setting actions to %s'%str(actions))
     self.actions = []
     layout = QtGui.QVBoxLayout()
     for i,(name,functor) in enumerate(actions):
@@ -60,16 +61,14 @@ class ActionsBox(QtGui.QGroupBox):
     layout.addStretch()
     self.setLayout(layout)
     
-  def setEntity(self, entity):
-    self.entity = entity
-    
   def executeAction(self, button_id):
     
     def execute_and_flush():
       from elixir import session
-      self.actions[button_id][1](self.entity)
-      session.flush([self.entity])
-      self.rsh.sendEntityUpdate(self.entity)
+      entity = self.entity_getter()
+      self.actions[button_id][1](entity)
+      session.flush([entity])
+      self.rsh.sendEntityUpdate(entity)
       
     def executed(result):
       logger.debug('action %i executed'%button_id)

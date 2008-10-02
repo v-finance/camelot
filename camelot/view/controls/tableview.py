@@ -19,7 +19,8 @@ class QueryTable(QtGui.QTableView):
     self.horizontalHeader().setClickable(False)
 
 class TableView(QtGui.QWidget):
-
+  """emits the row_selected signal when a row has been selected"""
+  
   def __init__(self, admin, parent=None):
     from search import SimpleSearchControl
     from inheritance import SubclassTree
@@ -48,13 +49,16 @@ class TableView(QtGui.QWidget):
     self.setLayout(self.widget_layout)
     self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
+  def sectionClicked(self, section):
+    self.emit(SIGNAL('row_selected'), section)
+              
   def setSubclass(self, admin):
     """Switch to a different subclass, where admin is the admin object of the
     subclass"""
     self.admin = admin
-#    if self.table:
-#      self.table.deleteLater()
-#      self.table_model.deleteLater()
+    if self.table:
+      self.table.deleteLater()
+      self.table_model.deleteLater()
     self.table = QueryTable()
     # We create the table first with only 10 rows, to be able resize
     # the columns to the contents without much processing
@@ -62,7 +66,9 @@ class TableView(QtGui.QWidget):
                                        admin.entity.query.limit(10),
                                        admin.getColumns)
     self.table.setModel(self.table_model)
+    self.connect(self.table.verticalHeader(), SIGNAL('sectionClicked(int)'), self.sectionClicked)     
     self.table_layout.insertWidget(1, self.table)
+
 
     def update_delegates(*args):
       self.table.setItemDelegate(self.table_model.getItemDelegate())
