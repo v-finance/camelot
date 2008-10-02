@@ -210,7 +210,12 @@ class DateColumnDelegate(QtGui.QItemDelegate):
 
   def setEditorData(self, editor, index):
     value = index.model().data(index, Qt.EditRole).toDate()
-    editor.setDate(value)
+    print value
+    if value:
+      editor.setDate(value)
+    else:
+      print 'got no date'
+      editor.setDate(QtCore.QDate(0,0,0))
 
   def setModelData(self, editor, model, index):
     value = editor.date()
@@ -229,12 +234,12 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
 
   def setEditorData(self, editor, index):
     value = index.data(Qt.EditRole).toPyObject()
+    editor.index = index
     if value:
       for part_editor, part in zip(editor.part_editors, value):
         part_editor.setText(unicode(part))
 
   def setModelData(self, editor, model, index):
-    print 'Set model data called !!!'
     from camelot.types import Code
     value = []
     for part in editor.part_editors:
@@ -283,13 +288,12 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     return editor
 
   def setEditorData(self, editor, index):
+    editor.index = index
     editor.setEntity(lambda: index.data(Qt.EditRole).toPyObject())
 
   def setModelData(self, editor, model, index):
+    print 'Many2OneColumnDelegate Set model data called'
     model.setData(index, editor.entity_instance_getter)
-    
-  def commit(self, widget):
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), widget)
 
 class One2ManyColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""

@@ -159,6 +159,7 @@ class ExcelExport:
           elif lst["python_type"] == datetime.date:
               myFormatDict [ n ] = lst["format"]          #Populating date Format dictionary
           elif lst["python_type"] == str:
+            if 'length' in lst:
               myLengthDict [ n ] = lst["length"]          #Populating Column Length dictionary
       ## Writing Data
       row = 3

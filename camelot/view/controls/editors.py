@@ -112,18 +112,21 @@ class CodeEditor(QtGui.QWidget):
     self.parts = parts
     self.part_editors = []
     self.delegate = delegate
+    self.index = None
     layout = QtGui.QHBoxLayout()
     #layout.setSpacing(0)
     layout.setMargin(0)
     for part in parts:
       editor = QtGui.QLineEdit()
       editor.setInputMask(part)
+      editor.installEventFilter(self)
       self.part_editors.append(editor)
       layout.addWidget(editor)
       self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
     self.setLayout(layout)
   def editingFinished(self):
-    self.delegate.editingFinished(self)
+    self.emit(QtCore.SIGNAL('editingFinished()'))
+    self.delegate.setModelData(self, self.index.model(), self.index)
         
 class Many2OneEditor(QtGui.QWidget):
   """Widget for editing many 2 one relations
@@ -132,6 +135,7 @@ class Many2OneEditor(QtGui.QWidget):
   def __init__(self, entity_admin, delegate, parent=None):
     super(Many2OneEditor, self).__init__(parent)
     self.admin = entity_admin
+    self.index = None
     self.entity_instance_getter = None
     self.entity_set = False
     self.layout = QtGui.QHBoxLayout()
@@ -220,7 +224,7 @@ class Many2OneEditor(QtGui.QWidget):
       else:
         self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
         self.entity_set = False
-      self.delegate.commit(self)
+      self.delegate.setModelData(self, self.index.model(), self.index)
       
     self.admin.mt.post(get_instance_represenation, set_instance_represenation)
     

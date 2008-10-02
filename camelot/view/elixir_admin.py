@@ -499,7 +499,7 @@ class EntityAdmin(object):
           
     return FormView()
 
-  def createSelectView(self, query, parent=None):
+  def createSelectView(admin, query, parent=None):
     """
     Returns a QT widget that can be used to select an element form a query,
 
@@ -512,12 +512,14 @@ class EntityAdmin(object):
     from PyQt4 import QtCore
     from PyQt4.QtCore import SIGNAL
 
+    
+    
     class SelectView(TableView):
 
-      def __init__(self, admin, parent):
-        tableview = TableView.__init__(self, admin, parent)
+      def __init__(self, admin, parent):  
+        TableView.__init__(self, admin, parent)  
         self.entity_selected_signal = SIGNAL("entity_selected")
-        self.connect(tableview, SIGNAL('row_selected'), self.sectionClicked)
+        self.connect(self, SIGNAL('row_selected'), self.sectionClicked)
 
       def sectionClicked(self, index):
         # table model will be set by the model thread, we can't decently select
@@ -533,7 +535,7 @@ class EntityAdmin(object):
   
           self.close()
 
-    return SelectView(self, parent)
+    return SelectView(admin, parent)
 
   def createTableView(self, query, parent=None):
     """
