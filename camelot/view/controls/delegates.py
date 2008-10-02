@@ -292,7 +292,7 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
 
   def setEditorData(self, editor, index):
     editor.index = index
-    editor.setEntity(lambda: index.data(Qt.EditRole).toPyObject())
+    editor.setEntity(lambda: index.data(Qt.EditRole).toPyObject(), propagate=False)
 
   def setModelData(self, editor, model, index):
     model.setData(index, editor.entity_instance_getter)

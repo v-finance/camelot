@@ -199,7 +199,7 @@ class Many2OneEditor(QtGui.QWidget):
       workspace.addWindow(key_from_entity(self.admin.entity, 0), form)
       form.show()
     
-  def setEntity(self, entity_instance_getter):
+  def setEntity(self, entity_instance_getter, propagate=True):
     
     def create_instance_getter(entity_instance):
       return lambda:entity_instance
@@ -224,7 +224,8 @@ class Many2OneEditor(QtGui.QWidget):
       else:
         self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
         self.entity_set = False
-      self.delegate.setModelData(self, self.index.model(), self.index)
+      if propagate:
+        self.delegate.setModelData(self, self.index.model(), self.index)
       
     self.admin.mt.post(get_instance_represenation, set_instance_represenation)
     
