@@ -70,7 +70,7 @@ class PartyRelationship(Entity):
   
 class EmployerEmployee(PartyRelationship):
   """Relation from employer to employee"""
-  using_options(tablename='party_relationship_employer_employee', inheritance='multi')
+  using_options(tablename='party_relationship_empl', inheritance='multi')
   established_from = ManyToOne('Organization', required=True, ondelete='cascade', onupdate='cascade')
   established_to = ManyToOne('Person', required=True, ondelete='cascade', onupdate='cascade')
   
@@ -88,7 +88,7 @@ class EmployerEmployee(PartyRelationship):
     
 class SupplierCustomer(PartyRelationship):
   """Relation from supplier to customer"""
-  using_options(tablename='party_relationship_supplier_customer', inheritance='multi')
+  using_options(tablename='party_relationship_suppl', inheritance='multi')
   established_from = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
   established_to = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
   
