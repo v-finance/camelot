@@ -56,6 +56,8 @@ class Validator(QtCore.QObject):
             is_null = True
           elif (column[1]['widget']=='code') and (sum(len(c) for c in value)==0):
             is_null = True
+          elif (column[1]['widget']=='str') and (len(value)==0):
+            is_null = True
           if is_null:
             messages.append(u'%s is a required field'%(column[1]['name'])) 
       self.message_cache.add_data(row, entity_instance.id, messages)

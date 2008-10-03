@@ -205,6 +205,8 @@ class TableView(QtGui.QWidget):
                 args.append(c.like(['%'] + codes + ['%']))
                 args.append(c.like(['%'] + codes))
                 args.append(c.like(codes + ['%']))
+              elif issubclass(c.type.__class__, camelot.types.Image):
+                continue
               elif issubclass(c.type.__class__, (Unicode, )) or \
                               (hasattr(c.type, 'impl') and \
                                issubclass(c.type.impl.__class__, (Unicode, ))):

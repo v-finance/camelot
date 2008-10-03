@@ -43,8 +43,8 @@ headerFont.bold = True          # Setting column header font to bold
 cellFont.bold = False           # Setting cell font to bold
 
 titleFont.height = 240          # 12*20 = 240 Font Size
-headerFont.height = 220         # 11*20 = 240 Font Size
-cellFont.height = 220           # 11*20 = 240 Font Size
+headerFont.height = 220         # 10*20 = 240 Font Size
+cellFont.height = 220           # 10*20 = 240 Font Size
 
 brdLeft = Borders()                # Defining border which is around header
 brdLeft.left = 0x01
