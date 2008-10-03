@@ -214,62 +214,6 @@ class PaneButton(QtGui.QWidget):
                 (self.index, self.label.text()))
 
 
-#class PaneTree(QtGui.QTreeWidget):
-#  """Navigation pane tree widget"""
-
-#  def __init__(self, parent=None):
-#    super(PaneTree, self).__init__(parent)
-#    self.setSelectionBehavior(QtGui.QAbstractItemView.SelectItems)
-#    # we track mouse movement when no button is pressed
-#    self.setMouseTracking(True)
-#    self.parent = parent
-
-#    if QT_MAJOR_VERSION > 4.3:
-#      self.setHeaderHidden(True)
-#    else:
-#      self.setHeaderLabels([''])
-  
-#  def mousePressEvent(self, event):
-#    if event.button() == Qt.RightButton:
-#      self.emit(QtCore.SIGNAL('customContextMenuRequested(const QPoint &)'),
-#                event.pos())
-#      event.accept()
-#    else:
-#      QtGui.QTreeWidget.mousePressEvent(self, event)
-
-#  def leaveEvent(self, event):
-#    for item in self.parent.treeitems:
-#      item._underline(False)
-
-#  def mouseMoveEvent(self, event):
-#    for item in self.parent.treeitems:
-#      item._underline(False)
-#
-#    item = self.itemAt(self.mapFromGlobal(self.cursor().pos()))
-#    if item:
-#      item._underline(True)
-
-#  def focusInEvent(self, event):
-#    item = self.itemAt(self.mapFromGlobal(self.cursor().pos()))
-#    if item:
-#      column = 0
-#      flag = QtGui.QItemSelectionModel.SelectCurrent
-#      self.setCurrentItem(item, column, flag)
-
-#class PaneTreeItem(QtGui.QTreeWidgetItem):
-#  """Navigation pane tree item widget"""
-#
-#  def __init__(self, parent, columns_names_list):
-#    super(PaneTreeItem, self).__init__(parent, columns_names_list)
-#    column = 0
-#    self.setIcon(column, QtGui.QIcon(art.icon16('actions/window-new')))
-#    
-#  def _underline(self, enable=False):
-#    column = 0
-#    font = self.font(column)
-#    font.setUnderline(enable)
-#    self.setFont(column, font)
-
 class NavigationPane(QtGui.QDockWidget):
   """ms office-like navigation pane in Qt"""
   
@@ -410,4 +354,3 @@ class NavigationPane(QtGui.QDockWidget):
     #column = 0
     #self.parent.createMdiChild(item, column)
     self.parent.createMdiChild(item)
-
