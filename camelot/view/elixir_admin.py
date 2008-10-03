@@ -490,7 +490,23 @@ class EntityAdmin(object):
           else:
             return True
         return True
-                  
+
+      def viewFirst(self):
+        """select model's first row"""
+        self.widget_mapper.toFirst()
+
+      def viewLast(self):
+        """select model's last row"""
+        self.widget_mapper.toLast()
+
+      def viewNext(self):
+        """select model's next row"""
+        self.widget_mapper.toNext()
+
+      def viewPrevious(self):
+        """select model's previous row"""
+        self.widget_mapper.toPrevious()            
+
       def closeEvent(self, event):
         logger.debug('close event')
         if self.validateClose():

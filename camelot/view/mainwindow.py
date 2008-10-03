@@ -350,42 +350,27 @@ class MainWindow(QtGui.QMainWindow):
     pass
 
   def viewFirst(self):
+    """selects view's first row"""
     active = self.activeMdiChild()
-    cls = active.__class__.__name__
-    if cls == 'TableView':
-      active.selectTableRow(0)
-    elif cls == 'FormView':
-      active.widget_mapper.toFirst()
+    active.viewFirst()
 
   def viewLast(self):
+    """selects view's last row"""
     active = self.activeMdiChild()
-    cls = active.__class__.__name__
-    if cls == 'TableView':
-      active.selectTableRow(active.table_model.rowCount()-1)
-    elif cls == 'FormView':
-      active.widget_mapper.toLast()
+    active.viewLast()
 
   def viewNext(self):
+    """selects view's next row"""
     active = self.activeMdiChild()
-    cls = active.__class__.__name__
-    if cls == 'TableView':
-      first = active.selectedTableIndexes()[0]
-      next = (first.row()+1) % active.table_model.rowCount()
-      active.selectTableRow(next)
-    elif active.__class__.__name__ == 'FormView':
-      active.widget_mapper.toNext()
+    active.viewNext()
 
   def viewPrevious(self):
+    """selects view's previous row"""
     active = self.activeMdiChild()
-    cls = active.__class__.__name__
-    if cls == 'TableView':
-      first = active.selectedTableIndexes()[0]
-      prev = (first.row()-1) % active.table_model.rowCount()
-      active.selectTableRow(prev)
-    elif cls == 'FormView':
-      active.widget_mapper.toPrevious()
+    active.viewPrevious()
 
   def exportToExcel(self):
+    """creates an excel file from the view"""
 
     mt = get_model_thread()
 
