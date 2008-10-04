@@ -329,6 +329,21 @@ class BoolEditor(QtGui.QCheckBox):
     super(BoolEditor, self).__init__(parent)
 
 class ImageEditor(QtGui.QLabel):
-  pass
+  def __init__(self, parent):
+    QtGui.QLabel.__init__(self, parent)
+    self.setAcceptDrops(True)
+    
+  def dragEnterEvent(self, event):
+    event.acceptProposedAction()
+
+  def dragMoveEvent(self, event):
+    event.acceptProposedAction()
+
+  def dropEvent(self, event):
+    mimeData = event.mimeData()
+    if mimeData.hasUrls():
+       urls = map(lambda x: str(x.toString())[8:], event.mimeData().urls())
+       for filename in urls:
+         print filename, 'dropped'
 
     
