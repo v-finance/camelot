@@ -60,11 +60,14 @@ def RowDataFromObject(obj, columns):
   return row_data
   
 def RowDataAsUnicode(row_data):
-  
+  import datetime
+
   def unicode_or_none(data):
     if data:
       if isinstance(data, list):
         return '.'.join(data)
+      elif isinstance(data, datetime.date):
+        return data.strftime('%d/%m/%Y')
       return unicode(data)
     return data
   
@@ -268,7 +271,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         delegate = delegates.IntegerColumnDelegate(0, 100000)
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == datetime.date:
-        delegate = delegates. DateColumnDelegate(datetime.date.min, datetime.date.max, 'dd/MM/yyyy', c[1].get('default', None))
+        delegate = delegates.DateColumnDelegate('dd/MM/yyyy', c[1].get('default', None))
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == float:
         delegate = delegates.FloatColumnDelegate(-100000.0, 100000.0)
@@ -311,6 +314,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     return QtCore.QAbstractTableModel.headerData(self, section, orientation, role)
   
   def data(self, index, role):
+    import datetime
     if not index.isValid() or \
        not (0 <= index.row() <= self.rowCount(index)) or \
        not (0 <= index.column() <= self.columnCount(index)):
@@ -365,7 +369,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             # update the cache
             row_data = RowDataFromObject(o, self.columns_getter())
             self.cache[Qt.EditRole].add_data(row, o.id, row_data)
-            self.cache[Qt.DisplayRole].add_data(row, o.id,  RowDataAsUnicode(row_data))
+            self.cache[Qt.DisplayRole].add_data(row, o.id, RowDataAsUnicode(row_data))
             if self.flush_changes and self.validator.isValid(row):
               # save the state before the update
               session.flush([o])
