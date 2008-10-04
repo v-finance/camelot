@@ -50,6 +50,7 @@ def main():
   from camelot.view.application_admin import ApplicationAdmin
 
   admin = ApplicationAdmin([('movies',('Movies', art.icon24('mimetypes/x-office-presentation'))),
+                            ('relations', ('Relations', art.icon24('apps/system-users'))),
                             ('configuration',('Configuration', art.icon24('categories/preferences-system'))),]
                            )
   from camelot.model.memento import Memento
