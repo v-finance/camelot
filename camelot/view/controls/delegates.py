@@ -193,21 +193,17 @@ class DateColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for date values"""
 
   def __init__(self,
-               minimum=datetime.date.min,
-               maximum=datetime.date.max,
                format='dd/MM/yyyy',
                default=None,
                parent=None):
 
     super(DateColumnDelegate, self).__init__(parent)
-    self.minimum = minimum
-    self.maximum = maximum
     self.format = format
     self.default = default
 
   def createEditor(self, parent, option, index):
     from camelot.view.controls.editors import DateEditor
-    editor = DateEditor(self.minimum, self.maximum, self.format, parent)
+    editor = DateEditor(self.format, parent)
     return editor
 
   def setEditorData(self, editor, index):
@@ -217,14 +213,19 @@ class DateColumnDelegate(QtGui.QItemDelegate):
     else:
       if self.default:
         value = self.default.execute()
-        editor.setDate(QtCore.QDate(value.year,value.month,value.day))
+        editor.setDate(QtCore.QDate(value.year, value.month, value.day))
       else:
-        editor.setDate(QtCore.QDate(0,0,0))
+        editor.setDate(editor.minimumDate())
 
   def setModelData(self, editor, model, index):
     value = editor.date()
-    d = datetime.date(value.year(), value.month(), value.day())
-    model.setData(index, create_constant_function(d))
+    
+    if value == editor.minimumDate():
+      model.setData(index, None)
+    else:
+      d = datetime.date(value.year(), value.month(), value.day())
+      model.setData(index, create_constant_function(d))
+
 
 class CodeColumnDelegate(QtGui.QItemDelegate):
 
