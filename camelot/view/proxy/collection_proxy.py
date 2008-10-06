@@ -327,6 +327,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         logger.error('Programming error, could not find data of column %s in %s'%(index.column(), str(data)))
         value = None
       return QtCore.QVariant(value)
+    elif role == Qt.SizeHintRole:
+      if self.columns_getter()[index.column()][1]['python_type'] == \
+         datetime.date:
+        from camelot.view.controls.editors import DateEditor
+        editor = DateEditor()
+        return QtCore.QVariant(editor.sizeHint())
     elif role == Qt.ForegroundRole:
       #if not self.columns_getter()[index.column()][1]['nullable']:
       #  return QtCore.QVariant(QtGui.QColor(Qt.red))
