@@ -50,29 +50,63 @@ class PlainTextEditor(QtGui.QLineEdit):
   def __init__(self, parent=None):
     super(PlainTextEditor, self).__init__(parent)
 
-class DateEditor(QtGui.QDateEdit):
+class DateEditor(QtGui.QWidget):
   """Widget for editing date values"""
-  def __init__(self, minimum, maximum, format, parent=None):
+  def __init__(self, format='dd/MM/yyyy', parent=None):
     super(DateEditor, self).__init__(parent)
     self.format = format
-    self.minimum = minimum
-    self.maximum = maximum
-    self.set_date_range()
-    self.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
-    self.setDisplayFormat(QtCore.QString(format))
-    self.setCalendarPopup(True)
+    self.qdateedit = QtGui.QDateEdit(self)
+    self.nullbutton = QtGui.QPushButton(self)
+    self.nullbutton.setText('Null')
+    self.nullbutton.setCheckable(True)
+    
+    self.qdateedit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+    self.qdateedit.setDisplayFormat(QtCore.QString(format))
+    self.qdateedit.setSpecialValueText('null')
 
-  def python_to_qt(self, value):
+    self.hlayout = QtGui.QHBoxLayout()
+    self.hlayout.addWidget(self.qdateedit)
+    self.hlayout.addWidget(self.nullbutton)
+    self.hlayout.setContentsMargins(0, 0, 0, 0)
+    self.hlayout.setMargin(0)
+    self.hlayout.setSpacing(0)
+
+    self.setContentsMargins(0, 0, 0, 0)
+    self.setLayout(self.hlayout)
+
+    self.connect(self.nullbutton,
+                 QtCore.SIGNAL('toggled()'),
+                 self.setMinimumDate)
+
+    import datetime
+    self.minimum = datetime.date.min
+    self.maximum = datetime.date.max
+    self.set_date_range()
+
+  def _python_to_qt(self, value):
     return QtCore.QDate(value.year, value.month, value.day)
 
-  def qt_to_python(self, value):
+  def _qt_to_python(self, value):
     import datetime
     return datetime.date(value.year(), value.month(), value.day())
   
   def set_date_range(self):
-    qdate_min = self.python_to_qt(self.minimum)
-    qdate_max = self.python_to_qt(self.maximum)
-    self.setDateRange(qdate_min, qdate_max)
+    qdate_min = self._python_to_qt(self.minimum)
+    qdate_max = self._python_to_qt(self.maximum)
+    self.qdateedit.setDateRange(qdate_min, qdate_max)
+
+  def date(self):
+    return self.qdateedit.date()
+
+  def minimumDate(self):
+    return self.qdateedit.minimumDate()
+
+  def setMinimumDate(self):
+    self.qdateedit.setDate(self.minimumDate())
+
+  def setDate(self, date):
+    self.qdateedit.setDate(date)
+
 
 class FloatEditor(QtGui.QDoubleSpinBox):
   """Widget for editing float values"""
