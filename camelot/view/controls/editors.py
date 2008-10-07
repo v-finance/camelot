@@ -53,31 +53,29 @@ class PlainTextEditor(QtGui.QLineEdit):
 
 class DateEditor(QtGui.QWidget):
   """Widget for editing date values"""
-  def __init__(self, format='dd/MM/yyyy', parent=None):
+  def __init__(self, delegate, nullable, format='dd/MM/yyyy', parent=None):
     super(DateEditor, self).__init__(parent)
     self.format = format
+    self.delegate = delegate
+    self.index = None
     self.qdateedit = QtGui.QDateEdit(self)
-    self.nullbutton = QtGui.QPushButton(self)
-    self.nullbutton.setText('Null')
-    self.nullbutton.setCheckable(True)
-    
     self.qdateedit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
     self.qdateedit.setDisplayFormat(QtCore.QString(format))
-    self.qdateedit.setSpecialValueText('null')
-
     self.hlayout = QtGui.QHBoxLayout()
     self.hlayout.addWidget(self.qdateedit)
-    self.hlayout.addWidget(self.nullbutton)
+    
+    if nullable:
+      nullbutton = QtGui.QPushButton( QtGui.QIcon(art.icon16('places/user-trash')), '')
+      self.connect(nullbutton, QtCore.SIGNAL('clicked()'), self.setMinimumDate)
+      self.qdateedit.setSpecialValueText('0/0/0')
+      self.hlayout.addWidget(nullbutton)
+          
     self.hlayout.setContentsMargins(0, 0, 0, 0)
     self.hlayout.setMargin(0)
     self.hlayout.setSpacing(0)
 
     self.setContentsMargins(0, 0, 0, 0)
     self.setLayout(self.hlayout)
-
-    self.connect(self.nullbutton,
-                 QtCore.SIGNAL('toggled()'),
-                 self.setMinimumDate)
 
     import datetime
     self.minimum = datetime.date.min

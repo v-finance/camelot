@@ -274,7 +274,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         delegate = delegates.IntegerColumnDelegate(0, 100000)
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == datetime.date:
-        delegate = delegates.DateColumnDelegate(format='dd/MM/yyyy', default=c[1].get('default', None))
+        delegate = delegates.DateColumnDelegate(format='dd/MM/yyyy', default=c[1].get('default', None), nullable=c[1].get('nullable', False))
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == float:
         delegate = delegates.FloatColumnDelegate(-100000.0, 100000.0)

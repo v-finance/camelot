@@ -195,19 +195,22 @@ class DateColumnDelegate(QtGui.QItemDelegate):
   def __init__(self,
                format='dd/MM/yyyy',
                default=None,
+               nullable=True,
                parent=None):
 
     super(DateColumnDelegate, self).__init__(parent)
     self.format = format
     self.default = default
+    self.nullable = nullable
 
   def createEditor(self, parent, option, index):
     from camelot.view.controls.editors import DateEditor
-    editor = DateEditor(self.format, parent)
+    editor = DateEditor(self, self.nullable, self.format, parent)
     return editor
 
   def setEditorData(self, editor, index):
     value = index.model().data(index, Qt.EditRole).toDate()
+    editor.index = index
     if value:
       editor.setDate(value)
     else:
