@@ -239,9 +239,14 @@ class Address(Entity):
   def __unicode__(self):
     return u'%s, %s'%(self.street1, self.city)
   
+  def showMap(self):
+    from PyQt4 import QtGui, QtCore
+    QtGui.QDesktopServices.openUrl (QtCore.QUrl('http://www.google.be/maps?f=q&source=s_q&geocode=%s&q=%s+%s'%(self.city.country.code, self.street1, self.city.name))) 
+  
   class Admin(EntityAdmin):
     name = 'Addresses'
     list_display = ['street1', 'street2', 'city']
+    form_actions = [('Show map',lambda address:address.showMap())]
   
 class PartyAddressRoleType(Entity):
   using_options(tablename='party_address_role_type')
@@ -256,7 +261,12 @@ class PartyAddress(Entity):
   thru_date = Field(Date(), default=end_of_times, required=True, index=True)
   comment = Field(Unicode('256'))
   
+  def showMap(self):
+    if self.address:
+      self.address.showMap()
+  
   class Admin(EntityAdmin):
     name = 'Address'
     list_display = ['address', 'comment']
-    fields = ['address', 'comment', 'from_date', 'thru_date']    
+    fields = ['address', 'comment', 'from_date', 'thru_date']
+    form_actions = [('Show map',lambda address:address.showMap())]   

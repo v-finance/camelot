@@ -42,7 +42,9 @@ from PyQt4.QtCore import Qt
 
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view import art
+from camelot.view.model_thread import model_function
    
+@model_function
 def RowDataFromObject(obj, columns):
   """Create row data from an object, by fetching its attributes"""
   row_data = []
@@ -135,7 +137,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     be cached in the proxy.  This function will be called inside the model thread.
     """
     self.logger = logger
-    logger.debug('initialize query table')
+    logger.debug('initialize query table for %s'%(admin.getName()))
     QtCore.QAbstractTableModel.__init__(self)
     self.admin = admin
     self.validator = admin.createValidator(self)
@@ -169,6 +171,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     is invalid"""
     return len(self.unflushed_rows)>0
   
+  @model_function
   def _getRowCount(self):
     return len(self.collection_getter())
   
@@ -357,6 +360,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       
       def make_update_function(row, column, value):
         
+        @model_function
         def update_model_and_cache():
           new_value = value()
           logger.debug('set data col %s, row %s to %s'%(row, column, new_value))
@@ -413,6 +417,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
      flags = flags | Qt.ItemIsEditable
     return flags
 
+  @model_function
   def _extend_cache(self, offset, limit):
     """Extend the cache around row"""
     #@TODO : also store the primary key, here we just saved the id
@@ -423,6 +428,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       self.cache[Qt.DisplayRole].add_data(i+offset, o.id, RowDataAsUnicode(row_data))
     return (offset, limit)
         
+  @model_function
   def _get_object(self, row):
     """Get the object corresponding to row"""
     try:
@@ -458,9 +464,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                      lambda interval:self._cache_extended(*interval))
       return empty_row_data
 
+  @model_function
   def remove(self, o):
     self.collection_getter().remove(o)
     
+  @model_function
   def append(self, o):
     self.collection_getter().append(o)
  
@@ -495,24 +503,29 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     
   def insertRow(self, row, entity_instance_getter):
     
-    def create_function():
-      from elixir import session
-      from camelot.model.memento import Create
-      from camelot.model.authentication import getCurrentPerson
-      o = entity_instance_getter()
-      self.append(o)
-      if self.flush_changes:
-        session.flush([o])
-        history = Create(model=self.admin.entity.__name__, 
-                         primary_key=o.id,
-                         person = getCurrentPerson() )
-        session.flush([history])
-        self.rsh.sendEntityCreate(o)
+    def create_insert_function(getter):
+      
+      @model_function
+      def insert_function():
+        from elixir import session
+        from camelot.model.memento import Create
+        from camelot.model.authentication import getCurrentPerson
+        o = getter()
+        self.append(o)
+        if self.flush_changes:
+          session.flush([o])
+          history = Create(model=self.admin.entity.__name__, 
+                           primary_key=o.id,
+                           person = getCurrentPerson() )
+          session.flush([history])
+          self.rsh.sendEntityCreate(o)
+          
+      return insert_function
       
     def emit_changes(*args):
       self.refresh()
   
-    self.mt.post(create_function, emit_changes)
+    self.mt.post(create_insert_function(entity_instance_getter), emit_changes)
         
   def __del__(self):
     logger.warn('delete CollectionProxy')

@@ -47,6 +47,7 @@ class QueryTableProxy(CollectionProxy):
     CollectionProxy.__init__(self, admin, lambda: [], columns_getter,
                              max_number_of_rows=10, edits=None)
 
+  @model_function
   def _getRowCount(self):
     return self.query.count()
 
@@ -63,11 +64,13 @@ class QueryTableProxy(CollectionProxy):
   def remove(self, o):
     pass
     
+  @model_function
   def getData(self):
     """Generator for all the data queried by this proxy"""
     for o in self.query.all():
       yield RowDataFromObject(o, self.columns_getter())
       
+  @model_function
   def _extend_cache(self, offset, limit):
     """Extend the cache around row"""
     q = self.query.offset(offset).limit(limit)
@@ -78,6 +81,7 @@ class QueryTableProxy(CollectionProxy):
       self.cache[Qt.DisplayRole].add_data(i+offset, o.id, RowDataAsUnicode(row_data))
     return (offset, limit)
         
+  @model_function
   def _get_object(self, row):
     """Get the object corresponding to row"""
     try:

@@ -230,10 +230,16 @@ class TableView(QtGui.QWidget):
 
   def rebuildQuery(self):
     """resets the table model query"""
-    query = self.admin.entity.query
-    if self.filters:
-      query = self.filters.decorate_query(query)
-    self.table_model.setQuery(self.search_filter(query))
+    
+    def rebuild_query():
+      query = self.admin.entity.query
+      if self.filters:
+        query = self.filters.decorate_query(query)
+      if self.search_filter:
+        query = self.search_filter(query)
+      self.table_model.setQuery(query)
+      
+    self.admin.mt.post(rebuild_query)
 
   def startSearch(self, text):
     """rebuilds query based on filtering text"""

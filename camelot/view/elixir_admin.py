@@ -25,6 +25,7 @@ logger.setLevel(logging.DEBUG)
 
 import sqlalchemy.types
 import camelot.types
+from camelot.view.model_thread import model_function
 import datetime
 
 _sqlalchemy_to_python_type_ = {
@@ -286,9 +287,6 @@ class EntityAdmin(object):
 
     The returned class has an 'entity_created_signal' that will be fired when a
     a valid new entity was created by the form
-    
-    @param delta_on_new: a function with as single argument the newly created
-    entity instance, this one will be called after a new entity was created 
     """
 
     from PyQt4 import QtCore
@@ -299,6 +297,7 @@ class EntityAdmin(object):
 
     new_object = []
 
+    @model_function
     def collection_getter():
       if not new_object:
         entity_instance = admin.entity()
@@ -329,6 +328,7 @@ class EntityAdmin(object):
             def validate():
               return validator.isValid(0)
             
+            @model_function
             def expunge_object():
               from elixir import session
               for o in new_object:
@@ -467,6 +467,7 @@ class EntityAdmin(object):
             def validate():
               return validator.isValid(self.widget_mapper.currentIndex())
             
+            @model_function
             def refresh_object():
               from elixir import session
               o = model._get_object(self.widget_mapper.currentIndex())

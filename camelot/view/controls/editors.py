@@ -37,6 +37,7 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from camelot.view import art
+from camelot.view.model_thread import model_function
 
 class IntegerEditor(QtGui.QSpinBox):
   """Widget for editing integer values"""
