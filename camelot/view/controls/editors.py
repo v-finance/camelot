@@ -53,7 +53,7 @@ class PlainTextEditor(QtGui.QLineEdit):
 
 class DateEditor(QtGui.QWidget):
   """Widget for editing date values"""
-  def __init__(self, delegate, nullable, format='dd/MM/yyyy', parent=None):
+  def __init__(self, delegate=None, nullable=True, format='dd/MM/yyyy', parent=None):
     super(DateEditor, self).__init__(parent)
     self.format = format
     self.delegate = delegate
