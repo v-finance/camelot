@@ -349,9 +349,10 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         sh = editor.sizeHint()
         return QtCore.QVariant(sh)
       elif widget_ == 'many2one':
+        from camelot.view.controls import delegates
         from camelot.view.controls.editors import Many2OneEditor
         entity_admin = c[1]['admin']
-        delegate = None
+        delegate = delegates.Many2OneColumnDelegate(entity_admin)
         editor = Many2OneEditor(entity_admin, delegate)
         sh = editor.sizeHint()
         return QtCore.QVariant(sh)
