@@ -65,7 +65,9 @@ class DateEditor(QtGui.QWidget):
     self.hlayout.addWidget(self.qdateedit)
     
     if nullable:
-      nullbutton = QtGui.QPushButton( QtGui.QIcon(art.icon16('places/user-trash')), '')
+      nullbutton = QtGui.QToolButton()
+      nullbutton.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
+      nullbutton.setCheckable(True)
       self.connect(nullbutton, QtCore.SIGNAL('clicked()'), self.setMinimumDate)
       self.qdateedit.setSpecialValueText('0/0/0')
       self.hlayout.addWidget(nullbutton)
@@ -81,6 +83,8 @@ class DateEditor(QtGui.QWidget):
     self.minimum = datetime.date.min
     self.maximum = datetime.date.max
     self.set_date_range()
+
+    self.setFocusProxy(self.qdateedit)
 
   def _python_to_qt(self, value):
     return QtCore.QDate(value.year, value.month, value.day)
@@ -105,7 +109,6 @@ class DateEditor(QtGui.QWidget):
 
   def setDate(self, date):
     self.qdateedit.setDate(date)
-
 
 class FloatEditor(QtGui.QDoubleSpinBox):
   """Widget for editing float values"""
