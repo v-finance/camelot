@@ -69,7 +69,8 @@ def RowDataAsUnicode(row_data):
       if isinstance(data, list):
         return '.'.join(data)
       elif isinstance(data, datetime.date):
-        return data.strftime('%d/%m/%Y')
+        if data.year>=1900:
+          return data.strftime('%d/%m/%Y')
       return unicode(data)
     return data
   

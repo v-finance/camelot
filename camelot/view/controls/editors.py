@@ -59,6 +59,7 @@ class DateEditor(QtGui.QWidget):
     self.delegate = delegate
     self.index = None
     self.qdateedit = QtGui.QDateEdit(self)
+    self.connect(self.qdateedit, QtCore.SIGNAL('editingFinished ()'), self.editingFinished)
     self.qdateedit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
     self.qdateedit.setDisplayFormat(QtCore.QString(format))
     self.hlayout = QtGui.QHBoxLayout()
@@ -67,7 +68,7 @@ class DateEditor(QtGui.QWidget):
     if nullable:
       nullbutton = QtGui.QToolButton()
       nullbutton.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
-      nullbutton.setCheckable(True)
+      #nullbutton.setCheckable(True)
       self.connect(nullbutton, QtCore.SIGNAL('clicked()'), self.setMinimumDate)
       self.qdateedit.setSpecialValueText('0/0/0')
       self.hlayout.addWidget(nullbutton)
@@ -93,6 +94,10 @@ class DateEditor(QtGui.QWidget):
     import datetime
     return datetime.date(value.year(), value.month(), value.day())
   
+  def editingFinished(self):
+    if self.index:
+      self.delegate.setModelData(self, self.index.model(), self.index)
+      
   def set_date_range(self):
     qdate_min = self._python_to_qt(self.minimum)
     qdate_max = self._python_to_qt(self.maximum)
@@ -106,6 +111,8 @@ class DateEditor(QtGui.QWidget):
 
   def setMinimumDate(self):
     self.qdateedit.setDate(self.minimumDate())
+    if self.index:
+      self.delegate.setModelData(self, self.index.model(), self.index)
 
   def setDate(self, date):
     self.qdateedit.setDate(date)
