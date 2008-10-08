@@ -275,7 +275,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         delegate = delegates.IntegerColumnDelegate(0, 100000)
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == datetime.date:
-        delegate = delegates.DateColumnDelegate(format='dd/MM/yyyy', default=c[1].get('default', None), nullable=c[1].get('nullable', False))
+        delegate = delegates.DateColumnDelegate(format='dd/MM/yyyy',
+                                                default=c[1].get('default', None),
+                                                nullable=c[1].get('nullable', False))
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == float:
         delegate = delegates.FloatColumnDelegate(-100000.0, 100000.0)
@@ -332,11 +334,27 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         value = None
       return QtCore.QVariant(value)
     elif role == Qt.SizeHintRole:
-      if self.columns_getter()[index.column()][1]['python_type'] == \
-         datetime.date:
+      c = self.columns_getter()[index.column()] 
+      type_ = c[1]['python_type'] 
+      widget_ = c[1]['widget'] 
+      if type_ == datetime.date:
         from camelot.view.controls.editors import DateEditor
         editor = DateEditor()
         return QtCore.QVariant(editor.sizeHint())
+      elif widget_ == 'one2many':
+        from camelot.view.controls.editors import One2ManyEditor
+        entity_name = c[0] 
+        entity_admin = c[1]['admin']
+        editor = One2ManyEditor(entity_admin, entity_name)
+        sh = editor.sizeHint()
+        return QtCore.QVariant(sh)
+      elif widget_ == 'many2one':
+        from camelot.view.controls.editors import Many2OneEditor
+        entity_admin = c[1]['admin']
+        delegate = None
+        editor = Many2OneEditor(entity_admin, delegate)
+        sh = editor.sizeHint()
+        return QtCore.QVariant(sh)
     elif role == Qt.ForegroundRole:
       #if not self.columns_getter()[index.column()][1]['nullable']:
       #  return QtCore.QVariant(QtGui.QColor(Qt.red))
