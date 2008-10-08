@@ -224,7 +224,7 @@ class DateColumnDelegate(QtGui.QItemDelegate):
     value = editor.date()
     
     if value == editor.minimumDate():
-      model.setData(index, None)
+      model.setData(index, create_constant_function(None))
     else:
       d = datetime.date(value.year(), value.month(), value.day())
       model.setData(index, create_constant_function(d))
