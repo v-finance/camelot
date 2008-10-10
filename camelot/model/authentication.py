@@ -111,8 +111,13 @@ class Party(Entity):
   is_synchronized('synchronized', lazy=True)
   addresses = OneToMany('PartyAddress')
     
+  @property
+  def name(self):
+    return u''
+  
   class Admin(EntityAdmin):
     name = 'Parties'
+    list_display = ['name']
     fields = ['suppliers', 'customers', 'addresses']
     field_attributes = dict(suppliers={'admin':SupplierCustomer.SupplierAdmin}, 
                             customers={'admin':SupplierCustomer.CustomerAdmin},
@@ -167,8 +172,12 @@ class Person(Party):
   comment = Field(Unicode())
   employers = OneToMany('EmployerEmployee', inverse='established_to')
       
+  @property
+  def name(self):
+    return u'%s %s'%(self.last_name, self.first_name)
+  
   def __unicode__(self):
-    return self.username
+    return self.name
   
   @classmethod
   def getOrCreatePerson(cls, username):

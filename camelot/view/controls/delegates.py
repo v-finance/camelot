@@ -213,11 +213,7 @@ class DateColumnDelegate(QtGui.QItemDelegate):
     if value:
       editor.setDate(value)
     else:
-      if self.default:
-        value = self.default.execute()
-        editor.setDate(QtCore.QDate(value.year, value.month, value.day))
-      else:
-        editor.setDate(editor.minimumDate())
+      editor.setDate(editor.minimumDate())
 
   def setModelData(self, editor, model, index):
     value = editor.date()

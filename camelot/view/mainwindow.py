@@ -144,7 +144,7 @@ class MainWindow(QtGui.QMainWindow):
     logger.debug('settings written')
 
   def runAction(self, name, callable):
-    progress = QtGui.QProgressDialog('Please wait', 'Cancel', 0, 0)
+    progress = QtGui.QProgressDialog('Please wait', 'Run in background', 0, 0)
     progress.setWindowTitle(name)
     progress.show()
     mt = get_model_thread()

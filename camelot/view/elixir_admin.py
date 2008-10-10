@@ -94,6 +94,8 @@ class EntityAdmin(object):
   name = None
   list_display = []
   fields = []
+  # list of field_names to filter on, if the field name is a one2many, many2one or many2many field, the field
+  # name should be followed by a field name of the related entity, eg : 'organization.name'
   list_filter = []
   list_charts = []
   list_actions = []
@@ -242,10 +244,11 @@ class EntityAdmin(object):
 
   def getFields(self):
     if self.fields:
-      return [(field, self.getFieldAttributes(field)) for field in self.fields]
+      fields = self.fields
     else:
-      return [(field, self.getFieldAttributes(field))
-              for field in self.list_display]
+      fields = self.list_display
+    fields_and_attributes =  [(field, self.getFieldAttributes(field)) for field in fields]
+    return fields_and_attributes
 
   def getListCharts(self):
     return self.list_charts
@@ -260,21 +263,44 @@ class EntityAdmin(object):
     @return: [(filter_name, [(option_name, query_decorator), ...), ... ]
     """
 
-    def getOptions(attr):
+    def getNameAndOptions(field_names):
       from sqlalchemy.sql import select
       from elixir import session
-      col = getattr(self.entity, attr)
       session.bind = self.entity.table.metadata.bind
-      query = select([col], distinct=True, order_by=col.asc())
+      filter_names = []
+      joins = []
+      admin = self
+      table = admin.entity.table
+      for field_name in field_names:
+        attributes = admin.getFieldAttributes(field_name)
+        filter_names.append(attributes['name'])
+        if attributes['widget'] in ('one2many', 'many2many', 'many2one'):
+          admin = attributes['admin']
+          joins.append(field_name)
+          if attributes['widget'] in ('many2one'):
+            table = admin.entity.table.join(table)
+          else:
+            table = admin.entity.table
+          
 
-      def decorator(col, value):
-        return lambda q: q.filter(col==value)
+      col = getattr(admin.entity, field_name)
 
-      options = [(value[0], decorator(col, value[0]))
+      query = select([col], distinct=True, order_by=col.asc()).select_from(table)
+        
+      def create_decorator(col, value, joins):
+        
+        def decorator(q):
+          if joins:
+            q = q.join(joins, aliased=True)
+          return q.filter(col==value)
+        
+        return decorator
+
+      options = [(value[0], create_decorator(col, value[0], joins))
                  for value in session.execute(query)]
-      return [('All', lambda q: q)] + options
+      return (filter_names[0],[('All', lambda q: q)] + options)
 
-    return [(attr, getOptions(attr)) for attr in self.list_filter]
+    return [getNameAndOptions(field_names.split('.')) for field_names in self.list_filter]
 
   def createValidator(self, model):
     from validator import *
@@ -294,13 +320,29 @@ class EntityAdmin(object):
     from PyQt4.QtCore import SIGNAL
 
     from proxy.collection_proxy import CollectionProxy
-
+    from sqlalchemy.schema import ColumnDefault
+    
     new_object = []
 
     @model_function
     def collection_getter():
       if not new_object:
         entity_instance = admin.entity()
+        # Give the default fields their value
+        for field,attributes in admin.getFields():
+          try:
+            default = attributes['default']
+            print default
+            if isinstance(default, ColumnDefault):
+              default_value = default.execute()
+            elif callable(default):
+              default_value = default()
+            else:
+              default_value = default
+            logger.debug('set default for %s to %s'%(field, unicode(default_value)))
+            setattr(entity_instance, field, default_value)
+          except KeyError,e:
+            pass
         new_object.append(entity_instance)
       return new_object
 
