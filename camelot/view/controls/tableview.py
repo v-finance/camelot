@@ -16,7 +16,6 @@ from PyQt4.QtCore import SIGNAL
 from camelot.view.proxy.queryproxy import QueryTableProxy
 
 logger = logging.getLogger('view.controls.tableview')
-logger.setLevel(logging.DEBUG)
 
 class QueryTable(QtGui.QTableView):
   """the actual displayed table"""

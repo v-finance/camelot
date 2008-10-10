@@ -30,7 +30,6 @@
 import logging
 
 logger = logging.getLogger('delegates')
-logger.setLevel(logging.DEBUG)
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -283,7 +282,7 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
 
   def __init__(self, entity_admin, parent=None):
-    logger.info('create many2onecolumn delegate')
+    logger.debug('create many2onecolumn delegate')
     assert entity_admin!=None
     super(Many2OneColumnDelegate, self).__init__(parent)
     self.entity_admin = entity_admin
@@ -305,21 +304,21 @@ class One2ManyColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
 
   def __init__(self, entity_admin, field_name, parent=None):
-    logger.info('create one2manycolumn delegate')
+    logger.debug('create one2manycolumn delegate')
     assert entity_admin!=None
     super(One2ManyColumnDelegate, self).__init__(parent)
     self.entity_admin = entity_admin
     self.field_name = field_name
 
   def createEditor(self, parent, option, index):
-    logger.info('create a one2many editor')
+    logger.debug('create a one2many editor')
     from camelot.view.controls.editors import One2ManyEditor
     editor = One2ManyEditor(self.entity_admin, self.field_name, parent)
     self.setEditorData(editor, index)
     return editor
 
   def setEditorData(self, editor, index):
-    logger.info('set one2many editor data')
+    logger.debug('set one2many editor data')
     model = index.data(Qt.EditRole).toPyObject()
     if model:
       editor.setModel(model)

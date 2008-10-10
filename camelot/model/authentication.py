@@ -94,13 +94,13 @@ class SupplierCustomer(PartyRelationship):
   
   class CustomerAdmin(EntityAdmin):
     name = 'Customers'
-    list_display = ['established_to', 'from_date', 'thru_date']
+    list_display = ['established_to',]
     fields = ['established_to', 'comment', 'from_date', 'thru_date']
     field_attributes = {'established_to':{'name':'Name'}}
     
   class SupplierAdmin(EntityAdmin):
     name = 'Suppliers'
-    list_display = ['established_from', 'from_date', 'thru_date']
+    list_display = ['established_from',]
     fields = ['established_from', 'comment', 'from_date', 'thru_date']
     field_attributes = {'established_from':{'name':'Name'}}
     

@@ -35,7 +35,6 @@ returned and an update signal is emitted when the correct data is available.
 import logging
 
 logger = logging.getLogger('proxy.collection_proxy')
-logger.setLevel(logging.DEBUG)
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt

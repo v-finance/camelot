@@ -28,7 +28,6 @@
 import logging
 
 logger = logging.getLogger('animation')
-logger.setLevel(logging.DEBUG)
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore

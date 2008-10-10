@@ -30,7 +30,6 @@
 import logging
 
 logger = logging.getLogger('editors')
-logger.setLevel(logging.DEBUG)
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -129,7 +128,7 @@ class FloatEditor(QtGui.QDoubleSpinBox):
 class Many2OneComboBox(QtGui.QComboBox):
   """Widget for editing many 2 one relations"""
   def __init__(self, entity_admin, parent=None):
-    logger.info('Create Many2OneComboBox')
+    logger.debug('Create Many2OneComboBox')
     from camelot.view.proxy.combo_proxy import ComboProxy
     QtGui.QComboBox.__init__(self, parent)
 #    self.insertItem(0, 'zero')
