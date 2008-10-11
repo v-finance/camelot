@@ -44,18 +44,19 @@ from camelot.view import art
 from camelot.view.model_thread import model_function
    
 @model_function
-def RowDataFromObject(obj, columns):
+def RowDataFromObject(obj, columns, model, row):
   """Create row data from an object, by fetching its attributes"""
+  from related_collection_proxy import RelatedCollectionProxy
   row_data = []
   
   def create_collection_getter(o,attr):
     return lambda:getattr(o,attr)
   
-  for col in columns:
+  for i,col in enumerate(columns):
     field_attributes = col[1]
     if field_attributes['python_type']==list:
-      row_data.append( CollectionProxy(field_attributes['admin'], create_collection_getter(obj,col[0]),
-                                       field_attributes['admin'].getColumns) )
+      row_data.append( RelatedCollectionProxy(field_attributes['admin'], create_collection_getter(obj,col[0]),
+                                              field_attributes['admin'].getColumns, model.index(row, i)) )
     else:
       row_data.append(getattr(obj,col[0]))
   return row_data
@@ -391,12 +392,17 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           old_value = getattr(o, attribute)
           if new_value!=old_value:
             # update the model
+            model_updated = False
             try:
               setattr(o, attribute, new_value)
+              model_updated = True
             except AttributeError:
               logger.error("Can't set attribute %s to %s"%(attribute, str(value)))
+            except TypeError:
+              # type error can be raised in case we try to set to a collection
+              pass
             # update the cache
-            row_data = RowDataFromObject(o, self.columns_getter())
+            row_data = RowDataFromObject(o, self.columns_getter(), self, row)
             self.cache[Qt.EditRole].add_data(row, o.id, row_data)
             self.cache[Qt.DisplayRole].add_data(row, o.id, RowDataAsUnicode(row_data))
             if self.flush_changes and self.validator.isValid(row):
@@ -406,11 +412,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                 self.unflushed_rows.remove(row)
               except KeyError:
                 pass
-              history = BeforeUpdate(model=self.admin.entity.__name__, 
-                                     primary_key=o.id, 
-                                     previous_attributes={attribute:old_value},
-                                     person = getCurrentPerson())
-              session.flush([history])              
+              if model_updated:
+                history = BeforeUpdate(model=self.admin.entity.__name__, 
+                                       primary_key=o.id, 
+                                       previous_attributes={attribute:old_value},
+                                       person = getCurrentPerson())
+                session.flush([history])              
               self.rsh.sendEntityUpdate(o)
             return ((row,0), (row,len(self.columns_getter())))
           elif flushed:
@@ -442,7 +449,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     #@TODO : also store the primary key, here we just saved the id
     columns = self.columns_getter()
     for i,o in enumerate(self.collection_getter()[offset:offset+limit+1]):
-      row_data = RowDataFromObject(o, columns)
+      row_data = RowDataFromObject(o, columns, self, i+offset)
       self.cache[Qt.EditRole].add_data(i+offset, o.id, row_data)
       self.cache[Qt.DisplayRole].add_data(i+offset, o.id, RowDataAsUnicode(row_data))
     return (offset, limit)
@@ -494,7 +501,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def removeRow(self, row, parent):
     logger.debug('remove row %s'%row)
     
-    def make_delete_function():
+    def create_delete_function():
       
       def delete_function():
         from elixir import session
@@ -517,10 +524,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     def emit_changes(*args):
       self.refresh()
   
-    self.mt.post(make_delete_function(), emit_changes)
+    self.mt.post(create_delete_function(), emit_changes)
     return True
     
   def insertRow(self, row, entity_instance_getter):
+    
+    self.unflushed_rows.add(row)
     
     def create_insert_function(getter):
       
@@ -533,7 +542,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         self.append(o)
         if self.flush_changes:
           session.flush([o])
-          history = Create(model=self.admin.entity.__name__, 
+          history = Create(model=self.admin.entity.__name__,
                            primary_key=o.id,
                            person = getCurrentPerson() )
           session.flush([history])
