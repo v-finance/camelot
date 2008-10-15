@@ -424,8 +424,9 @@ class EntityAdmin(object):
     
     class FormView(QtGui.QWidget):
 
-      def __init__(self):
+      def __init__(self, admin):
         super(FormView, self).__init__(None)
+        self.admin = admin
         self.setWindowTitle(title)
         self.widget_layout = QtGui.QHBoxLayout()
         self.widget_mapper = QtGui.QDataWidgetMapper()
@@ -557,7 +558,24 @@ class EntityAdmin(object):
         else:
           event.ignore()
           
-    return FormView()
+      def toHtml(self):
+        """generates html of the form"""
+        from camelot.view.proxy.collection_proxy import RowDataFromObject, RowDataAsUnicode
+        entity = self.entity_getter()
+        fields = self.admin.getFields()
+        row_data = RowDataFromObject(entity, fields, None, 0)
+        table = [(field[1]['name'], value) for field,value in zip(fields, row_data)]
+        context = {
+          'title': self.admin.getName(),
+          'table': table,
+        }
+        from jinja import Environment, FileSystemLoader
+        ld = FileSystemLoader(settings.CAMELOT_TEMPLATES_DIRECTORY)
+        env = Environment(loader=ld)
+        tp = env.get_template('form_view.html')
+        return tp.render(context)
+          
+    return FormView(admin)
 
   def createSelectView(admin, query, parent=None):
     """

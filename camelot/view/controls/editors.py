@@ -387,5 +387,9 @@ class ImageEditor(QtGui.QLabel):
        urls = map(lambda x: str(x.toString())[8:], event.mimeData().urls())
        for filename in urls:
          print filename, 'dropped'
+         
+class RichTextEditor(QtGui.QTextEdit):
+  pass
+
 
     

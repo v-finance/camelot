@@ -408,32 +408,9 @@ class MainWindow(QtGui.QMainWindow):
     mt = get_model_thread()
 
     def export():
-        import tempfile
-        html = self.activeMdiChild().toHtml()
-        html_fd, html_fn = tempfile.mkstemp(suffix='.html')
-        html_file = os.fdopen(html_fd, 'wb')
-        html_file.write(html)
-        html_file.close()
-
-        try:
-          import pythoncom
-          import win32com.client
-          pythoncom.CoInitialize()
-          word_app = win32com.client.Dispatch("Word.Application")
-        except Exception, e:
-          """We're probably not running windows, so try abiword"""
-          logger.warn('unable to launch word', exc_info=e)
-          os.system('abiword "%s"'%html_fn)
-          return
-
-        from integration.COM.word_constants import constants
-        doc_fd, doc_fn = tempfile.mkstemp(suffix='.doc')
-        os.close(doc_fd)
-        word_app.Visible = True
-        doc = word_app.Documents.Open(art.file_('empty_document.doc'))
-        word_app.ActiveDocument.SaveAs(doc_fn)
-        section = doc.Sections(1)
-        section.Range.InsertFile(FileName=html_fn)
+      from export.word import open_html_in_word
+      html = self.activeMdiChild().toHtml()
+      open_html_in_word(html)
 
     mt.post(export)
 

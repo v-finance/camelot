@@ -2,13 +2,8 @@
 
 import logging
 
-# If the user sets her/his own settings module this will cause bugs
-# import settings
-# we need a better way
+import settings
 import os
-CAMELOT_TEMPLATES_DIRECTORY = os.path.join(os.path.dirname(__file__),
-                                           '..', 
-                                           'templates')
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QSizePolicy
@@ -308,7 +303,7 @@ class TableView(QtGui.QWidget):
       'columns': [c[0] for c in self.admin.getColumns()],
     }
     from jinja import Environment, FileSystemLoader
-    ld = FileSystemLoader(CAMELOT_TEMPLATES_DIRECTORY)
+    ld = FileSystemLoader(settings.CAMELOT_TEMPLATES_DIRECTORY)
     env = Environment(loader=ld)
     tp = env.get_template('table_view.html')
     return tp.render(context)

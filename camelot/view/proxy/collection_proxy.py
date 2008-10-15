@@ -269,8 +269,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         delegate = delegates.One2ManyColumnDelegate(entity_admin, field_name)
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == str:
-        delegate = delegates.PlainTextColumnDelegate()
-        self.item_delegate.insertColumnDelegate(i, delegate)
+        if c[1]['length']:
+          delegate = delegates.PlainTextColumnDelegate()
+          self.item_delegate.insertColumnDelegate(i, delegate)
+        else:
+          delegate = delegates.RichTextColumnDelegate()
+          self.item_delegate.insertColumnDelegate(i, delegate)          
       elif type_ == int:
         delegate = delegates.IntegerColumnDelegate(0, 100000)
         self.item_delegate.insertColumnDelegate(i, delegate)

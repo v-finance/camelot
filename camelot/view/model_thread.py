@@ -142,7 +142,7 @@ def model_function( original_function ):
   
   def new_function(*args, **kwargs):
     if threading.currentThread() != get_model_thread():
-      raise Exception('%s was called outside the model thread'%(original_function.__name__))
+      logger.error('%s was called outside the model thread'%(original_function.__name__))
     return original_function(*args, **kwargs)
   
   new_function.__name__ = original_function.__name__

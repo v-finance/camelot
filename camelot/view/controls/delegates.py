@@ -365,3 +365,19 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
 
   def setModelData(self, editor, model, index):
     pass
+  
+class RichTextColumnDelegate(QtGui.QItemDelegate):
+
+  def createEditor(self, parent, option, index):
+    from camelot.view.controls.editors import RichTextEditor
+    return RichTextEditor(parent)
+
+  def setEditorData(self, editor, index):
+    html = index.model().data(index, Qt.EditRole).toString()
+    if html:
+      editor.setHtml(html)
+    else:
+      editor.clear()
+
+  def setModelData(self, editor, model, index):
+    model.setData(index, create_constant_function(unicode(editor.toHtml())))
