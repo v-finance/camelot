@@ -125,30 +125,9 @@ class FloatEditor(QtGui.QDoubleSpinBox):
     self.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
     self.setSingleStep(1.0)
 
-class Many2OneComboBox(QtGui.QComboBox):
-  """Widget for editing many 2 one relations"""
-  def __init__(self, entity_admin, parent=None):
-    logger.debug('Create Many2OneComboBox')
-    from camelot.view.proxy.combo_proxy import ComboProxy
-    QtGui.QComboBox.__init__(self, parent)
-#    self.insertItem(0, 'zero')
-#    self.insertItem(1, 'one')
-#    self.insertItem(2, 'two')
-    self.view = QtGui.QListView()
-    self.model = ComboProxy(entity_admin, self.view, entity_admin.entity.query)
-    #self.model = ComboProxy(entity_admin, self, entity_admin.entity.query)
-    self.setModel(self.model)
-    self.setView(self.view)
-    self.view.setCurrentIndex(self.model.index(2,0))
-    self.setCurrentIndex(2)
-    self.setEditText('edit text')
-  def setEntityInstance(self, entity_instance_getter):
-    """Sets the current entity in the combo box"""
-    self.model.setFirstRow(entity_instance_getter)
-
 class CodeEditor(QtGui.QWidget):
   
-  def __init__(self, parts, delegate, parent=None):
+  def __init__(self, parts=['99', 'AA'], delegate=None, parent=None):
     super(CodeEditor, self).__init__(parent)
     self.setFocusPolicy(Qt.StrongFocus)
     self.parts = parts
@@ -174,7 +153,7 @@ class Many2OneEditor(QtGui.QWidget):
   """Widget for editing many 2 one relations
   @param entity_admin : The Admin interface for the object on the one side of the relation
   """
-  def __init__(self, entity_admin, delegate, parent=None):
+  def __init__(self, entity_admin=None, delegate=None, parent=None):
     super(Many2OneEditor, self).__init__(parent)
     self.admin = entity_admin
     self.index = None
@@ -284,7 +263,7 @@ class Many2OneEditor(QtGui.QWidget):
     
 class One2ManyEditor(QtGui.QWidget):
   
-  def __init__(self, entity_admin, field_name, parent=None):
+  def __init__(self, entity_admin=None, field_name=None, parent=None):
     """
     @param entity_admin: the Admin interface for the objects on the one side of the relation  
     @param field_name: the name of the attribute on the entity_instance that contains the collection
@@ -330,14 +309,22 @@ class One2ManyEditor(QtGui.QWidget):
     self.model = model
     self.table.setModel(model)
     
+    def create_fill_model_cache(model):
+      
+      def fill_model_cache():
+        model._extend_cache(0, 10)
+        
+      return fill_model_cache
+        
     def create_delegate_updater(model):
       
       def update_delegates(*args):
         self.table.setItemDelegate(model.getItemDelegate())
-        
+        self.table.resizeColumnsToContents()
+          
       return update_delegates
       
-    self.admin.mt.post(lambda:None, create_delegate_updater(model))
+    self.admin.mt.post(create_fill_model_cache(model), create_delegate_updater(model))
     
   def newRow(self):
     from camelot.view.workspace import get_workspace
@@ -371,7 +358,7 @@ class BoolEditor(QtGui.QCheckBox):
     super(BoolEditor, self).__init__(parent)
 
 class ImageEditor(QtGui.QLabel):
-  def __init__(self, parent):
+  def __init__(self, parent=None):
     QtGui.QLabel.__init__(self, parent)
     self.setAcceptDrops(True)
     
@@ -389,7 +376,9 @@ class ImageEditor(QtGui.QLabel):
          print filename, 'dropped'
          
 class RichTextEditor(QtGui.QTextEdit):
-  pass
+  
+  def __init__(self, parent=None):
+    QtGui.QTextEdit.__init__(self, parent)
 
 
     
