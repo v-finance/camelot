@@ -26,33 +26,13 @@
 #  ============================================================================
 
 from PyQt4 import QtGui, QtDesigner
+from camelot.view.plugins import CamelotEditorPlugin
 
-class DateEditorPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
+class DateEditorPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin, CamelotEditorPlugin):
+    
   def __init__(self, parent = None):
     QtDesigner.QPyDesignerCustomWidgetPlugin.__init__(self)
-    self.initialized = False
-  def initialize(self, core):
-    if self.initialized:
-      return
-    self.initialized = True
-  def isInitialized(self):
-    return self.initialized
-  def createWidget(self, parent):
     from camelot.view.controls.editors import DateEditor
-    return DateEditor(parent=parent)
-  def name(self):
-    return "DateEditor"
-  def group(self):
-    return "Camelot"
-#  def icon(self):
-#    return QtGui.QIcon(_logo_pixmap)
-  def toolTip(self):
-    return ""
-  def whatsThis(self):
-    return ""
-  def isContainer(self):
-    return False
-  def domXml(self):
-    return '<widget class="DateEditor" name=\"DateEditor\" />\n'
-  def includeFile(self):
-    return "camelot.view.controls.editors"
+    CamelotEditorPlugin.__init__(self)
+    self._widget = DateEditor
+
