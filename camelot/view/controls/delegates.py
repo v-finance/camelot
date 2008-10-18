@@ -144,8 +144,9 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
     self.maximum = maximum
 
   def createEditor(self, parent, option, index):
-    from camelot.view.controls.editors import IntegerEditor
-    editor = IntegerEditor(self.minimum, self.maximum, parent)
+    editor = QtGui.QSpinBox(parent)
+    editor.setRange(self.minimum, self.maximum)
+    editor.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
     return editor
 
   def setEditorData(self, editor, index):
@@ -174,8 +175,7 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
       QtGui.QItemDelegate.paint(self, painter, option, index)
 
   def createEditor(self, parent, option, index):
-    from camelot.view.controls.editors import PlainTextEditor
-    editor = PlainTextEditor(parent)
+    editor = QtGui.QLineEdit(parent)
     if not self.parent().columnsdesc[index.column()][1]['editable']:
       editor.setEnabled(False)
     return editor
@@ -261,8 +261,11 @@ class FloatColumnDelegate(QtGui.QItemDelegate):
     self.precision = precision
 
   def createEditor(self, parent, option, index):
-    from camelot.view.controls.editors import FloatEditor
-    editor = FloatEditor(self.minimum, self.maximum, self.precision, parent)
+    editor = QtGui.QDoubleSpinBox(parent)
+    editor.setRange(self.minimum, self.maximum)
+    editor.setDecimals(self.precision)
+    editor.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+    editor.setSingleStep(1.0)
     return editor
 
   def setEditorData(self, editor, index):
@@ -329,8 +332,7 @@ class BoolColumnDelegate(QtGui.QItemDelegate):
     super(BoolColumnDelegate, self).__init__(parent)
 
   def createEditor(self, parent, option, index):
-    from camelot.view.controls.editors import BoolEditor
-    editor = BoolEditor(parent)
+    editor = QtGui.QCheckBox(parent)
     return editor
 
   def setEditorData(self, editor, index):

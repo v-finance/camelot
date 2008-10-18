@@ -38,18 +38,6 @@ from PyQt4.QtCore import Qt
 from camelot.view import art
 from camelot.view.model_thread import model_function
 
-class IntegerEditor(QtGui.QSpinBox):
-  """Widget for editing integer values"""
-  def __init__(self, minimum=0, maximum=100, parent=None):
-    super(IntegerEditor, self).__init__(parent)
-    self.setRange(minimum, maximum)
-    self.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
-
-class PlainTextEditor(QtGui.QLineEdit):
-  """Widget for editing plain text"""
-  def __init__(self, parent=None):
-    super(PlainTextEditor, self).__init__(parent)
-
 class DateEditor(QtGui.QWidget):
   """Widget for editing date values"""
   def __init__(self, delegate=None, nullable=True, format='dd/MM/yyyy', parent=None):
@@ -115,15 +103,6 @@ class DateEditor(QtGui.QWidget):
 
   def setDate(self, date):
     self.qdateedit.setDate(date)
-
-class FloatEditor(QtGui.QDoubleSpinBox):
-  """Widget for editing float values"""
-  def __init__(self, minimum=0.0, maximum=100.0, precision=3, parent=None):
-    super(FloatEditor, self).__init__(parent)
-    self.setRange(minimum, maximum)
-    self.setDecimals(precision)
-    self.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
-    self.setSingleStep(1.0)
 
 class CodeEditor(QtGui.QWidget):
   
@@ -351,11 +330,6 @@ class One2ManyEditor(QtGui.QWidget):
     form = self.admin.createFormView(title, model, index, get_workspace())
     get_workspace().addWindow('createFormForIndex', form)
     form.show()
-
-class BoolEditor(QtGui.QCheckBox):
-  """Widget for editing boolean values"""
-  def __init__(self, parent=None):
-    super(BoolEditor, self).__init__(parent)
 
 class ImageEditor(QtGui.QLabel):
   def __init__(self, parent=None):
