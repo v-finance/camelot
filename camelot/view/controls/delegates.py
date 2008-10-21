@@ -36,8 +36,10 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 import datetime
-from camelot.view.controls import editors
+from camelot.view.controls.editors import *
 
+"""Dictionary mapping widget types to an associated delegate"""
+_registered_delegates_ = {}
 
 def _paint_required(painter, option, index):
   text = index.model().data(index, Qt.DisplayRole).toString()
@@ -157,6 +159,7 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
     editor.interpretText()
     model.setData(index, create_constant_function(editor.value()))
 
+_registered_delegates_[QtGui.QSpinBox] = IntegerColumnDelegate
 
 class PlainTextColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for simple string values"""
@@ -186,6 +189,8 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
 
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(unicode(editor.text())))
+
+_registered_delegates_[QtGui.QLineEdit] = PlainTextColumnDelegate
 
 class TimeColumnDelegate(QtGui.QItemDelegate):
   
@@ -228,7 +233,7 @@ class DateColumnDelegate(QtGui.QItemDelegate):
     self.nullable = nullable
 
   def createEditor(self, parent, option, index):
-    from camelot.view.controls.editors import DateEditor
+    
     editor = DateEditor(self, self.nullable, self.format, parent)
     return editor
 
@@ -249,6 +254,7 @@ class DateColumnDelegate(QtGui.QItemDelegate):
       d = datetime.date(value.year(), value.month(), value.day())
       model.setData(index, create_constant_function(d))
 
+_registered_delegates_[DateEditor] = DateColumnDelegate
 
 class CodeColumnDelegate(QtGui.QItemDelegate):
 
@@ -257,7 +263,7 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
     self.parts = parts
 
   def createEditor(self, parent, option, index):
-    return editors.CodeEditor(self.parts, self, parent)
+    return CodeEditor(self.parts, self, parent)
 
   def setEditorData(self, editor, index):
     value = index.data(Qt.EditRole).toPyObject()
@@ -275,6 +281,8 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
     
   def editingFinished(self, widget):
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), widget)
+
+_registered_delegates_[CodeEditor] = CodeColumnDelegate
 
 class FloatColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for float values"""
@@ -301,6 +309,7 @@ class FloatColumnDelegate(QtGui.QItemDelegate):
     editor.interpretText()
     model.setData(index, create_constant_function(editor.value()))
 
+_registered_delegates_[QtGui.QDoubleSpinBox] = FloatColumnDelegate
 
 class Many2OneColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
@@ -312,7 +321,6 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     self.entity_admin = entity_admin
 
   def createEditor(self, parent, option, index):
-    from camelot.view.controls.editors import Many2OneEditor
     editor = Many2OneEditor(self.entity_admin, self, parent)
     self.setEditorData(editor, index)
     return editor
@@ -323,6 +331,8 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
 
   def setModelData(self, editor, model, index):
     model.setData(index, editor.entity_instance_getter)
+
+_registered_delegates_[Many2OneEditor] = Many2OneColumnDelegate
 
 class One2ManyColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
@@ -336,7 +346,6 @@ class One2ManyColumnDelegate(QtGui.QItemDelegate):
 
   def createEditor(self, parent, option, index):
     logger.debug('create a one2many editor')
-    from camelot.view.controls.editors import One2ManyEditor
     editor = One2ManyEditor(self.entity_admin, self.field_name, parent)
     self.setEditorData(editor, index)
     return editor
@@ -349,6 +358,8 @@ class One2ManyColumnDelegate(QtGui.QItemDelegate):
 
   def setModelData(self, editor, model, index):
     pass
+
+_registered_delegates_[One2ManyEditor] = One2ManyColumnDelegate
 
 class BoolColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for boolean values"""
@@ -367,11 +378,11 @@ class BoolColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(editor.isChecked()))
 
+_registered_delegates_[QtGui.QCheckBox] = BoolColumnDelegate
 
 class ImageColumnDelegate(QtGui.QItemDelegate):
 
   def createEditor(self, parent, option, index):
-    from camelot.view.controls.editors import ImageEditor
     return ImageEditor(parent)
 
   def setEditorData(self, editor, index):
@@ -393,10 +404,11 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     pass
   
+_registered_delegates_[ImageEditor] = ImageColumnDelegate
+
 class RichTextColumnDelegate(QtGui.QItemDelegate):
 
   def createEditor(self, parent, option, index):
-    from camelot.view.controls.editors import RichTextEditor
     return RichTextEditor(parent)
 
   def setEditorData(self, editor, index):
@@ -408,3 +420,5 @@ class RichTextColumnDelegate(QtGui.QItemDelegate):
 
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(unicode(editor.toHtml())))
+
+_registered_delegates_[RichTextEditor] = RichTextColumnDelegate

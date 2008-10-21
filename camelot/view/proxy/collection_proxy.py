@@ -215,7 +215,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def setRowCount(self, rows):
     """Callback method to set the number of rows
     @param rows the new number of rows
-    """
+    """ 
     self.rows = rows
     self.emit(QtCore.SIGNAL('layoutChanged()'))
     
@@ -457,6 +457,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     """Extend the cache around row"""
     #@TODO : also store the primary key, here we just saved the id
     columns = self.columns_getter()
+    offset = min(offset, self.rows)
+    limit = min(limit, self.rows-offset)
     for i,o in enumerate(self.collection_getter()[offset:offset+limit+1]):
       row_data = RowDataFromObject(o, columns, self, i+offset)
       self.cache[Qt.EditRole].add_data(i+offset, o.id, row_data)

@@ -28,72 +28,6 @@ import camelot.types
 from camelot.view.model_thread import model_function
 import datetime
 
-_sqlalchemy_to_python_type_ = {
-  sqlalchemy.types.Boolean: lambda f: {'python_type': bool,
-                                       'editable': True,
-                                       'widget': 'bool'},
-
-  sqlalchemy.types.BOOLEAN: lambda f: {'python_type': bool,
-                                       'editable': True,
-                                       'widget': 'bool'},
-
-  sqlalchemy.types.Date: lambda f: {'python_type': datetime.date,
-                                    'format': 'dd-mm-YYYY',
-                                    'editable': True,
-                                    'min': None,
-                                    'max': None,
-                                    'widget': 'date'},
-
-  sqlalchemy.types.Float: lambda f: {'python_type': float,
-                                     'precision': f.precision,
-                                     'editable': True,
-                                     'min': None,
-                                     'max': None,
-                                     'widget': 'float'},
-
-  sqlalchemy.types.Integer: lambda f: {'python_type': int,
-                                       'editable': True,
-                                       'min': None,
-                                       'max': None,
-                                       'widget': 'int'},
-
-  sqlalchemy.types.INT: lambda f: {'python_type': int,
-                                   'editable': True,
-                                   'min': None,
-                                   'max': None,
-                                   'widget': 'int'},
-
-  sqlalchemy.types.String: lambda f: {'python_type': str,
-                                      'length': f.length,
-                                      'editable': True,
-                                      'widget': 'str'},
-
-  sqlalchemy.types.TEXT: lambda f: {'python_type': str,
-                                    'length': f.length,
-                                    'editable': True,
-                                    'widget': 'str'},
-
-  sqlalchemy.types.Unicode: lambda f: {'python_type': str,
-                                       'length': f.length,
-                                       'editable': True,
-                                       'widget': 'str'},
-
-  camelot.types.Image: lambda f: {'python_type': str,
-                                  'editable': True,
-                                  'widget': 'image'},
-
-  camelot.types.Code: lambda f: {'python_type': str,
-                                 'editable': True,
-                                 'widget': 'code',
-                                 'parts': f.parts},
-  sqlalchemy.types.Time : lambda f: {'python_type':datetime.time,
-                                     'editable':True,
-                                     'widget':'time',
-                                     'format':'hh:mm',
-                                     'nullable':True}
-}
-
-
 class EntityAdmin(object):
 
   name = None
@@ -164,6 +98,7 @@ class EntityAdmin(object):
     """
     from sqlalchemy import orm
     from sqlalchemy.exceptions import InvalidRequestError
+    from field_attributes import _sqlalchemy_to_python_type_
     default = lambda x: dict(python_type=str,
                              length=None,
                              editable=False,
@@ -254,6 +189,14 @@ class EntityAdmin(object):
       fields = self.list_display
     fields_and_attributes =  [(field, self.getFieldAttributes(field)) for field in fields]
     return fields_and_attributes
+  
+  def getForm(self):
+    from forms import Form
+    if self.fields:
+      fields = self.fields
+    else:
+      fields = self.list_display
+    return Form(fields)    
 
   def getListCharts(self):
     return self.list_charts
@@ -433,30 +376,24 @@ class EntityAdmin(object):
         super(FormView, self).__init__(None)
         self.admin = admin
         self.setWindowTitle(title)
-        self.widget_layout = QtGui.QHBoxLayout()
         self.widget_mapper = QtGui.QDataWidgetMapper()
-
+        self.widget_layout = QtGui.QHBoxLayout()
         self.model = model
         self.connect(self.model,
                      SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                      self.dataChanged)
         self.widget_mapper.setModel(self.model)
-        
-        self.form_layout = QtGui.QFormLayout()
         self.scroll_area = QtGui.QScrollArea()
-
         self.widget_layout.insertWidget(0, self.scroll_area)
-        self.widget_layout.setContentsMargins(0,0,0,0)
-        #self.widget_layout.insertLayout(0, self.form_layout)
-
+        self.widget_layout.setContentsMargins(0,0,0,0)        
         self.setLayout(self.widget_layout)
         
         self.validate_before_close = True
-        
         admin.mt.post(lambda: None,
-                      lambda *args: self.setColumnsAndDelegate(
-                                      self.model.columns_getter(),
-                                      self.model.getItemDelegate()))
+                      lambda *args: self.setColumnsFormAndDelegate(                                   
+                                    self.model.columns_getter(),
+                                    admin.getForm(),
+                                    self.model.getItemDelegate()))
 
         def getActions():
           return admin.getFormActions(None)
@@ -467,30 +404,27 @@ class EntityAdmin(object):
         #@TODO: only revert if this form is in the changed range
         self.widget_mapper.revert()
 
-      def setColumnsAndDelegate(self, columns, delegate):
-        for i, column in enumerate(columns):
+      def setColumnsFormAndDelegate(self, columns, form, delegate):
+        from forms import Form
+        #
+        # Create the value and the label widgets
+        #
+        widgets = {}
+        for i, (field_name, field_attributes) in enumerate(columns):
           option = None
           model_index = self.model.index(index, i)
-          widget = delegate.createEditor(parent, option, model_index)
-          label = QtGui.QLabel(column[1]['name'])
-
-          if ('nullable' in column[1]) and (not column[1]['nullable']):
+          value_widget = delegate.createEditor(parent, option, model_index)
+          label_widget = QtGui.QLabel(field_attributes['name'])
+          if ('nullable' in field_attributes) and (not field_attributes['nullable']):
             font = QtGui.QApplication.font()
             font.setBold(True)
-            label.setFont(font)
+            label_widget.setFont(font)
+          self.widget_mapper.addMapping(value_widget, i)
+          widgets[field_name] = (label_widget, value_widget)
           
-          self.form_layout.addRow(label, widget)
-          self.widget_mapper.addMapping(widget, i)
-        
         self.widget_mapper.setItemDelegate(delegate)
         self.widget_mapper.setCurrentIndex(index)
-
-        # This should really be here so that the widgets inside the
-        # dummy widget get displayed
-        # QFormLayout accepts only QWidgets
-        self.form_widget = QtGui.QWidget()
-        self.form_widget.setLayout(self.form_layout)
-        self.scroll_area.setWidget(self.form_widget)
+        self.scroll_area.setWidget(form.render(widgets))
         self.scroll_area.setWidgetResizable(True)
 
       def entity_getter(self):
