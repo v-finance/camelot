@@ -34,12 +34,12 @@ class Form(object):
   """Use the QFormLayout widget to render a form"""
   
   def __init__(self, fields):
-    """@param fields: the fields to render"""
-    self.fields = fields 
+    """@param fields: a list with the fields to render"""
+    self._fields = fields 
   
   def get_fields(self):
-    """@return : the set of fields, visible in this form"""
-    return self.fields
+    """@return : the fields, visible in this form"""
+    return self._fields
   
   def render(self, widgets):
     """
@@ -47,14 +47,25 @@ class Form(object):
     @return : a QWidget into which the form is rendered"""
     from PyQt4 import QtGui
     form_layout = QtGui.QFormLayout()
-    for field in self.fields:
+    for field in self._fields:
       label_widget, value_widget = widgets[field]
       form_layout.addRow(label_widget, value_widget)
     form_widget = QtGui.QWidget()
     form_widget.setLayout(form_layout)
     return form_widget
   
-class TabForm(object):
+class TabForm(Form):
   """Render forms within a QTabWidget"""
   
+  def __init__(self, tabs):
+    """@param tabs: a list of tuples of (tab_label, tab_form)"""
+    super(TabForm, self).__init__(sum((tab_form.get_fields() for tab_label, tab_form in tabs), []))
+    self.tabs = tabs
+  
+  def render(self, widgets):
+    from PyQt4 import QtGui
+    widget = QtGui.QTabWidget()
+    for tab_label, tab_form in self.tabs:
+      widget.addTab(tab_form.render(widgets), tab_label)
+    return widget
   

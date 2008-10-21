@@ -39,6 +39,7 @@ from camelot.model.synchronization import *
 __metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
+from camelot.view.forms import *
 import datetime
 
 _current_person_ = None
@@ -202,7 +203,11 @@ class Organization(Party):
     name = 'Organizations'
     section = 'relations'
     list_display = ['name', 'tax_id',]
-    fields = ['name', 'tax_id',] + Party.Admin.fields + ['directors', 'employees', 'shareholders', 'shares']
+    form = TabForm([('Basic', Form(['name', 'tax_id', 'addresses'])),
+                    ('Employment', Form(['employees'])),
+                    ('Customers', Form(['customers'])),
+                    ('Suppliers', Form(['suppliers'])),
+                    ('Corporate', Form(['directors', 'shareholders', 'shares'])), ])
       
 class Person(Party):
   """Person represents natural persons, these can be given access to the system, and

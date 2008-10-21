@@ -33,6 +33,7 @@ class EntityAdmin(object):
   name = None
   list_display = []
   fields = []
+  form = []
   # list of field_names to filter on, if the field name is a one2many, many2one or many2many field, the field
   # name should be followed by a field name of the related entity, eg : 'organization.name'
   list_filter = []
@@ -183,7 +184,9 @@ class EntityAdmin(object):
             for field in self.list_display]
 
   def getFields(self):
-    if self.fields:
+    if self.form:
+      fields = self.form.get_fields()
+    elif self.fields:
       fields = self.fields
     else:
       fields = self.list_display
@@ -192,11 +195,9 @@ class EntityAdmin(object):
   
   def getForm(self):
     from forms import Form
-    if self.fields:
-      fields = self.fields
-    else:
-      fields = self.list_display
-    return Form(fields)    
+    if self.form:
+      return self.form
+    return Form([f for f,a in self.getFields()])    
 
   def getListCharts(self):
     return self.list_charts
