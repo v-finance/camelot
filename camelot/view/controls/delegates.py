@@ -187,7 +187,32 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(unicode(editor.text())))
 
-
+class TimeColumnDelegate(QtGui.QItemDelegate):
+  
+  def __init__(self, format, default, nullable, parent=None):
+    super(TimeColumnDelegate, self).__init__(parent)
+    self.nullable = nullable
+    self.format = format
+    self.default = default
+    
+  def createEditor(self, parent, option, index):
+    editor = QtGui.QTimeEdit(parent)
+    editor.setDisplayFormat(self.format)
+    return editor
+  
+  def setEditorData(self, editor, index):
+    value = index.model().data(index, Qt.EditRole).toTime()
+    editor.index = index
+    if value:
+      editor.setTime(value)
+    else:
+      editor.setTime(editor.minimumTime())
+  
+  def setModelData(self, editor, model, index):
+    value = editor.time()
+    t = datetime.time(hour=value.hour(), minute=value.minute(), second=value.second())
+    model.setData(index, create_constant_function(t))
+  
 class DateColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for date values"""
 

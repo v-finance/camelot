@@ -86,6 +86,11 @@ _sqlalchemy_to_python_type_ = {
                                  'editable': True,
                                  'widget': 'code',
                                  'parts': f.parts},
+  sqlalchemy.types.Time : lambda f: {'python_type':datetime.time,
+                                     'editable':True,
+                                     'widget':'time',
+                                     'format':'hh:mm',
+                                     'nullable':True}
 }
 
 

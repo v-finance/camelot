@@ -86,6 +86,40 @@ class EmployerEmployee(PartyRelationship):
     fields = ['established_from', 'comment', 'from_date', 'thru_date']
     field_attributes = {'established_from':{'name':'Name'}}
     
+class DirectedDirector(PartyRelationship):
+  """Relation from a directed organization to a director"""
+  using_options(tablename='party_relationship_dir', inheritance='multi')
+  established_from = ManyToOne('Organization', required=True, ondelete='cascade', onupdate='cascade')
+  established_to = ManyToOne('Person', required=True, ondelete='cascade', onupdate='cascade')
+  title = Field(Unicode(256))
+  representing = OneToMany('RepresentedRepresentor', inverse='established_to')
+  
+  class DirectorAdmin(EntityAdmin):
+    name = 'Directors'
+    list_display = ['established_to', 'from_date', 'thru_date']
+    fields = ['established_to', 'from_date', 'thru_date', 'representing', 'comment']
+    field_attributes = {'established_to':{'name':'Name'}}
+    
+  class DirectedAdmin(EntityAdmin):
+    name = 'Directed organizations'
+    list_display = ['established_from', 'from_date', 'thru_date']
+    fields = ['established_from', 'from_date', 'thru_date', 'representing', 'comment']
+    field_attributes = {'established_from':{'name':'Name'}}
+    
+class RepresentedRepresentor(Entity):
+  """Relation from a represented party to the director representing the party"""
+  using_options(tablename='party_representor')
+  from_date = Field(Date(), default=datetime.date.today, required=True, index=True)
+  thru_date = Field(Date(), default=end_of_times, required=True, index=True)
+  comment = Field(Unicode())
+  established_from = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
+  established_to = ManyToOne('DirectedDirector', required=True, ondelete='cascade', onupdate='cascade')
+  
+  class Admin(EntityAdmin):
+    name = 'Representing'
+    list_display = ['established_from', 'from_date', 'thru_date', 'comment']
+    field_attributes = {'established_from':{'name':'Name'}}
+    
 class SupplierCustomer(PartyRelationship):
   """Relation from supplier to customer"""
   using_options(tablename='party_relationship_suppl', inheritance='multi')
@@ -102,6 +136,25 @@ class SupplierCustomer(PartyRelationship):
     name = 'Suppliers'
     list_display = ['established_from',]
     fields = ['established_from', 'comment', 'from_date', 'thru_date']
+    field_attributes = {'established_from':{'name':'Name'}}
+    
+class SharedShareholder(PartyRelationship):
+  """Relation from a shared organization to a shareholder"""
+  using_options(tablename='party_relationship_shares', inheritance='multi')
+  established_from = ManyToOne('Organization', required=True, ondelete='cascade', onupdate='cascade')
+  established_to = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
+  shares = Field(Integer())
+  
+  class ShareholderAdmin(EntityAdmin):
+    name = 'Shareholders'
+    list_display = ['established_to', 'shares', 'from_date', 'thru_date']
+    fields = ['established_to', 'shares', 'from_date', 'thru_date', 'comment']
+    field_attributes = {'established_to':{'name':'Shareholder name'}}
+    
+  class SharedAdmin(EntityAdmin):
+    name = 'Shares'
+    list_display = ['established_from', 'shares', 'from_date', 'thru_date']
+    fields = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
     field_attributes = {'established_from':{'name':'Name'}}
     
 class Party(Entity):
@@ -122,7 +175,12 @@ class Party(Entity):
     field_attributes = dict(suppliers={'admin':SupplierCustomer.SupplierAdmin}, 
                             customers={'admin':SupplierCustomer.CustomerAdmin},
                             employers={'admin':EmployerEmployee.EmployerAdmin},
-                            employees={'admin':EmployerEmployee.EmployeeAdmin})
+                            employees={'admin':EmployerEmployee.EmployeeAdmin},
+                            directed_organizations={'admin':DirectedDirector.DirectedAdmin},
+                            directors={'admin':DirectedDirector.DirectorAdmin},
+                            shares={'admin':SharedShareholder.SharedAdmin},
+                            shareholders={'admin':SharedShareholder.ShareholderAdmin}
+                            )
       
 class Organization(Party):
   """An organization represents any internal or external organization.  Organizations can include
@@ -130,9 +188,12 @@ class Organization(Party):
   using_options(tablename='organization', inheritance='multi')
   name = Field(Unicode(50), required=True, index=True)
   tax_id = Field(Unicode(20))
+  directors = OneToMany('DirectedDirector', inverse='established_from')
   employees = OneToMany('EmployerEmployee', inverse='established_from')
   suppliers = OneToMany('SupplierCustomer', inverse='established_to')
-  customers = OneToMany('SupplierCustomer', inverse='established_from')  
+  customers = OneToMany('SupplierCustomer', inverse='established_from')
+  shareholders = OneToMany('SharedShareholder', inverse='established_from')
+  shares = OneToMany('SharedShareholder', inverse='established_to')
   
   def __unicode__(self):
     return self.name
@@ -141,7 +202,7 @@ class Organization(Party):
     name = 'Organizations'
     section = 'relations'
     list_display = ['name', 'tax_id',]
-    fields = ['name', 'tax_id',] + Party.Admin.fields + ['employees']
+    fields = ['name', 'tax_id',] + Party.Admin.fields + ['directors', 'employees', 'shareholders', 'shares']
       
 class Person(Party):
   """Person represents natural persons, these can be given access to the system, and
@@ -171,6 +232,8 @@ class Person(Party):
   picture = Field(camelot.types.Image(upload_to='person-pictures'), deferred=True)
   comment = Field(Unicode())
   employers = OneToMany('EmployerEmployee', inverse='established_to')
+  directed_organizations = OneToMany('DirectedDirector', inverse='established_to')
+  shares = OneToMany('SharedShareholder', inverse='established_to')
       
   @property
   def name(self):
@@ -194,7 +257,7 @@ class Person(Party):
     list_display = ['username', 'first_name', 'last_name', ]
     fields = ['username', 'first_name', 'last_name', 'birthdate', 'social_security_number', 'passport_number', 
               'passport_expiry_date', 'is_staff', 'is_active', 'is_superuser',
-              'comment', 'addresses', 'employers']
+              'comment', 'addresses', 'employers', 'directed_organizations', 'shares']
     list_filter = ['is_active', 'is_staff', 'is_superuser']
     
 class GeographicBoundary(Entity):
@@ -268,7 +331,7 @@ class PartyAddress(Entity):
   address = ManyToOne('Address', required=True, ondelete='cascade', onupdate='cascade')
   from_date = Field(Date(), default=datetime.date.today, required=True, index=True)
   thru_date = Field(Date(), default=end_of_times, required=True, index=True)
-  comment = Field(Unicode('256'))
+  comment = Field(Unicode(256))
   
   def showMap(self):
     if self.address:
