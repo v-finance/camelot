@@ -27,6 +27,7 @@
 
 """Editors for various type of values"""
 
+import os.path
 import logging
 
 logger = logging.getLogger('editors')
@@ -331,11 +332,66 @@ class One2ManyEditor(QtGui.QWidget):
     get_workspace().addWindow('createFormForIndex', form)
     form.show()
 
-class ImageEditor(QtGui.QLabel):
-  def __init__(self, parent=None):
-    QtGui.QLabel.__init__(self, parent)
-    self.setAcceptDrops(True)
+#class ImageEditor(QtGui.QLabel):
+#  def __init__(self, parent=None):
+#    QtGui.QLabel.__init__(self, parent)
+#    self.setAcceptDrops(True)
     
+#  def dragEnterEvent(self, event):
+#    event.acceptProposedAction()
+
+#  def dragMoveEvent(self, event):
+#    event.acceptProposedAction()
+
+#  def dropEvent(self, event):
+#    if event.mimeData().hasUrls():
+#      url = event.mimeData().urls()[0]
+#      filename = url.toLocalFile()
+#      if filename != '':
+#        self.setPixmap(QtGui.QPixmap(filename))
+#        self.file_url = url
+
+class ImageEditor(QtGui.QWidget):
+  def __init__(self, parent=None):
+    QtGui.QWidget.__init__(self, parent)
+    self.layout = QtGui.QHBoxLayout()
+    #
+    # Setup label
+    #
+    self.label = QtGui.QLabel(parent)
+    self.layout.addWidget(self.label)
+    self.label.setAcceptDrops(True)
+    self.label.__class__.dragEnterEvent = self.dragEnterEvent
+    self.label.__class__.dragMoveEvent = self.dragEnterEvent
+    self.label.__class__.dropEvent = self.dropEvent
+    #
+    # Setup buttons
+    #
+    button_layout = QtGui.QVBoxLayout()
+    button_layout.setSpacing(0)
+    clear_button = QtGui.QPushButton( QtGui.QIcon(art.icon16('actions/editclear')), '')
+    self.connect(clear_button, QtCore.SIGNAL('clicked()'), self.clearImage)
+    file_button = QtGui.QPushButton( QtGui.QIcon(art.icon16('places/folder')), '')
+    self.connect(file_button, QtCore.SIGNAL('clicked()'), self.openFileDialog)
+    app_button = QtGui.QPushButton( QtGui.QIcon(art.icon16('actions/stock_new-window')), '')
+    self.connect(app_button, QtCore.SIGNAL('clicked()'), self.openInApp)
+    button_layout.addStretch()
+    button_layout.addWidget(clear_button)
+    button_layout.addWidget(file_button)      
+    button_layout.addWidget(app_button)      
+    self.layout.addLayout(button_layout)
+    self.setLayout(self.layout)
+    #
+    # Image
+    #
+    self.dummy_image = os.path.normpath(art.icon32('apps/stock_help'))
+    self.setPixmap = self.label.setPixmap
+    if self.label.pixmap() == None:
+      self.clearImage()
+
+  #
+  # Drag & Drop
+  #
   def dragEnterEvent(self, event):
     event.acceptProposedAction()
 
@@ -343,11 +399,36 @@ class ImageEditor(QtGui.QLabel):
     event.acceptProposedAction()
 
   def dropEvent(self, event):
-    mimeData = event.mimeData()
-    if mimeData.hasUrls():
-       urls = map(lambda x: str(x.toString())[8:], event.mimeData().urls())
-       for filename in urls:
-         print filename, 'dropped'
+    if event.mimeData().hasUrls():
+      url = event.mimeData().urls()[0]
+      filename = url.toLocalFile()
+      if filename != '':
+        testImage = QtGui.QImage(filename)
+        if not testImage.isNull():
+          self.label.setPixmap(QtGui.QPixmap(filename))
+          self.image_url = url
+
+  #
+  # Buttons methods
+  #
+  def clearImage(self):
+    self.setPixmap(QtGui.QPixmap(self.dummy_image))
+    self.image_url =  QtCore.QUrl.fromLocalFile(self.dummy_image)
+
+  def openFileDialog(self):
+    filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file',
+                                                  QtCore.QDir.currentPath())
+    if filename != '':
+      testImage = QtGui.QImage(filename)
+      if not testImage.isNull():
+        self.label.setPixmap(QtGui.QPixmap(filename))
+        self.image_url = QtCore.QUrl.fromLocalFile(filename) 
+
+  def openInApp(self):
+    if self.image_url != None:
+      print self.image_url.toLocalFile()
+      QtGui.QDesktopServices.openUrl(self.image_url)
+
          
 class RichTextEditor(QtGui.QTextEdit):
   
