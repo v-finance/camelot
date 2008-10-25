@@ -31,8 +31,6 @@ import logging
 from collection_proxy import *
 
 logger = logging.getLogger('proxy.queryproxy')
-logger.setLevel(logging.DEBUG)
-
 
 class QueryTableProxy(CollectionProxy):
   """The QueryTableProxy contains a limited copy of the data in the Elixir
@@ -48,7 +46,7 @@ class QueryTableProxy(CollectionProxy):
                              max_number_of_rows=10, edits=None)
 
   @model_function
-  def _getRowCount(self):
+  def getRowCount(self):
     return self.query.count()
 
   def setQuery(self, query):

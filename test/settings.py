@@ -1,8 +1,9 @@
 import logging
 import os
 
-logging.basicConfig(level=logging.DEBUG, format='[%(levelname)-7s] [%(name)-35s] - %(message)s')
+logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] - %(message)s')
 db_name = 'test_data.db'
+#logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 if os.path.exists(db_name):
   os.remove(db_name)

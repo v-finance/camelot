@@ -326,7 +326,7 @@ class One2ManyEditor(QtGui.QWidget):
     """Delete the selected rows in this tableview"""
     logger.debug('delete selected rows called')
     for row in set(map(lambda x: x.row(), self.table.selectedIndexes())):
-      self.model.removeRow(row, None)
+      self.model.removeRow(row)
           
   def createFormForIndex(self, index):
     from camelot.view.proxy.collection_proxy import CollectionProxy

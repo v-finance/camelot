@@ -41,7 +41,7 @@ class RelatedCollectionProxy(CollectionProxy):
     CollectionProxy.__init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10, edits=None, flush_changes=True)
     self.related_index = related_index
     
-  def removeRow(self, row, parent):
+  def removeRow(self, row):
     logger.debug('remove row %s'%row)
     
     def create_delete_function():

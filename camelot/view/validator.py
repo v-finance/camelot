@@ -31,7 +31,6 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
 
 from proxy.collection_proxy import fifo
-logger.setLevel(logging.DEBUG)
 
 class Validator(QtCore.QObject):
   """A validator class validates an entity before flushing it to the database and

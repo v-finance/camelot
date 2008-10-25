@@ -163,7 +163,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.rsh.connect(self.rsh, self.rsh.entity_create_signal, self.handleEntityCreate)
     self.mt.post(columns_getter, lambda columns:self.setColumns(columns))
     # in that way the number of rows is requested as well
-    self.mt.post(self._getRowCount,  self.setRowCount)
+    self.mt.post(self.getRowCount,  self.setRowCount)
     logger.debug('initialization finished')
     self.item_delegate = None
     
@@ -173,7 +173,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     return len(self.unflushed_rows)>0
   
   @model_function
-  def _getRowCount(self):
+  def getRowCount(self):
     return len(self.collection_getter())
   
   def refresh(self):
@@ -182,7 +182,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       self.cache = {Qt.DisplayRole:fifo(10*self.max_number_of_rows), Qt.EditRole:fifo(10*self.max_number_of_rows)}
       self.setRowCount(rows)
       
-    self.mt.post(self._getRowCount, refresh_content )
+    self.mt.post(self.getRowCount, refresh_content )
     
   def setCollectionGetter(self, collection_getter):
     self.collection_getter = collection_getter
@@ -422,7 +422,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
               except KeyError:
                 pass
               if model_updated:
-                history = BeforeUpdate(model=self.admin.entity.__name__, 
+                history = BeforeUpdate(model=unicode(self.admin.entity.__name__), 
                                        primary_key=o.id, 
                                        previous_attributes={attribute:old_value},
                                        person = getCurrentPerson())
@@ -509,7 +509,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def append(self, o):
     self.collection_getter().append(o)
  
-  def removeRow(self, row, parent):
+  def removeRow(self, row):
     logger.debug('remove row %s'%row)
     
     def create_delete_function():
@@ -522,7 +522,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         pk = o.id
         self.remove(o)
         # save the state before the update
-        history = BeforeDelete(model=self.admin.entity.__name__, 
+        history = BeforeDelete(model=unicode(self.admin.entity.__name__), 
                                primary_key=pk, 
                                previous_attributes={},
                                person = getCurrentPerson() )
@@ -553,7 +553,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         self.append(o)
         if self.flush_changes:
           session.flush([o])
-          history = Create(model=self.admin.entity.__name__,
+          history = Create(model=unicode(self.admin.entity.__name__),
                            primary_key=o.id,
                            person = getCurrentPerson() )
           session.flush([history])

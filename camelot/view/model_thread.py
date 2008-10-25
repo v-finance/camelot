@@ -85,7 +85,7 @@ class ModelThread(threading.Thread):
           self._response_signaler.responseAvailable()
           self._response_signaler.stopProcessingRequest()
           logger.debug('finished handling request')
-          self._response_queue.join()
+          #self._response_queue.join()
         except Exception, e:
           logger.exception(e)
           self._response_queue.put((e, exception))
@@ -133,7 +133,23 @@ class ModelThread(threading.Thread):
     event = threading.Event()
     self._request_queue.put_nowait((event, request, response, exception))
     return event
-
+  
+  def post_and_block(self, request):
+    """Post a request tot the model thread, block until it is finished, and
+    then return it results.  This function only exists for testing purposes,
+    it should never be used from within the gui thread"""
+    # make sure there are no responses in the queue
+    self.process_responses()
+    results = []
+    
+    def re_raise(exc):
+      raise exc
+    
+    event = self.post(request, lambda result:results.append(result), exception=re_raise)
+    event.wait()
+    self.process_responses()
+    return results[-1]
+    
 _model_thread_ = []
         
 def construct_model_thread(*args, **kwargs):

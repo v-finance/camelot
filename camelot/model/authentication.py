@@ -52,7 +52,7 @@ def getCurrentPerson():
   global _current_person_
   if not _current_person_:
     import getpass
-    _current_person_ = Person.getOrCreatePerson(getpass.getuser())
+    _current_person_ = Person.getOrCreatePerson(unicode(getpass.getuser()))
   return _current_person_
 
 def updateLastLogin():
@@ -66,7 +66,7 @@ class PartyRelationship(Entity):
   using_options(tablename='party_relationship')
   from_date = Field(Date(), default=datetime.date.today, required=True, index=True)
   thru_date = Field(Date(), default=end_of_times, required=True, index=True)
-  comment = Field(Unicode())
+  comment = Field(Text)
   is_synchronized('synchronized', lazy=True)
   
 class EmployerEmployee(PartyRelationship):
@@ -112,7 +112,7 @@ class RepresentedRepresentor(Entity):
   using_options(tablename='party_representor')
   from_date = Field(Date(), default=datetime.date.today, required=True, index=True)
   thru_date = Field(Date(), default=end_of_times, required=True, index=True)
-  comment = Field(Unicode())
+  comment = Field(Text)
   established_from = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
   established_to = ManyToOne('DirectedDirector', required=True, ondelete='cascade', onupdate='cascade')
   
@@ -235,7 +235,7 @@ class Person(Party):
   last_login = Field(DateTime(), default=datetime.datetime.now)
   date_joined = Field(DateTime(), default=datetime.datetime.now)
   picture = Field(camelot.types.Image(upload_to='person-pictures'), deferred=True)
-  comment = Field(Unicode())
+  comment = Field(Text)
   employers = OneToMany('EmployerEmployee', inverse='established_to')
   directed_organizations = OneToMany('DirectedDirector', inverse='established_to')
   shares = OneToMany('SharedShareholder', inverse='established_to')
