@@ -56,6 +56,7 @@ class DateEditor(QtGui.QWidget):
     if nullable:
       nullbutton = QtGui.QToolButton()
       nullbutton.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
+      nullbutton.setAutoRaise(True)
       #nullbutton.setCheckable(True)
       self.connect(nullbutton, QtCore.SIGNAL('clicked()'), self.setMinimumDate)
       self.qdateedit.setSpecialValueText('0/0/0')
@@ -274,9 +275,13 @@ class One2ManyEditor(QtGui.QWidget):
     #
     button_layout = QtGui.QVBoxLayout()
     button_layout.setSpacing(0)
-    delete_button = QtGui.QPushButton( QtGui.QIcon(art.icon16('places/user-trash')), '')
+    delete_button = QtGui.QToolButton()
+    delete_button.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
+    delete_button.setAutoRaise(True)
     self.connect(delete_button, QtCore.SIGNAL('clicked()'), self.deleteSelectedRows)
-    add_button = QtGui.QPushButton( QtGui.QIcon(art.icon16('actions/document-new')), '')
+    add_button = QtGui.QToolButton()
+    add_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
+    add_button.setAutoRaise(True)
     self.connect(add_button, QtCore.SIGNAL('clicked()'), self.newRow)
     button_layout.addStretch()
     button_layout.addWidget(add_button)
