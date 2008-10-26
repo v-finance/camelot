@@ -390,6 +390,8 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
     s = StringIO.StringIO()
     data = index.data(Qt.EditRole).toPyObject()
     editor.image = data
+    editor.delegate = self
+    editor.index = index
     if data:
       data.thumbnail((100, 100))
       data.save(s, 'png')
@@ -403,7 +405,7 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
       pass
 
   def setModelData(self, editor, model, index):
-    pass
+    model.setData(index, create_constant_function(editor.image))
   
 _registered_delegates_[ImageEditor] = ImageColumnDelegate
 

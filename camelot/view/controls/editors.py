@@ -359,6 +359,9 @@ class One2ManyEditor(QtGui.QWidget):
 class ImageEditor(QtGui.QWidget):
   def __init__(self, parent=None):
     QtGui.QWidget.__init__(self, parent)
+    self.image = None
+    self.delegate = None
+    self.index = None    
     self.layout = QtGui.QHBoxLayout()
     #
     # Setup label
