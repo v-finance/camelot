@@ -374,23 +374,42 @@ class ImageEditor(QtGui.QWidget):
     #
     button_layout = QtGui.QVBoxLayout()
     button_layout.setSpacing(0)
-    clear_button = QtGui.QPushButton( QtGui.QIcon(art.icon16('actions/editclear')), '')
+    button_layout.setMargin(0)
+
+    clear_button = QtGui.QToolButton()
+    clear_button.setIcon( QtGui.QIcon(art.icon16('places/user-trash')))
+    clear_button.setToolTip('Clear image')
+    clear_button.setAutoRaise(True)
     self.connect(clear_button, QtCore.SIGNAL('clicked()'), self.clearImage)
-    file_button = QtGui.QPushButton( QtGui.QIcon(art.icon16('places/folder')), '')
+
+    file_button = QtGui.QToolButton()
+    file_button.setIcon( QtGui.QIcon(art.icon16('status/folder-open')))
+    file_button.setAutoRaise(True)
+    file_button.setToolTip('Open file')
     self.connect(file_button, QtCore.SIGNAL('clicked()'), self.openFileDialog)
-    app_button = QtGui.QPushButton( QtGui.QIcon(art.icon16('actions/stock_new-window')), '')
+
+    app_button = QtGui.QToolButton()
+    app_button.setIcon( QtGui.QIcon(art.icon16('actions/document-new')))
+    app_button.setAutoRaise(True)
+    app_button.setToolTip('Open in viewer')
     self.connect(app_button, QtCore.SIGNAL('clicked()'), self.openInApp)
-    button_layout.addStretch()
+
+    vspacerItem = QtGui.QSpacerItem(20,20,QtGui.QSizePolicy.Minimum,QtGui.QSizePolicy.Expanding)
+    
+    button_layout.addItem(vspacerItem)
     button_layout.addWidget(clear_button)
     button_layout.addWidget(file_button)      
     button_layout.addWidget(app_button)      
+
     self.layout.addLayout(button_layout)
+    
+    hspacerItem = QtGui.QSpacerItem(20,20,QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+    self.layout.addItem(hspacerItem)
     self.setLayout(self.layout)
     #
     # Image
     #
     self.dummy_image = os.path.normpath(art.icon32('apps/stock_help'))
-    self.setPixmap = self.label.setPixmap
     if self.label.pixmap() == None:
       self.clearImage()
 
@@ -421,8 +440,13 @@ class ImageEditor(QtGui.QWidget):
     self.image_url =  QtCore.QUrl.fromLocalFile(self.dummy_image)
 
   def openFileDialog(self):
-    filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file',
-                                                  QtCore.QDir.currentPath())
+    filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm)
+All files (*)"""
+    
+    filename = QtGui.QFileDialog.getOpenFileName(self, 
+                                                'Open file', 
+                                                QtCore.QDir.currentPath(),
+                                                filter)
     if filename != '':
       testImage = QtGui.QImage(filename)
       if not testImage.isNull():
@@ -433,6 +457,10 @@ class ImageEditor(QtGui.QWidget):
     if self.image_url != None:
       print self.image_url.toLocalFile()
       QtGui.QDesktopServices.openUrl(self.image_url)
+
+  def setPixmap(self, pixmap):
+    self.image_url = None
+    self.label.setPixmap(pixmap) 
 
          
 class RichTextEditor(QtGui.QTextEdit):
