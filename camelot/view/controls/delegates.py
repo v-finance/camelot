@@ -389,6 +389,7 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
     import StringIO
     s = StringIO.StringIO()
     data = index.data(Qt.EditRole).toPyObject()
+    editor.image = data
     if data:
       data.thumbnail((100, 100))
       data.save(s, 'png')
