@@ -26,9 +26,11 @@
 #  ==================================================================================
 
 """Editors for various type of values"""
-
+import os
 import os.path
+import tempfile
 import logging
+import settings
 
 logger = logging.getLogger('editors')
 
@@ -356,6 +358,11 @@ class One2ManyEditor(QtGui.QWidget):
 #        self.setPixmap(QtGui.QPixmap(filename))
 #        self.file_url = url
 
+try:
+  from PIL import Image as PILImage
+except:
+  import Image as PILImage
+
 class ImageEditor(QtGui.QWidget):
   def __init__(self, parent=None):
     QtGui.QWidget.__init__(self, parent)
@@ -412,8 +419,9 @@ class ImageEditor(QtGui.QWidget):
     #
     # Image
     #
+    self.setPixmap = self.label.setPixmap
     self.dummy_image = os.path.normpath(art.icon32('apps/stock_help'))
-    if self.label.pixmap() == None:
+    if self.image == None:
       self.clearImage()
 
   #
@@ -430,17 +438,13 @@ class ImageEditor(QtGui.QWidget):
       url = event.mimeData().urls()[0]
       filename = url.toLocalFile()
       if filename != '':
-        testImage = QtGui.QImage(filename)
-        if not testImage.isNull():
-          self.label.setPixmap(QtGui.QPixmap(filename))
-          self.image_url = url
+        self.pilimage_from_file(filename)
 
   #
   # Buttons methods
   #
   def clearImage(self):
-    self.setPixmap(QtGui.QPixmap(self.dummy_image))
-    self.image_url =  QtCore.QUrl.fromLocalFile(self.dummy_image)
+    self.pilimage_from_file(self.dummy_image)
 
   def openFileDialog(self):
     filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm)
@@ -451,19 +455,22 @@ All files (*)"""
                                                 QtCore.QDir.currentPath(),
                                                 filter)
     if filename != '':
-      testImage = QtGui.QImage(filename)
-      if not testImage.isNull():
-        self.label.setPixmap(QtGui.QPixmap(filename))
-        self.image_url = QtCore.QUrl.fromLocalFile(filename) 
+      self.pilimage_from_file(filename)
 
   def openInApp(self):
-    if self.image_url != None:
-      print self.image_url.toLocalFile()
-      QtGui.QDesktopServices.openUrl(self.image_url)
+    if self.image != None:
+      tmpfile = tempfile.mkstemp(suffix='.png',dir=settings.CAMELOT_MEDIA_ROOT)[1]
+      print tmpfile
+      self.image.save(open(tmpfile, 'wb'), 'png')
+      QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(tmpfile))
 
-  def setPixmap(self, pixmap):
-    self.image_url = None
-    self.label.setPixmap(pixmap) 
+  def pilimage_from_file(self, filepath):
+    testImage = QtGui.QImage(filepath)
+    print filepath
+    if not testImage.isNull():
+      fp = open(filepath, 'rb')
+      self.image = PILImage.open(fp)
+      self.delegate.setModelData(self, self.index.model(), self.index )
 
          
 class RichTextEditor(QtGui.QTextEdit):
