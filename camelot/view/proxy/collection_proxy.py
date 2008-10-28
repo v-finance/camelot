@@ -255,7 +255,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       if widget_ == 'code':
         delegate = delegates.CodeColumnDelegate(c[1]['parts'])
         self.item_delegate.insertColumnDelegate(i, delegate)
-        continue        
+        continue
+      if widget_ == 'virtual_address':
+        delegate = delegates.VirtualAddressColumnDelegate()
+        self.item_delegate.insertColumnDelegate(i, delegate)
+        continue      
       if widget_ == 'image':
         delegate = delegates. ImageColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
@@ -422,11 +426,16 @@ class CollectionProxy(QtCore.QAbstractTableModel):
               except KeyError:
                 pass
               if model_updated:
-                history = BeforeUpdate(model=unicode(self.admin.entity.__name__), 
-                                       primary_key=o.id, 
-                                       previous_attributes={attribute:old_value},
-                                       person = getCurrentPerson())
-                session.flush([history])              
+                import pickle
+                #
+                # in case of images, we cannot pickle them
+                #
+                if not 'Imag' in old_value.__class__.__name__:
+                  history = BeforeUpdate(model=unicode(self.admin.entity.__name__), 
+                                         primary_key=o.id, 
+                                         previous_attributes={attribute:old_value},
+                                         person = getCurrentPerson())
+                  session.flush([history])  
               self.rsh.sendEntityUpdate(o)
             return ((row,0), (row,len(self.columns_getter())))
           elif flushed:

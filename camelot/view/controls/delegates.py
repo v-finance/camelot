@@ -284,6 +284,29 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
 
 _registered_delegates_[CodeEditor] = CodeColumnDelegate
 
+class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
+
+  def __init__(self, parent=None):
+    super(VirtualAddressColumnDelegate, self).__init__(parent)
+
+  def createEditor(self, parent, option, index):
+    return VirtualAddressEditor(parent)
+
+  def setEditorData(self, editor, index):
+    import camelot.types
+    value = index.data(Qt.EditRole).toPyObject()
+    editor.index = index
+    editor.delegate = self
+    if value:
+      editor.editor.setText(value[1])
+      editor.combo.setCurrentIndex(camelot.types.VirtualAddress.virtual_address_types.index(value[0]))
+      
+  def setModelData(self, editor, model, index):
+    value = (unicode(editor.combo.currentText()), unicode(editor.editor.text()))
+    model.setData(index, create_constant_function(value))
+
+_registered_delegates_[VirtualAddressEditor] = VirtualAddressColumnDelegate
+
 class FloatColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for float values"""
 

@@ -9,6 +9,46 @@ logger.setLevel(logging.DEBUG)
 
 from sqlalchemy import types
 
+class VirtualAddress(types.TypeDecorator):
+  """
+  Sqlalchemy type to store virtual addresses : eg, phone number, e-mail address, ...
+  
+  This column type accepts and returns tuples of strings, the first string is
+  the virtual_address_type, and the second the address itself:
+  
+  eg: ('mail','project-camelot@conceptive.be') is stored as mail://project-camelot@conceptive.be
+  """
+  
+  impl = types.Unicode
+  virtual_address_types = ['phone', 'fax', 'mobile', 'email', 'im', 'pager',]
+
+  def bind_processor(self, dialect):
+
+    impl_processor = self.impl.bind_processor(dialect)
+    if not impl_processor:
+      impl_processor = lambda x:x
+    
+    def processor(value):
+      if value is not None:
+        value = '://'.join(value)
+      return impl_processor(value)
+    
+    return processor
+
+  def result_processor(self, dialect):
+    
+    impl_processor = self.impl.result_processor(dialect)
+    if not impl_processor:
+      impl_processor = lambda x:x
+
+    def processor(value):
+
+      if value:
+        return value.split('://')
+      return ('phone','')
+      
+    return processor  
+    
 class Code(types.TypeDecorator):
   """
   Sqlalchemy column type to store codes

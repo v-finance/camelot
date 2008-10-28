@@ -94,6 +94,11 @@ _sqlalchemy_to_python_type_ = {
                                  'widget': 'code',
                                  'parts': f.parts},
                                  
+  camelot.types.VirtualAddress: lambda f:{'python_type':str,
+                                          'editable':True,
+                                          'widget':'virtual_address',
+                                          },
+                                 
   sqlalchemy.types.Time : lambda f: {'python_type':datetime.time,
                                      'editable':True,
                                      'widget':'time',

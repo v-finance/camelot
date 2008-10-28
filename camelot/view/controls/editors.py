@@ -108,6 +108,26 @@ class DateEditor(QtGui.QWidget):
   def setDate(self, date):
     self.qdateedit.setDate(date)
 
+class VirtualAddressEditor(QtGui.QWidget):
+  
+  def __init__(self, parent=None):
+    import camelot.types
+    super(VirtualAddressEditor, self).__init__(parent)
+    self.delegate = None
+    self.index = None
+    layout = QtGui.QHBoxLayout()
+    layout.setMargin(0)
+    self.combo = QtGui.QComboBox()
+    self.combo.addItems(camelot.types.VirtualAddress.virtual_address_types)
+    layout.addWidget(self.combo)
+    self.editor = QtGui.QLineEdit()
+    layout.addWidget(self.editor)
+    self.connect(self.editor, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
+    self.setLayout(layout)
+  def editingFinished(self):
+    if self.delegate:
+      self.delegate.setModelData(self, self.index.model(), self.index)
+        
 class CodeEditor(QtGui.QWidget):
   
   def __init__(self, parts=['99', 'AA'], delegate=None, parent=None):
@@ -467,7 +487,7 @@ All files (*)"""
   def pilimage_from_file(self, filepath):
     testImage = QtGui.QImage(filepath)
     print filepath
-    if not testImage.isNull():
+    if not testImage.isNull() and self.delegate:
       fp = open(filepath, 'rb')
       self.image = PILImage.open(fp)
       self.delegate.setModelData(self, self.index.model(), self.index )

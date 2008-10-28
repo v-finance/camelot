@@ -163,7 +163,8 @@ class Party(Entity):
   organisations in building authentication systems, contact management or CRM"""
   using_options(tablename='party')
   is_synchronized('synchronized', lazy=True)
-  addresses = OneToMany('PartyAddress')
+  addresses = OneToMany('PartyAddress', lazy=True)
+  contact_mechanisms = OneToMany('PartyContactMechanism', lazy=True)
     
   @property
   def name(self):
@@ -203,7 +204,7 @@ class Organization(Party):
     name = 'Organizations'
     section = 'relations'
     list_display = ['name', 'tax_id',]
-    form = TabForm([('Basic', Form(['name', 'tax_id', 'addresses'])),
+    form = TabForm([('Basic', Form(['name', 'tax_id', 'addresses', 'contact_mechanisms'])),
                     ('Employment', Form(['employees'])),
                     ('Customers', Form(['customers'])),
                     ('Suppliers', Form(['suppliers'])),
@@ -260,10 +261,11 @@ class Person(Party):
     name = 'Persons'
     section = 'relations'
     list_display = ['username', 'first_name', 'last_name', ]
-    fields = ['username', 'first_name', 'last_name', 'birthdate', 'social_security_number', 'passport_number', 
-              'passport_expiry_date', 'is_staff', 'is_active', 'is_superuser',
-              'comment', 'addresses', 'employers', 'directed_organizations', 'shares']
     list_filter = ['is_active', 'is_staff', 'is_superuser']
+    form = TabForm([('Basic', Form(['username', 'first_name', 'last_name', 'contact_mechanisms', 'picture', 'is_staff', 'is_active', 'is_superuser','comment',])),
+                    ('Official', Form(['birthdate', 'social_security_number', 'passport_number','passport_expiry_date','addresses',])),
+                    ('Work', Form(['employers', 'directed_organizations', 'shares']))
+                    ])
     
 class GeographicBoundary(Entity):
   using_options(tablename='geographic_boundary')
@@ -338,6 +340,9 @@ class PartyAddress(Entity):
   thru_date = Field(Date(), default=end_of_times, required=True, index=True)
   comment = Field(Unicode(256))
   
+  def __unicode__(self):
+    return '%s : %s'%(unicode(self.party), unicode(self.address))
+  
   def showMap(self):
     if self.address:
       self.address.showMap()
@@ -346,4 +351,33 @@ class PartyAddress(Entity):
     name = 'Address'
     list_display = ['address', 'comment']
     fields = ['address', 'comment', 'from_date', 'thru_date']
-    form_actions = [('Show map',lambda address:address.showMap())]   
+    form_actions = [('Show map',lambda address:address.showMap())]
+    
+class ContactMechanism(Entity):
+  using_options(tablename='contact_mechanism')
+  mechanism = Field(camelot.types.VirtualAddress(256), required=True)
+  party_address = ManyToOne('PartyAddress', ondelete='set null', onupdate='cascade')
+  
+  def __unicode__(self):
+    return self.mechanism[1]
+  
+  class Admin(EntityAdmin):
+    name = 'Contact mechanism'
+    list_display = ['mechanism']
+    form = Form(['mechanism', 'party_address'])
+
+class PartyContactMechanism(Entity):
+  using_options(tablename='party_contact_mechanism')
+  party = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
+  contact_mechanism = ManyToOne('ContactMechanism', required=True, ondelete='cascade', onupdate='cascade')
+  from_date = Field(Date(), default=datetime.date.today, required=True, index=True)
+  thru_date = Field(Date(), default=end_of_times, index=True)
+  comment = Field(Unicode(256))
+
+  def __unicode__(self):
+    return unicode(self.contact_mechanism)
+  
+  class Admin(EntityAdmin):
+    name = 'Party contact mechanisms'
+    list_display = ['contact_mechanism', 'comment', 'from_date',]
+    form = Form(['contact_mechanism', 'comment', 'from_date', 'thru_date',])
