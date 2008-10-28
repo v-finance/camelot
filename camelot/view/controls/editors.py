@@ -499,4 +499,5 @@ class RichTextEditor(QtGui.QTextEdit):
     QtGui.QTextEdit.__init__(self, parent)
 
 
+
     

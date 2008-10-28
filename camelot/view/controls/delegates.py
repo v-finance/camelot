@@ -445,6 +445,6 @@ class RichTextColumnDelegate(QtGui.QItemDelegate):
       editor.clear()
 
   def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(unicode(editor.toHtml())))
+    model.setData(index, create_constant_function(unicode(editor.toHtml())))    
 
 _registered_delegates_[RichTextEditor] = RichTextColumnDelegate

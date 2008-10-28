@@ -243,7 +243,10 @@ class Person(Party):
       
   @property
   def name(self):
-    return u'%s %s'%(self.last_name, self.first_name)
+    if self.last_name and self.first_name:
+      return u'%s %s'%(self.last_name, self.first_name)
+    else:
+      return self.username
   
   def __unicode__(self):
     return self.name
