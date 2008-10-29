@@ -439,10 +439,15 @@ class ImageEditor(QtGui.QWidget):
     #
     # Image
     #
-    self.setPixmap = self.label.setPixmap
     self.dummy_image = os.path.normpath(art.icon32('apps/stock_help'))
-    if self.image == None:
+    self.draw_border()
+    if self.image is None:
       self.clearImage()
+      #testImage = QtGui.QImage(filepath)
+      #if not testImage.isNull() and self.delegate:
+      #  fp = open(filepath, 'rb')
+      #  self.image = PILImage.open(fp)
+      #  self.delegate.setModelData(self, self.index.model(), self.index )
 
   #
   # Drag & Drop
@@ -464,7 +469,10 @@ class ImageEditor(QtGui.QWidget):
   # Buttons methods
   #
   def clearImage(self):
+    print self.dummy_image
+    print self.delegate
     self.pilimage_from_file(self.dummy_image)
+    self.draw_border()
 
   def openFileDialog(self):
     filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm)
@@ -479,20 +487,31 @@ All files (*)"""
 
   def openInApp(self):
     if self.image != None:
-      tmpfile = tempfile.mkstemp(suffix='.png',dir=settings.CAMELOT_MEDIA_ROOT)[1]
-      print tmpfile
-      self.image.save(open(tmpfile, 'wb'), 'png')
+      tmpfp, tmpfile = tempfile.mkstemp(suffix='.png')
+      self.image.save(os.fdopen(tmpfp, 'wb'), 'png')
       QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(tmpfile))
+
+  #
+  # Utils methods
+  #
 
   def pilimage_from_file(self, filepath):
     testImage = QtGui.QImage(filepath)
-    print filepath
     if not testImage.isNull() and self.delegate:
       fp = open(filepath, 'rb')
       self.image = PILImage.open(fp)
       self.delegate.setModelData(self, self.index.model(), self.index )
+  
+  def draw_border(self):
+    self.label.setFrameShape(QtGui.QFrame.Box)
+    self.label.setFrameShadow(QtGui.QFrame.Plain)
+    self.label.setLineWidth(1)
+    self.label.setFixedSize(100, 100)
+   
+  def setPixmap(self, pixmap):
+    self.draw_border()
+    self.label.setPixmap(pixmap)      
 
-         
 class RichTextEditor(QtGui.QTextEdit):
   
   def __init__(self, parent=None):
