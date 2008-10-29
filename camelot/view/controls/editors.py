@@ -396,6 +396,7 @@ class ImageEditor(QtGui.QWidget):
     self.label = QtGui.QLabel(parent)
     self.layout.addWidget(self.label)
     self.label.setAcceptDrops(True)
+    self.draw_border()
     self.label.__class__.dragEnterEvent = self.dragEnterEvent
     self.label.__class__.dragMoveEvent = self.dragEnterEvent
     self.label.__class__.dropEvent = self.dropEvent
@@ -440,15 +441,12 @@ class ImageEditor(QtGui.QWidget):
     # Image
     #
     self.dummy_image = os.path.normpath(art.icon32('apps/stock_help'))
-    self.draw_border()
     if self.image is None:
-      self.clearImage()
-      #testImage = QtGui.QImage(filepath)
-      #if not testImage.isNull() and self.delegate:
-      #  fp = open(filepath, 'rb')
-      #  self.image = PILImage.open(fp)
-      #  self.delegate.setModelData(self, self.index.model(), self.index )
-
+      testImage = QtGui.QImage(self.dummy_image)
+      if not testImage.isNull():
+        fp = open(self.dummy_image, 'rb')
+        self.image = PILImage.open(fp)
+        self.setPixmap(QtGui.QPixmap(self.dummy_image))
   #
   # Drag & Drop
   #
@@ -469,8 +467,6 @@ class ImageEditor(QtGui.QWidget):
   # Buttons methods
   #
   def clearImage(self):
-    print self.dummy_image
-    print self.delegate
     self.pilimage_from_file(self.dummy_image)
     self.draw_border()
 
@@ -509,14 +505,19 @@ All files (*)"""
     self.label.setFixedSize(100, 100)
    
   def setPixmap(self, pixmap):
-    self.draw_border()
     self.label.setPixmap(pixmap)      
+
+  def __setattr__(self, name, value):
+    QtGui.QWidget.__setattr__(self, name, value)
+    if name == 'delegate':
+      if 'label' in self.__dict__:
+        self.draw_border() 
+        
 
 class RichTextEditor(QtGui.QTextEdit):
   
   def __init__(self, parent=None):
     QtGui.QTextEdit.__init__(self, parent)
-
 
 
     
