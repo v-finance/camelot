@@ -416,6 +416,7 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
     editor.delegate = self
     editor.index = index
     if data:
+      data = data.copy()
       data.thumbnail((100, 100))
       data.save(s, 'png')
       s.seek(0)
@@ -425,7 +426,7 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
       editor.setPixmap(pixmap)
     else:
       #@todo: clear pixmap
-      pass
+      editor.clearFirstImage()
 
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(editor.image))

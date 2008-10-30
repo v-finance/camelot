@@ -396,7 +396,8 @@ class ImageEditor(QtGui.QWidget):
     self.label = QtGui.QLabel(parent)
     self.layout.addWidget(self.label)
     self.label.setAcceptDrops(True)
-    self.draw_border()
+#    self.draw_border()
+    self.label.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
     self.label.__class__.dragEnterEvent = self.dragEnterEvent
     self.label.__class__.dragMoveEvent = self.dragEnterEvent
     self.label.__class__.dropEvent = self.dropEvent
@@ -506,13 +507,15 @@ All files (*)"""
    
   def setPixmap(self, pixmap):
     self.label.setPixmap(pixmap)      
+    self.draw_border()
 
-  def __setattr__(self, name, value):
-    QtGui.QWidget.__setattr__(self, name, value)
-    if name == 'delegate':
-      if 'label' in self.__dict__:
-        self.draw_border() 
-        
+  def clearFirstImage(self):
+    testImage = QtGui.QImage(self.dummy_image)
+    if not testImage.isNull():
+      fp = open(self.dummy_image, 'rb')
+      self.image = PILImage.open(fp)
+    self.draw_border()
+
 
 class RichTextEditor(QtGui.QTextEdit):
   
