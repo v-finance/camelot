@@ -408,30 +408,30 @@ class ImageEditor(QtGui.QWidget):
     button_layout.setSpacing(0)
     button_layout.setMargin(0)
 
+    file_button = QtGui.QToolButton()
+    file_button.setIcon( QtGui.QIcon(art.icon16('actions/document-new')))
+    file_button.setAutoRaise(True)
+    file_button.setToolTip('Select image')
+    self.connect(file_button, QtCore.SIGNAL('clicked()'), self.openFileDialog)
+    
+    app_button = QtGui.QToolButton()
+    app_button.setIcon( QtGui.QIcon(art.icon16('status/folder-open')))
+    app_button.setAutoRaise(True)
+    app_button.setToolTip('Open image')
+    self.connect(app_button, QtCore.SIGNAL('clicked()'), self.openInApp)
+    
     clear_button = QtGui.QToolButton()
     clear_button.setIcon( QtGui.QIcon(art.icon16('places/user-trash')))
     clear_button.setToolTip('Clear image')
     clear_button.setAutoRaise(True)
     self.connect(clear_button, QtCore.SIGNAL('clicked()'), self.clearImage)
 
-    file_button = QtGui.QToolButton()
-    file_button.setIcon( QtGui.QIcon(art.icon16('status/folder-open')))
-    file_button.setAutoRaise(True)
-    file_button.setToolTip('Open file')
-    self.connect(file_button, QtCore.SIGNAL('clicked()'), self.openFileDialog)
-
-    app_button = QtGui.QToolButton()
-    app_button.setIcon( QtGui.QIcon(art.icon16('actions/document-new')))
-    app_button.setAutoRaise(True)
-    app_button.setToolTip('Open in viewer')
-    self.connect(app_button, QtCore.SIGNAL('clicked()'), self.openInApp)
-
     vspacerItem = QtGui.QSpacerItem(20,20,QtGui.QSizePolicy.Minimum,QtGui.QSizePolicy.Expanding)
     
     button_layout.addItem(vspacerItem)
-    button_layout.addWidget(clear_button)
     button_layout.addWidget(file_button)      
-    button_layout.addWidget(app_button)      
+    button_layout.addWidget(app_button)
+    button_layout.addWidget(clear_button)    
 
     self.layout.addLayout(button_layout)
     
@@ -441,7 +441,7 @@ class ImageEditor(QtGui.QWidget):
     #
     # Image
     #
-    self.dummy_image = os.path.normpath(art.icon32('apps/stock_help'))
+    self.dummy_image = os.path.normpath(art.icon32('apps/help-browser'))
     if self.image is None:
       testImage = QtGui.QImage(self.dummy_image)
       if not testImage.isNull():

@@ -165,8 +165,7 @@ class TableView(QtGui.QWidget):
   def deleteSelectedRows(self):
     """delete the selected rows in this tableview"""
     logger.debug('delete selected rows called')
-    #for row in set(map(lambda x: x.row(), self.table.selectedIndexes())):
-    for row in set([lambda x: x.row(), self.table.selectedIndexes()]):
+    for row in set(map(lambda x: x.row(), self.table.selectedIndexes())):
       self.table_model.removeRow(row)
 
   def newRow(self):
