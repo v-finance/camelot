@@ -517,10 +517,89 @@ All files (*)"""
     self.draw_border()
 
 
-class RichTextEditor(QtGui.QTextEdit):
+#class RichTextEditor(QtGui.QTextEdit):
+#  
+#  def __init__(self, parent=None):
+#    QtGui.QTextEdit.__init__(self, parent)
+
+class RichTextEditor(QtGui.QWidget):
   
   def __init__(self, parent=None):
-    QtGui.QTextEdit.__init__(self, parent)
-
-
+    QtGui.QWidget.__init__(self, parent)
     
+    self.layout = QtGui.QVBoxLayout(self)
+
+    self.button_layout = QtGui.QHBoxLayout(self)
+
+    bold_button = QtGui.QToolButton(self)
+    bold_button.setIcon( QtGui.QIcon(art.icon16('actions/format-text-bold')))
+    bold_button.setAutoRaise(True)
+    bold_button.setCheckable(True)
+    bold_button.setShortcut(QtGui.QKeySequence('Ctrl+B'))
+    self.connect(bold_button, QtCore.SIGNAL('toggled(bool)'), self.set_bold)
+
+    italic_button = QtGui.QToolButton(self)
+    italic_button.setIcon(QtGui.QIcon(art.icon16('actions/format-text-italic')))
+    italic_button.setAutoRaise(True)
+    italic_button.setCheckable(True)
+    italic_button.setShortcut(QtGui.QKeySequence('Ctrl+I'))
+    self.connect(italic_button, QtCore.SIGNAL('toggled(bool)'), self.set_italic)
+
+    underline_button = QtGui.QToolButton(self)
+    underline_button.setIcon(QtGui.QIcon(art.icon16('actions/format-text-underline')))
+    underline_button.setAutoRaise(True)
+    underline_button.setCheckable(True)
+    underline_button.setShortcut(QtGui.QKeySequence('Ctrl+U'))
+    self.connect(underline_button, QtCore.SIGNAL('toggled(bool)'), self.set_underline)
+
+    hspacerItem = QtGui.QSpacerItem(20,20,QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Minimum)
+
+    self.button_layout.addWidget(bold_button)
+    self.button_layout.addWidget(italic_button)      
+    self.button_layout.addWidget(underline_button) 
+    self.button_layout.addItem(hspacerItem)
+
+    self.textedit = QtGui.QTextEdit(self)
+    self.textedit.setAcceptRichText(True)
+
+    self.layout.addLayout(self.button_layout)
+    self.layout.addWidget(self.textedit)
+   
+    self.setLayout(self.layout)
+
+    self.textedit.setFontWeight(QtGui.QFont.Normal)
+    self.textedit.setFontItalic(False)
+    self.textedit.setFontUnderline(False)
+    
+  def set_bold(self, bool):
+    if bool:
+      self.textedit.setFocus(Qt.OtherFocusReason)
+      self.textedit.setFontWeight(QtGui.QFont.Bold)
+    else:
+      self.textedit.setFocus(Qt.OtherFocusReason)
+      self.textedit.setFontWeight(QtGui.QFont.Normal)
+
+  def set_italic(self, bool):
+    if bool:
+      self.textedit.setFocus(Qt.OtherFocusReason)
+      self.textedit.setFontItalic(True)
+    else:
+      self.textedit.setFocus(Qt.OtherFocusReason)
+      self.textedit.setFontItalic(False)
+
+  def set_underline(self, bool):
+    if bool:
+      self.textedit.setFocus(Qt.OtherFocusReason)
+      self.textedit.setFontUnderline(True)
+    else:
+      self.textedit.setFocus(Qt.OtherFocusReason)
+      self.textedit.setFontUnderline(False)
+
+  def clear(self):
+    self.textedit.clear()
+
+  def setHtml(self, html):
+    self.textedit.setHtml(html)
+   
+  def toHtml(self):
+    return self.textedit.toHtml() 
