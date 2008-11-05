@@ -81,6 +81,10 @@ class ApplicationAdmin(object):
     """@return: the name of the application"""
     return "Project Camelot"
   
+  def getIcon(self):
+    import art
+    return art.icon32('apps/system-users')
+  
   def getAbout(self):
     """@return: the content of the About dialog"""
     return """<b>Camelot Project</b>

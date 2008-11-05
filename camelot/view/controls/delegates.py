@@ -412,11 +412,11 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
     import StringIO
     s = StringIO.StringIO()
     data = index.data(Qt.EditRole).toPyObject()
-    editor.image = data
     editor.delegate = self
     editor.index = index
     if data:
-      data = data.copy()
+      editor.image = data.image
+      data = data.image.copy()
       data.thumbnail((100, 100))
       data.save(s, 'png')
       s.seek(0)
@@ -429,7 +429,8 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
       editor.clearFirstImage()
 
   def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(editor.image))
+    from camelot.types import StoredImage
+    model.setData(index, create_constant_function(StoredImage(editor.image)))
   
 _registered_delegates_[ImageEditor] = ImageColumnDelegate
 

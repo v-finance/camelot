@@ -109,11 +109,25 @@ try:
 except:
   import Image as PILImage
         
+class StoredImage(object):
+  """Class linking a PIL image and the location and filename where the image is stored"""
+  
+  def __init__(self, image, location=None, filename=None):
+    self.image = image
+    self.location = location
+    self.filename = filename
+  
+  @property
+  def full_path(self):
+    import os
+    return os.path.join(self.location, self.filename)
+    
+    
 class Image(types.TypeDecorator):
   """
   Sqlalchemy column type to store images
   
-  This column type accepts and returns PIL images, and stores them in the directory
+  This column type accepts and returns a StoredImage, and stores them in the directory
   specified by settings.MEDIA_ROOT.  The name of the file is stored as a string in
   the database.
   """
@@ -139,7 +153,7 @@ class Image(types.TypeDecorator):
       if value is not None:
         import tempfile
         (handle, name) = tempfile.mkstemp(suffix='.%s'%self.format, prefix=self.prefix, dir=os.path.join(self.upload_to))
-        value.save(os.fdopen(handle, 'wb'), 'png')
+        value.image.save(os.fdopen(handle, 'wb'), 'png')
         value = os.path.basename(name)
       return impl_processor(value)
     
@@ -156,7 +170,7 @@ class Image(types.TypeDecorator):
       if value:
         value = os.path.join(self.upload_to, impl_processor(value))
         if os.path.exists(value):
-          return PILImage.open( value )
+          return StoredImage(PILImage.open( value ), self.upload_to, value)
         else:
           logger.warn('Image at %s does not exist'%value)
       

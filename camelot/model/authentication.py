@@ -98,7 +98,7 @@ class DirectedDirector(PartyRelationship):
   class DirectorAdmin(EntityAdmin):
     name = 'Directors'
     list_display = ['established_to', 'from_date', 'thru_date']
-    fields = ['established_to', 'from_date', 'thru_date', 'representing', 'comment']
+    fields = ['established_to', 'title', 'from_date', 'thru_date', 'representing', 'comment']
     field_attributes = {'established_to':{'name':'Name'}}
     
   class DirectedAdmin(EntityAdmin):
@@ -189,6 +189,7 @@ class Organization(Party):
   businesses and groups of individuals"""
   using_options(tablename='organization', inheritance='multi')
   name = Field(Unicode(50), required=True, index=True)
+  logo = Field(camelot.types.Image(upload_to='organization-logo'), deferred=True)
   tax_id = Field(Unicode(20))
   directors = OneToMany('DirectedDirector', inverse='established_from')
   employees = OneToMany('EmployerEmployee', inverse='established_from')
@@ -208,7 +209,8 @@ class Organization(Party):
                     ('Employment', Form(['employees'])),
                     ('Customers', Form(['customers'])),
                     ('Suppliers', Form(['suppliers'])),
-                    ('Corporate', Form(['directors', 'shareholders', 'shares'])), ])
+                    ('Corporate', Form(['directors', 'shareholders', 'shares'])),
+                    ('Branding', Form(['logo'])), ])
       
 class Person(Party):
   """Person represents natural persons, these can be given access to the system, and
