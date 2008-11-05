@@ -513,10 +513,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   @model_function
   def remove(self, o):
     self.collection_getter().remove(o)
+    self.rows -= 1
     
   @model_function
   def append(self, o):
     self.collection_getter().append(o)
+    self.rows += 1
  
   def removeRow(self, row):
     logger.debug('remove row %s'%row)
@@ -528,16 +530,17 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         from camelot.model.memento import BeforeDelete
         from camelot.model.authentication import getCurrentPerson
         o = self._get_object(row)
-        pk = o.id
         self.remove(o)
-        # save the state before the update
-        history = BeforeDelete(model=unicode(self.admin.entity.__name__), 
-                               primary_key=pk, 
-                               previous_attributes={},
-                               person = getCurrentPerson() )
-        self.rsh.sendEntityDelete(o)        
-        o.delete()
-        session.flush([history, o])   
+        if o.id:
+          pk = o.id
+          # save the state before the update
+          history = BeforeDelete(model=unicode(self.admin.entity.__name__), 
+                                 primary_key=pk, 
+                                 previous_attributes={},
+                                 person = getCurrentPerson() )
+          self.rsh.sendEntityDelete(o)        
+          o.delete()
+          session.flush([history, o])   
       
       return delete_function
     
@@ -549,8 +552,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     
   def insertRow(self, row, entity_instance_getter):
     
-    self.unflushed_rows.add(row)
-    
     def create_insert_function(getter):
       
       @model_function
@@ -560,8 +561,14 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         from camelot.model.authentication import getCurrentPerson
         o = getter()
         self.append(o)
-        if self.flush_changes:
+        row = self.getRowCount()-1
+        self.unflushed_rows.add(row)
+        if self.flush_changes and not len(self.validator.objectValidity(o)):
           session.flush([o])
+          try:
+            self.unflushed_rows.remove(row)
+          except KeyError:
+            pass
           history = Create(model=unicode(self.admin.entity.__name__),
                            primary_key=o.id,
                            person = getCurrentPerson() )

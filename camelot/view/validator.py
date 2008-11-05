@@ -41,24 +41,30 @@ class Validator(QtCore.QObject):
     self.model = model
     self.message_cache = fifo(10)
     
+  def objectValidity(self, entity_instance):
+    """@return: list of messages explaining invalid data, empty list if object is valid"""
+    messages = []
+    for column in self.model.getColumns():
+      value = getattr(entity_instance, column[0])
+      if column[1]['nullable']!=True:
+        is_null = False
+        if value==None:
+          is_null = True
+        elif (column[1]['widget']=='code') and (sum(len(c) for c in value)==0):
+          is_null = True
+        elif (column[1]['widget']=='str') and (len(value)==0):
+          is_null = True
+        if is_null:
+          messages.append(u'%s is a required field'%(column[1]['name']))
+    return messages
+            
   def isValid(self, row):
     """Verify if a row in a model is 'valid', meaning it could be flushed to the database"""
     entity_instance = self.model._get_object(row)
     messages = []
     logger.debug('is valid for row %s'%row)
     if entity_instance:
-      for column in self.model.getColumns():
-        value = getattr(entity_instance, column[0])
-        if column[1]['nullable']!=True:
-          is_null = False
-          if value==None:
-            is_null = True
-          elif (column[1]['widget']=='code') and (sum(len(c) for c in value)==0):
-            is_null = True
-          elif (column[1]['widget']=='str') and (len(value)==0):
-            is_null = True
-          if is_null:
-            messages.append(u'%s is a required field'%(column[1]['name'])) 
+      messages = self.objectValidity(entity_instance)
       self.message_cache.add_data(row, entity_instance.id, messages)
     return len(messages)==0
   

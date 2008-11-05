@@ -9,11 +9,12 @@ if os.path.exists(db_name):
   os.remove(db_name)
 
 def setup_model():
-  from model import *
+  #from model import *
   from camelot.model.memento import *
   from camelot.model.synchronization import *
   from camelot.model.authentication import *
   setup_all(create_tables=True)
+  updateLastLogin()
       
 CAMELOT_MAIN_DIRECTORY = os.path.join(os.path.dirname(__file__), '..', 'camelot')
 CAMELOT_LIB_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY, 'librairies')

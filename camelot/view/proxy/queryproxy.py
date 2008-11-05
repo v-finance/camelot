@@ -42,12 +42,26 @@ class QueryTableProxy(CollectionProxy):
                max_number_of_rows=10, edits=None):
     logger.debug('initialize query table')
     self.query = query
+    #rows appended to the table which have not yet been flushed to the
+    #database, and as such cannot be a result of the query
+    self._appended_rows = []
     CollectionProxy.__init__(self, admin, lambda: [], columns_getter,
                              max_number_of_rows=10, edits=None)
 
   @model_function
+  def _clean_appended_rows(self):
+    """Remove those rows from appended rows that have been flushed"""
+    flushed_rows = []
+    for o in self._appended_rows:
+      if o.id:
+        flushed_rows.append(o)
+    for o in flushed_rows:
+      self._appended_rows.remove(o)
+    
+  @model_function
   def getRowCount(self):
-    return self.query.count()
+    self._clean_appended_rows()
+    return self.query.count() + len(self._appended_rows)
 
   def setQuery(self, query):
     """Set the query and refresh the view"""
@@ -57,10 +71,14 @@ class QueryTableProxy(CollectionProxy):
   def append(self, o):
     """Add an object to this collection, used when inserting a new
     row, overwrite this method for specific behaviour in subclasses"""
-    pass
+    if not o.id:
+      self._appended_rows.append(o)
+    self.rows = self.rows + 1
       
   def remove(self, o):
-    pass
+    if o in self._appended_rows:
+      self._appended_rows.remove(o)
+    self.rows = self.rows - 1
     
   @model_function
   def getData(self):
@@ -82,6 +100,10 @@ class QueryTableProxy(CollectionProxy):
   @model_function
   def _get_object(self, row):
     """Get the object corresponding to row"""
+    self._clean_appended_rows()
+    rows_in_query = (self.rows-len(self._appended_rows))
+    if row >= rows_in_query:
+      return self._appended_rows[row-rows_in_query]
     try:
       # first try to get the primary key out of the cache, if it's not
       # there, query the collection_getter
