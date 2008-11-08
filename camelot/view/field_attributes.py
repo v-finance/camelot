@@ -103,5 +103,5 @@ _sqlalchemy_to_python_type_ = {
                                      'editable':True,
                                      'widget':'time',
                                      'format':'hh:mm',
-                                     'nullable':True}                                 
+                                     'nullable':True}
 }
