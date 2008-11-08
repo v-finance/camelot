@@ -42,18 +42,25 @@ class SubclassTree(ModelTree):
         
   def setSubclasses(self, subclasses):
     logger.debug('set subclass tree')
+    
+    class SubclassItem(ModelItem):
+      def __init__(self, parent, admin):
+        super(SubclassItem, self).__init__(parent, [admin.getName()])
+        self.admin = admin
+      
     self.subclasses = subclasses
     if len(subclasses) > 1:
       self.clear_model_items()
+      top_level_item = SubclassItem(self, self.admin)
+      self.modelitems.append(top_level_item)
       for cls in subclasses:
-        #item = QtGui.QTreeWidgetItem(self, [cls.getName()])
-        #column = 0
-        #item.setIcon(column, QtGui.QIcon(winnew))
-        item = ModelItem(self, [cls.getName()])
+        item = SubclassItem(top_level_item, cls)
         self.modelitems.append(item)
+      top_level_item.setExpanded(True)
     else:
       self.setMaximumWidth(0)
 
   def emitSubclassClicked(self, index):
     logger.debug('subclass clicked at position %s'%index.row())
-    self.emit(QtCore.SIGNAL('subclasssClicked'), self.subclasses[index.row()])
+    item = self.itemFromIndex(index)
+    self.emit(QtCore.SIGNAL('subclasssClicked'), item.admin)

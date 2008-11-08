@@ -83,8 +83,9 @@ class EntityAdmin(object):
     from elixir import entities
     return [e.Admin(self.app_admin, e)
             for e in entities
-            if issubclass(e, (self.entity, ))
-            if hasattr(e, 'Admin')]
+            if (issubclass(e, (self.entity, )) and 
+                hasattr(e, 'Admin') and
+                e!=self.entity)]
 
   def getFieldAttributes(self, field_name):
     """

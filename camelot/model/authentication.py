@@ -168,7 +168,7 @@ class Party(Entity):
     
   @property
   def name(self):
-    return u''
+    return unicode(self)
   
   class Admin(EntityAdmin):
     name = 'Parties'
