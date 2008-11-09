@@ -249,9 +249,13 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       type_ = c[1]['python_type']
       widget_ = c[1]['widget']
 
-      logger.debug('%s : creating delegate for type %s, using widget %s' % \
-                   (field_name, type_, widget_))
+      logger.debug('%s : creating delegate for type %s, using widget %s and arguments %s' % \
+                   (field_name, type_, widget_, str(c[1])))
       
+      if 'choices' in c[1]:
+        delegate = delegates.ComboBoxColumnDelegate(**c[1])
+        self.item_delegate.insertColumnDelegate(i, delegate)
+        continue
       if widget_ == 'code':
         delegate = delegates.CodeColumnDelegate(c[1]['parts'])
         self.item_delegate.insertColumnDelegate(i, delegate)
@@ -293,7 +297,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                                                 nullable=c[1].get('nullable', False))
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == float:
-        delegate = delegates.FloatColumnDelegate(-100000.0, 100000.0)
+        delegate = delegates.FloatColumnDelegate(-100000.0, 100000.0, **c[1])
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == bool:
         delegate = delegates.BoolColumnDelegate()

@@ -310,14 +310,16 @@ _registered_delegates_[VirtualAddressEditor] = VirtualAddressColumnDelegate
 class FloatColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for float values"""
 
-  def __init__(self, minimum=-100.0, maximum=100.0, precision=3, parent=None):
+  def __init__(self, minimum=-100.0, maximum=100.0, precision=3, editable=True, parent=None, **kwargs):
     super(FloatColumnDelegate, self).__init__(parent)
     self.minimum = minimum
     self.maximum = maximum
     self.precision = precision
+    self.editable = editable
 
   def createEditor(self, parent, option, index):
     editor = QtGui.QDoubleSpinBox(parent)
+    editor.setReadOnly(self.editable==False)
     editor.setRange(self.minimum, self.maximum)
     editor.setDecimals(self.precision)
     editor.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
@@ -450,3 +452,38 @@ class RichTextColumnDelegate(QtGui.QItemDelegate):
     model.setData(index, create_constant_function(unicode(editor.toHtml())))    
 
 _registered_delegates_[RichTextEditor] = RichTextColumnDelegate
+
+class ComboBoxColumnDelegate(QtGui.QItemDelegate):
+  
+  def __init__(self, choices, parent=None, **kwargs):
+    super(ComboBoxColumnDelegate, self).__init__(parent)
+    self.choices = choices
+    
+  def createEditor(self, parent, option, index):
+    from camelot.view.model_thread import get_model_thread
+    combobox = QtGui.QComboBox(parent)
+    
+    def getChoices(model, row):
+      return list(self.choices(model._get_object(row)))
+      
+    def setChoices(choices):
+      for i,choice in enumerate(choices):
+        combobox.insertItem(i, unicode(choice), QtCore.QVariant(choice))
+      
+    get_model_thread().post(lambda:getChoices(index.model(), index.row()), setChoices)
+    return combobox
+  
+  def setEditorData(self, editor, index):
+    data = index.model().data(index, Qt.EditRole).toPyObject()
+    if data!=None:
+      for i in range(editor.count()):
+        if data == editor.itemData(i).toPyObject():
+          editor.setCurrentIndex(i)
+          return
+      editor.insertItem(editor.count(), unicode(data), QtCore.QVariant(data))
+      editor.setCurrentIndex(editor.count()-1)
+    
+  def setModelData(self, editor, model, index):
+    model.setData(index, create_constant_function(editor.itemData(editor.currentIndex()).toPyObject()))
+
+_registered_delegates_[QtGui.QComboBox] = ComboBoxColumnDelegate
