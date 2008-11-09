@@ -256,7 +256,7 @@ class EntityAdmin(object):
     from validator import *
     return Validator(self, model)
   
-  def createNewView(admin, parent=None):
+  def createNewView(admin, parent=None, oncreate=None, onexpunge=None):
     """
     Create a QT widget containing a form to create a new instance of the entity
     related to this admin class
@@ -278,6 +278,8 @@ class EntityAdmin(object):
     def collection_getter():
       if not new_object:
         entity_instance = admin.entity()
+        if oncreate:
+          oncreate(entity_instance)
         # Give the default fields their value
         for field,attributes in admin.getFields():
           try:
@@ -297,7 +299,7 @@ class EntityAdmin(object):
       return new_object
 
     model = CollectionProxy(admin, collection_getter, admin.getFields,
-                            max_number_of_rows=1, flush_changes=False)
+                            max_number_of_rows=1)
     validator = admin.createValidator(model)
 
     class NewForm(QtGui.QWidget):
@@ -324,6 +326,8 @@ class EntityAdmin(object):
             def expunge_object():
               from elixir import session
               for o in new_object:
+                if onexpunge:
+                  onexpunge(o)
                 session.expunge(o)
                                 
             def showMessage(valid):

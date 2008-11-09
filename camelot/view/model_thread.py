@@ -81,17 +81,17 @@ class ModelThread(threading.Thread):
           result = request()
           self._response_queue.put((result, response))
           self._request_queue.task_done()
-          event.set()
           self._response_signaler.responseAvailable()
           self._response_signaler.stopProcessingRequest()
           logger.debug('finished handling request')
+          event.set()
           #self._response_queue.join()
         except Exception, e:
           logger.exception(e)
           self._response_queue.put((e, exception))
           self._request_queue.task_done()
-          event.set()
           self._response_signaler.responseAvailable()
+          event.set()
           
     except Exception, e:
       logger.exception(e)

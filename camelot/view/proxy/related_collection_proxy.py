@@ -53,21 +53,21 @@ class RelatedCollectionProxy(CollectionProxy):
         o = self._get_object(row)
         pk = o.id
         self.remove(o)
-        # save the state before the update
-        history = BeforeDelete(model=self.admin.entity.__name__, 
-                               primary_key=pk, 
-                               previous_attributes={},
-                               person = getCurrentPerson() )
-        self.rsh.sendEntityDelete(o)        
-        o.delete()
-        session.flush([history, o])   
+        if o.id:
+          # save the state before the update
+          history = BeforeDelete(model=self.admin.entity.__name__, 
+                                 primary_key=pk, 
+                                 previous_attributes={},
+                                 person = getCurrentPerson() )
+          self.rsh.sendEntityDelete(o)        
+          o.delete()
+          session.flush([history, o])   
       
       return delete_function
     
     def create_emit_function():
       
       def emit_changes(*args):
-        self.related_index.model().setData(self.related_index, lambda:None)
         self.refresh()
       
       return emit_changes
@@ -77,21 +77,26 @@ class RelatedCollectionProxy(CollectionProxy):
   
   def insertRow(self, row, entity_instance_getter):
     
-    self.unflushed_rows.add(row)
-    
     def create_insert_function(getter):
       
       @model_function
       def insert_function():
+        from elixir import session
         o = getter()
+        self.unflushed_rows.add(row)
         self.append(o)
+        if self.flush_changes and not len(self.validator.objectValidity(o)):
+          session.flush([o])
+          try:
+            self.unflushed_rows.remove(row)
+          except KeyError:
+            pass
           
       return insert_function
       
     def create_emit_function(getter):
       
       def emit_changes(*args):
-        self.related_index.model().setData(self.related_index, getter)
         self.refresh()
       
       return emit_changes

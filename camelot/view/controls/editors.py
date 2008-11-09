@@ -336,13 +336,17 @@ class One2ManyEditor(QtGui.QWidget):
   def newRow(self):
     from camelot.view.workspace import get_workspace
     workspace = get_workspace()
-    form = self.admin.createNewView(workspace)
+    
+    def oncreate(o):
+      self.model.insertRow(0, lambda:o)
+      
+    def onexpunge(o):
+      #@todo: in multiple new rows are added at the same time, this will fail
+      row = self.model.removeRow(self.model.rowCount()-1)
+      
+    form = self.admin.createNewView(workspace, oncreate=oncreate, onexpunge=onexpunge)
     workspace.addWindow('new', form)
-    self.connect(form, form.entity_created_signal, self.entityCreated)
     form.show()
-  
-  def entityCreated(self, entity_instance_getter):
-    self.model.insertRow(0, entity_instance_getter)
     
   def deleteSelectedRows(self):
     """Delete the selected rows in this tableview"""
