@@ -517,11 +517,6 @@ All files (*)"""
     self.draw_border()
 
 
-#class RichTextEditor(QtGui.QTextEdit):
-#  
-#  def __init__(self, parent=None):
-#    QtGui.QTextEdit.__init__(self, parent)
-
 class RichTextEditor(QtGui.QWidget):
   
   def __init__(self, parent=None):
@@ -534,9 +529,8 @@ class RichTextEditor(QtGui.QWidget):
     #
     # Buttons setup
     #
-    self.button_layout = QtGui.QHBoxLayout(self)
-    self.button_layout.setMargin(0)
-    self.button_layout.setSpacing(0)
+    self.toolbar = QtGui.QToolBar(self)
+    self.toolbar.setContentsMargins(0,0,0,0)
     self.bold_button = QtGui.QToolButton(self)
     self.bold_button.setIcon( QtGui.QIcon(art.icon16('actions/format-text-bold')))
     self.bold_button.setAutoRaise(True)
@@ -560,12 +554,10 @@ class RichTextEditor(QtGui.QWidget):
     self.underline_button.setShortcut(QtGui.QKeySequence('Ctrl+U'))
     self.connect(self.underline_button, QtCore.SIGNAL('clicked(bool)'), self.set_underline)
 
-    hspacerItem = QtGui.QSpacerItem(20,20,QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Minimum)
-
-    self.button_layout.addWidget(self.bold_button)
-    self.button_layout.addWidget(self.italic_button)      
-    self.button_layout.addWidget(self.underline_button) 
-    self.button_layout.addItem(hspacerItem)
+    self.toolbar.addWidget(self.bold_button)
+    self.toolbar.addWidget(self.italic_button)      
+    self.toolbar.addWidget(self.underline_button) 
+    #self.toolbar.addItem(hspacerItem)
     
     #
     # Textedit & widget
@@ -573,7 +565,7 @@ class RichTextEditor(QtGui.QWidget):
     self.textedit = QtGui.QTextEdit(self)
     self.textedit.setAcceptRichText(True)
 
-    self.layout.addLayout(self.button_layout)
+    self.layout.addWidget(self.toolbar)
     self.layout.addWidget(self.textedit)
    
     self.setLayout(self.layout)
