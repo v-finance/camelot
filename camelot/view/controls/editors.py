@@ -336,17 +336,19 @@ class One2ManyEditor(QtGui.QWidget):
   def newRow(self):
     from camelot.view.workspace import get_workspace
     workspace = get_workspace()
-    
     def oncreate(o):
       self.model.insertRow(0, lambda:o)
       
     def onexpunge(o):
       #@todo: in multiple new rows are added at the same time, this will fail
       row = self.model.removeRow(self.model.rowCount()-1)
-      
-    form = self.admin.createNewView(workspace, oncreate=oncreate, onexpunge=onexpunge)
+
     workspace.addWindow('new', form)
+    #self.connect(form, form.entity_created_signal, self.entityCreated)
     form.show()
+  
+#  def entityCreated(self, entity_instance_getter):
+#    self.model.insertRow(0, entity_instance_getter)
     
   def deleteSelectedRows(self):
     """Delete the selected rows in this tableview"""
@@ -531,6 +533,12 @@ class RichTextEditor(QtGui.QWidget):
     self.layout.setMargin(0)
 
     #
+    # Textedit
+    #
+    self.textedit = QtGui.QTextEdit(self)
+    self.textedit.setAcceptRichText(True)
+
+    #
     # Buttons setup
     #
     self.toolbar = QtGui.QToolBar(self)
@@ -558,17 +566,67 @@ class RichTextEditor(QtGui.QWidget):
     self.underline_button.setShortcut(QtGui.QKeySequence('Ctrl+U'))
     self.connect(self.underline_button, QtCore.SIGNAL('clicked(bool)'), self.set_underline)
 
+    self.copy_button = QtGui.QToolButton(self)
+    self.copy_button.setIcon(QtGui.QIcon(art.icon16('actions/edit-copy')))
+    self.copy_button.setAutoRaise(True)
+    self.copy_button.setMaximumSize(QtCore.QSize(20,20))
+    self.connect(self.copy_button, QtCore.SIGNAL('clicked(bool)'), self.textedit.copy)
+
+    self.cut_button = QtGui.QToolButton(self)
+    self.cut_button.setIcon(QtGui.QIcon(art.icon16('actions/edit-cut')))
+    self.cut_button.setAutoRaise(True)
+    self.cut_button.setMaximumSize(QtCore.QSize(20,20))
+    self.connect(self.cut_button, QtCore.SIGNAL('clicked(bool)'), self.textedit.cut)
+
+    self.paste_button = QtGui.QToolButton(self)
+    self.paste_button.setIcon(QtGui.QIcon(art.icon16('actions/edit-paste')))
+    self.paste_button.setAutoRaise(True)
+    self.paste_button.setMaximumSize(QtCore.QSize(20,20))
+    self.connect(self.paste_button, QtCore.SIGNAL('clicked(bool)'), self.textedit.paste)
+
+    self.alignleft_button = QtGui.QToolButton(self)
+    self.alignleft_button.setIcon(QtGui.QIcon(art.icon16('actions/format-justify-left')))
+    self.alignleft_button.setAutoRaise(True)
+    self.alignleft_button.setCheckable(True)
+    self.alignleft_button.setMaximumSize(QtCore.QSize(20,20))
+    self.connect(self.alignleft_button, QtCore.SIGNAL('clicked(bool)'), self.set_alignleft)   
+
+    self.aligncenter_button = QtGui.QToolButton(self)
+    self.aligncenter_button.setIcon(QtGui.QIcon(art.icon16('actions/format-justify-center')))
+    self.aligncenter_button.setAutoRaise(True)
+    self.aligncenter_button.setCheckable(True)
+    self.aligncenter_button.setMaximumSize(QtCore.QSize(20,20))
+    self.connect(self.aligncenter_button, QtCore.SIGNAL('clicked(bool)'), self.set_aligncenter)
+
+    self.alignright_button = QtGui.QToolButton(self)
+    self.alignright_button.setIcon(QtGui.QIcon(art.icon16('actions/format-justify-right')))
+    self.alignright_button.setAutoRaise(True)
+    self.alignright_button.setCheckable(True)
+    self.alignright_button.setMaximumSize(QtCore.QSize(20,20))
+    self.connect(self.alignright_button, QtCore.SIGNAL('clicked(bool)'), self.set_alignright)
+
+    self.color_button = QtGui.QToolButton(self)
+    self.color_button.setAutoRaise(True)
+    self.color_button.setMaximumSize(QtCore.QSize(20,20))
+    self.connect(self.color_button, QtCore.SIGNAL('clicked(bool)'), self.set_color)
+
+    self.toolbar.addWidget(self.copy_button)
+    self.toolbar.addWidget(self.cut_button)
+    self.toolbar.addWidget(self.paste_button)
+    self.toolbar.addSeparator()
     self.toolbar.addWidget(self.bold_button)
     self.toolbar.addWidget(self.italic_button)      
     self.toolbar.addWidget(self.underline_button) 
-    #self.toolbar.addItem(hspacerItem)
+    self.toolbar.addSeparator()
+    self.toolbar.addWidget(self.alignleft_button)
+    self.toolbar.addWidget(self.aligncenter_button)      
+    self.toolbar.addWidget(self.alignright_button)   
+    self.toolbar.addSeparator()
+    self.toolbar.addWidget(self.color_button)   
     
     #
-    # Textedit & widget
+    # Layout
     #
-    self.textedit = QtGui.QTextEdit(self)
-    self.textedit.setAcceptRichText(True)
-
     self.layout.addWidget(self.toolbar)
     self.layout.addWidget(self.textedit)
    
@@ -580,8 +638,11 @@ class RichTextEditor(QtGui.QWidget):
     self.textedit.setFontWeight(QtGui.QFont.Normal)
     self.textedit.setFontItalic(False)
     self.textedit.setFontUnderline(False)
+    self.textedit.setFocus(Qt.OtherFocusReason)
+    self.update_alignment()
 
     self.connect(self.textedit, QtCore.SIGNAL('currentCharFormatChanged (const QTextCharFormat&)'), self.update_format)
+    self.connect(self.textedit, QtCore.SIGNAL('cursorPositionChanged ()'), self.update_text)
     
   #
   # Button methods
@@ -610,11 +671,67 @@ class RichTextEditor(QtGui.QWidget):
       self.textedit.setFocus(Qt.OtherFocusReason)
       self.textedit.setFontUnderline(False)
 
+
+  def set_alignleft(self, bool):
+    if bool:
+      self.textedit.setFocus(Qt.OtherFocusReason)
+      self.textedit.setAlignment(Qt.AlignLeft)
+    self.update_alignment(Qt.AlignLeft)
+
+  def set_aligncenter(self, bool):
+    if bool:
+      self.textedit.setFocus(Qt.OtherFocusReason)
+      self.textedit.setAlignment(Qt.AlignCenter)
+    self.update_alignment(Qt.AlignCenter)
+
+  def set_alignright(self, bool):
+    if bool:
+      self.textedit.setFocus(Qt.OtherFocusReason)
+      self.textedit.setAlignment(Qt.AlignRight)
+    self.update_alignment(Qt.AlignRight)
+
+  def update_alignment(self, al=None):
+    if al is None:
+        al = self.textedit.alignment()
+    if al == Qt.AlignLeft:
+        self.alignleft_button.setChecked(True)
+        self.aligncenter_button.setChecked(False)
+        self.alignright_button.setChecked(False)
+    elif al == Qt.AlignCenter:
+        self.aligncenter_button.setChecked(True)
+        self.alignleft_button.setChecked(False)
+        self.alignright_button.setChecked(False)
+    elif al == Qt.AlignRight:
+        self.alignright_button.setChecked(True)
+        self.alignleft_button.setChecked(False)
+        self.aligncenter_button.setChecked(False)
+
+  def set_color(self):
+    color = QtGui.QColorDialog.getColor(self.textedit.textColor())
+    if color.isValid():
+      self.textedit.setFocus(Qt.OtherFocusReason)
+      self.textedit.setTextColor(color)
+      pixmap = QtGui.QPixmap(16,16)
+      pixmap.fill(color)
+      self.color_button.setIcon(QtGui.QIcon(pixmap))
+  
+  def update_color(self):
+    color = self.textedit.textColor()
+    pixmap = QtGui.QPixmap(16,16)
+    pixmap.fill(color)
+    self.color_button.setIcon(QtGui.QIcon(pixmap))
+
   def update_format(self, format):
     font = format.font()
     self.bold_button.setChecked(font.bold())
     self.italic_button.setChecked(font.italic())
     self.underline_button.setChecked(font.underline())
+    
+    self.update_alignment(self.textedit.alignment())
+
+  def update_text(self):
+    self.update_alignment()
+    self.update_color()
   
   #
   # Textedit functions
@@ -623,7 +740,11 @@ class RichTextEditor(QtGui.QWidget):
     self.textedit.clear()
 
   def setHtml(self, html):
+    self.update_alignment()
     self.textedit.setHtml(html)
+    self.update_color()
    
   def toHtml(self):
     return self.textedit.toHtml() 
+
+
