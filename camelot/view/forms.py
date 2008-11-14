@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,11 +23,11 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
 """
-Python structures to represent interface forms.  These structures can be transformed
-to QT forms.
+Python structures to represent interface forms.
+These structures can be transformed to QT forms.
 """
 
 class Form(object):
@@ -43,23 +43,31 @@ class Form(object):
   
   def render(self, widgets):
     """
-    @param widgets: a dictionary mapping each field in this form to a tuple of (label widget, value widget) 
-    @return : a QWidget into which the form is rendered"""
+    @param widgets: a dictionary mapping each field in this form to a tuple of 
+                    (label widget, value widget) 
+    @return : a QWidget into which the form is rendered
+    """
     from PyQt4 import QtGui
+
     form_layout = QtGui.QFormLayout()
     for field in self._fields:
       label_widget, value_widget = widgets[field]
       form_layout.addRow(label_widget, value_widget)
     form_widget = QtGui.QWidget()
     form_widget.setLayout(form_layout)
-    return form_widget
+    scroll_area = QtGui.QScrollArea()
+    scroll_area.setWidget(form_widget)
+    scroll_area.setWidgetResizable(True)
+    scroll_area.setFrameStyle(QtGui.QFrame.NoFrame)
+    return scroll_area
   
 class TabForm(Form):
   """Render forms within a QTabWidget"""
   
   def __init__(self, tabs):
     """@param tabs: a list of tuples of (tab_label, tab_form)"""
-    super(TabForm, self).__init__(sum((tab_form.get_fields() for tab_label, tab_form in tabs), []))
+    super(TabForm, self).__init__(sum((tab_form.get_fields()
+                                  for tab_label, tab_form in tabs), []))
     self.tabs = tabs
   
   def render(self, widgets):
@@ -68,4 +76,3 @@ class TabForm(Form):
     for tab_label, tab_form in self.tabs:
       widget.addTab(tab_form.render(widgets), tab_label)
     return widget
-  

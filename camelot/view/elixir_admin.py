@@ -389,14 +389,13 @@ class EntityAdmin(object):
                      SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                      self.dataChanged)
         self.widget_mapper.setModel(self.model)
-        self.scroll_area = QtGui.QScrollArea()
-        self.widget_layout.insertWidget(0, self.scroll_area)
-        self.widget_layout.setContentsMargins(0,0,0,0)        
+        #self.scroll_area = QtGui.QScrollArea()
+        #self.widget_layout.insertWidget(0, self.scroll_area)
         self.setLayout(self.widget_layout)
         
         self.validate_before_close = True
         admin.mt.post(lambda: None,
-                      lambda *args: self.setColumnsFormAndDelegate(                                   
+                      lambda *args: self.setColumnsFormAndDelegate(     
                                     self.model.columns_getter(),
                                     admin.getForm(),
                                     self.model.getItemDelegate()))
@@ -430,8 +429,10 @@ class EntityAdmin(object):
           
         self.widget_mapper.setItemDelegate(delegate)
         self.widget_mapper.setCurrentIndex(index)
-        self.scroll_area.setWidget(form.render(widgets))
-        self.scroll_area.setWidgetResizable(True)
+        self.widget_layout.insertWidget(0, form.render(widgets))
+        self.widget_layout.setContentsMargins(7,7,7,7)        
+        #self.scroll_area.setWidget(form.render(widgets))
+        #self.scroll_area.setWidgetResizable(True)
 
       def entity_getter(self):
         return self.model._get_object(self.widget_mapper.currentIndex())
