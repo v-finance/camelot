@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,7 +23,7 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
 """
 left navigation pane
@@ -224,7 +224,8 @@ class NavigationPane(QtGui.QDockWidget):
     super(NavigationPane, self).__init__(parent)
     self.app_admin = app_admin
     self.sections = app_admin.getSections() 
-    buttons = [PaneButton(label, icon) for (section,(label, icon)) in self.sections]
+    buttons = [PaneButton(label, icon) 
+               for (section,(label, icon)) in self.sections]
     self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
 
     self.setcontent(buttons)
@@ -331,7 +332,8 @@ class NavigationPane(QtGui.QDockWidget):
     
     def get_models_for_tree():
       """Return pairs of (Admin,query) classes for items in the tree"""
-      return self.app_admin.getEntitiesAndQueriesInSection(self.sections[index][0])
+      section = self.sections[index][0] 
+      return self.app_admin.getEntitiesAndQueriesInSection(section)
     
     self.mt.post(get_models_for_tree, 
                  lambda models:self.set_models_in_tree(models))
