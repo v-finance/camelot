@@ -420,12 +420,18 @@ class EntityAdmin(object):
           model_index = self.model.index(index, i)
           value_widget = delegate.createEditor(parent, option, model_index)
           label_widget = QtGui.QLabel(field_attributes['name'])
+          type_widget  = field_attributes['widget']
+          # look for rich text editor widget
+          if field_attributes['python_type'] == str:
+            if field_attributes.has_key('length'):
+              type_widget = 'richtext'
+
           if ('nullable' in field_attributes) and (not field_attributes['nullable']):
             font = QtGui.QApplication.font()
             font.setBold(True)
             label_widget.setFont(font)
           self.widget_mapper.addMapping(value_widget, i)
-          widgets[field_name] = (label_widget, value_widget)
+          widgets[field_name] = (label_widget, value_widget, type_widget)
           
         self.widget_mapper.setItemDelegate(delegate)
         self.widget_mapper.setCurrentIndex(index)
