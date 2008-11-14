@@ -423,7 +423,8 @@ class EntityAdmin(object):
           type_widget  = field_attributes['widget']
           # look for rich text editor widget
           if field_attributes['python_type'] == str:
-            if field_attributes.has_key('length'):
+            if field_attributes.has_key('length') and \
+               field_attributes['length'] is None:
               type_widget = 'richtext'
 
           if ('nullable' in field_attributes) and (not field_attributes['nullable']):
