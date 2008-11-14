@@ -51,8 +51,9 @@ class Form(object):
 
     form_layout = QtGui.QFormLayout()
     for field in self._fields:
-      label_widget, value_widget = widgets[field]
-      form_layout.addRow(label_widget, value_widget)
+      if field in widgets:
+        label_widget, value_widget = widgets[field]
+        form_layout.addRow(label_widget, value_widget)
     form_widget = QtGui.QWidget()
     form_widget.setLayout(form_layout)
     scroll_area = QtGui.QScrollArea()
