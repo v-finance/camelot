@@ -52,14 +52,21 @@ class Form(object):
     form_layout = QtGui.QFormLayout()
     for field in self._fields:
       if field in widgets:
-        label_widget, value_widget = widgets[field]
-        form_layout.addRow(label_widget, value_widget)
+        label_widget, value_widget, type_widget = widgets[field]
+        if type_widget in ['one2many', 'many2one', 'richtext']:
+          form_layout.addRow(value_widget)
+        else:
+          form_layout.addRow(label_widget, value_widget)
+
+
     form_widget = QtGui.QWidget()
     form_widget.setLayout(form_layout)
+    
     scroll_area = QtGui.QScrollArea()
     scroll_area.setWidget(form_widget)
     scroll_area.setWidgetResizable(True)
     scroll_area.setFrameStyle(QtGui.QFrame.NoFrame)
+    
     return scroll_area
   
 class TabForm(Form):
