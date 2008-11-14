@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,7 +23,7 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
 """Editors for various type of values"""
 import os
@@ -277,6 +277,7 @@ class One2ManyEditor(QtGui.QWidget):
     """
     QtGui.QWidget.__init__(self, parent)
     self.layout = QtGui.QHBoxLayout()
+    self.layout.setContentsMargins(0,0,0,0)
     #
     # Setup table
     #
