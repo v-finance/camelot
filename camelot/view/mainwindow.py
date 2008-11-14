@@ -309,12 +309,16 @@ class MainWindow(QtGui.QMainWindow):
                                         tip=_('Export to MS Word'))
     
     self.app_actions = []
-    for name,icon,callable in self.app_admin.getActions():
+    for name, icon, callable in self.app_admin.getActions():
       
       def bind_callable(name, callable):
         return lambda:self.runAction(name, callable)
       
-      self.app_actions.append( createAction(self, name, slot=bind_callable(name, callable), actionicon=icon, tip=name ) )
+      self.app_actions.append(createAction(self,
+                                           name,
+                                           slot=bind_callable(name, callable), 
+                                           actionicon=icon,
+                                           tip=name))
 
   # QAction slots and methods implementations
 
@@ -375,29 +379,29 @@ class MainWindow(QtGui.QMainWindow):
     mt = get_model_thread()
 
     def export():
-        import os
-        import tempfile
-        from export.excel import ExcelExport
-        title = self.activeMdiChild().getTitle()
-        columns = self.activeMdiChild().getColumns()
-        data = [d for d in self.activeMdiChild().getData()]
-        objExcel = ExcelExport()
-        xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
-        objExcel.exportToFile(xls_fn, title, columns, data)
+      import os
+      import tempfile
+      from export.excel import ExcelExport
+      title = self.activeMdiChild().getTitle()
+      columns = self.activeMdiChild().getColumns()
+      data = [d for d in self.activeMdiChild().getData()]
+      objExcel = ExcelExport()
+      xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
+      objExcel.exportToFile(xls_fn, title, columns, data)
 
-        try:
-          import pythoncom
-          import win32com.client
-          pythoncom.CoInitialize()
-          excel_app = win32com.client.Dispatch("Excel.Application")
-        except Exception, e:
-          """We're probably not running windows, so try gnumeric"""
-          logger.warning('Unable to launch excel', exc_info=e)
-          os.system('gnumeric "%s"'%xls_fn)
-          return
+      try:
+        import pythoncom
+        import win32com.client
+        pythoncom.CoInitialize()
+        excel_app = win32com.client.Dispatch("Excel.Application")
+      except Exception, e:
+        """We're probably not running windows, so try gnumeric"""
+        logger.warning('Unable to launch excel', exc_info=e)
+        os.system('gnumeric "%s"'%xls_fn)
+        return
 
-        excel_app.Visible = True
-        excel_app.Workbooks.Open(xls_fn)
+      excel_app.Visible = True
+      excel_app.Workbooks.Open(xls_fn)
 
     mt.post(export)
 
