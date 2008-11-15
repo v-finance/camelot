@@ -328,6 +328,7 @@ class One2ManyEditor(QtGui.QWidget):
       
       def update_delegates(*args):
         self.table.setItemDelegate(model.getItemDelegate())
+        self.table.horizontalHeader().setResizeMode(QtGui.QHeaderView.Interactive)
         self.table.resizeColumnsToContents()
           
       return update_delegates
