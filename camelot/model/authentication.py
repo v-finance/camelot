@@ -267,9 +267,13 @@ class Person(Party):
     section = 'relations'
     list_display = ['username', 'first_name', 'last_name', ]
     list_filter = ['is_active', 'is_staff', 'is_superuser']
-    form = TabForm([('Basic', Form(['username', 'first_name', 'last_name', 'contact_mechanisms', 'picture', 'is_staff', 'is_active', 'is_superuser','comment',])),
-                    ('Official', Form(['birthdate', 'social_security_number', 'passport_number','passport_expiry_date','addresses',])),
-                    ('Work', Form(['employers', 'directed_organizations', 'shares']))
+    form = TabForm([('Basic', Form([HBoxForm([Form(['username', 'first_name', 'last_name']),
+                                              Form(['is_staff', 'is_active', 'is_superuser',]),
+                                              Form(['picture',]),
+                                              ]), 
+                                              'contact_mechanisms',  'comment',], scrollbars=True)),
+                    ('Official', Form(['birthdate', 'social_security_number', 'passport_number','passport_expiry_date','addresses',], scrollbars=True)),
+                    ('Work', Form(['employers', 'directed_organizations', 'shares'], scrollbars=True))
                     ])
     
 class GeographicBoundary(Entity):
