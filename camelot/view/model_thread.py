@@ -36,6 +36,37 @@ import settings
 logger = logging.getLogger('model_thread')
 logger.setLevel(logging.INFO)
 
+_model_thread_ = []
+
+def model_function( original_function ):
+  """Decorator to ensure a function is only called from within the model thread.  If this
+  function is called in another thread, an exception will be thrown"""
+  
+  def new_function(*args, **kwargs):
+    if threading.currentThread() != get_model_thread():
+      logger.error('%s was called outside the model thread'%(original_function.__name__))
+    return original_function(*args, **kwargs)
+  
+  new_function.__name__ = original_function.__name__
+  
+  return new_function
+  
+def gui_function( original_function ):
+  """Decorator to ensure a function is only called from within the gui thread.  If this
+  function is called in another thread, an exception will be thrown
+  @todo: now it only checks if the function is not called within the model thread, this
+  is incomplete
+  """  
+
+  def new_function(*args, **kwargs):
+    if threading.currentThread() == get_model_thread():
+      logger.error('%s was called outside the gui thread'%(original_function.__name__))
+    return original_function(*args, **kwargs)
+  
+  new_function.__name__ = original_function.__name__
+  
+  return new_function
+
 class ModelThread(threading.Thread):
   """Thread in which the model runs, all requests to the model should be
   posted to the the model thread.
@@ -48,7 +79,7 @@ class ModelThread(threading.Thread):
     """@param response_signaler: an object with methods called :
     responseAvailable() : this method will be called when a response is available
     startProcessingRequest(),
-    stopProcessingRequest(), 
+    stopProcessingRequest(),
     """ 
     threading.Thread.__init__(self)
     
@@ -74,12 +105,13 @@ class ModelThread(threading.Thread):
       setup_model()
       logger.debug('start handling requests')
       while True:
+        new_event = threading.Event()
         try:
           (event, request, response, exception) = self._request_queue.get()
           logger.debug('start handling request')
           self._response_signaler.startProcessingRequest()
           result = request()
-          self._response_queue.put((result, response))
+          self._response_queue.put((new_event, result, response))
           self._request_queue.task_done()
           self._response_signaler.responseAvailable()
           self._response_signaler.stopProcessingRequest()
@@ -88,7 +120,7 @@ class ModelThread(threading.Thread):
           #self._response_queue.join()
         except Exception, e:
           logger.exception(e)
-          self._response_queue.put((e, exception))
+          self._response_queue.put((new_event, e, exception))
           self._request_queue.task_done()
           self._response_signaler.responseAvailable()
           event.set()
@@ -105,12 +137,13 @@ class ModelThread(threading.Thread):
     """
     try:
       while True:
-        (result, response) = self._response_queue.get_nowait()
+        (event, result, response) = self._response_queue.get_nowait()
         try:
           response(result)
         except Exception, e:
           logger.error('exception in response', exc_info=e)
         self._response_queue.task_done()
+        event.set()
     except Queue.Empty, e:
       pass
       
@@ -149,25 +182,26 @@ class ModelThread(threading.Thread):
     event.wait()
     self.process_responses()
     return results[-1]
+  
+  @model_function
+  def post_to_gui_thread_and_block(self, request):
+    """Post a request to the gui thread and block until it is finished, and then 
+    return its results"""
     
-_model_thread_ = []
-        
+    result = []
+    
+    def request_and_store_result(*a):
+      result.append(request())
+      
+    event = threading.Event()
+    self._response_queue.put_nowait((event, None, request_and_store_result))
+    self._response_signaler.responseAvailable()
+    event.wait()
+    return result[-1]
+    
 def construct_model_thread(*args, **kwargs):
   _model_thread_.append(ModelThread(*args, **kwargs))
   
 def get_model_thread():
   return _model_thread_[0]
  
-def model_function( original_function ):
-  """Decorator to ensure a function is only called from within the model thread.  If this
-  function is called in another thread, an exception will be thrown"""
-  
-  def new_function(*args, **kwargs):
-    if threading.currentThread() != get_model_thread():
-      logger.error('%s was called outside the model thread'%(original_function.__name__))
-    return original_function(*args, **kwargs)
-  
-  new_function.__name__ = original_function.__name__
-  
-  return new_function
-  

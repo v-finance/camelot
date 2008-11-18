@@ -53,7 +53,7 @@ class Form(object):
     for field in self._fields:
       if field in widgets:
         label_widget, value_widget, type_widget = widgets[field]
-        if type_widget in ['one2many', 'many2one', 'richtext']:
+        if type_widget in ['one2many', 'richtext']:
           form_layout.addRow(label_widget)
           form_layout.addRow(value_widget)
         else:

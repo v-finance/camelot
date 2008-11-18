@@ -93,8 +93,8 @@ class QueryTableProxy(CollectionProxy):
     columns = self.columns_getter()
     for i, o in enumerate(q.all()):
       row_data = RowDataFromObject(o, columns, self, i+offset)
-      self.cache[Qt.EditRole].add_data(i+offset, o.id, row_data)
-      self.cache[Qt.DisplayRole].add_data(i+offset, o.id, RowDataAsUnicode(row_data))
+      self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
+      self.cache[Qt.DisplayRole].add_data(i+offset, o, RowDataAsUnicode(row_data))
     return (offset, limit)
         
   @model_function
@@ -107,9 +107,7 @@ class QueryTableProxy(CollectionProxy):
     try:
       # first try to get the primary key out of the cache, if it's not
       # there, query the collection_getter
-      pk = self.cache[Qt.EditRole].get_primary_key_at_row(row)
-      if pk:
-        return self.admin.entity.get(pk)
+      return self.cache[Qt.EditRole].get_entity_at_row(row)
     except KeyError:
       pass
     return self.query.offset(row).limit(1).first()

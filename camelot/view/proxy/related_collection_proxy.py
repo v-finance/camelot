@@ -25,7 +25,7 @@
 #
 #  ============================================================================
 """
-Proxy representing a collection of entities thas is related to a row in 
+Proxy representing a collection of entities which is related to a row in 
 another model.
 
 If changes occur to entities in this collection, they will not be flushed
@@ -37,9 +37,21 @@ logger = logging.getLogger('proxy.related_collection_proxy')
 
 class RelatedCollectionProxy(CollectionProxy):
   
-  def __init__(self, admin, collection_getter, columns_getter, related_index, max_number_of_rows=10):
+  def __init__(self, admin, collection_getter, columns_getter, related_model, row_in_related_model, max_number_of_rows=10):
+    self.related_model = related_model
+    self.row_in_related_model = row_in_related_model
     CollectionProxy.__init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10, edits=None, flush_changes=True)
-    self.related_index = related_index
+    
+  def __unicode__(self):
+    return u'RelatedCollectionProxy for objects of type %s connected to %s row %s'%(self.admin.entity.__name__, str(self.related_model), self.row_in_related_model)
+  
+  def refresh(self):
+    super(RelatedCollectionProxy, self).refresh()
+    
+  def setData(self, index, value, role=Qt.EditRole):
+    result = super(RelatedCollectionProxy, self).setData(index, value, role)
+    self.related_model.handleRowUpdate(self.row_in_related_model)
+    return result
     
   def removeRow(self, row):
     logger.debug('remove row %s'%row)

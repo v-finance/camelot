@@ -68,7 +68,7 @@ class SignalHandler(QObject):
     if match:
       entity = match.group('entity')
       logger.debug(' decoded as update signal for entity %s'%entity)
-      self.emit(self.entity_update_signal, [e for e in entities if e.__name__==entity][0], eval(message))
+      self.emit(self.entity_update_signal, [e for e in entities if e.__name__==entity][0].get(eval(message)))
   def on_connecting(self, server):
     logger.debug('try to connect to message service')
     self.connection.connect()
@@ -78,15 +78,15 @@ class SignalHandler(QObject):
   def on_disconnected(self):
     logger.debug('stomp service disconnected')
   def sendEntityUpdate(self, entity):
+    self.emit(self.entity_update_signal, entity)
     if self.connection:
       self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.update'%entity.__class__.__name__)
-    self.emit(self.entity_update_signal, entity.__class__, [entity.id])
   def sendEntityDelete(self, entity):
     if self.connection:
       self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.delete'%entity.__class__.__name__)
   def sendEntityCreate(self, entity):
     if self.connection:
-      self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.create'%entity.__class__.__name__)        
+      self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.create'%entity.__class__.__name__)
 
 _signal_handler_ = []
         

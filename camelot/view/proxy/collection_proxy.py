@@ -41,13 +41,14 @@ from PyQt4.QtCore import Qt
 
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view import art
-from camelot.view.model_thread import model_function
+from camelot.view.model_thread import model_function, gui_function, get_model_thread
    
 @model_function
 def RowDataFromObject(obj, columns, model, row):
   """Create row data from an object, by fetching its attributes"""
   from related_collection_proxy import RelatedCollectionProxy
   row_data = []
+  mt = get_model_thread()
   
   def create_collection_getter(o,attr):
     return lambda:getattr(o,attr)
@@ -55,8 +56,9 @@ def RowDataFromObject(obj, columns, model, row):
   for i,col in enumerate(columns):
     field_attributes = col[1]
     if field_attributes['python_type']==list:
-      row_data.append( RelatedCollectionProxy(field_attributes['admin'], create_collection_getter(obj,col[0]),
-                                              field_attributes['admin'].getColumns, model.index(row, i)) )
+      proxy = mt.post_to_gui_thread_and_block(lambda *a:RelatedCollectionProxy(field_attributes['admin'], create_collection_getter(obj,col[0]),
+                                                                               field_attributes['admin'].getColumns, model, row))
+      row_data.append( proxy )
     else:
       row_data.append(getattr(obj,col[0]))
   return row_data
@@ -94,33 +96,38 @@ class fifo(object):
   """
   def __init__(self, max_entries):
     self.max_entries = max_entries
-    self.primary_keys = []
+    self.entities = []
     self.data_by_rows = dict()
-    self.rows_by_primary_keys = dict()
-  def add_data(self, row, primary_key, value):
+    self.rows_by_entity = dict()
+  def add_data(self, row, entity, value):
     try:
-      row = self.delete_by_primary_key(primary_key)
+      row = self.delete_by_entity(entity)
     except KeyError:
       pass   
-    self.data_by_rows[row] = (primary_key, value)
-    self.rows_by_primary_keys[primary_key] = row
-    self.primary_keys.append(primary_key)
-    if len(self.primary_keys)>self.max_entries:
-      primary_key = self.primary_keys.pop(0)
-      row = self.rows_by_primary_keys[primary_key]
+    self.data_by_rows[row] = (entity, value)
+    self.rows_by_entity[entity] = row
+    self.entities.append(entity)
+    if len(self.entities)>self.max_entries:
+      entity = self.entities.pop(0)
+      row = self.rows_by_entity[entity]
       del self.data_by_rows[row]
-      del self.rows_by_primary_keys[primary_key]
-  def delete_by_primary_key(self, primary_key):
-    row = self.rows_by_primary_keys[primary_key]
-    self.primary_keys.remove(primary_key)
+      del self.rows_by_entity[entity]
+  def delete_by_row(self, row):
+    (entity, value) = self.data_by_rows[row]
     del self.data_by_rows[row]
-    del self.rows_by_primary_keys[primary_key]
+    del self.rows_by_entity[entity] 
+    return row
+  def delete_by_entity(self, entity):
+    row = self.rows_by_entity[entity]
+    self.entities.remove(entity)
+    del self.data_by_rows[row]
+    del self.rows_by_entity[entity]
     return row    
   def get_data_at_row(self, row):
     return self.data_by_rows[row][1]
-  def get_row_by_primary_key(self, primary_key):
-    return self.rows_by_primary_keys[primary_key]
-  def get_primary_key_at_row(self, row):
+  def get_row_by_entity(self, entity):
+    return self.rows_by_entity[entity]
+  def get_entity_at_row(self, row):
     return self.data_by_rows[row][0]
       
 class CollectionProxy(QtCore.QAbstractTableModel):
@@ -128,6 +135,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   usable for fast visualisation in a QTableView 
   """
   
+  @gui_function
   def __init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10, edits=None, flush_changes=True):
     """"
     @param admin: the admin interface for the items in the collection
@@ -188,19 +196,25 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.collection_getter = collection_getter
     self.refresh()
     
-  def handleEntityUpdate(self, entity, primary_keys):
+  def handleRowUpdate(self, row):
+    """Handles the update of a row when this row might be out of date"""
+    self.cache[Qt.DisplayRole].delete_by_row(row)
+    self.cache[Qt.EditRole].delete_by_row(row) 
+    self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+              self.index(row,0), self.index(row,self.column_count))
+    
+  def handleEntityUpdate(self, entity):
     """Handles the entity signal, indicating that the model is out of date"""
-    if entity is self.admin.entity:
-      logger.debug('received entity update signal for %s : %s'%(entity.__name__, str(primary_keys)))
-      for pk in primary_keys:
-        try:
-          row = self.cache[Qt.DisplayRole].delete_by_primary_key(pk)
-          row = self.cache[Qt.EditRole].delete_by_primary_key(pk)
-          logger.debug('update row %i'%row)
-          self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
-                    self.index(row,0), self.index(row,self.column_count))
-        except KeyError:
-          pass
+    logger.debug('%s %s received entity update signal for %s'%(self.__class__.__name__, self.admin.getName(), unicode(entity)))
+    try:
+      row = self.cache[Qt.DisplayRole].delete_by_entity(entity)
+      row = self.cache[Qt.EditRole].delete_by_entity(entity)
+      logger.debug('updated row %i'%row)
+      self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                self.index(row,0), self.index(row,self.column_count))
+    except KeyError:
+      logger.debug('entity not in cache')
+      pass
 
   def handleEntityDelete(self, entity, primary_keys):
     """Handles the entity signal, indicating that the model is out of date"""
@@ -420,8 +434,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
               pass
             # update the cache
             row_data = RowDataFromObject(o, self.columns_getter(), self, row)
-            self.cache[Qt.EditRole].add_data(row, o.id, row_data)
-            self.cache[Qt.DisplayRole].add_data(row, o.id, RowDataAsUnicode(row_data))
+            self.cache[Qt.EditRole].add_data(row, o, row_data)
+            self.cache[Qt.DisplayRole].add_data(row, o, RowDataAsUnicode(row_data))
             if self.flush_changes and self.validator.isValid(row):
               # save the state before the update
               session.flush([o])
@@ -439,8 +453,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                                          primary_key=o.id, 
                                          previous_attributes={attribute:old_value},
                                          person = getCurrentPerson())
-                  session.flush([history])  
-              self.rsh.sendEntityUpdate(o)
+                  session.flush([history])
+            #@todo: update should only be sent remotely when flush was done 
+            self.rsh.sendEntityUpdate(o)
             return ((row,0), (row,len(self.columns_getter())))
           elif flushed:
             try:
@@ -474,8 +489,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     limit = min(limit, self.rows-offset)
     for i,o in enumerate(self.collection_getter()[offset:offset+limit+1]):
       row_data = RowDataFromObject(o, columns, self, i+offset)
-      self.cache[Qt.EditRole].add_data(i+offset, o.id, row_data)
-      self.cache[Qt.DisplayRole].add_data(i+offset, o.id, RowDataAsUnicode(row_data))
+      self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
+      self.cache[Qt.DisplayRole].add_data(i+offset, o, RowDataAsUnicode(row_data))
     return (offset, limit)
         
   @model_function
@@ -484,9 +499,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     try:
       # first try to get the primary key out of the cache, if it's not
       # there, query the collection_getter
-      pk = self.cache[Qt.EditRole].get_primary_key_at_row(row)
-      if pk:
-        return self.admin.entity.get(pk)
+      return self.cache[Qt.EditRole].get_entity_at_row(row)
     except KeyError:
       pass
     return self.collection_getter()[row]
