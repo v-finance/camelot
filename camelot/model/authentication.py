@@ -201,6 +201,10 @@ class Organization(Party):
   def __unicode__(self):
     return self.name
   
+  @property
+  def number_of_shares_issued(self):
+    return sum((shareholder.shares for shareholder in self.shareholders), 0)
+  
   class Admin(Party.Admin):
     name = 'Organizations'
     section = 'relations'

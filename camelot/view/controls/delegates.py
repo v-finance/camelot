@@ -459,6 +459,12 @@ class ComboBoxColumnDelegate(QtGui.QItemDelegate):
     super(ComboBoxColumnDelegate, self).__init__(parent)
     self.choices = choices
     
+  def qvariantToPython(self, variant):
+    if variant.canConvert(QtCore.QVariant.String):
+      return unicode(variant.toString())
+    else:
+      return variant.toPyObject()
+          
   def createEditor(self, parent, option, index):
     from camelot.view.model_thread import get_model_thread
     combobox = QtGui.QComboBox(parent)
@@ -467,14 +473,14 @@ class ComboBoxColumnDelegate(QtGui.QItemDelegate):
       return list(self.choices(model._get_object(row)))
       
     def setChoices(choices):
-      for i,choice in enumerate(choices):
-        combobox.insertItem(i, unicode(choice), QtCore.QVariant(choice))
+      for i,(value,name) in enumerate(choices):
+        combobox.insertItem(i, unicode(name), QtCore.QVariant(value))
       
     get_model_thread().post(lambda:getChoices(index.model(), index.row()), setChoices)
     return combobox
   
   def setEditorData(self, editor, index):
-    data = index.model().data(index, Qt.EditRole).toPyObject()
+    data = self.qvariantToPython(index.model().data(index, Qt.EditRole))
     if data!=None:
       for i in range(editor.count()):
         if data == editor.itemData(i).toPyObject():
@@ -484,6 +490,7 @@ class ComboBoxColumnDelegate(QtGui.QItemDelegate):
       editor.setCurrentIndex(editor.count()-1)
     
   def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(editor.itemData(editor.currentIndex()).toPyObject()))
+    editor_data = self.qvariantToPython(editor.itemData(editor.currentIndex()))
+    model.setData(index, create_constant_function(editor_data))
 
 _registered_delegates_[QtGui.QComboBox] = ComboBoxColumnDelegate
