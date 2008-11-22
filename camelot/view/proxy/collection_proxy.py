@@ -205,7 +205,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     
   def handleEntityUpdate(self, entity):
     """Handles the entity signal, indicating that the model is out of date"""
-    logger.debug('%s %s received entity update signal for %s'%(self.__class__.__name__, self.admin.getName(), unicode(entity)))
+    logger.debug('%s %s received entity update signal'%(self.__class__.__name__, self.admin.getName()))
     try:
       row = self.cache[Qt.DisplayRole].delete_by_entity(entity)
       row = self.cache[Qt.EditRole].delete_by_entity(entity)
@@ -240,7 +240,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     return self.item_delegate 
     
   def getColumns(self):
-    return self.columns_getter()
+    return self._columns
   
   def setColumns(self, columns):
     """
@@ -249,6 +249,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     """
 
     self.column_count = len(columns)
+    self._columns = columns
     logger.debug('setting up custom delegates')
     
     from camelot.view.controls import delegates
@@ -330,7 +331,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def headerData(self, section, orientation, role):
     if role == Qt.DisplayRole:
       if orientation == Qt.Horizontal:
-        return QtCore.QVariant(self.columns_getter()[section][1]['name'])
+        return QtCore.QVariant(self.getColumns()[section][1]['name'])
       elif orientation == Qt.Vertical:
         #return QtCore.QVariant(int(section+1))
         # we don't want anything to be displayed
@@ -338,8 +339,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     if role == Qt.FontRole:
       if orientation == Qt.Horizontal:
         font = QtGui.QApplication.font()
-        if ('nullable' in self.columns_getter()[section][1]) and \
-           (self.columns_getter()[section][1]['nullable']==False):
+        if ('nullable' in self.getColumns()[section][1]) and \
+           (self.getColumns()[section][1]['nullable']==False):
           font.setBold(True)
           return QtCore.QVariant(font)
         else:
@@ -365,7 +366,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         value = None
       return QtCore.QVariant(value)
     elif role == Qt.SizeHintRole:
-      c = self.columns_getter()[index.column()] 
+      c = self.getColumns()[index.column()] 
       type_ = c[1]['python_type'] 
       widget_ = c[1]['widget'] 
       if type_ == datetime.date:
@@ -476,7 +477,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   
   def flags(self, index):
     flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
-    if self.columns_getter()[index.column()][1]['editable']:
+    if self.getColumns()[index.column()][1]['editable']:
      flags = flags | Qt.ItemIsEditable
     return flags
 

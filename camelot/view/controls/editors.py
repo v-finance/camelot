@@ -286,7 +286,9 @@ class One2ManyEditor(QtGui.QWidget):
     logger.debug('create querytable')
     self.table.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
     self.table.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                             QtGui.QSizePolicy.Expanding)
+                             QtGui.QSizePolicy.Expanding)    
+    self.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                       QtGui.QSizePolicy.Expanding)
 
     self.connect(self.table.verticalHeader(),
                  QtCore.SIGNAL('sectionClicked(int)'),

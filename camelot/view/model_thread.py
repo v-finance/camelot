@@ -38,6 +38,9 @@ logger.setLevel(logging.INFO)
 
 _model_thread_ = []
 
+class ModelThreadException(Exception):
+  pass
+
 def model_function( original_function ):
   """Decorator to ensure a function is only called from within the model thread.  If this
   function is called in another thread, an exception will be thrown"""
@@ -45,6 +48,7 @@ def model_function( original_function ):
   def new_function(*args, **kwargs):
     if threading.currentThread() != get_model_thread():
       logger.error('%s was called outside the model thread'%(original_function.__name__))
+      raise ModelThreadException()
     return original_function(*args, **kwargs)
   
   new_function.__name__ = original_function.__name__
@@ -61,6 +65,7 @@ def gui_function( original_function ):
   def new_function(*args, **kwargs):
     if threading.currentThread() == get_model_thread():
       logger.error('%s was called outside the gui thread'%(original_function.__name__))
+      raise ModelThreadException()
     return original_function(*args, **kwargs)
   
   new_function.__name__ = original_function.__name__

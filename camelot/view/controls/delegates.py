@@ -233,7 +233,6 @@ class DateColumnDelegate(QtGui.QItemDelegate):
     self.nullable = nullable
 
   def createEditor(self, parent, option, index):
-    
     editor = DateEditor(self, self.nullable, self.format, parent)
     return editor
 
@@ -247,7 +246,6 @@ class DateColumnDelegate(QtGui.QItemDelegate):
 
   def setModelData(self, editor, model, index):
     value = editor.date()
-    
     if value == editor.minimumDate():
       model.setData(index, create_constant_function(None))
     else:

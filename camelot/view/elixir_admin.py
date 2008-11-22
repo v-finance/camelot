@@ -25,7 +25,7 @@ logger.setLevel(logging.DEBUG)
 
 import sqlalchemy.types
 import camelot.types
-from camelot.view.model_thread import model_function
+from camelot.view.model_thread import model_function, gui_function
 import datetime
 
 class EntityAdmin(object):
@@ -62,6 +62,7 @@ class EntityAdmin(object):
   def getModelThread(self):
     return self.mt
 
+  @model_function
   def getFormActions(self, entity):
     return self.form_actions
 
@@ -75,6 +76,7 @@ class EntityAdmin(object):
       logger.warn('no related admin found for %s'%(entity.__name__))
     return related_admin
 
+  @model_function
   def getSubclasses(self):
     """
     Return admin objects for the subclasses of the Entity represented by this
@@ -87,6 +89,7 @@ class EntityAdmin(object):
                 hasattr(e, 'Admin') and
                 e!=self.entity)]
 
+  @model_function
   def getFieldAttributes(self, field_name):
     """
     Get the attributes needed to visualize the field field_name
@@ -168,6 +171,7 @@ class EntityAdmin(object):
       pass
     return attributes
 
+  @model_function
   def getColumns(self):
     """
     The columns to be displayed in the list view, returns a list of pairs of
@@ -184,9 +188,10 @@ class EntityAdmin(object):
     return [(field, self.getFieldAttributes(field))
             for field in self.list_display]
 
+  @model_function
   def getFields(self):
     if self.form:
-      fields = self.form.get_fields()
+      fields = self.getForm().get_fields()
     elif self.fields:
       fields = self.fields
     else:
@@ -195,14 +200,16 @@ class EntityAdmin(object):
     return fields_and_attributes
   
   def getForm(self):
-    from forms import Form
+    from forms import Form, structure_to_form
     if self.form:
-      return self.form
+      return structure_to_form(self.form)
     return Form([f for f,a in self.getFields()])    
 
+  @model_function
   def getListCharts(self):
     return self.list_charts
 
+  @model_function
   def getFilters(self):
     """
     Return the filters applicable for these entities each filter is a tuple
@@ -256,6 +263,7 @@ class EntityAdmin(object):
     from validator import *
     return Validator(self, model)
   
+  @gui_function
   def createNewView(admin, parent=None, oncreate=None, onexpunge=None):
     """
     Create a QT widget containing a form to create a new instance of the entity
@@ -284,11 +292,15 @@ class EntityAdmin(object):
         for field,attributes in admin.getFields():
           try:
             default = attributes['default']
-            print default
             if isinstance(default, ColumnDefault):
               default_value = default.execute()
             elif callable(default):
-              default_value = default()
+              import inspect
+              args, varargs, kwargs, defs = inspect.getargspec(default)
+              if len(args):
+                default_value = default(entity_instance)
+              else:
+                default_value = default()
             else:
               default_value = default
             logger.debug('set default for %s to %s'%(field, unicode(default_value)))
@@ -363,6 +375,7 @@ class EntityAdmin(object):
 
     return NewForm(parent)
 
+  @gui_function
   def createFormView(admin, title, model, index, parent):
     """
     Creates a Qt widget containing a form view, for a specific row of the
@@ -394,11 +407,12 @@ class EntityAdmin(object):
         self.setLayout(self.widget_layout)
         
         self.validate_before_close = True
-        admin.mt.post(lambda: None,
-                      lambda *args: self.setColumnsFormAndDelegate(     
-                                    self.model.columns_getter(),
-                                    admin.getForm(),
-                                    self.model.getItemDelegate()))
+        
+        def getColumnsAndForm():
+          return (self.model.columns_getter(), self.admin.getForm())
+        
+        admin.mt.post(getColumnsAndForm,
+                      lambda columns_and_form:self.setColumnsFormAndDelegate(columns_and_form[0], columns_and_form[1], self.model.getItemDelegate()))
 
         def getActions():
           return admin.getFormActions(None)
@@ -530,6 +544,7 @@ class EntityAdmin(object):
           
     return FormView(admin)
 
+  @gui_function
   def createSelectView(admin, query, parent=None):
     """
     Returns a QT widget that can be used to select an element form a query,
@@ -543,8 +558,6 @@ class EntityAdmin(object):
     from PyQt4 import QtCore
     from PyQt4.QtCore import SIGNAL
 
-    
-    
     class SelectView(TableView):
 
       def __init__(self, admin, parent):  
@@ -568,6 +581,7 @@ class EntityAdmin(object):
 
     return SelectView(admin, parent)
 
+  @gui_function
   def createTableView(self, query, parent=None):
     """
     Returns a QT widget containing a table view, for a certain query, using

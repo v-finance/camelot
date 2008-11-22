@@ -30,6 +30,16 @@ Python structures to represent interface forms.
 These structures can be transformed to QT forms.
 """
 
+def structure_to_form(structure):
+  """Convert a python data structure to a form, using the following rules :
+  
+  if structure is an instance of Form, return structure
+  if structure is a list, create a Form from this list
+  """
+  if isinstance(structure, Form):
+    return structure
+  return Form(structure)
+  
 class Form(object):
   """Use the QFormLayout widget to render a form"""
   
@@ -57,6 +67,7 @@ class Form(object):
     from PyQt4 import QtGui
 
     form_layout = QtGui.QFormLayout()
+    form_layout.setFieldGrowthPolicy(QtGui.QFormLayout.ExpandingFieldsGrow) 
     for field in self._content:
       if isinstance(field, Form):
         form_layout.addRow(field.render(widgets))
@@ -70,6 +81,8 @@ class Form(object):
 
 
     form_widget = QtGui.QWidget()
+    form_widget.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                              QtGui.QSizePolicy.Expanding)    
     form_widget.setLayout(form_layout)
     
     if self._scrollbars:
@@ -86,9 +99,9 @@ class TabForm(Form):
   
   def __init__(self, tabs):
     """@param tabs: a list of tuples of (tab_label, tab_form)"""
+    self.tabs = [(tab_label, structure_to_form(tab_form)) for tab_label,tab_form in tabs]
     super(TabForm, self).__init__(sum((tab_form.get_fields()
-                                  for tab_label, tab_form in tabs), []))
-    self.tabs = tabs
+                                  for tab_label, tab_form in self.tabs), []))
   
   def render(self, widgets):
     from PyQt4 import QtGui
@@ -103,13 +116,40 @@ class HBoxForm(Form):
   def __init__(self, columns):
     """@param columns: a list of forms to display in the different columns
     of the horizontal box"""
+    self.columns = [structure_to_form(col) for col in columns]
     super(HBoxForm, self).__init__(sum((column_form.get_fields()
-                                  for column_form in columns), []))    
-    self.columns = columns 
+                                  for column_form in self.columns), []))
 
   def render(self, widgets):
     from PyQt4 import QtGui
     widget = QtGui.QHBoxLayout()
     for form in self.columns:
+      widget.addWidget(form.render(widgets))
+    return widget
+  
+class WidgetOnlyForm(Form):
+  """Only render a single widget without it's label, typically a
+  one2many widget"""
+  
+  def __init__(self, field):
+    super(WidgetOnlyForm, self).__init__([field])
+    
+  def render(self, widgets):
+    label_widget, value_widget, type_widget = widgets[self.get_fields()[0]]
+    return value_widget
+    
+def VBoxForm(Form):
+  """Render different forms or widgets in a vertical box"""
+  
+  def __init__(self, rows):
+    """@param columns: a list of forms to display in the different columns
+    of the horizontal box"""
+    self.rows = [structure_to_form(row) for row in rows]
+    super(VBoxForm, self).__init__(sum((row_form.get_fields() for row_form in self.rows), []))
+
+  def render(self, widgets):
+    from PyQt4 import QtGui
+    widget = QtGui.QVBoxLayout()
+    for form in self.rows:
       widget.addWidget(form.render(widgets))
     return widget
