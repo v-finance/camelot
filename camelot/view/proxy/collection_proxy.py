@@ -384,8 +384,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         from camelot.view.controls import delegates
         from camelot.view.controls.editors import Many2OneEditor
         entity_admin = c[1]['admin']
-        delegate = delegates.Many2OneColumnDelegate(entity_admin)
-        editor = Many2OneEditor(entity_admin, delegate)
+        editor = Many2OneEditor(entity_admin)
         sh = editor.sizeHint()
         return QtCore.QVariant(sh)
     elif role == Qt.ForegroundRole:

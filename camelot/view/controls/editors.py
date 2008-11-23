@@ -43,11 +43,9 @@ from camelot.view.model_thread import model_function
 
 class DateEditor(QtGui.QWidget):
   """Widget for editing date values"""
-  def __init__(self, delegate=None, nullable=True, format='dd/MM/yyyy', parent=None):
+  def __init__(self, nullable=True, format='dd/MM/yyyy', parent=None):
     super(DateEditor, self).__init__(parent)
     self.format = format
-    self.delegate = delegate
-    self.index = None
     self.qdateedit = QtGui.QDateEdit(self)
     self.connect(self.qdateedit, QtCore.SIGNAL('editingFinished ()'), self.editingFinished)
     self.qdateedit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
@@ -86,8 +84,7 @@ class DateEditor(QtGui.QWidget):
     return datetime.date(value.year(), value.month(), value.day())
   
   def editingFinished(self):
-    if self.index:
-      self.delegate.setModelData(self, self.index.model(), self.index)
+    self.emit(QtCore.SIGNAL('editingFinished()'))
       
   def set_date_range(self):
     qdate_min = self._python_to_qt(self.minimum)
@@ -102,8 +99,7 @@ class DateEditor(QtGui.QWidget):
 
   def setMinimumDate(self):
     self.qdateedit.setDate(self.minimumDate())
-    if self.index:
-      self.delegate.setModelData(self, self.index.model(), self.index)
+    self.emit(QtCore.SIGNAL('editingFinished()'))
 
   def setDate(self, date):
     self.qdateedit.setDate(date)
@@ -113,8 +109,6 @@ class VirtualAddressEditor(QtGui.QWidget):
   def __init__(self, parent=None):
     import camelot.types
     super(VirtualAddressEditor, self).__init__(parent)
-    self.delegate = None
-    self.index = None
     layout = QtGui.QHBoxLayout()
     layout.setMargin(0)
     self.combo = QtGui.QComboBox()
@@ -125,18 +119,15 @@ class VirtualAddressEditor(QtGui.QWidget):
     self.connect(self.editor, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
     self.setLayout(layout)
   def editingFinished(self):
-    if self.delegate:
-      self.delegate.setModelData(self, self.index.model(), self.index)
+    self.emit(QtCore.SIGNAL('editingFinished()'))
         
 class CodeEditor(QtGui.QWidget):
   
-  def __init__(self, parts=['99', 'AA'], delegate=None, parent=None):
+  def __init__(self, parts=['99', 'AA'], parent=None):
     super(CodeEditor, self).__init__(parent)
     self.setFocusPolicy(Qt.StrongFocus)
     self.parts = parts
     self.part_editors = []
-    self.delegate = delegate
-    self.index = None
     layout = QtGui.QHBoxLayout()
     #layout.setSpacing(0)
     layout.setMargin(0)
@@ -150,22 +141,19 @@ class CodeEditor(QtGui.QWidget):
     self.setLayout(layout)
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
-    self.delegate.setModelData(self, self.index.model(), self.index)
         
 class Many2OneEditor(QtGui.QWidget):
   """Widget for editing many 2 one relations
   @param entity_admin : The Admin interface for the object on the one side of the relation
   """
-  def __init__(self, entity_admin=None, delegate=None, parent=None):
+  def __init__(self, entity_admin=None, parent=None):
     super(Many2OneEditor, self).__init__(parent)
     self.admin = entity_admin
-    self.index = None
     self.entity_instance_getter = None
     self.entity_set = False
     self.layout = QtGui.QHBoxLayout()
     self.layout.setSpacing(0)
     self.layout.setMargin(0)
-    self.delegate = delegate
     # Search button
     self.search_button = QtGui.QToolButton()
     self.search_button.setIcon(QtGui.QIcon(art.icon16('actions/system-search')))
@@ -234,7 +222,7 @@ class Many2OneEditor(QtGui.QWidget):
       """
       entity = entity_instance_getter()
       self.entity_instance_getter = create_instance_getter(entity)
-      if entity:
+      if hasattr(entity, 'id'):
         return (unicode(entity), entity.id)
       return ('', False)
     
@@ -249,7 +237,7 @@ class Many2OneEditor(QtGui.QWidget):
         self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
         self.entity_set = False
       if propagate:
-        self.delegate.setModelData(self, self.index.model(), self.index)
+        self.emit(QtCore.SIGNAL('editingFinished()'))
       
     self.admin.mt.post(get_instance_represenation, set_instance_represenation)
     
@@ -371,25 +359,6 @@ class One2ManyEditor(QtGui.QWidget):
     get_workspace().addWindow('createFormForIndex', form)
     form.show()
 
-#class ImageEditor(QtGui.QLabel):
-#  def __init__(self, parent=None):
-#    QtGui.QLabel.__init__(self, parent)
-#    self.setAcceptDrops(True)
-    
-#  def dragEnterEvent(self, event):
-#    event.acceptProposedAction()
-
-#  def dragMoveEvent(self, event):
-#    event.acceptProposedAction()
-
-#  def dropEvent(self, event):
-#    if event.mimeData().hasUrls():
-#      url = event.mimeData().urls()[0]
-#      filename = url.toLocalFile()
-#      if filename != '':
-#        self.setPixmap(QtGui.QPixmap(filename))
-#        self.file_url = url
-
 try:
   from PIL import Image as PILImage
 except:
@@ -398,9 +367,7 @@ except:
 class ImageEditor(QtGui.QWidget):
   def __init__(self, parent=None):
     QtGui.QWidget.__init__(self, parent)
-    self.image = None
-    self.delegate = None
-    self.index = None    
+    self.image = None 
     self.layout = QtGui.QHBoxLayout()
     #
     # Setup label
@@ -506,10 +473,10 @@ All files (*)"""
 
   def pilimage_from_file(self, filepath):
     testImage = QtGui.QImage(filepath)
-    if not testImage.isNull() and self.delegate:
+    if not testImage.isNull():
       fp = open(filepath, 'rb')
       self.image = PILImage.open(fp)
-      self.delegate.setModelData(self, self.index.model(), self.index )
+      self.emit(QtCore.SIGNAL('editingFinished()'))
   
   def draw_border(self):
     self.label.setFrameShape(QtGui.QFrame.Box)
@@ -541,7 +508,17 @@ class RichTextEditor(QtGui.QWidget):
     #
     # Textedit
     #
-    self.textedit = QtGui.QTextEdit(self)
+    
+    class CustomTextEdit(QtGui.QTextEdit):
+      
+      def __init__(self, parent):
+        super(CustomTextEdit, self).__init__(parent)
+      def focusOutEvent(self, event):
+        print 'focus out'
+        self.emit(QtCore.SIGNAL('editingFinished()'))
+        
+    self.textedit = CustomTextEdit(self)
+    self.connect(self.textedit, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
     self.textedit.setAcceptRichText(True)
 
     #
@@ -649,6 +626,10 @@ class RichTextEditor(QtGui.QWidget):
 
     self.connect(self.textedit, QtCore.SIGNAL('currentCharFormatChanged (const QTextCharFormat&)'), self.update_format)
     self.connect(self.textedit, QtCore.SIGNAL('cursorPositionChanged ()'), self.update_text)
+    
+  def editingFinished(self):
+    print 'rich text editing finished'
+    self.emit(QtCore.SIGNAL('editingFinished()'))
     
   #
   # Button methods

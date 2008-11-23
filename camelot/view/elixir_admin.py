@@ -388,7 +388,7 @@ class EntityAdmin(object):
     from PyQt4 import QtGui
 
     validator = admin.createValidator(model)
-    
+      
     class FormView(QtGui.QWidget):
 
       def __init__(self, admin):
@@ -428,6 +428,7 @@ class EntityAdmin(object):
         #
         # Create the value and the label widgets
         #
+        self.widget_mapper.setItemDelegate(delegate)
         widgets = {}
         for i, (field_name, field_attributes) in enumerate(columns):
           option = None
@@ -448,7 +449,6 @@ class EntityAdmin(object):
           self.widget_mapper.addMapping(value_widget, i)
           widgets[field_name] = (label_widget, value_widget, type_widget)
           
-        self.widget_mapper.setItemDelegate(delegate)
         self.widget_mapper.setCurrentIndex(index)
         self.widget_layout.insertWidget(0, form.render(widgets))
         self.widget_layout.setContentsMargins(7,7,7,7)        
@@ -504,18 +504,30 @@ class EntityAdmin(object):
 
       def viewFirst(self):
         """select model's first row"""
+        # submit should not happen a second time, since then we don't want the widgets data to
+        # be written to the model
+        self.widget_mapper.submit()        
         self.widget_mapper.toFirst()
 
       def viewLast(self):
         """select model's last row"""
+        # submit should not happen a second time, since then we don't want the widgets data to
+        # be written to the model
+        self.widget_mapper.submit()         
         self.widget_mapper.toLast()
 
       def viewNext(self):
         """select model's next row"""
+        # submit should not happen a second time, since then we don't want the widgets data to
+        # be written to the model
+        self.widget_mapper.submit()         
         self.widget_mapper.toNext()
 
       def viewPrevious(self):
         """select model's previous row"""
+        # submit should not happen a second time, since then we don't want the widgets data to
+        # be written to the model
+        self.widget_mapper.submit()         
         self.widget_mapper.toPrevious()            
 
       def closeEvent(self, event):

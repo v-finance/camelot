@@ -95,7 +95,17 @@ class GenericDelegate(QtGui.QItemDelegate):
     logger.debug('inserting a new custom column delegate')
     delegate.setParent(self)
     self.delegates[column] = delegate
+    self.connect(delegate, QtCore.SIGNAL('commitData(QWidget*)'), self.commitData)
+    self.connect(delegate, QtCore.SIGNAL('closeEditor(QWidget*)'), self.closeEditor)   
 
+  def commitData(self, editor):
+    print 'propagate commit'
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    
+  def closeEditor(self, editor):
+    print 'propagate close'
+    self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
+    
   def removeColumnDelegate(self, column):
     """Removes custom column delegate"""
     logger.debug('removing a new custom column delegate')
@@ -120,12 +130,14 @@ class GenericDelegate(QtGui.QItemDelegate):
 
   def setEditorData(self, editor, index):
     """Use a custom delegate setEditorData method if it exists"""
-    logger.debug('setting delegate data editor for column %s' % index.column())
+    logger.debug('setting editor data for column %s' % index.column())
     delegate = self.delegates.get(index.column())
     if delegate is not None:
+      logger.debug('got delegate')
       delegate.setEditorData(editor, index)
     else:
       QtGui.QItemDelegate.setEditorData(self, editor, index)
+    logger.debug('data set')
 
   def setModelData(self, editor, model, index):
     """Use a custom delegate setModelData method if it exists"""
@@ -135,7 +147,6 @@ class GenericDelegate(QtGui.QItemDelegate):
       delegate.setModelData(editor, model, index)
     else:
       QtGui.QItemDelegate.setModelData(self, editor, model, index)
-
 
 class IntegerColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for integer values"""
@@ -233,24 +244,33 @@ class DateColumnDelegate(QtGui.QItemDelegate):
     self.nullable = nullable
 
   def createEditor(self, parent, option, index):
-    editor = DateEditor(self, self.nullable, self.format, parent)
+    editor = DateEditor(self.nullable, self.format, parent)
+    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)  
     return editor
 
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
+  
   def setEditorData(self, editor, index):
     value = index.model().data(index, Qt.EditRole).toDate()
-    editor.index = index
+    editor._index = index
     if value:
       editor.setDate(value)
     else:
       editor.setDate(editor.minimumDate())
 
   def setModelData(self, editor, model, index):
+    logger.debug('date delegate set model data')
     value = editor.date()
+    logger.debug('date delegate got value')
     if value == editor.minimumDate():
       model.setData(index, create_constant_function(None))
     else:
       d = datetime.date(value.year(), value.month(), value.day())
       model.setData(index, create_constant_function(d))
+    logger.debug('date delegate data set')
 
 _registered_delegates_[DateEditor] = DateColumnDelegate
 
@@ -261,11 +281,17 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
     self.parts = parts
 
   def createEditor(self, parent, option, index):
-    return CodeEditor(self.parts, self, parent)
+    editor = CodeEditor(self.parts, parent)
+    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
+    return editor
 
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
+    
   def setEditorData(self, editor, index):
     value = index.data(Qt.EditRole).toPyObject()
-    editor.index = index
     if value:
       for part_editor, part in zip(editor.part_editors, value):
         part_editor.setText(unicode(part))
@@ -276,9 +302,6 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
     for part in editor.part_editors:
       value.append(unicode(part.text()))
     model.setData(index, create_constant_function(value))
-    
-  def editingFinished(self, widget):
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), widget)
 
 _registered_delegates_[CodeEditor] = CodeColumnDelegate
 
@@ -287,14 +310,19 @@ class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, parent=None):
     super(VirtualAddressColumnDelegate, self).__init__(parent)
 
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
+  
   def createEditor(self, parent, option, index):
-    return VirtualAddressEditor(parent)
+    editor = VirtualAddressEditor(parent)
+    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
+    return editor
 
   def setEditorData(self, editor, index):
     import camelot.types
     value = index.data(Qt.EditRole).toPyObject()
-    editor.index = index
-    editor.delegate = self
     if value:
       editor.editor.setText(value[1])
       editor.combo.setCurrentIndex(camelot.types.VirtualAddress.virtual_address_types.index(value[0]))
@@ -344,8 +372,8 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     self.entity_admin = entity_admin
 
   def createEditor(self, parent, option, index):
-    editor = Many2OneEditor(self.entity_admin, self, parent)
-    self.setEditorData(editor, index)
+    editor = Many2OneEditor(self.entity_admin, parent)
+    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
     return editor
 
   def setEditorData(self, editor, index):
@@ -355,6 +383,11 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, editor.entity_instance_getter)
 
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
+    
 _registered_delegates_[Many2OneEditor] = Many2OneColumnDelegate
 
 class One2ManyColumnDelegate(QtGui.QItemDelegate):
@@ -420,14 +453,14 @@ _registered_delegates_[QtGui.QCheckBox] = BoolColumnDelegate
 class ImageColumnDelegate(QtGui.QItemDelegate):
 
   def createEditor(self, parent, option, index):
-    return ImageEditor(parent)
+    editor = ImageEditor(parent)
+    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
+    return editor
 
   def setEditorData(self, editor, index):
     import StringIO
     s = StringIO.StringIO()
     data = index.data(Qt.EditRole).toPyObject()
-    editor.delegate = self
-    editor.index = index
     if data:
       editor.image = data.image
       data = data.image.copy()
@@ -442,6 +475,11 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
       #@todo: clear pixmap
       editor.clearFirstImage()
 
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
+    
   def setModelData(self, editor, model, index):
     from camelot.types import StoredImage
     model.setData(index, create_constant_function(StoredImage(editor.image)))
@@ -451,8 +489,15 @@ _registered_delegates_[ImageEditor] = ImageColumnDelegate
 class RichTextColumnDelegate(QtGui.QItemDelegate):
 
   def createEditor(self, parent, option, index):
-    return RichTextEditor(parent)
+    editor = RichTextEditor(parent)
+    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
+    return editor
 
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
+    
   def setEditorData(self, editor, index):
     html = index.model().data(index, Qt.EditRole).toString()
     if html:
