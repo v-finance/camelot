@@ -128,7 +128,11 @@ class ModelThread(threading.Thread):
           self._response_queue.put((new_event, e, exception))
           self._request_queue.task_done()
           self._response_signaler.responseAvailable()
+          self._response_signaler.stopProcessingRequest()
           event.set()
+        except:
+          logger.error('unhandled exception in model thread')
+          
           
     except Exception, e:
       logger.exception(e)

@@ -323,8 +323,8 @@ class City(GeographicBoundary):
     
 class Address(Entity):
   using_options(tablename='address')
-  street1 = Field(Unicode('128'), required=True)
-  street2 = Field(Unicode('128'))
+  street1 = Field(Unicode(128), required=True)
+  street2 = Field(Unicode(128))
   city = ManyToOne('City', required=True, ondelete='cascade', onupdate='cascade')
   is_synchronized('synchronized', lazy=True)
   

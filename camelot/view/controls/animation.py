@@ -56,17 +56,22 @@ class MovieWidget(QtGui.QLabel):
     return result
 
   def startMovie(self):
-    logger.debug('movie started')
-    if self.started:
-      return
-    self.timerId = self.startTimer(80) # 80 milliseconds
-    self.started = True
+#    logger.debug('movie started')
+#    if self.started:
+#      return
+#    self.timerId = self.startTimer(80) # 80 milliseconds
+#    self.started = True
+#@attention: movie stuff was turned off, because it seems to crash the application sometimes,
+#            according to google this could be a bug in QT 4.4, VLC seems to suffer the same
+#            problem
+    pass
 
   def stopMovie(self):
-    logger.debug('movie stopped')
-    if self.started:
-      self.killTimer(self.timerId)
-      self.started = False
+#    logger.debug('movie stopped')
+#    if self.started:
+#      self.killTimer(self.timerId)
+#      self.started = False
+    pass
 
   def timerEvent(self, event):
     #logger.debug('changing movie frame')

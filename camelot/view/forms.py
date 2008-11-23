@@ -44,7 +44,8 @@ class Form(object):
   """Use the QFormLayout widget to render a form"""
   
   def __init__(self, content, scrollbars=False):
-    """@param fields: a list with the fields to render"""
+    """@param content: a list with the field names and forms to render"""
+    assert isinstance(content, list)
     self._content = content
     self._scrollbars = scrollbars
     self._fields = []
@@ -52,6 +53,7 @@ class Form(object):
       if isinstance(c, Form):
         self._fields.extend(c.get_fields())
       else:
+        assert isinstance(c, (str, unicode))
         self._fields.append(c)
 
   def get_fields(self):
@@ -99,6 +101,9 @@ class TabForm(Form):
   
   def __init__(self, tabs):
     """@param tabs: a list of tuples of (tab_label, tab_form)"""
+    assert isinstance(tabs, list)
+    for tab in tabs:
+      assert isinstance(tab, tuple)
     self.tabs = [(tab_label, structure_to_form(tab_form)) for tab_label,tab_form in tabs]
     super(TabForm, self).__init__(sum((tab_form.get_fields()
                                   for tab_label, tab_form in self.tabs), []))
@@ -116,6 +121,7 @@ class HBoxForm(Form):
   def __init__(self, columns):
     """@param columns: a list of forms to display in the different columns
     of the horizontal box"""
+    assert isinstance(columns, list)
     self.columns = [structure_to_form(col) for col in columns]
     super(HBoxForm, self).__init__(sum((column_form.get_fields()
                                   for column_form in self.columns), []))
@@ -132,6 +138,7 @@ class WidgetOnlyForm(Form):
   one2many widget"""
   
   def __init__(self, field):
+    assert isinstance(field, (str, unicode))
     super(WidgetOnlyForm, self).__init__([field])
     
   def render(self, widgets):
@@ -144,6 +151,7 @@ def VBoxForm(Form):
   def __init__(self, rows):
     """@param columns: a list of forms to display in the different columns
     of the horizontal box"""
+    assert isinstance(rows, list)
     self.rows = [structure_to_form(row) for row in rows]
     super(VBoxForm, self).__init__(sum((row_form.get_fields() for row_form in self.rows), []))
 

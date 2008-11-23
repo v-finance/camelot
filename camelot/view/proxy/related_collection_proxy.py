@@ -48,11 +48,6 @@ class RelatedCollectionProxy(CollectionProxy):
   def refresh(self):
     super(RelatedCollectionProxy, self).refresh()
     
-  def setData(self, index, value, role=Qt.EditRole):
-    result = super(RelatedCollectionProxy, self).setData(index, value, role)
-    self.related_model.handleRowUpdate(self.row_in_related_model)
-    return result
-    
   def removeRow(self, row):
     logger.debug('remove row %s'%row)
     
