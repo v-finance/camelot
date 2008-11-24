@@ -99,11 +99,9 @@ class GenericDelegate(QtGui.QItemDelegate):
     self.connect(delegate, QtCore.SIGNAL('closeEditor(QWidget*)'), self.closeEditor)   
 
   def commitData(self, editor):
-    print 'propagate commit'
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
     
   def closeEditor(self, editor):
-    print 'propagate close'
     self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
     
   def removeColumnDelegate(self, column):
@@ -377,16 +375,15 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     return editor
 
   def setEditorData(self, editor, index):
-    editor.index = index
-    editor.setEntity(lambda: index.data(Qt.EditRole).toPyObject(), propagate=False)
+    editor.setEntity(create_constant_function(index.data(Qt.EditRole).toPyObject()), propagate=False)
 
   def setModelData(self, editor, model, index):
-    model.setData(index, editor.entity_instance_getter)
+    if editor.entity_instance_getter:
+      model.setData(index, editor.entity_instance_getter)
 
   def commitAndCloseEditor(self):
     editor = self.sender()
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
-    #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
     
 _registered_delegates_[Many2OneEditor] = Many2OneColumnDelegate
 
