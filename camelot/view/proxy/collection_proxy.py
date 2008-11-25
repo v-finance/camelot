@@ -44,9 +44,10 @@ from camelot.view import art
 from camelot.view.model_thread import model_function, gui_function, get_model_thread
    
 @model_function
-def RowDataFromObject(obj, columns, model, row):
+def RowDataFromObject(obj, columns):
   """Create row data from an object, by fetching its attributes"""
   from related_collection_proxy import RelatedCollectionProxy
+  from entity_proxy import EntityProxy
   row_data = []
   mt = get_model_thread()
   
@@ -57,8 +58,11 @@ def RowDataFromObject(obj, columns, model, row):
     field_attributes = col[1]
     if field_attributes['python_type']==list:
       proxy = mt.post_to_gui_thread_and_block(lambda *a:RelatedCollectionProxy(field_attributes['admin'], create_collection_getter(obj,col[0]),
-                                                                               field_attributes['admin'].getColumns, model, row))
+                                                                               field_attributes['admin'].getColumns))
       row_data.append( proxy )
+#    elif field_attributes['python_type']==object:
+#      proxy = mt.post_to_gui_thread_and_block(lambda *a:EntityProxy(field_attributes['admin'], create_collection_getter(obj,col[0])))
+#      row_data.append( proxy )
     else:
       row_data.append(getattr(obj,col[0]))
   return row_data
@@ -156,7 +160,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.mt = admin.getModelThread()
     # Set database connection and load data
     self.rows = 0
-    self.columns_getter = columns_getter
+    self._columns = []
     self.max_number_of_rows = max_number_of_rows
     self.cache = {Qt.DisplayRole:fifo(10*self.max_number_of_rows), Qt.EditRole:fifo(10*self.max_number_of_rows)}
     # The rows in the table for which a cache refill is under request
@@ -169,7 +173,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.rsh.connect(self.rsh, self.rsh.entity_update_signal, self.handleEntityUpdate)
     self.rsh.connect(self.rsh, self.rsh.entity_delete_signal, self.handleEntityDelete)
     self.rsh.connect(self.rsh, self.rsh.entity_create_signal, self.handleEntityCreate)
-    self.mt.post(columns_getter, lambda columns:self.setColumns(columns))
+    
+    def get_columns():
+      self._columns = columns_getter()
+      return self._columns
+    
+    self.mt.post(get_columns, lambda columns:self.setColumns(columns))
     # in that way the number of rows is requested as well
     self.mt.post(self.getRowCount,  self.setRowCount)
     logger.debug('initialization finished')
@@ -184,6 +193,30 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def getRowCount(self):
     return len(self.collection_getter())
   
+  @gui_function
+  def revertRow(self, row):
+    
+    def create_refresh_entity(row):
+      
+      @model_function
+      def refresh_entity():
+        from elixir import session
+        o = self._get_object(row)
+        print 'BEFORE REFRESH', unicode(o)
+        session.refresh(o)
+        print 'AFTER REFRESHED', unicode(o)
+        self.rsh.sendEntityUpdate(self, o)
+        return row, o
+      
+      return refresh_entity
+
+    def refresh(row_and_entity):
+      row, entity = row_and_entity
+      self.handleRowUpdate(row)
+      self.rsh.sendEntityUpdate(self, entity)
+      
+    self.mt.post(create_refresh_entity(row), refresh)
+              
   def refresh(self):
     
     def refresh_content(rows):
@@ -203,28 +236,33 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
               self.index(row,0), self.index(row,self.column_count))
     
-  def handleEntityUpdate(self, entity):
+  def handleEntityUpdate(self, sender, entity):
     """Handles the entity signal, indicating that the model is out of date"""
     logger.debug('%s %s received entity update signal'%(self.__class__.__name__, self.admin.getName()))
-    try:
-      row = self.cache[Qt.DisplayRole].delete_by_entity(entity)
-      row = self.cache[Qt.EditRole].delete_by_entity(entity)
-      logger.debug('updated row %i'%row)
-      self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
-                self.index(row,0), self.index(row,self.column_count))
-    except KeyError:
-      logger.debug('entity not in cache')
-      pass
+    if sender!=self:
+      try:
+        row = self.cache[Qt.DisplayRole].delete_by_entity(entity)
+        row = self.cache[Qt.EditRole].delete_by_entity(entity)
+        logger.debug('updated row %i'%row)
+        self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                  self.index(row,0), self.index(row,self.column_count))
+      except KeyError:
+        logger.debug('entity not in cache')
+        pass
+    else:
+      logger.debug('duplicate update')
 
-  def handleEntityDelete(self, entity, primary_keys):
+  def handleEntityDelete(self, sender, entity, primary_keys):
     """Handles the entity signal, indicating that the model is out of date"""
     logger.debug('received entity delete signal')
-    self.refresh()
+    if sender!=self:
+      self.refresh()
                  
   def handleEntityCreate(self, entity, primary_keys):
     """Handles the entity signal, indicating that the model is out of date"""
     logger.debug('received entity create signal')
-    self.refresh()
+    if sender!=self:
+      self.refresh()
                  
   def setRowCount(self, rows):
     """Callback method to set the number of rows
@@ -328,6 +366,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def columnCount(self, index=None):
     return self.column_count
   
+  @gui_function
   def headerData(self, section, orientation, role):
     if role == Qt.DisplayRole:
       if orientation == Qt.Horizontal:
@@ -351,6 +390,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         return form_icon 
     return QtCore.QAbstractTableModel.headerData(self, section, orientation, role)
   
+  @gui_function
   def data(self, index, role):
     import datetime
     if not index.isValid() or \
@@ -388,13 +428,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         sh = editor.sizeHint()
         return QtCore.QVariant(sh)
     elif role == Qt.ForegroundRole:
-      #if not self.columns_getter()[index.column()][1]['nullable']:
-      #  return QtCore.QVariant(QtGui.QColor(Qt.red))
       pass
     elif role == Qt.BackgroundRole:
-      #if not self.columns_getter()[index.column()][1]['editable']:
-      #  logger.debug('Setting background for non-editable column')
-      #  return QtCore.QVariant(QtGui.QColor(Qt.lightGray))
       pass
     return QtCore.QVariant()
 
@@ -419,7 +454,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           from camelot.model.memento import BeforeUpdate
           from camelot.model.authentication import getCurrentPerson
           o = self._get_object(row)
-          attribute = self.columns_getter()[column][0]
+          attribute = self.getColumns()[column][0]
           old_value = getattr(o, attribute)
           if new_value!=old_value:
             # update the model
@@ -433,7 +468,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
               # type error can be raised in case we try to set to a collection
               pass
             # update the cache
-            row_data = RowDataFromObject(o, self.columns_getter(), self, row)
+            row_data = RowDataFromObject(o, self.getColumns())
             self.cache[Qt.EditRole].add_data(row, o, row_data)
             self.cache[Qt.DisplayRole].add_data(row, o, RowDataAsUnicode(row_data))
             if self.flush_changes and self.validator.isValid(row):
@@ -455,8 +490,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                                          person = getCurrentPerson())
                   session.flush([history])
             #@todo: update should only be sent remotely when flush was done 
-            self.rsh.sendEntityUpdate(o)
-            return ((row,0), (row,len(self.columns_getter())))
+            self.rsh.sendEntityUpdate(self, o)
+            return ((row,0), (row,len(self.getColumns())))
           elif flushed:
             try:
               self.unflushed_rows.remove(row)
@@ -484,11 +519,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def _extend_cache(self, offset, limit):
     """Extend the cache around row"""
     #@TODO : also store the primary key, here we just saved the id
-    columns = self.columns_getter()
+    columns = self.getColumns()
     offset = min(offset, self.rows)
     limit = min(limit, self.rows-offset)
     for i,o in enumerate(self.collection_getter()[offset:offset+limit+1]):
-      row_data = RowDataFromObject(o, columns, self, i+offset)
+      row_data = RowDataFromObject(o, columns)
       self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
       self.cache[Qt.DisplayRole].add_data(i+offset, o, RowDataAsUnicode(row_data))
     return (offset, limit)
@@ -555,7 +590,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                                  primary_key=pk, 
                                  previous_attributes={},
                                  person = getCurrentPerson() )
-          self.rsh.sendEntityDelete(o)        
+          self.rsh.sendEntityDelete(self, o)        
           o.delete()
           session.flush([history, o])   
       
@@ -590,7 +625,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                            primary_key=o.id,
                            person = getCurrentPerson() )
           session.flush([history])
-          self.rsh.sendEntityCreate(o)
+          self.rsh.sendEntityCreate(self, o)
           
       return insert_function
       

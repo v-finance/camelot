@@ -333,14 +333,6 @@ class EntityAdmin(object):
           
             def validate():
               return validator.isValid(0)
-            
-            @model_function
-            def expunge_object():
-              from elixir import session
-              for o in new_object:
-                if onexpunge:
-                  onexpunge(o)
-                session.expunge(o)
                                 
             def showMessage(valid):
               if not valid:
@@ -348,7 +340,10 @@ class EntityAdmin(object):
                 reply = QtGui.QMessageBox.question(self, u'Could not create new %s'%admin.getName(),
                 u"\n%s\n Do you want to lose your changes ?"%messages, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
                 if reply == QtGui.QMessageBox.Yes:
-                  admin.mt.post(expunge_object)
+                  # clear mapping to prevent data being written again to the model, after we
+                  # reverted the row
+                  self.widget_mapper.clearMapping()
+                  model.revertRow(self.form_view.widget_mapper.currentIndex())
                   self.validate_before_close = False
                   self.close()
               else:
@@ -357,7 +352,7 @@ class EntityAdmin(object):
                 
                 for o in new_object:
                   self.emit(self.entity_created_signal,
-                            create_instance_getter(new_object))                
+                            create_instance_getter(new_object))
                 self.validate_before_close = False
                 self.close()
             
@@ -402,14 +397,11 @@ class EntityAdmin(object):
                      SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                      self.dataChanged)
         self.widget_mapper.setModel(self.model)
-        #self.scroll_area = QtGui.QScrollArea()
-        #self.widget_layout.insertWidget(0, self.scroll_area)
         self.setLayout(self.widget_layout)
-        
         self.validate_before_close = True
         
         def getColumnsAndForm():
-          return (self.model.columns_getter(), self.admin.getForm())
+          return (self.model.getColumns(), self.admin.getForm())
         
         admin.mt.post(getColumnsAndForm,
                       lambda columns_and_form:self.setColumnsFormAndDelegate(columns_and_form[0], columns_and_form[1], self.model.getItemDelegate()))
@@ -472,34 +464,29 @@ class EntityAdmin(object):
           # submit should not happen a second time, since then we don't want the widgets data to
           # be written to the model
           self.widget_mapper.submit()
-          if model.hasUnflushedRows():
           
-            def validate():
-              return validator.isValid(self.widget_mapper.currentIndex())
-            
-            @model_function
-            def refresh_object():
-              from elixir import session
-              o = model._get_object(self.widget_mapper.currentIndex())
-              session.refresh(o)
-                                
-            def showMessage(valid):
-              if not valid:
-                messages = u'\n'.join(validator.validityMessages(self.widget_mapper.currentIndex()))
-                reply = QtGui.QMessageBox.question(self, u'Unsaved changes',
-                u"Changes in this window could not be saved :\n%s\n Do you want to lose your changes ?"%messages, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-                if reply == QtGui.QMessageBox.Yes:
-                  admin.mt.post(refresh_object)
-                  self.validate_before_close = False
-                  self.close()
-              else:
+          def validate():
+            return validator.isValid(self.widget_mapper.currentIndex())
+                              
+          def showMessage(valid):
+            if not valid:
+              messages = u'\n'.join(validator.validityMessages(self.widget_mapper.currentIndex()))
+              reply = QtGui.QMessageBox.question(self, u'Unsaved changes',
+              u"Changes in this window could not be saved :\n%s\n Do you want to lose your changes ?"%messages, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+              if reply == QtGui.QMessageBox.Yes:
+                # clear mapping to prevent data being written again to the model, after we
+                # reverted the row                
+                self.widget_mapper.clearMapping()
+                model.revertRow(self.widget_mapper.currentIndex())
                 self.validate_before_close = False
                 self.close()
-            
-            admin.mt.post(validate, showMessage)
-            return False
-          else:
-            return True
+            else:
+              self.validate_before_close = False
+              self.close()
+          
+          admin.mt.post(validate, showMessage)
+          return False
+
         return True
 
       def viewFirst(self):
@@ -573,7 +560,7 @@ class EntityAdmin(object):
     class SelectView(TableView):
 
       def __init__(self, admin, parent):  
-        TableView.__init__(self, admin, parent)  
+        TableView.__init__(self, admin, parent)
         self.entity_selected_signal = SIGNAL("entity_selected")
         self.connect(self, SIGNAL('row_selected'), self.sectionClicked)
 
@@ -582,15 +569,23 @@ class EntityAdmin(object):
         # if it has not been set yet
         if self.table_model:
           
-          # table model needs to be in a closure, otherwise it will be deleted from
-          # the tableview upon closure of this one
-          def create_instance_getter(table_model, index):
-            return lambda: table_model._get_object(index)
-  
-          self.emit(self.entity_selected_signal, create_instance_getter(self.table_model, index))
-  
-          self.close()
-
+          def create_constant_getter(cst):
+            return lambda:cst
+          
+          def create_instance_getter():
+            entity = self.table_model._get_object(index)
+            return create_constant_getter(entity)
+            
+          def create_emit_and_close(selectview):
+            
+            def emit_and_close(instance_getter):
+              selectview.emit(self.entity_selected_signal, instance_getter)
+              selectview.close()
+              
+            return emit_and_close
+          
+          self.admin.mt.post(create_instance_getter, create_emit_and_close(self))
+            
     return SelectView(admin, parent)
 
   @gui_function

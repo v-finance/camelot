@@ -222,7 +222,7 @@ class Many2OneEditor(QtGui.QWidget):
       """
       entity = entity_instance_getter()
       self.entity_instance_getter = create_instance_getter(entity)
-      if hasattr(entity, 'id'):
+      if entity and hasattr(entity, 'id'):
         return (unicode(entity), entity.id)
       return ('', False)
     
@@ -340,9 +340,6 @@ class One2ManyEditor(QtGui.QWidget):
     workspace.addWindow('new', form)
     #self.connect(form, form.entity_created_signal, self.entityCreated)
     form.show()
-  
-#  def entityCreated(self, entity_instance_getter):
-#    self.model.insertRow(0, entity_instance_getter)
     
   def deleteSelectedRows(self):
     """Delete the selected rows in this tableview"""
@@ -514,8 +511,10 @@ class RichTextEditor(QtGui.QWidget):
       def __init__(self, parent):
         super(CustomTextEdit, self).__init__(parent)
       def focusOutEvent(self, event):
-        print 'focus out'
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+        # this seems to cause weird behaviour, where editingFinished is fired, even
+        # if nothing has been edited yet
+        #self.emit(QtCore.SIGNAL('editingFinished()'))
+        pass
         
     self.textedit = CustomTextEdit(self)
     self.connect(self.textedit, QtCore.SIGNAL('editingFinished()'), self.editingFinished)

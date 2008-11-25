@@ -37,13 +37,11 @@ logger = logging.getLogger('proxy.related_collection_proxy')
 
 class RelatedCollectionProxy(CollectionProxy):
   
-  def __init__(self, admin, collection_getter, columns_getter, related_model, row_in_related_model, max_number_of_rows=10):
-    self.related_model = related_model
-    self.row_in_related_model = row_in_related_model
+  def __init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10):
     CollectionProxy.__init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10, edits=None, flush_changes=True)
     
   def __unicode__(self):
-    return u'RelatedCollectionProxy for objects of type %s connected to %s row %s'%(self.admin.entity.__name__, str(self.related_model), self.row_in_related_model)
+    return u'RelatedCollectionProxy for objects of type %s connected'%(self.admin.entity.__name__)
   
   def refresh(self):
     super(RelatedCollectionProxy, self).refresh()
@@ -66,7 +64,7 @@ class RelatedCollectionProxy(CollectionProxy):
                                  primary_key=pk, 
                                  previous_attributes={},
                                  person = getCurrentPerson() )
-          self.rsh.sendEntityDelete(o)        
+          self.rsh.sendEntityDelete(self, o)        
           o.delete()
           session.flush([history, o])   
       

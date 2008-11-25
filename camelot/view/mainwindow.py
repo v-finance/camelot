@@ -457,15 +457,15 @@ class MainWindow(QtGui.QMainWindow):
     self.helpMenu = self.menuBar().addMenu(_('&Help'))
     addActions(self.helpMenu, (self.aboutAct, ))
 
-    self.throbber = Throbber(self.menuBar())
+    #self.throbber = Throbber(self.menuBar())
 
   def resizeEvent(self, event):
     """Needed to correctly position the throbber"""
     QtGui.QMainWindow.resizeEvent(self, event)
     # always put throbber in top right corner
-    x = self.width() - self.throbber.sizeHint().width() - 5
-    y = 2
-    self.throbber.move(x, y)
+#    x = self.width() - self.throbber.sizeHint().width() - 5
+#    y = 2
+#    self.throbber.move(x, y)
 
   def updateMenus(self):
     hasMdiChild = (self.activeMdiChild() is not None)

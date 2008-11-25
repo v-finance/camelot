@@ -84,15 +84,15 @@ class QueryTableProxy(CollectionProxy):
   def getData(self):
     """Generator for all the data queried by this proxy"""
     for i,o in enumerate(self.query.all()):
-      yield RowDataFromObject(o, self.columns_getter(), self, i)
+      yield RowDataFromObject(o, self.getColumns())
       
   @model_function
   def _extend_cache(self, offset, limit):
     """Extend the cache around row"""
     q = self.query.offset(offset).limit(limit)
-    columns = self.columns_getter()
+    columns = self.getColumns()
     for i, o in enumerate(q.all()):
-      row_data = RowDataFromObject(o, columns, self, i+offset)
+      row_data = RowDataFromObject(o, columns)
       self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
       self.cache[Qt.DisplayRole].add_data(i+offset, o, RowDataAsUnicode(row_data))
     return (offset, limit)

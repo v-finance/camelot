@@ -113,6 +113,7 @@ class ModelThread(threading.Thread):
         new_event = threading.Event()
         try:
           (event, request, response, exception) = self._request_queue.get()
+          #self._response_queue.join()
           logger.debug('start handling request')
           self._response_signaler.startProcessingRequest()
           result = request()
@@ -132,7 +133,6 @@ class ModelThread(threading.Thread):
           event.set()
         except:
           logger.error('unhandled exception in model thread')
-          
           
     except Exception, e:
       logger.exception(e)
