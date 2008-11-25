@@ -342,7 +342,7 @@ class EntityAdmin(object):
                 if reply == QtGui.QMessageBox.Yes:
                   # clear mapping to prevent data being written again to the model, after we
                   # reverted the row
-                  self.widget_mapper.clearMapping()
+                  self.form_view.widget_mapper.clearMapping()
                   model.revertRow(self.form_view.widget_mapper.currentIndex())
                   self.validate_before_close = False
                   self.close()
