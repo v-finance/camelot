@@ -521,17 +521,27 @@ class ComboBoxColumnDelegate(QtGui.QItemDelegate):
           
   def createEditor(self, parent, option, index):
     from camelot.view.model_thread import get_model_thread
-    combobox = QtGui.QComboBox(parent)
+    editor = QtGui.QComboBox(parent)
     
-    def getChoices(model, row):
-      return list(self.choices(model._get_object(row)))
+    def create_choices_getter(model, row):
       
-    def setChoices(choices):
-      for i,(value,name) in enumerate(choices):
-        combobox.insertItem(i, unicode(name), QtCore.QVariant(value))
+      def getChoices():
+        return list(self.choices(model._get_object(row)))
       
-    get_model_thread().post(lambda:getChoices(index.model(), index.row()), setChoices)
-    return combobox
+      return getChoices
+      
+    def create_choices_setter(editor):
+      
+      def setChoices(choices):
+        allready_in_combobox = [self.qvariantToPython(editor.itemData(i)) for i in range(editor.count())]
+        for i,(value,name) in enumerate(choices):
+          if value not in allready_in_combobox:
+            editor.insertItem(i, unicode(name), QtCore.QVariant(value))
+          
+      return setChoices
+        
+    get_model_thread().post(create_choices_getter(index.model(), index.row()), create_choices_setter(editor))
+    return editor
   
   def setEditorData(self, editor, index):
     data = self.qvariantToPython(index.model().data(index, Qt.EditRole))
