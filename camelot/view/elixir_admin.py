@@ -343,7 +343,12 @@ class EntityAdmin(object):
                   # clear mapping to prevent data being written again to the model, after we
                   # reverted the row
                   self.form_view.widget_mapper.clearMapping()
-                  model.revertRow(self.form_view.widget_mapper.currentIndex())
+                  
+                  def onexpunge_on_all():
+                    for o in new_object:
+                      onexpunge(o)
+                      
+                  admin.mt.post(onexpunge_on_all)
                   self.validate_before_close = False
                   self.close()
               else:
