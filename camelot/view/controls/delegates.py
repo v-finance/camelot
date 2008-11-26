@@ -555,10 +555,14 @@ class ComboBoxColumnDelegate(QtGui.QItemDelegate):
     def create_choices_setter(editor):
       
       def setChoices(choices):
-        allready_in_combobox = [self.qvariantToPython(editor.itemData(i)) for i in range(editor.count())]
+        allready_in_combobox = dict((self.qvariantToPython(editor.itemData(i)),i) for i in range(editor.count()))
         for i,(value,name) in enumerate(choices):
           if value not in allready_in_combobox:
             editor.insertItem(i, unicode(name), QtCore.QVariant(value))
+          else:
+            # the editor data might allready have been set, but its name is still ...,
+            # therefor we set the name now correct
+            editor.setItemText(i, unicode(name))
           
       return setChoices
         
@@ -572,7 +576,10 @@ class ComboBoxColumnDelegate(QtGui.QItemDelegate):
         if data == self.qvariantToPython(editor.itemData(i)):
           editor.setCurrentIndex(i)
           return
-      editor.insertItem(editor.count(), unicode(data), QtCore.QVariant(data))
+      # it might happen, that when we set the editor data, the setChoices method has
+      # not happened yes, therefore, we temporary set ... in the text while setting the
+      # correct data to the editor
+      editor.insertItem(editor.count(), '...', QtCore.QVariant(data))
       editor.setCurrentIndex(editor.count()-1)
     
   def setModelData(self, editor, model, index):
