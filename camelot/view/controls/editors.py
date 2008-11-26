@@ -254,11 +254,11 @@ class Many2OneEditor(QtGui.QWidget):
     
 class One2ManyEditor(QtGui.QWidget):
   
-  def __init__(self, entity_admin=None, field_name=None, parent=None):
+  def __init__(self, admin=None, parent=None, create_inline=False, **kw):
     """
-    @param entity_admin: the Admin interface for the objects on the one side of the relation  
-    @param field_name: the name of the attribute on the entity_instance that contains the collection
-                        of many objects
+    @param admin: the Admin interface for the objects on the one side of the relation  
+    @param create_inline: if False, then a new entity will be created within a new window, if True, it
+                       will be created inline
                         
     after creating the editor, setEntityInstance needs to be called to set
     the actual data to the editor
@@ -279,7 +279,8 @@ class One2ManyEditor(QtGui.QWidget):
                  QtCore.SIGNAL('sectionClicked(int)'),
                  self.createFormForIndex)
 
-    self.admin = entity_admin
+    self.admin = admin
+    self.create_inline = create_inline
     #
     # Setup buttons
     #
@@ -333,10 +334,19 @@ class One2ManyEditor(QtGui.QWidget):
       #@todo: in multiple new rows are added at the same time, this will fail
       row = self.model.removeRow(self.model.rowCount()-1)
 
-    form = self.admin.createNewView(workspace, oncreate=oncreate, onexpunge=onexpunge)
-    workspace.addWindow('new', form)
-    #self.connect(form, form.entity_created_signal, self.entityCreated)
-    form.show()
+    if self.create_inline:
+      
+      def create():
+        o = self.admin.entity()
+        self.admin.setDefaults(o)
+        oncreate(o)
+        
+      self.admin.mt.post(create)
+        
+    else:
+      form = self.admin.createNewView(workspace, oncreate=oncreate, onexpunge=onexpunge)
+      workspace.addWindow('new', form)
+      form.show()
     
   def deleteSelectedRows(self):
     """Delete the selected rows in this tableview"""

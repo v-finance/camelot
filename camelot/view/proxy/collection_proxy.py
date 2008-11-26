@@ -326,8 +326,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         delegate = delegates.Many2OneColumnDelegate(entity_admin)
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif widget_ == 'one2many':
-        entity_admin = c[1]['admin']
-        delegate = delegates.One2ManyColumnDelegate(entity_admin, field_name)
+        delegate = delegates.One2ManyColumnDelegate(**c[1])
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == str:
         if c[1]['length']:
@@ -583,6 +582,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         from camelot.model.authentication import getCurrentPerson
         o = self._get_object(row)
         self.remove(o)
+        self.rsh.sendEntityDelete(self, o)
         if o.id:
           pk = o.id
           # save the state before the update
@@ -590,7 +590,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                                  primary_key=pk, 
                                  previous_attributes={},
                                  person = getCurrentPerson() )
-          self.rsh.sendEntityDelete(self, o)        
           o.delete()
           session.flush([history, o])   
       

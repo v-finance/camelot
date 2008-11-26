@@ -412,16 +412,15 @@ _registered_delegates_[Many2OneEditor] = Many2OneColumnDelegate
 class One2ManyColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
 
-  def __init__(self, entity_admin, field_name, parent=None):
+  def __init__(self, parent=None, **kwargs):
     logger.debug('create one2manycolumn delegate')
-    assert entity_admin!=None
+    assert 'admin' in kwargs
     super(One2ManyColumnDelegate, self).__init__(parent)
-    self.entity_admin = entity_admin
-    self.field_name = field_name
+    self.kwargs = kwargs
 
   def createEditor(self, parent, option, index):
     logger.debug('create a one2many editor')
-    editor = One2ManyEditor(self.entity_admin, self.field_name, parent)
+    editor = One2ManyEditor(parent=parent, **self.kwargs)
     self.setEditorData(editor, index)
     return editor
 

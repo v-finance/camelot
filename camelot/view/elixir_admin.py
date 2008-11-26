@@ -136,6 +136,7 @@ class EntityAdmin(object):
                             editable=True,
                             nullable=True,
                             widget='one2many',
+                            create_inline=False,
                             admin=get_entity_admin(target))
         elif property.direction == orm.sync.MANYTOONE:
           attributes = dict(python_type=str,
@@ -263,6 +264,29 @@ class EntityAdmin(object):
     from validator import *
     return Validator(self, model)
   
+  @model_function
+  def setDefaults(self, entity_instance):
+    """Set the defaults of an object"""
+    from sqlalchemy.schema import ColumnDefault
+    for field,attributes in self.getFields():
+      try:
+        default = attributes['default']
+        if isinstance(default, ColumnDefault):
+          default_value = default.execute()
+        elif callable(default):
+          import inspect
+          args, varargs, kwargs, defs = inspect.getargspec(default)
+          if len(args):
+            default_value = default(entity_instance)
+          else:
+            default_value = default()
+        else:
+          default_value = default
+        logger.debug('set default for %s to %s'%(field, unicode(default_value)))
+        setattr(entity_instance, field, default_value)
+      except KeyError,e:
+        pass
+              
   @gui_function
   def createNewView(admin, parent=None, oncreate=None, onexpunge=None):
     """
@@ -276,10 +300,7 @@ class EntityAdmin(object):
     from PyQt4 import QtCore
     from PyQt4 import QtGui
     from PyQt4.QtCore import SIGNAL
-
     from proxy.collection_proxy import CollectionProxy
-    from sqlalchemy.schema import ColumnDefault
-    
     new_object = []
 
     @model_function
@@ -289,24 +310,7 @@ class EntityAdmin(object):
         if oncreate:
           oncreate(entity_instance)
         # Give the default fields their value
-        for field,attributes in admin.getFields():
-          try:
-            default = attributes['default']
-            if isinstance(default, ColumnDefault):
-              default_value = default.execute()
-            elif callable(default):
-              import inspect
-              args, varargs, kwargs, defs = inspect.getargspec(default)
-              if len(args):
-                default_value = default(entity_instance)
-              else:
-                default_value = default()
-            else:
-              default_value = default
-            logger.debug('set default for %s to %s'%(field, unicode(default_value)))
-            setattr(entity_instance, field, default_value)
-          except KeyError,e:
-            pass
+        admin.setDefaults(entity_instance)
         new_object.append(entity_instance)
       return new_object
 
