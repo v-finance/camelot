@@ -15,10 +15,11 @@ logger = logging.getLogger('view.controls.tableview')
 class QueryTable(QtGui.QTableView):
   """the actual displayed table"""
 
-  def __init__(self):
-    QtGui.QTableView.__init__(self)
+  def __init__(self, parent=None):
+    QtGui.QTableView.__init__(self, parent)
     logger.debug('create querytable')
     self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+    self.setEditTriggers(QtGui.QAbstractItemView.AllEditTriggers)
     self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     self.horizontalHeader().setClickable(False)
 

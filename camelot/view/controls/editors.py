@@ -263,18 +263,15 @@ class One2ManyEditor(QtGui.QWidget):
     after creating the editor, setEntityInstance needs to be called to set
     the actual data to the editor
     """
+    from tableview import QueryTable
     QtGui.QWidget.__init__(self, parent)
     self.layout = QtGui.QHBoxLayout()
     self.layout.setContentsMargins(0,0,0,0)
     #
     # Setup table
     #
-    self.table = QtGui.QTableView(parent)
-    self.layout.addWidget(self.table)
-    logger.debug('create querytable')
-    self.table.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-    self.table.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                             QtGui.QSizePolicy.Expanding)    
+    self.table = QueryTable(parent)
+    self.layout.addWidget(self.table) 
     self.setSizePolicy(QtGui.QSizePolicy.Expanding,
                        QtGui.QSizePolicy.Expanding)
 

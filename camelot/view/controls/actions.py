@@ -29,7 +29,6 @@
 import logging
 
 logger = logging.getLogger('controls.actions')
-logger.setLevel(logging.DEBUG)
 
 from PyQt4 import QtCore, QtGui
 
@@ -68,7 +67,7 @@ class ActionsBox(QtGui.QGroupBox):
       entity = self.entity_getter()
       self.actions[button_id][1](entity)
       session.flush([entity])
-      self.rsh.sendEntityUpdate(entity)
+      self.rsh.sendEntityUpdate(self, entity)
       
     def executed(result):
       logger.debug('action %i executed'%button_id)

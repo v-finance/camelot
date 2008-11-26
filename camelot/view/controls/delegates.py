@@ -145,6 +145,14 @@ class GenericDelegate(QtGui.QItemDelegate):
       delegate.setModelData(editor, model, index)
     else:
       QtGui.QItemDelegate.setModelData(self, editor, model, index)
+      
+  def sizeHint(self, option, index):
+    option = QtGui.QStyleOptionViewItem()
+    delegate = self.delegates.get(index.column())
+    if delegate is not None:
+      return delegate.sizeHint(option, index)
+    else:
+      return QtGui.QItemDelegate.sizeHint(option, index)    
 
 class IntegerColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for integer values"""
@@ -368,6 +376,7 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     assert entity_admin!=None
     super(Many2OneColumnDelegate, self).__init__(parent)
     self.entity_admin = entity_admin
+    self._dummy_editor = Many2OneEditor(self.entity_admin, None)
 
   def createEditor(self, parent, option, index):
     editor = Many2OneEditor(self.entity_admin, parent)
@@ -384,6 +393,19 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
   def commitAndCloseEditor(self):
     editor = self.sender()
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    
+  def sizeHint(self, option, index):
+    name = index.model().data(index, Qt.DisplayRole).toString()
+    #self._dummy_editor.search_input.setText(name)
+    return self._dummy_editor.sizeHint()    
+  
+#  def paint(self, painter, option, index):
+#    painter.save()
+#    self.drawBackground(painter, option, index)
+#    name = index.model().data(index, Qt.DisplayRole).toString()
+#    self._dummy_editor.search_input.setText(name)
+#    self._dummy_editor.render(painter)
+#    painter.restore()
     
 _registered_delegates_[Many2OneEditor] = Many2OneColumnDelegate
 
@@ -547,7 +569,7 @@ class ComboBoxColumnDelegate(QtGui.QItemDelegate):
     data = self.qvariantToPython(index.model().data(index, Qt.EditRole))
     if data!=None:
       for i in range(editor.count()):
-        if data == editor.itemData(i).toPyObject():
+        if data == self.qvariantToPython(editor.itemData(i)):
           editor.setCurrentIndex(i)
           return
       editor.insertItem(editor.count(), unicode(data), QtCore.QVariant(data))
