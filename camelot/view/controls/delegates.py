@@ -506,8 +506,12 @@ _registered_delegates_[ImageEditor] = ImageColumnDelegate
 
 class RichTextColumnDelegate(QtGui.QItemDelegate):
 
+  def __init__(self, parent = None, **kwargs):
+    super(RichTextColumnDelegate, self).__init__(parent)
+    self.kwargs = kwargs
+    
   def createEditor(self, parent, option, index):
-    editor = RichTextEditor(parent)
+    editor = RichTextEditor(parent, **self.kwargs)
     self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
     return editor
 

@@ -333,7 +333,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           delegate = delegates.PlainTextColumnDelegate()
           self.item_delegate.insertColumnDelegate(i, delegate)
         else:
-          delegate = delegates.RichTextColumnDelegate()
+          delegate = delegates.RichTextColumnDelegate(**c[1])
           self.item_delegate.insertColumnDelegate(i, delegate)          
       elif type_ == int:
         delegate = delegates.IntegerColumnDelegate(0, 100000)
