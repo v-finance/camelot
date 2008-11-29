@@ -129,7 +129,7 @@ class EntityAdmin(object):
         attributes['default'] = property.columns[0].default
       elif isinstance(property, orm.properties.PropertyLoader):
         target = property._get_target_class()
-        fk = property.foreign_keys
+        foreign_keys = property.foreign_keys
         if property.direction == orm.sync.ONETOMANY:
           attributes = dict(python_type=list,
                             length=None,
@@ -137,13 +137,14 @@ class EntityAdmin(object):
                             nullable=True,
                             widget='one2many',
                             create_inline=False,
+                            backref=property.backref.key,
                             admin=get_entity_admin(target))
         elif property.direction == orm.sync.MANYTOONE:
           attributes = dict(python_type=str,
                             length=None,
                             editable=True,
                             #@todo: take into account all foreign keys instead of only the first one
-                            nullable=fk[0].nullable,
+                            nullable=foreign_keys[0].nullable,
                             widget='many2one',
                             admin=get_entity_admin(target))
         elif property.direction == orm.sync.MANYTOMANY:

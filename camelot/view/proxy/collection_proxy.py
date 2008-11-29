@@ -57,8 +57,8 @@ def RowDataFromObject(obj, columns):
   for i,col in enumerate(columns):
     field_attributes = col[1]
     if field_attributes['python_type']==list:
-      proxy = mt.post_to_gui_thread_and_block(lambda *a:RelatedCollectionProxy(field_attributes['admin'], create_collection_getter(obj,col[0]),
-                                                                               field_attributes['admin'].getColumns))
+      proxy = mt.post_to_gui_thread_and_block(lambda *a:CollectionProxy(field_attributes['admin'], create_collection_getter(obj,col[0]),
+                                                                        field_attributes['admin'].getColumns))
       row_data.append( proxy )
 #    elif field_attributes['python_type']==object:
 #      proxy = mt.post_to_gui_thread_and_block(lambda *a:EntityProxy(field_attributes['admin'], create_collection_getter(obj,col[0])))
@@ -571,67 +571,72 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.collection_getter().append(o)
     self.rows += 1
  
+  @model_function
+  def removeEntityInstance(self, o):
+    from elixir import session
+    from camelot.model.memento import BeforeDelete
+    from camelot.model.authentication import getCurrentPerson
+    self.remove(o)
+    self.rsh.sendEntityDelete(self, o)
+    if o.id:
+      pk = o.id
+      # save the state before the update
+      history = BeforeDelete(model=unicode(self.admin.entity.__name__), 
+                             primary_key=pk, 
+                             previous_attributes={},
+                             person = getCurrentPerson() )
+      o.delete()
+      session.flush([history, o])
+    self.mt.post(lambda:None, lambda *args:self.refresh())  
+    
+  @gui_function
   def removeRow(self, row):
     logger.debug('remove row %s'%row)
     
-    def create_delete_function():
+    def create_delete_function(row):
       
       def delete_function():
-        from elixir import session
-        from camelot.model.memento import BeforeDelete
-        from camelot.model.authentication import getCurrentPerson
         o = self._get_object(row)
-        self.remove(o)
-        self.rsh.sendEntityDelete(self, o)
-        if o.id:
-          pk = o.id
-          # save the state before the update
-          history = BeforeDelete(model=unicode(self.admin.entity.__name__), 
-                                 primary_key=pk, 
-                                 previous_attributes={},
-                                 person = getCurrentPerson() )
-          o.delete()
-          session.flush([history, o])   
+        self.removeEntityInstance(o)
       
       return delete_function
-    
-    def emit_changes(*args):
-      self.refresh()
   
-    self.mt.post(create_delete_function(), emit_changes)
+    self.mt.post(create_delete_function(row))
     return True
     
+  @model_function
+  def insertEntityInstance(self, row, o):
+    from elixir import session
+    from camelot.model.memento import Create
+    from camelot.model.authentication import getCurrentPerson
+    self.append(o)
+    row = self.getRowCount()-1
+    self.unflushed_rows.add(row)
+    if self.flush_changes and not len(self.validator.objectValidity(o)):
+      session.flush([o])
+      try:
+        self.unflushed_rows.remove(row)
+      except KeyError:
+        pass
+      history = Create(model=unicode(self.admin.entity.__name__),
+                       primary_key=o.id,
+                       person = getCurrentPerson() )
+      session.flush([history])
+      self.rsh.sendEntityCreate(self, o)
+    self.mt.post(lambda:None, lambda *args:self.refresh())
+              
+  @gui_function
   def insertRow(self, row, entity_instance_getter):
     
     def create_insert_function(getter):
       
       @model_function
       def insert_function():
-        from elixir import session
-        from camelot.model.memento import Create
-        from camelot.model.authentication import getCurrentPerson
-        o = getter()
-        self.append(o)
-        row = self.getRowCount()-1
-        self.unflushed_rows.add(row)
-        if self.flush_changes and not len(self.validator.objectValidity(o)):
-          session.flush([o])
-          try:
-            self.unflushed_rows.remove(row)
-          except KeyError:
-            pass
-          history = Create(model=unicode(self.admin.entity.__name__),
-                           primary_key=o.id,
-                           person = getCurrentPerson() )
-          session.flush([history])
-          self.rsh.sendEntityCreate(self, o)
+        self.insertEntityInstance(row, getter())
           
       return insert_function
-      
-    def emit_changes(*args):
-      self.refresh()
   
-    self.mt.post(create_insert_function(entity_instance_getter), emit_changes)
+    self.mt.post(create_insert_function(entity_instance_getter))
         
   def __del__(self):
     logger.warn('delete CollectionProxy')

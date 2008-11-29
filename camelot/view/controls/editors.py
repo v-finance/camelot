@@ -326,25 +326,20 @@ class One2ManyEditor(QtGui.QWidget):
   def newRow(self):
     from camelot.view.workspace import get_workspace
     workspace = get_workspace()
-    
-    def oncreate(o):
-      self.model.insertRow(0, lambda:o)
-      
-    def onexpunge(o):
-      #@todo: in multiple new rows are added at the same time, this will fail
-      row = self.model.removeRow(self.model.rowCount()-1)
 
     if self.create_inline:
       
       def create():
         o = self.admin.entity()
+        self.model.insertEntityInstance(0,o)
         self.admin.setDefaults(o)
-        oncreate(o)
         
       self.admin.mt.post(create)
         
     else:
-      form = self.admin.createNewView(workspace, oncreate=oncreate, onexpunge=onexpunge)
+      form = self.admin.createNewView(workspace,
+                                      oncreate=lambda o:self.model.insertEntityInstance(0,o), 
+                                      onexpunge=lambda o:self.model.removeEntityInstance(o))
       workspace.addWindow('new', form)
       form.show()
     
