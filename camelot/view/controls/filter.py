@@ -97,12 +97,11 @@ class FilterList(QtGui.QScrollArea):
     self.filters = []
     layout.addWidget(QtGui.QLabel(_('Filter'), self))
     
-    for name, choices in items:
-      logger.debug('add filter for %s'%name)
-      checkbox = FilterBox(name, choices, self)
-      layout.addWidget(checkbox)
-      self.filters.append(checkbox)
-      self.connect(checkbox, QtCore.SIGNAL('filter_changed'), self.emit_filters_changed)
+    for filter,(name,options) in items:
+      widget = filter.render(self, name, options)
+      layout.addWidget(widget)
+      self.filters.append(widget)
+      self.connect(widget, QtCore.SIGNAL('filter_changed'), self.emit_filters_changed)
 
     layout.addStretch()
     self.widget.setLayout(layout)

@@ -202,9 +202,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       def refresh_entity():
         from elixir import session
         o = self._get_object(row)
-        print 'BEFORE REFRESH', unicode(o)
         session.refresh(o)
-        print 'AFTER REFRESHED', unicode(o)
         self.rsh.sendEntityUpdate(self, o)
         return row, o
       

@@ -214,52 +214,17 @@ class EntityAdmin(object):
   @model_function
   def getFilters(self):
     """
-    Return the filters applicable for these entities each filter is a tuple
-    of the name of the filter and a list of options that can be selected. Each
-    option is a tuple of the name of the option, and a filter function to
-    decorate a query
-
+    Return the filters applicable for these entities each filter is 
     @return: [(filter_name, [(option_name, query_decorator), ...), ... ]
     """
-
-    def getNameAndOptions(field_names):
-      from sqlalchemy.sql import select
-      from elixir import session
-      session.bind = self.entity.table.metadata.bind
-      filter_names = []
-      joins = []
-      admin = self
-      table = admin.entity.table
-      for field_name in field_names:
-        attributes = admin.getFieldAttributes(field_name)
-        filter_names.append(attributes['name'])
-        if attributes['widget'] in ('one2many', 'many2many', 'many2one'):
-          admin = attributes['admin']
-          joins.append(field_name)
-          if attributes['widget'] in ('many2one'):
-            table = admin.entity.table.join(table)
-          else:
-            table = admin.entity.table
-          
-
-      col = getattr(admin.entity, field_name)
-
-      query = select([col], distinct=True, order_by=col.asc()).select_from(table)
+    
+    def filter_generator():
+      from filters import GroupBoxFilter
+      for filter in self.list_filter:
+        filter = GroupBoxFilter(filter)
+        yield (filter, filter.get_name_and_options(self))
         
-      def create_decorator(col, value, joins):
-        
-        def decorator(q):
-          if joins:
-            q = q.join(joins, aliased=True)
-          return q.filter(col==value)
-        
-        return decorator
-
-      options = [(value[0], create_decorator(col, value[0], joins))
-                 for value in session.execute(query)]
-      return (filter_names[0],[('All', lambda q: q)] + options)
-
-    return [getNameAndOptions(field_names.split('.')) for field_names in self.list_filter]
+    return list(filter_generator())
 
   def createValidator(self, model):
     from validator import *
