@@ -505,7 +505,7 @@ class EntityAdmin(object):
         from camelot.view.proxy.collection_proxy import RowDataFromObject, RowDataAsUnicode
         entity = self.entity_getter()
         fields = self.admin.getFields()
-        row_data = RowDataFromObject(entity, fields, None, 0)
+        row_data = RowDataFromObject(entity, fields)
         table = [(field[1]['name'], value) for field,value in zip(fields, row_data)]
         context = {
           'title': self.admin.getName(),
