@@ -217,11 +217,12 @@ class EntityAdmin(object):
     Return the filters applicable for these entities each filter is 
     @return: [(filter_name, [(option_name, query_decorator), ...), ... ]
     """
+    from filters import structure_to_filter
     
     def filter_generator():
       from filters import GroupBoxFilter
-      for filter in self.list_filter:
-        filter = GroupBoxFilter(filter)
+      for structure in self.list_filter:
+        filter = structure_to_filter(structure)
         yield (filter, filter.get_name_and_options(self))
         
     return list(filter_generator())

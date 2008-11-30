@@ -104,9 +104,86 @@ class GroupBoxFilter(Filter):
   """Filter where the items are displayed in a QGroupBox"""
   
   def render(self, parent, name, options):
-    from camelot.view.controls.filter import FilterBox
-    return FilterBox(name, options, parent)
+    
+    from PyQt4 import QtCore, QtGui
+    
+    class FilterWidget(QtGui.QGroupBox):
+      """A box containing a filter that can be applied on a table view, this filter is
+      based on the distinct values in a certain column"""
+    
+      def __init__(self, name, choices, parent):
+        QtGui.QGroupBox.__init__(self, name, parent)
+        self.group = QtGui.QButtonGroup()
+        self.item = name
+        self.unique_values = []
+        self.choices = None
+        self.setChoices(choices)
+         
+      def emit_filter_changed(self, state):
+        self.emit(QtCore.SIGNAL('filter_changed'))
+    
+      def setChoices(self, choices):
+        self.choices = choices
+        layout = QtGui.QVBoxLayout()
+        for i,name in enumerate([unicode(c[0]) for c in choices]):
+          button = QtGui.QRadioButton(name)
+          layout.addWidget(button)
+          self.group.addButton(button, i)
+          if i==0:
+            button.setChecked(True)
+          self.connect(button, QtCore.SIGNAL('toggled(bool)'), self.emit_filter_changed)
+        layout.addStretch()
+        self.setLayout(layout)
+    
+      def decorate_query(self, query):
+        checked = self.group.checkedId()
+        if checked>=0:
+          return self.choices[checked][1](query)
+        return query
+              
+#      def apply_filter(self, query):
+#        '''Apply this FilterBox's filter on a query, if All is selected, no
+#        filter is applied at all.
+#        @return the modified query
+#        '''
+#        selected_value = self.unique_values[self.get_selection()]
+#        if selected_value==FilterBox.all:
+#          return query
+#        if isinstance(self.col.type, Float):
+#          delta = 0.1**self.col.type.precision
+#          return query.filter(and_(self.col>=selected_value-delta, self.col<=selected_value+delta))
+#        return query.filter(self.col==selected_value)
+        
+    return FilterWidget(name, options, parent)
   
 class ComboBoxFilter(Filter):
   """Filter where the items are displayed in a QComboBox"""
-  pass
+  
+  def render(self, parent, name, options):
+    
+    from PyQt4 import QtCore, QtGui
+    
+    class FilterWidget(QtGui.QGroupBox):
+      
+      def __init__(self, name, choices, parent):
+        super(FilterWidget, self).__init__(name, parent)
+        layout = QtGui.QVBoxLayout()
+        self.choices = choices
+        combobox = QtGui.QComboBox(self)
+        for i,(name,decorator) in enumerate(choices):
+          combobox.insertItem(i, unicode(name), QtCore.QVariant(decorator))
+        layout.addWidget(combobox)
+        self.setLayout(layout)
+        self.current_index = 0
+        self.connect(combobox, QtCore.SIGNAL('currentIndexChanged(int)'), self.emit_filter_changed)
+            
+      def emit_filter_changed(self, index):
+        self.current_index = index
+        self.emit(QtCore.SIGNAL('filter_changed'))
+        
+      def decorate_query(self, query):
+        if self.current_index>=0:
+          return self.choices[self.current_index][1](query)
+        return query
+      
+    return FilterWidget(name, options, parent)
