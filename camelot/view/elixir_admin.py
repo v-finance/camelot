@@ -39,6 +39,8 @@ class EntityAdmin(object):
   list_filter = []
   list_charts = []
   list_actions = []
+  list_size = (700,500)
+  form_size = (700,500)
   form_actions = []
   form_title_column = None
   field_attributes = {}
@@ -344,7 +346,9 @@ class EntityAdmin(object):
         else:
           event.ignore()
 
-    return NewForm(parent)
+    form = NewForm(parent)
+    form.resize(admin.form_size[0], admin.form_size[1])
+    return form
 
   @gui_function
   def createFormView(admin, title, model, index, parent):
@@ -517,7 +521,10 @@ class EntityAdmin(object):
         tp = env.get_template('form_view.html')
         return tp.render(context)
           
-    return FormView(admin)
+    form = FormView(admin)
+    form.resize(admin.form_size[0], admin.form_size[1])
+    
+    return form
 
   @gui_function
   def createSelectView(admin, query, parent=None):
@@ -562,7 +569,9 @@ class EntityAdmin(object):
           
           self.admin.mt.post(create_instance_getter, create_emit_and_close(self))
             
-    return SelectView(admin, parent)
+    widget = SelectView(admin, parent)
+    widget.resize(admin.list_size[0], admin.list_size[1])
+    return widget
 
   @gui_function
   def createTableView(self, query, parent=None):
@@ -579,6 +588,7 @@ class EntityAdmin(object):
     from PyQt4.QtCore import SIGNAL
 
     tableview = TableView(self)
+    admin = self
 
     def createOpenForm(self, tableview):
 

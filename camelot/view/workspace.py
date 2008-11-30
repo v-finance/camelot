@@ -24,12 +24,12 @@ class DesktopWorkspace(QtGui.QWorkspace):
     
     this method is a modification of QWorkspace.addWindow
     """
-    parent = self.parent()
-    width = int(parent.width() / 2)
-    height = int(parent.height() / 2)
-    #if widget.__class__.__name__ == 'FormView':
-    #  height = widget.height() 
-    widget.resize(width, height)    
+#    parent = self.parent()
+#    width = int(parent.width() / 2)
+#    height = int(parent.height() / 2)
+#    #if widget.__class__.__name__ == 'FormView':
+#    #  height = widget.height()
+#    widget.resize(width, height)    
     window = QtGui.QWorkspace.addWindow(self, widget, *args)
     return window
 

@@ -600,7 +600,7 @@ class MainWindow(QtGui.QMainWindow):
            self.cutAct.setEnabled)
     self.connect(child, QtCore.SIGNAL("copyAvailable(bool)"),
            self.copyAct.setEnabled)
-    child.show()
+    child.showMaximized()
 
   def activeMdiChild(self):
     return self.workspace.activeWindow()
