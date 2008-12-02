@@ -156,28 +156,22 @@ class Many2OneEditor(QtGui.QWidget):
     self.layout.setMargin(0)
     # Search button
     self.search_button = QtGui.QToolButton()
-    self.search_button.setIcon(QtGui.QIcon(art.icon16('actions/system-search')))
+    self.search_button.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
     self.search_button.setAutoRaise(True)
-    self.connect(self.search_button, QtCore.SIGNAL('clicked()'), self.createSelectView)
+    self.connect(self.search_button, QtCore.SIGNAL('clicked()'), self.searchButtonClicked)
     # Open button
     self.open_button = QtGui.QToolButton()
     self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
     self.connect(self.open_button, QtCore.SIGNAL('clicked()'), self.openButtonClicked)
-    self.open_button.setAutoRaise(True)
-    # Trash button
-    self.trash_button = QtGui.QToolButton()
-    self.trash_button.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
-    self.connect(self.trash_button, QtCore.SIGNAL('clicked()'), self.trashButtonClicked)
-    self.trash_button.setAutoRaise(True)     
+    self.open_button.setAutoRaise(True)  
     # Search input
     self.search_input = QtGui.QLineEdit()
     self.search_input.setReadOnly(True)
-    #self.connect(self.search_input, QtCore.SIGNAL('returnPressed()'), self.emit_search)
+    self.connect(self.search_input, QtCore.SIGNAL('returnPressed()'), self.returnPressed)
     # Setup layout
     self.layout.addWidget(self.search_input)
     self.layout.addWidget(self.open_button)
     self.layout.addWidget(self.search_button)
-    self.layout.addWidget(self.trash_button)
     self.setLayout(self.layout)
     
   def openButtonClicked(self):
@@ -186,6 +180,16 @@ class Many2OneEditor(QtGui.QWidget):
     else:
       return self.createNew()
     
+  def returnPressed(self, event):
+    if not self.entity_set:
+      self.createSelectView()
+      
+  def searchButtonClicked(self):
+    if self.entity_set:
+      self.setEntity(lambda:None)
+    else:
+      self.createSelectView()
+      
   def trashButtonClicked(self):
     self.setEntity(lambda:None)
     
@@ -232,10 +236,14 @@ class Many2OneEditor(QtGui.QWidget):
       self.search_input.setText(desc)
       if pk!=False:
         self.open_button.setIcon(QtGui.QIcon(art.icon16('places/folder')))
+        self.search_button.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
         self.entity_set = True
+        self.search_input.setReadOnly(True)
       else:
         self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
+        self.search_button.setIcon(QtGui.QIcon(art.icon16('actions/system-search')))
         self.entity_set = False
+        self.search_input.setReadOnly(False)
       if propagate:
         self.emit(QtCore.SIGNAL('editingFinished()'))
       
@@ -244,7 +252,8 @@ class Many2OneEditor(QtGui.QWidget):
   def createSelectView(self):
     from camelot.view.workspace import get_workspace
     workspace = get_workspace()
-    select = self.admin.createSelectView(self.admin.entity.query, workspace)
+    search_text = unicode(self.search_input.text())
+    select = self.admin.createSelectView(self.admin.entity.query, parent=workspace, search_text=search_text)
     self.connect(select, select.entity_selected_signal, self.selectEntity)
     workspace.addWindow('select', select)
     select.show()

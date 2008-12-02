@@ -527,9 +527,9 @@ class EntityAdmin(object):
     return form
 
   @gui_function
-  def createSelectView(admin, query, parent=None):
+  def createSelectView(admin, query, search_text=None, parent=None):
     """
-    Returns a QT widget that can be used to select an element form a query,
+    Returns a QT widget that can be used to select an element from a query,
 
     @param query: sqlalchemy query object
     @param parent: the widget that will contain this select view, the returned
@@ -543,7 +543,7 @@ class EntityAdmin(object):
     class SelectView(TableView):
 
       def __init__(self, admin, parent):  
-        TableView.__init__(self, admin, parent)
+        TableView.__init__(self, admin, search_text=search_text, parent=parent)
         self.entity_selected_signal = SIGNAL("entity_selected")
         self.connect(self, SIGNAL('row_selected'), self.sectionClicked)
 

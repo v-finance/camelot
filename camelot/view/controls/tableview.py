@@ -26,7 +26,7 @@ class QueryTable(QtGui.QTableView):
 class TableView(QtGui.QWidget):
   """emits the row_selected signal when a row has been selected"""
   
-  def __init__(self, admin, parent=None):
+  def __init__(self, admin, search_text=None, parent=None):
     from search import SimpleSearchControl
     from inheritance import SubclassTree
     QtGui.QWidget.__init__(self, parent)
@@ -53,6 +53,8 @@ class TableView(QtGui.QWidget):
     self.search_filter = lambda q: q
     self.setLayout(self.widget_layout)
     self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+    if search_text:
+      self.search_control.search(search_text)
 
   def sectionClicked(self, section):
     """emits a row_selected signal"""

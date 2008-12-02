@@ -63,6 +63,11 @@ class SimpleSearchControl(QtGui.QWidget):
     layout.addWidget(self.cancel_button)
     self.setLayout(layout)
 
+  def search(self, search_text):
+    """Start searching for search_text"""
+    self.search_input.setText(search_text)
+    self.emit_search()
+    
   def emit_search(self):
     text = str(self.search_input.text())
     self.emit(QtCore.SIGNAL('search'), text)
