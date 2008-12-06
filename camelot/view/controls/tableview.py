@@ -162,8 +162,10 @@ class TableView(QtGui.QWidget):
     self.table.resizeColumnsToContents()
     self.rebuildQuery()
 
-    logger.debug('Selecting first row in table')
-    self.table.selectRow(0)
+    #logger.debug('Selecting first row in table')
+    #@todo: select first row is not appropriate because the custom editors don't
+    #       scale well
+    #self.table.selectRow(0)
 
   def deleteSelectedRows(self):
     """delete the selected rows in this tableview"""

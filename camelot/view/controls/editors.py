@@ -149,6 +149,30 @@ class Many2OneEditor(QtGui.QWidget):
   """Widget for editing many 2 one relations
   @param entity_admin : The Admin interface for the object on the one side of the relation
   """
+  
+  class CompletionsModel(QtCore.QAbstractListModel):
+    
+    def __init__(self, parent=None):
+      super(Many2OneEditor.CompletionsModel, self).__init__(parent)
+      self._completions = []
+    
+    def setCompletions(self, completions):
+      self._completions = completions
+      self.emit(QtCore.SIGNAL('layoutChanged()'))
+        
+    def data(self, index, role):
+      if role==Qt.DisplayRole:
+        return QtCore.QVariant(self._completions[index.row()][0])
+      elif role==Qt.EditRole:
+        return QtCore.QVariant(self._completions[index.row()][1])
+      return QtCore.QVariant()
+        
+    def rowCount(self, index=None):
+      return len(self._completions)
+    
+    def columnCount(self, index=None):
+      return 1
+      
   def __init__(self, entity_admin=None, parent=None):
     super(Many2OneEditor, self).__init__(parent)
     self.admin = entity_admin
@@ -174,11 +198,8 @@ class Many2OneEditor(QtGui.QWidget):
     self.connect(self.search_input, QtCore.SIGNAL('textEdited(const QString&)'), self.textEdited)
     
     self.completer = QtGui.QCompleter()
-    stringlist = QtCore.QStringList()
-    stringlist.append('abc')
-    stringlist.append('def')
-    self.completions = QtGui.QStringListModel(stringlist, self.completer)
-    self.completer.setModel(self.completions)
+    self.completions_model = self.CompletionsModel(self.completer)
+    self.completer.setModel(self.completions_model)
     self.completer.setCaseSensitivity(Qt.CaseInsensitive)
     self.completer.setCompletionMode(QtGui.QCompleter.UnfilteredPopupCompletion)
     self.connect(self.completer, QtCore.SIGNAL('activated(const QModelIndex&)'), self.completionActivated)
@@ -208,14 +229,12 @@ class Many2OneEditor(QtGui.QWidget):
   
   @gui_function
   def display_search_completions(self, completions):
-    stringlist = QtCore.QStringList()
-    for label, getter in completions:
-      stringlist.append(label)
-    self.completions.setStringList(stringlist)
+    self.completions_model.setCompletions(completions)
     self.completer.complete()
   
   def completionActivated(self, index):
-    print 'completion activated', index
+    object_getter = index.data(Qt.EditRole)
+    self.setEntity(object_getter.toPyObject())
     
   def openButtonClicked(self):
     if self.entity_set:
