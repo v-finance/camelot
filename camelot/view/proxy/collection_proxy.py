@@ -46,8 +46,6 @@ from camelot.view.model_thread import model_function, gui_function, get_model_th
 @model_function
 def RowDataFromObject(obj, columns):
   """Create row data from an object, by fetching its attributes"""
-  from related_collection_proxy import RelatedCollectionProxy
-  from entity_proxy import EntityProxy
   row_data = []
   mt = get_model_thread()
   
@@ -60,9 +58,6 @@ def RowDataFromObject(obj, columns):
       proxy = mt.post_to_gui_thread_and_block(lambda *a:CollectionProxy(field_attributes['admin'], create_collection_getter(obj,col[0]),
                                                                         field_attributes['admin'].getColumns))
       row_data.append( proxy )
-#    elif field_attributes['python_type']==object:
-#      proxy = mt.post_to_gui_thread_and_block(lambda *a:EntityProxy(field_attributes['admin'], create_collection_getter(obj,col[0])))
-#      row_data.append( proxy )
     else:
       row_data.append(getattr(obj,col[0]))
   return row_data

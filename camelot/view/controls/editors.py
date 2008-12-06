@@ -39,7 +39,10 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from camelot.view import art
-from camelot.view.model_thread import model_function
+from camelot.view.model_thread import model_function, gui_function
+
+def create_constant_function(constant):
+  return lambda:constant
 
 class DateEditor(QtGui.QWidget):
   """Widget for editing date values"""
@@ -166,13 +169,53 @@ class Many2OneEditor(QtGui.QWidget):
     self.open_button.setAutoRaise(True)  
     # Search input
     self.search_input = QtGui.QLineEdit()
-    self.search_input.setReadOnly(True)
-    self.connect(self.search_input, QtCore.SIGNAL('returnPressed()'), self.returnPressed)
+    #self.search_input.setReadOnly(True)
+    #self.connect(self.search_input, QtCore.SIGNAL('returnPressed()'), self.returnPressed)
+    self.connect(self.search_input, QtCore.SIGNAL('textEdited(const QString&)'), self.textEdited)
+    
+    self.completer = QtGui.QCompleter()
+    stringlist = QtCore.QStringList()
+    stringlist.append('abc')
+    stringlist.append('def')
+    self.completions = QtGui.QStringListModel(stringlist, self.completer)
+    self.completer.setModel(self.completions)
+    self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+    self.completer.setCompletionMode(QtGui.QCompleter.UnfilteredPopupCompletion)
+    self.connect(self.completer, QtCore.SIGNAL('activated(const QModelIndex&)'), self.completionActivated)
+    self.search_input.setCompleter(self.completer)
     # Setup layout
     self.layout.addWidget(self.search_input)
     self.layout.addWidget(self.open_button)
     self.layout.addWidget(self.search_button)
     self.setLayout(self.layout)
+    
+  def textEdited(self, text):
+    
+    def create_search_completion(text):
+      return lambda:self.search_completions(text)
+    
+    self.admin.mt.post(create_search_completion(unicode(text)), self.display_search_completions)
+    self.completer.complete()
+    
+  @model_function
+  def search_completions(self, text):
+    """Search for object that match text, to fill the list of
+    completions
+    @return: a list of tuples of (object_representation, object_getter)"""
+    from camelot.view.search import create_entity_search_query_decorator
+    search_decorator = create_entity_search_query_decorator(self.admin, text)
+    return [(unicode(e),create_constant_function(e)) for e in search_decorator(self.admin.entity.query).limit(20)]
+  
+  @gui_function
+  def display_search_completions(self, completions):
+    stringlist = QtCore.QStringList()
+    for label, getter in completions:
+      stringlist.append(label)
+    self.completions.setStringList(stringlist)
+    self.completer.complete()
+  
+  def completionActivated(self, index):
+    print 'completion activated', index
     
   def openButtonClicked(self):
     if self.entity_set:
@@ -180,7 +223,7 @@ class Many2OneEditor(QtGui.QWidget):
     else:
       return self.createNew()
     
-  def returnPressed(self, event):
+  def returnPressed(self):
     if not self.entity_set:
       self.createSelectView()
       
@@ -238,12 +281,12 @@ class Many2OneEditor(QtGui.QWidget):
         self.open_button.setIcon(QtGui.QIcon(art.icon16('places/folder')))
         self.search_button.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
         self.entity_set = True
-        self.search_input.setReadOnly(True)
+        #self.search_input.setReadOnly(True)
       else:
         self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
         self.search_button.setIcon(QtGui.QIcon(art.icon16('actions/system-search')))
         self.entity_set = False
-        self.search_input.setReadOnly(False)
+        #self.search_input.setReadOnly(False)
       if propagate:
         self.emit(QtCore.SIGNAL('editingFinished()'))
       
