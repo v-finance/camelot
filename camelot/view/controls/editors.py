@@ -177,6 +177,7 @@ class Many2OneEditor(QtGui.QWidget):
     super(Many2OneEditor, self).__init__(parent)
     self.admin = entity_admin
     self.entity_instance_getter = None
+    self._entity_representation = ''
     self.entity_set = False
     self.layout = QtGui.QHBoxLayout()
     self.layout.setSpacing(0)
@@ -196,6 +197,8 @@ class Many2OneEditor(QtGui.QWidget):
     #self.search_input.setReadOnly(True)
     #self.connect(self.search_input, QtCore.SIGNAL('returnPressed()'), self.returnPressed)
     self.connect(self.search_input, QtCore.SIGNAL('textEdited(const QString&)'), self.textEdited)
+    # suppose garbage was entered, we need to refresh the content
+    self.connect(self.search_input, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
     
     self.completer = QtGui.QCompleter()
     self.completions_model = self.CompletionsModel(self.completer)
@@ -277,6 +280,9 @@ class Many2OneEditor(QtGui.QWidget):
       workspace.addWindow(key_from_entity(self.admin.entity, 0), form)
       form.show()
     
+  def editingFinished(self):
+    self.search_input.setText(self._entity_representation)
+    
   def setEntity(self, entity_instance_getter, propagate=True):
     
     def create_instance_getter(entity_instance):
@@ -295,6 +301,7 @@ class Many2OneEditor(QtGui.QWidget):
     def set_instance_represenation(representation):
       """Update the gui"""
       desc, pk = representation
+      self._entity_representation = desc
       self.search_input.setText(desc)
       if pk!=False:
         self.open_button.setIcon(QtGui.QIcon(art.icon16('places/folder')))
