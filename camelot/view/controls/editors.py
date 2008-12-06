@@ -389,7 +389,9 @@ class One2ManyEditor(QtGui.QWidget):
         self.table.setItemDelegate(model.getItemDelegate())
         self.table.horizontalHeader().setResizeMode(QtGui.QHeaderView.Interactive)
         self.table.horizontalHeader().setStretchLastSection(True)
-        self.table.resizeColumnsToContents()
+        # only if there is data in the rows, it makes sense to resize the columns
+        if self.model.rowCount()>1:
+          self.table.resizeColumnsToContents()
           
       return update_delegates
       

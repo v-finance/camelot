@@ -159,8 +159,11 @@ class TableView(QtGui.QWidget):
   def resizeColumnsAndRebuildQuery(self):
     """resizes table of columns"""
     logger.debug('resizeColumnsAndRebuildQuery')
-    self.table.resizeColumnsToContents()
-    self.rebuildQuery()
+    # only if there is data in the model, we can resize the columns and
+    # a query rebuild is needed
+    if self.table_model.rowCount()>1:
+      self.table.resizeColumnsToContents()
+      self.rebuildQuery()
 
     #logger.debug('Selecting first row in table')
     #@todo: select first row is not appropriate because the custom editors don't
