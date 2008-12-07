@@ -103,6 +103,7 @@ class EntityAdmin(object):
      * widget : which widget to be used to render the field
      * ...
     """
+    from camelot.model.i18n import tr
     from sqlalchemy import orm
     from sqlalchemy.exceptions import InvalidRequestError
     from field_attributes import _sqlalchemy_to_python_type_
@@ -173,6 +174,7 @@ class EntityAdmin(object):
           attributes[k] = v
     except KeyError:
       pass
+    attributes['name'] = tr(attributes['name'])
     return attributes
 
   @model_function
