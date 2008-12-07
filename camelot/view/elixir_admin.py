@@ -57,6 +57,10 @@ class EntityAdmin(object):
       from model_thread import get_model_thread
       self.entity = entity
       self.mt = get_model_thread()
+    #
+    # caches to prevent recalculation of things
+    # 
+    self.__field_attributes = dict()
 
   def getName(self):
     return (self.name or self.entity.__name__)
@@ -103,79 +107,83 @@ class EntityAdmin(object):
      * widget : which widget to be used to render the field
      * ...
     """
-    from camelot.model.i18n import tr
-    from sqlalchemy import orm
-    from sqlalchemy.exceptions import InvalidRequestError
-    from field_attributes import _sqlalchemy_to_python_type_
-    default = lambda x: dict(python_type=str,
-                             length=None,
-                             editable=False,
-                             nullable=True,
-                             widget='str')
-    attributes = default(field_name)
-    mapper = orm.class_mapper(self.entity)
-
-    def get_entity_admin(target):
-      try:
-        admin_class = self.field_attributes[field_name]['admin']
-        return admin_class(self.app_admin, target)
-      except KeyError:
-        return self.getRelatedEntityAdmin(target)
-
     try:
-      property = mapper.get_property(field_name, resolve_synonyms=True)
-      if isinstance(property, orm.properties.ColumnProperty):
-        type = property.columns[0].type
-        python_type = _sqlalchemy_to_python_type_.get(type.__class__, default)
-        attributes = python_type(type)
-        attributes['nullable'] = property.columns[0].nullable 
-        attributes['default'] = property.columns[0].default
-      elif isinstance(property, orm.properties.PropertyLoader):
-        target = property._get_target_class()
-        foreign_keys = property.foreign_keys
-        if property.direction == orm.sync.ONETOMANY:
-          attributes = dict(python_type=list,
-                            length=None,
-                            editable=True,
-                            nullable=True,
-                            widget='one2many',
-                            create_inline=False,
-                            backref=property.backref.key,
-                            admin=get_entity_admin(target))
-        elif property.direction == orm.sync.MANYTOONE:
-          attributes = dict(python_type=str,
-                            length=None,
-                            editable=True,
-                            #@todo: take into account all foreign keys instead of only the first one
-                            nullable=foreign_keys[0].nullable,
-                            widget='many2one',
-                            admin=get_entity_admin(target))
-        elif property.direction == orm.sync.MANYTOMANY:
-          attributes = dict(python_type=list,
-                            length=None,
-                            editable=True,
-                            nullable=True,
-                            widget='one2many',
-                            admin=get_entity_admin(target))
-        else:
-          raise Exception('PropertyLoader has unknown direction')
-    except InvalidRequestError:
-      """
-      If the field name is not a property of the mapper, then use the default
-      stuff
-      """
-      pass
-    attributes.update(dict(blank=True,
-                           validator_list=[],
-                           name=field_name.replace('_', ' ').capitalize()))
-    try:
-      for k, v in self.field_attributes[field_name].items():
-        if k!='admin':
-          attributes[k] = v
+      return self.__field_attributes[field_name]
     except KeyError:
-      pass
-    attributes['name'] = tr(attributes['name'])
-    return attributes
+      from camelot.model.i18n import tr
+      from sqlalchemy import orm
+      from sqlalchemy.exceptions import InvalidRequestError
+      from field_attributes import _sqlalchemy_to_python_type_
+      default = lambda x: dict(python_type=str,
+                               length=None,
+                               editable=False,
+                               nullable=True,
+                               widget='str')
+      attributes = default(field_name)
+      mapper = orm.class_mapper(self.entity)
+  
+      def get_entity_admin(target):
+        try:
+          admin_class = self.field_attributes[field_name]['admin']
+          return admin_class(self.app_admin, target)
+        except KeyError:
+          return self.getRelatedEntityAdmin(target)
+  
+      try:
+        property = mapper.get_property(field_name, resolve_synonyms=True)
+        if isinstance(property, orm.properties.ColumnProperty):
+          type = property.columns[0].type
+          python_type = _sqlalchemy_to_python_type_.get(type.__class__, default)
+          attributes = python_type(type)
+          attributes['nullable'] = property.columns[0].nullable 
+          attributes['default'] = property.columns[0].default
+        elif isinstance(property, orm.properties.PropertyLoader):
+          target = property._get_target_class()
+          foreign_keys = property.foreign_keys
+          if property.direction == orm.sync.ONETOMANY:
+            attributes = dict(python_type=list,
+                              length=None,
+                              editable=True,
+                              nullable=True,
+                              widget='one2many',
+                              create_inline=False,
+                              backref=property.backref.key,
+                              admin=get_entity_admin(target))
+          elif property.direction == orm.sync.MANYTOONE:
+            attributes = dict(python_type=str,
+                              length=None,
+                              editable=True,
+                              #@todo: take into account all foreign keys instead of only the first one
+                              nullable=foreign_keys[0].nullable,
+                              widget='many2one',
+                              admin=get_entity_admin(target))
+          elif property.direction == orm.sync.MANYTOMANY:
+            attributes = dict(python_type=list,
+                              length=None,
+                              editable=True,
+                              nullable=True,
+                              widget='one2many',
+                              admin=get_entity_admin(target))
+          else:
+            raise Exception('PropertyLoader has unknown direction')
+      except InvalidRequestError:
+        """
+        If the field name is not a property of the mapper, then use the default
+        stuff
+        """
+        pass
+      attributes.update(dict(blank=True,
+                             validator_list=[],
+                             name=field_name.replace('_', ' ').capitalize()))
+      try:
+        for k, v in self.field_attributes[field_name].items():
+          if k!='admin':
+            attributes[k] = v
+      except KeyError:
+        pass
+      attributes['name'] = tr(attributes['name'])
+      self.__field_attributes[field_name] = attributes
+      return attributes
 
   @model_function
   def getColumns(self):
