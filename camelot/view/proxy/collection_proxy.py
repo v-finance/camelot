@@ -316,7 +316,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         continue   
       if widget_ == 'many2one':
         entity_admin = c[1]['admin']
-        delegate = delegates.Many2OneColumnDelegate(entity_admin)
+        delegate = delegates.Many2OneColumnDelegate(**c[1])
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif widget_ == 'one2many':
         delegate = delegates.One2ManyColumnDelegate(**c[1])

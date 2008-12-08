@@ -20,8 +20,7 @@ import settings
 
 _ = lambda x: x
 
-logger = logging.getLogger('entity_admin')
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger('camelot.view.elixir_admin')
 
 import sqlalchemy.types
 import camelot.types

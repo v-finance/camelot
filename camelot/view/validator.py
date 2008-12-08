@@ -54,6 +54,8 @@ class Validator(QtCore.QObject):
           is_null = True
         elif (column[1]['widget']=='str') and (len(value)==0):
           is_null = True
+        elif (column[1]['widget']=='many2one') and (not value.id):
+          is_null = True
         if is_null:
           messages.append(u'%s is a required field'%(column[1]['name']))
     return messages

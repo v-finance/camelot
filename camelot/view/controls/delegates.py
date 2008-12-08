@@ -371,15 +371,20 @@ _registered_delegates_[QtGui.QDoubleSpinBox] = FloatColumnDelegate
 class Many2OneColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
 
-  def __init__(self, entity_admin, parent=None):
+  def __init__(self, admin, embedded=False, parent=None, **kwargs):
     logger.debug('create many2onecolumn delegate')
-    assert entity_admin!=None
+    assert admin!=None
     super(Many2OneColumnDelegate, self).__init__(parent)
-    self.entity_admin = entity_admin
-    self._dummy_editor = Many2OneEditor(self.entity_admin, None)
+    self.admin = admin
+    self._embedded = embedded
+    self._kwargs = kwargs
+    self._dummy_editor = Many2OneEditor(self.admin, None)
 
   def createEditor(self, parent, option, index):
-    editor = Many2OneEditor(self.entity_admin, parent)
+    if self._embedded:
+      editor = EmbeddedMany2OneEditor(self.admin, parent)
+    else:
+      editor = Many2OneEditor(self.admin, parent)
     self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
     return editor
 
