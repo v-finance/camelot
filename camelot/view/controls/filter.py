@@ -29,7 +29,6 @@
 import logging
 
 logger = logging.getLogger('controls.filter')
-logger.setLevel(logging.DEBUG)
 
 from PyQt4 import QtCore, QtGui
 

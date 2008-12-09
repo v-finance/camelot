@@ -446,9 +446,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           from camelot.model.memento import BeforeUpdate
           from camelot.model.authentication import getCurrentPerson
           o = self._get_object(row)
-          attribute = self.getColumns()[column][0]
+          attribute, field_attributes = self.getColumns()[column]
           old_value = getattr(o, attribute)
-          if new_value!=old_value:
+          if new_value!=old_value and field_attributes['editable']==True:
             # update the model
             model_updated = False
             try:

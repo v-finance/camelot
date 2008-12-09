@@ -23,4 +23,4 @@ def open_html_in_print_preview(html):
   def create_html_getter(html):
     return lambda:html
 
-  mt.post(create_html_getter(), open_html_in_print_preview_from_gui_thread)
+  mt.post(create_html_getter(html), open_html_in_print_preview_from_gui_thread)

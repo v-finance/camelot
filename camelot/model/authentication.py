@@ -181,7 +181,8 @@ class Party(Entity):
                             directed_organizations={'admin':DirectedDirector.DirectedAdmin},
                             directors={'admin':DirectedDirector.DirectorAdmin},
                             shares={'admin':SharedShareholder.SharedAdmin},
-                            shareholders={'admin':SharedShareholder.ShareholderAdmin}
+                            shareholders={'admin':SharedShareholder.ShareholderAdmin},
+                            sex=dict(choices=lambda obj:[(u'M',u'Male'), (u'F',u'Female')],),
                             )
       
 class Organization(Party):
@@ -230,7 +231,7 @@ class Person(Party):
   middle_name = Field(Unicode(40))
   personal_title = Field(Unicode(10))
   suffix = Field(Unicode(3))
-  sex = Field(Unicode(1))
+  sex = Field(Unicode(1), default=u'M')
   birthdate = Field(Date())
   martial_status = Field(Unicode(1))
   social_security_number = Field(Unicode(12))
@@ -271,7 +272,7 @@ class Person(Party):
     section = 'relations'
     list_display = ['username', 'first_name', 'last_name', ]
     list_filter = ['is_active', 'is_staff', 'is_superuser']
-    form = TabForm([('Basic', Form([HBoxForm([Form(['username', 'first_name', 'last_name']),
+    form = TabForm([('Basic', Form([HBoxForm([Form(['username', 'first_name', 'last_name', 'sex']),
                                               Form(['is_staff', 'is_active', 'is_superuser',]),
                                               Form(['picture',]),
                                               ]), 
