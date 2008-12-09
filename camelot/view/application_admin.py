@@ -68,7 +68,9 @@ class ApplicationAdmin(object):
     @return: a list of tuples of (admin,query) instances related to
     the entities in this section.
     """
-    return [(self.getEntityAdmin(e),self.getEntityQuery(e)) for e,a in self.admins.items() if hasattr(a,'section') and a.section==section ]
+    result = [(self.getEntityAdmin(e),self.getEntityQuery(e)) for e,a in self.admins.items() if hasattr(a,'section') and a.section==section ]
+    result.sort(cmp = lambda x,y:cmp(x[0].getName(), y[0].getName()))
+    return result
   
   def getActions(self):
     """@return: a list of actions that should be added to the menu and the icon
