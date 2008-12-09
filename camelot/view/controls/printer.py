@@ -91,10 +91,8 @@ class Printer:
 
   def preview(self, view, parent):
     logger.debug('print preview dialog')
-    # TODO: maximize button
-    dialog = QtGui.QPrintPreviewDialog(self.printer, parent)
 
-    def render(printer):
+    def generate_html():
       client_address = '<br/>'.join(['2 Azalea St.',
                                      'Fredericksburg',
                                      '22406 VA'])
@@ -122,12 +120,10 @@ class Printer:
       e = Environment(loader=fileloader)
       t = e.get_template('base.html')
       html = t.render(context)
+      return html
 
-      doc = QtGui.QTextDocument()
-      doc.setHtml(html)
-      doc.print_(self.printer)
-
-    parent.connect(dialog, QtCore.SIGNAL('paintRequested(QPrinter*)'), render)
-
-    dialog.exec_()
+    from camelot.view.model_thread import get_model_thread
+    from camelot.view.export.printer import open_html_in_print_preview_from_gui_thread
+    mt = get_model_thread()  
+    mt.post(generate_html, open_html_in_print_preview_from_gui_thread)
 
