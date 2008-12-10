@@ -78,6 +78,7 @@ class DateEditor(QtGui.QWidget):
     self.set_date_range()
 
     self.setFocusProxy(self.qdateedit)
+    self.setAutoFillBackground(True);
 
   def _python_to_qt(self, value):
     return QtCore.QDate(value.year, value.month, value.day)
@@ -121,6 +122,7 @@ class VirtualAddressEditor(QtGui.QWidget):
     layout.addWidget(self.editor)
     self.connect(self.editor, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
     self.setLayout(layout)
+    self.setAutoFillBackground(True);
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
         
@@ -142,6 +144,7 @@ class CodeEditor(QtGui.QWidget):
       layout.addWidget(editor)
       self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
     self.setLayout(layout)
+    self.setAutoFillBackground(True);
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
         
@@ -258,6 +261,7 @@ class Many2OneEditor(QtGui.QWidget):
     self.layout.addWidget(self.open_button)
     self.layout.addWidget(self.search_button)
     self.setLayout(self.layout)
+    self.setAutoFillBackground(True);
     
   def textEdited(self, text):
     

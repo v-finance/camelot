@@ -285,6 +285,7 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, parts, parent=None):
     super(CodeColumnDelegate, self).__init__(parent)
     self.parts = parts
+    self._dummy_editor = CodeEditor(self.parts, None)
 
   def createEditor(self, parent, option, index):
     editor = CodeEditor(self.parts, parent)
@@ -302,6 +303,9 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
       for part_editor, part in zip(editor.part_editors, value):
         part_editor.setText(unicode(part))
 
+  def sizeHint(self, option, index):
+    return self._dummy_editor.sizeHint() 
+  
   def setModelData(self, editor, model, index):
     from camelot.types import Code
     value = []
@@ -400,8 +404,6 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
     
   def sizeHint(self, option, index):
-    name = index.model().data(index, Qt.DisplayRole).toString()
-    #self._dummy_editor.search_input.setText(name)
     return self._dummy_editor.sizeHint()    
   
 #  def paint(self, painter, option, index):
