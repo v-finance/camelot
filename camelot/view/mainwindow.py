@@ -115,9 +115,6 @@ class MainWindow(QtGui.QMainWindow):
     logger.debug('setting up window title')
     self.setWindowTitle(self.app_admin.getName())
 
-    logger.debug("setting window's icon")
-    self.setWindowIcon(QtGui.QIcon(self.app_admin.getIcon()))
-
     #QtCore.QTimer.singleShot(0, self.doInitialization)
     logger.debug('initialization complete')
 
