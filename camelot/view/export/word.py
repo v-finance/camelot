@@ -21,7 +21,6 @@ def open_html_in_word(html):
     os.system('abiword "%s"'%html_fn)
     return
 
-  from integration.COM.word_constants import constants
   doc_fd, doc_fn = tempfile.mkstemp(suffix='.doc')
   os.close(doc_fd)
   word_app.Visible = True

@@ -43,11 +43,16 @@ def structure_to_filter(structure):
 class Filter(object):
   """Base class for filters"""
   
-  def __init__(self, attribute):
-    """@param attribute: the attribute on which to filter, this attribute
+  def __init__(self, attribute, value_to_string=lambda x:unicode(x)):
+    """
+    @param attribute: the attribute on which to filter, this attribute
     may contain dots to indicate relationships that need to be followed, 
-    eg.  'person.groups.name'"""
+    eg.  'person.groups.name'
+    @param value_to_string: function that converts a value of the attribute to
+    a string that will be displayed in the filter 
+    """
     self.attribute = attribute
+    self._value_to_string = value_to_string
      
   def render(self, parent, name, options):
     """Render this filter as a qt object
@@ -96,7 +101,7 @@ class Filter(object):
       
       return decorator
 
-    options = [(value[0], create_decorator(col, value[0], joins))
+    options = [(self._value_to_string(value[0]), create_decorator(col, value[0], joins))
                for value in session.execute(query)]
     return (filter_names[0],[('All', lambda q: q)] + options)
     
@@ -140,19 +145,6 @@ class GroupBoxFilter(Filter):
         if checked>=0:
           return self.choices[checked][1](query)
         return query
-              
-#      def apply_filter(self, query):
-#        '''Apply this FilterBox's filter on a query, if All is selected, no
-#        filter is applied at all.
-#        @return the modified query
-#        '''
-#        selected_value = self.unique_values[self.get_selection()]
-#        if selected_value==FilterBox.all:
-#          return query
-#        if isinstance(self.col.type, Float):
-#          delta = 0.1**self.col.type.precision
-#          return query.filter(and_(self.col>=selected_value-delta, self.col<=selected_value+delta))
-#        return query.filter(self.col==selected_value)
         
     return FilterWidget(name, options, parent)
   

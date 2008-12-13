@@ -130,7 +130,9 @@ class MainWindow(QtGui.QMainWindow):
     # TODO: improve settings reading
     settings = QtCore.QSettings()
     self.restoreGeometry(settings.value('geometry').toByteArray())
-    self.restoreState(settings.value('state').toByteArray())
+    # Don't restore state, since it messes up the toolbar if stuff was
+    # added
+    # self.restoreState(settings.value('state').toByteArray())
 
   def writeSettings(self):
     # TODO: improve settings saving
@@ -304,6 +306,12 @@ class MainWindow(QtGui.QMainWindow):
                                         self.exportToWord,
                                         actionicon=temp,
                                         tip=_('Export to MS Word'))
+    temp = art.icon16('actions/mail-message-new')
+    self.exportToMailAct = createAction(self,
+                                        _('Send by e-mail'),
+                                        self.exportToMail,
+                                        actionicon=temp,
+                                        tip=_('Send by e-mail'))    
     
     self.app_actions = []
     for name, icon, callable in self.app_admin.getActions():
@@ -415,6 +423,16 @@ class MainWindow(QtGui.QMainWindow):
 
     mt.post(export)
 
+  def exportToMail(self):
+    
+    mt = get_model_thread()
+    
+    def export():
+      from export.outlook import open_html_in_outlook
+      html = self.activeMdiChild().toHtml()
+      open_html_in_outlook(html)
+
+    mt.post(export)      
   # Menus
 
   def createMenus(self):
@@ -427,7 +445,9 @@ class MainWindow(QtGui.QMainWindow):
 
     self.exportMenu = QtGui.QMenu(_('Export To'))
     addActions(self.exportMenu, (self.exportToExcelAct,
-                                 self.exportToWordAct))
+                                 self.exportToWordAct,
+                                 self.exportToMailAct,
+                                 ))
     self.fileMenu.addMenu(self.exportMenu)
 
     addActions(self.fileMenu, (None, self.exitAct))
@@ -487,6 +507,7 @@ class MainWindow(QtGui.QMainWindow):
 
     self.exportToWordAct.setEnabled(hasMdiChild)
     self.exportToExcelAct.setEnabled(hasMdiChild)
+    self.exportToMailAct.setEnabled(hasMdiChild)
 
     self.separatorAct.setVisible(hasMdiChild)
 
@@ -558,7 +579,8 @@ class MainWindow(QtGui.QMainWindow):
     self.exportToolBar.setMovable(False)
     self.exportToolBar.setFloatable(False)
     addActions(self.exportToolBar, (self.exportToExcelAct,
-                                    self.exportToWordAct))
+                                    self.exportToWordAct,
+                                    self.exportToMailAct,))
     
     
     if self.app_actions:
