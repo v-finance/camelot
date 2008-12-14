@@ -360,9 +360,13 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   
   @gui_function
   def headerData(self, section, orientation, role):
+    # In case the columns have not been set yet, don't even try to get information
+    # out of them
+    if (orientation == Qt.Horizontal) and (section >= self.column_count):
+      return QtCore.QAbstractTableModel.headerData(self, section, orientation, role)
     if role == Qt.DisplayRole:
       if orientation == Qt.Horizontal:
-        return QtCore.QVariant(self.getColumns()[section][1]['name'])
+        return QtCore.QVariant(self._columns[section][1]['name'])
       elif orientation == Qt.Vertical:
         #return QtCore.QVariant(int(section+1))
         # we don't want anything to be displayed
@@ -370,8 +374,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     if role == Qt.FontRole:
       if orientation == Qt.Horizontal:
         font = QtGui.QApplication.font()
-        if ('nullable' in self.getColumns()[section][1]) and \
-           (self.getColumns()[section][1]['nullable']==False):
+        if ('nullable' in self._columns[section][1]) and \
+           (self._columns[section][1]['nullable']==False):
           font.setBold(True)
           return QtCore.QVariant(font)
         else:

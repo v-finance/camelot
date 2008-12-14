@@ -13,12 +13,12 @@ def open_html_in_outlook(html):
     import pythoncom
     import win32com.client
     pythoncom.CoInitialize()
-    #outlook_app = win32com.client.Dispatch("Outlook.Application")
-    outlook_app = win32com.client.Dispatch("CDO.Message")
+    outlook_app = win32com.client.Dispatch("Outlook.Application")
   except Exception, e:
     """We're probably not running windows"""
     logger.warn('unable to launch Outlook', exc_info=e)
     return
   
-  msg = o.CreateItem(0)
+  
+  msg = outlook_app.CreateItem(0)
   msg.Body = html
