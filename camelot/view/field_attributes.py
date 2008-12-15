@@ -93,7 +93,12 @@ _sqlalchemy_to_python_type_ = {
                                  'editable': True,
                                  'widget': 'code',
                                  'parts': f.parts},
-                                 
+
+  camelot.types.IPAddress: lambda f: {'python_type': str,
+                                 'editable': True,
+                                 'widget': 'code',
+                                 'parts': f.parts},
+                                                                  
   camelot.types.VirtualAddress: lambda f:{'python_type':str,
                                           'editable':True,
                                           'widget':'virtual_address',
@@ -103,5 +108,13 @@ _sqlalchemy_to_python_type_ = {
                                      'editable':True,
                                      'widget':'time',
                                      'format':'hh:mm',
-                                     'nullable':True}
+                                     'nullable':True},
+  
+  sqlalchemy.types.DateTime : lambda f: {'python_type':datetime.datetime,
+                                         'editable':True,
+                                         'widget':'time',
+                                         'format':'dd-MM-yyyy hh:mm',
+                                         'nullable':True,
+                                         'widget':'datetime'},
+  
 }

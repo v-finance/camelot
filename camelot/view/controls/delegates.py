@@ -235,6 +235,24 @@ class TimeColumnDelegate(QtGui.QItemDelegate):
     t = datetime.time(hour=value.hour(), minute=value.minute(), second=value.second())
     model.setData(index, create_constant_function(t))
   
+class DateTimeColumnDelegate(QtGui.QItemDelegate):
+  
+  def __init__(self, parent, format, nullable, **kwargs):
+    super(DateTimeColumnDelegate, self).__init__(parent)
+    self.format = format
+    
+  def createEditor(self, parent, option, index):
+    editor = QtGui.QDateTimeEdit(parent)
+    editor.setDisplayFormat(self.format)
+    return editor
+  
+  def setEditorData(self, editor, index):
+    value = index.model().data(index, Qt.EditRole).toDateTime()
+    if value:
+      editor.setDateTime(value)
+    else:
+      editor.setDateTime(editor.minimumDateTime())
+    
 class DateColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for date values"""
 

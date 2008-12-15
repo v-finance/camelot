@@ -69,6 +69,10 @@ def RowDataAsUnicode(row_data):
     if data:
       if isinstance(data, list):
         return '.'.join(data)
+      elif isinstance(data, datetime.datetime):
+        # datetime should come before date since datetime is a subtype of date
+        if data.year>=1900:
+          return data.strftime('%d/%m/%Y %H:%M')       
       elif isinstance(data, datetime.date):
         if data.year>=1900:
           return data.strftime('%d/%m/%Y')
@@ -306,15 +310,18 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         delegate = delegates.CodeColumnDelegate(c[1]['parts'])
         self.item_delegate.insertColumnDelegate(i, delegate)
         continue
-      if widget_ == 'virtual_address':
+      elif widget_ == 'datetime':
+        delegate = delegates.DateTimeColumnDelegate(parent=None, **c[1])
+        self.item_delegate.insertColumnDelegate(i, delegate)
+      elif widget_ == 'virtual_address':
         delegate = delegates.VirtualAddressColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
         continue      
-      if widget_ == 'image':
+      elif widget_ == 'image':
         delegate = delegates. ImageColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
         continue   
-      if widget_ == 'many2one':
+      elif widget_ == 'many2one':
         entity_admin = c[1]['admin']
         delegate = delegates.Many2OneColumnDelegate(**c[1])
         self.item_delegate.insertColumnDelegate(i, delegate)
