@@ -81,12 +81,8 @@ class MainWindow(QtGui.QMainWindow):
     logger.debug('setting central widget to our workspace')
     self.setCentralWidget(self.workspace)
 
-    self.connect(self.workspace, QtCore.SIGNAL('windowActivated(QWidget *)'),
+    self.connect(self.workspace, QtCore.SIGNAL('subWindowActivated(QMdiSubWindow *)'),
                  self.updateMenus)
-
-    self.windowMapper = QtCore.QSignalMapper(self)
-    self.connect(self.windowMapper, QtCore.SIGNAL('mapped(QWidget *)'),
-                 self.workspace, QtCore.SLOT('setActiveWindow(QWidget *)'))
 
     logger.debug('creating navigation pane')
     self.createNavigationPane()
@@ -216,24 +212,18 @@ class MainWindow(QtGui.QMainWindow):
 
     self.closeAct = createAction(self,
                                  _('Cl&ose'),
-                                 self.workspace.closeActiveWindow,
+                                 self.workspace.closeActiveSubWindow,
                                  shortcut = QtGui.QKeySequence.Close,
                                  tip=_('Close the active window'))
 
     self.closeAllAct = createAction(self,
                                     _('Close &All'),
-                                    self.workspace.closeAllWindows,
+                                    self.workspace.closeAllSubWindows,
                                     tip=_('Close all the windows'))
-
-    self.arrangeAct = createAction(self,
-                                   _('Arrange &icons'),
-                                   self.workspace.arrangeIcons,
-                                   tip=_('Arranges all minimized windows '
-                                         'at the bottom of the workspace.'))
 
     self.cascadeAct = createAction(self,
                                    _('&Cascade windows'),
-                                   self.workspace.cascade,
+                                   self.workspace.cascadeSubWindows,
                                    tip=_('Arranges all the child windows '
                                          'in a cascade pattern.'))
 
@@ -344,16 +334,16 @@ class MainWindow(QtGui.QMainWindow):
 
   def printDoc(self):
     active = self.activeMdiChild()
-    self.printer.printView(active, self)
+    self.printer.printView(active.widget(), self)
 
   def previewDoc(self):
-    self.printer.preview(self.activeMdiChild(), self)
+    self.printer.preview(self.activeMdiChild().widget(), self)
 
   def new(self):
-    self.activeMdiChild().newRow()
+    self.activeMdiChild().widget().newRow()
 
   def delete(self):
-    self.activeMdiChild().deleteSelectedRows()
+    self.activeMdiChild().widget().deleteSelectedRows()
 
   def pageSetup(self):
     pass
@@ -361,22 +351,22 @@ class MainWindow(QtGui.QMainWindow):
   def viewFirst(self):
     """selects view's first row"""
     active = self.activeMdiChild()
-    active.viewFirst()
+    active.widget().viewFirst()
 
   def viewLast(self):
     """selects view's last row"""
     active = self.activeMdiChild()
-    active.viewLast()
+    active.widget().viewLast()
 
   def viewNext(self):
     """selects view's next row"""
     active = self.activeMdiChild()
-    active.viewNext()
+    active.widget().viewNext()
 
   def viewPrevious(self):
     """selects view's previous row"""
     active = self.activeMdiChild()
-    active.viewPrevious()
+    active.widget().viewPrevious()
 
   def exportToExcel(self):
     """creates an excel file from the view"""
@@ -387,9 +377,9 @@ class MainWindow(QtGui.QMainWindow):
       import os
       import tempfile
       from export.excel import ExcelExport
-      title = self.activeMdiChild().getTitle()
-      columns = self.activeMdiChild().getColumns()
-      data = [d for d in self.activeMdiChild().getData()]
+      title = self.activeMdiChild().widget().getTitle()
+      columns = self.activeMdiChild().widget().getColumns()
+      data = [d for d in self.activeMdiChild().widget().getData()]
       objExcel = ExcelExport()
       xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
       objExcel.exportToFile(xls_fn, title, columns, data)
@@ -418,7 +408,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def export():
       from export.word import open_html_in_word
-      html = self.activeMdiChild().toHtml()
+      html = self.activeMdiChild().widget().toHtml()
       open_html_in_word(html)
 
     mt.post(export)
@@ -429,7 +419,7 @@ class MainWindow(QtGui.QMainWindow):
     
     def export():
       from export.outlook import open_html_in_outlook
-      html = self.activeMdiChild().toHtml()
+      html = self.activeMdiChild().widget().toHtml()
       open_html_in_outlook(html)
 
     mt.post(export)      
@@ -492,7 +482,6 @@ class MainWindow(QtGui.QMainWindow):
 
     self.closeAllAct.setEnabled(hasMdiChild)
     self.cascadeAct.setEnabled(hasMdiChild)
-    self.arrangeAct.setEnabled(hasMdiChild)
 
     self.pageSetupAct.setEnabled(hasMdiChild)
     self.previewAct.setEnabled(hasMdiChild)
@@ -522,10 +511,9 @@ class MainWindow(QtGui.QMainWindow):
     self.windowMenu.clear()
     self.windowMenu.addAction(self.closeAllAct)
     self.windowMenu.addAction(self.cascadeAct)
-    self.windowMenu.addAction(self.arrangeAct)
     self.windowMenu.addAction(self.separatorAct)
 
-    windows = self.workspace.windowList()
+    windows = self.workspace.subWindowList()
 
     self.separatorAct.setVisible(len(windows) != 0)
 
@@ -542,9 +530,15 @@ class MainWindow(QtGui.QMainWindow):
       action = self.windowMenu.addAction(text)
       action.setCheckable(True)
       action.setChecked(child == self.activeMdiChild())
-      self.connect(action, QtCore.SIGNAL('triggered()'),
-                   self.windowMapper, QtCore.SLOT('map()'))
-      self.windowMapper.setMapping(action, child)
+      
+      def create_window_activator(window):
+        
+        def activate_window():
+          self.workspace.setActiveSubWindow(window)
+          
+        return activate_window
+      
+      self.connect(action, QtCore.SIGNAL('triggered()'), create_window_activator(child))
 
   # Toolbars
 
@@ -612,7 +606,7 @@ class MainWindow(QtGui.QMainWindow):
     logger.debug('creating model %s' % str(model[0]))
 
     child = model[0].createTableView(model[1], parent=self)
-    self.workspace.addWindow(child)
+    self.workspace.addSubWindow(child)
 
     self.connect(child, QtCore.SIGNAL("copyAvailable(bool)"),
            self.cutAct.setEnabled)
@@ -621,7 +615,7 @@ class MainWindow(QtGui.QMainWindow):
     child.showMaximized()
 
   def activeMdiChild(self):
-    return self.workspace.activeWindow()
+    return self.workspace.activeSubWindow()
 
   # Statusbar
 
@@ -632,7 +626,7 @@ class MainWindow(QtGui.QMainWindow):
   # Events (re)implementations
 
   def closeEvent(self, event):
-    self.workspace.closeAllWindows()
+    self.workspace.closeAllSubWindows()
     if self.activeMdiChild():
       event.ignore()
     else:

@@ -312,7 +312,7 @@ class Many2OneEditor(QtGui.QWidget):
     from camelot.view.workspace import get_workspace
     workspace = get_workspace()
     form = self.admin.createNewView(workspace)
-    workspace.addWindow(form)
+    workspace.addSubWindow(form)
     self.connect(form, form.entity_created_signal, self.selectEntity)
     form.show()
         
@@ -327,7 +327,7 @@ class Many2OneEditor(QtGui.QWidget):
       workspace = get_workspace()  
       model = CollectionProxy(self.admin, create_collection_getter(self.entity_instance_getter), self.admin.getFields)
       form = self.admin.createFormView('', model, 0, workspace)
-      workspace.addWindow(form)
+      workspace.addSubWindow(form)
       form.show()
     
   def editingFinished(self):
@@ -374,7 +374,7 @@ class Many2OneEditor(QtGui.QWidget):
     search_text = unicode(self.search_input.text())
     select = self.admin.createSelectView(self.admin.entity.query, parent=workspace, search_text=search_text)
     self.connect(select, select.entity_selected_signal, self.selectEntity)
-    workspace.addWindow(select)
+    workspace.addSubWindow(select)
     select.show()
     
   def selectEntity(self, entity_instance_getter):
@@ -472,7 +472,7 @@ class One2ManyEditor(QtGui.QWidget):
       form = self.admin.createNewView(workspace,
                                       oncreate=lambda o:self.model.insertEntityInstance(0,o), 
                                       onexpunge=lambda o:self.model.removeEntityInstance(o))
-      workspace.addWindow(form)
+      workspace.addSubWindow(form)
       form.show()
     
   def deleteSelectedRows(self):
@@ -487,7 +487,7 @@ class One2ManyEditor(QtGui.QWidget):
     model = CollectionProxy(self.admin, self.model.collection_getter, self.admin.getFields, max_number_of_rows=1, edits=None)
     title = self.admin.getName()
     form = self.admin.createFormView(title, model, index, get_workspace())
-    get_workspace().addWindow(form)
+    get_workspace().addSubWindow(form)
     form.show()
 
 try:

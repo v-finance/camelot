@@ -327,12 +327,16 @@ class EntityAdmin(object):
                   self.form_view.widget_mapper.clearMapping()
                   
                   def onexpunge_on_all():
-                    for o in new_object:
-                      onexpunge(o)
+                    if onexpunge:
+                      for o in new_object:
+                        onexpunge(o)
                       
                   admin.mt.post(onexpunge_on_all)
                   self.validate_before_close = False
-                  self.close()
+                  from camelot.view.workspace import get_workspace
+                  for window in get_workspace().subWindowList():
+                    if window.widget() == self:
+                      window.close()
               else:
                 def create_instance_getter(new_object):
                   return lambda:new_object[0]
@@ -341,7 +345,10 @@ class EntityAdmin(object):
                   self.emit(self.entity_created_signal,
                             create_instance_getter(new_object))
                 self.validate_before_close = False
-                self.close()
+                from camelot.view.workspace import get_workspace
+                for window in get_workspace().subWindowList():
+                  if window.widget() == self:
+                    window.close()
             
             admin.mt.post(validate, showMessage)
             return False
@@ -356,7 +363,7 @@ class EntityAdmin(object):
           event.ignore()
 
     form = NewForm(parent)
-    form.resize(admin.form_size[0], admin.form_size[1])
+    form.setMinimumSize(admin.form_size[0], admin.form_size[1])
     return form
 
   @gui_function
@@ -468,10 +475,16 @@ class EntityAdmin(object):
                 self.widget_mapper.clearMapping()
                 model.revertRow(self.widget_mapper.currentIndex())
                 self.validate_before_close = False
-                self.close()
+                from camelot.view.workspace import get_workspace
+                for window in get_workspace().subWindowList():
+                  if window.widget() == self:
+                    window.close()
             else:
               self.validate_before_close = False
-              self.close()
+              from camelot.view.workspace import get_workspace
+              for window in get_workspace().subWindowList():
+                if window.widget() == self:
+                  window.close()
           
           admin.mt.post(validate, showMessage)
           return False
@@ -531,7 +544,7 @@ class EntityAdmin(object):
         return tp.render(context)
           
     form = FormView(admin)
-    form.resize(admin.form_size[0], admin.form_size[1])
+    form.setMinimumSize(admin.form_size[0], admin.form_size[1])
     
     return form
 
@@ -572,7 +585,10 @@ class EntityAdmin(object):
             
             def emit_and_close(instance_getter):
               selectview.emit(self.entity_selected_signal, instance_getter)
-              selectview.close()
+              from camelot.view.workspace import get_workspace
+              for window in get_workspace().subWindowList():
+                if window.widget() == selectview:
+                  window.close()
               
             return emit_and_close
           
@@ -610,7 +626,7 @@ class EntityAdmin(object):
         title = u'%s'%(self.getName())
 
         formview = tableview.admin.createFormView(title, model, index, parent)
-        get_workspace().addWindow(formview)
+        get_workspace().addSubWindow(formview)
         formview.show()
 
       return openForm

@@ -181,7 +181,7 @@ class TableView(QtGui.QWidget):
     from camelot.view.workspace import get_workspace
     workspace = get_workspace()
     form = self.admin.createNewView(workspace)
-    workspace.addWindow(form)
+    workspace.addSubWindow(form)
     self.connect(form,
                  form.entity_created_signal,
                  lambda entity_instance_getter: \
