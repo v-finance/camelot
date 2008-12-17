@@ -71,7 +71,7 @@ class TableView(QtGui.QWidget):
     # We create the table first with only 10 rows, to be able resize
     # the columns to the contents without much processing
     self.table_model = QueryTableProxy(admin,
-                                       admin.entity.query.limit(10),
+                                       lambda:admin.entity.query.limit(10),
                                        admin.getColumns)
     self.table.setModel(self.table_model)
     self.connect(self.table.verticalHeader(),
@@ -181,7 +181,7 @@ class TableView(QtGui.QWidget):
     from camelot.view.workspace import get_workspace
     workspace = get_workspace()
     form = self.admin.createNewView(workspace)
-    workspace.addWindow('new', form)
+    workspace.addWindow(form)
     self.connect(form,
                  form.entity_created_signal,
                  lambda entity_instance_getter: \

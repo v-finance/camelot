@@ -457,6 +457,14 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           from camelot.model.memento import BeforeUpdate
           from camelot.model.authentication import getCurrentPerson
           o = self._get_object(row)
+          if not o:
+            # the object might have been deleted from the collection while the editor
+            # was still open
+            try:
+              self.unflushed_rows.remove(row)
+            except KeyError:
+              pass
+            return            
           attribute, field_attributes = self.getColumns()[column]
           old_value = getattr(o, attribute)
           if new_value!=old_value and field_attributes['editable']==True:
@@ -577,10 +585,14 @@ class CollectionProxy(QtCore.QAbstractTableModel):
  
   @model_function
   def removeEntityInstance(self, o):
-    from elixir import session
+    logger.debug('remove entity instance with id %s'%o.id)
+    from sqlalchemy.orm.session import Session
     from camelot.model.memento import BeforeDelete
     from camelot.model.authentication import getCurrentPerson
     self.remove(o)
+    # remove the entity from the cache
+    self.cache[Qt.DisplayRole].delete_by_entity(o)
+    self.cache[Qt.EditRole].delete_by_entity(o)        
     self.rsh.sendEntityDelete(self, o)
     if o.id:
       pk = o.id
@@ -589,8 +601,10 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                              primary_key=pk, 
                              previous_attributes={},
                              person = getCurrentPerson() )
+      logger.debug('delete the object')
       o.delete()
-      session.flush([history, o])
+      Session.object_session(o).flush([o])
+      Session.object_session(history).flush([history])
     self.mt.post(lambda:None, lambda *args:self.refresh())  
     
   @gui_function

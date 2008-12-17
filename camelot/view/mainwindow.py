@@ -607,13 +607,12 @@ class MainWindow(QtGui.QMainWindow):
   # Interface for child windows
 
   def createMdiChild(self, item):
-    from workspace import key_from_query
     index = self.navpane.treewidget.indexFromItem(item)
     model = self.navpane.models[index.row()]
     logger.debug('creating model %s' % str(model[0]))
 
     child = model[0].createTableView(model[1], parent=self)
-    self.workspace.addWindow(key_from_query(model[0].entity, model[1]), child)
+    self.workspace.addWindow(child)
 
     self.connect(child, QtCore.SIGNAL("copyAvailable(bool)"),
            self.cutAct.setEnabled)

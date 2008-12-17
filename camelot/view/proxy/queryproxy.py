@@ -38,10 +38,13 @@ class QueryTableProxy(CollectionProxy):
   QTableView
   """
 
-  def __init__(self, admin, query, columns_getter,
+  def __init__(self, admin, query_getter, columns_getter,
                max_number_of_rows=10, edits=None):
+    """
+    @param query_getter: a model_thread function that returns a query
+    """
     logger.debug('initialize query table')
-    self.query = query
+    self._query_getter = query_getter
     #rows appended to the table which have not yet been flushed to the
     #database, and as such cannot be a result of the query
     self._appended_rows = []
@@ -61,11 +64,11 @@ class QueryTableProxy(CollectionProxy):
   @model_function
   def getRowCount(self):
     self._clean_appended_rows()
-    return self.query.count() + len(self._appended_rows)
+    return self._query_getter().count() + len(self._appended_rows)
 
-  def setQuery(self, query):
+  def setQuery(self, query_getter):
     """Set the query and refresh the view"""
-    self.query = query
+    self._query_getter = query_getter
     self.refresh()
 
   def append(self, o):
@@ -83,13 +86,13 @@ class QueryTableProxy(CollectionProxy):
   @model_function
   def getData(self):
     """Generator for all the data queried by this proxy"""
-    for i,o in enumerate(self.query.all()):
+    for i,o in enumerate(self.query_getter().all()):
       yield RowDataFromObject(o, self.getColumns())
       
   @model_function
   def _extend_cache(self, offset, limit):
     """Extend the cache around row"""
-    q = self.query.offset(offset).limit(limit)
+    q = self._query_getter().offset(offset).limit(limit)
     columns = self.getColumns()
     for i, o in enumerate(q.all()):
       row_data = RowDataFromObject(o, columns)
@@ -100,14 +103,15 @@ class QueryTableProxy(CollectionProxy):
   @model_function
   def _get_object(self, row):
     """Get the object corresponding to row"""
-    self._clean_appended_rows()
-    rows_in_query = (self.rows-len(self._appended_rows))
-    if row >= rows_in_query:
-      return self._appended_rows[row-rows_in_query]
-    try:
-      # first try to get the primary key out of the cache, if it's not
-      # there, query the collection_getter
-      return self.cache[Qt.EditRole].get_entity_at_row(row)
-    except KeyError:
-      pass
-    return self.query.offset(row).limit(1).first()
+    if self.rows>0:
+      self._clean_appended_rows()
+      rows_in_query = (self.rows-len(self._appended_rows))
+      if row >= rows_in_query:
+        return self._appended_rows[row-rows_in_query]
+      try:
+        # first try to get the primary key out of the cache, if it's not
+        # there, query the collection_getter
+        return self.cache[Qt.EditRole].get_entity_at_row(row)
+      except KeyError:
+        pass
+      return self._query_getter().offset(row).limit(1).first()

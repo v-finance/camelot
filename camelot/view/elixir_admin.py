@@ -602,15 +602,15 @@ class EntityAdmin(object):
     def createOpenForm(self, tableview):
 
       def openForm(index):
-        from camelot.view.workspace import get_workspace, key_from_query
+        from workspace import get_workspace
         model = QueryTableProxy(tableview.admin,
-                                tableview.table_model.query,
+                                tableview.table_model._query_getter,
                                 tableview.admin.getFields,
                                 max_number_of_rows=1)
         title = u'%s'%(self.getName())
 
         formview = tableview.admin.createFormView(title, model, index, parent)
-        get_workspace().addWindow('form', formview)
+        get_workspace().addWindow(formview)
         formview.show()
 
       return openForm
