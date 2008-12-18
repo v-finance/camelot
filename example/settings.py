@@ -6,6 +6,7 @@ def setup_model():
   from camelot.model.memento import *
   from camelot.model.synchronization import *
   from camelot.model.authentication import *
+  from camelot.model.i18n import *
   setup_all(create_tables=True)
   updateLastLogin()
       
