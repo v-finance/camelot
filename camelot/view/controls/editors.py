@@ -470,7 +470,7 @@ class One2ManyEditor(QtGui.QWidget):
         
     else:
       form = self.admin.createNewView(workspace,
-                                      oncreate=lambda o:self.model.insertEntityInstance(0,o), 
+                                      oncreate=lambda o:self.model.insertEntityInstance(0,o),
                                       onexpunge=lambda o:self.model.removeEntityInstance(o))
       workspace.addSubWindow(form)
       form.show()
