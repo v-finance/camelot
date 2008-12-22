@@ -27,42 +27,45 @@ def testSuites():
   construct_model_thread(rh)
   get_model_thread().start()
   
-  class model_thread_tests(unittest.TestCase):
-      def setUp(self):
-        self.mt = get_model_thread()
-      def testRequestAndResponseInDifferentThread(self):
-        """Test if the request function is really executed in another thread"""
+#  class model_thread_tests(unittest.TestCase):
+#      def setUp(self):
+#        self.mt = get_model_thread()
+#      def testRequestAndResponseInDifferentThread(self):
+#        """Test if the request function is really executed in another thread"""
+#        
+#        def get_request_thread():
+#          import threading
+#          return threading.currentThread()
+#        
+#        def compare_with_response_thread(thread):
+#          import threading
+#          self.assertNotEqual(thread, threading.currentThread())
+#          
+#        event = self.mt.post( get_request_thread, compare_with_response_thread )
+#        event.wait()
+#        self.mt.process_responses()
         
-        def get_request_thread():
-          import threading
-          return threading.currentThread()
-        
-        def compare_with_response_thread(thread):
-          import threading
-          self.assertNotEqual(thread, threading.currentThread())
-          
-        event = self.mt.post( get_request_thread, compare_with_response_thread )
-        event.wait()
-        self.mt.process_responses()
-        
-
   class proxy_tests(unittest.TestCase):
     """Test the functionality of the proxies to perform CRUD operations on data"""
     def setUp(self):
-      from camelot.model.authentication import Person
+      from camelot.model.authentication import Person, PartyAddressRoleType
       from camelot.view.proxy.queryproxy import QueryTableProxy
       from camelot.view.application_admin import ApplicationAdmin
       self.app_admin = ApplicationAdmin([])
       self.mt = get_model_thread()
       self.block = self.mt.post_and_block
       person_admin = self.app_admin.getEntityAdmin(Person)
-      self.person_proxy = QueryTableProxy(person_admin, Person.query, person_admin.getFields)
+      party_address_role_type_admin = self.app_admin.getEntityAdmin(PartyAddressRoleType)
+      self.person_proxy = QueryTableProxy(person_admin, lambda:Person.query, person_admin.getFields)
+      self.party_address_role_type_proxy = QueryTableProxy(party_address_role_type_admin, lambda:PartyAddressRoleType.query, party_address_role_type_admin.getFields)
       # get the columns of the proxy
       self.columns = dict((c[0],i) for i,c in enumerate(self.block(lambda:self.person_proxy.getColumns())))
       self.rows_before_insert = 0
       self.rows_after_insert = 0
       self.rows_after_delete = 0
       self.new_person = None
+      # make sure nothing is running in the model thread any more
+      self.block(lambda:None)
     def listPersons(self):
       from camelot.model.authentication import Person
       
@@ -99,6 +102,16 @@ def testSuites():
       self.person_proxy.removeRow(self.rows_before_insert)
       self.rows_after_delete = self.numberOfPersons()
       self.assertTrue( self.rows_after_delete < self.rows_after_insert )
+    def testCreateDataWithoutRequiredFields(self):
+      """Create a record that has no required fields, so the creation
+      should be instantaneous as opposed to delayed until all required fields are filled"""
+      from camelot.model.authentication import PartyAddressRoleType
+      rows_before_insert = self.block(lambda:self.party_address_role_type_proxy.getRowCount())
+      new_party_address_role_type_proxy = self.block(lambda:PartyAddressRoleType())
+      self.party_address_role_type_proxy.insertRow(0, create_getter(new_party_address_role_type_proxy))
+      self.assertNotEqual( self.block(lambda:new_party_address_role_type_proxy.id), None )
+      rows_after_insert = self.block(lambda:self.party_address_role_type_proxy.getRowCount())
+      self.assertTrue( rows_after_insert > rows_before_insert)      
     def testCreateUpdateDeleteValidData(self):
       self.insertNewPerson(valid=True)
       self.assertTrue( self.block(lambda:self.new_person.id) != None )
@@ -129,6 +142,6 @@ if __name__ == '__main__':
   logger.info('running unit tests')
   import sys
   app = QApplication(sys.argv)  
-  runner=unittest.TextTestRunner()
+  runner=unittest.TextTestRunner(verbosity=2)
   for s in testSuites():
     runner.run(s)  
