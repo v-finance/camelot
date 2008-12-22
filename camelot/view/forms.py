@@ -60,7 +60,7 @@ class Form(object):
     """@return : the fields, visible in this form"""
     return self._fields
   
-  def render(self, widgets):
+  def render(self, widgets, parent=None):
     """
     @param widgets: a dictionary mapping each field in this form to a tuple of 
                     (label widget, value widget) 
@@ -72,7 +72,7 @@ class Form(object):
     form_layout.setFieldGrowthPolicy(QtGui.QFormLayout.ExpandingFieldsGrow) 
     for field in self._content:
       if isinstance(field, Form):
-        form_layout.addRow(field.render(widgets))
+        form_layout.addRow(field.render(widgets, parent))
       if field in widgets:
         label_widget, value_widget, type_widget = widgets[field]
         if type_widget in ['one2many', 'richtext']:
@@ -108,11 +108,11 @@ class TabForm(Form):
     super(TabForm, self).__init__(sum((tab_form.get_fields()
                                   for tab_label, tab_form in self.tabs), []))
   
-  def render(self, widgets):
+  def render(self, widgets, parent=None):
     from PyQt4 import QtGui
-    widget = QtGui.QTabWidget()
+    widget = QtGui.QTabWidget(parent)
     for tab_label, tab_form in self.tabs:      
-      widget.addTab(tab_form.render(widgets), tab_label)
+      widget.addTab(tab_form.render(widgets, widget), tab_label)
     return widget
   
 class HBoxForm(Form):
@@ -126,11 +126,11 @@ class HBoxForm(Form):
     super(HBoxForm, self).__init__(sum((column_form.get_fields()
                                   for column_form in self.columns), []))
 
-  def render(self, widgets):
+  def render(self, widgets, parent=None):
     from PyQt4 import QtGui
     widget = QtGui.QHBoxLayout()
     for form in self.columns:
-      widget.addWidget(form.render(widgets))
+      widget.addWidget(form.render(widgets, parent))
     return widget
   
 class WidgetOnlyForm(Form):
@@ -141,7 +141,7 @@ class WidgetOnlyForm(Form):
     assert isinstance(field, (str, unicode))
     super(WidgetOnlyForm, self).__init__([field])
     
-  def render(self, widgets):
+  def render(self, widgets, parent=None):
     label_widget, value_widget, type_widget = widgets[self.get_fields()[0]]
     return value_widget
     
@@ -155,9 +155,9 @@ def VBoxForm(Form):
     self.rows = [structure_to_form(row) for row in rows]
     super(VBoxForm, self).__init__(sum((row_form.get_fields() for row_form in self.rows), []))
 
-  def render(self, widgets):
+  def render(self, widgets, parent=None):
     from PyQt4 import QtGui
     widget = QtGui.QVBoxLayout()
     for form in self.rows:
-      widget.addWidget(form.render(widgets))
+      widget.addWidget(form.render(widgets, parent))
     return widget

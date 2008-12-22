@@ -412,7 +412,6 @@ class EntityAdmin(object):
         self.widget_mapper.revert()
 
       def setColumnsFormAndDelegate(self, columns, form, delegate):
-        from forms import Form
         #
         # Create the value and the label widgets
         #
@@ -438,7 +437,7 @@ class EntityAdmin(object):
           widgets[field_name] = (label_widget, value_widget, type_widget)
           
         self.widget_mapper.setCurrentIndex(index)
-        self.widget_layout.insertWidget(0, form.render(widgets))
+        self.widget_layout.insertWidget(0, form.render(widgets, self))
         self.widget_layout.setContentsMargins(7,7,7,7)        
         #self.scroll_area.setWidget(form.render(widgets))
         #self.scroll_area.setWidgetResizable(True)
