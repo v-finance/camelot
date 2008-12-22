@@ -346,6 +346,10 @@ class PartyAddressRoleType(Entity):
   code = Field(Unicode(10))
   description = Field(Unicode(40))
   
+  class Admin(EntityAdmin):
+    name = 'Address role type'
+    list_display = ['code', 'description']
+  
 class PartyAddress(Entity):
   using_options(tablename='party_address')
   party = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')

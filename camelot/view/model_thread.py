@@ -191,22 +191,6 @@ class ModelThread(threading.Thread):
     event.wait()
     self.process_responses()
     return results[-1]
-  
-  @model_function
-  def post_to_gui_thread_and_block(self, request):
-    """Post a request to the gui thread and block until it is finished, and then 
-    return its results"""
-    
-    result = []
-    
-    def request_and_store_result(*a):
-      result.append(request())
-      
-    event = threading.Event()
-    self._response_queue.put_nowait((event, None, request_and_store_result))
-    self._response_signaler.responseAvailable()
-    event.wait()
-    return result[-1]
     
 def construct_model_thread(*args, **kwargs):
   _model_thread_.append(ModelThread(*args, **kwargs))

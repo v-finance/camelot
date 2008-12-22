@@ -43,6 +43,20 @@ from camelot.view.remote_signals import get_signal_handler
 from camelot.view import art
 from camelot.view.model_thread import model_function, gui_function, get_model_thread
    
+class DelayedProxy(object):
+  """A proxy object needs to be constructed within the GUI thread.  Construct a delayed
+  proxy when the construction of a proxy is needed within the Model thread.  On first
+  occasion the delayed proxy will be converted to a real proxy within the GUI thread"""
+  
+  @model_function
+  def __init__(self, *args, **kwargs):
+    self.args = args
+    self.kwargs = kwargs
+    
+  @gui_function
+  def __call__(self):
+    return CollectionProxy(*self.args, **self.kwargs)
+  
 @model_function
 def RowDataFromObject(obj, columns):
   """Create row data from an object, by fetching its attributes"""
@@ -55,9 +69,7 @@ def RowDataFromObject(obj, columns):
   for i,col in enumerate(columns):
     field_attributes = col[1]
     if field_attributes['python_type']==list:
-      proxy = mt.post_to_gui_thread_and_block(lambda *a:CollectionProxy(field_attributes['admin'], create_collection_getter(obj,col[0]),
-                                                                        field_attributes['admin'].getColumns))
-      row_data.append( proxy )
+      row_data.append( DelayedProxy(field_attributes['admin'], create_collection_getter(obj,col[0]),field_attributes['admin'].getColumns) )
     else:
       row_data.append(getattr(obj,col[0]))
   return row_data
@@ -103,10 +115,7 @@ class fifo(object):
     self.data_by_rows = dict()
     self.rows_by_entity = dict()
   def add_data(self, row, entity, value):
-    try:
-      row = self.delete_by_entity(entity)
-    except KeyError:
-      pass   
+    self.delete_by_entity(entity)
     self.data_by_rows[row] = (entity, value)
     self.rows_by_entity[entity] = row
     self.entities.append(entity)
@@ -121,10 +130,20 @@ class fifo(object):
     del self.rows_by_entity[entity] 
     return row
   def delete_by_entity(self, entity):
-    row = self.rows_by_entity[entity]
-    self.entities.remove(entity)
-    del self.data_by_rows[row]
-    del self.rows_by_entity[entity]
+    """Remove everything in the cache related to an entity instance
+    returns the row at which the data was stored if the data was in the
+    cache, return None otherwise"""
+    row = None
+    try:
+      row = self.rows_by_entity[entity]
+      del self.data_by_rows[row]
+      del self.rows_by_entity[entity]      
+    except KeyError:
+      pass
+    try:
+      self.entities.remove(entity)
+    except ValueError:
+      pass
     return row    
   def get_data_at_row(self, row):
     return self.data_by_rows[row][1]
@@ -237,15 +256,14 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     """Handles the entity signal, indicating that the model is out of date"""
     logger.debug('%s %s received entity update signal'%(self.__class__.__name__, self.admin.getName()))
     if sender!=self:
-      try:
-        row = self.cache[Qt.DisplayRole].delete_by_entity(entity)
-        row = self.cache[Qt.EditRole].delete_by_entity(entity)
+      row = self.cache[Qt.DisplayRole].delete_by_entity(entity)
+      row = self.cache[Qt.EditRole].delete_by_entity(entity)
+      if row:
         logger.debug('updated row %i'%row)
         self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                   self.index(row,0), self.index(row,self.column_count))
-      except KeyError:
+      else:
         logger.debug('entity not in cache')
-        pass
     else:
       logger.debug('duplicate update')
 
@@ -404,6 +422,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       data = self._get_row_data(index.row(), role)
       try:
         value = data[index.column()]
+        if isinstance(value, DelayedProxy):
+          value = value()
+          data[index.column()] = value
       except KeyError:
         logger.error('Programming error, could not find data of column %s in %s'%(index.column(), str(data)))
         value = None
@@ -592,7 +613,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.remove(o)
     # remove the entity from the cache
     self.cache[Qt.DisplayRole].delete_by_entity(o)
-    self.cache[Qt.EditRole].delete_by_entity(o)        
+    self.cache[Qt.EditRole].delete_by_entity(o)
     self.rsh.sendEntityDelete(self, o)
     if o.id:
       pk = o.id
