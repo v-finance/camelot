@@ -21,4 +21,7 @@ def open_html_in_outlook(html):
   
   
   msg = outlook_app.CreateItem(0)
-  msg.Body = html
+  msg.BodyFormat=2
+  msg.HTMLBody=html
+  #msg.Subject=o_subject
+  msg.Display(True)
