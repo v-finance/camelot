@@ -3,9 +3,8 @@
 <table width="100%">
 {% for row in table %}
   <tr>
-  {% for col in row %}
-    <td>{{col}}</td>
-  {% endfor %}
+    <td>{{row.field_attributes.name}}</td>
+    <td>{{row.value|to_html(row.field_attributes.delegate)}}</td>
   </tr>
 {% endfor %}
 </table>

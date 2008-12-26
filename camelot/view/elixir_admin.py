@@ -525,13 +525,26 @@ class EntityAdmin(object):
         else:
           event.ignore()
           
+      @model_function
       def toHtml(self):
         """generates html of the form"""
         from camelot.view.proxy.collection_proxy import RowDataFromObject, RowDataAsUnicode
+        
+        def to_html(d=u''):
+          """Jinja 1 filter to convert field values to their default html
+          representation"""
+          
+          def wrapped(env, context, value):
+            if isinstance(value, list):
+              return u'<table><tr><td>' + u'</td></tr><tr><td>'.join([unicode(e) for e in value]) + u'</td></tr></table>'
+            return unicode(value)
+          
+          return wrapped
+
         entity = self.entity_getter()
         fields = self.admin.getFields()
-        row_data = RowDataFromObject(entity, fields)
-        table = [(field[1]['name'], value) for field,value in zip(fields, row_data)]
+        table = [dict(field_attributes=field_attributes, 
+                      value=getattr(entity,name)) for name,field_attributes in fields]
         context = {
           'title': self.admin.getName(),
           'table': table,
@@ -539,6 +552,7 @@ class EntityAdmin(object):
         from jinja import Environment, FileSystemLoader
         ld = FileSystemLoader(settings.CAMELOT_TEMPLATES_DIRECTORY)
         env = Environment(loader=ld)
+        env.filters['to_html'] = to_html        
         tp = env.get_template('form_view.html')
         return tp.render(context)
           
