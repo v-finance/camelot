@@ -1,4 +1,4 @@
-""" Tableview """
+"""Tableview"""
 
 import logging
 
@@ -78,7 +78,6 @@ class TableView(QtGui.QWidget):
                  SIGNAL('sectionClicked(int)'),
                  self.sectionClicked)     
     self.table_layout.insertWidget(1, self.table)
-
 
     def update_delegates(*args):
       """update item delegate"""

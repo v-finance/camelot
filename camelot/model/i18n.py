@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  =============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,7 +23,7 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  =============================================================================
 """Set of classes to enable internationalization of the user interface"""
 
 from camelot.model import *

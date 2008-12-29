@@ -25,9 +25,7 @@
 #
 #  ============================================================================
 
-"""
-left navigation pane
-"""
+"""left navigation pane"""
 
 import os
 import sys
@@ -44,7 +42,7 @@ from camelot.view import art
 from camelot.view.model_thread import get_model_thread
 from camelot.view.helpers import createAction, addActions
 from camelot.view.controls.modeltree import ModelItem, ModelTree
-from schemer import schemer, defaultUI
+from appscheme import scheme, defaultUI
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
@@ -83,9 +81,9 @@ class PaneCaption(QtGui.QLabel):
       color: %s;
       background-color: %s;
     }
-    """ % (schemer.bordercolor(),
-           schemer.captiontextcolor(),
-           schemer.captionbackground())
+    """ % (scheme.bordercolor(),
+           scheme.captiontextcolor(),
+           scheme.captionbackground())
 
     self.setStyleSheet(style);
     self.setFixedHeight(height)
@@ -144,9 +142,9 @@ class PaneButton(QtGui.QWidget):
       border-color : %s;
       background-color : %s;
     }
-    """ % (schemer.textcolor(),
-           schemer.bordercolor(),
-           schemer.normalbackground())
+    """ % (scheme.textcolor(),
+           scheme.bordercolor(),
+           scheme.normalbackground())
     
     self.stylehovered = """
     QWidget#PaneButton * {
@@ -155,8 +153,8 @@ class PaneButton(QtGui.QWidget):
       color : %s;
       background-color : %s;
     }
-    """ % (schemer.textcolor(),
-           schemer.hoveredbackground())
+    """ % (scheme.textcolor(),
+           scheme.hoveredbackground())
 
     self.styleselected = """
     QWidget#PaneButton * {
@@ -165,8 +163,8 @@ class PaneButton(QtGui.QWidget):
       color : %s;
       background-color : %s;
     }
-    """ % (schemer.selectedcolor(),
-           schemer.selectedbackground())
+    """ % (scheme.selectedcolor(),
+           scheme.selectedbackground())
 
     self.styleselectedover = """
     QWidget#PaneButton * {
@@ -175,8 +173,8 @@ class PaneButton(QtGui.QWidget):
       color : %s;
       background-color : %s;
     }
-    """ % (schemer.selectedcolor(),
-           schemer.selectedbackground(inverted=True))
+    """ % (scheme.selectedcolor(),
+           scheme.selectedbackground(inverted=True))
 
     self.setStyleSheet(self.stylenormal)
     self.setFixedHeight(height)
@@ -216,10 +214,7 @@ class PaneButton(QtGui.QWidget):
 class NavigationPane(QtGui.QDockWidget):
   """ms office-like navigation pane in Qt"""
   
-  def __init__(self,
-               app_admin,
-               objectname='NavigationPane',
-               parent=None):
+  def __init__(self, app_admin, objectname='NavigationPane', parent=None):
 
     super(NavigationPane, self).__init__(parent)
     self.app_admin = app_admin
@@ -253,7 +248,7 @@ class NavigationPane(QtGui.QDockWidget):
       margin-left: 3px;
       background-color: %s;
     }
-    """ % schemer.bordercolor()
+    """ % scheme.bordercolor()
 
     self.content.setStyleSheet(style) 
 
@@ -270,7 +265,7 @@ class NavigationPane(QtGui.QDockWidget):
       margin-left: 3px;
       border: 1px solid %s;
     }
-    """ % schemer.bordercolor()
+    """ % scheme.bordercolor()
   
     self.treewidget.setStyleSheet(style)
 

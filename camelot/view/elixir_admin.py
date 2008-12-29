@@ -420,19 +420,23 @@ class EntityAdmin(object):
         for i, (field_name, field_attributes) in enumerate(columns):
           option = None
           model_index = self.model.index(index, i)
+
           value_widget = delegate.createEditor(parent, option, model_index)
           label_widget = QtGui.QLabel(field_attributes['name'])
           type_widget  = field_attributes['widget']
+
           # look for rich text editor widget
           if field_attributes['python_type'] == str:
             if field_attributes.has_key('length') and \
                field_attributes['length'] is None:
               type_widget = 'richtext'
 
+          # required fields font is bold
           if ('nullable' in field_attributes) and (not field_attributes['nullable']):
             font = QtGui.QApplication.font()
             font.setBold(True)
             label_widget.setFont(font)
+
           self.widget_mapper.addMapping(value_widget, i)
           widgets[field_name] = (label_widget, value_widget, type_widget)
           

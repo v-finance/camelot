@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  =============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,11 +23,9 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  =============================================================================
 
-"""
-custom tree and tree-items widgets
-"""
+"""custom tree and tree-items widgets"""
 
 import logging
 
@@ -61,6 +59,7 @@ class ModelItem(QtGui.QTreeWidgetItem):
       self.setIcon(self.column, qicon)
     else:
       self.setIcon(self.column, QtGui.QIcon(art.icon16('actions/window-new')))
+
 
 class ModelTree(QtGui.QTreeWidget):
   """Custom tree widget"""
@@ -117,4 +116,3 @@ class ModelTree(QtGui.QTreeWidget):
     item = self.itemAt(self.mapFromGlobal(self.cursor().pos()))
     if item:
       self.setCurrentItem(item)
-

@@ -44,6 +44,7 @@ from camelot.view.model_thread import model_function, gui_function
 def create_constant_function(constant):
   return lambda:constant
 
+
 class DateEditor(QtGui.QWidget):
   """Widget for editing date values"""
   def __init__(self, nullable=True, format='dd/MM/yyyy', parent=None):
@@ -108,6 +109,7 @@ class DateEditor(QtGui.QWidget):
   def setDate(self, date):
     self.qdateedit.setDate(date)
 
+
 class VirtualAddressEditor(QtGui.QWidget):
   
   def __init__(self, parent=None):
@@ -126,6 +128,7 @@ class VirtualAddressEditor(QtGui.QWidget):
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
         
+
 class CodeEditor(QtGui.QWidget):
   
   def __init__(self, parts=['99', 'AA'], parent=None):
@@ -148,6 +151,7 @@ class CodeEditor(QtGui.QWidget):
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
         
+
 class EmbeddedMany2OneEditor(QtGui.QWidget):
   """Widget for editing a many 2 one relation a a form embedded in another
   form.
@@ -194,6 +198,7 @@ class EmbeddedMany2OneEditor(QtGui.QWidget):
           
     self.admin.mt.post(set_entity_instance, update_form)
   
+
 class Many2OneEditor(QtGui.QWidget):
   """Widget for editing many 2 one relations
   @param entity_admin : The Admin interface for the object on the one side of the relation
@@ -380,6 +385,7 @@ class Many2OneEditor(QtGui.QWidget):
   def selectEntity(self, entity_instance_getter):
     self.setEntity(entity_instance_getter)
     
+
 class One2ManyEditor(QtGui.QWidget):
   
   def __init__(self, admin=None, parent=None, create_inline=False, **kw):
@@ -494,6 +500,7 @@ try:
   from PIL import Image as PILImage
 except:
   import Image as PILImage
+
 
 class ImageEditor(QtGui.QWidget):
   def __init__(self, parent=None):
@@ -875,5 +882,3 @@ class RichTextEditor(QtGui.QWidget):
    
   def toHtml(self):
     return self.textedit.toHtml() 
-
-

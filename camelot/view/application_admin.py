@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,11 +23,9 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
-"""
-Admin class, specify how the main window should look like
-"""
+"""Admin class, specify how the main window should look like"""
 
 class ApplicationAdmin(object):
   
@@ -90,7 +88,7 @@ class ApplicationAdmin(object):
   def getAbout(self):
     """@return: the content of the About dialog"""
     return """<b>Camelot Project</b>
-                <p>
-                Copyright &copy; 2008 Conceptive Engineering.
-                All right reserved.
-                </p>"""
+              <p>
+              Copyright &copy; 2008 Conceptive Engineering.
+              All right reserved.
+              </p>"""

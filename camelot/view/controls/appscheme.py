@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,13 +23,9 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
-"""
-module that encapsulate various ms office schemes 
-"""
-
-__version__ = '0.1.0'
+"""encapsulates various ms office schemes"""
 
 Office2003BlueStyle = {
   'SplitterDark' : '(21, 28, 171)',
@@ -191,7 +187,7 @@ Office2007SilverStyle = {
   'ContextMenuBackColor' : '(235, 238, 250)'
 }
 
-class Schemer():
+class Scheme():
   def __init__(self, styledict=Office2007BlueStyle):
     self.styledict = styledict
 
@@ -261,6 +257,5 @@ class Schemer():
     
     return self.twocolorgradient(rgb1, rgb2)
 
-schemer = Schemer()
+scheme = Scheme()
 defaultUI = Office2007BlueStyle
-

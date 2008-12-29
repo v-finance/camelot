@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  =============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,7 +23,7 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  =============================================================================
 """Set of classes to keep track of changes to objects and
 be able to restore their state"""
 
@@ -91,4 +91,3 @@ class Create(Memento):
     name = 'Creates'
     list_display = Memento.Admin.list_display
     list_filter = ['model']
-

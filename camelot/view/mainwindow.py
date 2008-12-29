@@ -25,7 +25,7 @@
 #
 #  ============================================================================
 
-""" Main window GUI """
+"""Main window GUI"""
 
 import settings
 import os
@@ -49,15 +49,12 @@ from PyQt4.QtTest import QTest
 
 from camelot.view import art
 from camelot.view.helpers import createAction, addActions
-from camelot.view.controls.schemer import schemer
 from camelot.view.controls.navpane import PaneButton, NavigationPane
 from camelot.view.controls.printer import Printer
 from camelot.view.controls.animation import Throbber
 from camelot.view.model_thread import get_model_thread, construct_model_thread
 from camelot.view.response_handler import ResponseHandler
 from camelot.view.remote_signals import construct_signal_handler
-
-__version__ = '0.1.0'
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
@@ -470,9 +467,9 @@ class MainWindow(QtGui.QMainWindow):
     """Needed to correctly position the throbber"""
     QtGui.QMainWindow.resizeEvent(self, event)
     # always put throbber in top right corner
-#    x = self.width() - self.throbber.sizeHint().width() - 5
-#    y = 2
-#    self.throbber.move(x, y)
+    #x = self.width() - self.throbber.sizeHint().width() - 5
+    #y = 2
+    #self.throbber.move(x, y)
 
   def updateMenus(self):
     hasMdiChild = (self.activeMdiChild() is not None)
