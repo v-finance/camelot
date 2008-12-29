@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,18 +23,20 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
 import logging
 logger = logging.getLogger('camelot.view.validator')
+
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
 
 from proxy.collection_proxy import fifo
 
 class Validator(QtCore.QObject):
-  """A validator class validates an entity before flushing it to the database and
-  provides the user with feedback if the entity is not ready to flush"""
+  """A validator class validates an entity before flushing it to the database
+  and provides the user with feedback if the entity is not ready to flush
+  """
   
   def __init__(self, admin, model):
     self.admin = admin
@@ -42,7 +44,9 @@ class Validator(QtCore.QObject):
     self.message_cache = fifo(10)
     
   def objectValidity(self, entity_instance):
-    """@return: list of messages explaining invalid data, empty list if object is valid"""
+    """@return: list of messages explaining invalid data
+    empty list if object is valid
+    """
     messages = []
     for column in self.model.getColumns():
       value = getattr(entity_instance, column[0])
@@ -61,23 +65,33 @@ class Validator(QtCore.QObject):
     return messages
             
   def isValid(self, row):
-    """Verify if a row in a model is 'valid', meaning it could be flushed to the database"""
-    entity_instance = self.model._get_object(row)
+    """Verify if a row in a model is 'valid' meaning it could be flushed to
+    the database
+    """
     messages = []
-    logger.debug('is valid for row %s'%row)
-    if entity_instance:
-      messages = self.objectValidity(entity_instance)
-      self.message_cache.add_data(row, entity_instance.id, messages)
-    return len(messages)==0
+    logger.debug('is valid for row %s' % row)
+
+    try:
+      entity_instance = self.model._get_object(row)
+      if entity_instance:
+        messages = self.objectValidity(entity_instance)
+        self.message_cache.add_data(row, entity_instance.id, messages)
+    except:
+      # that's rude, should be fixed
+      pass
+    return len(messages) == 0
   
   def validityMessages(self, row):
     try:
       return self.message_cache.get_data_at_row(row)
     except KeyError:
-      raise Exception('Programming error : isValid should be called before calling validityMessage')
+      raise Exception('Programming error : isValid should be called ' \
+                      'before calling validityMessage')
         
   def validityMessage(self, row, parent):
-    """Inform the user about the validity of the data at row, by showing a message box, this function can only
-    be called if isValid has been called and is finished within the model thread"""
+    """Inform the user about the validity of the data at row, by showing 
+    a message box, this function can only be called if isValid has been
+    called and is finished within the model thread
+    """
     messages = self.validityMessages(row)
     QtGui.QMessageBox.information(parent, u'Validation', u'\n'.join(messages))
