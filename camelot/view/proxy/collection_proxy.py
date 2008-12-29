@@ -41,7 +41,9 @@ from PyQt4.QtCore import Qt
 
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view import art
-from camelot.view.model_thread import model_function, gui_function, get_model_thread
+from camelot.view.model_thread import gui_function
+from camelot.view.model_thread import model_function
+from camelot.view.model_thread import get_model_thread
    
 class DelayedProxy(object):
   """A proxy object needs to be constructed within the GUI thread.  Construct a delayed
