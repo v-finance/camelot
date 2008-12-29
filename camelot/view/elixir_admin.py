@@ -1,4 +1,33 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
+
 """
+@TODO: rewrite docstring
+
 Admin classes, specify how objects should be rendered in the gui
 
 An admin class has class attributes like 'list_display' which contains the
@@ -24,17 +53,23 @@ logger = logging.getLogger('camelot.view.elixir_admin')
 
 import sqlalchemy.types
 import camelot.types
-from camelot.view.model_thread import model_function, gui_function
+from camelot.view.model_thread import gui_function
+from camelot.view.model_thread import model_function
+from controls.formview import FormView
+from controls.tableview import TableView
+from proxy.queryproxy import QueryTableProxy
+from PyQt4 import QtCore
 import datetime
 
-class EntityAdmin(object):
 
+class EntityAdmin(object):
   name = None
   list_display = []
   fields = []
   form = []
-  # list of field_names to filter on, if the field name is a one2many, many2one or many2many field, the field
-  # name should be followed by a field name of the related entity, eg : 'organization.name'
+  # list of field_names to filter on, if the field name is a one2many,
+  # many2one or many2many field, the field name should be followed by a
+  # field name of the related entity, eg : 'organization.name'
   list_filter = []
   list_charts = []
   list_actions = []
@@ -58,8 +93,11 @@ class EntityAdmin(object):
       self.mt = get_model_thread()
     #
     # caches to prevent recalculation of things
-    # 
+    #
     self.__field_attributes = dict()
+
+  def __str__(self):
+    return 'Admin %s' % str(self.entity.__name__)
 
   def getName(self):
     return (self.name or self.entity.__name__)
@@ -216,7 +254,7 @@ class EntityAdmin(object):
     from forms import Form, structure_to_form
     if self.form:
       return structure_to_form(self.form)
-    return Form([f for f,a in self.getFields()])    
+    return Form([f for f, a in self.getFields()])    
 
   @model_function
   def getListCharts(self):
@@ -368,201 +406,11 @@ class EntityAdmin(object):
 
   @gui_function
   def createFormView(admin, title, model, index, parent):
-    """
-    Creates a Qt widget containing a form view, for a specific row of the
+    """Creates a Qt widget containing a form view, for a specific row of the
     passed query; uses the Admin class
     """
-    logger.debug('creating form view for index %s'%index)
-
-    from PyQt4 import QtCore
-    from PyQt4.QtCore import SIGNAL
-    from PyQt4 import QtGui
-
-    validator = admin.createValidator(model)
-      
-    class FormView(QtGui.QWidget):
-
-      def __init__(self, admin):
-        super(FormView, self).__init__(None)
-        self.admin = admin
-        self.setWindowTitle(title)
-        self.widget_mapper = QtGui.QDataWidgetMapper()
-        self.widget_layout = QtGui.QHBoxLayout()
-        self.model = model
-        self.connect(self.model,
-                     SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
-                     self.dataChanged)
-        self.widget_mapper.setModel(self.model)
-        self.setLayout(self.widget_layout)
-        self.validate_before_close = True
-        
-        def getColumnsAndForm():
-          return (self.model.getColumns(), self.admin.getForm())
-        
-        admin.mt.post(getColumnsAndForm,
-                      lambda columns_and_form:self.setColumnsFormAndDelegate(columns_and_form[0], columns_and_form[1], self.model.getItemDelegate()))
-
-        def getActions():
-          return admin.getFormActions(None)
-
-        admin.mt.post(getActions, self.setActions)
-
-      def dataChanged(self, index_from, index_to):
-        #@TODO: only revert if this form is in the changed range
-        self.widget_mapper.revert()
-
-      def setColumnsFormAndDelegate(self, columns, form, delegate):
-        #
-        # Create the value and the label widgets
-        #
-        self.widget_mapper.setItemDelegate(delegate)
-        widgets = {}
-        for i, (field_name, field_attributes) in enumerate(columns):
-          option = None
-          model_index = self.model.index(index, i)
-
-          value_widget = delegate.createEditor(parent, option, model_index)
-          label_widget = QtGui.QLabel(field_attributes['name'])
-          type_widget  = field_attributes['widget']
-
-          # look for rich text editor widget
-          if field_attributes['python_type'] == str:
-            if field_attributes.has_key('length') and \
-               field_attributes['length'] is None:
-              type_widget = 'richtext'
-
-          # required fields font is bold
-          if ('nullable' in field_attributes) and (not field_attributes['nullable']):
-            font = QtGui.QApplication.font()
-            font.setBold(True)
-            label_widget.setFont(font)
-
-          self.widget_mapper.addMapping(value_widget, i)
-          widgets[field_name] = (label_widget, value_widget, type_widget)
-          
-        self.widget_mapper.setCurrentIndex(index)
-        self.widget_layout.insertWidget(0, form.render(widgets, self))
-        self.widget_layout.setContentsMargins(7,7,7,7)        
-        #self.scroll_area.setWidget(form.render(widgets))
-        #self.scroll_area.setWidgetResizable(True)
-
-      def entity_getter(self):
-        return self.model._get_object(self.widget_mapper.currentIndex())
-      
-      def setActions(self, actions):
-        if actions:
-          from controls.actions import ActionsBox
-          logger.debug('setting Actions')
-          self.actions_widget = ActionsBox(self, admin.mt, self.entity_getter)
-          self.actions_widget.setActions(actions)
-          self.widget_layout.insertWidget(1, self.actions_widget)
-
-      def validateClose(self):
-        logger.debug('validate before close : %s'%self.validate_before_close)
-        if self.validate_before_close:
-          # submit should not happen a second time, since then we don't want the widgets data to
-          # be written to the model
-          self.widget_mapper.submit()
-          
-          def validate():
-            return validator.isValid(self.widget_mapper.currentIndex())
-                              
-          def showMessage(valid):
-            if not valid:
-              messages = u'\n'.join(validator.validityMessages(self.widget_mapper.currentIndex()))
-              reply = QtGui.QMessageBox.question(self, u'Unsaved changes',
-              u"Changes in this window could not be saved :\n%s\n Do you want to lose your changes ?"%messages, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-              if reply == QtGui.QMessageBox.Yes:
-                # clear mapping to prevent data being written again to the model, after we
-                # reverted the row                
-                self.widget_mapper.clearMapping()
-                model.revertRow(self.widget_mapper.currentIndex())
-                self.validate_before_close = False
-                from camelot.view.workspace import get_workspace
-                for window in get_workspace().subWindowList():
-                  if window.widget() == self:
-                    window.close()
-            else:
-              self.validate_before_close = False
-              from camelot.view.workspace import get_workspace
-              for window in get_workspace().subWindowList():
-                if window.widget() == self:
-                  window.close()
-          
-          admin.mt.post(validate, showMessage)
-          return False
-
-        return True
-
-      def viewFirst(self):
-        """select model's first row"""
-        # submit should not happen a second time, since then we don't want the widgets data to
-        # be written to the model
-        self.widget_mapper.submit()        
-        self.widget_mapper.toFirst()
-
-      def viewLast(self):
-        """select model's last row"""
-        # submit should not happen a second time, since then we don't want the widgets data to
-        # be written to the model
-        self.widget_mapper.submit()         
-        self.widget_mapper.toLast()
-
-      def viewNext(self):
-        """select model's next row"""
-        # submit should not happen a second time, since then we don't want the widgets data to
-        # be written to the model
-        self.widget_mapper.submit()         
-        self.widget_mapper.toNext()
-
-      def viewPrevious(self):
-        """select model's previous row"""
-        # submit should not happen a second time, since then we don't want the widgets data to
-        # be written to the model
-        self.widget_mapper.submit()         
-        self.widget_mapper.toPrevious()            
-
-      def closeEvent(self, event):
-        logger.debug('close event')
-        if self.validateClose():
-          event.accept()
-        else:
-          event.ignore()
-          
-      @model_function
-      def toHtml(self):
-        """generates html of the form"""
-        from camelot.view.proxy.collection_proxy import RowDataFromObject, RowDataAsUnicode
-        
-        def to_html(d=u''):
-          """Jinja 1 filter to convert field values to their default html
-          representation"""
-          
-          def wrapped(env, context, value):
-            if isinstance(value, list):
-              return u'<table><tr><td>' + u'</td></tr><tr><td>'.join([unicode(e) for e in value]) + u'</td></tr></table>'
-            return unicode(value)
-          
-          return wrapped
-
-        entity = self.entity_getter()
-        fields = self.admin.getFields()
-        table = [dict(field_attributes=field_attributes, 
-                      value=getattr(entity,name)) for name,field_attributes in fields]
-        context = {
-          'title': self.admin.getName(),
-          'table': table,
-        }
-        from jinja import Environment, FileSystemLoader
-        ld = FileSystemLoader(settings.CAMELOT_TEMPLATES_DIRECTORY)
-        env = Environment(loader=ld)
-        env.filters['to_html'] = to_html        
-        tp = env.get_template('form_view.html')
-        return tp.render(context)
-          
-    form = FormView(admin)
-    form.setMinimumSize(admin.form_size[0], admin.form_size[1])
-    
+    logger.debug('creating form view for index %s' % index)
+    form = FormView(title, admin, model, index)
     return form
 
   @gui_function
@@ -624,10 +472,6 @@ class EntityAdmin(object):
     @param query: sqlalchemy query object
     @param parent: the workspace widget that will contain the table view
     """
-    from controls.tableview import TableView
-    from proxy.queryproxy import QueryTableProxy
-    from PyQt4 import QtCore
-    from PyQt4.QtCore import SIGNAL
 
     tableview = TableView(self)
     admin = self
@@ -640,7 +484,7 @@ class EntityAdmin(object):
                                 tableview.table_model._query_getter,
                                 tableview.admin.getFields,
                                 max_number_of_rows=1)
-        title = u'%s'%(self.getName())
+        title = u'%s' % (self.getName())
 
         formview = tableview.admin.createFormView(title, model, index, parent)
         get_workspace().addSubWindow(formview)
@@ -648,9 +492,8 @@ class EntityAdmin(object):
 
       return openForm
 
-    tableview.connect(tableview, SIGNAL('row_selected'), createOpenForm(self, tableview))
+    tableview.connect(tableview,
+                      QtCore.SIGNAL('row_selected'),
+                      createOpenForm(self, tableview))
 
     return tableview
-
-  def __str__(self):
-    return 'Admin %s'%str(self.entity.__name__)
