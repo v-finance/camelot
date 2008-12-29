@@ -63,18 +63,22 @@ class ApplicationAdmin(object):
   
   def getEntitiesAndQueriesInSection(self, section):
     """
-    @return: a list of tuples of (admin,query) instances related to
+    @return: a list of tuples of (admin, query) instances related to
     the entities in this section.
     """
-    result = [(self.getEntityAdmin(e),self.getEntityQuery(e)) for e,a in self.admins.items() if hasattr(a,'section') and a.section==section ]
-    result.sort(cmp = lambda x,y:cmp(x[0].getName(), y[0].getName()))
+    result = [(self.getEntityAdmin(e), self.getEntityQuery(e))
+              for e, a in self.admins.items()
+              if hasattr(a, 'section') 
+              and a.section == section]
+    result.sort(cmp = lambda x, y: cmp(x[0].getName(), y[0].getName()))
     return result
   
   def getActions(self):
     """@return: a list of actions that should be added to the menu and the icon
-    bar for this application, each action is a tuple of (name, icon, callable), where
-    callable is a function taking no arguments that will be called when the action
-    is executed.  Callable will be called in the model thread."""
+    bar for this application, each action is a tuple of (name, icon, callable),
+    where callable is a function taking no arguments that will be called when
+    the action is executed.  Callable will be called in the model thread.
+    """
     return []
   
   def getName(self):
