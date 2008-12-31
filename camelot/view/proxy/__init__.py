@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,12 +23,13 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
-"""Proxy objects for the model that live in the GUI thread and
-are able to respond immediately.  They do so by keeping a local
-copy of the data of the real model
+"""Proxy objects for the model that live in the GUI thread and are able to
+respond immediately. They do so by keeping a local copy of the data of the real
+model
 
-we take copies of the data in the elixir model, because accessing an attribute on the model, 
-might cause an sql query which might take a long time, and might freeze the gui
+We take copies of the data in the elixir model, because accessing an attribute
+on the model, might cause an sql query which might take a long time, and might
+freeze the gui
 """

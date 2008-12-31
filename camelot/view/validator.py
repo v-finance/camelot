@@ -28,21 +28,21 @@
 import logging
 logger = logging.getLogger('camelot.view.validator')
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import Qt
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 
-from proxy.collection_proxy import fifo
+from fifo import fifo
 
 class Validator(QtCore.QObject):
   """A validator class validates an entity before flushing it to the database
   and provides the user with feedback if the entity is not ready to flush
   """
-  
+
   def __init__(self, admin, model):
     self.admin = admin
     self.model = model
     self.message_cache = fifo(10)
-    
+
   def objectValidity(self, entity_instance):
     """@return: list of messages explaining invalid data
     empty list if object is valid
@@ -54,16 +54,17 @@ class Validator(QtCore.QObject):
         is_null = False
         if value==None:
           is_null = True
-        elif (column[1]['widget']=='code') and (sum(len(c) for c in value)==0):
+        elif (column[1]['widget'] == 'code') and \
+             (sum(len(c) for c in value) == 0):
           is_null = True
-        elif (column[1]['widget']=='str') and (len(value)==0):
+        elif (column[1]['widget'] == 'str') and (len(value) == 0):
           is_null = True
-        elif (column[1]['widget']=='many2one') and (not value.id):
+        elif (column[1]['widget'] == 'many2one') and (not value.id):
           is_null = True
         if is_null:
-          messages.append(u'%s is a required field'%(column[1]['name']))
+          messages.append(u'%s is a required field' % (column[1]['name']))
     return messages
-            
+
   def isValid(self, row):
     """Verify if a row in a model is 'valid' meaning it could be flushed to
     the database
@@ -77,17 +78,17 @@ class Validator(QtCore.QObject):
         messages = self.objectValidity(entity_instance)
         self.message_cache.add_data(row, entity_instance.id, messages)
     except:
-      # that's rude, should be fixed
+      # rude, should be fixed
       pass
     return len(messages) == 0
-  
+
   def validityMessages(self, row):
     try:
       return self.message_cache.get_data_at_row(row)
     except KeyError:
       raise Exception('Programming error : isValid should be called ' \
                       'before calling validityMessage')
-        
+
   def validityMessage(self, row, parent):
     """Inform the user about the validity of the data at row, by showing 
     a message box, this function can only be called if isValid has been

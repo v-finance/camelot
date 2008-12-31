@@ -25,30 +25,40 @@
 #
 #  ============================================================================
 
-"""
-Proxy representing a collection of entities that live in the model thread.
+"""Proxy representing a collection of entities that live in the model thread.
 
 The proxy represents them in the gui thread and provides access to the data
 with zero delay.  If the data is not yet present in the proxy, dummy data is
 returned and an update signal is emitted when the correct data is available.
 """
+
 import logging
+logger = logging.getLogger('camelot.view.proxy.collection_proxy')
+verbose = False 
 
-logger = logging.getLogger('proxy.collection_proxy')
-
-from PyQt4 import QtCore, QtGui
+import pickle
+import elixir
+import datetime
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from camelot.view.remote_signals import get_signal_handler
+from sqlalchemy.orm.session import Session
 from camelot.view import art
+from camelot.view.fifo import fifo
+from camelot.view.controls import delegates
+from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import gui_function
 from camelot.view.model_thread import model_function
 from camelot.view.model_thread import get_model_thread
-   
+
+
 class DelayedProxy(object):
-  """A proxy object needs to be constructed within the GUI thread.  Construct a delayed
-  proxy when the construction of a proxy is needed within the Model thread.  On first
-  occasion the delayed proxy will be converted to a real proxy within the GUI thread"""
+  """A proxy object needs to be constructed within the GUI thread. Construct
+  a delayed proxy when the construction of a proxy is needed within the Model
+  thread.  On first occasion the delayed proxy will be converted to a real
+  proxy within the GUI thread
+  """
   
   @model_function
   def __init__(self, *args, **kwargs):
@@ -65,35 +75,36 @@ def RowDataFromObject(obj, columns):
   row_data = []
   mt = get_model_thread()
   
-  def create_collection_getter(o,attr):
-    return lambda:getattr(o,attr)
+  def create_collection_getter(o, attr):
+    return lambda: getattr(o, attr)
   
   for i,col in enumerate(columns):
     field_attributes = col[1]
-    if field_attributes['python_type']==list:
-      row_data.append( DelayedProxy(field_attributes['admin'], create_collection_getter(obj,col[0]),field_attributes['admin'].getColumns) )
+    if field_attributes['python_type'] == list:
+      row_data.append(DelayedProxy(field_attributes['admin'],
+                      create_collection_getter(obj, col[0]), 
+                      field_attributes['admin'].getColumns))
     else:
-      row_data.append(getattr(obj,col[0]))
+      row_data.append(getattr(obj, col[0]))
   return row_data
   
 def RowDataAsUnicode(row_data):
-  import datetime
-
   def unicode_or_none(data):
     if data:
       if isinstance(data, list):
         return '.'.join(data)
       elif isinstance(data, datetime.datetime):
         # datetime should come before date since datetime is a subtype of date
-        if data.year>=1900:
+        if data.year >= 1900:
           return data.strftime('%d/%m/%Y %H:%M')       
       elif isinstance(data, datetime.date):
-        if data.year>=1900:
+        if data.year >= 1900:
           return data.strftime('%d/%m/%Y')
       return unicode(data)
     return data
   
   return [unicode_or_none(col) for col in row_data]
+
 
 class EmptyRowData(object):
   def __getitem__(self, column):
@@ -102,75 +113,28 @@ class EmptyRowData(object):
 empty_row_data = EmptyRowData()
 form_icon = QtCore.QVariant(QtGui.QIcon(art.icon16('places/folder')))
 
-class fifo(object):
-  """fifo, is the actual cache containing a limited set of copies of row data
-  so the data in fifo, is always immediately accessible to the gui thread,
-  with zero delay as you scroll down the table view, fifo is filled and
-  refilled with data queried from the database
-  
-  the cache can be queried either by the row number or by the primary key
-  of the object represented by the row data.
-  """
-  def __init__(self, max_entries):
-    self.max_entries = max_entries
-    self.entities = []
-    self.data_by_rows = dict()
-    self.rows_by_entity = dict()
-  def add_data(self, row, entity, value):
-    self.delete_by_entity(entity)
-    self.data_by_rows[row] = (entity, value)
-    self.rows_by_entity[entity] = row
-    self.entities.append(entity)
-    if len(self.entities)>self.max_entries:
-      entity = self.entities.pop(0)
-      row = self.rows_by_entity[entity]
-      del self.data_by_rows[row]
-      del self.rows_by_entity[entity]
-  def delete_by_row(self, row):
-    (entity, value) = self.data_by_rows[row]
-    del self.data_by_rows[row]
-    del self.rows_by_entity[entity] 
-    return row
-  def delete_by_entity(self, entity):
-    """Remove everything in the cache related to an entity instance
-    returns the row at which the data was stored if the data was in the
-    cache, return None otherwise"""
-    row = None
-    try:
-      row = self.rows_by_entity[entity]
-      del self.data_by_rows[row]
-      del self.rows_by_entity[entity]      
-    except KeyError:
-      pass
-    try:
-      self.entities.remove(entity)
-    except ValueError:
-      pass
-    return row    
-  def get_data_at_row(self, row):
-    return self.data_by_rows[row][1]
-  def get_row_by_entity(self, entity):
-    return self.rows_by_entity[entity]
-  def get_entity_at_row(self, row):
-    return self.data_by_rows[row][0]
       
 class CollectionProxy(QtCore.QAbstractTableModel):
-  """The CollectionProxy contains a limited copy of the data in the actual collection,
-  usable for fast visualisation in a QTableView 
+  """The CollectionProxy contains a limited copy of the data in the actual
+  collection, usable for fast visualisation in a QTableView 
   """
   
   @gui_function
-  def __init__(self, admin, collection_getter, columns_getter, max_number_of_rows=10, edits=None, flush_changes=True):
-    """"
-    @param admin: the admin interface for the items in the collection
-    @param collection_getter: a function that takes no arguments and returns the collection
-    that will be visualized.  This function will be called inside the model thread, to prevent
-    delays when this function causes the database to be hit.
-    @param columns_getter: a function that takes no arguments and returns the columns that will
-    be cached in the proxy.  This function will be called inside the model thread.
+  def __init__(self, admin, collection_getter, columns_getter,
+               max_number_of_rows=10, edits=None, flush_changes=True):
+    """@param admin: the admin interface for the items in the collection
+
+    @param collection_getter: a function that takes no arguments and returns
+    the collection that will be visualized. This function will be called inside
+    the model thread, to prevent delays when this function causes the database
+    to be hit.
+
+    @param columns_getter: a function that takes no arguments and returns the
+    columns that will be cached in the proxy. This function will be called
+    inside the model thread.
     """
+    logger.debug('initialize query table for %s' % (admin.getName()))
     self.logger = logger
-    logger.debug('initialize query table for %s'%(admin.getName()))
     QtCore.QAbstractTableModel.__init__(self)
     self.admin = admin
     self.validator = admin.createValidator(self)
@@ -182,7 +146,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.rows = 0
     self._columns = []
     self.max_number_of_rows = max_number_of_rows
-    self.cache = {Qt.DisplayRole:fifo(10*self.max_number_of_rows), Qt.EditRole:fifo(10*self.max_number_of_rows)}
+    self.cache = {Qt.DisplayRole:fifo(10*self.max_number_of_rows),
+                  Qt.EditRole:fifo(10*self.max_number_of_rows)}
     # The rows in the table for which a cache refill is under request
     self.rows_under_request = set()
     # The rows that have unflushed changes
@@ -190,9 +155,15 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     # Set edits
     self.edits = edits or []
     self.rsh = get_signal_handler()
-    self.rsh.connect(self.rsh, self.rsh.entity_update_signal, self.handleEntityUpdate)
-    self.rsh.connect(self.rsh, self.rsh.entity_delete_signal, self.handleEntityDelete)
-    self.rsh.connect(self.rsh, self.rsh.entity_create_signal, self.handleEntityCreate)
+    self.rsh.connect(self.rsh,
+                     self.rsh.entity_update_signal,
+                     self.handleEntityUpdate)
+    self.rsh.connect(self.rsh,
+                     self.rsh.entity_delete_signal,
+                     self.handleEntityDelete)
+    self.rsh.connect(self.rsh,
+                     self.rsh.entity_create_signal,
+                     self.handleEntityCreate)
     
     def get_columns():
       self._columns = columns_getter()
@@ -205,9 +176,10 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.item_delegate = None
     
   def hasUnflushedRows(self):
-    """The model has rows that have not been flushed to the database yet, because the row
-    is invalid"""
-    return len(self.unflushed_rows)>0
+    """The model has rows that have not been flushed to the database yet,
+    because the row is invalid
+    """
+    return len(self.unflushed_rows) > 0
   
   @model_function
   def getRowCount(self):
@@ -215,14 +187,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   
   @gui_function
   def revertRow(self, row):
-    
     def create_refresh_entity(row):
-      
       @model_function
       def refresh_entity():
-        from elixir import session
         o = self._get_object(row)
-        session.refresh(o)
+        elixir.session.refresh(o)
         self.rsh.sendEntityUpdate(self, o)
         return row, o
       
@@ -236,12 +205,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.mt.post(create_refresh_entity(row), refresh)
               
   def refresh(self):
-    
     def refresh_content(rows):
-      self.cache = {Qt.DisplayRole:fifo(10*self.max_number_of_rows), Qt.EditRole:fifo(10*self.max_number_of_rows)}
+      self.cache = {Qt.DisplayRole: fifo(10*self.max_number_of_rows),
+                    Qt.EditRole: fifo(10*self.max_number_of_rows)}
       self.setRowCount(rows)
       
-    self.mt.post(self.getRowCount, refresh_content )
+    self.mt.post(self.getRowCount, refresh_content)
     
   def setCollectionGetter(self, collection_getter):
     self.collection_getter = collection_getter
@@ -251,19 +220,24 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     """Handles the update of a row when this row might be out of date"""
     self.cache[Qt.DisplayRole].delete_by_row(row)
     self.cache[Qt.EditRole].delete_by_row(row) 
-    self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
-              self.index(row,0), self.index(row,self.column_count))
+    sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
+    self.emit(QtCore.SIGNAL(sig),
+              self.index(row, 0),
+              self.index(row, self.column_count))
     
   def handleEntityUpdate(self, sender, entity):
     """Handles the entity signal, indicating that the model is out of date"""
-    logger.debug('%s %s received entity update signal'%(self.__class__.__name__, self.admin.getName()))
-    if sender!=self:
+    logger.debug('%s %s received entity update signal' % \
+                 (self.__class__.__name__, self.admin.getName()))
+    if sender != self:
       row = self.cache[Qt.DisplayRole].delete_by_entity(entity)
       row = self.cache[Qt.EditRole].delete_by_entity(entity)
       if row:
-        logger.debug('updated row %i'%row)
-        self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
-                  self.index(row,0), self.index(row,self.column_count))
+        logger.debug('updated row %i' % row)
+        sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
+        self.emit(QtCore.SIGNAL(sig),
+                  self.index(row, 0),
+                  self.index(row, self.column_count))
       else:
         logger.debug('entity not in cache')
     else:
@@ -272,13 +246,13 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def handleEntityDelete(self, sender, entity, primary_keys):
     """Handles the entity signal, indicating that the model is out of date"""
     logger.debug('received entity delete signal')
-    if sender!=self:
+    if sender != self:
       self.refresh()
                  
   def handleEntityCreate(self, entity, primary_keys):
     """Handles the entity signal, indicating that the model is out of date"""
     logger.debug('received entity create signal')
-    if sender!=self:
+    if sender != self:
       self.refresh()
                  
   def setRowCount(self, rows):
@@ -291,24 +265,20 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def getItemDelegate(self):
     logger.debug('getItemDelegate')
     if not self.item_delegate:
-      raise Exception('Item delegate not yet available')
+      raise Exception('item delegate not yet available')
     return self.item_delegate 
     
   def getColumns(self):
     return self._columns
   
   def setColumns(self, columns):
-    """
-    Callback method to set the columns
+    """Callback method to set the columns
+
     @param columns a list with fields to be displayed
     """
 
     self.column_count = len(columns)
     self._columns = columns
-    logger.debug('setting up custom delegates')
-    
-    from camelot.view.controls import delegates
-    import datetime
     
     self.item_delegate = delegates.GenericDelegate()
     self.item_delegate.set_columns_desc(columns)
@@ -319,8 +289,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       type_ = c[1]['python_type']
       widget_ = c[1]['widget']
 
-      logger.debug('%s : creating delegate for type %s, using widget %s and arguments %s' % \
-                   (field_name, type_, widget_, str(c[1])))
+      if verbose:
+        logger.debug("creating delegate for %s \ntype: %s\nwidget: %s\n" \
+                     "arguments: %s" % (field_name, type_, widget_, str(c[1])))
+      else:
+        logger.debug('creating delegate for %s' % field_name)
+
       
       if 'delegate' in c[1]:
         delegate = c[1]['delegate'](parent=None, **c[1])
@@ -391,10 +365,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   
   @gui_function
   def headerData(self, section, orientation, role):
-    # In case the columns have not been set yet, don't even try to get information
-    # out of them
+    """In case the columns have not been set yet, don't even try to get
+    information out of them
+    """
     if (orientation == Qt.Horizontal) and (section >= self.column_count):
-      return QtCore.QAbstractTableModel.headerData(self, section, orientation, role)
+      return QtCore.QAbstractTableModel.headerData(self, section,
+                                                   orientation, role)
     if role == Qt.DisplayRole:
       if orientation == Qt.Horizontal:
         return QtCore.QVariant(self._columns[section][1]['name'])
@@ -464,12 +440,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     return QtCore.QVariant()
 
   def setData(self, index, value, role=Qt.EditRole):
-    """Value should be a function taking no arguments that returns the data to be set
+    """Value should be a function taking no arguments that returns the data to
+    be set
+    
     This function will then be called in the model_thread
     """
-    from elixir import session
-    import datetime
-    if role==Qt.EditRole:
+    if role == Qt.EditRole:
       
       flushed = (index.row() not in self.unflushed_rows)
       self.unflushed_rows.add(index.row())
@@ -479,10 +455,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         @model_function
         def update_model_and_cache():
           new_value = value()
-          logger.debug('set data col %s, row %s to %s'%(row, column, new_value))
+          if verbose:
+            logger.debug('set data for col %s;row %s to %s' % (row, column, new_value))
+          else:
+            logger.debug('set data for col %s;row %s' % (row, column))
             
-          from camelot.model.memento import BeforeUpdate
-          from camelot.model.authentication import getCurrentPerson
           o = self._get_object(row)
           if not o:
             # the object might have been deleted from the collection while the editor
@@ -511,17 +488,18 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             self.cache[Qt.DisplayRole].add_data(row, o, RowDataAsUnicode(row_data))
             if self.flush_changes and self.validator.isValid(row):
               # save the state before the update
-              session.flush([o])
+              elixir.session.flush([o])
               try:
                 self.unflushed_rows.remove(row)
               except KeyError:
                 pass
               if model_updated:
-                import pickle
                 #
                 # in case of images, we cannot pickle them
                 #
                 if not 'Imag' in old_value.__class__.__name__:
+                  from camelot.model.memento import BeforeUpdate
+                  from camelot.model.authentication import getCurrentPerson
                   history = BeforeUpdate(model=unicode(self.admin.entity.__name__), 
                                          primary_key=o.id, 
                                          previous_attributes={attribute:old_value},
@@ -612,10 +590,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
  
   @model_function
   def removeEntityInstance(self, o):
-    logger.debug('remove entity instance with id %s'%o.id)
-    from sqlalchemy.orm.session import Session
-    from camelot.model.memento import BeforeDelete
-    from camelot.model.authentication import getCurrentPerson
+    logger.debug('remove entity instance with id %s' % o.id)
     self.remove(o)
     # remove the entity from the cache
     self.cache[Qt.DisplayRole].delete_by_entity(o)
@@ -624,10 +599,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     if o.id:
       pk = o.id
       # save the state before the update
+      from camelot.model.memento import BeforeDelete
+      from camelot.model.authentication import getCurrentPerson
       history = BeforeDelete(model=unicode(self.admin.entity.__name__), 
                              primary_key=pk, 
                              previous_attributes={},
-                             person = getCurrentPerson() )
+                             person = getCurrentPerson())
       logger.debug('delete the object')
       o.delete()
       Session.object_session(o).flush([o])
@@ -636,7 +613,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     
   @gui_function
   def removeRow(self, row):
-    logger.debug('remove row %s'%row)
+    logger.debug('remove row %s' % row)
     
     def create_delete_function(row):
       
@@ -651,22 +628,21 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     
   @model_function
   def insertEntityInstance(self, row, o):
-    from elixir import session
-    from camelot.model.memento import Create
-    from camelot.model.authentication import getCurrentPerson
     self.append(o)
     row = self.getRowCount()-1
     self.unflushed_rows.add(row)
     if self.flush_changes and not len(self.validator.objectValidity(o)):
-      session.flush([o])
+      elixir.session.flush([o])
       try:
         self.unflushed_rows.remove(row)
       except KeyError:
         pass
+      from camelot.model.memento import Create
+      from camelot.model.authentication import getCurrentPerson
       history = Create(model=unicode(self.admin.entity.__name__),
                        primary_key=o.id,
-                       person = getCurrentPerson() )
-      session.flush([history])
+                       person = getCurrentPerson())
+      elixir.session.flush([history])
       self.rsh.sendEntityCreate(self, o)
     self.mt.post(lambda:None, lambda *args:self.refresh())
               

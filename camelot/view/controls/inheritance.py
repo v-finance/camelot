@@ -1,20 +1,54 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
+
 """Controls related to visualizing object hierarchy"""
-import logging
-import settings
+
 import os
+import logging
 
-logger = logging.getLogger('controls.inheritance')
+logger = logging.getLogger('camelot.view.controls.inheritance')
 
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
-from PyQt4 import QtCore, QtGui
 
-from camelot.view.controls.modeltree import ModelItem, ModelTree
-
-#winnew = os.path.join(settings.CANTATE_ART_DIRECTORY, 'tango/16x16/actions/window-new.png')
+import settings
+from camelot.view.controls.modeltree import ModelTree
+from camelot.view.controls.modeltree import ModelItem
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
-#class SubclassTree(QtGui.QTreeWidget):
+
+class SubclassItem(ModelItem):
+  def __init__(self, parent, admin):
+    super(SubclassItem, self).__init__(parent, [admin.getName()])
+    self.admin = admin
+      
+
 class SubclassTree(ModelTree):
   """Widget to select subclasses of a certain entity, where the
   subclasses are represented in a tree
@@ -23,31 +57,22 @@ class SubclassTree(ModelTree):
   """
   
   def __init__(self, admin, parent):
-    #QtGui.QTreeWidget.__init__(self, parent)
     header_labels = ['Types']
     super(SubclassTree, self).__init__(header_labels, parent)
-
-    #if QT_MAJOR_VERSION > 4.3:
-    #  self.setHeaderHidden(True)
-    #else:
-    #  self.setHeaderLabels(['Types'])
-
     self.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
     #self.setSelectionBehavior(QtGui.QAbstractItemView.SelectItems)
     self.admin = admin
     self.subclasses = []
     self.mt = admin.getModelThread()
-    self.mt.post(lambda:self.admin.getSubclasses(), lambda subclasses:self.setSubclasses(subclasses))
-    self.connect(self, QtCore.SIGNAL('clicked(const QModelIndex&)'), self.emitSubclassClicked)
+    self.mt.post(lambda: self.admin.getSubclasses(),
+                 lambda subclasses: self.setSubclasses(subclasses))
+    self.connect(self,
+                 QtCore.SIGNAL('clicked(const QModelIndex&)'),
+                 self.emitSubclassClicked)
         
   def setSubclasses(self, subclasses):
-    logger.debug('set subclass tree')
+    logger.debug('setting subclass tree')
     
-    class SubclassItem(ModelItem):
-      def __init__(self, parent, admin):
-        super(SubclassItem, self).__init__(parent, [admin.getName()])
-        self.admin = admin
-      
     self.subclasses = subclasses
     if len(subclasses) > 1:
       self.clear_model_items()
@@ -61,6 +86,6 @@ class SubclassTree(ModelTree):
       self.setMaximumWidth(0)
 
   def emitSubclassClicked(self, index):
-    logger.debug('subclass clicked at position %s'%index.row())
+    logger.debug('subclass clicked at position %s' % index.row())
     item = self.itemFromIndex(index)
     self.emit(QtCore.SIGNAL('subclasssClicked'), item.admin)

@@ -1,16 +1,45 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
+
 """Tableview"""
 
-import logging
-
-import settings
 import os
+import logging
+logger = logging.getLogger('camelot.view.controls.tableview')
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QSizePolicy
 from PyQt4.QtCore import SIGNAL
-from camelot.view.proxy.queryproxy import QueryTableProxy
 
-logger = logging.getLogger('view.controls.tableview')
+from camelot.view.proxy.queryproxy import QueryTableProxy
+import settings
+
+verbose = False
+
 
 class QueryTable(QtGui.QTableView):
   """the actual displayed table"""
@@ -22,6 +51,7 @@ class QueryTable(QtGui.QTableView):
     self.setEditTriggers(QtGui.QAbstractItemView.AllEditTriggers)
     self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     self.horizontalHeader().setClickable(False)
+
 
 class TableView(QtGui.QWidget):
   """emits the row_selected signal when a row has been selected"""
@@ -160,13 +190,13 @@ class TableView(QtGui.QWidget):
     logger.debug('resizeColumnsAndRebuildQuery')
     # only if there is data in the model, we can resize the columns and
     # a query rebuild is needed
-    if self.table_model.rowCount()>1:
+    if self.table_model.rowCount() > 1:
       self.table.resizeColumnsToContents()
       self.rebuildQuery()
 
     #logger.debug('Selecting first row in table')
-    #@todo: select first row is not appropriate because the custom editors don't
-    #       scale well
+    #@todo: select first row is not appropriate because 
+    #       the custom editors don't scale well
     #self.table.selectRow(0)
 
   def deleteSelectedRows(self):
@@ -255,7 +285,10 @@ class TableView(QtGui.QWidget):
   def setFilters(self, items):
     """sets filters for the tableview"""
     from filter import FilterList
-    logger.debug('setFilters %s'%str(items))
+    if verbose:
+      logger.debug('setting filters with items : %s' % str(items))
+    else:
+      logger.debug('setting filters for tableview')
     if self.filters:
       self.filters.deleteLater()
       self.filters = None

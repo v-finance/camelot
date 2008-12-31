@@ -44,23 +44,22 @@ the context
 import os
 import sys
 import logging
-
-import settings
-
-_ = lambda x: x
-
 logger = logging.getLogger('camelot.view.elixir_admin')
 
-import sqlalchemy.types
-import camelot.types
-from camelot.view.model_thread import gui_function
-from camelot.view.model_thread import model_function
-from controls.formview import FormView
-from controls.tableview import TableView
-from proxy.queryproxy import QueryTableProxy
 from PyQt4 import QtCore
 import datetime
 
+import sqlalchemy.types
+import camelot.types
+from model_thread import gui_function
+from model_thread import model_function
+from controls.formview import FormView
+from controls.tableview import TableView
+from proxy.queryproxy import QueryTableProxy
+from validator import Validator
+import settings
+
+_ = lambda x: x
 
 class EntityAdmin(object):
   name = None
@@ -262,8 +261,8 @@ class EntityAdmin(object):
 
   @model_function
   def getFilters(self):
-    """
-    Return the filters applicable for these entities each filter is 
+    """Return the filters applicable for these entities each filter is 
+
     @return: [(filter_name, [(option_name, query_decorator), ...), ... ]
     """
     from filters import structure_to_filter
@@ -277,7 +276,6 @@ class EntityAdmin(object):
     return list(filter_generator())
 
   def createValidator(self, model):
-    from validator import *
     return Validator(self, model)
   
   @model_function
@@ -298,16 +296,16 @@ class EntityAdmin(object):
             default_value = default()
         else:
           default_value = default
-        logger.debug('set default for %s to %s'%(field, unicode(default_value)))
+        logger.debug('set default for %s to %s' % \
+                    (field, unicode(default_value)))
         setattr(entity_instance, field, default_value)
       except KeyError,e:
         pass
               
   @gui_function
   def createNewView(admin, parent=None, oncreate=None, onexpunge=None):
-    """
-    Create a QT widget containing a form to create a new instance of the entity
-    related to this admin class
+    """Create a QT widget containing a form to create a new instance of the
+    entity related to this admin class
 
     The returned class has an 'entity_created_signal' that will be fired when a
     a valid new entity was created by the form
@@ -415,10 +413,10 @@ class EntityAdmin(object):
 
   @gui_function
   def createSelectView(admin, query, search_text=None, parent=None):
-    """
-    Returns a QT widget that can be used to select an element from a query,
+    """Returns a QT widget that can be used to select an element from a query,
 
     @param query: sqlalchemy query object
+
     @param parent: the widget that will contain this select view, the returned
     widget has an entity_selected_signal signal that will be fired when a
     entity has been selected.
@@ -465,11 +463,11 @@ class EntityAdmin(object):
 
   @gui_function
   def createTableView(self, query, parent=None):
-    """
-    Returns a QT widget containing a table view, for a certain query, using
+    """Returns a QT widget containing a table view, for a certain query, using
     this Admin class; the table widget contains a model QueryTableModel
 
     @param query: sqlalchemy query object
+
     @param parent: the workspace widget that will contain the table view
     """
 

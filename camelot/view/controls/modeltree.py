@@ -1,4 +1,4 @@
-#  =============================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,13 +23,13 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  =============================================================================
+#  ============================================================================
 
 """custom tree and tree-items widgets"""
 
 import logging
 
-logger = logging.getLogger('controls.modeltree')
+logger = logging.getLogger('camelot.view.controls.modeltree')
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -39,6 +39,7 @@ import settings
 from camelot.view import art
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
+
 
 class ModelItem(QtGui.QTreeWidgetItem):
   """Custom tree item widget"""

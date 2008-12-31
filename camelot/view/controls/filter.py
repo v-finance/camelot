@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,24 +23,26 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
 """Controls to filter data"""
+
 import logging
+logger = logging.getLogger('camelot.view.controls.filter')
 
-logger = logging.getLogger('controls.filter')
-
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 
 _ = lambda x:x
-      
+
+
 class FilterList(QtGui.QScrollArea):
-  """A list with filters that can be applied on a query in the 
-  tableview"""
-  
+  """A list with filters that can be applied on a query in the tableview"""
+ 
   def __init__(self, items, parent):
     """@param item list of tubles (name, choices) for constructing the
-    different filterboxes"""
+    different filterboxes
+    """
     QtGui.QScrollArea.__init__(self, parent)
     self.widget = QtGui.QWidget()
     layout = QtGui.QVBoxLayout()
@@ -51,7 +53,9 @@ class FilterList(QtGui.QScrollArea):
       widget = filter.render(self, name, options)
       layout.addWidget(widget)
       self.filters.append(widget)
-      self.connect(widget, QtCore.SIGNAL('filter_changed'), self.emit_filters_changed)
+      self.connect(widget,
+                   QtCore.SIGNAL('filter_changed'),
+                   self.emit_filters_changed)
 
     layout.addStretch()
     self.widget.setLayout(layout)
@@ -64,10 +68,10 @@ class FilterList(QtGui.QScrollArea):
     for filter in self.filters:
       query = filter.decorate_query(query)
     return query
-  
+
   def emit_filters_changed(self):
     logger.debug('filters changed')
     self.emit(QtCore.SIGNAL('filters_changed'))
-    
+
   def __del__(self):
     logger.debug('delete filter list')

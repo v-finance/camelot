@@ -26,11 +26,17 @@
 #  ============================================================================
 
 """Proxies representing the results of a query"""
+
+from PyQt4.QtCore import Qt
+
 import logging
+logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
-from collection_proxy import *
+from collection_proxy import CollectionProxy
+from collection_proxy import RowDataAsUnicode
+from collection_proxy import RowDataFromObject
+from camelot.view.model_thread import model_function
 
-logger = logging.getLogger('proxy.queryproxy')
 
 class QueryTableProxy(CollectionProxy):
   """The QueryTableProxy contains a limited copy of the data in the Elixir
@@ -40,9 +46,7 @@ class QueryTableProxy(CollectionProxy):
 
   def __init__(self, admin, query_getter, columns_getter,
                max_number_of_rows=10, edits=None):
-    """
-    @param query_getter: a model_thread function that returns a query
-    """
+    """@param query_getter: a model_thread function that returns a query"""
     logger.debug('initialize query table')
     self._query_getter = query_getter
     #rows appended to the table which have not yet been flushed to the

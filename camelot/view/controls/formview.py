@@ -32,17 +32,10 @@ logger = logging.getLogger('camelot.view.controls.formview')
 
 from PyQt4 import QtCore
 from PyQt4 import QtGui
-from jinja import Environment
-from jinja import FileSystemLoader
-import settings
 from camelot.view.model_thread import model_function
-from camelot.view.proxy.collection_proxy import RowDataAsUnicode
-from camelot.view.proxy.collection_proxy import RowDataFromObject
-from camelot.view.workspace import get_workspace
-from actions import ActionsBox
+
 
 class FormView(QtGui.QWidget):
-
   def __init__(self, title, admin, model, index):
     super(FormView, self).__init__(None)
     self.admin = admin
@@ -63,13 +56,11 @@ class FormView(QtGui.QWidget):
     self.validate_before_close = True
 
     def getColumnsAndForm():
-      return (self.model.getColumns(),
-              self.admin.getForm(),
-              self.model.getItemDelegate())
+      return (self.model.getColumns(), self.admin.getForm())
 
     self.admin.mt.post(getColumnsAndForm, 
-                       lambda (columns, form, delegate):
-                       self.setColumnsFormAndDelegate(columns, form, delegate))
+                       lambda (columns, form):
+                       self.handleGetColumnsAndForm(columns, form))
 
     def getActions():
       return admin.getFormActions(None)
@@ -80,6 +71,10 @@ class FormView(QtGui.QWidget):
     #@TODO: only revert if this form is in the changed range
     self.widget_mapper.revert()
 
+  def handleGetColumnsAndForm(self, columns, form):
+    delegate = self.model.getItemDelegate()
+    self.setColumnsFormAndDelegate(columns, form, delegate)
+
   def setColumnsFormAndDelegate(self, columns, form, delegate):
     """Create value and label widgets"""
     widgets = {}
@@ -88,15 +83,15 @@ class FormView(QtGui.QWidget):
     for i, (field_name, field_attributes) in enumerate(columns):
       option = None
       model_index = self.model.index(self.index, i)
-      widget_type  = field_attributes['widget']
+      #widget_type  = field_attributes['widget']
       widget_label = QtGui.QLabel(field_attributes['name'])
       widget_editor = delegate.createEditor(None, option, model_index)
 
       # look for rich text editor widget
-      if field_attributes['python_type'] == str:
-        if field_attributes.has_key('length') and \
-           field_attributes['length'] is None:
-          widget_type = 'richtext'
+      #if field_attributes['python_type'] == str:
+      #  if field_attributes.has_key('length') and \
+      #     field_attributes['length'] is None:
+      #    widget_type = 'richtext'
 
       # required fields font is bold
       if ('nullable' in field_attributes) and \
@@ -106,7 +101,8 @@ class FormView(QtGui.QWidget):
         widget_label.setFont(font)
 
       self.widget_mapper.addMapping(widget_editor, i)
-      widgets[field_name] = (widget_label, widget_editor, widget_type)
+      #widgets[field_name] = (widget_label, widget_editor, widget_type)
+      widgets[field_name] = (widget_label, widget_editor)
       
     self.widget_mapper.setCurrentIndex(self.index)
     self.widget_layout.insertWidget(0, form.render(widgets, self))
@@ -117,7 +113,8 @@ class FormView(QtGui.QWidget):
 
   def setActions(self, actions):
     if actions:
-      logger.debug('setting Actions')
+      from actions import ActionsBox
+      logger.debug('setting Actions for formview')
       self.actions_widget = ActionsBox(self, admin.mt, self.getEntity)
       self.actions_widget.setActions(actions)
       self.widget_layout.insertWidget(1, self.actions_widget)
@@ -175,11 +172,13 @@ class FormView(QtGui.QWidget):
             # then we reverted the row
             self.widget_mapper.clearMapping()
             model.revertRow(self.index)
+            from camelot.view.workspace import get_workspace
             self.validate_before_close = False
             for window in get_workspace().subWindowList():
               if window.widget() == self:
                 window.close()
         else:
+          from camelot.view.workspace import get_workspace
           self.validate_before_close = False
           for window in get_workspace().subWindowList():
             if window.widget() == self:
@@ -191,15 +190,19 @@ class FormView(QtGui.QWidget):
     return True
 
   def closeEvent(self, event):
-    logger.debug('close event')
+    logger.debug('formview closed')
     if self.validateClose():
       event.accept()
     else:
       event.ignore()
-    
+
   @model_function
   def toHtml(self):
     """generates html of the form"""
+
+    import settings
+    from jinja import Environment
+    from jinja import FileSystemLoader
 
     def to_html(d=u''):
       """Jinja 1 filter to convert field values to their default html
@@ -232,3 +235,7 @@ class FormView(QtGui.QWidget):
     tp = env.get_template('form_view.html')
 
     return tp.render(context)
+
+  def __del__(self):
+    """deletes formview object"""
+    logger.debug('%s deleted' % self.__class__.__name__) 

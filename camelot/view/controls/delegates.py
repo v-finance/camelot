@@ -29,37 +29,24 @@
 
 import logging
 
-logger = logging.getLogger('delegates')
+logger = logging.getLogger('camelot.view.controls.delegates')
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 import datetime
-from camelot.view.controls.editors import *
+import StringIO
+
+import camelot.types
+from camelot.view.controls import editors 
+from camelot.view.model_thread import get_model_thread
+
 
 """Dictionary mapping widget types to an associated delegate"""
+
 _registered_delegates_ = {}
-
-def _paint_required(painter, option, index):
-  text = index.model().data(index, Qt.DisplayRole).toString()
-  painter.save()
-
-  #painter.setPen(QtGui.QColor(Qt.red))
-
-  font = painter.font()
-  font.setBold(True)
-  painter.setFont(font)
-
-  painter.drawText(option.rect.x()+2,
-                   option.rect.y(),
-                   option.rect.width()-4,
-                   option.rect.height(),
-                   Qt.AlignVCenter,
-                   text)
-
-  painter.restore()
-
+verbose = False
 
 def _paint_not_editable(painter, option, index):
   text = index.model().data(index, Qt.DisplayRole).toString()
@@ -80,6 +67,7 @@ def _paint_not_editable(painter, option, index):
 def create_constant_function(constant):
   return lambda:constant
 
+
 class GenericDelegate(QtGui.QItemDelegate):
   """Manages custom delegates"""
 
@@ -92,7 +80,8 @@ class GenericDelegate(QtGui.QItemDelegate):
 
   def insertColumnDelegate(self, column, delegate):
     """Inserts a custom column delegate"""
-    logger.debug('inserting a new custom column delegate')
+    if verbose:
+      logger.debug('inserting delegate for column %s' % column)
     delegate.setParent(self)
     self.delegates[column] = delegate
     self.connect(delegate, QtCore.SIGNAL('commitData(QWidget*)'), self.commitData)
@@ -128,14 +117,17 @@ class GenericDelegate(QtGui.QItemDelegate):
 
   def setEditorData(self, editor, index):
     """Use a custom delegate setEditorData method if it exists"""
-    logger.debug('setting editor data for column %s' % index.column())
+    if verbose:
+      logger.debug('setting editor data for column %s' % index.column())
     delegate = self.delegates.get(index.column())
     if delegate is not None:
-      logger.debug('got delegate')
+      if verbose:
+        logger.debug('got delegate')
       delegate.setEditorData(editor, index)
     else:
       QtGui.QItemDelegate.setEditorData(self, editor, index)
-    logger.debug('data set')
+    if verbose:
+      logger.debug('data set')
 
   def setModelData(self, editor, model, index):
     """Use a custom delegate setModelData method if it exists"""
@@ -153,6 +145,7 @@ class GenericDelegate(QtGui.QItemDelegate):
       return delegate.sizeHint(option, index)
     else:
       return QtGui.QItemDelegate.sizeHint(option, index)    
+
 
 class IntegerColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for integer values"""
@@ -178,6 +171,7 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
 
 _registered_delegates_[QtGui.QSpinBox] = IntegerColumnDelegate
 
+
 class PlainTextColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for simple string values"""
 
@@ -189,8 +183,6 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
       QtGui.QItemDelegate.paint(self, painter, option, index)
     elif not self.parent().columnsdesc[index.column()][1]['editable']:
       _paint_not_editable(painter, option, index)
-  #  elif not self.parent().columnsdesc[index.column()][1]['nullable']:
-  #    _paint_required(painter, option, index)
     else:
       QtGui.QItemDelegate.paint(self, painter, option, index)
 
@@ -209,8 +201,8 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
 
 _registered_delegates_[QtGui.QLineEdit] = PlainTextColumnDelegate
 
+
 class TimeColumnDelegate(QtGui.QItemDelegate):
-  
   def __init__(self, format, default, nullable, parent=None):
     super(TimeColumnDelegate, self).__init__(parent)
     self.nullable = nullable
@@ -235,8 +227,8 @@ class TimeColumnDelegate(QtGui.QItemDelegate):
     t = datetime.time(hour=value.hour(), minute=value.minute(), second=value.second())
     model.setData(index, create_constant_function(t))
   
+
 class DateTimeColumnDelegate(QtGui.QItemDelegate):
-  
   def __init__(self, parent, format, nullable, **kwargs):
     super(DateTimeColumnDelegate, self).__init__(parent)
     self.format = format
@@ -253,6 +245,7 @@ class DateTimeColumnDelegate(QtGui.QItemDelegate):
     else:
       editor.setDateTime(editor.minimumDateTime())
     
+
 class DateColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for date values"""
 
@@ -268,7 +261,7 @@ class DateColumnDelegate(QtGui.QItemDelegate):
     self.nullable = nullable
 
   def createEditor(self, parent, option, index):
-    editor = DateEditor(self.nullable, self.format, parent)
+    editor = editors.DateEditor(self.nullable, self.format, parent)
     self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)  
     return editor
 
@@ -296,17 +289,17 @@ class DateColumnDelegate(QtGui.QItemDelegate):
       model.setData(index, create_constant_function(d))
     logger.debug('date delegate data set')
 
-_registered_delegates_[DateEditor] = DateColumnDelegate
+_registered_delegates_[editors.DateEditor] = DateColumnDelegate
+
 
 class CodeColumnDelegate(QtGui.QItemDelegate):
-
   def __init__(self, parts, parent=None):
     super(CodeColumnDelegate, self).__init__(parent)
     self.parts = parts
-    self._dummy_editor = CodeEditor(self.parts, None)
+    self._dummy_editor = editors.CodeEditor(self.parts, None)
 
   def createEditor(self, parent, option, index):
-    editor = CodeEditor(self.parts, parent)
+    editor = editors.CodeEditor(self.parts, parent)
     self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
     return editor
 
@@ -325,16 +318,15 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
     return self._dummy_editor.sizeHint() 
   
   def setModelData(self, editor, model, index):
-    from camelot.types import Code
     value = []
     for part in editor.part_editors:
       value.append(unicode(part.text()))
     model.setData(index, create_constant_function(value))
 
-_registered_delegates_[CodeEditor] = CodeColumnDelegate
+_registered_delegates_[editors.CodeEditor] = CodeColumnDelegate
+
 
 class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
-
   def __init__(self, parent=None):
     super(VirtualAddressColumnDelegate, self).__init__(parent)
 
@@ -344,12 +336,11 @@ class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
     #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
   
   def createEditor(self, parent, option, index):
-    editor = VirtualAddressEditor(parent)
+    editor = editors.VirtualAddressEditor(parent)
     self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
     return editor
 
   def setEditorData(self, editor, index):
-    import camelot.types
     value = index.data(Qt.EditRole).toPyObject()
     if value:
       editor.editor.setText(value[1])
@@ -359,12 +350,14 @@ class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
     value = (unicode(editor.combo.currentText()), unicode(editor.editor.text()))
     model.setData(index, create_constant_function(value))
 
-_registered_delegates_[VirtualAddressEditor] = VirtualAddressColumnDelegate
+_registered_delegates_[editors.VirtualAddressEditor] = VirtualAddressColumnDelegate
+
 
 class FloatColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for float values"""
 
-  def __init__(self, minimum=-100.0, maximum=100.0, precision=3, editable=True, parent=None, **kwargs):
+  def __init__(self, minimum=-100.0, maximum=100.0, precision=3,
+               editable=True, parent=None, **kwargs):
     super(FloatColumnDelegate, self).__init__(parent)
     self.minimum = minimum
     self.maximum = maximum
@@ -390,23 +383,24 @@ class FloatColumnDelegate(QtGui.QItemDelegate):
 
 _registered_delegates_[QtGui.QDoubleSpinBox] = FloatColumnDelegate
 
+
 class Many2OneColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
 
   def __init__(self, admin, embedded=False, parent=None, **kwargs):
     logger.debug('create many2onecolumn delegate')
-    assert admin!=None
+    assert admin != None
     super(Many2OneColumnDelegate, self).__init__(parent)
     self.admin = admin
     self._embedded = embedded
     self._kwargs = kwargs
-    self._dummy_editor = Many2OneEditor(self.admin, None)
+    self._dummy_editor = editors.Many2OneEditor(self.admin, None)
 
   def createEditor(self, parent, option, index):
     if self._embedded:
-      editor = EmbeddedMany2OneEditor(self.admin, parent)
+      editor = editors.EmbeddedMany2OneEditor(self.admin, parent)
     else:
-      editor = Many2OneEditor(self.admin, parent)
+      editor = editors.Many2OneEditor(self.admin, parent)
     self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
     return editor
 
@@ -424,15 +418,8 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
   def sizeHint(self, option, index):
     return self._dummy_editor.sizeHint()    
   
-#  def paint(self, painter, option, index):
-#    painter.save()
-#    self.drawBackground(painter, option, index)
-#    name = index.model().data(index, Qt.DisplayRole).toString()
-#    self._dummy_editor.search_input.setText(name)
-#    self._dummy_editor.render(painter)
-#    painter.restore()
-    
-_registered_delegates_[Many2OneEditor] = Many2OneColumnDelegate
+_registered_delegates_[editors.Many2OneEditor] = Many2OneColumnDelegate
+
 
 class One2ManyColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
@@ -445,7 +432,7 @@ class One2ManyColumnDelegate(QtGui.QItemDelegate):
 
   def createEditor(self, parent, option, index):
     logger.debug('create a one2many editor')
-    editor = One2ManyEditor(parent=parent, **self.kwargs)
+    editor = editors.One2ManyEditor(parent=parent, **self.kwargs)
     self.setEditorData(editor, index)
     return editor
 
@@ -458,7 +445,8 @@ class One2ManyColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     pass
 
-_registered_delegates_[One2ManyEditor] = One2ManyColumnDelegate
+_registered_delegates_[editors.One2ManyEditor] = One2ManyColumnDelegate
+
 
 class BoolColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for boolean values"""
@@ -493,15 +481,14 @@ class BoolColumnDelegate(QtGui.QItemDelegate):
 
 _registered_delegates_[QtGui.QCheckBox] = BoolColumnDelegate
 
-class ImageColumnDelegate(QtGui.QItemDelegate):
 
+class ImageColumnDelegate(QtGui.QItemDelegate):
   def createEditor(self, parent, option, index):
-    editor = ImageEditor(parent)
+    editor = editors.ImageEditor(parent)
     self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
     return editor
 
   def setEditorData(self, editor, index):
-    import StringIO
     s = StringIO.StringIO()
     data = index.data(Qt.EditRole).toPyObject()
     if data:
@@ -524,19 +511,18 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
     #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
     
   def setModelData(self, editor, model, index):
-    from camelot.types import StoredImage
-    model.setData(index, create_constant_function(StoredImage(editor.image)))
+    model.setData(index, create_constant_function(camelot.types.StoredImage(editor.image)))
   
-_registered_delegates_[ImageEditor] = ImageColumnDelegate
+_registered_delegates_[editors.ImageEditor] = ImageColumnDelegate
+
 
 class RichTextColumnDelegate(QtGui.QItemDelegate):
-
   def __init__(self, parent = None, **kwargs):
     super(RichTextColumnDelegate, self).__init__(parent)
     self.kwargs = kwargs
     
   def createEditor(self, parent, option, index):
-    editor = RichTextEditor(parent, **self.kwargs)
+    editor = editors.RichTextEditor(parent, **self.kwargs)
     self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
     return editor
 
@@ -553,12 +539,12 @@ class RichTextColumnDelegate(QtGui.QItemDelegate):
       editor.clear()
 
   def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(unicode(editor.toHtml())))    
+    model.setData(index, create_constant_function(unicode(editor.toHtml())))
 
-_registered_delegates_[RichTextEditor] = RichTextColumnDelegate
+_registered_delegates_[editors.RichTextEditor] = RichTextColumnDelegate
+
 
 class ComboBoxColumnDelegate(QtGui.QItemDelegate):
-  
   def __init__(self, choices, parent=None, **kwargs):
     super(ComboBoxColumnDelegate, self).__init__(parent)
     self.choices = choices
@@ -570,7 +556,6 @@ class ComboBoxColumnDelegate(QtGui.QItemDelegate):
       return variant.toPyObject()
           
   def createEditor(self, parent, option, index):
-    from camelot.view.model_thread import get_model_thread
     editor = QtGui.QComboBox(parent)
     
     def create_choices_getter(model, row):

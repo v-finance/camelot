@@ -31,7 +31,7 @@ import os
 import sys
 import logging
 
-logger = logging.getLogger('controls.navpane')
+logger = logging.getLogger('camelot.view.controls.navpane')
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -40,13 +40,17 @@ from PyQt4.QtCore import Qt
 import settings
 from camelot.view import art
 from camelot.view.model_thread import get_model_thread
-from camelot.view.helpers import createAction, addActions
-from camelot.view.controls.modeltree import ModelItem, ModelTree
-from appscheme import scheme, defaultUI
+from camelot.view.helpers import addActions
+from camelot.view.helpers import createAction
+from camelot.view.controls.modeltree import ModelItem
+from camelot.view.controls.modeltree import ModelTree
+from appscheme import scheme
+from appscheme import defaultUI
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
 _ = lambda x:x
+
 
 class PaneCaption(QtGui.QLabel):
   """Navigation pane Caption"""

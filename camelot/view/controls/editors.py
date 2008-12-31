@@ -29,17 +29,22 @@
 import os
 import os.path
 import tempfile
+import datetime
 import logging
-import settings
+logger = logging.getLogger('camelot.view.controls.editors')
 
-logger = logging.getLogger('editors')
+import settings
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
+import camelot.types
 from camelot.view import art
-from camelot.view.model_thread import model_function, gui_function
+from camelot.view.model_thread import gui_function
+from camelot.view.model_thread import model_function
+from camelot.view.workspace import get_workspace
+from camelot.view.search import create_entity_search_query_decorator
 
 def create_constant_function(constant):
   return lambda:constant
@@ -51,7 +56,9 @@ class DateEditor(QtGui.QWidget):
     super(DateEditor, self).__init__(parent)
     self.format = format
     self.qdateedit = QtGui.QDateEdit(self)
-    self.connect(self.qdateedit, QtCore.SIGNAL('editingFinished ()'), self.editingFinished)
+    self.connect(self.qdateedit,
+                 QtCore.SIGNAL('editingFinished ()'),
+                 self.editingFinished)
     self.qdateedit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
     self.qdateedit.setDisplayFormat(QtCore.QString(format))
     self.hlayout = QtGui.QHBoxLayout()
@@ -73,7 +80,6 @@ class DateEditor(QtGui.QWidget):
     self.setContentsMargins(0, 0, 0, 0)
     self.setLayout(self.hlayout)
 
-    import datetime
     self.minimum = datetime.date.min
     self.maximum = datetime.date.max
     self.set_date_range()
@@ -85,7 +91,6 @@ class DateEditor(QtGui.QWidget):
     return QtCore.QDate(value.year, value.month, value.day)
 
   def _qt_to_python(self, value):
-    import datetime
     return datetime.date(value.year(), value.month(), value.day())
   
   def editingFinished(self):
@@ -111,9 +116,7 @@ class DateEditor(QtGui.QWidget):
 
 
 class VirtualAddressEditor(QtGui.QWidget):
-  
   def __init__(self, parent=None):
-    import camelot.types
     super(VirtualAddressEditor, self).__init__(parent)
     layout = QtGui.QHBoxLayout()
     layout.setMargin(0)
@@ -125,12 +128,12 @@ class VirtualAddressEditor(QtGui.QWidget):
     self.connect(self.editor, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
     self.setLayout(layout)
     self.setAutoFillBackground(True);
+
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
         
 
 class CodeEditor(QtGui.QWidget):
-  
   def __init__(self, parts=['99', 'AA'], parent=None):
     super(CodeEditor, self).__init__(parent)
     self.setFocusPolicy(Qt.StrongFocus)
@@ -148,6 +151,7 @@ class CodeEditor(QtGui.QWidget):
       self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
     self.setLayout(layout)
     self.setAutoFillBackground(True);
+
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
         
@@ -158,14 +162,14 @@ class EmbeddedMany2OneEditor(QtGui.QWidget):
   """
   
   def __init__(self, admin=None, parent=None, **kwargs):
-    assert admin!=None
+    assert admin != None
     super(EmbeddedMany2OneEditor, self).__init__(parent)
     self.admin = admin    
     self.layout = QtGui.QHBoxLayout()
     self.entity_instance_getter = None
     self.form = None
     self.setLayout(self.layout)
-    self.setEntity(lambda:None, propagate=False)
+    self.setEntity(lambda:None, propagate = False)
 
   def setEntity(self, entity_instance_getter, propagate=True):
     
@@ -183,13 +187,15 @@ class EmbeddedMany2OneEditor(QtGui.QWidget):
       if self.form:
         self.form.deleteLater()
         self.layout.removeWidget(self.form)
+
       from camelot.view.proxy.collection_proxy import CollectionProxy
-      from camelot.view.workspace import get_workspace
-        
+ 
       def create_collection_getter(instance_getter):
         return lambda:[instance_getter()]
         
-      model = CollectionProxy(self.admin, create_collection_getter(self.entity_instance_getter), self.admin.getFields)
+      model = CollectionProxy(self.admin,
+                              create_collection_getter(self.entity_instance_getter),
+                              self.admin.getFields)
       self.form = self.admin.createFormView('', model, 0, self)
       self.layout.addWidget(self.form)
       if propagate:
@@ -201,11 +207,12 @@ class EmbeddedMany2OneEditor(QtGui.QWidget):
 
 class Many2OneEditor(QtGui.QWidget):
   """Widget for editing many 2 one relations
-  @param entity_admin : The Admin interface for the object on the one side of the relation
+
+  @param entity_admin : The Admin interface for the object on the one side of
+  the relation
   """
   
   class CompletionsModel(QtCore.QAbstractListModel):
-    
     def __init__(self, parent=None):
       super(Many2OneEditor.CompletionsModel, self).__init__(parent)
       self._completions = []
@@ -269,21 +276,21 @@ class Many2OneEditor(QtGui.QWidget):
     self.setAutoFillBackground(True);
     
   def textEdited(self, text):
-    
     def create_search_completion(text):
-      return lambda:self.search_completions(text)
+      return lambda: self.search_completions(text)
     
     self.admin.mt.post(create_search_completion(unicode(text)), self.display_search_completions)
     self.completer.complete()
     
   @model_function
   def search_completions(self, text):
-    """Search for object that match text, to fill the list of
-    completions
-    @return: a list of tuples of (object_representation, object_getter)"""
-    from camelot.view.search import create_entity_search_query_decorator
+    """Search for object that match text, to fill the list of completions
+
+    @return: a list of tuples of (object_representation, object_getter)
+    """
     search_decorator = create_entity_search_query_decorator(self.admin, text)
-    return [(unicode(e),create_constant_function(e)) for e in search_decorator(self.admin.entity.query).limit(20)]
+    return [(unicode(e),create_constant_function(e))
+            for e in search_decorator(self.admin.entity.query).limit(20)]
   
   @gui_function
   def display_search_completions(self, completions):
@@ -314,7 +321,6 @@ class Many2OneEditor(QtGui.QWidget):
     self.setEntity(lambda:None)
     
   def createNew(self):
-    from camelot.view.workspace import get_workspace
     workspace = get_workspace()
     form = self.admin.createNewView(workspace)
     workspace.addSubWindow(form)
@@ -322,15 +328,17 @@ class Many2OneEditor(QtGui.QWidget):
     form.show()
         
   def createFormView(self):
-    from camelot.view.proxy.collection_proxy import CollectionProxy
-    from camelot.view.workspace import get_workspace
     if self.entity_instance_getter:
       
       def create_collection_getter(instance_getter):
         return lambda:[instance_getter()]
       
+      from camelot.view.proxy.collection_proxy import CollectionProxy
+
       workspace = get_workspace()  
-      model = CollectionProxy(self.admin, create_collection_getter(self.entity_instance_getter), self.admin.getFields)
+      model = CollectionProxy(self.admin,
+                        create_collection_getter(self.entity_instance_getter),
+                        self.admin.getFields)
       form = self.admin.createFormView('', model, 0, workspace)
       workspace.addSubWindow(form)
       form.show()
@@ -345,7 +353,9 @@ class Many2OneEditor(QtGui.QWidget):
     
     def get_instance_represenation():
       """Get a representation of the instance
-      @return: (unicode, pk) its unicode representation and its primary key or ('', False) if the instance was None
+
+      @return: (unicode, pk) its unicode representation and its primary key 
+      or ('', False) if the instance was None
       """
       entity = entity_instance_getter()
       self.entity_instance_getter = create_instance_getter(entity)
@@ -358,14 +368,18 @@ class Many2OneEditor(QtGui.QWidget):
       desc, pk = representation
       self._entity_representation = desc
       self.search_input.setText(desc)
-      if pk!=False:
-        self.open_button.setIcon(QtGui.QIcon(art.icon16('places/folder')))
-        self.search_button.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
+      if pk != False:
+        open_icon = QtGui.QIcon(art.icon16('places/folder'))
+        search_icon = QtGui.QIcon(art.icon16('places/user-trash'))
+        self.open_button.setIcon()
+        self.search_button.setIcon()
         self.entity_set = True
         #self.search_input.setReadOnly(True)
       else:
-        self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
-        self.search_button.setIcon(QtGui.QIcon(art.icon16('actions/system-search')))
+        open_icon = QtGui.QIcon(art.icon16('actions/document-new'))
+        search_icon = QtGui.QIcon(art.icon16('actions/system-search'))
+        self.open_button.setIcon(open_icon)
+        self.search_button.setIcon(search_icon)
         self.entity_set = False
         #self.search_input.setReadOnly(False)
       if propagate:
@@ -374,10 +388,11 @@ class Many2OneEditor(QtGui.QWidget):
     self.admin.mt.post(get_instance_represenation, set_instance_represenation)
     
   def createSelectView(self):
-    from camelot.view.workspace import get_workspace
     workspace = get_workspace()
     search_text = unicode(self.search_input.text())
-    select = self.admin.createSelectView(self.admin.entity.query, parent=workspace, search_text=search_text)
+    select = self.admin.createSelectView(self.admin.entity.query,
+                                         parent=workspace,
+                                         search_text=search_text)
     self.connect(select, select.entity_selected_signal, self.selectEntity)
     workspace.addSubWindow(select)
     select.show()
@@ -387,32 +402,30 @@ class Many2OneEditor(QtGui.QWidget):
     
 
 class One2ManyEditor(QtGui.QWidget):
-  
   def __init__(self, admin=None, parent=None, create_inline=False, **kw):
-    """
-    @param admin: the Admin interface for the objects on the one side of the relation  
-    @param create_inline: if False, then a new entity will be created within a new window, if True, it
-                       will be created inline
+    """@param admin: the Admin interface for the objects on the one side of
+    the relation  
+
+    @param create_inline: if False, then a new entity will be created within a
+    new window, if True, it will be created inline
                         
-    after creating the editor, setEntityInstance needs to be called to set
-    the actual data to the editor
+    after creating the editor, setEntityInstance needs to be called to set the
+    actual data to the editor
     """
-    from tableview import QueryTable
     QtGui.QWidget.__init__(self, parent)
     self.layout = QtGui.QHBoxLayout()
     self.layout.setContentsMargins(0,0,0,0)
     #
     # Setup table
     #
+    from tableview import QueryTable
     self.table = QueryTable(parent)
     self.layout.addWidget(self.table) 
     self.setSizePolicy(QtGui.QSizePolicy.Expanding,
                        QtGui.QSizePolicy.Expanding)
-
     self.connect(self.table.verticalHeader(),
                  QtCore.SIGNAL('sectionClicked(int)'),
                  self.createFormForIndex)
-
     self.admin = admin
     self.create_inline = create_inline
     #
@@ -423,7 +436,9 @@ class One2ManyEditor(QtGui.QWidget):
     delete_button = QtGui.QToolButton()
     delete_button.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
     delete_button.setAutoRaise(True)
-    self.connect(delete_button, QtCore.SIGNAL('clicked()'), self.deleteSelectedRows)
+    self.connect(delete_button,
+                 QtCore.SIGNAL('clicked()'),
+                 self.deleteSelectedRows)
     add_button = QtGui.QToolButton()
     add_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
     add_button.setAutoRaise(True)
@@ -440,28 +455,27 @@ class One2ManyEditor(QtGui.QWidget):
     self.table.setModel(model)
     
     def create_fill_model_cache(model):
-      
       def fill_model_cache():
         model._extend_cache(0, 10)
         
       return fill_model_cache
-        
+    
     def create_delegate_updater(model):
-      
       def update_delegates(*args):
         self.table.setItemDelegate(model.getItemDelegate())
-        self.table.horizontalHeader().setResizeMode(QtGui.QHeaderView.Interactive)
-        self.table.horizontalHeader().setStretchLastSection(True)
-        # only if there is data in the rows, it makes sense to resize the columns
-        if self.model.rowCount()>1:
+        hheader = self.table.horizontalHeader() 
+        hheader.setResizeMode(QtGui.QHeaderView.Interactive)
+        hheader.setStretchLastSection(True)
+        # resize the columns if there is data in the rows
+        if self.model.rowCount() > 1:
           self.table.resizeColumnsToContents()
           
       return update_delegates
       
-    self.admin.mt.post(create_fill_model_cache(model), create_delegate_updater(model))
+    self.admin.mt.post(create_fill_model_cache(model),
+                       create_delegate_updater(model))
     
   def newRow(self):
-    from camelot.view.workspace import get_workspace
     workspace = get_workspace()
 
     if self.create_inline:
@@ -475,9 +489,11 @@ class One2ManyEditor(QtGui.QWidget):
       self.admin.mt.post(create)
         
     else:
+      prependentity = lambda o: self.model.insertEntityInstance(0, o)
+      removeentity = lambda o: self.model.removeEntityInstance(o)
       form = self.admin.createNewView(workspace,
-                                      oncreate=lambda o:self.model.insertEntityInstance(0,o),
-                                      onexpunge=lambda o:self.model.removeEntityInstance(o))
+                                      oncreate=prepend_entity,
+                                      onexpunge=remove_entity)
       workspace.addSubWindow(form)
       form.show()
     
@@ -489,17 +505,25 @@ class One2ManyEditor(QtGui.QWidget):
           
   def createFormForIndex(self, index):
     from camelot.view.proxy.collection_proxy import CollectionProxy
-    from camelot.view.workspace import get_workspace
-    model = CollectionProxy(self.admin, self.model.collection_getter, self.admin.getFields, max_number_of_rows=1, edits=None)
+    model = CollectionProxy(self.admin,
+                            self.model.collection_getter,
+                            self.admin.getFields,
+                            max_number_of_rows=1,
+                            edits=None)
     title = self.admin.getName()
     form = self.admin.createFormView(title, model, index, get_workspace())
     get_workspace().addSubWindow(form)
     form.show()
 
+
 try:
   from PIL import Image as PILImage
 except:
   import Image as PILImage
+
+filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm """\
+         """*.ppm *.tiff *.xbm *.xpm) 
+All files (*)"""
 
 
 class ImageEditor(QtGui.QWidget):
@@ -513,7 +537,7 @@ class ImageEditor(QtGui.QWidget):
     self.label = QtGui.QLabel(parent)
     self.layout.addWidget(self.label)
     self.label.setAcceptDrops(True)
-#    self.draw_border()
+    # self.draw_border()
     self.label.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
     self.label.__class__.dragEnterEvent = self.dragEnterEvent
     self.label.__class__.dragMoveEvent = self.dragEnterEvent
@@ -565,6 +589,7 @@ class ImageEditor(QtGui.QWidget):
         fp = open(self.dummy_image, 'rb')
         self.image = PILImage.open(fp)
         self.setPixmap(QtGui.QPixmap(self.dummy_image))
+
   #
   # Drag & Drop
   #
@@ -589,13 +614,9 @@ class ImageEditor(QtGui.QWidget):
     self.draw_border()
 
   def openFileDialog(self):
-    filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm)
-All files (*)"""
-    
-    filename = QtGui.QFileDialog.getOpenFileName(self, 
-                                                'Open file', 
-                                                QtCore.QDir.currentPath(),
-                                                filter)
+    filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file', 
+                                                 QtCore.QDir.currentPath(),
+                                                 filter)
     if filename != '':
       self.pilimage_from_file(filename)
 
@@ -608,7 +629,6 @@ All files (*)"""
   #
   # Utils methods
   #
-
   def pilimage_from_file(self, filepath):
     testImage = QtGui.QImage(filepath)
     if not testImage.isNull():
@@ -635,7 +655,6 @@ All files (*)"""
 
 
 class RichTextEditor(QtGui.QWidget):
-  
   def __init__(self, parent=None, editable=True, **kwargs):
     QtGui.QWidget.__init__(self, parent)
     

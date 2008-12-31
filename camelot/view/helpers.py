@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,26 +23,16 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
-"""
-collection of helper functions 
-"""
+"""collection of helper functions"""
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-def createAction(parent,
-                 text,
-                 slot=None,
-                 shortcut='', 
-                 actionicon='',
-                 tip='', 
-                 checkable=False, 
-                 signal='triggered()',
-                 widgetaction=False):
-
+def createAction(parent, text, slot=None, shortcut='', actionicon='', tip='',
+                 checkable=False, signal='triggered()', widgetaction=False):
   """ creates and returns a QAction object """
 
   action = QtGui.QWidgetAction(parent) if widgetaction \
@@ -63,33 +53,12 @@ def createAction(parent,
   return action
 
 def addActions(target, actions):
-  """ 
-    add action objects to menus, menubars, and toolbars
-    if action is None, add a toolbar, however we must
-    explicitly add separator actions in the case of 
-    context menus.
+  """add action objects to menus, menubars, and toolbars if action is None, add
+  a toolbar, however we must explicitly add separator actions in the case of
+  context menus.
   """
   for action in actions:
     if action is None:
       target.addSeparator()
     else:
       target.addAction(action)
-
-def okToContinue(widget, func):
-  """
-    save unsaved changes before exiting the application
-    function func is called
-  """
-  if widget.changed:
-    reply = QtGui.QMessageBox.question(widget,
-                  widget.tr('Unsaved Changes'),
-                  widget.tr('Save unsaved changes?'),
-                  QtGui.QMessageBox.Yes|
-                  QtGui.QMessageBox.No|
-                  QtGui.QMessageBox.Cancel)
-    if reply == QtGui.QMessageBox.Cancel:
-      return False
-    elif reply == QtGui.QMessageBox.Yes:
-      getattr(widget, func)()
-    return True
-
