@@ -414,12 +414,14 @@ class One2ManyEditor(QtGui.QWidget):
     """
     QtGui.QWidget.__init__(self, parent)
     self.layout = QtGui.QHBoxLayout()
-    self.layout.setContentsMargins(0,0,0,0)
+    self.layout.setContentsMargins(0, 0, 0, 0)
     #
     # Setup table
     #
     from tableview import QueryTable
-    self.table = QueryTable(parent)
+    # parent set by layout manager
+    #self.table = QueryTable(parent)
+    self.table = QueryTable()
     self.layout.addWidget(self.table) 
     self.setSizePolicy(QtGui.QSizePolicy.Expanding,
                        QtGui.QSizePolicy.Expanding)
@@ -492,8 +494,8 @@ class One2ManyEditor(QtGui.QWidget):
       prependentity = lambda o: self.model.insertEntityInstance(0, o)
       removeentity = lambda o: self.model.removeEntityInstance(o)
       form = self.admin.createNewView(workspace,
-                                      oncreate=prepend_entity,
-                                      onexpunge=remove_entity)
+                                      oncreate=prependentity,
+                                      onexpunge=removeentity)
       workspace.addSubWindow(form)
       form.show()
     
