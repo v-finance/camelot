@@ -111,9 +111,7 @@ class EmptyRowData(object):
     return None
   
 empty_row_data = EmptyRowData()
-form_icon = QtCore.QVariant(QtGui.QIcon(art.icon16('places/folder')))
 
-      
 class CollectionProxy(QtCore.QAbstractTableModel):
   """The CollectionProxy contains a limited copy of the data in the actual
   collection, usable for fast visualisation in a QTableView 
@@ -137,6 +135,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.logger = logger
     QtCore.QAbstractTableModel.__init__(self)
     self.admin = admin
+    self.form_icon = QtCore.QVariant(QtGui.QIcon(art.icon16('places/folder')))
     self.validator = admin.createValidator(self)
     self.collection_getter = collection_getter
     self.column_count = 0
@@ -390,7 +389,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           return QtCore.QVariant(font)
     if role == Qt.DecorationRole:
       if orientation == Qt.Vertical:
-        return form_icon 
+        return self.form_icon 
     return QtCore.QAbstractTableModel.headerData(self, section, orientation, role)
   
   @gui_function
