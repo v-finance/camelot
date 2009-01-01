@@ -413,16 +413,16 @@ class One2ManyEditor(QtGui.QWidget):
     actual data to the editor
     """
     QtGui.QWidget.__init__(self, parent)
-    self.layout = QtGui.QHBoxLayout()
-    self.layout.setContentsMargins(0, 0, 0, 0)
+    layout = QtGui.QHBoxLayout()
+    layout.setContentsMargins(0, 0, 0, 0)
     #
     # Setup table
     #
     from tableview import QueryTable
     # parent set by layout manager
-    #self.table = QueryTable(parent)
     self.table = QueryTable()
-    self.layout.addWidget(self.table) 
+    layout.setSizeConstraint(QtGui.QLayout.SetNoConstraint)
+    layout.addWidget(self.table) 
     self.setSizePolicy(QtGui.QSizePolicy.Expanding,
                        QtGui.QSizePolicy.Expanding)
     self.connect(self.table.verticalHeader(),
@@ -447,9 +447,9 @@ class One2ManyEditor(QtGui.QWidget):
     self.connect(add_button, QtCore.SIGNAL('clicked()'), self.newRow)
     button_layout.addStretch()
     button_layout.addWidget(add_button)
-    button_layout.addWidget(delete_button)      
-    self.layout.addLayout(button_layout)
-    self.setLayout(self.layout)
+    button_layout.addWidget(delete_button)
+    layout.addLayout(button_layout)
+    self.setLayout(layout)
     self.model = None
   
   def setModel(self, model):
@@ -465,9 +465,9 @@ class One2ManyEditor(QtGui.QWidget):
     def create_delegate_updater(model):
       def update_delegates(*args):
         self.table.setItemDelegate(model.getItemDelegate())
-        hheader = self.table.horizontalHeader() 
-        hheader.setResizeMode(QtGui.QHeaderView.Interactive)
-        hheader.setStretchLastSection(True)
+        #hheader = self.table.horizontalHeader() 
+        #hheader.setResizeMode(QtGui.QHeaderView.Interactive)
+        #hheader.setStretchLastSection(True)
         # resize the columns if there is data in the rows
         if self.model.rowCount() > 1:
           self.table.resizeColumnsToContents()

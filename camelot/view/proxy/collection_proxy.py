@@ -387,6 +387,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         else:
           font.setBold(False)
           return QtCore.QVariant(font)
+    #if role == Qt.SizeHintRole:
+    #  label = QtGui.QLabel(self._columns[section][1]['name'])
+    #  return QtCore.QVariant(label.sizeHint())
     if role == Qt.DecorationRole:
       if orientation == Qt.Vertical:
         return self.form_icon 
@@ -426,7 +429,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         sh = editor.sizeHint()
         return QtCore.QVariant(sh)
       elif widget_ == 'many2one':
-        from camelot.view.controls import delegates
         from camelot.view.controls.editors import Many2OneEditor
         entity_admin = c[1]['admin']
         editor = Many2OneEditor(entity_admin)

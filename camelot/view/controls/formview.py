@@ -83,15 +83,8 @@ class FormView(QtGui.QWidget):
     for i, (field_name, field_attributes) in enumerate(columns):
       option = None
       model_index = self.model.index(self.index, i)
-      #widget_type  = field_attributes['widget']
       widget_label = QtGui.QLabel(field_attributes['name'])
       widget_editor = delegate.createEditor(None, option, model_index)
-
-      # look for rich text editor widget
-      #if field_attributes['python_type'] == str:
-      #  if field_attributes.has_key('length') and \
-      #     field_attributes['length'] is None:
-      #    widget_type = 'richtext'
 
       # required fields font is bold
       if ('nullable' in field_attributes) and \
@@ -101,7 +94,6 @@ class FormView(QtGui.QWidget):
         widget_label.setFont(font)
 
       self.widget_mapper.addMapping(widget_editor, i)
-      #widgets[field_name] = (widget_label, widget_editor, widget_type)
       widgets[field_name] = (widget_label, widget_editor)
       
     self.widget_mapper.setCurrentIndex(self.index)

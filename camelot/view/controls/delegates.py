@@ -350,7 +350,8 @@ class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
     value = (unicode(editor.combo.currentText()), unicode(editor.editor.text()))
     model.setData(index, create_constant_function(value))
 
-_registered_delegates_[editors.VirtualAddressEditor] = VirtualAddressColumnDelegate
+_registered_delegates_[editors.VirtualAddressEditor] = \
+    VirtualAddressColumnDelegate
 
 
 class FloatColumnDelegate(QtGui.QItemDelegate):

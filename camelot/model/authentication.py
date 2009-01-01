@@ -1,4 +1,4 @@
-#  =============================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,11 +23,12 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  =============================================================================
-"""Set of classes to store persons, organizations, relationships and permissions
+#  ============================================================================
+"""Set of classes to store persons, organizations, relationships and
+permissions
 
-These structures are modeled like described in 'The Data Model Resource Book' by
-Len Silverston, Chapter 2
+These structures are modeled like described in 'The Data Model Resource Book'
+by Len Silverston, Chapter 2
 """
 
 import camelot
@@ -218,11 +219,12 @@ class Organization(Party):
                     ('Branding', Form(['logo'])), ])
       
 class Person(Party):
-  """Person represents natural persons, these can be given access to the system, and
-  as such require a username.
+  """Person represents natural persons, these can be given access to the system
+  and as such require a username.
   
   Username is required, other fields are optional, there is no password because
-  authentication is supposed to happen through the operating system services or other.
+  authentication is supposed to happen through the operating system services or
+  other.
   """
   using_options(tablename='person', inheritance='multi')
   username = Field(Unicode(40), required=True, index=True, unique=True)

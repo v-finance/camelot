@@ -34,6 +34,7 @@ import logging
 logger = logging.getLogger('camelot.view.forms')
 
 from PyQt4 import QtGui
+from PyQt4.QtCore import Qt
 
 from camelot.view.controls.editors import One2ManyEditor
 from camelot.view.controls.editors import RichTextEditor
@@ -69,29 +70,64 @@ class Form(object):
     """@return : the fields, visible in this form"""
     return self._fields
   
-  def render(self, widgets, parent=None):
+  def render(self, widgets, parent=None, nomargins=False):
     """@param widgets: a dictionary mapping each field in this form to a tuple
     of (label, widget editor) 
 
     @return : a QWidget into which the form is rendered
     """
     logger.debug('rendering %s' % self.__class__.__name__) 
-    form_layout = QtGui.QFormLayout()
-    form_layout.setFieldGrowthPolicy(QtGui.QFormLayout.ExpandingFieldsGrow) 
+
+    #form_layout = QtGui.QFormLayout()
+    #form_layout.setFieldGrowthPolicy(QtGui.QFormLayout.ExpandingFieldsGrow) 
+    #for field in self._content:
+    #  if isinstance(field, Form):
+    #    form_layout.addRow(field.render(widgets, parent, True))
+    #  elif field in widgets:
+    #    label, editor = widgets[field]
+    #    if isinstance(editor, One2ManyEditor) or\
+    #       isinstance(editor, RichTextEditor):
+    #      form_layout.addRow(label)
+    #      form_layout.addRow(editor)
+    #    else:
+    #      form_layout.addRow(label, editor)
+
+    form_layout = QtGui.QGridLayout()
+    row = 0
     for field in self._content:
       if isinstance(field, Form):
-        form_layout.addRow(field.render(widgets, parent))
-      if field in widgets:
+        col = 0
+        row_span = 1
+        col_span = 2
+        f = field.render(widgets, parent, True)
+        if isinstance(f, QtGui.QLayout):
+          form_layout.addLayout(f, row, col, row_span, col_span)
+        else:
+          form_layout.addWidget(f, row, col, row_span, col_span)
+        row += 1
+      elif field in widgets:
+        col = 0
+        row_span = 1
         label, editor = widgets[field]
         if isinstance(editor, One2ManyEditor) or\
            isinstance(editor, RichTextEditor):
-          form_layout.addRow(label)
-          form_layout.addRow(editor)
+          col_span = 2
+          form_layout.addWidget(label, row, col, row_span, col_span)
+          row += 1
+          form_layout.addWidget(editor, row, col, row_span, col_span)
+          row += 1
         else:
-          form_layout.addRow(label, editor)
-
+          col_span = 1
+          form_layout.addWidget(label, row, col, row_span, col_span)
+          form_layout.addWidget(editor, row, col + 1, row_span, col_span)
+          row += 1
 
     form_widget = QtGui.QWidget()
+    
+    # fix embedded forms
+    if nomargins:
+      form_layout.setContentsMargins(0, 0, 0, 0)
+
     form_widget.setSizePolicy(QtGui.QSizePolicy.Expanding,
                               QtGui.QSizePolicy.Expanding)
     form_widget.setLayout(form_layout)
@@ -119,10 +155,13 @@ class TabForm(Form):
     super(TabForm, self).__init__(sum((tab_form.get_fields()
                                   for tab_label, tab_form in self.tabs), []))
   
-  def render(self, widgets, parent=None):
+  def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     widget = QtGui.QTabWidget(parent)
     for tab_label, tab_form in self.tabs:      
+      #form = tab_form.render(widgets, widget)
+      #print form.height()
+      #widget.addTab(form, tab_label)
       widget.addTab(tab_form.render(widgets, widget), tab_label)
     return widget
   
@@ -138,11 +177,11 @@ class HBoxForm(Form):
     super(HBoxForm, self).__init__(sum((column_form.get_fields()
                                   for column_form in self.columns), []))
 
-  def render(self, widgets, parent=None):
+  def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     widget = QtGui.QHBoxLayout()
     for form in self.columns:
-      widget.addWidget(form.render(widgets, parent))
+      widget.addWidget(form.render(widgets, parent, nomargins))
     return widget
   
 
@@ -157,11 +196,11 @@ class VBoxForm(Form):
     self.rows = [structure_to_form(row) for row in rows]
     super(VBoxForm, self).__init__(sum((row_form.get_fields() for row_form in self.rows), []))
 
-  def render(self, widgets, parent=None):
+  def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     widget = QtGui.QVBoxLayout()
     for form in self.rows:
-      widget.addWidget(form.render(widgets, parent))
+      widget.addWidget(form.render(widgets, parent, nomargins))
     return widget
 
 
@@ -172,7 +211,7 @@ class WidgetOnlyForm(Form):
     assert isinstance(field, (str, unicode))
     super(WidgetOnlyForm, self).__init__([field])
     
-  def render(self, widgets, parent=None):
+  def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     label, editor = widgets[self.get_fields()[0]]
     return editor
