@@ -77,6 +77,7 @@ class TableView(QtGui.QWidget):
     self.class_tree = SubclassTree(admin, self)
     self.widget_layout.insertWidget(0, self.class_tree)
     self.widget_layout.insertLayout(1, self.table_layout)
+    self.closeAfterValidation = QtCore.SIGNAL('closeAfterValidation()')
     self.connect(self.search_control, SIGNAL('search'), self.startSearch)
     self.connect(self.search_control, SIGNAL('cancel'), self.cancelSearch)
     self.connect(self.class_tree, SIGNAL('subclasssClicked'), self.setSubclass)

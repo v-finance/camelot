@@ -45,6 +45,7 @@ class FormView(QtGui.QWidget):
     self.widget_mapper = QtGui.QDataWidgetMapper()
     self.widget_layout = QtGui.QHBoxLayout()
 
+    self.closeAfterValidation = QtCore.SIGNAL('closeAfterValidation()')
     sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
     self.connect(self.model, QtCore.SIGNAL(sig), self.dataChanged)
 
@@ -166,15 +167,11 @@ class FormView(QtGui.QWidget):
             self.model.revertRow(self.index)
             from camelot.view.workspace import get_workspace
             self.validate_before_close = False
-            for window in get_workspace().subWindowList():
-              if window.widget() == self:
-                window.close()
+            self.emit(self.closeAfterValidation)
         else:
           from camelot.view.workspace import get_workspace
           self.validate_before_close = False
-          for window in get_workspace().subWindowList():
-            if window.widget() == self:
-              window.close()
+          self.emit(self.closeAfterValidation)
       
       self.admin.mt.post(validate, showMessage)
       return False
