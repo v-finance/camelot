@@ -107,7 +107,7 @@ class FormView(QtGui.QWidget):
     if actions:
       from actions import ActionsBox
       logger.debug('setting Actions for formview')
-      self.actions_widget = ActionsBox(self, admin.mt, self.getEntity)
+      self.actions_widget = ActionsBox(self, self.admin.mt, self.getEntity)
       self.actions_widget.setActions(actions)
       self.widget_layout.insertWidget(1, self.actions_widget)
 

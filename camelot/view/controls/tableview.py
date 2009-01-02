@@ -265,7 +265,7 @@ class TableView(QtGui.QWidget):
         query = self.filters.decorate_query(query)
       if self.search_filter:
         query = self.search_filter(query)
-      self.table_model.setQuery(query)
+      self.table_model.setQuery(lambda:query)
       
     self.admin.mt.post(rebuild_query)
 

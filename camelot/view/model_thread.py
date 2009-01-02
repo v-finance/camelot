@@ -34,11 +34,8 @@ import Queue
 import settings
 
 logger = logging.getLogger('camelot.view.model_thread')
-logger.setLevel(logging.INFO)
 
 _model_thread_ = []
-verbose = False
-
 
 class ModelThreadException(Exception):
   pass
@@ -138,10 +135,7 @@ class ModelThread(threading.Thread):
           event.set()
           #self._response_queue.join()
         except Exception, e:
-          if verbose:
-            logger.exception(e)
-          else:
-            logger.error('exception caught in model thread')
+          logger.error('exception caught in model thread', exc_info=e)
           self._response_queue.put((new_event, e, exception))
           self._request_queue.task_done()
           self._response_signaler.responseAvailable()
@@ -151,10 +145,7 @@ class ModelThread(threading.Thread):
           logger.error('unhandled exception in model thread')
           
     except Exception, e:
-      if verbose:
-        logger.exception(e)
-      else:
-        logger.error('exception caught in model thread')
+      logger.error('exception caught in model thread', exc_info=e)
     except:
       logger.error('unhandled exception')       
       

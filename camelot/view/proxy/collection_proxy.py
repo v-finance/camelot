@@ -505,7 +505,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                                          primary_key=o.id, 
                                          previous_attributes={attribute:old_value},
                                          person = getCurrentPerson())
-                  session.flush([history])
+                  elixir.session.flush([history])
             #@todo: update should only be sent remotely when flush was done 
             self.rsh.sendEntityUpdate(self, o)
             return ((row,0), (row,len(self.getColumns())))
