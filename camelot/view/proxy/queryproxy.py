@@ -90,7 +90,7 @@ class QueryTableProxy(CollectionProxy):
   @model_function
   def getData(self):
     """Generator for all the data queried by this proxy"""
-    for i,o in enumerate(self.query_getter().all()):
+    for i,o in enumerate(self._query_getter().all()):
       yield RowDataFromObject(o, self.getColumns())
       
   @model_function
