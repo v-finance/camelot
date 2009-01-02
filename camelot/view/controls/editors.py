@@ -371,8 +371,8 @@ class Many2OneEditor(QtGui.QWidget):
       if pk != False:
         open_icon = QtGui.QIcon(art.icon16('places/folder'))
         search_icon = QtGui.QIcon(art.icon16('places/user-trash'))
-        self.open_button.setIcon()
-        self.search_button.setIcon()
+        self.open_button.setIcon(open_icon)
+        self.search_button.setIcon(search_icon)
         self.entity_set = True
         #self.search_input.setReadOnly(True)
       else:
