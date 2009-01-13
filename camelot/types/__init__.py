@@ -1,22 +1,22 @@
-import settings
-import logging
 import os
+import settings
 
-from sqlalchemy import types
-
+import logging
 logger = logging.getLogger('cantate.types')
 logger.setLevel(logging.DEBUG)
 
 from sqlalchemy import types
 
+
 class VirtualAddress(types.TypeDecorator):
-  """
-  Sqlalchemy type to store virtual addresses : eg, phone number, e-mail address, ...
+  """Sqlalchemy type to store virtual addresses : eg, phone number, e-mail
+  address, ...
   
   This column type accepts and returns tuples of strings, the first string is
   the virtual_address_type, and the second the address itself:
   
-  eg: ('mail','project-camelot@conceptive.be') is stored as mail://project-camelot@conceptive.be
+  eg: ('mail','project-camelot@conceptive.be') is stored as 
+  mail://project-camelot@conceptive.be
   """
   
   impl = types.Unicode
@@ -49,9 +49,9 @@ class VirtualAddress(types.TypeDecorator):
       
     return processor  
     
+
 class Code(types.TypeDecorator):
-  """
-  Sqlalchemy column type to store codes
+  """Sqlalchemy column type to store codes
   
   This column type accepts and returns a list of strings and stores them as a
   string joined with points.
@@ -98,8 +98,8 @@ class Code(types.TypeDecorator):
       
     return processor
   
+
 class IPAddress(Code):
-  
   def __init__(self, **kwargs):
     super(IPAddress, self).__init__(parts=['900','900','900','900'])
     
@@ -109,6 +109,7 @@ try:
 except:
   import Image as PILImage
         
+
 class StoredImage(object):
   """Class linking a PIL image and the location and filename where the image is stored"""
   
@@ -124,8 +125,7 @@ class StoredImage(object):
     
     
 class Image(types.TypeDecorator):
-  """
-  Sqlalchemy column type to store images
+  """Sqlalchemy column type to store images
   
   This column type accepts and returns a StoredImage, and stores them in the directory
   specified by settings.MEDIA_ROOT.  The name of the file is stored as a string in
