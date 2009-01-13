@@ -33,11 +33,7 @@ These structures can be transformed to QT forms.
 import logging
 logger = logging.getLogger('camelot.view.forms')
 
-from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
 
-from camelot.view.controls.editors import One2ManyEditor
-from camelot.view.controls.editors import RichTextEditor
 
 def structure_to_form(structure):
   """Convert a python data structure to a form, using the following rules :
@@ -77,6 +73,11 @@ class Form(object):
     @return : a QWidget into which the form is rendered
     """
     logger.debug('rendering %s' % self.__class__.__name__) 
+    from camelot.view.controls.editors import One2ManyEditor
+    from camelot.view.controls.editors import RichTextEditor
+
+    from PyQt4 import QtGui
+    from PyQt4.QtCore import Qt
 
     #form_layout = QtGui.QFormLayout()
     #form_layout.setFieldGrowthPolicy(QtGui.QFormLayout.ExpandingFieldsGrow) 
@@ -157,6 +158,8 @@ class TabForm(Form):
   
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
+    from PyQt4 import QtGui
+    from PyQt4.QtCore import Qt
     widget = QtGui.QTabWidget(parent)
     for tab_label, tab_form in self.tabs:      
       #form = tab_form.render(widgets, widget)
@@ -179,6 +182,8 @@ class HBoxForm(Form):
 
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
+    from PyQt4 import QtGui
+    from PyQt4.QtCore import Qt
     widget = QtGui.QHBoxLayout()
     for form in self.columns:
       widget.addWidget(form.render(widgets, parent, nomargins))
@@ -198,6 +203,8 @@ class VBoxForm(Form):
 
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
+    from PyQt4 import QtGui
+    from PyQt4.QtCore import Qt
     widget = QtGui.QVBoxLayout()
     for form in self.rows:
       widget.addWidget(form.render(widgets, parent, nomargins))
