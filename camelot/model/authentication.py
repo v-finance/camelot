@@ -40,7 +40,7 @@ from camelot.model.synchronization import *
 __metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
-from camelot.view.forms import *
+from camelot.view.forms import Form, TabForm, VBoxForm, HBoxForm, WidgetOnlyForm
 import datetime
 
 _current_person_ = None
