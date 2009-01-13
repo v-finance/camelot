@@ -52,10 +52,6 @@ import sqlalchemy.types
 import camelot.types
 from model_thread import gui_function
 from model_thread import model_function
-from controls.formview import FormView
-from controls.tableview import TableView
-from proxy.queryproxy import QueryTableProxy
-from validator import Validator
 import settings
 
 _ = lambda x: x
@@ -275,6 +271,7 @@ class EntityAdmin(object):
     return list(filter_generator())
 
   def createValidator(self, model):
+    from validator import Validator
     return Validator(self, model)
   
   @model_function
@@ -407,6 +404,7 @@ class EntityAdmin(object):
     passed query; uses the Admin class
     """
     logger.debug('creating form view for index %s' % index)
+    from controls.formview import FormView
     form = FormView(title, admin, model, index)
     return form
 
@@ -471,6 +469,8 @@ class EntityAdmin(object):
     """
 
     from PyQt4 import QtCore
+    from controls.tableview import TableView
+    from proxy.queryproxy import QueryTableProxy
     tableview = TableView(self)
     admin = self
 
