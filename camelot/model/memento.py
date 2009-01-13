@@ -24,8 +24,10 @@
 #  project-camelot@conceptive.be
 #
 #  =============================================================================
+
 """Set of classes to keep track of changes to objects and
-be able to restore their state"""
+be able to restore their state
+"""
 
 from camelot.model import *
 from authentication import getCurrentPerson, Person
