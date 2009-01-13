@@ -46,7 +46,6 @@ import sys
 import logging
 logger = logging.getLogger('camelot.view.elixir_admin')
 
-from PyQt4 import QtCore
 import datetime
 
 import sqlalchemy.types
@@ -471,6 +470,7 @@ class EntityAdmin(object):
     @param parent: the workspace widget that will contain the table view
     """
 
+    from PyQt4 import QtCore
     tableview = TableView(self)
     admin = self
 
