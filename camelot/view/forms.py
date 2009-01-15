@@ -25,8 +25,8 @@
 #
 #  ============================================================================
 
-"""
-Python structures to represent interface forms.
+"""Python structures to represent interface forms.
+
 These structures can be transformed to QT forms.
 """
 
