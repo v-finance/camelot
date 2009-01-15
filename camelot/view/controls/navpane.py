@@ -40,12 +40,9 @@ from PyQt4.QtCore import Qt
 import settings
 from camelot.view import art
 from camelot.view.model_thread import get_model_thread
-from camelot.view.helpers import addActions
-from camelot.view.helpers import createAction
-from camelot.view.controls.modeltree import ModelItem
-from camelot.view.controls.modeltree import ModelTree
-from appscheme import scheme
-from appscheme import defaultUI
+from camelot.view.helpers import addActions, createAction
+from camelot.view.controls.modeltree import ModelItem, ModelTree
+from appscheme import scheme, defaultUI
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
@@ -219,7 +216,6 @@ class NavigationPane(QtGui.QDockWidget):
   """ms office-like navigation pane in Qt"""
   
   def __init__(self, app_admin, objectname='NavigationPane', parent=None):
-
     super(NavigationPane, self).__init__(parent)
     self.app_admin = app_admin
     self.sections = app_admin.getSections() 
