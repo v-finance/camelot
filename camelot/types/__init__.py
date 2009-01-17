@@ -103,6 +103,14 @@ class IPAddress(Code):
   def __init__(self, **kwargs):
     super(IPAddress, self).__init__(parts=['900','900','900','900'])
     
+class RichText(types.TypeDecorator):
+  """Sqlalchemy column type to store rich text
+  
+  by default, fields of this type will be displayed within a rich
+  text editor"""
+  
+  impl = types.UnicodeText
+  
 # Try to import PIL in various ways
 try:
   from PIL import Image as PILImage
