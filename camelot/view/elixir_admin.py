@@ -60,7 +60,8 @@ class EntityAdmin(object):
   name = None
   list_display = []
   fields = []
-  form = []
+  form = [] #DEPRECATED
+  form_display = []
   # list of field_names to filter on, if the field name is a one2many,
   # many2one or many2many field, the field name should be followed by a
   # field name of the related entity, eg : 'organization.name'
@@ -235,7 +236,7 @@ class EntityAdmin(object):
 
   @model_function
   def getFields(self):
-    if self.form:
+    if self.form or self.form_display:
       fields = self.getForm().get_fields()
     elif self.fields:
       fields = self.fields
@@ -246,8 +247,8 @@ class EntityAdmin(object):
   
   def getForm(self):
     from forms import Form, structure_to_form
-    if self.form:
-      return structure_to_form(self.form)
+    if self.form or self.form_display:
+      return structure_to_form(self.form or self.form_display)
     return Form([f for f, a in self.getFields()])    
 
   @model_function

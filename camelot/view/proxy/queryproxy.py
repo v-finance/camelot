@@ -102,6 +102,14 @@ class QueryTableProxy(CollectionProxy):
       row_data = RowDataFromObject(o, columns)
       self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
       self.cache[Qt.DisplayRole].add_data(i+offset, o, RowDataAsUnicode(row_data))
+    rows_in_query = (self.rows - len(self._appended_rows))
+    # Verify if rows that have not yet been flushed have been requested
+    if offset+limit>=rows_in_query:
+      for row in range(max(rows_in_query,offset), min(offset+limit, self.rows)):
+        o = self._get_object(row)
+        row_data = RowDataFromObject(o, columns)
+        self.cache[Qt.EditRole].add_data(row, o, row_data)
+        self.cache[Qt.DisplayRole].add_data(row, o, RowDataAsUnicode(row_data))
     return (offset, limit)
         
   @model_function

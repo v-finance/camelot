@@ -125,6 +125,8 @@ class ModelThread(threading.Thread):
           (event, request, response, exception) = self._request_queue.get()
           #self._response_queue.join()
           logger.debug('start handling request')
+#          import inspect
+#          print inspect.getsource(request)
           self._response_signaler.startProcessingRequest()
           result = request()
           self._response_queue.put((new_event, result, response))
