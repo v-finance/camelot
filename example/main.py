@@ -55,12 +55,10 @@ def main():
                            )
   from camelot.model.memento import Memento
   from camelot.model.authentication import *
-  from model import Director, Movie, Actor
+  from model import Movie, Cast
   admin.register(Memento, Memento.Admin)
   admin.register(Person, Person.Admin)
-  admin.register(Director, Director.Admin)
   admin.register(Movie, Movie.Admin)
-  admin.register(Actor, Actor.Admin)
   admin.register(Organization, Organization.Admin)
   admin.register(Party, Party.Admin)
   from camelot.view.mainwindow import MainWindow

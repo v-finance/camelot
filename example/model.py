@@ -3,88 +3,84 @@
 # to get started quickly
 #
 
-from datetime import datetime
-
 import camelot.types
-from camelot.model import *
+from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, Unicode, Date, Integer, using_options
 from camelot.view.elixir_admin import EntityAdmin
 
 __metadata__ = metadata
 
-
-class Director(Entity):
-    name = Field(Unicode(60), required=True)
-    movies = OneToMany('Movie', inverse='director')
-    using_options(tablename='directors')
-
-    def __repr__(self):
-      return self.name
-
-    #
-    # Each Entity subclass can have a subclass of EntityAdmin as
-    # its inner class.  The EntityAdmin class defines how the Entity
-    # class will be displayed in the GUI.  Its behaviour can be steered
-    # by specifying some class attributes
-    #
-    # To fully customize the way the entity is visualized, the EntityAdmin
-    # subclass should overrule some of the EntityAdmin's methods
-    #
-
-    class Admin(EntityAdmin):
-        name = 'Directors'
-        # the section attributed specifies where in the left panel of the
-        # main window a link to a list of this entities will appear. Have
-        # a look in main.py for the definition of the sections
-        section = 'movies'
-        # the list_display attribute specifies which entity attributes should
-        # be visible in the table view
-        list_display = ['name']
-        # the fields attribute specifies which entity attributes should be
-        # visible in the form view
-        fields = ['name', 'movies']
-
-
+def genre_choices(entity_instance):
+  yield (('action'),('Action'))
+  yield (('animation'),('Animation'))
+  yield (('comedy'),('Comedy'))
+  yield (('drama'),('Drama'))
+  yield (('sci-fi'),('Sci-Fi'))
+  yield (('war'),('War'))
+  
 class Movie(Entity):
-    title = Field(Unicode(60))
-    description = Field(Unicode(512))
-    releasedate = Field(Date)
-    director = ManyToOne('Director', inverse='movies')
-    actors = ManyToMany('Actor', inverse='movies', tablename='movie_casting')
+  using_options(tablename='movies')
+  title = Field(Unicode(60), required=True)
+  description = Field(Unicode())
+  releasedate = Field(Date)
+  director = ManyToOne('Person')
+  cast = OneToMany('Cast')
+  genre = Field(Unicode(15))
+  rating = Field(Integer())
+  #
+  # Camelot includes custom sqlalchemy types, like Image, which stores an
+  # PIL image on disk and keeps the reference to it in the database.
+  #
+  cover = Field(camelot.types.Image(upload_to='covers'))
+  short_description = Field(Unicode(512))
+  
+  def burn_to_disk(self):
+    print 'burn burn burn'
+
+  #
+  # Each Entity subclass can have a subclass of EntityAdmin as
+  # its inner class.  The EntityAdmin class defines how the Entity
+  # class will be displayed in the GUI.  Its behaviour can be steered
+  # by specifying some class attributes
+  #
+  # To fully customize the way the entity is visualized, the EntityAdmin
+  # subclass should overrule some of the EntityAdmin's methods
+  #
+  class Admin(EntityAdmin):
+    name = 'Movies'
+    # the section attributed specifies where in the left panel of the
+    # main window a link to a list of this entities will appear. Have
+    # a look in main.py for the definition of the sections        
+    section = 'movies'
+    # the list_display attribute specifies which entity attributes should
+    # be visible in the table view        
+    list_display = ['title', 'releasedate', 'director']
+    # define filters to be available in the table view
+    list_filter = ['genre']
+    # the form_display attribute specifies which entity attributes should be
+    # visible in the form view        
+    form_display = ['title', 'short_description', 'releasedate', 'director', 'cover', 'cast', 'genre', 'rating', 'description']
     #
-    # Camelot includes custom sqlalchemy types, like Image, which stores an
-    # PIL image on disk and keeps the reference to it in the database.
+    # create a list of actions available for the user on the form view
+    # those actions will be executed within the model thread
     #
-    cover = Field(camelot.types.Image(upload_to='covers'))
-    using_options(tablename='movies')
+    form_actions = [('Burn DVD', lambda o: o.burn_to_disk())]
+    # additional attributes for a field can be specified int the field_attributes dictionary
+    field_attributes = dict(actors=dict(edit_inline=True),
+                            genre=dict(choices=genre_choices))
 
-    def burn_to_disk(self):
-      print 'burn burn burn'
+  def __repr__(self):
+    return self.title or ''
 
-    class Admin(EntityAdmin):
-        name = 'Movies'
-        section = 'movies'
-        list_display = ['title', 'releasedate', 'director']
-        fields = ['title', 'releasedate', 'director', 'cover', 'actors']
-        #
-        # create a list of actions available for the user on the form view
-        # those actions will be executed within the model thread
-        #
-        form_actions = [('Burn DVD', lambda o: o.burn_to_disk())]
+class Cast(Entity):
+  using_options(tablename='cast')
+  movie = ManyToOne('Movie')
+  actor = ManyToOne('Person', required=True)
+  role = Field(Unicode(60))
+  
+  class Admin(EntityAdmin):
+      name = 'Actor'
+      list_display = ['actor', 'role']
+      form_display = ['actor', 'role']
 
-    def __repr__(self):
-      return self.title
-
-
-class Actor(Entity):
-    name = Field(Unicode(60))
-    movies = ManyToMany('Movie', inverse='actors', tablename='movie_casting')
-    using_options(tablename='actors')
-
-    class Admin(EntityAdmin):
-        name = 'Actor'
-        section = 'movies'
-        list_display = ['name', ]
-        fields = ['name', 'movies']
-
-    def __repr__(self):
-      return self.name
+  def __repr__(self):
+    return self.name or ''
