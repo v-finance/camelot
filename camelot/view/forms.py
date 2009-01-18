@@ -33,8 +33,6 @@ These structures can be transformed to QT forms.
 import logging
 logger = logging.getLogger('camelot.view.forms')
 
-
-
 def structure_to_form(structure):
   """Convert a python data structure to a form, using the following rules :
   
