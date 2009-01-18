@@ -110,8 +110,7 @@ class Form(object):
         col = 0
         row_span = 1
         label, editor = widgets[field]
-        if isinstance(editor, One2ManyEditor) or\
-           isinstance(editor, RichTextEditor):
+        if isinstance(editor, (One2ManyEditor, RichTextEditor)):
           col_span = 2
           form_layout.addWidget(label, row, col, row_span, col_span)
           row += 1
@@ -122,6 +121,19 @@ class Form(object):
           form_layout.addWidget(label, row, col, row_span, col_span)
           form_layout.addWidget(editor, row, col + 1, row_span, col_span)
           row += 1
+
+    # get last item in the layout
+    last_item = form_layout.itemAt(form_layout.count() - 1)
+
+    # if last item does not contain a widget, 0 is returned
+    # which is fine with the isinstance test
+    w = last_item.widget()
+
+    # add stretch only if last item is not expandable
+    if isinstance(w, (One2ManyEditor, RichTextEditor)):
+      pass
+    else:
+      form_layout.setRowStretch(form_layout.rowCount(), 1)
 
     form_widget = QtGui.QWidget()
     
