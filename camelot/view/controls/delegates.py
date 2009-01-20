@@ -175,8 +175,9 @@ _registered_delegates_[QtGui.QSpinBox] = IntegerColumnDelegate
 class PlainTextColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for simple string values"""
 
-  def __init__(self, parent=None):
+  def __init__(self, maxlength=None, parent=None):
     super(PlainTextColumnDelegate, self).__init__(parent)
+    self.maxlength = maxlength
 
   def paint(self, painter, option, index):
     if (option.state & QtGui.QStyle.State_Selected):
@@ -188,6 +189,7 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
 
   def createEditor(self, parent, option, index):
     editor = QtGui.QLineEdit(parent)
+    editor.setMaxLength(self.maxlength)
     if not self.parent().columnsdesc[index.column()][1]['editable']:
       editor.setEnabled(False)
     return editor

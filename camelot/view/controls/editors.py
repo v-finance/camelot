@@ -35,14 +35,12 @@ logger = logging.getLogger('camelot.view.controls.editors')
 
 import settings
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
+from PyQt4 import QtGui, QtCore
 
 import camelot.types
 from camelot.view import art
-from camelot.view.model_thread import gui_function
-from camelot.view.model_thread import model_function
+from camelot.view.model_thread import gui_function, model_function
 from camelot.view.workspace import get_workspace
 from camelot.view.search import create_entity_search_query_decorator
 
