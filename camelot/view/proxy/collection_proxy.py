@@ -327,7 +327,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == str:
         if c[1]['length']:
-          delegate = delegates.PlainTextColumnDelegate()
+          delegate = delegates.PlainTextColumnDelegate(maxlength=c[1]['length'])
           self.item_delegate.insertColumnDelegate(i, delegate)
         else:
           delegate = delegates.RichTextColumnDelegate(**c[1])
