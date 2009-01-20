@@ -3,14 +3,12 @@ FORMAT = '[%(levelname)-7s] [%(name)-35s] - %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 logger = logging.getLogger('videostore')
 
-from PyQt4 import QtCore
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
 from camelot.view import art
 
 def main():
-  
   logger.debug('qt version %s, pyqt version %s' % (QtCore.QT_VERSION_STR, 
                                                    QtCore.PYQT_VERSION_STR))
 
@@ -22,12 +20,12 @@ def main():
   app.setApplicationName('Videostore')
   app.setWindowIcon(QtGui.QIcon(art.icon32('apps/system-users')))
 
-  from camelot.view.controls.schemer import schemer
+  from camelot.view.controls.appscheme import scheme
   style = """
   QMainWindow::separator {
     border-right: 1px solid rgb%(BorderColor)s;
   }
-  """ % schemer.styledict
+  """ % scheme.styledict
   app.setStyleSheet(style)
 
   logger.debug('loading splashscreen')
