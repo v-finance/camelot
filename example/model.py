@@ -6,6 +6,7 @@
 import camelot.types
 from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, Unicode, Date, Integer, using_options
 from camelot.view.elixir_admin import EntityAdmin
+from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
 
 __metadata__ = metadata
 
@@ -20,7 +21,7 @@ def genre_choices(entity_instance):
 class Movie(Entity):
   using_options(tablename='movies')
   title = Field(Unicode(60), required=True)
-  description = Field(Unicode())
+  short_description = Field(Unicode(512))
   releasedate = Field(Date)
   director = ManyToOne('Person')
   cast = OneToMany('Cast')
@@ -31,7 +32,7 @@ class Movie(Entity):
   # PIL image on disk and keeps the reference to it in the database.
   #
   cover = Field(camelot.types.Image(upload_to='covers'))
-  short_description = Field(Unicode(512))
+  description = Field(Unicode())
   
   def burn_to_disk(self):
     print 'burn burn burn'
@@ -58,14 +59,15 @@ class Movie(Entity):
     list_filter = ['genre']
     # the form_display attribute specifies which entity attributes should be
     # visible in the form view        
-    form_display = ['title', 'short_description', 'releasedate', 'director', 'cover', 'cast', 'genre', 'rating', 'description']
+    form_display = TabForm([('Movie', Form([HBoxForm([['title', 'rating'],WidgetOnlyForm('cover')]), 'short_description', 'releasedate', 'director', 'description'])),
+                            ('Cast', WidgetOnlyForm('cast'))])
     #
     # create a list of actions available for the user on the form view
     # those actions will be executed within the model thread
     #
     form_actions = [('Burn DVD', lambda o: o.burn_to_disk())]
     # additional attributes for a field can be specified int the field_attributes dictionary
-    field_attributes = dict(actors=dict(edit_inline=True),
+    field_attributes = dict(cast=dict(create_inline=True),
                             genre=dict(choices=genre_choices))
 
   def __repr__(self):
