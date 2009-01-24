@@ -1,8 +1,7 @@
 import os
-import settings
 
 import logging
-logger = logging.getLogger('cantate.types')
+logger = logging.getLogger('camelot.types')
 logger.setLevel(logging.DEBUG)
 
 from sqlalchemy import types
@@ -143,6 +142,7 @@ class Image(types.TypeDecorator):
   impl = types.Unicode
   
   def __init__(self, max_length=100, upload_to='', prefix='image-', format='png', **kwargs):
+    import settings
     self.upload_to = os.path.join(settings.CAMELOT_MEDIA_ROOT, upload_to)
     self.prefix = prefix
     self.format = format
