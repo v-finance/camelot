@@ -1,4 +1,6 @@
 import logging
+import inspect
+import camelot
 import os
 
 logging.basicConfig(level=logging.ERROR)
@@ -12,7 +14,7 @@ def setup_model():
   setup_all(create_tables=True)
   updateLastLogin()
       
-CAMELOT_MAIN_DIRECTORY = os.path.join(os.path.dirname(__file__), '..', 'camelot')
+CAMELOT_MAIN_DIRECTORY = os.path.dirname(inspect.getabsfile(camelot))
 CAMELOT_ART_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY, 'art')
 CAMELOT_TEMPLATES_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY,
                                            'view', 'templates')

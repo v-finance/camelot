@@ -7,8 +7,6 @@ class MyApplicationAdmin(ApplicationAdmin):
     super(MyApplicationAdmin, self).__init__([('relations', ('Relations', art.icon24('apps/system-users'))),
                                               ('configuration',('Configuration', art.icon24('categories/preferences-system'))),]
                                               )
-
-
     from camelot.model.memento import Memento
     from camelot.model.authentication import Person, Organization
     from camelot.model.i18n import Translation
