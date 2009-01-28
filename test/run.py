@@ -45,8 +45,9 @@ def testSuites():
 #        event.wait()
 #        self.mt.process_responses()
         
-  class proxy_tests(unittest.TestCase):
-    """Test the functionality of the proxies to perform CRUD operations on data"""
+  class ProxyEntityTest(unittest.TestCase):
+    """Test the functionality of the proxies to perform CRUD operations on stand
+    alone data"""
     def setUp(self):
       from camelot.model.authentication import Person, PartyAddressRoleType
       from camelot.view.proxy.queryproxy import QueryTableProxy
@@ -59,7 +60,7 @@ def testSuites():
       self.person_proxy = QueryTableProxy(person_admin, lambda:Person.query, person_admin.getFields)
       self.party_address_role_type_proxy = QueryTableProxy(party_address_role_type_admin, lambda:PartyAddressRoleType.query, party_address_role_type_admin.getFields)
       # get the columns of the proxy
-      self.columns = dict((c[0],i) for i,c in enumerate(self.block(lambda:self.person_proxy.getColumns())))
+      self.person_columns = dict((c[0],i) for i,c in enumerate(self.block(lambda:self.person_proxy.getColumns())))
       self.rows_before_insert = 0
       self.rows_after_insert = 0
       self.rows_after_delete = 0
@@ -88,15 +89,15 @@ def testSuites():
     def updateNewPerson(self):
       rows_before_update = self.numberOfPersons()
       self.assertNotEqual( self.block(lambda:self.new_person.last_name), u'Testers')
-      index = self.person_proxy.index(self.rows_before_insert, self.columns['last_name'])
+      index = self.person_proxy.index(self.rows_before_insert, self.person_columns['last_name'])
       self.person_proxy.setData(index, lambda:u'Testers')
       self.assertEqual( self.block(lambda:self.new_person.last_name), u'Testers')
       self.assertEqual(rows_before_update, self.numberOfPersons())
     def updateNewPersonToValid(self):
-      index = self.person_proxy.index(self.rows_before_insert, self.columns['username'])
+      index = self.person_proxy.index(self.rows_before_insert, self.person_columns['username'])
       self.person_proxy.setData(index, lambda:u'test')
     def updateNewPersonToInvalid(self):
-      index = self.person_proxy.index(self.rows_before_insert, self.columns['username'])
+      index = self.person_proxy.index(self.rows_before_insert, self.person_columns['username'])
       self.person_proxy.setData(index, lambda:None)
     def deleteNewPerson(self):
       self.person_proxy.removeRow(self.rows_before_insert)
@@ -133,6 +134,59 @@ def testSuites():
       self.updateNewPersonToInvalid()
       self.deleteNewPerson()
                   
+  class ProxyOneToManyTest(ProxyEntityTest):
+    """Test the functionality of the proxies to perform CRUD operations on related
+    data"""
+    def setUp(self):
+      super(ProxyOneToManyTest, self).setUp()
+      from elixir import session
+      from camelot.view.proxy.queryproxy import QueryTableProxy
+      from camelot.model.authentication import Country, City, Address, PartyAddress
+      party_address_admin = self.app_admin.getEntityAdmin(PartyAddress)
+      self.party_address_proxy = QueryTableProxy(party_address_admin, PartyAddress.query, party_address_admin.getFields)
+      self.party_address_columns = dict((c[0],i) for i,c in enumerate(self.block(lambda:self.party_address_proxy.getColumns())))
+      self.country = self.block(lambda:Country(code=u'BE', name=u'Belgium'))
+      self.city = self.block(lambda:City(code=u'2000', name=u'Antwerp', country=self.country))
+      self.address = self.block(lambda:Address(street1=u'Teststreet', city=self.city))
+      self.block(lambda:session.flush([self.country, self.city, self.address]))
+    def insertRelatedPartyAddress(self, valid):
+      from camelot.model.authentication import PartyAddress
+      index = self.person_proxy.index(self.rows_before_insert, self.person_columns['addresses'])
+      self.block(lambda:None)
+      self.related_party_address_proxy = self.person_proxy.data(index, Qt.EditRole).toPyObject()
+      self.block(lambda:None)
+      self.related_party_address_proxy = self.person_proxy.data(index, Qt.EditRole).toPyObject()
+      self.assertNotEqual(self.related_party_address_proxy, None)
+      self.party_address = self.block({True:lambda:PartyAddress(address=self.address), False:lambda:PartyAddress()}[valid])
+      self.related_party_address_proxy.insertRow(0, create_getter(self.party_address))
+      self.block(lambda:None)
+    def testCreateBothValidDataUpdateDelete(self):
+      self.insertNewPerson(valid=True)
+      self.insertRelatedPartyAddress(valid=True)
+      self.assertNotEqual(self.party_address.id, None)
+      self.deleteNewPerson()
+    def testCreateValidPersonInvalidPartyAddressUpdateDelete(self):
+      self.insertNewPerson(valid=True)
+      self.insertRelatedPartyAddress(valid=False)
+      self.assertEqual(self.party_address.id, None)
+      self.deleteNewPerson()
+    def testCreateInvalidPersonValidPartyAddressUpdateDelete(self):
+      self.insertNewPerson(valid=False)
+      self.insertRelatedPartyAddress(valid=False)
+      self.assertEqual(self.party_address.id, None)
+      self.deleteNewPerson()
+#    def testCreateBothInvalidUpdateDelete(self):
+#      self.insertNewPerson(valid=False)
+#      self.insertRelatedPartyAddress(valid=False)
+#      #self.assertEqual(self.party_address.id, None)
+#      self.deleteNewPerson()
+    def tearDown(self):
+      from elixir import session
+      self.block(lambda:self.address.delete())
+      self.block(lambda:self.city.delete())
+      self.block(lambda:self.country.delete())
+      self.block(lambda:session.flush([self.country, self.city, self.address]))
+    
   import inspect
   for c in locals().values():
     if inspect.isclass(c):
