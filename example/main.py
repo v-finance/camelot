@@ -6,7 +6,7 @@ logger = logging.getLogger('videostore')
 from PyQt4 import QtGui, QtCore
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
-from camelot.view import art
+from camelot.view.art import TangoIcon, QTangoIcon
 
 def main():
   logger.debug('qt version %s, pyqt version %s' % (QtCore.QT_VERSION_STR, 
@@ -18,7 +18,9 @@ def main():
   app.setOrganizationName('Conceptive Engineering')
   app.setOrganizationDomain('conceptive.be')
   app.setApplicationName('Videostore')
-  app.setWindowIcon(QtGui.QIcon(art.icon32('apps/system-users')))
+  app.setWindowIcon(QTangoIcon('system-users', 
+                    folder='apps',
+                    size='32x32').getQIcon())
 
   from camelot.view.controls.appscheme import scheme
   style = """
@@ -32,25 +34,40 @@ def main():
   splash = QtGui.QSplashScreen(QtGui.QPixmap(('camelot-proposal.png')))
   splash.show()
   app.processEvents()
-  
+
   #
   # Start the model thread
   #
-  from camelot.view.model_thread import get_model_thread, construct_model_thread
+  from camelot.view.model_thread import get_model_thread, \
+                                        construct_model_thread
   from camelot.view.response_handler import ResponseHandler
   from camelot.view.remote_signals import construct_signal_handler
+
   rh = ResponseHandler()
-  
   construct_model_thread(rh)
   construct_signal_handler()
   get_model_thread().start()
   
   from camelot.view.application_admin import ApplicationAdmin
+  
+  # icons displayed in the navigation pane with buttons
 
-  admin = ApplicationAdmin([('movies',('Movies', art.icon24('mimetypes/x-office-presentation'))),
-                            ('relations', ('Relations', art.icon24('apps/system-users'))),
-                            ('configuration',('Configuration', art.icon24('categories/preferences-system'))),]
-                           )
+  icon_movies = TangoIcon('x-office-presentation',
+                          folder='mimetypes',
+                          size='24x24').fullpath()
+  icon_relations = TangoIcon('system-users',
+                             folder='apps',
+                             size='24x24').fullpath()
+  icon_configuration = TangoIcon('preferences-system',
+                                 folder='categories',
+                                 size='24x24').fullpath()
+
+  admin = ApplicationAdmin([
+    ('movies', ('Movies', icon_movies)),
+    ('relations', ('Relations', icon_relations)),
+    ('configuration', ('Configuration', icon_configuration)),
+  ])
+  
   from camelot.model.memento import Memento
   from camelot.model.authentication import *
   from model import Movie, Cast
@@ -61,8 +78,8 @@ def main():
   admin.register(Party, Party.Admin)
   from camelot.view.mainwindow import MainWindow
   mainwindow = MainWindow(admin)
-#  mainwindow.connect(rh, rh.start_signal, mainwindow.throbber.process_working)
-#  mainwindow.connect(rh, rh.stop_signal, mainwindow.throbber.process_idle)
+  #mainwindow.connect(rh, rh.start_signal, mainwindow.throbber.process_working)
+  #mainwindow.connect(rh, rh.stop_signal, mainwindow.throbber.process_idle)
   mainwindow.show()
   splash.finish(mainwindow)
   sys.exit(app.exec_())
