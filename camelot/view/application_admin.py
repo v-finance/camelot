@@ -25,9 +25,9 @@
 #
 #  ============================================================================
 
-"""Admin class, specify how the main window should look like"""
 
 class ApplicationAdmin(object):
+  """Admin class, specify how the main window should look like"""
   
   sections = []
   admins = {}
@@ -36,7 +36,7 @@ class ApplicationAdmin(object):
     """The main sections to be used in the navigation pane of the application,
     all entities will be put in such a section, depending on the properties of
     their EntityAdmin class, a list of tuples of strings and icons
-    [('section', ('Section display name',section_icon))]
+    [('section', ('Section display name', section_icon))]
     """
     if main_sections:
       self.sections = main_sections
@@ -62,8 +62,7 @@ class ApplicationAdmin(object):
     return entity.query
   
   def getEntitiesAndQueriesInSection(self, section):
-    """
-    @return: a list of tuples of (admin, query) instances related to
+    """@return: a list of tuples of (admin, query) instances related to
     the entities in this section.
     """
     result = [(self.getEntityAdmin(e), self.getEntityQuery(e))
@@ -86,8 +85,8 @@ class ApplicationAdmin(object):
     return "Project Camelot"
   
   def getIcon(self):
-    import art
-    return art.icon32('apps/system-users')
+    from art import TangoIcon
+    return TangoIcon('system-users', folder='apps', size='32x32').fullpath()
   
   def getAbout(self):
     """@return: the content of the About dialog"""

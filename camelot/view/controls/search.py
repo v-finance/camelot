@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,11 +23,11 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
 from PyQt4 import QtCore, QtGui
+from camelot.view.art import QTangoIcon
 
-from camelot.view import art
 
 class SimpleSearchControl(QtGui.QWidget):
   """A control that displays a single text field in which search
@@ -42,21 +42,27 @@ class SimpleSearchControl(QtGui.QWidget):
     layout = QtGui.QHBoxLayout()
     layout.setSpacing(0)
     layout.setMargin(0)
+
     # Search button
     self.search_button = QtGui.QToolButton()
-    self.search_button.setIcon(QtGui.QIcon(art.icon16('actions/system-search')))
+    icon = QTangoIcon('system-search', folder='actions').getQIcon()
+    self.search_button.setIcon(icon)
     self.search_button.setIconSize(QtCore.QSize(14, 14))
     self.search_button.setAutoRaise(True)
     self.connect(self.search_button, QtCore.SIGNAL('clicked()'), self.emit_search)
+
     # Search input
     self.search_input = QtGui.QLineEdit()
     self.connect(self.search_input, QtCore.SIGNAL('returnPressed()'), self.emit_search)
+
     # Cancel button
     self.cancel_button = QtGui.QToolButton()
-    self.cancel_button.setIcon(QtGui.QIcon(art.icon16('actions/edit-clear')))
+    icon = QTangoIcon('edit-clear', folder='actions').getQIcon()
+    self.cancel_button.setIcon(icon)
     self.cancel_button.setIconSize(QtCore.QSize(14, 14))
     self.cancel_button.setAutoRaise(True)
     self.connect(self.cancel_button, QtCore.SIGNAL('clicked()'), self.emit_cancel)
+
     # Setup layout
     layout.addWidget(self.search_button)
     layout.addWidget(self.search_input)

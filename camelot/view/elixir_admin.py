@@ -68,8 +68,8 @@ class EntityAdmin(object):
   list_filter = []
   list_charts = []
   list_actions = []
-  list_size = (700,500)
-  form_size = (700,500)
+  list_size = (700, 500)
+  form_size = (700, 500)
   form_actions = []
   form_title_column = None
   field_attributes = {}

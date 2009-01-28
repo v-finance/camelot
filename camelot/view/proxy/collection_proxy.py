@@ -39,18 +39,17 @@ verbose = False
 import pickle
 import elixir
 import datetime
-from PyQt4 import QtGui
-from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
+from PyQt4 import QtGui, QtCore
 
 from sqlalchemy.orm.session import Session
-from camelot.view import art
+from camelot.view.art import QTangoIcon
 from camelot.view.fifo import fifo
 from camelot.view.controls import delegates
 from camelot.view.remote_signals import get_signal_handler
-from camelot.view.model_thread import gui_function
-from camelot.view.model_thread import model_function
-from camelot.view.model_thread import get_model_thread
+from camelot.view.model_thread import gui_function, \
+                                      model_function, \
+                                      get_model_thread
 
 
 class DelayedProxy(object):
@@ -112,6 +111,7 @@ class EmptyRowData(object):
   
 empty_row_data = EmptyRowData()
 
+
 class CollectionProxy(QtCore.QAbstractTableModel):
   """The CollectionProxy contains a limited copy of the data in the actual
   collection, usable for fast visualisation in a QTableView 
@@ -135,7 +135,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.logger = logger
     QtCore.QAbstractTableModel.__init__(self)
     self.admin = admin
-    self.form_icon = QtCore.QVariant(QtGui.QIcon(art.icon16('places/folder')))
+    icon = QTangoIcon('folder', folder='places').getQIcon()
+    self.form_icon = QtCore.QVariant(icon)
     self.validator = admin.createValidator(self)
     self.collection_getter = collection_getter
     self.column_count = 0

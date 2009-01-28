@@ -25,8 +25,6 @@
 #
 #  ============================================================================
 
-"""Main window GUI"""
-
 import settings
 import os
 import sys
@@ -42,16 +40,14 @@ logger.setLevel(logging.INFO)
 from sqlalchemy.databases import sqlite
 import sqlite3
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 from PyQt4.QtTest import QTest
+from PyQt4 import QtGui, QtCore
 
-from camelot.view import art
+from camelot.view.art import TangoIcon
 from camelot.view.helpers import createAction, addActions
 from camelot.view.controls.navpane import PaneButton, NavigationPane
 from camelot.view.controls.printer import Printer
-from camelot.view.controls.animation import Throbber
 from camelot.view.model_thread import get_model_thread, construct_model_thread
 from camelot.view.response_handler import ResponseHandler
 from camelot.view.remote_signals import construct_signal_handler
@@ -62,6 +58,7 @@ _ = lambda x: x
 
 
 class MainWindow(QtGui.QMainWindow):
+  """Main window GUI"""
 
   def __init__(self, app_admin, parent=None):
     from workspace import construct_workspace
@@ -154,10 +151,11 @@ class MainWindow(QtGui.QMainWindow):
                                 _('&Save'),
                                 self.save,
                                 QtGui.QKeySequence.Save,
-                                art.icon16('actions/document-save'),
+                                TangoIcon('document-save', 
+                                          folder='actions').fullpath(),
                                 _('Save'))
 
-    temp = art.icon16('actions/document-properties')
+    temp = TangoIcon('document-properties', folder='actions').fullpath()
     self.pageSetupAct = createAction(self,
                                      _('Page Setup...'),
                                      self.pageSetup,
@@ -168,10 +166,11 @@ class MainWindow(QtGui.QMainWindow):
                                  _('Print...'),
                                  self.printDoc,
                                  QtGui.QKeySequence.Print,
-                                 art.icon16('actions/document-print'),
+                                 TangoIcon('document-print',
+                                           folder='actions').fullpath(),
                                  _('Print...'))
 
-    temp = art.icon16('actions/document-print-preview')
+    temp = TangoIcon('document-print-preview', folder='actions').fullpath()
     self.previewAct = createAction(self,
                                    _('Print Preview'),
                                    self.previewDoc,
@@ -188,7 +187,8 @@ class MainWindow(QtGui.QMainWindow):
                                _('Cu&t'),
                                self.cut,
                                QtGui.QKeySequence.Cut,
-                               art.icon16('actions/edit-cut'),
+                               TangoIcon('edit-cut',
+                                         folder='actions').fullpath(),
                                tip)
 
     tip = _("Copy the current selection's contents to the clipboard")
@@ -196,7 +196,8 @@ class MainWindow(QtGui.QMainWindow):
                                 _('&Copy'),
                                 self.copy,
                                 QtGui.QKeySequence.Copy,
-                                art.icon16('actions/edit-copy'),
+                                TangoIcon('edit-copy',
+                                          folder='actions').fullpath(),
                                 tip)
 
     tip = _("Paste the clipboard's contents into the current selection")
@@ -204,7 +205,8 @@ class MainWindow(QtGui.QMainWindow):
                                  _('&Paste'),
                                  self.paste,
                                  QtGui.QKeySequence.Paste,
-                                 art.icon16('actions/edit-paste'),
+                                 TangoIcon('edit-paste',
+                                           folder='actions').fullpath(),
                                  tip)
 
     self.closeAct = createAction(self,
@@ -236,42 +238,48 @@ class MainWindow(QtGui.QMainWindow):
                                _('New'),
                                self.new,
                                QtGui.QKeySequence.New,
-                               art.icon16('actions/document-new'),
+                               TangoIcon('document-new',
+                                         folder='actions').fullpath(),
                                _('New'))
 
     self.deleteAct = createAction(self,
                                   _('Delete'),
                                   self.delete,
                                   QtGui.QKeySequence.Delete,
-                                  art.icon16('places/user-trash'),
+                                  TangoIcon('user-trash',
+                                            folder='places').fullpath(),
                                   _('Delete'))
 
     self.viewFirstAct = createAction(self,
                                      _('First'),
                                      self.viewFirst,
                                      QtGui.QKeySequence.MoveToStartOfDocument,
-                                     art.icon16('actions/go-first'),
+                                     TangoIcon('go-first',
+                                               folder='actions').fullpath(),
                                      _('First'))
 
     self.viewLastAct = createAction(self,
                                     _('Last'),
                                     self.viewLast,
                                     QtGui.QKeySequence.MoveToEndOfDocument,
-                                    art.icon16('actions/go-last'),
+                                    TangoIcon('go-last',
+                                              folder='actions').fullpath(),
                                     _('Last'))
 
     self.viewNextAct = createAction(self,
                                     _('Next'),
                                     self.viewNext,
                                     QtGui.QKeySequence.MoveToNextPage,
-                                    art.icon16('actions/go-next'),
+                                    TangoIcon('go-next',
+                                              folder='actions').fullpath(),
                                     _('Next'))
 
     self.viewPreviousAct = createAction(self,
                                         _('Previous'),
                                         self.viewPrevious,
                                         QtGui.QKeySequence.MoveToPreviousPage,
-                                        art.icon16('actions/go-previous'),
+                                        TangoIcon('go-previous',
+                                                  folder='actions').fullpath(),
                                         _('Previous'))
 
     if QT_MAJOR_VERSION > 4.3:
@@ -280,20 +288,21 @@ class MainWindow(QtGui.QMainWindow):
       self.viewNextAct.setIconVisibleInMenu(False)
       self.viewPreviousAct.setIconVisibleInMenu(False)
 
-    temp = art.icon16('mimetypes/x-office-spreadsheet')
+    temp = TangoIcon('x-office-spreadsheet', folder='mimetypes').fullpath()
     self.exportToExcelAct = createAction(self,
                                          _('Export to MS Excel'),
                                          self.exportToExcel,
                                          actionicon=temp,
                                          tip=_('Export to MS Excel'))
 
-    temp = art.icon16('mimetypes/x-office-document')
+    temp = TangoIcon('x-office-document', folder='mimetypes').fullpath()
     self.exportToWordAct = createAction(self,
                                         _('Export to MS Word'),
                                         self.exportToWord,
                                         actionicon=temp,
                                         tip=_('Export to MS Word'))
-    temp = art.icon16('actions/mail-message-new')
+
+    temp = TangoIcon('mail-message-new', folder='actions').fullpath()
     self.exportToMailAct = createAction(self,
                                         _('Send by e-mail'),
                                         self.exportToMail,
@@ -460,16 +469,6 @@ class MainWindow(QtGui.QMainWindow):
 
     self.helpMenu = self.menuBar().addMenu(_('&Help'))
     addActions(self.helpMenu, (self.aboutAct, ))
-
-    #self.throbber = Throbber(self.menuBar())
-
-  def resizeEvent(self, event):
-    """Needed to correctly position the throbber"""
-    QtGui.QMainWindow.resizeEvent(self, event)
-    # always put throbber in top right corner
-    #x = self.width() - self.throbber.sizeHint().width() - 5
-    #y = 2
-    #self.throbber.move(x, y)
 
   def updateMenus(self):
     hasMdiChild = (self.activeMdiChild() is not None)

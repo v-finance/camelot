@@ -39,7 +39,7 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
 import camelot.types
-from camelot.view import art
+from camelot.view.art import TangoIcon, QTangoIcon
 from camelot.view.model_thread import gui_function, model_function
 from camelot.view.workspace import get_workspace
 from camelot.view.search import create_entity_search_query_decorator
@@ -64,7 +64,8 @@ class DateEditor(QtGui.QWidget):
     
     if nullable:
       nullbutton = QtGui.QToolButton()
-      nullbutton.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
+      icon = QTangoIcon('user-trash', folder='places').getQIcon()
+      nullbutton.setIcon(icon)
       nullbutton.setAutoRaise(True)
       #nullbutton.setCheckable(True)
       self.connect(nullbutton, QtCore.SIGNAL('clicked()'), self.setMinimumDate)
@@ -140,13 +141,17 @@ class CodeEditor(QtGui.QWidget):
     layout = QtGui.QHBoxLayout()
     #layout.setSpacing(0)
     layout.setMargin(0)
+
     for part in parts:
       editor = QtGui.QLineEdit()
       editor.setInputMask(part)
       editor.installEventFilter(self)
       self.part_editors.append(editor)
       layout.addWidget(editor)
-      self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
+      self.connect(editor,
+                   QtCore.SIGNAL('editingFinished()'),
+                   self.editingFinished)
+
     self.setLayout(layout)
     self.setAutoFillBackground(True);
 
@@ -241,16 +246,25 @@ class Many2OneEditor(QtGui.QWidget):
     self.layout = QtGui.QHBoxLayout()
     self.layout.setSpacing(0)
     self.layout.setMargin(0)
+
     # Search button
     self.search_button = QtGui.QToolButton()
-    self.search_button.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
+    icon = QTangoIcon('user-trash', folder='places').getQIcon()
+    self.search_button.setIcon(icon)
     self.search_button.setAutoRaise(True)
-    self.connect(self.search_button, QtCore.SIGNAL('clicked()'), self.searchButtonClicked)
+    self.connect(self.search_button,
+                 QtCore.SIGNAL('clicked()'),
+                 self.searchButtonClicked)
+
     # Open button
     self.open_button = QtGui.QToolButton()
-    self.open_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
-    self.connect(self.open_button, QtCore.SIGNAL('clicked()'), self.openButtonClicked)
+    icon = QTangoIcon('document-new', folder='actions').getQIcon()
+    self.open_button.setIcon(icon)
+    self.connect(self.open_button,
+                 QtCore.SIGNAL('clicked()'),
+                 self.openButtonClicked)
     self.open_button.setAutoRaise(True)  
+
     # Search input
     self.search_input = QtGui.QLineEdit()
     #self.search_input.setReadOnly(True)
@@ -367,17 +381,17 @@ class Many2OneEditor(QtGui.QWidget):
       self._entity_representation = desc
       self.search_input.setText(desc)
       if pk != False:
-        open_icon = QtGui.QIcon(art.icon16('places/folder'))
-        search_icon = QtGui.QIcon(art.icon16('places/user-trash'))
-        self.open_button.setIcon(open_icon)
-        self.search_button.setIcon(search_icon)
+        icon = QTangoIcon('folder', folder='places').getQIcon()
+        self.open_button.setIcon(icon)
+        icon = QTangoIcon('user-trash', folder='places').getQIcon()
+        self.search_button.setIcon(icon)
         self.entity_set = True
         #self.search_input.setReadOnly(True)
       else:
-        open_icon = QtGui.QIcon(art.icon16('actions/document-new'))
-        search_icon = QtGui.QIcon(art.icon16('actions/system-search'))
-        self.open_button.setIcon(open_icon)
-        self.search_button.setIcon(search_icon)
+        icon = QTangoIcon('document-new', folder='actions').getQIcon()
+        self.open_button.setIcon(icon)
+        icon = QTangoIcon('system-search', folder='actions').getQIcon()
+        self.search_button.setIcon(icon)
         self.entity_set = False
         #self.search_input.setReadOnly(False)
       if propagate:
@@ -434,13 +448,15 @@ class One2ManyEditor(QtGui.QWidget):
     button_layout = QtGui.QVBoxLayout()
     button_layout.setSpacing(0)
     delete_button = QtGui.QToolButton()
-    delete_button.setIcon(QtGui.QIcon(art.icon16('places/user-trash')))
+    icon = QTangoIcon('user-trash', folder='places').getQIcon()
+    delete_button.setIcon(icon)
     delete_button.setAutoRaise(True)
     self.connect(delete_button,
                  QtCore.SIGNAL('clicked()'),
                  self.deleteSelectedRows)
     add_button = QtGui.QToolButton()
-    add_button.setIcon(QtGui.QIcon(art.icon16('actions/document-new')))
+    icon = QTangoIcon('document-new', folder='actions').getQIcon()
+    add_button.setIcon(icon)
     add_button.setAutoRaise(True)
     self.connect(add_button, QtCore.SIGNAL('clicked()'), self.newRow)
     button_layout.addStretch()
@@ -550,24 +566,30 @@ class ImageEditor(QtGui.QWidget):
     button_layout.setMargin(0)
 
     file_button = QtGui.QToolButton()
-    file_button.setIcon( QtGui.QIcon(art.icon16('actions/document-new')))
+    icon = QTangoIcon('document-new', folder='actions').getQIcon()
+    file_button.setIcon(icon)
     file_button.setAutoRaise(True)
     file_button.setToolTip('Select image')
     self.connect(file_button, QtCore.SIGNAL('clicked()'), self.openFileDialog)
     
     app_button = QtGui.QToolButton()
-    app_button.setIcon( QtGui.QIcon(art.icon16('status/folder-open')))
+    icon = QTangoIcon('folder-open', folder='status').getQIcon()
+    app_button.setIcon(icon)
     app_button.setAutoRaise(True)
     app_button.setToolTip('Open image')
     self.connect(app_button, QtCore.SIGNAL('clicked()'), self.openInApp)
     
     clear_button = QtGui.QToolButton()
-    clear_button.setIcon( QtGui.QIcon(art.icon16('places/user-trash')))
+    icon = QTangoIcon('user-trash', folder='places').getQIcon()
+    clear_button.setIcon(icon)
     clear_button.setToolTip('Clear image')
     clear_button.setAutoRaise(True)
     self.connect(clear_button, QtCore.SIGNAL('clicked()'), self.clearImage)
 
-    vspacerItem = QtGui.QSpacerItem(20,20,QtGui.QSizePolicy.Minimum,QtGui.QSizePolicy.Expanding)
+    vspacerItem = QtGui.QSpacerItem(20,
+                                    20,
+                                    QtGui.QSizePolicy.Minimum,
+                                    QtGui.QSizePolicy.Expanding)
     
     button_layout.addItem(vspacerItem)
     button_layout.addWidget(file_button)      
@@ -576,13 +598,18 @@ class ImageEditor(QtGui.QWidget):
 
     self.layout.addLayout(button_layout)
     
-    hspacerItem = QtGui.QSpacerItem(20,20,QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+    hspacerItem = QtGui.QSpacerItem(20,
+                                    20,
+                                    QtGui.QSizePolicy.Expanding,
+                                    QtGui.QSizePolicy.Minimum)
     self.layout.addItem(hspacerItem)
     self.setLayout(self.layout)
     #
     # Image
     #
-    self.dummy_image = os.path.normpath(art.icon32('apps/help-browser'))
+    self.dummy_image = TangoIcon('help-browser', 
+                                 folder='apps',
+                                 size='32x32').fullpath()
     if self.image is None:
       testImage = QtGui.QImage(self.dummy_image)
       if not testImage.isNull():
@@ -668,18 +695,21 @@ class RichTextEditor(QtGui.QWidget):
     #
     
     class CustomTextEdit(QtGui.QTextEdit):
-      
       def __init__(self, parent):
         super(CustomTextEdit, self).__init__(parent)
+
       def focusOutEvent(self, event):
-        # this seems to cause weird behaviour, where editingFinished is fired, even
+        # this seems to cause weird behaviour,
+        # where editingFinished is fired, even
         # if nothing has been edited yet
         #self.emit(QtCore.SIGNAL('editingFinished()'))
         pass
         
     self.textedit = CustomTextEdit(self)
     
-    self.connect(self.textedit, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
+    self.connect(self.textedit,
+                 QtCore.SIGNAL('editingFinished()'),
+                 self.editingFinished)
     self.textedit.setAcceptRichText(True)
 
     if not self.editable:
@@ -689,74 +719,103 @@ class RichTextEditor(QtGui.QWidget):
       # Buttons setup
       #
       self.toolbar = QtGui.QToolBar(self)
-      self.toolbar.setContentsMargins(0,0,0,0)
+      self.toolbar.setContentsMargins(0, 0, 0, 0)
+      
       self.bold_button = QtGui.QToolButton(self)
-      self.bold_button.setIcon( QtGui.QIcon(art.icon16('actions/format-text-bold')))
+      icon = QTangoIcon('format-text-bold', folder='actions').getQIcon()
+      self.bold_button.setIcon(icon)
       self.bold_button.setAutoRaise(True)
       self.bold_button.setCheckable(True)
-      self.bold_button.setMaximumSize(QtCore.QSize(20,20))
+      self.bold_button.setMaximumSize(QtCore.QSize(20, 20))
       self.bold_button.setShortcut(QtGui.QKeySequence('Ctrl+B'))
       self.connect(self.bold_button, QtCore.SIGNAL('clicked()'), self.set_bold)
+
       self.italic_button = QtGui.QToolButton(self)
-      self.italic_button.setIcon(QtGui.QIcon(art.icon16('actions/format-text-italic')))
+      icon = QTangoIcon('format-text-italic', folder='actions').getQIcon()
+      self.italic_button.setIcon(icon)
       self.italic_button.setAutoRaise(True)
       self.italic_button.setCheckable(True)
-      self.italic_button.setMaximumSize(QtCore.QSize(20,20))
+      self.italic_button.setMaximumSize(QtCore.QSize(20, 20))
       self.italic_button.setShortcut(QtGui.QKeySequence('Ctrl+I'))
-      self.connect(self.italic_button, QtCore.SIGNAL('clicked(bool)'), self.set_italic)
+      self.connect(self.italic_button,
+                   QtCore.SIGNAL('clicked(bool)'),
+                   self.set_italic)
   
       self.underline_button = QtGui.QToolButton(self)
-      self.underline_button.setIcon(QtGui.QIcon(art.icon16('actions/format-text-underline')))
+      icon = QTangoIcon('format-text-underline', folder='actions').getQIcon()
+      self.underline_button.setIcon(icon)
       self.underline_button.setAutoRaise(True)
       self.underline_button.setCheckable(True)
-      self.underline_button.setMaximumSize(QtCore.QSize(20,20))
+      self.underline_button.setMaximumSize(QtCore.QSize(20, 20))
       self.underline_button.setShortcut(QtGui.QKeySequence('Ctrl+U'))
-      self.connect(self.underline_button, QtCore.SIGNAL('clicked(bool)'), self.set_underline)
+      self.connect(self.underline_button,
+                   QtCore.SIGNAL('clicked(bool)'),
+                   self.set_underline)
   
       self.copy_button = QtGui.QToolButton(self)
-      self.copy_button.setIcon(QtGui.QIcon(art.icon16('actions/edit-copy')))
+      icon = QTangoIcon('edit-copy', folder='actions').getQIcon()
+      self.copy_button.setIcon(icon)
       self.copy_button.setAutoRaise(True)
-      self.copy_button.setMaximumSize(QtCore.QSize(20,20))
-      self.connect(self.copy_button, QtCore.SIGNAL('clicked(bool)'), self.textedit.copy)
+      self.copy_button.setMaximumSize(QtCore.QSize(20, 20))
+      self.connect(self.copy_button,
+                   QtCore.SIGNAL('clicked(bool)'),
+                   self.textedit.copy)
   
       self.cut_button = QtGui.QToolButton(self)
-      self.cut_button.setIcon(QtGui.QIcon(art.icon16('actions/edit-cut')))
+      icon = QTangoIcon('edit-cut', folder='actions').getQIcon()
+      self.cut_button.setIcon(icon)
       self.cut_button.setAutoRaise(True)
-      self.cut_button.setMaximumSize(QtCore.QSize(20,20))
-      self.connect(self.cut_button, QtCore.SIGNAL('clicked(bool)'), self.textedit.cut)
+      self.cut_button.setMaximumSize(QtCore.QSize(20, 20))
+      self.connect(self.cut_button,
+                   QtCore.SIGNAL('clicked(bool)'),
+                   self.textedit.cut)
   
       self.paste_button = QtGui.QToolButton(self)
-      self.paste_button.setIcon(QtGui.QIcon(art.icon16('actions/edit-paste')))
+      icon = QTangoIcon('edit-paste', folder='actions').getQIcon()
+      self.paste_button.setIcon(icon)
       self.paste_button.setAutoRaise(True)
-      self.paste_button.setMaximumSize(QtCore.QSize(20,20))
-      self.connect(self.paste_button, QtCore.SIGNAL('clicked(bool)'), self.textedit.paste)
+      self.paste_button.setMaximumSize(QtCore.QSize(20, 20))
+      self.connect(self.paste_button,
+                   QtCore.SIGNAL('clicked(bool)'),
+                   self.textedit.paste)
   
       self.alignleft_button = QtGui.QToolButton(self)
-      self.alignleft_button.setIcon(QtGui.QIcon(art.icon16('actions/format-justify-left')))
+      icon = QTangoIcon('format-justify-left', folder='actions').getQIcon()
+      self.alignleft_button.setIcon(icon)
       self.alignleft_button.setAutoRaise(True)
       self.alignleft_button.setCheckable(True)
-      self.alignleft_button.setMaximumSize(QtCore.QSize(20,20))
-      self.connect(self.alignleft_button, QtCore.SIGNAL('clicked(bool)'), self.set_alignleft)   
+      self.alignleft_button.setMaximumSize(QtCore.QSize(20, 20))
+      self.connect(self.alignleft_button,
+                   QtCore.SIGNAL('clicked(bool)'),
+                   self.set_alignleft)   
   
       self.aligncenter_button = QtGui.QToolButton(self)
-      self.aligncenter_button.setIcon(QtGui.QIcon(art.icon16('actions/format-justify-center')))
+      icon = QTangoIcon('format-justify-center', folder='actions').getQIcon()
+      self.aligncenter_button.setIcon(icon)
       self.aligncenter_button.setAutoRaise(True)
       self.aligncenter_button.setCheckable(True)
-      self.aligncenter_button.setMaximumSize(QtCore.QSize(20,20))
-      self.connect(self.aligncenter_button, QtCore.SIGNAL('clicked(bool)'), self.set_aligncenter)
+      self.aligncenter_button.setMaximumSize(QtCore.QSize(20, 20))
+      self.connect(self.aligncenter_button,
+                   QtCore.SIGNAL('clicked(bool)'),
+                   self.set_aligncenter)
   
       self.alignright_button = QtGui.QToolButton(self)
-      self.alignright_button.setIcon(QtGui.QIcon(art.icon16('actions/format-justify-right')))
+      icon = QTangoIcon('format-justify-right', folder='actions').getQIcon()
+      self.alignright_button.setIcon(icon)
       self.alignright_button.setAutoRaise(True)
       self.alignright_button.setCheckable(True)
-      self.alignright_button.setMaximumSize(QtCore.QSize(20,20))
-      self.connect(self.alignright_button, QtCore.SIGNAL('clicked(bool)'), self.set_alignright)
+      self.alignright_button.setMaximumSize(QtCore.QSize(20, 20))
+      self.connect(self.alignright_button,
+                   QtCore.SIGNAL('clicked(bool)'),
+                   self.set_alignright)
   
       self.color_button = QtGui.QToolButton(self)
       self.color_button.setAutoRaise(True)
-      self.color_button.setMaximumSize(QtCore.QSize(20,20))
-      self.connect(self.color_button, QtCore.SIGNAL('clicked(bool)'), self.set_color)
-  
+      self.color_button.setMaximumSize(QtCore.QSize(20, 20))
+      self.connect(self.color_button,
+                   QtCore.SIGNAL('clicked(bool)'),
+                   self.set_color)
+ 
       self.toolbar.addWidget(self.copy_button)
       self.toolbar.addWidget(self.cut_button)
       self.toolbar.addWidget(self.paste_button)
