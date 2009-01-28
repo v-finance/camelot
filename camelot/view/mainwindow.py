@@ -75,7 +75,8 @@ class MainWindow(QtGui.QMainWindow):
     logger.debug('setting central widget to our workspace')
     self.setCentralWidget(self.workspace)
 
-    self.connect(self.workspace, QtCore.SIGNAL('subWindowActivated(QMdiSubWindow *)'),
+    self.connect(self.workspace,
+                 QtCore.SIGNAL('subWindowActivated(QMdiSubWindow *)'),
                  self.updateMenus)
 
     logger.debug('creating navigation pane')
