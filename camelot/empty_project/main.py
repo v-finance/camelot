@@ -5,7 +5,7 @@ logger = logging.getLogger('camelot.main')
 from PyQt4 import QtGui, QtCore
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
-import camelot.view.art as art
+from camelot.view.art import QTangoIcon
 
 def main():
   logger.debug('qt version %s, pyqt version %s' % (QtCore.QT_VERSION_STR, 
@@ -17,7 +17,9 @@ def main():
   app.setOrganizationName('My organization')
   app.setOrganizationDomain('example.com')
   app.setApplicationName('Camelot')
-  app.setWindowIcon(QtGui.QIcon(art.icon32('apps/system-users')))
+  app.setWindowIcon(QTangoIcon('system-users',
+                    folders='apps',
+                    size='32x32').getQIcon())
 
   from camelot.view.controls.appscheme import scheme
   style = """
