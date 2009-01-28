@@ -14,3 +14,14 @@ class MyApplicationAdmin(ApplicationAdmin):
     self.register(Person, Person.Admin)
     self.register(Organization, Organization.Admin)
     self.register(Translation, Translation.Admin)
+
+  def getName(self):
+    return u'Probis Partnerplan'
+
+  def getAbout(self):
+    return """<b>Probis Partnerplan</b><br/>
+               <p>
+              Copyright &copy; 2009 Probis.
+              All rights reserved.
+              </p>"""
+

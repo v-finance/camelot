@@ -1,5 +1,6 @@
 import logging
 import settings
+import os
 
 logger = logging.getLogger('camelot.main')
 from PyQt4 import QtGui, QtCore
@@ -28,7 +29,8 @@ def main():
   app.setStyleSheet(style)
 
   logger.debug('loading splashscreen')
-  splash = QtGui.QSplashScreen(QtGui.QPixmap(art.file_('camelot-proposal.png')))
+  f = file(os.path.join(settings.PARTNERPLAN_ART_DIRECTORY, 'probis-logo.png'))
+  splash = QtGui.QSplashScreen(QtGui.QPixmap(os.path.join(settings.PARTNERPLAN_ART_DIRECTORY, 'probis-logo.png')))
   splash.show()
   app.processEvents()
   
