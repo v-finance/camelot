@@ -318,7 +318,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       elif widget_ == 'image':
         delegate = delegates. ImageColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
-        continue   
+        continue
+      elif widget_ == 'richtext':
+        delegate = delegates.RichTextColumnDelegate(**c[1])
+        self.item_delegate.insertColumnDelegate(i, delegate)
+        continue  
       elif widget_ == 'many2one':
         entity_admin = c[1]['admin']
         delegate = delegates.Many2OneColumnDelegate(**c[1])
@@ -331,7 +335,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           delegate = delegates.PlainTextColumnDelegate(maxlength=c[1]['length'])
           self.item_delegate.insertColumnDelegate(i, delegate)
         else:
-          delegate = delegates.RichTextColumnDelegate(**c[1])
+          delegate = delegates.TextEditColumnDelegate(**c[1])
           self.item_delegate.insertColumnDelegate(i, delegate)          
       elif type_ == int:
         delegate = delegates.IntegerColumnDelegate(0, 100000)

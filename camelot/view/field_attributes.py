@@ -103,7 +103,12 @@ _sqlalchemy_to_python_type_ = {
                                           'editable':True,
                                           'widget':'virtual_address',
                                           },
-                                 
+
+  camelot.types.RichText: lambda f:{'python_type':str,
+                                    'editable':True,
+                                    'widget':'richtext',
+                                   },
+                                                                           
   sqlalchemy.types.Time : lambda f: {'python_type':datetime.time,
                                      'editable':True,
                                      'widget':'time',

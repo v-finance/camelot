@@ -214,7 +214,24 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
 
 _registered_delegates_[QtGui.QLineEdit] = PlainTextColumnDelegate
 
+class TextEditColumnDelegate(QtGui.QItemDelegate):
+  """Edit plain text with a QTextEdit widget"""
+  
+  def __init__(self, parent=None, editable=True, **kwargs):
+    super(TextEditColumnDelegate, self).__init__(parent)
+    self.editable = editable
+    
+  def createEditor(self, parent, option, index):
+    editor = QtGui.QTextEdit(parent)
+    return editor
 
+  def setEditorData(self, editor, index):
+    value = index.model().data(index, Qt.EditRole).toString()
+    editor.setText(value)
+
+  def setModelData(self, editor, model, index):
+    model.setData(index, create_constant_function(unicode(editor.toPlainText())))
+    
 class TimeColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, format, default, nullable, parent=None):
     super(TimeColumnDelegate, self).__init__(parent)
