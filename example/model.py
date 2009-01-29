@@ -42,7 +42,7 @@ class Movie(Entity):
   # PIL image on disk and keeps the reference to it in the database.
   #
   cover = Field(camelot.types.Image(upload_to='covers'))
-  description = Field(Unicode())
+  description = Field(camelot.types.RichText)
   
   def burn_to_disk(self):
     print 'burn burn burn'
