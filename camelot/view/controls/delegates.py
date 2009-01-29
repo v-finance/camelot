@@ -150,7 +150,7 @@ class GenericDelegate(QtGui.QItemDelegate):
 class IntegerColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for integer values"""
 
-  def __init__(self, minimum=0, maximum=100, parent=None):
+  def __init__(self, minimum=0, maximum=100, parent=None, **kwargs):
     super(IntegerColumnDelegate, self).__init__(parent)
     self.minimum = minimum
     self.maximum = maximum
@@ -171,6 +171,17 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
 
 _registered_delegates_[QtGui.QSpinBox] = IntegerColumnDelegate
 
+class SliderDelegate(IntegerColumnDelegate):
+  """A delegate for horizontal sliders"""
+  
+  def createEditor(self, parent, option, index):
+    editor = QtGui.QSlider(Qt.Horizontal, parent)
+    editor.setRange(self.minimum, self.maximum)
+    editor.setTickPosition(QtGui.QSlider.TicksBelow)
+    return editor
+  
+  def setModelData(self, editor, model, index):
+    model.setData(index, create_constant_function(editor.value()))  
 
 class PlainTextColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for simple string values"""

@@ -10,13 +10,23 @@ from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
 
 __metadata__ = metadata
 
+#
+# Some helper functions that will be used later on
+#
+
 def genre_choices(entity_instance):
+  """Generate choices for the possible movie genres"""
   yield (('action'),('Action'))
   yield (('animation'),('Animation'))
   yield (('comedy'),('Comedy'))
   yield (('drama'),('Drama'))
   yield (('sci-fi'),('Sci-Fi'))
   yield (('war'),('War'))
+  
+def create_slider_delegate(*args, **kwargs):
+  """Factory function for a slider delegate"""
+  from camelot.view.controls.delegates import SliderDelegate
+  return SliderDelegate(*args, **kwargs)
   
 class Movie(Entity):
   using_options(tablename='movies')
@@ -68,7 +78,8 @@ class Movie(Entity):
     form_actions = [('Burn DVD', lambda o: o.burn_to_disk())]
     # additional attributes for a field can be specified int the field_attributes dictionary
     field_attributes = dict(cast=dict(create_inline=True),
-                            genre=dict(choices=genre_choices))
+                            genre=dict(choices=genre_choices),
+                            rating=dict(delegate=create_slider_delegate))
 
   def __repr__(self):
     return self.title or ''
