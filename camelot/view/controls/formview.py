@@ -51,7 +51,9 @@ class FormView(QtGui.QWidget):
 
     self.widget_mapper.setModel(model)
     self.setLayout(self.widget_layout)
-    self.setMinimumSize(admin.form_size[0], admin.form_size[1])
+
+    if hasattr(admin, 'form_size'):
+      self.setMinimumSize(admin.form_size[0], admin.form_size[1])
 
     self.validator = admin.createValidator(model)
     self.validate_before_close = True

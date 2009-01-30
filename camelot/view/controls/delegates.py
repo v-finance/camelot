@@ -516,7 +516,9 @@ _registered_delegates_[QtGui.QCheckBox] = BoolColumnDelegate
 class ImageColumnDelegate(QtGui.QItemDelegate):
   def createEditor(self, parent, option, index):
     editor = editors.ImageEditor(parent)
-    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
+    self.connect(editor, 
+                 QtCore.SIGNAL('editingFinished()'),
+                 self.commitAndCloseEditor)
     return editor
 
   def setEditorData(self, editor, index):
@@ -542,7 +544,9 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
     #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
     
   def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(camelot.types.StoredImage(editor.image)))
+    model.setData(index, 
+                  create_constant_function(
+                    camelot.types.StoredImage(editor.image)))
   
 _registered_delegates_[editors.ImageEditor] = ImageColumnDelegate
 

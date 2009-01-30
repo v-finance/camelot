@@ -56,6 +56,7 @@ import settings
 
 _ = lambda x: x
 
+
 class EntityAdmin(object):
   name = None
   list_display = []
