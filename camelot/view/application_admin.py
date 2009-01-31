@@ -92,6 +92,10 @@ class ApplicationAdmin(object):
     """@return: the content of the About dialog"""
     return """<b>Camelot Project</b>
               <p>
-              Copyright &copy; 2008 Conceptive Engineering.
-              All right reserved.
-              </p>"""
+              Copyright &copy; 2008-2009 Conceptive Engineering.
+              All rights reserved.
+              </p>
+              <p>
+              http://www.conceptive.be/projects/camelot
+              </p>
+              """
