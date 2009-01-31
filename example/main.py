@@ -1,6 +1,7 @@
+import settings
 import logging
-FORMAT = '[%(levelname)-7s] [%(name)-35s] - %(message)s' 
-logging.basicConfig(level=logging.DEBUG, format=FORMAT)
+import os
+
 logger = logging.getLogger('videostore')
 
 from PyQt4 import QtGui, QtCore
@@ -31,7 +32,7 @@ def main():
   app.setStyleSheet(style)
 
   logger.debug('loading splashscreen')
-  splash = QtGui.QSplashScreen(QtGui.QPixmap(('camelot-proposal.png')))
+  splash = QtGui.QSplashScreen(QtGui.QPixmap(os.path.join(settings.CAMELOT_MEDIA_ROOT, 'camelot-proposal.png')))
   splash.show()
   app.processEvents()
 
@@ -70,7 +71,7 @@ def main():
   
   from camelot.model.memento import Memento
   from camelot.model.authentication import *
-  from model import Movie, Cast
+  from example.model import Movie, Cast
   admin.register(Memento, Memento.Admin)
   admin.register(Person, Person.Admin)
   admin.register(Movie, Movie.Admin)
@@ -78,8 +79,6 @@ def main():
   admin.register(Party, Party.Admin)
   from camelot.view.mainwindow import MainWindow
   mainwindow = MainWindow(admin)
-  #mainwindow.connect(rh, rh.start_signal, mainwindow.throbber.process_working)
-  #mainwindow.connect(rh, rh.stop_signal, mainwindow.throbber.process_idle)
   mainwindow.show()
   splash.finish(mainwindow)
   sys.exit(app.exec_())

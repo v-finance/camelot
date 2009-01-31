@@ -3,6 +3,9 @@ import inspect
 import camelot
 import os
 
+FORMAT = '[%(levelname)-7s] [%(name)-35s] - %(message)s' 
+logging.basicConfig(level=logging.INFO, format=FORMAT)
+
 CAMELOT_MAIN_DIRECTORY = os.path.dirname(inspect.getabsfile(camelot))
 CAMELOT_LIB_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY, 'librairies')
 CAMELOT_ART_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY, 'art')
@@ -15,7 +18,7 @@ CAMELOT_MEDIA_ROOT = 'media'
 ENGINE = lambda:'sqlite:///videostore.sqlite'
 
 def setup_model():
-  from model import *
+  from example.model import Movie, Cast
   from camelot.model.memento import *
   from camelot.model.synchronization import *
   from camelot.model.authentication import *
