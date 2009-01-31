@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>camelot.camelot.view.controls.animation</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Package&nbsp;camelot ::
+        <a href="camelot.camelot-module.html">Package&nbsp;camelot</a> ::
+        <a href="camelot.camelot.view-module.html">Package&nbsp;view</a> ::
+        <a href="camelot.camelot.view.controls-module.html">Package&nbsp;controls</a> ::
+        Module&nbsp;animation
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="camelot.camelot.view.controls.animation-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="camelot.camelot.view.controls.animation-module.html">Module camelot.camelot.view.controls.animation</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno">  1</tt>  <tt class="py-line"><tt class="py-comment">#  ==================================================================================</tt> </tt>
+<a name="L2"></a><tt class="py-lineno">  2</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L3"></a><tt class="py-lineno">  3</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.</tt> </tt>
+<a name="L4"></a><tt class="py-lineno">  4</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  www.conceptive.be / project-camelot@conceptive.be</tt> </tt>
+<a name="L5"></a><tt class="py-lineno">  5</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L6"></a><tt class="py-lineno">  6</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is part of the Camelot Library.</tt> </tt>
+<a name="L7"></a><tt class="py-lineno">  7</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L8"></a><tt class="py-lineno">  8</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file may be used under the terms of the GNU General Public</tt> </tt>
+<a name="L9"></a><tt class="py-lineno">  9</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  License version 2.0 as published by the Free Software Foundation</tt> </tt>
+<a name="L10"></a><tt class="py-lineno"> 10</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  and appearing in the file LICENSE.GPL included in the packaging of</tt> </tt>
+<a name="L11"></a><tt class="py-lineno"> 11</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  this file.  Please review the following information to ensure GNU</tt> </tt>
+<a name="L12"></a><tt class="py-lineno"> 12</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  General Public Licensing requirements will be met:</tt> </tt>
+<a name="L13"></a><tt class="py-lineno"> 13</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/opensource.html</tt> </tt>
+<a name="L14"></a><tt class="py-lineno"> 14</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L15"></a><tt class="py-lineno"> 15</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  If you are unsure which license is appropriate for your use, please</tt> </tt>
+<a name="L16"></a><tt class="py-lineno"> 16</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  review the following information:</tt> </tt>
+<a name="L17"></a><tt class="py-lineno"> 17</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/licensing.html or contact</tt> </tt>
+<a name="L18"></a><tt class="py-lineno"> 18</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be.</tt> </tt>
+<a name="L19"></a><tt class="py-lineno"> 19</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L20"></a><tt class="py-lineno"> 20</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE</tt> </tt>
+<a name="L21"></a><tt class="py-lineno"> 21</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</tt> </tt>
+<a name="L22"></a><tt class="py-lineno"> 22</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L23"></a><tt class="py-lineno"> 23</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  For use of this library in commercial applications, please contact</tt> </tt>
+<a name="L24"></a><tt class="py-lineno"> 24</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be</tt> </tt>
+<a name="L25"></a><tt class="py-lineno"> 25</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L26"></a><tt class="py-lineno"> 26</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  ==================================================================================</tt> </tt>
+<a name="L27"></a><tt class="py-lineno"> 27</tt>  <tt class="py-line"><tt class="py-comment"></tt> </tt>
+<a name="L28"></a><tt class="py-lineno"> 28</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">logging</tt> </tt>
+<a name="L29"></a><tt class="py-lineno"> 29</tt>  <tt class="py-line"> </tt>
+<a name="L30"></a><tt class="py-lineno"> 30</tt>  <tt class="py-line"><tt id="link-0" class="py-name" targets="Variable camelot.camelot.empty_project.main.logger=camelot.camelot.empty_project.main-module.html#logger,Variable camelot.camelot.model.i18n.logger=camelot.camelot.model.i18n-module.html#logger,Variable camelot.camelot.types.logger=camelot.camelot.types-module.html#logger,Variable camelot.camelot.view.controls.actions.logger=camelot.camelot.view.controls.actions-module.html#logger,Variable camelot.camelot.view.controls.animation.logger=camelot.camelot.view.controls.animation-module.html#logger,Variable camelot.camelot.view.controls.delegates.logger=camelot.camelot.view.controls.delegates-module.html#logger,Variable camelot.camelot.view.controls.editors.logger=camelot.camelot.view.controls.editors-module.html#logger,Variable camelot.camelot.view.controls.filter.logger=camelot.camelot.view.controls.filter-module.html#logger,Variable camelot.camelot.view.controls.formview.logger=camelot.camelot.view.controls.formview-module.html#logger,Variable camelot.camelot.view.controls.inheritance.logger=camelot.camelot.view.controls.inheritance-module.html#logger,Variable camelot.camelot.view.controls.modeltree.logger=camelot.camelot.view.controls.modeltree-module.html#logger,Variable camelot.camelot.view.controls.navpane.logger=camelot.camelot.view.controls.navpane-module.html#logger,Variable camelot.camelot.view.controls.printer.logger=camelot.camelot.view.controls.printer-module.html#logger,Variable camelot.camelot.view.controls.tableview.logger=camelot.camelot.view.controls.tableview-module.html#logger,Variable camelot.camelot.view.elixir_admin.logger=camelot.camelot.view.elixir_admin-module.html#logger,Variable camelot.camelot.view.export.desktop_service.logger=camelot.camelot.view.export.desktop_service-module.html#logger,Variable camelot.camelot.view.export.outlook.logger=camelot.camelot.view.export.outlook-module.html#logger,Variable camelot.camelot.view.export.printer.logger=camelot.camelot.view.export.printer-module.html#logger,Variable camelot.camelot.view.export.word.logger=camelot.camelot.view.export.word-module.html#logger,Variable camelot.camelot.view.forms.logger=camelot.camelot.view.forms-module.html#logger,Variable camelot.camelot.view.mainwindow.logger=camelot.camelot.view.mainwindow-module.html#logger,Variable camelot.camelot.view.model_thread.logger=camelot.camelot.view.model_thread-module.html#logger,Variable camelot.camelot.view.proxy.collection_proxy.logger=camelot.camelot.view.proxy.collection_proxy-module.html#logger,Variable camelot.camelot.view.proxy.queryproxy.logger=camelot.camelot.view.proxy.queryproxy-module.html#logger,Variable camelot.camelot.view.response_handler.logger=camelot.camelot.view.response_handler-module.html#logger,Variable camelot.camelot.view.search.logger=camelot.camelot.view.search-module.html#logger,Variable camelot.camelot.view.validator.logger=camelot.camelot.view.validator-module.html#logger,Variable camelot.camelot.view.workspace.logger=camelot.camelot.view.workspace-module.html#logger"><a title="camelot.camelot.empty_project.main.logger
+camelot.camelot.model.i18n.logger
+camelot.camelot.types.logger
+camelot.camelot.view.controls.actions.logger
+camelot.camelot.view.controls.animation.logger
+camelot.camelot.view.controls.delegates.logger
+camelot.camelot.view.controls.editors.logger
+camelot.camelot.view.controls.filter.logger
+camelot.camelot.view.controls.formview.logger
+camelot.camelot.view.controls.inheritance.logger
+camelot.camelot.view.controls.modeltree.logger
+camelot.camelot.view.controls.navpane.logger
+camelot.camelot.view.controls.printer.logger
+camelot.camelot.view.controls.tableview.logger
+camelot.camelot.view.elixir_admin.logger
+camelot.camelot.view.export.desktop_service.logger
+camelot.camelot.view.export.outlook.logger
+camelot.camelot.view.export.printer.logger
+camelot.camelot.view.export.word.logger
+camelot.camelot.view.forms.logger
+camelot.camelot.view.mainwindow.logger
+camelot.camelot.view.model_thread.logger
+camelot.camelot.view.proxy.collection_proxy.logger
+camelot.camelot.view.proxy.queryproxy.logger
+camelot.camelot.view.response_handler.logger
+camelot.camelot.view.search.logger
+camelot.camelot.view.validator.logger
+camelot.camelot.view.workspace.logger" class="py-name" href="#" onclick="return doclink('link-0', 'logger', 'link-0');">logger</a></tt> <tt class="py-op">=</tt> <tt class="py-name">logging</tt><tt class="py-op">.</tt><tt class="py-name">getLogger</tt><tt class="py-op">(</tt><tt class="py-string">'animation'</tt><tt class="py-op">)</tt> </tt>
+<a name="L31"></a><tt class="py-lineno"> 31</tt>  <tt class="py-line"> </tt>
+<a name="L32"></a><tt class="py-lineno"> 32</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">PyQt4</tt> <tt class="py-keyword">import</tt> <tt class="py-name">QtGui</tt> </tt>
+<a name="L33"></a><tt class="py-lineno"> 33</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">PyQt4</tt> <tt class="py-keyword">import</tt> <tt class="py-name">QtCore</tt> </tt>
+<a name="L34"></a><tt class="py-lineno"> 34</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">PyQt4</tt><tt class="py-op">.</tt><tt class="py-name">QtCore</tt> <tt class="py-keyword">import</tt> <tt class="py-name">Qt</tt> </tt>
+<a name="L35"></a><tt class="py-lineno"> 35</tt>  <tt class="py-line"> </tt>
+<a name="L36"></a><tt class="py-lineno"> 36</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt id="link-1" class="py-name" targets="Package camelot.camelot=camelot.camelot-module.html"><a title="camelot.camelot" class="py-name" href="#" onclick="return doclink('link-1', 'camelot', 'link-1');">camelot</a></tt><tt class="py-op">.</tt><tt id="link-2" class="py-name" targets="Package camelot.camelot.view=camelot.camelot.view-module.html"><a title="camelot.camelot.view" class="py-name" href="#" onclick="return doclink('link-2', 'view', 'link-2');">view</a></tt> <tt class="py-keyword">import</tt> <tt id="link-3" class="py-name" targets="Module camelot.camelot.view.art=camelot.camelot.view.art-module.html"><a title="camelot.camelot.view.art" class="py-name" href="#" onclick="return doclink('link-3', 'art', 'link-3');">art</a></tt> </tt>
+<a name="L37"></a><tt class="py-lineno"> 37</tt>  <tt class="py-line"> </tt>
+<a name="MovieWidget"></a><div id="MovieWidget-def"><a name="L38"></a><tt class="py-lineno"> 38</tt> <a class="py-toggle" href="#" id="MovieWidget-toggle" onclick="return toggle('MovieWidget');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="camelot.camelot.view.controls.animation.MovieWidget-class.html">MovieWidget</a><tt class="py-op">(</tt><tt class="py-base-class">QtGui</tt><tt class="py-op">.</tt><tt class="py-base-class">QLabel</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MovieWidget-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="MovieWidget-expanded"><a name="L39"></a><tt class="py-lineno"> 39</tt>  <tt class="py-line">  <tt class="py-docstring">"""Simulates a QMovie using a QLabel"""</tt> </tt>
+<a name="L40"></a><tt class="py-lineno"> 40</tt>  <tt class="py-line"> </tt>
+<a name="MovieWidget.__init__"></a><div id="MovieWidget.__init__-def"><a name="L41"></a><tt class="py-lineno"> 41</tt> <a class="py-toggle" href="#" id="MovieWidget.__init__-toggle" onclick="return toggle('MovieWidget.__init__');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.animation.MovieWidget-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">icons</tt><tt class="py-op">,</tt> <tt class="py-param">parent</tt><tt class="py-op">=</tt><tt class="py-name">None</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MovieWidget.__init__-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="MovieWidget.__init__-expanded"><a name="L42"></a><tt class="py-lineno"> 42</tt>  <tt class="py-line">    <tt id="link-4" class="py-name"><a title="camelot.camelot.empty_project.main.logger
+camelot.camelot.model.i18n.logger
+camelot.camelot.types.logger
+camelot.camelot.view.controls.actions.logger
+camelot.camelot.view.controls.animation.logger
+camelot.camelot.view.controls.delegates.logger
+camelot.camelot.view.controls.editors.logger
+camelot.camelot.view.controls.filter.logger
+camelot.camelot.view.controls.formview.logger
+camelot.camelot.view.controls.inheritance.logger
+camelot.camelot.view.controls.modeltree.logger
+camelot.camelot.view.controls.navpane.logger
+camelot.camelot.view.controls.printer.logger
+camelot.camelot.view.controls.tableview.logger
+camelot.camelot.view.elixir_admin.logger
+camelot.camelot.view.export.desktop_service.logger
+camelot.camelot.view.export.outlook.logger
+camelot.camelot.view.export.printer.logger
+camelot.camelot.view.export.word.logger
+camelot.camelot.view.forms.logger
+camelot.camelot.view.mainwindow.logger
+camelot.camelot.view.model_thread.logger
+camelot.camelot.view.proxy.collection_proxy.logger
+camelot.camelot.view.proxy.queryproxy.logger
+camelot.camelot.view.response_handler.logger
+camelot.camelot.view.search.logger
+camelot.camelot.view.validator.logger
+camelot.camelot.view.workspace.logger" class="py-name" href="#" onclick="return doclink('link-4', 'logger', 'link-0');">logger</a></tt><tt class="py-op">.</tt><tt class="py-name">debug</tt><tt class="py-op">(</tt><tt class="py-string">'creating movie widget'</tt><tt class="py-op">)</tt> </tt>
+<a name="L43"></a><tt class="py-lineno"> 43</tt>  <tt class="py-line">    <tt class="py-name">super</tt><tt class="py-op">(</tt><tt id="link-5" class="py-name" targets="Class camelot.camelot.view.controls.animation.MovieWidget=camelot.camelot.view.controls.animation.MovieWidget-class.html"><a title="camelot.camelot.view.controls.animation.MovieWidget" class="py-name" href="#" onclick="return doclink('link-5', 'MovieWidget', 'link-5');">MovieWidget</a></tt><tt class="py-op">,</tt> <tt class="py-name">self</tt><tt class="py-op">)</tt><tt class="py-op">.</tt><tt id="link-6" class="py-name" targets="Method camelot.camelot.empty_project.application_admin.MyApplicationAdmin.__init__()=camelot.camelot.empty_project.application_admin.MyApplicationAdmin-class.html#__init__,Method camelot.camelot.types.Code.__init__()=camelot.camelot.types.Code-class.html#__init__,Method camelot.camelot.types.IPAddress.__init__()=camelot.camelot.types.IPAddress-class.html#__init__,Method camelot.camelot.types.Image.__init__()=camelot.camelot.types.Image-class.html#__init__,Method camelot.camelot.types.StoredImage.__init__()=camelot.camelot.types.StoredImage-class.html#__init__,Method camelot.camelot.view.application_admin.ApplicationAdmin.__init__()=camelot.camelot.view.application_admin.ApplicationAdmin-class.html#__init__,Method camelot.camelot.view.controls.actions.ActionsBox.__init__()=camelot.camelot.view.controls.actions.ActionsBox-class.html#__init__,Method camelot.camelot.view.controls.animation.MovieWidget.__init__()=camelot.camelot.view.controls.animation.MovieWidget-class.html#__init__,Method camelot.camelot.view.controls.animation.Throbber.__init__()=camelot.camelot.view.controls.animation.Throbber-class.html#__init__,Method camelot.camelot.view.controls.appscheme.Scheme.__init__()=camelot.camelot.view.controls.appscheme.Scheme-class.html#__init__,Method camelot.camelot.view.controls.delegates.BoolColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.BoolColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.CodeColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.CodeColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.ComboBoxColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.ComboBoxColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.DateColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.DateColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.DateTimeColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.DateTimeColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.FloatColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.FloatColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.GenericDelegate.__init__()=camelot.camelot.view.controls.delegates.GenericDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.IntegerColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.IntegerColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.Many2OneColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.Many2OneColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.One2ManyColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.One2ManyColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.PlainTextColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.PlainTextColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.RichTextColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.RichTextColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.TimeColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.TimeColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.VirtualAddressColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.VirtualAddressColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.editors.CodeEditor.__init__()=camelot.camelot.view.controls.editors.CodeEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.DateEditor.__init__()=camelot.camelot.view.controls.editors.DateEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.EmbeddedMany2OneEditor.__init__()=camelot.camelot.view.controls.editors.EmbeddedMany2OneEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.ImageEditor.__init__()=camelot.camelot.view.controls.editors.ImageEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.Many2OneEditor.CompletionsModel.__init__()=camelot.camelot.view.controls.editors.Many2OneEditor.CompletionsModel-class.html#__init__,Method camelot.camelot.view.controls.editors.Many2OneEditor.__init__()=camelot.camelot.view.controls.editors.Many2OneEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.One2ManyEditor.__init__()=camelot.camelot.view.controls.editors.One2ManyEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.RichTextEditor.__init__()=camelot.camelot.view.controls.editors.RichTextEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.VirtualAddressEditor.__init__()=camelot.camelot.view.controls.editors.VirtualAddressEditor-class.html#__init__,Method camelot.camelot.view.controls.filter.FilterList.__init__()=camelot.camelot.view.controls.filter.FilterList-class.html#__init__,Method camelot.camelot.view.controls.formview.FormView.__init__()=camelot.camelot.view.controls.formview.FormView-class.html#__init__,Method camelot.camelot.view.controls.inheritance.SubclassItem.__init__()=camelot.camelot.view.controls.inheritance.SubclassItem-class.html#__init__,Method camelot.camelot.view.controls.inheritance.SubclassTree.__init__()=camelot.camelot.view.controls.inheritance.SubclassTree-class.html#__init__,Method camelot.camelot.view.controls.modeltree.ModelItem.__init__()=camelot.camelot.view.controls.modeltree.ModelItem-class.html#__init__,Method camelot.camelot.view.controls.modeltree.ModelTree.__init__()=camelot.camelot.view.controls.modeltree.ModelTree-class.html#__init__,Method camelot.camelot.view.controls.navpane.NavigationPane.__init__()=camelot.camelot.view.controls.navpane.NavigationPane-class.html#__init__,Method camelot.camelot.view.controls.navpane.PaneButton.__init__()=camelot.camelot.view.controls.navpane.PaneButton-class.html#__init__,Method camelot.camelot.view.controls.navpane.PaneCaption.__init__()=camelot.camelot.view.controls.navpane.PaneCaption-class.html#__init__,Method camelot.camelot.view.controls.printer.Printer.__init__()=camelot.camelot.view.controls.printer.Printer-class.html#__init__,Method camelot.camelot.view.controls.schemer.Schemer.__init__()=camelot.camelot.view.controls.schemer.Schemer-class.html#__init__,Method camelot.camelot.view.controls.search.SimpleSearchControl.__init__()=camelot.camelot.view.controls.search.SimpleSearchControl-class.html#__init__,Method camelot.camelot.view.controls.tableview.QueryTable.__init__()=camelot.camelot.view.controls.tableview.QueryTable-class.html#__init__,Method camelot.camelot.view.controls.tableview.TableView.__init__()=camelot.camelot.view.controls.tableview.TableView-class.html#__init__,Method camelot.camelot.view.elixir_admin.EntityAdmin.__init__()=camelot.camelot.view.elixir_admin.EntityAdmin-class.html#__init__,Method camelot.camelot.view.fifo.fifo.__init__()=camelot.camelot.view.fifo.fifo-class.html#__init__,Method camelot.camelot.view.filters.Filter.__init__()=camelot.camelot.view.filters.Filter-class.html#__init__,Method camelot.camelot.view.forms.Form.__init__()=camelot.camelot.view.forms.Form-class.html#__init__,Method camelot.camelot.view.forms.HBoxForm.__init__()=camelot.camelot.view.forms.HBoxForm-class.html#__init__,Method camelot.camelot.view.forms.TabForm.__init__()=camelot.camelot.view.forms.TabForm-class.html#__init__,Method camelot.camelot.view.forms.VBoxForm.__init__()=camelot.camelot.view.forms.VBoxForm-class.html#__init__,Method camelot.camelot.view.forms.WidgetOnlyForm.__init__()=camelot.camelot.view.forms.WidgetOnlyForm-class.html#__init__,Method camelot.camelot.view.mainwindow.MainWindow.__init__()=camelot.camelot.view.mainwindow.MainWindow-class.html#__init__,Method camelot.camelot.view.model_thread.ModelThread.__init__()=camelot.camelot.view.model_thread.ModelThread-class.html#__init__,Method camelot.camelot.view.plugins.CamelotEditorPlugin.__init__()=camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.codeeditorplugin.DateEditorPlugin.__init__()=camelot.camelot.view.plugins.codeeditorplugin.DateEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.dateeditorplugin.DateEditorPlugin.__init__()=camelot.camelot.view.plugins.dateeditorplugin.DateEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin.__init__()=camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.manytooneeditorplugin.ManyToOneEditorPlugin.__init__()=camelot.camelot.view.plugins.manytooneeditorplugin.ManyToOneEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.onetomanyeditorplugin.OneToManyEditorPlugin.__init__()=camelot.camelot.view.plugins.onetomanyeditorplugin.OneToManyEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.richtexteditorplugin.DateEditorPlugin.__init__()=camelot.camelot.view.plugins.richtexteditorplugin.DateEditorPlugin-class.html#__init__,Method camelot.camelot.view.proxy.collection_proxy.CollectionProxy.__init__()=camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#__init__,Method camelot.camelot.view.proxy.collection_proxy.DelayedProxy.__init__()=camelot.camelot.view.proxy.collection_proxy.DelayedProxy-class.html#__init__,Method camelot.camelot.view.proxy.queryproxy.QueryTableProxy.__init__()=camelot.camelot.view.proxy.queryproxy.QueryTableProxy-class.html#__init__,Method camelot.camelot.view.response_handler.ResponseHandler.__init__()=camelot.camelot.view.response_handler.ResponseHandler-class.html#__init__,Method camelot.camelot.view.validator.Validator.__init__()=camelot.camelot.view.validator.Validator-class.html#__init__,Method camelot.camelot.view.workspace.DesktopWorkspace.__init__()=camelot.camelot.view.workspace.DesktopWorkspace-class.html#__init__"><a title="camelot.camelot.empty_project.application_admin.MyApplicationAdmin.__init__
+camelot.camelot.types.Code.__init__
+camelot.camelot.types.IPAddress.__init__
+camelot.camelot.types.Image.__init__
+camelot.camelot.types.StoredImage.__init__
+camelot.camelot.view.application_admin.ApplicationAdmin.__init__
+camelot.camelot.view.controls.actions.ActionsBox.__init__
+camelot.camelot.view.controls.animation.MovieWidget.__init__
+camelot.camelot.view.controls.animation.Throbber.__init__
+camelot.camelot.view.controls.appscheme.Scheme.__init__
+camelot.camelot.view.controls.delegates.BoolColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.CodeColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.ComboBoxColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.DateColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.DateTimeColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.FloatColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.GenericDelegate.__init__
+camelot.camelot.view.controls.delegates.IntegerColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.Many2OneColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.One2ManyColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.PlainTextColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.RichTextColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.TimeColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.VirtualAddressColumnDelegate.__init__
+camelot.camelot.view.controls.editors.CodeEditor.__init__
+camelot.camelot.view.controls.editors.DateEditor.__init__
+camelot.camelot.view.controls.editors.EmbeddedMany2OneEditor.__init__
+camelot.camelot.view.controls.editors.ImageEditor.__init__
+camelot.camelot.view.controls.editors.Many2OneEditor.CompletionsModel.__init__
+camelot.camelot.view.controls.editors.Many2OneEditor.__init__
+camelot.camelot.view.controls.editors.One2ManyEditor.__init__
+camelot.camelot.view.controls.editors.RichTextEditor.__init__
+camelot.camelot.view.controls.editors.VirtualAddressEditor.__init__
+camelot.camelot.view.controls.filter.FilterList.__init__
+camelot.camelot.view.controls.formview.FormView.__init__
+camelot.camelot.view.controls.inheritance.SubclassItem.__init__
+camelot.camelot.view.controls.inheritance.SubclassTree.__init__
+camelot.camelot.view.controls.modeltree.ModelItem.__init__
+camelot.camelot.view.controls.modeltree.ModelTree.__init__
+camelot.camelot.view.controls.navpane.NavigationPane.__init__
+camelot.camelot.view.controls.navpane.PaneButton.__init__
+camelot.camelot.view.controls.navpane.PaneCaption.__init__
+camelot.camelot.view.controls.printer.Printer.__init__
+camelot.camelot.view.controls.schemer.Schemer.__init__
+camelot.camelot.view.controls.search.SimpleSearchControl.__init__
+camelot.camelot.view.controls.tableview.QueryTable.__init__
+camelot.camelot.view.controls.tableview.TableView.__init__
+camelot.camelot.view.elixir_admin.EntityAdmin.__init__
+camelot.camelot.view.fifo.fifo.__init__
+camelot.camelot.view.filters.Filter.__init__
+camelot.camelot.view.forms.Form.__init__
+camelot.camelot.view.forms.HBoxForm.__init__
+camelot.camelot.view.forms.TabForm.__init__
+camelot.camelot.view.forms.VBoxForm.__init__
+camelot.camelot.view.forms.WidgetOnlyForm.__init__
+camelot.camelot.view.mainwindow.MainWindow.__init__
+camelot.camelot.view.model_thread.ModelThread.__init__
+camelot.camelot.view.plugins.CamelotEditorPlugin.__init__
+camelot.camelot.view.plugins.codeeditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.plugins.dateeditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.plugins.manytooneeditorplugin.ManyToOneEditorPlugin.__init__
+camelot.camelot.view.plugins.onetomanyeditorplugin.OneToManyEditorPlugin.__init__
+camelot.camelot.view.plugins.richtexteditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.proxy.collection_proxy.CollectionProxy.__init__
+camelot.camelot.view.proxy.collection_proxy.DelayedProxy.__init__
+camelot.camelot.view.proxy.queryproxy.QueryTableProxy.__init__
+camelot.camelot.view.response_handler.ResponseHandler.__init__
+camelot.camelot.view.validator.Validator.__init__
+camelot.camelot.view.workspace.DesktopWorkspace.__init__" class="py-name" href="#" onclick="return doclink('link-6', '__init__', 'link-6');">__init__</a></tt><tt class="py-op">(</tt><tt class="py-name">parent</tt><tt class="py-op">)</tt> </tt>
+<a name="L44"></a><tt class="py-lineno"> 44</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">current_frame</tt> <tt class="py-op">=</tt> <tt class="py-number">0</tt> </tt>
+<a name="L45"></a><tt class="py-lineno"> 45</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">last_frame</tt> <tt class="py-op">=</tt> <tt class="py-name">len</tt><tt class="py-op">(</tt><tt class="py-name">icons</tt><tt class="py-op">)</tt> <tt class="py-op">-</tt> <tt class="py-number">1</tt> </tt>
+<a name="L46"></a><tt class="py-lineno"> 46</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">pixmaps</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-7" class="py-name" targets="Method camelot.camelot.view.controls.animation.MovieWidget._create_pixmaps()=camelot.camelot.view.controls.animation.MovieWidget-class.html#_create_pixmaps"><a title="camelot.camelot.view.controls.animation.MovieWidget._create_pixmaps" class="py-name" href="#" onclick="return doclink('link-7', '_create_pixmaps', 'link-7');">_create_pixmaps</a></tt><tt class="py-op">(</tt><tt class="py-name">icons</tt><tt class="py-op">)</tt> </tt>
+<a name="L47"></a><tt class="py-lineno"> 47</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">started</tt> <tt class="py-op">=</tt> <tt class="py-name">False</tt> </tt>
+</div><a name="L48"></a><tt class="py-lineno"> 48</tt>  <tt class="py-line"> </tt>
+<a name="MovieWidget._create_pixmaps"></a><div id="MovieWidget._create_pixmaps-def"><a name="L49"></a><tt class="py-lineno"> 49</tt> <a class="py-toggle" href="#" id="MovieWidget._create_pixmaps-toggle" onclick="return toggle('MovieWidget._create_pixmaps');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.animation.MovieWidget-class.html#_create_pixmaps">_create_pixmaps</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">icons</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MovieWidget._create_pixmaps-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="MovieWidget._create_pixmaps-expanded"><a name="L50"></a><tt class="py-lineno"> 50</tt>  <tt class="py-line">    <tt class="py-name">result</tt> <tt class="py-op">=</tt> <tt class="py-op">[</tt><tt class="py-op">]</tt> </tt>
+<a name="L51"></a><tt class="py-lineno"> 51</tt>  <tt class="py-line">    <tt class="py-keyword">for</tt> <tt class="py-name">ic</tt> <tt class="py-keyword">in</tt> <tt class="py-name">icons</tt><tt class="py-op">:</tt> </tt>
+<a name="L52"></a><tt class="py-lineno"> 52</tt>  <tt class="py-line">      <tt class="py-name">px</tt> <tt class="py-op">=</tt> <tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QPixmap</tt><tt class="py-op">(</tt><tt class="py-name">ic</tt><tt class="py-op">)</tt> </tt>
+<a name="L53"></a><tt class="py-lineno"> 53</tt>  <tt class="py-line">      <tt class="py-comment"># scale to 16 x 16</tt> </tt>
+<a name="L54"></a><tt class="py-lineno"> 54</tt>  <tt class="py-line"><tt class="py-comment"></tt>      <tt class="py-comment">#px = px.scaled(16, 16, Qt.KeepAspectRatio)</tt> </tt>
+<a name="L55"></a><tt class="py-lineno"> 55</tt>  <tt class="py-line"><tt class="py-comment"></tt>      <tt class="py-name">result</tt><tt class="py-op">.</tt><tt id="link-8" class="py-name" targets="Method camelot.camelot.view.proxy.collection_proxy.CollectionProxy.append()=camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#append,Method camelot.camelot.view.proxy.queryproxy.QueryTableProxy.append()=camelot.camelot.view.proxy.queryproxy.QueryTableProxy-class.html#append"><a title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy.append
+camelot.camelot.view.proxy.queryproxy.QueryTableProxy.append" class="py-name" href="#" onclick="return doclink('link-8', 'append', 'link-8');">append</a></tt><tt class="py-op">(</tt><tt class="py-name">px</tt><tt class="py-op">)</tt> </tt>
+<a name="L56"></a><tt class="py-lineno"> 56</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">result</tt> </tt>
+</div><a name="L57"></a><tt class="py-lineno"> 57</tt>  <tt class="py-line"> </tt>
+<a name="MovieWidget.startMovie"></a><div id="MovieWidget.startMovie-def"><a name="L58"></a><tt class="py-lineno"> 58</tt> <a class="py-toggle" href="#" id="MovieWidget.startMovie-toggle" onclick="return toggle('MovieWidget.startMovie');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.animation.MovieWidget-class.html#startMovie">startMovie</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MovieWidget.startMovie-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="MovieWidget.startMovie-expanded"><a name="L59"></a><tt class="py-lineno"> 59</tt>  <tt class="py-line"><tt class="py-comment">#    logger.debug('movie started')</tt> </tt>
+<a name="L60"></a><tt class="py-lineno"> 60</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#    if self.started:</tt> </tt>
+<a name="L61"></a><tt class="py-lineno"> 61</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#      return</tt> </tt>
+<a name="L62"></a><tt class="py-lineno"> 62</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#    self.timerId = self.startTimer(80) # 80 milliseconds</tt> </tt>
+<a name="L63"></a><tt class="py-lineno"> 63</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#    self.started = True</tt> </tt>
+<a name="L64"></a><tt class="py-lineno"> 64</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#@attention: movie stuff was turned off, because it seems to crash the application sometimes,</tt> </tt>
+<a name="L65"></a><tt class="py-lineno"> 65</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#            according to google this could be a bug in QT 4.4, VLC seems to suffer the same</tt> </tt>
+<a name="L66"></a><tt class="py-lineno"> 66</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#            problem</tt> </tt>
+<a name="L67"></a><tt class="py-lineno"> 67</tt>  <tt class="py-line"><tt class="py-comment"></tt>    <tt class="py-keyword">pass</tt> </tt>
+</div><a name="L68"></a><tt class="py-lineno"> 68</tt>  <tt class="py-line"> </tt>
+<a name="MovieWidget.stopMovie"></a><div id="MovieWidget.stopMovie-def"><a name="L69"></a><tt class="py-lineno"> 69</tt> <a class="py-toggle" href="#" id="MovieWidget.stopMovie-toggle" onclick="return toggle('MovieWidget.stopMovie');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.animation.MovieWidget-class.html#stopMovie">stopMovie</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MovieWidget.stopMovie-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="MovieWidget.stopMovie-expanded"><a name="L70"></a><tt class="py-lineno"> 70</tt>  <tt class="py-line"><tt class="py-comment">#    logger.debug('movie stopped')</tt> </tt>
+<a name="L71"></a><tt class="py-lineno"> 71</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#    if self.started:</tt> </tt>
+<a name="L72"></a><tt class="py-lineno"> 72</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#      self.killTimer(self.timerId)</tt> </tt>
+<a name="L73"></a><tt class="py-lineno"> 73</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#      self.started = False</tt> </tt>
+<a name="L74"></a><tt class="py-lineno"> 74</tt>  <tt class="py-line"><tt class="py-comment"></tt>    <tt class="py-keyword">pass</tt> </tt>
+</div><a name="L75"></a><tt class="py-lineno"> 75</tt>  <tt class="py-line"> </tt>
+<a name="MovieWidget.timerEvent"></a><div id="MovieWidget.timerEvent-def"><a name="L76"></a><tt class="py-lineno"> 76</tt> <a class="py-toggle" href="#" id="MovieWidget.timerEvent-toggle" onclick="return toggle('MovieWidget.timerEvent');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.animation.MovieWidget-class.html#timerEvent">timerEvent</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">event</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MovieWidget.timerEvent-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="MovieWidget.timerEvent-expanded"><a name="L77"></a><tt class="py-lineno"> 77</tt>  <tt class="py-line">    <tt class="py-comment">#logger.debug('changing movie frame')</tt> </tt>
+<a name="L78"></a><tt class="py-lineno"> 78</tt>  <tt class="py-line"><tt class="py-comment"></tt>    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-9" class="py-name" targets="Method camelot.camelot.view.controls.editors.ImageEditor.setPixmap()=camelot.camelot.view.controls.editors.ImageEditor-class.html#setPixmap"><a title="camelot.camelot.view.controls.editors.ImageEditor.setPixmap" class="py-name" href="#" onclick="return doclink('link-9', 'setPixmap', 'link-9');">setPixmap</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">pixmaps</tt><tt class="py-op">[</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">current_frame</tt><tt class="py-op">]</tt><tt class="py-op">)</tt> </tt>
+<a name="L79"></a><tt class="py-lineno"> 79</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">current_frame</tt> <tt class="py-op">+=</tt> <tt class="py-number">1</tt> </tt>
+<a name="L80"></a><tt class="py-lineno"> 80</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">current_frame</tt> <tt class="py-op">&gt;</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">last_frame</tt><tt class="py-op">:</tt> </tt>
+<a name="L81"></a><tt class="py-lineno"> 81</tt>  <tt class="py-line">      <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">current_frame</tt> <tt class="py-op">=</tt> <tt class="py-number">0</tt> </tt>
+</div></div><a name="L82"></a><tt class="py-lineno"> 82</tt>  <tt class="py-line"> </tt>
+<a name="Throbber"></a><div id="Throbber-def"><a name="L83"></a><tt class="py-lineno"> 83</tt> <a class="py-toggle" href="#" id="Throbber-toggle" onclick="return toggle('Throbber');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="camelot.camelot.view.controls.animation.Throbber-class.html">Throbber</a><tt class="py-op">(</tt><tt class="py-base-class">MovieWidget</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Throbber-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="Throbber-expanded"><a name="L84"></a><tt class="py-lineno"> 84</tt>  <tt class="py-line">  <tt class="py-docstring">"""Spinning widget subclassing MovieWidget"""</tt> </tt>
+<a name="L85"></a><tt class="py-lineno"> 85</tt>  <tt class="py-line">   </tt>
+<a name="Throbber.__init__"></a><div id="Throbber.__init__-def"><a name="L86"></a><tt class="py-lineno"> 86</tt> <a class="py-toggle" href="#" id="Throbber.__init__-toggle" onclick="return toggle('Throbber.__init__');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.animation.Throbber-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">parent</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Throbber.__init__-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Throbber.__init__-expanded"><a name="L87"></a><tt class="py-lineno"> 87</tt>  <tt class="py-line">    <tt id="link-10" class="py-name"><a title="camelot.camelot.empty_project.main.logger
+camelot.camelot.model.i18n.logger
+camelot.camelot.types.logger
+camelot.camelot.view.controls.actions.logger
+camelot.camelot.view.controls.animation.logger
+camelot.camelot.view.controls.delegates.logger
+camelot.camelot.view.controls.editors.logger
+camelot.camelot.view.controls.filter.logger
+camelot.camelot.view.controls.formview.logger
+camelot.camelot.view.controls.inheritance.logger
+camelot.camelot.view.controls.modeltree.logger
+camelot.camelot.view.controls.navpane.logger
+camelot.camelot.view.controls.printer.logger
+camelot.camelot.view.controls.tableview.logger
+camelot.camelot.view.elixir_admin.logger
+camelot.camelot.view.export.desktop_service.logger
+camelot.camelot.view.export.outlook.logger
+camelot.camelot.view.export.printer.logger
+camelot.camelot.view.export.word.logger
+camelot.camelot.view.forms.logger
+camelot.camelot.view.mainwindow.logger
+camelot.camelot.view.model_thread.logger
+camelot.camelot.view.proxy.collection_proxy.logger
+camelot.camelot.view.proxy.queryproxy.logger
+camelot.camelot.view.response_handler.logger
+camelot.camelot.view.search.logger
+camelot.camelot.view.validator.logger
+camelot.camelot.view.workspace.logger" class="py-name" href="#" onclick="return doclink('link-10', 'logger', 'link-0');">logger</a></tt><tt class="py-op">.</tt><tt class="py-name">debug</tt><tt class="py-op">(</tt><tt class="py-string">'creating throbber'</tt><tt class="py-op">)</tt> </tt>
+<a name="L88"></a><tt class="py-lineno"> 88</tt>  <tt class="py-line"> </tt>
+<a name="L89"></a><tt class="py-lineno"> 89</tt>  <tt class="py-line">    <tt class="py-name">icons</tt> <tt class="py-op">=</tt> <tt class="py-op">[</tt><tt id="link-11" class="py-name"><a title="camelot.camelot.view.art" class="py-name" href="#" onclick="return doclink('link-11', 'art', 'link-3');">art</a></tt><tt class="py-op">.</tt><tt id="link-12" class="py-name" targets="Variable camelot.camelot.view.art.file_=camelot.camelot.view.art-module.html#file_"><a title="camelot.camelot.view.art.file_" class="py-name" href="#" onclick="return doclink('link-12', 'file_', 'link-12');">file_</a></tt><tt class="py-op">(</tt><tt class="py-string">'Throbber-small-anim1.png'</tt><tt class="py-op">)</tt><tt class="py-op">,</tt>  </tt>
+<a name="L90"></a><tt class="py-lineno"> 90</tt>  <tt class="py-line">             <tt id="link-13" class="py-name"><a title="camelot.camelot.view.art" class="py-name" href="#" onclick="return doclink('link-13', 'art', 'link-3');">art</a></tt><tt class="py-op">.</tt><tt id="link-14" class="py-name"><a title="camelot.camelot.view.art.file_" class="py-name" href="#" onclick="return doclink('link-14', 'file_', 'link-12');">file_</a></tt><tt class="py-op">(</tt><tt class="py-string">'Throbber-small-anim2.png'</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> </tt>
+<a name="L91"></a><tt class="py-lineno"> 91</tt>  <tt class="py-line">             <tt id="link-15" class="py-name"><a title="camelot.camelot.view.art" class="py-name" href="#" onclick="return doclink('link-15', 'art', 'link-3');">art</a></tt><tt class="py-op">.</tt><tt id="link-16" class="py-name"><a title="camelot.camelot.view.art.file_" class="py-name" href="#" onclick="return doclink('link-16', 'file_', 'link-12');">file_</a></tt><tt class="py-op">(</tt><tt class="py-string">'Throbber-small-anim3.png'</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> </tt>
+<a name="L92"></a><tt class="py-lineno"> 92</tt>  <tt class="py-line">             <tt id="link-17" class="py-name"><a title="camelot.camelot.view.art" class="py-name" href="#" onclick="return doclink('link-17', 'art', 'link-3');">art</a></tt><tt class="py-op">.</tt><tt id="link-18" class="py-name"><a title="camelot.camelot.view.art.file_" class="py-name" href="#" onclick="return doclink('link-18', 'file_', 'link-12');">file_</a></tt><tt class="py-op">(</tt><tt class="py-string">'Throbber-small-anim4.png'</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> </tt>
+<a name="L93"></a><tt class="py-lineno"> 93</tt>  <tt class="py-line">             <tt id="link-19" class="py-name"><a title="camelot.camelot.view.art" class="py-name" href="#" onclick="return doclink('link-19', 'art', 'link-3');">art</a></tt><tt class="py-op">.</tt><tt id="link-20" class="py-name"><a title="camelot.camelot.view.art.file_" class="py-name" href="#" onclick="return doclink('link-20', 'file_', 'link-12');">file_</a></tt><tt class="py-op">(</tt><tt class="py-string">'Throbber-small-anim5.png'</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> </tt>
+<a name="L94"></a><tt class="py-lineno"> 94</tt>  <tt class="py-line">             <tt id="link-21" class="py-name"><a title="camelot.camelot.view.art" class="py-name" href="#" onclick="return doclink('link-21', 'art', 'link-3');">art</a></tt><tt class="py-op">.</tt><tt id="link-22" class="py-name"><a title="camelot.camelot.view.art.file_" class="py-name" href="#" onclick="return doclink('link-22', 'file_', 'link-12');">file_</a></tt><tt class="py-op">(</tt><tt class="py-string">'Throbber-small-anim6.png'</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> </tt>
+<a name="L95"></a><tt class="py-lineno"> 95</tt>  <tt class="py-line">             <tt id="link-23" class="py-name"><a title="camelot.camelot.view.art" class="py-name" href="#" onclick="return doclink('link-23', 'art', 'link-3');">art</a></tt><tt class="py-op">.</tt><tt id="link-24" class="py-name"><a title="camelot.camelot.view.art.file_" class="py-name" href="#" onclick="return doclink('link-24', 'file_', 'link-12');">file_</a></tt><tt class="py-op">(</tt><tt class="py-string">'Throbber-small-anim7.png'</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> </tt>
+<a name="L96"></a><tt class="py-lineno"> 96</tt>  <tt class="py-line">             <tt id="link-25" class="py-name"><a title="camelot.camelot.view.art" class="py-name" href="#" onclick="return doclink('link-25', 'art', 'link-3');">art</a></tt><tt class="py-op">.</tt><tt id="link-26" class="py-name"><a title="camelot.camelot.view.art.file_" class="py-name" href="#" onclick="return doclink('link-26', 'file_', 'link-12');">file_</a></tt><tt class="py-op">(</tt><tt class="py-string">'Throbber-small-anim8.png'</tt><tt class="py-op">)</tt><tt class="py-op">]</tt> </tt>
+<a name="L97"></a><tt class="py-lineno"> 97</tt>  <tt class="py-line"> </tt>
+<a name="L98"></a><tt class="py-lineno"> 98</tt>  <tt class="py-line">    <tt class="py-name">super</tt><tt class="py-op">(</tt><tt id="link-27" class="py-name" targets="Class camelot.camelot.view.controls.animation.Throbber=camelot.camelot.view.controls.animation.Throbber-class.html"><a title="camelot.camelot.view.controls.animation.Throbber" class="py-name" href="#" onclick="return doclink('link-27', 'Throbber', 'link-27');">Throbber</a></tt><tt class="py-op">,</tt> <tt class="py-name">self</tt><tt class="py-op">)</tt><tt class="py-op">.</tt><tt id="link-28" class="py-name"><a title="camelot.camelot.empty_project.application_admin.MyApplicationAdmin.__init__
+camelot.camelot.types.Code.__init__
+camelot.camelot.types.IPAddress.__init__
+camelot.camelot.types.Image.__init__
+camelot.camelot.types.StoredImage.__init__
+camelot.camelot.view.application_admin.ApplicationAdmin.__init__
+camelot.camelot.view.controls.actions.ActionsBox.__init__
+camelot.camelot.view.controls.animation.MovieWidget.__init__
+camelot.camelot.view.controls.animation.Throbber.__init__
+camelot.camelot.view.controls.appscheme.Scheme.__init__
+camelot.camelot.view.controls.delegates.BoolColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.CodeColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.ComboBoxColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.DateColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.DateTimeColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.FloatColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.GenericDelegate.__init__
+camelot.camelot.view.controls.delegates.IntegerColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.Many2OneColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.One2ManyColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.PlainTextColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.RichTextColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.TimeColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.VirtualAddressColumnDelegate.__init__
+camelot.camelot.view.controls.editors.CodeEditor.__init__
+camelot.camelot.view.controls.editors.DateEditor.__init__
+camelot.camelot.view.controls.editors.EmbeddedMany2OneEditor.__init__
+camelot.camelot.view.controls.editors.ImageEditor.__init__
+camelot.camelot.view.controls.editors.Many2OneEditor.CompletionsModel.__init__
+camelot.camelot.view.controls.editors.Many2OneEditor.__init__
+camelot.camelot.view.controls.editors.One2ManyEditor.__init__
+camelot.camelot.view.controls.editors.RichTextEditor.__init__
+camelot.camelot.view.controls.editors.VirtualAddressEditor.__init__
+camelot.camelot.view.controls.filter.FilterList.__init__
+camelot.camelot.view.controls.formview.FormView.__init__
+camelot.camelot.view.controls.inheritance.SubclassItem.__init__
+camelot.camelot.view.controls.inheritance.SubclassTree.__init__
+camelot.camelot.view.controls.modeltree.ModelItem.__init__
+camelot.camelot.view.controls.modeltree.ModelTree.__init__
+camelot.camelot.view.controls.navpane.NavigationPane.__init__
+camelot.camelot.view.controls.navpane.PaneButton.__init__
+camelot.camelot.view.controls.navpane.PaneCaption.__init__
+camelot.camelot.view.controls.printer.Printer.__init__
+camelot.camelot.view.controls.schemer.Schemer.__init__
+camelot.camelot.view.controls.search.SimpleSearchControl.__init__
+camelot.camelot.view.controls.tableview.QueryTable.__init__
+camelot.camelot.view.controls.tableview.TableView.__init__
+camelot.camelot.view.elixir_admin.EntityAdmin.__init__
+camelot.camelot.view.fifo.fifo.__init__
+camelot.camelot.view.filters.Filter.__init__
+camelot.camelot.view.forms.Form.__init__
+camelot.camelot.view.forms.HBoxForm.__init__
+camelot.camelot.view.forms.TabForm.__init__
+camelot.camelot.view.forms.VBoxForm.__init__
+camelot.camelot.view.forms.WidgetOnlyForm.__init__
+camelot.camelot.view.mainwindow.MainWindow.__init__
+camelot.camelot.view.model_thread.ModelThread.__init__
+camelot.camelot.view.plugins.CamelotEditorPlugin.__init__
+camelot.camelot.view.plugins.codeeditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.plugins.dateeditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.plugins.manytooneeditorplugin.ManyToOneEditorPlugin.__init__
+camelot.camelot.view.plugins.onetomanyeditorplugin.OneToManyEditorPlugin.__init__
+camelot.camelot.view.plugins.richtexteditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.proxy.collection_proxy.CollectionProxy.__init__
+camelot.camelot.view.proxy.collection_proxy.DelayedProxy.__init__
+camelot.camelot.view.proxy.queryproxy.QueryTableProxy.__init__
+camelot.camelot.view.response_handler.ResponseHandler.__init__
+camelot.camelot.view.validator.Validator.__init__
+camelot.camelot.view.workspace.DesktopWorkspace.__init__" class="py-name" href="#" onclick="return doclink('link-28', '__init__', 'link-6');">__init__</a></tt><tt class="py-op">(</tt><tt class="py-name">icons</tt><tt class="py-op">,</tt> <tt class="py-name">parent</tt><tt class="py-op">)</tt> </tt>
+<a name="L99"></a><tt class="py-lineno"> 99</tt>  <tt class="py-line">     </tt>
+<a name="L100"></a><tt class="py-lineno">100</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">idle_pixmap</tt> <tt class="py-op">=</tt> <tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QPixmap</tt><tt class="py-op">(</tt><tt id="link-29" class="py-name"><a title="camelot.camelot.view.art" class="py-name" href="#" onclick="return doclink('link-29', 'art', 'link-3');">art</a></tt><tt class="py-op">.</tt><tt id="link-30" class="py-name"><a title="camelot.camelot.view.art.file_" class="py-name" href="#" onclick="return doclink('link-30', 'file_', 'link-12');">file_</a></tt><tt class="py-op">(</tt><tt class="py-string">'Throbber-small.png'</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L101"></a><tt class="py-lineno">101</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-31" class="py-name" targets="Method camelot.camelot.view.controls.animation.Throbber._idle_state()=camelot.camelot.view.controls.animation.Throbber-class.html#_idle_state"><a title="camelot.camelot.view.controls.animation.Throbber._idle_state" class="py-name" href="#" onclick="return doclink('link-31', '_idle_state', 'link-31');">_idle_state</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L102"></a><tt class="py-lineno">102</tt>  <tt class="py-line">    <tt class="py-name">parent</tt><tt class="py-op">.</tt><tt class="py-name">resize</tt><tt class="py-op">(</tt><tt class="py-name">parent</tt><tt class="py-op">.</tt><tt class="py-name">size</tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L103"></a><tt class="py-lineno">103</tt>  <tt class="py-line"> </tt>
+<a name="Throbber._idle_state"></a><div id="Throbber._idle_state-def"><a name="L104"></a><tt class="py-lineno">104</tt> <a class="py-toggle" href="#" id="Throbber._idle_state-toggle" onclick="return toggle('Throbber._idle_state');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.animation.Throbber-class.html#_idle_state">_idle_state</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Throbber._idle_state-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Throbber._idle_state-expanded"><a name="L105"></a><tt class="py-lineno">105</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-32" class="py-name"><a title="camelot.camelot.view.controls.editors.ImageEditor.setPixmap" class="py-name" href="#" onclick="return doclink('link-32', 'setPixmap', 'link-9');">setPixmap</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">idle_pixmap</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L106"></a><tt class="py-lineno">106</tt>  <tt class="py-line"> </tt>
+<a name="Throbber.process_working"></a><div id="Throbber.process_working-def"><a name="L107"></a><tt class="py-lineno">107</tt> <a class="py-toggle" href="#" id="Throbber.process_working-toggle" onclick="return toggle('Throbber.process_working');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.animation.Throbber-class.html#process_working">process_working</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Throbber.process_working-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Throbber.process_working-expanded"><a name="L108"></a><tt class="py-lineno">108</tt>  <tt class="py-line">    <tt id="link-33" class="py-name"><a title="camelot.camelot.empty_project.main.logger
+camelot.camelot.model.i18n.logger
+camelot.camelot.types.logger
+camelot.camelot.view.controls.actions.logger
+camelot.camelot.view.controls.animation.logger
+camelot.camelot.view.controls.delegates.logger
+camelot.camelot.view.controls.editors.logger
+camelot.camelot.view.controls.filter.logger
+camelot.camelot.view.controls.formview.logger
+camelot.camelot.view.controls.inheritance.logger
+camelot.camelot.view.controls.modeltree.logger
+camelot.camelot.view.controls.navpane.logger
+camelot.camelot.view.controls.printer.logger
+camelot.camelot.view.controls.tableview.logger
+camelot.camelot.view.elixir_admin.logger
+camelot.camelot.view.export.desktop_service.logger
+camelot.camelot.view.export.outlook.logger
+camelot.camelot.view.export.printer.logger
+camelot.camelot.view.export.word.logger
+camelot.camelot.view.forms.logger
+camelot.camelot.view.mainwindow.logger
+camelot.camelot.view.model_thread.logger
+camelot.camelot.view.proxy.collection_proxy.logger
+camelot.camelot.view.proxy.queryproxy.logger
+camelot.camelot.view.response_handler.logger
+camelot.camelot.view.search.logger
+camelot.camelot.view.validator.logger
+camelot.camelot.view.workspace.logger" class="py-name" href="#" onclick="return doclink('link-33', 'logger', 'link-0');">logger</a></tt><tt class="py-op">.</tt><tt class="py-name">debug</tt><tt class="py-op">(</tt><tt class="py-string">'Process is working'</tt><tt class="py-op">)</tt> </tt>
+<a name="L109"></a><tt class="py-lineno">109</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-34" class="py-name" targets="Method camelot.camelot.view.controls.animation.MovieWidget.startMovie()=camelot.camelot.view.controls.animation.MovieWidget-class.html#startMovie"><a title="camelot.camelot.view.controls.animation.MovieWidget.startMovie" class="py-name" href="#" onclick="return doclink('link-34', 'startMovie', 'link-34');">startMovie</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L110"></a><tt class="py-lineno">110</tt>  <tt class="py-line"> </tt>
+<a name="Throbber.process_idle"></a><div id="Throbber.process_idle-def"><a name="L111"></a><tt class="py-lineno">111</tt> <a class="py-toggle" href="#" id="Throbber.process_idle-toggle" onclick="return toggle('Throbber.process_idle');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.animation.Throbber-class.html#process_idle">process_idle</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Throbber.process_idle-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Throbber.process_idle-expanded"><a name="L112"></a><tt class="py-lineno">112</tt>  <tt class="py-line">    <tt id="link-35" class="py-name"><a title="camelot.camelot.empty_project.main.logger
+camelot.camelot.model.i18n.logger
+camelot.camelot.types.logger
+camelot.camelot.view.controls.actions.logger
+camelot.camelot.view.controls.animation.logger
+camelot.camelot.view.controls.delegates.logger
+camelot.camelot.view.controls.editors.logger
+camelot.camelot.view.controls.filter.logger
+camelot.camelot.view.controls.formview.logger
+camelot.camelot.view.controls.inheritance.logger
+camelot.camelot.view.controls.modeltree.logger
+camelot.camelot.view.controls.navpane.logger
+camelot.camelot.view.controls.printer.logger
+camelot.camelot.view.controls.tableview.logger
+camelot.camelot.view.elixir_admin.logger
+camelot.camelot.view.export.desktop_service.logger
+camelot.camelot.view.export.outlook.logger
+camelot.camelot.view.export.printer.logger
+camelot.camelot.view.export.word.logger
+camelot.camelot.view.forms.logger
+camelot.camelot.view.mainwindow.logger
+camelot.camelot.view.model_thread.logger
+camelot.camelot.view.proxy.collection_proxy.logger
+camelot.camelot.view.proxy.queryproxy.logger
+camelot.camelot.view.response_handler.logger
+camelot.camelot.view.search.logger
+camelot.camelot.view.validator.logger
+camelot.camelot.view.workspace.logger" class="py-name" href="#" onclick="return doclink('link-35', 'logger', 'link-0');">logger</a></tt><tt class="py-op">.</tt><tt class="py-name">debug</tt><tt class="py-op">(</tt><tt class="py-string">'Process is idle'</tt><tt class="py-op">)</tt> </tt>
+<a name="L113"></a><tt class="py-lineno">113</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-36" class="py-name" targets="Method camelot.camelot.view.controls.animation.MovieWidget.stopMovie()=camelot.camelot.view.controls.animation.MovieWidget-class.html#stopMovie"><a title="camelot.camelot.view.controls.animation.MovieWidget.stopMovie" class="py-name" href="#" onclick="return doclink('link-36', 'stopMovie', 'link-36');">stopMovie</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L114"></a><tt class="py-lineno">114</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-37" class="py-name"><a title="camelot.camelot.view.controls.animation.Throbber._idle_state" class="py-name" href="#" onclick="return doclink('link-37', '_idle_state', 'link-31');">_idle_state</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L115"></a><tt class="py-lineno">115</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Sat Jan 31 18:50:04 2009
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

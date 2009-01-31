@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>camelot.camelot.view.controls.printer</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Package&nbsp;camelot ::
+        <a href="camelot.camelot-module.html">Package&nbsp;camelot</a> ::
+        <a href="camelot.camelot.view-module.html">Package&nbsp;view</a> ::
+        <a href="camelot.camelot.view.controls-module.html">Package&nbsp;controls</a> ::
+        Module&nbsp;printer
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="camelot.camelot.view.controls.printer-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="camelot.camelot.view.controls.printer-module.html">Module camelot.camelot.view.controls.printer</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno">  1</tt>  <tt class="py-line"><tt class="py-comment">#  ==================================================================================</tt> </tt>
+<a name="L2"></a><tt class="py-lineno">  2</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L3"></a><tt class="py-lineno">  3</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.</tt> </tt>
+<a name="L4"></a><tt class="py-lineno">  4</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  www.conceptive.be / project-camelot@conceptive.be</tt> </tt>
+<a name="L5"></a><tt class="py-lineno">  5</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L6"></a><tt class="py-lineno">  6</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is part of the Camelot Library.</tt> </tt>
+<a name="L7"></a><tt class="py-lineno">  7</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L8"></a><tt class="py-lineno">  8</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file may be used under the terms of the GNU General Public</tt> </tt>
+<a name="L9"></a><tt class="py-lineno">  9</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  License version 2.0 as published by the Free Software Foundation</tt> </tt>
+<a name="L10"></a><tt class="py-lineno"> 10</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  and appearing in the file LICENSE.GPL included in the packaging of</tt> </tt>
+<a name="L11"></a><tt class="py-lineno"> 11</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  this file.  Please review the following information to ensure GNU</tt> </tt>
+<a name="L12"></a><tt class="py-lineno"> 12</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  General Public Licensing requirements will be met:</tt> </tt>
+<a name="L13"></a><tt class="py-lineno"> 13</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/opensource.html</tt> </tt>
+<a name="L14"></a><tt class="py-lineno"> 14</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L15"></a><tt class="py-lineno"> 15</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  If you are unsure which license is appropriate for your use, please</tt> </tt>
+<a name="L16"></a><tt class="py-lineno"> 16</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  review the following information:</tt> </tt>
+<a name="L17"></a><tt class="py-lineno"> 17</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/licensing.html or contact</tt> </tt>
+<a name="L18"></a><tt class="py-lineno"> 18</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be.</tt> </tt>
+<a name="L19"></a><tt class="py-lineno"> 19</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L20"></a><tt class="py-lineno"> 20</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE</tt> </tt>
+<a name="L21"></a><tt class="py-lineno"> 21</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</tt> </tt>
+<a name="L22"></a><tt class="py-lineno"> 22</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L23"></a><tt class="py-lineno"> 23</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  For use of this library in commercial applications, please contact</tt> </tt>
+<a name="L24"></a><tt class="py-lineno"> 24</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be</tt> </tt>
+<a name="L25"></a><tt class="py-lineno"> 25</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L26"></a><tt class="py-lineno"> 26</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  ==================================================================================</tt> </tt>
+<a name="L27"></a><tt class="py-lineno"> 27</tt>  <tt class="py-line"><tt class="py-comment"></tt> </tt>
+<a name="L28"></a><tt class="py-lineno"> 28</tt>  <tt class="py-line"><tt class="py-docstring">"""</tt> </tt>
+<a name="L29"></a><tt class="py-lineno"> 29</tt>  <tt class="py-line"><tt class="py-docstring">class to handle printing</tt> </tt>
+<a name="L30"></a><tt class="py-lineno"> 30</tt>  <tt class="py-line"><tt class="py-docstring">"""</tt> </tt>
+<a name="L31"></a><tt class="py-lineno"> 31</tt>  <tt class="py-line"> </tt>
+<a name="L32"></a><tt class="py-lineno"> 32</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">os</tt> </tt>
+<a name="L33"></a><tt class="py-lineno"> 33</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">sys</tt> </tt>
+<a name="L34"></a><tt class="py-lineno"> 34</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">logging</tt> </tt>
+<a name="L35"></a><tt class="py-lineno"> 35</tt>  <tt class="py-line"> </tt>
+<a name="L36"></a><tt class="py-lineno"> 36</tt>  <tt class="py-line"><tt class="py-comment">#FORMAT = '[%(levelname)-5s] [%(name)-35s] - %(message)s' </tt> </tt>
+<a name="L37"></a><tt class="py-lineno"> 37</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#logging.basicConfig(level=logging.DEBUG, format=FORMAT)</tt> </tt>
+<a name="L38"></a><tt class="py-lineno"> 38</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt id="link-0" class="py-name" targets="Variable camelot.camelot.empty_project.main.logger=camelot.camelot.empty_project.main-module.html#logger,Variable camelot.camelot.model.i18n.logger=camelot.camelot.model.i18n-module.html#logger,Variable camelot.camelot.types.logger=camelot.camelot.types-module.html#logger,Variable camelot.camelot.view.controls.actions.logger=camelot.camelot.view.controls.actions-module.html#logger,Variable camelot.camelot.view.controls.animation.logger=camelot.camelot.view.controls.animation-module.html#logger,Variable camelot.camelot.view.controls.delegates.logger=camelot.camelot.view.controls.delegates-module.html#logger,Variable camelot.camelot.view.controls.editors.logger=camelot.camelot.view.controls.editors-module.html#logger,Variable camelot.camelot.view.controls.filter.logger=camelot.camelot.view.controls.filter-module.html#logger,Variable camelot.camelot.view.controls.formview.logger=camelot.camelot.view.controls.formview-module.html#logger,Variable camelot.camelot.view.controls.inheritance.logger=camelot.camelot.view.controls.inheritance-module.html#logger,Variable camelot.camelot.view.controls.modeltree.logger=camelot.camelot.view.controls.modeltree-module.html#logger,Variable camelot.camelot.view.controls.navpane.logger=camelot.camelot.view.controls.navpane-module.html#logger,Variable camelot.camelot.view.controls.printer.logger=camelot.camelot.view.controls.printer-module.html#logger,Variable camelot.camelot.view.controls.tableview.logger=camelot.camelot.view.controls.tableview-module.html#logger,Variable camelot.camelot.view.elixir_admin.logger=camelot.camelot.view.elixir_admin-module.html#logger,Variable camelot.camelot.view.export.desktop_service.logger=camelot.camelot.view.export.desktop_service-module.html#logger,Variable camelot.camelot.view.export.outlook.logger=camelot.camelot.view.export.outlook-module.html#logger,Variable camelot.camelot.view.export.printer.logger=camelot.camelot.view.export.printer-module.html#logger,Variable camelot.camelot.view.export.word.logger=camelot.camelot.view.export.word-module.html#logger,Variable camelot.camelot.view.forms.logger=camelot.camelot.view.forms-module.html#logger,Variable camelot.camelot.view.mainwindow.logger=camelot.camelot.view.mainwindow-module.html#logger,Variable camelot.camelot.view.model_thread.logger=camelot.camelot.view.model_thread-module.html#logger,Variable camelot.camelot.view.proxy.collection_proxy.logger=camelot.camelot.view.proxy.collection_proxy-module.html#logger,Variable camelot.camelot.view.proxy.queryproxy.logger=camelot.camelot.view.proxy.queryproxy-module.html#logger,Variable camelot.camelot.view.response_handler.logger=camelot.camelot.view.response_handler-module.html#logger,Variable camelot.camelot.view.search.logger=camelot.camelot.view.search-module.html#logger,Variable camelot.camelot.view.validator.logger=camelot.camelot.view.validator-module.html#logger,Variable camelot.camelot.view.workspace.logger=camelot.camelot.view.workspace-module.html#logger"><a title="camelot.camelot.empty_project.main.logger
+camelot.camelot.model.i18n.logger
+camelot.camelot.types.logger
+camelot.camelot.view.controls.actions.logger
+camelot.camelot.view.controls.animation.logger
+camelot.camelot.view.controls.delegates.logger
+camelot.camelot.view.controls.editors.logger
+camelot.camelot.view.controls.filter.logger
+camelot.camelot.view.controls.formview.logger
+camelot.camelot.view.controls.inheritance.logger
+camelot.camelot.view.controls.modeltree.logger
+camelot.camelot.view.controls.navpane.logger
+camelot.camelot.view.controls.printer.logger
+camelot.camelot.view.controls.tableview.logger
+camelot.camelot.view.elixir_admin.logger
+camelot.camelot.view.export.desktop_service.logger
+camelot.camelot.view.export.outlook.logger
+camelot.camelot.view.export.printer.logger
+camelot.camelot.view.export.word.logger
+camelot.camelot.view.forms.logger
+camelot.camelot.view.mainwindow.logger
+camelot.camelot.view.model_thread.logger
+camelot.camelot.view.proxy.collection_proxy.logger
+camelot.camelot.view.proxy.queryproxy.logger
+camelot.camelot.view.response_handler.logger
+camelot.camelot.view.search.logger
+camelot.camelot.view.validator.logger
+camelot.camelot.view.workspace.logger" class="py-name" href="#" onclick="return doclink('link-0', 'logger', 'link-0');">logger</a></tt> <tt class="py-op">=</tt> <tt class="py-name">logging</tt><tt class="py-op">.</tt><tt class="py-name">getLogger</tt><tt class="py-op">(</tt><tt class="py-string">'printer'</tt><tt class="py-op">)</tt> </tt>
+<a name="L39"></a><tt class="py-lineno"> 39</tt>  <tt class="py-line"><tt id="link-1" class="py-name"><a title="camelot.camelot.empty_project.main.logger
+camelot.camelot.model.i18n.logger
+camelot.camelot.types.logger
+camelot.camelot.view.controls.actions.logger
+camelot.camelot.view.controls.animation.logger
+camelot.camelot.view.controls.delegates.logger
+camelot.camelot.view.controls.editors.logger
+camelot.camelot.view.controls.filter.logger
+camelot.camelot.view.controls.formview.logger
+camelot.camelot.view.controls.inheritance.logger
+camelot.camelot.view.controls.modeltree.logger
+camelot.camelot.view.controls.navpane.logger
+camelot.camelot.view.controls.printer.logger
+camelot.camelot.view.controls.tableview.logger
+camelot.camelot.view.elixir_admin.logger
+camelot.camelot.view.export.desktop_service.logger
+camelot.camelot.view.export.outlook.logger
+camelot.camelot.view.export.printer.logger
+camelot.camelot.view.export.word.logger
+camelot.camelot.view.forms.logger
+camelot.camelot.view.mainwindow.logger
+camelot.camelot.view.model_thread.logger
+camelot.camelot.view.proxy.collection_proxy.logger
+camelot.camelot.view.proxy.queryproxy.logger
+camelot.camelot.view.response_handler.logger
+camelot.camelot.view.search.logger
+camelot.camelot.view.validator.logger
+camelot.camelot.view.workspace.logger" class="py-name" href="#" onclick="return doclink('link-1', 'logger', 'link-0');">logger</a></tt><tt class="py-op">.</tt><tt class="py-name">setLevel</tt><tt class="py-op">(</tt><tt class="py-name">logging</tt><tt class="py-op">.</tt><tt class="py-name">DEBUG</tt><tt class="py-op">)</tt> </tt>
+<a name="L40"></a><tt class="py-lineno"> 40</tt>  <tt class="py-line"> </tt>
+<a name="L41"></a><tt class="py-lineno"> 41</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt id="link-2" class="py-name" targets="Module camelot.camelot.empty_project.settings=camelot.camelot.empty_project.settings-module.html"><a title="camelot.camelot.empty_project.settings" class="py-name" href="#" onclick="return doclink('link-2', 'settings', 'link-2');">settings</a></tt> </tt>
+<a name="L42"></a><tt class="py-lineno"> 42</tt>  <tt class="py-line"> </tt>
+<a name="L43"></a><tt class="py-lineno"> 43</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">PyQt4</tt> <tt class="py-keyword">import</tt> <tt class="py-name">QtGui</tt> </tt>
+<a name="L44"></a><tt class="py-lineno"> 44</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">PyQt4</tt> <tt class="py-keyword">import</tt> <tt class="py-name">QtCore</tt> </tt>
+<a name="L45"></a><tt class="py-lineno"> 45</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">PyQt4</tt><tt class="py-op">.</tt><tt class="py-name">QtCore</tt> <tt class="py-keyword">import</tt> <tt class="py-name">Qt</tt> </tt>
+<a name="L46"></a><tt class="py-lineno"> 46</tt>  <tt class="py-line"> </tt>
+<a name="L47"></a><tt class="py-lineno"> 47</tt>  <tt class="py-line"><tt id="link-3" class="py-name" targets="Variable camelot.camelot.view.controls.printer.icon=camelot.camelot.view.controls.printer-module.html#icon"><a title="camelot.camelot.view.controls.printer.icon" class="py-name" href="#" onclick="return doclink('link-3', 'icon', 'link-3');">icon</a></tt> <tt class="py-op">=</tt> <tt class="py-string">'../art/tango/32x32/apps/system-users.png'</tt> </tt>
+<a name="L48"></a><tt class="py-lineno"> 48</tt>  <tt class="py-line"> </tt>
+<a name="Printer"></a><div id="Printer-def"><a name="L49"></a><tt class="py-lineno"> 49</tt> <a class="py-toggle" href="#" id="Printer-toggle" onclick="return toggle('Printer');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="camelot.camelot.view.controls.printer.Printer-class.html">Printer</a><tt class="py-op">:</tt> </tt>
+</div><div id="Printer-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="Printer-expanded"><a name="Printer.__init__"></a><div id="Printer.__init__-def"><a name="L50"></a><tt class="py-lineno"> 50</tt> <a class="py-toggle" href="#" id="Printer.__init__-toggle" onclick="return toggle('Printer.__init__');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.printer.Printer-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Printer.__init__-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Printer.__init__-expanded"><a name="L51"></a><tt class="py-lineno"> 51</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-4" class="py-name" targets="Module camelot.camelot.view.controls.printer=camelot.camelot.view.controls.printer-module.html,Module camelot.camelot.view.export.printer=camelot.camelot.view.export.printer-module.html"><a title="camelot.camelot.view.controls.printer
+camelot.camelot.view.export.printer" class="py-name" href="#" onclick="return doclink('link-4', 'printer', 'link-4');">printer</a></tt> <tt class="py-op">=</tt> <tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QPrinter</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L52"></a><tt class="py-lineno"> 52</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-5" class="py-name"><a title="camelot.camelot.view.controls.printer
+camelot.camelot.view.export.printer" class="py-name" href="#" onclick="return doclink('link-5', 'printer', 'link-4');">printer</a></tt><tt class="py-op">.</tt><tt class="py-name">setPageSize</tt><tt class="py-op">(</tt><tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QPrinter</tt><tt class="py-op">.</tt><tt class="py-name">Letter</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L53"></a><tt class="py-lineno"> 53</tt>  <tt class="py-line"> </tt>
+<a name="Printer.printView"></a><div id="Printer.printView-def"><a name="L54"></a><tt class="py-lineno"> 54</tt> <a class="py-toggle" href="#" id="Printer.printView-toggle" onclick="return toggle('Printer.printView');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.printer.Printer-class.html#printView">printView</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">view</tt><tt class="py-op">,</tt> <tt class="py-param">parent</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Printer.printView-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Printer.printView-expanded"><a name="L55"></a><tt class="py-lineno"> 55</tt>  <tt class="py-line">    <tt id="link-6" class="py-name"><a title="camelot.camelot.empty_project.main.logger
+camelot.camelot.model.i18n.logger
+camelot.camelot.types.logger
+camelot.camelot.view.controls.actions.logger
+camelot.camelot.view.controls.animation.logger
+camelot.camelot.view.controls.delegates.logger
+camelot.camelot.view.controls.editors.logger
+camelot.camelot.view.controls.filter.logger
+camelot.camelot.view.controls.formview.logger
+camelot.camelot.view.controls.inheritance.logger
+camelot.camelot.view.controls.modeltree.logger
+camelot.camelot.view.controls.navpane.logger
+camelot.camelot.view.controls.printer.logger
+camelot.camelot.view.controls.tableview.logger
+camelot.camelot.view.elixir_admin.logger
+camelot.camelot.view.export.desktop_service.logger
+camelot.camelot.view.export.outlook.logger
+camelot.camelot.view.export.printer.logger
+camelot.camelot.view.export.word.logger
+camelot.camelot.view.forms.logger
+camelot.camelot.view.mainwindow.logger
+camelot.camelot.view.model_thread.logger
+camelot.camelot.view.proxy.collection_proxy.logger
+camelot.camelot.view.proxy.queryproxy.logger
+camelot.camelot.view.response_handler.logger
+camelot.camelot.view.search.logger
+camelot.camelot.view.validator.logger
+camelot.camelot.view.workspace.logger" class="py-name" href="#" onclick="return doclink('link-6', 'logger', 'link-0');">logger</a></tt><tt class="py-op">.</tt><tt class="py-name">debug</tt><tt class="py-op">(</tt><tt class="py-string">'printing table view'</tt><tt class="py-op">)</tt> </tt>
+<a name="L56"></a><tt class="py-lineno"> 56</tt>  <tt class="py-line">    <tt class="py-name">dialog</tt> <tt class="py-op">=</tt> <tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QPrintDialog</tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-7" class="py-name"><a title="camelot.camelot.view.controls.printer
+camelot.camelot.view.export.printer" class="py-name" href="#" onclick="return doclink('link-7', 'printer', 'link-4');">printer</a></tt><tt class="py-op">,</tt> <tt class="py-name">parent</tt><tt class="py-op">)</tt> </tt>
+<a name="L57"></a><tt class="py-lineno"> 57</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-keyword">not</tt> <tt class="py-name">dialog</tt><tt class="py-op">.</tt><tt class="py-name">exec_</tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L58"></a><tt class="py-lineno"> 58</tt>  <tt class="py-line">      <tt class="py-keyword">return</tt> </tt>
+<a name="L59"></a><tt class="py-lineno"> 59</tt>  <tt class="py-line">     </tt>
+<a name="L60"></a><tt class="py-lineno"> 60</tt>  <tt class="py-line">    <tt class="py-name">client_address</tt> <tt class="py-op">=</tt> <tt class="py-string">'&lt;br/&gt;'</tt><tt class="py-op">.</tt><tt class="py-name">join</tt><tt class="py-op">(</tt><tt class="py-op">[</tt><tt class="py-string">'2 Azalea St.'</tt><tt class="py-op">,</tt> </tt>
+<a name="L61"></a><tt class="py-lineno"> 61</tt>  <tt class="py-line">                                   <tt class="py-string">'Fredericksburg'</tt><tt class="py-op">,</tt> </tt>
+<a name="L62"></a><tt class="py-lineno"> 62</tt>  <tt class="py-line">                                   <tt class="py-string">'22406 VA'</tt><tt class="py-op">]</tt><tt class="py-op">)</tt> </tt>
+<a name="L63"></a><tt class="py-lineno"> 63</tt>  <tt class="py-line"> </tt>
+<a name="L64"></a><tt class="py-lineno"> 64</tt>  <tt class="py-line">    <tt class="py-keyword">import</tt> <tt class="py-name">datetime</tt> </tt>
+<a name="L65"></a><tt class="py-lineno"> 65</tt>  <tt class="py-line">    <tt class="py-name">ts</tt> <tt class="py-op">=</tt> <tt class="py-name">datetime</tt><tt class="py-op">.</tt><tt class="py-name">datetime</tt><tt class="py-op">.</tt><tt class="py-name">today</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L66"></a><tt class="py-lineno"> 66</tt>  <tt class="py-line">    <tt class="py-name">datestring</tt> <tt class="py-op">=</tt> <tt class="py-string">'Date: %s/%s/%s'</tt> <tt class="py-op">%</tt> <tt class="py-op">(</tt><tt class="py-name">ts</tt><tt class="py-op">.</tt><tt class="py-name">month</tt><tt class="py-op">,</tt> <tt class="py-name">ts</tt><tt class="py-op">.</tt><tt class="py-name">day</tt><tt class="py-op">,</tt> <tt class="py-name">ts</tt><tt class="py-op">.</tt><tt class="py-name">year</tt><tt class="py-op">)</tt>  </tt>
+<a name="L67"></a><tt class="py-lineno"> 67</tt>  <tt class="py-line"> </tt>
+<a name="L68"></a><tt class="py-lineno"> 68</tt>  <tt class="py-line">    <tt class="py-name">view_content</tt> <tt class="py-op">=</tt> <tt id="link-8" class="py-name" targets="Package camelot.camelot.view=camelot.camelot.view-module.html"><a title="camelot.camelot.view" class="py-name" href="#" onclick="return doclink('link-8', 'view', 'link-8');">view</a></tt><tt class="py-op">.</tt><tt id="link-9" class="py-name" targets="Method camelot.camelot.view.controls.editors.RichTextEditor.toHtml()=camelot.camelot.view.controls.editors.RichTextEditor-class.html#toHtml,Method camelot.camelot.view.controls.formview.FormView.toHtml()=camelot.camelot.view.controls.formview.FormView-class.html#toHtml,Method camelot.camelot.view.controls.tableview.TableView.toHtml()=camelot.camelot.view.controls.tableview.TableView-class.html#toHtml"><a title="camelot.camelot.view.controls.editors.RichTextEditor.toHtml
+camelot.camelot.view.controls.formview.FormView.toHtml
+camelot.camelot.view.controls.tableview.TableView.toHtml" class="py-name" href="#" onclick="return doclink('link-9', 'toHtml', 'link-9');">toHtml</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L69"></a><tt class="py-lineno"> 69</tt>  <tt class="py-line">    <tt class="py-name">context</tt> <tt class="py-op">=</tt> <tt class="py-op">{</tt> </tt>
+<a name="L70"></a><tt class="py-lineno"> 70</tt>  <tt class="py-line">      <tt class="py-string">'logo'</tt> <tt class="py-op">:</tt> <tt id="link-10" class="py-name"><a title="camelot.camelot.view.controls.printer.icon" class="py-name" href="#" onclick="return doclink('link-10', 'icon', 'link-3');">icon</a></tt><tt class="py-op">,</tt> </tt>
+<a name="L71"></a><tt class="py-lineno"> 71</tt>  <tt class="py-line">      <tt class="py-string">'company_name'</tt> <tt class="py-op">:</tt> <tt class="py-string">'Conceptive Engineering'</tt><tt class="py-op">,</tt> </tt>
+<a name="L72"></a><tt class="py-lineno"> 72</tt>  <tt class="py-line">      <tt class="py-string">'company_address_1'</tt> <tt class="py-op">:</tt> <tt class="py-string">'L. Van Bauwelstraat 16'</tt><tt class="py-op">,</tt> </tt>
+<a name="L73"></a><tt class="py-lineno"> 73</tt>  <tt class="py-line">      <tt class="py-string">'company_address_2'</tt> <tt class="py-op">:</tt> <tt class="py-string">'2220 Heist-op-den-Berg'</tt><tt class="py-op">,</tt> </tt>
+<a name="L74"></a><tt class="py-lineno"> 74</tt>  <tt class="py-line">      <tt class="py-string">'city'</tt> <tt class="py-op">:</tt> <tt class="py-string">'Belgium'</tt><tt class="py-op">,</tt>  </tt>
+<a name="L75"></a><tt class="py-lineno"> 75</tt>  <tt class="py-line">      <tt class="py-string">'date'</tt> <tt class="py-op">:</tt> <tt class="py-name">datestring</tt><tt class="py-op">,</tt> </tt>
+<a name="L76"></a><tt class="py-lineno"> 76</tt>  <tt class="py-line">      <tt class="py-string">'client_address'</tt> <tt class="py-op">:</tt> <tt class="py-name">client_address</tt><tt class="py-op">,</tt> </tt>
+<a name="L77"></a><tt class="py-lineno"> 77</tt>  <tt class="py-line">      <tt class="py-string">'client_name'</tt> <tt class="py-op">:</tt> <tt class="py-string">'Client'</tt><tt class="py-op">,</tt> </tt>
+<a name="L78"></a><tt class="py-lineno"> 78</tt>  <tt class="py-line">      <tt class="py-string">'content'</tt> <tt class="py-op">:</tt> <tt class="py-name">view_content</tt><tt class="py-op">,</tt> </tt>
+<a name="L79"></a><tt class="py-lineno"> 79</tt>  <tt class="py-line">      <tt class="py-string">'signature'</tt> <tt class="py-op">:</tt> <tt class="py-string">'M. Anager'</tt> </tt>
+<a name="L80"></a><tt class="py-lineno"> 80</tt>  <tt class="py-line">    <tt class="py-op">}</tt> </tt>
+<a name="L81"></a><tt class="py-lineno"> 81</tt>  <tt class="py-line"> </tt>
+<a name="L82"></a><tt class="py-lineno"> 82</tt>  <tt class="py-line">    <tt class="py-keyword">from</tt> <tt class="py-name">jinja</tt> <tt class="py-keyword">import</tt> <tt class="py-name">Environment</tt><tt class="py-op">,</tt> <tt class="py-name">FileSystemLoader</tt> </tt>
+<a name="L83"></a><tt class="py-lineno"> 83</tt>  <tt class="py-line">    <tt class="py-name">fileloader</tt> <tt class="py-op">=</tt> <tt class="py-name">FileSystemLoader</tt><tt class="py-op">(</tt><tt id="link-11" class="py-name"><a title="camelot.camelot.empty_project.settings" class="py-name" href="#" onclick="return doclink('link-11', 'settings', 'link-2');">settings</a></tt><tt class="py-op">.</tt><tt class="py-name">CANTATE_TEMPLATES_DIRECTORY</tt><tt class="py-op">)</tt>  </tt>
+<a name="L84"></a><tt class="py-lineno"> 84</tt>  <tt class="py-line">    <tt class="py-name">e</tt> <tt class="py-op">=</tt> <tt class="py-name">Environment</tt><tt class="py-op">(</tt><tt class="py-name">loader</tt><tt class="py-op">=</tt><tt class="py-name">fileloader</tt><tt class="py-op">)</tt> </tt>
+<a name="L85"></a><tt class="py-lineno"> 85</tt>  <tt class="py-line">    <tt class="py-name">t</tt> <tt class="py-op">=</tt> <tt class="py-name">e</tt><tt class="py-op">.</tt><tt class="py-name">get_template</tt><tt class="py-op">(</tt><tt class="py-string">'base.html'</tt><tt class="py-op">)</tt> </tt>
+<a name="L86"></a><tt class="py-lineno"> 86</tt>  <tt class="py-line">    <tt class="py-name">html</tt> <tt class="py-op">=</tt> <tt class="py-name">t</tt><tt class="py-op">.</tt><tt id="link-12" class="py-name" targets="Method camelot.camelot.view.filters.ComboBoxFilter.render()=camelot.camelot.view.filters.ComboBoxFilter-class.html#render,Method camelot.camelot.view.filters.Filter.render()=camelot.camelot.view.filters.Filter-class.html#render,Method camelot.camelot.view.filters.GroupBoxFilter.render()=camelot.camelot.view.filters.GroupBoxFilter-class.html#render,Method camelot.camelot.view.forms.Form.render()=camelot.camelot.view.forms.Form-class.html#render,Method camelot.camelot.view.forms.HBoxForm.render()=camelot.camelot.view.forms.HBoxForm-class.html#render,Method camelot.camelot.view.forms.TabForm.render()=camelot.camelot.view.forms.TabForm-class.html#render,Method camelot.camelot.view.forms.VBoxForm.render()=camelot.camelot.view.forms.VBoxForm-class.html#render,Method camelot.camelot.view.forms.WidgetOnlyForm.render()=camelot.camelot.view.forms.WidgetOnlyForm-class.html#render"><a title="camelot.camelot.view.filters.ComboBoxFilter.render
+camelot.camelot.view.filters.Filter.render
+camelot.camelot.view.filters.GroupBoxFilter.render
+camelot.camelot.view.forms.Form.render
+camelot.camelot.view.forms.HBoxForm.render
+camelot.camelot.view.forms.TabForm.render
+camelot.camelot.view.forms.VBoxForm.render
+camelot.camelot.view.forms.WidgetOnlyForm.render" class="py-name" href="#" onclick="return doclink('link-12', 'render', 'link-12');">render</a></tt><tt class="py-op">(</tt><tt class="py-name">context</tt><tt class="py-op">)</tt> </tt>
+<a name="L87"></a><tt class="py-lineno"> 87</tt>  <tt class="py-line"> </tt>
+<a name="L88"></a><tt class="py-lineno"> 88</tt>  <tt class="py-line">    <tt class="py-name">doc</tt> <tt class="py-op">=</tt> <tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QTextDocument</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L89"></a><tt class="py-lineno"> 89</tt>  <tt class="py-line">    <tt class="py-name">doc</tt><tt class="py-op">.</tt><tt id="link-13" class="py-name" targets="Method camelot.camelot.view.controls.editors.RichTextEditor.setHtml()=camelot.camelot.view.controls.editors.RichTextEditor-class.html#setHtml"><a title="camelot.camelot.view.controls.editors.RichTextEditor.setHtml" class="py-name" href="#" onclick="return doclink('link-13', 'setHtml', 'link-13');">setHtml</a></tt><tt class="py-op">(</tt><tt class="py-name">html</tt><tt class="py-op">)</tt> </tt>
+<a name="L90"></a><tt class="py-lineno"> 90</tt>  <tt class="py-line">    <tt class="py-name">doc</tt><tt class="py-op">.</tt><tt class="py-name">print_</tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-14" class="py-name"><a title="camelot.camelot.view.controls.printer
+camelot.camelot.view.export.printer" class="py-name" href="#" onclick="return doclink('link-14', 'printer', 'link-4');">printer</a></tt><tt class="py-op">)</tt> </tt>
+</div><a name="L91"></a><tt class="py-lineno"> 91</tt>  <tt class="py-line"> </tt>
+<a name="Printer.preview"></a><div id="Printer.preview-def"><a name="L92"></a><tt class="py-lineno"> 92</tt> <a class="py-toggle" href="#" id="Printer.preview-toggle" onclick="return toggle('Printer.preview');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.printer.Printer-class.html#preview">preview</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">view</tt><tt class="py-op">,</tt> <tt class="py-param">parent</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Printer.preview-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Printer.preview-expanded"><a name="L93"></a><tt class="py-lineno"> 93</tt>  <tt class="py-line">    <tt id="link-15" class="py-name"><a title="camelot.camelot.empty_project.main.logger
+camelot.camelot.model.i18n.logger
+camelot.camelot.types.logger
+camelot.camelot.view.controls.actions.logger
+camelot.camelot.view.controls.animation.logger
+camelot.camelot.view.controls.delegates.logger
+camelot.camelot.view.controls.editors.logger
+camelot.camelot.view.controls.filter.logger
+camelot.camelot.view.controls.formview.logger
+camelot.camelot.view.controls.inheritance.logger
+camelot.camelot.view.controls.modeltree.logger
+camelot.camelot.view.controls.navpane.logger
+camelot.camelot.view.controls.printer.logger
+camelot.camelot.view.controls.tableview.logger
+camelot.camelot.view.elixir_admin.logger
+camelot.camelot.view.export.desktop_service.logger
+camelot.camelot.view.export.outlook.logger
+camelot.camelot.view.export.printer.logger
+camelot.camelot.view.export.word.logger
+camelot.camelot.view.forms.logger
+camelot.camelot.view.mainwindow.logger
+camelot.camelot.view.model_thread.logger
+camelot.camelot.view.proxy.collection_proxy.logger
+camelot.camelot.view.proxy.queryproxy.logger
+camelot.camelot.view.response_handler.logger
+camelot.camelot.view.search.logger
+camelot.camelot.view.validator.logger
+camelot.camelot.view.workspace.logger" class="py-name" href="#" onclick="return doclink('link-15', 'logger', 'link-0');">logger</a></tt><tt class="py-op">.</tt><tt class="py-name">debug</tt><tt class="py-op">(</tt><tt class="py-string">'print preview dialog'</tt><tt class="py-op">)</tt> </tt>
+<a name="L94"></a><tt class="py-lineno"> 94</tt>  <tt class="py-line"> </tt>
+<a name="L95"></a><tt class="py-lineno"> 95</tt>  <tt class="py-line">    <tt class="py-keyword">def</tt> <tt class="py-def-name">generate_html</tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L96"></a><tt class="py-lineno"> 96</tt>  <tt class="py-line">      <tt class="py-name">client_address</tt> <tt class="py-op">=</tt> <tt class="py-string">'&lt;br/&gt;'</tt><tt class="py-op">.</tt><tt class="py-name">join</tt><tt class="py-op">(</tt><tt class="py-op">[</tt><tt class="py-string">'2 Azalea St.'</tt><tt class="py-op">,</tt> </tt>
+<a name="L97"></a><tt class="py-lineno"> 97</tt>  <tt class="py-line">                                     <tt class="py-string">'Fredericksburg'</tt><tt class="py-op">,</tt> </tt>
+<a name="L98"></a><tt class="py-lineno"> 98</tt>  <tt class="py-line">                                     <tt class="py-string">'22406 VA'</tt><tt class="py-op">]</tt><tt class="py-op">)</tt> </tt>
+<a name="L99"></a><tt class="py-lineno"> 99</tt>  <tt class="py-line"> </tt>
+<a name="L100"></a><tt class="py-lineno">100</tt>  <tt class="py-line">      <tt class="py-keyword">import</tt> <tt class="py-name">datetime</tt> </tt>
+<a name="L101"></a><tt class="py-lineno">101</tt>  <tt class="py-line">      <tt class="py-name">ts</tt> <tt class="py-op">=</tt> <tt class="py-name">datetime</tt><tt class="py-op">.</tt><tt class="py-name">datetime</tt><tt class="py-op">.</tt><tt class="py-name">today</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L102"></a><tt class="py-lineno">102</tt>  <tt class="py-line">      <tt class="py-name">datestring</tt> <tt class="py-op">=</tt> <tt class="py-string">'Date: %s/%s/%s'</tt> <tt class="py-op">%</tt> <tt class="py-op">(</tt><tt class="py-name">ts</tt><tt class="py-op">.</tt><tt class="py-name">month</tt><tt class="py-op">,</tt> <tt class="py-name">ts</tt><tt class="py-op">.</tt><tt class="py-name">day</tt><tt class="py-op">,</tt> <tt class="py-name">ts</tt><tt class="py-op">.</tt><tt class="py-name">year</tt><tt class="py-op">)</tt>  </tt>
+<a name="L103"></a><tt class="py-lineno">103</tt>  <tt class="py-line"> </tt>
+<a name="L104"></a><tt class="py-lineno">104</tt>  <tt class="py-line">      <tt class="py-name">view_content</tt> <tt class="py-op">=</tt> <tt id="link-16" class="py-name"><a title="camelot.camelot.view" class="py-name" href="#" onclick="return doclink('link-16', 'view', 'link-8');">view</a></tt><tt class="py-op">.</tt><tt id="link-17" class="py-name"><a title="camelot.camelot.view.controls.editors.RichTextEditor.toHtml
+camelot.camelot.view.controls.formview.FormView.toHtml
+camelot.camelot.view.controls.tableview.TableView.toHtml" class="py-name" href="#" onclick="return doclink('link-17', 'toHtml', 'link-9');">toHtml</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L105"></a><tt class="py-lineno">105</tt>  <tt class="py-line">      <tt class="py-name">context</tt> <tt class="py-op">=</tt> <tt class="py-op">{</tt> </tt>
+<a name="L106"></a><tt class="py-lineno">106</tt>  <tt class="py-line">        <tt class="py-string">'logo'</tt> <tt class="py-op">:</tt> <tt id="link-18" class="py-name"><a title="camelot.camelot.view.controls.printer.icon" class="py-name" href="#" onclick="return doclink('link-18', 'icon', 'link-3');">icon</a></tt><tt class="py-op">,</tt> </tt>
+<a name="L107"></a><tt class="py-lineno">107</tt>  <tt class="py-line">        <tt class="py-string">'company_name'</tt> <tt class="py-op">:</tt> <tt class="py-string">'Conceptive Engineering'</tt><tt class="py-op">,</tt> </tt>
+<a name="L108"></a><tt class="py-lineno">108</tt>  <tt class="py-line">        <tt class="py-string">'company_address_1'</tt> <tt class="py-op">:</tt> <tt class="py-string">'L. Van Bauwelstraat 16'</tt><tt class="py-op">,</tt> </tt>
+<a name="L109"></a><tt class="py-lineno">109</tt>  <tt class="py-line">        <tt class="py-string">'company_address_2'</tt> <tt class="py-op">:</tt> <tt class="py-string">'2220 Heist-op-den-Berg'</tt><tt class="py-op">,</tt> </tt>
+<a name="L110"></a><tt class="py-lineno">110</tt>  <tt class="py-line">        <tt class="py-string">'city'</tt> <tt class="py-op">:</tt> <tt class="py-string">'Belgium'</tt><tt class="py-op">,</tt>  </tt>
+<a name="L111"></a><tt class="py-lineno">111</tt>  <tt class="py-line">        <tt class="py-string">'date'</tt> <tt class="py-op">:</tt> <tt class="py-name">datestring</tt><tt class="py-op">,</tt> </tt>
+<a name="L112"></a><tt class="py-lineno">112</tt>  <tt class="py-line">        <tt class="py-string">'client_address'</tt> <tt class="py-op">:</tt> <tt class="py-name">client_address</tt><tt class="py-op">,</tt> </tt>
+<a name="L113"></a><tt class="py-lineno">113</tt>  <tt class="py-line">        <tt class="py-string">'client_name'</tt> <tt class="py-op">:</tt> <tt class="py-string">'Client'</tt><tt class="py-op">,</tt> </tt>
+<a name="L114"></a><tt class="py-lineno">114</tt>  <tt class="py-line">        <tt class="py-string">'content'</tt> <tt class="py-op">:</tt> <tt class="py-name">view_content</tt><tt class="py-op">,</tt> </tt>
+<a name="L115"></a><tt class="py-lineno">115</tt>  <tt class="py-line">        <tt class="py-string">'signature'</tt> <tt class="py-op">:</tt> <tt class="py-string">'M. Anager'</tt> </tt>
+<a name="L116"></a><tt class="py-lineno">116</tt>  <tt class="py-line">      <tt class="py-op">}</tt> </tt>
+<a name="L117"></a><tt class="py-lineno">117</tt>  <tt class="py-line"> </tt>
+<a name="L118"></a><tt class="py-lineno">118</tt>  <tt class="py-line">      <tt class="py-keyword">from</tt> <tt class="py-name">jinja</tt> <tt class="py-keyword">import</tt> <tt class="py-name">Environment</tt><tt class="py-op">,</tt> <tt class="py-name">FileSystemLoader</tt> </tt>
+<a name="L119"></a><tt class="py-lineno">119</tt>  <tt class="py-line">      <tt class="py-name">fileloader</tt> <tt class="py-op">=</tt> <tt class="py-name">FileSystemLoader</tt><tt class="py-op">(</tt><tt id="link-19" class="py-name"><a title="camelot.camelot.empty_project.settings" class="py-name" href="#" onclick="return doclink('link-19', 'settings', 'link-2');">settings</a></tt><tt class="py-op">.</tt><tt id="link-20" class="py-name" targets="Variable camelot.camelot.empty_project.settings.CAMELOT_TEMPLATES_DIRECTORY=camelot.camelot.empty_project.settings-module.html#CAMELOT_TEMPLATES_DIRECTORY"><a title="camelot.camelot.empty_project.settings.CAMELOT_TEMPLATES_DIRECTORY" class="py-name" href="#" onclick="return doclink('link-20', 'CAMELOT_TEMPLATES_DIRECTORY', 'link-20');">CAMELOT_TEMPLATES_DIRECTORY</a></tt><tt class="py-op">)</tt>  </tt>
+<a name="L120"></a><tt class="py-lineno">120</tt>  <tt class="py-line">      <tt class="py-name">e</tt> <tt class="py-op">=</tt> <tt class="py-name">Environment</tt><tt class="py-op">(</tt><tt class="py-name">loader</tt><tt class="py-op">=</tt><tt class="py-name">fileloader</tt><tt class="py-op">)</tt> </tt>
+<a name="L121"></a><tt class="py-lineno">121</tt>  <tt class="py-line">      <tt class="py-name">t</tt> <tt class="py-op">=</tt> <tt class="py-name">e</tt><tt class="py-op">.</tt><tt class="py-name">get_template</tt><tt class="py-op">(</tt><tt class="py-string">'base.html'</tt><tt class="py-op">)</tt> </tt>
+<a name="L122"></a><tt class="py-lineno">122</tt>  <tt class="py-line">      <tt class="py-name">html</tt> <tt class="py-op">=</tt> <tt class="py-name">t</tt><tt class="py-op">.</tt><tt id="link-21" class="py-name"><a title="camelot.camelot.view.filters.ComboBoxFilter.render
+camelot.camelot.view.filters.Filter.render
+camelot.camelot.view.filters.GroupBoxFilter.render
+camelot.camelot.view.forms.Form.render
+camelot.camelot.view.forms.HBoxForm.render
+camelot.camelot.view.forms.TabForm.render
+camelot.camelot.view.forms.VBoxForm.render
+camelot.camelot.view.forms.WidgetOnlyForm.render" class="py-name" href="#" onclick="return doclink('link-21', 'render', 'link-12');">render</a></tt><tt class="py-op">(</tt><tt class="py-name">context</tt><tt class="py-op">)</tt> </tt>
+<a name="L123"></a><tt class="py-lineno">123</tt>  <tt class="py-line">      <tt class="py-keyword">return</tt> <tt class="py-name">html</tt> </tt>
+</div><a name="L124"></a><tt class="py-lineno">124</tt>  <tt class="py-line"> </tt>
+<a name="L125"></a><tt class="py-lineno">125</tt>  <tt class="py-line">    <tt class="py-keyword">from</tt> <tt id="link-22" class="py-name" targets="Package camelot.camelot=camelot.camelot-module.html"><a title="camelot.camelot" class="py-name" href="#" onclick="return doclink('link-22', 'camelot', 'link-22');">camelot</a></tt><tt class="py-op">.</tt><tt id="link-23" class="py-name"><a title="camelot.camelot.view" class="py-name" href="#" onclick="return doclink('link-23', 'view', 'link-8');">view</a></tt><tt class="py-op">.</tt><tt id="link-24" class="py-name" targets="Module camelot.camelot.view.model_thread=camelot.camelot.view.model_thread-module.html"><a title="camelot.camelot.view.model_thread" class="py-name" href="#" onclick="return doclink('link-24', 'model_thread', 'link-24');">model_thread</a></tt> <tt class="py-keyword">import</tt> <tt id="link-25" class="py-name" targets="Function camelot.camelot.view.model_thread.get_model_thread()=camelot.camelot.view.model_thread-module.html#get_model_thread"><a title="camelot.camelot.view.model_thread.get_model_thread" class="py-name" href="#" onclick="return doclink('link-25', 'get_model_thread', 'link-25');">get_model_thread</a></tt> </tt>
+<a name="L126"></a><tt class="py-lineno">126</tt>  <tt class="py-line">    <tt class="py-keyword">from</tt> <tt id="link-26" class="py-name"><a title="camelot.camelot" class="py-name" href="#" onclick="return doclink('link-26', 'camelot', 'link-22');">camelot</a></tt><tt class="py-op">.</tt><tt id="link-27" class="py-name"><a title="camelot.camelot.view" class="py-name" href="#" onclick="return doclink('link-27', 'view', 'link-8');">view</a></tt><tt class="py-op">.</tt><tt id="link-28" class="py-name" targets="Package camelot.camelot.view.export=camelot.camelot.view.export-module.html"><a title="camelot.camelot.view.export" class="py-name" href="#" onclick="return doclink('link-28', 'export', 'link-28');">export</a></tt><tt class="py-op">.</tt><tt id="link-29" class="py-name"><a title="camelot.camelot.view.controls.printer
+camelot.camelot.view.export.printer" class="py-name" href="#" onclick="return doclink('link-29', 'printer', 'link-4');">printer</a></tt> <tt class="py-keyword">import</tt> <tt id="link-30" class="py-name" targets="Function camelot.camelot.view.export.printer.open_html_in_print_preview_from_gui_thread()=camelot.camelot.view.export.printer-module.html#open_html_in_print_preview_from_gui_thread"><a title="camelot.camelot.view.export.printer.open_html_in_print_preview_from_gui_thread" class="py-name" href="#" onclick="return doclink('link-30', 'open_html_in_print_preview_from_gui_thread', 'link-30');">open_html_in_print_preview_from_gui_thread</a></tt> </tt>
+<a name="L127"></a><tt class="py-lineno">127</tt>  <tt class="py-line">    <tt class="py-name">mt</tt> <tt class="py-op">=</tt> <tt id="link-31" class="py-name"><a title="camelot.camelot.view.model_thread.get_model_thread" class="py-name" href="#" onclick="return doclink('link-31', 'get_model_thread', 'link-25');">get_model_thread</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt>   </tt>
+<a name="L128"></a><tt class="py-lineno">128</tt>  <tt class="py-line">    <tt class="py-name">mt</tt><tt class="py-op">.</tt><tt id="link-32" class="py-name" targets="Method camelot.camelot.view.model_thread.ModelThread.post()=camelot.camelot.view.model_thread.ModelThread-class.html#post"><a title="camelot.camelot.view.model_thread.ModelThread.post" class="py-name" href="#" onclick="return doclink('link-32', 'post', 'link-32');">post</a></tt><tt class="py-op">(</tt><tt class="py-name">generate_html</tt><tt class="py-op">,</tt> <tt id="link-33" class="py-name"><a title="camelot.camelot.view.export.printer.open_html_in_print_preview_from_gui_thread" class="py-name" href="#" onclick="return doclink('link-33', 'open_html_in_print_preview_from_gui_thread', 'link-30');">open_html_in_print_preview_from_gui_thread</a></tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L129"></a><tt class="py-lineno">129</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Sat Jan 31 18:50:03 2009
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

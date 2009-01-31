@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>camelot.camelot.view.plugins.imageeditorplugin</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Package&nbsp;camelot ::
+        <a href="camelot.camelot-module.html">Package&nbsp;camelot</a> ::
+        <a href="camelot.camelot.view-module.html">Package&nbsp;view</a> ::
+        <a href="camelot.camelot.view.plugins-module.html">Package&nbsp;plugins</a> ::
+        Module&nbsp;imageeditorplugin
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="camelot.camelot.view.plugins.imageeditorplugin-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="camelot.camelot.view.plugins.imageeditorplugin-module.html">Module camelot.camelot.view.plugins.imageeditorplugin</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno"> 1</tt>  <tt class="py-line"><tt class="py-comment">#  ============================================================================</tt> </tt>
+<a name="L2"></a><tt class="py-lineno"> 2</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L3"></a><tt class="py-lineno"> 3</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.</tt> </tt>
+<a name="L4"></a><tt class="py-lineno"> 4</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  www.conceptive.be / project-camelot@conceptive.be</tt> </tt>
+<a name="L5"></a><tt class="py-lineno"> 5</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L6"></a><tt class="py-lineno"> 6</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is part of the Camelot Library.</tt> </tt>
+<a name="L7"></a><tt class="py-lineno"> 7</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L8"></a><tt class="py-lineno"> 8</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file may be used under the terms of the GNU General Public</tt> </tt>
+<a name="L9"></a><tt class="py-lineno"> 9</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  License version 2.0 as published by the Free Software Foundation</tt> </tt>
+<a name="L10"></a><tt class="py-lineno">10</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  and appearing in the file LICENSE.GPL included in the packaging of</tt> </tt>
+<a name="L11"></a><tt class="py-lineno">11</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  this file.  Please review the following information to ensure GNU</tt> </tt>
+<a name="L12"></a><tt class="py-lineno">12</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  General Public Licensing requirements will be met:</tt> </tt>
+<a name="L13"></a><tt class="py-lineno">13</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/opensource.html</tt> </tt>
+<a name="L14"></a><tt class="py-lineno">14</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L15"></a><tt class="py-lineno">15</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  If you are unsure which license is appropriate for your use, please</tt> </tt>
+<a name="L16"></a><tt class="py-lineno">16</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  review the following information:</tt> </tt>
+<a name="L17"></a><tt class="py-lineno">17</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/licensing.html or contact</tt> </tt>
+<a name="L18"></a><tt class="py-lineno">18</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be.</tt> </tt>
+<a name="L19"></a><tt class="py-lineno">19</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L20"></a><tt class="py-lineno">20</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE</tt> </tt>
+<a name="L21"></a><tt class="py-lineno">21</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</tt> </tt>
+<a name="L22"></a><tt class="py-lineno">22</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L23"></a><tt class="py-lineno">23</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  For use of this library in commercial applications, please contact</tt> </tt>
+<a name="L24"></a><tt class="py-lineno">24</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be</tt> </tt>
+<a name="L25"></a><tt class="py-lineno">25</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L26"></a><tt class="py-lineno">26</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  ============================================================================</tt> </tt>
+<a name="L27"></a><tt class="py-lineno">27</tt>  <tt class="py-line"><tt class="py-comment"></tt> </tt>
+<a name="L28"></a><tt class="py-lineno">28</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">PyQt4</tt> <tt class="py-keyword">import</tt> <tt class="py-name">QtGui</tt><tt class="py-op">,</tt> <tt class="py-name">QtDesigner</tt> </tt>
+<a name="L29"></a><tt class="py-lineno">29</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt id="link-0" class="py-name" targets="Package camelot.camelot=camelot.camelot-module.html"><a title="camelot.camelot" class="py-name" href="#" onclick="return doclink('link-0', 'camelot', 'link-0');">camelot</a></tt><tt class="py-op">.</tt><tt id="link-1" class="py-name" targets="Package camelot.camelot.view=camelot.camelot.view-module.html"><a title="camelot.camelot.view" class="py-name" href="#" onclick="return doclink('link-1', 'view', 'link-1');">view</a></tt><tt class="py-op">.</tt><tt id="link-2" class="py-name" targets="Package camelot.camelot.view.plugins=camelot.camelot.view.plugins-module.html"><a title="camelot.camelot.view.plugins" class="py-name" href="#" onclick="return doclink('link-2', 'plugins', 'link-2');">plugins</a></tt> <tt class="py-keyword">import</tt> <tt id="link-3" class="py-name" targets="Class camelot.camelot.view.plugins.CamelotEditorPlugin=camelot.camelot.view.plugins.CamelotEditorPlugin-class.html"><a title="camelot.camelot.view.plugins.CamelotEditorPlugin" class="py-name" href="#" onclick="return doclink('link-3', 'CamelotEditorPlugin', 'link-3');">CamelotEditorPlugin</a></tt> </tt>
+<a name="L30"></a><tt class="py-lineno">30</tt>  <tt class="py-line"> </tt>
+<a name="DateEditorPlugin"></a><div id="DateEditorPlugin-def"><a name="L31"></a><tt class="py-lineno">31</tt> <a class="py-toggle" href="#" id="DateEditorPlugin-toggle" onclick="return toggle('DateEditorPlugin');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin-class.html">DateEditorPlugin</a><tt class="py-op">(</tt><tt class="py-base-class">QtDesigner</tt><tt class="py-op">.</tt><tt class="py-base-class">QPyDesignerCustomWidgetPlugin</tt><tt class="py-op">,</tt> <tt class="py-base-class">CamelotEditorPlugin</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="DateEditorPlugin-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="DateEditorPlugin-expanded"><a name="L32"></a><tt class="py-lineno">32</tt>  <tt class="py-line">     </tt>
+<a name="DateEditorPlugin.__init__"></a><div id="DateEditorPlugin.__init__-def"><a name="L33"></a><tt class="py-lineno">33</tt> <a class="py-toggle" href="#" id="DateEditorPlugin.__init__-toggle" onclick="return toggle('DateEditorPlugin.__init__');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">parent</tt> <tt class="py-op">=</tt> <tt class="py-name">None</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="DateEditorPlugin.__init__-collapsed" style="display:none;" pad="++" indent="++++++"></div><div id="DateEditorPlugin.__init__-expanded"><a name="L34"></a><tt class="py-lineno">34</tt>  <tt class="py-line">    <tt class="py-name">QtDesigner</tt><tt class="py-op">.</tt><tt class="py-name">QPyDesignerCustomWidgetPlugin</tt><tt class="py-op">.</tt><tt id="link-4" class="py-name" targets="Method camelot.camelot.empty_project.application_admin.MyApplicationAdmin.__init__()=camelot.camelot.empty_project.application_admin.MyApplicationAdmin-class.html#__init__,Method camelot.camelot.types.Code.__init__()=camelot.camelot.types.Code-class.html#__init__,Method camelot.camelot.types.IPAddress.__init__()=camelot.camelot.types.IPAddress-class.html#__init__,Method camelot.camelot.types.Image.__init__()=camelot.camelot.types.Image-class.html#__init__,Method camelot.camelot.types.StoredImage.__init__()=camelot.camelot.types.StoredImage-class.html#__init__,Method camelot.camelot.view.application_admin.ApplicationAdmin.__init__()=camelot.camelot.view.application_admin.ApplicationAdmin-class.html#__init__,Method camelot.camelot.view.controls.actions.ActionsBox.__init__()=camelot.camelot.view.controls.actions.ActionsBox-class.html#__init__,Method camelot.camelot.view.controls.animation.MovieWidget.__init__()=camelot.camelot.view.controls.animation.MovieWidget-class.html#__init__,Method camelot.camelot.view.controls.animation.Throbber.__init__()=camelot.camelot.view.controls.animation.Throbber-class.html#__init__,Method camelot.camelot.view.controls.appscheme.Scheme.__init__()=camelot.camelot.view.controls.appscheme.Scheme-class.html#__init__,Method camelot.camelot.view.controls.delegates.BoolColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.BoolColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.CodeColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.CodeColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.ComboBoxColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.ComboBoxColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.DateColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.DateColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.DateTimeColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.DateTimeColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.FloatColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.FloatColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.GenericDelegate.__init__()=camelot.camelot.view.controls.delegates.GenericDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.IntegerColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.IntegerColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.Many2OneColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.Many2OneColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.One2ManyColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.One2ManyColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.PlainTextColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.PlainTextColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.RichTextColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.RichTextColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.TimeColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.TimeColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.VirtualAddressColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.VirtualAddressColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.editors.CodeEditor.__init__()=camelot.camelot.view.controls.editors.CodeEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.DateEditor.__init__()=camelot.camelot.view.controls.editors.DateEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.EmbeddedMany2OneEditor.__init__()=camelot.camelot.view.controls.editors.EmbeddedMany2OneEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.ImageEditor.__init__()=camelot.camelot.view.controls.editors.ImageEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.Many2OneEditor.CompletionsModel.__init__()=camelot.camelot.view.controls.editors.Many2OneEditor.CompletionsModel-class.html#__init__,Method camelot.camelot.view.controls.editors.Many2OneEditor.__init__()=camelot.camelot.view.controls.editors.Many2OneEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.One2ManyEditor.__init__()=camelot.camelot.view.controls.editors.One2ManyEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.RichTextEditor.__init__()=camelot.camelot.view.controls.editors.RichTextEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.VirtualAddressEditor.__init__()=camelot.camelot.view.controls.editors.VirtualAddressEditor-class.html#__init__,Method camelot.camelot.view.controls.filter.FilterList.__init__()=camelot.camelot.view.controls.filter.FilterList-class.html#__init__,Method camelot.camelot.view.controls.formview.FormView.__init__()=camelot.camelot.view.controls.formview.FormView-class.html#__init__,Method camelot.camelot.view.controls.inheritance.SubclassItem.__init__()=camelot.camelot.view.controls.inheritance.SubclassItem-class.html#__init__,Method camelot.camelot.view.controls.inheritance.SubclassTree.__init__()=camelot.camelot.view.controls.inheritance.SubclassTree-class.html#__init__,Method camelot.camelot.view.controls.modeltree.ModelItem.__init__()=camelot.camelot.view.controls.modeltree.ModelItem-class.html#__init__,Method camelot.camelot.view.controls.modeltree.ModelTree.__init__()=camelot.camelot.view.controls.modeltree.ModelTree-class.html#__init__,Method camelot.camelot.view.controls.navpane.NavigationPane.__init__()=camelot.camelot.view.controls.navpane.NavigationPane-class.html#__init__,Method camelot.camelot.view.controls.navpane.PaneButton.__init__()=camelot.camelot.view.controls.navpane.PaneButton-class.html#__init__,Method camelot.camelot.view.controls.navpane.PaneCaption.__init__()=camelot.camelot.view.controls.navpane.PaneCaption-class.html#__init__,Method camelot.camelot.view.controls.printer.Printer.__init__()=camelot.camelot.view.controls.printer.Printer-class.html#__init__,Method camelot.camelot.view.controls.schemer.Schemer.__init__()=camelot.camelot.view.controls.schemer.Schemer-class.html#__init__,Method camelot.camelot.view.controls.search.SimpleSearchControl.__init__()=camelot.camelot.view.controls.search.SimpleSearchControl-class.html#__init__,Method camelot.camelot.view.controls.tableview.QueryTable.__init__()=camelot.camelot.view.controls.tableview.QueryTable-class.html#__init__,Method camelot.camelot.view.controls.tableview.TableView.__init__()=camelot.camelot.view.controls.tableview.TableView-class.html#__init__,Method camelot.camelot.view.elixir_admin.EntityAdmin.__init__()=camelot.camelot.view.elixir_admin.EntityAdmin-class.html#__init__,Method camelot.camelot.view.fifo.fifo.__init__()=camelot.camelot.view.fifo.fifo-class.html#__init__,Method camelot.camelot.view.filters.Filter.__init__()=camelot.camelot.view.filters.Filter-class.html#__init__,Method camelot.camelot.view.forms.Form.__init__()=camelot.camelot.view.forms.Form-class.html#__init__,Method camelot.camelot.view.forms.HBoxForm.__init__()=camelot.camelot.view.forms.HBoxForm-class.html#__init__,Method camelot.camelot.view.forms.TabForm.__init__()=camelot.camelot.view.forms.TabForm-class.html#__init__,Method camelot.camelot.view.forms.VBoxForm.__init__()=camelot.camelot.view.forms.VBoxForm-class.html#__init__,Method camelot.camelot.view.forms.WidgetOnlyForm.__init__()=camelot.camelot.view.forms.WidgetOnlyForm-class.html#__init__,Method camelot.camelot.view.mainwindow.MainWindow.__init__()=camelot.camelot.view.mainwindow.MainWindow-class.html#__init__,Method camelot.camelot.view.model_thread.ModelThread.__init__()=camelot.camelot.view.model_thread.ModelThread-class.html#__init__,Method camelot.camelot.view.plugins.CamelotEditorPlugin.__init__()=camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.codeeditorplugin.DateEditorPlugin.__init__()=camelot.camelot.view.plugins.codeeditorplugin.DateEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.dateeditorplugin.DateEditorPlugin.__init__()=camelot.camelot.view.plugins.dateeditorplugin.DateEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin.__init__()=camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.manytooneeditorplugin.ManyToOneEditorPlugin.__init__()=camelot.camelot.view.plugins.manytooneeditorplugin.ManyToOneEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.onetomanyeditorplugin.OneToManyEditorPlugin.__init__()=camelot.camelot.view.plugins.onetomanyeditorplugin.OneToManyEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.richtexteditorplugin.DateEditorPlugin.__init__()=camelot.camelot.view.plugins.richtexteditorplugin.DateEditorPlugin-class.html#__init__,Method camelot.camelot.view.proxy.collection_proxy.CollectionProxy.__init__()=camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#__init__,Method camelot.camelot.view.proxy.collection_proxy.DelayedProxy.__init__()=camelot.camelot.view.proxy.collection_proxy.DelayedProxy-class.html#__init__,Method camelot.camelot.view.proxy.queryproxy.QueryTableProxy.__init__()=camelot.camelot.view.proxy.queryproxy.QueryTableProxy-class.html#__init__,Method camelot.camelot.view.response_handler.ResponseHandler.__init__()=camelot.camelot.view.response_handler.ResponseHandler-class.html#__init__,Method camelot.camelot.view.validator.Validator.__init__()=camelot.camelot.view.validator.Validator-class.html#__init__,Method camelot.camelot.view.workspace.DesktopWorkspace.__init__()=camelot.camelot.view.workspace.DesktopWorkspace-class.html#__init__"><a title="camelot.camelot.empty_project.application_admin.MyApplicationAdmin.__init__
+camelot.camelot.types.Code.__init__
+camelot.camelot.types.IPAddress.__init__
+camelot.camelot.types.Image.__init__
+camelot.camelot.types.StoredImage.__init__
+camelot.camelot.view.application_admin.ApplicationAdmin.__init__
+camelot.camelot.view.controls.actions.ActionsBox.__init__
+camelot.camelot.view.controls.animation.MovieWidget.__init__
+camelot.camelot.view.controls.animation.Throbber.__init__
+camelot.camelot.view.controls.appscheme.Scheme.__init__
+camelot.camelot.view.controls.delegates.BoolColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.CodeColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.ComboBoxColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.DateColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.DateTimeColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.FloatColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.GenericDelegate.__init__
+camelot.camelot.view.controls.delegates.IntegerColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.Many2OneColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.One2ManyColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.PlainTextColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.RichTextColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.TimeColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.VirtualAddressColumnDelegate.__init__
+camelot.camelot.view.controls.editors.CodeEditor.__init__
+camelot.camelot.view.controls.editors.DateEditor.__init__
+camelot.camelot.view.controls.editors.EmbeddedMany2OneEditor.__init__
+camelot.camelot.view.controls.editors.ImageEditor.__init__
+camelot.camelot.view.controls.editors.Many2OneEditor.CompletionsModel.__init__
+camelot.camelot.view.controls.editors.Many2OneEditor.__init__
+camelot.camelot.view.controls.editors.One2ManyEditor.__init__
+camelot.camelot.view.controls.editors.RichTextEditor.__init__
+camelot.camelot.view.controls.editors.VirtualAddressEditor.__init__
+camelot.camelot.view.controls.filter.FilterList.__init__
+camelot.camelot.view.controls.formview.FormView.__init__
+camelot.camelot.view.controls.inheritance.SubclassItem.__init__
+camelot.camelot.view.controls.inheritance.SubclassTree.__init__
+camelot.camelot.view.controls.modeltree.ModelItem.__init__
+camelot.camelot.view.controls.modeltree.ModelTree.__init__
+camelot.camelot.view.controls.navpane.NavigationPane.__init__
+camelot.camelot.view.controls.navpane.PaneButton.__init__
+camelot.camelot.view.controls.navpane.PaneCaption.__init__
+camelot.camelot.view.controls.printer.Printer.__init__
+camelot.camelot.view.controls.schemer.Schemer.__init__
+camelot.camelot.view.controls.search.SimpleSearchControl.__init__
+camelot.camelot.view.controls.tableview.QueryTable.__init__
+camelot.camelot.view.controls.tableview.TableView.__init__
+camelot.camelot.view.elixir_admin.EntityAdmin.__init__
+camelot.camelot.view.fifo.fifo.__init__
+camelot.camelot.view.filters.Filter.__init__
+camelot.camelot.view.forms.Form.__init__
+camelot.camelot.view.forms.HBoxForm.__init__
+camelot.camelot.view.forms.TabForm.__init__
+camelot.camelot.view.forms.VBoxForm.__init__
+camelot.camelot.view.forms.WidgetOnlyForm.__init__
+camelot.camelot.view.mainwindow.MainWindow.__init__
+camelot.camelot.view.model_thread.ModelThread.__init__
+camelot.camelot.view.plugins.CamelotEditorPlugin.__init__
+camelot.camelot.view.plugins.codeeditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.plugins.dateeditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.plugins.manytooneeditorplugin.ManyToOneEditorPlugin.__init__
+camelot.camelot.view.plugins.onetomanyeditorplugin.OneToManyEditorPlugin.__init__
+camelot.camelot.view.plugins.richtexteditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.proxy.collection_proxy.CollectionProxy.__init__
+camelot.camelot.view.proxy.collection_proxy.DelayedProxy.__init__
+camelot.camelot.view.proxy.queryproxy.QueryTableProxy.__init__
+camelot.camelot.view.response_handler.ResponseHandler.__init__
+camelot.camelot.view.validator.Validator.__init__
+camelot.camelot.view.workspace.DesktopWorkspace.__init__" class="py-name" href="#" onclick="return doclink('link-4', '__init__', 'link-4');">__init__</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">)</tt> </tt>
+<a name="L35"></a><tt class="py-lineno">35</tt>  <tt class="py-line">    <tt class="py-keyword">from</tt> <tt id="link-5" class="py-name"><a title="camelot.camelot" class="py-name" href="#" onclick="return doclink('link-5', 'camelot', 'link-0');">camelot</a></tt><tt class="py-op">.</tt><tt id="link-6" class="py-name"><a title="camelot.camelot.view" class="py-name" href="#" onclick="return doclink('link-6', 'view', 'link-1');">view</a></tt><tt class="py-op">.</tt><tt id="link-7" class="py-name" targets="Package camelot.camelot.view.controls=camelot.camelot.view.controls-module.html"><a title="camelot.camelot.view.controls" class="py-name" href="#" onclick="return doclink('link-7', 'controls', 'link-7');">controls</a></tt><tt class="py-op">.</tt><tt id="link-8" class="py-name" targets="Module camelot.camelot.view.controls.editors=camelot.camelot.view.controls.editors-module.html"><a title="camelot.camelot.view.controls.editors" class="py-name" href="#" onclick="return doclink('link-8', 'editors', 'link-8');">editors</a></tt> <tt class="py-keyword">import</tt> <tt id="link-9" class="py-name" targets="Class camelot.camelot.view.controls.editors.ImageEditor=camelot.camelot.view.controls.editors.ImageEditor-class.html"><a title="camelot.camelot.view.controls.editors.ImageEditor" class="py-name" href="#" onclick="return doclink('link-9', 'ImageEditor', 'link-9');">ImageEditor</a></tt> </tt>
+<a name="L36"></a><tt class="py-lineno">36</tt>  <tt class="py-line">    <tt id="link-10" class="py-name"><a title="camelot.camelot.view.plugins.CamelotEditorPlugin" class="py-name" href="#" onclick="return doclink('link-10', 'CamelotEditorPlugin', 'link-3');">CamelotEditorPlugin</a></tt><tt class="py-op">.</tt><tt id="link-11" class="py-name"><a title="camelot.camelot.empty_project.application_admin.MyApplicationAdmin.__init__
+camelot.camelot.types.Code.__init__
+camelot.camelot.types.IPAddress.__init__
+camelot.camelot.types.Image.__init__
+camelot.camelot.types.StoredImage.__init__
+camelot.camelot.view.application_admin.ApplicationAdmin.__init__
+camelot.camelot.view.controls.actions.ActionsBox.__init__
+camelot.camelot.view.controls.animation.MovieWidget.__init__
+camelot.camelot.view.controls.animation.Throbber.__init__
+camelot.camelot.view.controls.appscheme.Scheme.__init__
+camelot.camelot.view.controls.delegates.BoolColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.CodeColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.ComboBoxColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.DateColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.DateTimeColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.FloatColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.GenericDelegate.__init__
+camelot.camelot.view.controls.delegates.IntegerColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.Many2OneColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.One2ManyColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.PlainTextColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.RichTextColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.TimeColumnDelegate.__init__
+camelot.camelot.view.controls.delegates.VirtualAddressColumnDelegate.__init__
+camelot.camelot.view.controls.editors.CodeEditor.__init__
+camelot.camelot.view.controls.editors.DateEditor.__init__
+camelot.camelot.view.controls.editors.EmbeddedMany2OneEditor.__init__
+camelot.camelot.view.controls.editors.ImageEditor.__init__
+camelot.camelot.view.controls.editors.Many2OneEditor.CompletionsModel.__init__
+camelot.camelot.view.controls.editors.Many2OneEditor.__init__
+camelot.camelot.view.controls.editors.One2ManyEditor.__init__
+camelot.camelot.view.controls.editors.RichTextEditor.__init__
+camelot.camelot.view.controls.editors.VirtualAddressEditor.__init__
+camelot.camelot.view.controls.filter.FilterList.__init__
+camelot.camelot.view.controls.formview.FormView.__init__
+camelot.camelot.view.controls.inheritance.SubclassItem.__init__
+camelot.camelot.view.controls.inheritance.SubclassTree.__init__
+camelot.camelot.view.controls.modeltree.ModelItem.__init__
+camelot.camelot.view.controls.modeltree.ModelTree.__init__
+camelot.camelot.view.controls.navpane.NavigationPane.__init__
+camelot.camelot.view.controls.navpane.PaneButton.__init__
+camelot.camelot.view.controls.navpane.PaneCaption.__init__
+camelot.camelot.view.controls.printer.Printer.__init__
+camelot.camelot.view.controls.schemer.Schemer.__init__
+camelot.camelot.view.controls.search.SimpleSearchControl.__init__
+camelot.camelot.view.controls.tableview.QueryTable.__init__
+camelot.camelot.view.controls.tableview.TableView.__init__
+camelot.camelot.view.elixir_admin.EntityAdmin.__init__
+camelot.camelot.view.fifo.fifo.__init__
+camelot.camelot.view.filters.Filter.__init__
+camelot.camelot.view.forms.Form.__init__
+camelot.camelot.view.forms.HBoxForm.__init__
+camelot.camelot.view.forms.TabForm.__init__
+camelot.camelot.view.forms.VBoxForm.__init__
+camelot.camelot.view.forms.WidgetOnlyForm.__init__
+camelot.camelot.view.mainwindow.MainWindow.__init__
+camelot.camelot.view.model_thread.ModelThread.__init__
+camelot.camelot.view.plugins.CamelotEditorPlugin.__init__
+camelot.camelot.view.plugins.codeeditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.plugins.dateeditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.plugins.manytooneeditorplugin.ManyToOneEditorPlugin.__init__
+camelot.camelot.view.plugins.onetomanyeditorplugin.OneToManyEditorPlugin.__init__
+camelot.camelot.view.plugins.richtexteditorplugin.DateEditorPlugin.__init__
+camelot.camelot.view.proxy.collection_proxy.CollectionProxy.__init__
+camelot.camelot.view.proxy.collection_proxy.DelayedProxy.__init__
+camelot.camelot.view.proxy.queryproxy.QueryTableProxy.__init__
+camelot.camelot.view.response_handler.ResponseHandler.__init__
+camelot.camelot.view.validator.Validator.__init__
+camelot.camelot.view.workspace.DesktopWorkspace.__init__" class="py-name" href="#" onclick="return doclink('link-11', '__init__', 'link-4');">__init__</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">)</tt> </tt>
+<a name="L37"></a><tt class="py-lineno">37</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">_widget</tt> <tt class="py-op">=</tt> <tt id="link-12" class="py-name"><a title="camelot.camelot.view.controls.editors.ImageEditor" class="py-name" href="#" onclick="return doclink('link-12', 'ImageEditor', 'link-9');">ImageEditor</a></tt> </tt>
+</div></div><a name="L38"></a><tt class="py-lineno">38</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Sat Jan 31 18:50:04 2009
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

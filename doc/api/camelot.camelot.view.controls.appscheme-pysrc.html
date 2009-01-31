@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>camelot.camelot.view.controls.appscheme</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Package&nbsp;camelot ::
+        <a href="camelot.camelot-module.html">Package&nbsp;camelot</a> ::
+        <a href="camelot.camelot.view-module.html">Package&nbsp;view</a> ::
+        <a href="camelot.camelot.view.controls-module.html">Package&nbsp;controls</a> ::
+        Module&nbsp;appscheme
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="camelot.camelot.view.controls.appscheme-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="camelot.camelot.view.controls.appscheme-module.html">Module camelot.camelot.view.controls.appscheme</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno">  1</tt>  <tt class="py-line"><tt class="py-comment">#  ============================================================================</tt> </tt>
+<a name="L2"></a><tt class="py-lineno">  2</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L3"></a><tt class="py-lineno">  3</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.</tt> </tt>
+<a name="L4"></a><tt class="py-lineno">  4</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  www.conceptive.be / project-camelot@conceptive.be</tt> </tt>
+<a name="L5"></a><tt class="py-lineno">  5</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L6"></a><tt class="py-lineno">  6</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is part of the Camelot Library.</tt> </tt>
+<a name="L7"></a><tt class="py-lineno">  7</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L8"></a><tt class="py-lineno">  8</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file may be used under the terms of the GNU General Public</tt> </tt>
+<a name="L9"></a><tt class="py-lineno">  9</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  License version 2.0 as published by the Free Software Foundation</tt> </tt>
+<a name="L10"></a><tt class="py-lineno"> 10</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  and appearing in the file LICENSE.GPL included in the packaging of</tt> </tt>
+<a name="L11"></a><tt class="py-lineno"> 11</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  this file.  Please review the following information to ensure GNU</tt> </tt>
+<a name="L12"></a><tt class="py-lineno"> 12</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  General Public Licensing requirements will be met:</tt> </tt>
+<a name="L13"></a><tt class="py-lineno"> 13</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/opensource.html</tt> </tt>
+<a name="L14"></a><tt class="py-lineno"> 14</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L15"></a><tt class="py-lineno"> 15</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  If you are unsure which license is appropriate for your use, please</tt> </tt>
+<a name="L16"></a><tt class="py-lineno"> 16</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  review the following information:</tt> </tt>
+<a name="L17"></a><tt class="py-lineno"> 17</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/licensing.html or contact</tt> </tt>
+<a name="L18"></a><tt class="py-lineno"> 18</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be.</tt> </tt>
+<a name="L19"></a><tt class="py-lineno"> 19</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L20"></a><tt class="py-lineno"> 20</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE</tt> </tt>
+<a name="L21"></a><tt class="py-lineno"> 21</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</tt> </tt>
+<a name="L22"></a><tt class="py-lineno"> 22</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L23"></a><tt class="py-lineno"> 23</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  For use of this library in commercial applications, please contact</tt> </tt>
+<a name="L24"></a><tt class="py-lineno"> 24</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be</tt> </tt>
+<a name="L25"></a><tt class="py-lineno"> 25</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L26"></a><tt class="py-lineno"> 26</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  ============================================================================</tt> </tt>
+<a name="L27"></a><tt class="py-lineno"> 27</tt>  <tt class="py-line"><tt class="py-comment"></tt> </tt>
+<a name="L28"></a><tt class="py-lineno"> 28</tt>  <tt class="py-line"><tt class="py-docstring">"""encapsulates various ms office schemes"""</tt> </tt>
+<a name="L29"></a><tt class="py-lineno"> 29</tt>  <tt class="py-line"> </tt>
+<a name="L30"></a><tt class="py-lineno"> 30</tt>  <tt class="py-line"><tt id="link-0" class="py-name" targets="Variable camelot.camelot.view.controls.appscheme.Office2003BlueStyle=camelot.camelot.view.controls.appscheme-module.html#Office2003BlueStyle,Variable camelot.camelot.view.controls.schemer.Office2003BlueStyle=camelot.camelot.view.controls.schemer-module.html#Office2003BlueStyle"><a title="camelot.camelot.view.controls.appscheme.Office2003BlueStyle
+camelot.camelot.view.controls.schemer.Office2003BlueStyle" class="py-name" href="#" onclick="return doclink('link-0', 'Office2003BlueStyle', 'link-0');">Office2003BlueStyle</a></tt> <tt class="py-op">=</tt> <tt class="py-op">{</tt> </tt>
+<a name="L31"></a><tt class="py-lineno"> 31</tt>  <tt class="py-line">  <tt class="py-string">'SplitterDark'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(21, 28, 171)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L32"></a><tt class="py-lineno"> 32</tt>  <tt class="py-line">  <tt class="py-string">'SplitterLight'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(129, 168, 226)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L33"></a><tt class="py-lineno"> 33</tt>  <tt class="py-line">  <tt class="py-string">'BorderColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(21, 28, 171)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L34"></a><tt class="py-lineno"> 34</tt>  <tt class="py-line">  <tt class="py-string">'TextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(0, 0, 0)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L35"></a><tt class="py-lineno"> 35</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(201, 223, 251)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L36"></a><tt class="py-lineno"> 36</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(165, 196, 239)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L37"></a><tt class="py-lineno"> 37</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(165, 196, 239)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L38"></a><tt class="py-lineno"> 38</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(129, 168, 226)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L39"></a><tt class="py-lineno"> 39</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 253, 216)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L40"></a><tt class="py-lineno"> 40</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(251, 222, 152)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L41"></a><tt class="py-lineno"> 41</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(251, 222, 152)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L42"></a><tt class="py-lineno"> 42</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(248, 194, 95)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L43"></a><tt class="py-lineno"> 43</tt>  <tt class="py-line">  <tt class="py-string">'SelectedTextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(0, 0, 0)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L44"></a><tt class="py-lineno"> 44</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(251, 228, 144)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L45"></a><tt class="py-lineno"> 45</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(245, 190, 85)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L46"></a><tt class="py-lineno"> 46</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(245, 190, 85)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L47"></a><tt class="py-lineno"> 47</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(240, 153, 25)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L48"></a><tt class="py-lineno"> 48</tt>  <tt class="py-line">  <tt class="py-string">'CaptionBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(201, 223, 251)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L49"></a><tt class="py-lineno"> 49</tt>  <tt class="py-line">  <tt class="py-string">'CaptionEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(129, 168, 226)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L50"></a><tt class="py-lineno"> 50</tt>  <tt class="py-line">  <tt class="py-string">'CaptionDescBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(201, 223, 251)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L51"></a><tt class="py-lineno"> 51</tt>  <tt class="py-line">  <tt class="py-string">'CaptionDescEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(129, 168, 226)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L52"></a><tt class="py-lineno"> 52</tt>  <tt class="py-line">  <tt class="py-string">'CaptionTextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(21, 28, 171)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L53"></a><tt class="py-lineno"> 53</tt>  <tt class="py-line">  <tt class="py-string">'ContextMenuBackColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(253, 250, 255)'</tt> </tt>
+<a name="L54"></a><tt class="py-lineno"> 54</tt>  <tt class="py-line"><tt class="py-op">}</tt> </tt>
+<a name="L55"></a><tt class="py-lineno"> 55</tt>  <tt class="py-line"> </tt>
+<a name="L56"></a><tt class="py-lineno"> 56</tt>  <tt class="py-line"><tt id="link-1" class="py-name" targets="Variable camelot.camelot.view.controls.appscheme.Office2003SilverStyle=camelot.camelot.view.controls.appscheme-module.html#Office2003SilverStyle,Variable camelot.camelot.view.controls.schemer.Office2003SilverStyle=camelot.camelot.view.controls.schemer-module.html#Office2003SilverStyle"><a title="camelot.camelot.view.controls.appscheme.Office2003SilverStyle
+camelot.camelot.view.controls.schemer.Office2003SilverStyle" class="py-name" href="#" onclick="return doclink('link-1', 'Office2003SilverStyle', 'link-1');">Office2003SilverStyle</a></tt> <tt class="py-op">=</tt> <tt class="py-op">{</tt> </tt>
+<a name="L57"></a><tt class="py-lineno"> 57</tt>  <tt class="py-line">  <tt class="py-string">'SplitterDark'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(150, 148, 178)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L58"></a><tt class="py-lineno"> 58</tt>  <tt class="py-line">  <tt class="py-string">'SplitterLight'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(223, 224, 234)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L59"></a><tt class="py-lineno"> 59</tt>  <tt class="py-line">  <tt class="py-string">'BorderColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(100, 97, 135)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L60"></a><tt class="py-lineno"> 60</tt>  <tt class="py-line">  <tt class="py-string">'TextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(0, 0, 0)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L61"></a><tt class="py-lineno"> 61</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(223, 224, 234)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L62"></a><tt class="py-lineno"> 62</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(190, 190, 209)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L63"></a><tt class="py-lineno"> 63</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(190, 190, 209)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L64"></a><tt class="py-lineno"> 64</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(150, 148, 178)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L65"></a><tt class="py-lineno"> 65</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 253, 216)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L66"></a><tt class="py-lineno"> 66</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(251, 222, 152)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L67"></a><tt class="py-lineno"> 67</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(251, 222, 152)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L68"></a><tt class="py-lineno"> 68</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(248, 194, 95)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L69"></a><tt class="py-lineno"> 69</tt>  <tt class="py-line">  <tt class="py-string">'SelectedTextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(0, 0, 0)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L70"></a><tt class="py-lineno"> 70</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(251, 228, 144)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L71"></a><tt class="py-lineno"> 71</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(245, 190, 85)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L72"></a><tt class="py-lineno"> 72</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(245, 190, 85)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L73"></a><tt class="py-lineno"> 73</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(240, 153, 25)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L74"></a><tt class="py-lineno"> 74</tt>  <tt class="py-line">  <tt class="py-string">'CaptionBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(223, 224, 234)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L75"></a><tt class="py-lineno"> 75</tt>  <tt class="py-line">  <tt class="py-string">'CaptionEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(100, 97, 135)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L76"></a><tt class="py-lineno"> 76</tt>  <tt class="py-line">  <tt class="py-string">'CaptionDescBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(223, 224, 234)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L77"></a><tt class="py-lineno"> 77</tt>  <tt class="py-line">  <tt class="py-string">'CaptionDescEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(150, 148, 178)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L78"></a><tt class="py-lineno"> 78</tt>  <tt class="py-line">  <tt class="py-string">'CaptionTextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(0, 0, 0)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L79"></a><tt class="py-lineno"> 79</tt>  <tt class="py-line">  <tt class="py-string">'ContextMenuBackColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(253, 250, 255)'</tt> </tt>
+<a name="L80"></a><tt class="py-lineno"> 80</tt>  <tt class="py-line"><tt class="py-op">}</tt> </tt>
+<a name="L81"></a><tt class="py-lineno"> 81</tt>  <tt class="py-line"> </tt>
+<a name="L82"></a><tt class="py-lineno"> 82</tt>  <tt class="py-line"><tt id="link-2" class="py-name" targets="Variable camelot.camelot.view.controls.appscheme.Office2003OliveStyle=camelot.camelot.view.controls.appscheme-module.html#Office2003OliveStyle,Variable camelot.camelot.view.controls.schemer.Office2003OliveStyle=camelot.camelot.view.controls.schemer-module.html#Office2003OliveStyle"><a title="camelot.camelot.view.controls.appscheme.Office2003OliveStyle
+camelot.camelot.view.controls.schemer.Office2003OliveStyle" class="py-name" href="#" onclick="return doclink('link-2', 'Office2003OliveStyle', 'link-2');">Office2003OliveStyle</a></tt> <tt class="py-op">=</tt> <tt class="py-op">{</tt> </tt>
+<a name="L83"></a><tt class="py-lineno"> 83</tt>  <tt class="py-line">  <tt class="py-string">'SplitterDark'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(182, 196, 144)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L84"></a><tt class="py-lineno"> 84</tt>  <tt class="py-line">  <tt class="py-string">'SplitterLight'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(233, 239, 205)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L85"></a><tt class="py-lineno"> 85</tt>  <tt class="py-line">  <tt class="py-string">'BorderColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(134, 161, 105)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L86"></a><tt class="py-lineno"> 86</tt>  <tt class="py-line">  <tt class="py-string">'TextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(0, 0, 0)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L87"></a><tt class="py-lineno"> 87</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(233, 239, 205)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L88"></a><tt class="py-lineno"> 88</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(208, 218, 176)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L89"></a><tt class="py-lineno"> 89</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(208, 218, 176)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L90"></a><tt class="py-lineno"> 90</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(182, 196, 144)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L91"></a><tt class="py-lineno"> 91</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 253, 216)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L92"></a><tt class="py-lineno"> 92</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(251, 222, 152)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L93"></a><tt class="py-lineno"> 93</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(251, 222, 152)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L94"></a><tt class="py-lineno"> 94</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(248, 194, 95)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L95"></a><tt class="py-lineno"> 95</tt>  <tt class="py-line">  <tt class="py-string">'SelectedTextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(0, 0, 0)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L96"></a><tt class="py-lineno"> 96</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(251, 228, 144)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L97"></a><tt class="py-lineno"> 97</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(245, 190, 85)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L98"></a><tt class="py-lineno"> 98</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(245, 190, 85)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L99"></a><tt class="py-lineno"> 99</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(240, 153, 25)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L100"></a><tt class="py-lineno">100</tt>  <tt class="py-line">  <tt class="py-string">'CaptionBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(233, 239, 205)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L101"></a><tt class="py-lineno">101</tt>  <tt class="py-line">  <tt class="py-string">'CaptionEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(134, 161, 105)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L102"></a><tt class="py-lineno">102</tt>  <tt class="py-line">  <tt class="py-string">'CaptionDescBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(233, 239, 205)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L103"></a><tt class="py-lineno">103</tt>  <tt class="py-line">  <tt class="py-string">'CaptionDescEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(182, 196, 144)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L104"></a><tt class="py-lineno">104</tt>  <tt class="py-line">  <tt class="py-string">'CaptionTextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(0, 0, 0)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L105"></a><tt class="py-lineno">105</tt>  <tt class="py-line">  <tt class="py-string">'ContextMenuBackColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(253, 250, 255)'</tt> </tt>
+<a name="L106"></a><tt class="py-lineno">106</tt>  <tt class="py-line"><tt class="py-op">}</tt> </tt>
+<a name="L107"></a><tt class="py-lineno">107</tt>  <tt class="py-line"> </tt>
+<a name="L108"></a><tt class="py-lineno">108</tt>  <tt class="py-line"><tt id="link-3" class="py-name" targets="Variable camelot.camelot.view.controls.appscheme.Office2007BlueStyle=camelot.camelot.view.controls.appscheme-module.html#Office2007BlueStyle,Variable camelot.camelot.view.controls.schemer.Office2007BlueStyle=camelot.camelot.view.controls.schemer-module.html#Office2007BlueStyle"><a title="camelot.camelot.view.controls.appscheme.Office2007BlueStyle
+camelot.camelot.view.controls.schemer.Office2007BlueStyle" class="py-name" href="#" onclick="return doclink('link-3', 'Office2007BlueStyle', 'link-3');">Office2007BlueStyle</a></tt> <tt class="py-op">=</tt> <tt class="py-op">{</tt> </tt>
+<a name="L109"></a><tt class="py-lineno">109</tt>  <tt class="py-line">  <tt class="py-string">'SplitterDark'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(192, 219, 255)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L110"></a><tt class="py-lineno">110</tt>  <tt class="py-line">  <tt class="py-string">'SplitterLight'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(227, 239, 255)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L111"></a><tt class="py-lineno">111</tt>  <tt class="py-line">  <tt class="py-string">'BorderColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(101, 147, 207)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L112"></a><tt class="py-lineno">112</tt>  <tt class="py-line">  <tt class="py-string">'TextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(32, 77, 137)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L113"></a><tt class="py-lineno">113</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(227, 239, 255)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L114"></a><tt class="py-lineno">114</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(196, 221, 255)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L115"></a><tt class="py-lineno">115</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(173, 209, 255)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L116"></a><tt class="py-lineno">116</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(192, 219, 255)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L117"></a><tt class="py-lineno">117</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 254, 228)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L118"></a><tt class="py-lineno">118</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 232, 167)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L119"></a><tt class="py-lineno">119</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 215, 103)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L120"></a><tt class="py-lineno">120</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 230, 158)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L121"></a><tt class="py-lineno">121</tt>  <tt class="py-line">  <tt class="py-string">'SelectedTextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(0, 0, 0)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L122"></a><tt class="py-lineno">122</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 217, 170)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L123"></a><tt class="py-lineno">123</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 187, 110)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L124"></a><tt class="py-lineno">124</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 171, 63)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L125"></a><tt class="py-lineno">125</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(254, 225, 122)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L126"></a><tt class="py-lineno">126</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedOverBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 189, 105)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L127"></a><tt class="py-lineno">127</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedOverMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 172, 66)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L128"></a><tt class="py-lineno">128</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedOverMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(251, 140, 60)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L129"></a><tt class="py-lineno">129</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedOverEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(254, 211, 100)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L130"></a><tt class="py-lineno">130</tt>  <tt class="py-line">  <tt class="py-string">'CaptionBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(227, 239, 255)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L131"></a><tt class="py-lineno">131</tt>  <tt class="py-line">  <tt class="py-string">'CaptionEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(173, 209, 255)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L132"></a><tt class="py-lineno">132</tt>  <tt class="py-line">  <tt class="py-string">'CaptionDescBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(227, 239, 255)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L133"></a><tt class="py-lineno">133</tt>  <tt class="py-line">  <tt class="py-string">'CaptionDescEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(192, 219, 255)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L134"></a><tt class="py-lineno">134</tt>  <tt class="py-line">  <tt class="py-string">'CaptionTextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(21, 66, 139)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L135"></a><tt class="py-lineno">135</tt>  <tt class="py-line">  <tt class="py-string">'ContextMenuBackColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(227, 239, 255)'</tt> </tt>
+<a name="L136"></a><tt class="py-lineno">136</tt>  <tt class="py-line"><tt class="py-op">}</tt> </tt>
+<a name="L137"></a><tt class="py-lineno">137</tt>  <tt class="py-line"> </tt>
+<a name="L138"></a><tt class="py-lineno">138</tt>  <tt class="py-line"><tt id="link-4" class="py-name" targets="Variable camelot.camelot.view.controls.appscheme.Office2007BlackStyle=camelot.camelot.view.controls.appscheme-module.html#Office2007BlackStyle,Variable camelot.camelot.view.controls.schemer.Office2007BlackStyle=camelot.camelot.view.controls.schemer-module.html#Office2007BlackStyle"><a title="camelot.camelot.view.controls.appscheme.Office2007BlackStyle
+camelot.camelot.view.controls.schemer.Office2007BlackStyle" class="py-name" href="#" onclick="return doclink('link-4', 'Office2007BlackStyle', 'link-4');">Office2007BlackStyle</a></tt> <tt class="py-op">=</tt> <tt class="py-op">{</tt> </tt>
+<a name="L139"></a><tt class="py-lineno">139</tt>  <tt class="py-line">  <tt class="py-string">'SplitterDark'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(199, 203, 209)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L140"></a><tt class="py-lineno">140</tt>  <tt class="py-line">  <tt class="py-string">'SplitterLight'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(219, 222, 226)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L141"></a><tt class="py-lineno">141</tt>  <tt class="py-line">  <tt class="py-string">'BorderColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(76, 83, 92)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L142"></a><tt class="py-lineno">142</tt>  <tt class="py-line">  <tt class="py-string">'TextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(76, 83, 92)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L143"></a><tt class="py-lineno">143</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(248, 248, 249)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L144"></a><tt class="py-lineno">144</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(223, 226, 228)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L145"></a><tt class="py-lineno">145</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(199, 203, 209)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L146"></a><tt class="py-lineno">146</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(219, 222, 226)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L147"></a><tt class="py-lineno">147</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 254, 228)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L148"></a><tt class="py-lineno">148</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 232, 167)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L149"></a><tt class="py-lineno">149</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 215, 103)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L150"></a><tt class="py-lineno">150</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 230, 158)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L151"></a><tt class="py-lineno">151</tt>  <tt class="py-line">  <tt class="py-string">'SelectedTextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(0, 0, 0)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L152"></a><tt class="py-lineno">152</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 217, 170)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L153"></a><tt class="py-lineno">153</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 187, 110)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L154"></a><tt class="py-lineno">154</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 171, 63)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L155"></a><tt class="py-lineno">155</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(254, 225, 122)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L156"></a><tt class="py-lineno">156</tt>  <tt class="py-line">  <tt class="py-string">'CaptionBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(240, 241, 242)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L157"></a><tt class="py-lineno">157</tt>  <tt class="py-line">  <tt class="py-string">'CaptionEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(189, 193, 200)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L158"></a><tt class="py-lineno">158</tt>  <tt class="py-line">  <tt class="py-string">'CaptionDescBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(240, 241, 242)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L159"></a><tt class="py-lineno">159</tt>  <tt class="py-line">  <tt class="py-string">'CaptionDescEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(189, 193, 200)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L160"></a><tt class="py-lineno">160</tt>  <tt class="py-line">  <tt class="py-string">'CaptionTextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(0, 0, 0)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L161"></a><tt class="py-lineno">161</tt>  <tt class="py-line">  <tt class="py-string">'ContextMenuBackColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(248, 248, 249)'</tt> </tt>
+<a name="L162"></a><tt class="py-lineno">162</tt>  <tt class="py-line"><tt class="py-op">}</tt> </tt>
+<a name="L163"></a><tt class="py-lineno">163</tt>  <tt class="py-line"> </tt>
+<a name="L164"></a><tt class="py-lineno">164</tt>  <tt class="py-line"><tt id="link-5" class="py-name" targets="Variable camelot.camelot.view.controls.appscheme.Office2007SilverStyle=camelot.camelot.view.controls.appscheme-module.html#Office2007SilverStyle,Variable camelot.camelot.view.controls.schemer.Office2007SilverStyle=camelot.camelot.view.controls.schemer-module.html#Office2007SilverStyle"><a title="camelot.camelot.view.controls.appscheme.Office2007SilverStyle
+camelot.camelot.view.controls.schemer.Office2007SilverStyle" class="py-name" href="#" onclick="return doclink('link-5', 'Office2007SilverStyle', 'link-5');">Office2007SilverStyle</a></tt> <tt class="py-op">=</tt> <tt class="py-op">{</tt> </tt>
+<a name="L165"></a><tt class="py-lineno">165</tt>  <tt class="py-line">  <tt class="py-string">'SplitterDark'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(119, 118, 151)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L166"></a><tt class="py-lineno">166</tt>  <tt class="py-line">  <tt class="py-string">'SplitterLight'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(168, 167, 191)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L167"></a><tt class="py-lineno">167</tt>  <tt class="py-line">  <tt class="py-string">'BorderColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(111, 112, 116)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L168"></a><tt class="py-lineno">168</tt>  <tt class="py-line">  <tt class="py-string">'TextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(111, 112, 116)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L169"></a><tt class="py-lineno">169</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(235, 238, 250)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L170"></a><tt class="py-lineno">170</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(214, 218, 228)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L171"></a><tt class="py-lineno">171</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(197, 199, 204)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L172"></a><tt class="py-lineno">172</tt>  <tt class="py-line">  <tt class="py-string">'ButtonNormalEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(212, 216, 226)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L173"></a><tt class="py-lineno">173</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 254, 228)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L174"></a><tt class="py-lineno">174</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 232, 167)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L175"></a><tt class="py-lineno">175</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 215, 103)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L176"></a><tt class="py-lineno">176</tt>  <tt class="py-line">  <tt class="py-string">'ButtonMouseOverEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 230, 158)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L177"></a><tt class="py-lineno">177</tt>  <tt class="py-line">  <tt class="py-string">'SelectedTextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(0, 0, 0)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L178"></a><tt class="py-lineno">178</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 217, 170)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L179"></a><tt class="py-lineno">179</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedMiddleBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 187, 110)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L180"></a><tt class="py-lineno">180</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedMiddleEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(255, 171, 63)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L181"></a><tt class="py-lineno">181</tt>  <tt class="py-line">  <tt class="py-string">'ButtonSelectedEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(254, 225, 122)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L182"></a><tt class="py-lineno">182</tt>  <tt class="py-line">  <tt class="py-string">'CaptionBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(246, 247, 248)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L183"></a><tt class="py-lineno">183</tt>  <tt class="py-line">  <tt class="py-string">'CaptionEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(218, 223, 230)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L184"></a><tt class="py-lineno">184</tt>  <tt class="py-line">  <tt class="py-string">'CaptionDescBegin'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(246, 247, 248)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L185"></a><tt class="py-lineno">185</tt>  <tt class="py-line">  <tt class="py-string">'CaptionDescEnd'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(218, 223, 230)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L186"></a><tt class="py-lineno">186</tt>  <tt class="py-line">  <tt class="py-string">'CaptionTextColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(21, 66, 139)'</tt><tt class="py-op">,</tt> </tt>
+<a name="L187"></a><tt class="py-lineno">187</tt>  <tt class="py-line">  <tt class="py-string">'ContextMenuBackColor'</tt> <tt class="py-op">:</tt> <tt class="py-string">'(235, 238, 250)'</tt> </tt>
+<a name="L188"></a><tt class="py-lineno">188</tt>  <tt class="py-line"><tt class="py-op">}</tt> </tt>
+<a name="L189"></a><tt class="py-lineno">189</tt>  <tt class="py-line"> </tt>
+<a name="Scheme"></a><div id="Scheme-def"><a name="L190"></a><tt class="py-lineno">190</tt> <a class="py-toggle" href="#" id="Scheme-toggle" onclick="return toggle('Scheme');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="camelot.camelot.view.controls.appscheme.Scheme-class.html">Scheme</a><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Scheme-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="Scheme-expanded"><a name="Scheme.__init__"></a><div id="Scheme.__init__-def"><a name="L191"></a><tt class="py-lineno">191</tt> <a class="py-toggle" href="#" id="Scheme.__init__-toggle" onclick="return toggle('Scheme.__init__');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.appscheme.Scheme-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">styledict</tt><tt class="py-op">=</tt><tt id="link-6" class="py-name"><a title="camelot.camelot.view.controls.appscheme.Office2007BlueStyle
+camelot.camelot.view.controls.schemer.Office2007BlueStyle" class="py-name" href="#" onclick="return doclink('link-6', 'Office2007BlueStyle', 'link-3');">Office2007BlueStyle</a></tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Scheme.__init__-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Scheme.__init__-expanded"><a name="L192"></a><tt class="py-lineno">192</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt> <tt class="py-op">=</tt> <tt class="py-name">styledict</tt> </tt>
+</div><a name="L193"></a><tt class="py-lineno">193</tt>  <tt class="py-line"> </tt>
+<a name="Scheme.bordercolor"></a><div id="Scheme.bordercolor-def"><a name="L194"></a><tt class="py-lineno">194</tt> <a class="py-toggle" href="#" id="Scheme.bordercolor-toggle" onclick="return toggle('Scheme.bordercolor');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.appscheme.Scheme-class.html#bordercolor">bordercolor</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Scheme.bordercolor-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Scheme.bordercolor-expanded"><a name="L195"></a><tt class="py-lineno">195</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-string">'rgb%(BorderColor)s'</tt> <tt class="py-op">%</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt> </tt>
+</div><a name="L196"></a><tt class="py-lineno">196</tt>  <tt class="py-line"> </tt>
+<a name="Scheme.textcolor"></a><div id="Scheme.textcolor-def"><a name="L197"></a><tt class="py-lineno">197</tt> <a class="py-toggle" href="#" id="Scheme.textcolor-toggle" onclick="return toggle('Scheme.textcolor');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.appscheme.Scheme-class.html#textcolor">textcolor</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Scheme.textcolor-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Scheme.textcolor-expanded"><a name="L198"></a><tt class="py-lineno">198</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-string">'rgb%(TextColor)s'</tt> <tt class="py-op">%</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt> </tt>
+</div><a name="L199"></a><tt class="py-lineno">199</tt>  <tt class="py-line"> </tt>
+<a name="Scheme.selectedcolor"></a><div id="Scheme.selectedcolor-def"><a name="L200"></a><tt class="py-lineno">200</tt> <a class="py-toggle" href="#" id="Scheme.selectedcolor-toggle" onclick="return toggle('Scheme.selectedcolor');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.appscheme.Scheme-class.html#selectedcolor">selectedcolor</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Scheme.selectedcolor-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Scheme.selectedcolor-expanded"><a name="L201"></a><tt class="py-lineno">201</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-string">'rgb%(SelectedTextColor)s'</tt> <tt class="py-op">%</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt> </tt>
+</div><a name="L202"></a><tt class="py-lineno">202</tt>  <tt class="py-line"> </tt>
+<a name="Scheme.captiontextcolor"></a><div id="Scheme.captiontextcolor-def"><a name="L203"></a><tt class="py-lineno">203</tt> <a class="py-toggle" href="#" id="Scheme.captiontextcolor-toggle" onclick="return toggle('Scheme.captiontextcolor');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.appscheme.Scheme-class.html#captiontextcolor">captiontextcolor</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Scheme.captiontextcolor-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Scheme.captiontextcolor-expanded"><a name="L204"></a><tt class="py-lineno">204</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-string">'rgb%(CaptionTextColor)s'</tt> <tt class="py-op">%</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt> </tt>
+</div><a name="L205"></a><tt class="py-lineno">205</tt>  <tt class="py-line"> </tt>
+<a name="Scheme.twocolorgradient"></a><div id="Scheme.twocolorgradient-def"><a name="L206"></a><tt class="py-lineno">206</tt> <a class="py-toggle" href="#" id="Scheme.twocolorgradient-toggle" onclick="return toggle('Scheme.twocolorgradient');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.appscheme.Scheme-class.html#twocolorgradient">twocolorgradient</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">rgb1</tt><tt class="py-op">,</tt> <tt class="py-param">rgb2</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Scheme.twocolorgradient-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Scheme.twocolorgradient-expanded"><a name="L207"></a><tt class="py-lineno">207</tt>  <tt class="py-line">    <tt class="py-name">s</tt> <tt class="py-op">=</tt> <tt class="py-string">'qlineargradient(spread:pad, '</tt> \ </tt>
+<a name="L208"></a><tt class="py-lineno">208</tt>  <tt class="py-line">        <tt class="py-string">'x1:0.5, y1:0, x2:0.5, y2:1, '</tt> \ </tt>
+<a name="L209"></a><tt class="py-lineno">209</tt>  <tt class="py-line">        <tt class="py-string">'stop:0 rgba%s, 255), '</tt> \ </tt>
+<a name="L210"></a><tt class="py-lineno">210</tt>  <tt class="py-line">        <tt class="py-string">'stop:1 rgba%s, 255))'</tt> <tt class="py-op">%</tt> <tt class="py-op">(</tt><tt class="py-name">rgb1</tt><tt class="py-op">,</tt> <tt class="py-name">rgb2</tt><tt class="py-op">)</tt> </tt>
+<a name="L211"></a><tt class="py-lineno">211</tt>  <tt class="py-line"> </tt>
+<a name="L212"></a><tt class="py-lineno">212</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">s</tt> </tt>
+</div><a name="L213"></a><tt class="py-lineno">213</tt>  <tt class="py-line"> </tt>
+<a name="Scheme.fourcolorgradient"></a><div id="Scheme.fourcolorgradient-def"><a name="L214"></a><tt class="py-lineno">214</tt> <a class="py-toggle" href="#" id="Scheme.fourcolorgradient-toggle" onclick="return toggle('Scheme.fourcolorgradient');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.appscheme.Scheme-class.html#fourcolorgradient">fourcolorgradient</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">rgb1</tt><tt class="py-op">,</tt> <tt class="py-param">rgb2</tt><tt class="py-op">,</tt> <tt class="py-param">rgb3</tt><tt class="py-op">,</tt> <tt class="py-param">rgb4</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Scheme.fourcolorgradient-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Scheme.fourcolorgradient-expanded"><a name="L215"></a><tt class="py-lineno">215</tt>  <tt class="py-line">    <tt class="py-name">s</tt> <tt class="py-op">=</tt> <tt class="py-string">'qlineargradient(spread:pad, '</tt> \ </tt>
+<a name="L216"></a><tt class="py-lineno">216</tt>  <tt class="py-line">        <tt class="py-string">'x1:0.5, y1:0, x2:0.5, y2:1, '</tt> \ </tt>
+<a name="L217"></a><tt class="py-lineno">217</tt>  <tt class="py-line">        <tt class="py-string">'stop:0 rgba%s, 255), '</tt> \ </tt>
+<a name="L218"></a><tt class="py-lineno">218</tt>  <tt class="py-line">        <tt class="py-string">'stop:0.4 rgba%s, 255), '</tt> \ </tt>
+<a name="L219"></a><tt class="py-lineno">219</tt>  <tt class="py-line">        <tt class="py-string">'stop:0.401 rgba%s, 255), '</tt> \ </tt>
+<a name="L220"></a><tt class="py-lineno">220</tt>  <tt class="py-line">        <tt class="py-string">'stop:1 rgba%s, 255))'</tt> <tt class="py-op">%</tt> <tt class="py-op">(</tt><tt class="py-name">rgb1</tt><tt class="py-op">,</tt> <tt class="py-name">rgb2</tt><tt class="py-op">,</tt> <tt class="py-name">rgb3</tt><tt class="py-op">,</tt> <tt class="py-name">rgb4</tt><tt class="py-op">)</tt> </tt>
+<a name="L221"></a><tt class="py-lineno">221</tt>  <tt class="py-line"> </tt>
+<a name="L222"></a><tt class="py-lineno">222</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">s</tt> </tt>
+</div><a name="L223"></a><tt class="py-lineno">223</tt>  <tt class="py-line"> </tt>
+<a name="Scheme.normalbackground"></a><div id="Scheme.normalbackground-def"><a name="L224"></a><tt class="py-lineno">224</tt> <a class="py-toggle" href="#" id="Scheme.normalbackground-toggle" onclick="return toggle('Scheme.normalbackground');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.appscheme.Scheme-class.html#normalbackground">normalbackground</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Scheme.normalbackground-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Scheme.normalbackground-expanded"><a name="L225"></a><tt class="py-lineno">225</tt>  <tt class="py-line">    <tt class="py-name">rgb1</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonNormalBegin'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L226"></a><tt class="py-lineno">226</tt>  <tt class="py-line">    <tt class="py-name">rgb2</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonNormalMiddleBegin'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L227"></a><tt class="py-lineno">227</tt>  <tt class="py-line">    <tt class="py-name">rgb3</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonNormalMiddleEnd'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L228"></a><tt class="py-lineno">228</tt>  <tt class="py-line">    <tt class="py-name">rgb4</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonNormalEnd'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L229"></a><tt class="py-lineno">229</tt>  <tt class="py-line">     </tt>
+<a name="L230"></a><tt class="py-lineno">230</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-7" class="py-name" targets="Method camelot.camelot.view.controls.appscheme.Scheme.fourcolorgradient()=camelot.camelot.view.controls.appscheme.Scheme-class.html#fourcolorgradient,Method camelot.camelot.view.controls.schemer.Schemer.fourcolorgradient()=camelot.camelot.view.controls.schemer.Schemer-class.html#fourcolorgradient"><a title="camelot.camelot.view.controls.appscheme.Scheme.fourcolorgradient
+camelot.camelot.view.controls.schemer.Schemer.fourcolorgradient" class="py-name" href="#" onclick="return doclink('link-7', 'fourcolorgradient', 'link-7');">fourcolorgradient</a></tt><tt class="py-op">(</tt><tt class="py-name">rgb1</tt><tt class="py-op">,</tt> <tt class="py-name">rgb2</tt><tt class="py-op">,</tt> <tt class="py-name">rgb3</tt><tt class="py-op">,</tt> <tt class="py-name">rgb4</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L231"></a><tt class="py-lineno">231</tt>  <tt class="py-line"> </tt>
+<a name="Scheme.hoveredbackground"></a><div id="Scheme.hoveredbackground-def"><a name="L232"></a><tt class="py-lineno">232</tt> <a class="py-toggle" href="#" id="Scheme.hoveredbackground-toggle" onclick="return toggle('Scheme.hoveredbackground');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.appscheme.Scheme-class.html#hoveredbackground">hoveredbackground</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Scheme.hoveredbackground-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Scheme.hoveredbackground-expanded"><a name="L233"></a><tt class="py-lineno">233</tt>  <tt class="py-line">    <tt class="py-name">rgb1</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonMouseOverBegin'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L234"></a><tt class="py-lineno">234</tt>  <tt class="py-line">    <tt class="py-name">rgb2</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonMouseOverMiddleBegin'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L235"></a><tt class="py-lineno">235</tt>  <tt class="py-line">    <tt class="py-name">rgb3</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonMouseOverMiddleEnd'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L236"></a><tt class="py-lineno">236</tt>  <tt class="py-line">    <tt class="py-name">rgb4</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonMouseOverEnd'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L237"></a><tt class="py-lineno">237</tt>  <tt class="py-line">     </tt>
+<a name="L238"></a><tt class="py-lineno">238</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-8" class="py-name"><a title="camelot.camelot.view.controls.appscheme.Scheme.fourcolorgradient
+camelot.camelot.view.controls.schemer.Schemer.fourcolorgradient" class="py-name" href="#" onclick="return doclink('link-8', 'fourcolorgradient', 'link-7');">fourcolorgradient</a></tt><tt class="py-op">(</tt><tt class="py-name">rgb1</tt><tt class="py-op">,</tt> <tt class="py-name">rgb2</tt><tt class="py-op">,</tt> <tt class="py-name">rgb3</tt><tt class="py-op">,</tt> <tt class="py-name">rgb4</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L239"></a><tt class="py-lineno">239</tt>  <tt class="py-line"> </tt>
+<a name="Scheme.selectedbackground"></a><div id="Scheme.selectedbackground-def"><a name="L240"></a><tt class="py-lineno">240</tt> <a class="py-toggle" href="#" id="Scheme.selectedbackground-toggle" onclick="return toggle('Scheme.selectedbackground');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.appscheme.Scheme-class.html#selectedbackground">selectedbackground</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">inverted</tt><tt class="py-op">=</tt><tt class="py-name">False</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Scheme.selectedbackground-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Scheme.selectedbackground-expanded"><a name="L241"></a><tt class="py-lineno">241</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-name">inverted</tt><tt class="py-op">:</tt> </tt>
+<a name="L242"></a><tt class="py-lineno">242</tt>  <tt class="py-line">      <tt class="py-name">rgb1</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonSelectedOverBegin'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L243"></a><tt class="py-lineno">243</tt>  <tt class="py-line">      <tt class="py-name">rgb2</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonSelectedOverMiddleBegin'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L244"></a><tt class="py-lineno">244</tt>  <tt class="py-line">      <tt class="py-name">rgb3</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonSelectedOverMiddleEnd'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L245"></a><tt class="py-lineno">245</tt>  <tt class="py-line">      <tt class="py-name">rgb4</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonSelectedOverEnd'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L246"></a><tt class="py-lineno">246</tt>  <tt class="py-line">    <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
+<a name="L247"></a><tt class="py-lineno">247</tt>  <tt class="py-line">      <tt class="py-name">rgb1</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonSelectedBegin'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L248"></a><tt class="py-lineno">248</tt>  <tt class="py-line">      <tt class="py-name">rgb2</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonSelectedMiddleBegin'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L249"></a><tt class="py-lineno">249</tt>  <tt class="py-line">      <tt class="py-name">rgb3</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonSelectedMiddleEnd'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L250"></a><tt class="py-lineno">250</tt>  <tt class="py-line">      <tt class="py-name">rgb4</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'ButtonSelectedEnd'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L251"></a><tt class="py-lineno">251</tt>  <tt class="py-line"> </tt>
+<a name="L252"></a><tt class="py-lineno">252</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-9" class="py-name"><a title="camelot.camelot.view.controls.appscheme.Scheme.fourcolorgradient
+camelot.camelot.view.controls.schemer.Schemer.fourcolorgradient" class="py-name" href="#" onclick="return doclink('link-9', 'fourcolorgradient', 'link-7');">fourcolorgradient</a></tt><tt class="py-op">(</tt><tt class="py-name">rgb1</tt><tt class="py-op">,</tt> <tt class="py-name">rgb2</tt><tt class="py-op">,</tt> <tt class="py-name">rgb3</tt><tt class="py-op">,</tt> <tt class="py-name">rgb4</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L253"></a><tt class="py-lineno">253</tt>  <tt class="py-line"> </tt>
+<a name="Scheme.captionbackground"></a><div id="Scheme.captionbackground-def"><a name="L254"></a><tt class="py-lineno">254</tt> <a class="py-toggle" href="#" id="Scheme.captionbackground-toggle" onclick="return toggle('Scheme.captionbackground');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.controls.appscheme.Scheme-class.html#captionbackground">captionbackground</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Scheme.captionbackground-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Scheme.captionbackground-expanded"><a name="L255"></a><tt class="py-lineno">255</tt>  <tt class="py-line">    <tt class="py-name">rgb1</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'CaptionBegin'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L256"></a><tt class="py-lineno">256</tt>  <tt class="py-line">    <tt class="py-name">rgb2</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">styledict</tt><tt class="py-op">[</tt><tt class="py-string">'CaptionEnd'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">rstrip</tt><tt class="py-op">(</tt><tt class="py-string">')'</tt><tt class="py-op">)</tt> </tt>
+<a name="L257"></a><tt class="py-lineno">257</tt>  <tt class="py-line">     </tt>
+<a name="L258"></a><tt class="py-lineno">258</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-10" class="py-name" targets="Method camelot.camelot.view.controls.appscheme.Scheme.twocolorgradient()=camelot.camelot.view.controls.appscheme.Scheme-class.html#twocolorgradient,Method camelot.camelot.view.controls.schemer.Schemer.twocolorgradient()=camelot.camelot.view.controls.schemer.Schemer-class.html#twocolorgradient"><a title="camelot.camelot.view.controls.appscheme.Scheme.twocolorgradient
+camelot.camelot.view.controls.schemer.Schemer.twocolorgradient" class="py-name" href="#" onclick="return doclink('link-10', 'twocolorgradient', 'link-10');">twocolorgradient</a></tt><tt class="py-op">(</tt><tt class="py-name">rgb1</tt><tt class="py-op">,</tt> <tt class="py-name">rgb2</tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L259"></a><tt class="py-lineno">259</tt>  <tt class="py-line"> </tt>
+<a name="L260"></a><tt class="py-lineno">260</tt>  <tt class="py-line"><tt id="link-11" class="py-name" targets="Variable camelot.camelot.view.controls.appscheme.scheme=camelot.camelot.view.controls.appscheme-module.html#scheme"><a title="camelot.camelot.view.controls.appscheme.scheme" class="py-name" href="#" onclick="return doclink('link-11', 'scheme', 'link-11');">scheme</a></tt> <tt class="py-op">=</tt> <tt id="link-12" class="py-name" targets="Class camelot.camelot.view.controls.appscheme.Scheme=camelot.camelot.view.controls.appscheme.Scheme-class.html"><a title="camelot.camelot.view.controls.appscheme.Scheme" class="py-name" href="#" onclick="return doclink('link-12', 'Scheme', 'link-12');">Scheme</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L261"></a><tt class="py-lineno">261</tt>  <tt class="py-line"><tt id="link-13" class="py-name" targets="Variable camelot.camelot.view.controls.appscheme.defaultUI=camelot.camelot.view.controls.appscheme-module.html#defaultUI,Variable camelot.camelot.view.controls.schemer.defaultUI=camelot.camelot.view.controls.schemer-module.html#defaultUI"><a title="camelot.camelot.view.controls.appscheme.defaultUI
+camelot.camelot.view.controls.schemer.defaultUI" class="py-name" href="#" onclick="return doclink('link-13', 'defaultUI', 'link-13');">defaultUI</a></tt> <tt class="py-op">=</tt> <tt id="link-14" class="py-name"><a title="camelot.camelot.view.controls.appscheme.Office2007BlueStyle
+camelot.camelot.view.controls.schemer.Office2007BlueStyle" class="py-name" href="#" onclick="return doclink('link-14', 'Office2007BlueStyle', 'link-3');">Office2007BlueStyle</a></tt> </tt>
+<a name="L262"></a><tt class="py-lineno">262</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Sat Jan 31 18:50:01 2009
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

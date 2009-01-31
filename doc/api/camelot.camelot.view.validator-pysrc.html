@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>camelot.camelot.view.validator</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Package&nbsp;camelot ::
+        <a href="camelot.camelot-module.html">Package&nbsp;camelot</a> ::
+        <a href="camelot.camelot.view-module.html">Package&nbsp;view</a> ::
+        Module&nbsp;validator
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="camelot.camelot.view.validator-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="camelot.camelot.view.validator-module.html">Module camelot.camelot.view.validator</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno">  1</tt>  <tt class="py-line"><tt class="py-comment">#  ============================================================================</tt> </tt>
+<a name="L2"></a><tt class="py-lineno">  2</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L3"></a><tt class="py-lineno">  3</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.</tt> </tt>
+<a name="L4"></a><tt class="py-lineno">  4</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  www.conceptive.be / project-camelot@conceptive.be</tt> </tt>
+<a name="L5"></a><tt class="py-lineno">  5</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L6"></a><tt class="py-lineno">  6</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is part of the Camelot Library.</tt> </tt>
+<a name="L7"></a><tt class="py-lineno">  7</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L8"></a><tt class="py-lineno">  8</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file may be used under the terms of the GNU General Public</tt> </tt>
+<a name="L9"></a><tt class="py-lineno">  9</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  License version 2.0 as published by the Free Software Foundation</tt> </tt>
+<a name="L10"></a><tt class="py-lineno"> 10</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  and appearing in the file LICENSE.GPL included in the packaging of</tt> </tt>
+<a name="L11"></a><tt class="py-lineno"> 11</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  this file.  Please review the following information to ensure GNU</tt> </tt>
+<a name="L12"></a><tt class="py-lineno"> 12</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  General Public Licensing requirements will be met:</tt> </tt>
+<a name="L13"></a><tt class="py-lineno"> 13</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/opensource.html</tt> </tt>
+<a name="L14"></a><tt class="py-lineno"> 14</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L15"></a><tt class="py-lineno"> 15</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  If you are unsure which license is appropriate for your use, please</tt> </tt>
+<a name="L16"></a><tt class="py-lineno"> 16</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  review the following information:</tt> </tt>
+<a name="L17"></a><tt class="py-lineno"> 17</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/licensing.html or contact</tt> </tt>
+<a name="L18"></a><tt class="py-lineno"> 18</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be.</tt> </tt>
+<a name="L19"></a><tt class="py-lineno"> 19</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L20"></a><tt class="py-lineno"> 20</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE</tt> </tt>
+<a name="L21"></a><tt class="py-lineno"> 21</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</tt> </tt>
+<a name="L22"></a><tt class="py-lineno"> 22</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L23"></a><tt class="py-lineno"> 23</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  For use of this library in commercial applications, please contact</tt> </tt>
+<a name="L24"></a><tt class="py-lineno"> 24</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be</tt> </tt>
+<a name="L25"></a><tt class="py-lineno"> 25</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
+<a name="L26"></a><tt class="py-lineno"> 26</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  ============================================================================</tt> </tt>
+<a name="L27"></a><tt class="py-lineno"> 27</tt>  <tt class="py-line"><tt class="py-comment"></tt> </tt>
+<a name="L28"></a><tt class="py-lineno"> 28</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">logging</tt> </tt>
+<a name="L29"></a><tt class="py-lineno"> 29</tt>  <tt class="py-line"><tt id="link-0" class="py-name" targets="Variable camelot.camelot.empty_project.main.logger=camelot.camelot.empty_project.main-module.html#logger,Variable camelot.camelot.model.i18n.logger=camelot.camelot.model.i18n-module.html#logger,Variable camelot.camelot.types.logger=camelot.camelot.types-module.html#logger,Variable camelot.camelot.view.controls.actions.logger=camelot.camelot.view.controls.actions-module.html#logger,Variable camelot.camelot.view.controls.animation.logger=camelot.camelot.view.controls.animation-module.html#logger,Variable camelot.camelot.view.controls.delegates.logger=camelot.camelot.view.controls.delegates-module.html#logger,Variable camelot.camelot.view.controls.editors.logger=camelot.camelot.view.controls.editors-module.html#logger,Variable camelot.camelot.view.controls.filter.logger=camelot.camelot.view.controls.filter-module.html#logger,Variable camelot.camelot.view.controls.formview.logger=camelot.camelot.view.controls.formview-module.html#logger,Variable camelot.camelot.view.controls.inheritance.logger=camelot.camelot.view.controls.inheritance-module.html#logger,Variable camelot.camelot.view.controls.modeltree.logger=camelot.camelot.view.controls.modeltree-module.html#logger,Variable camelot.camelot.view.controls.navpane.logger=camelot.camelot.view.controls.navpane-module.html#logger,Variable camelot.camelot.view.controls.printer.logger=camelot.camelot.view.controls.printer-module.html#logger,Variable camelot.camelot.view.controls.tableview.logger=camelot.camelot.view.controls.tableview-module.html#logger,Variable camelot.camelot.view.elixir_admin.logger=camelot.camelot.view.elixir_admin-module.html#logger,Variable camelot.camelot.view.export.desktop_service.logger=camelot.camelot.view.export.desktop_service-module.html#logger,Variable camelot.camelot.view.export.outlook.logger=camelot.camelot.view.export.outlook-module.html#logger,Variable camelot.camelot.view.export.printer.logger=camelot.camelot.view.export.printer-module.html#logger,Variable camelot.camelot.view.export.word.logger=camelot.camelot.view.export.word-module.html#logger,Variable camelot.camelot.view.forms.logger=camelot.camelot.view.forms-module.html#logger,Variable camelot.camelot.view.mainwindow.logger=camelot.camelot.view.mainwindow-module.html#logger,Variable camelot.camelot.view.model_thread.logger=camelot.camelot.view.model_thread-module.html#logger,Variable camelot.camelot.view.proxy.collection_proxy.logger=camelot.camelot.view.proxy.collection_proxy-module.html#logger,Variable camelot.camelot.view.proxy.queryproxy.logger=camelot.camelot.view.proxy.queryproxy-module.html#logger,Variable camelot.camelot.view.response_handler.logger=camelot.camelot.view.response_handler-module.html#logger,Variable camelot.camelot.view.search.logger=camelot.camelot.view.search-module.html#logger,Variable camelot.camelot.view.validator.logger=camelot.camelot.view.validator-module.html#logger,Variable camelot.camelot.view.workspace.logger=camelot.camelot.view.workspace-module.html#logger"><a title="camelot.camelot.empty_project.main.logger
+camelot.camelot.model.i18n.logger
+camelot.camelot.types.logger
+camelot.camelot.view.controls.actions.logger
+camelot.camelot.view.controls.animation.logger
+camelot.camelot.view.controls.delegates.logger
+camelot.camelot.view.controls.editors.logger
+camelot.camelot.view.controls.filter.logger
+camelot.camelot.view.controls.formview.logger
+camelot.camelot.view.controls.inheritance.logger
+camelot.camelot.view.controls.modeltree.logger
+camelot.camelot.view.controls.navpane.logger
+camelot.camelot.view.controls.printer.logger
+camelot.camelot.view.controls.tableview.logger
+camelot.camelot.view.elixir_admin.logger
+camelot.camelot.view.export.desktop_service.logger
+camelot.camelot.view.export.outlook.logger
+camelot.camelot.view.export.printer.logger
+camelot.camelot.view.export.word.logger
+camelot.camelot.view.forms.logger
+camelot.camelot.view.mainwindow.logger
+camelot.camelot.view.model_thread.logger
+camelot.camelot.view.proxy.collection_proxy.logger
+camelot.camelot.view.proxy.queryproxy.logger
+camelot.camelot.view.response_handler.logger
+camelot.camelot.view.search.logger
+camelot.camelot.view.validator.logger
+camelot.camelot.view.workspace.logger" class="py-name" href="#" onclick="return doclink('link-0', 'logger', 'link-0');">logger</a></tt> <tt class="py-op">=</tt> <tt class="py-name">logging</tt><tt class="py-op">.</tt><tt class="py-name">getLogger</tt><tt class="py-op">(</tt><tt class="py-string">'camelot.view.validator'</tt><tt class="py-op">)</tt> </tt>
+<a name="L30"></a><tt class="py-lineno"> 30</tt>  <tt class="py-line"> </tt>
+<a name="L31"></a><tt class="py-lineno"> 31</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">PyQt4</tt> <tt class="py-keyword">import</tt> <tt class="py-name">QtGui</tt> </tt>
+<a name="L32"></a><tt class="py-lineno"> 32</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">PyQt4</tt> <tt class="py-keyword">import</tt> <tt class="py-name">QtCore</tt> </tt>
+<a name="L33"></a><tt class="py-lineno"> 33</tt>  <tt class="py-line"> </tt>
+<a name="L34"></a><tt class="py-lineno"> 34</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt id="link-1" class="py-name" targets="Module camelot.camelot.view.fifo=camelot.camelot.view.fifo-module.html,Class camelot.camelot.view.fifo.fifo=camelot.camelot.view.fifo.fifo-class.html"><a title="camelot.camelot.view.fifo
+camelot.camelot.view.fifo.fifo" class="py-name" href="#" onclick="return doclink('link-1', 'fifo', 'link-1');">fifo</a></tt> <tt class="py-keyword">import</tt> <tt id="link-2" class="py-name"><a title="camelot.camelot.view.fifo
+camelot.camelot.view.fifo.fifo" class="py-name" href="#" onclick="return doclink('link-2', 'fifo', 'link-1');">fifo</a></tt> </tt>
+<a name="L35"></a><tt class="py-lineno"> 35</tt>  <tt class="py-line"> </tt>
+<a name="Validator"></a><div id="Validator-def"><a name="L36"></a><tt class="py-lineno"> 36</tt> <a class="py-toggle" href="#" id="Validator-toggle" onclick="return toggle('Validator');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="camelot.camelot.view.validator.Validator-class.html">Validator</a><tt class="py-op">(</tt><tt class="py-base-class">QtCore</tt><tt class="py-op">.</tt><tt class="py-base-class">QObject</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Validator-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="Validator-expanded"><a name="L37"></a><tt class="py-lineno"> 37</tt>  <tt class="py-line">  <tt class="py-docstring">"""A validator class validates an entity before flushing it to the database</tt> </tt>
+<a name="L38"></a><tt class="py-lineno"> 38</tt>  <tt class="py-line"><tt class="py-docstring">  and provides the user with feedback if the entity is not ready to flush</tt> </tt>
+<a name="L39"></a><tt class="py-lineno"> 39</tt>  <tt class="py-line"><tt class="py-docstring">  """</tt> </tt>
+<a name="L40"></a><tt class="py-lineno"> 40</tt>  <tt class="py-line"> </tt>
+<a name="Validator.__init__"></a><div id="Validator.__init__-def"><a name="L41"></a><tt class="py-lineno"> 41</tt> <a class="py-toggle" href="#" id="Validator.__init__-toggle" onclick="return toggle('Validator.__init__');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.validator.Validator-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">admin</tt><tt class="py-op">,</tt> <tt class="py-param">model</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Validator.__init__-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Validator.__init__-expanded"><a name="L42"></a><tt class="py-lineno"> 42</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">admin</tt> <tt class="py-op">=</tt> <tt class="py-name">admin</tt> </tt>
+<a name="L43"></a><tt class="py-lineno"> 43</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-3" class="py-name" targets="Module camelot.camelot.empty_project.model=camelot.camelot.empty_project.model-module.html,Package camelot.camelot.model=camelot.camelot.model-module.html,Variable camelot.camelot.model.memento.Memento.model=camelot.camelot.model.memento.Memento-class.html#model"><a title="camelot.camelot.empty_project.model
+camelot.camelot.model
+camelot.camelot.model.memento.Memento.model" class="py-name" href="#" onclick="return doclink('link-3', 'model', 'link-3');">model</a></tt> <tt class="py-op">=</tt> <tt id="link-4" class="py-name"><a title="camelot.camelot.empty_project.model
+camelot.camelot.model
+camelot.camelot.model.memento.Memento.model" class="py-name" href="#" onclick="return doclink('link-4', 'model', 'link-3');">model</a></tt> </tt>
+<a name="L44"></a><tt class="py-lineno"> 44</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">message_cache</tt> <tt class="py-op">=</tt> <tt id="link-5" class="py-name"><a title="camelot.camelot.view.fifo
+camelot.camelot.view.fifo.fifo" class="py-name" href="#" onclick="return doclink('link-5', 'fifo', 'link-1');">fifo</a></tt><tt class="py-op">(</tt><tt class="py-number">10</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L45"></a><tt class="py-lineno"> 45</tt>  <tt class="py-line"> </tt>
+<a name="Validator.objectValidity"></a><div id="Validator.objectValidity-def"><a name="L46"></a><tt class="py-lineno"> 46</tt> <a class="py-toggle" href="#" id="Validator.objectValidity-toggle" onclick="return toggle('Validator.objectValidity');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.validator.Validator-class.html#objectValidity">objectValidity</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">entity_instance</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Validator.objectValidity-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Validator.objectValidity-expanded"><a name="L47"></a><tt class="py-lineno"> 47</tt>  <tt class="py-line">    <tt class="py-docstring">"""@return: list of messages explaining invalid data</tt> </tt>
+<a name="L48"></a><tt class="py-lineno"> 48</tt>  <tt class="py-line"><tt class="py-docstring">    empty list if object is valid</tt> </tt>
+<a name="L49"></a><tt class="py-lineno"> 49</tt>  <tt class="py-line"><tt class="py-docstring">    """</tt> </tt>
+<a name="L50"></a><tt class="py-lineno"> 50</tt>  <tt class="py-line">    <tt class="py-name">messages</tt> <tt class="py-op">=</tt> <tt class="py-op">[</tt><tt class="py-op">]</tt> </tt>
+<a name="L51"></a><tt class="py-lineno"> 51</tt>  <tt class="py-line">    <tt class="py-keyword">for</tt> <tt class="py-name">column</tt> <tt class="py-keyword">in</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-6" class="py-name"><a title="camelot.camelot.empty_project.model
+camelot.camelot.model
+camelot.camelot.model.memento.Memento.model" class="py-name" href="#" onclick="return doclink('link-6', 'model', 'link-3');">model</a></tt><tt class="py-op">.</tt><tt id="link-7" class="py-name" targets="Method camelot.camelot.view.controls.tableview.TableView.getColumns()=camelot.camelot.view.controls.tableview.TableView-class.html#getColumns,Method camelot.camelot.view.elixir_admin.EntityAdmin.getColumns()=camelot.camelot.view.elixir_admin.EntityAdmin-class.html#getColumns,Method camelot.camelot.view.proxy.collection_proxy.CollectionProxy.getColumns()=camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#getColumns"><a title="camelot.camelot.view.controls.tableview.TableView.getColumns
+camelot.camelot.view.elixir_admin.EntityAdmin.getColumns
+camelot.camelot.view.proxy.collection_proxy.CollectionProxy.getColumns" class="py-name" href="#" onclick="return doclink('link-7', 'getColumns', 'link-7');">getColumns</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L52"></a><tt class="py-lineno"> 52</tt>  <tt class="py-line">      <tt id="link-8" class="py-name" targets="Variable camelot.camelot.model.i18n.Translation.value=camelot.camelot.model.i18n.Translation-class.html#value"><a title="camelot.camelot.model.i18n.Translation.value" class="py-name" href="#" onclick="return doclink('link-8', 'value', 'link-8');">value</a></tt> <tt class="py-op">=</tt> <tt class="py-name">getattr</tt><tt class="py-op">(</tt><tt class="py-name">entity_instance</tt><tt class="py-op">,</tt> <tt class="py-name">column</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt><tt class="py-op">)</tt> </tt>
+<a name="L53"></a><tt class="py-lineno"> 53</tt>  <tt class="py-line">      <tt class="py-keyword">if</tt> <tt class="py-name">column</tt><tt class="py-op">[</tt><tt class="py-number">1</tt><tt class="py-op">]</tt><tt class="py-op">[</tt><tt class="py-string">'nullable'</tt><tt class="py-op">]</tt><tt class="py-op">!=</tt><tt class="py-name">True</tt><tt class="py-op">:</tt> </tt>
+<a name="L54"></a><tt class="py-lineno"> 54</tt>  <tt class="py-line">        <tt class="py-name">is_null</tt> <tt class="py-op">=</tt> <tt class="py-name">False</tt> </tt>
+<a name="L55"></a><tt class="py-lineno"> 55</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt id="link-9" class="py-name"><a title="camelot.camelot.model.i18n.Translation.value" class="py-name" href="#" onclick="return doclink('link-9', 'value', 'link-8');">value</a></tt><tt class="py-op">==</tt><tt class="py-name">None</tt><tt class="py-op">:</tt> </tt>
+<a name="L56"></a><tt class="py-lineno"> 56</tt>  <tt class="py-line">          <tt class="py-name">is_null</tt> <tt class="py-op">=</tt> <tt class="py-name">True</tt> </tt>
+<a name="L57"></a><tt class="py-lineno"> 57</tt>  <tt class="py-line">        <tt class="py-keyword">elif</tt> <tt class="py-op">(</tt><tt class="py-name">column</tt><tt class="py-op">[</tt><tt class="py-number">1</tt><tt class="py-op">]</tt><tt class="py-op">[</tt><tt class="py-string">'widget'</tt><tt class="py-op">]</tt> <tt class="py-op">==</tt> <tt class="py-string">'code'</tt><tt class="py-op">)</tt> <tt class="py-keyword">and</tt> \ </tt>
+<a name="L58"></a><tt class="py-lineno"> 58</tt>  <tt class="py-line">             <tt class="py-op">(</tt><tt class="py-name">sum</tt><tt class="py-op">(</tt><tt class="py-name">len</tt><tt class="py-op">(</tt><tt class="py-name">c</tt><tt class="py-op">)</tt> <tt class="py-keyword">for</tt> <tt class="py-name">c</tt> <tt class="py-keyword">in</tt> <tt id="link-10" class="py-name"><a title="camelot.camelot.model.i18n.Translation.value" class="py-name" href="#" onclick="return doclink('link-10', 'value', 'link-8');">value</a></tt><tt class="py-op">)</tt> <tt class="py-op">==</tt> <tt class="py-number">0</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L59"></a><tt class="py-lineno"> 59</tt>  <tt class="py-line">          <tt class="py-name">is_null</tt> <tt class="py-op">=</tt> <tt class="py-name">True</tt> </tt>
+<a name="L60"></a><tt class="py-lineno"> 60</tt>  <tt class="py-line">        <tt class="py-keyword">elif</tt> <tt class="py-op">(</tt><tt class="py-name">column</tt><tt class="py-op">[</tt><tt class="py-number">1</tt><tt class="py-op">]</tt><tt class="py-op">[</tt><tt class="py-string">'widget'</tt><tt class="py-op">]</tt> <tt class="py-op">==</tt> <tt class="py-string">'str'</tt><tt class="py-op">)</tt> <tt class="py-keyword">and</tt> <tt class="py-op">(</tt><tt class="py-name">len</tt><tt class="py-op">(</tt><tt id="link-11" class="py-name"><a title="camelot.camelot.model.i18n.Translation.value" class="py-name" href="#" onclick="return doclink('link-11', 'value', 'link-8');">value</a></tt><tt class="py-op">)</tt> <tt class="py-op">==</tt> <tt class="py-number">0</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L61"></a><tt class="py-lineno"> 61</tt>  <tt class="py-line">          <tt class="py-name">is_null</tt> <tt class="py-op">=</tt> <tt class="py-name">True</tt> </tt>
+<a name="L62"></a><tt class="py-lineno"> 62</tt>  <tt class="py-line">        <tt class="py-keyword">elif</tt> <tt class="py-op">(</tt><tt class="py-name">column</tt><tt class="py-op">[</tt><tt class="py-number">1</tt><tt class="py-op">]</tt><tt class="py-op">[</tt><tt class="py-string">'widget'</tt><tt class="py-op">]</tt> <tt class="py-op">==</tt> <tt class="py-string">'many2one'</tt><tt class="py-op">)</tt> <tt class="py-keyword">and</tt> <tt class="py-op">(</tt><tt class="py-keyword">not</tt> <tt id="link-12" class="py-name"><a title="camelot.camelot.model.i18n.Translation.value" class="py-name" href="#" onclick="return doclink('link-12', 'value', 'link-8');">value</a></tt><tt class="py-op">.</tt><tt class="py-name">id</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L63"></a><tt class="py-lineno"> 63</tt>  <tt class="py-line">          <tt class="py-name">is_null</tt> <tt class="py-op">=</tt> <tt class="py-name">True</tt> </tt>
+<a name="L64"></a><tt class="py-lineno"> 64</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">is_null</tt><tt class="py-op">:</tt> </tt>
+<a name="L65"></a><tt class="py-lineno"> 65</tt>  <tt class="py-line">          <tt class="py-name">messages</tt><tt class="py-op">.</tt><tt id="link-13" class="py-name" targets="Method camelot.camelot.view.proxy.collection_proxy.CollectionProxy.append()=camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#append,Method camelot.camelot.view.proxy.queryproxy.QueryTableProxy.append()=camelot.camelot.view.proxy.queryproxy.QueryTableProxy-class.html#append"><a title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy.append
+camelot.camelot.view.proxy.queryproxy.QueryTableProxy.append" class="py-name" href="#" onclick="return doclink('link-13', 'append', 'link-13');">append</a></tt><tt class="py-op">(</tt><tt class="py-string">u'%s is a required field'</tt> <tt class="py-op">%</tt> <tt class="py-op">(</tt><tt class="py-name">column</tt><tt class="py-op">[</tt><tt class="py-number">1</tt><tt class="py-op">]</tt><tt class="py-op">[</tt><tt class="py-string">'name'</tt><tt class="py-op">]</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L66"></a><tt class="py-lineno"> 66</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">messages</tt> </tt>
+</div><a name="L67"></a><tt class="py-lineno"> 67</tt>  <tt class="py-line"> </tt>
+<a name="Validator.isValid"></a><div id="Validator.isValid-def"><a name="L68"></a><tt class="py-lineno"> 68</tt> <a class="py-toggle" href="#" id="Validator.isValid-toggle" onclick="return toggle('Validator.isValid');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.validator.Validator-class.html#isValid">isValid</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">row</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Validator.isValid-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Validator.isValid-expanded"><a name="L69"></a><tt class="py-lineno"> 69</tt>  <tt class="py-line">    <tt class="py-docstring">"""Verify if a row in a model is 'valid' meaning it could be flushed to</tt> </tt>
+<a name="L70"></a><tt class="py-lineno"> 70</tt>  <tt class="py-line"><tt class="py-docstring">    the database</tt> </tt>
+<a name="L71"></a><tt class="py-lineno"> 71</tt>  <tt class="py-line"><tt class="py-docstring">    """</tt> </tt>
+<a name="L72"></a><tt class="py-lineno"> 72</tt>  <tt class="py-line">    <tt class="py-name">messages</tt> <tt class="py-op">=</tt> <tt class="py-op">[</tt><tt class="py-op">]</tt> </tt>
+<a name="L73"></a><tt class="py-lineno"> 73</tt>  <tt class="py-line">    <tt id="link-14" class="py-name"><a title="camelot.camelot.empty_project.main.logger
+camelot.camelot.model.i18n.logger
+camelot.camelot.types.logger
+camelot.camelot.view.controls.actions.logger
+camelot.camelot.view.controls.animation.logger
+camelot.camelot.view.controls.delegates.logger
+camelot.camelot.view.controls.editors.logger
+camelot.camelot.view.controls.filter.logger
+camelot.camelot.view.controls.formview.logger
+camelot.camelot.view.controls.inheritance.logger
+camelot.camelot.view.controls.modeltree.logger
+camelot.camelot.view.controls.navpane.logger
+camelot.camelot.view.controls.printer.logger
+camelot.camelot.view.controls.tableview.logger
+camelot.camelot.view.elixir_admin.logger
+camelot.camelot.view.export.desktop_service.logger
+camelot.camelot.view.export.outlook.logger
+camelot.camelot.view.export.printer.logger
+camelot.camelot.view.export.word.logger
+camelot.camelot.view.forms.logger
+camelot.camelot.view.mainwindow.logger
+camelot.camelot.view.model_thread.logger
+camelot.camelot.view.proxy.collection_proxy.logger
+camelot.camelot.view.proxy.queryproxy.logger
+camelot.camelot.view.response_handler.logger
+camelot.camelot.view.search.logger
+camelot.camelot.view.validator.logger
+camelot.camelot.view.workspace.logger" class="py-name" href="#" onclick="return doclink('link-14', 'logger', 'link-0');">logger</a></tt><tt class="py-op">.</tt><tt class="py-name">debug</tt><tt class="py-op">(</tt><tt class="py-string">'is valid for row %s'</tt> <tt class="py-op">%</tt> <tt class="py-name">row</tt><tt class="py-op">)</tt> </tt>
+<a name="L74"></a><tt class="py-lineno"> 74</tt>  <tt class="py-line"> </tt>
+<a name="L75"></a><tt class="py-lineno"> 75</tt>  <tt class="py-line">    <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L76"></a><tt class="py-lineno"> 76</tt>  <tt class="py-line">      <tt class="py-name">entity_instance</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-15" class="py-name"><a title="camelot.camelot.empty_project.model
+camelot.camelot.model
+camelot.camelot.model.memento.Memento.model" class="py-name" href="#" onclick="return doclink('link-15', 'model', 'link-3');">model</a></tt><tt class="py-op">.</tt><tt id="link-16" class="py-name" targets="Method camelot.camelot.view.proxy.collection_proxy.CollectionProxy._get_object()=camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#_get_object,Method camelot.camelot.view.proxy.queryproxy.QueryTableProxy._get_object()=camelot.camelot.view.proxy.queryproxy.QueryTableProxy-class.html#_get_object"><a title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy._get_object
+camelot.camelot.view.proxy.queryproxy.QueryTableProxy._get_object" class="py-name" href="#" onclick="return doclink('link-16', '_get_object', 'link-16');">_get_object</a></tt><tt class="py-op">(</tt><tt class="py-name">row</tt><tt class="py-op">)</tt> </tt>
+<a name="L77"></a><tt class="py-lineno"> 77</tt>  <tt class="py-line">      <tt class="py-keyword">if</tt> <tt class="py-name">entity_instance</tt><tt class="py-op">:</tt> </tt>
+<a name="L78"></a><tt class="py-lineno"> 78</tt>  <tt class="py-line">        <tt class="py-name">messages</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-17" class="py-name" targets="Method camelot.camelot.view.validator.Validator.objectValidity()=camelot.camelot.view.validator.Validator-class.html#objectValidity"><a title="camelot.camelot.view.validator.Validator.objectValidity" class="py-name" href="#" onclick="return doclink('link-17', 'objectValidity', 'link-17');">objectValidity</a></tt><tt class="py-op">(</tt><tt class="py-name">entity_instance</tt><tt class="py-op">)</tt> </tt>
+<a name="L79"></a><tt class="py-lineno"> 79</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">message_cache</tt><tt class="py-op">.</tt><tt id="link-18" class="py-name" targets="Method camelot.camelot.view.fifo.fifo.add_data()=camelot.camelot.view.fifo.fifo-class.html#add_data"><a title="camelot.camelot.view.fifo.fifo.add_data" class="py-name" href="#" onclick="return doclink('link-18', 'add_data', 'link-18');">add_data</a></tt><tt class="py-op">(</tt><tt class="py-name">row</tt><tt class="py-op">,</tt> <tt class="py-name">entity_instance</tt><tt class="py-op">.</tt><tt class="py-name">id</tt><tt class="py-op">,</tt> <tt class="py-name">messages</tt><tt class="py-op">)</tt> </tt>
+<a name="L80"></a><tt class="py-lineno"> 80</tt>  <tt class="py-line">    <tt class="py-keyword">except</tt><tt class="py-op">:</tt> </tt>
+<a name="L81"></a><tt class="py-lineno"> 81</tt>  <tt class="py-line">      <tt class="py-comment"># rude, should be fixed</tt> </tt>
+<a name="L82"></a><tt class="py-lineno"> 82</tt>  <tt class="py-line"><tt class="py-comment"></tt>      <tt class="py-keyword">pass</tt> </tt>
+<a name="L83"></a><tt class="py-lineno"> 83</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">len</tt><tt class="py-op">(</tt><tt class="py-name">messages</tt><tt class="py-op">)</tt> <tt class="py-op">==</tt> <tt class="py-number">0</tt> </tt>
+</div><a name="L84"></a><tt class="py-lineno"> 84</tt>  <tt class="py-line"> </tt>
+<a name="Validator.validityMessages"></a><div id="Validator.validityMessages-def"><a name="L85"></a><tt class="py-lineno"> 85</tt> <a class="py-toggle" href="#" id="Validator.validityMessages-toggle" onclick="return toggle('Validator.validityMessages');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.validator.Validator-class.html#validityMessages">validityMessages</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">row</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Validator.validityMessages-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Validator.validityMessages-expanded"><a name="L86"></a><tt class="py-lineno"> 86</tt>  <tt class="py-line">    <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L87"></a><tt class="py-lineno"> 87</tt>  <tt class="py-line">      <tt class="py-keyword">return</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">message_cache</tt><tt class="py-op">.</tt><tt id="link-19" class="py-name" targets="Method camelot.camelot.view.fifo.fifo.get_data_at_row()=camelot.camelot.view.fifo.fifo-class.html#get_data_at_row"><a title="camelot.camelot.view.fifo.fifo.get_data_at_row" class="py-name" href="#" onclick="return doclink('link-19', 'get_data_at_row', 'link-19');">get_data_at_row</a></tt><tt class="py-op">(</tt><tt class="py-name">row</tt><tt class="py-op">)</tt> </tt>
+<a name="L88"></a><tt class="py-lineno"> 88</tt>  <tt class="py-line">    <tt class="py-keyword">except</tt> <tt class="py-name">KeyError</tt><tt class="py-op">:</tt> </tt>
+<a name="L89"></a><tt class="py-lineno"> 89</tt>  <tt class="py-line">      <tt class="py-keyword">raise</tt> <tt class="py-name">Exception</tt><tt class="py-op">(</tt><tt class="py-string">'Programming error : isValid should be called '</tt> \ </tt>
+<a name="L90"></a><tt class="py-lineno"> 90</tt>  <tt class="py-line">                      <tt class="py-string">'before calling validityMessage'</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L91"></a><tt class="py-lineno"> 91</tt>  <tt class="py-line"> </tt>
+<a name="Validator.validityMessage"></a><div id="Validator.validityMessage-def"><a name="L92"></a><tt class="py-lineno"> 92</tt> <a class="py-toggle" href="#" id="Validator.validityMessage-toggle" onclick="return toggle('Validator.validityMessage');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.validator.Validator-class.html#validityMessage">validityMessage</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">row</tt><tt class="py-op">,</tt> <tt class="py-param">parent</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="Validator.validityMessage-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Validator.validityMessage-expanded"><a name="L93"></a><tt class="py-lineno"> 93</tt>  <tt class="py-line">    <tt class="py-docstring">"""Inform the user about the validity of the data at row, by showing </tt> </tt>
+<a name="L94"></a><tt class="py-lineno"> 94</tt>  <tt class="py-line"><tt class="py-docstring">    a message box, this function can only be called if isValid has been</tt> </tt>
+<a name="L95"></a><tt class="py-lineno"> 95</tt>  <tt class="py-line"><tt class="py-docstring">    called and is finished within the model thread</tt> </tt>
+<a name="L96"></a><tt class="py-lineno"> 96</tt>  <tt class="py-line"><tt class="py-docstring">    """</tt> </tt>
+<a name="L97"></a><tt class="py-lineno"> 97</tt>  <tt class="py-line">    <tt class="py-name">messages</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-20" class="py-name" targets="Method camelot.camelot.view.validator.Validator.validityMessages()=camelot.camelot.view.validator.Validator-class.html#validityMessages"><a title="camelot.camelot.view.validator.Validator.validityMessages" class="py-name" href="#" onclick="return doclink('link-20', 'validityMessages', 'link-20');">validityMessages</a></tt><tt class="py-op">(</tt><tt class="py-name">row</tt><tt class="py-op">)</tt> </tt>
+<a name="L98"></a><tt class="py-lineno"> 98</tt>  <tt class="py-line">    <tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QMessageBox</tt><tt class="py-op">.</tt><tt class="py-name">information</tt><tt class="py-op">(</tt><tt class="py-name">parent</tt><tt class="py-op">,</tt> <tt class="py-string">u'Validation'</tt><tt class="py-op">,</tt> <tt class="py-string">u'\n'</tt><tt class="py-op">.</tt><tt class="py-name">join</tt><tt class="py-op">(</tt><tt class="py-name">messages</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L99"></a><tt class="py-lineno"> 99</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Sat Jan 31 18:50:01 2009
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

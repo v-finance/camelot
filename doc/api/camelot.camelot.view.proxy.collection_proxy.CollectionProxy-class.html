@@ -1,0 +1,1145 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>camelot.camelot.view.proxy.collection_proxy.CollectionProxy</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Package&nbsp;camelot ::
+        <a href="camelot.camelot-module.html">Package&nbsp;camelot</a> ::
+        <a href="camelot.camelot.view-module.html">Package&nbsp;view</a> ::
+        <a href="camelot.camelot.view.proxy-module.html">Package&nbsp;proxy</a> ::
+        <a href="camelot.camelot.view.proxy.collection_proxy-module.html">Module&nbsp;collection_proxy</a> ::
+        Class&nbsp;CollectionProxy
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS DESCRIPTION ==================== -->
+<h1 class="epydoc">Class CollectionProxy</h1><p class="nomargin-top"><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy">source&nbsp;code</a></span></p>
+<center>
+<center>  <map id="uml_class_diagram_for_camelot__115" name="uml_class_diagram_for_camelot__115">
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#__init__" title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy.__init__" alt="" coords="17,36,695,55"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#hasUnflushedRows" title="The model has rows that have not been flushed to the database yet, because &#160;the row is invalid" alt="" coords="17,55,695,73"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#getRowCount" title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy.getRowCount" alt="" coords="17,73,695,92"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#revertRow" title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy.revertRow" alt="" coords="17,92,695,111"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#refresh" title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy.refresh" alt="" coords="17,111,695,129"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#setCollectionGetter" title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy.setCollectionGetter" alt="" coords="17,129,695,148"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#handleRowUpdate" title="Handles the update of a row when this row might be out of date" alt="" coords="17,148,695,167"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#handleEntityUpdate" title="Handles the entity signal, indicating that the model is out of date" alt="" coords="17,167,695,185"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#handleEntityDelete" title="Handles the entity signal, indicating that the model is out of date" alt="" coords="17,185,695,204"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#handleEntityCreate" title="Handles the entity signal, indicating that the model is out of date" alt="" coords="17,204,695,223"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#setRowCount" title="Callback method to set the number of rows @param rows the new number of &#160;rows" alt="" coords="17,223,695,241"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#getItemDelegate" title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy.getItemDelegate" alt="" coords="17,241,695,260"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#getColumns" title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy.getColumns" alt="" coords="17,260,695,279"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html#__del__" title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy.__del__" alt="" coords="17,297,695,316"/>
+<area shape="rect" href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy&#45;class.html" title="The CollectionProxy contains a limited copy of the data in the actual collection, usable for fast visualisation in a QTableView" alt="" coords="16,11,696,317"/>
+</map>
+  <img src="uml_class_diagram_for_camelot__115.gif" alt='' usemap="#uml_class_diagram_for_camelot__115" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
+<hr />
+<p>The CollectionProxy contains a limited copy of the data in the actual 
+  collection, usable for fast visualisation in a QTableView</p>
+
+<!-- ==================== INSTANCE METHODS ==================== -->
+<a name="section-InstanceMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Instance Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-InstanceMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">admin</span>,
+        <span class="summary-sig-arg">collection_getter</span>,
+        <span class="summary-sig-arg">columns_getter</span>,
+        <span class="summary-sig-arg">max_number_of_rows</span>=<span class="summary-sig-default">10</span>,
+        <span class="summary-sig-arg">edits</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">flush_changes</span>=<span class="summary-sig-default">True</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.__init__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="hasUnflushedRows"></a><span class="summary-sig-name">hasUnflushedRows</span>(<span class="summary-sig-arg">self</span>)</span><br />
+      The model has rows that have not been flushed to the database yet, 
+      because the row is invalid</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.hasUnflushedRows">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#getRowCount" class="summary-sig-name">getRowCount</a>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.getRowCount">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#revertRow" class="summary-sig-name">revertRow</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.revertRow">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="refresh"></a><span class="summary-sig-name">refresh</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.refresh">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="setCollectionGetter"></a><span class="summary-sig-name">setCollectionGetter</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">collection_getter</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.setCollectionGetter">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="handleRowUpdate"></a><span class="summary-sig-name">handleRowUpdate</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>)</span><br />
+      Handles the update of a row when this row might be out of date</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.handleRowUpdate">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="handleEntityUpdate"></a><span class="summary-sig-name">handleEntityUpdate</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">sender</span>,
+        <span class="summary-sig-arg">entity</span>)</span><br />
+      Handles the entity signal, indicating that the model is out of date</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.handleEntityUpdate">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="handleEntityDelete"></a><span class="summary-sig-name">handleEntityDelete</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">sender</span>,
+        <span class="summary-sig-arg">entity</span>,
+        <span class="summary-sig-arg">primary_keys</span>)</span><br />
+      Handles the entity signal, indicating that the model is out of date</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.handleEntityDelete">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="handleEntityCreate"></a><span class="summary-sig-name">handleEntityCreate</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">entity</span>,
+        <span class="summary-sig-arg">primary_keys</span>)</span><br />
+      Handles the entity signal, indicating that the model is out of date</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.handleEntityCreate">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="setRowCount"></a><span class="summary-sig-name">setRowCount</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">rows</span>)</span><br />
+      Callback method to set the number of rows @param rows the new number 
+      of rows</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.setRowCount">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getItemDelegate"></a><span class="summary-sig-name">getItemDelegate</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.getItemDelegate">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getColumns"></a><span class="summary-sig-name">getColumns</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.getColumns">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#setColumns" class="summary-sig-name">setColumns</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">columns</span>)</span><br />
+      Callback method to set the columns</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.setColumns">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="rowCount"></a><span class="summary-sig-name">rowCount</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">index</span>=<span class="summary-sig-default">None</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.rowCount">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="columnCount"></a><span class="summary-sig-name">columnCount</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">index</span>=<span class="summary-sig-default">None</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.columnCount">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#headerData" class="summary-sig-name">headerData</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">section</span>,
+        <span class="summary-sig-arg">orientation</span>,
+        <span class="summary-sig-arg">role</span>)</span><br />
+      In case the columns have not been set yet, don't even try to get 
+      information out of them</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.headerData">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#data" class="summary-sig-name">data</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">index</span>,
+        <span class="summary-sig-arg">role</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.data">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#setData" class="summary-sig-name">setData</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">index</span>,
+        <span class="summary-sig-arg">value</span>,
+        <span class="summary-sig-arg">role</span>=<span class="summary-sig-default">Qt.EditRole</span>)</span><br />
+      Value should be a function taking no arguments that returns the data 
+      to be set</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.setData">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="flags"></a><span class="summary-sig-name">flags</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">index</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.flags">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr class="private">
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#_extend_cache" class="summary-sig-name" onclick="show_private();">_extend_cache</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">offset</span>,
+        <span class="summary-sig-arg">limit</span>)</span><br />
+      Extend the cache around row</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy._extend_cache">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr class="private">
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#_get_object" class="summary-sig-name" onclick="show_private();">_get_object</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>)</span><br />
+      Get the object corresponding to row</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy._get_object">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr class="private">
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="_cache_extended"></a><span class="summary-sig-name">_cache_extended</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">offset</span>,
+        <span class="summary-sig-arg">limit</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy._cache_extended">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr class="private">
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#_get_row_data" class="summary-sig-name" onclick="show_private();">_get_row_data</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">role</span>)</span><br />
+      Get the data which is to be visualized at a certain row of the table,
+      if needed, post a refill request the cache to get the object and its 
+      neighbours in the cache, meanwhile, return an empty object</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy._get_row_data">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#remove" class="summary-sig-name">remove</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">o</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.remove">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#append" class="summary-sig-name">append</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">o</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.append">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#removeEntityInstance" class="summary-sig-name">removeEntityInstance</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">o</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.removeEntityInstance">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#removeRow" class="summary-sig-name">removeRow</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.removeRow">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#insertEntityInstance" class="summary-sig-name">insertEntityInstance</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">o</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.insertEntityInstance">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#insertRow" class="summary-sig-name">insertRow</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">entity_instance_getter</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.insertRow">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="__del__"></a><span class="summary-sig-name">__del__</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.__del__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+</table>
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Method Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-MethodDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="__init__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">admin</span>,
+        <span class="sig-arg">collection_getter</span>,
+        <span class="sig-arg">columns_getter</span>,
+        <span class="sig-arg">max_number_of_rows</span>=<span class="sig-default">10</span>,
+        <span class="sig-arg">edits</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">flush_changes</span>=<span class="sig-default">True</span>)</span>
+    <br /><em class="fname">(Constructor)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.__init__">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>admin</code></strong> - the admin interface for the items in the collection</li>
+        <li><strong class="pname"><code>collection_getter</code></strong> - a function that takes no arguments and returns the collection 
+          that will be visualized. This function will be called inside the 
+          model thread, to prevent delays when this function causes the 
+          database to be hit.</li>
+        <li><strong class="pname"><code>columns_getter</code></strong> - a function that takes no arguments and returns the columns that 
+          will be cached in the proxy. This function will be called inside 
+          the model thread.</li>
+    </ul></dd>
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@gui_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getRowCount"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getRowCount</span>(<span class="sig-arg">self</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.getRowCount">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@model_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="revertRow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">revertRow</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">row</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.revertRow">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@gui_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="setColumns"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setColumns</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">columns</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.setColumns">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Callback method to set the columns</p>
+  <p>@param columns a list with fields to be displayed</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="headerData"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">headerData</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">section</span>,
+        <span class="sig-arg">orientation</span>,
+        <span class="sig-arg">role</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.headerData">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>In case the columns have not been set yet, don't even try to get 
+  information out of them</p>
+  <dl class="fields">
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@gui_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="data"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">data</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">index</span>,
+        <span class="sig-arg">role</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.data">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@gui_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="setData"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setData</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">index</span>,
+        <span class="sig-arg">value</span>,
+        <span class="sig-arg">role</span>=<span class="sig-default">Qt.EditRole</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.setData">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Value should be a function taking no arguments that returns the data 
+  to be set</p>
+  <p>This function will then be called in the model_thread</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="_extend_cache"></a>
+<div class="private">
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">_extend_cache</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">offset</span>,
+        <span class="sig-arg">limit</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy._extend_cache">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Extend the cache around row</p>
+  <dl class="fields">
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@model_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="_get_object"></a>
+<div class="private">
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">_get_object</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">row</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy._get_object">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Get the object corresponding to row</p>
+  <dl class="fields">
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@model_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="_get_row_data"></a>
+<div class="private">
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">_get_row_data</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">row</span>,
+        <span class="sig-arg">role</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy._get_row_data">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Get the data which is to be visualized at a certain row of the table, 
+  if needed, post a refill request the cache to get the object and its 
+  neighbours in the cache, meanwhile, return an empty object</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>role</code></strong> - Qt.EditRole or Qt.DisplayRole</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="remove"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">remove</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">o</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.remove">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@model_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="append"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">append</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">o</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.append">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@model_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="removeEntityInstance"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">removeEntityInstance</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">o</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.removeEntityInstance">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@model_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="removeRow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">removeRow</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">row</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.removeRow">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@gui_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="insertEntityInstance"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">insertEntityInstance</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">row</span>,
+        <span class="sig-arg">o</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.insertEntityInstance">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@model_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="insertRow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">insertRow</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">row</span>,
+        <span class="sig-arg">entity_instance_getter</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="camelot.camelot.view.proxy.collection_proxy-pysrc.html#CollectionProxy.insertRow">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Decorators:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code>@gui_function</code></li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Sat Jan 31 18:50:00 2009
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>
