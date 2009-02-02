@@ -218,7 +218,7 @@ class NavigationPane(QtGui.QDockWidget):
     self.app_admin = app_admin
     self.sections = app_admin.getSections() 
     buttons = [PaneButton(label, icon) 
-               for (section,(label, icon)) in self.sections]
+               for (section, (label, icon)) in self.sections]
     self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
 
     self.setcontent(buttons)
@@ -296,19 +296,16 @@ class NavigationPane(QtGui.QDockWidget):
 
   def set_models_in_tree(self, models):
     self.treewidget.clear()
+    self.treewidget.clear_model_items()
     self.models = models
-    #self.treeitems = []
 
     if not models:
       return
 
-    self.treewidget.clear_model_items()
 
     for model in models:
       logger.debug('loading model %s' % str(model[0]))
-      #item = PaneTreeItem(self.treewidget, [model[0].getName()])
       item = ModelItem(self.treewidget, [model[0].getName()])
-      #self.treeitems.append(item)
       self.treewidget.modelitems.append(item)
 
     self.treewidget.update()
@@ -324,7 +321,7 @@ class NavigationPane(QtGui.QDockWidget):
     self.currentbutton = index
     
     def get_models_for_tree():
-      """Return pairs of (Admin,query) classes for items in the tree"""
+      """Return pairs of (Admin, query) classes for items in the tree"""
       section = self.sections[index][0] 
       return self.app_admin.getEntitiesAndQueriesInSection(section)
     
