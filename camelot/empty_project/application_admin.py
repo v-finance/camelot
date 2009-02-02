@@ -10,7 +10,8 @@ class MyApplicationAdmin(ApplicationAdmin):
         TangoIcon('system-users', folder='apps', size='24x24').fullpath())),
       ('configuration',
         ('Configuration',
-         TangoIcon('preferences-system', folder='categories', size='24x24'))),
+         TangoIcon('preferences-system', 
+                   folder='categories', size='24x24').fullpath())),
     ])
 
     from camelot.model.memento import Memento
