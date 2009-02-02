@@ -18,7 +18,7 @@ def main():
   app.setOrganizationDomain('example.com')
   app.setApplicationName('Camelot')
   app.setWindowIcon(QTangoIcon('system-users',
-                    folders='apps',
+                    folder='apps',
                     size='32x32').getQIcon())
 
   from camelot.view.controls.appscheme import scheme
