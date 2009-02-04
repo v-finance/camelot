@@ -39,7 +39,7 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
 import camelot.types
-from camelot.view.art import TangoIcon, QTangoIcon
+from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function
 from camelot.view.workspace import get_workspace
 from camelot.view.search import create_entity_search_query_decorator
@@ -64,7 +64,7 @@ class DateEditor(QtGui.QWidget):
     
     if nullable:
       nullbutton = QtGui.QToolButton()
-      icon = QTangoIcon('user-trash', folder='places').getQIcon()
+      icon = Icon('tango/16x16/places/user-trash.png').getQIcon()
       nullbutton.setIcon(icon)
       nullbutton.setAutoRaise(True)
       #nullbutton.setCheckable(True)
@@ -249,7 +249,7 @@ class Many2OneEditor(QtGui.QWidget):
 
     # Search button
     self.search_button = QtGui.QToolButton()
-    icon = QTangoIcon('user-trash', folder='places').getQIcon()
+    icon = Icon('tango/16x16/places/user-trash.png').getQIcon()
     self.search_button.setIcon(icon)
     self.search_button.setAutoRaise(True)
     self.connect(self.search_button,
@@ -258,7 +258,7 @@ class Many2OneEditor(QtGui.QWidget):
 
     # Open button
     self.open_button = QtGui.QToolButton()
-    icon = QTangoIcon('document-new', folder='actions').getQIcon()
+    icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
     self.open_button.setIcon(icon)
     self.connect(self.open_button,
                  QtCore.SIGNAL('clicked()'),
@@ -381,16 +381,16 @@ class Many2OneEditor(QtGui.QWidget):
       self._entity_representation = desc
       self.search_input.setText(desc)
       if pk != False:
-        icon = QTangoIcon('folder', folder='places').getQIcon()
+        icon = Icon('tango/16x16/places/folder.png').getQIcon()
         self.open_button.setIcon(icon)
-        icon = QTangoIcon('user-trash', folder='places').getQIcon()
+        icon = Icon('tango/16x16/places/user-trash.png').getQIcon()
         self.search_button.setIcon(icon)
         self.entity_set = True
         #self.search_input.setReadOnly(True)
       else:
-        icon = QTangoIcon('document-new', folder='actions').getQIcon()
+        icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
         self.open_button.setIcon(icon)
-        icon = QTangoIcon('system-search', folder='actions').getQIcon()
+        icon = Icon('tango/16x16/actions/system-search.png').getQIcon()
         self.search_button.setIcon(icon)
         self.entity_set = False
         #self.search_input.setReadOnly(False)
@@ -448,14 +448,14 @@ class One2ManyEditor(QtGui.QWidget):
     button_layout = QtGui.QVBoxLayout()
     button_layout.setSpacing(0)
     delete_button = QtGui.QToolButton()
-    icon = QTangoIcon('user-trash', folder='places').getQIcon()
+    icon = Icon('tango/16x16/places/user-trash.png').getQIcon()
     delete_button.setIcon(icon)
     delete_button.setAutoRaise(True)
     self.connect(delete_button,
                  QtCore.SIGNAL('clicked()'),
                  self.deleteSelectedRows)
     add_button = QtGui.QToolButton()
-    icon = QTangoIcon('document-new', folder='actions').getQIcon()
+    icon = Icon('tango/16x16/actions/document-new').getQIcon()
     add_button.setIcon(icon)
     add_button.setAutoRaise(True)
     self.connect(add_button, QtCore.SIGNAL('clicked()'), self.newRow)
@@ -566,21 +566,21 @@ class ImageEditor(QtGui.QWidget):
     button_layout.setMargin(0)
 
     file_button = QtGui.QToolButton()
-    icon = QTangoIcon('document-new', folder='actions').getQIcon()
+    icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
     file_button.setIcon(icon)
     file_button.setAutoRaise(True)
     file_button.setToolTip('Select image')
     self.connect(file_button, QtCore.SIGNAL('clicked()'), self.openFileDialog)
     
     app_button = QtGui.QToolButton()
-    icon = QTangoIcon('folder-open', folder='status').getQIcon()
+    icon = Icon('tango/16x16/status/folder-open.png').getQIcon()
     app_button.setIcon(icon)
     app_button.setAutoRaise(True)
     app_button.setToolTip('Open image')
     self.connect(app_button, QtCore.SIGNAL('clicked()'), self.openInApp)
     
     clear_button = QtGui.QToolButton()
-    icon = QTangoIcon('user-trash', folder='places').getQIcon()
+    icon = Icon('tango/16x16/places/user-trash.png').getQIcon()
     clear_button.setIcon(icon)
     clear_button.setToolTip('Clear image')
     clear_button.setAutoRaise(True)
@@ -607,9 +607,7 @@ class ImageEditor(QtGui.QWidget):
     #
     # Image
     #
-    self.dummy_image = TangoIcon('help-browser', 
-                                 folder='apps',
-                                 size='32x32').fullpath()
+    self.dummy_image = Icon('tango/32x32/apps/help-browser.png').fullpath()
     if self.image is None:
       testImage = QtGui.QImage(self.dummy_image)
       if not testImage.isNull():
@@ -722,7 +720,7 @@ class RichTextEditor(QtGui.QWidget):
       self.toolbar.setContentsMargins(0, 0, 0, 0)
       
       self.bold_button = QtGui.QToolButton(self)
-      icon = QTangoIcon('format-text-bold', folder='actions').getQIcon()
+      icon = Icon('tango/16x16/actions/format-text-bold.png').getQIcon()
       self.bold_button.setIcon(icon)
       self.bold_button.setAutoRaise(True)
       self.bold_button.setCheckable(True)
@@ -731,7 +729,7 @@ class RichTextEditor(QtGui.QWidget):
       self.connect(self.bold_button, QtCore.SIGNAL('clicked()'), self.set_bold)
 
       self.italic_button = QtGui.QToolButton(self)
-      icon = QTangoIcon('format-text-italic', folder='actions').getQIcon()
+      icon = Icon('tango/16x16/actions/format-text-italic.png').getQIcon()
       self.italic_button.setIcon(icon)
       self.italic_button.setAutoRaise(True)
       self.italic_button.setCheckable(True)
@@ -742,7 +740,7 @@ class RichTextEditor(QtGui.QWidget):
                    self.set_italic)
   
       self.underline_button = QtGui.QToolButton(self)
-      icon = QTangoIcon('format-text-underline', folder='actions').getQIcon()
+      icon = Icon('tango/16x16/actions/format-text-underline.png').getQIcon()
       self.underline_button.setIcon(icon)
       self.underline_button.setAutoRaise(True)
       self.underline_button.setCheckable(True)
@@ -753,7 +751,7 @@ class RichTextEditor(QtGui.QWidget):
                    self.set_underline)
   
       self.copy_button = QtGui.QToolButton(self)
-      icon = QTangoIcon('edit-copy', folder='actions').getQIcon()
+      icon = Icon('tango/16x16/actions/edit-copy.png').getQIcon()
       self.copy_button.setIcon(icon)
       self.copy_button.setAutoRaise(True)
       self.copy_button.setMaximumSize(QtCore.QSize(20, 20))
@@ -762,7 +760,7 @@ class RichTextEditor(QtGui.QWidget):
                    self.textedit.copy)
   
       self.cut_button = QtGui.QToolButton(self)
-      icon = QTangoIcon('edit-cut', folder='actions').getQIcon()
+      icon = Icon('tango/16x16/actions/edit-cut.png').getQIcon()
       self.cut_button.setIcon(icon)
       self.cut_button.setAutoRaise(True)
       self.cut_button.setMaximumSize(QtCore.QSize(20, 20))
@@ -771,7 +769,7 @@ class RichTextEditor(QtGui.QWidget):
                    self.textedit.cut)
   
       self.paste_button = QtGui.QToolButton(self)
-      icon = QTangoIcon('edit-paste', folder='actions').getQIcon()
+      icon = Icon('tango/16x16/actions/edit-paste.png').getQIcon()
       self.paste_button.setIcon(icon)
       self.paste_button.setAutoRaise(True)
       self.paste_button.setMaximumSize(QtCore.QSize(20, 20))
@@ -780,7 +778,7 @@ class RichTextEditor(QtGui.QWidget):
                    self.textedit.paste)
   
       self.alignleft_button = QtGui.QToolButton(self)
-      icon = QTangoIcon('format-justify-left', folder='actions').getQIcon()
+      icon = Icon('tango/16x16/actions/format-justify-left.png').getQIcon()
       self.alignleft_button.setIcon(icon)
       self.alignleft_button.setAutoRaise(True)
       self.alignleft_button.setCheckable(True)
@@ -790,7 +788,7 @@ class RichTextEditor(QtGui.QWidget):
                    self.set_alignleft)   
   
       self.aligncenter_button = QtGui.QToolButton(self)
-      icon = QTangoIcon('format-justify-center', folder='actions').getQIcon()
+      icon = Icon('tango/16x16/actions/format-justify-center.png').getQIcon()
       self.aligncenter_button.setIcon(icon)
       self.aligncenter_button.setAutoRaise(True)
       self.aligncenter_button.setCheckable(True)
@@ -800,7 +798,7 @@ class RichTextEditor(QtGui.QWidget):
                    self.set_aligncenter)
   
       self.alignright_button = QtGui.QToolButton(self)
-      icon = QTangoIcon('format-justify-right', folder='actions').getQIcon()
+      icon = Icon('tango/16x16/actions/format-justify-right.png').getQIcon()
       self.alignright_button.setIcon(icon)
       self.alignright_button.setAutoRaise(True)
       self.alignright_button.setCheckable(True)
@@ -923,14 +921,14 @@ class RichTextEditor(QtGui.QWidget):
     if color.isValid():
       self.textedit.setFocus(Qt.OtherFocusReason)
       self.textedit.setTextColor(color)
-      pixmap = QtGui.QPixmap(16,16)
+      pixmap = QtGui.QPixmap(16, 16)
       pixmap.fill(color)
       self.color_button.setIcon(QtGui.QIcon(pixmap))
   
   def update_color(self):
     if self.editable:
       color = self.textedit.textColor()
-      pixmap = QtGui.QPixmap(16,16)
+      pixmap = QtGui.QPixmap(16, 16)
       pixmap.fill(color)
       self.color_button.setIcon(QtGui.QIcon(pixmap))
 

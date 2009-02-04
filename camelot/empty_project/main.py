@@ -6,7 +6,7 @@ from PyQt4 import QtGui, QtCore
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
 from camelot.view import art
-from camelot.view.art import QTangoIcon
+from camelot.view.art import Icon
 
 def main():
   logger.debug('qt version %s, pyqt version %s' % (QtCore.QT_VERSION_STR, 
@@ -18,9 +18,7 @@ def main():
   app.setOrganizationName('My organization')
   app.setOrganizationDomain('example.com')
   app.setApplicationName('Camelot')
-  app.setWindowIcon(QTangoIcon('system-users',
-                    folder='apps',
-                    size='32x32').getQIcon())
+  app.setWindowIcon(Icon('tango/32x32/apps/system-users.png').getQIcon())
 
   from camelot.view.controls.appscheme import scheme
   style = """
@@ -31,14 +29,16 @@ def main():
   app.setStyleSheet(style)
 
   logger.debug('loading splashscreen')
-  splash = QtGui.QSplashScreen(QtGui.QPixmap(art.file_('camelot-proposal.png')))
+  pixmap = QtGui.QPixmap(art.file_('camelot-proposal.png'))
+  splash = QtGui.QSplashScreen(pixmap)
   splash.show()
   app.processEvents()
   
   #
   # Start the model thread
   #
-  from camelot.view.model_thread import get_model_thread, construct_model_thread
+  from camelot.view.model_thread import get_model_thread, \
+                                        construct_model_thread
   from camelot.view.response_handler import ResponseHandler
   from camelot.view.remote_signals import construct_signal_handler
   rh = ResponseHandler()

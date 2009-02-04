@@ -25,5 +25,3 @@ def setup_model():
   from camelot.model.i18n import *
   setup_all(create_tables=True)
   updateLastLogin()
-      
-

@@ -36,7 +36,7 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 import settings
-from camelot.view.art import QTangoIcon
+from camelot.view.art import Icon
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
@@ -56,11 +56,9 @@ class ModelItem(QtGui.QTreeWidgetItem):
     self.setFont(self.column, font)
 
   def set_icon(self, qicon=None):
-    if qicon is not None:
-      self.setIcon(self.column, qicon)
-    else:
-      self.setIcon(self.column,
-                   QTangoIcon('window-new', folder='actions').getQIcon())
+    if qicon is None:
+      qicon = Icon('tango/16x16/actions/window-new.png').getQIcon()
+    self.setIcon(self.column, qicon)
 
 
 class ModelTree(QtGui.QTreeWidget):

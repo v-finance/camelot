@@ -1,4 +1,4 @@
-#  =============================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,7 +23,7 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  =============================================================================
+#  ============================================================================
 
 """Set of classes to keep track of changes to objects and
 be able to restore their state
@@ -36,6 +36,7 @@ __metadata__ = metadata
 from camelot.view.elixir_admin import EntityAdmin
 import datetime
 
+
 class Memento(Entity):
   """Keeps information on the previous state of objects, to keep track
   of changes and enable restore to that previous state"""
@@ -43,16 +44,24 @@ class Memento(Entity):
   model = Field(Unicode(256), index=True, required=True)
   primary_key = Field(INT(), index=True, required=True)
   creation_date = Field(DateTime(), default=datetime.datetime.now)
-  person = ManyToOne('Person', required=True, ondelete='restrict', onupdate='cascade')
+  person = ManyToOne('Person',
+                     required=True,
+                     ondelete='restrict',
+                     onupdate='cascade')
   
   description = property(lambda self:'Change')
  
   class Admin(EntityAdmin):
     name = 'History'
     section = 'configuration'
-    list_display = ['creation_date', 'person', 'model', 'primary_key', 'description']
+    list_display = ['creation_date',
+                    'person',
+                    'model',
+                    'primary_key',
+                    'description']
     list_filter = ['model']
      
+
 class BeforeUpdate(Memento):
   """The state of the object before an update took place"""
   using_options(inheritance='multi', tablename='memento_update',)
@@ -60,13 +69,16 @@ class BeforeUpdate(Memento):
   
   @property
   def description(self):
-    return u'Update %s when previous value was %s'%(','.join(self.previous_attributes.keys()), ','.join(unicode(v) for v in self.previous_attributes.values()))
+    return u'Update %s when previous value was %s' % (
+        ','.join(self.previous_attributes.keys()),
+        ','.join(unicode(v) for v in self.previous_attributes.values()))
   
   class Admin(EntityAdmin):
     name = 'Updates'
     list_display = Memento.Admin.list_display
     list_filter = ['model']
     
+
 class BeforeDelete(Memento):
   """The state of the object before it is deleted"""
   using_options(inheritance='multi', tablename='memento_delete',)
@@ -80,6 +92,7 @@ class BeforeDelete(Memento):
     name = 'Deletes'
     list_display = Memento.Admin.list_display
     list_filter = ['model']
+
 
 class Create(Memento):
   """Marks the creation of an object"""

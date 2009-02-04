@@ -44,7 +44,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtTest import QTest
 from PyQt4 import QtGui, QtCore
 
-from camelot.view.art import TangoIcon
+from camelot.view.art import Icon
 from camelot.view.helpers import createAction, addActions
 from camelot.view.controls.navpane import PaneButton, NavigationPane
 from camelot.view.controls.printer import Printer
@@ -147,35 +147,52 @@ class MainWindow(QtGui.QMainWindow):
     
   # QAction objects creation methods
   def createActions(self):
-    # TODO: change status tip
+    icon_save = Icon('tango/16x16/actions/document-save.png').fullpath()
+    icon_pgsetup = Icon('tango/16x16/actions/document-properties.png').fullpath()
+    icon_print = Icon('tango/16x16/actions/document-print.png').fullpath()
+    icon_preview = Icon('tango/16x16/actions/document-print-preview.png').fullpath()
+
+    icon_cut = Icon('tango/16x16/actions/edit-cut.png').fullpath()
+    icon_copy = Icon('tango/16x16/actions/edit-copy.png').fullpath()
+    icon_paste = Icon('tango/16x16/actions/edit-paste.png').fullpath()
+
+    icon_new = Icon('tango/16x16/actions/document-new.png').fullpath()
+    icon_delete = Icon('tango/16x16/places/user-trash.png').fullpath()
+
+    icon_gofirst = Icon('tango/16x16/actions/go-first.png').fullpath()
+    icon_golast = Icon('tango/16x16/actions/go-last.png').fullpath()
+    icon_gonext = Icon('tango/16x16/actions/go-next.png').fullpath()
+    icon_goprevious = Icon('tango/16x16/actions/go-previous.png').fullpath()
+
+    icon_excel = Icon('tango/16x16/mimetypes/x-office-spreadsheet.png').fullpath()
+    icon_word = Icon('tango/16x16/mimetypes/x-office-document.png').fullpath()
+    icon_mail = Icon('tango/16x16/actions/mail-message-new.png').fullpath()
+
+    # TODO: change some of the status tips
     self.saveAct = createAction(self,
                                 _('&Save'),
                                 self.save,
                                 QtGui.QKeySequence.Save,
-                                TangoIcon('document-save', 
-                                          folder='actions').fullpath(),
+                                icon_save,
                                 _('Save'))
 
-    temp = TangoIcon('document-properties', folder='actions').fullpath()
     self.pageSetupAct = createAction(self,
                                      _('Page Setup...'),
                                      self.pageSetup,
-                                     actionicon=temp,
+                                     actionicon=icon_pgsetup,
                                      tip=_('Page Setup...'))
 
     self.printAct = createAction(self,
                                  _('Print...'),
                                  self.printDoc,
                                  QtGui.QKeySequence.Print,
-                                 TangoIcon('document-print',
-                                           folder='actions').fullpath(),
+                                 icon_print,
                                  _('Print...'))
 
-    temp = TangoIcon('document-print-preview', folder='actions').fullpath()
     self.previewAct = createAction(self,
                                    _('Print Preview'),
                                    self.previewDoc,
-                                   actionicon=temp,
+                                   actionicon=icon_preview,
                                    tip=_('Print Preview'))
 
     self.exitAct = createAction(self,
@@ -188,8 +205,7 @@ class MainWindow(QtGui.QMainWindow):
                                _('Cu&t'),
                                self.cut,
                                QtGui.QKeySequence.Cut,
-                               TangoIcon('edit-cut',
-                                         folder='actions').fullpath(),
+                               icon_cut,
                                tip)
 
     tip = _("Copy the current selection's contents to the clipboard")
@@ -197,8 +213,7 @@ class MainWindow(QtGui.QMainWindow):
                                 _('&Copy'),
                                 self.copy,
                                 QtGui.QKeySequence.Copy,
-                                TangoIcon('edit-copy',
-                                          folder='actions').fullpath(),
+                                icon_copy,
                                 tip)
 
     tip = _("Paste the clipboard's contents into the current selection")
@@ -206,8 +221,7 @@ class MainWindow(QtGui.QMainWindow):
                                  _('&Paste'),
                                  self.paste,
                                  QtGui.QKeySequence.Paste,
-                                 TangoIcon('edit-paste',
-                                           folder='actions').fullpath(),
+                                 icon_paste,
                                  tip)
 
     self.closeAct = createAction(self,
@@ -239,48 +253,42 @@ class MainWindow(QtGui.QMainWindow):
                                _('New'),
                                self.new,
                                QtGui.QKeySequence.New,
-                               TangoIcon('document-new',
-                                         folder='actions').fullpath(),
+                               icon_new,
                                _('New'))
 
     self.deleteAct = createAction(self,
                                   _('Delete'),
                                   self.delete,
                                   QtGui.QKeySequence.Delete,
-                                  TangoIcon('user-trash',
-                                            folder='places').fullpath(),
+                                  icon_delete,
                                   _('Delete'))
 
     self.viewFirstAct = createAction(self,
                                      _('First'),
                                      self.viewFirst,
                                      QtGui.QKeySequence.MoveToStartOfDocument,
-                                     TangoIcon('go-first',
-                                               folder='actions').fullpath(),
+                                     icon_gofirst,
                                      _('First'))
 
     self.viewLastAct = createAction(self,
                                     _('Last'),
                                     self.viewLast,
                                     QtGui.QKeySequence.MoveToEndOfDocument,
-                                    TangoIcon('go-last',
-                                              folder='actions').fullpath(),
+                                    icon_golast,
                                     _('Last'))
 
     self.viewNextAct = createAction(self,
                                     _('Next'),
                                     self.viewNext,
                                     QtGui.QKeySequence.MoveToNextPage,
-                                    TangoIcon('go-next',
-                                              folder='actions').fullpath(),
+                                    icon_gonext,
                                     _('Next'))
 
     self.viewPreviousAct = createAction(self,
                                         _('Previous'),
                                         self.viewPrevious,
                                         QtGui.QKeySequence.MoveToPreviousPage,
-                                        TangoIcon('go-previous',
-                                                  folder='actions').fullpath(),
+                                        icon_goprevious,
                                         _('Previous'))
 
     if QT_MAJOR_VERSION > 4.3:
@@ -289,25 +297,22 @@ class MainWindow(QtGui.QMainWindow):
       self.viewNextAct.setIconVisibleInMenu(False)
       self.viewPreviousAct.setIconVisibleInMenu(False)
 
-    temp = TangoIcon('x-office-spreadsheet', folder='mimetypes').fullpath()
     self.exportToExcelAct = createAction(self,
                                          _('Export to MS Excel'),
                                          self.exportToExcel,
-                                         actionicon=temp,
+                                         actionicon=icon_excel,
                                          tip=_('Export to MS Excel'))
 
-    temp = TangoIcon('x-office-document', folder='mimetypes').fullpath()
     self.exportToWordAct = createAction(self,
                                         _('Export to MS Word'),
                                         self.exportToWord,
-                                        actionicon=temp,
+                                        actionicon=icon_word,
                                         tip=_('Export to MS Word'))
 
-    temp = TangoIcon('mail-message-new', folder='actions').fullpath()
     self.exportToMailAct = createAction(self,
                                         _('Send by e-mail'),
                                         self.exportToMail,
-                                        actionicon=temp,
+                                        actionicon=icon_mail,
                                         tip=_('Send by e-mail'))    
     
     self.app_actions = []

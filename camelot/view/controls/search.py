@@ -26,7 +26,7 @@
 #  ============================================================================
 
 from PyQt4 import QtCore, QtGui
-from camelot.view.art import QTangoIcon
+from camelot.view.art import Icon
 
 
 class SimpleSearchControl(QtGui.QWidget):
@@ -45,23 +45,29 @@ class SimpleSearchControl(QtGui.QWidget):
 
     # Search button
     self.search_button = QtGui.QToolButton()
-    icon = QTangoIcon('system-search', folder='actions').getQIcon()
+    icon = Icon('tango/16x16/actions/system-search.png').getQIcon()
     self.search_button.setIcon(icon)
     self.search_button.setIconSize(QtCore.QSize(14, 14))
     self.search_button.setAutoRaise(True)
-    self.connect(self.search_button, QtCore.SIGNAL('clicked()'), self.emit_search)
+    self.connect(self.search_button, 
+                 QtCore.SIGNAL('clicked()'),
+                 self.emit_search)
 
     # Search input
     self.search_input = QtGui.QLineEdit()
-    self.connect(self.search_input, QtCore.SIGNAL('returnPressed()'), self.emit_search)
+    self.connect(self.search_input,
+                 QtCore.SIGNAL('returnPressed()'),
+                 self.emit_search)
 
     # Cancel button
     self.cancel_button = QtGui.QToolButton()
-    icon = QTangoIcon('edit-clear', folder='actions').getQIcon()
+    icon = Icon('tango/16x16/actions/edit-clear.png').getQIcon()
     self.cancel_button.setIcon(icon)
     self.cancel_button.setIconSize(QtCore.QSize(14, 14))
     self.cancel_button.setAutoRaise(True)
-    self.connect(self.cancel_button, QtCore.SIGNAL('clicked()'), self.emit_cancel)
+    self.connect(self.cancel_button,
+                 QtCore.SIGNAL('clicked()'),
+                 self.emit_cancel)
 
     # Setup layout
     layout.addWidget(self.search_button)

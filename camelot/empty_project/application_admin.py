@@ -1,17 +1,15 @@
+from camelot.view.art import Icon
 from camelot.view.application_admin import ApplicationAdmin
-from camelot.view.art import TangoIcon
 
 class MyApplicationAdmin(ApplicationAdmin):
   
   def __init__(self):
+    icon_relations = Icon('tango/24x24/apps/system-users.png').fullpath()
+    icon_config = Icon('tango/24x24/categories/preferences-system.png').fullpath()
+
     super(MyApplicationAdmin, self).__init__([
-      ('relations',
-       ('Relations',
-        TangoIcon('system-users', folder='apps', size='24x24').fullpath())),
-      ('configuration',
-        ('Configuration',
-         TangoIcon('preferences-system', 
-                   folder='categories', size='24x24').fullpath())),
+      ('relations', ('Relations', icon_relations)),
+      ('configuration', ('Configuration', icon_config)),
     ])
 
     from camelot.model.memento import Memento

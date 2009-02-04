@@ -4,7 +4,8 @@
 #
 
 import camelot.types
-from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, Unicode, Date, Integer, using_options
+from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, \
+                          Unicode, Date, Integer, using_options
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
 
@@ -23,11 +24,13 @@ def genre_choices(entity_instance):
   yield (('sci-fi'),('Sci-Fi'))
   yield (('war'),('War'))
   
+
 def create_slider_delegate(*args, **kwargs):
   """Factory function for a slider delegate"""
   from camelot.view.controls.delegates import SliderDelegate
   return SliderDelegate(*args, **kwargs)
   
+
 class Movie(Entity):
   using_options(tablename='movies')
   title = Field(Unicode(60), required=True)
@@ -68,21 +71,33 @@ class Movie(Entity):
     # define filters to be available in the table view
     list_filter = ['genre']
     # the form_display attribute specifies which entity attributes should be
-    # visible in the form view        
-    form_display = TabForm([('Movie', Form([HBoxForm([['title', 'rating'],WidgetOnlyForm('cover')]), 'short_description', 'releasedate', 'director', 'description'])),
-                            ('Cast', WidgetOnlyForm('cast'))])
-    #
+    # visible in the form view
+    form_display = TabForm([
+      ('Movie', Form([
+        HBoxForm([['title', 'rating'], WidgetOnlyForm('cover')]),
+        'short_description',
+        'releasedate', 
+        'director', 
+        'genre', 
+        'description'])),
+      ('Cast', WidgetOnlyForm('cast'))
+    ])
+    
     # create a list of actions available for the user on the form view
     # those actions will be executed within the model thread
     #
     form_actions = [('Burn DVD', lambda o: o.burn_to_disk())]
-    # additional attributes for a field can be specified int the field_attributes dictionary
+    #
+    # additional attributes for a field can be specified int the
+    # field_attributes dictionary
+    #
     field_attributes = dict(cast=dict(create_inline=True),
                             genre=dict(choices=genre_choices),
                             rating=dict(delegate=create_slider_delegate))
 
   def __repr__(self):
     return self.title or ''
+
 
 class Cast(Entity):
   using_options(tablename='cast')

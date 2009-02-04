@@ -85,8 +85,8 @@ class ApplicationAdmin(object):
     return "Project Camelot"
   
   def getIcon(self):
-    from art import TangoIcon
-    return TangoIcon('system-users', folder='apps', size='32x32').fullpath()
+    import art
+    return art.Icon('tango/32x32/apps/system-users.png').fullpath()
   
   def getAbout(self):
     """@return: the content of the About dialog"""

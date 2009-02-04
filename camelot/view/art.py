@@ -32,47 +32,24 @@ import settings
 import logging
 logger = logging.getLogger('camelot.view.art')
 
+
 file_ = lambda name:os.path.join(settings.CAMELOT_ART_DIRECTORY, '%s' % name)
 
-def validate_or_listhead(el, lst):
-  if el in lst: return el
-  else: return lst[0]
 
+class Icon(object):
+  """Manages paths to the icons images"""
 
-class TangoIcon(object):
-  """Manages paths to the Tango open arts icons"""
-  
-  FOLDERS = ['actions', 'animations', 'apps', 'categories', 'devices'
-             'emblems', 'emotes', 'mimetypes', 'places', 'status']
-  
-  SIZES = ['16x16', '22x22', '24x24', '32x32', 'scalable']
-
-  TANGO_PATH = os.path.join(settings.CAMELOT_ART_DIRECTORY, 'tango')
-  TANGO_FOUND = True
-  if not os.path.exists(TANGO_PATH):
-    TANGO_FOUND = False
-    logger.warning('Tango folder not found')
-
-  def __init__(self, name, folder='actions', size='16x16'):
-    self.name = '%s.png' % name
-    self.size = validate_or_listhead(size, TangoIcon.SIZES)
-    self.folder = validate_or_listhead(folder, TangoIcon.FOLDERS)
+  def __init__(self, path):
+      self.path = path
 
   def fullpath(self):
-    empty = ''
-    if not TangoIcon.TANGO_FOUND: return empty
-    pth = os.path.join(TangoIcon.TANGO_PATH, self.size, self.folder, self.name)
-    return os.path.normpath(pth)
+    pth = os.path.normpath(self.path)
+    pth = os.path.join(settings.CAMELOT_ART_DIRECTORY, pth)
 
-  def __str__(self):
-    return 'TangoIcon %s' % self.name
-
-
-class QTangoIcon(TangoIcon):
-  """Decorates TangoIcon with PyQT4 QIcon"""
-
-  def __init__(self, *a, **kw):
-    super(QTangoIcon, self).__init__(*a, **kw)
+    if os.path.exists(pth):
+      return pth
+    else:
+      return '' 
 
   def getQIcon(self):
     from PyQt4.QtGui import QIcon

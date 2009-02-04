@@ -43,7 +43,7 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
 from sqlalchemy.orm.session import Session
-from camelot.view.art import QTangoIcon
+from camelot.view.art import Icon
 from camelot.view.fifo import fifo
 from camelot.view.controls import delegates
 from camelot.view.remote_signals import get_signal_handler
@@ -135,7 +135,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.logger = logger
     QtCore.QAbstractTableModel.__init__(self)
     self.admin = admin
-    icon = QTangoIcon('folder', folder='places').getQIcon()
+    icon = Icon('tango/16x16/places/folder.png').getQIcon()
     self.form_icon = QtCore.QVariant(icon)
     self.validator = admin.createValidator(self)
     self.collection_getter = collection_getter
