@@ -66,8 +66,8 @@ _sqlalchemy_to_python_type_ = {
 
   sqlalchemy.types.INT: lambda f: {'python_type': int,
                                    'editable': True,
-                                   'min': None,
-                                   'max': None,
+                                   'min': -1000000000000,
+                                   'max': 1000000000000,
                                    'widget': 'int'},
 
   sqlalchemy.types.String: lambda f: {'python_type': str,

@@ -76,9 +76,11 @@ class Filter(object):
     filter_names = []
     joins = []
     table = admin.entity.table
-    for field_name in self.attribute.split('.'):
+    path = self.attribute.split('.')
+    for i,field_name in enumerate(path):
       attributes = admin.getFieldAttributes(field_name)
       filter_names.append(attributes['name'])
+      # @todo: if the filter is not on an attribute of the relation, but on the relation itselves
       if attributes['widget'] in ('one2many', 'many2many', 'many2one'):
         admin = attributes['admin']
         joins.append(field_name)

@@ -122,11 +122,12 @@ class EntityAdmin(object):
     admin object
     """
     from elixir import entities
-    return [e.Admin(self.app_admin, e)
-            for e in entities
-            if (issubclass(e, (self.entity, )) and 
-                hasattr(e, 'Admin') and
-                e!=self.entity)]
+    subclasses = [e.Admin(self.app_admin, e)
+                  for e in entities
+                  if (issubclass(e, (self.entity, )) and 
+                      hasattr(e, 'Admin') and
+                      e!=self.entity)]
+    return subclasses
 
   @model_function
   def getFieldAttributes(self, field_name):

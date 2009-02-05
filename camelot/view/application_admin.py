@@ -25,6 +25,8 @@
 #
 #  ============================================================================
 
+import os
+import settings
 
 class ApplicationAdmin(object):
   """Admin class, specify how the main window should look like"""
@@ -85,8 +87,20 @@ class ApplicationAdmin(object):
     return "Project Camelot"
   
   def getIcon(self):
+    from PyQt4 import QtGui
     import art
-    return art.Icon('tango/32x32/apps/system-users.png').fullpath()
+    return QtGui.QIcon(art.Icon('tango/32x32/apps/system-users.png').fullpath())
+  
+  def getSplashscreen(self):
+    """@return: a QtGui.QPixmap"""
+    from PyQt4 import QtGui
+    return QtGui.QPixmap(os.path.join(settings.CAMELOT_ART_DIRECTORY, 'splashscreen.png'))
+  
+  def getOrganizationName(self):
+    return 'Conceptive Engineering'
+    
+  def getOrganizationDomain(self):
+    return 'conceptive.be'
   
   def getAbout(self):
     """@return: the content of the About dialog"""

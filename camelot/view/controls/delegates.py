@@ -157,7 +157,8 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
 
   def createEditor(self, parent, option, index):
     editor = QtGui.QSpinBox(parent)
-    editor.setRange(self.minimum, self.maximum)
+    if self.minimum and self.maximum:
+      editor.setRange(self.minimum, self.maximum)
     editor.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
     return editor
 
