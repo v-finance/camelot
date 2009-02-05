@@ -178,7 +178,11 @@ class Image(types.TypeDecorator):
       if value:
         value = os.path.join(self.upload_to, impl_processor(value))
         if os.path.exists(value):
-          return StoredImage(PILImage.open( value ), self.upload_to, value)
+          try:
+            return StoredImage(PILImage.open( value ), self.upload_to, value)
+          except Exception, e:
+            logger.warn('Cannot open image at %s'%value, exc_info=e)
+            return None
         else:
           logger.warn('Image at %s does not exist'%value)
       
