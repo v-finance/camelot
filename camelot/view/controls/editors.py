@@ -61,7 +61,7 @@ class DateEditor(QtGui.QWidget):
     self.qdateedit.setDisplayFormat(QtCore.QString(format))
     self.hlayout = QtGui.QHBoxLayout()
     self.hlayout.addWidget(self.qdateedit)
-    
+
     if nullable:
       nullbutton = QtGui.QToolButton()
       icon = Icon('tango/16x16/places/user-trash.png').getQIcon()
@@ -71,7 +71,7 @@ class DateEditor(QtGui.QWidget):
       self.connect(nullbutton, QtCore.SIGNAL('clicked()'), self.setMinimumDate)
       self.qdateedit.setSpecialValueText('0/0/0')
       self.hlayout.addWidget(nullbutton)
-          
+
     self.hlayout.setContentsMargins(0, 0, 0, 0)
     self.hlayout.setMargin(0)
     self.hlayout.setSpacing(0)
