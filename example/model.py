@@ -88,7 +88,7 @@ class Movie(Entity):
     #
     form_actions = [('Burn DVD', lambda o: o.burn_to_disk())]
     #
-    # additional attributes for a field can be specified int the
+    # additional attributes for a field can be specified in the
     # field_attributes dictionary
     #
     field_attributes = dict(cast=dict(create_inline=True),
