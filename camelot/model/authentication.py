@@ -203,6 +203,9 @@ class Organization(Party):
   def __unicode__(self):
     return self.name
   
+  def __repr__(self):
+    return self.name
+  
   @property
   def number_of_shares_issued(self):
     return sum((shareholder.shares for shareholder in self.shareholders), 0)
@@ -256,6 +259,9 @@ class Person(Party):
       return u'%s %s'%(self.last_name, self.first_name)
     else:
       return self.username
+  
+  def __repr__(self):
+    return self.name
   
   def __unicode__(self):
     return self.name
