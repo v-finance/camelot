@@ -102,6 +102,13 @@ class ApplicationAdmin(object):
   def getOrganizationDomain(self):
     return 'conceptive.be'
   
+  def getStylesheet(self):
+    """
+    @return: the qt stylesheet to be used for this application as a string or None
+    if no stylesheet needed
+    """
+    return None
+  
   def getAbout(self):
     """@return: the content of the About dialog"""
     return """<b>Camelot Project</b>

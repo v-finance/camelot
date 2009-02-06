@@ -42,7 +42,12 @@ def main(application_admin):
   construct_model_thread(rh)
   construct_signal_handler()
   get_model_thread().start()
-
+  
+  # Set the stylesheet
+  stylesheet = application_admin.getStylesheet()
+  if stylesheet:
+    app.setStyleSheet(stylesheet)
+  
   from camelot.view.mainwindow import MainWindow
   mainwindow = MainWindow(application_admin)
   mainwindow.show()
