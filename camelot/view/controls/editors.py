@@ -351,7 +351,13 @@ class Many2OneEditor(QtGui.QWidget):
       model = CollectionProxy(self.admin,
                         create_collection_getter(self.entity_instance_getter),
                         self.admin.getFields)
-      form = self.admin.createFormView('', model, 0, workspace)
+      title = ''
+      if self.entity_instance_getter and self.entity_instance_getter().Admin:
+        entity = self.entity_instance_getter().Admin.name
+        entity_repr = str(self.entity_instance_getter())
+        title = '%s - %s' % (entity, entity_repr)
+      
+      form = self.admin.createFormView(title, model, 0, workspace)
       workspace.addSubWindow(form)
       form.show()
     
