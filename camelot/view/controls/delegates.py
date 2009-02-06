@@ -275,6 +275,13 @@ class DateTimeColumnDelegate(QtGui.QItemDelegate):
       editor.setDateTime(value)
     else:
       editor.setDateTime(editor.minimumDateTime())
+      
+  def setModelData(self, editor, model, index):
+    time_value = editor.time()
+    date_value = editor.date()
+    t = datetime.time(hour=time_value.hour(), minute=time_value.minute(), second=time_value.second(),
+                      year=date_value.year(), month=date_value.month(), day=date_value.day())
+    model.setData(index, create_constant_function(t))
     
 
 class DateColumnDelegate(QtGui.QItemDelegate):
