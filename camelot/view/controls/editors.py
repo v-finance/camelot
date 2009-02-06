@@ -355,7 +355,10 @@ class Many2OneEditor(QtGui.QWidget):
       if self.entity_instance_getter and self.entity_instance_getter().Admin:
         entity = self.entity_instance_getter().Admin.name
         entity_repr = str(self.entity_instance_getter())
-        title = '%s - %s' % (entity, entity_repr)
+        #title = '%s - %s' % (entity, entity_repr)
+        # to stay consistent with the other forms titles which do not show the
+        # entity's string repr
+        title = '%s' % entity
       
       form = self.admin.createFormView(title, model, 0, workspace)
       workspace.addSubWindow(form)
