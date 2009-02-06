@@ -68,11 +68,11 @@ the directory from which the application is launched.</p>
 us. They are used to create our entities. Let's say we want a movie entity with
 a title, a short description, a release date, and a genre.</p>
 
-<p>The small aforementioned specification translates to the following Python code,
-that we add to our <em>model.py</em> module:</p>
+<p>The small aforementioned specification translates into the following Python
+code, that we add to our <em>model.py</em> module:</p>
 
 <pre><code>class Movie(Entity):
-  using_options(tablename='movies')
+  using_options(tablename='movie')
 
   title = Field(Unicode(60), required=True)
   short_description = Field(Unicode(512))
@@ -116,7 +116,7 @@ one of the purposes of EntityAdmin subclasses. After writing the adding the
 EntityAdmin subclass our Movie class now looks like this:</p>
 
 <pre><code>class Movie(Entity):
-  using_options(tablename='movies')
+  using_options(tablename='movie')
 
   title = Field(Unicode(60), required=True)
   short_description = Field(Unicode(512))
@@ -127,6 +127,9 @@ EntityAdmin subclass our Movie class now looks like this:</p>
     name = 'Movies'
     section = 'movies'
     list_display = ['title', 'short_description', 'release_date', 'genre']
+
+  def __repr__(self):
+    return self.title or 'untitled movie'
 </code></pre>
 
 <p>We made Admin an inner class to emphasize the link between it and the Entity
@@ -144,6 +147,9 @@ does not affect forms though. </p>
 <p>In our case we want to display four fields: title, short_description,
 release_date, and genre (well, all of them.) Next is the last piece of the
 puzzle.</p>
+
+<p>Lastly, we add a <em>__repr__()</em> method that will return either the title of
+the movie entity or <em>'untitled movie'</em> if <em>title</em> is empty.</p>
 
 <h2>application_admin.py</h2>
 
@@ -237,4 +243,80 @@ fills the navigation tree with the only entity in the movies's section.
 Clicking on this tree entry opens a tabular view of records. And if we click on
 the blue folder of each record, a form appears. </p>
 
-<p>That's it for the basics of Camelot.</p>
+<p>That's it for the basics of defining an entity and setting it for display in
+Camelot. Next we look at relationships between entities.</p>
+
+<p>Relationships</p>
+
+<p>We will be using Elixir's special fields <em>ManyToOne</em> and <em>OneToMany</em> to specify
+relationships between entities. But first we need a <em>Director</em> entity to play
+with. We define it as follows:</p>
+
+<pre><code>class Director(Entity):
+  using_options(tablename='director')
+
+  name = Field(Unicode(60))
+  movies = OneToMany('Movie')
+</code></pre>
+
+<p>Once again, we name the table ourselves. The novelty here is <em>OneToMany</em>.</p>
+
+<p>In Elixir, <em>OneToMany</em> is a relationship; it takes as parameter the related
+class's name. Behind the scenes, Elixir creates a director id column in the 
+table represented by the entity <em>Movie</em> and set a foreign key constraint on
+this column.</p>
+
+<p>Elixir requires that we add an inverse relationship <em>ManyToOne</em> to our now
+familiar <em>Movie</em> entity. It ends up looking as follows:</p>
+
+<pre><code>class Movie(Entity):
+  using_options(tablename='movie')
+
+  title = Field(Unicode(60), required=True)
+  short_description = Field(Unicode(512))
+  release_date = Field(Date)
+  genre = Field(Unicode(15))
+  director = ManyToOne('Director')
+
+  class Admin(EntityAdmin):
+    name = 'Movies'
+    section = 'movies'
+    list_display = ['title',
+                    'short_description',
+                    'release_date',
+                    'genre',
+                    'director']
+
+  def __repr__(self):
+    return self.title or 'untitled movie'
+</code></pre>
+
+<p>Our <em>Director</em> entity needs an administration class, which adds the entity to
+the section <em>'movies'</em>. We also add <em>__repr__()</em> method. The entity now 
+looks as follows:</p>
+
+<pre><code>class Director(Entity):
+  using_options(tablename='director')
+
+  name = Field(Unicode(60))
+  movies = OneToMany('Movie')
+
+  class Admin(EntityAdmin):
+    name = 'Directors'
+    section = 'movies'
+    list_display = ['name']
+
+ def __repr__(self):
+   return self.name or 'unknown director'
+</code></pre>
+
+<p>Finally, we fix <em>application_admin.py</em>; the last lines of the <em>__init__()</em>
+are now:</p>
+
+<pre><code>from model import Movie, Director
+self.register(Movie, Movie.Admin)
+self.register(Director, Director.Admin)
+</code></pre>
+
+<p>This takes care of the relationship between our two entities. The changes
+should also be reflected in the GUI.</p>
