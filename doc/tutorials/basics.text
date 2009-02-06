@@ -22,17 +22,17 @@ module, _main.py_, for a moment. You use it to start your Camelot application:
 
     python videostore\main.py
 
-![Camelot application main window](images/picture1.png)
-
 The application has menus, a toolbar, a left navigation pane, and a central 
 area on which nothing is currently displayed.
+
+![Camelot application main window](images/picture1.png "Camelot running under Windows XP")
 
 The navigation pane has its first button selected. Select any other button by
 clicking on it, and see the nagivation tree fills itself with new entries.
 These are entities, and we will talk about them later (Generally speaking, an 
 entity represents a single table in a database.)
 
-![Camelot navigation pane](images/picture2.png)
+![Camelot navigation pane](images/picture2.png "Camelot's navigation pane")
 
 Short disgression on sections: Camelot uses sections to group models. Each
 button in the navigation pane represents a section, and each entry of the
@@ -45,7 +45,7 @@ The tabular window that appears in the previously empty area is maximized by
 default. Each row in the table is a record that we can edit (save those fields
 that are marked not editable.) 
 
-![Camelot table view](images/picture3.png)
+![Camelot table view](images/picture3.png "Camelot application with table view")
 
 Not all the fields appear in the table. We check this by getting a form window
 of a record. Get a form window by clicking on the blue folder icon in the first
@@ -53,8 +53,6 @@ column of each record.
  
 Forms are not maximized by default. And now there is more fields to edit.
 Camelot echoes new fields values to the database.
-
-![Camelot form view](images/picture4.png)
 
 That's all for basic usages of the interface.
 
