@@ -20,6 +20,9 @@ def main(application_admin):
   logger.debug('qt version %s, pyqt version %s' % 
                (QtCore.QT_VERSION_STR, QtCore.PYQT_VERSION_STR))
   logger.debug('qt major version %f' % QT_MAJOR_VERSION)
+  import sqlalchemy, elixir
+  logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)
+  logger.debug('elixir version %s'%elixir.__version__)
 
   app = QtGui.QApplication(sys.argv)
   app.setOrganizationName(application_admin.getOrganizationName())
