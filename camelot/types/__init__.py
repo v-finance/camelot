@@ -1,3 +1,33 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
+
+"""Custom Camelot field types that extend the SQLAlchemy field types.
+"""
+
 import os
 
 import logging
@@ -50,20 +80,24 @@ class VirtualAddress(types.TypeDecorator):
     
 
 class Code(types.TypeDecorator):
-  """Sqlalchemy column type to store codes
+  """Sqlalchemy column type to store codes.  Where a code is a list of strings
+  on which a regular expression can be enforced.
   
   This column type accepts and returns a list of strings and stores them as a
   string joined with points.
   
   eg: ['08', 'AB'] is stored as 08.AB
   
-  @param parts: a list of input masks specifying the mask for each part, eg ['99', 'AA'], for
-  valid input masks, see the docs of qlineedit
+
   """
   
   impl = types.Unicode
         
   def __init__(self, parts, **kwargs):
+    """
+    @param parts: a list of input masks specifying the mask for each part, eg ['99', 'AA'], for
+    valid input masks, see the docs of qlineedit    
+    """
     import string
     translator = string.maketrans('', '')
     self.parts = parts

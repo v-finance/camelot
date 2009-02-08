@@ -554,6 +554,7 @@ All files (*)"""
 class ImageEditor(QtGui.QWidget):
   def __init__(self, parent=None):
     QtGui.QWidget.__init__(self, parent)
+    self._modified = False
     self.image = None 
     self.layout = QtGui.QHBoxLayout()
     #
@@ -624,6 +625,12 @@ class ImageEditor(QtGui.QWidget):
         self.image = PILImage.open(fp)
         self.setPixmap(QtGui.QPixmap(self.dummy_image))
 
+  def isModified(self):
+    return self._modified
+
+  def setModified(self, modified):
+    self._modified = modified
+
   #
   # Drag & Drop
   #
@@ -668,6 +675,7 @@ class ImageEditor(QtGui.QWidget):
     if not testImage.isNull():
       fp = open(filepath, 'rb')
       self.image = PILImage.open(fp)
+      self._modified = True
       self.emit(QtCore.SIGNAL('editingFinished()'))
   
   def draw_border(self):
