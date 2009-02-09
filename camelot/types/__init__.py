@@ -181,8 +181,11 @@ class Image(types.TypeDecorator):
     self.prefix = prefix
     self.format = format
     self.max_length = max_length
-    if not os.path.exists(self.upload_to):
-      os.makedirs(self.upload_to)
+    try:
+      if not os.path.exists(self.upload_to):
+        os.makedirs(self.upload_to)
+    except Exception, e:
+      logger.warn('Could not access or create image path %s, images will be unreachable'%self.upload_to, exc_info=e)
     types.TypeDecorator.__init__(self, length=max_length, **kwargs)
     
   def bind_processor(self, dialect):
