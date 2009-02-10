@@ -67,7 +67,7 @@ class PartyRelationship(Entity):
   using_options(tablename='party_relationship')
   from_date = Field(Date(), default=datetime.date.today, required=True, index=True)
   thru_date = Field(Date(), default=end_of_times, required=True, index=True)
-  comment = Field(Text)
+  comment = Field(camelot.types.RichText())
   is_synchronized('synchronized', lazy=True)
   
 class EmployerEmployee(PartyRelationship):
@@ -248,7 +248,7 @@ class Person(Party):
   last_login = Field(DateTime(), default=datetime.datetime.now)
   date_joined = Field(DateTime(), default=datetime.datetime.now)
   picture = Field(camelot.types.Image(upload_to='person-pictures'), deferred=True)
-  comment = Field(Text)
+  comment = Field(camelot.types.RichText())
   employers = OneToMany('EmployerEmployee', inverse='established_to')
   directed_organizations = OneToMany('DirectedDirector', inverse='established_to')
   shares = OneToMany('SharedShareholder', inverse='established_to')

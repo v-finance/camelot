@@ -464,7 +464,7 @@ class One2ManyEditor(QtGui.QWidget):
                  QtCore.SIGNAL('clicked()'),
                  self.deleteSelectedRows)
     add_button = QtGui.QToolButton()
-    icon = Icon('tango/16x16/actions/document-new').getQIcon()
+    icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
     add_button.setIcon(icon)
     add_button.setAutoRaise(True)
     self.connect(add_button, QtCore.SIGNAL('clicked()'), self.newRow)

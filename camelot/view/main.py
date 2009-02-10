@@ -11,10 +11,13 @@ from camelot.view.art import Icon
 import sys
 import os
 
-def main(application_admin):
+def main(application_admin, initialization=lambda:None):
   """Main function, call this function to start the GUI interface
   @param application_admin: object of type ApplicationAdmin (as defined in application_admin.py)
-  that specifies the look of the GUI interface 
+  that specifies the look of the GUI interface
+  @param initialization: function that will be called during the appearance of the splash
+  screen, put all time consuming initialization here.  this function will be called after the
+  model thread has been started
   """
   
   logger.debug('qt version %s, pyqt version %s' % 
@@ -50,6 +53,9 @@ def main(application_admin):
   stylesheet = application_admin.getStylesheet()
   if stylesheet:
     app.setStyleSheet(stylesheet)
+  
+  # Application specific intialization instructions
+  initialization()
   
   from camelot.view.mainwindow import MainWindow
   mainwindow = MainWindow(application_admin)
