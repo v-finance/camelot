@@ -705,20 +705,24 @@ class RichTextEditor(QtGui.QWidget):
     self.layout.setMargin(0)
     self.editable = editable
 
-    #
-    # Textedit
-    #
-    
     class CustomTextEdit(QtGui.QTextEdit):
+      """A TextEdit editor that sends editingFinished events when the text was changed
+      and focus is lost"""
+      
       def __init__(self, parent):
         super(CustomTextEdit, self).__init__(parent)
+        self._changed = False
+        self.connect(self, QtCore.SIGNAL('textChanged()'), self.textChanged)
 
       def focusOutEvent(self, event):
         # this seems to cause weird behaviour,
         # where editingFinished is fired, even
         # if nothing has been edited yet
-        #self.emit(QtCore.SIGNAL('editingFinished()'))
-        pass
+        if self._changed:
+          self.emit(QtCore.SIGNAL('editingFinished()'))
+        
+      def textChanged(self):
+        self._changed = True
         
     self.textedit = CustomTextEdit(self)
     
@@ -867,7 +871,6 @@ class RichTextEditor(QtGui.QWidget):
       self.connect(self.textedit, QtCore.SIGNAL('cursorPositionChanged ()'), self.update_text)
     
   def editingFinished(self):
-    print 'rich text editing finished'
     self.emit(QtCore.SIGNAL('editingFinished()'))
     
   #

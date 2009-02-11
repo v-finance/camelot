@@ -110,8 +110,10 @@ def RowDataAsUnicode(obj, columns):
     elif isinstance(field_data, datetime.date):
       if field_data.year >= 1900:
         row_data.append( field_data.strftime('%d/%m/%Y') )
-    else:
+    elif field_data!=None:
       row_data.append(unicode(field_data))
+    else:
+      row_data.append('')
   
   return row_data
 
