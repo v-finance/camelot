@@ -32,8 +32,7 @@ from PyQt4.QtCore import Qt
 import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
-from collection_proxy import CollectionProxy
-from collection_proxy import RowDataAsUnicode
+from collection_proxy import CollectionProxy, RowDataAsUnicode, RowDataFromObject
 from collection_proxy import RowDataFromObject
 from camelot.view.model_thread import model_function
 
@@ -101,7 +100,7 @@ class QueryTableProxy(CollectionProxy):
     for i, o in enumerate(q.all()):
       row_data = RowDataFromObject(o, columns)
       self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
-      self.cache[Qt.DisplayRole].add_data(i+offset, o, RowDataAsUnicode(row_data))
+      self.cache[Qt.DisplayRole].add_data(i+offset, o, RowDataAsUnicode(o, columns))
     rows_in_query = (self.rows - len(self._appended_rows))
     # Verify if rows that have not yet been flushed have been requested
     if offset+limit>=rows_in_query:
@@ -109,7 +108,7 @@ class QueryTableProxy(CollectionProxy):
         o = self._get_object(row)
         row_data = RowDataFromObject(o, columns)
         self.cache[Qt.EditRole].add_data(row, o, row_data)
-        self.cache[Qt.DisplayRole].add_data(row, o, RowDataAsUnicode(row_data))
+        self.cache[Qt.DisplayRole].add_data(row, o, RowDataAsUnicode(o, columns))
     return (offset, limit)
         
   @model_function

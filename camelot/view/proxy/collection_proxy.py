@@ -87,30 +87,39 @@ def RowDataFromObject(obj, columns):
       row_data.append(getattr(obj, col[0]))
   return row_data
   
-def RowDataAsUnicode(row_data):
-  def unicode_or_none(data):
-    if data:
-      if isinstance(data, list):
-        return '.'.join(data)
-      elif isinstance(data, datetime.datetime):
-        # datetime should come before date since datetime is a subtype of date
-        if data.year >= 1900:
-          return data.strftime('%d/%m/%Y %H:%M')       
-      elif isinstance(data, datetime.date):
-        if data.year >= 1900:
-          return data.strftime('%d/%m/%Y')
-      return unicode(data)
-    return data
+@model_function
+def RowDataAsUnicode(obj, columns):
+  """Extract for each field in the row data a 'visible' form of 
+  data"""
   
-  return [unicode_or_none(col) for col in row_data]
-
+  row_data = []
+  
+  for i,(field_name,field_attriubtes) in enumerate(columns):
+    field_data = getattr(obj, field_name)
+    if 'choices' in field_attriubtes:
+      for key,value in field_attriubtes['choices'](obj):
+        if key==field_data:
+          row_data.append(value)
+          continue
+    if isinstance(field_data, list):
+      row_data.append(unicode(len(field_data)))
+    elif isinstance(field_data, datetime.datetime):
+      # datetime should come before date since datetime is a subtype of date
+      if field_data.year >= 1900:
+        row_data.append( field_data.strftime('%d/%m/%Y %H:%M') )   
+    elif isinstance(field_data, datetime.date):
+      if field_data.year >= 1900:
+        row_data.append( field_data.strftime('%d/%m/%Y') )
+    else:
+      row_data.append(unicode(field_data))
+  
+  return row_data
 
 class EmptyRowData(object):
   def __getitem__(self, column):
     return None
   
 empty_row_data = EmptyRowData()
-
 
 class CollectionProxy(QtCore.QAbstractTableModel):
   """The CollectionProxy contains a limited copy of the data in the actual
@@ -269,12 +278,14 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     return self.item_delegate 
     
   def getColumns(self):
+    """@return: the columns as set by the setColumns method"""
     return self._columns
   
   def setColumns(self, columns):
     """Callback method to set the columns
 
-    @param columns a list with fields to be displayed
+    @param columns a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
+    returned by the getColumns method of the ElixirAdmin class
     """
 
     self.column_count = len(columns)
@@ -496,7 +507,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             # update the cache
             row_data = RowDataFromObject(o, self.getColumns())
             self.cache[Qt.EditRole].add_data(row, o, row_data)
-            self.cache[Qt.DisplayRole].add_data(row, o, RowDataAsUnicode(row_data))
+            self.cache[Qt.DisplayRole].add_data(row, o, RowDataAsUnicode(o, self.getColumns()))
             if self.flush_changes and self.validator.isValid(row):
               # save the state before the update
               elixir.session.flush([o])
@@ -552,7 +563,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     for i,o in enumerate(self.collection_getter()[offset:offset+limit+1]):
       row_data = RowDataFromObject(o, columns)
       self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
-      self.cache[Qt.DisplayRole].add_data(i+offset, o, RowDataAsUnicode(row_data))
+      self.cache[Qt.DisplayRole].add_data(i+offset, o, RowDataAsUnicode(o, columns))
     return (offset, limit)
         
   @model_function

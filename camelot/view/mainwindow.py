@@ -578,7 +578,6 @@ class MainWindow(QtGui.QMainWindow):
                                     self.exportToWordAct,
                                     self.exportToMailAct,))
     
-    
     if self.app_actions:
       self.applicationToolBar = self.addToolBar(_('Application'))
       self.applicationToolBar.setObjectName('ApplicationToolBar')
