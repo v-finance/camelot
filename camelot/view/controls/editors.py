@@ -977,4 +977,7 @@ class RichTextEditor(QtGui.QWidget):
     self.update_color()
    
   def toHtml(self):
-    return self.textedit.toHtml() 
+    from xml.dom import minidom
+    tree = minidom.parseString(self.textedit.toHtml())
+    return u''.join([node.toxml() for node in tree.getElementsByTagName('html')[0].getElementsByTagName('body')[0].childNodes])
+  
