@@ -158,6 +158,7 @@ class EntityAdmin(object):
   
       def get_entity_admin(target):
         try:
+          target = self.field_attributes[field_name].get('target', target)
           admin_class = self.field_attributes[field_name]['admin']
           return admin_class(self.app_admin, target)
         except KeyError:
