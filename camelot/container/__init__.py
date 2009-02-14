@@ -65,6 +65,9 @@ class Interval(object):
     self.end = end
     self.name = name
     self.color = color
+    
+  def __unicode__(self):
+    return u'[%s,%s]'%(self.begin, self.end)
 
 class IntervalsContainer(Container):
   """Containter to hold interval data
@@ -84,3 +87,6 @@ class IntervalsContainer(Container):
     self.min = min
     self.max = max
     self.intervals = intervals
+
+  def __unicode__(self):
+    return u', '.join(unicode(i) for i in self.intervals)

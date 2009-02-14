@@ -233,7 +233,41 @@ class TextEditColumnDelegate(QtGui.QItemDelegate):
 
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(unicode(editor.toPlainText())))
+
+class IntervalsColumnDelegate(QtGui.QItemDelegate):
+  """Custom delegate for visualizing camelot.container.IntervalsContainer
+  data"""
+
+  def __init__(self, parent=None, **kwargs):
+    super(IntervalsColumnDelegate, self).__init__(parent)
     
+  def paint(self, painter, option, index):
+    painter.save()
+    self.drawBackground(painter, option, index)
+    intervals = index.model().data(index, Qt.EditRole).toPyObject()
+    if intervals:
+      rect = option.rect
+      xscale = float(rect.width())/(intervals.max-intervals.min)
+      xoffset = intervals.min * xscale + rect.x()
+      yoffset = rect.y() + rect.height()/2
+      for interval in intervals.intervals:
+        qcolor = QtGui.QColor()
+        qcolor.setRgb(*interval.color)
+        pen = QtGui.QPen(qcolor)
+        pen.setWidth(3)
+        painter.setPen(pen)
+        painter.drawLine(xoffset + interval.begin*xscale, yoffset, xoffset + interval.end*xscale, yoffset)
+    painter.restore()
+      
+  def createEditor(self, parent, option, index):
+    pass
+    
+  def setEditorData(self, editor, index):
+    pass
+
+  def setModelData(self, editor, model, index):
+    pass
+
 class ColorColumnDelegate(QtGui.QItemDelegate):
 
   def __init__(self, parent=None, **kwargs):
