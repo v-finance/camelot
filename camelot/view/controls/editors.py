@@ -696,6 +696,43 @@ class ImageEditor(QtGui.QWidget):
     self.draw_border()
 
 
+class ColorEditor(QtGui.QWidget):
+  
+  def __init__(self, parent=None, **kwargs):
+    QtGui.QWidget.__init__(self, parent)
+    layout = QtGui.QVBoxLayout(self)
+    layout.setSpacing(0)
+    layout.setMargin(0)
+    self.color_button = QtGui.QPushButton(parent)
+    self.color_button.setMaximumSize(QtCore.QSize(20, 20))
+    layout.addWidget(self.color_button)
+    self.connect(self.color_button,
+                 QtCore.SIGNAL('clicked(bool)'),
+                 self.buttonClicked)
+    self.setLayout(layout)
+    self._color = None
+
+  def getColor(self):
+    return self._color
+  
+  def setColor(self, color):
+    pixmap = QtGui.QPixmap(16, 16)
+    if color:
+      pixmap.fill(color)
+    else:
+      pixmap.fill(Qt.transparent)
+    self.color_button.setIcon(QtGui.QIcon(pixmap))
+    self._color = color
+     
+  def buttonClicked(self, raised):
+    if self._color:
+      color = QtGui.QColorDialog.getColor(self._color)
+    else:
+      color = QtGui.QColorDialog.getColor()
+    if color.isValid() and color!=self._color:
+      self.setColor(color)
+      self.emit(QtCore.SIGNAL('editingFinished()'))
+    
 class RichTextEditor(QtGui.QWidget):
   def __init__(self, parent=None, editable=True, **kwargs):
     QtGui.QWidget.__init__(self, parent)

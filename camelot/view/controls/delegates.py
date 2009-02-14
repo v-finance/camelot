@@ -187,7 +187,7 @@ class SliderDelegate(IntegerColumnDelegate):
 class PlainTextColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for simple string values"""
 
-  def __init__(self, maxlength=None, parent=None):
+  def __init__(self, maxlength=None, parent=None, **kwargs):
     super(PlainTextColumnDelegate, self).__init__(parent)
     self.maxlength = maxlength
 
@@ -215,6 +215,7 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
 
 _registered_delegates_[QtGui.QLineEdit] = PlainTextColumnDelegate
 
+
 class TextEditColumnDelegate(QtGui.QItemDelegate):
   """Edit plain text with a QTextEdit widget"""
   
@@ -233,6 +234,48 @@ class TextEditColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(unicode(editor.toPlainText())))
     
+class ColorColumnDelegate(QtGui.QItemDelegate):
+
+  def __init__(self, parent=None, **kwargs):
+    super(ColorColumnDelegate, self).__init__(parent)
+    
+  def paint(self, painter, option, index):
+    painter.save()
+    self.drawBackground(painter, option, index)
+    color = index.model().data(index, Qt.EditRole).toPyObject()  
+    if color:
+      pixmap = QtGui.QPixmap(16, 16)
+      qcolor = QtGui.QColor()
+      qcolor.setRgb(*color)
+      pixmap.fill(qcolor)
+      QtGui.QApplication.style().drawItemPixmap(painter, option.rect, Qt.AlignVCenter, pixmap)
+    painter.restore()
+      
+  def createEditor(self, parent, option, index):
+    editor = editors.ColorEditor(parent)
+    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
+    return editor
+
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    
+  def setEditorData(self, editor, index):
+    value = index.model().data(index, Qt.EditRole).toPyObject()
+    if value:
+      color = QtGui.QColor()
+      color.setRgb(*value)
+      editor.setColor(color)
+    else:
+      editor.setColor(value)
+
+  def setModelData(self, editor, model, index):
+    color = editor.getColor()
+    if color:
+      model.setData(index, create_constant_function((color.red(), color.green(), color.blue(), color.alpha())))
+    else:
+      model.setData(index, create_constant_function(None))
+
 class TimeColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, format, default, nullable, parent=None):
     super(TimeColumnDelegate, self).__init__(parent)
@@ -576,7 +619,6 @@ class RichTextColumnDelegate(QtGui.QItemDelegate):
   def commitAndCloseEditor(self):
     editor = self.sender()
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
-    #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
     
   def setEditorData(self, editor, index):
     html = index.model().data(index, Qt.EditRole).toString()

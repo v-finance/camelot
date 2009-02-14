@@ -164,7 +164,51 @@ class StoredImage(object):
     import os
     return os.path.join(self.location, self.filename)
     
+class Color(types.TypeDecorator):
+  """Sqlalchemy column type to store colors.
+  
+  The Color field returns and accepts tuples of the form (r,g,b,a) where
+  r,g,b,a are integers between 0 and 255
+  
+  The colors are stored in the database as strings of the form AARRGGBB,
+  where AA is the transparency, RR is red, GG is green BB is blue.
+  """
+  
+  impl = types.Unicode
+  
+  def __init__(self):
+    types.TypeDecorator.__init__(self, length=8)
     
+  def bind_processor(self, dialect):
+
+    impl_processor = self.impl.bind_processor(dialect)
+    if not impl_processor:
+      impl_processor = lambda x:x
+    
+    def processor(value):
+      if value is not None:
+        assert len(value) == 4
+        for i in range(4):
+          assert value[i] >= 0
+          assert value[i] <= 255
+        return '%02X%02X%02X%02X'%(value[3], value[0], value[1], value[2])
+      return impl_processor(value)
+    
+    return processor
+  
+  def result_processor(self, dialect):
+    
+    impl_processor = self.impl.result_processor(dialect)
+    if not impl_processor:
+      impl_processor = lambda x:x
+      
+    def processor(value):
+
+      if value:
+        return (int(value[2:4],16), int(value[4:6],16), int(value[6:8],16), int(value[0:2],16))
+      
+    return processor
+  
 class Image(types.TypeDecorator):
   """Sqlalchemy column type to store images
   

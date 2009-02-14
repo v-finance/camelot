@@ -33,6 +33,7 @@ import datetime
 
 from PyQt4 import QtGui
 from controls.editors import *
+from controls.delegates import *
 
 _sqlalchemy_to_python_type_ = {
                                
@@ -108,6 +109,11 @@ _sqlalchemy_to_python_type_ = {
                                     'editable':True,
                                     'widget':'richtext',
                                    },
+                                   
+  camelot.types.Color: lambda f:{'delegate':ColorColumnDelegate,
+                                 'python_type':str,
+                                 'editable':True,
+                                 'widget':'color'},
                                                                            
   sqlalchemy.types.Time : lambda f: {'python_type':datetime.time,
                                      'editable':True,
@@ -121,5 +127,6 @@ _sqlalchemy_to_python_type_ = {
                                          'format':'dd-MM-yyyy hh:mm',
                                          'nullable':True,
                                          'widget':'datetime'},
+                                         
   
 }
