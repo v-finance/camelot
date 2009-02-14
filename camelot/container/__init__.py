@@ -45,13 +45,42 @@ class MyEntity(Entity):
 
   @property
   def my_interval(self):
-    return IntervalContainer(...) 
+    return IntervalsContainer() 
 
   class Admin(EntityAdmin):
     form_display = ['my_interval']
-    field_attributes = dict(my_interval=dict(delegate=IntervalDelegate))
+    field_attributes = dict(my_interval=dict(delegate=IntervalsDelegate))
     
 """
 
-class IntervalContainer(object):
+class Container(object):
+  """Top level class for all container classes"""
   pass
+
+class Interval(object):
+  """Helper class for IntervalsContainer, specifications for one interval"""
+  
+  def __init__(self, begin, end, name, color):
+    self.begin = begin
+    self.end = end
+    self.name = name
+    self.color = color
+
+class IntervalsContainer(Container):
+  """Containter to hold interval data
+  
+  eg : representing the time frame of 8pm till 6am that someone was at work using an hourly
+  precision :
+  
+  intervals = IntervalsContainer(0, 24, [Interval(8, 18, 'work)])
+  """
+  
+  def __init__(self, min, max, intervals):
+    """
+    @param min: minimum value that the begin value of an interval is allowed to have
+    @param max: maximum ...
+    @param intervals: list of Interval classes   
+    """
+    self.min = min
+    self.max = max
+    self.intervals = intervals
