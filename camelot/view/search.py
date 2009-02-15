@@ -51,7 +51,9 @@ def create_entity_search_query_decorator(admin, text):
         search_tables.append(entity.table)
     for table in search_tables:
       for c in table._columns:
-        if issubclass(c.type.__class__, camelot.types.Code):
+        if issubclass(c.type.__class__, camelot.types.Color):
+          pass
+        elif issubclass(c.type.__class__, camelot.types.Code):
           codes = text.split('.')
           args.append(c.like(['%'] + codes + ['%']))
           args.append(c.like(['%'] + codes))
