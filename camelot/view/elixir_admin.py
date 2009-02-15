@@ -49,6 +49,7 @@ logger = logging.getLogger('camelot.view.elixir_admin')
 import datetime
 
 import sqlalchemy.types
+import sqlalchemy.sql.expression
 import camelot.types
 from model_thread import gui_function
 from model_thread import model_function
@@ -170,8 +171,9 @@ class EntityAdmin(object):
           type = property.columns[0].type
           python_type = _sqlalchemy_to_python_type_.get(type.__class__, default)
           attributes = python_type(type)
-          attributes['nullable'] = property.columns[0].nullable 
-          attributes['default'] = property.columns[0].default
+          if not isinstance(property.columns[0], sqlalchemy.sql.expression._Label):
+            attributes['nullable'] = property.columns[0].nullable 
+            attributes['default'] = property.columns[0].default
         elif isinstance(property, orm.properties.PropertyLoader):
           target = property._get_target_class()
           foreign_keys = property.foreign_keys
