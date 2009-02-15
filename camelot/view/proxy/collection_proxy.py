@@ -430,8 +430,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         if isinstance(value, datetime.datetime):
           # Putting a python datetime into a QVariant and returning it to a PyObject seems
           # to be buggy, therefor we convert it here to a QDateTime 
-          value = QtCore.QDateTime(value.year, value.month, value.day, 
-                                   value.minute, value.second, value.microsecond)
+          date = QtCore.QDate(value.year, value.month, value.day)
+          time = QtCore.QTime(value.hour, value.minute, value.second, value.microsecond )
+          value = QtCore.QDateTime(date, time)
       except KeyError:
         logger.error('Programming error, could not find data of column %s in %s'%(index.column(), str(data)))
         value = None
