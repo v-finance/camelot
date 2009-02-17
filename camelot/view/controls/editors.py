@@ -749,17 +749,21 @@ class RichTextEditor(QtGui.QWidget):
       def __init__(self, parent):
         super(CustomTextEdit, self).__init__(parent)
         self._changed = False
-        self.connect(self, QtCore.SIGNAL('textChanged()'), self.textChanged)
+        self.connect(self, QtCore.SIGNAL('textChanged()'), self.setTextChanged)
 
       def focusOutEvent(self, event):
-        # this seems to cause weird behaviour,
-        # where editingFinished is fired, even
-        # if nothing has been edited yet
         if self._changed:
           self.emit(QtCore.SIGNAL('editingFinished()'))
-        
+    
       def textChanged(self):
-        self._changed = True
+        return self._changed
+      
+      def setTextChanged(self, state=True):
+        self._changed = state
+        
+      def setHtml(self, html):
+        QtGui.QTextEdit.setHtml(self, html)
+        self._changed = False
         
     self.textedit = CustomTextEdit(self)
     
@@ -906,9 +910,10 @@ class RichTextEditor(QtGui.QWidget):
     if self.editable:
       self.connect(self.textedit, QtCore.SIGNAL('currentCharFormatChanged (const QTextCharFormat&)'), self.update_format)
       self.connect(self.textedit, QtCore.SIGNAL('cursorPositionChanged ()'), self.update_text)
-    
+          
   def editingFinished(self):
-    self.emit(QtCore.SIGNAL('editingFinished()'))
+    if self.textedit.textChanged():
+      self.emit(QtCore.SIGNAL('editingFinished()'))
     
   #
   # Button methods
@@ -1009,9 +1014,10 @@ class RichTextEditor(QtGui.QWidget):
     self.textedit.clear()
 
   def setHtml(self, html):
-    self.update_alignment()
-    self.textedit.setHtml(html)
-    self.update_color()
+    if self.toHtml()!=html:
+      self.update_alignment()
+      self.textedit.setHtml(html)
+      self.update_color()
    
   def toHtml(self):
     from xml.dom import minidom
