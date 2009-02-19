@@ -141,7 +141,10 @@ class MainWindow(QtGui.QMainWindow):
     
     def exception_in_action(e):
       progress.close()
-      QtGui.QMessageBox.warning(self, 'Error while %s'%name, str(e))
+      msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning, self.app_admin.getName(), 'Error during %s'%name)
+      msgBox.setInformativeText(str(e))
+      msgBox.setDetailedText(mt.traceback())
+      msgBox.exec_();
       
     mt.post(callable, lambda *args:progress.close(), exception_in_action)
     
