@@ -53,7 +53,7 @@ class QueryTable(QtGui.QTableView):
     self.horizontalHeader().setClickable(False)
 
 
-class TableView(QtGui.QWidget):
+class TableView(QtGui.QSplitter):
   """emits the row_selected signal when a row has been selected"""
   
   def __init__(self, admin, search_text=None, parent=None):
@@ -61,28 +61,28 @@ class TableView(QtGui.QWidget):
     from inheritance import SubclassTree
     QtGui.QWidget.__init__(self, parent)
     self.setWindowTitle(admin.getName())
-    self.widget_layout = QtGui.QHBoxLayout()
-    self.widget_layout.setSpacing(0)
-    self.widget_layout.setMargin(0)
+    widget_layout = QtGui.QHBoxLayout()
+    table_widget = QtGui.QWidget(self)
     self.table_layout = QtGui.QVBoxLayout()
     self.table_layout.setSpacing(0)
     self.table_layout.setMargin(0)
-    self.search_control = SimpleSearchControl()
+    search_control = SimpleSearchControl()
     self.table = None
     self.filters = None
     self.admin = admin
     self.table_model = None
-    self.table_layout.insertWidget(0, self.search_control)
+    self.table_layout.insertWidget(0, search_control)
+    table_widget.setLayout(self.table_layout)
     self.setSubclass(admin)
     self.class_tree = SubclassTree(admin, self)
-    self.widget_layout.insertWidget(0, self.class_tree)
-    self.widget_layout.insertLayout(1, self.table_layout)
+    self.insertWidget(0, self.class_tree)
+    self.insertWidget(1, table_widget)
+    self.setLayout(widget_layout)
     self.closeAfterValidation = QtCore.SIGNAL('closeAfterValidation()')
-    self.connect(self.search_control, SIGNAL('search'), self.startSearch)
-    self.connect(self.search_control, SIGNAL('cancel'), self.cancelSearch)
+    self.connect(search_control, SIGNAL('search'), self.startSearch)
+    self.connect(search_control, SIGNAL('cancel'), self.cancelSearch)
     self.connect(self.class_tree, SIGNAL('subclasssClicked'), self.setSubclass)
     self.search_filter = lambda q: q
-    self.setLayout(self.widget_layout)
     self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
     if search_text:
       self.search_control.search(search_text)
@@ -295,7 +295,7 @@ class TableView(QtGui.QWidget):
       self.filters = None
     if items:
       self.filters = FilterList(items, self)
-      self.widget_layout.insertWidget(2, self.filters)
+      self.insertWidget(2, self.filters)
       self.connect(self.filters, SIGNAL('filters_changed'), self.rebuildQuery)
 
   def toHtml(self):
@@ -317,9 +317,7 @@ class TableView(QtGui.QWidget):
     """reimplements close event"""
     logger.debug('tableview closed')
     # remove all references we hold, to enable proper garbage collection
-    del self.widget_layout
     del self.table_layout
-    del self.search_control
     del self.table
     del self.filters
     del self.class_tree

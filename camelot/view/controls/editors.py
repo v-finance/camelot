@@ -237,7 +237,7 @@ class Many2OneEditor(QtGui.QWidget):
     def columnCount(self, index=None):
       return 1
       
-  def __init__(self, entity_admin=None, parent=None):
+  def __init__(self, entity_admin=None, parent=None, **kwargs):
     super(Many2OneEditor, self).__init__(parent)
     self.admin = entity_admin
     self.entity_instance_getter = None
@@ -288,6 +288,7 @@ class Many2OneEditor(QtGui.QWidget):
     self.setAutoFillBackground(True);
     
   def textEdited(self, text):
+    
     def create_search_completion(text):
       return lambda: self.search_completions(text)
     

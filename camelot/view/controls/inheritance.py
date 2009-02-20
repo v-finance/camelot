@@ -82,6 +82,7 @@ class SubclassTree(ModelTree):
         item = SubclassItem(top_level_item, cls)
         self.modelitems.append(item)
       top_level_item.setExpanded(True)
+      self.setMaximumWidth(self.fontMetrics().width(' ')*80)
     else:
       self.setMaximumWidth(0)
 
