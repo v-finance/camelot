@@ -492,6 +492,9 @@ class One2ManyEditor(QtGui.QWidget):
         #hheader = self.table.horizontalHeader() 
         #hheader.setResizeMode(QtGui.QHeaderView.Interactive)
         #hheader.setStretchLastSection(True)
+        # make sure the header data fits into the header
+        for i in range(self.model.columnCount()):
+          self.table.setColumnWidth(i, max(self.model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize().width(), self.table.columnWidth(i)))
         # resize the columns if there is data in the rows
         if self.model.rowCount() > 1:
           self.table.resizeColumnsToContents()

@@ -385,31 +385,26 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     """In case the columns have not been set yet, don't even try to get
     information out of them
     """
-    if (orientation == Qt.Horizontal) and (section >= self.column_count):
-      return QtCore.QAbstractTableModel.headerData(self, section,
-                                                   orientation, role)
-    if role == Qt.DisplayRole:
-      if orientation == Qt.Horizontal:
-        return QtCore.QVariant(self._columns[section][1]['name'])
-      elif orientation == Qt.Vertical:
-        #return QtCore.QVariant(int(section+1))
-        # we don't want anything to be displayed
-        return QtCore.QVariant()
-    if role == Qt.FontRole:
-      if orientation == Qt.Horizontal:
+    if orientation == Qt.Horizontal:
+      if section >= self.column_count:
+        return QtCore.QAbstractTableModel.headerData(self, section, orientation, role)
+      c = self.getColumns()[section]
+      if role == Qt.DisplayRole:
+        return QtCore.QVariant(c[1]['name'])
+      elif role == Qt.FontRole:
         font = QtGui.QApplication.font()
-        if ('nullable' in self._columns[section][1]) and \
-           (self._columns[section][1]['nullable']==False):
+        if ('nullable' in c[1]) and \
+           (c[1]['nullable']==False):
           font.setBold(True)
           return QtCore.QVariant(font)
         else:
           font.setBold(False)
           return QtCore.QVariant(font)
-    #if role == Qt.SizeHintRole:
-    #  label = QtGui.QLabel(self._columns[section][1]['name'])
-    #  return QtCore.QVariant(label.sizeHint())
-    if role == Qt.DecorationRole:
-      if orientation == Qt.Vertical:
+      elif role == Qt.SizeHintRole:
+        label_size = QtGui.QFontMetrics(QtGui.QApplication.font()).size(Qt.TextSingleLine, c[1]['name']+' ')
+        return QtCore.QVariant(QtCore.QSize(label_size.width()+10, label_size.height()+10))
+    else:
+      if role == Qt.DecorationRole:
         return self.form_icon 
     return QtCore.QAbstractTableModel.headerData(self, section, orientation, role)
   
@@ -440,24 +435,26 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     elif role == Qt.SizeHintRole:
       c = self.getColumns()[index.column()] 
       type_ = c[1]['python_type'] 
-      widget_ = c[1]['widget'] 
+      widget_ = c[1]['widget']
+      label_size = QtGui.QFontMetrics(QtGui.QApplication.font()).width(c[1]['name']+' ')
+      size_hint = 0
       if type_ == datetime.date:
         from camelot.view.controls.editors import DateEditor
         editor = DateEditor()
-        return QtCore.QVariant(editor.sizeHint())
+        size_hint = editor.sizeHint()
       elif widget_ == 'one2many':
         from camelot.view.controls.editors import One2ManyEditor
         entity_name = c[0] 
         entity_admin = c[1]['admin']
         editor = One2ManyEditor(entity_admin, entity_name)
-        sh = editor.sizeHint()
-        return QtCore.QVariant(sh)
+        size_hint = editor.sizeHint()
       elif widget_ == 'many2one':
         from camelot.view.controls.editors import Many2OneEditor
         entity_admin = c[1]['admin']
         editor = Many2OneEditor(entity_admin)
-        sh = editor.sizeHint()
-        return QtCore.QVariant(sh)
+        size_hint = editor.sizeHint()
+      print 'data size hint', c[1]['name'], label_size
+      return QtCore.QVariant(size_hint)
     elif role == Qt.ForegroundRole:
       pass
     elif role == Qt.BackgroundRole:

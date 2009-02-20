@@ -34,6 +34,7 @@ logger = logging.getLogger('camelot.view.controls.tableview')
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QSizePolicy
 from PyQt4.QtCore import SIGNAL
+from PyQt4.QtCore import Qt
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
 import settings
@@ -189,6 +190,9 @@ class TableView(QtGui.QSplitter):
   def resizeColumnsAndRebuildQuery(self):
     """resizes table of columns"""
     logger.debug('resizeColumnsAndRebuildQuery')
+    # make sure the header data fits in the header
+    for i in range(self.table_model.columnCount()):
+      self.table.setColumnWidth(i, max(self.table_model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize().width(), self.table.columnWidth(i)))
     # only if there is data in the model, we can resize the columns and
     # a query rebuild is needed
     if self.table_model.rowCount() > 1:
