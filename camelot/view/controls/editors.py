@@ -210,9 +210,6 @@ class EmbeddedMany2OneEditor(QtGui.QWidget):
 
 class Many2OneEditor(QtGui.QWidget):
   """Widget for editing many 2 one relations
-
-  @param entity_admin : The Admin interface for the object on the one side of
-  the relation
   """
   
   class CompletionsModel(QtCore.QAbstractListModel):
@@ -238,6 +235,8 @@ class Many2OneEditor(QtGui.QWidget):
       return 1
       
   def __init__(self, entity_admin=None, parent=None, **kwargs):
+    """@param entity_admin : The Admin interface for the object on the one side of
+       the relation"""    
     super(Many2OneEditor, self).__init__(parent)
     self.admin = entity_admin
     self.entity_instance_getter = None
@@ -249,6 +248,7 @@ class Many2OneEditor(QtGui.QWidget):
 
     # Search button
     self.search_button = QtGui.QToolButton()
+    self.search_button.setFocusPolicy(Qt.ClickFocus)
     icon = Icon('tango/16x16/places/user-trash.png').getQIcon()
     self.search_button.setIcon(icon)
     self.search_button.setAutoRaise(True)
@@ -258,6 +258,7 @@ class Many2OneEditor(QtGui.QWidget):
 
     # Open button
     self.open_button = QtGui.QToolButton()
+    self.open_button.setFocusPolicy(Qt.ClickFocus)
     icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
     self.open_button.setIcon(icon)
     self.connect(self.open_button,
@@ -267,6 +268,7 @@ class Many2OneEditor(QtGui.QWidget):
 
     # Search input
     self.search_input = QtGui.QLineEdit()
+    self.setFocusProxy(self.search_input)
     #self.search_input.setReadOnly(True)
     #self.connect(self.search_input, QtCore.SIGNAL('returnPressed()'), self.returnPressed)
     self.connect(self.search_input, QtCore.SIGNAL('textEdited(const QString&)'), self.textEdited)
