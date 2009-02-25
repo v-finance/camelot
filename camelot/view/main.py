@@ -1,15 +1,4 @@
 """Main function, to be called to start the GUI interface"""
-import logging
-logger = logging.getLogger('camelot.view.main')
-import settings
-
-from PyQt4 import QtCore
-from PyQt4 import QtGui
-QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
-from camelot.view.art import Icon
-
-import sys
-import os
 
 def main(application_admin, initialization=lambda:None):
   """Main function, call this function to start the GUI interface
@@ -19,23 +8,42 @@ def main(application_admin, initialization=lambda:None):
   screen, put all time consuming initialization here.  this function will be called after the
   model thread has been started
   """
+  # before anything else happens or is imported, the splash screen should be there
+  import sys
+  from PyQt4 import QtGui
+  app = QtGui.QApplication(sys.argv)
+  splash = QtGui.QSplashScreen(application_admin.getSplashscreen())
+  splash.show()
   
+  # regulary call processEvents to keep the splash alive
+  app.processEvents()
+    
+  import logging
+  logger = logging.getLogger('camelot.view.main')
+  import settings
+  from PyQt4 import QtCore
+
+  QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])) 
   logger.debug('qt version %s, pyqt version %s' % 
                (QtCore.QT_VERSION_STR, QtCore.PYQT_VERSION_STR))
   logger.debug('qt major version %f' % QT_MAJOR_VERSION)
+
+  # regulary call processEvents to keep the splash alive
+  app.processEvents()
+  
   import sqlalchemy, elixir
   logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)
   logger.debug('elixir version %s'%elixir.__version__)
 
-  app = QtGui.QApplication(sys.argv)
+  # regulary call processEvents to keep the splash alive
+  app.processEvents()
+    
   app.setOrganizationName(application_admin.getOrganizationName())
   app.setOrganizationDomain(application_admin.getOrganizationDomain())
   app.setApplicationName(application_admin.getName())
   app.setWindowIcon(application_admin.getIcon())
 
-  logger.debug('loading splashscreen')
-  splash = QtGui.QSplashScreen(application_admin.getSplashscreen())
-  splash.show()
+  # regulary call processEvents to keep the splash alive
   app.processEvents()
   #
   # Start the model thread
@@ -54,9 +62,15 @@ def main(application_admin, initialization=lambda:None):
   if stylesheet:
     app.setStyleSheet(stylesheet)
   
+  # regulary call processEvents to keep the splash alive
+  app.processEvents()
+  
   # Application specific intialization instructions
   initialization()
-  
+
+  # regulary call processEvents to keep the splash alive
+  app.processEvents()
+    
   from camelot.view.mainwindow import MainWindow
   mainwindow = MainWindow(application_admin)
   mainwindow.show()

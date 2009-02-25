@@ -70,6 +70,7 @@ class EntityAdmin(object):
   list_filter = []
   list_charts = []
   list_actions = []
+  list_search = []
   list_size = (700, 500)
   form_size = (700, 500)
   form_actions = []
