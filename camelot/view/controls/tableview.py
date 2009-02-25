@@ -111,14 +111,14 @@ class TableView(QtGui.QSplitter):
                  self.sectionClicked)     
     self.table_layout.insertWidget(1, self.table)
 
-    def update_delegates(*args):
+    def update_delegates_and_column_width(*args):
       """update item delegate"""
       self.table.setItemDelegate(self.table_model.getItemDelegate())
+      for i in range(self.table_model.columnCount()):
+        self.table.setColumnWidth(i, max(self.table_model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize().width(), self.table.columnWidth(i)))
+      
 
-    admin.mt.post(lambda: None, update_delegates)
-    # Once those are loaded, rebuild the query to get the actual number of rows
-    admin.mt.post(lambda: self.table_model._extend_cache(0, 10),
-                  lambda x: self.resizeColumnsAndRebuildQuery())
+    admin.mt.post(lambda: None, update_delegates_and_column_width)
     admin.mt.post(lambda: admin.getFilters(),
                   lambda items: self.setFilters(items))
     admin.mt.post(lambda: admin.getListCharts(),
@@ -186,23 +186,6 @@ class TableView(QtGui.QSplitter):
         self.table_layout.addWidget(sc)
 
       self.admin.mt.post(getData, setData)
-
-  def resizeColumnsAndRebuildQuery(self):
-    """resizes table of columns"""
-    logger.debug('resizeColumnsAndRebuildQuery')
-    # make sure the header data fits in the header
-    for i in range(self.table_model.columnCount()):
-      self.table.setColumnWidth(i, max(self.table_model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize().width(), self.table.columnWidth(i)))
-    # only if there is data in the model, we can resize the columns and
-    # a query rebuild is needed
-    if self.table_model.rowCount() > 1:
-      self.table.resizeColumnsToContents()
-      self.rebuildQuery()
-
-    #logger.debug('Selecting first row in table')
-    #@todo: select first row is not appropriate because 
-    #       the custom editors don't scale well
-    #self.table.selectRow(0)
 
   def deleteSelectedRows(self):
     """delete the selected rows in this tableview"""

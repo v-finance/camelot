@@ -123,10 +123,15 @@ class EmptyRowData(object):
   
 empty_row_data = EmptyRowData()
 
+
 class CollectionProxy(QtCore.QAbstractTableModel):
   """The CollectionProxy contains a limited copy of the data in the actual
   collection, usable for fast visualisation in a QTableView 
   """
+  
+  _header_font = QtGui.QApplication.font()
+  _header_font_required = QtGui.QApplication.font()
+  _header_font_required.setBold(True)
   
   @gui_function
   def __init__(self, admin, collection_getter, columns_getter,
@@ -392,16 +397,13 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       if role == Qt.DisplayRole:
         return QtCore.QVariant(c[1]['name'])
       elif role == Qt.FontRole:
-        font = QtGui.QApplication.font()
         if ('nullable' in c[1]) and \
            (c[1]['nullable']==False):
-          font.setBold(True)
-          return QtCore.QVariant(font)
+          return QtCore.QVariant(self._header_font_required)
         else:
-          font.setBold(False)
-          return QtCore.QVariant(font)
+          return QtCore.QVariant(self._header_font)
       elif role == Qt.SizeHintRole:
-        label_size = QtGui.QFontMetrics(QtGui.QApplication.font()).size(Qt.TextSingleLine, c[1]['name']+' ')
+        label_size = QtGui.QFontMetrics(self._header_font_required).size(Qt.TextSingleLine, c[1]['name']+' ')
         return QtCore.QVariant(QtCore.QSize(label_size.width()+10, label_size.height()+10))
     else:
       if role == Qt.DecorationRole:
