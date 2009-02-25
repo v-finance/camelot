@@ -47,7 +47,6 @@ class FilterList(QtGui.QScrollArea):
     self.setFrameStyle(QtGui.QFrame.NoFrame)
     layout = QtGui.QVBoxLayout()
     self.filters = []
-    layout.addWidget(QtGui.QLabel(_('Filter'), self))
     
     for filter,(name,options) in items:
       widget = filter.render(self, name, options)
