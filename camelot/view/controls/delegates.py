@@ -144,7 +144,7 @@ class GenericDelegate(QtGui.QItemDelegate):
     if delegate is not None:
       return delegate.sizeHint(option, index)
     else:
-      return QtGui.QItemDelegate.sizeHint(option, index)    
+      return QtGui.QItemDelegate.sizeHint(self, option, index)    
 
 
 class IntegerColumnDelegate(QtGui.QItemDelegate):

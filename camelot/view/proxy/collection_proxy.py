@@ -403,8 +403,14 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         else:
           return QtCore.QVariant(self._header_font)
       elif role == Qt.SizeHintRole:
+        option = QtGui.QStyleOptionViewItem()
+        editor_size = self.item_delegate.sizeHint(option, self.index(0, section))
+        if 'minimal_column_width' in c[1]:
+          minimal_column_width = QtGui.QFontMetrics(self._header_font).size(Qt.TextSingleLine, ' ').width()*c[1]['minimal_column_width']
+        else:
+          minimal_column_width = 0
         label_size = QtGui.QFontMetrics(self._header_font_required).size(Qt.TextSingleLine, c[1]['name']+' ')
-        return QtCore.QVariant(QtCore.QSize(label_size.width()+10, label_size.height()+10))
+        return QtCore.QVariant(QtCore.QSize(max(minimal_column_width, editor_size.width(),label_size.width()+10), label_size.height()+10))
     else:
       if role == Qt.DecorationRole:
         return self.form_icon
@@ -440,7 +446,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       c = self.getColumns()[index.column()] 
       type_ = c[1]['python_type'] 
       widget_ = c[1]['widget']
-      label_size = QtGui.QFontMetrics(QtGui.QApplication.font()).width(c[1]['name']+' ')
       size_hint = 0
       if type_ == datetime.date:
         from camelot.view.controls.editors import DateEditor

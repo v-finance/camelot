@@ -152,6 +152,7 @@ class EntityAdmin(object):
       from field_attributes import _sqlalchemy_to_python_type_
       default = lambda x: dict(python_type=str,
                                length=None,
+                               minimal_column_width=0,
                                editable=False,
                                nullable=True,
                                widget='str')

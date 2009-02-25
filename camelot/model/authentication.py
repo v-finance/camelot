@@ -184,6 +184,7 @@ class Party(Entity):
                             shares={'admin':SharedShareholder.SharedAdmin},
                             shareholders={'admin':SharedShareholder.ShareholderAdmin},
                             sex=dict(choices=lambda obj:[(u'M',u'Male'), (u'F',u'Female')],),
+                            name=dict(minimal_column_width=50),
                             )
       
 class Organization(Party):
@@ -214,12 +215,12 @@ class Organization(Party):
     name = 'Organizations'
     section = 'relations'
     list_display = ['name', 'tax_id',]
-    form = TabForm([('Basic', Form(['name', 'tax_id', 'addresses', 'contact_mechanisms'])),
-                    ('Employment', Form(['employees'])),
-                    ('Customers', Form(['customers'])),
-                    ('Suppliers', Form(['suppliers'])),
-                    ('Corporate', Form(['directors', 'shareholders', 'shares'])),
-                    ('Branding', Form(['logo'])), ])
+    form_display = TabForm([('Basic', Form(['name', 'tax_id', 'addresses', 'contact_mechanisms'])),
+                            ('Employment', Form(['employees'])),
+                            ('Customers', Form(['customers'])),
+                            ('Suppliers', Form(['suppliers'])),
+                            ('Corporate', Form(['directors', 'shareholders', 'shares'])),
+                            ('Branding', Form(['logo'])), ])
       
 class Person(Party):
   """Person represents natural persons, these can be given access to the system
@@ -280,14 +281,14 @@ class Person(Party):
     section = 'relations'
     list_display = ['username', 'first_name', 'last_name', ]
     list_filter = ['is_active', 'is_staff', 'is_superuser']
-    form = TabForm([('Basic', Form([HBoxForm([Form(['username', 'first_name', 'last_name', 'sex']),
-                                              Form(['is_staff', 'is_active', 'is_superuser',]),
-                                              Form(['picture',]),
-                                              ]), 
-                                              'contact_mechanisms',  'comment',], scrollbars=True)),
-                    ('Official', Form(['birthdate', 'social_security_number', 'passport_number','passport_expiry_date','addresses',], scrollbars=True)),
-                    ('Work', Form(['employers', 'directed_organizations', 'shares'], scrollbars=True))
-                    ])
+    form_display = TabForm([('Basic', Form([HBoxForm([Form(['username', 'first_name', 'last_name', 'sex']),
+                                                      Form(['is_staff', 'is_active', 'is_superuser',]),
+                                                      Form(['picture',]),
+                                                     ]), 
+                                                     'contact_mechanisms',  'comment',], scrollbars=True)),
+                            ('Official', Form(['birthdate', 'social_security_number', 'passport_number','passport_expiry_date','addresses',], scrollbars=True)),
+                            ('Work', Form(['employers', 'directed_organizations', 'shares'], scrollbars=True))
+                            ])
     
 class GeographicBoundary(Entity):
   using_options(tablename='geographic_boundary')
@@ -347,6 +348,7 @@ class Address(Entity):
   class Admin(EntityAdmin):
     name = 'Addresses'
     list_display = ['street1', 'street2', 'city']
+    form_size = (700,150)
     form_actions = [('Show map',lambda address:address.showMap())]
   
 class PartyAddressRoleType(Entity):
@@ -377,6 +379,7 @@ class PartyAddress(Entity):
     name = 'Address'
     list_display = ['address', 'comment']
     fields = ['address', 'comment', 'from_date', 'thru_date']
+    form_size = (700,200)
     form_actions = [('Show map',lambda address:address.showMap())]
     
 class ContactMechanism(Entity):
@@ -406,4 +409,4 @@ class PartyContactMechanism(Entity):
   class Admin(EntityAdmin):
     name = 'Party contact mechanisms'
     list_display = ['contact_mechanism', 'comment', 'from_date',]
-    form = Form(['contact_mechanism', 'comment', 'from_date', 'thru_date',])
+    form_display = Form(['contact_mechanism', 'comment', 'from_date', 'thru_date',])
