@@ -100,10 +100,8 @@ class TableView(QtGui.QSplitter):
       self.table.deleteLater()
       self.table_model.deleteLater()
     self.table = QueryTable()
-    # We create the table first with only 10 rows, to be able resize
-    # the columns to the contents without much processing
     self.table_model = QueryTableProxy(admin,
-                                       lambda:admin.entity.query.limit(10),
+                                       lambda:admin.entity.query,
                                        admin.getColumns)
     self.table.setModel(self.table_model)
     self.connect(self.table.verticalHeader(),
