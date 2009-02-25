@@ -16,6 +16,7 @@ def main(application_admin, initialization=lambda:None):
   splash.show()
   
   # regulary call processEvents to keep the splash alive
+  splash.showMessage('Initialize application')
   app.processEvents()
     
   import logging
@@ -44,6 +45,7 @@ def main(application_admin, initialization=lambda:None):
   app.setWindowIcon(application_admin.getIcon())
 
   # regulary call processEvents to keep the splash alive
+  splash.showMessage('Setup database')
   app.processEvents()
   #
   # Start the model thread
@@ -58,6 +60,7 @@ def main(application_admin, initialization=lambda:None):
   get_model_thread().start()
   
   # Set the stylesheet
+  splash.showMessage('Create main window')
   stylesheet = application_admin.getStylesheet()
   if stylesheet:
     app.setStyleSheet(stylesheet)
