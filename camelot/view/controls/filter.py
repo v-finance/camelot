@@ -35,7 +35,6 @@ from PyQt4 import QtCore
 
 _ = lambda x:x
 
-
 class FilterList(QtGui.QScrollArea):
   """A list with filters that can be applied on a query in the tableview"""
  
@@ -45,6 +44,7 @@ class FilterList(QtGui.QScrollArea):
     """
     QtGui.QScrollArea.__init__(self, parent)
     self.widget = QtGui.QWidget()
+    self.setFrameStyle(QtGui.QFrame.NoFrame)
     layout = QtGui.QVBoxLayout()
     self.filters = []
     layout.addWidget(QtGui.QLabel(_('Filter'), self))
