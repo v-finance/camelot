@@ -30,6 +30,7 @@
 import sqlalchemy.types
 import camelot.types
 import datetime
+import sys
 
 from PyQt4 import QtGui
 from controls.editors import *
@@ -61,14 +62,14 @@ _sqlalchemy_to_python_type_ = {
 
   sqlalchemy.types.Integer: lambda f: {'python_type': int,
                                        'editable': True,
-                                       'min': None,
-                                       'max': None,
+                                       'minimum': -1*sys.maxint,
+                                       'maximum': sys.maxint,
                                        'widget': 'int'},
 
   sqlalchemy.types.INT: lambda f: {'python_type': int,
                                    'editable': True,
-                                   'min': -1000000000000,
-                                   'max': 1000000000000,
+                                   'minimum': -1*sys.maxint,
+                                   'maximum': sys.maxint,
                                    'widget': 'int'},
 
   sqlalchemy.types.String: lambda f: {'python_type': str,
