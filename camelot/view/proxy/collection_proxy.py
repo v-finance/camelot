@@ -405,7 +405,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         return QtCore.QVariant(QtCore.QSize(label_size.width()+10, label_size.height()+10))
     else:
       if role == Qt.DecorationRole:
-        return self.form_icon 
+        return self.form_icon
+      elif role == Qt.DisplayRole:
+        return QtCore.QVariant()
     return QtCore.QAbstractTableModel.headerData(self, section, orientation, role)
   
   @gui_function
@@ -453,7 +455,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         entity_admin = c[1]['admin']
         editor = Many2OneEditor(entity_admin)
         size_hint = editor.sizeHint()
-      print 'data size hint', c[1]['name'], label_size
       return QtCore.QVariant(size_hint)
     elif role == Qt.ForegroundRole:
       pass
