@@ -204,11 +204,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   @gui_function
   def revertRow(self, row):
     def create_refresh_entity(row):
+      
       @model_function
       def refresh_entity():
         o = self._get_object(row)
         elixir.session.refresh(o)
-        self.rsh.sendEntityUpdate(self, o)
         return row, o
       
       return refresh_entity

@@ -316,7 +316,11 @@ class MainWindow(QtGui.QMainWindow):
                                         _('Send by e-mail'),
                                         self.exportToMail,
                                         actionicon=icon_mail,
-                                        tip=_('Send by e-mail'))    
+                                        tip=_('Send by e-mail'))
+    
+    from camelot.action.refresh import SessionRefresh
+    
+    self.sessionRefreshAct = SessionRefresh(self)  
     
     self.app_actions = []
     for name, icon, callable in self.app_admin.getActions():
@@ -456,12 +460,13 @@ class MainWindow(QtGui.QMainWindow):
     self.fileMenu.addMenu(self.exportMenu)
 
     addActions(self.fileMenu, (None, self.exitAct))
-
+    
     self.editMenu = self.menuBar().addMenu(_('&Edit'))
 
     addActions(self.editMenu, (self.cutAct,
                                self.copyAct,
-                               self.pasteAct))
+                               self.pasteAct,
+                               self.sessionRefreshAct))
     # TODO: add refresh action
     self.viewMenu = self.menuBar().addMenu(_('View'))
     gotoMenu = self.viewMenu.addMenu(_('Go To'))
