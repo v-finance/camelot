@@ -41,7 +41,6 @@ import settings
 
 verbose = False
 
-
 class QueryTable(QtGui.QTableView):
   """the actual displayed table"""
 
@@ -53,41 +52,71 @@ class QueryTable(QtGui.QTableView):
     self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     self.horizontalHeader().setClickable(False)
 
-
-class TableView(QtGui.QSplitter):
+class Header(QtGui.QWidget):
+  """Header for a tableview, containing the title and the search widget"""
+  
+  _title_font = QtGui.QApplication.font()
+  _title_font.setBold(True)
+  
+  def __init__(self, admin, parent):
+    super(Header, self).__init__(parent)
+    from search import SimpleSearchControl
+    self.setAutoFillBackground(True)
+    self.setBackgroundRole(QtGui.QPalette.Highlight)
+    widget_layout = QtGui.QHBoxLayout()
+    self.search_control = SimpleSearchControl(self)
+    title = QtGui.QLabel(admin.getName(), self)
+    title.setFont(self._title_font)
+    widget_layout.addWidget(title)
+    widget_layout.addWidget(self.search_control)
+    self.setLayout(widget_layout)
+    self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+    #widget_layout.setSpacing(0)
+    #widget_layout.setMargin(0)
+    
+class TableView(QtGui.QWidget):
   """emits the row_selected signal when a row has been selected"""
   
   def __init__(self, admin, search_text=None, parent=None):
-    from search import SimpleSearchControl
-    from inheritance import SubclassTree
-    QtGui.QWidget.__init__(self, parent)
+    super(TableView, self).__init__(parent)
     self.setWindowTitle(admin.getName())
-    widget_layout = QtGui.QHBoxLayout()
+    widget_layout = QtGui.QVBoxLayout()
+    header = Header(admin, self)
+    widget_layout.addWidget(header)
+    widget_layout.setSpacing(0)
+    widget_layout.setMargin(0)
+    self.splitter = QtGui.QSplitter(self)
+    widget_layout.addWidget(self.splitter)
     table_widget = QtGui.QWidget(self)
     self.table_layout = QtGui.QVBoxLayout()
     self.table_layout.setSpacing(0)
     self.table_layout.setMargin(0)
-    search_control = SimpleSearchControl()
     self.table = None
     self.filters = None
     self.admin = admin
     self.table_model = None
-    self.table_layout.insertWidget(0, search_control)
     table_widget.setLayout(self.table_layout)
     self.setSubclass(admin)
-    self.class_tree = SubclassTree(admin, self)
-    self.insertWidget(0, self.class_tree)
-    self.insertWidget(1, table_widget)
+    self.splitter.insertWidget(0, table_widget)
     self.setLayout(widget_layout)
     self.closeAfterValidation = QtCore.SIGNAL('closeAfterValidation()')
-    self.connect(search_control, SIGNAL('search'), self.startSearch)
-    self.connect(search_control, SIGNAL('cancel'), self.cancelSearch)
-    self.connect(self.class_tree, SIGNAL('subclasssClicked'), self.setSubclass)
+    self.connect(header.search_control, SIGNAL('search'), self.startSearch)
+    self.connect(header.search_control, SIGNAL('cancel'), self.cancelSearch)
+    
     self.search_filter = lambda q: q
     self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
     if search_text:
-      self.search_control.search(search_text)
+      header.search_control.search(search_text)
+    admin.mt.post(lambda: self.admin.getSubclasses(),
+                  lambda subclasses: self.setSubclassTree(subclasses))      
 
+  def setSubclassTree(self, subclasses):
+    if len(subclasses) > 1:
+      from inheritance import SubclassTree
+      class_tree = SubclassTree(self.admin, self)
+      self.splitter.insertWidget(0, class_tree)
+      self.connect(class_tree, SIGNAL('subclasssClicked'), self.setSubclass)
+      
   def sectionClicked(self, section):
     """emits a row_selected signal"""
     self.emit(SIGNAL('row_selected'), section)
@@ -280,7 +309,7 @@ class TableView(QtGui.QSplitter):
       self.filters = None
     if items:
       self.filters = FilterList(items, self)
-      self.insertWidget(2, self.filters)
+      self.splitter.insertWidget(2, self.filters)
       self.connect(self.filters, SIGNAL('filters_changed'), self.rebuildQuery)
 
   def toHtml(self):
@@ -305,7 +334,6 @@ class TableView(QtGui.QSplitter):
     del self.table_layout
     del self.table
     del self.filters
-    del self.class_tree
     del self.table_model
     event.accept()
     

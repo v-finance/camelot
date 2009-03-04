@@ -267,7 +267,7 @@ class Many2OneEditor(QtGui.QWidget):
     self.open_button.setAutoRaise(True)  
 
     # Search input
-    self.search_input = QtGui.QLineEdit()
+    self.search_input = QtGui.QLineEdit(self)
     self.setFocusProxy(self.search_input)
     #self.search_input.setReadOnly(True)
     #self.connect(self.search_input, QtCore.SIGNAL('returnPressed()'), self.returnPressed)

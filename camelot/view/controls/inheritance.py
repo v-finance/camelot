@@ -47,7 +47,6 @@ class SubclassItem(ModelItem):
   def __init__(self, parent, admin):
     super(SubclassItem, self).__init__(parent, [admin.getName()])
     self.admin = admin
-      
 
 class SubclassTree(ModelTree):
   """Widget to select subclasses of a certain entity, where the
@@ -82,7 +81,7 @@ class SubclassTree(ModelTree):
         item = SubclassItem(top_level_item, cls)
         self.modelitems.append(item)
       top_level_item.setExpanded(True)
-      self.setMaximumWidth(self.fontMetrics().width(' ')*80)
+      self.setMaximumWidth(self.fontMetrics().width(' ')*70)
     else:
       self.setMaximumWidth(0)
 

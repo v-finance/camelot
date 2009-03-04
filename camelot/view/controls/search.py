@@ -37,8 +37,8 @@ class SimpleSearchControl(QtGui.QWidget):
   the search
   """
   
-  def __init__(self):
-    QtGui.QWidget.__init__(self)
+  def __init__(self, parent):
+    QtGui.QWidget.__init__(self, parent)
     layout = QtGui.QHBoxLayout()
     layout.setSpacing(0)
     layout.setMargin(3)
@@ -55,6 +55,7 @@ class SimpleSearchControl(QtGui.QWidget):
 
     # Search input
     self.search_input = QtGui.QLineEdit()
+    #self.search_input.setStyleSheet('QLineEdit{ border-radius: 0.25em;}')
     self.connect(self.search_input,
                  QtCore.SIGNAL('returnPressed()'),
                  self.emit_search)
