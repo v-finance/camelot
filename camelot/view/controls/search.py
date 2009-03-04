@@ -55,6 +55,7 @@ class SimpleSearchControl(QtGui.QWidget):
 
     # Search input
     self.search_input = QtGui.QLineEdit()
+    self.search_input.setToolTip('Type words to search for')
     #self.search_input.setStyleSheet('QLineEdit{ border-radius: 0.25em;}')
     self.connect(self.search_input,
                  QtCore.SIGNAL('returnPressed()'),

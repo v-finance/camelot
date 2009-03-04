@@ -61,8 +61,9 @@ class Header(QtGui.QWidget):
   def __init__(self, admin, parent):
     super(Header, self).__init__(parent)
     from search import SimpleSearchControl
-    self.setAutoFillBackground(True)
-    self.setBackgroundRole(QtGui.QPalette.Highlight)
+    from appscheme import scheme
+#    self.setAutoFillBackground(True)
+#    self.setBackgroundRole(QtGui.QPalette.Highlight)
     widget_layout = QtGui.QHBoxLayout()
     self.search_control = SimpleSearchControl(self)
     title = QtGui.QLabel(admin.getName(), self)
