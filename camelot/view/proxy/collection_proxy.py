@@ -102,7 +102,7 @@ def RowDataAsUnicode(obj, columns):
           row_data.append(value)
           continue
     if isinstance(field_data, list):
-      row_data.append(unicode(len(field_data)))
+      row_data.append(u'.'.join([unicode(e) for e in field_data]))
     elif isinstance(field_data, datetime.datetime):
       # datetime should come before date since datetime is a subtype of date
       if field_data.year >= 1900:
