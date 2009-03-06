@@ -249,7 +249,7 @@ class Many2OneEditor(QtGui.QWidget):
     # Search button
     self.search_button = QtGui.QToolButton()
     self.search_button.setFocusPolicy(Qt.ClickFocus)
-    icon = Icon('tango/16x16/places/user-trash.png').getQIcon()
+    icon = Icon('tango/16x16/actions/edit-clear.png').getQIcon()
     self.search_button.setIcon(icon)
     self.search_button.setAutoRaise(True)
     self.connect(self.search_button,
@@ -284,8 +284,8 @@ class Many2OneEditor(QtGui.QWidget):
     self.search_input.setCompleter(self.completer)
     # Setup layout
     self.layout.addWidget(self.search_input)
-    self.layout.addWidget(self.open_button)
     self.layout.addWidget(self.search_button)
+    self.layout.addWidget(self.open_button)
     self.setLayout(self.layout)
     self.setAutoFillBackground(True);
     
@@ -395,7 +395,7 @@ class Many2OneEditor(QtGui.QWidget):
       if pk != False:
         icon = Icon('tango/16x16/places/folder.png').getQIcon()
         self.open_button.setIcon(icon)
-        icon = Icon('tango/16x16/places/user-trash.png').getQIcon()
+        icon = Icon('tango/16x16/actions/edit-clear.png').getQIcon()
         self.search_button.setIcon(icon)
         self.entity_set = True
         #self.search_input.setReadOnly(True)
