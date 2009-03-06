@@ -36,6 +36,9 @@ from PyQt4 import QtGui
 from controls.editors import *
 from controls.delegates import *
 
+camelot_maxint = 2147483647
+camelot_minint = -2147483648
+
 _sqlalchemy_to_python_type_ = {
                                
   sqlalchemy.types.Boolean: lambda f: {'python_type': bool,
@@ -62,14 +65,14 @@ _sqlalchemy_to_python_type_ = {
 
   sqlalchemy.types.Integer: lambda f: {'python_type': int,
                                        'editable': True,
-                                       'minimum': -1*sys.maxint,
-                                       'maximum': sys.maxint,
+                                       'minimum': camelot_minint,
+                                       'maximum': camelot_maxint,
                                        'widget': 'int'},
 
   sqlalchemy.types.INT: lambda f: {'python_type': int,
                                    'editable': True,
-                                   'minimum': -1*sys.maxint,
-                                   'maximum': sys.maxint,
+                                   'minimum': camelot_minint,
+                                   'maximum': camelot_maxint,
                                    'widget': 'int'},
 
   sqlalchemy.types.String: lambda f: {'python_type': str,
