@@ -337,21 +337,20 @@ class TimeColumnDelegate(QtGui.QItemDelegate):
   
 
 class DateTimeColumnDelegate(QtGui.QItemDelegate):
-  def __init__(self, parent, format, nullable, **kwargs):
+  def __init__(self, parent, format, **kwargs):
+    from editors import DateTimeEditor
     super(DateTimeColumnDelegate, self).__init__(parent)
     self.format = format
+    self.kwargs = kwargs
+    self._dummy_editor = DateTimeEditor(parent, self.format, **self.kwargs)
     
   def createEditor(self, parent, option, index):
-    editor = QtGui.QDateTimeEdit(parent)
-    editor.setDisplayFormat(self.format)
+    from editors import DateTimeEditor
+    editor = DateTimeEditor(parent, self.format, **self.kwargs)
     return editor
   
   def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.EditRole).toDateTime()
-    if value:
-      editor.setDateTime(value)
-    else:
-      editor.setDateTime(editor.minimumDateTime())
+    editor.setDateTime(index.model().data(index, Qt.EditRole).toPyObject())
       
   def setModelData(self, editor, model, index):
     time_value = editor.time()
@@ -359,6 +358,9 @@ class DateTimeColumnDelegate(QtGui.QItemDelegate):
     t = datetime.datetime(hour=time_value.hour(), minute=time_value.minute(), second=time_value.second(),
                           year=date_value.year(), month=date_value.month(), day=date_value.day())
     model.setData(index, create_constant_function(t))
+    
+  def sizeHint(self, option, index):
+    return self._dummy_editor.sizeHint()
     
 
 class DateColumnDelegate(QtGui.QItemDelegate):

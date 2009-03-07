@@ -47,7 +47,89 @@ from camelot.view.search import create_entity_search_query_decorator
 def create_constant_function(constant):
   return lambda:constant
 
+class DateTimeEditor(QtGui.QWidget):
+  """Widget for editing date and time separated and with popups"""
+  
+  def __init__(self, parent, format, nullable=True, **kwargs):
+    import itertools
+    self.nullable = nullable
+    super(QtGui.QWidget, self).__init__(parent)
+    dateformat, timeformat = format.split(' ')
+    layout = QtGui.QHBoxLayout()
+    self.dateedit = QtGui.QDateEdit(self)
+    self.dateedit.setDisplayFormat(dateformat)
+    self.dateedit.setCalendarPopup(True)
+    layout.addWidget(self.dateedit)
+    
+    class TimeValidator(QtGui.QValidator):
+      def __init__(self, parent):
+        super(TimeValidator, self).__init__(parent)
+      def validate(self, input, pos):
+        parts = str(input).split(':')
+        if len(parts)!=2:
+          return (QtGui.QValidator.Invalid, pos)
+        if str(input)=='--:--' and nullable:
+          return (QtGui.QValidator.Acceptable, pos)
+        for part in parts:
+          if not part.isdigit():
+            return (QtGui.QValidator.Invalid, pos)          
+          if len(part) not in (1,2):
+            return (QtGui.QValidator.Intermediate, pos)
+        if not int(parts[0]) in range(0,24):
+          return (QtGui.QValidator.Invalid, pos)
+        if not int(parts[1]) in range(0,60):
+          return (QtGui.QValidator.Invalid, pos)        
+        return (QtGui.QValidator.Acceptable, pos)
+        
+    self.timeedit = QtGui.QComboBox(self)
+    self.timeedit.setEditable(True)
+    time_entries = [entry for entry in itertools.chain(*(('%02i:00'%i, '%02i:30'%i) for i in range(0,24)))]
+    self.timeedit.addItems(time_entries)
+    self.timeedit.setValidator(TimeValidator(self))
+    
+#    self.timeedit = QtGui.QTimeEdit(self)
+#    self.timeedit.setDisplayFormat(timeformat)
+#  
+#    setting the tab order does not seem to work inside a table
+#
+#    self.dateedit.setTabOrder(self.dateedit, self.timeedit)
+    
+#   
+#    Completion doesn't seems to work with a QTimeEdit widget
+#
+#    time_lineedit = self.timeedit.lineEdit()
+#    time_completions_model = QtGui.QStringListModel(['00:00', '00:30'], parent)
+#    time_completer = QtGui.QCompleter()
+#    time_completer.setModel(time_completions_model)
+#    time_completer.setCaseSensitivity(Qt.CaseInsensitive)
+#    time_completer.setCompletionMode(QtGui.QCompleter.UnfilteredPopupCompletion)
+#    time_lineedit.setCompleter(time_completer)
+    
+    layout.addWidget(self.timeedit)
+    self.setFocusProxy(self.dateedit)
+    self.setLayout(layout)
+    layout.setMargin(0)
+    layout.setSpacing(0)
+    layout.addStretch(1)
+        
+  def setDateTime(self, value):
+    if value:
+      self.dateedit.setDate(QtCore.QDate(*value[:3]))
+      self.timeedit.lineEdit().setText('%02i:%02i'%(value[3], value[4]))
+    else:
+      self.dateedit.setDate(self.dateedit.minimumDate())
+      self.timeedit.lineEdit().setText('--:--')
 
+  def date(self):
+    return self.dateedit.date()
+        
+  def time(self):
+    text = str(self.timeedit.lineEdit().text())
+    if text=='--:--':
+      return None
+    parts = text.split(':')
+    return QtCore.QTime(int(parts[0]), int(parts[1]))
+    
 class DateEditor(QtGui.QWidget):
   """Widget for editing date values"""
   def __init__(self, nullable=True, format='dd/MM/yyyy', parent=None):
@@ -67,10 +149,11 @@ class DateEditor(QtGui.QWidget):
       icon = Icon('tango/16x16/places/user-trash.png').getQIcon()
       nullbutton.setIcon(icon)
       nullbutton.setAutoRaise(True)
-      #nullbutton.setCheckable(True)
       self.connect(nullbutton, QtCore.SIGNAL('clicked()'), self.setMinimumDate)
       self.qdateedit.setSpecialValueText('0/0/0')
       self.hlayout.addWidget(nullbutton)
+    else:
+      self.qdateedit.setCalendarPopup(True)
 
     self.hlayout.setContentsMargins(0, 0, 0, 0)
     self.hlayout.setMargin(0)
@@ -84,7 +167,7 @@ class DateEditor(QtGui.QWidget):
     self.set_date_range()
 
     self.setFocusProxy(self.qdateedit)
-    self.setAutoFillBackground(True);
+    self.setAutoFillBackground(True)
 
   def _python_to_qt(self, value):
     return QtCore.QDate(value.year, value.month, value.day)
