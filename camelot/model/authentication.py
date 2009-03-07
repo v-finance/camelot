@@ -113,13 +113,14 @@ class RepresentedRepresentor(Entity):
   using_options(tablename='party_representor')
   from_date = Field(Date(), default=datetime.date.today, required=True, index=True)
   thru_date = Field(Date(), default=end_of_times, required=True, index=True)
-  comment = Field(Text)
+  comment = Field(camelot.types.RichText())
   established_from = ManyToOne('Person', required=True, ondelete='cascade', onupdate='cascade')
   established_to = ManyToOne('DirectedDirector', required=True, ondelete='cascade', onupdate='cascade')
   
   class Admin(EntityAdmin):
     name = 'Represented by'
-    list_display = ['established_from', 'from_date', 'thru_date', 'comment']
+    list_display = ['established_from', 'from_date', 'thru_date']
+    form_display = ['established_from', 'from_date', 'thru_date', 'comment']
     field_attributes = {'established_from':{'name':'Name'}}
     
 class SupplierCustomer(PartyRelationship):
