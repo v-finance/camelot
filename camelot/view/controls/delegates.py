@@ -247,7 +247,7 @@ class IntervalsColumnDelegate(QtGui.QItemDelegate):
     intervals = index.model().data(index, Qt.EditRole).toPyObject()
     if intervals:
       rect = option.rect
-      xscale = float(rect.width())/(intervals.max-intervals.min)
+      xscale = float(rect.width()-4)/(intervals.max-intervals.min)
       xoffset = intervals.min * xscale + rect.x()
       yoffset = rect.y() + rect.height()/2
       for interval in intervals.intervals:
@@ -256,7 +256,10 @@ class IntervalsColumnDelegate(QtGui.QItemDelegate):
         pen = QtGui.QPen(qcolor)
         pen.setWidth(3)
         painter.setPen(pen)
-        painter.drawLine(xoffset + interval.begin*xscale, yoffset, xoffset + interval.end*xscale, yoffset)
+        x1, x2 =  xoffset + interval.begin*xscale, xoffset + interval.end*xscale
+        painter.drawLine(x1, yoffset, x2, yoffset)
+        painter.drawEllipse(x1-1, yoffset-1, 2, 2)
+        painter.drawEllipse(x2-1, yoffset-1, 2, 2)
     painter.restore()
       
   def createEditor(self, parent, option, index):

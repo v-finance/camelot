@@ -506,7 +506,6 @@ class Many2OneEditor(QtGui.QWidget):
     
   def selectEntity(self, entity_instance_getter):
     self.setEntity(entity_instance_getter)
-    
 
 class One2ManyEditor(QtGui.QWidget):
   def __init__(self, admin=None, parent=None, create_inline=False, **kw):
