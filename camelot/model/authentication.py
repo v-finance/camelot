@@ -92,33 +92,33 @@ class DirectedDirector(PartyRelationship):
   """Relation from a directed organization to a director"""
   using_options(tablename='party_relationship_dir', inheritance='multi')
   established_from = ManyToOne('Organization', required=True, ondelete='cascade', onupdate='cascade')
-  established_to = ManyToOne('Person', required=True, ondelete='cascade', onupdate='cascade')
+  established_to = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
   title = Field(Unicode(256))
-  representing = OneToMany('RepresentedRepresentor', inverse='established_to')
+  represented_by = OneToMany('RepresentedRepresentor', inverse='established_to')
   
   class DirectorAdmin(EntityAdmin):
     name = 'Directors'
     list_display = ['established_to', 'from_date', 'thru_date']
-    fields = ['established_to', 'title', 'from_date', 'thru_date', 'representing', 'comment']
+    fields = ['established_to', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
     field_attributes = {'established_to':{'name':'Name'}}
     
   class DirectedAdmin(EntityAdmin):
     name = 'Directed organizations'
     list_display = ['established_from', 'from_date', 'thru_date']
-    fields = ['established_from', 'from_date', 'thru_date', 'representing', 'comment']
+    fields = ['established_from', 'from_date', 'thru_date', 'represented_by', 'comment']
     field_attributes = {'established_from':{'name':'Name'}}
     
 class RepresentedRepresentor(Entity):
-  """Relation from a represented party to the director representing the party"""
+  """Relation from a representing party to the person representing the party"""
   using_options(tablename='party_representor')
   from_date = Field(Date(), default=datetime.date.today, required=True, index=True)
   thru_date = Field(Date(), default=end_of_times, required=True, index=True)
   comment = Field(Text)
-  established_from = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
+  established_from = ManyToOne('Person', required=True, ondelete='cascade', onupdate='cascade')
   established_to = ManyToOne('DirectedDirector', required=True, ondelete='cascade', onupdate='cascade')
   
   class Admin(EntityAdmin):
-    name = 'Representing'
+    name = 'Represented by'
     list_display = ['established_from', 'from_date', 'thru_date', 'comment']
     field_attributes = {'established_from':{'name':'Name'}}
     
