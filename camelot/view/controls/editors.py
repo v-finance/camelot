@@ -428,27 +428,29 @@ class Many2OneEditor(QtGui.QWidget):
   def createFormView(self):
     if self.entity_instance_getter:
       
-      def create_collection_getter(instance_getter):
-        return lambda:[instance_getter()]
+      def get_admin_and_title():
+        object = self.entity_instance_getter()
+        admin = self.admin.getSubclassEntityAdmin(object.__class__)
+        return admin, '%s : %s'%(admin.name,str(object))
       
-      from camelot.view.proxy.collection_proxy import CollectionProxy
-
-      workspace = get_workspace()  
-      model = CollectionProxy(self.admin,
-                        create_collection_getter(self.entity_instance_getter),
-                        self.admin.getFields)
-      title = ''
-      if self.entity_instance_getter and self.entity_instance_getter().Admin:
-        entity = self.entity_instance_getter().Admin.name
-        entity_repr = str(self.entity_instance_getter())
-        #title = '%s - %s' % (entity, entity_repr)
-        # to stay consistent with the other forms titles which do not show the
-        # entity's string repr
-        title = '%s' % entity
-      
-      form = self.admin.createFormView(title, model, 0, workspace)
-      workspace.addSubWindow(form)
-      form.show()
+      def show_form_view(admin_and_title):
+        admin, title = admin_and_title
+        
+        def create_collection_getter(instance_getter):
+          return lambda:[instance_getter()]
+        
+        from camelot.view.proxy.collection_proxy import CollectionProxy
+  
+        workspace = get_workspace()  
+        model = CollectionProxy(admin,
+                          create_collection_getter(self.entity_instance_getter),
+                          admin.getFields)
+        
+        form = admin.createFormView(title, model, 0, workspace)
+        workspace.addSubWindow(form)
+        form.show()
+        
+      self.admin.mt.post(get_admin_and_title, show_form_view)
     
   def editingFinished(self):
     self.search_input.setText(self._entity_representation)

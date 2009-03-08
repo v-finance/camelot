@@ -93,6 +93,7 @@ class EntityAdmin(object):
     # caches to prevent recalculation of things
     #
     self.__field_attributes = dict()
+    self.__subclasses = None
 
   def __str__(self):
     return 'Admin %s' % str(self.entity.__name__)
@@ -116,6 +117,15 @@ class EntityAdmin(object):
     if not related_admin:
       logger.warn('no related admin found for %s'%(entity.__name__))
     return related_admin
+  
+  @model_function
+  def getSubclassEntityAdmin(self, entity):
+    """Get the admin class for an entity that is a subclass of this admin's entity
+    or this admin's entity itself."""
+    for subclass_admin in self.getSubclasses():
+      if subclass_admin.entity==entity:
+        return subclass_admin
+    return self
 
   @model_function
   def getSubclasses(self):
@@ -123,13 +133,14 @@ class EntityAdmin(object):
     Return admin objects for the subclasses of the Entity represented by this
     admin object
     """
-    from elixir import entities
-    subclasses = [e.Admin(self.app_admin, e)
-                  for e in entities
-                  if (issubclass(e, (self.entity, )) and 
-                      hasattr(e, 'Admin') and
-                      e!=self.entity)]
-    return subclasses
+    if not self.__subclasses:
+      from elixir import entities
+      self.__subclasses = [e.Admin(self.app_admin, e)
+                          for e in entities
+                          if (issubclass(e, (self.entity, )) and 
+                          hasattr(e, 'Admin') and
+                          e!=self.entity)]
+    return self.__subclasses
 
   @model_function
   def getFieldAttributes(self, field_name):
@@ -314,7 +325,6 @@ class EntityAdmin(object):
     The returned class has an 'entity_created_signal' that will be fired when a
     a valid new entity was created by the form
     """
-
     from PyQt4 import QtCore
     from PyQt4 import QtGui
     from PyQt4.QtCore import SIGNAL
