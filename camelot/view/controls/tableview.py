@@ -116,7 +116,7 @@ class TableView(QtGui.QWidget):
       from inheritance import SubclassTree
       class_tree = SubclassTree(self.admin, self)
       self.splitter.insertWidget(0, class_tree)
-      self.connect(class_tree, SIGNAL('subclasssClicked'), self.setSubclass)
+      self.connect(class_tree, SIGNAL('subclassClicked'), self.setSubclass)
       
   def sectionClicked(self, section):
     """emits a row_selected signal"""

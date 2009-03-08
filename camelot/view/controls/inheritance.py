@@ -52,7 +52,7 @@ class SubclassTree(ModelTree):
   """Widget to select subclasses of a certain entity, where the
   subclasses are represented in a tree
   
-  emits subclasssClicked when a subclass has been selected
+  emits subclassClicked when a subclass has been selected
   """
   
   def __init__(self, admin, parent):
@@ -88,4 +88,21 @@ class SubclassTree(ModelTree):
   def emitSubclassClicked(self, index):
     logger.debug('subclass clicked at position %s' % index.row())
     item = self.itemFromIndex(index)
-    self.emit(QtCore.SIGNAL('subclasssClicked'), item.admin)
+    self.emit(QtCore.SIGNAL('subclassClicked'), item.admin)
+    
+class SubclassDialog(QtGui.QDialog):
+  """A dialog requesting the user to select a subclass"""
+  
+  def __init__(self, parent, admin):
+    super(SubclassDialog, self).__init__(parent)
+    layout = QtGui.QVBoxLayout()
+    subclass_tree = SubclassTree(admin, self)
+    layout.addWidget(subclass_tree)
+    layout.addStretch(1)
+    self.setLayout(layout)
+    self.selected_subclass = None
+    self.connect(subclass_tree, QtCore.SIGNAL('subclassClicked'), self.subclassClicked)
+    
+  def subclassClicked(self, admin):
+    self.selected_subclass = admin
+    self.accept()    

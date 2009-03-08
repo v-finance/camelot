@@ -419,11 +419,27 @@ class Many2OneEditor(QtGui.QWidget):
     self.setEntity(lambda:None)
     
   def createNew(self):
-    workspace = get_workspace()
-    form = self.admin.createNewView(workspace)
-    workspace.addSubWindow(form)
-    self.connect(form, form.entity_created_signal, self.selectEntity)
-    form.show()
+    
+    def get_has_subclasses():
+      return len(self.admin.getSubclasses())
+    
+    def show_new_view(has_subclasses):
+      
+      selected = QtGui.QDialog.Accepted
+      admin = self.admin
+      if has_subclasses:
+        from camelot.view.controls.inheritance import SubclassDialog
+        select_subclass = SubclassDialog(self, self.admin)
+        selected = select_subclass.exec_()
+        admin = select_subclass.selected_subclass
+      if selected:
+        workspace = get_workspace()
+        form = admin.createNewView(workspace)
+        workspace.addSubWindow(form)
+        self.connect(form, form.entity_created_signal, self.selectEntity)
+        form.show()
+      
+    self.admin.mt.post(get_has_subclasses, show_new_view)
         
   def createFormView(self):
     if self.entity_instance_getter:

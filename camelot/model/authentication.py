@@ -167,6 +167,8 @@ class Party(Entity):
   is_synchronized('synchronized', lazy=True)
   addresses = OneToMany('PartyAddress', lazy=True)
   contact_mechanisms = OneToMany('PartyContactMechanism', lazy=True)
+  shares = OneToMany('SharedShareholder', inverse='established_to')
+  directed_organizations = OneToMany('DirectedDirector', inverse='established_to')
     
   @property
   def name(self):
@@ -175,7 +177,7 @@ class Party(Entity):
   class Admin(EntityAdmin):
     name = 'Parties'
     list_display = ['name']
-    fields = ['suppliers', 'customers', 'addresses']
+    fields = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
     field_attributes = dict(suppliers={'admin':SupplierCustomer.SupplierAdmin}, 
                             customers={'admin':SupplierCustomer.CustomerAdmin},
                             employers={'admin':EmployerEmployee.EmployerAdmin},
@@ -200,7 +202,6 @@ class Organization(Party):
   suppliers = OneToMany('SupplierCustomer', inverse='established_to')
   customers = OneToMany('SupplierCustomer', inverse='established_from')
   shareholders = OneToMany('SharedShareholder', inverse='established_from')
-  shares = OneToMany('SharedShareholder', inverse='established_to')
   
   def __unicode__(self):
     return self.name
@@ -252,8 +253,6 @@ class Person(Party):
   picture = Field(camelot.types.Image(upload_to='person-pictures'), deferred=True)
   comment = Field(camelot.types.RichText())
   employers = OneToMany('EmployerEmployee', inverse='established_to')
-  directed_organizations = OneToMany('DirectedDirector', inverse='established_to')
-  shares = OneToMany('SharedShareholder', inverse='established_to')
       
   @property
   def name(self):
