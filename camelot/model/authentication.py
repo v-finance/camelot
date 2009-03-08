@@ -177,6 +177,7 @@ class Party(Entity):
   class Admin(EntityAdmin):
     name = 'Parties'
     list_display = ['name']
+    list_size = (1000, 700)
     fields = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
     field_attributes = dict(suppliers={'admin':SupplierCustomer.SupplierAdmin}, 
                             customers={'admin':SupplierCustomer.CustomerAdmin},
@@ -388,7 +389,8 @@ class ContactMechanism(Entity):
   party_address = ManyToOne('PartyAddress', ondelete='set null', onupdate='cascade')
   
   def __unicode__(self):
-    return self.mechanism[1]
+    if self.mechanism:
+      return u'%s : %s'%(self.mechanism[0], self.mechanism[1])
   
   class Admin(EntityAdmin):
     name = 'Contact mechanism'
