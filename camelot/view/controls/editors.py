@@ -196,7 +196,6 @@ class DateEditor(QtGui.QWidget):
   def setDate(self, date):
     self.qdateedit.setDate(date)
 
-
 class VirtualAddressEditor(QtGui.QWidget):
   def __init__(self, parent=None):
     super(VirtualAddressEditor, self).__init__(parent)

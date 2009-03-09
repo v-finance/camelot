@@ -258,7 +258,7 @@ class Person(Party):
   @property
   def name(self):
     if self.last_name and self.first_name:
-      return u'%s %s'%(self.last_name, self.first_name)
+      return u'%s %s'%(self.first_name, self.last_name)
     else:
       return self.username
   
