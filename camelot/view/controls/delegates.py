@@ -314,7 +314,7 @@ class ColorColumnDelegate(QtGui.QItemDelegate):
       model.setData(index, create_constant_function(None))
 
 class TimeColumnDelegate(QtGui.QItemDelegate):
-  def __init__(self, parent, format, default, nullable, **kwargs):
+  def __init__(self, parent, format='hh:mm', default=None, nullable=True, **kwargs):
     super(TimeColumnDelegate, self).__init__(parent)
     self.nullable = nullable
     self.format = format

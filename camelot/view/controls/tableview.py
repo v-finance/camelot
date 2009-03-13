@@ -77,7 +77,7 @@ class Header(QtGui.QWidget):
     
 class TableView(QtGui.QWidget):
   """emits the row_selected signal when a row has been selected"""
-  
+
   def __init__(self, admin, search_text=None, parent=None):
     super(TableView, self).__init__(parent)
     self.setWindowTitle(admin.getName())
@@ -121,7 +121,7 @@ class TableView(QtGui.QWidget):
   def sectionClicked(self, section):
     """emits a row_selected signal"""
     self.emit(SIGNAL('row_selected'), section)
-              
+
   def setSubclass(self, admin):
     """Switch to a different subclass, where admin is the admin object of the
     subclass"""
@@ -136,7 +136,7 @@ class TableView(QtGui.QWidget):
     self.table.setModel(self.table_model)
     self.connect(self.table.verticalHeader(),
                  SIGNAL('sectionClicked(int)'),
-                 self.sectionClicked)     
+                 self.sectionClicked)
     self.table_layout.insertWidget(1, self.table)
 
     def update_delegates_and_column_width(*args):
