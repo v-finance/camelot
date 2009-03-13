@@ -59,7 +59,10 @@ class VirtualAddress(types.TypeDecorator):
     
     def processor(value):
       if value is not None:
-        value = '://'.join(value)
+        if value[1]:
+          value = '://'.join(value)
+        else:
+          value = None
       return impl_processor(value)
     
     return processor
