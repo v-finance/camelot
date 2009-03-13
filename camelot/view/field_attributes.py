@@ -122,6 +122,7 @@ _sqlalchemy_to_python_type_ = {
   sqlalchemy.types.Time : lambda f: {'python_type':datetime.time,
                                      'editable':True,
                                      'widget':'time',
+                                     'delegate':TimeColumnDelegate,
                                      'format':'hh:mm',
                                      'nullable':True},
   
