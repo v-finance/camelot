@@ -94,10 +94,15 @@ def RowDataAsUnicode(obj, columns):
   
   row_data = []
   
-  for i,(field_name,field_attriubtes) in enumerate(columns):
+  for i,(field_name,field_attributes) in enumerate(columns):
     field_data = getattr(obj, field_name)
-    if 'choices' in field_attriubtes:
-      for key,value in field_attriubtes['choices'](obj):
+    if 'unicode_format' in field_attributes:
+        unicode_format = field_attributes['unicode_format']
+        if field_data != None:
+            row_data.append(unicode_format(field_data))
+            continue
+    if 'choices' in field_attributes:
+      for key,value in field_attributes['choices'](obj):
         if key==field_data:
           row_data.append(value)
           continue
