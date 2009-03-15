@@ -307,7 +307,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.item_delegate.set_columns_desc(columns)
 
     for i, c in enumerate(columns):
-      
       field_name = c[0]
       type_ = c[1]['python_type']
       widget_ = c[1]['widget']
@@ -317,7 +316,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                      "arguments: %s" % (field_name, type_, widget_, str(c[1])))
       else:
         logger.debug('creating delegate for %s' % field_name)
-
       
       if 'delegate' in c[1]:
         delegate = c[1]['delegate'](parent=None, **c[1])
@@ -441,27 +439,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         logger.error('Programming error, could not find data of column %s in %s'%(index.column(), str(data)))
         value = None
       return QtCore.QVariant(value)
-#    elif role == Qt.SizeHintRole:
-#      c = self.getColumns()[index.column()] 
-#      type_ = c[1]['python_type'] 
-#      widget_ = c[1]['widget']
-#      size_hint = 0
-#      if type_ == datetime.date:
-#        from camelot.view.controls.editors import DateEditor
-#        editor = DateEditor()
-#        size_hint = editor.sizeHint()
-#      elif widget_ == 'one2many':
-#        from camelot.view.controls.editors import One2ManyEditor
-#        entity_name = c[0] 
-#        entity_admin = c[1]['admin']
-#        editor = One2ManyEditor(entity_admin, entity_name)
-#        size_hint = editor.sizeHint()
-#      elif widget_ == 'many2one':
-#        from camelot.view.controls.editors import Many2OneEditor
-#        entity_admin = c[1]['admin']
-#        editor = Many2OneEditor(entity_admin)
-#        size_hint = editor.sizeHint()
-#      return QtCore.QVariant(size_hint)
     elif role == Qt.ForegroundRole:
       pass
     elif role == Qt.BackgroundRole:

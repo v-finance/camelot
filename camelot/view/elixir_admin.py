@@ -473,7 +473,7 @@ class EntityAdmin(object):
           self.admin.mt.post(create_instance_getter, create_emit_and_close(self))
             
     widget = SelectView(admin, parent)
-    widget.resize(admin.list_size[0], admin.list_size[1])
+    widget.setMinimumSize(admin.list_size[0], admin.list_size[1])
     return widget
 
   @gui_function
