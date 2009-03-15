@@ -460,12 +460,16 @@ class Many2OneEditor(QtGui.QWidget):
         model = CollectionProxy(admin,
                           create_collection_getter(self.entity_instance_getter),
                           admin.getFields)
-        
+        sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
+        self.connect(model, QtCore.SIGNAL(sig), self.dataChanged)        
         form = admin.createFormView(title, model, 0, workspace)
         workspace.addSubWindow(form)
         form.show()
         
       self.admin.mt.post(get_admin_and_title, show_form_view)
+    
+  def dataChanged(self, index1, index2):
+    self.setEntity(self.entity_instance_getter, False)
     
   def editingFinished(self):
     self.search_input.setText(self._entity_representation)
@@ -485,6 +489,8 @@ class Many2OneEditor(QtGui.QWidget):
       self.entity_instance_getter = create_instance_getter(entity)
       if entity and hasattr(entity, 'id'):
         return (unicode(entity), entity.id)
+      elif entity:
+        return (unicode(entity), False)
       return ('', False)
     
     def set_instance_represenation(representation):
