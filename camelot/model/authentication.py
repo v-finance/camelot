@@ -43,25 +43,25 @@ from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, VBoxForm, HBoxForm, WidgetOnlyForm
 import datetime
 
-_current_person_ = None
+_current_authentication_ = None
 
 def end_of_times():
   return datetime.date(year=2400, month=12, day=31)
 
-def getCurrentPerson():
+def getCurrentAuthentication():
   """Get the currently logged in person"""
-  global _current_person_
-  if not _current_person_:
+  global _current_authentication_
+  if not _current_authentication_:
     import getpass
-    _current_person_ = Person.getOrCreatePerson(unicode(getpass.getuser()))
-  return _current_person_
+    _current_authentication_ = UsernameAuthenticationMechanism.getOrCreateAuthentication(unicode(getpass.getuser()))
+  return _current_authentication_
 
 def updateLastLogin():
   """Update the last login of the current person to now"""
   from elixir import session
-  person = getCurrentPerson()
-  person.last_login = datetime.datetime.now()
-  session.flush([person])
+  authentication = getCurrentAuthentication()
+  authentication.last_login = datetime.datetime.now()
+  session.flush([authentication])
 
 class PartyRelationship(Entity):
   using_options(tablename='party_relationship')
@@ -224,7 +224,36 @@ class Organization(Party):
                             ('Suppliers', Form(['suppliers'])),
                             ('Corporate', Form(['directors', 'shareholders', 'shares'])),
                             ('Branding', Form(['logo'])), ])
-      
+
+class AuthenticationMechanism(Entity):
+  using_options(tablename='authentication_mechanism')
+  last_login = Field(DateTime(), default=datetime.datetime.now)
+  is_active = Field(Boolean, default=True, index=True)
+  
+  class Admin(EntityAdmin):
+    name = 'Authentication mechanism'
+  
+class UsernameAuthenticationMechanism(AuthenticationMechanism):
+  using_options(tablename='authentication_mechanism_username', inheritance='multi')
+  username = Field(Unicode(40), required=True, index=True, unique=True)
+  password = Field(Unicode(200), required=False, index=False, default=None)
+  
+  @classmethod
+  def getOrCreateAuthentication(cls, username):
+    authentication = cls.query.filter_by(username=username).first()
+    if not authentication:
+      authentication = cls(username=username)
+      from elixir import session
+      session.flush([authentication])
+    return authentication
+  
+  def __unicode__(self):
+    return self.username
+  
+  class Admin(EntityAdmin):
+    name = 'Authentication mechanism'
+    list_display = ['username', 'last_login', 'is_active']
+  
 class Person(Party):
   """Person represents natural persons, these can be given access to the system
   and as such require a username.
@@ -234,7 +263,6 @@ class Person(Party):
   other.
   """
   using_options(tablename='person', inheritance='multi')
-  username = Field(Unicode(40), required=True, index=True, unique=True)
   first_name = Field(Unicode(40))
   last_name =  Field(Unicode(40))
   middle_name = Field(Unicode(40))
@@ -247,10 +275,7 @@ class Person(Party):
   passport_number = Field(Unicode(20))
   passport_expiry_date = Field(Date())
   is_staff = Field(Boolean, default=False, index=True)
-  is_active = Field(Boolean, default=True, index=True)
   is_superuser = Field(Boolean, default=False, index=True)
-  last_login = Field(DateTime(), default=datetime.datetime.now)
-  date_joined = Field(DateTime(), default=datetime.datetime.now)
   picture = Field(camelot.types.Image(upload_to='person-pictures'), deferred=True)
   comment = Field(camelot.types.RichText())
   employers = OneToMany('EmployerEmployee', inverse='established_to')
@@ -267,15 +292,6 @@ class Person(Party):
   
   def __unicode__(self):
     return self.name
-  
-  @classmethod
-  def getOrCreatePerson(cls, username):
-    person = cls.query.filter_by(username=username).first()
-    if not person:
-      person = cls(username=username)
-      from elixir import session
-      session.flush([person])
-    return person
 
   class Admin(Party.Admin):
     name = 'Persons'
@@ -312,6 +328,7 @@ class Country(GeographicBoundary):
     return country
   
   class Admin(EntityAdmin):
+    form_size = (700,150)
     name = 'Countries'
     list_display = ['name', 'code']
     
@@ -330,6 +347,7 @@ class City(GeographicBoundary):
   
   class Admin(EntityAdmin):
     name = 'Cities'
+    form_size = (700,150)
     list_display = ['code', 'name', 'country']
     
 class Address(Entity):
@@ -361,6 +379,13 @@ class PartyAddressRoleType(Entity):
     name = 'Address role type'
     list_display = ['code', 'description']
   
+class PartyAuthentication(Entity):
+  using_options(tablename='party_authentication')
+  address = ManyToOne('AuthenticationMechanism', required=True, ondelete='cascade', onupdate='cascade')
+  from_date = Field(Date(), default=datetime.date.today, required=True, index=True)
+  thru_date = Field(Date(), default=end_of_times, required=True, index=True)
+  comment = Field(Unicode(256))
+    
 class PartyAddress(Entity):
   using_options(tablename='party_address')
   party = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
@@ -393,6 +418,7 @@ class ContactMechanism(Entity):
       return u'%s : %s'%(self.mechanism[0], self.mechanism[1])
   
   class Admin(EntityAdmin):
+    form_size = (700,150)
     name = 'Contact mechanism'
     list_display = ['mechanism']
     form = Form(['mechanism', 'party_address'])
@@ -409,6 +435,7 @@ class PartyContactMechanism(Entity):
     return unicode(self.contact_mechanism)
   
   class Admin(EntityAdmin):
+    form_size = (700,200)
     name = 'Party contact mechanisms'
     list_display = ['contact_mechanism', 'comment', 'from_date',]
     form_display = Form(['contact_mechanism', 'comment', 'from_date', 'thru_date',])

@@ -52,6 +52,7 @@ class Translation(Entity):
   _cache = dict()
     
   class Admin(EntityAdmin):
+    form_size = (700,150)
     section = 'configuration'
     list_display = ['source', 'language', 'value', 'uid']
     list_filter = ['language']

@@ -528,11 +528,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                 #
                 if not 'Imag' in old_value.__class__.__name__:
                   from camelot.model.memento import BeforeUpdate
-                  from camelot.model.authentication import getCurrentPerson
+                  from camelot.model.authentication import getCurrentAuthentication
                   history = BeforeUpdate(model=unicode(self.admin.entity.__name__), 
                                          primary_key=o.id, 
                                          previous_attributes={attribute:old_value},
-                                         person = getCurrentPerson())
+                                         authentication = getCurrentAuthentication())
                   elixir.session.flush([history])
             #@todo: update should only be sent remotely when flush was done 
             self.rsh.sendEntityUpdate(self, o)
