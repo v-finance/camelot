@@ -117,6 +117,7 @@ _sqlalchemy_to_python_type_ = {
   camelot.types.Color: lambda f:{'delegate':ColorColumnDelegate,
                                  'python_type':str,
                                  'editable':True,
+                                 'nullable':True,
                                  'widget':'color'},
                                                                            
   sqlalchemy.types.Time : lambda f: {'python_type':datetime.time,
