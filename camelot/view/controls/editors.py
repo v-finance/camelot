@@ -518,14 +518,30 @@ class Many2OneEditor(QtGui.QWidget):
     self.admin.mt.post(get_instance_represenation, set_instance_represenation)
     
   def createSelectView(self):
-    workspace = get_workspace()
+    
     search_text = unicode(self.search_input.text())
-    select = self.admin.createSelectView(self.admin.entity.query,
-                                         parent=workspace,
-                                         search_text=search_text)
-    self.connect(select, select.entity_selected_signal, self.selectEntity)
-    workspace.addSubWindow(select)
-    select.show()
+    admin = self.admin
+    query = self.admin.entity.query
+    
+    class SelectDialog(QtGui.QDialog):
+      def __init__(self, parent):
+        super(SelectDialog, self).__init__(parent)
+        self.entity_selected_signal = QtCore.SIGNAL("entity_selected")
+        layout = QtGui.QVBoxLayout()
+        layout.setMargin(0)
+        layout.setSpacing(0)
+        self.setWindowTitle('Select %s'%admin.getName())
+        self.select = admin.createSelectView(query, parent=parent, search_text=search_text)
+        layout.addWidget(self.select)
+        self.setLayout(layout)
+        self.connect(self.select, self.select.entity_selected_signal, self.selectEntity)
+      def selectEntity(self, entity_instance_getter):
+        self.emit(self.entity_selected_signal, entity_instance_getter)
+        self.close()
+        
+    selectDialog = SelectDialog(self)
+    self.connect(selectDialog, selectDialog.entity_selected_signal, self.selectEntity)
+    selectDialog.exec_()
     
   def selectEntity(self, entity_instance_getter):
     self.setEntity(entity_instance_getter)

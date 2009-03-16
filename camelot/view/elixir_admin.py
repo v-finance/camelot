@@ -71,7 +71,7 @@ class EntityAdmin(object):
   list_charts = []
   list_actions = []
   list_search = []
-  list_size = (700, 500)
+  list_size = (600, 400)
   form_size = (700, 500)
   form_actions = []
   form_title_column = None
@@ -437,12 +437,20 @@ class EntityAdmin(object):
     entity has been selected.
     """
     from controls.tableview import TableView
+    from art import Icon
+    from proxy.queryproxy import QueryTableProxy
     from PyQt4 import QtCore
     from PyQt4.QtCore import SIGNAL
 
+    class SelectQueryTableProxy(QueryTableProxy):
+      header_icon = Icon('tango/16x16/emblems/emblem-symbolic-link.png').getQIcon()
+      
     class SelectView(TableView):
 
-      def __init__(self, admin, parent):  
+      query_table_proxy = SelectQueryTableProxy
+      title_format = 'Select %s'
+        
+      def __init__(self, admin, parent):
         TableView.__init__(self, admin, search_text=search_text, parent=parent)
         self.entity_selected_signal = SIGNAL("entity_selected")
         self.connect(self, SIGNAL('row_selected'), self.sectionClicked)

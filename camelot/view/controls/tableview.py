@@ -37,6 +37,7 @@ from PyQt4.QtCore import SIGNAL
 from PyQt4.QtCore import Qt
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
+from camelot.view.art import Icon
 import settings
 
 verbose = False
@@ -78,9 +79,18 @@ class Header(QtGui.QWidget):
 class TableView(QtGui.QWidget):
   """emits the row_selected signal when a row has been selected"""
 
+  #
+  # The proxy class to use 
+  #
+  query_table_proxy = QueryTableProxy
+  #
+  # Format to use as the window title
+  #
+  title_format = '%s'
+  
   def __init__(self, admin, search_text=None, parent=None):
     super(TableView, self).__init__(parent)
-    self.setWindowTitle(admin.getName())
+    self.setWindowTitle(self.title_format%(admin.getName()))
     widget_layout = QtGui.QVBoxLayout()
     header = Header(admin, self)
     widget_layout.addWidget(header)
@@ -130,9 +140,10 @@ class TableView(QtGui.QWidget):
       self.table.deleteLater()
       self.table_model.deleteLater()
     self.table = QueryTable()
-    self.table_model = QueryTableProxy(admin,
-                                       lambda:admin.entity.query,
-                                       admin.getColumns)
+      
+    self.table_model = self.query_table_proxy(admin,
+                                              lambda:admin.entity.query,
+                                              admin.getColumns)
     self.table.setModel(self.table_model)
     self.connect(self.table.verticalHeader(),
                  SIGNAL('sectionClicked(int)'),

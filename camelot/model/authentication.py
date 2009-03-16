@@ -177,7 +177,6 @@ class Party(Entity):
   class Admin(EntityAdmin):
     name = 'Parties'
     list_display = ['name']
-    list_size = (1000, 700)
     fields = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
     field_attributes = dict(suppliers={'admin':SupplierCustomer.SupplierAdmin}, 
                             customers={'admin':SupplierCustomer.CustomerAdmin},
