@@ -284,8 +284,11 @@ class Person(Party):
   def name(self):
     if self.last_name and self.first_name:
       return u'%s %s'%(self.first_name, self.last_name)
-    else:
-      return self.username
+    elif self.last_name:
+      return self.last_name
+    elif self.first_name:
+      return self.first_name
+    return ''
   
   def __repr__(self):
     return self.name
