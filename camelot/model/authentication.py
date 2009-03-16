@@ -296,10 +296,8 @@ class Person(Party):
   class Admin(Party.Admin):
     name = 'Persons'
     section = 'relations'
-    list_display = ['username', 'first_name', 'last_name', ]
-    list_filter = ['is_active', 'is_staff', 'is_superuser']
-    form_display = TabForm([('Basic', Form([HBoxForm([Form(['username', 'first_name', 'last_name', 'sex']),
-                                                      Form(['is_staff', 'is_active', 'is_superuser',]),
+    list_display = ['first_name', 'last_name', ]
+    form_display = TabForm([('Basic', Form([HBoxForm([Form(['first_name', 'last_name', 'sex']),
                                                       Form(['picture',]),
                                                      ]), 
                                                      'contact_mechanisms',  'comment',], scrollbars=True)),
