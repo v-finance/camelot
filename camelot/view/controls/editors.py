@@ -239,7 +239,80 @@ class CodeEditor(QtGui.QWidget):
 
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
-        
+    
+    
+    
+    
+    
+class FloatEditor(QtGui.QWidget):
+  """Widget for editing a float field, with a calculator"""
+    
+  
+  def __init__(self, parent, precision, minimum, maximum, editable):
+    super(FloatEditor, self).__init__(parent)
+
+
+    action = QtGui.QAction(self)
+    action.setShortcut(Qt.Key_F3)
+    self.setFocusPolicy(Qt.StrongFocus)
+    self.spinBox = QtGui.QDoubleSpinBox(parent)
+    self.spinBox.setReadOnly(editable==False)
+    self.spinBox.setRange(minimum, maximum)
+    self.spinBox.setDecimals(precision)
+    self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+    self.spinBox.setSingleStep(1.0)
+    self.spinBox.addAction(action)
+    calculatorButton = QtGui.QToolButton()
+    icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
+    calculatorButton.setIcon(icon)
+    calculatorButton.setAutoRaise(True)
+    
+    self.connect(calculatorButton, QtCore.SIGNAL('clicked()'), lambda:self.popupCalculator(self.spinBox.value()))
+    self.connect(action, QtCore.SIGNAL('triggered(bool)'), lambda:self.popupCalculator(self.spinBox.value()))
+    self.connect(self.spinBox, QtCore.SIGNAL('editingFinished()'), lambda:self.editingFinished(self.spinBox.value()))
+    
+    self.releaseKeyboard()
+    
+    layout = QtGui.QHBoxLayout()
+    layout.setMargin(0)
+    layout.setSpacing(0)
+    layout.addWidget(self.spinBox)
+    layout.addWidget(calculatorButton)
+    
+    self.setFocusProxy(self.spinBox)
+    
+    self.setLayout(layout)
+    
+
+
+  def setValue(self, value):
+    value = str(value).replace(',', '.')
+    self.spinBox.setValue(eval(value))
+    
+    
+  def value(self):
+    self.spinBox.interpretText()
+    value = self.spinBox.value()
+    return value
+  
+    
+  def popupCalculator(self, value):
+    from calculator import Calculator
+    calculator = Calculator(self)
+    calculator.setValue(value)
+    self.connect(calculator, QtCore.SIGNAL('calculationFinished'), self.calculationFinished)
+    calculator.exec_()
+    
+  def calculationFinished(self, value):
+    self.spinBox.setValue(float(value))
+    self.emit(QtCore.SIGNAL('editingFinished()'), value)
+    
+  def editingFinished(self, value):
+    self.emit(QtCore.SIGNAL('editingFinished()'), value)
+    
+    
+
+          
 
 class EmbeddedMany2OneEditor(QtGui.QWidget):
   """Widget for editing a many 2 one relation a a form embedded in another

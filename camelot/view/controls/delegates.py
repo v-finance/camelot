@@ -487,12 +487,8 @@ class FloatColumnDelegate(QtGui.QItemDelegate):
     self.editable = editable
 
   def createEditor(self, parent, option, index):
-    editor = QtGui.QDoubleSpinBox(parent)
-    editor.setReadOnly(self.editable==False)
-    editor.setRange(self.minimum, self.maximum)
-    editor.setDecimals(self.precision)
-    editor.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
-    editor.setSingleStep(1.0)
+    editor = editors.FloatEditor(parent, self.precision, self.minimum, self.maximum, self.editable)
+    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
     return editor
 
   def setEditorData(self, editor, index):
@@ -500,8 +496,13 @@ class FloatColumnDelegate(QtGui.QItemDelegate):
     editor.setValue(value)
 
   def setModelData(self, editor, model, index):
-    editor.interpretText()
     model.setData(index, create_constant_function(editor.value()))
+    
+    
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    print 'commitAndCloseEditor'
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
 
 _registered_delegates_[QtGui.QDoubleSpinBox] = FloatColumnDelegate
 
