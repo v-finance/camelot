@@ -253,7 +253,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     if sender != self:
       row = self.cache[Qt.DisplayRole].delete_by_entity(entity)
       row = self.cache[Qt.EditRole].delete_by_entity(entity)
-      if row:
+      if row!=None:
         logger.debug('updated row %i' % row)
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
         self.emit(QtCore.SIGNAL(sig),

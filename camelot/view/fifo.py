@@ -40,6 +40,9 @@ class fifo(object):
     self.entities = []
     self.data_by_rows = dict()
     self.rows_by_entity = dict()
+    
+  def __unicode__(self):
+    return u','.join(unicode(e) for e in self.entities)
 
   def add_data(self, row, entity, value):
     self.delete_by_entity(entity)
