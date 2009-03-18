@@ -352,6 +352,7 @@ class EntityAdmin(object):
         super(NewForm, self).__init__(parent)
         self.setWindowTitle('New %s'%(admin.getName()))
         self.widget_layout = QtGui.QVBoxLayout()
+        self.widget_layout.setMargin(0)
         self.form_view = admin.createFormView('New', model, 0, parent)
         self.widget_layout.insertWidget(0, self.form_view)
         self.setLayout(self.widget_layout)
