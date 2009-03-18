@@ -43,10 +43,12 @@ _sqlalchemy_to_python_type_ = {
                                
   sqlalchemy.types.Boolean: lambda f: {'python_type': bool,
                                        'editable': True,
+                                       'nullable':True,
                                        'widget': QtGui.QCheckBox },
 
   sqlalchemy.types.BOOLEAN: lambda f: {'python_type': bool,
                                        'editable': True,
+                                       'nullable':True,
                                        'widget': QtGui.QCheckBox},
 
   sqlalchemy.types.Date: lambda f: {'python_type': datetime.date,
@@ -54,6 +56,7 @@ _sqlalchemy_to_python_type_ = {
                                     'editable': True,
                                     'min': None,
                                     'max': None,
+                                    'nullable':True,
                                     'widget': DateEditor },
 
   sqlalchemy.types.Float: lambda f: {'python_type': float,
@@ -61,56 +64,67 @@ _sqlalchemy_to_python_type_ = {
                                      'editable': True,
                                      'min': None,
                                      'max': None,
+                                     'nullable':True,
                                      'widget': 'float'},
 
   sqlalchemy.types.Integer: lambda f: {'python_type': int,
                                        'editable': True,
                                        'minimum': camelot_minint,
                                        'maximum': camelot_maxint,
+                                       'nullable':True,
                                        'widget': 'int'},
 
   sqlalchemy.types.INT: lambda f: {'python_type': int,
                                    'editable': True,
                                    'minimum': camelot_minint,
                                    'maximum': camelot_maxint,
+                                   'nullable':True,
                                    'widget': 'int'},
 
   sqlalchemy.types.String: lambda f: {'python_type': str,
                                       'length': f.length,
                                       'editable': True,
+                                      'nullable':True,
                                       'widget': 'str'},
 
   sqlalchemy.types.TEXT: lambda f: {'python_type': str,
                                     'length': f.length,
                                     'editable': True,
+                                    'nullable':True,
                                     'widget': 'str'},
 
   sqlalchemy.types.Unicode: lambda f: {'python_type': str,
                                        'length': f.length,
                                        'editable': True,
+                                       'nullable':True,
                                        'widget': 'str'},
 
   camelot.types.Image: lambda f: {'python_type': str,
                                   'editable': True,
+                                  'nullable':True,
                                   'widget': 'image'},
 
   camelot.types.Code: lambda f: {'python_type': str,
                                  'editable': True,
                                  'widget': 'code',
+                                 'nullable':True,
                                  'parts': f.parts},
 
   camelot.types.IPAddress: lambda f: {'python_type': str,
                                  'editable': True,
                                  'widget': 'code',
+                                 'nullable':True,
                                  'parts': f.parts},
                                                                   
   camelot.types.VirtualAddress: lambda f:{'python_type':str,
                                           'editable':True,
+                                          'nullable':True,
                                           'widget':'virtual_address',
                                           },
 
   camelot.types.RichText: lambda f:{'python_type':str,
                                     'editable':True,
+                                    'nullable':True,
                                     'widget':'richtext',
                                    },
                                    
@@ -122,6 +136,7 @@ _sqlalchemy_to_python_type_ = {
                                                                            
   sqlalchemy.types.Time : lambda f: {'python_type':datetime.time,
                                      'editable':True,
+                                     'nullable':True,
                                      'widget':'time',
                                      'delegate':TimeColumnDelegate,
                                      'format':'hh:mm',
@@ -129,6 +144,7 @@ _sqlalchemy_to_python_type_ = {
   
   sqlalchemy.types.DateTime : lambda f: {'python_type':datetime.datetime,
                                          'editable':True,
+                                         'nullable':True,
                                          'widget':'time',
                                          'format':'dd-MM-yyyy hh:mm',
                                          'nullable':True,
