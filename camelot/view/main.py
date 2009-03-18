@@ -2,6 +2,7 @@
 
 def main(application_admin, initialization=lambda:None):
   """Main function, call this function to start the GUI interface
+
   @param application_admin: object of type ApplicationAdmin (as defined in application_admin.py)
   that specifies the look of the GUI interface
   @param initialization: function that will be called during the appearance of the splash
@@ -24,7 +25,7 @@ def main(application_admin, initialization=lambda:None):
   import settings
   from PyQt4 import QtCore
 
-  QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])) 
+  QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
   logger.debug('qt version %s, pyqt version %s' % 
                (QtCore.QT_VERSION_STR, QtCore.PYQT_VERSION_STR))
   logger.debug('qt major version %f' % QT_MAJOR_VERSION)
