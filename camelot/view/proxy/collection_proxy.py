@@ -606,11 +606,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       pk = o.id
       # save the state before the update
       from camelot.model.memento import BeforeDelete
-      from camelot.model.authentication import getCurrentPerson
+      from camelot.model.authentication import getCurrentAuthentication
       history = BeforeDelete(model=unicode(self.admin.entity.__name__), 
                              primary_key=pk, 
                              previous_attributes={},
-                             person = getCurrentPerson())
+                             authentication = getCurrentAuthentication())
       logger.debug('delete the object')
       o.delete()
       Session.object_session(o).flush([o])

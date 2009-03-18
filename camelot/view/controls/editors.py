@@ -502,6 +502,7 @@ class Many2OneEditor(QtGui.QWidget):
       if has_subclasses:
         from camelot.view.controls.inheritance import SubclassDialog
         select_subclass = SubclassDialog(self, self.admin)
+        select_subclass.setWindowTitle('Select')
         selected = select_subclass.exec_()
         admin = select_subclass.selected_subclass
       if selected:
