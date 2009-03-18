@@ -644,10 +644,10 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       except KeyError:
         pass
       from camelot.model.memento import Create
-      from camelot.model.authentication import getCurrentPerson
+      from camelot.model.authentication import getCurrentAuthentication
       history = Create(model=unicode(self.admin.entity.__name__),
                        primary_key=o.id,
-                       person = getCurrentPerson())
+                       authentication = getCurrentAuthentication())
       elixir.session.flush([history])
       self.rsh.sendEntityCreate(self, o)
     self.mt.post(lambda:None, lambda *args:self.refresh())

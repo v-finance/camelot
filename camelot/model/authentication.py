@@ -262,8 +262,8 @@ class Person(Party):
   other.
   """
   using_options(tablename='person', inheritance='multi')
-  first_name = Field(Unicode(40))
-  last_name =  Field(Unicode(40))
+  first_name = Field(Unicode(40), required=True)
+  last_name =  Field(Unicode(40), required=True)
   middle_name = Field(Unicode(40))
   personal_title = Field(Unicode(10))
   suffix = Field(Unicode(3))
