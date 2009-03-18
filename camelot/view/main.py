@@ -1,15 +1,22 @@
 """Main function, to be called to start the GUI interface"""
 
-def main(application_admin, initialization=lambda:None):
+def main(application_admin, 
+         initialization=lambda:None,
+         pre_initialization=lambda:None):
   """Main function, call this function to start the GUI interface
 
   @param application_admin: object of type ApplicationAdmin (as defined in application_admin.py)
   that specifies the look of the GUI interface
   @param initialization: function that will be called during the appearance of the splash
   screen, put all time consuming initialization here.  this function will be called after the
-  model thread has been started
+  model thread has been started.
+  @param pre-initialization: function that will be called before the model thread has been started,
+  but after the QApplication has been created.  This function can be used to run a configuration
+  wizard before a connection to the database was mode or any gui element has been constructed.
   """
+  #
   # before anything else happens or is imported, the splash screen should be there
+  #
   import sys
   from PyQt4 import QtGui
   app = QtGui.QApplication(sys.argv)
@@ -44,6 +51,8 @@ def main(application_admin, initialization=lambda:None):
   app.setOrganizationDomain(application_admin.getOrganizationDomain())
   app.setApplicationName(application_admin.getName())
   app.setWindowIcon(application_admin.getIcon())
+  pre_initialization()
+  app.processEvents()
 
   # regulary call processEvents to keep the splash alive
   splash.showMessage('Setup database')

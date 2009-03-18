@@ -490,13 +490,15 @@ class Many2OneEditor(QtGui.QWidget):
   def trashButtonClicked(self):
     self.setEntity(lambda:None)
     
+  @gui_function
   def createNew(self):
     
+    @model_function
     def get_has_subclasses():
       return len(self.admin.getSubclasses())
     
+    @gui_function
     def show_new_view(has_subclasses):
-      
       selected = QtGui.QDialog.Accepted
       admin = self.admin
       if has_subclasses:
