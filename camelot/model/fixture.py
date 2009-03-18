@@ -61,4 +61,4 @@ class Fixture(Entity):
     if store_fixture:
       fixture = cls(model=unicode(entity.__name__), primary_key=obj.id, fixture_key=fixture_key, fixture_class=fixture_class)
       Session.object_session(fixture).flush([fixture]) 
-    return fixture
+    return obj
