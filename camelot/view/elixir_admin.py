@@ -72,7 +72,7 @@ class EntityAdmin(object):
   list_actions = []
   list_search = []
   list_size = (600, 400)
-  form_size = (700, 500)
+  #form_size = (700, 500)
   form_actions = []
   form_title_column = None
   field_attributes = {}
@@ -413,7 +413,8 @@ class EntityAdmin(object):
           event.ignore()
 
     form = NewForm(parent)
-    form.setMinimumSize(admin.form_size[0], admin.form_size[1])
+    if hasattr(admin, 'form_size'):
+      form.setMinimumSize(admin.form_size[0], admin.form_size[1])
     return form
 
   @gui_function
