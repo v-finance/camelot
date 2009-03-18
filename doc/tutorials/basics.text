@@ -1,31 +1,39 @@
-Create and edit a movie database
-================================
+Create a movie database application
+===================================
+
 
 startproject
 ------------
 
 We begin with the creation of a new project. Typing the following command in
-your command line interpreter creates one:
+your command prompt creates one:
 
     PTC\camelot\bin\camelot-admin.py startproject videostore
 
+Under linux, you may have to adjust the folder separator. This tutorial has
+been written under the Windows XP operating system. The pictures also reflect
+that operating system.
+
 PTC is the path to Camelot main directory. If Camelot is correctly installed
 and working, the folder _videostore_ appears in your current working directory.
-We will be working with files inside this folder.
+We will be working with the files inside this folder.
 
 
 Main window and views
 ---------------------
 
-The previous command created some modules for us. Let's focus on the main 
-module, _main.py_, for a moment. You use it to start your Camelot application:
+The previous command created some modules for us. Let's focus on the module
+named _main.py_ for a moment. It contains the entry point of your Camelot
+application, which you start with:
 
     python videostore\main.py
 
-The application has menus, a toolbar, a left navigation pane, and a central 
-area on which nothing is currently displayed.
+You should get the picture we display below:
 
 ![Camelot application main window](images/picture1.png "Camelot running under Windows XP")
+
+The application has menus, a toolbar, a left navigation pane, and a central
+area on which nothing is currently displayed.
 
 The navigation pane has its first button selected. Select any other button by
 clicking on it, and see the nagivation tree fills itself with new entries.
@@ -38,21 +46,30 @@ Short disgression on sections: Camelot uses sections to group models. Each
 button in the navigation pane represents a section, and each entry of the
 navigation tree is part of this section.
 
-Notice that we cannot do much with the menus and the toolbar; we have not
-clicked on any entity yet. So let's do it (Camelot have some ready for us.)
-
-The tabular window that appears in the previously empty area is maximized by
-default. Each row in the table is a record that we can edit (save those fields
-that are marked not editable.) 
+Notice that the application disables most of the menus and the toolbar buttons.
+When we click on an entity, more options become available. So let's click on
+the entity named _Persons_ in the section _relations_. A child window appears
+in the previously empty area and is maximized by default: this is the table
+view of the entity named _Persons_.
 
 ![Camelot table view](images/picture3.png "Camelot application with table view")
 
-Not all the fields appear in the table. We check this by getting a form window
-of a record. Get a form window by clicking on the blue folder icon in the first
-column of each record.
- 
-Forms are not maximized by default. And now there is more fields to edit.
-Camelot echoes new fields values to the database.
+Each row is a record with some fields that we can edit (other fields may not be
+editable). Let's now add a new row by clicking on the new document icon (next
+to the trash bin icon -- which removes a row).
+
+![Camelot toolbar add/remove icons](images/picture4.png "Add or delete a row")
+
+We now see a form view with additional fields. Forms are not maximized by
+default. Forms label required fields in bold.
+
+![Camelot form view](images/picture5.png "Filling a form")
+
+Fill in a first and a last name, and close the form. Camelot will automatically
+validate and echo the changes to the database. We can reopen the form by
+clicking on the blue icon in the first column of each row of the table.
+
+![Camelot table view with record](images/picture6.png "The new record appears in the table view as well")
 
 That's all for basic usages of the interface.
 
@@ -62,11 +79,12 @@ Modeling
 
 Next we will create our videostore model. Let's first take a look at the module
 _settings.py_. There is an attribute, _ENGINE_, an anonymous function, which 
-returns a URI. That's the database your Camelot application will be connecting
-too.
+returns a URI, a uniform resource identifier. That's the database your Camelot
+application will be connecting too. Camelot provides a default sqlite URI
+scheme. But you can set your own.
 
-If you set a sqlite database file that does not exist, it will be created in
-the directory from which the application is launched.
+If you set a sqlite database file that does not exist, for example, it will be
+created in the directory from which the application is launched.
 
 Now we can look at _model.py_. Camelot has already imported some classes for
 us. They are used to create our entities. Let's say we want a movie entity with
@@ -122,8 +140,8 @@ EntityAdmin subclassing
 -----------------------
 
 We have to tell Camelot about our entities, so they show up in the GUI. This is
-one of the purposes of EntityAdmin subclasses. After writing the adding the
-EntityAdmin subclass our Movie class now looks like this:
+one of the purposes of EntityAdmin subclasses. After adding the EntityAdmin
+subclass, our Movie class now looks like this:
 
     class Movie(Entity):
       using_options(tablename='movie')
@@ -144,22 +162,22 @@ EntityAdmin subclass our Movie class now looks like this:
 We made Admin an inner class to emphasize the link between it and the Entity
 subclass. Camelot does not force us though.
 
-Admin holds three attributes. The value of _name_ is used in navigation trees,
-while _section_'s value is used to group entities together (ie, buttons's label
-in the navigation pane.) In our case the section is _'movies'_.
+Admin holds three attributes. The value of _name_ will be a label in navigation
+trees, while _section_'s value is used programmatically to group entities
+together (we will see that soon). In our case, our group/section is _'movies'_.
 
-The last attribute is interesting; it holds a list containing fields we have
-defined before. As its name suggests, _list\_display_ tells Camelot to show the
-fields in the list and ignore any others fields it encounter. _list\_display_
+The last attribute is interesting; it holds a list containing the fields we
+have defined above. As the name suggests, _list\_display_ tells Camelot to show
+the fields in the list and ignore any others fields it finds. _list\_display_
 does not affect forms though. 
 
-In our case we want to display four fields: title, short\_description,
-release\_date, and genre (well, all of them.) Next is the last piece of the
-puzzle.
+In our case we want to display four fields: _title_, _short\_description_,
+_release\_date_, and _genre_ (well, all of them.) 
 
 Lastly, we add a _\_\_repr\_\_()_ method that will return either the title of
 the movie entity or _'untitled movie'_ if _title_ is empty.
 
+Let's move onto the last piece of the puzzle.
 
 application\_admin.py
 --------------------
@@ -169,14 +187,14 @@ in the navigation pane? We said they were sections, used to group entities. One
 of the tasks of the module _application\_admin.py_ is to specify sections.
 
 Camelot defines a class, _MyApplicationAdmin_, for us. This class is a subclass
-of _ApplicationAdmin_, which is used to control the overall look of every 
-Camelot application.
+of _ApplicationAdmin_, which is used to control the overall look and feel of
+every Camelot application.
 
 MyApplicationAdmin._\_\_init\_\_()_ calls its parent
 _ApplicationAdmin.\_\_init\_\_()_ and passes it a list of sections using the
 following syntax:
 
-    (<section_name>, (<selection_display_name>, <section_icon_image>))
+    (<section_internal_name>, (<section_label>, <section_icon_image>))
 
 That means initializing ApplicationAdmin with
   
@@ -195,7 +213,7 @@ Next, follows four calls to _ApplicationAdmin.register()_. As you have probably
 guessed, this method registers Entities and their corresponding EntityAdmins.
 
 We need to add a new section for our Movie entity and then register it. Camelot
-comes with the Tango icon collection, we use a suitable icon for our movie
+comes with the Tango icon collection; we use a suitable icon for our movie
 section. The call to super() in _\_\_init\_\_()_ looks like this after the
 changes:
 
@@ -239,14 +257,18 @@ The whole _\_\_init\_\_()_ now looks like this:
       from model import Movie
       self.register(Movie, Movie.Admin)
 
-We are all set. If we run our application
+We are all set. If we run our application,
 
     python videostore/main.py
 
 we see a new button the navigation pane labelled _'Movies'_. Clicking on it
 fills the navigation tree with the only entity in the movies's section.
 Clicking on this tree entry opens a tabular view of records. And if we click on
-the blue folder of each record, a form appears. 
+the blue folder of each record, a form appears.
+
+See our movie database in action:
+
+![Camelot movie database application](images/picture7.png "Our movie database")
 
 That's it for the basics of defining an entity and setting it for display in
 Camelot. Next we look at relationships between entities.
@@ -311,8 +333,46 @@ looks as follows:
         section = 'movies'
         list_display = ['name']
 
-     def __repr__(self):
-       return self.name or 'unknown director'
+      def __repr__(self):
+        return self.name or 'unknown director'
+
+The two entities are once again listed below:
+
+    class Movie(Entity):
+      using_options(tablename='movie')
+
+      title = Field(Unicode(60), required=True)
+      short_description = Field(Unicode(512))
+      release_date = Field(Date)
+      genre = Field(Unicode(15))
+      director = ManyToOne('Director')
+
+      class Admin(EntityAdmin):
+        name = 'Movies'
+        section = 'movies'
+        list_display = ['title',
+                        'short_description',
+                        'release_date',
+                        'genre',
+                        'director']
+
+      def __repr__(self):
+        return self.title or 'untitled movie'
+
+
+    class Director(Entity):
+      using_options(tablename='director')
+      
+      name = Field(Unicode(60))
+      movies = OneToMany('Movie')
+ 
+      class Admin(EntityAdmin):
+        name = 'Directors'
+        section = 'movies'
+        list_display = ['name']
+
+      def __repr__(self):
+        return self.name or 'unknown director'
 
 Finally, we fix _application\_admin.py_; the last lines of the _\_\_init\_\_()_
 are now:
@@ -321,5 +381,11 @@ are now:
     self.register(Movie, Movie.Admin)
     self.register(Director, Director.Admin)
 
-This takes care of the relationship between our two entities. The changes
-should also be reflected in the GUI.
+This takes care of the relationship between our two entities. This should be
+the new look of our application:
+
+![Camelot movie database application](images/picture8.png "We have relationships between entities now!")
+
+We have just learned the basics of Camelot, and have a nice movie database
+application that we can play with. In another tutorial, we will learn more
+advanced features of Camelot.
