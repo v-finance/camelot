@@ -172,9 +172,6 @@ class TabForm(Form):
     from PyQt4.QtCore import Qt
     widget = QtGui.QTabWidget(parent)
     for tab_label, tab_form in self.tabs:      
-      #form = tab_form.render(widgets, widget)
-      #print form.height()
-      #widget.addTab(form, tab_label)
       widget.addTab(tab_form.render(widgets, widget), tab_label)
     return widget
   
