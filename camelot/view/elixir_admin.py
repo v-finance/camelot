@@ -72,7 +72,7 @@ class EntityAdmin(object):
   list_actions = []
   list_search = []
   list_size = (600, 400)
-  #form_size = (700, 500)
+  form_size = (700, 500)
   form_actions = []
   form_title_column = None
   field_attributes = {}
