@@ -256,7 +256,7 @@ class FloatEditor(QtGui.QWidget):
     action.setShortcut(Qt.Key_F3)
     self.setFocusPolicy(Qt.StrongFocus)
     self.spinBox = QtGui.QDoubleSpinBox(parent)
-    self.spinBox.setReadOnly(editable==False)
+    self.spinBox.setReadOnly(not editable)
     self.spinBox.setRange(minimum, maximum)
     self.spinBox.setDecimals(precision)
     self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
@@ -277,7 +277,8 @@ class FloatEditor(QtGui.QWidget):
     layout.setMargin(0)
     layout.setSpacing(0)
     layout.addWidget(self.spinBox)
-    layout.addWidget(calculatorButton)
+    if editable:
+      layout.addWidget(calculatorButton)
     
     self.setFocusProxy(self.spinBox)
     
@@ -313,6 +314,155 @@ class FloatEditor(QtGui.QWidget):
     
 
           
+          
+class IntegerEditor(QtGui.QWidget):
+  """Widget for editing a float field, with a calculator"""
+    
+  
+  def __init__(self, parent, minimum, maximum, editable):
+    super(IntegerEditor, self).__init__(parent)
+
+
+    action = QtGui.QAction(self)
+    action.setShortcut(Qt.Key_F3)
+    self.setFocusPolicy(Qt.StrongFocus)
+    self.spinBox = QtGui.QDoubleSpinBox(parent)
+    self.spinBox.setReadOnly(not editable)
+    self.spinBox.setRange(minimum, maximum)
+    self.spinBox.setDecimals(0)
+    self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+    self.spinBox.setSingleStep(1)
+    self.spinBox.addAction(action)
+    calculatorButton = QtGui.QToolButton()
+    icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
+    calculatorButton.setIcon(icon)
+    calculatorButton.setAutoRaise(True)
+    
+    self.connect(calculatorButton, QtCore.SIGNAL('clicked()'), lambda:self.popupCalculator(self.spinBox.value()))
+    self.connect(action, QtCore.SIGNAL('triggered(bool)'), lambda:self.popupCalculator(self.spinBox.value()))
+    self.connect(self.spinBox, QtCore.SIGNAL('editingFinished()'), lambda:self.editingFinished(self.spinBox.value()))
+    
+#    self.releaseKeyboard()
+    
+    layout = QtGui.QHBoxLayout()
+    layout.setMargin(0)
+    layout.setSpacing(0)
+    layout.addWidget(self.spinBox)
+    if editable:
+      layout.addWidget(calculatorButton)
+    
+    self.setFocusProxy(self.spinBox)
+    
+    self.setLayout(layout)
+    
+
+
+  def setValue(self, value):
+    value = str(value).replace(',', '.')
+    self.spinBox.setValue(eval(value))
+    
+    
+  def value(self):
+    self.spinBox.interpretText()
+    value = self.spinBox.value()
+    return value
+  
+    
+  def popupCalculator(self, value):
+    from calculator import Calculator
+    calculator = Calculator(self)
+    calculator.setValue(value)
+    self.connect(calculator, QtCore.SIGNAL('calculationFinished'), self.calculationFinished)
+    calculator.exec_()
+    
+  def calculationFinished(self, value):
+    self.spinBox.setValue(float(value))
+    self.emit(QtCore.SIGNAL('editingFinished()'), value)
+    
+  def editingFinished(self, value):
+    self.emit(QtCore.SIGNAL('editingFinished()'), value)
+    
+    
+
+    
+    
+class StarEditor(QtGui.QWidget):
+  def __init__(self, parent, maximum, editable):
+    QtGui.QWidget.__init__(self, parent)
+    self.setFocusPolicy(Qt.StrongFocus)
+    layout = QtGui.QHBoxLayout(self)
+    layout.setMargin(0)
+    layout.setSpacing(0)
+    self.starIcon = Icon('tango/16x16/status/weather-clear.png').getQIcon()
+    self.noStarIcon = Icon('tango/16x16/status/weather-overcast.png').getQIcon()
+    self.setAutoFillBackground(True)
+    #self.starCount = maximum
+    self.starCount = 5
+    self.buttons = []
+    
+    for i in range(self.starCount):
+      button = QtGui.QToolButton(self)
+      button.setIcon(self.noStarIcon)
+      if editable:
+        button.setAutoRaise(True)
+      else:
+        button.setAutoRaise(True)
+        button.setDisabled(True)
+        
+      self.buttons.append(button)
+      
+    
+    def createStarClick(i):
+      return lambda:self.starClick(i+1)
+    
+    for i in range(self.starCount):
+      self.connect(self.buttons[i], QtCore.SIGNAL('clicked()'), createStarClick(i))
+      
+      
+    
+    for i in range(self.starCount):
+      layout.addWidget(self.buttons[i])
+      
+      
+    layout.addStretch()
+    self.setLayout(layout)
+    
+    
+    
+  def getValue(self):
+    return self.stars
+    
+  def starClick(self, value):
+    self.stars = int(value)
+    #print self.stars
+      
+    for i in range(self.starCount):
+      if i+1 <= self.stars:
+        self.buttons[i].setIcon(self.starIcon)
+      else:
+        self.buttons[i].setIcon(self.noStarIcon)
+    print 'EditingFinished Emitted'
+    self.emit(QtCore.SIGNAL('editingFinished()'), self.stars)
+        
+
+      
+  def setValue(self, value):
+    self.stars = int(value)
+    #print self.stars
+      
+    for i in range(self.starCount):
+      if i+1 <= self.stars:
+        self.buttons[i].setIcon(self.starIcon)
+      else:
+        self.buttons[i].setIcon(self.noStarIcon)
+        
+        
+        
+    print self.stars
+    print '---------------------------------------------------------'
+        
+
+      
 
 class EmbeddedMany2OneEditor(QtGui.QWidget):
   """Widget for editing a many 2 one relation a a form embedded in another
