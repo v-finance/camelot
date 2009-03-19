@@ -23,13 +23,6 @@ def genre_choices(entity_instance):
   yield (('drama'),('Drama'))
   yield (('sci-fi'),('Sci-Fi'))
   yield (('war'),('War'))
-  
-
-def create_slider_delegate(*args, **kwargs):
-  """Factory function for a slider delegate"""
-  from camelot.view.controls.delegates import SliderDelegate
-  return SliderDelegate(*args, **kwargs)
-  
 
 class Movie(Entity):
   using_options(tablename='movies')
@@ -39,7 +32,7 @@ class Movie(Entity):
   director = ManyToOne('Person')
   cast = OneToMany('Cast')
   genre = Field(Unicode(15))
-  rating = Field(Integer())
+  rating = Field(camelot.types.Rating())
   #
   # Camelot includes custom sqlalchemy types, like Image, which stores an
   # PIL image on disk and keeps the reference to it in the database.
@@ -92,10 +85,9 @@ class Movie(Entity):
     # field_attributes dictionary
     #
     field_attributes = dict(cast=dict(create_inline=True),
-                            genre=dict(choices=genre_choices),
-                            rating=dict(delegate=create_slider_delegate))
+                            genre=dict(choices=genre_choices),)
 
-  def __repr__(self):
+  def __unicode__(self):
     return self.title or ''
 
 
@@ -110,5 +102,7 @@ class Cast(Entity):
       list_display = ['actor', 'role']
       form_display = ['actor', 'role']
 
-  def __repr__(self):
-    return self.name or ''
+  def __unicode__(self):
+    if self.actor:
+      return self.actor.name
+    return ''
