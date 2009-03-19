@@ -138,7 +138,14 @@ class Code(types.TypeDecorator):
 class IPAddress(Code):
   def __init__(self, **kwargs):
     super(IPAddress, self).__init__(parts=['900','900','900','900'])
-    
+ 
+class Rating(types.TypeDecorator):
+  """Sqlalchemy column type to store ratings
+  
+  by default, fields of this type will be displayed as stars"""
+  
+  impl = types.Integer
+     
 class RichText(types.TypeDecorator):
   """Sqlalchemy column type to store rich text
   

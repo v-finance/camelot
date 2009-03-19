@@ -239,19 +239,13 @@ class CodeEditor(QtGui.QWidget):
 
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
-    
-    
-    
-    
+
     
 class FloatEditor(QtGui.QWidget):
   """Widget for editing a float field, with a calculator"""
     
-  
-  def __init__(self, parent, precision, minimum, maximum, editable):
+  def __init__(self, parent, precision, minimum, maximum, editable=True):
     super(FloatEditor, self).__init__(parent)
-
-
     action = QtGui.QAction(self)
     action.setShortcut(Qt.Key_F3)
     self.setFocusPolicy(Qt.StrongFocus)
@@ -283,19 +277,16 @@ class FloatEditor(QtGui.QWidget):
     self.setFocusProxy(self.spinBox)
     
     self.setLayout(layout)
-    
-
 
   def setValue(self, value):
-    value = str(value).replace(',', '.')
-    self.spinBox.setValue(eval(value))
-    
+    print 'set value', value
+    self.spinBox.setValue(value)
+    print self.spinBox.value()
     
   def value(self):
     self.spinBox.interpretText()
     value = self.spinBox.value()
     return value
-  
     
   def popupCalculator(self, value):
     from calculator import Calculator
@@ -310,10 +301,6 @@ class FloatEditor(QtGui.QWidget):
     
   def editingFinished(self, value):
     self.emit(QtCore.SIGNAL('editingFinished()'), value)
-    
-    
-
-          
           
 class IntegerEditor(QtGui.QWidget):
   """Widget for editing a float field, with a calculator"""

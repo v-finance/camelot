@@ -545,7 +545,7 @@ _registered_delegates_[editors.VirtualAddressEditor] = \
 class FloatColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for float values"""
 
-  def __init__(self, minimum=-100.0, maximum=100.0, precision=3,
+  def __init__(self, minimum=-1e15, maximum=1e15, precision=2,
                editable=True, parent=None, **kwargs):
     super(FloatColumnDelegate, self).__init__(parent)
     self.minimum = minimum

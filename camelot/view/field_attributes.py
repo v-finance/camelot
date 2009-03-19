@@ -133,6 +133,12 @@ _sqlalchemy_to_python_type_ = {
                                  'editable':True,
                                  'nullable':True,
                                  'widget':'color'},
+                                 
+  camelot.types.Rating: lambda f:{'delegate':StarDelegate,
+                                  'editable':True,
+                                  'nullable':True,
+                                  'python_type':int,
+                                  'widget':'star'},
                                                                            
   sqlalchemy.types.Time : lambda f: {'python_type':datetime.time,
                                      'editable':True,
@@ -141,6 +147,7 @@ _sqlalchemy_to_python_type_ = {
                                      'delegate':TimeColumnDelegate,
                                      'format':'hh:mm',
                                      'nullable':True},
+                                     
   
   sqlalchemy.types.DateTime : lambda f: {'python_type':datetime.datetime,
                                          'editable':True,
