@@ -279,9 +279,7 @@ class FloatEditor(QtGui.QWidget):
     self.setLayout(layout)
 
   def setValue(self, value):
-    print 'set value', value
     self.spinBox.setValue(value)
-    print self.spinBox.value()
     
   def value(self):
     self.spinBox.interpretText()
@@ -421,35 +419,24 @@ class StarEditor(QtGui.QWidget):
     
   def starClick(self, value):
     self.stars = int(value)
-    #print self.stars
       
     for i in range(self.starCount):
       if i+1 <= self.stars:
         self.buttons[i].setIcon(self.starIcon)
       else:
         self.buttons[i].setIcon(self.noStarIcon)
-    print 'EditingFinished Emitted'
     self.emit(QtCore.SIGNAL('editingFinished()'), self.stars)
         
 
       
   def setValue(self, value):
     self.stars = int(value)
-    #print self.stars
       
     for i in range(self.starCount):
       if i+1 <= self.stars:
         self.buttons[i].setIcon(self.starIcon)
       else:
-        self.buttons[i].setIcon(self.noStarIcon)
-        
-        
-        
-    print self.stars
-    print '---------------------------------------------------------'
-        
-
-      
+        self.buttons[i].setIcon(self.noStarIcon)  
 
 class EmbeddedMany2OneEditor(QtGui.QWidget):
   """Widget for editing a many 2 one relation a a form embedded in another
@@ -494,7 +481,6 @@ class EmbeddedMany2OneEditor(QtGui.QWidget):
       self.form = self.admin.createFormView('', model, 0, self)
       self.layout.addWidget(self.form)
       if propagate:
-        print 'emit editing finished'
         self.emit(QtCore.SIGNAL('editingFinished()'))
           
     self.admin.mt.post(set_entity_instance, update_form)
