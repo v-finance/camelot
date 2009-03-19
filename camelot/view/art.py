@@ -51,6 +51,10 @@ class Icon(object):
     else:
       return '' 
 
+  def getQPixmap(self):
+    from PyQt4.QtGui import QPixmap
+    return QPixmap(self.fullpath())
+  
   def getQIcon(self):
     from PyQt4.QtGui import QIcon
     return QIcon(self.fullpath())

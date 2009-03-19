@@ -39,6 +39,7 @@ import datetime
 import StringIO
 
 import camelot.types
+from camelot.view.art import Icon
 from camelot.view.controls import editors 
 from camelot.view.model_thread import get_model_thread
 
@@ -147,19 +148,19 @@ class GenericDelegate(QtGui.QItemDelegate):
       return QtGui.QItemDelegate.sizeHint(self, option, index)    
 
 
-class IntegerColumnDelegate(QtGui.QItemDelegate):
+
+
+class StarDelegate(QtGui.QItemDelegate):
   """Custom delegate for integer values"""
 
-  def __init__(self, minimum=0, maximum=100, parent=None, **kwargs):
-    super(IntegerColumnDelegate, self).__init__(parent)
-    self.minimum = minimum
+  def __init__(self, maximum=5, editable=True, parent=None, **kwargs):
+    super(StarDelegate, self).__init__(parent)
     self.maximum = maximum
+    self.editable = True
 
   def createEditor(self, parent, option, index):
-    editor = QtGui.QSpinBox(parent)
-    if self.minimum and self.maximum:
-      editor.setRange(self.minimum, self.maximum)
-    editor.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+    editor = editors.StarEditor(parent, self.maximum, self.editable)
+    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
     return editor
 
   def setEditorData(self, editor, index):
@@ -167,8 +168,74 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
     editor.setValue(value)
 
   def setModelData(self, editor, model, index):
-    editor.interpretText()
+    #editor.interpretText()
+    model.setData(index, create_constant_function(editor.getValue()))
+
+
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    print 'commitAndCloseEditor_STAR'
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    
+    
+    
+  def paint(self, painter, option, index):
+    painter.save()
+    self.drawBackground(painter, option, index)
+    stars = index.model().data(index, Qt.EditRole).toInt()[0]
+    editor = editors.StarEditor(parent=None, maximum=self.maximum, editable=self.editable)
+    rect = option.rect
+    rect = QtCore.QRect(rect.left()+3, rect.top()+6, rect.width()-5, rect.height())
+    
+    
+    for i in range(5):
+      if i+1<=stars:
+        icon = Icon('tango/16x16/status/weather-clear.png').getQPixmap()
+        QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
+
+        rect = QtCore.QRect(rect.left()+20, rect.top(), rect.width(), rect.height())
+        
+#      else:
+#        icon = Icon('').getQPixmap()
+#        QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
+#        rect = QtCore.QRect(rect.left()+20, rect.top(), rect.width(), rect.height())
+#      
+
+    painter.restore()
+
+
+_registered_delegates_[editors.StarEditor] = StarDelegate
+
+
+
+class IntegerColumnDelegate(QtGui.QItemDelegate):
+  """Custom delegate for integer values"""
+
+  def __init__(self, minimum=0, maximum=100, editable=True, parent=None, **kwargs):
+    super(IntegerColumnDelegate, self).__init__(parent)
+    self.minimum = minimum
+    self.maximum = maximum
+    self.editable = True
+
+  def createEditor(self, parent, option, index):
+    editor = editors.IntegerEditor(parent, self.minimum, self.maximum, self.editable)
+    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
+    return editor
+
+  def setEditorData(self, editor, index):
+    value = index.model().data(index, Qt.EditRole).toInt()[0]
+    editor.setValue(value)
+
+  def setModelData(self, editor, model, index):
+    #editor.interpretText()
     model.setData(index, create_constant_function(editor.value()))
+
+
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    print 'commitAndCloseEditor_INT'
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+
 
 _registered_delegates_[QtGui.QSpinBox] = IntegerColumnDelegate
 
