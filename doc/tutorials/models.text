@@ -4,6 +4,25 @@ Creating models with Elixir/Sqlalchemy/Camelot
 This section contains tips and tricks to build data models with Elixir/Sqlalchemy/Camelot.
 The reader is encouraged to first read the basics tutorial.
 
+Camelot field types
+-------------------
+
+Camelot extends the Sqlalchemy field types with a number of its own field types.  Those
+field types are automatically mapped to a specific delegate taking care of the visualisation.
+
+Those field types are defined in _camelot.types_
+
+### Rating ###
+
+The rating field is an integer field that is visualized as a number of stars that
+can be selected.
+
+	class Movie(Entity):
+	  title = Field(Unicode(60), required=True)
+	  rating = Field(camelot.types.Rating())
+	  
+![Example of the rating field](images/rating.png "Rate a movie by assigning stars")
+
 Fields calculated by the database
 ---------------------------------
 
