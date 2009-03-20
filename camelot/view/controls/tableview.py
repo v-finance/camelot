@@ -139,7 +139,7 @@ class TableView(QtGui.QWidget):
     if self.table:
       self.table.deleteLater()
       self.table_model.deleteLater()
-    self.table = QueryTable()
+    self.table = QueryTable(self)
       
     self.table_model = self.query_table_proxy(admin,
                                               lambda:admin.entity.query,
