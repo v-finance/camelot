@@ -43,7 +43,6 @@ def structure_to_form(structure):
     return structure
   return Form(structure)
 
-
 class Form(object):
   """Use the QFormLayout widget to render a form"""
   
@@ -64,6 +63,29 @@ class Form(object):
     """@return : the fields, visible in this form"""
     return self._fields
   
+  def replaceField(self, original_field, new_field):
+    """Replace a field on this form with another field.  This function can be used to 
+    modify inherited forms.
+    @param original_field : the name of the field to be replace
+    @param new_field : the name of the new field
+    @return: True if the original field was found and replaced.
+    """
+    for i,c in enumerate(self._content):
+      if isinstance(c, Form):
+        c.replaceField(original_field, new_field)
+      elif c==original_field:
+        self._content[i] = new_field
+    try:
+      i = self._fields.index(original_field)
+      self._fields[i] = new_field
+      return True
+    except ValueError:
+      pass
+    return False
+  
+  def __unicode__(self):
+    return 'Form(%s)'%(u','.join(unicode(c) for c in self._content))
+      
   def render(self, widgets, parent=None, nomargins=False):
     """@param widgets: a dictionary mapping each field in this form to a tuple
     of (label, widget editor) 
@@ -76,20 +98,6 @@ class Form(object):
 
     from PyQt4 import QtGui
     from PyQt4.QtCore import Qt
-
-    #form_layout = QtGui.QFormLayout()
-    #form_layout.setFieldGrowthPolicy(QtGui.QFormLayout.ExpandingFieldsGrow) 
-    #for field in self._content:
-    #  if isinstance(field, Form):
-    #    form_layout.addRow(field.render(widgets, parent, True))
-    #  elif field in widgets:
-    #    label, editor = widgets[field]
-    #    if isinstance(editor, One2ManyEditor) or\
-    #       isinstance(editor, RichTextEditor):
-    #      form_layout.addRow(label)
-    #      form_layout.addRow(editor)
-    #    else:
-    #      form_layout.addRow(label, editor)
 
     form_layout = QtGui.QGridLayout()
     row = 0
@@ -165,7 +173,27 @@ class TabForm(Form):
                  for tab_label, tab_form in tabs]
     super(TabForm, self).__init__(sum((tab_form.get_fields()
                                   for tab_label, tab_form in self.tabs), []))
+    
+  def __unicode__(self):
+    return 'TabForm { %s\n        }'%(u'\n  '.join('%s : %s'%(label,unicode(form)) for label, form in self.tabs))
   
+  def getTab(self, tab_label):
+    """Get the tab form of associated with a tab_label, use this function to
+    modify the underlying tab_form in case of inheritance
+    
+    @param tab_label : a label of a tab as passed in the construction method
+    @return: the tab_form corresponding to tab_label
+    """
+    for label, form in self.tabs:
+      if label==tab_label:
+        return form
+      
+  def replaceField(self, original_field, new_field):
+    for tabel, form in self.tabs:
+      if form.replaceField(original_field, new_field):
+        return True
+    return False
+    
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
@@ -187,6 +215,15 @@ class HBoxForm(Form):
     super(HBoxForm, self).__init__(sum((column_form.get_fields()
                                   for column_form in self.columns), []))
 
+  def __unicode__(self):
+    return 'HBoxForm [ %s\n         ]'%('         \n'.join([unicode(form) for form in self.columns])) 
+  
+  def replaceField(self, original_field, new_field):
+    for form in self.columns:
+      if form.replaceField(original_field, new_field):
+        return True
+    return False
+  
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
@@ -195,7 +232,6 @@ class HBoxForm(Form):
     for form in self.columns:
       widget.addWidget(form.render(widgets, parent, nomargins))
     return widget
-  
 
 class VBoxForm(Form):
   """Render different forms or widgets in a vertical box"""
@@ -208,6 +244,15 @@ class VBoxForm(Form):
     self.rows = [structure_to_form(row) for row in rows]
     super(VBoxForm, self).__init__(sum((row_form.get_fields() for row_form in self.rows), []))
 
+  def replaceField(self, original_field, new_field):
+    for form in self.rows:
+      if form.replaceField(original_field, new_field):
+        return True
+    return False
+  
+  def __unicode__(self):
+    return 'VBoxForm [ %s\n         ]'%('         \n'.join([unicode(form) for form in self.rows]))
+  
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui

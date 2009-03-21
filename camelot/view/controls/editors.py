@@ -273,9 +273,7 @@ class FloatEditor(QtGui.QWidget):
     layout.addWidget(self.spinBox)
     if editable:
       layout.addWidget(calculatorButton)
-    
     self.setFocusProxy(self.spinBox)
-    
     self.setLayout(layout)
 
   def setValue(self, value):
