@@ -76,7 +76,7 @@ class VirtualAddress(types.TypeDecorator):
     def processor(value):
 
       if value:
-        return value.split('://')
+        return tuple(value.split('://'))
       return ('phone','')
       
     return processor  

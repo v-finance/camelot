@@ -63,6 +63,8 @@ def create_entity_search_query_decorator(admin, text):
         args.append(c.like(['%'] + codes + ['%']))
         args.append(c.like(['%'] + codes))
         args.append(c.like(codes + ['%']))
+      elif issubclass(c.type.__class__, camelot.types.VirtualAddress):
+        args.append(c.like(('%','%'+text+'%')))
       elif issubclass(c.type.__class__, camelot.types.Image):
         pass
       elif issubclass(c.type.__class__, (Unicode, )) or \

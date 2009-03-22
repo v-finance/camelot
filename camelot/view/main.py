@@ -19,7 +19,7 @@ def main(application_admin,
   #
   import sys
   from PyQt4 import QtGui
-  app = QtGui.QApplication(sys.argv)
+  app = QtGui.QApplication([a for a in sys.argv if a])
   splash = QtGui.QSplashScreen(application_admin.getSplashscreen())
   splash.show()
   

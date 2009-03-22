@@ -366,6 +366,7 @@ class Address(Entity):
   
   class Admin(EntityAdmin):
     name = 'Addresses'
+    section = 'relations'
     list_display = ['street1', 'street2', 'city']
     form_size = (700,150)
     form_actions = [('Show map',lambda address:address.showMap())]
@@ -419,9 +420,11 @@ class ContactMechanism(Entity):
   
   class Admin(EntityAdmin):
     form_size = (700,150)
-    name = 'Contact mechanism'
+    name = 'Contact mechanisms'
+    section = 'relations'
     list_display = ['mechanism']
-    form = Form(['mechanism', 'party_address'])
+    form_display = Form(['mechanism', 'party_address'])
+    field_attributes = {'mechanism':{'minimal_column_width':120}}
 
 class PartyContactMechanism(Entity):
   using_options(tablename='party_contact_mechanism')

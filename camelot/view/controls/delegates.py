@@ -518,6 +518,14 @@ class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, parent=None):
     super(VirtualAddressColumnDelegate, self).__init__(parent)
 
+  def paint(self, painter, option, index):
+    painter.save()
+    self.drawBackground(painter, option, index)
+    virtual_address = index.model().data(index, Qt.EditRole).toPyObject()  
+    if virtual_address and virtual_address[1]:
+      painter.drawText(option.rect, Qt.AlignLeft, '%s : %s'%virtual_address)
+    painter.restore()
+    
   def commitAndCloseEditor(self):
     editor = self.sender()
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
