@@ -633,6 +633,16 @@ class Many2OneEditor(QtGui.QWidget):
         form = admin.createNewView(workspace)
         workspace.addSubWindow(form)
         self.connect(form, form.entity_created_signal, self.selectEntity)
+#        #
+#        # We need to know when the new object has been modified, to update its representation
+#        # and emit a commit signal when the new object gets a primary key
+#        # 
+#        # to achieve this, we connect to dataChanged of the model underlying the new view, this is
+#        # not very transparant since the new view might be another structure then expected here
+#        #
+#        self.connect(form.form_view.model,  
+#                     QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), 
+#                     self.dataChanged)
         form.show()
       
     self.admin.mt.post(get_has_subclasses, show_new_view)
@@ -658,7 +668,7 @@ class Many2OneEditor(QtGui.QWidget):
                           create_collection_getter(self.entity_instance_getter),
                           admin.getFields)
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
-        self.connect(model, QtCore.SIGNAL(sig), self.dataChanged)        
+        self.connect(model, QtCore.SIGNAL(sig), self.dataChanged)
         form = admin.createFormView(title, model, 0, workspace)
         workspace.addSubWindow(form)
         form.show()
@@ -685,10 +695,12 @@ class Many2OneEditor(QtGui.QWidget):
       entity = entity_instance_getter()
       self.entity_instance_getter = create_instance_getter(entity)
       if entity and hasattr(entity, 'id'):
-        return (unicode(entity), entity.id)
+        representation = (unicode(entity), entity.id)
       elif entity:
-        return (unicode(entity), False)
-      return ('', False)
+        representation = (unicode(entity), False)
+      else:
+        representation = ('', False)
+      return representation
     
     def set_instance_represenation(representation):
       """Update the gui"""
@@ -701,14 +713,12 @@ class Many2OneEditor(QtGui.QWidget):
         icon = Icon('tango/16x16/actions/edit-clear.png').getQIcon()
         self.search_button.setIcon(icon)
         self.entity_set = True
-        #self.search_input.setReadOnly(True)
       else:
         icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
         self.open_button.setIcon(icon)
         icon = Icon('tango/16x16/actions/system-search.png').getQIcon()
         self.search_button.setIcon(icon)
         self.entity_set = False
-        #self.search_input.setReadOnly(False)
       if propagate:
         self.emit(QtCore.SIGNAL('editingFinished()'))
       

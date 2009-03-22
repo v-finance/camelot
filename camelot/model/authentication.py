@@ -358,7 +358,7 @@ class Address(Entity):
   is_synchronized('synchronized', lazy=True)
   
   def __unicode__(self):
-    return u'%s, %s'%(self.street1, self.city)
+    return u'%s, %s'%(self.street1 or '', self.city or '')
   
   def showMap(self):
     from PyQt4 import QtGui, QtCore
@@ -369,6 +369,7 @@ class Address(Entity):
     section = 'relations'
     list_display = ['street1', 'street2', 'city']
     form_size = (700,150)
+    field_attributes = {'street1':{'minimal_column_width':100}}
     form_actions = [('Show map',lambda address:address.showMap())]
   
 class PartyAddressRoleType(Entity):

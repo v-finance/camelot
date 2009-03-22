@@ -460,6 +460,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         
         @model_function
         def update_model_and_cache():
+          from sqlalchemy.exceptions import OperationalError
           new_value = value()
           if verbose:
             logger.debug('set data for col %s;row %s to %s' % (row, column, new_value))
@@ -494,7 +495,10 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             self.cache[Qt.DisplayRole].add_data(row, o, RowDataAsUnicode(o, self.getColumns()))
             if self.flush_changes and self.validator.isValid(row):
               # save the state before the update
-              elixir.session.flush([o])
+              try:
+                elixir.session.flush([o])
+              except OperationalError, e:
+                logger.error('Programming Error, could not flush object', exc_info=e)
               try:
                 self.unflushed_rows.remove(row)
               except KeyError:
@@ -510,7 +514,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                                          primary_key=o.id, 
                                          previous_attributes={attribute:old_value},
                                          authentication = getCurrentAuthentication())
-                  elixir.session.flush([history])
+                  
+                  try:
+                    elixir.session.flush([history])
+                  except OperationalError, e:
+                    logger.error('Programming Error, could not flush history', exc_info=e)                  
             #@todo: update should only be sent remotely when flush was done 
             self.rsh.sendEntityUpdate(self, o)
             return ((row,0), (row,len(self.getColumns())))

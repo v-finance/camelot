@@ -358,6 +358,30 @@ class EntityAdmin(object):
         self.setLayout(self.widget_layout)
         self.validate_before_close = True
         self.entity_created_signal = SIGNAL("entity_created")
+        #
+        # every time data has been changed, it could become valid, when this is the
+        # case, it should be propagated
+        #
+        self.connect(model,  
+                     QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), 
+                     self.dataChanged)        
+        
+      def dataChanged(self, index1, index2):
+          
+        def validate():
+          return validator.isValid(0)
+        
+        def emit_if_valid(valid):
+          if valid:
+            
+            def create_instance_getter(new_object):
+              return lambda:new_object[0]
+            
+            for o in new_object:
+              self.emit(self.entity_created_signal,
+                        create_instance_getter(new_object))
+              
+        admin.mt.post(validate, emit_if_valid)           
         
       def validateClose(self):
         if self.validate_before_close:

@@ -18,7 +18,7 @@ def main(application_admin,
   # before anything else happens or is imported, the splash screen should be there
   #
   import sys
-  from PyQt4 import QtGui
+  from PyQt4 import QtGui, QtCore
   app = QtGui.QApplication([a for a in sys.argv if a])
   splash = QtGui.QSplashScreen(application_admin.getSplashscreen())
   splash.show()
@@ -26,6 +26,11 @@ def main(application_admin,
   # regulary call processEvents to keep the splash alive
   splash.showMessage('Initialize application')
   app.processEvents()
+  
+
+  font = app.font()
+  font.setStyleStrategy(QtGui.QFont.PreferAntialias)
+  app.setFont(font);
     
   import logging
   logger = logging.getLogger('camelot.view.main')
