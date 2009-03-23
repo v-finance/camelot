@@ -273,7 +273,9 @@ class FloatEditor(QtGui.QWidget):
     layout.addWidget(self.spinBox)
     if editable:
       layout.addWidget(calculatorButton)
+    
     self.setFocusProxy(self.spinBox)
+    
     self.setLayout(layout)
 
   def setValue(self, value):
@@ -416,8 +418,14 @@ class StarEditor(QtGui.QWidget):
     return self.stars
     
   def starClick(self, value):
-    self.stars = int(value)
-      
+    
+    
+    if self.stars == value:
+      self.stars -= 1
+    else:
+      self.stars = int(value)
+    #print self.stars
+   
     for i in range(self.starCount):
       if i+1 <= self.stars:
         self.buttons[i].setIcon(self.starIcon)
@@ -434,7 +442,7 @@ class StarEditor(QtGui.QWidget):
       if i+1 <= self.stars:
         self.buttons[i].setIcon(self.starIcon)
       else:
-        self.buttons[i].setIcon(self.noStarIcon)  
+        self.buttons[i].setIcon(self.noStarIcon)
 
 class EmbeddedMany2OneEditor(QtGui.QWidget):
   """Widget for editing a many 2 one relation a a form embedded in another
@@ -633,16 +641,6 @@ class Many2OneEditor(QtGui.QWidget):
         form = admin.createNewView(workspace)
         workspace.addSubWindow(form)
         self.connect(form, form.entity_created_signal, self.selectEntity)
-#        #
-#        # We need to know when the new object has been modified, to update its representation
-#        # and emit a commit signal when the new object gets a primary key
-#        # 
-#        # to achieve this, we connect to dataChanged of the model underlying the new view, this is
-#        # not very transparant since the new view might be another structure then expected here
-#        #
-#        self.connect(form.form_view.model,  
-#                     QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), 
-#                     self.dataChanged)
         form.show()
       
     self.admin.mt.post(get_has_subclasses, show_new_view)
@@ -668,7 +666,7 @@ class Many2OneEditor(QtGui.QWidget):
                           create_collection_getter(self.entity_instance_getter),
                           admin.getFields)
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
-        self.connect(model, QtCore.SIGNAL(sig), self.dataChanged)
+        self.connect(model, QtCore.SIGNAL(sig), self.dataChanged)        
         form = admin.createFormView(title, model, 0, workspace)
         workspace.addSubWindow(form)
         form.show()
@@ -695,12 +693,10 @@ class Many2OneEditor(QtGui.QWidget):
       entity = entity_instance_getter()
       self.entity_instance_getter = create_instance_getter(entity)
       if entity and hasattr(entity, 'id'):
-        representation = (unicode(entity), entity.id)
+        return (unicode(entity), entity.id)
       elif entity:
-        representation = (unicode(entity), False)
-      else:
-        representation = ('', False)
-      return representation
+        return (unicode(entity), False)
+      return ('', False)
     
     def set_instance_represenation(representation):
       """Update the gui"""
@@ -713,12 +709,14 @@ class Many2OneEditor(QtGui.QWidget):
         icon = Icon('tango/16x16/actions/edit-clear.png').getQIcon()
         self.search_button.setIcon(icon)
         self.entity_set = True
+        #self.search_input.setReadOnly(True)
       else:
         icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
         self.open_button.setIcon(icon)
         icon = Icon('tango/16x16/actions/system-search.png').getQIcon()
         self.search_button.setIcon(icon)
         self.entity_set = False
+        #self.search_input.setReadOnly(False)
       if propagate:
         self.emit(QtCore.SIGNAL('editingFinished()'))
       
