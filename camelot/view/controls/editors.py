@@ -199,18 +199,97 @@ class DateEditor(QtGui.QWidget):
 class VirtualAddressEditor(QtGui.QWidget):
   def __init__(self, parent=None):
     super(VirtualAddressEditor, self).__init__(parent)
-    layout = QtGui.QHBoxLayout()
-    layout.setMargin(0)
+    self.layout = QtGui.QHBoxLayout()
+    self.layout.setMargin(0)
     self.combo = QtGui.QComboBox()
     self.combo.addItems(camelot.types.VirtualAddress.virtual_address_types)
-    layout.addWidget(self.combo)
+    self.layout.addWidget(self.combo)
     self.editor = QtGui.QLineEdit()
-    layout.addWidget(self.editor)
+    self.layout.addWidget(self.editor)
+    
+    
+    print camelot.types.VirtualAddress.virtual_address_types
+    
+    
+#    if virtual_adress[0] == 'email':
+#      icon = Icon('tango/16x16/apps/internet-mail.png').getQPixmap()
+#    else:
+#      #if virtual_adress[0] == 'telephone':
+    icon = Icon('tango/16x16/actions/zero.png').getQPixmap()
+#      
+    self.label = QtGui.QLabel()
+    self.label.setPixmap(icon)
+    
     self.connect(self.editor, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
-    self.setLayout(layout)
+    self.connect(self.combo, QtCore.SIGNAL('currentIndexChanged(int)'), lambda:self.comboIndexChanged())
+    self.setLayout(self.layout)
     self.setAutoFillBackground(True);
+    
+    
+  def comboIndexChanged(self):
+    print 'comboIndexChanged'
+    self.editingFinished()
+    
+  def setData(self, value):
+    if value:
+      self.editor.setText(value[1])
+      self.combo.setCurrentIndex(camelot.types.VirtualAddress.virtual_address_types.index(value[0]))
+      print self.combo.currentText()
+      if str(self.combo.currentText()) == 'phone':
+        icon = Icon('tango/16x16/devices/phone.png').getQPixmap()
+      if str(self.combo.currentText()) == 'fax':
+        icon = Icon('tango/16x16/devices/printer.png').getQPixmap()
+      if str(self.combo.currentText()) == 'mobile':
+        icon = Icon('tango/16x16/devices/mobile.png').getQPixmap()
+      if str(self.combo.currentText()) == 'im':
+        icon = Icon('tango/16x16/places/instant-messaging.png').getQPixmap()
+      if str(self.combo.currentText()) == 'pager':
+        icon = Icon('tango/16x16/devices/pager.png').getQPixmap()
+        
+      if str(self.combo.currentText()) == 'email':
+        icon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
+        self.label.deleteLater()
+        self.label = QtGui.QToolButton()
+        self.label.setFocusPolicy(Qt.StrongFocus)
+        self.label.setAutoRaise(True)
+        self.label.setAutoFillBackground(True)
+        self.label.setIcon(icon)
+        self.connect(self.label, QtCore.SIGNAL('clicked()'), lambda:self.mailClick(self.editor.text()))
+      else:
+        self.label.deleteLater()
+        self.label = QtGui.QLabel()
+        self.label.setPixmap(icon)
+        
+      self.layout.addWidget(self.label)
+  
+  
+  
+  def getData(self):
+    return self.value
+  
+  
+  
+  def mailClick(self, adress):
+    url = QtCore.QUrl()
+    url.setUrl('mailto:'+str(adress)+'?subject=Camelot')
+    mailSent = QtGui.QDesktopServices.openUrl(url)
+    
+    if not mailSent:
+      print 'Failed to send Mail.'
+    else:
+      print 'mail client opened.'
+      
+    print adress
+  
+  
+  
 
   def editingFinished(self):
+    self.value = []
+    self.value.append(str(self.combo.currentText()))
+    self.value.append(str(self.editor.text()))
+    self.setData(self.value)
+    self.label.setFocus()
     self.emit(QtCore.SIGNAL('editingFinished()'))
         
 
@@ -371,6 +450,81 @@ class IntegerEditor(QtGui.QWidget):
 
     
     
+    
+class ColoredFloatEditor(QtGui.QWidget):
+  """Widget for editing a float field, with a calculator"""
+    
+  def __init__(self, parent, precision, minimum, maximum, editable=True):
+    super(ColoredFloatEditor, self).__init__(parent)
+    action = QtGui.QAction(self)
+    action.setShortcut(Qt.Key_F3)
+    self.setFocusPolicy(Qt.StrongFocus)
+    self.spinBox = QtGui.QDoubleSpinBox(parent)
+    self.spinBox.setReadOnly(not editable)
+    self.spinBox.setRange(minimum, maximum)
+    self.spinBox.setDecimals(precision)
+    self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+    self.spinBox.setSingleStep(1.0)
+    self.spinBox.addAction(action)
+    self.arrow = QtGui.QLabel()
+    self.arrow.setPixmap(Icon('tango/16x16/actions/go-up.png').getQPixmap())
+    
+    self.arrow.setAutoFillBackground(True)
+    self.arrow.setMaximumWidth(19)
+    
+    calculatorButton = QtGui.QToolButton()
+    icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
+    calculatorButton.setIcon(icon)
+    calculatorButton.setAutoRaise(True)
+    
+    self.connect(calculatorButton, QtCore.SIGNAL('clicked()'), lambda:self.popupCalculator(self.spinBox.value()))
+    self.connect(action, QtCore.SIGNAL('triggered(bool)'), lambda:self.popupCalculator(self.spinBox.value()))
+    self.connect(self.spinBox, QtCore.SIGNAL('editingFinished()'), lambda:self.editingFinished(self.spinBox.value()))
+    
+    self.releaseKeyboard()
+    
+    layout = QtGui.QHBoxLayout()
+    layout.setMargin(0)
+    layout.setSpacing(0)
+    layout.addSpacing(4)
+    layout.addWidget(self.arrow)
+    layout.addWidget(self.spinBox)
+    if editable:
+      layout.addWidget(calculatorButton)
+    
+    self.setFocusProxy(self.spinBox)
+    
+    self.setLayout(layout)
+
+  def setValue(self, value):
+    self.spinBox.setValue(value)
+    if value >= 0:
+      self.arrow.setPixmap(Icon('tango/16x16/actions/go-up.png').getQPixmap())
+    else:
+      self.arrow.setPixmap(Icon('tango/16x16/actions/go-down-red.png').getQPixmap())
+    
+  def value(self):
+    self.spinBox.interpretText()
+    value = self.spinBox.value()
+    return value
+    
+  def popupCalculator(self, value):
+    from calculator import Calculator
+    calculator = Calculator(self)
+    calculator.setValue(value)
+    self.connect(calculator, QtCore.SIGNAL('calculationFinished'), self.calculationFinished)
+    calculator.exec_()
+    
+  def calculationFinished(self, value):
+    self.spinBox.setValue(float(value))
+    self.emit(QtCore.SIGNAL('editingFinished()'), value)
+    
+  def editingFinished(self, value):
+    self.emit(QtCore.SIGNAL('editingFinished()'), value)
+          
+
+
+    
 class StarEditor(QtGui.QWidget):
   def __init__(self, parent, maximum, editable):
     QtGui.QWidget.__init__(self, parent)
@@ -379,7 +533,7 @@ class StarEditor(QtGui.QWidget):
     layout.setMargin(0)
     layout.setSpacing(0)
     self.starIcon = Icon('tango/16x16/status/weather-clear.png').getQIcon()
-    self.noStarIcon = Icon('tango/16x16/status/weather-overcast.png').getQIcon()
+    self.noStarIcon = Icon('tango/16x16/status/weather-clear-noStar.png').getQIcon()
     self.setAutoFillBackground(True)
     #self.starCount = maximum
     self.starCount = 5

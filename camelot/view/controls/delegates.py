@@ -524,6 +524,20 @@ class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
     virtual_address = index.model().data(index, Qt.EditRole).toPyObject()  
     if virtual_address and virtual_address[1]:
       painter.drawText(option.rect, Qt.AlignLeft, '%s : %s'%virtual_address)
+      rect = option.rect
+      rect = QtCore.QRect(rect.width()-19, rect.top()+6, 16, 16)
+      if virtual_adress[0] == 'email':
+        icon = Icon('tango/16x16/apps/internet-mail.png').getQPixmap()
+        painter.drawPixmap(rect, icon)
+      else:
+      #if virtual_adress[0] == 'telephone':
+        icon = Icon('tango/16x16/apps/preferences-desktop-sound.png').getQPixmap()
+        print painter
+        print icon
+        print rect
+        painter.drawPixmap(rect, icon)
+        
+        
     painter.restore()
     
   def commitAndCloseEditor(self):
@@ -538,9 +552,7 @@ class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
 
   def setEditorData(self, editor, index):
     value = index.data(Qt.EditRole).toPyObject()
-    if value:
-      editor.editor.setText(value[1])
-      editor.combo.setCurrentIndex(camelot.types.VirtualAddress.virtual_address_types.index(value[0]))
+    editor.setData(value)
       
   def setModelData(self, editor, model, index):
     value = (unicode(editor.combo.currentText()), unicode(editor.editor.text()))
@@ -580,6 +592,91 @@ class FloatColumnDelegate(QtGui.QItemDelegate):
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
 
 _registered_delegates_[QtGui.QDoubleSpinBox] = FloatColumnDelegate
+
+
+
+class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
+  """Custom delegate for float values"""
+
+  def __init__(self, minimum=-1e15, maximum=1e15, precision=2,
+               editable=True, parent=None, **kwargs):
+    super(ColoredFloatColumnDelegate, self).__init__(parent)
+    self.minimum = minimum
+    self.maximum = maximum
+    self.precision = precision
+    self.editable = editable
+
+  def createEditor(self, parent, option, index):
+    editor = editors.ColoredFloatEditor(parent, self.precision, self.minimum, self.maximum, self.editable)
+    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
+    return editor
+
+  def setEditorData(self, editor, index):
+    value = index.model().data(index, Qt.EditRole).toDouble()[0]
+    editor.setValue(value)
+
+  def setModelData(self, editor, model, index):
+    model.setData(index, create_constant_function(editor.value()))
+    
+    
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    print 'commitAndCloseEditor'
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    
+    
+  def paint(self, painter, option, index):
+    painter.save()
+    #self.drawBackground(painter, option, index)
+    value = index.model().data(index, Qt.EditRole).toDouble()[0]
+    editor = editors.ColoredFloatEditor(parent=None, minimum=self.minimum, maximum=self.maximum, precision=self.precision, editable=self.editable)
+    rect = option.rect
+    rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
+    
+    fontColor = QtGui.QColor()
+    
+    
+    
+    if value >= 0:
+      if value == 0:
+        icon = Icon('tango/16x16/actions/zero.png').getQPixmap()
+        QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
+        fontColor.setRgb(0, 0, 0)
+      else:
+        icon = Icon('tango/16x16/actions/go-up.png').getQPixmap()
+        QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
+        fontColor.setRgb(0, 255, 0)
+      
+    else:
+      icon = Icon('tango/16x16/actions/go-down-red.png').getQPixmap()
+      QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
+      fontColor.setRgb(255, 0, 0)
+      
+    fontColor = fontColor.darker()
+      
+      
+    rect = QtCore.QRect(rect.left()+23, rect.top()+12, rect.width()-23, rect.height())
+    
+    point = QtCore.QPointF()
+    point.setX(rect.left())
+    point.setY(rect.top())
+    
+    
+    
+    
+    
+    painter.setPen(fontColor.toRgb())
+    painter.drawText(point, str(value))
+    #painter.drawText(rect, Qt.AlignRight, str(value))
+
+      
+
+    painter.restore()
+    
+    
+
+_registered_delegates_[editors.ColoredFloatEditor] = ColoredFloatColumnDelegate
+
 
 
 class Many2OneColumnDelegate(QtGui.QItemDelegate):

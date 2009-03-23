@@ -480,6 +480,7 @@ class EntityAdmin(object):
         TableView.__init__(self, admin, search_text=search_text, parent=parent)
         self.entity_selected_signal = SIGNAL("entity_selected")
         self.connect(self, SIGNAL('row_selected'), self.sectionClicked)
+        self.setUpdatesEnabled(True)
 
       def sectionClicked(self, index):
         # table model will be set by the model thread, we can't decently select
@@ -507,7 +508,9 @@ class EntityAdmin(object):
           self.admin.mt.post(create_instance_getter, create_emit_and_close(self))
             
     widget = SelectView(admin, parent)
+    widget.setUpdatesEnabled(True)
     widget.setMinimumSize(admin.list_size[0], admin.list_size[1])
+    widget.update()
     return widget
 
   @gui_function
