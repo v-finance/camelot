@@ -380,13 +380,10 @@ class FloatEditor(QtGui.QWidget):
     self.emit(QtCore.SIGNAL('editingFinished()'), value)
           
 class IntegerEditor(QtGui.QWidget):
-  """Widget for editing a float field, with a calculator"""
-    
-  
+  """Widget for editing an integer field, with a calculator"""
+
   def __init__(self, parent, minimum, maximum, editable):
     super(IntegerEditor, self).__init__(parent)
-
-
     action = QtGui.QAction(self)
     action.setShortcut(Qt.Key_F3)
     self.setFocusPolicy(Qt.StrongFocus)
@@ -406,31 +403,25 @@ class IntegerEditor(QtGui.QWidget):
     self.connect(action, QtCore.SIGNAL('triggered(bool)'), lambda:self.popupCalculator(self.spinBox.value()))
     self.connect(self.spinBox, QtCore.SIGNAL('editingFinished()'), lambda:self.editingFinished(self.spinBox.value()))
     
-#    self.releaseKeyboard()
-    
     layout = QtGui.QHBoxLayout()
     layout.setMargin(0)
     layout.setSpacing(0)
     layout.addWidget(self.spinBox)
     if editable:
       layout.addWidget(calculatorButton)
-    
+    else:
+      self.spinBox.setEnabled(False)
     self.setFocusProxy(self.spinBox)
-    
     self.setLayout(layout)
-    
-
 
   def setValue(self, value):
     value = str(value).replace(',', '.')
     self.spinBox.setValue(eval(value))
     
-    
   def value(self):
     self.spinBox.interpretText()
     value = self.spinBox.value()
     return value
-  
     
   def popupCalculator(self, value):
     from calculator import Calculator
@@ -444,12 +435,7 @@ class IntegerEditor(QtGui.QWidget):
     self.emit(QtCore.SIGNAL('editingFinished()'), value)
     
   def editingFinished(self, value):
-    self.emit(QtCore.SIGNAL('editingFinished()'), value)
-    
-    
-
-    
-    
+    self.emit(QtCore.SIGNAL('editingFinished()'), value)    
     
 class ColoredFloatEditor(QtGui.QWidget):
   """Widget for editing a float field, with a calculator"""

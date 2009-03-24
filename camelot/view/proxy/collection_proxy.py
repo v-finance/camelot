@@ -357,10 +357,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           self.item_delegate.insertColumnDelegate(i, delegate)
         else:
           delegate = delegates.TextEditColumnDelegate(**c[1])
-          self.item_delegate.insertColumnDelegate(i, delegate)          
-      elif type_ == int:
-        delegate = delegates.IntegerColumnDelegate(parent=None, **c[1])
-        self.item_delegate.insertColumnDelegate(i, delegate)
+          self.item_delegate.insertColumnDelegate(i, delegate)
       elif type_ == datetime.date:
         delegate = delegates.DateColumnDelegate(format='dd/MM/yyyy',
                                                 default=c[1].get('default', None),

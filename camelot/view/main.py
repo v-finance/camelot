@@ -27,10 +27,10 @@ def main(application_admin,
   splash.showMessage('Initialize application')
   app.processEvents()
   
-
-  font = app.font()
-  font.setStyleStrategy(QtGui.QFont.PreferAntialias)
-  app.setFont(font);
+#  font = app.font()
+#  font.setStyleStrategy(QtGui.QFont.PreferAntialias)
+#  font.setPointSize(font.pointSize()+1)
+#  app.setFont(font)
     
   import logging
   logger = logging.getLogger('camelot.view.main')

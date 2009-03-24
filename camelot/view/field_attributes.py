@@ -72,6 +72,7 @@ _sqlalchemy_to_python_type_ = {
                                        'minimum': camelot_minint,
                                        'maximum': camelot_maxint,
                                        'nullable':True,
+                                       'delegate':IntegerColumnDelegate,
                                        'widget': 'int'},
 
   sqlalchemy.types.INT: lambda f: {'python_type': int,
@@ -79,6 +80,7 @@ _sqlalchemy_to_python_type_ = {
                                    'minimum': camelot_minint,
                                    'maximum': camelot_maxint,
                                    'nullable':True,
+                                   'delegate':IntegerColumnDelegate,
                                    'widget': 'int'},
 
   sqlalchemy.types.String: lambda f: {'python_type': str,

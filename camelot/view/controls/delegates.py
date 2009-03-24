@@ -49,20 +49,20 @@ from camelot.view.model_thread import get_model_thread
 _registered_delegates_ = {}
 verbose = False
 
+_not_editable_background_ = QtGui.QColor(235, 233, 237)
+_not_editable_foreground_ = QtGui.QColor(Qt.darkGray)
+
 def _paint_not_editable(painter, option, index):
   text = index.model().data(index, Qt.DisplayRole).toString()
-  color = QtGui.QColor(235, 233, 237)
   painter.save()
-
-  painter.fillRect(option.rect, color)
-  painter.setPen(QtGui.QColor(Qt.darkGray))
+  painter.fillRect(option.rect, _not_editable_background_)
+  painter.setPen(_not_editable_foreground_)
   painter.drawText(option.rect.x()+2,
                    option.rect.y(),
                    option.rect.width()-4,
                    option.rect.height(),
                    Qt.AlignVCenter,
                    text)
-
   painter.restore()
 
 def create_constant_function(constant):
@@ -145,10 +145,7 @@ class GenericDelegate(QtGui.QItemDelegate):
     if delegate is not None:
       return delegate.sizeHint(option, index)
     else:
-      return QtGui.QItemDelegate.sizeHint(self, option, index)    
-
-
-
+      return QtGui.QItemDelegate.sizeHint(self, option, index)
 
 class StarDelegate(QtGui.QItemDelegate):
   """Custom delegate for integer values"""
@@ -206,17 +203,35 @@ class StarDelegate(QtGui.QItemDelegate):
 
 _registered_delegates_[editors.StarEditor] = StarDelegate
 
-
+camelot_maxint = 2147483647
+camelot_minint = -2147483648
 
 class IntegerColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for integer values"""
 
-  def __init__(self, minimum=0, maximum=100, editable=True, parent=None, **kwargs):
+  def __init__(self, parent, minimum=camelot_minint, maximum=camelot_maxint, editable=True, **kwargs):
     super(IntegerColumnDelegate, self).__init__(parent)
     self.minimum = minimum
     self.maximum = maximum
-    self.editable = True
+    self.editable = editable
 
+  def paint(self, painter, option, index):
+    if (option.state & QtGui.QStyle.State_Selected):
+      QtGui.QItemDelegate.paint(self, painter, option, index)
+    else:
+      painter.save()
+      if not self.editable:
+        painter.fillRect(option.rect, _not_editable_background_)
+        painter.setPen(_not_editable_foreground_)
+      value =  index.model().data(index, Qt.DisplayRole).toString()
+      painter.drawText(option.rect.x()+2,
+                       option.rect.y(),
+                       option.rect.width()-4,
+                       option.rect.height(),
+                       Qt.AlignVCenter | Qt.AlignRight,
+                       value)
+      painter.restore()
+      
   def createEditor(self, parent, option, index):
     editor = editors.IntegerEditor(parent, self.minimum, self.maximum, self.editable)
     self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
@@ -227,15 +242,11 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
     editor.setValue(value)
 
   def setModelData(self, editor, model, index):
-    #editor.interpretText()
     model.setData(index, create_constant_function(editor.value()))
-
 
   def commitAndCloseEditor(self):
     editor = self.sender()
-    print 'commitAndCloseEditor_INT'
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
-
 
 _registered_delegates_[QtGui.QSpinBox] = IntegerColumnDelegate
 
