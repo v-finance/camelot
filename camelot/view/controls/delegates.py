@@ -638,7 +638,7 @@ class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
     
   def paint(self, painter, option, index):
     painter.save()
-    #self.drawBackground(painter, option, index)
+    self.drawBackground(painter, option, index)
     value = index.model().data(index, Qt.EditRole).toDouble()[0]
     editor = editors.ColoredFloatEditor(parent=None, minimum=self.minimum, maximum=self.maximum, precision=self.precision, editable=self.editable)
     rect = option.rect

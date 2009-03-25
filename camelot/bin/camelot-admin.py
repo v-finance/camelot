@@ -34,14 +34,23 @@ use : python camelot-admin.py -h
 to get a list of commands and options
 """
 
+def startproject(project):
+  import shutil, os
+  if os.path.exists(project):
+    raise Exception('Directory %s allready exists, cannot start a project in it'%project)
+  shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
+                  project,)
+  from migrate.versioning.api import create
+  create(os.path.join(project, 'repository'), project)
+    
+commands = locals()
+
 def main():
   from optparse import OptionParser
   parser = OptionParser(usage='usage: %prog [options] startproject project')
   (options, args) = parser.parse_args()
   command, project = args
-  import shutil, os
-  shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), project)
-  
+  commands[command](*args[1:])
   
 if __name__ == '__main__':
   main()
