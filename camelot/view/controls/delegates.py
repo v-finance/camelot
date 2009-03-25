@@ -669,11 +669,7 @@ class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
                      str(value))
     painter.restore()
     
-    
-
 _registered_delegates_[editors.ColoredFloatEditor] = ColoredFloatColumnDelegate
-
-
 
 class Many2OneColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
