@@ -607,7 +607,8 @@ _registered_delegates_[QtGui.QDoubleSpinBox] = FloatColumnDelegate
 
 
 class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
-  """Custom delegate for float values"""
+  """Custom delegate for float values, representing them in green when they are
+  positive and in red when they are negative."""
 
   def __init__(self, minimum=-1e15, maximum=1e15, precision=2,
                editable=True, parent=None, **kwargs):
@@ -635,7 +636,6 @@ class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
     print 'commitAndCloseEditor'
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
     
-    
   def paint(self, painter, option, index):
     painter.save()
     #self.drawBackground(painter, option, index)
@@ -643,11 +643,7 @@ class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
     editor = editors.ColoredFloatEditor(parent=None, minimum=self.minimum, maximum=self.maximum, precision=self.precision, editable=self.editable)
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
-    
     fontColor = QtGui.QColor()
-    
-    
-    
     if value >= 0:
       if value == 0:
         icon = Icon('tango/16x16/actions/zero.png').getQPixmap()
@@ -657,31 +653,20 @@ class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
         icon = Icon('tango/16x16/actions/go-up.png').getQPixmap()
         QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
         fontColor.setRgb(0, 255, 0)
-      
     else:
       icon = Icon('tango/16x16/actions/go-down-red.png').getQPixmap()
       QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
       fontColor.setRgb(255, 0, 0)
       
     fontColor = fontColor.darker()
-      
-      
-    rect = QtCore.QRect(rect.left()+23, rect.top()+12, rect.width()-23, rect.height())
-    
-    point = QtCore.QPointF()
-    point.setX(rect.left())
-    point.setY(rect.top())
-    
-    
-    
-    
-    
     painter.setPen(fontColor.toRgb())
-    painter.drawText(point, str(value))
-    #painter.drawText(rect, Qt.AlignRight, str(value))
-
-      
-
+    rect = QtCore.QRect(option.rect.left()+23, option.rect.top(), option.rect.width()-23, option.rect.height())
+    painter.drawText(rect.x()+2,
+                     rect.y(),
+                     rect.width()-4,
+                     rect.height(),
+                     Qt.AlignVCenter | Qt.AlignRight,
+                     str(value))
     painter.restore()
     
     
