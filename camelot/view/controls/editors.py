@@ -35,6 +35,8 @@ logger = logging.getLogger('camelot.view.controls.editors')
 
 import settings
 
+import re
+
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
@@ -43,6 +45,7 @@ from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function
 from camelot.view.workspace import get_workspace
 from camelot.view.search import create_entity_search_query_decorator
+
 
 def create_constant_function(constant):
   return lambda:constant
@@ -208,7 +211,6 @@ class VirtualAddressEditor(QtGui.QWidget):
     self.layout.addWidget(self.editor)
     
     
-    print camelot.types.VirtualAddress.virtual_address_types
     
     
 #    if virtual_adress[0] == 'email':
@@ -221,20 +223,20 @@ class VirtualAddressEditor(QtGui.QWidget):
     self.label.setPixmap(icon)
     
     self.connect(self.editor, QtCore.SIGNAL('editingFinished()'), self.editingFinished)
+    self.connect(self.editor, QtCore.SIGNAL('textEdited(const QString&)'), self.editorValueChanged)
     self.connect(self.combo, QtCore.SIGNAL('currentIndexChanged(int)'), lambda:self.comboIndexChanged())
     self.setLayout(self.layout)
     self.setAutoFillBackground(True);
     
     
   def comboIndexChanged(self):
-    print 'comboIndexChanged'
+    self.checkValue(self.editor.text())
     self.editingFinished()
     
   def setData(self, value):
     if value:
       self.editor.setText(value[1])
       self.combo.setCurrentIndex(camelot.types.VirtualAddress.virtual_address_types.index(value[0]))
-      print self.combo.currentText()
       if str(self.combo.currentText()) == 'phone':
         icon = Icon('tango/16x16/devices/phone.png').getQPixmap()
       if str(self.combo.currentText()) == 'fax':
@@ -268,6 +270,44 @@ class VirtualAddressEditor(QtGui.QWidget):
     return self.value
   
   
+  def checkValue(self, text):
+    if self.combo.currentText() == 'email':
+        email = text
+
+        mailCheck = re.compile('^\S+@\S+\.\S+$')
+      
+        if not mailCheck.match(email):
+          palette = self.editor.palette()
+          palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 0, 0))
+          self.editor.setPalette(palette)
+        else:
+          palette = self.editor.palette()
+          palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 255, 255))
+          self.editor.setPalette(palette)
+        
+    if self.combo.currentText() == 'phone' or self.combo.currentText() == 'pager' or self.combo.currentText() == 'fax' or self.combo.currentText() == 'mobile':
+        number = text
+      
+        numberCheck = re.compile('^[0-9 ]*$')
+      
+        if not numberCheck.match(number):
+          palette = self.editor.palette()
+          palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 0, 0))
+          self.editor.setPalette(palette)
+        else:
+          palette = self.editor.palette()
+          palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 255, 255))
+          self.editor.setPalette(palette)
+    
+  
+  
+  
+  def editorValueChanged(self, text):
+
+    
+    self.checkValue(text)
+  
+  
   
   def mailClick(self, adress):
     url = QtCore.QUrl()
@@ -279,87 +319,17 @@ class VirtualAddressEditor(QtGui.QWidget):
     else:
       print 'mail client opened.'
       
-    print adress
-  
-  
-  
-  
-  
-  
-  
-#  
-#  
-#  def paint(self, painter, option, index):
-#    painter.save()
-#    self.drawBackground(painter, option, index)
-#    value = index.model().data(index, Qt.EditRole).toDouble()[0]
-#    editor = editors.ColoredFloatEditor(parent=None, minimum=self.minimum, maximum=self.maximum, precision=self.precision, editable=self.editable)
-#    rect = option.rect
-#    rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
-#    fontColor = QtGui.QColor()
-#    if value >= 0:
-#      if value == 0:
-#        icon = Icon('tango/16x16/actions/zero.png').getQPixmap()
-#        QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
-#        fontColor.setRgb(0, 0, 0)
-#      else:
-#        icon = Icon('tango/16x16/actions/go-up.png').getQPixmap()
-#        QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
-#        fontColor.setRgb(0, 255, 0)
-#    else:
-#      icon = Icon('tango/16x16/actions/go-down-red.png').getQPixmap()
-#      QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
-#      fontColor.setRgb(255, 0, 0)
-#      
-#    fontColor = fontColor.darker()
-#    painter.setPen(fontColor.toRgb())
-#    rect = QtCore.QRect(option.rect.left()+23, option.rect.top(), option.rect.width()-23, option.rect.height())
-#    painter.drawText(rect.x()+2,
-#                     rect.y(),
-#                     rect.width()-4,
-#                     rect.height(),
-#                     Qt.AlignVCenter | Qt.AlignRight,
-#                     str(value))
-#    painter.restore()
-#    
-    
-    
-    
-    
-    
-    
+
     
     
     
 
   def editingFinished(self):
     
-    if self.combo.currentText() == 'email':
-      email = str(self.editor.text())
-      email.strip()
-      #at = int(email.index('@'))
-      at = int(email.find('@'))
-      print at
-      if at <= 0:
-        palette = self.editor.palette()
-        palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 0, 0))
-        self.editor.setPalette(palette)
-      else:
-        lastPoint = int(email.rfind('.'))
-        print lastPoint
-        if lastPoint <= at:
-          palette = self.editor.palette()
-          palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 0, 0))
-          self.editor.setPalette(palette)
-        else:
-          if email.endswith('.'):
-            palette = self.editor.palette()
-            palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 0, 0))
-            self.editor.setPalette(palette)
-          else:
-            palette = self.editor.palette()
-            palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 255, 255))
-            self.editor.setPalette(palette)
+   
+      
+        
+
         
 
     
@@ -645,7 +615,7 @@ class StarEditor(QtGui.QWidget):
       self.stars -= 1
     else:
       self.stars = int(value)
-    #print self.stars
+
    
     for i in range(self.starCount):
       if i+1 <= self.stars:

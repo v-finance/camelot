@@ -171,7 +171,7 @@ class StarDelegate(QtGui.QItemDelegate):
 
   def commitAndCloseEditor(self):
     editor = self.sender()
-    #print 'commitAndCloseEditor_STAR'
+
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
     
     
@@ -543,9 +543,6 @@ class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
       else:
       #if virtual_adress[0] == 'telephone':
         icon = Icon('tango/16x16/apps/preferences-desktop-sound.png').getQPixmap()
-        print painter
-        print icon
-        print rect
         painter.drawPixmap(rect, icon)
         
         
@@ -599,7 +596,7 @@ class FloatColumnDelegate(QtGui.QItemDelegate):
     
   def commitAndCloseEditor(self):
     editor = self.sender()
-    print 'commitAndCloseEditor'
+
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
 
 _registered_delegates_[QtGui.QDoubleSpinBox] = FloatColumnDelegate
@@ -633,7 +630,6 @@ class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
     
   def commitAndCloseEditor(self):
     editor = self.sender()
-    print 'commitAndCloseEditor'
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
     
   def paint(self, painter, option, index):
