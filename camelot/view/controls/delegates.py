@@ -171,7 +171,7 @@ class StarDelegate(QtGui.QItemDelegate):
 
   def commitAndCloseEditor(self):
     editor = self.sender()
-    print 'commitAndCloseEditor_STAR'
+    #print 'commitAndCloseEditor_STAR'
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
     
     
