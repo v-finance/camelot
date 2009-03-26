@@ -283,8 +283,86 @@ class VirtualAddressEditor(QtGui.QWidget):
   
   
   
+  
+  
+  
+  
+#  
+#  
+#  def paint(self, painter, option, index):
+#    painter.save()
+#    self.drawBackground(painter, option, index)
+#    value = index.model().data(index, Qt.EditRole).toDouble()[0]
+#    editor = editors.ColoredFloatEditor(parent=None, minimum=self.minimum, maximum=self.maximum, precision=self.precision, editable=self.editable)
+#    rect = option.rect
+#    rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
+#    fontColor = QtGui.QColor()
+#    if value >= 0:
+#      if value == 0:
+#        icon = Icon('tango/16x16/actions/zero.png').getQPixmap()
+#        QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
+#        fontColor.setRgb(0, 0, 0)
+#      else:
+#        icon = Icon('tango/16x16/actions/go-up.png').getQPixmap()
+#        QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
+#        fontColor.setRgb(0, 255, 0)
+#    else:
+#      icon = Icon('tango/16x16/actions/go-down-red.png').getQPixmap()
+#      QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
+#      fontColor.setRgb(255, 0, 0)
+#      
+#    fontColor = fontColor.darker()
+#    painter.setPen(fontColor.toRgb())
+#    rect = QtCore.QRect(option.rect.left()+23, option.rect.top(), option.rect.width()-23, option.rect.height())
+#    painter.drawText(rect.x()+2,
+#                     rect.y(),
+#                     rect.width()-4,
+#                     rect.height(),
+#                     Qt.AlignVCenter | Qt.AlignRight,
+#                     str(value))
+#    painter.restore()
+#    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
   def editingFinished(self):
+    
+    if self.combo.currentText() == 'email':
+      email = str(self.editor.text())
+      email.strip()
+      #at = int(email.index('@'))
+      at = int(email.find('@'))
+      print at
+      if at <= 0:
+        palette = self.editor.palette()
+        palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 0, 0))
+        self.editor.setPalette(palette)
+      else:
+        lastPoint = int(email.rfind('.'))
+        print lastPoint
+        if lastPoint <= at:
+          palette = self.editor.palette()
+          palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 0, 0))
+          self.editor.setPalette(palette)
+        else:
+          if email.endswith('.'):
+            palette = self.editor.palette()
+            palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 0, 0))
+            self.editor.setPalette(palette)
+          else:
+            palette = self.editor.palette()
+            palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 255, 255))
+            self.editor.setPalette(palette)
+        
+
+    
     self.value = []
     self.value.append(str(self.combo.currentText()))
     self.value.append(str(self.editor.text()))
@@ -455,7 +533,7 @@ class ColoredFloatEditor(QtGui.QWidget):
     self.arrow = QtGui.QLabel()
     self.arrow.setPixmap(Icon('tango/16x16/actions/go-up.png').getQPixmap())
     
-    self.arrow.setAutoFillBackground(True)
+    self.arrow.setAutoFillBackground(False)
     self.arrow.setMaximumWidth(19)
     
     calculatorButton = QtGui.QToolButton()
@@ -472,7 +550,7 @@ class ColoredFloatEditor(QtGui.QWidget):
     layout = QtGui.QHBoxLayout()
     layout.setMargin(0)
     layout.setSpacing(0)
-    layout.addSpacing(4)
+    layout.addSpacing(3.5)
     layout.addWidget(self.arrow)
     layout.addWidget(self.spinBox)
     if editable:
@@ -485,7 +563,10 @@ class ColoredFloatEditor(QtGui.QWidget):
   def setValue(self, value):
     self.spinBox.setValue(value)
     if value >= 0:
-      self.arrow.setPixmap(Icon('tango/16x16/actions/go-up.png').getQPixmap())
+      if value == 0:
+        self.arrow.setPixmap(Icon('tango/16x16/actions/zero.png').getQPixmap())
+      else:
+        self.arrow.setPixmap(Icon('tango/16x16/actions/go-up.png').getQPixmap())
     else:
       self.arrow.setPixmap(Icon('tango/16x16/actions/go-down-red.png').getQPixmap())
     
