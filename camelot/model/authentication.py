@@ -79,13 +79,13 @@ class EmployerEmployee(PartyRelationship):
   class EmployeeAdmin(EntityAdmin):
     name = 'Employees'
     list_display = ['established_to', 'from_date', 'thru_date']
-    fields = ['established_to', 'comment', 'from_date', 'thru_date']
+    form_display = ['established_to', 'comment', 'from_date', 'thru_date']
     field_attributes = {'established_to':{'name':'Name'}}
     
   class EmployerAdmin(EntityAdmin):
     name = 'Employers'
     list_display = ['established_from', 'from_date', 'thru_date']
-    fields = ['established_from', 'comment', 'from_date', 'thru_date']
+    form_display = ['established_from', 'comment', 'from_date', 'thru_date']
     field_attributes = {'established_from':{'name':'Name'}}
     
 class DirectedDirector(PartyRelationship):
