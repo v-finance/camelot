@@ -52,13 +52,18 @@ class Form(object):
     self._content = content
     self._scrollbars = scrollbars
     self._fields = []
+    self._add_content(content)
+
+  def _add_content(self, content):
+    """add content to the form
+    @param content: a list with field names and forms"""
     for c in content:
       if isinstance(c, Form):
         self._fields.extend(c.get_fields())
       else:
         assert isinstance(c, (str, unicode))
-        self._fields.append(c)
-
+        self._fields.append(c)    
+     
   def get_fields(self):
     """@return : the fields, visible in this form"""
     return self._fields
@@ -169,14 +174,22 @@ class TabForm(Form):
     assert isinstance(tabs, list)
     for tab in tabs:
       assert isinstance(tab, tuple)
-    self.tabs = [(tab_label, structure_to_form(tab_form))
-                 for tab_label, tab_form in tabs]
+    self.tabs = [(tab_label,structure_to_form(tab_form)) for tab_label, tab_form in tabs]
     super(TabForm, self).__init__(sum((tab_form.get_fields()
                                   for tab_label, tab_form in self.tabs), []))
     
   def __unicode__(self):
     return 'TabForm { %s\n        }'%(u'\n  '.join('%s : %s'%(label,unicode(form)) for label, form in self.tabs))
   
+  def addTab(self, tab_label, tab_form):
+    """Add a tab to the form
+    @param tab_label: the name of the tab
+    @param tab_form: the form to display in the tab or a list of field names.
+    """
+    tab_form = structure_to_form(tab_form)
+    self.tabs.append((tab_label, tab_form))
+    self._add_content([tab_form])
+                       
   def getTab(self, tab_label):
     """Get the tab form of associated with a tab_label, use this function to
     modify the underlying tab_form in case of inheritance
