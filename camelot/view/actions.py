@@ -31,22 +31,24 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
 def getAction(parent, widgetaction):
-	if widgetaction:
-		return QtGui.QWidgetAction(parent)
-	else
-	  return QtGui.QAction(parent)
+  if widgetaction:
+    return QtGui.QWidgetAction(parent)
+  else:
+    return QtGui.QAction(parent)
 
-def createAction(parent, text, **kw):
+def createAction(*a, **kw):
   """creates and returns a QAction object"""
 
   # collect params
-	slot = kw.get('slot', None)
-	shortcut = kw.get('shortcut', '')
-	actionicon = kw.get('actionicon', '')
-	tip = kw.get('tip', '')
-	checkable = kw.get('checkable', False)
-	signal = kw.get('signal', 'triggered()')
-	widgetaction = kw.get('widgetaction', False)
+  parent = kw['parent']
+  text = kw['text']
+  slot = kw.get('slot', None)
+  shortcut = kw.get('shortcut', '')
+  actionicon = kw.get('actionicon', '')
+  tip = kw.get('tip', '')
+  checkable = kw.get('checkable', False)
+  signal = kw.get('signal', 'triggered()')
+  widgetaction = kw.get('widgetaction', False)
 
   action = getAction(parent, widgetaction)
 
