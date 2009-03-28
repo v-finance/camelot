@@ -45,7 +45,7 @@ from PyQt4.QtTest import QTest
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.art import Icon
-from camelot.view.helpers import createAction, addActions
+from camelot.view.actions import createAction, addActions
 from camelot.view.controls.navpane import PaneButton, NavigationPane
 from camelot.view.controls.printer import Printer
 from camelot.view.model_thread import get_model_thread, construct_model_thread
