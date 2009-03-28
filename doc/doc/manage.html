@@ -1,0 +1,36 @@
+<h1>Manage a Camelot project</h1>
+
+<p>Once a project has been created and set up as described in the basics tutorial, it needs
+to be maintained and managed over time.</p>
+
+<p>Two tools exist to assist in the management of Camelot projects :</p>
+
+<ul>
+<li><p>camelot/bin/camelot-admin.py is oriented towards developers of the project, it is used for
+the creation of projects and the creation of schema revisions.</p></li>
+<li><p>camelot/bin/manage.py is oriented towards administrators of an installed camelot project, it
+is used for interacting with and migration of the database to a certain schema revision.</p></li>
+</ul>
+
+<p>Both tools support the --help command line argument to provide a list of available commands.</p>
+
+<p>python camelot/bin/manage.py --help</p>
+
+<h2>Command line interaction with the model</h2>
+
+<p>python camelot/bin/manage.py console</p>
+
+<p>launches a python console with the model all setup for interaction.  Within the example
+movie project one could do within the console :</p>
+
+<p>from model import Movie
+  for movie in Movie.query.all():
+    print movie.title</p>
+
+<p>to print a list of all movie titles to the screen.</p>
+
+<h2>Schema revisions and migrations</h2>
+
+<p>Camelot makes use of the sqlalchemy-migrate library to assist with schema revisions and
+migrations.  When creating a new project, the camelot-admin.py tool creates a schema
+repository for your project in the repository directory in the project path.</p>
