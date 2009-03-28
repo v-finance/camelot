@@ -269,10 +269,10 @@ class NavigationPane(QtGui.QDockWidget):
 
     # context menu
     self.treewidget.contextmenu = QtGui.QMenu(self)
-    newWindowAct = createAction(self,
-                                _('Open in New Window'),
-                                self.popWindow,
-                                'Ctrl+Enter')
+    newWindowAct = createAction(parent=self,
+                                text=_('Open in New Window'),
+                                slot=self.popWindow,
+                                shortcut='Ctrl+Enter')
     
     addActions(self.treewidget.contextmenu, (newWindowAct,))
     self.treewidget.setContextMenuPolicy(Qt.CustomContextMenu)

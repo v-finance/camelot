@@ -172,127 +172,127 @@ class MainWindow(QtGui.QMainWindow):
     icon_mail = Icon('tango/16x16/actions/mail-message-new.png').fullpath()
 
     # TODO: change some of the status tips
-    self.saveAct = createAction(self,
-                                _('&Save'),
-                                self.save,
-                                QtGui.QKeySequence.Save,
-                                icon_save,
-                                _('Save'))
+    self.saveAct = createAction(parent=self,
+                                text=_('&Save'),
+                                slot=self.save,
+                                shortcut=QtGui.QKeySequence.Save,
+                                actionicon=icon_save,
+                                tip=_('Save'))
 
-    self.pageSetupAct = createAction(self,
-                                     _('Page Setup...'),
-                                     self.pageSetup,
+    self.pageSetupAct = createAction(parent=self,
+                                     text=_('Page Setup...'),
+                                     slot=self.pageSetup,
                                      actionicon=icon_pgsetup,
                                      tip=_('Page Setup...'))
 
-    self.printAct = createAction(self,
-                                 _('Print...'),
-                                 self.printDoc,
-                                 QtGui.QKeySequence.Print,
-                                 icon_print,
-                                 _('Print...'))
+    self.printAct = createAction(parent=self,
+                                 text=_('Print...'),
+                                 slot=self.printDoc,
+                                 shortcut=QtGui.QKeySequence.Print,
+                                 actionicon=icon_print,
+                                 tip=_('Print...'))
 
-    self.previewAct = createAction(self,
-                                   _('Print Preview'),
-                                   self.previewDoc,
+    self.previewAct = createAction(parent=self,
+                                   text=_('Print Preview'),
+                                   slot=self.previewDoc,
                                    actionicon=icon_preview,
                                    tip=_('Print Preview'))
 
-    self.exitAct = createAction(self,
-                                _('E&xit'),
-                                self.close,
+    self.exitAct = createAction(parent=self,
+                                text=_('E&xit'),
+                                slot=self.close,
                                 tip=_('Exit the application'))
 
     tip = _("Cut the current selection's contents to the clipboard")
-    self.cutAct = createAction(self,
-                               _('Cu&t'),
-                               self.cut,
-                               QtGui.QKeySequence.Cut,
-                               icon_cut,
-                               tip)
+    self.cutAct = createAction(parent=self,
+                               text=_('Cu&t'),
+                               slot=self.cut,
+                               shortcut=QtGui.QKeySequence.Cut,
+                               actionicon=icon_cut,
+                               tip=tip)
 
     tip = _("Copy the current selection's contents to the clipboard")
-    self.copyAct = createAction(self,
-                                _('&Copy'),
-                                self.copy,
-                                QtGui.QKeySequence.Copy,
-                                icon_copy,
-                                tip)
+    self.copyAct = createAction(parent=self,
+                                text=_('&Copy'),
+                                slot=self.copy,
+                                shortcut=QtGui.QKeySequence.Copy,
+                                actionicon=icon_copy,
+                                tip=tip)
 
     tip = _("Paste the clipboard's contents into the current selection")
-    self.pasteAct = createAction(self,
-                                 _('&Paste'),
-                                 self.paste,
-                                 QtGui.QKeySequence.Paste,
-                                 icon_paste,
-                                 tip)
+    self.pasteAct = createAction(parent=self,
+                                 text=_('&Paste'),
+                                 slot=self.paste,
+                                 shortcut=QtGui.QKeySequence.Paste,
+                                 actionicon=icon_paste,
+                                 tip=tip)
 
-    self.closeAct = createAction(self,
-                                 _('Cl&ose'),
-                                 self.workspace.closeActiveSubWindow,
-                                 shortcut = QtGui.QKeySequence.Close,
+    self.closeAct = createAction(parent=self,
+                                 text=_('Cl&ose'),
+                                 slot=self.workspace.closeActiveSubWindow,
+                                 shortcut=QtGui.QKeySequence.Close,
                                  tip=_('Close the active window'))
 
-    self.closeAllAct = createAction(self,
-                                    _('Close &All'),
-                                    self.workspace.closeAllSubWindows,
+    self.closeAllAct = createAction(parent=self,
+                                    text=_('Close &All'),
+                                    slot=self.workspace.closeAllSubWindows,
                                     tip=_('Close all the windows'))
 
-    self.cascadeAct = createAction(self,
-                                   _('&Cascade windows'),
-                                   self.workspace.cascadeSubWindows,
+    self.cascadeAct = createAction(parent=self,
+                                   text=_('&Cascade windows'),
+                                   slot=self.workspace.cascadeSubWindows,
                                    tip=_('Arranges all the child windows '
                                          'in a cascade pattern.'))
 
     self.separatorAct = QtGui.QAction(self)
     self.separatorAct.setSeparator(True)
 
-    self.aboutAct = createAction(self,
-                                 _('&About'),
-                                 self.about,
+    self.aboutAct = createAction(parent=self,
+                                 text=_('&About'),
+                                 slot=self.about,
                                  tip=_("Show the application's About box"))
 
-    self.newAct = createAction(self,
-                               _('New'),
-                               self.new,
-                               QtGui.QKeySequence.New,
-                               icon_new,
-                               _('New'))
+    self.newAct = createAction(parent=self,
+                               text=_('New'),
+                               slot=self.new,
+                               shortcut=QtGui.QKeySequence.New,
+                               actionicon=icon_new,
+                               tip=_('New'))
 
-    self.deleteAct = createAction(self,
-                                  _('Delete'),
-                                  self.delete,
-                                  QtGui.QKeySequence.Delete,
-                                  icon_delete,
-                                  _('Delete'))
+    self.deleteAct = createAction(parent=self,
+                                  text=_('Delete'),
+                                  slot=self.delete,
+                                  shortcut=QtGui.QKeySequence.Delete,
+                                  actionicon=icon_delete,
+                                  tip=_('Delete'))
 
-    self.viewFirstAct = createAction(self,
-                                     _('First'),
-                                     self.viewFirst,
-                                     QtGui.QKeySequence.MoveToStartOfDocument,
-                                     icon_gofirst,
-                                     _('First'))
+    self.viewFirstAct = createAction(parent=self,
+                                     text=_('First'),
+                                     slot=self.viewFirst,
+                                     shortcut=QtGui.QKeySequence.MoveToStartOfDocument,
+                                     actionicon=icon_gofirst,
+                                     tip=_('First'))
 
-    self.viewLastAct = createAction(self,
-                                    _('Last'),
-                                    self.viewLast,
-                                    QtGui.QKeySequence.MoveToEndOfDocument,
-                                    icon_golast,
-                                    _('Last'))
+    self.viewLastAct = createAction(parent=self,
+                                    text=_('Last'),
+                                    slot=self.viewLast,
+                                    shortcut=QtGui.QKeySequence.MoveToEndOfDocument,
+                                    actionicon=icon_golast,
+                                    tip=_('Last'))
 
-    self.viewNextAct = createAction(self,
-                                    _('Next'),
-                                    self.viewNext,
-                                    QtGui.QKeySequence.MoveToNextPage,
-                                    icon_gonext,
-                                    _('Next'))
+    self.viewNextAct = createAction(parent=self,
+                                    text=_('Next'),
+                                    slot=self.viewNext,
+                                    shortcut=QtGui.QKeySequence.MoveToNextPage,
+                                    actionicon=icon_gonext,
+                                    tip=_('Next'))
 
-    self.viewPreviousAct = createAction(self,
-                                        _('Previous'),
-                                        self.viewPrevious,
-                                        QtGui.QKeySequence.MoveToPreviousPage,
-                                        icon_goprevious,
-                                        _('Previous'))
+    self.viewPreviousAct = createAction(parent=self,
+                                        text=_('Previous'),
+                                        slot=self.viewPrevious,
+                                        shortcut=QtGui.QKeySequence.MoveToPreviousPage,
+                                        actionicon=icon_goprevious,
+                                        tip=_('Previous'))
 
     if QT_MAJOR_VERSION > 4.3:
       self.viewFirstAct.setIconVisibleInMenu(False)
@@ -300,21 +300,21 @@ class MainWindow(QtGui.QMainWindow):
       self.viewNextAct.setIconVisibleInMenu(False)
       self.viewPreviousAct.setIconVisibleInMenu(False)
 
-    self.exportToExcelAct = createAction(self,
-                                         _('Export to MS Excel'),
-                                         self.exportToExcel,
+    self.exportToExcelAct = createAction(parent=self,
+                                         text=_('Export to MS Excel'),
+                                         slot=self.exportToExcel,
                                          actionicon=icon_excel,
                                          tip=_('Export to MS Excel'))
 
-    self.exportToWordAct = createAction(self,
-                                        _('Export to MS Word'),
-                                        self.exportToWord,
+    self.exportToWordAct = createAction(parent=self,
+                                        text=_('Export to MS Word'),
+                                        slot=self.exportToWord,
                                         actionicon=icon_word,
                                         tip=_('Export to MS Word'))
 
-    self.exportToMailAct = createAction(self,
-                                        _('Send by e-mail'),
-                                        self.exportToMail,
+    self.exportToMailAct = createAction(parent=self,
+                                        text=_('Send by e-mail'),
+                                        slot=self.exportToMail,
                                         actionicon=icon_mail,
                                         tip=_('Send by e-mail'))
     
@@ -328,8 +328,8 @@ class MainWindow(QtGui.QMainWindow):
       def bind_callable(name, callable):
         return lambda:self.runAction(name, callable)
       
-      self.app_actions.append(createAction(self,
-                                           name,
+      self.app_actions.append(createAction(parent=self,
+                                           text=name,
                                            slot=bind_callable(name, callable), 
                                            actionicon=icon,
                                            tip=name))
