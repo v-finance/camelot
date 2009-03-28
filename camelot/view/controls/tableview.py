@@ -40,7 +40,6 @@ from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.art import Icon
 import settings
 
-verbose = False
 
 class QueryTable(QtGui.QTableView):
   """the actual displayed table"""
@@ -312,10 +311,8 @@ class TableView(QtGui.QWidget):
   def setFilters(self, items):
     """sets filters for the tableview"""
     from filter import FilterList
-    if verbose:
-      logger.debug('setting filters with items : %s' % str(items))
-    else:
-      logger.debug('setting filters for tableview')
+    #logger.debug('setting filters with items : %s' % str(items))
+    logger.debug('setting filters for tableview')
     if self.filters:
       self.filters.deleteLater()
       self.filters = None

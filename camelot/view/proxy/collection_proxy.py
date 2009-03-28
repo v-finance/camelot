@@ -34,7 +34,6 @@ returned and an update signal is emitted when the correct data is available.
 
 import logging
 logger = logging.getLogger('camelot.view.proxy.collection_proxy')
-verbose = False 
 
 import pickle
 import elixir
@@ -311,11 +310,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       type_ = c[1]['python_type']
       widget_ = c[1]['widget']
 
-      if verbose:
-        logger.debug("creating delegate for %s \ntype: %s\nwidget: %s\n" \
-                     "arguments: %s" % (field_name, type_, widget_, str(c[1])))
-      else:
-        logger.debug('creating delegate for %s' % field_name)
+      #logger.debug("creating delegate for %s \ntype: %s\nwidget: %s\n" \
+      #             "arguments: %s" % (field_name, type_, widget_, str(c[1])))
+      logger.debug('creating delegate for %s' % field_name)
       
       if 'delegate' in c[1]:
         delegate = c[1]['delegate'](parent=None, **c[1])
@@ -459,10 +456,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         def update_model_and_cache():
           from sqlalchemy.exceptions import OperationalError
           new_value = value()
-          if verbose:
-            logger.debug('set data for col %s;row %s to %s' % (row, column, new_value))
-          else:
-            logger.debug('set data for col %s;row %s' % (row, column))
+          #logger.debug('set data for col %s;row %s to %s' % (row, column, new_value))
+          logger.debug('set data for col %s;row %s' % (row, column))
             
           o = self._get_object(row)
           if not o:

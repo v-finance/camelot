@@ -47,7 +47,6 @@ from camelot.view.model_thread import get_model_thread
 """Dictionary mapping widget types to an associated delegate"""
 
 _registered_delegates_ = {}
-verbose = False
 
 _not_editable_background_ = QtGui.QColor(235, 233, 237)
 _not_editable_foreground_ = QtGui.QColor(Qt.darkGray)
@@ -81,8 +80,7 @@ class GenericDelegate(QtGui.QItemDelegate):
 
   def insertColumnDelegate(self, column, delegate):
     """Inserts a custom column delegate"""
-    if verbose:
-      logger.debug('inserting delegate for column %s' % column)
+    logger.debug('inserting delegate for column %s' % column)
     delegate.setParent(self)
     self.delegates[column] = delegate
     self.connect(delegate, QtCore.SIGNAL('commitData(QWidget*)'), self.commitData)
@@ -118,17 +116,12 @@ class GenericDelegate(QtGui.QItemDelegate):
 
   def setEditorData(self, editor, index):
     """Use a custom delegate setEditorData method if it exists"""
-    if verbose:
-      logger.debug('setting editor data for column %s' % index.column())
+    logger.debug('setting editor data for column %s' % index.column())
     delegate = self.delegates.get(index.column())
     if delegate is not None:
-      if verbose:
-        logger.debug('got delegate')
       delegate.setEditorData(editor, index)
     else:
       QtGui.QItemDelegate.setEditorData(self, editor, index)
-    if verbose:
-      logger.debug('data set')
 
   def setModelData(self, editor, model, index):
     """Use a custom delegate setModelData method if it exists"""
