@@ -25,17 +25,31 @@
 #
 #  ============================================================================
 
-"""collection of helper functions"""
+"""Manage QAction objects"""
 
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
-def createAction(parent, text, slot=None, shortcut='', actionicon='', tip='',
-                 checkable=False, signal='triggered()', widgetaction=False):
+def getAction(parent, widgetaction):
+	if widgetaction:
+		return QtGui.QWidgetAction(parent)
+	else
+	  return QtGui.QAction(parent)
+
+def createAction(parent, text, **kw):
   """creates and returns a QAction object"""
 
-  action = QtGui.QWidgetAction(parent) if widgetaction \
-                                       else QtGui.QAction(parent)
+  # collect params
+	slot = kw.get('slot', None)
+	shortcut = kw.get('shortcut', '')
+	actionicon = kw.get('actionicon', '')
+	tip = kw.get('tip', '')
+	checkable = kw.get('checkable', False)
+	signal = kw.get('signal', 'triggered()')
+	widgetaction = kw.get('widgetaction', False)
+
+  action = getAction(parent, widgetaction)
+
   action.setText(text)
 
   if actionicon:
@@ -45,7 +59,7 @@ def createAction(parent, text, slot=None, shortcut='', actionicon='', tip='',
   if tip:
     action.setToolTip(tip)
     action.setStatusTip(tip)
-  if slot:
+  if slot is not None:
     parent.connect(action, QtCore.SIGNAL(signal), slot)
   if checkable:
     action.setCheckable(True)
