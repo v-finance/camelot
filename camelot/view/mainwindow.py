@@ -230,7 +230,7 @@ class MainWindow(QtGui.QMainWindow):
     self.closeAct = createAction(parent=self,
                                  text=_('Cl&ose'),
                                  slot=self.workspace.closeActiveSubWindow,
-                                 shortcut=QtGui.QKeySequence.Close,
+                                 shortcut='Ctrl+W',
                                  tip=_('Close the active window'))
 
     self.closeAllAct = createAction(parent=self,
