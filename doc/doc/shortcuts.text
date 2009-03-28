@@ -47,6 +47,7 @@ Child windows shortcuts
     CTRL+F5...............Restore window size of selected window (todo)
     CTRL+TAB............................Switch next child window (todo)
     CTRL+SHIFT+TAB...............Switch to previous child window (todo)
+    F9..................................................Session refresh
     CTRL+F9................................Minimize child window (todo)
     CTRL+F10...............................Maximize child window (todo)
 
