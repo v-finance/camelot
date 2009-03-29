@@ -43,7 +43,7 @@ method :
 	  from model import *
 	  setup_all(create_tables=True)
 	  updateLastLogin()
-	  updateFixtures()
+	  update_fixtures()
  
 Creating new data
 -----------------
