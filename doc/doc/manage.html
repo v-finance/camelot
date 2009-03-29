@@ -18,14 +18,16 @@ is used for interacting with and migration of the database to a certain schema r
 
 <h2>Command line interaction with the model</h2>
 
-<p>python camelot/bin/manage.py console</p>
+<pre><code>python camelot/bin/manage.py console
+</code></pre>
 
 <p>launches a python console with the model all setup for interaction.  Within the example
 movie project one could do within the console :</p>
 
-<p>from model import Movie
-  for movie in Movie.query.all():
-    print movie.title</p>
+<pre><code>from model import Movie
+for movie in Movie.query.all():
+  print movie.title
+</code></pre>
 
 <p>to print a list of all movie titles to the screen.</p>
 

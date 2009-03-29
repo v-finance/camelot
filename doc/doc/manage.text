@@ -19,14 +19,14 @@ Both tools support the --help command line argument to provide a list of availab
 Command line interaction with the model
 ---------------------------------------
 
-  python camelot/bin/manage.py console
+ 	python camelot/bin/manage.py console
   
 launches a python console with the model all setup for interaction.  Within the example
 movie project one could do within the console :
 
-  from model import Movie
-  for movie in Movie.query.all():
-    print movie.title
+	from model import Movie
+	for movie in Movie.query.all():
+	  print movie.title
     
 to print a list of all movie titles to the screen.
 
