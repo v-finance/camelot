@@ -141,7 +141,7 @@ class GenericDelegate(QtGui.QItemDelegate):
       return QtGui.QItemDelegate.sizeHint(self, option, index)
 
 class StarDelegate(QtGui.QItemDelegate):
-  """Custom delegate for integer values"""
+  """Custom delegate for integer values from (1 to 5)(Rating Delegate)"""
 
   def __init__(self, maximum=5, editable=True, parent=None, **kwargs):
     super(StarDelegate, self).__init__(parent)
