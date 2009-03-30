@@ -63,6 +63,14 @@ class ApplicationAdmin(object):
     """Get the root query for an entity"""
     return entity.query
   
+  
+  def createMainWindow(self):
+    """createMainWindow"""
+    from camelot.view.mainwindow import MainWindow
+    mainwindow = MainWindow(self)
+    
+    return mainwindow
+  
   def getEntitiesAndQueriesInSection(self, section):
     """@return: a list of tuples of (admin, query) instances related to
     the entities in this section.

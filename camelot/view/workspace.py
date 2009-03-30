@@ -2,6 +2,7 @@
 and widget to create new windows or raise existing ones"""
 
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
 import logging
 
@@ -20,10 +21,34 @@ class DesktopWorkspace(QtGui.QMdiArea):
       subwindow.connect(widget, widget.closeAfterValidation, subwindow, QtCore.SLOT("close()"))
     
 _workspace_ = []
+
+
+class NoDesktopWorkspace(QtCore.QObject):
+  def __init__(self):
+    QtCore.QObject.__init__(self)
+
+
+  def addSubWindow(self, widget, *args):
+    print 'add sub'
+    self.widget = widget
+    self.widget.setParent(None)
+    self.widget.show()
+    _workspace_.append(self.widget)
+    self.connect(widget, QtCore.SIGNAL('WidgetClosed()'), self.removeWidgetFromWorkspace)
+    
+  def removeWidgetFromWorkspace(self):
+    _workspace_.remove(self.widget)
+    
+
+_workspace_ = []
         
 def construct_workspace(*args, **kwargs):
-  _workspace_.append(DesktopWorkspace(*args))
+  _workspace_.append(DesktopWorkspace())
   return _workspace_[0]
   
+def construct_no_desktop_workspace(*args, **kwargs):
+  _workspace_.append(NoDesktopWorkspace())
+  return _workspace_[0]
+
 def get_workspace():
   return _workspace_[0]

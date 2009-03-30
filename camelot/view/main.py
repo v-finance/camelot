@@ -12,7 +12,7 @@ def main(application_admin,
   model thread has been started.
   @param pre-initialization: function that will be called before the model thread has been started,
   but after the QApplication has been created.  This function can be used to run a configuration
-  wizard before a connection to the database was mode or any gui element has been constructed.
+  wizard before a connection to the database was made or any gui element has been constructed.
   """
   #
   # before anything else happens or is imported, the splash screen should be there
@@ -88,9 +88,9 @@ def main(application_admin,
 
   # regulary call processEvents to keep the splash alive
   app.processEvents()
+  
+  mainwindow = application_admin.createMainWindow()
     
-  from camelot.view.mainwindow import MainWindow
-  mainwindow = MainWindow(application_admin)
   mainwindow.show()
   splash.finish(mainwindow)
   sys.exit(app.exec_())
