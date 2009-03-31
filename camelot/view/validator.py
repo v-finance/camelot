@@ -28,12 +28,9 @@
 import logging
 logger = logging.getLogger('camelot.view.validator')
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-
 from fifo import fifo
 
-class Validator(QtCore.QObject):
+class Validator(object):
   """A validator class validates an entity before flushing it to the database
   and provides the user with feedback if the entity is not ready to flush
   """

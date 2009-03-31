@@ -53,6 +53,7 @@ import sqlalchemy.sql.expression
 import camelot.types
 from model_thread import gui_function
 from model_thread import model_function
+from validator import Validator
 import settings
 
 _ = lambda x: x
@@ -61,6 +62,7 @@ _ = lambda x: x
 class EntityAdmin(object):
   name = None
   list_display = []
+  validator = Validator
   fields = []
   form = [] #DEPRECATED
   form_display = []
@@ -290,8 +292,7 @@ class EntityAdmin(object):
     return list(filter_generator())
 
   def createValidator(self, model):
-    from validator import Validator
-    return Validator(self, model)
+    return self.validator(self, model)
   
   @model_function
   def setDefaults(self, entity_instance):
