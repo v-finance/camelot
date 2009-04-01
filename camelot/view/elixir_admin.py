@@ -75,6 +75,10 @@ class EntityAdmin(object):
   list_search = []
   list_size = (600, 400)
   form_size = (700, 500)
+  # Actions to be accessible by pushbuttons on the side of a form,
+  # a list of tuples (button_label, action_function) where action_function
+  # takes as its single argument, the object that is edited by the form
+  # eg. : form_actions = [('Print', lamda o:print o)]
   form_actions = []
   form_title_column = None
   field_attributes = {}

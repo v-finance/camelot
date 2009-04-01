@@ -59,20 +59,9 @@ class ActionsBox(QtGui.QGroupBox):
       self.actions.append((name, functor))
     layout.addStretch()
     self.setLayout(layout)
-    
+
   def executeAction(self, button_id):
-    
-    def execute_and_flush():
-      from elixir import session
-      entity = self.entity_getter()
-      self.actions[button_id][1](entity)
-      session.flush([entity])
-      self.rsh.sendEntityUpdate(self, entity)
-      
-    def executed(result):
-      logger.debug('action %i executed'%button_id)
-      
-    self.mt.post(execute_and_flush, executed )
+    self.actions[button_id][1](self.entity_getter)
  
   def __del__(self):
     logger.debug('delete actions box')
