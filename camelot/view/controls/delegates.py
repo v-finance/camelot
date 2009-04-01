@@ -601,12 +601,13 @@ class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
   positive and in red when they are negative."""
 
   def __init__(self, minimum=-1e15, maximum=1e15, precision=2,
-               editable=True, parent=None, **kwargs):
+               editable=True, parent=None, unicode_format=None, **kwargs):
     super(ColoredFloatColumnDelegate, self).__init__(parent)
     self.minimum = minimum
     self.maximum = maximum
     self.precision = precision
     self.editable = editable
+    self.unicode_format = unicode_format
 
   def createEditor(self, parent, option, index):
     editor = editors.ColoredFloatEditor(parent, self.precision, self.minimum, self.maximum, self.editable)
@@ -646,7 +647,11 @@ class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
       icon = Icon('tango/16x16/actions/go-down-red.png').getQPixmap()
       QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
       fontColor.setRgb(255, 0, 0)
-      
+
+    value_str = str(value)
+    if self.unicode_format != None:
+        value_str = self.unicode_format(value)
+
     fontColor = fontColor.darker()
     painter.setPen(fontColor.toRgb())
     rect = QtCore.QRect(option.rect.left()+23, option.rect.top(), option.rect.width()-23, option.rect.height())
@@ -655,7 +660,7 @@ class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
                      rect.width()-4,
                      rect.height(),
                      Qt.AlignVCenter | Qt.AlignRight,
-                     str(value))
+                     value_str)
     painter.restore()
     
 _registered_delegates_[editors.ColoredFloatEditor] = ColoredFloatColumnDelegate
