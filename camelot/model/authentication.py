@@ -357,6 +357,15 @@ class Address(Entity):
   city = ManyToOne('City', required=True, ondelete='cascade', onupdate='cascade')
   is_synchronized('synchronized', lazy=True)
   
+  @classmethod
+  def getOrCreate(cls, street1, street2, city):
+    address = cls.query.filter_by(street1=street1, street2=street2, city=city).first()
+    if not address:
+      from elixir import session
+      address = cls(street1=street1, street2=street2, city=city)
+      session.flush([address])
+    return address
+  
   def __unicode__(self):
     return u'%s, %s'%(self.street1 or '', self.city or '')
   

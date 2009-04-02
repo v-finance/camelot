@@ -88,13 +88,13 @@ class NewCompanyWizard(QtGui.QWizard):
     class checkPage(QtGui.QWizardPage):
       def __init__(self):
         super(checkPage, self).__init__()
-        self.succes = False
+        self.success = False
         self.ondernemingsVorm = QtGui.QLabel()
         self.name = QtGui.QLabel()
         self.street = QtGui.QLabel()
         self.town = QtGui.QLabel()
         self.setTitle('Add New Company')
-        if self.succes == False:
+        if self.success == False:
           self.setSubTitle('')
         else:
           self.setSubTitle('Here is the adress we found in the database, make sure this is correct.')
@@ -109,7 +109,7 @@ class NewCompanyWizard(QtGui.QWizard):
         self.setLayout(layout)
 
       def isComplete(self):
-        if not wizard.succes:
+        if not wizard.success:
           return False
         else:
           return True
@@ -126,10 +126,10 @@ class NewCompanyWizard(QtGui.QWizard):
           self.setSubTitle('System Overloaded, please try again later.')
         else:
           if succes[0] == 'Y':
-            wizard.succes = True
+            wizard.success = True
           else:
-            wizard.succes = False
-          if wizard.succes == False:
+            wizard.success = False
+          if wizard.success == False:
             self.setSubTitle('')
           else:
             self.setSubTitle('Here is the adress we found in the database, make sure this is correct.')
@@ -155,7 +155,7 @@ class NewCompanyWizard(QtGui.QWizard):
               self.street.setText(wizard.street)
               self.town.setText(wizard.town)
               wizard.taxid = str(wizard.value)
-          if not wizard.succes:
+          if not wizard.success:
             self.ondernemingsVorm.setText('Nothing Found.')
             self.name.setText(' ')
             self.street.setText('Please retyp the VAT number')
@@ -164,5 +164,8 @@ class NewCompanyWizard(QtGui.QWizard):
     wizard.addPage(WelcomePage())
     wizard.addPage(inputPage())
     wizard.addPage(checkPage())
+  
+  def finished(self, result):
+    pass
     
     
