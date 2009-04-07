@@ -54,8 +54,12 @@ _not_editable_foreground_ = QtGui.QColor(Qt.darkGray)
 def _paint_not_editable(painter, option, index):
   text = index.model().data(index, Qt.DisplayRole).toString()
   painter.save()
-  painter.fillRect(option.rect, _not_editable_background_)
-  painter.setPen(_not_editable_foreground_)
+  if (option.state & QtGui.QStyle.State_Selected):
+    painter.fillRect(option.rect, option.palette.highlight())
+    painter.setPen(option.palette.highlightedText().color())
+  else:
+    painter.fillRect(option.rect, _not_editable_background_)
+    painter.setPen(_not_editable_foreground_)
   painter.drawText(option.rect.x()+2,
                    option.rect.y(),
                    option.rect.width()-4,
@@ -209,21 +213,22 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
     self.editable = editable
 
   def paint(self, painter, option, index):
+    self.drawBackground(painter, option, index)
+    painter.save()
     if (option.state & QtGui.QStyle.State_Selected):
-      QtGui.QItemDelegate.paint(self, painter, option, index)
-    else:
-      painter.save()
-      if not self.editable:
-        painter.fillRect(option.rect, _not_editable_background_)
-        painter.setPen(_not_editable_foreground_)
-      value =  index.model().data(index, Qt.DisplayRole).toString()
-      painter.drawText(option.rect.x()+2,
-                       option.rect.y(),
-                       option.rect.width()-4,
-                       option.rect.height(),
-                       Qt.AlignVCenter | Qt.AlignRight,
-                       value)
-      painter.restore()
+      painter.fillRect(option.rect, option.palette.highlight())
+      painter.setPen(option.palette.highlightedText().color())
+    elif not self.editable:
+      painter.fillRect(option.rect, _not_editable_background_)
+      painter.setPen(_not_editable_foreground_)
+    value =  index.model().data(index, Qt.DisplayRole).toString()
+    painter.drawText(option.rect.x()+2,
+                     option.rect.y(),
+                     option.rect.width()-4,
+                     option.rect.height(),
+                     Qt.AlignVCenter | Qt.AlignRight,
+                     value)
+    painter.restore()
       
   def createEditor(self, parent, option, index):
     editor = editors.IntegerEditor(parent, self.minimum, self.maximum, self.editable)
