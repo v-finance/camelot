@@ -141,6 +141,14 @@ _sqlalchemy_to_python_type_ = {
                                   'nullable':True,
                                   'python_type':int,
                                   'widget':'star'},
+                                  
+  camelot.types.Enumeration: lambda f:{'delegate':ComboBoxColumnDelegate,
+                                       'python_type':str,
+                                       'choices':lambda o:[(v,v.capitalize()) for v in f.values],
+                                       'editable':True,
+                                       'nullable':False,
+                                       'widget':'combobox',
+                                       },
                                                                            
   sqlalchemy.types.Time : lambda f: {'python_type':datetime.time,
                                      'editable':True,
