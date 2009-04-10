@@ -95,29 +95,28 @@ def RowDataAsUnicode(obj, columns):
   
   for i,(field_name,field_attributes) in enumerate(columns):
     field_data = getattr(obj, field_name)
+    unicode_date = u''
     if 'unicode_format' in field_attributes:
         unicode_format = field_attributes['unicode_format']
         if field_data != None:
-            row_data.append(unicode_format(field_data))
-            continue
-    if 'choices' in field_attributes:
+            unicode_data = unicode_format(field_data)
+    elif 'choices' in field_attributes:
       for key,value in field_attributes['choices'](obj):
         if key==field_data:
-          row_data.append(value)
+          unicode_data = value
           continue
-    if isinstance(field_data, list):
-      row_data.append(u'.'.join([unicode(e) for e in field_data]))
+    elif isinstance(field_data, list):
+      unicode_data = u'.'.join([unicode(e) for e in field_data])
     elif isinstance(field_data, datetime.datetime):
       # datetime should come before date since datetime is a subtype of date
       if field_data.year >= 1900:
-        row_data.append( field_data.strftime('%d/%m/%Y %H:%M') )   
+        unicode_data = field_data.strftime('%d/%m/%Y %H:%M')   
     elif isinstance(field_data, datetime.date):
       if field_data.year >= 1900:
-        row_data.append( field_data.strftime('%d/%m/%Y') )
+        unicode_data = field_data.strftime('%d/%m/%Y')
     elif field_data!=None:
-      row_data.append(unicode(field_data))
-    else:
-      row_data.append('')
+      unicode_data = unicode(field_data)
+    row_data.append(unicode_data)
   
   return row_data
 
