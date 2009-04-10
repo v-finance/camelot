@@ -219,6 +219,51 @@ class Color(types.TypeDecorator):
       
     return processor
   
+class Enumeration(types.TypeDecorator):
+  """Column type to store Enumerations
+  
+  Stores enumerations as integer values and returns and accepts associated strings 
+  """
+  
+  impl = types.Integer
+  
+  def __init__(self, values=[], **kwargs):
+    """
+    @param param: values is a list of tuples.  each tuple contains an integer and its
+    associated string.  eg. : values = [(1,'draft'), (2,'approved')]
+    """
+    types.TypeDecorator.__init__(self, **kwargs)
+    self._int_to_string = dict(values)
+    self._string_to_int = dict((v,k) for (k,v) in values)
+    self.values = [v for (k,v) in values]
+    
+  def bind_processor(self, dialect):
+
+    impl_processor = self.impl.bind_processor(dialect)
+    if not impl_processor:
+      impl_processor = lambda x:x
+    
+    def processor(value):
+      if value is not None:
+        value = self._string_to_int[value]
+      return impl_processor(value)
+    
+    return processor
+
+  def result_processor(self, dialect):
+    
+    impl_processor = self.impl.result_processor(dialect)
+    if not impl_processor:
+      impl_processor = lambda x:x
+      
+    def processor(value):
+      if value:
+        value = impl_processor(value)
+        return self._int_to_string(value)
+      
+    return processor  
+  
+  
 class Image(types.TypeDecorator):
   """Sqlalchemy column type to store images
   

@@ -336,6 +336,8 @@ class IntervalsColumnDelegate(QtGui.QItemDelegate):
         painter.drawLine(x1, yoffset, x2, yoffset)
         painter.drawEllipse(x1-1, yoffset-1, 2, 2)
         painter.drawEllipse(x2-1, yoffset-1, 2, 2)
+        pen = QtGui.QPen(Qt.white)      
+        
     painter.restore()
       
   def createEditor(self, parent, option, index):
