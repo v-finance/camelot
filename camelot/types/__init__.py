@@ -246,7 +246,7 @@ class Enumeration(types.TypeDecorator):
     def processor(value):
       if value is not None:
         value = self._string_to_int[value]
-      return impl_processor(value)
+      return impl_processor[value]
     
     return processor
 
@@ -259,7 +259,7 @@ class Enumeration(types.TypeDecorator):
     def processor(value):
       if value:
         value = impl_processor(value)
-        return self._int_to_string(value)
+        return self._int_to_string[value]
       
     return processor  
   
