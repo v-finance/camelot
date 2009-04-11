@@ -41,12 +41,16 @@ class Fixture(Entity):
   fixture_class = Field(Unicode(256), index=True, required=False)
   
   @classmethod
+  def findFixtureReference(cls, entity, fixture_key, fixture_class=None):
+    entity_name = unicode(entity.__name__)
+    return cls.query.filter_by(model=unicode(entity_name), fixture_key=fixture_key, fixture_class=fixture_class).first()
+  
+  @classmethod
   def findFixture(cls, entity, fixture_key, fixture_class=None):
     """Find a registered fixture, return None if no fixture is found"""
-    entity_name = unicode(entity.__name__)
-    fixture = cls.query.filter_by(model=unicode(entity_name), fixture_key=fixture_key, fixture_class=fixture_class).first()
-    if fixture:
-      return entity.get(fixture.primary_key)
+    reference = cls.findFixtureReference(entity, fixture_key, fixture_class) 
+    if reference:
+      return entity.get(reference.primary_key)
   
   @classmethod
   def insertOrUpdateFixture(cls, entity, fixture_key, values, fixture_class=None):
@@ -59,6 +63,14 @@ class Fixture(Entity):
     obj.from_dict(values)
     Session.object_session(obj).flush([obj])
     if store_fixture:
-      fixture = cls(model=unicode(entity.__name__), primary_key=obj.id, fixture_key=fixture_key, fixture_class=fixture_class)
-      Session.object_session(fixture).flush([fixture]) 
+      #
+      # The fixture itself might have been deleted, but the reference might be intact,
+      # so this should be updated
+      #
+      reference = cls.findFixtureReference(entity, fixture_key, fixture_class)
+      if not reference:
+        reference = cls(model=unicode(entity.__name__), primary_key=obj.id, fixture_key=fixture_key, fixture_class=fixture_class)
+      else:
+        reference.primary_key = obj.id
+      Session.object_session(reference).flush([reference]) 
     return obj
