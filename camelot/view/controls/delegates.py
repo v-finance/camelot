@@ -351,12 +351,17 @@ class IntervalsColumnDelegate(QtGui.QItemDelegate):
 
 class ColorColumnDelegate(QtGui.QItemDelegate):
 
-  def __init__(self, parent=None, **kwargs):
+  def __init__(self, parent=None, editable=True, **kwargs):
     super(ColorColumnDelegate, self).__init__(parent)
+    self.editable = editable
     
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
+    if (option.state & QtGui.QStyle.State_Selected):
+      pass
+    elif not self.editable:
+      painter.fillRect(option.rect, _not_editable_background_)
     color = index.model().data(index, Qt.EditRole).toPyObject()  
     if color:
       pixmap = QtGui.QPixmap(16, 16)
@@ -367,7 +372,7 @@ class ColorColumnDelegate(QtGui.QItemDelegate):
     painter.restore()
       
   def createEditor(self, parent, option, index):
-    editor = editors.ColorEditor(parent)
+    editor = editors.ColorEditor(parent, self.editable)
     self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
     return editor
 

@@ -1214,7 +1214,7 @@ class ImageEditor(QtGui.QWidget):
 
 class ColorEditor(QtGui.QWidget):
   
-  def __init__(self, parent=None, **kwargs):
+  def __init__(self, parent=None, editable=True, **kwargs):
     QtGui.QWidget.__init__(self, parent)
     layout = QtGui.QVBoxLayout(self)
     layout.setSpacing(0)
@@ -1222,9 +1222,10 @@ class ColorEditor(QtGui.QWidget):
     self.color_button = QtGui.QPushButton(parent)
     self.color_button.setMaximumSize(QtCore.QSize(20, 20))
     layout.addWidget(self.color_button)
-    self.connect(self.color_button,
-                 QtCore.SIGNAL('clicked(bool)'),
-                 self.buttonClicked)
+    if editable:
+      self.connect(self.color_button,
+                   QtCore.SIGNAL('clicked(bool)'),
+                   self.buttonClicked)
     self.setLayout(layout)
     self._color = None
 
