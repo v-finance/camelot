@@ -53,27 +53,31 @@ class QueryTable(QtGui.QTableView):
     self.horizontalHeader().setClickable(False)
 
 class Header(QtGui.QWidget):
-  """Header for a tableview, containing the title and the search widget"""
+  """Header for a tableview, containing the title, the search widget,
+  and the number of rows in the table"""
   
   _title_font = QtGui.QApplication.font()
   _title_font.setBold(True)
+  _number_of_rows_font = QtGui.QApplication.font()
   
   def __init__(self, admin, parent):
     super(Header, self).__init__(parent)
     from search import SimpleSearchControl
-    from appscheme import scheme
-#    self.setAutoFillBackground(True)
-#    self.setBackgroundRole(QtGui.QPalette.Highlight)
     widget_layout = QtGui.QHBoxLayout()
     self.search_control = SimpleSearchControl(self)
     title = QtGui.QLabel(admin.getName(), self)
     title.setFont(self._title_font)
     widget_layout.addWidget(title)
     widget_layout.addWidget(self.search_control)
+    self.number_of_rows = QtGui.QLabel(self)
+    self.number_of_rows.setFont(self._number_of_rows_font)
+    widget_layout.addWidget(self.number_of_rows)
     self.setLayout(widget_layout)
     self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-    #widget_layout.setSpacing(0)
-    #widget_layout.setMargin(0)
+    self.setNumberOfRows(0)
+    
+  def setNumberOfRows(self, rows):
+    self.number_of_rows.setText(u'(%i rows)'%rows)
     
 class TableView(QtGui.QWidget):
   """emits the row_selected signal when a row has been selected"""
@@ -91,8 +95,8 @@ class TableView(QtGui.QWidget):
     super(TableView, self).__init__(parent)
     self.setWindowTitle(self.title_format%(admin.getName()))
     widget_layout = QtGui.QVBoxLayout()
-    header = Header(admin, self)
-    widget_layout.addWidget(header)
+    self.header = Header(admin, self)
+    widget_layout.addWidget(self.header)
     widget_layout.setSpacing(0)
     widget_layout.setMargin(0)
     self.splitter = QtGui.QSplitter(self)
@@ -110,13 +114,13 @@ class TableView(QtGui.QWidget):
     self.splitter.insertWidget(0, table_widget)
     self.setLayout(widget_layout)
     self.closeAfterValidation = QtCore.SIGNAL('closeAfterValidation()')
-    self.connect(header.search_control, SIGNAL('search'), self.startSearch)
-    self.connect(header.search_control, SIGNAL('cancel'), self.cancelSearch)
+    self.connect(self.header.search_control, SIGNAL('search'), self.startSearch)
+    self.connect(self.header.search_control, SIGNAL('cancel'), self.cancelSearch)
     
     self.search_filter = lambda q: q
     self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
     if search_text:
-      header.search_control.search(search_text)
+      self.header.search_control.search(search_text)
     admin.mt.post(lambda: self.admin.getSubclasses(),
                   lambda subclasses: self.setSubclassTree(subclasses))      
 
@@ -147,6 +151,7 @@ class TableView(QtGui.QWidget):
     self.connect(self.table.verticalHeader(),
                  SIGNAL('sectionClicked(int)'),
                  self.sectionClicked)
+    self.connect(self.table_model, QtCore.SIGNAL('layoutChanged()'), self.tableLayoutChanged)
     self.table_layout.insertWidget(1, self.table)
 
     def update_delegates_and_column_width(*args):
@@ -162,6 +167,9 @@ class TableView(QtGui.QWidget):
     admin.mt.post(lambda: admin.getListCharts(),
                   lambda charts: self.setCharts(charts))
 
+  def tableLayoutChanged(self):
+    self.header.setNumberOfRows(self.table_model.rowCount())
+    
   def setCharts(self, charts):
     """creates and display charts"""
     if charts:
