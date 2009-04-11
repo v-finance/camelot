@@ -10,17 +10,19 @@ field types are automatically mapped to a specific delegate taking care of the v
 
 <p>Those field types are defined in <em>camelot.types</em></p>
 
-<h3>Rating</h3>
+<h3>Code</h3>
 
-<p>The rating field is an integer field that is visualized as a number of stars that
-can be selected.</p>
+<h3>Color</h3>
 
-<pre><code>class Movie(Entity):
-  title = Field(Unicode(60), required=True)
-  rating = Field(camelot.types.Rating())
+<p>The Color field returns and accepts tuples of the form (r,g,b,a) where
+r,g,b,a are integers between 0 and 255.  The color is stored as an hexadecimal
+string into the database.</p>
+
+<pre><code>class MovieType(Entity):
+  color = Field(camelot.types.Color())
 </code></pre>
 
-<p><img src="images/rating.png" alt="Example of the rating field" title="Rate a movie by assigning stars" /></p>
+<p><img src="images/color.png" alt="Example of the color field" title="The color of a movie type" /></p>
 
 <h3>Enumeration</h3>
 
@@ -39,6 +41,26 @@ box are the capitalized strings.</p>
 </code></pre>
 
 <p><img src="images/enumeration.png" alt="Example of the enumeration field" title="The status of a movie" /></p>
+
+<h3>IPAddress</h3>
+
+<h3>Image</h3>
+
+<h3>Rating</h3>
+
+<p>The rating field is an integer field that is visualized as a number of stars that
+can be selected.</p>
+
+<pre><code>class Movie(Entity):
+  title = Field(Unicode(60), required=True)
+  rating = Field(camelot.types.Rating())
+</code></pre>
+
+<p><img src="images/rating.png" alt="Example of the rating field" title="Rate a movie by assigning stars" /></p>
+
+<h3>RichText</h3>
+
+<h3>VirtualAddress</h3>
 
 <h2>Fields calculated by the database</h2>
 
