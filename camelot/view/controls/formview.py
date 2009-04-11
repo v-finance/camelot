@@ -154,24 +154,15 @@ class FormView(QtGui.QWidget):
                           
       def showMessage(valid):
         if not valid:
-          messages = u'\n'.join(self.validator.validityMessages(self.index))
-          mbmessages = u"Changes in this window could not be saved :\n%s" \
-                       u"\n Do you want to lose your changes ?" % messages
-          reply = QtGui.QMessageBox.question(self,
-                                             u'Unsaved changes',
-                                             mbmessages,
-                                             QtGui.QMessageBox.Yes,
-                                             QtGui.QMessageBox.No)
-          if reply == QtGui.QMessageBox.Yes:
+          reply = self.validator.validityDialog(self.index, self).exec_()
+          if reply == QtGui.QMessageBox.Discard:
             # clear mapping to prevent data being written again to the model,
             # then we reverted the row
             self.widget_mapper.clearMapping()
             self.model.revertRow(self.index)
-            from camelot.view.workspace import get_workspace
             self.validate_before_close = False
             self.emit(self.closeAfterValidation)
         else:
-          from camelot.view.workspace import get_workspace
           self.validate_before_close = False
           self.emit(self.closeAfterValidation)
       

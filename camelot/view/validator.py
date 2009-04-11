@@ -68,15 +68,13 @@ class Validator(object):
     """
     messages = []
     logger.debug('is valid for row %s' % row)
-
     try:
       entity_instance = self.model._get_object(row)
       if entity_instance:
         messages = self.objectValidity(entity_instance)
         self.message_cache.add_data(row, entity_instance.id, messages)
-    except:
-      # rude, should be fixed
-      pass
+    except Exception, e:
+      logger.error('programming error while validating object', exc_info=e)
     return len(messages) == 0
 
   def validityMessages(self, row):
@@ -86,10 +84,15 @@ class Validator(object):
       raise Exception('Programming error : isValid should be called ' \
                       'before calling validityMessage')
 
-  def validityMessage(self, row, parent):
-    """Inform the user about the validity of the data at row, by showing 
-    a message box, this function can only be called if isValid has been
-    called and is finished within the model thread
+  def validityDialog(self, row, parent):
+    """Return a QDialog that asks the user to discard his changes or continue
+    to edit the row until it is valid.
     """
-    messages = self.validityMessages(row)
-    QtGui.QMessageBox.information(parent, u'Validation', u'\n'.join(messages))
+    from PyQt4 import QtGui
+    return QtGui.QMessageBox(QtGui.QMessageBox.Warning,
+                             'Invalid form',
+                             '\n'.join(self.validityMessages(row)),
+                             QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard,
+                             parent
+                             )
+

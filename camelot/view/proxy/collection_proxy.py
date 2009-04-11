@@ -95,7 +95,7 @@ def RowDataAsUnicode(obj, columns):
   
   for i,(field_name,field_attributes) in enumerate(columns):
     field_data = getattr(obj, field_name)
-    unicode_date = u''
+    unicode_data = u''
     if 'unicode_format' in field_attributes:
         unicode_format = field_attributes['unicode_format']
         if field_data != None:

@@ -395,13 +395,11 @@ class EntityAdmin(object):
           
             def validate():
               return validator.isValid(0)
-                                
+
             def showMessage(valid):
               if not valid:
-                messages = u'\n'.join(validator.validityMessages(0))
-                reply = QtGui.QMessageBox.question(self, u'Could not create new %s'%admin.getName(),
-                u"\n%s\n Do you want to lose your changes ?"%messages, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-                if reply == QtGui.QMessageBox.Yes:
+                reply = validator.validityDialog(0, self).exec_()
+                if reply == QtGui.QMessageBox.Discard:
                   # clear mapping to prevent data being written again to the model, after we
                   # reverted the row
                   self.form_view.widget_mapper.clearMapping()
