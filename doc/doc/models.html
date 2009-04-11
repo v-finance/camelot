@@ -22,6 +22,24 @@ can be selected.</p>
 
 <p><img src="images/rating.png" alt="Example of the rating field" title="Rate a movie by assigning stars" /></p>
 
+<h3>Enumeration</h3>
+
+<p>The enumeration field stores integers in the database, but represents them as
+strings.  This allows efficient storage and querying while preserving readable code.</p>
+
+<p>Typical use of this field would be a status field.</p>
+
+<p>Enumeration fields are visualized as a combo box, where the labels in the combo
+box are the capitalized strings.</p>
+
+<pre><code>class Movie(Entity):
+  title = Field(Unicode(60), required=True)
+  state = Field(camelot.types.Enumeration([(1,'planned'), (2,'recording'), (3,'finished'), (4,'canceled')]), 
+                                          index=True, required=True, default='planning')
+</code></pre>
+
+<p><img src="images/enumeration.png" alt="Example of the enumeration field" title="The status of a movie" /></p>
+
 <h2>Fields calculated by the database</h2>
 
 <p>Having certain summary fields of your models filled by the database has the advantage

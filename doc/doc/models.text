@@ -23,6 +23,23 @@ can be selected.
 	  
 ![Example of the rating field](images/rating.png "Rate a movie by assigning stars")
 
+### Enumeration ###
+
+The enumeration field stores integers in the database, but represents them as
+strings.  This allows efficient storage and querying while preserving readable code.
+
+Typical use of this field would be a status field.
+
+Enumeration fields are visualized as a combo box, where the labels in the combo
+box are the capitalized strings.
+
+	class Movie(Entity):
+	  title = Field(Unicode(60), required=True)
+	  state = Field(camelot.types.Enumeration([(1,'planned'), (2,'recording'), (3,'finished'), (4,'canceled')]), 
+	                                          index=True, required=True, default='planning')
+
+![Example of the enumeration field](images/enumeration.png "The status of a movie")
+
 Fields calculated by the database
 ---------------------------------
 
