@@ -130,6 +130,7 @@ class Form(object):
         else:
           col_span = 1
           form_layout.addWidget(label, row, col, row_span, col_span)
+          #form_layout.addWidget(editor, row, col + 1, row_span, col_span, Qt.AlignRight)
           form_layout.addWidget(editor, row, col + 1, row_span, col_span)
           row += 1
 

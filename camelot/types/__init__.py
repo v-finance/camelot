@@ -227,15 +227,15 @@ class Enumeration(types.TypeDecorator):
   
   impl = types.Integer
   
-  def __init__(self, values=[], **kwargs):
+  def __init__(self, choices=[], **kwargs):
     """
-    @param param: values is a list of tuples.  each tuple contains an integer and its
-    associated string.  eg. : values = [(1,'draft'), (2,'approved')]
+    @param param: choices is a list of tuples.  each tuple contains an integer and its
+    associated string.  eg. : choices = [(1,'draft'), (2,'approved')]
     """
     types.TypeDecorator.__init__(self, **kwargs)
-    self._int_to_string = dict(values)
-    self._string_to_int = dict((v,k) for (k,v) in values)
-    self.values = [v for (k,v) in values]
+    self._int_to_string = dict(choices)
+    self._string_to_int = dict((v,k) for (k,v) in choices)
+    self.choices = [v for (k,v) in choices]
     
   def bind_processor(self, dialect):
 
