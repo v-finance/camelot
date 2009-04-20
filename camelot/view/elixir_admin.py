@@ -116,8 +116,10 @@ class EntityAdmin(object):
 
   def getRelatedEntityAdmin(self, entity):
     """
-    Get the related admin class for an entity, optionally specify for which
-    field of this admin's entity
+    Get an admin object for another entity.  Taking into account preferences of this
+    admin object or for those of admin object higher up the chain such as the
+    application admin object.
+    @param entity: the entity class for which an admin object is requested 
     """
     related_admin = self.app_admin.getEntityAdmin(entity)
     if not related_admin:

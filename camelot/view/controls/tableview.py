@@ -51,6 +51,7 @@ class QueryTable(QtGui.QTableView):
     self.setEditTriggers(QtGui.QAbstractItemView.AllEditTriggers)
     self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     self.horizontalHeader().setClickable(False)
+    #self.setSortingEnabled(True)
 
 class Header(QtGui.QWidget):
   """Header for a tableview, containing the title, the search widget,
