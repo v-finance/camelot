@@ -94,9 +94,9 @@ class ModelThread(threading.Thread):
   def __init__(self, response_signaler, setup_thread=setup_model):
     """
     @param response_signaler: an object with methods called :
-      responseAvailable() : this method will be called when a response is available
-      startProcessingRequest(),
-      stopProcessingRequest(),
+      responseAvailable(self, model_thread) : this method will be called when a response is available
+      startProcessingRequest(self, model_thread),
+      stopProcessingRequest(self, model_thread),
     @param setup_thread: function to be called at startup of the thread to initialize
     everything, by default this will setup the model.  set to None if nothing should
     be done. 
@@ -124,12 +124,12 @@ class ModelThread(threading.Thread):
           logger.debug('start handling request')
 #          import inspect
 #          print inspect.getsource(request)
-          self._response_signaler.startProcessingRequest()
+          self._response_signaler.startProcessingRequest(self)
           result = request()
           self._response_queue.put((new_event, result, response))
           self._request_queue.task_done()
-          self._response_signaler.responseAvailable()
-          self._response_signaler.stopProcessingRequest()
+          self._response_signaler.responseAvailable(self)
+          self._response_signaler.stopProcessingRequest(self)
           logger.debug('finished handling request')
           event.set()
           #self._response_queue.join()
@@ -140,10 +140,11 @@ class ModelThread(threading.Thread):
           self._traceback = sio.getvalue()
           sio.close()
           logger.error('exception caught in model thread', exc_info=e)
-          self._response_queue.put((new_event, e, exception))
+          exception_info = (e, self)
+          self._response_queue.put((new_event, exception_info, exception))
           self._request_queue.task_done()
-          self._response_signaler.responseAvailable()
-          self._response_signaler.stopProcessingRequest()
+          self._response_signaler.responseAvailable(self)
+          self._response_signaler.stopProcessingRequest(self)
           event.set()
         except:
           logger.error('unhandled exception in model thread')
@@ -203,8 +204,8 @@ class ModelThread(threading.Thread):
     """
     event = threading.Event()
     self._response_queue.put((event, arg, response))
-    self._response_signaler.responseAvailable()
-    self._response_signaler.stopProcessingRequest()
+    self._response_signaler.responseAvailable(self)
+    self._response_signaler.stopProcessingRequest(self)
             
   def post_and_block(self, request):
     """Post a request tot the model thread, block until it is finished, and
