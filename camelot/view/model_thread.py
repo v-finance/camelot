@@ -77,6 +77,11 @@ def gui_function(original_function):
   return new_function
 
 
+def setup_model():
+  """Call the setup_model function in the settings"""
+  from settings import setup_model
+  setup_model()
+  
 class ModelThread(threading.Thread):
   """Thread in which the model runs, all requests to the model should be
   posted to the the model thread.
@@ -86,27 +91,18 @@ class ModelThread(threading.Thread):
   the model thread and the gui thread
   """
 
-  def __init__(self, response_signaler):
-    """@param response_signaler: an object with methods called :
-
-    responseAvailable() : this method will be called when a response is 
-    available
-
-    startProcessingRequest(),
-
-    stopProcessingRequest(),
+  def __init__(self, response_signaler, setup_thread=setup_model):
     """
+    @param response_signaler: an object with methods called :
+      responseAvailable() : this method will be called when a response is available
+      startProcessingRequest(),
+      stopProcessingRequest(),
+    @param setup_thread: function to be called at startup of the thread to initialize
+    everything, by default this will setup the model.  set to None if nothing should
+    be done. 
+    """
+    self._setup_thread = setup_thread
     threading.Thread.__init__(self)
-
-    def setup_thread():
-#      from libraries.elixir import setup_all
-#      for model in settings.ELIXIR_MODELS:
-#        __import__(model, globals(),  locals(), [], -1)
-#      setup_all(create_tables=True)
-#      from model.base import Project
-
-      logger.debug('thread setup finished')
-
     self._request_queue = Queue.Queue()
     self._response_queue = Queue.Queue()
     self._response_signaler = response_signaler
@@ -117,8 +113,8 @@ class ModelThread(threading.Thread):
   def run(self):
     logger.debug('model thread started')
     try:
-      from settings import setup_model
-      setup_model()
+      if self._setup_thread:
+        self._setup_thread()
       logger.debug('start handling requests')
       while True:
         new_event = threading.Event()
