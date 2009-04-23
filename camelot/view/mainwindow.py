@@ -139,14 +139,8 @@ class MainWindow(QtGui.QMainWindow):
     progress.show()
     mt = get_model_thread()
     
-    def exception_in_action(e):
-      progress.close()
-      msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning, self.app_admin.getName(), 'Error during %s'%name)
-      msgBox.setInformativeText(str(e))
-      msgBox.setDetailedText(mt.traceback())
-      msgBox.exec_();
-      
-    mt.post(callable, lambda *args:progress.close(), exception_in_action)
+    from controls.exception import model_thread_exception_message_box
+    mt.post(callable, lambda *args:progress.close(), model_thread_exception_message_box)
     
   # QAction objects creation methods
   def createActions(self):
@@ -628,8 +622,10 @@ class MainWindow(QtGui.QMainWindow):
   # Statusbar
 
   def createStatusBar(self):
-    self.status = self.statusBar()
-    self.status.showMessage(_('Ready'), 5000)
+    from controls.statusbar import StatusBar    
+    statusbar = StatusBar(self)
+    self.setStatusBar(statusbar)
+    statusbar.showMessage(_('Ready'), 5000)
 
   # Events (re)implementations
 
