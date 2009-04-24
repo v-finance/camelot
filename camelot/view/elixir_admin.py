@@ -519,11 +519,11 @@ class EntityAdmin(object):
     return widget
 
   @gui_function
-  def createTableView(self, query, parent=None):
+  def createTableView(self, query_getter=None, parent=None):
     """Returns a QT widget containing a table view, for a certain query, using
     this Admin class; the table widget contains a model QueryTableModel
 
-    @param query: sqlalchemy query object
+    @param query_getter: sqlalchemy query object
 
     @param parent: the workspace widget that will contain the table view
     """
@@ -539,7 +539,7 @@ class EntityAdmin(object):
       def openForm(index):
         from workspace import get_workspace
         model = QueryTableProxy(tableview.admin,
-                                tableview.table_model._query_getter,
+                                query_getter or tableview.table_model._query_getter,
                                 tableview.admin.getFields,
                                 max_number_of_rows=1)
         title = u'%s' % (self.getName())
