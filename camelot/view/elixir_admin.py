@@ -169,29 +169,39 @@ class EntityAdmin(object):
       from sqlalchemy import orm
       from sqlalchemy.exceptions import InvalidRequestError
       from field_attributes import _sqlalchemy_to_python_type_
-      default = lambda x: dict(python_type=str,
-                               length=None,
-                               minimal_column_width=0,
-                               editable=False,
-                               nullable=True,
-                               widget='str')
-      attributes = default(field_name)
-      mapper = orm.class_mapper(self.entity)
   
       def get_entity_admin(target):
+        """Helper function that instantiated an Admin object for a target entity class
+        @param target: an entity class for which an Admin object is needed"""
         try:
           target = self.field_attributes[field_name].get('target', target)
           admin_class = self.field_attributes[field_name]['admin']
           return admin_class(self.app_admin, target)
         except KeyError:
           return self.getRelatedEntityAdmin(target)
-  
+     
+      #
+      # Default attributes for all fields
+      #
+      attributes = dict(python_type=str,
+                        length=None,
+                        minimal_column_width=0,
+                        editable=False,
+                        nullable=True,
+                        widget='str')
+              
+      #
+      # Get the default field_attributes trough introspection if the field
+      # is a mapped field
+      # 
+      mapper = orm.class_mapper(self.entity)
       try:
         property = mapper.get_property(field_name, resolve_synonyms=True)
         if isinstance(property, orm.properties.ColumnProperty):
           type = property.columns[0].type
-          python_type = _sqlalchemy_to_python_type_.get(type.__class__, default)
-          attributes = python_type(type)
+          python_type = _sqlalchemy_to_python_type_.get(type.__class__, None)
+          if python_type:
+            attributes = python_type(type)
           if not isinstance(property.columns[0], sqlalchemy.sql.expression._Label):
             attributes['nullable'] = property.columns[0].nullable 
             attributes['default'] = property.columns[0].default
@@ -204,6 +214,7 @@ class EntityAdmin(object):
                               editable=True,
                               nullable=True,
                               widget='one2many',
+                              target=target,
                               create_inline=False,
                               backref=property.backref.key,
                               admin=get_entity_admin(target))
@@ -211,6 +222,7 @@ class EntityAdmin(object):
             attributes = dict(python_type=str,
                               length=None,
                               editable=True,
+                              target=target,
                               #@todo: take into account all foreign keys instead of only the first one
                               nullable=foreign_keys[0].nullable,
                               widget='many2one',
@@ -219,6 +231,7 @@ class EntityAdmin(object):
             attributes = dict(python_type=list,
                               length=None,
                               editable=True,
+                              target=target,
                               nullable=True,
                               widget='one2many',
                               admin=get_entity_admin(target))
@@ -233,12 +246,22 @@ class EntityAdmin(object):
       attributes.update(dict(blank=True,
                              validator_list=[],
                              name=field_name.replace('_', ' ').capitalize()))
+      
+      #
+      # Overrule introspected field_attributes with those defined
+      #
       try:
-        for k, v in self.field_attributes[field_name].items():
-          if k!='admin':
-            attributes[k] = v
+        attributes.update(self.field_attributes[field_name])
       except KeyError:
         pass
+      
+      #
+      # In case of a 'target' field attribute, instantiate an appropriate
+      # 'admin' attribute
+      #
+      if 'target' in attributes:
+        attributes['admin'] = get_entity_admin(attributes['target'])
+      
       attributes['name'] = tr(attributes['name'])
       self.__field_attributes[field_name] = attributes
       return attributes
