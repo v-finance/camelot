@@ -235,7 +235,7 @@ class EntityAdmin(object):
                               target=target,
                               nullable=True,
                               create_inline=False,
-                              delegate=delegates.One2ManyColumnDelegate,
+                              delegate=delegates.ManyToManyColumnDelegate,
                               admin=get_entity_admin(target))
           else:
             raise Exception('PropertyLoader has unknown direction')

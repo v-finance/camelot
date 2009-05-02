@@ -748,6 +748,12 @@ class One2ManyColumnDelegate(QtGui.QItemDelegate):
 
 _registered_delegates_[editors.One2ManyEditor] = One2ManyColumnDelegate
 
+class ManyToManyColumnDelegate(One2ManyColumnDelegate):
+  
+  def createEditor(self, parent, option, index):
+    editor = editors.ManyToManyEditor(parent=parent, **self.kwargs)
+    self.setEditorData(editor, index)
+    return editor
 
 class BoolColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for boolean values"""

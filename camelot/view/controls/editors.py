@@ -682,8 +682,41 @@ class EmbeddedMany2OneEditor(QtGui.QWidget):
           
     self.admin.mt.post(set_entity_instance, update_form)
   
+class AbstractManyToOneEditor(object):
+  """Helper functions for implementing a ManyToOneEditor, to be used
+  in the ManyToOneEditor and in the ManyToManyEditor"""
+  
+  def createSelectView(self):
+    
+    #search_text = unicode(self.search_input.text())
+    search_text = ""
+    admin = self.admin
+    query = self.admin.entity.query
+    
+    class SelectDialog(QtGui.QDialog):
+      def __init__(self, parent):
+        super(SelectDialog, self).__init__(parent)
+        self.entity_selected_signal = QtCore.SIGNAL("entity_selected")
+        layout = QtGui.QVBoxLayout()
+        layout.setMargin(0)
+        layout.setSpacing(0)
+        self.setWindowTitle('Select %s'%admin.getName())
+        self.select = admin.createSelectView(query, parent=parent, search_text=search_text)
+        layout.addWidget(self.select)
+        self.setLayout(layout)
+        self.connect(self.select, self.select.entity_selected_signal, self.selectEntity)
+      def selectEntity(self, entity_instance_getter):
+        self.emit(self.entity_selected_signal, entity_instance_getter)
+        self.close()
+        
+    selectDialog = SelectDialog(self)
+    self.connect(selectDialog, selectDialog.entity_selected_signal, self.selectEntity)
+    selectDialog.exec_()
+    
+  def selectEntity(self, entity_instance_getter):
+    raise Exception('Not implemented')
 
-class Many2OneEditor(QtGui.QWidget):
+class Many2OneEditor(QtGui.QWidget, AbstractManyToOneEditor):
   """Widget for editing many 2 one relations
   """
   
@@ -913,36 +946,11 @@ class Many2OneEditor(QtGui.QWidget):
       
     self.admin.mt.post(get_instance_represenation, set_instance_represenation)
     
-  def createSelectView(self):
-    
-    search_text = unicode(self.search_input.text())
-    admin = self.admin
-    query = self.admin.entity.query
-    
-    class SelectDialog(QtGui.QDialog):
-      def __init__(self, parent):
-        super(SelectDialog, self).__init__(parent)
-        self.entity_selected_signal = QtCore.SIGNAL("entity_selected")
-        layout = QtGui.QVBoxLayout()
-        layout.setMargin(0)
-        layout.setSpacing(0)
-        self.setWindowTitle('Select %s'%admin.getName())
-        self.select = admin.createSelectView(query, parent=parent, search_text=search_text)
-        layout.addWidget(self.select)
-        self.setLayout(layout)
-        self.connect(self.select, self.select.entity_selected_signal, self.selectEntity)
-      def selectEntity(self, entity_instance_getter):
-        self.emit(self.entity_selected_signal, entity_instance_getter)
-        self.close()
-        
-    selectDialog = SelectDialog(self)
-    self.connect(selectDialog, selectDialog.entity_selected_signal, self.selectEntity)
-    selectDialog.exec_()
-    
   def selectEntity(self, entity_instance_getter):
     self.setEntity(entity_instance_getter)
 
 class One2ManyEditor(QtGui.QWidget):
+  
   def __init__(self, admin=None, parent=None, create_inline=False, **kw):
     """@param admin: the Admin interface for the objects on the one side of
     the relation  
@@ -971,9 +979,11 @@ class One2ManyEditor(QtGui.QWidget):
                  self.createFormForIndex)
     self.admin = admin
     self.create_inline = create_inline
-    #
-    # Setup buttons
-    #
+    self.setupButtons(layout)
+    self.setLayout(layout)
+    self.model = None    
+
+  def setupButtons(self, layout):
     button_layout = QtGui.QVBoxLayout()
     button_layout.setSpacing(0)
     delete_button = QtGui.QToolButton()
@@ -992,8 +1002,6 @@ class One2ManyEditor(QtGui.QWidget):
     button_layout.addWidget(add_button)
     button_layout.addWidget(delete_button)
     layout.addLayout(button_layout)
-    self.setLayout(layout)
-    self.model = None
   
   def setModel(self, model):
     self.model = model
@@ -1056,6 +1064,39 @@ class One2ManyEditor(QtGui.QWidget):
     get_workspace().addSubWindow(form)
     form.show()
 
+class ManyToManyEditor(One2ManyEditor, AbstractManyToOneEditor):
+
+  def setupButtons(self, layout):
+    button_layout = QtGui.QVBoxLayout()
+    button_layout.setSpacing(0)
+    remove_button = QtGui.QToolButton()
+    remove_button.setIcon(Icon('tango/16x16/actions/list-remove.png').getQIcon())
+    remove_button.setAutoRaise(True)
+    self.connect(remove_button,
+                 QtCore.SIGNAL('clicked()'),
+                 self.deleteSelectedRows)
+    add_button = QtGui.QToolButton()
+    add_button.setIcon(Icon('tango/16x16/actions/list-add.png').getQIcon())
+    add_button.setAutoRaise(True)
+    self.connect(add_button, QtCore.SIGNAL('clicked()'), self.createSelectView)    
+    new_button = QtGui.QToolButton()
+    new_button.setIcon(Icon('tango/16x16/actions/document-new.png').getQIcon())
+    new_button.setAutoRaise(True)
+    self.connect(new_button, QtCore.SIGNAL('clicked()'), self.newRow)
+    button_layout.addStretch()
+    button_layout.addWidget(add_button)
+    button_layout.addWidget(remove_button)
+    button_layout.addWidget(new_button)
+    layout.addLayout(button_layout)
+    
+  def selectEntity(self, entity_instance_getter):
+    
+    @model_function
+    def insert():
+      o = entity_instance_getter()
+      self.model.insertEntityInstance(0,o)
+      
+    self.admin.mt.post(insert)
 
 try:
   from PIL import Image as PILImage
