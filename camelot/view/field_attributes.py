@@ -104,11 +104,11 @@ _sqlalchemy_to_python_type_ = {
   camelot.types.Image: lambda f: {'python_type': str,
                                   'editable': True,
                                   'nullable':True,
-                                  'widget': 'image'},
+                                  'delegate': ImageColumnDelegate},
 
   camelot.types.Code: lambda f: {'python_type': str,
                                  'editable': True,
-                                 'widget': 'code',
+                                 'delegate': CodeColumnDelegate,
                                  'nullable':True,
                                  'parts': f.parts},
 
@@ -121,13 +121,13 @@ _sqlalchemy_to_python_type_ = {
   camelot.types.VirtualAddress: lambda f:{'python_type':str,
                                           'editable':True,
                                           'nullable':True,
-                                          'widget':'virtual_address',
+                                          'delegate':VirtualAddressColumnDelegate,
                                           },
 
   camelot.types.RichText: lambda f:{'python_type':str,
                                     'editable':True,
                                     'nullable':True,
-                                    'widget':'richtext',
+                                    'delegate':RichTextColumnDelegate,
                                    },
                                    
   camelot.types.Color: lambda f:{'delegate':ColorColumnDelegate,
@@ -165,7 +165,7 @@ _sqlalchemy_to_python_type_ = {
                                          'widget':'time',
                                          'format':'dd-MM-yyyy hh:mm',
                                          'nullable':True,
-                                         'widget':'datetime'},
+                                         'delegate':DateTimeColumnDelegate},
                                          
   
 }

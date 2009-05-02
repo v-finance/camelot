@@ -162,6 +162,7 @@ class EntityAdmin(object):
      * widget : which widget to be used to render the field
      * ...
     """
+    from camelot.view.controls import delegates
     try:
       return self.__field_attributes[field_name]
     except KeyError:
@@ -213,7 +214,7 @@ class EntityAdmin(object):
                               length=None,
                               editable=True,
                               nullable=True,
-                              widget='one2many',
+                              delegate=delegates.One2ManyColumnDelegate,
                               target=target,
                               create_inline=False,
                               backref=property.backref.key,
@@ -222,10 +223,10 @@ class EntityAdmin(object):
             attributes = dict(python_type=str,
                               length=None,
                               editable=True,
+                              delegate=delegates.Many2OneColumnDelegate,
                               target=target,
                               #@todo: take into account all foreign keys instead of only the first one
                               nullable=foreign_keys[0].nullable,
-                              widget='many2one',
                               admin=get_entity_admin(target))
           elif property.direction == orm.sync.MANYTOMANY:
             attributes = dict(python_type=list,
@@ -233,7 +234,8 @@ class EntityAdmin(object):
                               editable=True,
                               target=target,
                               nullable=True,
-                              widget='one2many',
+                              create_inline=False,
+                              delegate=delegates.One2ManyColumnDelegate,
                               admin=get_entity_admin(target))
           else:
             raise Exception('PropertyLoader has unknown direction')

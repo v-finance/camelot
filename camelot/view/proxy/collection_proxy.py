@@ -307,7 +307,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     for i, c in enumerate(columns):
       field_name = c[0]
       type_ = c[1]['python_type']
-      widget_ = c[1]['widget']
 
       #logger.debug("creating delegate for %s \ntype: %s\nwidget: %s\n" \
       #             "arguments: %s" % (field_name, type_, widget_, str(c[1])))
@@ -320,33 +319,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       if 'choices' in c[1]:
         delegate = delegates.ComboBoxColumnDelegate(**c[1])
         self.item_delegate.insertColumnDelegate(i, delegate)
-        continue
-      if widget_ == 'code':
-        delegate = delegates.CodeColumnDelegate(c[1]['parts'])
-        self.item_delegate.insertColumnDelegate(i, delegate)
-        continue
-      elif widget_ == 'datetime':
-        delegate = delegates.DateTimeColumnDelegate(parent=None, **c[1])
-        self.item_delegate.insertColumnDelegate(i, delegate)
-      elif widget_ == 'virtual_address':
-        delegate = delegates.VirtualAddressColumnDelegate()
-        self.item_delegate.insertColumnDelegate(i, delegate)
-        continue      
-      elif widget_ == 'image':
-        delegate = delegates. ImageColumnDelegate()
-        self.item_delegate.insertColumnDelegate(i, delegate)
-        continue
-      elif widget_ == 'richtext':
-        delegate = delegates.RichTextColumnDelegate(**c[1])
-        self.item_delegate.insertColumnDelegate(i, delegate)
-        continue  
-      elif widget_ == 'many2one':
-        entity_admin = c[1]['admin']
-        delegate = delegates.Many2OneColumnDelegate(**c[1])
-        self.item_delegate.insertColumnDelegate(i, delegate)
-      elif widget_ == 'one2many':
-        delegate = delegates.One2ManyColumnDelegate(**c[1])
-        self.item_delegate.insertColumnDelegate(i, delegate)
+        continue 
       elif type_ == str:
         if c[1]['length']:
           delegate = delegates.PlainTextColumnDelegate(maxlength=c[1]['length'])

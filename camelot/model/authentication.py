@@ -226,7 +226,7 @@ class Organization(Party):
 
 class AuthenticationMechanism(Entity):
   using_options(tablename='authentication_mechanism')
-  last_login = Field(DateTime(), default=datetime.datetime.now)
+  last_login = Field(DateTime())
   is_active = Field(Boolean, default=True, index=True)
   
   class Admin(EntityAdmin):

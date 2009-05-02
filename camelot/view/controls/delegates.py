@@ -497,7 +497,7 @@ _registered_delegates_[editors.DateEditor] = DateColumnDelegate
 
 
 class CodeColumnDelegate(QtGui.QItemDelegate):
-  def __init__(self, parts, parent=None):
+  def __init__(self, parent=None, parts=[], **kwargs):
     super(CodeColumnDelegate, self).__init__(parent)
     self.parts = parts
     self._dummy_editor = editors.CodeEditor(self.parts, None)
@@ -531,7 +531,7 @@ _registered_delegates_[editors.CodeEditor] = CodeColumnDelegate
 
 
 class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
-  def __init__(self, parent=None):
+  def __init__(self, parent=None, **kwargs):
     super(VirtualAddressColumnDelegate, self).__init__(parent)
 
   def paint(self, painter, option, index):
@@ -680,7 +680,7 @@ _registered_delegates_[editors.ColoredFloatEditor] = ColoredFloatColumnDelegate
 class Many2OneColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for many 2 one relations"""
 
-  def __init__(self, admin, embedded=False, parent=None, **kwargs):
+  def __init__(self, parent=None, admin=None, embedded=False, **kwargs):
     logger.debug('create many2onecolumn delegate')
     assert admin != None
     super(Many2OneColumnDelegate, self).__init__(parent)
@@ -784,6 +784,10 @@ _registered_delegates_[QtGui.QCheckBox] = BoolColumnDelegate
 
 
 class ImageColumnDelegate(QtGui.QItemDelegate):
+    
+  def __init__(self, parent = None, **kwargs):
+    super(ImageColumnDelegate, self).__init__(parent)
+    self.kwargs = kwargs
     
   def createEditor(self, parent, option, index):
     editor = editors.ImageEditor(parent)
