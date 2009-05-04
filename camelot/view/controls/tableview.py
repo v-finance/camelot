@@ -62,7 +62,7 @@ class Header(QtGui.QWidget):
   _number_of_rows_font = QtGui.QApplication.font()
   
   def __init__(self, admin, parent):
-    super(Header, self).__init__(parent)
+    QtGui.QWidget.__init__(self, parent)
     from search import SimpleSearchControl
     widget_layout = QtGui.QHBoxLayout()
     self.search_control = SimpleSearchControl(self)
@@ -93,7 +93,7 @@ class TableView(QtGui.QWidget):
   title_format = '%s'
   
   def __init__(self, admin, search_text=None, parent=None):
-    super(TableView, self).__init__(parent)
+    QtGui.QWidget.__init__(self, parent)
     self.setWindowTitle(self.title_format%(admin.getName()))
     widget_layout = QtGui.QVBoxLayout()
     self.header = Header(admin, self)

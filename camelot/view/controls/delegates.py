@@ -76,7 +76,7 @@ class GenericDelegate(QtGui.QItemDelegate):
   """Manages custom delegates"""
 
   def __init__(self, parent=None):
-    super(GenericDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.delegates = {}
 
   def set_columns_desc(self, columnsdesc):
@@ -148,7 +148,7 @@ class StarDelegate(QtGui.QItemDelegate):
   """Custom delegate for integer values from (1 to 5)(Rating Delegate)"""
 
   def __init__(self, maximum=5, editable=True, parent=None, **kwargs):
-    super(StarDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.maximum = maximum
     self.editable = True
 
@@ -207,7 +207,7 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for integer values"""
 
   def __init__(self, parent, minimum=camelot_minint, maximum=camelot_maxint, editable=True, **kwargs):
-    super(IntegerColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.minimum = minimum
     self.maximum = maximum
     self.editable = editable
@@ -264,7 +264,7 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for simple string values"""
 
   def __init__(self, maxlength=None, parent=None, **kwargs):
-    super(PlainTextColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.maxlength = maxlength
 
   def paint(self, painter, option, index):
@@ -296,7 +296,7 @@ class TextEditColumnDelegate(QtGui.QItemDelegate):
   """Edit plain text with a QTextEdit widget"""
   
   def __init__(self, parent=None, editable=True, **kwargs):
-    super(TextEditColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.editable = editable
     
   def createEditor(self, parent, option, index):
@@ -315,7 +315,7 @@ class IntervalsColumnDelegate(QtGui.QItemDelegate):
   data"""
 
   def __init__(self, parent=None, **kwargs):
-    super(IntervalsColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     
   def paint(self, painter, option, index):
     painter.save()
@@ -352,7 +352,7 @@ class IntervalsColumnDelegate(QtGui.QItemDelegate):
 class ColorColumnDelegate(QtGui.QItemDelegate):
 
   def __init__(self, parent=None, editable=True, **kwargs):
-    super(ColorColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.editable = editable
     
   def paint(self, painter, option, index):
@@ -398,7 +398,7 @@ class ColorColumnDelegate(QtGui.QItemDelegate):
 
 class TimeColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, parent, format='hh:mm', default=None, nullable=True, **kwargs):
-    super(TimeColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.nullable = nullable
     self.format = format
     self.default = default
@@ -426,7 +426,7 @@ class TimeColumnDelegate(QtGui.QItemDelegate):
 class DateTimeColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, parent, format, **kwargs):
     from editors import DateTimeEditor
-    super(DateTimeColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.format = format
     self.kwargs = kwargs
     self._dummy_editor = DateTimeEditor(parent, self.format, **self.kwargs)
@@ -459,7 +459,7 @@ class DateColumnDelegate(QtGui.QItemDelegate):
                nullable=True,
                parent=None):
 
-    super(DateColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.format = format
     self.default = default
     self.nullable = nullable
@@ -498,7 +498,7 @@ _registered_delegates_[editors.DateEditor] = DateColumnDelegate
 
 class CodeColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, parent=None, parts=[], **kwargs):
-    super(CodeColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.parts = parts
     self._dummy_editor = editors.CodeEditor(self.parts, None)
 
@@ -532,7 +532,7 @@ _registered_delegates_[editors.CodeEditor] = CodeColumnDelegate
 
 class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, parent=None, **kwargs):
-    super(VirtualAddressColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
 
   def paint(self, painter, option, index):
     painter.save()
@@ -580,7 +580,7 @@ class FloatColumnDelegate(QtGui.QItemDelegate):
 
   def __init__(self, minimum=-1e15, maximum=1e15, precision=2,
                editable=True, parent=None, **kwargs):
-    super(FloatColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.minimum = minimum
     self.maximum = maximum
     self.precision = precision
@@ -614,7 +614,7 @@ class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
 
   def __init__(self, minimum=-1e15, maximum=1e15, precision=2,
                editable=True, parent=None, unicode_format=None, **kwargs):
-    super(ColoredFloatColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.minimum = minimum
     self.maximum = maximum
     self.precision = precision
@@ -683,7 +683,7 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, parent=None, admin=None, embedded=False, **kwargs):
     logger.debug('create many2onecolumn delegate')
     assert admin != None
-    super(Many2OneColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.admin = admin
     self._embedded = embedded
     self._kwargs = kwargs
@@ -728,7 +728,7 @@ class One2ManyColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, parent=None, **kwargs):
     logger.debug('create one2manycolumn delegate')
     assert 'admin' in kwargs
-    super(One2ManyColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.kwargs = kwargs
 
   def createEditor(self, parent, option, index):
@@ -759,7 +759,7 @@ class BoolColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for boolean values"""
 
   def __init__(self, parent=None):
-    super(BoolColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
 
   def createEditor(self, parent, option, index):
     editor = QtGui.QCheckBox(parent)
@@ -837,7 +837,7 @@ _registered_delegates_[editors.ImageEditor] = ImageColumnDelegate
 
 class RichTextColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, parent = None, **kwargs):
-    super(RichTextColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.kwargs = kwargs
     
   def createEditor(self, parent, option, index):
@@ -864,7 +864,7 @@ _registered_delegates_[editors.RichTextEditor] = RichTextColumnDelegate
 
 class ComboBoxColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, choices, parent=None, **kwargs):
-    super(ComboBoxColumnDelegate, self).__init__(parent)
+    QtGui.QItemDelegate.__init__(self, parent)
     self.choices = choices
     
   def qvariantToPython(self, variant):
