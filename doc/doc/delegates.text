@@ -1,0 +1,62 @@
+
+Default delegates
+-----------------
+
+Camelot assigns a default delegate based on the sqlalchemy field type used
+in the model definition.
+
+The use of a specific delegate can be forced by using the delegate field
+attribute.  Suppose rating is a field of type integer, than it can be forced
+to be visualized as stars :
+
+	from camelot.view.controls import delegates
+	
+	field_attributes = {'rating':{'delegate':delegates.StarDelegate}}
+
+Attributes common to most delegates
+-----------------------------------
+
+### editable ###
+
+True or False, indicates wether the user can edit the field
+
+### minimum, maximum ###
+
+The minimum and maximum allowed values for Integer and Float delegates
+or their related delegates like the Star delegate.
+
+### choices ###
+
+A function taking as a single argument the object to which the field
+belongs.  The function returns a list of tuples containing for each
+possible choice the value to be stored on the model and the value
+displayed to the user.
+
+The use of the choices attribute forces the use of the ComboBox delegate.
+
+	field_attributes = {'state':{'choices':lambda o:[(1, 'Active'), 
+	                                                 (2, 'Passive')]}}
+
+Delegate specific attributes
+----------------------------
+
+## Float ##
+
+### precision ###
+
+The number of digits after the decimal point displayed.  This defaults
+to the precision specified in the definition of the Field.
+
+## Text ##
+
+### length ###
+
+The number of characters displayed.  Defaults to the length allowed in
+the definition of the field. 
+
+## Time, Date and DateTime ##
+
+### format ###
+
+The format used to display time and date.  Defaults to 'hh:mm', 'dd-MM-yyyy' 
+'dd-MM-yyyy hh:mm'
