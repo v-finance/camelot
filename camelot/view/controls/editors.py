@@ -140,7 +140,7 @@ class DateEditor(QtGui.QWidget):
     self.format = format
     self.qdateedit = QtGui.QDateEdit(self)
     self.connect(self.qdateedit,
-                 QtCore.SIGNAL('editingFinished ()'),
+                 QtCore.SIGNAL('editingFinished()'),
                  self.editingFinished)
     self.qdateedit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
     self.qdateedit.setDisplayFormat(QtCore.QString(format))
@@ -172,18 +172,20 @@ class DateEditor(QtGui.QWidget):
     self.setFocusProxy(self.qdateedit)
     self.setAutoFillBackground(True)
 
-  def _python_to_qt(self, value):
+  @classmethod
+  def _python_to_qt(value):
     return QtCore.QDate(value.year, value.month, value.day)
 
-  def _qt_to_python(self, value):
+  @classmethod
+  def _qt_to_python(value):
     return datetime.date(value.year(), value.month(), value.day())
   
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
       
   def set_date_range(self):
-    qdate_min = self._python_to_qt(self.minimum)
-    qdate_max = self._python_to_qt(self.maximum)
+    qdate_min = DateEditor._python_to_qt(self.minimum)
+    qdate_max = DateEditor._python_to_qt(self.maximum)
     self.qdateedit.setDateRange(qdate_min, qdate_max)
 
   def date(self):
