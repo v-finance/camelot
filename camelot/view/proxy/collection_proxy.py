@@ -315,11 +315,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       if 'delegate' in c[1]:
         delegate = c[1]['delegate'](parent=None, **c[1])
         self.item_delegate.insertColumnDelegate(i, delegate)
-        continue       
-      if 'choices' in c[1]:
-        delegate = delegates.ComboBoxColumnDelegate(**c[1])
-        self.item_delegate.insertColumnDelegate(i, delegate)
-        continue 
+        continue
       elif type_ == str:
         if c[1]['length']:
           delegate = delegates.PlainTextColumnDelegate(maxlength=c[1]['length'])
@@ -327,17 +323,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         else:
           delegate = delegates.TextEditColumnDelegate(**c[1])
           self.item_delegate.insertColumnDelegate(i, delegate)
-      elif type_ == datetime.date:
-        delegate = delegates.DateColumnDelegate(format='dd/MM/yyyy',
-                                                default=c[1].get('default', None),
-                                                nullable=c[1].get('nullable', False))
-        self.item_delegate.insertColumnDelegate(i, delegate)
-      elif type_ == float:
-        delegate = delegates.FloatColumnDelegate(-100000.0, 100000.0, **c[1])
-        self.item_delegate.insertColumnDelegate(i, delegate)
-      elif type_ == bool:
-        delegate = delegates.BoolColumnDelegate()
-        self.item_delegate.insertColumnDelegate(i, delegate)
       else:
         delegate = delegates.PlainTextColumnDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)

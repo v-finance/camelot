@@ -190,7 +190,16 @@ class EntityAdmin(object):
                         editable=False,
                         nullable=True,
                         widget='str')
-              
+      
+      #
+      # Field attributes forced by the field_attributes property
+      #
+      forced_attributes = {}
+      try:
+        forced_attributes = self.field_attributes[field_name]
+      except KeyError:
+        pass
+      
       #
       # Get the default field_attributes trough introspection if the field
       # is a mapped field
@@ -198,7 +207,10 @@ class EntityAdmin(object):
       mapper = orm.class_mapper(self.entity)
       try:
         property = mapper.get_property(field_name, resolve_synonyms=True)
-        if isinstance(property, orm.properties.ColumnProperty):
+        if 'choices' in forced_attributes:
+          attributes['delegate'] = delegates.ComboBoxColumnDelegate
+          attributes['editable'] = True
+        elif isinstance(property, orm.properties.ColumnProperty):
           type = property.columns[0].type
           python_type = _sqlalchemy_to_python_type_.get(type.__class__, None)
           if python_type:
@@ -218,6 +230,7 @@ class EntityAdmin(object):
                               target=target,
                               create_inline=False,
                               backref=property.backref.key,
+                              direction=property.direction,
                               admin=get_entity_admin(target))
           elif property.direction == orm.sync.MANYTOONE:
             attributes = dict(python_type=str,
@@ -227,6 +240,7 @@ class EntityAdmin(object):
                               target=target,
                               #@todo: take into account all foreign keys instead of only the first one
                               nullable=foreign_keys[0].nullable,
+                              direction=property.direction,
                               admin=get_entity_admin(target))
           elif property.direction == orm.sync.MANYTOMANY:
             attributes = dict(python_type=list,
@@ -235,6 +249,7 @@ class EntityAdmin(object):
                               target=target,
                               nullable=True,
                               create_inline=False,
+                              direction=property.direction,
                               delegate=delegates.ManyToManyColumnDelegate,
                               admin=get_entity_admin(target))
           else:
@@ -252,10 +267,7 @@ class EntityAdmin(object):
       #
       # Overrule introspected field_attributes with those defined
       #
-      try:
-        attributes.update(self.field_attributes[field_name])
-      except KeyError:
-        pass
+      attributes.update(forced_attributes)
       
       #
       # In case of a 'target' field attribute, instantiate an appropriate

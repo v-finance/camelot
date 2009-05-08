@@ -75,7 +75,7 @@ def create_constant_function(constant):
 class GenericDelegate(QtGui.QItemDelegate):
   """Manages custom delegates"""
 
-  def __init__(self, parent=None):
+  def __init__(self, parent=None, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
     self.delegates = {}
 
@@ -263,9 +263,9 @@ class SliderDelegate(IntegerColumnDelegate):
 class PlainTextColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for simple string values"""
 
-  def __init__(self, maxlength=None, parent=None, **kwargs):
+  def __init__(self, parent=None, length=None, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
-    self.maxlength = maxlength
+    self.length = length
 
   def paint(self, painter, option, index):
     if (option.state & QtGui.QStyle.State_Selected):
@@ -277,7 +277,8 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
 
   def createEditor(self, parent, option, index):
     editor = QtGui.QLineEdit(parent)
-    editor.setMaxLength(self.maxlength)
+    if self.length:
+      editor.setMaxLength(self.length)
     if not self.parent().columnsdesc[index.column()][1]['editable']:
       editor.setEnabled(False)
     return editor
@@ -454,10 +455,11 @@ class DateColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for date values"""
 
   def __init__(self,
+               parent=None,
                format='dd/MM/yyyy',
                default=None,
                nullable=True,
-               parent=None):
+               **kwargs):
 
     QtGui.QItemDelegate.__init__(self, parent)
     self.format = format
@@ -758,7 +760,7 @@ class ManyToManyColumnDelegate(One2ManyColumnDelegate):
 class BoolColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for boolean values"""
 
-  def __init__(self, parent=None):
+  def __init__(self, parent=None, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
 
   def createEditor(self, parent, option, index):

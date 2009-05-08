@@ -38,34 +38,36 @@ from controls.delegates import *
 
 camelot_maxint = 2147483647
 camelot_minint = -2147483648
+camelot_maxfloat = 1e15
+camelot_minfloat = -1e15
 
 _sqlalchemy_to_python_type_ = {
                                
   sqlalchemy.types.Boolean: lambda f: {'python_type': bool,
                                        'editable': True,
                                        'nullable':True,
-                                       'widget': QtGui.QCheckBox },
+                                       'delegate': BoolColumnDelegate },
 
   sqlalchemy.types.BOOLEAN: lambda f: {'python_type': bool,
                                        'editable': True,
                                        'nullable':True,
-                                       'widget': QtGui.QCheckBox},
+                                       'delegate': BoolColumnDelegate},
 
   sqlalchemy.types.Date: lambda f: {'python_type': datetime.date,
-                                    'format': 'dd-mm-YYYY',
+                                    'format': 'dd/MM/yyyy',
                                     'editable': True,
                                     'min': None,
                                     'max': None,
                                     'nullable':True,
-                                    'widget': DateEditor },
+                                    'delegate': DateColumnDelegate },
 
   sqlalchemy.types.Float: lambda f: {'python_type': float,
                                      'precision': f.precision,
                                      'editable': True,
-                                     'min': None,
-                                     'max': None,
+                                     'minimum': camelot_minfloat,
+                                     'maximum': camelot_maxfloat,
                                      'nullable':True,
-                                     'widget': 'float'},
+                                     'delegate': FloatColumnDelegate},
 
   sqlalchemy.types.Integer: lambda f: {'python_type': int,
                                        'editable': True,
@@ -85,18 +87,21 @@ _sqlalchemy_to_python_type_ = {
 
   sqlalchemy.types.String: lambda f: {'python_type': str,
                                       'length': f.length,
+                                      'delegate': PlainTextColumnDelegate,
                                       'editable': True,
                                       'nullable':True,
                                       'widget': 'str'},
 
   sqlalchemy.types.TEXT: lambda f: {'python_type': str,
                                     'length': f.length,
+                                    'delegate': PlainTextColumnDelegate,
                                     'editable': True,
                                     'nullable':True,
                                     'widget': 'str'},
 
   sqlalchemy.types.Unicode: lambda f: {'python_type': str,
                                        'length': f.length,
+                                       'delegate': PlainTextColumnDelegate,
                                        'editable': True,
                                        'nullable':True,
                                        'widget': 'str'},

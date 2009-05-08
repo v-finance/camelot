@@ -44,19 +44,22 @@ class Validator(object):
     """@return: list of messages explaining invalid data
     empty list if object is valid
     """
+    from camelot.view.controls import delegates
     messages = []
     for column in self.model.getColumns():
       value = getattr(entity_instance, column[0])
       if column[1]['nullable']!=True:
+        if 'delegate' not in column[1]:
+          raise Exception('no delegate specified for %s'%(column[0]))
         is_null = False
         if value==None:
           is_null = True
-        elif (column[1]['widget'] == 'code') and \
+        elif (column[1]['delegate'] == delegates.CodeColumnDelegate) and \
              (sum(len(c) for c in value) == 0):
           is_null = True
-        elif (column[1]['widget'] == 'str') and (len(value) == 0):
+        elif (column[1]['delegate'] == delegates.PlainTextColumnDelegate) and (len(value) == 0):
           is_null = True
-        elif (column[1]['widget'] == 'many2one') and (not value.id):
+        elif (column[1]['delegate'] == delegates.Many2OneColumnDelegate) and (not value.id):
           is_null = True
         if is_null:
           messages.append(u'%s is a required field' % (column[1]['name']))

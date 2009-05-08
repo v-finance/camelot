@@ -71,6 +71,7 @@ class Filter(object):
     @return:  (filter_name, [(option_name, query_decorator), ...)
     """
     from sqlalchemy.sql import select
+    from sqlalchemy import orm
     from elixir import session
     #session.bind = self.entity.table.metadata.bind
     filter_names = []
@@ -81,10 +82,10 @@ class Filter(object):
       attributes = admin.getFieldAttributes(field_name)
       filter_names.append(attributes['name'])
       # @todo: if the filter is not on an attribute of the relation, but on the relation itselves
-      if attributes['widget'] in ('one2many', 'many2many', 'many2one'):
+      if 'target' in attributes:
         admin = attributes['admin']
         joins.append(field_name)
-        if attributes['widget'] in ('many2one'):
+        if attributes['direction'] == orm.sync.MANYTOONE:
           table = admin.entity.table.join(table)
         else:
           table = admin.entity.table
