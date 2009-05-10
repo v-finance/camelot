@@ -25,8 +25,10 @@
 #
 #  ==================================================================================
 
+import logging
+logger = logging.getLogger('camelot.view.export.excel')
+
 from pyExcelerator import *
-import pickle
 import time
 import datetime
 
@@ -123,116 +125,123 @@ headerStyle.pattern = pat1
 topleftCellStyle.pattern = pat1
 toprightCellStyle.pattern = pat1
 
-class ExcelExport:
-    def exportToFile(self, filename, title, headerList, dataList):
-      """
-      @param filename: the file to which to save the exported excel
-      @param title: title to put in the first row of the genarated excel file
-      @param headerList: list of header definitions 
-      @param dataList: list or generator with the row data 
-      """
-      w = Workbook()
-      ws = w.add_sheet('Sheet1')
-      ## Writing Title
-      ws.write(0, 0, title, titleStyle)                   # Writing Title
-      ws.col(0).width = len(title) * 400                  # Setting cell width
-      ## Writing Header
-      myDataTypeDict = {}            # dictionary of datatype, {columnnumber, Datatype}
-      myPrecisionDict = {}        # dictionary of precision , {columnnumber, Precision}
-      myLengthDict = {}           # dictionary of length , {columnnumber, length}
-      myFormatDict = {}           # dictionary of dateformat , {columnnumber, format}
-      for n,desc in enumerate(headerList):
-          lst =  desc[1]
-          if n==0:
-            ws.write(2, n, lst['name'], topleftCellStyle)
-          elif n==len(headerList)-1:
-            ws.write(2, n, lst['name'], toprightCellStyle)
-          else:
-              ws.write(2, n, lst['name'], headerStyle)
-          if len(lst['name']) < 8:
-              ws.col(n).width = 8 *  375
-          else:
-              ws.col(n).width = len(lst['name']) *  375
-          myDataTypeDict[ n ] = lst["python_type"]
-          if lst["python_type"] == float:
-              myPrecisionDict [ n ] = lst["precision"]    #Populating precision dictionary
-          elif lst["python_type"] == datetime.date:
-              myFormatDict [ n ] = lst["format"]          #Populating date Format dictionary
-          elif lst["python_type"] == str:
-            if 'length' in lst:
-              myLengthDict [ n ] = lst["length"]          #Populating Column Length dictionary
-      ## Writing Data
-      row = 3
+def open_data_with_excel(title, headerList, dataList):
+    import os
+    import tempfile
+    xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
+    write_data_to_excel(xls_fn, title, headerList, dataList)
+
+    try:
+      import pythoncom
+      import win32com.client
+      pythoncom.CoInitialize()
+      excel_app = win32com.client.Dispatch("Excel.Application")
+    except Exception, e:
+      """We're probably not running windows, so try gnumeric"""
+      logger.warning('Unable to launch excel', exc_info=e)
+      os.system('gnumeric "%s"'%xls_fn)
+      return
+
+    excel_app.Visible = True
+    excel_app.Workbooks.Open(xls_fn)  
+
+def write_data_to_excel(filename, title, headerList, dataList):
+  """
+  @param filename: the file to which to save the exported excel
+  @param title: title to put in the first row of the genarated excel file
+  @param headerList: list of header definitions 
+  @param dataList: list or generator with the row data 
+  """
+  w = Workbook()
+  ws = w.add_sheet('Sheet1')
+  ## Writing Title
+  ws.write(0, 0, title, titleStyle)                   # Writing Title
+  ws.col(0).width = len(title) * 400                  # Setting cell width
+  ## Writing Header
+  myDataTypeDict = {}            # dictionary of datatype, {columnnumber, Datatype}
+  myPrecisionDict = {}        # dictionary of precision , {columnnumber, Precision}
+  myLengthDict = {}           # dictionary of length , {columnnumber, length}
+  myFormatDict = {}           # dictionary of dateformat , {columnnumber, format}
+  for n,desc in enumerate(headerList):
+      lst =  desc[1]
+      if n==0:
+        ws.write(2, n, lst['name'], topleftCellStyle)
+      elif n==len(headerList)-1:
+        ws.write(2, n, lst['name'], toprightCellStyle)
+      else:
+          ws.write(2, n, lst['name'], headerStyle)
+      if len(lst['name']) < 8:
+          ws.col(n).width = 8 *  375
+      else:
+          ws.col(n).width = len(lst['name']) *  375
+      myDataTypeDict[ n ] = lst["python_type"]
+      if lst["python_type"] == float:
+          myPrecisionDict [ n ] = lst["precision"]    #Populating precision dictionary
+      elif lst["python_type"] == datetime.date:
+          myFormatDict [ n ] = lst["format"]          #Populating date Format dictionary
+      elif lst["python_type"] == str:
+        if 'length' in lst:
+          myLengthDict [ n ] = lst["length"]          #Populating Column Length dictionary
+  ## Writing Data
+  row = 3
+  column = 0
+  valueAddedInSize = 0
+  formatStr = '0'
+  for dictCounter in dataList:                       # iterating the dataList, having dictionary
       column = 0
-      valueAddedInSize = 0
-      formatStr = '0'
-      for dictCounter in dataList:                       # iterating the dataList, having dictionary
-          column = 0
-          cellStyle.num_format_str = '0'
-          for i in range( 0 , len(dictCounter)): #for i in dictCounter:
-              valueAddedInSize = 0
-              val = dictCounter[i]
-              if val != None:
-                  if not isinstance(val,(str,unicode,int,float,datetime.datetime,datetime.time,datetime.date,
-                                         ExcelFormula.Formula) ):
-                    val = unicode(val)
-                  if myDataTypeDict.has_key(column) == True:
-                      if myLengthDict.get(column) != None:
-                          if len(val) > myLengthDict[ column ]:
-                              val = val[0:myLengthDict[ column ]]
-                      elif myDataTypeDict[ column ] == str:
-                          formatStr = '0'
-                      elif myDataTypeDict[ column ] == int:
-                          formatStr = '0'
-                      elif myDataTypeDict[ column ] == float:
-                          formatStr = '0.'
-                          for j in range( 0 , myPrecisionDict[ column ]):
-                              formatStr += '0'
-                          valueAddedInSize = len(formatStr) # To fit the cell width + 1 (of dot(.))
-                      elif myDataTypeDict[ column ] == datetime.date:
-                          formatStr = myFormatDict[column]
-                          val = datetime.datetime( day = val.day, year = val.year, month = val.month)
-                      elif myDataTypeDict[ column ] == bool:
-                          formatStr = '0'
-                      else:
-                          formatStr = '0'
-                  cellStyle.num_format_str = formatStr
-                  bottomCellStyle.num_format_str = formatStr
-                  rightCellStyle.num_format_str = formatStr
-                  bottomrightCellStyle.num_format_str = formatStr
-                  leftCellStyle.num_format_str = formatStr
-                  bottomleftCellStyle.num_format_str = formatStr
-              elif val == None:
-                  val = ' '
-              if row - 2  == len(dataList):
-                #we re at the bottom row
-                if i==0:
-                  ws.write(row , column, val , bottomleftCellStyle)
-                elif i  == len(dictCounter)-1:
-                  ws.write(row , column, val , bottomrightCellStyle)
-                else:
-                  ws.write(row , column, val , bottomCellStyle)
-              else:
-                if i==0:
-                  ws.write(row , column, val , leftCellStyle)
-                elif  i + 1 == len(dictCounter) and row - 2 != len(dataList):            #right column
-                  ws.write(row , column, val , rightCellStyle)
-                else:
-                  ws.write(row , column, val , cellStyle)
-              if ws.col(column).width < (len(unicode( val )) )* 300:
-                  ws.col(column).width = (len(unicode( val )) + valueAddedInSize )* 300
-              column = column + 1
-          row = row + 1
-      w.save(filename)
-
-
-if __name__ == '__main__':
-    arguments = {}
-    arguments = pickle.load(open('Purchase order.pickle', 'rb'))
-
-    dataList = list(arguments['data'])
-    headerList = list(arguments['columns'])
-    title = arguments['title']
-
-    objExcel = clsExcel()
-    objExcel.createExcel( title, headerList, dataList )
+      cellStyle.num_format_str = '0'
+      for i in range( 0 , len(dictCounter)): #for i in dictCounter:
+          valueAddedInSize = 0
+          val = dictCounter[i]
+          if val != None:
+              if not isinstance(val,(str,unicode,int,float,datetime.datetime,datetime.time,datetime.date,
+                                     ExcelFormula.Formula) ):
+                val = unicode(val)
+              if myDataTypeDict.has_key(column) == True:
+                  if myLengthDict.get(column) != None:
+                      if len(val) > myLengthDict[ column ]:
+                          val = val[0:myLengthDict[ column ]]
+                  elif myDataTypeDict[ column ] == str:
+                      formatStr = '0'
+                  elif myDataTypeDict[ column ] == int:
+                      formatStr = '0'
+                  elif myDataTypeDict[ column ] == float:
+                      formatStr = '0.'
+                      for j in range( 0 , myPrecisionDict[ column ]):
+                          formatStr += '0'
+                      valueAddedInSize = len(formatStr) # To fit the cell width + 1 (of dot(.))
+                  elif myDataTypeDict[ column ] == datetime.date:
+                      formatStr = myFormatDict[column]
+                      val = datetime.datetime( day = val.day, year = val.year, month = val.month)
+                  elif myDataTypeDict[ column ] == bool:
+                      formatStr = '0'
+                  else:
+                      formatStr = '0'
+              cellStyle.num_format_str = formatStr
+              bottomCellStyle.num_format_str = formatStr
+              rightCellStyle.num_format_str = formatStr
+              bottomrightCellStyle.num_format_str = formatStr
+              leftCellStyle.num_format_str = formatStr
+              bottomleftCellStyle.num_format_str = formatStr
+          elif val == None:
+              val = ' '
+          if row - 2  == len(dataList):
+            #we re at the bottom row
+            if i==0:
+              ws.write(row , column, val , bottomleftCellStyle)
+            elif i  == len(dictCounter)-1:
+              ws.write(row , column, val , bottomrightCellStyle)
+            else:
+              ws.write(row , column, val , bottomCellStyle)
+          else:
+            if i==0:
+              ws.write(row , column, val , leftCellStyle)
+            elif  i + 1 == len(dictCounter) and row - 2 != len(dataList):            #right column
+              ws.write(row , column, val , rightCellStyle)
+            else:
+              ws.write(row , column, val , cellStyle)
+          if ws.col(column).width < (len(unicode( val )) )* 300:
+              ws.col(column).width = (len(unicode( val )) + valueAddedInSize )* 300
+          column = column + 1
+      row = row + 1
+  w.save(filename)

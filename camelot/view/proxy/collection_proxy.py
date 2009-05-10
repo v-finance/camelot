@@ -622,5 +622,11 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   
     self.mt.post(create_insert_function(entity_instance_getter))
         
+  @model_function
+  def getData(self):
+    """Generator for all the data queried by this proxy"""
+    for i,o in enumerate(self.collection_getter()):
+      yield RowDataFromObject(o, self.getColumns())
+      
   def __del__(self):
     logger.warn('delete CollectionProxy')

@@ -1000,10 +1000,26 @@ class One2ManyEditor(QtGui.QWidget):
     add_button.setIcon(icon)
     add_button.setAutoRaise(True)
     self.connect(add_button, QtCore.SIGNAL('clicked()'), self.newRow)
+    export_button = QtGui.QToolButton()
+    export_button.setIcon(Icon('tango/16x16/mimetypes/x-office-spreadsheet.png').getQIcon())
+    export_button.setAutoRaise(True)
+    self.connect(export_button, QtCore.SIGNAL('clicked()'), self.exportToExcel)
     button_layout.addStretch()
     button_layout.addWidget(add_button)
     button_layout.addWidget(delete_button)
+    button_layout.addWidget(export_button)
     layout.addLayout(button_layout)
+  
+  def exportToExcel(self):
+    from camelot.view.export.excel import open_data_with_excel
+    
+    def export():
+      title = self.admin.getName()
+      columns = self.admin.getColumns()
+      data = list(self.model.getData())
+      open_data_with_excel(title, columns, data)
+      
+    self.admin.mt.post(export)
   
   def setModel(self, model):
     self.model = model

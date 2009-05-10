@@ -386,29 +386,11 @@ class MainWindow(QtGui.QMainWindow):
     mt = get_model_thread()
 
     def export():
-      import os
-      import tempfile
-      from export.excel import ExcelExport
+      from export.excel import open_data_with_excel
       title = self.activeMdiChild().widget().getTitle()
       columns = self.activeMdiChild().widget().getColumns()
       data = [d for d in self.activeMdiChild().widget().getData()]
-      objExcel = ExcelExport()
-      xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
-      objExcel.exportToFile(xls_fn, title, columns, data)
-
-      try:
-        import pythoncom
-        import win32com.client
-        pythoncom.CoInitialize()
-        excel_app = win32com.client.Dispatch("Excel.Application")
-      except Exception, e:
-        """We're probably not running windows, so try gnumeric"""
-        logger.warning('Unable to launch excel', exc_info=e)
-        os.system('gnumeric "%s"'%xls_fn)
-        return
-
-      excel_app.Visible = True
-      excel_app.Workbooks.Open(xls_fn)
+      open_data_with_excel(title, columns, data)
 
     mt.post(export)
 
