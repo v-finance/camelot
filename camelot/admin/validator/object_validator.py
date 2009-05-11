@@ -26,13 +26,14 @@
 #  ============================================================================
 
 import logging
-logger = logging.getLogger('camelot.view.validator')
+logger = logging.getLogger('camelot.admin.validator.object_validator')
 
-from fifo import fifo
+from camelot.view.fifo import fifo
 
-class Validator(object):
-  """A validator class validates an entity before flushing it to the database
-  and provides the user with feedback if the entity is not ready to flush
+class ObjectValidator(object):
+  """A validator class for normal python objects.  By default this validator
+  declares all objects valid.  Subclass this class and overwrite it's 
+  objectValidity method to change it's behaviour.
   """
 
   def __init__(self, admin, model):
@@ -44,26 +45,7 @@ class Validator(object):
     """@return: list of messages explaining invalid data
     empty list if object is valid
     """
-    from camelot.view.controls import delegates
-    messages = []
-    for column in self.model.getColumns():
-      value = getattr(entity_instance, column[0])
-      if column[1]['nullable']!=True:
-        if 'delegate' not in column[1]:
-          raise Exception('no delegate specified for %s'%(column[0]))
-        is_null = False
-        if value==None:
-          is_null = True
-        elif (column[1]['delegate'] == delegates.CodeColumnDelegate) and \
-             (sum(len(c) for c in value) == 0):
-          is_null = True
-        elif (column[1]['delegate'] == delegates.PlainTextColumnDelegate) and (len(value) == 0):
-          is_null = True
-        elif (column[1]['delegate'] == delegates.Many2OneColumnDelegate) and (not value.id):
-          is_null = True
-        if is_null:
-          messages.append(u'%s is a required field' % (column[1]['name']))
-    return messages
+    return []
 
   def isValid(self, row):
     """Verify if a row in a model is 'valid' meaning it could be flushed to
@@ -98,4 +80,3 @@ class Validator(object):
                              QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard,
                              parent
                              )
-

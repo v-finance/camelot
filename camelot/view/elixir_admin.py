@@ -25,22 +25,6 @@
 #
 #  ============================================================================
 
-"""
-@TODO: rewrite docstring
-
-Admin classes, specify how objects should be rendered in the gui
-
-An admin class has class attributes like 'list_display' which contains the
-columns that should be displayed in a list view (again, see Django)
-
-So this 'list_display' attribute can be overwritten in the Admin class for each
-model.
-
-But for the gui generation itself, we don't use the class attributes, but we
-use methods, like 'getColumns', that way, we can make the gui very specific, on
-the context
-"""
-
 import os
 import sys
 import logging
@@ -53,78 +37,18 @@ import sqlalchemy.sql.expression
 import camelot.types
 from model_thread import gui_function
 from model_thread import model_function
-from validator import Validator
 import settings
 
 _ = lambda x: x
 
+from camelot.admin.object_admin import ObjectAdmin
+from camelot.admin.validator.entity_validator import EntityValidator
 
-class EntityAdmin(object):
-  name = None
-  list_display = []
-  validator = Validator
-  fields = []
-  form = [] #DEPRECATED
-  form_display = []
-  # list of field_names to filter on, if the field name is a one2many,
-  # many2one or many2many field, the field name should be followed by a
-  # field name of the related entity, eg : 'organization.name'
-  list_filter = []
-  list_charts = []
-  list_actions = []
-  list_search = []
-  list_size = (600, 400)
-  form_size = (700, 500)
-  # Actions to be accessible by pushbuttons on the side of a form,
-  # a list of tuples (button_label, action_function) where action_function
-  # takes as its single argument, the object that is edited by the form
-  # eg. : form_actions = [('Print', lamda o:print o)]
-  form_actions = []
-  form_title_column = None
-  field_attributes = {}
-
-  def __init__(self, app_admin, entity):
-    """
-    @param app_admin: the application admin object for this application
-    @param entity: the entity class for which this admin instance is to be used
-    """
-    from camelot.view.remote_signals import get_signal_handler
-    self.app_admin = app_admin
-    self.rsh = get_signal_handler()
-    if entity:
-      from model_thread import get_model_thread
-      self.entity = entity
-      self.mt = get_model_thread()
-    #
-    # caches to prevent recalculation of things
-    #
-    self.__field_attributes = dict()
-    self.__subclasses = None
-
-  def __str__(self):
-    return 'Admin %s' % str(self.entity.__name__)
-
-  def getName(self):
-    return (self.name or self.entity.__name__)
-
-  def getModelThread(self):
-    return self.mt
-
-  @model_function
-  def getFormActions(self, entity):
-    return self.form_actions
-
-  def getRelatedEntityAdmin(self, entity):
-    """
-    Get an admin object for another entity.  Taking into account preferences of this
-    admin object or for those of admin object higher up the chain such as the
-    application admin object.
-    @param entity: the entity class for which an admin object is requested 
-    """
-    related_admin = self.app_admin.getEntityAdmin(entity)
-    if not related_admin:
-      logger.warn('no related admin found for %s'%(entity.__name__))
-    return related_admin
+class EntityAdmin(ObjectAdmin):
+  """Admin class specific for classes that are mapped by sqlalchemy.  This allows for much more
+  introspection than the standard ObjectAdmin"""
+  
+  validator = EntityValidator
   
   @model_function
   def getSubclassEntityAdmin(self, entity):
@@ -141,14 +65,14 @@ class EntityAdmin(object):
     Return admin objects for the subclasses of the Entity represented by this
     admin object
     """
-    if not self.__subclasses:
+    if not self._subclasses:
       from elixir import entities
-      self.__subclasses = [e.Admin(self.app_admin, e)
+      self._subclasses = [e.Admin(self.app_admin, e)
                           for e in entities
                           if (issubclass(e, (self.entity, )) and 
                           hasattr(e, 'Admin') and
                           e!=self.entity)]
-    return self.__subclasses
+    return self._subclasses
 
   @model_function
   def getFieldAttributes(self, field_name):
@@ -162,25 +86,11 @@ class EntityAdmin(object):
      * widget : which widget to be used to render the field
      * ...
     """
-    from camelot.view.controls import delegates
+    
     try:
-      return self.__field_attributes[field_name]
+      return self._field_attributes[field_name]
     except KeyError:
       from camelot.model.i18n import tr
-      from sqlalchemy import orm
-      from sqlalchemy.exceptions import InvalidRequestError
-      from field_attributes import _sqlalchemy_to_python_type_
-  
-      def get_entity_admin(target):
-        """Helper function that instantiated an Admin object for a target entity class
-        @param target: an entity class for which an Admin object is needed"""
-        try:
-          target = self.field_attributes[field_name].get('target', target)
-          admin_class = self.field_attributes[field_name]['admin']
-          return admin_class(self.app_admin, target)
-        except KeyError:
-          return self.getRelatedEntityAdmin(target)
-     
       #
       # Default attributes for all fields
       #
@@ -189,7 +99,10 @@ class EntityAdmin(object):
                         minimal_column_width=0,
                         editable=False,
                         nullable=True,
-                        widget='str')
+                        widget='str',
+                        blank=True,
+                        validator_list=[],
+                        name=field_name.replace('_', ' ').capitalize())
       
       #
       # Field attributes forced by the field_attributes property
@@ -200,10 +113,24 @@ class EntityAdmin(object):
       except KeyError:
         pass
       
+      def get_entity_admin(target):
+        """Helper function that instantiated an Admin object for a target entity class
+        @param target: an entity class for which an Admin object is needed"""
+        try:
+          target = self.field_attributes[field_name].get('target', target)
+          admin_class = self.field_attributes[field_name]['admin']
+          return admin_class(self.app_admin, target)
+        except KeyError:
+          return self.getRelatedEntityAdmin(target)
+        
       #
       # Get the default field_attributes trough introspection if the field
       # is a mapped field
       # 
+      from sqlalchemy import orm
+      from sqlalchemy.exceptions import InvalidRequestError
+      from field_attributes import _sqlalchemy_to_python_type_      
+      from camelot.view.controls import delegates
       mapper = orm.class_mapper(self.entity)
       try:
         property = mapper.get_property(field_name, resolve_synonyms=True)
@@ -214,7 +141,7 @@ class EntityAdmin(object):
           type = property.columns[0].type
           python_type = _sqlalchemy_to_python_type_.get(type.__class__, None)
           if python_type:
-            attributes = python_type(type)
+            attributes.update(python_type(type))
           if not isinstance(property.columns[0], sqlalchemy.sql.expression._Label):
             attributes['nullable'] = property.columns[0].nullable 
             attributes['default'] = property.columns[0].default
@@ -222,8 +149,7 @@ class EntityAdmin(object):
           target = property._get_target_class()
           foreign_keys = property.foreign_keys
           if property.direction == orm.sync.ONETOMANY:
-            attributes = dict(python_type=list,
-                              length=None,
+            attributes.update(python_type=list,
                               editable=True,
                               nullable=True,
                               delegate=delegates.One2ManyColumnDelegate,
@@ -233,8 +159,7 @@ class EntityAdmin(object):
                               direction=property.direction,
                               admin=get_entity_admin(target))
           elif property.direction == orm.sync.MANYTOONE:
-            attributes = dict(python_type=str,
-                              length=None,
+            attributes.update(python_type=str,
                               editable=True,
                               delegate=delegates.Many2OneColumnDelegate,
                               target=target,
@@ -243,8 +168,7 @@ class EntityAdmin(object):
                               direction=property.direction,
                               admin=get_entity_admin(target))
           elif property.direction == orm.sync.MANYTOMANY:
-            attributes = dict(python_type=list,
-                              length=None,
+            attributes.update(python_type=list,
                               editable=True,
                               target=target,
                               nullable=True,
@@ -260,9 +184,6 @@ class EntityAdmin(object):
         stuff
         """
         pass
-      attributes.update(dict(blank=True,
-                             validator_list=[],
-                             name=field_name.replace('_', ' ').capitalize()))
       
       #
       # Overrule introspected field_attributes with those defined
@@ -277,25 +198,8 @@ class EntityAdmin(object):
         attributes['admin'] = get_entity_admin(attributes['target'])
       
       attributes['name'] = tr(attributes['name'])
-      self.__field_attributes[field_name] = attributes
+      self._field_attributes[field_name] = attributes
       return attributes
-
-  @model_function
-  def getColumns(self):
-    """
-    The columns to be displayed in the list view, returns a list of pairs of
-    the name of the field and its attributes needed to display it properly
-
-    @return: [(field_name,
-              {'widget': widget_type,
-               'editable': True or False,
-               'blank': True or False,
-               'validator_list':[...],
-               'name':'Field name'}),
-             ...]
-    """
-    return [(field, self.getFieldAttributes(field))
-            for field in self.list_display]
 
   @model_function
   def getFields(self):
@@ -333,9 +237,6 @@ class EntityAdmin(object):
         yield (filter, filter.get_name_and_options(self))
         
     return list(filter_generator())
-
-  def createValidator(self, model):
-    return self.validator(self, model)
   
   @model_function
   def setDefaults(self, entity_instance):
