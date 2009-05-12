@@ -35,13 +35,11 @@ import datetime
 import sqlalchemy.types
 import sqlalchemy.sql.expression
 import camelot.types
-from model_thread import gui_function
-from model_thread import model_function
 import settings
 
 _ = lambda x: x
 
-from camelot.admin.object_admin import ObjectAdmin
+from camelot.admin.object_admin import *
 from camelot.admin.validator.entity_validator import EntityValidator
 
 class EntityAdmin(ObjectAdmin):
@@ -200,23 +198,6 @@ class EntityAdmin(ObjectAdmin):
       attributes['name'] = tr(attributes['name'])
       self._field_attributes[field_name] = attributes
       return attributes
-
-  @model_function
-  def getFields(self):
-    if self.form or self.form_display:
-      fields = self.getForm().get_fields()
-    elif self.fields:
-      fields = self.fields
-    else:
-      fields = self.list_display
-    fields_and_attributes =  [(field, self.getFieldAttributes(field)) for field in fields]
-    return fields_and_attributes
-  
-  def getForm(self):
-    from forms import Form, structure_to_form
-    if self.form or self.form_display:
-      return structure_to_form(self.form or self.form_display)
-    return Form([f for f, a in self.getFields()])    
 
   @model_function
   def getListCharts(self):
@@ -383,16 +364,6 @@ class EntityAdmin(ObjectAdmin):
     form = NewForm(parent)
     if hasattr(admin, 'form_size'):
       form.setMinimumSize(admin.form_size[0], admin.form_size[1])
-    return form
-
-  @gui_function
-  def createFormView(admin, title, model, index, parent):
-    """Creates a Qt widget containing a form view, for a specific row of the
-    passed query; uses the Admin class
-    """
-    logger.debug('creating form view for index %s' % index)
-    from controls.formview import FormView
-    form = FormView(title, admin, model, index)
     return form
 
   @gui_function

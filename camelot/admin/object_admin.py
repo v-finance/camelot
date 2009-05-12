@@ -116,6 +116,7 @@ class ObjectAdmin(object):
       return self._field_attributes[field_name]
     except KeyError:
       from camelot.model.i18n import tr
+      from camelot.view.controls import delegates
       #
       # Default attributes for all fields
       #
@@ -126,6 +127,7 @@ class ObjectAdmin(object):
                         nullable=True,
                         widget='str',
                         blank=True,
+                        delegate=delegates.PlainTextColumnDelegate,
                         validator_list=[],
                         name=field_name.replace('_', ' ').capitalize())
       
@@ -141,6 +143,29 @@ class ObjectAdmin(object):
       #
       # TODO : move part of logic from entity admin class over here
       #
+      
+      #
+      # Overrule introspected field_attributes with those defined
+      #
+      attributes.update(forced_attributes)
+      
+      #
+      # In case of a 'target' field attribute, instantiate an appropriate
+      # 'admin' attribute
+      #
+      
+      def get_entity_admin(target):
+        """Helper function that instantiated an Admin object for a target entity class
+        @param target: an entity class for which an Admin object is needed"""
+        try:
+          target = self.field_attributes[field_name].get('target', target)
+          admin_class = self.field_attributes[field_name]['admin']
+          return admin_class(self.app_admin, target)
+        except KeyError:
+          return self.getRelatedEntityAdmin(target)
+        
+      if 'target' in attributes:
+        attributes['admin'] = get_entity_admin(attributes['target'])
       
       attributes['name'] = tr(attributes['name'])
       self._field_attributes[field_name] = attributes
@@ -167,3 +192,30 @@ class ObjectAdmin(object):
   def createValidator(self, model):
     return self.validator(self, model)
     
+  @model_function
+  def getFields(self):
+    if self.form or self.form_display:
+      fields = self.getForm().get_fields()
+    elif self.fields:
+      fields = self.fields
+    else:
+      fields = self.list_display
+    fields_and_attributes =  [(field, self.getFieldAttributes(field)) for field in fields]
+    return fields_and_attributes
+  
+  def getForm(self):
+    from camelot.view.forms import Form, structure_to_form
+    if self.form or self.form_display:
+      return structure_to_form(self.form or self.form_display)
+    return Form([f for f, a in self.getFields()])
+  
+  @gui_function
+  def createFormView(self, title, model, index, parent):
+    """Creates a Qt widget containing a form view, for a specific index in a
+    model; uses the Admin class
+    """
+    logger.debug('creating form view for index %s' % index)
+    from camelot.view.controls.formview import FormView
+    form = FormView(title, self, model, index)
+    return form
+

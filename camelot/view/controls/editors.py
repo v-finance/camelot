@@ -953,7 +953,7 @@ class Many2OneEditor(QtGui.QWidget, AbstractManyToOneEditor):
 
 class One2ManyEditor(QtGui.QWidget):
   
-  def __init__(self, admin=None, parent=None, create_inline=False, **kw):
+  def __init__(self, admin=None, parent=None, create_inline=False, editable=True, **kw):
     """@param admin: the Admin interface for the objects on the one side of
     the relation  
 
@@ -980,6 +980,7 @@ class One2ManyEditor(QtGui.QWidget):
                  QtCore.SIGNAL('sectionClicked(int)'),
                  self.createFormForIndex)
     self.admin = admin
+    self.editable = editable
     self.create_inline = create_inline
     self.setupButtons(layout)
     self.setLayout(layout)
@@ -1005,8 +1006,9 @@ class One2ManyEditor(QtGui.QWidget):
     export_button.setAutoRaise(True)
     self.connect(export_button, QtCore.SIGNAL('clicked()'), self.exportToExcel)
     button_layout.addStretch()
-    button_layout.addWidget(add_button)
-    button_layout.addWidget(delete_button)
+    if self.editable:
+      button_layout.addWidget(add_button)
+      button_layout.addWidget(delete_button)
     button_layout.addWidget(export_button)
     layout.addLayout(button_layout)
   
