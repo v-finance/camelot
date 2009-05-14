@@ -448,7 +448,7 @@ class EntityAdmin(ObjectAdmin):
       def openForm(index):
         from workspace import get_workspace
         model = QueryTableProxy(tableview.admin,
-                                query_getter or tableview.table_model._query_getter,
+                                tableview.table_model._query_getter,
                                 tableview.admin.getFields,
                                 max_number_of_rows=1)
         title = u'%s' % (self.getName())
