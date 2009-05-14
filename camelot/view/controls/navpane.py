@@ -111,8 +111,10 @@ class PaneButton(QtGui.QWidget):
 
     super(PaneButton, self).__init__(parent)
 
-    option = QtGui.QBoxLayout.LeftToRight if textleft \
-                                          else QtGui.QBoxLayout.RightToLeft
+    if textleft:
+      option = QtGui.QBoxLayout.LeftToRight 
+    else:
+      option = QtGui.QBoxLayout.RightToLeft
     self.layout = QtGui.QBoxLayout(option)
     self.layout.setSpacing(0)
     self.layout.setContentsMargins(3,0,0,0)

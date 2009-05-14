@@ -187,7 +187,7 @@ Office2007SilverStyle = {
   'ContextMenuBackColor' : '(235, 238, 250)'
 }
 
-class Scheme():
+class Scheme(object):
   def __init__(self, styledict=Office2007BlueStyle):
     self.styledict = styledict
 
