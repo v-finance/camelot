@@ -323,3 +323,24 @@ class Image(types.TypeDecorator):
           logger.warn('Image at %s does not exist'%value)
       
     return processor
+
+class File(types.TypeDecorator):
+  """Sqlalchemy column type to store files.  Only the location of the file is stored
+  
+  This column type accepts and returns a StoredFiles, and stores them in the directory
+  specified by settings.MEDIA_ROOT.  The name of the file is stored as a string in
+  the database.
+  """
+  
+  impl = types.Unicode
+  
+  def __init__(self, max_length=100, upload_to='', **kwargs):
+    import settings
+    self.upload_to = os.path.join(settings.CAMELOT_MEDIA_ROOT, upload_to)
+    self.max_length = max_length
+    try:
+      if not os.path.exists(self.upload_to):
+        os.makedirs(self.upload_to)
+    except Exception, e:
+      logger.warn('Could not access or create attachment path %s, attachments will be unreachable'%self.upload_to, exc_info=e)
+    types.TypeDecorator.__init__(self, length=max_length, **kwargs)
