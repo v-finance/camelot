@@ -420,6 +420,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           if not o:
             # the object might have been deleted from the collection while the editor
             # was still open
+            logger.debug('this object is no longer in the collection')
             try:
               self.unflushed_rows.remove(row)
             except KeyError:
@@ -472,6 +473,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             self.rsh.sendEntityUpdate(self, o)
             return ((row,0), (row,len(self.getColumns())))
           elif flushed:
+            logger.debug('old value equals new value, no need to flush this object')
             try:
               self.unflushed_rows.remove(row)
             except KeyError:
@@ -552,37 +554,50 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.rows += 1
  
   @model_function
-  def removeEntityInstance(self, o):
+  def removeEntityInstance(self, o, delete=True):
+    """Remove the entity instance o from this collection
+    @param o: the object to be removed from this collection
+    @param delete: delete the object after removing it from the collection 
+    """
     logger.debug('remove entity instance with id %s' % o.id)
     self.remove(o)
     # remove the entity from the cache
     self.cache[Qt.DisplayRole].delete_by_entity(o)
     self.cache[Qt.EditRole].delete_by_entity(o)
-    self.rsh.sendEntityDelete(self, o)
+    if delete:
+      self.rsh.sendEntityDelete(self, o)
     if o.id:
-      pk = o.id
-      # save the state before the update
-      from camelot.model.memento import BeforeDelete
-      from camelot.model.authentication import getCurrentAuthentication
-      history = BeforeDelete(model=unicode(self.admin.entity.__name__), 
-                             primary_key=pk, 
-                             previous_attributes={},
-                             authentication = getCurrentAuthentication())
-      logger.debug('delete the object')
-      o.delete()
-      Session.object_session(o).flush([o])
-      Session.object_session(history).flush([history])
+      if delete:
+        pk = o.id
+        # save the state before the update
+        from camelot.model.memento import BeforeDelete
+        from camelot.model.authentication import getCurrentAuthentication
+        history = BeforeDelete(model=unicode(self.admin.entity.__name__), 
+                               primary_key=pk, 
+                               previous_attributes={},
+                               authentication = getCurrentAuthentication())
+        logger.debug('delete the object')
+        o.delete()
+        Session.object_session(o).flush([o])
+        Session.object_session(history).flush([history])
+      else:
+        # even if the object is not deleted, it needs to be flushed to make
+        # sure it's out of the collection
+        Session.object_session(o).flush([o])
     self.mt.post(lambda:None, lambda *args:self.refresh())  
     
   @gui_function
-  def removeRow(self, row):
+  def removeRow(self, row, delete=True):
+    """Remove the entity associated with this row from this collection
+    @param delete: delete the entity as well
+    """
     logger.debug('remove row %s' % row)
     
     def create_delete_function(row):
       
       def delete_function():
         o = self._get_object(row)
-        self.removeEntityInstance(o)
+        self.removeEntityInstance(o, delete)
       
       return delete_function
   

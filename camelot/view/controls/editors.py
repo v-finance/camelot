@@ -46,6 +46,7 @@ from camelot.view.model_thread import gui_function, model_function
 from camelot.view.workspace import get_workspace
 from camelot.view.search import create_entity_search_query_decorator
 
+editingFinished = QtCore.SIGNAL('editingFinished()')
 
 def create_constant_function(constant):
   return lambda:constant
@@ -691,7 +692,7 @@ class AbstractManyToOneEditor(object):
   def createSelectView(self):
     
     #search_text = unicode(self.search_input.text())
-    search_text = ""
+    search_text = ''
     admin = self.admin
     query = self.admin.entity.query
     
@@ -1023,6 +1024,9 @@ class One2ManyEditor(QtGui.QWidget):
       
     self.admin.mt.post(export)
   
+  def getModel(self):
+    return self.model
+  
   def setModel(self, model):
     self.model = model
     self.table.setModel(model)
@@ -1094,19 +1098,19 @@ class ManyToManyEditor(One2ManyEditor, AbstractManyToOneEditor):
     remove_button.setAutoRaise(True)
     self.connect(remove_button,
                  QtCore.SIGNAL('clicked()'),
-                 self.deleteSelectedRows)
+                 self.removeSelectedRows)
     add_button = QtGui.QToolButton()
     add_button.setIcon(Icon('tango/16x16/actions/list-add.png').getQIcon())
     add_button.setAutoRaise(True)
     self.connect(add_button, QtCore.SIGNAL('clicked()'), self.createSelectView)    
-    new_button = QtGui.QToolButton()
-    new_button.setIcon(Icon('tango/16x16/actions/document-new.png').getQIcon())
-    new_button.setAutoRaise(True)
-    self.connect(new_button, QtCore.SIGNAL('clicked()'), self.newRow)
+#    new_button = QtGui.QToolButton()
+#    new_button.setIcon(Icon('tango/16x16/actions/document-new.png').getQIcon())
+#    new_button.setAutoRaise(True)
+#    self.connect(new_button, QtCore.SIGNAL('clicked()'), self.newRow)
     button_layout.addStretch()
     button_layout.addWidget(add_button)
     button_layout.addWidget(remove_button)
-    button_layout.addWidget(new_button)
+#    button_layout.addWidget(new_button)
     layout.addLayout(button_layout)
     
   def selectEntity(self, entity_instance_getter):
@@ -1115,9 +1119,16 @@ class ManyToManyEditor(One2ManyEditor, AbstractManyToOneEditor):
     def insert():
       o = entity_instance_getter()
       self.model.insertEntityInstance(0,o)
-      
+        
     self.admin.mt.post(insert)
 
+  def removeSelectedRows(self):
+    """Remove the selected rows in this tableview, but don't delete them"""
+    logger.debug('delete selected rows called')
+    for row in set(map(lambda x: x.row(), self.table.selectedIndexes())):
+      self.model.removeRow(row, delete=False)
+    self.emit(editingFinished)
+      
 try:
   from PIL import Image as PILImage
 except:

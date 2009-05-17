@@ -755,7 +755,17 @@ class ManyToManyColumnDelegate(One2ManyColumnDelegate):
   def createEditor(self, parent, option, index):
     editor = editors.ManyToManyEditor(parent=parent, **self.kwargs)
     self.setEditorData(editor, index)
+    self.connect(editor, 
+                 editors.editingFinished,
+                 self.commitAndCloseEditor)
     return editor
+  
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    
+  def setModelData(self, editor, model, index):
+    model.setData(index, editor.getModel().collection_getter)
 
 class BoolColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for boolean values"""
