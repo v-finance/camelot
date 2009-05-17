@@ -412,6 +412,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         @model_function
         def update_model_and_cache():
           from sqlalchemy.exceptions import OperationalError
+          from sqlalchemy import orm
           new_value = value()
           #logger.debug('set data for col %s;row %s to %s' % (row, column, new_value))
           logger.debug('set data for col %s;row %s' % (row, column))
@@ -428,7 +429,16 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             return            
           attribute, field_attributes = self.getColumns()[column]
           old_value = getattr(o, attribute)
-          if new_value!=old_value and field_attributes['editable']==True:
+          changed = (new_value!=old_value)
+          #
+          # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
+          # old and new value to know if the object was changed, so we'll
+          # consider it changed anyway
+          #
+          direction = field_attributes.get('direction', None)
+          if direction in (orm.sync.MANYTOMANY, orm.sync.ONETOMANY):
+            changed = True
+          if changed and field_attributes['editable']==True:
             # update the model
             model_updated = False
             try:
@@ -455,9 +465,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                 pass
               if model_updated:
                 #
-                # in case of images, we cannot pickle them
+                # in case of images or relations, we cannot pickle them
                 #
-                if not 'Imag' in old_value.__class__.__name__:
+                if (not 'Imag' in old_value.__class__.__name__) and not direction:
                   from camelot.model.memento import BeforeUpdate
                   from camelot.model.authentication import getCurrentAuthentication
                   history = BeforeUpdate(model=unicode(self.admin.entity.__name__), 
@@ -615,13 +625,15 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         self.unflushed_rows.remove(row)
       except KeyError:
         pass
-      from camelot.model.memento import Create
-      from camelot.model.authentication import getCurrentAuthentication
-      history = Create(model=unicode(self.admin.entity.__name__),
-                       primary_key=o.id,
-                       authentication = getCurrentAuthentication())
-      elixir.session.flush([history])
-      self.rsh.sendEntityCreate(self, o)
+# TODO : it's not because an object is added to this list, that it was created
+# it might as well exist allready, eg. manytomany relation
+#      from camelot.model.memento import Create
+#      from camelot.model.authentication import getCurrentAuthentication
+#      history = Create(model=unicode(self.admin.entity.__name__),
+#                       primary_key=o.id,
+#                       authentication = getCurrentAuthentication())
+#      elixir.session.flush([history])
+#      self.rsh.sendEntityCreate(self, o)
     self.mt.post(lambda:None, lambda *args:self.refresh())
               
   @gui_function

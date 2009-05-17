@@ -1120,7 +1120,7 @@ class ManyToManyEditor(One2ManyEditor, AbstractManyToOneEditor):
       o = entity_instance_getter()
       self.model.insertEntityInstance(0,o)
         
-    self.admin.mt.post(insert)
+    self.admin.mt.post(insert, lambda *args:self.emit(editingFinished))
 
   def removeSelectedRows(self):
     """Remove the selected rows in this tableview, but don't delete them"""
