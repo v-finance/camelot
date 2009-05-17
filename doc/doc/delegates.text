@@ -2,8 +2,33 @@
 Default delegates
 -----------------
 
+All delegates can be found in the module :
+
+	camelot.view.controls.delegates
+	
 Camelot assigns a default delegate based on the sqlalchemy field type used
-in the model definition.
+in the model definition.  
+
+### OneToMany ###
+
+OneToManyColumnDelegate
+
+![](images/onetomany.png "The ManyToManyEditor")
+
+### ManyToOne ###
+
+ManyToOneColumnDelegate
+
+![](images/manytoone.png "The ManyToManyEditor")
+
+### ManyToMany ###
+
+ManyToManyColumnDelegate
+
+![](images/manytomany.png "The ManyToManyEditor")
+ 
+Forcing delegates
+-----------------
 
 The use of a specific delegate can be forced by using the delegate field
 attribute.  Suppose rating is a field of type integer, than it can be forced
