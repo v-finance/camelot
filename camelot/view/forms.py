@@ -68,6 +68,22 @@ class Form(object):
     """@return : the fields, visible in this form"""
     return self._fields
   
+  def removeField(self, original_field):
+    """Remove a field from the form, This function can be used to modify
+    inherited forms.
+    @param original_field: the name of the field to be removed
+    @return: True if the field was found and removed
+    """
+    for c in self._content:
+      if isinstance(c, Form):
+        c.removeField(original_field)
+    if original_field in self._content:
+      self._content.remove(original_field)
+    if original_field in self._fields:
+      self._fields.remove(original_field)
+      return True
+    return False
+             
   def replaceField(self, original_field, new_field):
     """Replace a field on this form with another field.  This function can be used to 
     modify inherited forms.
