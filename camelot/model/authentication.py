@@ -70,12 +70,23 @@ class PartyRelationship(Entity):
   comment = Field(camelot.types.RichText())
   is_synchronized('synchronized', lazy=True)
   
+  class Admin(EntityAdmin):
+    name = 'Relationship'
+    list_display = ['from_date', 'thru_date']
+  
 class EmployerEmployee(PartyRelationship):
   """Relation from employer to employee"""
   using_options(tablename='party_relationship_empl', inheritance='multi')
   established_from = ManyToOne('Organization', required=True, ondelete='cascade', onupdate='cascade')
   established_to = ManyToOne('Person', required=True, ondelete='cascade', onupdate='cascade')
   
+  def __unicode__(self):
+    return u'%s employed by %s'%(unicode(self.established_to), unicode(self.established_from))
+  
+  class Admin(EntityAdmin):
+    name = 'Employer - Employee'
+    list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
+    
   class EmployeeAdmin(EntityAdmin):
     name = 'Employees'
     list_display = ['established_to', 'from_date', 'thru_date']
@@ -95,6 +106,10 @@ class DirectedDirector(PartyRelationship):
   established_to = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
   title = Field(Unicode(256))
   represented_by = OneToMany('RepresentedRepresentor', inverse='established_to')
+  
+  class Admin(EntityAdmin):
+    name = 'Directed - Director'
+    list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
   
   class DirectorAdmin(EntityAdmin):
     name = 'Directors'
@@ -116,7 +131,7 @@ class RepresentedRepresentor(Entity):
   comment = Field(camelot.types.RichText())
   established_from = ManyToOne('Person', required=True, ondelete='cascade', onupdate='cascade')
   established_to = ManyToOne('DirectedDirector', required=True, ondelete='cascade', onupdate='cascade')
-  
+    
   class Admin(EntityAdmin):
     name = 'Represented by'
     list_display = ['established_from', 'from_date', 'thru_date']
@@ -129,6 +144,10 @@ class SupplierCustomer(PartyRelationship):
   established_from = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
   established_to = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
   
+  class Admin(EntityAdmin):
+    name = 'Supplier - Customer'
+    list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
+    
   class CustomerAdmin(EntityAdmin):
     name = 'Customers'
     list_display = ['established_to',]
@@ -148,6 +167,10 @@ class SharedShareholder(PartyRelationship):
   established_to = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
   shares = Field(Integer())
   
+  class Admin(EntityAdmin):
+    name = 'Shared - Shareholder'
+    list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
+    
   class ShareholderAdmin(EntityAdmin):
     name = 'Shareholders'
     list_display = ['established_to', 'shares', 'from_date', 'thru_date']
