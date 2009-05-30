@@ -21,4 +21,5 @@ CAMELOT_TEMPLATES_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY,
 CAMELOT_ATTACHMENTS = ''
 CAMELOT_MEDIA_ROOT = ''
 
+REPOSITORY = 'repository'
 ENGINE = lambda:'sqlite:///model-data.sqlite'

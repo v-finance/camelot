@@ -41,7 +41,6 @@ from code import InteractiveConsole
 import sys
 
 import settings
-settings.setup_model()
 
 class FileCacher:
   "Cache the stdout text so we can analyze it before returning it"
@@ -77,10 +76,26 @@ class Shell(InteractiveConsole):
 
 def main():
   from optparse import OptionParser
+ 
   parser = OptionParser(usage='usage: %prog [options] console')
   (options, args) = parser.parse_args()
-  sh = Shell()
-  sh.interact()
+  if args[0]=='console':
+    settings.setup_model()
+    sh = Shell()
+    sh.interact()
+  else:
+    from migrate.versioning.repository import Repository
+    from migrate.versioning.schema import ControlledSchema
+    from migrate.versioning.exceptions import DatabaseAlreadyControlledError    
+    schema = ControlledSchema(settings.ENGINE(), settings.REPOSITORY)
+    repository = Repository(settings.REPOSITORY)
+    if args[0]=='db_version':
+      print schema.version
+    elif args[0]=='version':
+      print repository.latest
+    elif args[0]=='upgrade':
+      schema.upgrade(args[1])
+      print schema.version
     
 if __name__ == '__main__':
   main()
