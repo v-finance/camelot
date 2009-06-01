@@ -37,6 +37,20 @@ Camelot makes use of the sqlalchemy-migrate library to assist with schema revisi
 migrations.  When creating a new project, the camelot-admin.py tool creates a schema
 repository for your project in the repository directory in the project path.
 
+The manage.py administration tool supports a subset of sqlalchmey-migrate commands :
+
+	python camelot/bin/manage.py db_version
+	
+to return the current revision of the database.
+
+	python camelot/bin/manage.py version
+	
+to return the latest revision available in the repository
+
+	python camelot/bin/manage.py upgrade version_number
+	
+to upgrade or downgrade the database to a different version_number
+
 
 
   
