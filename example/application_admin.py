@@ -21,8 +21,9 @@ class MyApplicationAdmin(ApplicationAdmin):
     self.register(Person, Person.Admin)
     self.register(Organization, Organization.Admin)
     self.register(Translation, Translation.Admin)
-    from example.model import Movie
+    from example.model import Movie, Tag
     self.register(Movie, Movie.Admin)
+    self.register(Tag, Tag.Admin)
     
   def getName(self):
     return 'Camelot Videostore'

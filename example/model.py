@@ -4,7 +4,7 @@
 #
 
 import camelot.types
-from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, \
+from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, ManyToMany, \
                           Unicode, Date, Integer, using_options
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
@@ -29,8 +29,12 @@ class Movie(Entity):
   title = Field(Unicode(60), required=True)
   short_description = Field(Unicode(512))
   releasedate = Field(Date)
+  # 
+  # All relation types are covered with their own editor
+  #
   director = ManyToOne('Person')
   cast = OneToMany('Cast')
+  tags = ManyToMany('Tag')
   genre = Field(Unicode(15))
   rating = Field(camelot.types.Rating())
   #
@@ -38,6 +42,11 @@ class Movie(Entity):
   # PIL image on disk and keeps the reference to it in the database.
   #
   cover = Field(camelot.types.Image(upload_to='covers'))
+  #
+  # Or File, which stores a file in the upload_to directory and stores a
+  # reference to it in the database
+  #
+  script = Field(camelot.types.File(upload_to='script'))
   description = Field(camelot.types.RichText)
   
   def burn_to_disk(self):
@@ -70,9 +79,10 @@ class Movie(Entity):
         HBoxForm([['title', 'rating'], WidgetOnlyForm('cover')]),
         'short_description',
         'releasedate', 
-        'director', 
+        'director',
+        'script', 
         'genre', 
-        'description'])),
+        'description', 'tags'])),
       ('Cast', WidgetOnlyForm('cast'))
     ])
     
@@ -90,7 +100,6 @@ class Movie(Entity):
   def __unicode__(self):
     return self.title or ''
 
-
 class Cast(Entity):
   using_options(tablename='cast')
   movie = ManyToOne('Movie')
@@ -106,3 +115,18 @@ class Cast(Entity):
     if self.actor:
       return self.actor.name
     return ''
+
+class Tag(Entity):
+  using_options(tablename='tags')
+  name = Field(Unicode(60), required=True)
+  movies = ManyToMany('Movie')
+  
+  def __unicode__(self):
+    return self.name
+  
+  class Admin(EntityAdmin):
+    section = 'movies'
+    name = 'Tags'
+    form_size = (400,200)
+    list_display = ['name']
+    form_display = ['name', 'movies']
