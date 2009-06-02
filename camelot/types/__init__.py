@@ -161,11 +161,11 @@ except:
   import Image as PILImage
         
 
-class StoredImage(object):
-  """Class linking a PIL image and the location and filename where the image is stored"""
+class StoredFile(object):
+  """Helper class for the File field type containing the location and the
+  filename of a file"""
   
-  def __init__(self, image, location=None, filename=None):
-    self.image = image
+  def __init__(self, location=None, filename=None):
     self.location = location
     self.filename = filename
   
@@ -173,6 +173,15 @@ class StoredImage(object):
   def full_path(self):
     import os
     return os.path.join(self.location, self.filename)
+    
+class StoredImage(StoredFile):
+  """Helper class for the Image field type Class linking a PIL image and the 
+  location and filename where the image is stored"""
+  
+  def __init__(self, image, location=None, filename=None):
+    self.image = image
+    self.location = location
+    self.filename = filename
     
 class Color(types.TypeDecorator):
   """Sqlalchemy column type to store colors.
@@ -327,7 +336,7 @@ class Image(types.TypeDecorator):
 class File(types.TypeDecorator):
   """Sqlalchemy column type to store files.  Only the location of the file is stored
   
-  This column type accepts and returns a StoredFiles, and stores them in the directory
+  This column type accepts and returns a StoredFile, and stores them in the directory
   specified by settings.MEDIA_ROOT.  The name of the file is stored as a string in
   the database.
   """
@@ -342,5 +351,43 @@ class File(types.TypeDecorator):
       if not os.path.exists(self.upload_to):
         os.makedirs(self.upload_to)
     except Exception, e:
-      logger.warn('Could not access or create attachment path %s, attachments will be unreachable'%self.upload_to, exc_info=e)
+      logger.warn('Could not access or create path %s, files will be unreachable'%self.upload_to, exc_info=e)
     types.TypeDecorator.__init__(self, length=max_length, **kwargs)
+    
+  def bind_processor(self, dialect):
+
+    impl_processor = self.impl.bind_processor(dialect)
+    if not impl_processor:
+      impl_processor = lambda x:x
+    
+    def processor(value):
+      if value is not None:
+        import tempfile
+        import shutil
+        assert isinstance(value, (StoredFile))
+        from_path = value.full_path
+        root, extension = os.path.splitext(os.path.basename(from_path))
+        (handle, to_path) = tempfile.mkstemp(suffix=extension, prefix=root, dir=self.upload_to, text='b')
+        os.close(handle)
+        logger.debug('copy file from %s to %s', from_path, to_path)
+        shutil.copy(from_path, to_path)
+        value = os.path.basename(to_path)
+      return impl_processor(value)
+    
+    return processor
+
+  def result_processor(self, dialect):
+    
+    impl_processor = self.impl.result_processor(dialect)
+    if not impl_processor:
+      impl_processor = lambda x:x
+      
+    def processor(value):
+
+      if value:
+        if os.path.exists(os.path.join(self.upload_to, impl_processor(value))):
+          return StoredFile(self.upload_to, value)
+        else:
+          logger.warn('File at %s does not exist'%value)
+      
+    return processor

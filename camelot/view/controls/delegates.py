@@ -144,6 +144,39 @@ class GenericDelegate(QtGui.QItemDelegate):
     else:
       return QtGui.QItemDelegate.sizeHint(self, option, index)
 
+class CustomDelegate(QtGui.QItemDelegate):
+  """Base class for implementing custom delegates.
+  
+  The 'editor' class attribute specifies the editor class
+  that will be created.
+  """
+  
+  editor = None
+  
+  def __init__(self, parent=None, **kwargs):
+    QtGui.QItemDelegate.__init__(self, parent)
+    self.kwargs = kwargs
+    
+  def createEditor(self, parent, option, index):
+    editor = self.editor(parent, **self.kwargs)
+    self.connect(editor, editors.editingFinished, self.commitAndCloseEditor)
+    return editor
+
+  def commitAndCloseEditor(self):
+    editor = self.sender()
+    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+
+  def setEditorData(self, editor, index):
+    value = index.model().data(index, Qt.EditRole).toPyObject()
+    editor.setValue(value)
+
+  def setModelData(self, editor, model, index):
+    model.setData(index, create_constant_function(editor.getValue()))
+
+class FileDelegate(CustomDelegate):
+  
+  editor = editors.FileEditor    
+    
 class StarDelegate(QtGui.QItemDelegate):
   """Custom delegate for integer values from (1 to 5)(Rating Delegate)"""
 
@@ -168,7 +201,6 @@ class StarDelegate(QtGui.QItemDelegate):
 
   def commitAndCloseEditor(self):
     editor = self.sender()
-
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
     
     

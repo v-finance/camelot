@@ -1284,6 +1284,79 @@ class ImageEditor(QtGui.QWidget):
     self.draw_border()
 
 
+class FileEditor(QtGui.QWidget):
+  """Widget for editing File fields
+  """
+      
+  def __init__(self, parent=None, **kwargs):
+    QtGui.QWidget.__init__(self, parent)
+    self.value = None
+    self.layout = QtGui.QHBoxLayout()
+    self.layout.setSpacing(0)
+    self.layout.setMargin(0)
+
+    # Clear button
+    self.clear_button = QtGui.QToolButton()
+    self.clear_button.setFocusPolicy(Qt.ClickFocus)
+    self.clear_button.setIcon(Icon('tango/16x16/actions/edit-clear.png').getQIcon())
+    self.clear_button.setAutoRaise(True)
+    self.connect(self.clear_button,
+                 QtCore.SIGNAL('clicked()'),
+                 self.clearButtonClicked)
+
+    # Open button
+    self.open_button = QtGui.QToolButton()
+    self.open_button.setFocusPolicy(Qt.ClickFocus)
+    icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
+    self.open_button.setIcon(icon)
+    self.connect(self.open_button,
+                 QtCore.SIGNAL('clicked()'),
+                 self.openButtonClicked)
+    self.open_button.setAutoRaise(True)  
+
+    # Filename
+    self.filename = QtGui.QLineEdit(self)
+    self.filename.setEnabled(False)
+    self.filename.setReadOnly(True)
+    
+    # Setup layout
+    self.layout.addWidget(self.filename)
+    self.layout.addWidget(self.clear_button)
+    self.layout.addWidget(self.open_button)
+    self.setLayout(self.layout)
+    self.setAutoFillBackground(True)
+    
+  def setValue(self, value):
+    self.value = value
+    if value:
+      self.filename.setText(value.filename) 
+      self.open_button.setIcon(Icon('tango/16x16/places/folder.png').getQIcon())
+    else:
+      self.filename.setText('')
+      self.open_button.setIcon(Icon('tango/16x16/actions/document-new.png').getQIcon())
+      
+  def getValue(self):
+    return self.value
+  
+  def openButtonClicked(self):
+    if not self.value:
+      import os
+      from camelot.types import StoredFile
+      filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file', 
+                                                   QtCore.QDir.currentPath())
+      if filename:
+        head, tail = os.path.split(unicode(filename))
+        self.value = StoredFile(head, tail)
+        self.emit(editingFinished)
+    else:
+      print self.value.full_path
+      url = QtCore.QUrl.fromLocalFile(self.value.full_path)
+      QtGui.QDesktopServices.openUrl(url)
+  
+  def clearButtonClicked(self):
+    self.value = None
+    self.emit(editingFinished)
+    
 class ColorEditor(QtGui.QWidget):
   
   def __init__(self, parent=None, editable=True, **kwargs):

@@ -171,6 +171,9 @@ _sqlalchemy_to_python_type_ = {
                                          'format':'dd-MM-yyyy hh:mm',
                                          'nullable':True,
                                          'delegate':DateTimeColumnDelegate},
+  camelot.types.File : lambda f: {'python_type':str,
+                                  'editable':True,
+                                  'delegate':FileDelegate},
                                          
   
 }
