@@ -221,9 +221,15 @@ class MainWindow(QtGui.QMainWindow):
                                  actionicon=icon_paste,
                                  tip=tip)
 
+    # BUG: there is a problem with setting a key sequence for closing
+    #      a subwindow.  PyQt adopts defaults from specific platforms
+    #      but we want the sequence Ctrl+W on every platform.  there-
+    #      fore we set the string 'Ctrl+W', but PyQt defaults will
+    #      still work.
     self.closeAct = createAction(parent=self,
                                  text=_('Cl&ose'),
                                  slot=self.workspace.closeActiveSubWindow,
+                                 shortcut='Ctrl+W',
                                  tip=_('Close the active window'))
 
     self.closeAllAct = createAction(parent=self,
