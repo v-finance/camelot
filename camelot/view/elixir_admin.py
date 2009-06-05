@@ -89,6 +89,7 @@ class EntityAdmin(ObjectAdmin):
       return self._field_attributes[field_name]
     except KeyError:
       from camelot.model.i18n import tr
+      from camelot.view.controls import delegates
       #
       # Default attributes for all fields
       #
@@ -99,6 +100,7 @@ class EntityAdmin(ObjectAdmin):
                         nullable=True,
                         widget='str',
                         blank=True,
+                        delegate=delegates.PlainTextColumnDelegate,
                         validator_list=[],
                         name=field_name.replace('_', ' ').capitalize())
       

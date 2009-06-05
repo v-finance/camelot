@@ -150,18 +150,19 @@ class Form(object):
           form_layout.addWidget(editor, row, col + 1, row_span, col_span)
           row += 1
 
-    # get last item in the layout
-    last_item = form_layout.itemAt(form_layout.count() - 1)
-
-    # if last item does not contain a widget, 0 is returned
-    # which is fine with the isinstance test
-    w = last_item.widget()
-
-    # add stretch only if last item is not expandable
-    if isinstance(w, (One2ManyEditor, RichTextEditor)):
-      pass
-    else:
-      form_layout.setRowStretch(form_layout.rowCount(), 1)
+    if self._content:
+      # get last item in the layout
+      last_item = form_layout.itemAt(form_layout.count() - 1)
+  
+      # if last item does not contain a widget, 0 is returned
+      # which is fine with the isinstance test
+      w = last_item.widget()
+  
+      # add stretch only if last item is not expandable
+      if isinstance(w, (One2ManyEditor, RichTextEditor)):
+        pass
+      else:
+        form_layout.setRowStretch(form_layout.rowCount(), 1)
 
     form_widget = QtGui.QWidget()
     
@@ -304,3 +305,26 @@ class WidgetOnlyForm(Form):
     logger.debug('rendering %s' % self.__class__.__name__) 
     label, editor = widgets[self.get_fields()[0]]
     return editor
+  
+class GroupBoxForm(Form):
+  """Renders a form within a QGroupBox
+  
+  eg :
+  
+  class Admin(EntityAdmin):
+    form_display = ['title', GroupBoxForm('Ratings', ['expert_rating', 'public_rating'])]
+  
+  """
+  
+  def __init__(self, title, content):
+    self.title = title
+    Form.__init__(self, content)
+
+  def render(self, widgets, parent=None, nomargins=False):
+    from PyQt4 import QtGui
+    widget = QtGui.QGroupBox(self.title, parent)
+    layout = QtGui.QVBoxLayout()
+    widget.setLayout(layout)
+    form = Form.render(self, widgets, widget, nomargins)
+    layout.addWidget(form)
+    return widget
