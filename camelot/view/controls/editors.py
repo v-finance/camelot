@@ -149,6 +149,8 @@ class DateEditor(QtGui.QWidget):
     if nullable:
       specialdates.extend(['clear'])
       self.qdateedit.setSpecialValueText('0/0/0')
+    else:
+      self.qdateedit.setCalendarPopup(True)
     self.combobox.addItems(specialdates)
     self.hlayout = QtGui.QHBoxLayout()
     self.hlayout.addWidget(self.qdateedit)
