@@ -500,7 +500,9 @@ class DateColumnDelegate(QtGui.QItemDelegate):
 
   def createEditor(self, parent, option, index):
     editor = editors.DateEditor(self.nullable, self.format, parent)
-    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)  
+    self.connect(editor,
+                 QtCore.SIGNAL('editingFinished()'),
+                 self.commitAndCloseEditor)
     return editor
 
   def commitAndCloseEditor(self):
@@ -523,9 +525,18 @@ class DateColumnDelegate(QtGui.QItemDelegate):
     if value == editor.minimumDate():
       model.setData(index, create_constant_function(None))
     else:
+      # TODO: QDate.toPyDate() might be useful
       d = datetime.date(value.year(), value.month(), value.day())
       model.setData(index, create_constant_function(d))
     logger.debug('date delegate data set')
+
+  def sizeHint(self, option, index):
+    return editors.DateEditor().sizeHint()
+
+  def paint(self, painter, option, index):
+    myoption = QtGui.QStyleOptionViewItem(option)
+    myoption.displayAlignment |= Qt.AlignRight|Qt.AlignVCenter
+    QtGui.QItemDelegate.paint(self, painter, myoption, index)
 
 _registered_delegates_[editors.DateEditor] = DateColumnDelegate
 
