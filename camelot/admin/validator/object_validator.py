@@ -52,7 +52,7 @@ class ObjectValidator(object):
     the database
     """
     messages = []
-    logger.debug('is valid for row %s' % row)
+    logger.debug('isValid for row %s' % row)
     try:
       entity_instance = self.model._get_object(row)
       if entity_instance:
@@ -60,7 +60,9 @@ class ObjectValidator(object):
         self.message_cache.add_data(row, entity_instance.id, messages)
     except Exception, e:
       logger.error('programming error while validating object', exc_info=e)
-    return len(messages) == 0
+    valid = (len(messages) == 0)
+    logger.debug('valid : %s'%valid)
+    return valid
 
   def validityMessages(self, row):
     try:

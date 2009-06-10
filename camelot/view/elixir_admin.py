@@ -134,10 +134,7 @@ class EntityAdmin(ObjectAdmin):
       mapper = orm.class_mapper(self.entity)
       try:
         property = mapper.get_property(field_name, resolve_synonyms=True)
-        if 'choices' in forced_attributes:
-          attributes['delegate'] = delegates.ComboBoxColumnDelegate
-          attributes['editable'] = True
-        elif isinstance(property, orm.properties.ColumnProperty):
+        if isinstance(property, orm.properties.ColumnProperty):
           type = property.columns[0].type
           python_type = _sqlalchemy_to_python_type_.get(type.__class__, None)
           if python_type:
@@ -185,6 +182,10 @@ class EntityAdmin(ObjectAdmin):
         """
         pass
       
+      if 'choices' in forced_attributes:
+        attributes['delegate'] = delegates.ComboBoxColumnDelegate
+        attributes['editable'] = True
+                
       #
       # Overrule introspected field_attributes with those defined
       #
