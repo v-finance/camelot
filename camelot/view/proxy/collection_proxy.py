@@ -189,16 +189,28 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       return self._columns
     
     self.mt.post(get_columns, lambda columns:self.setColumns(columns))
+    # the initial collection might contain unflushed rows
+    self.mt.post(self.updateUnflushedRows)    
     # in that way the number of rows is requested as well
     self.mt.post(self.getRowCount,  self.setRowCount)
     logger.debug('initialization finished')
     self.item_delegate = None
     
+  @model_function
+  def updateUnflushedRows(self):
+    """Verify all rows to see if some of them should be added to the
+    unflushed rows"""
+    for i,e in enumerate(self.collection_getter()):
+      if not e.id:
+        self.unflushed_rows.add(i)
+    
   def hasUnflushedRows(self):
     """The model has rows that have not been flushed to the database yet,
     because the row is invalid
     """
-    return len(self.unflushed_rows) > 0
+    has_unflushed_rows = (len(self.unflushed_rows) > 0)
+    logger.debug('hasUnflushed rows : %s'%has_unflushed_rows)
+    return has_unflushed_rows
   
   @model_function
   def getRowCount(self):
@@ -224,6 +236,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.mt.post(create_refresh_entity(row), refresh)
               
   def refresh(self):
+    
     def refresh_content(rows):
       self.cache = {Qt.DisplayRole: fifo(10*self.max_number_of_rows),
                     Qt.EditRole: fifo(10*self.max_number_of_rows)}

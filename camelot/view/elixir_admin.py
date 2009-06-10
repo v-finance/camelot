@@ -313,8 +313,10 @@ class EntityAdmin(ObjectAdmin):
         admin.mt.post(validate, emit_if_valid)           
         
       def validateClose(self):
+        logger.debug('validate before close : %s' % self.validate_before_close)
         if self.validate_before_close:
           self.form_view.widget_mapper.submit()
+          logger.debug('unflushed rows : %s'%str(model.hasUnflushedRows()))
           if model.hasUnflushedRows():
           
             def validate():

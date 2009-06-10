@@ -34,7 +34,6 @@ from PyQt4 import QtCore
 from PyQt4 import QtGui
 from camelot.view.model_thread import model_function
 
-
 class FormView(QtGui.QWidget):
   def __init__(self, title, admin, model, index):
     super(FormView, self).__init__(None)
