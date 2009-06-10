@@ -147,8 +147,6 @@ class DateEdit(QtGui.QDateEdit):
     icon = Icon('tango/16x16/mimetypes/x-office-calendar.png').getQIcon()
   
     menu.addAction(icon, 'today', self.setToday)
-    #menu.exec_(self.viewport().mapToGlobal(self.cursorRect().center()))
-    lineedit = self.lineEdit()
     pos = self.mapToGlobal(self.rect().center())
     menu.exec_(pos)
   
