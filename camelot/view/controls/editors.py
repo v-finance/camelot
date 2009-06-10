@@ -134,12 +134,34 @@ class DateTimeEditor(QtGui.QWidget):
     parts = text.split(':')
     return QtCore.QTime(int(parts[0]), int(parts[1]))
     
+class DateEdit(QtGui.QDateEdit):
+  """Provides custom context menu"""
+  def __init__(self, parent=None):
+    super(DateEdit, self).__init__(parent)
+
+  def contextMenuEvent(self, event):
+    self.specialDatesMenu()
+
+  def specialDatesMenu(self):
+    menu = QtGui.QMenu('Special dates')
+    icon = Icon('tango/16x16/mimetypes/x-office-calendar.png').getQIcon()
+  
+    menu.addAction(icon, 'today', self.setToday)
+    #menu.exec_(self.viewport().mapToGlobal(self.cursorRect().center()))
+    lineedit = self.lineEdit()
+    pos = self.mapToGlobal(self.rect().center())
+    menu.exec_(pos)
+  
+  def setToday(self):
+    self.setDate(QtCore.QDate.currentDate())
+
 class DateEditor(QtGui.QWidget):
   """Widget for editing date values"""
+
   def __init__(self, nullable=True, format='dd/MM/yyyy', parent=None):
     super(DateEditor, self).__init__(parent)
     self.format = format
-    self.qdateedit = QtGui.QDateEdit(self)
+    self.qdateedit = DateEdit()
     self.connect(self.qdateedit,
                  QtCore.SIGNAL('editingFinished()'),
                  self.editingFinished)
@@ -173,10 +195,12 @@ class DateEditor(QtGui.QWidget):
     self.setFocusProxy(self.qdateedit)
     self.setAutoFillBackground(True)
 
+  # TODO: consider using QDate.toPyDate(), PyQt4.1
   @staticmethod
   def _python_to_qt(value):
     return QtCore.QDate(value.year, value.month, value.day)
 
+  # TODO: consider using QDate.toPyDate(), PyQt4.1
   @staticmethod
   def _qt_to_python(value):
     return datetime.date(value.year(), value.month(), value.day())
@@ -184,6 +208,7 @@ class DateEditor(QtGui.QWidget):
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
 
+  # TODO: consider using QDate.toPyDate(), PyQt4.1
   def set_date_range(self):
     qdate_min = DateEditor._python_to_qt(self.minimum)
     qdate_max = DateEditor._python_to_qt(self.maximum)
@@ -201,6 +226,7 @@ class DateEditor(QtGui.QWidget):
 
   def setDate(self, date):
     self.qdateedit.setDate(date)
+
 
 class VirtualAddressEditor(QtGui.QWidget):
   def __init__(self, parent=None):
