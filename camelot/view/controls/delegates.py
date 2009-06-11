@@ -498,6 +498,14 @@ class DateColumnDelegate(QtGui.QItemDelegate):
     self.default = default
     self.nullable = nullable
 
+  def paint(self, painter, option, index):
+    myoption = QtGui.QStyleOptionViewItem(option)
+    myoption.displayAlignment |= Qt.AlignRight|Qt.AlignVCenter
+    QtGui.QItemDelegate.paint(self, painter, myoption, index)
+
+  def sizeHint(self, option, index):
+    return editors.DateEditor().sizeHint()
+
   def createEditor(self, parent, option, index):
     editor = editors.DateEditor(self.nullable, self.format, parent)
     self.connect(editor,
@@ -508,6 +516,7 @@ class DateColumnDelegate(QtGui.QItemDelegate):
   def commitAndCloseEditor(self):
     editor = self.sender()
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    # dont remember why this is commented
     #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
   
   def setEditorData(self, editor, index):
@@ -529,14 +538,6 @@ class DateColumnDelegate(QtGui.QItemDelegate):
       d = datetime.date(value.year(), value.month(), value.day())
       model.setData(index, create_constant_function(d))
     logger.debug('date delegate data set')
-
-  def sizeHint(self, option, index):
-    return editors.DateEditor().sizeHint()
-
-  def paint(self, painter, option, index):
-    myoption = QtGui.QStyleOptionViewItem(option)
-    myoption.displayAlignment |= Qt.AlignRight|Qt.AlignVCenter
-    QtGui.QItemDelegate.paint(self, painter, myoption, index)
 
 _registered_delegates_[editors.DateEditor] = DateColumnDelegate
 
