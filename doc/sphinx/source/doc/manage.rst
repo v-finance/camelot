@@ -13,11 +13,15 @@ Once a project has been created and set up as described in the tutorial
 .. seealso:: :ref:`doc-schemas`
 
 Two tools exist to assist in the management of Camelot projects:
+:program:`camelot-admin.py` and :program:`manage.py`.
 
-:program:`camelot/bin/camelot-admin.py <camelot-admin.py>` is oriented towards
-the developers of the project. It is used for the creation of projects and the
-creation of schema revisions. :program:`camelot-admin.py` has the following
-options:
+camelot-admin.py
+================
+
+:program:`camelot-admin.py` is oriented towards the developers of the project.
+It is used for the creation of projects and the creation of schema revisions.
+
+Command line options are:
 
 .. program:: camelot-admin.py
 
@@ -29,10 +33,14 @@ options:
 
    Starts a new project
 
-:program:`camelot/bin/manage.py <manage.py>` is oriented towards
-administrators of an installed camelot project. It is used for interacting
-with and migration of the database to a certain schema revision. :program:`manage.py`
-has the following options:
+manage.py
+=========
+
+:program:`manage.py` is oriented towards administrators of an installed camelot
+project. It is used for interacting with and migration of the database to a
+certain schema revision.
+
+Available options are:
 
 .. program:: manage.py
 
