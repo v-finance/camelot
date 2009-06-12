@@ -1,3 +1,4 @@
+.. _doc-index:
 
 ########################
   Camelot Documentation
@@ -19,5 +20,6 @@ fermentum at lobortis enim sodales.
    delegates.rst
    fixtures.rst
    manage.rst
+   schemas.rst
    shortcuts.rst
    threads.rst

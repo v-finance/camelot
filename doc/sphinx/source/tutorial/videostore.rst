@@ -1,6 +1,7 @@
+.. _tutorial-videostore:
 
 ########################################
-  Creating a Movie Database Application
+ Creating a Movie Database Application
 ########################################
 
 :Release: |version|

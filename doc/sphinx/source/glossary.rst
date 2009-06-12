@@ -1,6 +1,8 @@
-########
-Glossary
-########
+.. _glossary:
+
+##########
+ Glossary
+##########
 
 .. glossary::
 

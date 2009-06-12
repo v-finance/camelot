@@ -1,6 +1,7 @@
+.. _copyright:
 
 ####################################
-  Camelot's Documentation Copyright
+ Camelot's Documentation Copyright
 ####################################
 
 Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.

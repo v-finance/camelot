@@ -1,6 +1,7 @@
+.. _howto-index:
 
 ###################
-  Camelot's HOWTOs
+ Camelot's HOWTOs
 ###################
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sagittis

@@ -1,5 +1,7 @@
+.. _contents:
+
 #################################
-  Camelot Documentation contents
+ Camelot Documentation contents
 #################################
 
 .. toctree::

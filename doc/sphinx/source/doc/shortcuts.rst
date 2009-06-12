@@ -1,3 +1,4 @@
+.. _doc-shortcuts:
 
 ####################
   Camelot Shortcuts 

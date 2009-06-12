@@ -1,3 +1,4 @@
+.. _doc-fixtures:
 
 #################################################
  Fixtures : handling static data in the database

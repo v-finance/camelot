@@ -1,3 +1,4 @@
+.. _howto-admin:
 
 ##############################
   Customizing the Admin class

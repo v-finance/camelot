@@ -1,6 +1,7 @@
+.. _tutorial-index:
 
 ############
-  Tutorials
+ Tutorials
 ############
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sagittis

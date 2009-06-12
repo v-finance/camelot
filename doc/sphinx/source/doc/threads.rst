@@ -1,3 +1,4 @@
+.. _doc-threads:
 
 ##################
   The Two Threads

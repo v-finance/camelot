@@ -1,3 +1,4 @@
+.. _license:
 
 #############################
   Camelot, Qt, PyQt Licenses
