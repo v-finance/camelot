@@ -6,6 +6,9 @@
 Welcome to Camelot's documentation!
 ===================================
 
+:Release: |version|
+:Date: |today|
+
 Contents:
 
 .. toctree::
@@ -26,6 +29,7 @@ Others:
 .. toctree::
    :maxdepth: 2
 
+   Complete Table of Contents <contents.rst>
    glossary.rst
    license.rst
    copyright.rst
