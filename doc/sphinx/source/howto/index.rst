@@ -15,7 +15,6 @@ mattis magna, at eleifend massa nisl et sapien. Nulla venenatis magna in ipsum
 fermentum at lobortis enim sodales.
 
 .. toctree::
-   :maxdepth: 2
 
    admin.rst
    models.rst
