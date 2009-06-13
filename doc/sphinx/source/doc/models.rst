@@ -1,4 +1,4 @@
-.. _howto-models:
+.. _doc-models:
 
 #################################################
  Creating models with Elixir/Sqlalchemy/Camelot

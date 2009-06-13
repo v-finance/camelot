@@ -1,4 +1,4 @@
-.. _howto-admin:
+.. _doc-admin:
 
 ##############################
   Customizing the Admin class
