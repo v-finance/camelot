@@ -13,7 +13,7 @@
      todo
 
    delegate
-     Used to display and edit data from a model.
+     Used to display and edit data from a model. PyQt terminology.
 
    editor
      todo
