@@ -173,6 +173,9 @@ class StoredFile(object):
   def full_path(self):
     import os
     return os.path.join(self.location, self.filename)
+  
+  def __unicode__(self):
+    return self.full_path
     
 class StoredImage(StoredFile):
   """Helper class for the Image field type Class linking a PIL image and the 
@@ -371,7 +374,9 @@ class File(types.TypeDecorator):
         os.close(handle)
         logger.debug('copy file from %s to %s', from_path, to_path)
         shutil.copy(from_path, to_path)
-        value = os.path.basename(to_path)
+        value.filename = os.path.basename(to_path)
+        value.location = self.upload_to
+        return impl_processor(value.filename)
       return impl_processor(value)
     
     return processor

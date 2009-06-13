@@ -153,8 +153,9 @@ class CustomDelegate(QtGui.QItemDelegate):
   
   editor = None
   
-  def __init__(self, parent=None, **kwargs):
+  def __init__(self, parent=None, editable=True, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
+    self.editable = editable
     self.kwargs = kwargs
     
   def createEditor(self, parent, option, index):
@@ -175,7 +176,27 @@ class CustomDelegate(QtGui.QItemDelegate):
 
 class FileDelegate(CustomDelegate):
   
-  editor = editors.FileEditor    
+  editor = editors.FileEditor
+  
+  def paint(self, painter, option, index):
+    self.drawBackground(painter, option, index)
+    painter.save()
+    if (option.state & QtGui.QStyle.State_Selected):
+      painter.fillRect(option.rect, option.palette.highlight())
+      painter.setPen(option.palette.highlightedText().color())
+    elif not self.editable:
+      painter.fillRect(option.rect, _not_editable_background_)
+      painter.setPen(_not_editable_foreground_)
+    value =  index.model().data(index, Qt.EditRole).toPyObject()
+    if value:
+      painter.drawText(option.rect.x()+2,
+                       option.rect.y(),
+                       option.rect.width()-4,
+                       option.rect.height(),
+                       Qt.AlignVCenter | Qt.AlignLeft,
+                       value.filename)
+    painter.restore()
+
     
 class StarDelegate(QtGui.QItemDelegate):
   """Custom delegate for integer values from (1 to 5)(Rating Delegate)"""
