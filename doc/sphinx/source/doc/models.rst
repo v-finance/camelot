@@ -1,16 +1,16 @@
 .. _doc-models:
 
 #################################################
- Creating models with Elixir/Sqlalchemy/Camelot
+ Creating models with Elixir/SQLAlchemy/Camelot
 #################################################
 
 :Release: |version|
 :Date: |today|
 
-This section contains tips and tricks to build data models with Elixir/Sqlalchemy/Camelot.
-The reader is encouraged to first read the basics tutorial.
+This section describes the various field types that can be used to construct
+models. Fields from SQLAlchemy and Camelot are described.
 
-Sqlalchemy field types
+SQLAlchemy field types
 ======================
 
 .. automodule:: sqlalchemy.types
