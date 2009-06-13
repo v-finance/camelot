@@ -1173,6 +1173,12 @@ All files (*)"""
 
 
 class ImageEditor(QtGui.QWidget):
+  
+  clear_icon = Icon('tango/16x16/actions/edit-delete.png').getQIcon()
+  new_icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
+  open_icon = Icon('tango/16x16/actions/document-open.png').getQIcon()
+  saveas_icon = Icon('tango/16x16/actions/document-save-as.png').getQIcon()
+    
   def __init__(self, parent=None):
     QtGui.QWidget.__init__(self, parent)
     self._modified = False
@@ -1197,23 +1203,20 @@ class ImageEditor(QtGui.QWidget):
     button_layout.setMargin(0)
 
     file_button = QtGui.QToolButton()
-    icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
-    file_button.setIcon(icon)
+    file_button.setIcon(self.new_icon)
     file_button.setAutoRaise(True)
     file_button.setToolTip('Select image')
     self.connect(file_button, QtCore.SIGNAL('clicked()'), self.openFileDialog)
     
     app_button = QtGui.QToolButton()
-    icon = Icon('tango/16x16/status/folder-open.png').getQIcon()
-    app_button.setIcon(icon)
+    app_button.setIcon(self.open_icon)
     app_button.setAutoRaise(True)
     app_button.setToolTip('Open image')
     self.connect(app_button, QtCore.SIGNAL('clicked()'), self.openInApp)
     
     clear_button = QtGui.QToolButton()
-    icon = Icon('tango/16x16/places/user-trash.png').getQIcon()
-    clear_button.setIcon(icon)
-    clear_button.setToolTip('Clear image')
+    clear_button.setIcon(self.clear_icon)
+    clear_button.setToolTip('Delete image')
     clear_button.setAutoRaise(True)
     self.connect(clear_button, QtCore.SIGNAL('clicked()'), self.clearImage)
 
@@ -1320,7 +1323,13 @@ class ImageEditor(QtGui.QWidget):
 class FileEditor(QtGui.QWidget):
   """Widget for editing File fields
   """
-      
+     
+  document_pixmap =  Icon('tango/16x16/mimetypes/x-office-document.png').getQPixmap()
+  clear_icon = Icon('tango/16x16/actions/edit-delete.png').getQIcon()
+  new_icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
+  open_icon = Icon('tango/16x16/actions/document-open.png').getQIcon()
+  saveas_icon = Icon('tango/16x16/actions/document-save-as.png').getQIcon()
+  
   def __init__(self, parent=None, **kwargs):
     QtGui.QWidget.__init__(self, parent)
     self.value = None
@@ -1331,7 +1340,8 @@ class FileEditor(QtGui.QWidget):
     # Clear button
     self.clear_button = QtGui.QToolButton()
     self.clear_button.setFocusPolicy(Qt.ClickFocus)
-    self.clear_button.setIcon(Icon('tango/16x16/actions/edit-clear.png').getQIcon())
+    self.clear_button.setIcon(self.clear_icon)
+    self.clear_button.setToolTip('Delete file')
     self.clear_button.setAutoRaise(True)
     self.connect(self.clear_button,
                  QtCore.SIGNAL('clicked()'),
@@ -1340,19 +1350,31 @@ class FileEditor(QtGui.QWidget):
     # Open button
     self.open_button = QtGui.QToolButton()
     self.open_button.setFocusPolicy(Qt.ClickFocus)
-    icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
-    self.open_button.setIcon(icon)
+    self.open_button.setIcon(self.new_icon)
+    self.open_button.setToolTip('Add file')
     self.connect(self.open_button,
                  QtCore.SIGNAL('clicked()'),
                  self.openButtonClicked)
-    self.open_button.setAutoRaise(True)  
-
+    self.open_button.setAutoRaise(True)
+    
+#    self.saveas_button = QtGui.QToolButton()
+#    self.saveas_button = QtGui.QToolButton()
+#    self.saveas_button.setFocusPolicy(Qt.ClickFocus)
+#    self.saveas_button.setIcon(self.saveas_icon)
+#    self.connect(self.saveas_button,
+#                 QtCore.SIGNAL('clicked()'),
+#                 self.saveasButtonClicked)
+#    self.saveas_button.setAutoRaise(True)
+    
     # Filename
     self.filename = QtGui.QLineEdit(self)
     self.filename.setEnabled(False)
     self.filename.setReadOnly(True)
     
     # Setup layout
+    document_label = QtGui.QLabel(self)
+    document_label.setPixmap(self.document_pixmap)
+    self.layout.addWidget(document_label)
     self.layout.addWidget(self.filename)
     self.layout.addWidget(self.clear_button)
     self.layout.addWidget(self.open_button)
@@ -1363,10 +1385,12 @@ class FileEditor(QtGui.QWidget):
     self.value = value
     if value:
       self.filename.setText(value.filename) 
-      self.open_button.setIcon(Icon('tango/16x16/places/folder.png').getQIcon())
+      self.open_button.setIcon(self.open_icon)
+      self.open_button.setToolTip('Open file')
     else:
       self.filename.setText('')
-      self.open_button.setIcon(Icon('tango/16x16/actions/document-new.png').getQIcon())
+      self.open_button.setIcon(self.new_icon)
+      self.open_button.setToolTip('Add file')
       
   def getValue(self):
     return self.value
@@ -1382,7 +1406,6 @@ class FileEditor(QtGui.QWidget):
         self.value = StoredFile(head, tail)
         self.emit(editingFinished)
     else:
-      print self.value.full_path
       url = QtCore.QUrl.fromLocalFile(self.value.full_path)
       QtGui.QDesktopServices.openUrl(url)
   
