@@ -4,14 +4,14 @@
   Camelot Documentation
 ########################
 
-This is the reference documentation for developing projects using the
-Camelot library.  The first time Camelot developer is encouraged to
-read the models and the admin section of this documentation.  
+This is the reference documentation for developing projects using the Camelot
+library.  The first time Camelot developer is encouraged to read
+:ref:`doc-models` and :ref:`doc-admin`.
 
-The threads section is for developers whishing to maintain a responsive
-UI when faced with significant delays in their application code.
+The section :ref:`doc-threads` is for developers whishing to maintain a
+responsive UI when faced with significant delays in their application code.
 
-All other sections can be read on an as needed base. 
+All other sections can be read on an as needed base.
 
 .. toctree::
 

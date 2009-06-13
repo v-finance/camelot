@@ -13,7 +13,10 @@
      todo
 
    delegate
-     Plays the role of the *controller* in the Model-View-Controller paradigm.
+     Used to display and edit data from a model.
+
+   editor
+     todo
 
    EntityAdmin
      todo
