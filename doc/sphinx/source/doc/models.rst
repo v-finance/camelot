@@ -10,97 +10,17 @@
 This section contains tips and tricks to build data models with Elixir/Sqlalchemy/Camelot.
 The reader is encouraged to first read the basics tutorial.
 
+Sqlalchemy field types
+======================
+
+.. automodule:: sqlalchemy.types
+   :members:
+   
 Camelot field types
 ===================
 
-Camelot extends the Sqlalchemy field types with a number of its own field types.  Those
-field types are automatically mapped to a specific delegate taking care of the visualisation.
-
-Those field types are defined in _camelot.types_
-
-Code
-----
-
-Color
------
-
-The Color field returns and accepts tuples of the form (r,g,b,a) where
-r,g,b,a are integers between 0 and 255.  The color is stored as an hexadecimal
-string into the database::
-
-	class MovieType(Entity):
-	  color = Field(camelot.types.Color())
-
-.. image:: ../_static/color.png
-
-Enumeration
------------
-
-The enumeration field stores integers in the database, but represents them as
-strings.  This allows efficient storage and querying while preserving readable code.
-
-Typical use of this field would be a status field.
-
-Enumeration fields are visualized as a combo box, where the labels in the combo
-box are the capitalized strings::
-
-	class Movie(Entity):
-	  title = Field(Unicode(60), required=True)
-	  state = Field(camelot.types.Enumeration([(1,'planned'), (2,'recording'), (3,'finished'), (4,'canceled')]), 
-	                                          index=True, required=True, default='planning')
-
-.. image:: ../_static/enumeration.png
-
-File
-----
-
-The file field stores a filename, located within the settings.MEDIA_ROOT folder.  A subdirectory
-upload_to can be specified::
-
-  class Movie(Entity):
-    script = Field(camelot.types.File(upload_to='script'))
-    
-.. image:: ../_static/file_delegate.png
-
-IPAddress
----------
-
-Image
------
-
-The Image field type provides the same functionallity as the File field type, but
-the files stored should be images.
-
-.. image:: ../_static/image.png
-
-Rating
-------
-
-The rating field is an integer field that is visualized as a number of stars that
-can be selected::
-
-	class Movie(Entity):
-	  title = Field(Unicode(60), required=True)
-	  rating = Field(camelot.types.Rating())
-	  
-.. image:: ../_static/rating.png
-
-RichText
---------
-
-RichText fields are unlimited text fields which contain html.  The html will be
-rendered in a rich text editor.  
-
-.. image:: ../_static/richtext.png
-
-VirtualAddress
---------------
-
-A single field that can be used to enter phone numbers, fax numbers, email addresses, 
-im addresses.  The editor provides soft validation of the data entered.  The address
-or number is stored as a string in the database
-
-.. image:: ../_static/virtualaddress_editor.png
+.. automodule:: camelot.types
+   :members:
 
 Fields calculated by the database
 =================================
@@ -144,11 +64,11 @@ is calculated by the database ::
 When the user presses F9, all data in the application is refreshed from the database, and thus
 all fields are recalculated.
 
-An explanation of the lambda function inside the ColumnProperty can be found in the Elixir_ColumnProperty_ and
-the Sqlalchemy_mappers_.
+An explanation of the lambda function inside the ColumnProperty can be found in the ElixirColumnProperty_ and
+the SqlalchemyMappers_ documentation.
 
-.._Elixir_ColumnProperty http://elixir.ematia.de/apidocs/elixir.properties.ColumnProperty.html
+.. _ElixirColumnProperty: http://elixir.ematia.de/apidocs/elixir.properties.ColumnProperty.html
 
-.._Sqlalchemy_mappers http://www.sqlalchemy.org/docs/04/mappers.html#advdatamapping_mapper_expressions
+.. _SqlalchemyMappers: http://www.sqlalchemy.org/docs/04/mappers.html#advdatamapping_mapper_expressions
 
 
