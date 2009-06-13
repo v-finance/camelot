@@ -17,6 +17,8 @@ fermentum at lobortis enim sodales.
 .. toctree::
 
    install.rst
+   models.rst
+   admin.rst
    delegates.rst
    fixtures.rst
    manage.rst

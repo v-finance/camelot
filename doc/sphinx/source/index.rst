@@ -18,7 +18,6 @@ Contents:
 
    tutorial/index.rst
    doc/index.rst
-   howto/index.rst
 
 Indices and tables:
 
