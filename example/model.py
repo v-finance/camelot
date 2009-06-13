@@ -69,7 +69,7 @@ class Movie(Entity):
     section = 'movies'
     # the list_display attribute specifies which entity attributes should
     # be visible in the table view        
-    list_display = ['title', 'releasedate', 'director']
+    list_display = ['title', 'releasedate', 'director',]
     # define filters to be available in the table view
     list_filter = ['genre']
     # the form_display attribute specifies which entity attributes should be
@@ -82,7 +82,7 @@ class Movie(Entity):
         'director',
         'script', 
         'genre', 
-        'description', 'tags'])),
+        'description', 'tags'], scrollbars=True)),
       ('Cast', WidgetOnlyForm('cast'))
     ])
     

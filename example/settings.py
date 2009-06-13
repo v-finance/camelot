@@ -13,9 +13,12 @@ CAMELOT_ART_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY, 'art')
 CAMELOT_TEMPLATES_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY,
                                            'view', 'templates')
 CAMELOT_ATTACHMENTS = 'G:\Data\Attachments'
-CAMELOT_MEDIA_ROOT = 'media'
+CAMELOT_MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'media')
 
 ENGINE = lambda:'sqlite:///videostore.sqlite'
+
+#logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
+#logging.getLogger('camelot.view.proxy.collection_proxy').setLevel(logging.DEBUG)
 
 def setup_model():
   from example.model import Movie, Cast
