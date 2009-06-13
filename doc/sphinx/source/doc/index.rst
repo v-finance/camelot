@@ -16,6 +16,7 @@ fermentum at lobortis enim sodales.
 
 .. toctree::
 
+   install.rst
    delegates.rst
    fixtures.rst
    manage.rst
