@@ -25,7 +25,11 @@
 #
 #  ============================================================================
 
-"""Custom Camelot field types that extend the SQLAlchemy field types.
+"""
+Camelot extends the Sqlalchemy field types with a number of its own field types. Those field types are automatically 
+mapped to a specific delegate taking care of the visualisation.
+
+Those fields are stored in the camelot.types module
 """
 
 import os
@@ -38,14 +42,17 @@ from sqlalchemy import types
 
 
 class VirtualAddress(types.TypeDecorator):
-  """Sqlalchemy type to store virtual addresses : eg, phone number, e-mail
-  address, ...
+  """A single field that can be used to enter phone numbers, fax numbers, email addresses, 
+im addresses.  The editor provides soft validation of the data entered.  The address
+or number is stored as a string in the database
   
-  This column type accepts and returns tuples of strings, the first string is
-  the virtual_address_type, and the second the address itself:
-  
-  eg: ('mail','project-camelot@conceptive.be') is stored as 
-  mail://project-camelot@conceptive.be
+This column type accepts and returns tuples of strings, the first string is
+the virtual_address_type, and the second the address itself:
+
+eg: ('mail','project-camelot@conceptive.be') is stored as 
+mail://project-camelot@conceptive.be
+
+.. image:: ../_static/virtualaddress_editor.png
   """
   
   impl = types.Unicode
@@ -84,14 +91,12 @@ class VirtualAddress(types.TypeDecorator):
 
 class Code(types.TypeDecorator):
   """Sqlalchemy column type to store codes.  Where a code is a list of strings
-  on which a regular expression can be enforced.
-  
-  This column type accepts and returns a list of strings and stores them as a
-  string joined with points.
-  
-  eg: ['08', 'AB'] is stored as 08.AB
-  
+on which a regular expression can be enforced.
 
+This column type accepts and returns a list of strings and stores them as a
+string joined with points.
+
+eg: ['08', 'AB'] is stored as 08.AB
   """
   
   impl = types.Unicode
@@ -140,17 +145,22 @@ class IPAddress(Code):
     super(IPAddress, self).__init__(parts=['900','900','900','900'])
  
 class Rating(types.TypeDecorator):
-  """Sqlalchemy column type to store ratings
-  
-  by default, fields of this type will be displayed as stars"""
+  """The rating field is an integer field that is visualized as a number of stars that
+can be selected::
+
+  class Movie(Entity):
+    title = Field(Unicode(60), required=True)
+    rating = Field(camelot.types.Rating())
+    
+.. image:: ../_static/rating.png"""
   
   impl = types.Integer
      
 class RichText(types.TypeDecorator):
-  """Sqlalchemy column type to store rich text
-  
-  by default, fields of this type will be displayed within a rich
-  text editor"""
+  """RichText fields are unlimited text fields which contain html.  The html will be
+rendered in a rich text editor.  
+
+.. image:: ../_static/richtext.png"""
   
   impl = types.UnicodeText
   
@@ -163,7 +173,7 @@ except:
 
 class StoredFile(object):
   """Helper class for the File field type containing the location and the
-  filename of a file"""
+filename of a file"""
   
   def __init__(self, location=None, filename=None):
     self.location = location
@@ -179,7 +189,7 @@ class StoredFile(object):
     
 class StoredImage(StoredFile):
   """Helper class for the Image field type Class linking a PIL image and the 
-  location and filename where the image is stored"""
+location and filename where the image is stored"""
   
   def __init__(self, image, location=None, filename=None):
     self.image = image
@@ -187,13 +197,18 @@ class StoredImage(StoredFile):
     self.filename = filename
     
 class Color(types.TypeDecorator):
-  """Sqlalchemy column type to store colors.
-  
-  The Color field returns and accepts tuples of the form (r,g,b,a) where
-  r,g,b,a are integers between 0 and 255
-  
-  The colors are stored in the database as strings of the form AARRGGBB,
-  where AA is the transparency, RR is red, GG is green BB is blue.
+  """The Color field returns and accepts tuples of the form (r,g,b,a) where
+r,g,b,a are integers between 0 and 255. The color is stored as an hexadecimal
+string of the form AARRGGBB into the database, where AA is the transparency, 
+RR is red, GG is green BB is blue::
+
+  class MovieType(Entity):
+    color = Field(camelot.types.Color())
+
+.. image:: ../_static/color.png
+
+
+The colors are stored in the database as strings 
   """
   
   impl = types.Unicode
@@ -232,10 +247,21 @@ class Color(types.TypeDecorator):
     return processor
   
 class Enumeration(types.TypeDecorator):
-  """Column type to store Enumerations
-  
-  Stores enumerations as integer values and returns and accepts associated strings 
-  """
+  """The enumeration field stores integers in the database, but represents them as
+strings.  This allows efficient storage and querying while preserving readable code.
+
+Typical use of this field would be a status field.
+
+Enumeration fields are visualized as a combo box, where the labels in the combo
+box are the capitalized strings::
+
+  class Movie(Entity):
+    title = Field(Unicode(60), required=True)
+    state = Field(camelot.types.Enumeration([(1,'planned'), (2,'recording'), (3,'finished'), (4,'canceled')]), 
+                                            index=True, required=True, default='planning')
+
+.. image:: ../_static/enumeration.png  
+"""
   
   impl = types.Integer
   
@@ -279,9 +305,14 @@ class Enumeration(types.TypeDecorator):
 class Image(types.TypeDecorator):
   """Sqlalchemy column type to store images
   
-  This column type accepts and returns a StoredImage, and stores them in the directory
-  specified by settings.MEDIA_ROOT.  The name of the file is stored as a string in
-  the database.
+This column type accepts and returns a StoredImage, and stores them in the directory
+specified by settings.MEDIA_ROOT.  The name of the file is stored as a string in
+the database.
+
+The Image field type provides the same functionallity as the File field type, but
+the files stored should be images.
+
+.. image:: ../_static/image.png  
   """
   
   impl = types.Unicode
@@ -339,9 +370,14 @@ class Image(types.TypeDecorator):
 class File(types.TypeDecorator):
   """Sqlalchemy column type to store files.  Only the location of the file is stored
   
-  This column type accepts and returns a StoredFile, and stores them in the directory
-  specified by settings.MEDIA_ROOT.  The name of the file is stored as a string in
-  the database.
+This column type accepts and returns a StoredFile, and stores them in the directory
+specified by settings.MEDIA_ROOT.  The name of the file is stored as a string in
+the database.  A subdirectory upload_to can be specified::
+
+  class Movie(Entity):
+    script = Field(camelot.types.File(upload_to='script'))
+    
+.. image:: ../_static/file_delegate.png
   """
   
   impl = types.Unicode
