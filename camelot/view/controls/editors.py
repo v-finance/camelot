@@ -1173,14 +1173,15 @@ All files (*)"""
 
 
 class ImageEditor(QtGui.QWidget):
-  
-  clear_icon = Icon('tango/16x16/actions/edit-delete.png').getQIcon()
-  new_icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
-  open_icon = Icon('tango/16x16/actions/document-open.png').getQIcon()
-  saveas_icon = Icon('tango/16x16/actions/document-save-as.png').getQIcon()
     
   def __init__(self, parent=None):
     QtGui.QWidget.__init__(self, parent)
+    
+    self.clear_icon = Icon('tango/16x16/actions/edit-delete.png').getQIcon()
+    self.new_icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
+    self.open_icon = Icon('tango/16x16/actions/document-open.png').getQIcon()
+    self.saveas_icon = Icon('tango/16x16/actions/document-save-as.png').getQIcon()
+  
     self._modified = False
     self.image = None 
     self.layout = QtGui.QHBoxLayout()
@@ -1323,15 +1324,15 @@ class ImageEditor(QtGui.QWidget):
 class FileEditor(QtGui.QWidget):
   """Widget for editing File fields
   """
-     
-  document_pixmap =  Icon('tango/16x16/mimetypes/x-office-document.png').getQPixmap()
-  clear_icon = Icon('tango/16x16/actions/edit-delete.png').getQIcon()
-  new_icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
-  open_icon = Icon('tango/16x16/actions/document-open.png').getQIcon()
-  saveas_icon = Icon('tango/16x16/actions/document-save-as.png').getQIcon()
   
   def __init__(self, parent=None, **kwargs):
     QtGui.QWidget.__init__(self, parent)
+    self.document_pixmap =  Icon('tango/16x16/mimetypes/x-office-document.png').getQPixmap()
+    self.clear_icon = Icon('tango/16x16/actions/edit-delete.png').getQIcon()
+    self.new_icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
+    self.open_icon = Icon('tango/16x16/actions/document-open.png').getQIcon()
+    self.saveas_icon = Icon('tango/16x16/actions/document-save-as.png').getQIcon()
+  
     self.value = None
     self.layout = QtGui.QHBoxLayout()
     self.layout.setSpacing(0)

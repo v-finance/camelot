@@ -991,7 +991,11 @@ class ComboBoxColumnDelegate(QtGui.QItemDelegate):
       editor.setCurrentIndex(editor.count()-1)
     
   def setModelData(self, editor, model, index):
-    editor_data = self.qvariantToPython(editor.itemData(editor.currentIndex()))
+    current_index = editor.currentIndex()
+    if current_index>=0:
+      editor_data = self.qvariantToPython(editor.itemData(editor.currentIndex()))
+    else:
+      editor_data = None
     model.setData(index, create_constant_function(editor_data))
 
 _registered_delegates_[QtGui.QComboBox] = ComboBoxColumnDelegate
