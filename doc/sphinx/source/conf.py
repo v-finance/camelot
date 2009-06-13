@@ -98,7 +98,7 @@ html_theme = 'default'
 # documentation.
 html_theme_options = {
   'rightsidebar':'true', 
-  'sticksidebar':'true'
+  'stickysidebar':'true'
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
