@@ -7,12 +7,15 @@
 .. glossary::
 
    admin class   
-     todo
+     EntityAdmin subclass that controls how a :term:`Model` is displayed
 
    CAMELOT_ART_DIRECTORY
      todo
 
    delegate
+     Plays the role of the *controller* in the Model-View-Controller paradigm.
+
+   EntityAdmin
      todo
 
    entity
@@ -22,22 +25,23 @@
      todo
 
    GUI
-     Graphical User Interface
+     Graphical User Interface.
      
    manage
      todo
 
    model
-     todo
+     A table in a database.
 
    PTC
      todo
 
    section
-     todo
+     Logical and graphical grouping of Models. Graphically displayed in the
+     Camelot application left navigation pane.
 
    SQLAlchemy
-     todo
+     Powerful Python Object Relational Mapper.
 
    thread
      todo
