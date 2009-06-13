@@ -26,10 +26,11 @@
 #  ============================================================================
 
 """
-Camelot extends the Sqlalchemy field types with a number of its own field types. Those field types are automatically 
-mapped to a specific delegate taking care of the visualisation.
+Camelot extends the SQLAlchemy field types with a number of its own field
+types. Those field types are automatically mapped to a specific delegate taking
+care of the visualisation.
 
-Those fields are stored in the camelot.types module
+Those fields are stored in the :mod:`camelot.types` module.
 """
 
 import os
@@ -42,17 +43,17 @@ from sqlalchemy import types
 
 
 class VirtualAddress(types.TypeDecorator):
-  """A single field that can be used to enter phone numbers, fax numbers, email addresses, 
-im addresses.  The editor provides soft validation of the data entered.  The address
-or number is stored as a string in the database
-  
-This column type accepts and returns tuples of strings, the first string is
-the virtual_address_type, and the second the address itself:
+  """A single field that can be used to enter phone numbers, fax numbers, email
+  addresses, im addresses.  The editor provides soft validation of the data
+  entered.  The address or number is stored as a string in the database.
+    
+  This column type accepts and returns tuples of strings, the first string is
+  the :attr:`virtual_address_type`, and the second the address itself.
 
-eg: ('mail','project-camelot@conceptive.be') is stored as 
-mail://project-camelot@conceptive.be
+  eg: ``('mail','project-camelot@conceptive.be')`` is stored as
+  ``mail://project-camelot@conceptive.be``
 
-.. image:: ../_static/virtualaddress_editor.png
+  .. image:: ../_static/virtualaddress_editor.png
   """
   
   impl = types.Unicode
@@ -90,21 +91,22 @@ mail://project-camelot@conceptive.be
     
 
 class Code(types.TypeDecorator):
-  """Sqlalchemy column type to store codes.  Where a code is a list of strings
-on which a regular expression can be enforced.
+  """SQLAlchemy column type to store codes.  Where a code is a list of strings
+  on which a regular expression can be enforced.
 
-This column type accepts and returns a list of strings and stores them as a
-string joined with points.
+  This column type accepts and returns a list of strings and stores them as a
+  string joined with points.
 
-eg: ['08', 'AB'] is stored as 08.AB
+  eg: ``['08', 'AB']`` is stored as ``08.AB``
   """
   
   impl = types.Unicode
         
   def __init__(self, parts, **kwargs):
     """
-    @param parts: a list of input masks specifying the mask for each part, eg ['99', 'AA'], for
-    valid input masks, see the docs of qlineedit    
+    :param parts: a list of input masks specifying the mask for each part,
+    eg ``['99', 'AA']``. For valid input masks, see
+    `QLineEdit <http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/qlineedit.html>`_
     """
     import string
     translator = string.maketrans('', '')
