@@ -164,6 +164,8 @@ class MainWindow(QtGui.QMainWindow):
     icon_excel = Icon('tango/16x16/mimetypes/x-office-spreadsheet.png').fullpath()
     icon_word = Icon('tango/16x16/mimetypes/x-office-document.png').fullpath()
     icon_mail = Icon('tango/16x16/actions/mail-message-new.png').fullpath()
+    
+    icon_import = Icon('tango/16x16/actions/document-open.png').fullpath()
 
     # TODO: change some of the status tips
     self.saveAct = createAction(parent=self,
@@ -317,6 +319,12 @@ class MainWindow(QtGui.QMainWindow):
                                         actionicon=icon_mail,
                                         tip=_('Send by e-mail'))
     
+    self.importFromFileAct = createAction(parent=self,
+                                          text=_('Import from file'),
+                                          slot=self.importFromFile,
+                                          actionicon=icon_import,
+                                          tip=_('Import from file'))
+    
     from camelot.action.refresh import SessionRefresh
     
     self.sessionRefreshAct = SessionRefresh(self)  
@@ -422,7 +430,13 @@ class MainWindow(QtGui.QMainWindow):
       html = self.activeMdiChild().widget().toHtml()
       open_html_in_outlook(html)
 
-    mt.post(export)      
+    mt.post(export)  
+
+  def importFromFile(self):
+      from camelot.view.wizard.import_data import ImportWizard
+      wizard = ImportWizard()
+      wizard.start()
+        
   # Menus
 
   def createMenus(self):
@@ -439,6 +453,10 @@ class MainWindow(QtGui.QMainWindow):
                                  self.exportToMailAct,
                                  ))
     self.fileMenu.addMenu(self.exportMenu)
+    
+    self.importMenu = QtGui.QMenu(_('Import To'))
+    addActions(self.importMenu, (self.importFromFileAct, ))
+    self.fileMenu.addMenu(self.importMenu)
 
     addActions(self.fileMenu, (None, self.exitAct))
     
@@ -488,6 +506,8 @@ class MainWindow(QtGui.QMainWindow):
     self.exportToWordAct.setEnabled(hasMdiChild)
     self.exportToExcelAct.setEnabled(hasMdiChild)
     self.exportToMailAct.setEnabled(hasMdiChild)
+    
+    self.importFromFileAct.setEnabled(hasMdiChild)
 
     self.separatorAct.setVisible(hasMdiChild)
 
@@ -567,12 +587,20 @@ class MainWindow(QtGui.QMainWindow):
                                     self.exportToWordAct,
                                     self.exportToMailAct,))
     
+    self.importToolBar = self.addToolBar(_('Import'))
+    self.importToolBar.setObjectName('ImportToolBar')
+    self.importToolBar.setMovable(False)
+    self.importToolBar.setFloatable(False)
+    addActions(self.importToolBar, (self.importFromFileAct,
+                                    ))
+    
     if self.app_actions:
       self.applicationToolBar = self.addToolBar(_('Application'))
       self.applicationToolBar.setObjectName('ApplicationToolBar')
       self.applicationToolBar.setMovable(False)
       self.applicationToolBar.setFloatable(False)
       addActions(self.exportToolBar, self.app_actions)
+      addActions(self.importToolBar, self.app_actions)
       
   # Navigation Pane
 
