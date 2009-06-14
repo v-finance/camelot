@@ -33,27 +33,74 @@ logger = logging.getLogger('camelot.view.object_admin')
 from camelot.view.model_thread import gui_function, model_function
 from validator.object_validator import ObjectValidator
 
-
 class ObjectAdmin(object):
+  """The ObjectAdmin class describes the interface that will be used
+to interact with objects of a certain class.  The behaviour of this class and
+the resulting interface can be tuned by specifying specific class attributes:
+
+.. attribute:: list_display 
+
+a list with the fields that should be displayed in a table view
+
+.. attribute:: form_display 
+
+a list with the fields that should be displayed in a form view, defaults to the same
+fields as those specified in list_display
+
+.. attribute:: list_filter
+
+A list of fields that should be used to generate filters for in the table view.  If the
+field named is a one2many, many2one or many2many field, the field name should be followed by a
+field name of the related entity ::
+
+  class Project(Entity):
+    oranization = OneToMany('Organization')
+    name = Field(Unicode(50))
+    
+    class Admin(EntityAdmin):
+      list_display = ['organization']
+      list_filter = ['organization.name']
+
+.. attribute:: form_size
+
+a tuple indicating the size of a form view, defaults to (700,500)
+
+.. attribute:: form_actions
+
+Actions to be accessible by pushbuttons on the side of a form,
+a list of tuples (button_label, action_function) where action_function
+takes as its single argument, a method that returns the the object that
+was displayed by the form when the button was pressed::
+
+  class Admin(EntityAdmin):
+    form_actions = [('Foo', lamda o_getter:print 'foo')]
+    
+.. attribute:: field_attributes
+
+A dictionary specifying for each field of the model some additional
+attributes on how they should be displayed.  All of these attributes
+are forwarded to the constructor of the delegate of this field::
+
+  class Movie(Entity):
+    title = Field(Unicode(50))
+    
+    class Admin(EntityAdmin):
+      list_display = ['title']
+      field_attributes = dict(title=dict(editable=False))
+      
+"""
   name = None
   list_display = []
   validator = ObjectValidator  
   fields = []
   form = [] #DEPRECATED
   form_display = []
-  # list of field_names to filter on, if the field name is a one2many,
-  # many2one or many2many field, the field name should be followed by a
-  # field name of the related entity, eg : 'organization.name'
   list_filter = []
   list_charts = []
   list_actions = []
   list_search = []
   list_size = (600, 400)
   form_size = (700, 500)
-  # Actions to be accessible by pushbuttons on the side of a form,
-  # a list of tuples (button_label, action_function) where action_function
-  # takes as its single argument, the object that is edited by the form
-  # eg. : form_actions = [('Print', lamda o:print o)]
   form_actions = []
   form_title_column = None
   field_attributes = {}

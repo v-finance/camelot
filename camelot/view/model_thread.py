@@ -31,8 +31,6 @@ import logging
 import threading
 import Queue
 
-import settings
-
 logger = logging.getLogger('camelot.view.model_thread')
 
 _model_thread_ = []
