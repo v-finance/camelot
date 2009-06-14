@@ -368,7 +368,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         option = QtGui.QStyleOptionViewItem()
         editor_size = self.item_delegate.sizeHint(option, self.index(0, section))
         if 'minimal_column_width' in c[1]:
-          minimal_column_width = QtGui.QFontMetrics(self._header_font).size(Qt.TextSingleLine, ' ').width()*c[1]['minimal_column_width']
+          minimal_column_width = QtGui.QFontMetrics(self._header_font).size(Qt.TextSingleLine, 'A').width()*c[1]['minimal_column_width']
         else:
           minimal_column_width = 0
         label_size = QtGui.QFontMetrics(self._header_font_required).size(Qt.TextSingleLine, c[1]['name']+' ')

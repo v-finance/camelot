@@ -378,6 +378,7 @@ class VirtualAddressEditor(QtGui.QWidget):
         
 
 class CodeEditor(QtGui.QWidget):
+  
   def __init__(self, parts=['99', 'AA'], parent=None):
     super(CodeEditor, self).__init__(parent)
     self.setFocusPolicy(Qt.StrongFocus)
@@ -386,10 +387,13 @@ class CodeEditor(QtGui.QWidget):
     layout = QtGui.QHBoxLayout()
     #layout.setSpacing(0)
     layout.setMargin(0)
-
+    QtGui.QApplication.font()
+    #single_character_width = QtGui.QFontMetrics(self._header_font).size(Qt.TextSingleLine, ' ').width()
     for part in parts:
       editor = QtGui.QLineEdit()
       editor.setInputMask(part)
+      space_width = editor.fontMetrics().size(Qt.TextSingleLine, 'A').width()
+      editor.setMaximumWidth(space_width*5)
       editor.installEventFilter(self)
       self.part_editors.append(editor)
       layout.addWidget(editor)
