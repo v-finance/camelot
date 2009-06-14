@@ -358,3 +358,11 @@ class TableView(QtGui.QWidget):
   def __del__(self):
     """deletes the tableview object"""
     logger.debug('%s deleted' % self.__class__.__name__) 
+    
+  def importFromFile(self):
+    """"import data """
+    #todo move to import.py and import import.py here
+    from camelot.view.wizard.import_data import ImportWizard
+    logger.info('call import method')  
+    importWizard = ImportWizard()
+    importWizard.start()
