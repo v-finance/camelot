@@ -1,8 +1,8 @@
 .. _doc-delegates:
 
-####################
-  Camelot Delegates
-####################
+#############
+  Delegates
+#############
 
 :Release: |version|
 :Date: |today|
@@ -18,6 +18,30 @@ data from the model.  When the data has been edited in the form, the delegates
 will take care of updating the model with the new data.
 
 All Camelot delegates are subclasses of :class:`QAbstractItemDelegate`.
+
+Specifying delegates
+====================
+
+The use of a specific delegate can be forced by using the ``delegate`` field
+attribute.  Suppose ``rating`` is a field of type :ctype:`integer`, then it
+can be forced to be visualized as stars::
+
+  from camelot.view.controls import delegates
+  
+  class Movie(Entity):
+    title = Field(Unicode(50))
+    rating = Field(Integer)
+  
+    class Admin(EntityAdmin):
+      list_display = ['title', 'rating']
+      field_attributes = {'rating':{'delegate':delegates.StarDelegate}}
+	
+The above code will result in:
+
+.. image:: ../_static/rating.png
+
+If no ``delegate`` field attribute is given, a default one will be taken depending
+on the sqlalchemy field type.
 
 Default delegates
 =================
@@ -54,19 +78,6 @@ FileDelegate
 
 .. image:: ../_static/file_delegate.png
 
-
-Forcing delegates
-=================
-
-The use of a specific delegate can be forced by using the ``delegate`` field
-attribute.  Suppose ``rating`` is a field of type :ctype:`integer`, then it
-can be forced to be visualized as stars::
-
-	from camelot.view.controls import delegates
-	...
-	field_attributes = {'rating':{'delegate':delegates.StarDelegate}}
-
-
 Attributes common to most delegates
 ===================================
 
@@ -85,9 +96,17 @@ Attributes common to most delegates
 
   The use of :attr:`choices` forces the use of the ComboBox delegate::
 
-	field_attributes = {'state':{'choices':lambda o:[(1, 'Active'),
-	                                                 (2, 'Passive')]}}
+    field_attributes = {'state':{'choices':lambda o:[(1, 'Active'), 
+                                                     (2, 'Passive')]}}
+	                                                 
+**minimal_column_width**
+  An integer specifying the minimal column width when this field is 
+  displayed in a table view.  The width is expressed as the number of 
+  characters that should fit in the column::
 
+    field_attributes = {'name':{'minimal_column_width':50}}
+  
+  will make the column wide enough to display at least 50 characters.
 
 Delegate specific attributes
 ============================
