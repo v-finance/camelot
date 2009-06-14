@@ -1089,10 +1089,18 @@ class One2ManyEditor(QtGui.QWidget):
       @model_function
       def create():
         o = self.admin.entity()
-        self.model.insertEntityInstance(0,o)
+        row = self.model.insertEntityInstance(0,o)
         self.admin.setDefaults(o)
+        return row
+      
+      @gui_function
+      def activate_editor(row):
+        index = self.model.index(row, 0)
+        self.table.scrollToBottom()
+        self.table.setCurrentIndex(index)
+        self.table.edit(index)
         
-      self.admin.mt.post(create)
+      self.admin.mt.post(create, activate_editor)
         
     else:
       prependentity = lambda o: self.model.insertEntityInstance(0, o)

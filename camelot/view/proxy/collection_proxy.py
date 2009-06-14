@@ -629,6 +629,10 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     
   @model_function
   def insertEntityInstance(self, row, o):
+    """Insert object o into this collection
+    :param o: the object to be added to the collection
+    :return: the row at which the object was inserted
+    """
     self.append(o)
     row = self.getRowCount()-1
     self.unflushed_rows.add(row)
@@ -648,6 +652,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
 #      elixir.session.flush([history])
 #      self.rsh.sendEntityCreate(self, o)
     self.mt.post(lambda:None, lambda *args:self.refresh())
+    return row
               
   @gui_function
   def insertRow(self, row, entity_instance_getter):
