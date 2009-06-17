@@ -38,8 +38,15 @@ def startproject(project):
   import shutil, os
   if os.path.exists(project):
     raise Exception('Directory %s allready exists, cannot start a project in it'%project)
+
+  def ignore(directory, content):
+    """ignore .svn files"""
+    for c in content:
+      if c.startswith('.'):
+        yield c
+        
   shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
-                  project,)
+                  project)# , ignore=ignore) ignore doesn't seem to work as expected ??
   from migrate.versioning.api import create
   create(os.path.join(project, 'repository'), project)
     
