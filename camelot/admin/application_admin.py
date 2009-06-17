@@ -1,0 +1,1 @@
+from camelot.view.application_admin import ApplicationAdmin
