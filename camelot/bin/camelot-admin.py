@@ -35,7 +35,7 @@ to get a list of commands and options
 """
 
 def startproject(project):
-  import shutil, os
+  import shutil, os, sys
   if os.path.exists(project):
     raise Exception('Directory %s allready exists, cannot start a project in it'%project)
 
@@ -45,8 +45,15 @@ def startproject(project):
       if c.startswith('.'):
         yield c
         
-  shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
-                  project)# , ignore=ignore) ignore doesn't seem to work as expected ??
+  # ignore is only supported as of python 2.6
+  v = sys.version_info
+  if v[0]>2 or (v[0]==2 and v[1]>=6):
+    print 'ignore .svn files'
+    shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
+                    project, ignore=ignore)
+  else:
+    shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
+                    project)    
   from migrate.versioning.api import create
   create(os.path.join(project, 'repository'), project)
     

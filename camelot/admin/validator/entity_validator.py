@@ -39,7 +39,6 @@ class EntityValidator(ObjectValidator):
     """@return: list of messages explaining invalid data
     empty list if object is valid
     """
-    logger.debug(u'objectValidity %s'%unicode(entity_instance))
     from camelot.view.controls import delegates
     messages = []
     for column in self.model.getColumns():
