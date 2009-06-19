@@ -140,32 +140,27 @@ class DateEditor(QtGui.QWidget):
   def __init__(self, nullable=True, format='dd/MM/yyyy', parent=None):
     super(DateEditor, self).__init__(parent)
     self.format = format
-    self.reset = None
     self.qdateedit = QtGui.QDateEdit()
     self.qdateedit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
     self.qdateedit.setDisplayFormat(QtCore.QString(format))
-    self.combobox = QtGui.QComboBox()
-    specialdates = ['', 'today', 'reset']
+    
+    special_date_menu = QtGui.QMenu(self)
+    special_date_menu.addAction('Today')
+    special_date = QtGui.QToolButton(self)
+    special_date.setIcon(Icon('tango/16x16/apps/office-calendar.png').getQIcon())
+    special_date.setAutoRaise(True)
+    special_date.setMenu(special_date_menu)
+    special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
+    
     if nullable:
-      specialdates.extend(['clear'])
+      special_date_menu.addAction('Clear')
       self.qdateedit.setSpecialValueText('0/0/0')
     else:
       self.qdateedit.setCalendarPopup(True)
-    self.combobox.addItems(specialdates)
+
     self.hlayout = QtGui.QHBoxLayout()
     self.hlayout.addWidget(self.qdateedit)
-    self.hlayout.addWidget(self.combobox)
-
-    #if nullable:
-    #  nullbutton = QtGui.QToolButton()
-    #  icon = Icon('tango/16x16/places/user-trash.png').getQIcon()
-    #  nullbutton.setIcon(icon)
-    #  nullbutton.setAutoRaise(True)
-    #  self.connect(nullbutton, QtCore.SIGNAL('clicked()'), self.setMinimumDate)
-    #  self.qdateedit.setSpecialValueText('0/0/0')
-    #  self.hlayout.addWidget(nullbutton)
-    #else:
-    #  self.qdateedit.setCalendarPopup(True)
+    self.hlayout.addWidget(special_date)
 
     self.hlayout.setContentsMargins(0, 0, 0, 0)
     self.hlayout.setMargin(0)
@@ -184,8 +179,8 @@ class DateEditor(QtGui.QWidget):
     self.connect(self.qdateedit,
                  QtCore.SIGNAL('editingFinished()'),
                  self.editingFinished)
-    self.connect(self.combobox,
-                 QtCore.SIGNAL('currentIndexChanged(QString)'),
+    self.connect(special_date_menu,
+                 QtCore.SIGNAL('triggered( QAction*)'),
                  self.setSpecialDate)
                  
   # TODO: consider using QDate.toPyDate(), PyQt4.1
@@ -220,20 +215,13 @@ class DateEditor(QtGui.QWidget):
   def setDate(self, date):
     self.qdateedit.setDate(date)
 
-  def setSpecialDate(self, date):
-    if date.isNull():
-      return
-    elif date.compare('today') == 0:
-      self.reset = self.qdateedit.date()
+  def setSpecialDate(self, action):
+    if action.text().compare('Today') == 0:
       self.qdateedit.setDate(QtCore.QDate.currentDate())
-    elif date.compare('reset') == 0:
-      if self.reset is not None:
-        self.qdateedit.setDate(self.reset)
     # minimum date is our special value text
-    elif date.compare('clear') == 0:
+    elif action.text().compare('Clear') == 0:
       self.qdateedit.setDate(self.qdateedit.minimumDate())
-    else:
-      return
+    self.emit(QtCore.SIGNAL('editingFinished()'))
 
 class VirtualAddressEditor(QtGui.QWidget):
   def __init__(self, parent=None):
