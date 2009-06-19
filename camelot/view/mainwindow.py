@@ -165,7 +165,7 @@ class MainWindow(QtGui.QMainWindow):
     icon_word = Icon('tango/16x16/mimetypes/x-office-document.png').fullpath()
     icon_mail = Icon('tango/16x16/actions/mail-message-new.png').fullpath()
     
-    icon_import = Icon('tango/16x16/actions/document-open.png').fullpath()
+    icon_import = Icon('tango/16x16/mimetypes/text-x-generic.png').fullpath()
 
     # TODO: change some of the status tips
     self.saveAct = createAction(parent=self,
@@ -454,7 +454,7 @@ class MainWindow(QtGui.QMainWindow):
                                  ))
     self.fileMenu.addMenu(self.exportMenu)
     
-    self.importMenu = QtGui.QMenu(_('Import To'))
+    self.importMenu = QtGui.QMenu(_('Import From'))
     addActions(self.importMenu, (self.importFromFileAct, ))
     self.fileMenu.addMenu(self.importMenu)
 
@@ -591,8 +591,6 @@ class MainWindow(QtGui.QMainWindow):
     self.importToolBar.setObjectName('ImportToolBar')
     self.importToolBar.setMovable(False)
     self.importToolBar.setFloatable(False)
-    addActions(self.importToolBar, (self.importFromFileAct,
-                                    ))
     
     if self.app_actions:
       self.applicationToolBar = self.addToolBar(_('Application'))
