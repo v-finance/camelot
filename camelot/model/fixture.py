@@ -51,6 +51,19 @@ class Fixture(Entity):
     reference = cls.findFixtureReference(entity, fixture_key, fixture_class) 
     if reference:
       return entity.get(reference.primary_key)
+    
+  @classmethod
+  def findFixtureKeyAndClass(cls, obj):
+    """Find the fixture key and class of an object
+    @param obj: the object we are looking for 
+    @return: (fixture_key, fixture_class) if the object is a registered fixture, (None, None) otherwise
+    """
+    entity_name = unicode(obj.__class__.__name__)
+    fixture = cls.query.filter_by(model=entity_name, primary_key=obj.id).first()
+    if fixture:
+      return (fixture.fixture_key, fixture.fixture_class)
+    else:
+      return (None, None)
   
   @classmethod
   def insertOrUpdateFixture(cls, entity, fixture_key, values, fixture_class=None):
