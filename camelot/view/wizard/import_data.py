@@ -1,5 +1,5 @@
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QWizard, QWizardPage, QToolBar, QFileDialog, QPushButton, QTableView, QFont
+from PyQt4.QtGui import QWizard, QWizardPage, QToolBar, QFileDialog, QPushButton, QTableView, QFont, QVBoxLayout
 from PyQt4.QtCore import QString, QAbstractTableModel, QVariant, Qt
 from camelot.view import art
 from camelot.view.art import Icon
@@ -12,40 +12,30 @@ import csv, itertools
 _ = lambda x: x
 
 class ImportWizard(QtGui.QWizard):
-    """Import wizard GUI"""
-    
-#    def __init__(self):
-#        print 'init method'
-#        #logger.debug('make importWizard')
-        
+    """Import wizard GUI"""       
  
     def start(self):
         self.qWizard = QWizard()
         self.qWizard.setEnabled(True)
         self.qPage = QWizardPage(self.qWizard)
         self.qPage.setTitle(QString('import wizard'))
-
-        self.openToolBar = QToolBar(self.qPage)
-        icon_file_open = Icon('tango/32x32/actions/fileopen.png').fullpath()
         
-        self.openAct = QtGui.QAction(QtGui.QIcon(icon_file_open), 'Open File', self.openToolBar)
+        self.makeButtonToSearchFile()
         
-        self.openToolBar.connect(self.openAct, QtCore.SIGNAL('triggered()'), self.showOpenFileDialog)
-        self.openToolBar.addAction(self.openAct)
-        
+        #make grid
         self.grid = QtGui.QGridLayout()
         self.grid.setSpacing(10)
-
         self.grid.addWidget(self.openToolBar, 1, 0)
         self.label = QtGui.QLabel('', self.qPage)
         self.grid.addWidget(self.label, 1, 1)
-
-        self.qPage.setLayout(self.grid)
         
+        #add layout to page
+        self.qPage.setLayout(self.grid)
         self.qWizard.addPage(self.qPage)
-        self.qPage2 = QWizardPage(self.qWizard)
-        self.qPage2.setTitle(QString('page 2'))
-        self.qWizard.addPage(self.qPage2)
+        #make the page that shows the table
+        self.qTablePage = QWizardPage(self.qWizard)
+        self.qTablePage.setTitle(QString('Data from file'))
+        self.qWizard.addPage(self.qTablePage)
         
         cancelButton = QPushButton(QString('cancel'), self.qWizard)
         self.qWizard.setButton(QWizard.CancelButton, cancelButton)
@@ -55,6 +45,13 @@ class ImportWizard(QtGui.QWizard):
         
         self.qWizard.show()
         self.qWizard.exec_()
+    
+    def makeButtonToSearchFile(self):
+        self.openToolBar = QToolBar(self.qPage)
+        icon_file_open = Icon('tango/32x32/actions/fileopen.png').fullpath()
+        self.openAct = QtGui.QAction(QtGui.QIcon(icon_file_open), 'Open File', self.openToolBar)
+        self.openToolBar.connect(self.openAct, QtCore.SIGNAL('triggered()'), self.showOpenFileDialog)
+        self.openToolBar.addAction(self.openAct)
                
         
     def showOpenFileDialog(self):
@@ -62,9 +59,11 @@ class ImportWizard(QtGui.QWizard):
         self.label = QtGui.QLabel(filename, self.qPage)
         self.grid.addWidget(self.label, 2, 0)
         file=open(filename)
-        #data = file.read()
         self.csvreader = csv.reader(file)
-        table = self.makeTable()
+        tableView = self.makeTable()
+        layout = QVBoxLayout()
+        layout.addWidget(tableView) 
+        self.qTablePage.setLayout(layout) 
         
     def makeTable(self):
         # create the view
@@ -72,7 +71,7 @@ class ImportWizard(QtGui.QWizard):
 
         # set the table model
         header = ['naam', 'voornaam', 'rijksregisternr', 'geslacht']
-        tm = InputTableModel(self.csvreader, header, self.qPage2) 
+        tm = InputTableModel(self.csvreader, header, parent=self.qTablePage) 
         tv.setModel(tm)
 
         # set the minimum size
@@ -97,13 +96,9 @@ class ImportWizard(QtGui.QWizard):
         tv.resizeColumnsToContents()
 
         # set row height
-        nrows = len(self.csvreader)
+        nrows = len(list(self.csvreader))
         for row in xrange(nrows):
             tv.setRowHeight(row, 18)
-
-        # enable sorting
-        # this doesn't work
-        #tv.setSortingEnabled(True)
 
         return tv
         
