@@ -1,11 +1,16 @@
 .. _doc-admin:
 
-##############################
-  Customizing the Admin class
-##############################
+###############################
+  Customizing the Admin classes
+###############################
 
 :Release: |version|
 :Date: |today|
+
+The Admin classes are the classes that specify how objects should be visualized,
+they define the look, feel and behaviour of the Application.  Most of the behaviour
+of the Admin classes can be tuned by changing their static attributes.  This makes
+it easy to subclass a default Admin class and tune it to your needs.
 
 Each elixir Entity that is visualized within Camelot has an associated Admin
 class which specifies how the entity or a list of entities should be visualized.
@@ -14,7 +19,7 @@ Those entities are subclasses of the EntityAdmin class in the module
 camelot/view/elixir_admin.
 
 Usually the Admin class is bound to the Entity class by defining it as an
-inner class of the Admin class::
+inner class of the Entity class::
 
   class Movie(Entity):
     title = Field(Unicode(60), required=True)
@@ -37,6 +42,13 @@ that can be used to customize the interface.
 .. note::
   While EntityAdmin can only be used for classes
   that are mapped by Sqlalchemy, ObjectAdmin can be used for plain old python objects as well.
+
+EntityAdmin
+===========
+
+EntityAdmin is a specialization of ObjectAdmin, to be used for classes that are mapped by
+Sqlalchemy.  EntityAdmin will use introspection to determine field types and assign 
+according delegates and editors.
 
 Validators
 ==========
@@ -76,3 +88,10 @@ Then tell the Admin interface to pickup the custom Validator ::
       name = 'Movies'
       list_display = ['title']
       validator = MyValidator
+
+ApplicationAdmin
+================
+
+.. autoclass:: camelot.admin.application_admin.ApplicationAdmin
+
+  .. literalinclude:: ../../../../example/application_admin.py

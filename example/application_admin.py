@@ -3,6 +3,8 @@ from camelot.view.application_admin import ApplicationAdmin
 
 class MyApplicationAdmin(ApplicationAdmin):
   
+  name = 'Camelot Video Store'
+  
   def __init__(self):
     icon_relations = Icon('tango/24x24/apps/system-users.png').fullpath()
     icon_config = Icon('tango/24x24/categories/preferences-system.png').fullpath()
@@ -24,6 +26,3 @@ class MyApplicationAdmin(ApplicationAdmin):
     from example.model import Movie, Tag
     self.register(Movie, Movie.Admin)
     self.register(Tag, Tag.Admin)
-    
-  def getName(self):
-    return 'Camelot Videostore'

@@ -26,11 +26,26 @@
 #  ============================================================================
 
 import os
-import settings
 
 class ApplicationAdmin(object):
-  """Admin class, specify how the main window should look like"""
+  """The Application Admin class defines how the application should look like, it also ties
+  python classes to their associated admin classes.  It's behaviour can be steered by 
+  overwriting its static attributes or it's methods :
   
+  .. attribute:: name
+  
+  The name of the application, as it will appear in the title of the main window.
+  
+  .. attribute:: sections
+  
+  A list containing the various sections that should appear in the left panel of the 
+  mainwindow.
+  
+  .. image:: ../_static/picture2.png
+  
+  """
+  
+  name = 'Camelot'
   sections = []
   admins = {}
   
@@ -92,7 +107,7 @@ class ApplicationAdmin(object):
   
   def getName(self):
     """@return: the name of the application"""
-    return "Project Camelot"
+    return self.name
   
   def getIcon(self):
     from PyQt4 import QtGui
@@ -102,6 +117,7 @@ class ApplicationAdmin(object):
   def getSplashscreen(self):
     """@return: a QtGui.QPixmap"""
     from PyQt4 import QtGui
+    import settings
     return QtGui.QPixmap(os.path.join(settings.CAMELOT_ART_DIRECTORY, 'splashscreen.png'))
   
   def getOrganizationName(self):

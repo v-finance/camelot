@@ -149,6 +149,7 @@ class DateEditor(QtGui.QWidget):
     special_date = QtGui.QToolButton(self)
     special_date.setIcon(Icon('tango/16x16/apps/office-calendar.png').getQIcon())
     special_date.setAutoRaise(True)
+    special_date.setToolTip('Special dates')
     special_date.setMenu(special_date_menu)
     special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
     
@@ -159,8 +160,8 @@ class DateEditor(QtGui.QWidget):
       self.qdateedit.setCalendarPopup(True)
 
     self.hlayout = QtGui.QHBoxLayout()
+    self.hlayout.addWidget(special_date)    
     self.hlayout.addWidget(self.qdateedit)
-    self.hlayout.addWidget(special_date)
 
     self.hlayout.setContentsMargins(0, 0, 0, 0)
     self.hlayout.setMargin(0)
