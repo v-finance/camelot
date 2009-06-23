@@ -288,7 +288,33 @@ class VBoxForm(Form):
       else:
         form_layout.addWidget(f)
     return form_layout
-
+  
+class GridForm(Form):
+  """Put different fields into a grid"""
+  
+  def __init__(self, grid):
+    """:param grid: A list for each row in the grid, containing a list with all fields that should be put in that row::
+    
+  [['A1', 'B1'], ['A2','B2']]
+    """
+    assert isinstance(grid, list)
+    self._grid = grid
+    fields = []
+    for row in grid:
+      assert isinstance(row, list)
+      fields.extend(row)
+    super(GridForm, self).__init__(fields)
+    
+  def render(self, widgets, parent=None, nomargins=False):
+    from PyQt4 import QtGui
+    widget = QtGui.QWidget(parent)
+    grid_layout = QtGui.QGridLayout(parent)
+    for i,row in enumerate(self._grid):
+      for j,field in enumerate(row):
+        label, editor = widgets[field]
+        grid_layout.addWidget(editor, i, j)
+    widget.setLayout(grid_layout)
+    return widget
 
 class WidgetOnlyForm(Form):
   """Renders a single widget without its label, typically a one2many widget"""

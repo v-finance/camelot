@@ -70,7 +70,7 @@ class PartyRelationship(Entity):
   thru_date = Field(Date(), default=end_of_times, required=True, index=True)
   comment = Field(camelot.types.RichText())
   is_synchronized('synchronized', lazy=True)
-  
+
   class Admin(EntityAdmin):
     name = 'Relationship'
     list_display = ['from_date', 'thru_date']
