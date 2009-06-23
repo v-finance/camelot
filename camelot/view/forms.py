@@ -33,16 +33,6 @@ These structures can be transformed to QT forms.
 import logging
 logger = logging.getLogger('camelot.view.forms')
 
-def structure_to_form(structure):
-  """Convert a python data structure to a form, using the following rules :
-  
-  if structure is an instance of Form, return structure
-  if structure is a list, create a Form from this list
-  """
-  if isinstance(structure, Form):
-    return structure
-  return Form(structure)
-
 class Form(object):
   """Use the QFormLayout widget to render a form"""
   
@@ -258,11 +248,14 @@ class HBoxForm(Form):
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
-    from PyQt4.QtCore import Qt
-    widget = QtGui.QHBoxLayout()
+    form_layout = QtGui.QHBoxLayout()
     for form in self.columns:
-      widget.addWidget(form.render(widgets, parent, nomargins))
-    return widget
+      f = form.render(widgets, parent, nomargins)
+      if isinstance(f, QtGui.QLayout):
+        form_layout.addLayout(f)
+      else:
+        form_layout.addWidget(f)
+    return form_layout
 
 class VBoxForm(Form):
   """Render different forms or widgets in a vertical box"""
@@ -287,11 +280,14 @@ class VBoxForm(Form):
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
-    from PyQt4.QtCore import Qt
-    widget = QtGui.QVBoxLayout()
+    form_layout = QtGui.QVBoxLayout()
     for form in self.rows:
-      widget.addWidget(form.render(widgets, parent, nomargins))
-    return widget
+      f = form.render(widgets, parent, nomargins)
+      if isinstance(f, QtGui.QLayout):
+        form_layout.addLayout(f)
+      else:
+        form_layout.addWidget(f)
+    return form_layout
 
 
 class WidgetOnlyForm(Form):
@@ -307,9 +303,7 @@ class WidgetOnlyForm(Form):
     return editor
   
 class GroupBoxForm(Form):
-  """Renders a form within a QGroupBox
-  
-  eg :
+  """Renders a form within a QGroupBox::
   
   class Admin(EntityAdmin):
     form_display = ['title', GroupBoxForm('Ratings', ['expert_rating', 'public_rating'])]
@@ -328,3 +322,17 @@ class GroupBoxForm(Form):
     form = Form.render(self, widgets, widget, nomargins)
     layout.addWidget(form)
     return widget
+  
+
+def structure_to_form(structure):
+  """Convert a python data structure to a form, using the following rules :
+  
+ * if structure is an instance of Form, return structure
+ * if structure is a list, create a Form from this list
+  
+This function is mainly used in the Admin class to construct forms out of
+the form_display attribute   
+  """
+  if isinstance(structure, Form):
+    return structure
+  return Form(structure)
