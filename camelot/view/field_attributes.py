@@ -149,7 +149,7 @@ _sqlalchemy_to_python_type_ = {
                                   
   camelot.types.Enumeration: lambda f:{'delegate':ComboBoxColumnDelegate,
                                        'python_type':str,
-                                       'choices':lambda o:[(v,v.capitalize()) for v in f.choices],
+                                       'choices':lambda o:[(v,v.capitalize().replace('_',' ')) for v in f.choices],
                                        'editable':True,
                                        'nullable':False,
                                        'widget':'combobox',

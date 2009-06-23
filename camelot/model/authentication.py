@@ -30,6 +30,7 @@ permissions
 These structures are modeled like described in 'The Data Model Resource Book'
 by Len Silverston, Chapter 2
 """
+from sqlalchemy import sql, and_
 
 import camelot
 import camelot.types
@@ -193,13 +194,21 @@ class Party(Entity):
   shares = OneToMany('SharedShareholder', inverse='established_to')
   directed_organizations = OneToMany('DirectedDirector', inverse='established_to')
     
-  @property
-  def name(self):
-    return unicode(self)
-  
+  @ColumnProperty
+  def full_name(c):
+    aliased_organisation = Organization.table.alias('organisation_alias')
+    aliased_person = Person.table.alias('person_alias')
+    aliased_party = Party.table.alias('party_alias')
+    return sql.functions.coalesce(sql.select([aliased_person.c.first_name + ' ' + aliased_person.c.last_name],
+                                              whereclause=and_(aliased_party.c.id==c.id),
+                                              from_obj=[aliased_party.join(aliased_person, aliased_person.c.party_id==aliased_party.c.id)]).limit(1).as_scalar(),
+                                  sql.select([aliased_organisation.c.name],
+                                             whereclause=and_(aliased_party.c.id==c.id),
+                                             from_obj=[aliased_party.join(aliased_organisation, aliased_organisation.c.party_id==aliased_party.c.id)]).limit(1).as_scalar() )
+
   class Admin(EntityAdmin):
     name = 'Parties'
-    list_display = ['name']
+    list_display = ['full_name']
     fields = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
     field_attributes = dict(suppliers={'admin':SupplierCustomer.SupplierAdmin}, 
                             customers={'admin':SupplierCustomer.CustomerAdmin},
@@ -301,22 +310,12 @@ class Person(Party):
   picture = Field(camelot.types.Image(upload_to='person-pictures'), deferred=True)
   comment = Field(camelot.types.RichText())
   employers = OneToMany('EmployerEmployee', inverse='established_to')
-      
-  @property
-  def name(self):
-    if self.last_name and self.first_name:
-      return u'%s %s'%(self.first_name, self.last_name)
-    elif self.last_name:
-      return self.last_name
-    elif self.first_name:
-      return self.first_name
-    return ''
   
   def __repr__(self):
     return self.name
   
   def __unicode__(self):
-    return self.name
+    return self.full_name
 
   class Admin(Party.Admin):
     name = 'Persons'

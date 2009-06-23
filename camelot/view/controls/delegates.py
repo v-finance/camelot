@@ -938,7 +938,6 @@ class RichTextColumnDelegate(QtGui.QItemDelegate):
 
 _registered_delegates_[editors.RichTextEditor] = RichTextColumnDelegate
 
-
 class ComboBoxColumnDelegate(QtGui.QItemDelegate):
   def __init__(self, choices, parent=None, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)

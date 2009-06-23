@@ -297,7 +297,7 @@ box are the capitalized strings::
       impl_processor = lambda x:x
       
     def processor(value):
-      if value:
+      if value is not None:
         value = impl_processor(value)
         return self._int_to_string[value]
       

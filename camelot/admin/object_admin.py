@@ -61,6 +61,12 @@ field name of the related entity ::
       list_display = ['organization']
       list_filter = ['organization.name']
 
+.. attribute:: list_search
+
+A list of fields that should be searched when the user enters something in the search box
+in the table view.  By default only character fields are searched.  For use with one2many,
+many2one or many2many fields, the same rules as for the list_filter attribute apply
+
 .. attribute:: form_size
 
 a tuple indicating the size of a form view, defaults to (700,500)
