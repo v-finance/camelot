@@ -208,7 +208,8 @@ class Party(Entity):
 
   class Admin(EntityAdmin):
     name = 'Parties'
-    list_display = ['full_name']
+    list_display = ['name'] # don't use full name, since it might be None for new objects
+    list_search = ['full_name']
     fields = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
     field_attributes = dict(suppliers={'admin':SupplierCustomer.SupplierAdmin}, 
                             customers={'admin':SupplierCustomer.CustomerAdmin},
@@ -236,9 +237,6 @@ class Organization(Party):
   shareholders = OneToMany('SharedShareholder', inverse='established_from')
   
   def __unicode__(self):
-    return self.name
-  
-  def __repr__(self):
     return self.name
   
   @property
@@ -311,11 +309,14 @@ class Person(Party):
   comment = Field(camelot.types.RichText())
   employers = OneToMany('EmployerEmployee', inverse='established_to')
   
-  def __repr__(self):
-    return self.name
+  @property
+  def name(self):
+    # we don't use full name in here, because for new objects, full name will be None, since
+    # it needs to be fetched from the db first
+    return u'%s %s'%(self.first_name, self.last_name)
   
   def __unicode__(self):
-    return self.full_name
+    return self.name
 
   class Admin(Party.Admin):
     name = 'Persons'

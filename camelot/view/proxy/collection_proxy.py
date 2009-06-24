@@ -452,8 +452,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
             try:
               setattr(o, attribute, new_value)
               model_updated = True
-            except AttributeError:
-              logger.error("Can't set attribute %s to %s"%(attribute, str(value)))
+            except AttributeError, e:
+              logger.error(u"Can't set attribute %s to %s"%(attribute, unicode(new_value)), exc_info=e)
             except TypeError:
               # type error can be raised in case we try to set to a collection
               pass

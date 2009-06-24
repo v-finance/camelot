@@ -116,9 +116,8 @@ class ApplicationAdmin(object):
   
   def getSplashscreen(self):
     """@return: a QtGui.QPixmap"""
-    from PyQt4 import QtGui
-    import settings
-    return QtGui.QPixmap(os.path.join(settings.CAMELOT_ART_DIRECTORY, 'splashscreen.png'))
+    import camelot.view.art
+    return camelot.view.art.Pixmap('splashscreen.png').getQPixmap()
   
   def getOrganizationName(self):
     return 'Conceptive Engineering'

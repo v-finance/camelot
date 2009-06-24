@@ -33,28 +33,44 @@ import logging
 logger = logging.getLogger('camelot.view.art')
 
 
-file_ = lambda name:os.path.join(settings.CAMELOT_ART_DIRECTORY, '%s' % name)
+def file_(name):
+  from pkg_resources import resource_filename
+  import camelot
+  return resource_filename(camelot.__name__, 'art/%s'%name)
 
-
-class Icon(object):
-  """Manages paths to the icons images"""
-
+class Pixmap(object):
+  """Load pixmaps from the camelot art library"""
+  
   def __init__(self, path):
-      self.path = path
-
+    """:param path: the path of the pixmap relative to the camelot art directory, use '/' as a path separator
+    """
+    self._path = path
+    
   def fullpath(self):
-    pth = os.path.normpath(self.path)
-    pth = os.path.join(settings.CAMELOT_ART_DIRECTORY, pth)
-
+    """Obsolete : avoid this method, since it will copy the resource file from its package
+    and copy it to a temp folder if the resource is packaged.
+    """
+    import camelot
+    from pkg_resources import resource_string, resource_filename
+    pth = resource_filename(camelot.__name__, 'art/%s'%(self._path))
     if os.path.exists(pth):
       return pth
     else:
-      return '' 
-
+      return ''
+    
   def getQPixmap(self):
+    import camelot
+    from pkg_resources import resource_string
     from PyQt4.QtGui import QPixmap
-    return QPixmap(self.fullpath())
+    qpm = QPixmap()
+    success = qpm.loadFromData(resource_string(camelot.__name__, 'art/%s'%(self._path)))
+    if not success:
+      logger.warn(u'Could not load pixmap %s from camelot art library'%(self._path))
+    return qpm
+    
+class Icon(Pixmap):
+  """Manages paths to the icons images"""
   
   def getQIcon(self):
     from PyQt4.QtGui import QIcon
-    return QIcon(self.fullpath())
+    return QIcon(self.getQPixmap())
