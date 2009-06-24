@@ -115,9 +115,9 @@ class Printer:
         'signature' : 'M. Anager'
       }
 
-      from jinja import Environment, FileSystemLoader
-      fileloader = FileSystemLoader(settings.CAMELOT_TEMPLATES_DIRECTORY) 
-      e = Environment(loader=fileloader)
+      from jinja import Environment
+      from camelot.view.templates import loader
+      e = Environment(loader=loader)
       t = e.get_template('base.html')
       html = t.render(context)
       return html

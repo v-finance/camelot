@@ -210,8 +210,8 @@ class FormView(QtGui.QWidget):
       'table': table,
     }
 
-    ld = FileSystemLoader(settings.CAMELOT_TEMPLATES_DIRECTORY)
-    env = Environment(loader=ld)
+    from camelot.view.templates import loader
+    env = Environment(loader=loader)
     env.filters['to_html'] = to_html        
     tp = env.get_template('form_view.html')
 

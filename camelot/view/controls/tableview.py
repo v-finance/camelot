@@ -339,9 +339,9 @@ class TableView(QtGui.QWidget):
       'table': table,
       'columns': [c[0] for c in self.admin.getColumns()],
     }
+    from camelot.view.templates import loader
     from jinja import Environment, FileSystemLoader
-    ld = FileSystemLoader(settings.CAMELOT_TEMPLATES_DIRECTORY)
-    env = Environment(loader=ld)
+    env = Environment(loader=loader)
     tp = env.get_template('table_view.html')
     return tp.render(context)
 
