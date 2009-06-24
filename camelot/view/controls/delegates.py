@@ -835,11 +835,13 @@ class ManyToManyColumnDelegate(One2ManyColumnDelegate):
 class BoolColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for boolean values"""
 
-  def __init__(self, parent=None, **kwargs):
+  def __init__(self, parent=None, editable=True, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
+    self.editable = editable
 
   def createEditor(self, parent, option, index):
     editor = QtGui.QCheckBox(parent)
+    editor.setEnabled(self.editable)
     return editor
 
   def setEditorData(self, editor, index):

@@ -319,17 +319,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
 
     for i, c in enumerate(columns):
       field_name = c[0]
-      type_ = c[1]['python_type']
-
-      #logger.debug("creating delegate for %s \ntype: %s\nwidget: %s\n" \
-      #             "arguments: %s" % (field_name, type_, widget_, str(c[1])))
       logger.debug('creating delegate for %s' % field_name)
-      
       if 'delegate' in c[1]:
         delegate = c[1]['delegate'](parent=None, **c[1])
         self.item_delegate.insertColumnDelegate(i, delegate)
         continue
-      elif type_ == str:
+      elif c[1]['python_type'] == str:
         if c[1]['length']:
           delegate = delegates.PlainTextColumnDelegate(maxlength=c[1]['length'])
           self.item_delegate.insertColumnDelegate(i, delegate)
