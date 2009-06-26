@@ -57,7 +57,7 @@ except:
     pass
   
   class editors(object):
-    def __getattribute__(self, attr):
+    def __getattr__(self, attr):
       return editors()
   
 
