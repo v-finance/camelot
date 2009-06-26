@@ -37,9 +37,22 @@ import logging
 
 logger = logging.getLogger('camelot.view.controls.delegates')
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
+try:
+  from PyQt4 import QtGui
+  from PyQt4 import QtCore
+  from PyQt4.QtCore import Qt
+  from PyQt4.QtGui import QItemDelegate
+
+  _not_editable_background_ = QtGui.QColor(235, 233, 237)
+  _not_editable_foreground_ = QtGui.QColor(Qt.darkGray)
+except:
+  #
+  # dummy class when QT has not been found, this allows the documentation to be build
+  # without qt dependency
+  #
+  class QItemDelegate(object):
+    pass
+  
 
 import datetime
 import StringIO
@@ -48,14 +61,6 @@ import camelot.types
 from camelot.view.art import Icon
 from camelot.view.controls import editors 
 from camelot.view.model_thread import get_model_thread
-
-
-"""Dictionary mapping widget types to an associated delegate"""
-
-_registered_delegates_ = {}
-
-_not_editable_background_ = QtGui.QColor(235, 233, 237)
-_not_editable_foreground_ = QtGui.QColor(Qt.darkGray)
 
 def _paint_not_editable(painter, option, index):
   text = index.model().data(index, Qt.DisplayRole).toString()
@@ -77,7 +82,7 @@ def _paint_not_editable(painter, option, index):
 def create_constant_function(constant):
   return lambda:constant
 
-class GenericDelegate(QtGui.QItemDelegate):
+class GenericDelegate(QItemDelegate):
   """Manages custom delegates, should not be used by the application developer"""
 
   def __init__(self, parent=None, **kwargs):
@@ -149,7 +154,7 @@ class GenericDelegate(QtGui.QItemDelegate):
     else:
       return QtGui.QItemDelegate.sizeHint(self, option, index)
 
-class CustomDelegate(QtGui.QItemDelegate):
+class CustomDelegate(QItemDelegate):
   """Base class for implementing custom delegates.
   
 .. attribute:: editor 
@@ -208,7 +213,7 @@ class FileDelegate(CustomDelegate):
     painter.restore()
 
     
-class StarDelegate(QtGui.QItemDelegate):
+class StarDelegate(QItemDelegate):
   """Delegate for integer values from (1 to 5)(Rating Delegate)
 
 .. image:: ../_static/rating.png
@@ -264,13 +269,10 @@ class StarDelegate(QtGui.QItemDelegate):
 
     painter.restore()
 
-
-_registered_delegates_[editors.StarEditor] = StarDelegate
-
 camelot_maxint = 2147483647
 camelot_minint = -2147483648
 
-class IntegerColumnDelegate(QtGui.QItemDelegate):
+class IntegerColumnDelegate(QItemDelegate):
   """Custom delegate for integer values"""
 
   def __init__(self, parent, minimum=camelot_minint, maximum=camelot_maxint, editable=True, **kwargs):
@@ -313,8 +315,6 @@ class IntegerColumnDelegate(QtGui.QItemDelegate):
     editor = self.sender()
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
 
-_registered_delegates_[QtGui.QSpinBox] = IntegerColumnDelegate
-
 class SliderDelegate(IntegerColumnDelegate):
   """A delegate for horizontal sliders"""
   
@@ -327,7 +327,7 @@ class SliderDelegate(IntegerColumnDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(editor.value()))  
 
-class PlainTextColumnDelegate(QtGui.QItemDelegate):
+class PlainTextColumnDelegate(QItemDelegate):
   """Custom delegate for simple string values"""
 
   def __init__(self, parent=None, length=None, **kwargs):
@@ -362,10 +362,8 @@ the definition of the field.
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(unicode(editor.text())))
 
-_registered_delegates_[QtGui.QLineEdit] = PlainTextColumnDelegate
 
-
-class TextEditColumnDelegate(QtGui.QItemDelegate):
+class TextEditColumnDelegate(QItemDelegate):
   """Edit plain text with a QTextEdit widget"""
   
   def __init__(self, parent=None, editable=True, **kwargs):
@@ -383,7 +381,7 @@ class TextEditColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(unicode(editor.toPlainText())))
 
-class IntervalsColumnDelegate(QtGui.QItemDelegate):
+class IntervalsColumnDelegate(QItemDelegate):
   """Custom delegate for visualizing camelot.container.IntervalsContainer
   data"""
 
@@ -422,7 +420,7 @@ class IntervalsColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     pass
 
-class ColorColumnDelegate(QtGui.QItemDelegate):
+class ColorColumnDelegate(QItemDelegate):
   """
 .. image:: ../_static/color.png
 """
@@ -472,7 +470,7 @@ class ColorColumnDelegate(QtGui.QItemDelegate):
     else:
       model.setData(index, create_constant_function(None))
 
-class TimeColumnDelegate(QtGui.QItemDelegate):
+class TimeColumnDelegate(QItemDelegate):
   def __init__(self, parent, format='hh:mm', default=None, nullable=True, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
     self.nullable = nullable
@@ -499,7 +497,7 @@ class TimeColumnDelegate(QtGui.QItemDelegate):
     model.setData(index, create_constant_function(t))
   
 
-class DateTimeColumnDelegate(QtGui.QItemDelegate):
+class DateTimeColumnDelegate(QItemDelegate):
   def __init__(self, parent, format, **kwargs):
     from editors import DateTimeEditor
     QtGui.QItemDelegate.__init__(self, parent)
@@ -526,7 +524,7 @@ class DateTimeColumnDelegate(QtGui.QItemDelegate):
     return self._dummy_editor.sizeHint()
     
 
-class DateColumnDelegate(QtGui.QItemDelegate):
+class DateColumnDelegate(QItemDelegate):
   """Custom delegate for date values"""
 
   def __init__(self,
@@ -582,10 +580,7 @@ class DateColumnDelegate(QtGui.QItemDelegate):
       model.setData(index, create_constant_function(d))
     logger.debug('date delegate data set')
 
-_registered_delegates_[editors.DateEditor] = DateColumnDelegate
-
-
-class CodeColumnDelegate(QtGui.QItemDelegate):
+class CodeColumnDelegate(QItemDelegate):
   def __init__(self, parent=None, parts=[], **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
     self.parts = parts
@@ -615,11 +610,8 @@ class CodeColumnDelegate(QtGui.QItemDelegate):
     for part in editor.part_editors:
       value.append(unicode(part.text()))
     model.setData(index, create_constant_function(value))
-
-_registered_delegates_[editors.CodeEditor] = CodeColumnDelegate
-
-
-class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
+    
+class VirtualAddressColumnDelegate(QItemDelegate):
   """
 .. image:: ../_static/virtualaddress_editor.png
 """
@@ -664,11 +656,7 @@ class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
     value = (unicode(editor.combo.currentText()), unicode(editor.editor.text()))
     model.setData(index, create_constant_function(value))
 
-_registered_delegates_[editors.VirtualAddressEditor] = \
-    VirtualAddressColumnDelegate
-
-
-class FloatColumnDelegate(QtGui.QItemDelegate):
+class FloatColumnDelegate(QItemDelegate):
   """Custom delegate for float values
 
  
@@ -704,11 +692,7 @@ to the precision specified in the definition of the Field.
 
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
 
-_registered_delegates_[QtGui.QDoubleSpinBox] = FloatColumnDelegate
-
-
-
-class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
+class ColoredFloatColumnDelegate(QItemDelegate):
   """Custom delegate for float values, representing them in green when they are
   positive and in red when they are negative."""
 
@@ -774,10 +758,8 @@ class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
                      Qt.AlignVCenter | Qt.AlignRight,
                      value_str)
     painter.restore()
-    
-_registered_delegates_[editors.ColoredFloatEditor] = ColoredFloatColumnDelegate
 
-class Many2OneColumnDelegate(QtGui.QItemDelegate):
+class Many2OneColumnDelegate(QItemDelegate):
   """Custom delegate for many 2 one relations
   
 .. image:: ../_static/manytoone.png
@@ -821,11 +803,8 @@ class Many2OneColumnDelegate(QtGui.QItemDelegate):
     
   def sizeHint(self, option, index):
     return self._dummy_editor.sizeHint()    
-  
-_registered_delegates_[editors.Many2OneEditor] = Many2OneColumnDelegate
 
-
-class One2ManyColumnDelegate(QtGui.QItemDelegate):
+class One2ManyColumnDelegate(QItemDelegate):
   """Custom delegate for many 2 one relations
 
 .. image:: ../_static/onetomany.png  
@@ -852,8 +831,6 @@ class One2ManyColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     pass
 
-_registered_delegates_[editors.One2ManyEditor] = One2ManyColumnDelegate
-
 class ManyToManyColumnDelegate(One2ManyColumnDelegate):
   """
 .. image:: ../_static/manytomany.png
@@ -874,7 +851,7 @@ class ManyToManyColumnDelegate(One2ManyColumnDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, editor.getModel().collection_getter)
 
-class BoolColumnDelegate(QtGui.QItemDelegate):
+class BoolColumnDelegate(QItemDelegate):
   """Custom delegate for boolean values"""
 
   def __init__(self, parent=None, editable=True, **kwargs):
@@ -907,10 +884,7 @@ class BoolColumnDelegate(QtGui.QItemDelegate):
     QtGui.QApplication.style().drawControl(QtGui.QStyle.CE_CheckBox, check_option, painter)
     painter.restore()
 
-_registered_delegates_[QtGui.QCheckBox] = BoolColumnDelegate
-
-
-class ImageColumnDelegate(QtGui.QItemDelegate):
+class ImageColumnDelegate(QItemDelegate):
   """
 .. image:: ../_static/image.png
 """
@@ -955,11 +929,8 @@ class ImageColumnDelegate(QtGui.QItemDelegate):
                     create_constant_function(
                       camelot.types.StoredImage(editor.image)))
       editor.setModified(True)
-  
-_registered_delegates_[editors.ImageEditor] = ImageColumnDelegate
 
-
-class RichTextColumnDelegate(QtGui.QItemDelegate):
+class RichTextColumnDelegate(QItemDelegate):
   """
 .. image:: ../_static/richtext.png
 """
@@ -987,9 +958,7 @@ class RichTextColumnDelegate(QtGui.QItemDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(unicode(editor.toHtml())))
 
-_registered_delegates_[editors.RichTextEditor] = RichTextColumnDelegate
-
-class ComboBoxColumnDelegate(QtGui.QItemDelegate):
+class ComboBoxColumnDelegate(QItemDelegate):
   """
 .. image:: ../_static/enumeration.png 
 """
@@ -1050,5 +1019,3 @@ class ComboBoxColumnDelegate(QtGui.QItemDelegate):
     else:
       editor_data = None
     model.setData(index, create_constant_function(editor_data))
-
-_registered_delegates_[QtGui.QComboBox] = ComboBoxColumnDelegate
