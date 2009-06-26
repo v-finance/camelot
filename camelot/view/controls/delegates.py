@@ -57,8 +57,7 @@ except:
     pass
   
   class editors(object):
-    def __getattr__(self, attr):
-      return editors()
+    FileEditor = None
   
 
 import datetime
