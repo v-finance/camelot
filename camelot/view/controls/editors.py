@@ -33,8 +33,6 @@ import datetime
 import logging
 logger = logging.getLogger('camelot.view.controls.editors')
 
-import settings
-
 import re
 
 from PyQt4.QtCore import Qt

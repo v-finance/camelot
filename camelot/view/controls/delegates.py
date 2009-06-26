@@ -25,7 +25,13 @@
 #
 #  ============================================================================
 
-"""Contains classes for using custom delegates"""
+"""Camelot includes a number of QT delegates, most of them are used as default delegates
+for the various sqlalchemy and camelot field types.
+
+Some delegates take specific arguments into account for their construction.  All :attr:`field_attributes`
+specified for a certain field will be propagated towards the constructor of the
+delegate.
+"""
 
 import logging
 
@@ -71,9 +77,8 @@ def _paint_not_editable(painter, option, index):
 def create_constant_function(constant):
   return lambda:constant
 
-
 class GenericDelegate(QtGui.QItemDelegate):
-  """Manages custom delegates"""
+  """Manages custom delegates, should not be used by the application developer"""
 
   def __init__(self, parent=None, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
@@ -147,9 +152,10 @@ class GenericDelegate(QtGui.QItemDelegate):
 class CustomDelegate(QtGui.QItemDelegate):
   """Base class for implementing custom delegates.
   
-  The 'editor' class attribute specifies the editor class
-  that will be created.
-  """
+.. attribute:: editor 
+
+class attribute specifies the editor class that should be used
+"""
   
   editor = None
   
@@ -175,6 +181,10 @@ class CustomDelegate(QtGui.QItemDelegate):
     model.setData(index, create_constant_function(editor.getValue()))
 
 class FileDelegate(CustomDelegate):
+  """Delegate for camelot.types.file fields
+ 
+.. image:: ../_static/file_delegate.png 
+"""
   
   editor = editors.FileEditor
   
@@ -199,7 +209,11 @@ class FileDelegate(CustomDelegate):
 
     
 class StarDelegate(QtGui.QItemDelegate):
-  """Custom delegate for integer values from (1 to 5)(Rating Delegate)"""
+  """Delegate for integer values from (1 to 5)(Rating Delegate)
+
+.. image:: ../_static/rating.png
+  
+"""
 
   def __init__(self, maximum=5, editable=True, parent=None, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
@@ -317,6 +331,11 @@ class PlainTextColumnDelegate(QtGui.QItemDelegate):
   """Custom delegate for simple string values"""
 
   def __init__(self, parent=None, length=None, **kwargs):
+    """
+:param length: The number of characters displayed.  Defaults to the length allowed in
+the definition of the field.
+     
+"""
     QtGui.QItemDelegate.__init__(self, parent)
     self.length = length
 
@@ -404,6 +423,9 @@ class IntervalsColumnDelegate(QtGui.QItemDelegate):
     pass
 
 class ColorColumnDelegate(QtGui.QItemDelegate):
+  """
+.. image:: ../_static/color.png
+"""
 
   def __init__(self, parent=None, editable=True, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
@@ -598,6 +620,10 @@ _registered_delegates_[editors.CodeEditor] = CodeColumnDelegate
 
 
 class VirtualAddressColumnDelegate(QtGui.QItemDelegate):
+  """
+.. image:: ../_static/virtualaddress_editor.png
+"""
+
   def __init__(self, parent=None, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
 
@@ -643,10 +669,17 @@ _registered_delegates_[editors.VirtualAddressEditor] = \
 
 
 class FloatColumnDelegate(QtGui.QItemDelegate):
-  """Custom delegate for float values"""
+  """Custom delegate for float values
+
+ 
+"""
 
   def __init__(self, minimum=-1e15, maximum=1e15, precision=2,
                editable=True, parent=None, **kwargs):
+    """
+:param precision:  The number of digits after the decimal point displayed.  This defaults
+to the precision specified in the definition of the Field.     
+"""
     QtGui.QItemDelegate.__init__(self, parent)
     self.minimum = minimum
     self.maximum = maximum
@@ -745,7 +778,10 @@ class ColoredFloatColumnDelegate(QtGui.QItemDelegate):
 _registered_delegates_[editors.ColoredFloatEditor] = ColoredFloatColumnDelegate
 
 class Many2OneColumnDelegate(QtGui.QItemDelegate):
-  """Custom delegate for many 2 one relations"""
+  """Custom delegate for many 2 one relations
+  
+.. image:: ../_static/manytoone.png
+"""
 
   def __init__(self, parent=None, admin=None, embedded=False, **kwargs):
     logger.debug('create many2onecolumn delegate')
@@ -790,7 +826,10 @@ _registered_delegates_[editors.Many2OneEditor] = Many2OneColumnDelegate
 
 
 class One2ManyColumnDelegate(QtGui.QItemDelegate):
-  """Custom delegate for many 2 one relations"""
+  """Custom delegate for many 2 one relations
+
+.. image:: ../_static/onetomany.png  
+"""
 
   def __init__(self, parent=None, **kwargs):
     logger.debug('create one2manycolumn delegate')
@@ -816,6 +855,9 @@ class One2ManyColumnDelegate(QtGui.QItemDelegate):
 _registered_delegates_[editors.One2ManyEditor] = One2ManyColumnDelegate
 
 class ManyToManyColumnDelegate(One2ManyColumnDelegate):
+  """
+.. image:: ../_static/manytomany.png
+"""
   
   def createEditor(self, parent, option, index):
     editor = editors.ManyToManyEditor(parent=parent, **self.kwargs)
@@ -869,6 +911,9 @@ _registered_delegates_[QtGui.QCheckBox] = BoolColumnDelegate
 
 
 class ImageColumnDelegate(QtGui.QItemDelegate):
+  """
+.. image:: ../_static/image.png
+"""
     
   def __init__(self, parent = None, **kwargs):
     super(ImageColumnDelegate, self).__init__(parent)
@@ -915,6 +960,10 @@ _registered_delegates_[editors.ImageEditor] = ImageColumnDelegate
 
 
 class RichTextColumnDelegate(QtGui.QItemDelegate):
+  """
+.. image:: ../_static/richtext.png
+"""
+
   def __init__(self, parent = None, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
     self.kwargs = kwargs
@@ -941,6 +990,9 @@ class RichTextColumnDelegate(QtGui.QItemDelegate):
 _registered_delegates_[editors.RichTextEditor] = RichTextColumnDelegate
 
 class ComboBoxColumnDelegate(QtGui.QItemDelegate):
+  """
+.. image:: ../_static/enumeration.png 
+"""
   def __init__(self, choices, parent=None, **kwargs):
     QtGui.QItemDelegate.__init__(self, parent)
     self.choices = choices

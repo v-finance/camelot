@@ -28,7 +28,6 @@
 """Manages icons and artworks"""
 
 import os
-import settings
 import logging
 logger = logging.getLogger('camelot.view.art')
 
