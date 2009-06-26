@@ -225,10 +225,6 @@ will display two buttons in the navigation pane, labelled ``'Relations'`` and
 ``'Configurations'``, with the specified icon next to each label. And yes, the
 order matters.
 
-.. note::
-   ``Icon`` manages paths to icon resources; it knows where to search icons
-   using the attribute :term:`CAMELOT_ART_DIRECTORY` in :file:`settings.py`.
-
 Next, follows four calls to ``ApplicationAdmin.register()``. As you have
 probably guessed, this method registers Entities and their corresponding
 EntityAdmins so Camelot knows about them.

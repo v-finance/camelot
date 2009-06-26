@@ -43,40 +43,13 @@ The above code will result in:
 If no ``delegate`` field attribute is given, a default one will be taken depending
 on the sqlalchemy field type.
 
-Default delegates
-=================
+Available delegates
+===================
 
-All delegates can be found in :file:`camelot.view.controls.delegates.py`
+All available delegates can be found in :file:`camelot.view.controls.delegates.py`
 
-Camelot assigns a default delegate based on the `SQLAlchemy <http://www.sqlalchemy.org/>`_
-field type used in the model definition.  Some delegates take specific
-arguments into account for their construction.  All :attr:`field_attributes`
-specified for a certain field will be propagated towards the constructor of the
-delegate.
-
-**OneToMany**
-
-OneToManyColumnDelegate
-
-.. image:: ../_static/onetomany.png
-
-**ManyToOne**
-
-ManyToOneColumnDelegate
-
-.. image:: ../_static/manytoone.png
-
-**ManyToMany**
-
-ManyToManyColumnDelegate
-
-.. image:: ../_static/manytomany.png
-
-**File**
-
-FileDelegate
-
-.. image:: ../_static/file_delegate.png
+.. automodule:: camelot.view.controls.delegates
+   :members:
 
 Attributes common to most delegates
 ===================================
@@ -107,27 +80,3 @@ Attributes common to most delegates
     field_attributes = {'name':{'minimal_column_width':50}}
   
   will make the column wide enough to display at least 50 characters.
-
-Delegate specific attributes
-============================
-
-Float
------
-
-**precision**
-  The number of digits after the decimal point displayed.  This defaults
-  to the precision specified in the definition of the Field.
-
-Text
-----
-
-**length**
-  The number of characters displayed.  Defaults to the length allowed in
-  the definition of the field. 
-
-Time, Date and DateTime
------------------------
-
-**format**
-  The format used to display time and date.  Defaults to ``'hh:mm'``,
-  ``'dd-MM-yyyy'``, ``'dd-MM-yyyy hh:mm'``.
