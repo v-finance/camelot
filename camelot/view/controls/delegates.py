@@ -42,6 +42,9 @@ try:
   from PyQt4 import QtCore
   from PyQt4.QtCore import Qt
   from PyQt4.QtGui import QItemDelegate
+  
+  from camelot.view.controls import editors
+  from camelot.view.model_thread import get_model_thread
 
   _not_editable_background_ = QtGui.QColor(235, 233, 237)
   _not_editable_foreground_ = QtGui.QColor(Qt.darkGray)
@@ -59,8 +62,6 @@ import StringIO
 
 import camelot.types
 from camelot.view.art import Icon
-from camelot.view.controls import editors 
-from camelot.view.model_thread import get_model_thread
 
 def _paint_not_editable(painter, option, index):
   text = index.model().data(index, Qt.DisplayRole).toString()
