@@ -285,9 +285,12 @@ box are the capitalized strings::
     
     def processor(value):
       if value is not None:
-        value = self._string_to_int[value]
-      return impl_processor(value)
-    
+        try:
+          value = self._string_to_int[value]
+          return impl_processor(value)
+        except KeyError, e:
+          logger.error('could not process %s'%value, exc_info=e)
+              
     return processor
 
   def result_processor(self, dialect):
@@ -299,7 +302,10 @@ box are the capitalized strings::
     def processor(value):
       if value is not None:
         value = impl_processor(value)
-        return self._int_to_string[value]
+        try:
+          return self._int_to_string[value]
+        except KeyError, e:
+          logger.error('could not process %s'%value, exc_info=e)
       
     return processor  
   
