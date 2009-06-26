@@ -56,6 +56,10 @@ except:
   class QItemDelegate(object):
     pass
   
+  class editors(object):
+    def __getattribute__(self, attr):
+      return editors()
+  
 
 import datetime
 import StringIO
