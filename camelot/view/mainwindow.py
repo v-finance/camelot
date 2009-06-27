@@ -433,9 +433,11 @@ class MainWindow(QtGui.QMainWindow):
     mt.post(export)  
 
   def importFromFile(self):
-      from camelot.view.wizard.import_data import ImportWizard
-      wizard = ImportWizard()
-      wizard.start()
+      #from camelot.view.wizard.import_data import ImportWizard
+      #wizard = ImportWizard(self.activeMdiChild().widget())
+      #wizard.start()
+      from camelot.view.controls.tableview import TableView
+      self.activeMdiChild().widget().importFromFile()
         
   # Menus
 

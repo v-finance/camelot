@@ -360,9 +360,13 @@ class TableView(QtGui.QWidget):
     logger.debug('%s deleted' % self.__class__.__name__) 
     
   def importFromFile(self):
-    """"import data """
-    #todo move to import.py and import import.py here
+    """"import data : the data will be imported in the activeMdiChild """
     from camelot.view.wizard.import_data import ImportWizard
     logger.info('call import method')  
-    importWizard = ImportWizard()
+    importWizard = ImportWizard(self)
     importWizard.start()
+    data = importWizard.getImportedData()
+    for row in data:
+        print row
+        self.query_table_proxy.append(self.query_table_proxy, row)
+    
