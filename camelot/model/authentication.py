@@ -89,13 +89,13 @@ class EmployerEmployee(PartyRelationship):
     list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
     
   class EmployeeAdmin(EntityAdmin):
-    name = 'Employees'
+    verbose_name = 'Employee'
     list_display = ['established_to', 'from_date', 'thru_date']
     form_display = ['established_to', 'comment', 'from_date', 'thru_date']
     field_attributes = {'established_to':{'name':'Name'}}
     
   class EmployerAdmin(EntityAdmin):
-    name = 'Employers'
+    verbose_name = 'Employer'
     list_display = ['established_from', 'from_date', 'thru_date']
     form_display = ['established_from', 'comment', 'from_date', 'thru_date']
     field_attributes = {'established_from':{'name':'Name'}}
@@ -109,17 +109,17 @@ class DirectedDirector(PartyRelationship):
   represented_by = OneToMany('RepresentedRepresentor', inverse='established_to')
   
   class Admin(EntityAdmin):
-    name = 'Directed - Director'
+    verbose_name = 'Directed - Director'
     list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
   
   class DirectorAdmin(EntityAdmin):
-    name = 'Directors'
+    verbose_name = 'Director'
     list_display = ['established_to', 'from_date', 'thru_date']
     fields = ['established_to', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
     field_attributes = {'established_to':{'name':'Name'}}
     
   class DirectedAdmin(EntityAdmin):
-    name = 'Directed organizations'
+    verbose_name = 'Directed organization'
     list_display = ['established_from', 'from_date', 'thru_date']
     fields = ['established_from', 'from_date', 'thru_date', 'represented_by', 'comment']
     field_attributes = {'established_from':{'name':'Name'}}
@@ -134,7 +134,7 @@ class RepresentedRepresentor(Entity):
   established_to = ManyToOne('DirectedDirector', required=True, ondelete='cascade', onupdate='cascade')
     
   class Admin(EntityAdmin):
-    name = 'Represented by'
+    verbose_name = 'Represented by'
     list_display = ['established_from', 'from_date', 'thru_date']
     form_display = ['established_from', 'from_date', 'thru_date', 'comment']
     field_attributes = {'established_from':{'name':'Name'}}
@@ -146,17 +146,17 @@ class SupplierCustomer(PartyRelationship):
   established_to = ManyToOne('Party', required=True, ondelete='cascade', onupdate='cascade')
   
   class Admin(EntityAdmin):
-    name = 'Supplier - Customer'
+    verbose_name = 'Supplier - Customer'
     list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
     
   class CustomerAdmin(EntityAdmin):
-    name = 'Customers'
+    verbose_name = 'Customer'
     list_display = ['established_to',]
     fields = ['established_to', 'comment', 'from_date', 'thru_date']
     field_attributes = {'established_to':{'name':'Name'}}
     
   class SupplierAdmin(EntityAdmin):
-    name = 'Suppliers'
+    verbose_name = 'Supplier'
     list_display = ['established_from',]
     fields = ['established_from', 'comment', 'from_date', 'thru_date']
     field_attributes = {'established_from':{'name':'Name'}}
@@ -169,17 +169,18 @@ class SharedShareholder(PartyRelationship):
   shares = Field(Integer())
   
   class Admin(EntityAdmin):
-    name = 'Shared - Shareholder'
+    verbose_name = 'Shared - Shareholder'
     list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
     
   class ShareholderAdmin(EntityAdmin):
-    name = 'Shareholders'
+    verbose_name = 'Shareholder'
     list_display = ['established_to', 'shares', 'from_date', 'thru_date']
     fields = ['established_to', 'shares', 'from_date', 'thru_date', 'comment']
     field_attributes = {'established_to':{'name':'Shareholder name'}}
     
   class SharedAdmin(EntityAdmin):
-    name = 'Shares'
+    verbose_name = 'Shares'
+    verbose_name_plural = 'Shares'
     list_display = ['established_from', 'shares', 'from_date', 'thru_date']
     fields = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
     field_attributes = {'established_from':{'name':'Name'}}
@@ -207,7 +208,8 @@ class Party(Entity):
                                              from_obj=[aliased_party.join(aliased_organisation, aliased_organisation.c.party_id==aliased_party.c.id)]).limit(1).as_scalar() )
 
   class Admin(EntityAdmin):
-    name = 'Parties'
+    verbose_name = 'Party'
+    verbose_name_plural = 'Parties'
     list_display = ['name'] # don't use full name, since it might be None for new objects
     list_search = ['full_name']
     fields = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
@@ -244,7 +246,8 @@ class Organization(Party):
     return sum((shareholder.shares for shareholder in self.shareholders), 0)
   
   class Admin(Party.Admin):
-    name = 'Organizations'
+    verbose_name = 'Organization'
+    verbose_name_plural = 'Organizations'
     section = 'relations'
     list_display = ['name', 'tax_id',]
     form_display = TabForm([('Basic', Form(['name', 'tax_id', 'addresses', 'contact_mechanisms'])),
@@ -260,7 +263,7 @@ class AuthenticationMechanism(Entity):
   is_active = Field(Boolean, default=True, index=True)
   
   class Admin(EntityAdmin):
-    name = 'Authentication mechanism'
+    verbose_name = 'Authentication mechanism'
   
 class UsernameAuthenticationMechanism(AuthenticationMechanism):
   using_options(tablename='authentication_mechanism_username', inheritance='multi')
@@ -280,7 +283,7 @@ class UsernameAuthenticationMechanism(AuthenticationMechanism):
     return self.username
   
   class Admin(EntityAdmin):
-    name = 'Authentication mechanism'
+    verbose_name = 'Authentication mechanism'
     list_display = ['username', 'last_login', 'is_active']
   
 class Person(Party):
@@ -319,7 +322,8 @@ class Person(Party):
     return self.name
 
   class Admin(Party.Admin):
-    name = 'Persons'
+    verbose_name = 'Person'
+    verbose_name_plurall = 'Persons'
     section = 'relations'
     list_display = ['first_name', 'last_name', ]
     form_display = TabForm([('Basic', Form([HBoxForm([Form(['first_name', 'last_name', 'sex']),
@@ -352,7 +356,8 @@ class Country(GeographicBoundary):
   
   class Admin(EntityAdmin):
     form_size = (700,150)
-    name = 'Countries'
+    verbose_name = 'Country'
+    verbose_name_plural = 'Countries'
     list_display = ['name', 'code']
     
 class City(GeographicBoundary):
@@ -369,7 +374,8 @@ class City(GeographicBoundary):
     return city
   
   class Admin(EntityAdmin):
-    name = 'Cities'
+    verbose_name = 'City'
+    verbose_name_plural = 'Cities'
     form_size = (700,150)
     list_display = ['code', 'name', 'country']
     
@@ -397,7 +403,8 @@ class Address(Entity):
     QtGui.QDesktopServices.openUrl (QtCore.QUrl('http://www.google.be/maps?f=q&source=s_q&geocode=%s&q=%s+%s'%(self.city.country.code, self.street1, self.city.name))) 
   
   class Admin(EntityAdmin):
-    name = 'Addresses'
+    verbose_name = 'Address'
+    verbose_name_plural = 'Addresses'
     section = 'relations'
     list_display = ['street1', 'street2', 'city']
     form_size = (700,150)
@@ -410,7 +417,7 @@ class PartyAddressRoleType(Entity):
   description = Field(Unicode(40))
   
   class Admin(EntityAdmin):
-    name = 'Address role type'
+    verbose_name = 'Address role type'
     list_display = ['code', 'description']
   
 class PartyAuthentication(Entity):
@@ -436,7 +443,8 @@ class PartyAddress(Entity):
       self.address.showMap()
   
   class Admin(EntityAdmin):
-    name = 'Address'
+    verbose_name = 'Address'
+    verbose_name_plural = 'Addresses'
     list_display = ['address', 'comment']
     fields = ['address', 'comment', 'from_date', 'thru_date']
     form_size = (700,200)
@@ -453,7 +461,7 @@ class ContactMechanism(Entity):
   
   class Admin(EntityAdmin):
     form_size = (700,150)
-    name = 'Contact mechanisms'
+    verbose_name = 'Contact mechanism'
     section = 'relations'
     list_display = ['mechanism']
     form_display = Form(['mechanism', 'party_address'])
@@ -472,6 +480,6 @@ class PartyContactMechanism(Entity):
   
   class Admin(EntityAdmin):
     form_size = (700,200)
-    name = 'Party contact mechanisms'
+    verbose_name = 'Party contact mechanism'
     list_display = ['contact_mechanism', 'comment', 'from_date',]
     form_display = Form(['contact_mechanism', 'comment', 'from_date', 'thru_date',])

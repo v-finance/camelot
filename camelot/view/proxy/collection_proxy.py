@@ -151,7 +151,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     columns that will be cached in the proxy. This function will be called
     inside the model thread.
     """
-    logger.debug('initialize query table for %s' % (admin.getName()))
+    logger.debug('initialize query table for %s' % (admin.getVerboseName()))
     self.logger = logger
     QtCore.QAbstractTableModel.__init__(self)
     self.admin = admin
@@ -260,7 +260,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   def handleEntityUpdate(self, sender, entity):
     """Handles the entity signal, indicating that the model is out of date"""
     logger.debug('%s %s received entity update signal' % \
-                 (self.__class__.__name__, self.admin.getName()))
+                 (self.__class__.__name__, self.admin.getVerboseName()))
     if sender != self:
       row = self.cache[Qt.DisplayRole].delete_by_entity(entity)
       row = self.cache[Qt.EditRole].delete_by_entity(entity)

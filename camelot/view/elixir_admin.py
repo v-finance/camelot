@@ -279,7 +279,7 @@ class EntityAdmin(ObjectAdmin):
 
       def __init__(self, parent):
         super(NewForm, self).__init__(parent)
-        self.setWindowTitle('New %s'%(admin.getName()))
+        self.setWindowTitle('New %s'%(admin.getVerboseName()))
         self.widget_layout = QtGui.QVBoxLayout()
         self.widget_layout.setMargin(0)
         self.form_view = admin.createFormView('New', model, 0, parent)
@@ -456,7 +456,7 @@ class EntityAdmin(ObjectAdmin):
                                 tableview.table_model._query_getter,
                                 tableview.admin.getFields,
                                 max_number_of_rows=1)
-        title = u'%s' % (self.getName())
+        title = u'%s' % (self.getVerboseName())
 
         formview = tableview.admin.createFormView(title, model, index, parent)
         get_workspace().addSubWindow(formview)

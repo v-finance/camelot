@@ -307,7 +307,7 @@ class NavigationPane(QtGui.QDockWidget):
 
     for model in models:
       logger.debug('loading model %s' % str(model[0]))
-      item = ModelItem(self.treewidget, [model[0].getName()])
+      item = ModelItem(self.treewidget, [model[0].getVerboseNamePlural()])
       self.treewidget.modelitems.append(item)
 
     self.treewidget.update()

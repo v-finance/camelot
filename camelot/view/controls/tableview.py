@@ -66,7 +66,7 @@ class Header(QtGui.QWidget):
     from search import SimpleSearchControl
     widget_layout = QtGui.QHBoxLayout()
     self.search_control = SimpleSearchControl(self)
-    title = QtGui.QLabel(admin.getName(), self)
+    title = QtGui.QLabel(admin.getVerboseNamePlural(), self)
     title.setFont(self._title_font)
     widget_layout.addWidget(title)
     widget_layout.addWidget(self.search_control)
@@ -94,7 +94,7 @@ class TableView(QtGui.QWidget):
   
   def __init__(self, admin, search_text=None, parent=None):
     QtGui.QWidget.__init__(self, parent)
-    self.setWindowTitle(self.title_format%(admin.getName()))
+    self.setWindowTitle(self.title_format%(admin.getVerboseNamePlural()))
     widget_layout = QtGui.QVBoxLayout()
     self.header = Header(admin, self)
     widget_layout.addWidget(self.header)
@@ -269,7 +269,7 @@ class TableView(QtGui.QWidget):
 
   def getTitle(self):
     """return the name of the entity managed by the admin attribute"""
-    return self.admin.getName()
+    return self.admin.getVerboseName()
 
   def viewFirst(self):
     """selects first row"""
@@ -335,7 +335,7 @@ class TableView(QtGui.QWidget):
     table = [[getattr(row, col[0]) for col in self.admin.getColumns()]
              for row in self.admin.entity.query.all()]
     context = {
-      'title': self.admin.getName(),
+      'title': self.admin.getVerboseNamePlural(),
       'table': table,
       'columns': [c[0] for c in self.admin.getColumns()],
     }

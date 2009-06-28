@@ -94,7 +94,7 @@ class ApplicationAdmin(object):
               for e, a in self.admins.items()
               if hasattr(a, 'section') 
               and a.section == section]
-    result.sort(cmp = lambda x, y: cmp(x[0].getName(), y[0].getName()))
+    result.sort(cmp = lambda x, y: cmp(x[0].getVerboseNamePlural(), y[0].getVerboseNamePlural()))
     return result
   
   def getActions(self):

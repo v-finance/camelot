@@ -206,7 +206,7 @@ class FormView(QtGui.QWidget):
                   for name, field_attributes in fields]
 
     context = {
-      'title': self.admin.getName(),
+      'title': self.admin.getVerboseName(),
       'table': table,
     }
 

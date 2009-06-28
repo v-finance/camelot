@@ -38,6 +38,22 @@ class ObjectAdmin(object):
 to interact with objects of a certain class.  The behaviour of this class and
 the resulting interface can be tuned by specifying specific class attributes:
 
+.. attribute:: verbose_name
+
+A human-readable name for the object, singular ::
+
+  verbose_name = 'movie'
+
+If this isn't given, the class name will be used
+  
+.. attribute:: verbose_name_plural
+
+A human-readable name for the object, plural ::
+
+  verbose_name_plural = 'movies'
+  
+If this isn't given, Camelot will use verbose_name + "s"
+
 .. attribute:: list_display 
 
 a list with the fields that should be displayed in a table view
@@ -95,7 +111,9 @@ are forwarded to the constructor of the delegate of this field::
       field_attributes = dict(title=dict(editable=False))
       
 """
-  name = None
+  name = None #DEPRECATED
+  verbose_name = None
+  verbose_name_plural = None
   list_display = []
   validator = ObjectValidator  
   fields = []
@@ -108,7 +126,7 @@ are forwarded to the constructor of the delegate of this field::
   list_size = (600, 400)
   form_size = (700, 500)
   form_actions = []
-  form_title_column = None
+  form_title_column = None #DEPRECATED
   field_attributes = {}
   
   def __init__(self, app_admin, entity):
@@ -134,6 +152,12 @@ are forwarded to the constructor of the delegate of this field::
 
   def getName(self):
     return (self.name or self.entity.__name__)
+  
+  def getVerboseName(self):
+    return (self.verbose_name or self.name or self.entity.__name__)
+  
+  def getVerboseNamePlural(self):
+    return (self.verbose_name_plural or self.name or (self.getVerboseName()+'s'))
 
   def getModelThread(self):
     return self.mt
