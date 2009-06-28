@@ -278,7 +278,7 @@ class EntityAdmin(ObjectAdmin):
     class NewForm(QtGui.QWidget):
 
       def __init__(self, parent):
-        super(NewForm, self).__init__(parent)
+        QtGui.QWidget.__init__(self, parent)
         self.setWindowTitle('New %s'%(admin.getVerboseName()))
         self.widget_layout = QtGui.QVBoxLayout()
         self.widget_layout.setMargin(0)

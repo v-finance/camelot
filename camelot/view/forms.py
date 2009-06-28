@@ -110,7 +110,7 @@ class Form(object):
     from PyQt4 import QtGui
     from PyQt4.QtCore import Qt
 
-    form_layout = QtGui.QGridLayout()
+    form_layout = QtGui.QGridLayout(parent)
     row = 0
     for field in self._content:
       if isinstance(field, Form):
@@ -154,7 +154,7 @@ class Form(object):
       else:
         form_layout.setRowStretch(form_layout.rowCount(), 1)
 
-    form_widget = QtGui.QWidget()
+    form_widget = QtGui.QWidget(parent)
     
     # fix embedded forms
     if nomargins:
@@ -165,7 +165,7 @@ class Form(object):
     form_widget.setLayout(form_layout)
     
     if self._scrollbars:
-      scroll_area = QtGui.QScrollArea()
+      scroll_area = QtGui.QScrollArea(parent)
       scroll_area.setWidget(form_widget)
       scroll_area.setWidgetResizable(True)
       scroll_area.setFrameStyle(QtGui.QFrame.NoFrame)
@@ -248,7 +248,7 @@ class HBoxForm(Form):
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
-    form_layout = QtGui.QHBoxLayout()
+    form_layout = QtGui.QHBoxLayout(parent)
     for form in self.columns:
       f = form.render(widgets, parent, nomargins)
       if isinstance(f, QtGui.QLayout):
@@ -280,7 +280,7 @@ class VBoxForm(Form):
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
-    form_layout = QtGui.QVBoxLayout()
+    form_layout = QtGui.QVBoxLayout(parent)
     for form in self.rows:
       f = form.render(widgets, parent, nomargins)
       if isinstance(f, QtGui.QLayout):
@@ -343,7 +343,7 @@ class GroupBoxForm(Form):
   def render(self, widgets, parent=None, nomargins=False):
     from PyQt4 import QtGui
     widget = QtGui.QGroupBox(self.title, parent)
-    layout = QtGui.QVBoxLayout()
+    layout = QtGui.QVBoxLayout(parent)
     widget.setLayout(layout)
     form = Form.render(self, widgets, widget, nomargins)
     layout.addWidget(form)

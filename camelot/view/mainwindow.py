@@ -63,7 +63,7 @@ class MainWindow(QtGui.QMainWindow):
   def __init__(self, app_admin, parent=None):
     from workspace import construct_workspace
     logger.debug('initializing main window')
-    super(MainWindow, self).__init__(parent)
+    QtGui.QMainWindow.__init__(self, parent)
 
     self.app_admin = app_admin
 

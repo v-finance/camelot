@@ -894,7 +894,7 @@ class ImageColumnDelegate(QItemDelegate):
 """
     
   def __init__(self, parent = None, **kwargs):
-    super(ImageColumnDelegate, self).__init__(parent)
+    QItemDelegate.__init__(parent)
     self.kwargs = kwargs
     
   def createEditor(self, parent, option, index):

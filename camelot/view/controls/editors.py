@@ -55,7 +55,7 @@ class DateTimeEditor(QtGui.QWidget):
   def __init__(self, parent, format, nullable=True, **kwargs):
     import itertools
     self.nullable = nullable
-    super(QtGui.QWidget, self).__init__(parent)
+    QtGui.QWidget.__init__(self, parent)
     dateformat, timeformat = format.split(' ')
     layout = QtGui.QHBoxLayout()
     self.dateedit = QtGui.QDateEdit(self)
@@ -65,7 +65,7 @@ class DateTimeEditor(QtGui.QWidget):
     
     class TimeValidator(QtGui.QValidator):
       def __init__(self, parent):
-        super(TimeValidator, self).__init__(parent)
+        QtGui.QValidator.__init__(self, parent)
       def validate(self, input, pos):
         parts = str(input).split(':')
         if len(parts)!=2:
@@ -136,7 +136,7 @@ class DateEditor(QtGui.QWidget):
   """Widget for editing date values"""
 
   def __init__(self, nullable=True, format='dd/MM/yyyy', parent=None):
-    super(DateEditor, self).__init__(parent)
+    QtGui.QWidget.__init__(self, parent)
     self.format = format
     self.qdateedit = QtGui.QDateEdit()
     self.qdateedit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
@@ -224,7 +224,7 @@ class DateEditor(QtGui.QWidget):
 
 class VirtualAddressEditor(QtGui.QWidget):
   def __init__(self, parent=None):
-    super(VirtualAddressEditor, self).__init__(parent)
+    QtGui.QWidget.__init__(self, parent)
     self.layout = QtGui.QHBoxLayout()
     self.layout.setMargin(0)
     self.combo = QtGui.QComboBox()
@@ -367,7 +367,7 @@ class VirtualAddressEditor(QtGui.QWidget):
 class CodeEditor(QtGui.QWidget):
   
   def __init__(self, parts=['99', 'AA'], parent=None):
-    super(CodeEditor, self).__init__(parent)
+    QtGui.QWidget.__init__(self, parent)
     self.setFocusPolicy(Qt.StrongFocus)
     self.parts = parts
     self.part_editors = []
@@ -399,7 +399,7 @@ class FloatEditor(QtGui.QWidget):
   """Widget for editing a float field, with a calculator"""
     
   def __init__(self, parent, precision, minimum, maximum, editable=True):
-    super(FloatEditor, self).__init__(parent)
+    QtGui.QWidget.__init__(self, parent)
     action = QtGui.QAction(self)
     action.setShortcut(Qt.Key_F3)
     self.setFocusPolicy(Qt.StrongFocus)
@@ -669,7 +669,7 @@ class EmbeddedMany2OneEditor(QtGui.QWidget):
   
   def __init__(self, admin=None, parent=None, **kwargs):
     assert admin != None
-    super(EmbeddedMany2OneEditor, self).__init__(parent)
+    QtGui.QWidget.__init__(self, parent)
     self.admin = admin    
     self.layout = QtGui.QHBoxLayout()
     self.entity_instance_getter = None

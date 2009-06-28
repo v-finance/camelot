@@ -45,7 +45,7 @@ QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
 class SubclassItem(ModelItem):
   def __init__(self, parent, admin):
-    super(SubclassItem, self).__init__(parent, [admin.getVerboseName()])
+    ModelItem.__init__(self, parent, [admin.getVerboseName()])
     self.admin = admin
 
 class SubclassTree(ModelTree):
@@ -57,7 +57,7 @@ class SubclassTree(ModelTree):
   
   def __init__(self, admin, parent):
     header_labels = ['Types']
-    super(SubclassTree, self).__init__(header_labels, parent)
+    ModelTree.__init__(self, header_labels, parent)
     self.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
     #self.setSelectionBehavior(QtGui.QAbstractItemView.SelectItems)
     self.admin = admin
@@ -94,7 +94,7 @@ class SubclassDialog(QtGui.QDialog):
   """A dialog requesting the user to select a subclass"""
   
   def __init__(self, parent, admin):
-    super(SubclassDialog, self).__init__(parent)
+    QtGui.QDialog.__init__(self, parent)
     layout = QtGui.QVBoxLayout()
     subclass_tree = SubclassTree(admin, self)
     layout.addWidget(subclass_tree)

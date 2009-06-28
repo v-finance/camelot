@@ -161,7 +161,7 @@ class ComboBoxFilter(Filter):
     class FilterWidget(QtGui.QGroupBox):
       
       def __init__(self, name, choices, parent):
-        super(FilterWidget, self).__init__(name, parent)
+        QtGui.QGroupBox.__init__(self, parent)
         layout = QtGui.QVBoxLayout()
         self.choices = choices
         combobox = QtGui.QComboBox(self)

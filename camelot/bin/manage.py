@@ -86,16 +86,26 @@ def main():
   else:
     from migrate.versioning.repository import Repository
     from migrate.versioning.schema import ControlledSchema
-    from migrate.versioning.exceptions import DatabaseAlreadyControlledError    
-    schema = ControlledSchema(settings.ENGINE(), settings.REPOSITORY)
+    from migrate.versioning.exceptions import DatabaseAlreadyControlledError
+    migrate_engine = settings.ENGINE()
+    schema = ControlledSchema(migrate_engine, settings.REPOSITORY)
     repository = Repository(settings.REPOSITORY)
     if args[0]=='db_version':
       print schema.version
     elif args[0]=='version':
       print repository.latest
     elif args[0]=='upgrade':
-      schema.upgrade(args[1])
-      print schema.version
-    
+      migrate_connection = migrate_engine.connect()
+      transaction = migrate_connection.begin()
+      try:
+        schema.upgrade(args[1])
+        transaction.commit()
+        print schema.version
+      except:
+        transaction.rollback()
+        raise
+      finally:
+        migrate_connection.close()
+         
 if __name__ == '__main__':
   main()

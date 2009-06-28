@@ -58,7 +58,7 @@ class PaneCaption(QtGui.QLabel):
                objectname='PaneCaption',
                parent=None):
 
-    super(PaneCaption, self).__init__(parent)
+    QtGui.QLabel.__init__(self, parent)
 
     self.setText(text)
 
@@ -109,7 +109,7 @@ class PaneButton(QtGui.QWidget):
                objectname='PaneButton',
                parent=None):
 
-    super(PaneButton, self).__init__(parent)
+    QtGui.QWidget.__init__(self, parent)
 
     if textleft:
       option = QtGui.QBoxLayout.LeftToRight 
@@ -216,7 +216,7 @@ class NavigationPane(QtGui.QDockWidget):
   """ms office-like navigation pane in Qt"""
   
   def __init__(self, app_admin, objectname='NavigationPane', parent=None):
-    super(NavigationPane, self).__init__(parent)
+    QtGui.QDockWidget.__init__(self, parent)
     self.app_admin = app_admin
     self.sections = app_admin.getSections() 
     buttons = [PaneButton(label, icon) 
