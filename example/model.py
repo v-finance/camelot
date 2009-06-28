@@ -62,7 +62,6 @@ class Movie(Entity):
   # subclass should overrule some of the EntityAdmin's methods
   #
   class Admin(EntityAdmin):
-    name = 'Movies'
     # the section attributed specifies where in the left panel of the
     # main window a link to a list of this entities will appear. Have
     # a look in main.py for the definition of the sections        
@@ -107,7 +106,7 @@ class Cast(Entity):
   role = Field(Unicode(60))
   
   class Admin(EntityAdmin):
-      name = 'Actor'
+      verbose_name = 'Actor'
       list_display = ['actor', 'role']
       form_display = ['actor', 'role']
 
@@ -126,7 +125,6 @@ class Tag(Entity):
   
   class Admin(EntityAdmin):
     section = 'movies'
-    name = 'Tags'
     form_size = (400,200)
     list_display = ['name']
     form_display = ['name', 'movies']
