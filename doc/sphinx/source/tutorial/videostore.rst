@@ -169,18 +169,18 @@ This is one of the purposes of ``EntityAdmin`` subclasses. After adding the
     genre = Field(Unicode(15))
 
     class Admin(EntityAdmin):
-      name = 'Movies'
+      verbose_name = 'Movie'
       section = 'movies'
       list_display = ['title', 'short_description', 'release_date', 'genre']
 
-    def __repr__(self):
+    def __unicode__(self):
       return self.title or 'untitled movie'
 
 We made ``Admin`` an inner class to strengthen the link between it and the
 ``Entity`` subclass. Camelot does not force us. ``Admin`` holds three
 attributes.
 
-``name`` will be a label in navigation trees, while the value of ``section``
+``verbose_name`` will be a label in navigation trees, while the value of ``section``
 is used programmatically to group entities together (we will see that soon).
 Here, our section has the internal value ``'movies'``.
 
@@ -192,7 +192,7 @@ forms.
 In our case we want to display four fields: ``title``, ``short_description``,
 ``release_date``, and ``genre`` (that is, all of them.)
 
-We also add a ``__repr__()`` method that will return either the title of the
+We also add a ``__unicode__()`` method that will return either the title of the
 movie entity or ``'untitled movie'`` if title is empty. This is a good
 programming practice.
 
