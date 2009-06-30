@@ -374,7 +374,7 @@ the database.  A subdirectory upload_to can be specified::
   
   def __init__(self, max_length=100, upload_to='', storage=Storage, **kwargs):
     self.max_length = max_length
-    self.storage = Storage(upload_to)
+    self.storage = storage(upload_to)
     types.TypeDecorator.__init__(self, length=max_length, **kwargs)
     
   def bind_processor(self, dialect):

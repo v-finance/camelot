@@ -84,3 +84,31 @@ a local filesystem path where the file can be opened"""
   @model_function
   def delete(self, name):
     pass
+
+class S3Storage(object):
+  """Helper class that opens and saves StoredFile objects into Amazon S3.
+  
+  these attibutes need to be set in your settings for S3Storage to work :
+   * AWS_ACCESS_KEY_ID = '<INSERT YOUR AWS ACCESS KEY ID HERE>'
+   * AWS_SECRET_ACCESS_KEY = '<INSERT YOUR AWS SECRET ACCESS KEY HERE>'
+   * AWS_BUCKET_NAME = 'camelot'
+   * AWS_LOCATION = S3.Location.DEFAULT
+  """
+
+  def __init__(self, upload_to=''):
+    import locale
+    # try to work around bug S3 code which uses bad names of days
+    # http://code.google.com/p/boto/issues/detail?id=140
+    # but workaround doesn't work :(
+#    locale.setlocale(locale.LC_TIME, 'en_US.utf8')
+#    print 'create S3 storage'
+    import settings
+    import S3
+    self.upload_to=upload_to    
+    conn = S3.AWSAuthConnection(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY)
+    generator = S3.QueryStringAuthGenerator(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY)
+    if (conn.check_bucket_exists(settings.AWS_BUCKET_NAME).status == 200):
+      pass
+    else:
+      print '----- creating bucket -----'
+      print conn.create_located_bucket(settings.AWS_BUCKET_NAME, settings.AWS_LOCATION).message
