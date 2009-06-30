@@ -109,7 +109,8 @@ _sqlalchemy_to_python_type_ = {
   camelot.types.Image: lambda f: {'python_type': str,
                                   'editable': True,
                                   'nullable':True,
-                                  'delegate': ImageColumnDelegate},
+                                  'delegate': ImageColumnDelegate,
+                                  'storage':f.storage,},
 
   camelot.types.Code: lambda f: {'python_type': str,
                                  'editable': True,
@@ -173,7 +174,8 @@ _sqlalchemy_to_python_type_ = {
                                          'delegate':DateTimeColumnDelegate},
   camelot.types.File : lambda f: {'python_type':str,
                                   'editable':True,
-                                  'delegate':FileDelegate},
+                                  'delegate':FileDelegate,
+                                  'storage':f.storage},
                                          
   
 }

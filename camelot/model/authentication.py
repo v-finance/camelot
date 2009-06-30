@@ -323,7 +323,7 @@ class Person(Party):
 
   class Admin(Party.Admin):
     verbose_name = 'Person'
-    verbose_name_plurall = 'Persons'
+    verbose_name_plural = 'Persons'
     section = 'relations'
     list_display = ['first_name', 'last_name', ]
     form_display = TabForm([('Basic', Form([HBoxForm([Form(['first_name', 'last_name', 'sex']),

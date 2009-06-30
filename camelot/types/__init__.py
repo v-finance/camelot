@@ -40,7 +40,7 @@ logger = logging.getLogger('camelot.types')
 logger.setLevel(logging.DEBUG)
 
 from sqlalchemy import types
-
+from camelot.core.files.storage import StoredFile, Storage
 
 class VirtualAddress(types.TypeDecorator):
   """A single field that can be used to enter phone numbers, fax numbers, email
@@ -171,32 +171,6 @@ try:
   from PIL import Image as PILImage
 except:
   import Image as PILImage
-        
-
-class StoredFile(object):
-  """Helper class for the File field type containing the location and the
-filename of a file"""
-  
-  def __init__(self, location=None, filename=None):
-    self.location = location
-    self.filename = filename
-  
-  @property
-  def full_path(self):
-    import os
-    return os.path.join(self.location, self.filename)
-  
-  def __unicode__(self):
-    return self.full_path
-    
-class StoredImage(StoredFile):
-  """Helper class for the Image field type Class linking a PIL image and the 
-location and filename where the image is stored"""
-  
-  def __init__(self, image, location=None, filename=None):
-    self.image = image
-    self.location = location
-    self.filename = filename
     
 class Color(types.TypeDecorator):
   """The Color field returns and accepts tuples of the form (r,g,b,a) where
@@ -309,7 +283,14 @@ box are the capitalized strings::
       
     return processor  
   
+class StoredImage(StoredFile):
+  """Helper class for the Image field type Class linking a PIL image and the 
+location and filename where the image is stored"""
   
+  def __init__(self, image, storage=None, name=''):
+    self.image = image
+    StoredFile.__init__(self, storage, name)
+
 class Image(types.TypeDecorator):
   """Sqlalchemy column type to store images
   
@@ -325,11 +306,12 @@ the files stored should be images.
   
   impl = types.Unicode
   
-  def __init__(self, max_length=100, upload_to='', prefix='image-', format='png', **kwargs):
+  def __init__(self, max_length=100, upload_to='', prefix='image-', format='png', storage=Storage, **kwargs):
     import settings
     self.upload_to = os.path.join(settings.CAMELOT_MEDIA_ROOT, upload_to)
     self.prefix = prefix
     self.format = format
+    self.storage = Storage(self.upload_to)
     self.max_length = max_length
     try:
       if not os.path.exists(self.upload_to):
@@ -366,7 +348,7 @@ the files stored should be images.
         value = os.path.join(self.upload_to, impl_processor(value))
         if os.path.exists(value):
           try:
-            return StoredImage(PILImage.open( open(value, 'rb') ), self.upload_to, value)
+            return StoredImage(PILImage.open( open(value, 'rb') ), self.storage, value)
           except Exception, e:
             logger.warn('Cannot open image at %s'%value, exc_info=e)
             return None
@@ -390,15 +372,9 @@ the database.  A subdirectory upload_to can be specified::
   
   impl = types.Unicode
   
-  def __init__(self, max_length=100, upload_to='', **kwargs):
-    import settings
-    self.upload_to = os.path.join(settings.CAMELOT_MEDIA_ROOT, upload_to)
+  def __init__(self, max_length=100, upload_to='', storage=Storage, **kwargs):
     self.max_length = max_length
-    try:
-      if not os.path.exists(self.upload_to):
-        os.makedirs(self.upload_to)
-    except Exception, e:
-      logger.warn('Could not access or create path %s, files will be unreachable'%self.upload_to, exc_info=e)
+    self.storage = Storage(upload_to)
     types.TypeDecorator.__init__(self, length=max_length, **kwargs)
     
   def bind_processor(self, dialect):
@@ -412,15 +388,7 @@ the database.  A subdirectory upload_to can be specified::
         import tempfile
         import shutil
         assert isinstance(value, (StoredFile))
-        from_path = value.full_path
-        root, extension = os.path.splitext(os.path.basename(from_path))
-        (handle, to_path) = tempfile.mkstemp(suffix=extension, prefix=root, dir=self.upload_to, text='b')
-        os.close(handle)
-        logger.debug('copy file from %s to %s', from_path, to_path)
-        shutil.copy(from_path, to_path)
-        value.filename = os.path.basename(to_path)
-        value.location = self.upload_to
-        return impl_processor(value.filename)
+        return impl_processor(value.name)
       return impl_processor(value)
     
     return processor
@@ -434,9 +402,7 @@ the database.  A subdirectory upload_to can be specified::
     def processor(value):
 
       if value:
-        if os.path.exists(os.path.join(self.upload_to, impl_processor(value))):
-          return StoredFile(self.upload_to, value)
-        else:
-          logger.warn('File at %s does not exist'%value)
+        value = impl_processor(value)
+        return StoredFile(self.storage, value)
       
     return processor

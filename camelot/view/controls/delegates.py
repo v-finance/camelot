@@ -213,7 +213,7 @@ class FileDelegate(CustomDelegate):
                        option.rect.width()-4,
                        option.rect.height(),
                        Qt.AlignVCenter | Qt.AlignLeft,
-                       value.filename)
+                       value.verbose_name)
     painter.restore()
 
     

@@ -1324,8 +1324,9 @@ class FileEditor(QtGui.QWidget):
   """Widget for editing File fields
   """
   
-  def __init__(self, parent=None, **kwargs):
+  def __init__(self, parent=None, storage=None, **kwargs):
     QtGui.QWidget.__init__(self, parent)
+    self.storage = storage
     self.document_pixmap =  Icon('tango/16x16/mimetypes/x-office-document.png').getQPixmap()
     self.clear_icon = Icon('tango/16x16/actions/edit-delete.png').getQIcon()
     self.new_icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
@@ -1384,7 +1385,7 @@ class FileEditor(QtGui.QWidget):
   def setValue(self, value):
     self.value = value
     if value:
-      self.filename.setText(value.filename) 
+      self.filename.setText(value.verbose_name) 
       self.open_button.setIcon(self.open_icon)
       self.open_button.setToolTip('Open file')
     else:
@@ -1396,18 +1397,16 @@ class FileEditor(QtGui.QWidget):
     return self.value
   
   def openButtonClicked(self):
+    from camelot.view.storage import open_stored_file, create_stored_file
     if not self.value:
-      import os
-      from camelot.types import StoredFile
-      filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file', 
-                                                   QtCore.QDir.currentPath())
-      if filename:
-        head, tail = os.path.split(unicode(filename))
-        self.value = StoredFile(head, tail)
+      
+      def on_finish(stored_file):
+        self.setValue(stored_file)
         self.emit(editingFinished)
+        
+      create_stored_file(self, self.storage, on_finish)
     else:
-      url = QtCore.QUrl.fromLocalFile(self.value.full_path)
-      QtGui.QDesktopServices.openUrl(url)
+      open_stored_file(self, self.value)
   
   def clearButtonClicked(self):
     self.value = None
