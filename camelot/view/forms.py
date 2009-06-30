@@ -110,7 +110,7 @@ class Form(object):
     from PyQt4 import QtGui
     from PyQt4.QtCore import Qt
 
-    form_layout = QtGui.QGridLayout(parent)
+    form_layout = QtGui.QGridLayout()
     row = 0
     for field in self._content:
       if isinstance(field, Form):
@@ -248,7 +248,7 @@ class HBoxForm(Form):
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
-    form_layout = QtGui.QHBoxLayout(parent)
+    form_layout = QtGui.QHBoxLayout()
     for form in self.columns:
       f = form.render(widgets, parent, nomargins)
       if isinstance(f, QtGui.QLayout):
@@ -280,7 +280,7 @@ class VBoxForm(Form):
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
-    form_layout = QtGui.QVBoxLayout(parent)
+    form_layout = QtGui.QVBoxLayout()
     for form in self.rows:
       f = form.render(widgets, parent, nomargins)
       if isinstance(f, QtGui.QLayout):
@@ -308,7 +308,7 @@ class GridForm(Form):
   def render(self, widgets, parent=None, nomargins=False):
     from PyQt4 import QtGui
     widget = QtGui.QWidget(parent)
-    grid_layout = QtGui.QGridLayout(parent)
+    grid_layout = QtGui.QGridLayout()
     for i,row in enumerate(self._grid):
       for j,field in enumerate(row):
         label, editor = widgets[field]
@@ -343,7 +343,7 @@ class GroupBoxForm(Form):
   def render(self, widgets, parent=None, nomargins=False):
     from PyQt4 import QtGui
     widget = QtGui.QGroupBox(self.title, parent)
-    layout = QtGui.QVBoxLayout(parent)
+    layout = QtGui.QVBoxLayout()
     widget.setLayout(layout)
     form = Form.render(self, widgets, widget, nomargins)
     layout.addWidget(form)
