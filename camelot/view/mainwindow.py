@@ -589,18 +589,12 @@ class MainWindow(QtGui.QMainWindow):
                                     self.exportToWordAct,
                                     self.exportToMailAct,))
     
-    self.importToolBar = self.addToolBar(_('Import'))
-    self.importToolBar.setObjectName('ImportToolBar')
-    self.importToolBar.setMovable(False)
-    self.importToolBar.setFloatable(False)
-    
     if self.app_actions:
       self.applicationToolBar = self.addToolBar(_('Application'))
       self.applicationToolBar.setObjectName('ApplicationToolBar')
       self.applicationToolBar.setMovable(False)
       self.applicationToolBar.setFloatable(False)
-      addActions(self.exportToolBar, self.app_actions)
-      addActions(self.importToolBar, self.app_actions)
+      addActions(self.applicationToolBar, self.app_actions)
       
   # Navigation Pane
 
