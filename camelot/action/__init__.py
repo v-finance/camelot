@@ -28,4 +28,5 @@
 """The action module contains various QAction classes, representing commands
 that can be invoked via menus, toolbar buttons, and keyboard shortcuts."""
 
+from action import *
 from utils import createAction, addActions
