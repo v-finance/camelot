@@ -14,7 +14,7 @@ class TableViewAction(Action):
     from camelot.admin.application_admin import get_application_admin
     self.parent_admin = parent_admin or get_application_admin()
     if admin:
-      self.admin = admin(self.parent_admin)
+      self.admin = admin(self.parent_admin, entity)
     else:
       self.admin = self.parent_admin.getEntityAdmin(entity)
     self.entity = entity

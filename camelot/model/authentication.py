@@ -81,6 +81,18 @@ class EmployerEmployee(PartyRelationship):
   established_from = ManyToOne('Organization', required=True, ondelete='cascade', onupdate='cascade')
   established_to = ManyToOne('Person', required=True, ondelete='cascade', onupdate='cascade')
   
+  @ColumnProperty
+  def first_name(self):
+    return sql.select([Person.first_name], Person.c.party_id==self.established_to_party_id)
+  
+  @ColumnProperty
+  def last_name(self):
+    return sql.select([Person.last_name], Person.c.party_id==self.established_to_party_id)
+  
+  @ColumnProperty
+  def passport_number(self):
+    return sql.select([Person.passport_number], Person.c.party_id==self.established_to_party_id)
+  
   def __unicode__(self):
     return u'%s employed by %s'%(unicode(self.established_to), unicode(self.established_from))
   
