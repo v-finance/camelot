@@ -1,697 +1,0 @@
-<?xml version="1.0" encoding="ascii"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-          "DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-  <title>camelot.camelot.view.filters</title>
-  <link rel="stylesheet" href="epydoc.css" type="text/css" />
-  <script type="text/javascript" src="epydoc.js"></script>
-</head>
-
-<body bgcolor="white" text="black" link="blue" vlink="#204080"
-      alink="#204080">
-<!-- ==================== NAVIGATION BAR ==================== -->
-<table class="navbar" border="0" width="100%" cellpadding="0"
-       bgcolor="#a0c0ff" cellspacing="0">
-  <tr valign="middle">
-  <!-- Home link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Tree link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Index link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Help link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Project homepage -->
-      <th class="navbar" align="right" width="100%">
-        <table border="0" cellpadding="0" cellspacing="0">
-          <tr><th class="navbar" align="center"
-            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
-          </tr></table></th>
-  </tr>
-</table>
-<table width="100%" cellpadding="0" cellspacing="0">
-  <tr valign="top">
-    <td width="100%">
-      <span class="breadcrumbs">
-        Package&nbsp;camelot ::
-        <a href="camelot.camelot-module.html">Package&nbsp;camelot</a> ::
-        <a href="camelot.camelot.view-module.html">Package&nbsp;view</a> ::
-        Module&nbsp;filters
-      </span>
-    </td>
-    <td>
-      <table cellpadding="0" cellspacing="0">
-        <!-- hide/show private -->
-        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
-    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
-        <tr><td align="right"><span class="options"
-            >[<a href="frames.html" target="_top">frames</a
-            >]&nbsp;|&nbsp;<a href="camelot.camelot.view.filters-pysrc.html"
-            target="_top">no&nbsp;frames</a>]</span></td></tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<h1 class="epydoc">Source Code for <a href="camelot.camelot.view.filters-module.html">Module camelot.camelot.view.filters</a></h1>
-<pre class="py-src">
-<a name="L1"></a><tt class="py-lineno">  1</tt>  <tt class="py-line"><tt class="py-comment">#  ============================================================================</tt> </tt>
-<a name="L2"></a><tt class="py-lineno">  2</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L3"></a><tt class="py-lineno">  3</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.</tt> </tt>
-<a name="L4"></a><tt class="py-lineno">  4</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  www.conceptive.be / project-camelot@conceptive.be</tt> </tt>
-<a name="L5"></a><tt class="py-lineno">  5</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L6"></a><tt class="py-lineno">  6</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is part of the Camelot Library.</tt> </tt>
-<a name="L7"></a><tt class="py-lineno">  7</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L8"></a><tt class="py-lineno">  8</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file may be used under the terms of the GNU General Public</tt> </tt>
-<a name="L9"></a><tt class="py-lineno">  9</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  License version 2.0 as published by the Free Software Foundation</tt> </tt>
-<a name="L10"></a><tt class="py-lineno"> 10</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  and appearing in the file LICENSE.GPL included in the packaging of</tt> </tt>
-<a name="L11"></a><tt class="py-lineno"> 11</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  this file.  Please review the following information to ensure GNU</tt> </tt>
-<a name="L12"></a><tt class="py-lineno"> 12</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  General Public Licensing requirements will be met:</tt> </tt>
-<a name="L13"></a><tt class="py-lineno"> 13</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/opensource.html</tt> </tt>
-<a name="L14"></a><tt class="py-lineno"> 14</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L15"></a><tt class="py-lineno"> 15</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  If you are unsure which license is appropriate for your use, please</tt> </tt>
-<a name="L16"></a><tt class="py-lineno"> 16</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  review the following information:</tt> </tt>
-<a name="L17"></a><tt class="py-lineno"> 17</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/licensing.html or contact</tt> </tt>
-<a name="L18"></a><tt class="py-lineno"> 18</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be.</tt> </tt>
-<a name="L19"></a><tt class="py-lineno"> 19</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L20"></a><tt class="py-lineno"> 20</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE</tt> </tt>
-<a name="L21"></a><tt class="py-lineno"> 21</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</tt> </tt>
-<a name="L22"></a><tt class="py-lineno"> 22</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L23"></a><tt class="py-lineno"> 23</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  For use of this library in commercial applications, please contact</tt> </tt>
-<a name="L24"></a><tt class="py-lineno"> 24</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be</tt> </tt>
-<a name="L25"></a><tt class="py-lineno"> 25</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L26"></a><tt class="py-lineno"> 26</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  ============================================================================</tt> </tt>
-<a name="L27"></a><tt class="py-lineno"> 27</tt>  <tt class="py-line"><tt class="py-comment"></tt> </tt>
-<a name="L28"></a><tt class="py-lineno"> 28</tt>  <tt class="py-line"><tt class="py-docstring">"""</tt> </tt>
-<a name="L29"></a><tt class="py-lineno"> 29</tt>  <tt class="py-line"><tt class="py-docstring">Python structures to represent filters.</tt> </tt>
-<a name="L30"></a><tt class="py-lineno"> 30</tt>  <tt class="py-line"><tt class="py-docstring">These structures can be transformed to QT forms.</tt> </tt>
-<a name="L31"></a><tt class="py-lineno"> 31</tt>  <tt class="py-line"><tt class="py-docstring">"""</tt> </tt>
-<a name="L32"></a><tt class="py-lineno"> 32</tt>  <tt class="py-line"> </tt>
-<a name="structure_to_filter"></a><div id="structure_to_filter-def"><a name="L33"></a><tt class="py-lineno"> 33</tt> <a class="py-toggle" href="#" id="structure_to_filter-toggle" onclick="return toggle('structure_to_filter');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.filters-module.html#structure_to_filter">structure_to_filter</a><tt class="py-op">(</tt><tt class="py-param">structure</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="structure_to_filter-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="structure_to_filter-expanded"><a name="L34"></a><tt class="py-lineno"> 34</tt>  <tt class="py-line">  <tt class="py-docstring">"""Convert a python data structure to a filter, using the following rules :</tt> </tt>
-<a name="L35"></a><tt class="py-lineno"> 35</tt>  <tt class="py-line"><tt class="py-docstring">  </tt> </tt>
-<a name="L36"></a><tt class="py-lineno"> 36</tt>  <tt class="py-line"><tt class="py-docstring">  if structure is an instance of Filter, return structure</tt> </tt>
-<a name="L37"></a><tt class="py-lineno"> 37</tt>  <tt class="py-line"><tt class="py-docstring">  else create a GroupBoxFilter from the structure</tt> </tt>
-<a name="L38"></a><tt class="py-lineno"> 38</tt>  <tt class="py-line"><tt class="py-docstring">  """</tt> </tt>
-<a name="L39"></a><tt class="py-lineno"> 39</tt>  <tt class="py-line">  <tt class="py-keyword">if</tt> <tt class="py-name">isinstance</tt><tt class="py-op">(</tt><tt class="py-name">structure</tt><tt class="py-op">,</tt> <tt id="link-0" class="py-name" targets="Class camelot.camelot.view.filters.Filter=camelot.camelot.view.filters.Filter-class.html"><a title="camelot.camelot.view.filters.Filter" class="py-name" href="#" onclick="return doclink('link-0', 'Filter', 'link-0');">Filter</a></tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L40"></a><tt class="py-lineno"> 40</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">structure</tt> </tt>
-<a name="L41"></a><tt class="py-lineno"> 41</tt>  <tt class="py-line">  <tt class="py-keyword">return</tt> <tt id="link-1" class="py-name" targets="Class camelot.camelot.view.filters.GroupBoxFilter=camelot.camelot.view.filters.GroupBoxFilter-class.html"><a title="camelot.camelot.view.filters.GroupBoxFilter" class="py-name" href="#" onclick="return doclink('link-1', 'GroupBoxFilter', 'link-1');">GroupBoxFilter</a></tt><tt class="py-op">(</tt><tt class="py-name">structure</tt><tt class="py-op">)</tt> </tt>
-</div><a name="L42"></a><tt class="py-lineno"> 42</tt>  <tt class="py-line"> </tt>
-<a name="Filter"></a><div id="Filter-def"><a name="L43"></a><tt class="py-lineno"> 43</tt> <a class="py-toggle" href="#" id="Filter-toggle" onclick="return toggle('Filter');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="camelot.camelot.view.filters.Filter-class.html">Filter</a><tt class="py-op">(</tt><tt class="py-base-class">object</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="Filter-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="Filter-expanded"><a name="L44"></a><tt class="py-lineno"> 44</tt>  <tt class="py-line">  <tt class="py-docstring">"""Base class for filters"""</tt> </tt>
-<a name="L45"></a><tt class="py-lineno"> 45</tt>  <tt class="py-line">   </tt>
-<a name="Filter.__init__"></a><div id="Filter.__init__-def"><a name="L46"></a><tt class="py-lineno"> 46</tt> <a class="py-toggle" href="#" id="Filter.__init__-toggle" onclick="return toggle('Filter.__init__');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.filters.Filter-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">attribute</tt><tt class="py-op">,</tt> <tt class="py-param">value_to_string</tt><tt class="py-op">=</tt><tt class="py-keyword">lambda</tt> <tt class="py-name">x</tt><tt class="py-op">:</tt><tt class="py-name">unicode</tt><tt class="py-op">(</tt><tt class="py-name">x</tt><tt class="py-op">)</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="Filter.__init__-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Filter.__init__-expanded"><a name="L47"></a><tt class="py-lineno"> 47</tt>  <tt class="py-line">    <tt class="py-docstring">"""</tt> </tt>
-<a name="L48"></a><tt class="py-lineno"> 48</tt>  <tt class="py-line"><tt class="py-docstring">    @param attribute: the attribute on which to filter, this attribute</tt> </tt>
-<a name="L49"></a><tt class="py-lineno"> 49</tt>  <tt class="py-line"><tt class="py-docstring">    may contain dots to indicate relationships that need to be followed, </tt> </tt>
-<a name="L50"></a><tt class="py-lineno"> 50</tt>  <tt class="py-line"><tt class="py-docstring">    eg.  'person.groups.name'</tt> </tt>
-<a name="L51"></a><tt class="py-lineno"> 51</tt>  <tt class="py-line"><tt class="py-docstring">    @param value_to_string: function that converts a value of the attribute to</tt> </tt>
-<a name="L52"></a><tt class="py-lineno"> 52</tt>  <tt class="py-line"><tt class="py-docstring">    a string that will be displayed in the filter </tt> </tt>
-<a name="L53"></a><tt class="py-lineno"> 53</tt>  <tt class="py-line"><tt class="py-docstring">    """</tt> </tt>
-<a name="L54"></a><tt class="py-lineno"> 54</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">attribute</tt> <tt class="py-op">=</tt> <tt class="py-name">attribute</tt> </tt>
-<a name="L55"></a><tt class="py-lineno"> 55</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">_value_to_string</tt> <tt class="py-op">=</tt> <tt class="py-name">value_to_string</tt> </tt>
-</div><a name="L56"></a><tt class="py-lineno"> 56</tt>  <tt class="py-line">      </tt>
-<a name="Filter.render"></a><div id="Filter.render-def"><a name="L57"></a><tt class="py-lineno"> 57</tt> <a class="py-toggle" href="#" id="Filter.render-toggle" onclick="return toggle('Filter.render');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.filters.Filter-class.html#render">render</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">parent</tt><tt class="py-op">,</tt> <tt class="py-param">name</tt><tt class="py-op">,</tt> <tt class="py-param">options</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="Filter.render-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Filter.render-expanded"><a name="L58"></a><tt class="py-lineno"> 58</tt>  <tt class="py-line">    <tt class="py-docstring">"""Render this filter as a qt object</tt> </tt>
-<a name="L59"></a><tt class="py-lineno"> 59</tt>  <tt class="py-line"><tt class="py-docstring">    @param parent: its parent widget</tt> </tt>
-<a name="L60"></a><tt class="py-lineno"> 60</tt>  <tt class="py-line"><tt class="py-docstring">    @param name: the name of the filter</tt> </tt>
-<a name="L61"></a><tt class="py-lineno"> 61</tt>  <tt class="py-line"><tt class="py-docstring">    @param options: the options that can be selected, where each option is a list</tt> </tt>
-<a name="L62"></a><tt class="py-lineno"> 62</tt>  <tt class="py-line"><tt class="py-docstring">    of tuples containting (option_name, query_decorator)  </tt> </tt>
-<a name="L63"></a><tt class="py-lineno"> 63</tt>  <tt class="py-line"><tt class="py-docstring">    </tt> </tt>
-<a name="L64"></a><tt class="py-lineno"> 64</tt>  <tt class="py-line"><tt class="py-docstring">    The name and the list of options can be fetched with get_name_and_options"""</tt> </tt>
-<a name="L65"></a><tt class="py-lineno"> 65</tt>  <tt class="py-line">    <tt class="py-keyword">raise</tt> <tt class="py-name">NotImplementedException</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
-</div><a name="L66"></a><tt class="py-lineno"> 66</tt>  <tt class="py-line">     </tt>
-<a name="Filter.get_name_and_options"></a><div id="Filter.get_name_and_options-def"><a name="L67"></a><tt class="py-lineno"> 67</tt> <a class="py-toggle" href="#" id="Filter.get_name_and_options-toggle" onclick="return toggle('Filter.get_name_and_options');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.filters.Filter-class.html#get_name_and_options">get_name_and_options</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">admin</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="Filter.get_name_and_options-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="Filter.get_name_and_options-expanded"><a name="L68"></a><tt class="py-lineno"> 68</tt>  <tt class="py-line">    <tt class="py-docstring">"""return a tuple of the name of the filter and a list of options that can be selected. </tt> </tt>
-<a name="L69"></a><tt class="py-lineno"> 69</tt>  <tt class="py-line"><tt class="py-docstring">    Each option is a tuple of the name of the option, and a filter function to</tt> </tt>
-<a name="L70"></a><tt class="py-lineno"> 70</tt>  <tt class="py-line"><tt class="py-docstring">    decorate a query</tt> </tt>
-<a name="L71"></a><tt class="py-lineno"> 71</tt>  <tt class="py-line"><tt class="py-docstring">    @return:  (filter_name, [(option_name, query_decorator), ...)</tt> </tt>
-<a name="L72"></a><tt class="py-lineno"> 72</tt>  <tt class="py-line"><tt class="py-docstring">    """</tt> </tt>
-<a name="L73"></a><tt class="py-lineno"> 73</tt>  <tt class="py-line">    <tt class="py-keyword">from</tt> <tt class="py-name">sqlalchemy</tt><tt class="py-op">.</tt><tt class="py-name">sql</tt> <tt class="py-keyword">import</tt> <tt class="py-name">select</tt> </tt>
-<a name="L74"></a><tt class="py-lineno"> 74</tt>  <tt class="py-line">    <tt class="py-keyword">from</tt> <tt class="py-name">elixir</tt> <tt class="py-keyword">import</tt> <tt class="py-name">session</tt> </tt>
-<a name="L75"></a><tt class="py-lineno"> 75</tt>  <tt class="py-line">    <tt class="py-comment">#session.bind = self.entity.table.metadata.bind</tt> </tt>
-<a name="L76"></a><tt class="py-lineno"> 76</tt>  <tt class="py-line"><tt class="py-comment"></tt>    <tt class="py-name">filter_names</tt> <tt class="py-op">=</tt> <tt class="py-op">[</tt><tt class="py-op">]</tt> </tt>
-<a name="L77"></a><tt class="py-lineno"> 77</tt>  <tt class="py-line">    <tt class="py-name">joins</tt> <tt class="py-op">=</tt> <tt class="py-op">[</tt><tt class="py-op">]</tt> </tt>
-<a name="L78"></a><tt class="py-lineno"> 78</tt>  <tt class="py-line">    <tt class="py-name">table</tt> <tt class="py-op">=</tt> <tt class="py-name">admin</tt><tt class="py-op">.</tt><tt class="py-name">entity</tt><tt class="py-op">.</tt><tt class="py-name">table</tt> </tt>
-<a name="L79"></a><tt class="py-lineno"> 79</tt>  <tt class="py-line">    <tt class="py-keyword">for</tt> <tt class="py-name">field_name</tt> <tt class="py-keyword">in</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">attribute</tt><tt class="py-op">.</tt><tt class="py-name">split</tt><tt class="py-op">(</tt><tt class="py-string">'.'</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L80"></a><tt class="py-lineno"> 80</tt>  <tt class="py-line">      <tt class="py-name">attributes</tt> <tt class="py-op">=</tt> <tt class="py-name">admin</tt><tt class="py-op">.</tt><tt id="link-2" class="py-name" targets="Method camelot.camelot.view.elixir_admin.EntityAdmin.getFieldAttributes()=camelot.camelot.view.elixir_admin.EntityAdmin-class.html#getFieldAttributes"><a title="camelot.camelot.view.elixir_admin.EntityAdmin.getFieldAttributes" class="py-name" href="#" onclick="return doclink('link-2', 'getFieldAttributes', 'link-2');">getFieldAttributes</a></tt><tt class="py-op">(</tt><tt class="py-name">field_name</tt><tt class="py-op">)</tt> </tt>
-<a name="L81"></a><tt class="py-lineno"> 81</tt>  <tt class="py-line">      <tt class="py-name">filter_names</tt><tt class="py-op">.</tt><tt id="link-3" class="py-name" targets="Method camelot.camelot.view.proxy.collection_proxy.CollectionProxy.append()=camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#append,Method camelot.camelot.view.proxy.queryproxy.QueryTableProxy.append()=camelot.camelot.view.proxy.queryproxy.QueryTableProxy-class.html#append"><a title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy.append
-camelot.camelot.view.proxy.queryproxy.QueryTableProxy.append" class="py-name" href="#" onclick="return doclink('link-3', 'append', 'link-3');">append</a></tt><tt class="py-op">(</tt><tt class="py-name">attributes</tt><tt class="py-op">[</tt><tt class="py-string">'name'</tt><tt class="py-op">]</tt><tt class="py-op">)</tt> </tt>
-<a name="L82"></a><tt class="py-lineno"> 82</tt>  <tt class="py-line">      <tt class="py-keyword">if</tt> <tt class="py-name">attributes</tt><tt class="py-op">[</tt><tt class="py-string">'widget'</tt><tt class="py-op">]</tt> <tt class="py-keyword">in</tt> <tt class="py-op">(</tt><tt class="py-string">'one2many'</tt><tt class="py-op">,</tt> <tt class="py-string">'many2many'</tt><tt class="py-op">,</tt> <tt class="py-string">'many2one'</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L83"></a><tt class="py-lineno"> 83</tt>  <tt class="py-line">        <tt class="py-name">admin</tt> <tt class="py-op">=</tt> <tt class="py-name">attributes</tt><tt class="py-op">[</tt><tt class="py-string">'admin'</tt><tt class="py-op">]</tt> </tt>
-<a name="L84"></a><tt class="py-lineno"> 84</tt>  <tt class="py-line">        <tt class="py-name">joins</tt><tt class="py-op">.</tt><tt id="link-4" class="py-name"><a title="camelot.camelot.view.proxy.collection_proxy.CollectionProxy.append
-camelot.camelot.view.proxy.queryproxy.QueryTableProxy.append" class="py-name" href="#" onclick="return doclink('link-4', 'append', 'link-3');">append</a></tt><tt class="py-op">(</tt><tt class="py-name">field_name</tt><tt class="py-op">)</tt> </tt>
-<a name="L85"></a><tt class="py-lineno"> 85</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">attributes</tt><tt class="py-op">[</tt><tt class="py-string">'widget'</tt><tt class="py-op">]</tt> <tt class="py-keyword">in</tt> <tt class="py-op">(</tt><tt class="py-string">'many2one'</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L86"></a><tt class="py-lineno"> 86</tt>  <tt class="py-line">          <tt class="py-name">table</tt> <tt class="py-op">=</tt> <tt class="py-name">admin</tt><tt class="py-op">.</tt><tt class="py-name">entity</tt><tt class="py-op">.</tt><tt class="py-name">table</tt><tt class="py-op">.</tt><tt class="py-name">join</tt><tt class="py-op">(</tt><tt class="py-name">table</tt><tt class="py-op">)</tt> </tt>
-<a name="L87"></a><tt class="py-lineno"> 87</tt>  <tt class="py-line">        <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
-<a name="L88"></a><tt class="py-lineno"> 88</tt>  <tt class="py-line">          <tt class="py-name">table</tt> <tt class="py-op">=</tt> <tt class="py-name">admin</tt><tt class="py-op">.</tt><tt class="py-name">entity</tt><tt class="py-op">.</tt><tt class="py-name">table</tt> </tt>
-<a name="L89"></a><tt class="py-lineno"> 89</tt>  <tt class="py-line">         </tt>
-<a name="L90"></a><tt class="py-lineno"> 90</tt>  <tt class="py-line"> </tt>
-<a name="L91"></a><tt class="py-lineno"> 91</tt>  <tt class="py-line">    <tt class="py-name">col</tt> <tt class="py-op">=</tt> <tt class="py-name">getattr</tt><tt class="py-op">(</tt><tt class="py-name">admin</tt><tt class="py-op">.</tt><tt class="py-name">entity</tt><tt class="py-op">,</tt> <tt class="py-name">field_name</tt><tt class="py-op">)</tt> </tt>
-<a name="L92"></a><tt class="py-lineno"> 92</tt>  <tt class="py-line"> </tt>
-<a name="L93"></a><tt class="py-lineno"> 93</tt>  <tt class="py-line">    <tt class="py-name">query</tt> <tt class="py-op">=</tt> <tt class="py-name">select</tt><tt class="py-op">(</tt><tt class="py-op">[</tt><tt class="py-name">col</tt><tt class="py-op">]</tt><tt class="py-op">,</tt> <tt class="py-name">distinct</tt><tt class="py-op">=</tt><tt class="py-name">True</tt><tt class="py-op">,</tt> <tt class="py-name">order_by</tt><tt class="py-op">=</tt><tt class="py-name">col</tt><tt class="py-op">.</tt><tt class="py-name">asc</tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">)</tt><tt class="py-op">.</tt><tt class="py-name">select_from</tt><tt class="py-op">(</tt><tt class="py-name">table</tt><tt class="py-op">)</tt> </tt>
-<a name="L94"></a><tt class="py-lineno"> 94</tt>  <tt class="py-line">       </tt>
-<a name="L95"></a><tt class="py-lineno"> 95</tt>  <tt class="py-line">    <tt class="py-keyword">def</tt> <tt class="py-def-name">create_decorator</tt><tt class="py-op">(</tt><tt class="py-param">col</tt><tt class="py-op">,</tt> <tt class="py-param">value</tt><tt class="py-op">,</tt> <tt class="py-param">joins</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L96"></a><tt class="py-lineno"> 96</tt>  <tt class="py-line">       </tt>
-<a name="L97"></a><tt class="py-lineno"> 97</tt>  <tt class="py-line">      <tt class="py-keyword">def</tt> <tt class="py-def-name">decorator</tt><tt class="py-op">(</tt><tt class="py-param">q</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L98"></a><tt class="py-lineno"> 98</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">joins</tt><tt class="py-op">:</tt> </tt>
-<a name="L99"></a><tt class="py-lineno"> 99</tt>  <tt class="py-line">          <tt class="py-name">q</tt> <tt class="py-op">=</tt> <tt class="py-name">q</tt><tt class="py-op">.</tt><tt class="py-name">join</tt><tt class="py-op">(</tt><tt class="py-name">joins</tt><tt class="py-op">,</tt> <tt class="py-name">aliased</tt><tt class="py-op">=</tt><tt class="py-name">True</tt><tt class="py-op">)</tt> </tt>
-<a name="L100"></a><tt class="py-lineno">100</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">q</tt><tt class="py-op">.</tt><tt id="link-5" class="py-name" targets="Variable camelot.camelot.view.controls.editors.filter=camelot.camelot.view.controls.editors-module.html#filter,Module camelot.camelot.view.controls.filter=camelot.camelot.view.controls.filter-module.html"><a title="camelot.camelot.view.controls.editors.filter
-camelot.camelot.view.controls.filter" class="py-name" href="#" onclick="return doclink('link-5', 'filter', 'link-5');">filter</a></tt><tt class="py-op">(</tt><tt class="py-name">col</tt><tt class="py-op">==</tt><tt id="link-6" class="py-name" targets="Variable camelot.camelot.model.i18n.Translation.value=camelot.camelot.model.i18n.Translation-class.html#value"><a title="camelot.camelot.model.i18n.Translation.value" class="py-name" href="#" onclick="return doclink('link-6', 'value', 'link-6');">value</a></tt><tt class="py-op">)</tt> </tt>
-</div><a name="L101"></a><tt class="py-lineno">101</tt>  <tt class="py-line">       </tt>
-<a name="L102"></a><tt class="py-lineno">102</tt>  <tt class="py-line">      <tt class="py-keyword">return</tt> <tt class="py-name">decorator</tt> </tt>
-</div><a name="L103"></a><tt class="py-lineno">103</tt>  <tt class="py-line"> </tt>
-<a name="L104"></a><tt class="py-lineno">104</tt>  <tt class="py-line">    <tt class="py-name">options</tt> <tt class="py-op">=</tt> <tt class="py-op">[</tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">_value_to_string</tt><tt class="py-op">(</tt><tt id="link-7" class="py-name"><a title="camelot.camelot.model.i18n.Translation.value" class="py-name" href="#" onclick="return doclink('link-7', 'value', 'link-6');">value</a></tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> <tt class="py-name">create_decorator</tt><tt class="py-op">(</tt><tt class="py-name">col</tt><tt class="py-op">,</tt> <tt id="link-8" class="py-name"><a title="camelot.camelot.model.i18n.Translation.value" class="py-name" href="#" onclick="return doclink('link-8', 'value', 'link-6');">value</a></tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt><tt class="py-op">,</tt> <tt class="py-name">joins</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
-<a name="L105"></a><tt class="py-lineno">105</tt>  <tt class="py-line">               <tt class="py-keyword">for</tt> <tt id="link-9" class="py-name"><a title="camelot.camelot.model.i18n.Translation.value" class="py-name" href="#" onclick="return doclink('link-9', 'value', 'link-6');">value</a></tt> <tt class="py-keyword">in</tt> <tt class="py-name">session</tt><tt class="py-op">.</tt><tt class="py-name">execute</tt><tt class="py-op">(</tt><tt class="py-name">query</tt><tt class="py-op">)</tt><tt class="py-op">]</tt> </tt>
-<a name="L106"></a><tt class="py-lineno">106</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-op">(</tt><tt class="py-name">filter_names</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt><tt class="py-op">,</tt><tt class="py-op">[</tt><tt class="py-op">(</tt><tt class="py-string">'All'</tt><tt class="py-op">,</tt> <tt class="py-keyword">lambda</tt> <tt class="py-name">q</tt><tt class="py-op">:</tt> <tt class="py-name">q</tt><tt class="py-op">)</tt><tt class="py-op">]</tt> <tt class="py-op">+</tt> <tt class="py-name">options</tt><tt class="py-op">)</tt> </tt>
-</div></div><a name="L107"></a><tt class="py-lineno">107</tt>  <tt class="py-line">     </tt>
-<a name="GroupBoxFilter"></a><div id="GroupBoxFilter-def"><a name="L108"></a><tt class="py-lineno">108</tt> <a class="py-toggle" href="#" id="GroupBoxFilter-toggle" onclick="return toggle('GroupBoxFilter');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="camelot.camelot.view.filters.GroupBoxFilter-class.html">GroupBoxFilter</a><tt class="py-op">(</tt><tt class="py-base-class">Filter</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="GroupBoxFilter-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="GroupBoxFilter-expanded"><a name="L109"></a><tt class="py-lineno">109</tt>  <tt class="py-line">  <tt class="py-docstring">"""Filter where the items are displayed in a QGroupBox"""</tt> </tt>
-<a name="L110"></a><tt class="py-lineno">110</tt>  <tt class="py-line">   </tt>
-<a name="GroupBoxFilter.render"></a><div id="GroupBoxFilter.render-def"><a name="L111"></a><tt class="py-lineno">111</tt> <a class="py-toggle" href="#" id="GroupBoxFilter.render-toggle" onclick="return toggle('GroupBoxFilter.render');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.filters.GroupBoxFilter-class.html#render">render</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">parent</tt><tt class="py-op">,</tt> <tt class="py-param">name</tt><tt class="py-op">,</tt> <tt class="py-param">options</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="GroupBoxFilter.render-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="GroupBoxFilter.render-expanded"><a name="L112"></a><tt class="py-lineno">112</tt>  <tt class="py-line">     </tt>
-<a name="L113"></a><tt class="py-lineno">113</tt>  <tt class="py-line">    <tt class="py-keyword">from</tt> <tt class="py-name">PyQt4</tt> <tt class="py-keyword">import</tt> <tt class="py-name">QtCore</tt><tt class="py-op">,</tt> <tt class="py-name">QtGui</tt> </tt>
-<a name="L114"></a><tt class="py-lineno">114</tt>  <tt class="py-line">     </tt>
-<a name="L115"></a><tt class="py-lineno">115</tt>  <tt class="py-line">    <tt class="py-keyword">class</tt> <tt class="py-def-name">FilterWidget</tt><tt class="py-op">(</tt><tt class="py-base-class">QtGui</tt><tt class="py-op">.</tt><tt class="py-base-class">QGroupBox</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L116"></a><tt class="py-lineno">116</tt>  <tt class="py-line">      <tt class="py-docstring">"""A box containing a filter that can be applied on a table view, this filter is</tt> </tt>
-<a name="L117"></a><tt class="py-lineno">117</tt>  <tt class="py-line"><tt class="py-docstring">      based on the distinct values in a certain column"""</tt> </tt>
-<a name="L118"></a><tt class="py-lineno">118</tt>  <tt class="py-line">     </tt>
-<a name="L119"></a><tt class="py-lineno">119</tt>  <tt class="py-line">      <tt class="py-keyword">def</tt> <tt class="py-def-name">__init__</tt><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">name</tt><tt class="py-op">,</tt> <tt class="py-param">choices</tt><tt class="py-op">,</tt> <tt class="py-param">parent</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L120"></a><tt class="py-lineno">120</tt>  <tt class="py-line">        <tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QGroupBox</tt><tt class="py-op">.</tt><tt id="link-10" class="py-name" targets="Method camelot.camelot.empty_project.application_admin.MyApplicationAdmin.__init__()=camelot.camelot.empty_project.application_admin.MyApplicationAdmin-class.html#__init__,Method camelot.camelot.types.Code.__init__()=camelot.camelot.types.Code-class.html#__init__,Method camelot.camelot.types.IPAddress.__init__()=camelot.camelot.types.IPAddress-class.html#__init__,Method camelot.camelot.types.Image.__init__()=camelot.camelot.types.Image-class.html#__init__,Method camelot.camelot.types.StoredImage.__init__()=camelot.camelot.types.StoredImage-class.html#__init__,Method camelot.camelot.view.application_admin.ApplicationAdmin.__init__()=camelot.camelot.view.application_admin.ApplicationAdmin-class.html#__init__,Method camelot.camelot.view.controls.actions.ActionsBox.__init__()=camelot.camelot.view.controls.actions.ActionsBox-class.html#__init__,Method camelot.camelot.view.controls.animation.MovieWidget.__init__()=camelot.camelot.view.controls.animation.MovieWidget-class.html#__init__,Method camelot.camelot.view.controls.animation.Throbber.__init__()=camelot.camelot.view.controls.animation.Throbber-class.html#__init__,Method camelot.camelot.view.controls.appscheme.Scheme.__init__()=camelot.camelot.view.controls.appscheme.Scheme-class.html#__init__,Method camelot.camelot.view.controls.delegates.BoolColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.BoolColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.CodeColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.CodeColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.ComboBoxColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.ComboBoxColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.DateColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.DateColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.DateTimeColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.DateTimeColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.FloatColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.FloatColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.GenericDelegate.__init__()=camelot.camelot.view.controls.delegates.GenericDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.IntegerColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.IntegerColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.Many2OneColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.Many2OneColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.One2ManyColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.One2ManyColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.PlainTextColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.PlainTextColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.RichTextColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.RichTextColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.TimeColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.TimeColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.delegates.VirtualAddressColumnDelegate.__init__()=camelot.camelot.view.controls.delegates.VirtualAddressColumnDelegate-class.html#__init__,Method camelot.camelot.view.controls.editors.CodeEditor.__init__()=camelot.camelot.view.controls.editors.CodeEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.DateEditor.__init__()=camelot.camelot.view.controls.editors.DateEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.EmbeddedMany2OneEditor.__init__()=camelot.camelot.view.controls.editors.EmbeddedMany2OneEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.ImageEditor.__init__()=camelot.camelot.view.controls.editors.ImageEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.Many2OneEditor.CompletionsModel.__init__()=camelot.camelot.view.controls.editors.Many2OneEditor.CompletionsModel-class.html#__init__,Method camelot.camelot.view.controls.editors.Many2OneEditor.__init__()=camelot.camelot.view.controls.editors.Many2OneEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.One2ManyEditor.__init__()=camelot.camelot.view.controls.editors.One2ManyEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.RichTextEditor.__init__()=camelot.camelot.view.controls.editors.RichTextEditor-class.html#__init__,Method camelot.camelot.view.controls.editors.VirtualAddressEditor.__init__()=camelot.camelot.view.controls.editors.VirtualAddressEditor-class.html#__init__,Method camelot.camelot.view.controls.filter.FilterList.__init__()=camelot.camelot.view.controls.filter.FilterList-class.html#__init__,Method camelot.camelot.view.controls.formview.FormView.__init__()=camelot.camelot.view.controls.formview.FormView-class.html#__init__,Method camelot.camelot.view.controls.inheritance.SubclassItem.__init__()=camelot.camelot.view.controls.inheritance.SubclassItem-class.html#__init__,Method camelot.camelot.view.controls.inheritance.SubclassTree.__init__()=camelot.camelot.view.controls.inheritance.SubclassTree-class.html#__init__,Method camelot.camelot.view.controls.modeltree.ModelItem.__init__()=camelot.camelot.view.controls.modeltree.ModelItem-class.html#__init__,Method camelot.camelot.view.controls.modeltree.ModelTree.__init__()=camelot.camelot.view.controls.modeltree.ModelTree-class.html#__init__,Method camelot.camelot.view.controls.navpane.NavigationPane.__init__()=camelot.camelot.view.controls.navpane.NavigationPane-class.html#__init__,Method camelot.camelot.view.controls.navpane.PaneButton.__init__()=camelot.camelot.view.controls.navpane.PaneButton-class.html#__init__,Method camelot.camelot.view.controls.navpane.PaneCaption.__init__()=camelot.camelot.view.controls.navpane.PaneCaption-class.html#__init__,Method camelot.camelot.view.controls.printer.Printer.__init__()=camelot.camelot.view.controls.printer.Printer-class.html#__init__,Method camelot.camelot.view.controls.schemer.Schemer.__init__()=camelot.camelot.view.controls.schemer.Schemer-class.html#__init__,Method camelot.camelot.view.controls.search.SimpleSearchControl.__init__()=camelot.camelot.view.controls.search.SimpleSearchControl-class.html#__init__,Method camelot.camelot.view.controls.tableview.QueryTable.__init__()=camelot.camelot.view.controls.tableview.QueryTable-class.html#__init__,Method camelot.camelot.view.controls.tableview.TableView.__init__()=camelot.camelot.view.controls.tableview.TableView-class.html#__init__,Method camelot.camelot.view.elixir_admin.EntityAdmin.__init__()=camelot.camelot.view.elixir_admin.EntityAdmin-class.html#__init__,Method camelot.camelot.view.fifo.fifo.__init__()=camelot.camelot.view.fifo.fifo-class.html#__init__,Method camelot.camelot.view.filters.Filter.__init__()=camelot.camelot.view.filters.Filter-class.html#__init__,Method camelot.camelot.view.forms.Form.__init__()=camelot.camelot.view.forms.Form-class.html#__init__,Method camelot.camelot.view.forms.HBoxForm.__init__()=camelot.camelot.view.forms.HBoxForm-class.html#__init__,Method camelot.camelot.view.forms.TabForm.__init__()=camelot.camelot.view.forms.TabForm-class.html#__init__,Method camelot.camelot.view.forms.VBoxForm.__init__()=camelot.camelot.view.forms.VBoxForm-class.html#__init__,Method camelot.camelot.view.forms.WidgetOnlyForm.__init__()=camelot.camelot.view.forms.WidgetOnlyForm-class.html#__init__,Method camelot.camelot.view.mainwindow.MainWindow.__init__()=camelot.camelot.view.mainwindow.MainWindow-class.html#__init__,Method camelot.camelot.view.model_thread.ModelThread.__init__()=camelot.camelot.view.model_thread.ModelThread-class.html#__init__,Method camelot.camelot.view.plugins.CamelotEditorPlugin.__init__()=camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.codeeditorplugin.DateEditorPlugin.__init__()=camelot.camelot.view.plugins.codeeditorplugin.DateEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.dateeditorplugin.DateEditorPlugin.__init__()=camelot.camelot.view.plugins.dateeditorplugin.DateEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin.__init__()=camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.manytooneeditorplugin.ManyToOneEditorPlugin.__init__()=camelot.camelot.view.plugins.manytooneeditorplugin.ManyToOneEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.onetomanyeditorplugin.OneToManyEditorPlugin.__init__()=camelot.camelot.view.plugins.onetomanyeditorplugin.OneToManyEditorPlugin-class.html#__init__,Method camelot.camelot.view.plugins.richtexteditorplugin.DateEditorPlugin.__init__()=camelot.camelot.view.plugins.richtexteditorplugin.DateEditorPlugin-class.html#__init__,Method camelot.camelot.view.proxy.collection_proxy.CollectionProxy.__init__()=camelot.camelot.view.proxy.collection_proxy.CollectionProxy-class.html#__init__,Method camelot.camelot.view.proxy.collection_proxy.DelayedProxy.__init__()=camelot.camelot.view.proxy.collection_proxy.DelayedProxy-class.html#__init__,Method camelot.camelot.view.proxy.queryproxy.QueryTableProxy.__init__()=camelot.camelot.view.proxy.queryproxy.QueryTableProxy-class.html#__init__,Method camelot.camelot.view.response_handler.ResponseHandler.__init__()=camelot.camelot.view.response_handler.ResponseHandler-class.html#__init__,Method camelot.camelot.view.validator.Validator.__init__()=camelot.camelot.view.validator.Validator-class.html#__init__,Method camelot.camelot.view.workspace.DesktopWorkspace.__init__()=camelot.camelot.view.workspace.DesktopWorkspace-class.html#__init__"><a title="camelot.camelot.empty_project.application_admin.MyApplicationAdmin.__init__
-camelot.camelot.types.Code.__init__
-camelot.camelot.types.IPAddress.__init__
-camelot.camelot.types.Image.__init__
-camelot.camelot.types.StoredImage.__init__
-camelot.camelot.view.application_admin.ApplicationAdmin.__init__
-camelot.camelot.view.controls.actions.ActionsBox.__init__
-camelot.camelot.view.controls.animation.MovieWidget.__init__
-camelot.camelot.view.controls.animation.Throbber.__init__
-camelot.camelot.view.controls.appscheme.Scheme.__init__
-camelot.camelot.view.controls.delegates.BoolColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.CodeColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.ComboBoxColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.DateColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.DateTimeColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.FloatColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.GenericDelegate.__init__
-camelot.camelot.view.controls.delegates.IntegerColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.Many2OneColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.One2ManyColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.PlainTextColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.RichTextColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.TimeColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.VirtualAddressColumnDelegate.__init__
-camelot.camelot.view.controls.editors.CodeEditor.__init__
-camelot.camelot.view.controls.editors.DateEditor.__init__
-camelot.camelot.view.controls.editors.EmbeddedMany2OneEditor.__init__
-camelot.camelot.view.controls.editors.ImageEditor.__init__
-camelot.camelot.view.controls.editors.Many2OneEditor.CompletionsModel.__init__
-camelot.camelot.view.controls.editors.Many2OneEditor.__init__
-camelot.camelot.view.controls.editors.One2ManyEditor.__init__
-camelot.camelot.view.controls.editors.RichTextEditor.__init__
-camelot.camelot.view.controls.editors.VirtualAddressEditor.__init__
-camelot.camelot.view.controls.filter.FilterList.__init__
-camelot.camelot.view.controls.formview.FormView.__init__
-camelot.camelot.view.controls.inheritance.SubclassItem.__init__
-camelot.camelot.view.controls.inheritance.SubclassTree.__init__
-camelot.camelot.view.controls.modeltree.ModelItem.__init__
-camelot.camelot.view.controls.modeltree.ModelTree.__init__
-camelot.camelot.view.controls.navpane.NavigationPane.__init__
-camelot.camelot.view.controls.navpane.PaneButton.__init__
-camelot.camelot.view.controls.navpane.PaneCaption.__init__
-camelot.camelot.view.controls.printer.Printer.__init__
-camelot.camelot.view.controls.schemer.Schemer.__init__
-camelot.camelot.view.controls.search.SimpleSearchControl.__init__
-camelot.camelot.view.controls.tableview.QueryTable.__init__
-camelot.camelot.view.controls.tableview.TableView.__init__
-camelot.camelot.view.elixir_admin.EntityAdmin.__init__
-camelot.camelot.view.fifo.fifo.__init__
-camelot.camelot.view.filters.Filter.__init__
-camelot.camelot.view.forms.Form.__init__
-camelot.camelot.view.forms.HBoxForm.__init__
-camelot.camelot.view.forms.TabForm.__init__
-camelot.camelot.view.forms.VBoxForm.__init__
-camelot.camelot.view.forms.WidgetOnlyForm.__init__
-camelot.camelot.view.mainwindow.MainWindow.__init__
-camelot.camelot.view.model_thread.ModelThread.__init__
-camelot.camelot.view.plugins.CamelotEditorPlugin.__init__
-camelot.camelot.view.plugins.codeeditorplugin.DateEditorPlugin.__init__
-camelot.camelot.view.plugins.dateeditorplugin.DateEditorPlugin.__init__
-camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin.__init__
-camelot.camelot.view.plugins.manytooneeditorplugin.ManyToOneEditorPlugin.__init__
-camelot.camelot.view.plugins.onetomanyeditorplugin.OneToManyEditorPlugin.__init__
-camelot.camelot.view.plugins.richtexteditorplugin.DateEditorPlugin.__init__
-camelot.camelot.view.proxy.collection_proxy.CollectionProxy.__init__
-camelot.camelot.view.proxy.collection_proxy.DelayedProxy.__init__
-camelot.camelot.view.proxy.queryproxy.QueryTableProxy.__init__
-camelot.camelot.view.response_handler.ResponseHandler.__init__
-camelot.camelot.view.validator.Validator.__init__
-camelot.camelot.view.workspace.DesktopWorkspace.__init__" class="py-name" href="#" onclick="return doclink('link-10', '__init__', 'link-10');">__init__</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">,</tt> <tt id="link-11" class="py-name" targets="Variable camelot.camelot.model.authentication.Address.Admin.name=camelot.camelot.model.authentication.Address.Admin-class.html#name,Variable camelot.camelot.model.authentication.City.Admin.name=camelot.camelot.model.authentication.City.Admin-class.html#name,Variable camelot.camelot.model.authentication.ContactMechanism.Admin.name=camelot.camelot.model.authentication.ContactMechanism.Admin-class.html#name,Variable camelot.camelot.model.authentication.Country.Admin.name=camelot.camelot.model.authentication.Country.Admin-class.html#name,Variable camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name=camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin-class.html#name,Variable camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name=camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin-class.html#name,Variable camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name=camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin-class.html#name,Variable camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name=camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin-class.html#name,Variable camelot.camelot.model.authentication.GeographicBoundary.name=camelot.camelot.model.authentication.GeographicBoundary-class.html#name,Variable camelot.camelot.model.authentication.Organization.Admin.name=camelot.camelot.model.authentication.Organization.Admin-class.html#name,Variable camelot.camelot.model.authentication.Organization.name=camelot.camelot.model.authentication.Organization-class.html#name,Variable camelot.camelot.model.authentication.Party.Admin.name=camelot.camelot.model.authentication.Party.Admin-class.html#name,Method camelot.camelot.model.authentication.Party.name()=camelot.camelot.model.authentication.Party-class.html#name,Variable camelot.camelot.model.authentication.PartyAddress.Admin.name=camelot.camelot.model.authentication.PartyAddress.Admin-class.html#name,Variable camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name=camelot.camelot.model.authentication.PartyAddressRoleType.Admin-class.html#name,Variable camelot.camelot.model.authentication.PartyContactMechanism.Admin.name=camelot.camelot.model.authentication.PartyContactMechanism.Admin-class.html#name,Variable camelot.camelot.model.authentication.Person.Admin.name=camelot.camelot.model.authentication.Person.Admin-class.html#name,Method camelot.camelot.model.authentication.Person.name()=camelot.camelot.model.authentication.Person-class.html#name,Variable camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name=camelot.camelot.model.authentication.RepresentedRepresentor.Admin-class.html#name,Variable camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name=camelot.camelot.model.authentication.SharedShareholder.SharedAdmin-class.html#name,Variable camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name=camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin-class.html#name,Variable camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name=camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin-class.html#name,Variable camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name=camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin-class.html#name,Variable camelot.camelot.model.memento.BeforeDelete.Admin.name=camelot.camelot.model.memento.BeforeDelete.Admin-class.html#name,Variable camelot.camelot.model.memento.BeforeUpdate.Admin.name=camelot.camelot.model.memento.BeforeUpdate.Admin-class.html#name,Variable camelot.camelot.model.memento.Create.Admin.name=camelot.camelot.model.memento.Create.Admin-class.html#name,Variable camelot.camelot.model.memento.Memento.Admin.name=camelot.camelot.model.memento.Memento.Admin-class.html#name,Variable camelot.camelot.view.elixir_admin.EntityAdmin.name=camelot.camelot.view.elixir_admin.EntityAdmin-class.html#name,Method camelot.camelot.view.plugins.CamelotEditorPlugin.name()=camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#name"><a title="camelot.camelot.model.authentication.Address.Admin.name
-camelot.camelot.model.authentication.City.Admin.name
-camelot.camelot.model.authentication.ContactMechanism.Admin.name
-camelot.camelot.model.authentication.Country.Admin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name
-camelot.camelot.model.authentication.GeographicBoundary.name
-camelot.camelot.model.authentication.Organization.Admin.name
-camelot.camelot.model.authentication.Organization.name
-camelot.camelot.model.authentication.Party.Admin.name
-camelot.camelot.model.authentication.Party.name
-camelot.camelot.model.authentication.PartyAddress.Admin.name
-camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name
-camelot.camelot.model.authentication.PartyContactMechanism.Admin.name
-camelot.camelot.model.authentication.Person.Admin.name
-camelot.camelot.model.authentication.Person.name
-camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name
-camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name
-camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name
-camelot.camelot.model.memento.BeforeDelete.Admin.name
-camelot.camelot.model.memento.BeforeUpdate.Admin.name
-camelot.camelot.model.memento.Create.Admin.name
-camelot.camelot.model.memento.Memento.Admin.name
-camelot.camelot.view.elixir_admin.EntityAdmin.name
-camelot.camelot.view.plugins.CamelotEditorPlugin.name" class="py-name" href="#" onclick="return doclink('link-11', 'name', 'link-11');">name</a></tt><tt class="py-op">,</tt> <tt class="py-name">parent</tt><tt class="py-op">)</tt> </tt>
-<a name="L121"></a><tt class="py-lineno">121</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-12" class="py-name" targets="Method camelot.camelot.view.plugins.CamelotEditorPlugin.group()=camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#group"><a title="camelot.camelot.view.plugins.CamelotEditorPlugin.group" class="py-name" href="#" onclick="return doclink('link-12', 'group', 'link-12');">group</a></tt> <tt class="py-op">=</tt> <tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QButtonGroup</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
-<a name="L122"></a><tt class="py-lineno">122</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">item</tt> <tt class="py-op">=</tt> <tt id="link-13" class="py-name"><a title="camelot.camelot.model.authentication.Address.Admin.name
-camelot.camelot.model.authentication.City.Admin.name
-camelot.camelot.model.authentication.ContactMechanism.Admin.name
-camelot.camelot.model.authentication.Country.Admin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name
-camelot.camelot.model.authentication.GeographicBoundary.name
-camelot.camelot.model.authentication.Organization.Admin.name
-camelot.camelot.model.authentication.Organization.name
-camelot.camelot.model.authentication.Party.Admin.name
-camelot.camelot.model.authentication.Party.name
-camelot.camelot.model.authentication.PartyAddress.Admin.name
-camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name
-camelot.camelot.model.authentication.PartyContactMechanism.Admin.name
-camelot.camelot.model.authentication.Person.Admin.name
-camelot.camelot.model.authentication.Person.name
-camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name
-camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name
-camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name
-camelot.camelot.model.memento.BeforeDelete.Admin.name
-camelot.camelot.model.memento.BeforeUpdate.Admin.name
-camelot.camelot.model.memento.Create.Admin.name
-camelot.camelot.model.memento.Memento.Admin.name
-camelot.camelot.view.elixir_admin.EntityAdmin.name
-camelot.camelot.view.plugins.CamelotEditorPlugin.name" class="py-name" href="#" onclick="return doclink('link-13', 'name', 'link-11');">name</a></tt> </tt>
-<a name="L123"></a><tt class="py-lineno">123</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">unique_values</tt> <tt class="py-op">=</tt> <tt class="py-op">[</tt><tt class="py-op">]</tt> </tt>
-<a name="L124"></a><tt class="py-lineno">124</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">choices</tt> <tt class="py-op">=</tt> <tt class="py-name">None</tt> </tt>
-<a name="L125"></a><tt class="py-lineno">125</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">setChoices</tt><tt class="py-op">(</tt><tt class="py-name">choices</tt><tt class="py-op">)</tt> </tt>
-</div><a name="L126"></a><tt class="py-lineno">126</tt>  <tt class="py-line">          </tt>
-<a name="L127"></a><tt class="py-lineno">127</tt>  <tt class="py-line">      <tt class="py-keyword">def</tt> <tt class="py-def-name">emit_filter_changed</tt><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">state</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L128"></a><tt class="py-lineno">128</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">emit</tt><tt class="py-op">(</tt><tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">SIGNAL</tt><tt class="py-op">(</tt><tt class="py-string">'filter_changed'</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
-</div><a name="L129"></a><tt class="py-lineno">129</tt>  <tt class="py-line">     </tt>
-<a name="L130"></a><tt class="py-lineno">130</tt>  <tt class="py-line">      <tt class="py-keyword">def</tt> <tt class="py-def-name">setChoices</tt><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">choices</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L131"></a><tt class="py-lineno">131</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">choices</tt> <tt class="py-op">=</tt> <tt class="py-name">choices</tt> </tt>
-<a name="L132"></a><tt class="py-lineno">132</tt>  <tt class="py-line">        <tt class="py-name">layout</tt> <tt class="py-op">=</tt> <tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QVBoxLayout</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
-<a name="L133"></a><tt class="py-lineno">133</tt>  <tt class="py-line">        <tt class="py-keyword">for</tt> <tt class="py-name">i</tt><tt class="py-op">,</tt><tt id="link-14" class="py-name"><a title="camelot.camelot.model.authentication.Address.Admin.name
-camelot.camelot.model.authentication.City.Admin.name
-camelot.camelot.model.authentication.ContactMechanism.Admin.name
-camelot.camelot.model.authentication.Country.Admin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name
-camelot.camelot.model.authentication.GeographicBoundary.name
-camelot.camelot.model.authentication.Organization.Admin.name
-camelot.camelot.model.authentication.Organization.name
-camelot.camelot.model.authentication.Party.Admin.name
-camelot.camelot.model.authentication.Party.name
-camelot.camelot.model.authentication.PartyAddress.Admin.name
-camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name
-camelot.camelot.model.authentication.PartyContactMechanism.Admin.name
-camelot.camelot.model.authentication.Person.Admin.name
-camelot.camelot.model.authentication.Person.name
-camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name
-camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name
-camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name
-camelot.camelot.model.memento.BeforeDelete.Admin.name
-camelot.camelot.model.memento.BeforeUpdate.Admin.name
-camelot.camelot.model.memento.Create.Admin.name
-camelot.camelot.model.memento.Memento.Admin.name
-camelot.camelot.view.elixir_admin.EntityAdmin.name
-camelot.camelot.view.plugins.CamelotEditorPlugin.name" class="py-name" href="#" onclick="return doclink('link-14', 'name', 'link-11');">name</a></tt> <tt class="py-keyword">in</tt> <tt class="py-name">enumerate</tt><tt class="py-op">(</tt><tt class="py-op">[</tt><tt class="py-name">unicode</tt><tt class="py-op">(</tt><tt class="py-name">c</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt><tt class="py-op">)</tt> <tt class="py-keyword">for</tt> <tt class="py-name">c</tt> <tt class="py-keyword">in</tt> <tt class="py-name">choices</tt><tt class="py-op">]</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L134"></a><tt class="py-lineno">134</tt>  <tt class="py-line">          <tt class="py-name">button</tt> <tt class="py-op">=</tt> <tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QRadioButton</tt><tt class="py-op">(</tt><tt id="link-15" class="py-name"><a title="camelot.camelot.model.authentication.Address.Admin.name
-camelot.camelot.model.authentication.City.Admin.name
-camelot.camelot.model.authentication.ContactMechanism.Admin.name
-camelot.camelot.model.authentication.Country.Admin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name
-camelot.camelot.model.authentication.GeographicBoundary.name
-camelot.camelot.model.authentication.Organization.Admin.name
-camelot.camelot.model.authentication.Organization.name
-camelot.camelot.model.authentication.Party.Admin.name
-camelot.camelot.model.authentication.Party.name
-camelot.camelot.model.authentication.PartyAddress.Admin.name
-camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name
-camelot.camelot.model.authentication.PartyContactMechanism.Admin.name
-camelot.camelot.model.authentication.Person.Admin.name
-camelot.camelot.model.authentication.Person.name
-camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name
-camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name
-camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name
-camelot.camelot.model.memento.BeforeDelete.Admin.name
-camelot.camelot.model.memento.BeforeUpdate.Admin.name
-camelot.camelot.model.memento.Create.Admin.name
-camelot.camelot.model.memento.Memento.Admin.name
-camelot.camelot.view.elixir_admin.EntityAdmin.name
-camelot.camelot.view.plugins.CamelotEditorPlugin.name" class="py-name" href="#" onclick="return doclink('link-15', 'name', 'link-11');">name</a></tt><tt class="py-op">)</tt> </tt>
-<a name="L135"></a><tt class="py-lineno">135</tt>  <tt class="py-line">          <tt class="py-name">layout</tt><tt class="py-op">.</tt><tt class="py-name">addWidget</tt><tt class="py-op">(</tt><tt class="py-name">button</tt><tt class="py-op">)</tt> </tt>
-<a name="L136"></a><tt class="py-lineno">136</tt>  <tt class="py-line">          <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-16" class="py-name"><a title="camelot.camelot.view.plugins.CamelotEditorPlugin.group" class="py-name" href="#" onclick="return doclink('link-16', 'group', 'link-12');">group</a></tt><tt class="py-op">.</tt><tt class="py-name">addButton</tt><tt class="py-op">(</tt><tt class="py-name">button</tt><tt class="py-op">,</tt> <tt class="py-name">i</tt><tt class="py-op">)</tt> </tt>
-<a name="L137"></a><tt class="py-lineno">137</tt>  <tt class="py-line">          <tt class="py-keyword">if</tt> <tt class="py-name">i</tt><tt class="py-op">==</tt><tt class="py-number">0</tt><tt class="py-op">:</tt> </tt>
-<a name="L138"></a><tt class="py-lineno">138</tt>  <tt class="py-line">            <tt class="py-name">button</tt><tt class="py-op">.</tt><tt class="py-name">setChecked</tt><tt class="py-op">(</tt><tt class="py-name">True</tt><tt class="py-op">)</tt> </tt>
-<a name="L139"></a><tt class="py-lineno">139</tt>  <tt class="py-line">          <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">connect</tt><tt class="py-op">(</tt><tt class="py-name">button</tt><tt class="py-op">,</tt> <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">SIGNAL</tt><tt class="py-op">(</tt><tt class="py-string">'toggled(bool)'</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">emit_filter_changed</tt><tt class="py-op">)</tt> </tt>
-<a name="L140"></a><tt class="py-lineno">140</tt>  <tt class="py-line">        <tt class="py-name">layout</tt><tt class="py-op">.</tt><tt class="py-name">addStretch</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
-<a name="L141"></a><tt class="py-lineno">141</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">setLayout</tt><tt class="py-op">(</tt><tt class="py-name">layout</tt><tt class="py-op">)</tt> </tt>
-</div><a name="L142"></a><tt class="py-lineno">142</tt>  <tt class="py-line">     </tt>
-<a name="L143"></a><tt class="py-lineno">143</tt>  <tt class="py-line">      <tt class="py-keyword">def</tt> <tt class="py-def-name">decorate_query</tt><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">query</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L144"></a><tt class="py-lineno">144</tt>  <tt class="py-line">        <tt class="py-name">checked</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-17" class="py-name"><a title="camelot.camelot.view.plugins.CamelotEditorPlugin.group" class="py-name" href="#" onclick="return doclink('link-17', 'group', 'link-12');">group</a></tt><tt class="py-op">.</tt><tt class="py-name">checkedId</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
-<a name="L145"></a><tt class="py-lineno">145</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">checked</tt><tt class="py-op">&gt;=</tt><tt class="py-number">0</tt><tt class="py-op">:</tt> </tt>
-<a name="L146"></a><tt class="py-lineno">146</tt>  <tt class="py-line">          <tt class="py-keyword">return</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">choices</tt><tt class="py-op">[</tt><tt class="py-name">checked</tt><tt class="py-op">]</tt><tt class="py-op">[</tt><tt class="py-number">1</tt><tt class="py-op">]</tt><tt class="py-op">(</tt><tt class="py-name">query</tt><tt class="py-op">)</tt> </tt>
-<a name="L147"></a><tt class="py-lineno">147</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">query</tt> </tt>
-</div></div><a name="L148"></a><tt class="py-lineno">148</tt>  <tt class="py-line">         </tt>
-<a name="L149"></a><tt class="py-lineno">149</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">FilterWidget</tt><tt class="py-op">(</tt><tt id="link-18" class="py-name"><a title="camelot.camelot.model.authentication.Address.Admin.name
-camelot.camelot.model.authentication.City.Admin.name
-camelot.camelot.model.authentication.ContactMechanism.Admin.name
-camelot.camelot.model.authentication.Country.Admin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name
-camelot.camelot.model.authentication.GeographicBoundary.name
-camelot.camelot.model.authentication.Organization.Admin.name
-camelot.camelot.model.authentication.Organization.name
-camelot.camelot.model.authentication.Party.Admin.name
-camelot.camelot.model.authentication.Party.name
-camelot.camelot.model.authentication.PartyAddress.Admin.name
-camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name
-camelot.camelot.model.authentication.PartyContactMechanism.Admin.name
-camelot.camelot.model.authentication.Person.Admin.name
-camelot.camelot.model.authentication.Person.name
-camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name
-camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name
-camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name
-camelot.camelot.model.memento.BeforeDelete.Admin.name
-camelot.camelot.model.memento.BeforeUpdate.Admin.name
-camelot.camelot.model.memento.Create.Admin.name
-camelot.camelot.model.memento.Memento.Admin.name
-camelot.camelot.view.elixir_admin.EntityAdmin.name
-camelot.camelot.view.plugins.CamelotEditorPlugin.name" class="py-name" href="#" onclick="return doclink('link-18', 'name', 'link-11');">name</a></tt><tt class="py-op">,</tt> <tt class="py-name">options</tt><tt class="py-op">,</tt> <tt class="py-name">parent</tt><tt class="py-op">)</tt> </tt>
-</div></div><a name="L150"></a><tt class="py-lineno">150</tt>  <tt class="py-line">   </tt>
-<a name="ComboBoxFilter"></a><div id="ComboBoxFilter-def"><a name="L151"></a><tt class="py-lineno">151</tt> <a class="py-toggle" href="#" id="ComboBoxFilter-toggle" onclick="return toggle('ComboBoxFilter');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="camelot.camelot.view.filters.ComboBoxFilter-class.html">ComboBoxFilter</a><tt class="py-op">(</tt><tt class="py-base-class">Filter</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="ComboBoxFilter-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="ComboBoxFilter-expanded"><a name="L152"></a><tt class="py-lineno">152</tt>  <tt class="py-line">  <tt class="py-docstring">"""Filter where the items are displayed in a QComboBox"""</tt> </tt>
-<a name="L153"></a><tt class="py-lineno">153</tt>  <tt class="py-line">   </tt>
-<a name="ComboBoxFilter.render"></a><div id="ComboBoxFilter.render-def"><a name="L154"></a><tt class="py-lineno">154</tt> <a class="py-toggle" href="#" id="ComboBoxFilter.render-toggle" onclick="return toggle('ComboBoxFilter.render');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.filters.ComboBoxFilter-class.html#render">render</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">parent</tt><tt class="py-op">,</tt> <tt class="py-param">name</tt><tt class="py-op">,</tt> <tt class="py-param">options</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="ComboBoxFilter.render-collapsed" style="display:none;" pad="+++" indent="++++++"></div><div id="ComboBoxFilter.render-expanded"><a name="L155"></a><tt class="py-lineno">155</tt>  <tt class="py-line">     </tt>
-<a name="L156"></a><tt class="py-lineno">156</tt>  <tt class="py-line">    <tt class="py-keyword">from</tt> <tt class="py-name">PyQt4</tt> <tt class="py-keyword">import</tt> <tt class="py-name">QtCore</tt><tt class="py-op">,</tt> <tt class="py-name">QtGui</tt> </tt>
-<a name="L157"></a><tt class="py-lineno">157</tt>  <tt class="py-line">     </tt>
-<a name="L158"></a><tt class="py-lineno">158</tt>  <tt class="py-line">    <tt class="py-keyword">class</tt> <tt class="py-def-name">FilterWidget</tt><tt class="py-op">(</tt><tt class="py-base-class">QtGui</tt><tt class="py-op">.</tt><tt class="py-base-class">QGroupBox</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L159"></a><tt class="py-lineno">159</tt>  <tt class="py-line">       </tt>
-<a name="L160"></a><tt class="py-lineno">160</tt>  <tt class="py-line">      <tt class="py-keyword">def</tt> <tt class="py-def-name">__init__</tt><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">name</tt><tt class="py-op">,</tt> <tt class="py-param">choices</tt><tt class="py-op">,</tt> <tt class="py-param">parent</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L161"></a><tt class="py-lineno">161</tt>  <tt class="py-line">        <tt class="py-name">super</tt><tt class="py-op">(</tt><tt class="py-name">FilterWidget</tt><tt class="py-op">,</tt> <tt class="py-name">self</tt><tt class="py-op">)</tt><tt class="py-op">.</tt><tt id="link-19" class="py-name"><a title="camelot.camelot.empty_project.application_admin.MyApplicationAdmin.__init__
-camelot.camelot.types.Code.__init__
-camelot.camelot.types.IPAddress.__init__
-camelot.camelot.types.Image.__init__
-camelot.camelot.types.StoredImage.__init__
-camelot.camelot.view.application_admin.ApplicationAdmin.__init__
-camelot.camelot.view.controls.actions.ActionsBox.__init__
-camelot.camelot.view.controls.animation.MovieWidget.__init__
-camelot.camelot.view.controls.animation.Throbber.__init__
-camelot.camelot.view.controls.appscheme.Scheme.__init__
-camelot.camelot.view.controls.delegates.BoolColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.CodeColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.ComboBoxColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.DateColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.DateTimeColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.FloatColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.GenericDelegate.__init__
-camelot.camelot.view.controls.delegates.IntegerColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.Many2OneColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.One2ManyColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.PlainTextColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.RichTextColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.TimeColumnDelegate.__init__
-camelot.camelot.view.controls.delegates.VirtualAddressColumnDelegate.__init__
-camelot.camelot.view.controls.editors.CodeEditor.__init__
-camelot.camelot.view.controls.editors.DateEditor.__init__
-camelot.camelot.view.controls.editors.EmbeddedMany2OneEditor.__init__
-camelot.camelot.view.controls.editors.ImageEditor.__init__
-camelot.camelot.view.controls.editors.Many2OneEditor.CompletionsModel.__init__
-camelot.camelot.view.controls.editors.Many2OneEditor.__init__
-camelot.camelot.view.controls.editors.One2ManyEditor.__init__
-camelot.camelot.view.controls.editors.RichTextEditor.__init__
-camelot.camelot.view.controls.editors.VirtualAddressEditor.__init__
-camelot.camelot.view.controls.filter.FilterList.__init__
-camelot.camelot.view.controls.formview.FormView.__init__
-camelot.camelot.view.controls.inheritance.SubclassItem.__init__
-camelot.camelot.view.controls.inheritance.SubclassTree.__init__
-camelot.camelot.view.controls.modeltree.ModelItem.__init__
-camelot.camelot.view.controls.modeltree.ModelTree.__init__
-camelot.camelot.view.controls.navpane.NavigationPane.__init__
-camelot.camelot.view.controls.navpane.PaneButton.__init__
-camelot.camelot.view.controls.navpane.PaneCaption.__init__
-camelot.camelot.view.controls.printer.Printer.__init__
-camelot.camelot.view.controls.schemer.Schemer.__init__
-camelot.camelot.view.controls.search.SimpleSearchControl.__init__
-camelot.camelot.view.controls.tableview.QueryTable.__init__
-camelot.camelot.view.controls.tableview.TableView.__init__
-camelot.camelot.view.elixir_admin.EntityAdmin.__init__
-camelot.camelot.view.fifo.fifo.__init__
-camelot.camelot.view.filters.Filter.__init__
-camelot.camelot.view.forms.Form.__init__
-camelot.camelot.view.forms.HBoxForm.__init__
-camelot.camelot.view.forms.TabForm.__init__
-camelot.camelot.view.forms.VBoxForm.__init__
-camelot.camelot.view.forms.WidgetOnlyForm.__init__
-camelot.camelot.view.mainwindow.MainWindow.__init__
-camelot.camelot.view.model_thread.ModelThread.__init__
-camelot.camelot.view.plugins.CamelotEditorPlugin.__init__
-camelot.camelot.view.plugins.codeeditorplugin.DateEditorPlugin.__init__
-camelot.camelot.view.plugins.dateeditorplugin.DateEditorPlugin.__init__
-camelot.camelot.view.plugins.imageeditorplugin.DateEditorPlugin.__init__
-camelot.camelot.view.plugins.manytooneeditorplugin.ManyToOneEditorPlugin.__init__
-camelot.camelot.view.plugins.onetomanyeditorplugin.OneToManyEditorPlugin.__init__
-camelot.camelot.view.plugins.richtexteditorplugin.DateEditorPlugin.__init__
-camelot.camelot.view.proxy.collection_proxy.CollectionProxy.__init__
-camelot.camelot.view.proxy.collection_proxy.DelayedProxy.__init__
-camelot.camelot.view.proxy.queryproxy.QueryTableProxy.__init__
-camelot.camelot.view.response_handler.ResponseHandler.__init__
-camelot.camelot.view.validator.Validator.__init__
-camelot.camelot.view.workspace.DesktopWorkspace.__init__" class="py-name" href="#" onclick="return doclink('link-19', '__init__', 'link-10');">__init__</a></tt><tt class="py-op">(</tt><tt id="link-20" class="py-name"><a title="camelot.camelot.model.authentication.Address.Admin.name
-camelot.camelot.model.authentication.City.Admin.name
-camelot.camelot.model.authentication.ContactMechanism.Admin.name
-camelot.camelot.model.authentication.Country.Admin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name
-camelot.camelot.model.authentication.GeographicBoundary.name
-camelot.camelot.model.authentication.Organization.Admin.name
-camelot.camelot.model.authentication.Organization.name
-camelot.camelot.model.authentication.Party.Admin.name
-camelot.camelot.model.authentication.Party.name
-camelot.camelot.model.authentication.PartyAddress.Admin.name
-camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name
-camelot.camelot.model.authentication.PartyContactMechanism.Admin.name
-camelot.camelot.model.authentication.Person.Admin.name
-camelot.camelot.model.authentication.Person.name
-camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name
-camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name
-camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name
-camelot.camelot.model.memento.BeforeDelete.Admin.name
-camelot.camelot.model.memento.BeforeUpdate.Admin.name
-camelot.camelot.model.memento.Create.Admin.name
-camelot.camelot.model.memento.Memento.Admin.name
-camelot.camelot.view.elixir_admin.EntityAdmin.name
-camelot.camelot.view.plugins.CamelotEditorPlugin.name" class="py-name" href="#" onclick="return doclink('link-20', 'name', 'link-11');">name</a></tt><tt class="py-op">,</tt> <tt class="py-name">parent</tt><tt class="py-op">)</tt> </tt>
-<a name="L162"></a><tt class="py-lineno">162</tt>  <tt class="py-line">        <tt class="py-name">layout</tt> <tt class="py-op">=</tt> <tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QVBoxLayout</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
-<a name="L163"></a><tt class="py-lineno">163</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">choices</tt> <tt class="py-op">=</tt> <tt class="py-name">choices</tt> </tt>
-<a name="L164"></a><tt class="py-lineno">164</tt>  <tt class="py-line">        <tt class="py-name">combobox</tt> <tt class="py-op">=</tt> <tt class="py-name">QtGui</tt><tt class="py-op">.</tt><tt class="py-name">QComboBox</tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">)</tt> </tt>
-<a name="L165"></a><tt class="py-lineno">165</tt>  <tt class="py-line">        <tt class="py-keyword">for</tt> <tt class="py-name">i</tt><tt class="py-op">,</tt><tt class="py-op">(</tt><tt id="link-21" class="py-name"><a title="camelot.camelot.model.authentication.Address.Admin.name
-camelot.camelot.model.authentication.City.Admin.name
-camelot.camelot.model.authentication.ContactMechanism.Admin.name
-camelot.camelot.model.authentication.Country.Admin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name
-camelot.camelot.model.authentication.GeographicBoundary.name
-camelot.camelot.model.authentication.Organization.Admin.name
-camelot.camelot.model.authentication.Organization.name
-camelot.camelot.model.authentication.Party.Admin.name
-camelot.camelot.model.authentication.Party.name
-camelot.camelot.model.authentication.PartyAddress.Admin.name
-camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name
-camelot.camelot.model.authentication.PartyContactMechanism.Admin.name
-camelot.camelot.model.authentication.Person.Admin.name
-camelot.camelot.model.authentication.Person.name
-camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name
-camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name
-camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name
-camelot.camelot.model.memento.BeforeDelete.Admin.name
-camelot.camelot.model.memento.BeforeUpdate.Admin.name
-camelot.camelot.model.memento.Create.Admin.name
-camelot.camelot.model.memento.Memento.Admin.name
-camelot.camelot.view.elixir_admin.EntityAdmin.name
-camelot.camelot.view.plugins.CamelotEditorPlugin.name" class="py-name" href="#" onclick="return doclink('link-21', 'name', 'link-11');">name</a></tt><tt class="py-op">,</tt><tt class="py-name">decorator</tt><tt class="py-op">)</tt> <tt class="py-keyword">in</tt> <tt class="py-name">enumerate</tt><tt class="py-op">(</tt><tt class="py-name">choices</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L166"></a><tt class="py-lineno">166</tt>  <tt class="py-line">          <tt class="py-name">combobox</tt><tt class="py-op">.</tt><tt class="py-name">insertItem</tt><tt class="py-op">(</tt><tt class="py-name">i</tt><tt class="py-op">,</tt> <tt class="py-name">unicode</tt><tt class="py-op">(</tt><tt id="link-22" class="py-name"><a title="camelot.camelot.model.authentication.Address.Admin.name
-camelot.camelot.model.authentication.City.Admin.name
-camelot.camelot.model.authentication.ContactMechanism.Admin.name
-camelot.camelot.model.authentication.Country.Admin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name
-camelot.camelot.model.authentication.GeographicBoundary.name
-camelot.camelot.model.authentication.Organization.Admin.name
-camelot.camelot.model.authentication.Organization.name
-camelot.camelot.model.authentication.Party.Admin.name
-camelot.camelot.model.authentication.Party.name
-camelot.camelot.model.authentication.PartyAddress.Admin.name
-camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name
-camelot.camelot.model.authentication.PartyContactMechanism.Admin.name
-camelot.camelot.model.authentication.Person.Admin.name
-camelot.camelot.model.authentication.Person.name
-camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name
-camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name
-camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name
-camelot.camelot.model.memento.BeforeDelete.Admin.name
-camelot.camelot.model.memento.BeforeUpdate.Admin.name
-camelot.camelot.model.memento.Create.Admin.name
-camelot.camelot.model.memento.Memento.Admin.name
-camelot.camelot.view.elixir_admin.EntityAdmin.name
-camelot.camelot.view.plugins.CamelotEditorPlugin.name" class="py-name" href="#" onclick="return doclink('link-22', 'name', 'link-11');">name</a></tt><tt class="py-op">)</tt><tt class="py-op">,</tt> <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">QVariant</tt><tt class="py-op">(</tt><tt class="py-name">decorator</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
-<a name="L167"></a><tt class="py-lineno">167</tt>  <tt class="py-line">        <tt class="py-name">layout</tt><tt class="py-op">.</tt><tt class="py-name">addWidget</tt><tt class="py-op">(</tt><tt class="py-name">combobox</tt><tt class="py-op">)</tt> </tt>
-<a name="L168"></a><tt class="py-lineno">168</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">setLayout</tt><tt class="py-op">(</tt><tt class="py-name">layout</tt><tt class="py-op">)</tt> </tt>
-<a name="L169"></a><tt class="py-lineno">169</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">current_index</tt> <tt class="py-op">=</tt> <tt class="py-number">0</tt> </tt>
-<a name="L170"></a><tt class="py-lineno">170</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">connect</tt><tt class="py-op">(</tt><tt class="py-name">combobox</tt><tt class="py-op">,</tt> <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">SIGNAL</tt><tt class="py-op">(</tt><tt class="py-string">'currentIndexChanged(int)'</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">emit_filter_changed</tt><tt class="py-op">)</tt> </tt>
-</div><a name="L171"></a><tt class="py-lineno">171</tt>  <tt class="py-line">             </tt>
-<a name="L172"></a><tt class="py-lineno">172</tt>  <tt class="py-line">      <tt class="py-keyword">def</tt> <tt class="py-def-name">emit_filter_changed</tt><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">index</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L173"></a><tt class="py-lineno">173</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">current_index</tt> <tt class="py-op">=</tt> <tt class="py-name">index</tt> </tt>
-<a name="L174"></a><tt class="py-lineno">174</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">emit</tt><tt class="py-op">(</tt><tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">SIGNAL</tt><tt class="py-op">(</tt><tt class="py-string">'filter_changed'</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
-</div><a name="L175"></a><tt class="py-lineno">175</tt>  <tt class="py-line">         </tt>
-<a name="L176"></a><tt class="py-lineno">176</tt>  <tt class="py-line">      <tt class="py-keyword">def</tt> <tt class="py-def-name">decorate_query</tt><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">query</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-<a name="L177"></a><tt class="py-lineno">177</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">current_index</tt><tt class="py-op">&gt;=</tt><tt class="py-number">0</tt><tt class="py-op">:</tt> </tt>
-<a name="L178"></a><tt class="py-lineno">178</tt>  <tt class="py-line">          <tt class="py-keyword">return</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">choices</tt><tt class="py-op">[</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">current_index</tt><tt class="py-op">]</tt><tt class="py-op">[</tt><tt class="py-number">1</tt><tt class="py-op">]</tt><tt class="py-op">(</tt><tt class="py-name">query</tt><tt class="py-op">)</tt> </tt>
-<a name="L179"></a><tt class="py-lineno">179</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">query</tt> </tt>
-</div></div><a name="L180"></a><tt class="py-lineno">180</tt>  <tt class="py-line">       </tt>
-<a name="L181"></a><tt class="py-lineno">181</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">FilterWidget</tt><tt class="py-op">(</tt><tt id="link-23" class="py-name"><a title="camelot.camelot.model.authentication.Address.Admin.name
-camelot.camelot.model.authentication.City.Admin.name
-camelot.camelot.model.authentication.ContactMechanism.Admin.name
-camelot.camelot.model.authentication.Country.Admin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name
-camelot.camelot.model.authentication.GeographicBoundary.name
-camelot.camelot.model.authentication.Organization.Admin.name
-camelot.camelot.model.authentication.Organization.name
-camelot.camelot.model.authentication.Party.Admin.name
-camelot.camelot.model.authentication.Party.name
-camelot.camelot.model.authentication.PartyAddress.Admin.name
-camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name
-camelot.camelot.model.authentication.PartyContactMechanism.Admin.name
-camelot.camelot.model.authentication.Person.Admin.name
-camelot.camelot.model.authentication.Person.name
-camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name
-camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name
-camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name
-camelot.camelot.model.memento.BeforeDelete.Admin.name
-camelot.camelot.model.memento.BeforeUpdate.Admin.name
-camelot.camelot.model.memento.Create.Admin.name
-camelot.camelot.model.memento.Memento.Admin.name
-camelot.camelot.view.elixir_admin.EntityAdmin.name
-camelot.camelot.view.plugins.CamelotEditorPlugin.name" class="py-name" href="#" onclick="return doclink('link-23', 'name', 'link-11');">name</a></tt><tt class="py-op">,</tt> <tt class="py-name">options</tt><tt class="py-op">,</tt> <tt class="py-name">parent</tt><tt class="py-op">)</tt> </tt>
-</div></div><a name="L182"></a><tt class="py-lineno">182</tt>  <tt class="py-line"> </tt><script type="text/javascript">
-<!--
-expandto(location.href);
-// -->
-</script>
-</pre>
-<br />
-<!-- ==================== NAVIGATION BAR ==================== -->
-<table class="navbar" border="0" width="100%" cellpadding="0"
-       bgcolor="#a0c0ff" cellspacing="0">
-  <tr valign="middle">
-  <!-- Home link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Tree link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Index link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Help link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Project homepage -->
-      <th class="navbar" align="right" width="100%">
-        <table border="0" cellpadding="0" cellspacing="0">
-          <tr><th class="navbar" align="center"
-            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
-          </tr></table></th>
-  </tr>
-</table>
-<table border="0" cellpadding="0" cellspacing="0" width="100%%">
-  <tr>
-    <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Sat Jan 31 18:50:05 2009
-    </td>
-    <td align="right" class="footer">
-      <a target="mainFrame" href="http://epydoc.sourceforge.net"
-        >http://epydoc.sourceforge.net</a>
-    </td>
-  </tr>
-</table>
-
-<script type="text/javascript">
-  <!--
-  // Private objects are initially displayed (because if
-  // javascript is turned off then we want them to be
-  // visible); but by default, we want to hide them.  So hide
-  // them unless we have a cookie that says to show them.
-  checkCookie();
-  // -->
-</script>
-</body>
-</html>

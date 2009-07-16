@@ -1,274 +1,0 @@
-<?xml version="1.0" encoding="ascii"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-          "DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-  <title>camelot.camelot.view.plugins</title>
-  <link rel="stylesheet" href="epydoc.css" type="text/css" />
-  <script type="text/javascript" src="epydoc.js"></script>
-</head>
-
-<body bgcolor="white" text="black" link="blue" vlink="#204080"
-      alink="#204080">
-<!-- ==================== NAVIGATION BAR ==================== -->
-<table class="navbar" border="0" width="100%" cellpadding="0"
-       bgcolor="#a0c0ff" cellspacing="0">
-  <tr valign="middle">
-  <!-- Home link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Tree link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Index link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Help link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Project homepage -->
-      <th class="navbar" align="right" width="100%">
-        <table border="0" cellpadding="0" cellspacing="0">
-          <tr><th class="navbar" align="center"
-            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
-          </tr></table></th>
-  </tr>
-</table>
-<table width="100%" cellpadding="0" cellspacing="0">
-  <tr valign="top">
-    <td width="100%">
-      <span class="breadcrumbs">
-        Package&nbsp;camelot ::
-        <a href="camelot.camelot-module.html">Package&nbsp;camelot</a> ::
-        <a href="camelot.camelot.view-module.html">Package&nbsp;view</a> ::
-        Package&nbsp;plugins
-      </span>
-    </td>
-    <td>
-      <table cellpadding="0" cellspacing="0">
-        <!-- hide/show private -->
-        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
-    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
-        <tr><td align="right"><span class="options"
-            >[<a href="frames.html" target="_top">frames</a
-            >]&nbsp;|&nbsp;<a href="camelot.camelot.view.plugins-pysrc.html"
-            target="_top">no&nbsp;frames</a>]</span></td></tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<h1 class="epydoc">Source Code for <a href="camelot.camelot.view.plugins-module.html">Package camelot.camelot.view.plugins</a></h1>
-<pre class="py-src">
-<a name="L1"></a><tt class="py-lineno"> 1</tt>  <tt class="py-line"><tt class="py-comment">#  ============================================================================</tt> </tt>
-<a name="L2"></a><tt class="py-lineno"> 2</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L3"></a><tt class="py-lineno"> 3</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.</tt> </tt>
-<a name="L4"></a><tt class="py-lineno"> 4</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  www.conceptive.be / project-camelot@conceptive.be</tt> </tt>
-<a name="L5"></a><tt class="py-lineno"> 5</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L6"></a><tt class="py-lineno"> 6</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is part of the Camelot Library.</tt> </tt>
-<a name="L7"></a><tt class="py-lineno"> 7</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L8"></a><tt class="py-lineno"> 8</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file may be used under the terms of the GNU General Public</tt> </tt>
-<a name="L9"></a><tt class="py-lineno"> 9</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  License version 2.0 as published by the Free Software Foundation</tt> </tt>
-<a name="L10"></a><tt class="py-lineno">10</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  and appearing in the file LICENSE.GPL included in the packaging of</tt> </tt>
-<a name="L11"></a><tt class="py-lineno">11</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  this file.  Please review the following information to ensure GNU</tt> </tt>
-<a name="L12"></a><tt class="py-lineno">12</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  General Public Licensing requirements will be met:</tt> </tt>
-<a name="L13"></a><tt class="py-lineno">13</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/opensource.html</tt> </tt>
-<a name="L14"></a><tt class="py-lineno">14</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L15"></a><tt class="py-lineno">15</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  If you are unsure which license is appropriate for your use, please</tt> </tt>
-<a name="L16"></a><tt class="py-lineno">16</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  review the following information:</tt> </tt>
-<a name="L17"></a><tt class="py-lineno">17</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  http://www.trolltech.com/products/qt/licensing.html or contact</tt> </tt>
-<a name="L18"></a><tt class="py-lineno">18</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be.</tt> </tt>
-<a name="L19"></a><tt class="py-lineno">19</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L20"></a><tt class="py-lineno">20</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE</tt> </tt>
-<a name="L21"></a><tt class="py-lineno">21</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</tt> </tt>
-<a name="L22"></a><tt class="py-lineno">22</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L23"></a><tt class="py-lineno">23</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  For use of this library in commercial applications, please contact</tt> </tt>
-<a name="L24"></a><tt class="py-lineno">24</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  project-camelot@conceptive.be</tt> </tt>
-<a name="L25"></a><tt class="py-lineno">25</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#</tt> </tt>
-<a name="L26"></a><tt class="py-lineno">26</tt>  <tt class="py-line"><tt class="py-comment"></tt><tt class="py-comment">#  ============================================================================</tt> </tt>
-<a name="L27"></a><tt class="py-lineno">27</tt>  <tt class="py-line"><tt class="py-comment"></tt> </tt>
-<a name="L28"></a><tt class="py-lineno">28</tt>  <tt class="py-line"><tt class="py-docstring">"""Plugins to include custom Camelot editors into QT Designer"""</tt> </tt>
-<a name="L29"></a><tt class="py-lineno">29</tt>  <tt class="py-line"> </tt>
-<a name="CamelotEditorPlugin"></a><div id="CamelotEditorPlugin-def"><a name="L30"></a><tt class="py-lineno">30</tt> <a class="py-toggle" href="#" id="CamelotEditorPlugin-toggle" onclick="return toggle('CamelotEditorPlugin');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.CamelotEditorPlugin-class.html">CamelotEditorPlugin</a><tt class="py-op">(</tt><tt class="py-base-class">object</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="CamelotEditorPlugin-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="CamelotEditorPlugin-expanded"><a name="L31"></a><tt class="py-lineno">31</tt>  <tt class="py-line">   </tt>
-<a name="CamelotEditorPlugin.__init__"></a><div id="CamelotEditorPlugin.__init__-def"><a name="L32"></a><tt class="py-lineno">32</tt> <a class="py-toggle" href="#" id="CamelotEditorPlugin.__init__-toggle" onclick="return toggle('CamelotEditorPlugin.__init__');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="CamelotEditorPlugin.__init__-collapsed" style="display:none;" pad="++" indent="++++++"></div><div id="CamelotEditorPlugin.__init__-expanded"><a name="L33"></a><tt class="py-lineno">33</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">initialized</tt> <tt class="py-op">=</tt> <tt class="py-name">False</tt> </tt>
-<a name="L34"></a><tt class="py-lineno">34</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">_widget</tt> <tt class="py-op">=</tt> <tt class="py-name">None</tt> </tt>
-</div><a name="L35"></a><tt class="py-lineno">35</tt>  <tt class="py-line">     </tt>
-<a name="CamelotEditorPlugin.initialize"></a><div id="CamelotEditorPlugin.initialize-def"><a name="L36"></a><tt class="py-lineno">36</tt> <a class="py-toggle" href="#" id="CamelotEditorPlugin.initialize-toggle" onclick="return toggle('CamelotEditorPlugin.initialize');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#initialize">initialize</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">core</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="CamelotEditorPlugin.initialize-collapsed" style="display:none;" pad="++" indent="++++++"></div><div id="CamelotEditorPlugin.initialize-expanded"><a name="L37"></a><tt class="py-lineno">37</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">initialized</tt><tt class="py-op">:</tt> </tt>
-<a name="L38"></a><tt class="py-lineno">38</tt>  <tt class="py-line">      <tt class="py-keyword">return</tt> </tt>
-<a name="L39"></a><tt class="py-lineno">39</tt>  <tt class="py-line">    <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">initialized</tt> <tt class="py-op">=</tt> <tt class="py-name">True</tt> </tt>
-</div><a name="L40"></a><tt class="py-lineno">40</tt>  <tt class="py-line">     </tt>
-<a name="CamelotEditorPlugin.isInitialized"></a><div id="CamelotEditorPlugin.isInitialized-def"><a name="L41"></a><tt class="py-lineno">41</tt> <a class="py-toggle" href="#" id="CamelotEditorPlugin.isInitialized-toggle" onclick="return toggle('CamelotEditorPlugin.isInitialized');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#isInitialized">isInitialized</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="CamelotEditorPlugin.isInitialized-collapsed" style="display:none;" pad="++" indent="++++++"></div><div id="CamelotEditorPlugin.isInitialized-expanded"><a name="L42"></a><tt class="py-lineno">42</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">initialized</tt> </tt>
-</div><a name="L43"></a><tt class="py-lineno">43</tt>  <tt class="py-line">   </tt>
-<a name="CamelotEditorPlugin.createWidget"></a><div id="CamelotEditorPlugin.createWidget-def"><a name="L44"></a><tt class="py-lineno">44</tt> <a class="py-toggle" href="#" id="CamelotEditorPlugin.createWidget-toggle" onclick="return toggle('CamelotEditorPlugin.createWidget');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#createWidget">createWidget</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">parent</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="CamelotEditorPlugin.createWidget-collapsed" style="display:none;" pad="++" indent="++++++"></div><div id="CamelotEditorPlugin.createWidget-expanded"><a name="L45"></a><tt class="py-lineno">45</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">_widget</tt><tt class="py-op">(</tt><tt class="py-name">parent</tt><tt class="py-op">=</tt><tt class="py-name">parent</tt><tt class="py-op">)</tt> </tt>
-</div><a name="L46"></a><tt class="py-lineno">46</tt>  <tt class="py-line">   </tt>
-<a name="CamelotEditorPlugin.name"></a><div id="CamelotEditorPlugin.name-def"><a name="L47"></a><tt class="py-lineno">47</tt> <a class="py-toggle" href="#" id="CamelotEditorPlugin.name-toggle" onclick="return toggle('CamelotEditorPlugin.name');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#name">name</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="CamelotEditorPlugin.name-collapsed" style="display:none;" pad="++" indent="++++++"></div><div id="CamelotEditorPlugin.name-expanded"><a name="L48"></a><tt class="py-lineno">48</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">_widget</tt><tt class="py-op">.</tt><tt class="py-name">__name__</tt> </tt>
-</div><a name="L49"></a><tt class="py-lineno">49</tt>  <tt class="py-line">   </tt>
-<a name="CamelotEditorPlugin.group"></a><div id="CamelotEditorPlugin.group-def"><a name="L50"></a><tt class="py-lineno">50</tt> <a class="py-toggle" href="#" id="CamelotEditorPlugin.group-toggle" onclick="return toggle('CamelotEditorPlugin.group');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#group">group</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="CamelotEditorPlugin.group-collapsed" style="display:none;" pad="++" indent="++++++"></div><div id="CamelotEditorPlugin.group-expanded"><a name="L51"></a><tt class="py-lineno">51</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-string">'Camelot'</tt> </tt>
-</div><a name="L52"></a><tt class="py-lineno">52</tt>  <tt class="py-line">   </tt>
-<a name="CamelotEditorPlugin.toolTip"></a><div id="CamelotEditorPlugin.toolTip-def"><a name="L53"></a><tt class="py-lineno">53</tt> <a class="py-toggle" href="#" id="CamelotEditorPlugin.toolTip-toggle" onclick="return toggle('CamelotEditorPlugin.toolTip');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#toolTip">toolTip</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="CamelotEditorPlugin.toolTip-collapsed" style="display:none;" pad="++" indent="++++++"></div><div id="CamelotEditorPlugin.toolTip-expanded"><a name="L54"></a><tt class="py-lineno">54</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-string">""</tt> </tt>
-</div><a name="L55"></a><tt class="py-lineno">55</tt>  <tt class="py-line">   </tt>
-<a name="CamelotEditorPlugin.whatsThis"></a><div id="CamelotEditorPlugin.whatsThis-def"><a name="L56"></a><tt class="py-lineno">56</tt> <a class="py-toggle" href="#" id="CamelotEditorPlugin.whatsThis-toggle" onclick="return toggle('CamelotEditorPlugin.whatsThis');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#whatsThis">whatsThis</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="CamelotEditorPlugin.whatsThis-collapsed" style="display:none;" pad="++" indent="++++++"></div><div id="CamelotEditorPlugin.whatsThis-expanded"><a name="L57"></a><tt class="py-lineno">57</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-string">""</tt> </tt>
-</div><a name="L58"></a><tt class="py-lineno">58</tt>  <tt class="py-line">   </tt>
-<a name="CamelotEditorPlugin.isContainer"></a><div id="CamelotEditorPlugin.isContainer-def"><a name="L59"></a><tt class="py-lineno">59</tt> <a class="py-toggle" href="#" id="CamelotEditorPlugin.isContainer-toggle" onclick="return toggle('CamelotEditorPlugin.isContainer');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#isContainer">isContainer</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="CamelotEditorPlugin.isContainer-collapsed" style="display:none;" pad="++" indent="++++++"></div><div id="CamelotEditorPlugin.isContainer-expanded"><a name="L60"></a><tt class="py-lineno">60</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">False</tt> </tt>
-</div><a name="L61"></a><tt class="py-lineno">61</tt>  <tt class="py-line">   </tt>
-<a name="CamelotEditorPlugin.domXml"></a><div id="CamelotEditorPlugin.domXml-def"><a name="L62"></a><tt class="py-lineno">62</tt> <a class="py-toggle" href="#" id="CamelotEditorPlugin.domXml-toggle" onclick="return toggle('CamelotEditorPlugin.domXml');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#domXml">domXml</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="CamelotEditorPlugin.domXml-collapsed" style="display:none;" pad="++" indent="++++++"></div><div id="CamelotEditorPlugin.domXml-expanded"><a name="L63"></a><tt class="py-lineno">63</tt>  <tt class="py-line">    <tt id="link-0" class="py-name" targets="Variable camelot.camelot.model.authentication.Address.Admin.name=camelot.camelot.model.authentication.Address.Admin-class.html#name,Variable camelot.camelot.model.authentication.City.Admin.name=camelot.camelot.model.authentication.City.Admin-class.html#name,Variable camelot.camelot.model.authentication.ContactMechanism.Admin.name=camelot.camelot.model.authentication.ContactMechanism.Admin-class.html#name,Variable camelot.camelot.model.authentication.Country.Admin.name=camelot.camelot.model.authentication.Country.Admin-class.html#name,Variable camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name=camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin-class.html#name,Variable camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name=camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin-class.html#name,Variable camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name=camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin-class.html#name,Variable camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name=camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin-class.html#name,Variable camelot.camelot.model.authentication.GeographicBoundary.name=camelot.camelot.model.authentication.GeographicBoundary-class.html#name,Variable camelot.camelot.model.authentication.Organization.Admin.name=camelot.camelot.model.authentication.Organization.Admin-class.html#name,Variable camelot.camelot.model.authentication.Organization.name=camelot.camelot.model.authentication.Organization-class.html#name,Variable camelot.camelot.model.authentication.Party.Admin.name=camelot.camelot.model.authentication.Party.Admin-class.html#name,Method camelot.camelot.model.authentication.Party.name()=camelot.camelot.model.authentication.Party-class.html#name,Variable camelot.camelot.model.authentication.PartyAddress.Admin.name=camelot.camelot.model.authentication.PartyAddress.Admin-class.html#name,Variable camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name=camelot.camelot.model.authentication.PartyAddressRoleType.Admin-class.html#name,Variable camelot.camelot.model.authentication.PartyContactMechanism.Admin.name=camelot.camelot.model.authentication.PartyContactMechanism.Admin-class.html#name,Variable camelot.camelot.model.authentication.Person.Admin.name=camelot.camelot.model.authentication.Person.Admin-class.html#name,Method camelot.camelot.model.authentication.Person.name()=camelot.camelot.model.authentication.Person-class.html#name,Variable camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name=camelot.camelot.model.authentication.RepresentedRepresentor.Admin-class.html#name,Variable camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name=camelot.camelot.model.authentication.SharedShareholder.SharedAdmin-class.html#name,Variable camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name=camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin-class.html#name,Variable camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name=camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin-class.html#name,Variable camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name=camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin-class.html#name,Variable camelot.camelot.model.memento.BeforeDelete.Admin.name=camelot.camelot.model.memento.BeforeDelete.Admin-class.html#name,Variable camelot.camelot.model.memento.BeforeUpdate.Admin.name=camelot.camelot.model.memento.BeforeUpdate.Admin-class.html#name,Variable camelot.camelot.model.memento.Create.Admin.name=camelot.camelot.model.memento.Create.Admin-class.html#name,Variable camelot.camelot.model.memento.Memento.Admin.name=camelot.camelot.model.memento.Memento.Admin-class.html#name,Variable camelot.camelot.view.elixir_admin.EntityAdmin.name=camelot.camelot.view.elixir_admin.EntityAdmin-class.html#name,Method camelot.camelot.view.plugins.CamelotEditorPlugin.name()=camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#name"><a title="camelot.camelot.model.authentication.Address.Admin.name
-camelot.camelot.model.authentication.City.Admin.name
-camelot.camelot.model.authentication.ContactMechanism.Admin.name
-camelot.camelot.model.authentication.Country.Admin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name
-camelot.camelot.model.authentication.GeographicBoundary.name
-camelot.camelot.model.authentication.Organization.Admin.name
-camelot.camelot.model.authentication.Organization.name
-camelot.camelot.model.authentication.Party.Admin.name
-camelot.camelot.model.authentication.Party.name
-camelot.camelot.model.authentication.PartyAddress.Admin.name
-camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name
-camelot.camelot.model.authentication.PartyContactMechanism.Admin.name
-camelot.camelot.model.authentication.Person.Admin.name
-camelot.camelot.model.authentication.Person.name
-camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name
-camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name
-camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name
-camelot.camelot.model.memento.BeforeDelete.Admin.name
-camelot.camelot.model.memento.BeforeUpdate.Admin.name
-camelot.camelot.model.memento.Create.Admin.name
-camelot.camelot.model.memento.Memento.Admin.name
-camelot.camelot.view.elixir_admin.EntityAdmin.name
-camelot.camelot.view.plugins.CamelotEditorPlugin.name" class="py-name" href="#" onclick="return doclink('link-0', 'name', 'link-0');">name</a></tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">_widget</tt><tt class="py-op">.</tt><tt class="py-name">__name__</tt> </tt>
-<a name="L64"></a><tt class="py-lineno">64</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-string">'&lt;widget class="%s" name=\"%s\" /&gt;\n'</tt><tt class="py-op">%</tt><tt class="py-op">(</tt><tt id="link-1" class="py-name"><a title="camelot.camelot.model.authentication.Address.Admin.name
-camelot.camelot.model.authentication.City.Admin.name
-camelot.camelot.model.authentication.ContactMechanism.Admin.name
-camelot.camelot.model.authentication.Country.Admin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name
-camelot.camelot.model.authentication.GeographicBoundary.name
-camelot.camelot.model.authentication.Organization.Admin.name
-camelot.camelot.model.authentication.Organization.name
-camelot.camelot.model.authentication.Party.Admin.name
-camelot.camelot.model.authentication.Party.name
-camelot.camelot.model.authentication.PartyAddress.Admin.name
-camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name
-camelot.camelot.model.authentication.PartyContactMechanism.Admin.name
-camelot.camelot.model.authentication.Person.Admin.name
-camelot.camelot.model.authentication.Person.name
-camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name
-camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name
-camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name
-camelot.camelot.model.memento.BeforeDelete.Admin.name
-camelot.camelot.model.memento.BeforeUpdate.Admin.name
-camelot.camelot.model.memento.Create.Admin.name
-camelot.camelot.model.memento.Memento.Admin.name
-camelot.camelot.view.elixir_admin.EntityAdmin.name
-camelot.camelot.view.plugins.CamelotEditorPlugin.name" class="py-name" href="#" onclick="return doclink('link-1', 'name', 'link-0');">name</a></tt><tt class="py-op">,</tt> <tt id="link-2" class="py-name"><a title="camelot.camelot.model.authentication.Address.Admin.name
-camelot.camelot.model.authentication.City.Admin.name
-camelot.camelot.model.authentication.ContactMechanism.Admin.name
-camelot.camelot.model.authentication.Country.Admin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectedAdmin.name
-camelot.camelot.model.authentication.DirectedDirector.DirectorAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployeeAdmin.name
-camelot.camelot.model.authentication.EmployerEmployee.EmployerAdmin.name
-camelot.camelot.model.authentication.GeographicBoundary.name
-camelot.camelot.model.authentication.Organization.Admin.name
-camelot.camelot.model.authentication.Organization.name
-camelot.camelot.model.authentication.Party.Admin.name
-camelot.camelot.model.authentication.Party.name
-camelot.camelot.model.authentication.PartyAddress.Admin.name
-camelot.camelot.model.authentication.PartyAddressRoleType.Admin.name
-camelot.camelot.model.authentication.PartyContactMechanism.Admin.name
-camelot.camelot.model.authentication.Person.Admin.name
-camelot.camelot.model.authentication.Person.name
-camelot.camelot.model.authentication.RepresentedRepresentor.Admin.name
-camelot.camelot.model.authentication.SharedShareholder.SharedAdmin.name
-camelot.camelot.model.authentication.SharedShareholder.ShareholderAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.CustomerAdmin.name
-camelot.camelot.model.authentication.SupplierCustomer.SupplierAdmin.name
-camelot.camelot.model.memento.BeforeDelete.Admin.name
-camelot.camelot.model.memento.BeforeUpdate.Admin.name
-camelot.camelot.model.memento.Create.Admin.name
-camelot.camelot.model.memento.Memento.Admin.name
-camelot.camelot.view.elixir_admin.EntityAdmin.name
-camelot.camelot.view.plugins.CamelotEditorPlugin.name" class="py-name" href="#" onclick="return doclink('link-2', 'name', 'link-0');">name</a></tt><tt class="py-op">)</tt> </tt>
-</div><a name="L65"></a><tt class="py-lineno">65</tt>  <tt class="py-line">   </tt>
-<a name="CamelotEditorPlugin.includeFile"></a><div id="CamelotEditorPlugin.includeFile-def"><a name="L66"></a><tt class="py-lineno">66</tt> <a class="py-toggle" href="#" id="CamelotEditorPlugin.includeFile-toggle" onclick="return toggle('CamelotEditorPlugin.includeFile');">-</a><tt class="py-line">  <tt class="py-keyword">def</tt> <a class="py-def-name" href="camelot.camelot.view.plugins.CamelotEditorPlugin-class.html#includeFile">includeFile</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
-</div><div id="CamelotEditorPlugin.includeFile-collapsed" style="display:none;" pad="++" indent="++++++"></div><div id="CamelotEditorPlugin.includeFile-expanded"><a name="L67"></a><tt class="py-lineno">67</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-string">"camelot.view.controls.editors"</tt> </tt>
-</div></div><a name="L68"></a><tt class="py-lineno">68</tt>  <tt class="py-line"> </tt><script type="text/javascript">
-<!--
-expandto(location.href);
-// -->
-</script>
-</pre>
-<br />
-<!-- ==================== NAVIGATION BAR ==================== -->
-<table class="navbar" border="0" width="100%" cellpadding="0"
-       bgcolor="#a0c0ff" cellspacing="0">
-  <tr valign="middle">
-  <!-- Home link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="camelot.camelot-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Tree link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Index link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Help link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Project homepage -->
-      <th class="navbar" align="right" width="100%">
-        <table border="0" cellpadding="0" cellspacing="0">
-          <tr><th class="navbar" align="center"
-            ><a class="navbar" target="_top" href="http://www.conceptive.be/projects/camelot">Camelot - The python gui framework</a></th>
-          </tr></table></th>
-  </tr>
-</table>
-<table border="0" cellpadding="0" cellspacing="0" width="100%%">
-  <tr>
-    <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Sat Jan 31 18:50:03 2009
-    </td>
-    <td align="right" class="footer">
-      <a target="mainFrame" href="http://epydoc.sourceforge.net"
-        >http://epydoc.sourceforge.net</a>
-    </td>
-  </tr>
-</table>
-
-<script type="text/javascript">
-  <!--
-  // Private objects are initially displayed (because if
-  // javascript is turned off then we want them to be
-  // visible); but by default, we want to hide them.  So hide
-  // them unless we have a cookie that says to show them.
-  checkCookie();
-  // -->
-</script>
-</body>
-</html>
