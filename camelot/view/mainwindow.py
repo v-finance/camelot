@@ -607,8 +607,9 @@ class MainWindow(QtGui.QMainWindow):
                  self.createMdiChild)
 
     # use QTest to auto select first button :)
-    firstbutton = self.navpane.buttons[0]
-    QTest.mousePress(firstbutton, Qt.LeftButton)
+    if len(self.navpane.buttons):
+      firstbutton = self.navpane.buttons[0]
+      QTest.mousePress(firstbutton, Qt.LeftButton)
 
   # Interface for child windows
 

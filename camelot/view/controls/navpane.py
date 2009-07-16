@@ -291,6 +291,8 @@ class NavigationPane(QtGui.QDockWidget):
         layout.addWidget(b)
         self.connect(b, QtCore.SIGNAL('indexselected'), self.change_current)
       self.buttons = buttons
+    else:
+      self.buttons = []
 
     self.content.setLayout(layout)
     self.setWidget(self.content)
