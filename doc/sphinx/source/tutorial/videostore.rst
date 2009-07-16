@@ -170,7 +170,6 @@ This is one of the purposes of ``EntityAdmin`` subclasses. After adding the
 
     class Admin(EntityAdmin):
       verbose_name = 'Movie'
-      section = 'movies'
       list_display = ['title', 'short_description', 'release_date', 'genre']
 
     def __unicode__(self):
@@ -180,9 +179,7 @@ We made ``Admin`` an inner class to strengthen the link between it and the
 ``Entity`` subclass. Camelot does not force us. ``Admin`` holds three
 attributes.
 
-``verbose_name`` will be a label in navigation trees, while the value of ``section``
-is used programmatically to group entities together (we will see that soon).
-Here, our section has the internal value ``'movies'``.
+``verbose_name`` will be the label used in navigation trees.
 
 The last attribute is interesting; it holds a list containing the fields we
 have defined above. As the name suggests, ``list_display`` tells Camelot to
@@ -198,81 +195,68 @@ programming practice.
 
 Let's move onto the last piece of the puzzle.
 
-
 Configuring the Application
 ===========================
 
-We are now working with :file:`application_admin.py`. Remember the buttons in the
-navigation pane? We said they were sections, used to group entities. One of
-the tasks of :file:`application_admin.py` is to graphically specify sections.
+We are now working with :file:`application_admin.py`.  One of
+the tasks of :file:`application_admin.py` is to specify the sections in
+the left pane of the main window.
 
 Camelot defined a class, ``MyApplicationAdmin``, for us. This class is a
 subclass of ``ApplicationAdmin``, which is used to control the overall look
 and feel of every Camelot application.
 
-``MyApplicationAdmin.__init__()`` calls its parent
-``ApplicationAdmin.__init__()`` and passes it a list of sections using the
-following syntax::
+To change sections in the left pane of the main window, simply overwrite
+the ``get_sections`` method, to return a list of the desired sections.  By default
+this method contains::
 
-  (<section_internal_name>, (<section_label>, <section_icon_image>))
-
-That means initializing ApplicationAdmin with ::
-
-  [('relations', ('Relations', icon_relations)),
-   ('configuration', ('Configurations', icon_config))]
-
-will display two buttons in the navigation pane, labelled ``'Relations'`` and
-``'Configurations'``, with the specified icon next to each label. And yes, the
-order matters.
-
-Next, follows four calls to ``ApplicationAdmin.register()``. As you have
-probably guessed, this method registers Entities and their corresponding
-EntityAdmins so Camelot knows about them.
-
-We need to add a new section for our ``Movie`` entity and then register it.
-Camelot comes with the `Tango <http://tango.freedesktop.org/Tango_Icon_Library>`_
-icon collection; we use a suitable icon for our movie section. The call to
-``super()`` in ``__init__()`` looks like this after the changes::
-
-  icon_movies = Icon('tango/24x24/categories/applications-multimedia.png').fullpath()
-  icon_relations = Icon('tango/24x24/apps/system-users.png').fullpath()
-  icon_config = Icon('tango/24x24/categories/preferences-system.png').fullpath()
-
-  super(MyApplicationAdmin, self).__init__([
-    ('movies', ('Movies', icon_movies)),
-    ('relations', ('Relations', icon_relations)),
-    ('configuration', ('Configuration', icon_config)),
-  ])
-  
-We now register our entity by adding this code at the very end of
-``__init__()``::
-
-  from model import Movie
-  self.register(Movie, Movie.Admin)
-
-``__init__()`` now looks like this::
-
-  def __init__(self):
-    icon_movies = Icon('tango/24x24/categories/applications-multimedia.png').fullpath()
-    icon_relations = Icon('tango/24x24/apps/system-users.png').fullpath()
-    icon_config = Icon('tango/24x24/categories/preferences-system.png').fullpath()
-
-    super(MyApplicationAdmin, self).__init__([
-      ('movies', ('Movies', icon_movies)),
-      ('relations', ('Relations', icon_relations)),
-      ('configuration', ('Configuration', icon_config)),
-    ])
-
+  def get_sections(self):
     from camelot.model.memento import Memento
     from camelot.model.authentication import Person, Organization
     from camelot.model.i18n import Translation
-    self.register(Memento, Memento.Admin)
-    self.register(Person, Person.Admin)
-    self.register(Organization, Organization.Admin)
-    self.register(Translation, Translation.Admin)
+    return [Section('relation',
+                    Icon('tango/24x24/apps/system-users.png'),
+                    items = [Person, Organization]),
+            Section('configuration',
+                    Icon('tango/24x24/categories/preferences-system.png'),
+                    items = [Memento, Translation])
+            ]
+            
+which will display two buttons in the navigation pane, labelled ``'Relations'`` and
+``'Configurations'``, with the specified icon next to each label. And yes, the
+order matters.
 
-    from model import Movie
-    self.register(Movie, Movie.Admin)
+We need to add a new section for our ``Movie`` entity, this is done by extending
+the list of sections returned by the ``get_sections`` method with a Movie section::
+
+	Section('movies',
+            Icon('tango/24x24/mimetypes/x-office-presentation.png'),
+            items = [Movie])
+
+The constructor of a section object takes the name of the section, the icon to be
+used and the items in the section.  The items is a list of the entities for which
+a table view should shown. 
+
+Camelot comes with the `Tango <http://tango.freedesktop.org/Tango_Icon_Library>`_
+icon collection; we use a suitable icon for our movie section.
+
+The resulting method now becomes::
+
+  def get_sections(self):
+    from camelot.model.memento import Memento
+    from camelot.model.authentication import Person, Organization
+    from camelot.model.i18n import Translation    
+    from example.model import Movie
+    return [Section('movies', 
+                    Icon('tango/24x24/mimetypes/x-office-presentation.png'),
+                    items = [Movie]),
+            Section('relation',
+                    Icon('tango/24x24/apps/system-users.png'),
+                    items = [Person, Organization]),
+            Section('configuration',
+                    Icon('tango/24x24/categories/preferences-system.png'),
+                    items = [Memento, Translation])
+            ]
     
 We can now try our application.
 
@@ -285,7 +269,6 @@ record, a form view appears as shown below.
 
 That's it for the basics of defining an entity and setting it for display in
 Camelot. Next we look at relationships between entities.
-
 
 Relationships
 =============
@@ -320,21 +303,20 @@ Elixir requires that we add an inverse relationship ``ManyToOne`` to our
     director = ManyToOne('Director')
 
     class Admin(EntityAdmin):
-      name = 'Movies'
-      section = 'movies'
+      verbose_name = 'Movie'
       list_display = ['title',
                       'short_description',
                       'release_date',
                       'genre',
                       'director']
 
-    def __repr__(self):
+    def __unicode__(self):
       return self.title or 'untitled movie'
 
 We also inserted ``'director'`` in ``list_display``.
 
 Our ``Director`` entity needs an administration class, which will adds the
-entity to the section ``'movies'``. We will also add ``__repr__()`` method as
+entity to the section ``'movies'``. We will also add ``__unicode__()`` method as
 suggested above. The entity now looks as follows::
 
   class Director(Entity):
@@ -344,11 +326,10 @@ suggested above. The entity now looks as follows::
     movies = OneToMany('Movie')
 
     class Admin(EntityAdmin):
-      name = 'Directors'
-      section = 'movies'
+      verbose_name = 'Director'
       list_display = ['name']
 
-    def __repr__(self):
+    def __unicode__(self):
       return self.name or 'unknown director'
 
 For completeness the two entities are once again listed below::
@@ -363,15 +344,14 @@ For completeness the two entities are once again listed below::
     director = ManyToOne('Director')
 
     class Admin(EntityAdmin):
-      name = 'Movies'
-      section = 'movies'
+      verbose_name = 'Movie'
       list_display = ['title',
                       'short_description',
                       'release_date',
                       'genre',
                       'director']
 
-    def __repr__(self):
+    def __unicode__(self):
       return self.title or 'untitled movie'
 
 
@@ -382,19 +362,18 @@ For completeness the two entities are once again listed below::
     movies = OneToMany('Movie')
 
     class Admin(EntityAdmin):
-      name = 'Directors'
-      section = 'movies'
+      verbose_name = 'Director'
       list_display = ['name']
 
-    def __repr__(self):
+    def __unicode__(self):
       return self.name or 'unknown director'
 
 The last step is to fix :file:`application_admin.py` by adding the following
-lines to ``__init__()``::
+lines to the Director entity to the Movie section::
 
-  from model import Movie, Director
-  self.register(Movie, Movie.Admin)
-  self.register(Director, Director.Admin)
+	Section('movies', 
+            Icon('tango/24x24/mimetypes/x-office-presentation.png'),
+            items = [Movie, Director])
 
 This takes care of the relationship between our two entities. Below is the new
 look of our video store application.
