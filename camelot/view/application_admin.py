@@ -27,6 +27,13 @@
 
 import os
 
+_application_admin_ = []
+
+def get_application_admin():
+  if not len(_application_admin_):
+    raise Exception('No application admin class has been constructed yet')
+  return _application_admin_[0]
+
 class ApplicationAdmin(object):
   """The Application Admin class defines how the application should look like, it also ties
   python classes to their associated admin classes.  It's behaviour can be steered by 
@@ -49,20 +56,15 @@ class ApplicationAdmin(object):
   sections = []
   admins = {}
   
-  def __init__(self, main_sections):
-    """The main sections to be used in the navigation pane of the application,
-    all entities will be put in such a section, depending on the properties of
-    their EntityAdmin class, a list of tuples of strings and icons
-    [('section', ('Section display name', section_icon))]
-    """
-    if main_sections:
-      self.sections = main_sections
+  def __init__(self):
+    _application_admin_.append(self)
   
   def register(self, entity, admin_class):
     self.admins[entity] = admin_class
         
-  def getSections(self):
-    return self.sections
+  def get_sections(self):
+    from camelot.admin.section import structure_to_sections
+    return structure_to_sections(self.sections)
   
   def getEntityAdmin(self, entity):
     """Get the default entity admin for this entity, return None, if not
@@ -77,7 +79,6 @@ class ApplicationAdmin(object):
   def getEntityQuery(self, entity):
     """Get the root query for an entity"""
     return entity.query
-  
   
   def createMainWindow(self):
     """createMainWindow"""
@@ -94,7 +95,7 @@ class ApplicationAdmin(object):
               for e, a in self.admins.items()
               if hasattr(a, 'section') 
               and a.section == section]
-    result.sort(cmp = lambda x, y: cmp(x[0].getVerboseNamePlural(), y[0].getVerboseNamePlural()))
+    result.sort(cmp = lambda x, y: cmp(x[0].get_verbose_name_plural(), y[0].get_verbose_name_plural()))
     return result
   
   def getActions(self):

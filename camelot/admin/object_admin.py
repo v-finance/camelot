@@ -101,7 +101,7 @@ was displayed by the form when the button was pressed::
 
 A dictionary specifying for each field of the model some additional
 attributes on how they should be displayed.  All of these attributes
-are forwarded to the constructor of the delegate of this field::
+are propagated to the constructor of the delegate of this field::
 
   class Movie(Entity):
     title = Field(Unicode(50))
@@ -109,7 +109,21 @@ are forwarded to the constructor of the delegate of this field::
     class Admin(EntityAdmin):
       list_display = ['title']
       field_attributes = dict(title=dict(editable=False))
-      
+ 
+Other field attributes process by the admin interface are:
+
+  .. attribute:: name
+  The name of the field used, this defaults to the name of the attribute
+  
+  .. attribute:: target
+  In case of relation fields, specifies the class that is at the other
+  end of the relation.  Defaults to the one found by introspection.
+  
+  .. attribute:: admin
+  In case of relation fields, specifies the admin class that is to be used
+  to visualize the other end of the relation.  Defaults to the default admin
+  class of the target class.
+       
 """
   name = None #DEPRECATED
   verbose_name = None
@@ -156,7 +170,7 @@ are forwarded to the constructor of the delegate of this field::
   def getVerboseName(self):
     return (self.verbose_name or self.name or self.entity.__name__)
   
-  def getVerboseNamePlural(self):
+  def get_verbose_name_plural(self):
     return (self.verbose_name_plural or self.name or (self.getVerboseName()+'s'))
 
   def getModelThread(self):

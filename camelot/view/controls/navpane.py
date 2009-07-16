@@ -218,9 +218,8 @@ class NavigationPane(QtGui.QDockWidget):
   def __init__(self, app_admin, objectname='NavigationPane', parent=None):
     QtGui.QDockWidget.__init__(self, parent)
     self.app_admin = app_admin
-    self.sections = app_admin.getSections() 
-    buttons = [PaneButton(label, icon) 
-               for (section, (label, icon)) in self.sections]
+    self.sections = app_admin.get_sections() 
+    buttons = [PaneButton(section.get_verbose_name(), section.get_icon().getQPixmap()) for section in self.sections]
     self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
 
     self.setcontent(buttons)
@@ -296,19 +295,17 @@ class NavigationPane(QtGui.QDockWidget):
     self.content.setLayout(layout)
     self.setWidget(self.content)
 
-  def set_models_in_tree(self, models):
+  def set_items_in_tree(self, items):
     self.treewidget.clear()
     self.treewidget.clear_model_items()
-    self.models = models
+    self.items = items
 
-    if not models:
+    if not items:
       return
 
-
-    for model in models:
-      logger.debug('loading model %s' % str(model[0]))
-      item = ModelItem(self.treewidget, [model[0].getVerboseNamePlural()])
-      self.treewidget.modelitems.append(item)
+    for item in items:
+      model_item = ModelItem(self.treewidget, [item.get_verbose_name()])
+      self.treewidget.modelitems.append(model_item)
 
     self.treewidget.update()
 
@@ -324,11 +321,11 @@ class NavigationPane(QtGui.QDockWidget):
     
     def get_models_for_tree():
       """Return pairs of (Admin, query) classes for items in the tree"""
-      section = self.sections[index][0] 
-      return self.app_admin.getEntitiesAndQueriesInSection(section)
+      section = self.sections[index]
+      return section.get_items()
     
     self.mt.post(get_models_for_tree, 
-                 lambda models:self.set_models_in_tree(models))
+                 lambda models:self.set_items_in_tree(models))
 
   def createContextMenu(self, point):
     logger.debug('creating context menu')

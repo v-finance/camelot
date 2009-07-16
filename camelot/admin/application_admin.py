@@ -1,1 +1,1 @@
-from camelot.view.application_admin import ApplicationAdmin
+from camelot.view.application_admin import ApplicationAdmin, get_application_admin

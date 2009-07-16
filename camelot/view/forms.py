@@ -348,7 +348,6 @@ class GroupBoxForm(Form):
     form = Form.render(self, widgets, widget, nomargins)
     layout.addWidget(form)
     return widget
-  
 
 def structure_to_form(structure):
   """Convert a python data structure to a form, using the following rules :

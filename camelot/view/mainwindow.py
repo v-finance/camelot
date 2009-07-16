@@ -614,17 +614,15 @@ class MainWindow(QtGui.QMainWindow):
 
   def createMdiChild(self, item):
     index = self.navpane.treewidget.indexFromItem(item)
-    model = self.navpane.models[index.row()]
-    logger.debug('creating model %s' % str(model[0]))
-
-    child = model[0].createTableView(model[1], parent=self)
+    section_item = self.navpane.items[index.row()]
+    
+    child = section_item.get_action().run(self.workspace)
     self.workspace.addSubWindow(child)
-
+    child.showMaximized()
     self.connect(child, QtCore.SIGNAL("copyAvailable(bool)"),
            self.cutAct.setEnabled)
     self.connect(child, QtCore.SIGNAL("copyAvailable(bool)"),
            self.copyAct.setEnabled)
-    child.showMaximized()
 
   def activeMdiChild(self):
     return self.workspace.activeSubWindow()

@@ -1041,7 +1041,7 @@ class One2ManyEditor(QtGui.QWidget):
     from camelot.view.export.excel import open_data_with_excel
     
     def export():
-      title = self.admin.getVerboseNamePlural()
+      title = self.admin.get_verbose_name_plural()
       columns = self.admin.getColumns()
       data = list(self.model.getData())
       open_data_with_excel(title, columns, data)
