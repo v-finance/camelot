@@ -29,4 +29,4 @@
 interface.  Start building applications at warp speed, simply by adding some additional 
 information to you Elixir model."""
 
-__version__ = '09.07.16'
+__version__ = '09.07.17'
