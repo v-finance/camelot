@@ -170,9 +170,21 @@ class Form(object):
       scroll_area.setWidgetResizable(True)
       scroll_area.setFrameStyle(QtGui.QFrame.NoFrame)
       return scroll_area
-    
+ 
     return form_widget
   
+
+class Label(Form):
+  """Render a label with a QLabel"""
+
+  def __init__(self, label):
+    super(Label, self).__init__([])
+    self.label = label
+
+  def render(self, widgets, parent=None, nomargins=False):
+    from PyQt4 import QtGui
+    widget = QtGui.QLabel(self.label)
+    return widget
 
 class TabForm(Form):
   """Render forms within a QTabWidget"""
@@ -304,15 +316,18 @@ class GridForm(Form):
       assert isinstance(row, list)
       fields.extend(row)
     super(GridForm, self).__init__(fields)
-    
+
   def render(self, widgets, parent=None, nomargins=False):
     from PyQt4 import QtGui
     widget = QtGui.QWidget(parent)
     grid_layout = QtGui.QGridLayout()
     for i,row in enumerate(self._grid):
       for j,field in enumerate(row):
-        label, editor = widgets[field]
-        grid_layout.addWidget(editor, i, j)
+        if isinstance(field, Form):
+          grid_layout.addWidget(field.render([], grid_layout), i, j)
+        else:
+          label, editor = widgets[field]
+          grid_layout.addWidget(editor, i, j)
     widget.setLayout(grid_layout)
     return widget
 
