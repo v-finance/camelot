@@ -5,9 +5,6 @@ from camelot.admin.section import Section
 class MyApplicationAdmin(ApplicationAdmin):
   
   name = 'Camelot Video Store'
-  
-  def __init__(self):
-    super(MyApplicationAdmin, self).__init__()
     
   def get_sections(self):
     from camelot.model.memento import Memento
