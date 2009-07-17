@@ -37,6 +37,7 @@ from camelot.view.model_thread import model_function
 class FormView(QtGui.QWidget):
   def __init__(self, title, admin, model, index):
     QtGui.QWidget.__init__(self)
+    self.title_prefix = title
     self.admin = admin
     self.model = model
     self.index = index
@@ -68,10 +69,23 @@ class FormView(QtGui.QWidget):
       return admin.getFormActions(None)
 
     self.admin.mt.post(getActions, self.setActions)
+    self.update_title()
+    
+  def set_title(self, title):
+    self.setWindowTitle(title)
+    
+  def update_title(self):
+    
+    def get_title():
+      obj = self.getEntity()
+      return u'%s %s'%(self.title_prefix, self.admin.get_verbose_identifier(obj))
+    
+    self.admin.mt.post(get_title, self.set_title)
 
   def dataChanged(self, index_from, index_to):
     #@TODO: only revert if this form is in the changed range
     self.widget_mapper.revert()
+    self.update_title()
 
   def handleGetColumnsAndForm(self, columns, form):
     delegate = self.model.getItemDelegate()
@@ -103,7 +117,7 @@ class FormView(QtGui.QWidget):
     self.widget_layout.setContentsMargins(7, 7, 7, 7)        
 
   def getEntity(self):
-    return self.model._get_object(self.index)
+    return self.model._get_object(self.widget_mapper.currentIndex())
 
   def setActions(self, actions):
     if actions:
@@ -119,6 +133,7 @@ class FormView(QtGui.QWidget):
     # the widgets data to be written to the model
     self.widget_mapper.submit()        
     self.widget_mapper.toFirst()
+    self.update_title()
 
   def viewLast(self):
     """select model's last row"""
@@ -126,6 +141,7 @@ class FormView(QtGui.QWidget):
     # the widgets data to be written to the model
     self.widget_mapper.submit()         
     self.widget_mapper.toLast()
+    self.update_title()
 
   def viewNext(self):
     """select model's next row"""
@@ -133,13 +149,15 @@ class FormView(QtGui.QWidget):
     # the widgets data to be written to the model
     self.widget_mapper.submit()         
     self.widget_mapper.toNext()
+    self.update_title()
 
   def viewPrevious(self):
     """select model's previous row"""
     # submit should not happen a second time, since then we don't want
     # the widgets data to be written to the model
     self.widget_mapper.submit()         
-    self.widget_mapper.toPrevious()            
+    self.widget_mapper.toPrevious()
+    self.update_title()            
 
   def validateClose(self):
     logger.debug('validate before close : %s' % self.validate_before_close)
@@ -149,16 +167,16 @@ class FormView(QtGui.QWidget):
       self.widget_mapper.submit()
       
       def validate():
-        return self.validator.isValid(self.index)
+        return self.validator.isValid(self.widget_mapper.currentIndex())
                           
       def showMessage(valid):
         if not valid:
-          reply = self.validator.validityDialog(self.index, self).exec_()
+          reply = self.validator.validityDialog(self.widget_mapper.currentIndex(), self).exec_()
           if reply == QtGui.QMessageBox.Discard:
             # clear mapping to prevent data being written again to the model,
             # then we reverted the row
             self.widget_mapper.clearMapping()
-            self.model.revertRow(self.index)
+            self.model.revertRow(self.widget_mapper.currentIndex())
             self.validate_before_close = False
             self.emit(self.closeAfterValidation)
         else:
@@ -206,7 +224,7 @@ class FormView(QtGui.QWidget):
                   for name, field_attributes in fields]
 
     context = {
-      'title': self.admin.getVerboseName(),
+      'title': self.admin.get_verbose_name(),
       'table': table,
     }
 
@@ -216,7 +234,3 @@ class FormView(QtGui.QWidget):
     tp = env.get_template('form_view.html')
 
     return tp.render(context)
-
-  def __del__(self):
-    """deletes formview object"""
-    logger.debug('%s deleted' % self.__class__.__name__) 

@@ -73,6 +73,13 @@ class EntityAdmin(ObjectAdmin):
     return self._subclasses
 
   @model_function
+  def get_verbose_identifier(self, obj):
+    if hasattr(obj, 'id') and obj.id:
+      return u'%s %s : %s'%(self.get_verbose_name(), unicode(obj.id), unicode(obj))
+    else:
+      return self.get_verbose_name()
+    
+  @model_function
   def getFieldAttributes(self, field_name):
     """
     Get the attributes needed to visualize the field field_name
@@ -279,7 +286,6 @@ class EntityAdmin(ObjectAdmin):
 
       def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
-        self.setWindowTitle('New %s'%(admin.getVerboseName()))
         self.widget_layout = QtGui.QVBoxLayout()
         self.widget_layout.setMargin(0)
         self.form_view = admin.createFormView('New', model, 0, parent)
@@ -456,9 +462,8 @@ class EntityAdmin(ObjectAdmin):
                                 tableview.table_model._query_getter,
                                 tableview.admin.getFields,
                                 max_number_of_rows=1)
-        title = u'%s' % (self.getVerboseName())
 
-        formview = tableview.admin.createFormView(title, model, index, parent)
+        formview = tableview.admin.createFormView('', model, index, parent)
         get_workspace().addSubWindow(formview)
         formview.show()
 

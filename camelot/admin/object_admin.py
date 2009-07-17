@@ -167,12 +167,20 @@ Other field attributes process by the admin interface are:
   def getName(self):
     return (self.name or self.entity.__name__)
   
-  def getVerboseName(self):
+  def get_verbose_name(self):
     return (self.verbose_name or self.name or self.entity.__name__)
   
   def get_verbose_name_plural(self):
-    return (self.verbose_name_plural or self.name or (self.getVerboseName()+'s'))
+    return (self.verbose_name_plural or self.name or (self.get_verbose_name()+'s'))
 
+  @model_function
+  def get_verbose_identifier(self, obj):
+    """Create an identifier for an object that is interpretable
+    for the user, eg : the 'id' of an object.  This verbose identifier can be
+    used to generate a title for a form view of an object.
+    """
+    return u'%s : %s'%(self.get_verbose_name(), unicode(obj))
+    
   def getModelThread(self):
     return self.mt
 

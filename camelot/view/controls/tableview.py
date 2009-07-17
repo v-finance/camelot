@@ -269,7 +269,7 @@ class TableView(QtGui.QWidget):
 
   def getTitle(self):
     """return the name of the entity managed by the admin attribute"""
-    return self.admin.getVerboseName()
+    return self.admin.get_verbose_name()
 
   def viewFirst(self):
     """selects first row"""

@@ -727,7 +727,7 @@ class AbstractManyToOneEditor(object):
         layout = QtGui.QVBoxLayout()
         layout.setMargin(0)
         layout.setSpacing(0)
-        self.setWindowTitle('Select %s'%admin.getVerboseName())
+        self.setWindowTitle('Select %s'%admin.get_verbose_name())
         self.select = admin.createSelectView(query, parent=parent, search_text=search_text)
         layout.addWidget(self.select)
         self.setLayout(layout)
@@ -902,7 +902,7 @@ class Many2OneEditor(QtGui.QWidget, AbstractManyToOneEditor):
       def get_admin_and_title():
         object = self.entity_instance_getter()
         admin = self.admin.getSubclassEntityAdmin(object.__class__)
-        return admin, '%s : %s'%(admin.getVerboseName(),unicode(object))
+        return admin, '%s : %s'%(admin.get_verbose_name(),unicode(object))
       
       def show_form_view(admin_and_title):
         admin, title = admin_and_title
@@ -1115,7 +1115,7 @@ class One2ManyEditor(QtGui.QWidget):
                             self.admin.getFields,
                             max_number_of_rows=1,
                             edits=None)
-    title = self.admin.getVerboseName()
+    title = self.admin.get_verbose_name()
     form = self.admin.createFormView(title, model, index, get_workspace())
     get_workspace().addSubWindow(form)
     form.show()
