@@ -24,6 +24,9 @@ def genre_choices(entity_instance):
   yield (('sci-fi'),('Sci-Fi'))
   yield (('war'),('War'))
 
+def burn_to_disk(o_getter):
+  print 'burn burn burn'
+    
 class Movie(Entity):
   using_options(tablename='movies')
   title = Field(Unicode(60), required=True)
@@ -48,10 +51,6 @@ class Movie(Entity):
   #
   script = Field(camelot.types.File(upload_to='script'))
   description = Field(camelot.types.RichText)
-  
-  def burn_to_disk(self):
-    print 'burn burn burn'
-
   #
   # Each Entity subclass can have a subclass of EntityAdmin as
   # its inner class.  The EntityAdmin class defines how the Entity
@@ -84,7 +83,7 @@ class Movie(Entity):
     # create a list of actions available for the user on the form view
     # those actions will be executed within the model thread
     #
-    form_actions = [('Burn DVD', lambda o: o.burn_to_disk())]
+    form_actions = [('Burn DVD', burn_to_disk)]
     #
     # additional attributes for a field can be specified in the
     # field_attributes dictionary
