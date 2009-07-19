@@ -17,13 +17,6 @@ def setup_model():
   from camelot.model.i18n import *
   setup_all(create_tables=True)
   updateLastLogin()
-      
-CAMELOT_MAIN_DIRECTORY = os.path.join(os.path.dirname(__file__), '..', 'camelot')
-CAMELOT_LIB_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY, 'librairies')
-CAMELOT_ART_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY, 'art')
-
-CAMELOT_TEMPLATES_DIRECTORY = os.path.join(CAMELOT_MAIN_DIRECTORY,
-                                           'view', 'templates')
 
 CAMELOT_MEDIA_ROOT = 'media'
 

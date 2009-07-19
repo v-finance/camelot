@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 import logging
 import settings
 import unittest
@@ -52,7 +55,7 @@ def testSuites():
       from camelot.model.authentication import Person, PartyAddressRoleType
       from camelot.view.proxy.queryproxy import QueryTableProxy
       from camelot.view.application_admin import ApplicationAdmin
-      self.app_admin = ApplicationAdmin([])
+      self.app_admin = ApplicationAdmin()
       self.mt = get_model_thread()
       self.block = self.mt.post_and_block
       person_admin = self.app_admin.getEntityAdmin(Person)
@@ -82,7 +85,7 @@ def testSuites():
     def insertNewPerson(self, valid):
       from camelot.model.authentication import Person
       self.rows_before_insert = self.numberOfPersons()
-      self.new_person = self.block(lambda:Person(username={True:u'test', False:None}[valid]))
+      self.new_person = self.block(lambda:Person(first_name={True:u'test', False:None}[valid]))
       self.person_proxy.insertRow(0, create_getter(self.new_person))
       self.rows_after_insert = self.numberOfPersons()
       self.assertTrue( self.rows_after_insert > self.rows_before_insert)
@@ -94,11 +97,15 @@ def testSuites():
       self.assertEqual( self.block(lambda:self.new_person.last_name), u'Testers')
       self.assertEqual(rows_before_update, self.numberOfPersons())
     def updateNewPersonToValid(self):
-      index = self.person_proxy.index(self.rows_before_insert, self.person_columns['username'])
+      index = self.person_proxy.index(self.rows_before_insert, self.person_columns['first_name'])
       self.person_proxy.setData(index, lambda:u'test')
+      index = self.person_proxy.index(self.rows_before_insert, self.person_columns['last_name'])
+      self.person_proxy.setData(index, lambda:u'test')      
     def updateNewPersonToInvalid(self):
-      index = self.person_proxy.index(self.rows_before_insert, self.person_columns['username'])
+      index = self.person_proxy.index(self.rows_before_insert, self.person_columns['first_name'])
       self.person_proxy.setData(index, lambda:None)
+      index = self.person_proxy.index(self.rows_before_insert, self.person_columns['last_name'])
+      self.person_proxy.setData(index, lambda:None)      
     def deleteNewPerson(self):
       self.person_proxy.removeRow(self.rows_before_insert)
       self.rows_after_delete = self.numberOfPersons()
@@ -192,10 +199,102 @@ def testSuites():
     if inspect.isclass(c):
       yield unittest.makeSuite(c, 'test')
       
+class EditorTest(unittest.TestCase):
+  """
+Test the basic functionality of the editors :
+- get_value
+- set_value
+- support for ValueLoading
+  """
+  
+  from camelot.view.controls import editors
+  from camelot.view.proxy import ValueLoading
+  
+  def testDateEditor(self):
+    import datetime
+    editor = self.editors.DateEditor()
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( None )
+    self.assertEqual( editor.get_value(), None )
+    editor.set_value( datetime.date(1980, 12, 31) )
+    self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    
+  def testTextLineEditor(self):
+    editor = self.editors.TextLineEditor(parent=None, length=10)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( u'za coś tam' )
+    self.assertEqual( editor.get_value(), u'za coś tam' )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+ 
+  def testStarEditor(self):
+    editor = self.editors.StarEditor(parent=None, maximum=5)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 4 )
+    self.assertEqual( editor.get_value(), 4 )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+         
+  def testBoolEditor(self):
+    editor = self.editors.BoolEditor(parent=None, editable=True)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( True )
+    self.assertEqual( editor.get_value(), True )
+    editor.set_value( False )
+    self.assertEqual( editor.get_value(), False )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    
+  def testCodeEditor(self):
+    editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'])
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( ['XYZ', '123'] )
+    self.assertEqual( editor.get_value(), ['XYZ', '123'] )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )     
+
+  def testColorEditor(self):
+    editor = self.editors.ColorEditor(parent=None, editable=True)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( (255, 255, 255, 255) )
+    self.assertEqual( editor.get_value(), (255, 255, 255, 255) )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+     
+  def testColoredFloatEditor(self):
+    editor = self.editors.ColoredFloatEditor(parent=None, editable=True)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 3.14 )
+    self.assertEqual( editor.get_value(), 3.14 )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    
+  def testChoicesEditor(self):
+    from PyQt4 import QtCore
+    editor = self.editors.ChoicesEditor(parent=None, editable=True)
+    for i,(name,value) in enumerate([(u'A',1), (u'B',2), (u'C',3)]):
+      editor.insertItem(i, name, QtCore.QVariant(value))
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 2 )
+    self.assertEqual( editor.get_value(), '2' )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    
+  def testFileEditor(self):
+    editor = self.editors.FileEditor(parent=None, editable=True)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+       
 if __name__ == '__main__':
   logger.info('running unit tests')
   import sys
-  app = QApplication(sys.argv)  
+  app = QApplication(sys.argv)
+  
+  editor_test =  unittest.makeSuite(EditorTest, 'test')
   runner=unittest.TextTestRunner(verbosity=2)
-  for s in testSuites():
-    runner.run(s)  
+  runner.run(editor_test)
+  sys.exit()
+  
