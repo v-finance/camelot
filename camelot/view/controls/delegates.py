@@ -61,7 +61,6 @@ except:
   
 
 import datetime
-import StringIO
 
 import camelot.types
 from camelot.view.art import Icon
@@ -174,7 +173,7 @@ class attribute specifies the editor class that should be used
     self.kwargs = kwargs
     
   def createEditor(self, parent, option, index):
-    editor = self.editor(parent, **self.kwargs)
+    editor = self.editor(parent, editable=self.editable, **self.kwargs)
     self.connect(editor, editors.editingFinished, self.commitAndCloseEditor)
     return editor
 
@@ -184,10 +183,10 @@ class attribute specifies the editor class that should be used
 
   def setEditorData(self, editor, index):
     value = index.model().data(index, Qt.EditRole).toPyObject()
-    editor.setValue(value)
+    editor.set_value(value)
 
   def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(editor.getValue()))
+    model.setData(index, create_constant_function(editor.get_value()))
 
 class FileDelegate(CustomDelegate):
   """Delegate for camelot.types.file fields
@@ -217,38 +216,15 @@ class FileDelegate(CustomDelegate):
     painter.restore()
 
     
-class StarDelegate(QItemDelegate):
+class StarDelegate(CustomDelegate):
   """Delegate for integer values from (1 to 5)(Rating Delegate)
 
 .. image:: ../_static/rating.png
   
 """
+ 
+  editor = editors.StarEditor
 
-  def __init__(self, maximum=5, editable=True, parent=None, **kwargs):
-    QtGui.QItemDelegate.__init__(self, parent)
-    self.maximum = maximum
-    self.editable = True
-
-  def createEditor(self, parent, option, index):
-    editor = editors.StarEditor(parent, self.maximum, self.editable)
-    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
-    return editor
-
-  def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.EditRole).toInt()[0]
-    editor.setValue(value)
-
-  def setModelData(self, editor, model, index):
-    #editor.interpretText()
-    model.setData(index, create_constant_function(editor.getValue()))
-
-
-  def commitAndCloseEditor(self):
-    editor = self.sender()
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
-    
-    
-    
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
@@ -256,21 +232,11 @@ class StarDelegate(QItemDelegate):
     editor = editors.StarEditor(parent=None, maximum=self.maximum, editable=self.editable)
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, rect.width()-5, rect.height())
-    
-    
     for i in range(5):
       if i+1<=stars:
         icon = Icon('tango/16x16/status/weather-clear.png').getQPixmap()
         QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
-
         rect = QtCore.QRect(rect.left()+20, rect.top(), rect.width(), rect.height())
-        
-#      else:
-#        icon = Icon('').getQPixmap()
-#        QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
-#        rect = QtCore.QRect(rect.left()+20, rect.top(), rect.width(), rect.height())
-#      
-
     painter.restore()
 
 camelot_maxint = 2147483647
@@ -331,41 +297,18 @@ class SliderDelegate(IntegerColumnDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(editor.value()))  
 
-class PlainTextColumnDelegate(QItemDelegate):
+class PlainTextColumnDelegate(CustomDelegate):
   """Custom delegate for simple string values"""
 
-  def __init__(self, parent=None, length=None, **kwargs):
-    """
-:param length: The number of characters displayed.  Defaults to the length allowed in
-the definition of the field.
-     
-"""
-    QtGui.QItemDelegate.__init__(self, parent)
-    self.length = length
+  editor = editors.TextLineEditor
 
   def paint(self, painter, option, index):
     if (option.state & QtGui.QStyle.State_Selected):
       QtGui.QItemDelegate.paint(self, painter, option, index)
-    elif not self.parent().columnsdesc[index.column()][1]['editable']:
+    elif not self.editable:
       _paint_not_editable(painter, option, index)
     else:
       QtGui.QItemDelegate.paint(self, painter, option, index)
-
-  def createEditor(self, parent, option, index):
-    editor = QtGui.QLineEdit(parent)
-    if self.length:
-      editor.setMaxLength(self.length)
-    if not self.parent().columnsdesc[index.column()][1]['editable']:
-      editor.setEnabled(False)
-    return editor
-
-  def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.EditRole).toString()
-    editor.setText(value)
-
-  def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(unicode(editor.text())))
-
 
 class TextEditColumnDelegate(QItemDelegate):
   """Edit plain text with a QTextEdit widget"""
@@ -424,14 +367,10 @@ class IntervalsColumnDelegate(QItemDelegate):
   def setModelData(self, editor, model, index):
     pass
 
-class ColorColumnDelegate(QItemDelegate):
+class ColorColumnDelegate(CustomDelegate):
   """
 .. image:: ../_static/color.png
 """
-
-  def __init__(self, parent=None, editable=True, **kwargs):
-    QtGui.QItemDelegate.__init__(self, parent)
-    self.editable = editable
     
   def paint(self, painter, option, index):
     painter.save()
@@ -448,31 +387,6 @@ class ColorColumnDelegate(QItemDelegate):
       pixmap.fill(qcolor)
       QtGui.QApplication.style().drawItemPixmap(painter, option.rect, Qt.AlignVCenter, pixmap)
     painter.restore()
-      
-  def createEditor(self, parent, option, index):
-    editor = editors.ColorEditor(parent, self.editable)
-    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
-    return editor
-
-  def commitAndCloseEditor(self):
-    editor = self.sender()
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
-    
-  def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.EditRole).toPyObject()
-    if value:
-      color = QtGui.QColor()
-      color.setRgb(*value)
-      editor.setColor(color)
-    else:
-      editor.setColor(value)
-
-  def setModelData(self, editor, model, index):
-    color = editor.getColor()
-    if color:
-      model.setData(index, create_constant_function((color.red(), color.green(), color.blue(), color.alpha())))
-    else:
-      model.setData(index, create_constant_function(None))
 
 class TimeColumnDelegate(QItemDelegate):
   def __init__(self, parent, format='hh:mm', default=None, nullable=True, **kwargs):
@@ -527,21 +441,10 @@ class DateTimeColumnDelegate(QItemDelegate):
   def sizeHint(self, option, index):
     return self._dummy_editor.sizeHint()
     
-
-class DateColumnDelegate(QItemDelegate):
+class DateColumnDelegate(CustomDelegate):
   """Custom delegate for date values"""
 
-  def __init__(self,
-               parent=None,
-               format='dd/MM/yyyy',
-               default=None,
-               nullable=True,
-               **kwargs):
-
-    QtGui.QItemDelegate.__init__(self, parent)
-    self.format = format
-    self.default = default
-    self.nullable = nullable
+  editor = editors.DateEditor
 
   def paint(self, painter, option, index):
     myoption = QtGui.QStyleOptionViewItem(option)
@@ -551,69 +454,16 @@ class DateColumnDelegate(QItemDelegate):
   def sizeHint(self, option, index):
     return editors.DateEditor().sizeHint()
 
-  def createEditor(self, parent, option, index):
-    editor = editors.DateEditor(self.nullable, self.format, parent)
-    self.connect(editor,
-                 QtCore.SIGNAL('editingFinished()'),
-                 self.commitAndCloseEditor)
-    return editor
-
-  def commitAndCloseEditor(self):
-    editor = self.sender()
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
-    # dont remember why this is commented
-    #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
+class CodeColumnDelegate(CustomDelegate):
   
-  def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.EditRole).toDate()
-    editor._index = index
-    if value:
-      editor.setDate(value)
-    else:
-      editor.setDate(editor.minimumDate())
-
-  def setModelData(self, editor, model, index):
-    logger.debug('date delegate set model data')
-    value = editor.date()
-    logger.debug('date delegate got value')
-    if value == editor.minimumDate():
-      model.setData(index, create_constant_function(None))
-    else:
-      # TODO: QDate.toPyDate() might be useful
-      d = datetime.date(value.year(), value.month(), value.day())
-      model.setData(index, create_constant_function(d))
-    logger.debug('date delegate data set')
-
-class CodeColumnDelegate(QItemDelegate):
+  editor = editors.CodeEditor
+  
   def __init__(self, parent=None, parts=[], **kwargs):
-    QtGui.QItemDelegate.__init__(self, parent)
-    self.parts = parts
-    self._dummy_editor = editors.CodeEditor(self.parts, None)
-
-  def createEditor(self, parent, option, index):
-    editor = editors.CodeEditor(self.parts, parent)
-    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
-    return editor
-
-  def commitAndCloseEditor(self):
-    editor = self.sender()
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
-    #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
-    
-  def setEditorData(self, editor, index):
-    value = index.data(Qt.EditRole).toPyObject()
-    if value:
-      for part_editor, part in zip(editor.part_editors, value):
-        part_editor.setText(unicode(part))
+    CustomDelegate.__init__(self, parent=parent, parts=parts, **kwargs)
+    self._dummy_editor = editors.CodeEditor(parent=None, parts=parts)
 
   def sizeHint(self, option, index):
     return self._dummy_editor.sizeHint() 
-  
-  def setModelData(self, editor, model, index):
-    value = []
-    for part in editor.part_editors:
-      value.append(unicode(part.text()))
-    model.setData(index, create_constant_function(value))
     
 class VirtualAddressColumnDelegate(QItemDelegate):
   """
@@ -696,35 +546,21 @@ to the precision specified in the definition of the Field.
 
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
 
-class ColoredFloatColumnDelegate(QItemDelegate):
+class ColoredFloatColumnDelegate(CustomDelegate):
   """Custom delegate for float values, representing them in green when they are
   positive and in red when they are negative."""
 
-  def __init__(self, minimum=-1e15, maximum=1e15, precision=2,
-               editable=True, parent=None, unicode_format=None, **kwargs):
-    QtGui.QItemDelegate.__init__(self, parent)
+  editor = editors.ColoredFloatEditor
+  
+  def __init__(self, parent=None, minimum=-1e15, maximum=1e15, precision=2,
+               editable=True, unicode_format=None, **kwargs):
+    CustomDelegate.__init__(parent=parent, editable=editable, minimum=minimum, maximum=maximum,
+                            precision=precision, unicode_format=unicode_format, **kwargs)
     self.minimum = minimum
     self.maximum = maximum
     self.precision = precision
     self.editable = editable
     self.unicode_format = unicode_format
-
-  def createEditor(self, parent, option, index):
-    editor = editors.ColoredFloatEditor(parent, self.precision, self.minimum, self.maximum, self.editable)
-    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
-    return editor
-
-  def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.EditRole).toDouble()[0]
-    editor.setValue(value)
-
-  def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(editor.value()))
-    
-    
-  def commitAndCloseEditor(self):
-    editor = self.sender()
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
     
   def paint(self, painter, option, index):
     painter.save()
@@ -829,8 +665,7 @@ class One2ManyColumnDelegate(QItemDelegate):
   def setEditorData(self, editor, index):
     logger.debug('set one2many editor data')
     model = index.data(Qt.EditRole).toPyObject()
-    if model:
-      editor.setModel(model)
+    editor.set_value(model)
 
   def setModelData(self, editor, model, index):
     pass
@@ -856,24 +691,10 @@ class ManyToManyColumnDelegate(One2ManyColumnDelegate):
     if editor.getModel():
       model.setData(index, editor.getModel().collection_getter)
 
-class BoolColumnDelegate(QItemDelegate):
+class BoolColumnDelegate(CustomDelegate):
   """Custom delegate for boolean values"""
 
-  def __init__(self, parent=None, editable=True, **kwargs):
-    QtGui.QItemDelegate.__init__(self, parent)
-    self.editable = editable
-
-  def createEditor(self, parent, option, index):
-    editor = QtGui.QCheckBox(parent)
-    editor.setEnabled(self.editable)
-    return editor
-
-  def setEditorData(self, editor, index):
-    checked = index.model().data(index, Qt.EditRole).toBool()
-    editor.setChecked(checked)
-
-  def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(editor.isChecked()))
+  editor = editors.BoolEditor
     
   def paint(self, painter, option, index):
     painter.save()
@@ -906,34 +727,18 @@ class ImageColumnDelegate(QItemDelegate):
     return editor
 
   def setEditorData(self, editor, index):
-    s = StringIO.StringIO()
-    data = index.data(Qt.EditRole).toPyObject()
-    if data:
-      editor.image = data.image
-      data = data.image.copy()
-      data.thumbnail((100, 100))
-      data.save(s, 'png')
-      s.seek(0)
-      pixmap = QtGui.QPixmap()
-      pixmap.loadFromData(s.read())
-      s.close()
-      editor.setPixmap(pixmap)
-      editor.setModified(False)
-    else:
-      #@todo: clear pixmap
-      editor.clearFirstImage()
+    value = index.data(Qt.EditRole).toPyObject()
+    editor.set_value(value)
 
   def commitAndCloseEditor(self):
     editor = self.sender()
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
-    #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
     
   def setModelData(self, editor, model, index):
     if editor.isModified():
       model.setData(index, 
                     create_constant_function(
                       camelot.types.StoredImage(editor.image)))
-      editor.setModified(True)
 
 class RichTextColumnDelegate(QItemDelegate):
   """
@@ -963,22 +768,19 @@ class RichTextColumnDelegate(QItemDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(unicode(editor.toHtml())))
 
-class ComboBoxColumnDelegate(QItemDelegate):
+class ComboBoxColumnDelegate(CustomDelegate):
   """
 .. image:: ../_static/enumeration.png 
 """
-  def __init__(self, choices, parent=None, **kwargs):
-    QtGui.QItemDelegate.__init__(self, parent)
+
+  editor = editors.ChoicesEditor
+  
+  def __init__(self, parent, choices, editable=True, **kwargs):
+    CustomDelegate.__init__(self, parent, editable=editable, **kwargs)
     self.choices = choices
-    
-  def qvariantToPython(self, variant):
-    if variant.canConvert(QtCore.QVariant.String):
-      return unicode(variant.toString())
-    else:
-      return variant.toPyObject()
-          
+              
   def createEditor(self, parent, option, index):
-    editor = QtGui.QComboBox(parent)
+    editor = self.editor(parent=parent, editable=self.editable)
     
     def create_choices_getter(model, row):
       
@@ -990,7 +792,7 @@ class ComboBoxColumnDelegate(QItemDelegate):
     def create_choices_setter(editor):
       
       def setChoices(choices):
-        allready_in_combobox = dict((self.qvariantToPython(editor.itemData(i)),i) for i in range(editor.count()))
+        allready_in_combobox = dict((editor.qvariantToPython(editor.itemData(i)),i) for i in range(editor.count()))
         for i,(value,name) in enumerate(choices):
           if value not in allready_in_combobox:
             editor.insertItem(i, unicode(name), QtCore.QVariant(value))
@@ -1003,24 +805,3 @@ class ComboBoxColumnDelegate(QItemDelegate):
         
     get_model_thread().post(create_choices_getter(index.model(), index.row()), create_choices_setter(editor))
     return editor
-  
-  def setEditorData(self, editor, index):
-    data = self.qvariantToPython(index.model().data(index, Qt.EditRole))
-    if data!=None:
-      for i in range(editor.count()):
-        if data == self.qvariantToPython(editor.itemData(i)):
-          editor.setCurrentIndex(i)
-          return
-      # it might happen, that when we set the editor data, the setChoices method has
-      # not happened yes, therefore, we temporary set ... in the text while setting the
-      # correct data to the editor
-      editor.insertItem(editor.count(), '...', QtCore.QVariant(data))
-      editor.setCurrentIndex(editor.count()-1)
-    
-  def setModelData(self, editor, model, index):
-    current_index = editor.currentIndex()
-    if current_index>=0:
-      editor_data = self.qvariantToPython(editor.itemData(editor.currentIndex()))
-    else:
-      editor_data = None
-    model.setData(index, create_constant_function(editor_data))

@@ -33,3 +33,8 @@ We take copies of the data in the elixir model, because accessing an attribute
 on the model, might cause an sql query which might take a long time, and might
 freeze the gui
 """
+
+class ValueLoading(object):
+  """Class indicating that a value was not yet loaded into the
+  proxy"""
+  pass

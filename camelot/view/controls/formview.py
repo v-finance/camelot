@@ -71,16 +71,16 @@ class FormView(QtGui.QWidget):
     self.admin.mt.post(getActions, self.setActions)
     self.update_title()
     
-  def set_title(self, title):
-    self.setWindowTitle(title)
-    
   def update_title(self):
     
     def get_title():
       obj = self.getEntity()
       return u'%s %s'%(self.title_prefix, self.admin.get_verbose_identifier(obj))
     
-    self.admin.mt.post(get_title, self.set_title)
+    def set_title(title):
+      self.setWindowTitle(title)
+    
+    self.admin.mt.post(get_title, set_title)
 
   def dataChanged(self, index_from, index_to):
     #@TODO: only revert if this form is in the changed range

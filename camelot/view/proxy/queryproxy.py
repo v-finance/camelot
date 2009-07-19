@@ -126,7 +126,7 @@ class QueryTableProxy(CollectionProxy):
       except KeyError:
         pass
       # momentary hack for list error that prevents forms to be closed
-      res = self._query_getter().offset(row) 
+      res = self._query_getter().offset(row)
       if isinstance(res, list):
         res = res[0]
       return res.limit(1).first()

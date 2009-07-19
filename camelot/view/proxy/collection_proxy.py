@@ -120,12 +120,14 @@ def RowDataAsUnicode(obj, columns):
   
   return row_data
 
+from camelot.view.proxy import ValueLoading
+
 class EmptyRowData(object):
   def __getitem__(self, column):
+#    return ValueLoading
     return None
   
 empty_row_data = EmptyRowData()
-
 
 class CollectionProxy(QtCore.QAbstractTableModel):
   """The CollectionProxy contains a limited copy of the data in the actual
@@ -151,8 +153,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     columns that will be cached in the proxy. This function will be called
     inside the model thread.
     """
-    logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
-    self.logger = logger
+    self.logger = logging.getLogger(logger.name + '.%s'%id(self))
+    self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
     QtCore.QAbstractTableModel.__init__(self)
     self.admin = admin
     self.form_icon = QtCore.QVariant(self.header_icon)
@@ -193,7 +195,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.mt.post(self.updateUnflushedRows)    
     # in that way the number of rows is requested as well
     self.mt.post(self.getRowCount,  self.setRowCount)
-    logger.debug('initialization finished')
+    self.logger.debug('initialization finished')
     self.item_delegate = None
     
   @model_function
@@ -209,7 +211,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     because the row is invalid
     """
     has_unflushed_rows = (len(self.unflushed_rows) > 0)
-    logger.debug('hasUnflushed rows : %s'%has_unflushed_rows)
+    self.logger.debug('hasUnflushed rows : %s'%has_unflushed_rows)
     return has_unflushed_rows
   
   @model_function
@@ -259,31 +261,31 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     
   def handleEntityUpdate(self, sender, entity):
     """Handles the entity signal, indicating that the model is out of date"""
-    logger.debug('%s %s received entity update signal' % \
+    self.logger.debug('%s %s received entity update signal' % \
                  (self.__class__.__name__, self.admin.get_verbose_name()))
     if sender != self:
       row = self.cache[Qt.DisplayRole].delete_by_entity(entity)
       row = self.cache[Qt.EditRole].delete_by_entity(entity)
       if row!=None:
-        logger.debug('updated row %i' % row)
+        self.logger.debug('updated row %i' % row)
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
         self.emit(QtCore.SIGNAL(sig),
                   self.index(row, 0),
                   self.index(row, self.column_count))
       else:
-        logger.debug('entity not in cache')
+        self.logger.debug('entity not in cache')
     else:
-      logger.debug('duplicate update')
+      self.logger.debug('duplicate update')
 
   def handleEntityDelete(self, sender, entity, primary_keys):
     """Handles the entity signal, indicating that the model is out of date"""
-    logger.debug('received entity delete signal')
+    self.logger.debug('received entity delete signal')
     if sender != self:
       self.refresh()
                  
   def handleEntityCreate(self, entity, primary_keys):
     """Handles the entity signal, indicating that the model is out of date"""
-    logger.debug('received entity create signal')
+    self.logger.debug('received entity create signal')
     if sender != self:
       self.refresh()
                  
@@ -295,7 +297,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.emit(QtCore.SIGNAL('layoutChanged()'))
     
   def getItemDelegate(self):
-    logger.debug('getItemDelegate')
+    self.logger.debug('getItemDelegate')
     if not self.item_delegate:
       raise Exception('item delegate not yet available')
     return self.item_delegate 
@@ -319,7 +321,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
 
     for i, c in enumerate(columns):
       field_name = c[0]
-      logger.debug('creating delegate for %s' % field_name)
+      self.logger.debug('creating delegate for %s' % field_name)
       if 'delegate' in c[1]:
         delegate = c[1]['delegate'](parent=None, **c[1])
         self.item_delegate.insertColumnDelegate(i, delegate)
@@ -394,8 +396,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           # to be buggy, therefor we convert it here to a tuple of date and time
           if role==Qt.EditRole and value:
             return QtCore.QVariant((value.year, value.month, value.day, value.hour, value.minute, value.second, value.microsecond))
+        self.logger.debug('get data for row %s;col %s : %s' % (index.row(), index.column(), unicode(value)))
       except KeyError:
-        logger.error('Programming error, could not find data of column %s in %s'%(index.column(), str(data)))
+        self.logger.error('Programming error, could not find data of column %s in %s'%(index.column(), str(data)))
         value = None
       return QtCore.QVariant(value)
     elif role == Qt.ForegroundRole:
@@ -422,14 +425,16 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           from sqlalchemy.exceptions import OperationalError
           from sqlalchemy import orm
           new_value = value()
-          #logger.debug('set data for col %s;row %s to %s' % (row, column, new_value))
-          logger.debug('set data for col %s;row %s' % (row, column))
-            
+          self.logger.debug('set data for row %s;col %s to %s' % (row, column, new_value))
+          self.logger.debug('set data for row %s;col %s' % (row, column))
+          
+          if new_value==ValueLoading:
+            return None
           o = self._get_object(row)
           if not o:
             # the object might have been deleted from the collection while the editor
             # was still open
-            logger.debug('this object is no longer in the collection')
+            self.logger.debug('this object is no longer in the collection')
             try:
               self.unflushed_rows.remove(row)
             except KeyError:
@@ -453,7 +458,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
               setattr(o, attribute, new_value)
               model_updated = True
             except AttributeError, e:
-              logger.error(u"Can't set attribute %s to %s"%(attribute, unicode(new_value)), exc_info=e)
+              self.logger.error(u"Can't set attribute %s to %s"%(attribute, unicode(new_value)), exc_info=e)
             except TypeError:
               # type error can be raised in case we try to set to a collection
               pass
@@ -466,7 +471,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
               try:
                 elixir.session.flush([o])
               except OperationalError, e:
-                logger.error('Programming Error, could not flush object', exc_info=e)
+                self.logger.error('Programming Error, could not flush object', exc_info=e)
               try:
                 self.unflushed_rows.remove(row)
               except KeyError:
@@ -486,12 +491,12 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                   try:
                     elixir.session.flush([history])
                   except OperationalError, e:
-                    logger.error('Programming Error, could not flush history', exc_info=e)                  
+                    self.logger.error('Programming Error, could not flush history', exc_info=e)                  
             #@todo: update should only be sent remotely when flush was done 
             self.rsh.sendEntityUpdate(self, o)
             return ((row,0), (row,len(self.getColumns())))
           elif flushed:
-            logger.debug('old value equals new value, no need to flush this object')
+            self.logger.debug('old value equals new value, no need to flush this object')
             try:
               self.unflushed_rows.remove(row)
             except KeyError:
@@ -577,7 +582,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     @param o: the object to be removed from this collection
     @param delete: delete the object after removing it from the collection 
     """
-    logger.debug('remove entity instance with id %s' % o.id)
+    self.logger.debug('remove entity instance with id %s' % o.id)
     self.remove(o)
     # remove the entity from the cache
     self.cache[Qt.DisplayRole].delete_by_entity(o)
@@ -594,7 +599,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
                                primary_key=pk, 
                                previous_attributes={},
                                authentication = getCurrentAuthentication())
-        logger.debug('delete the object')
+        self.logger.debug('delete the object')
         o.delete()
         Session.object_session(o).flush([o])
         Session.object_session(history).flush([history])
@@ -609,7 +614,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     """Remove the entity associated with this row from this collection
     @param delete: delete the entity as well
     """
-    logger.debug('remove row %s' % row)
+    self.logger.debug('remove row %s' % row)
     
     def create_delete_function(row):
       
@@ -667,6 +672,4 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     """Generator for all the data queried by this proxy"""
     for i,o in enumerate(self.collection_getter()):
       yield RowDataFromObject(o, self.getColumns())
-      
-  def __del__(self):
-    logger.warn('delete CollectionProxy')
+    

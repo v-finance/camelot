@@ -43,12 +43,111 @@ from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function
 from camelot.view.workspace import get_workspace
 from camelot.view.search import create_entity_search_query_decorator
+from camelot.view.proxy import ValueLoading
+from camelot.core.constants import *
 
 editingFinished = QtCore.SIGNAL('editingFinished()')
 
 def create_constant_function(constant):
   return lambda:constant
 
+class AbstractCustomEditor(object):
+  
+  def __init__(self):
+    self._value_loading = True
+    
+  def set_value(self, value):
+    if value==ValueLoading:
+      self._value_loading = True
+      return None
+    else:
+      self._value_loading = False
+      return value
+      
+  def get_value(self):
+    if self._value_loading:
+      return ValueLoading
+    return None
+      
+class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
+  """Base class for implementing custom editor widgets.  This class provides dual
+state functionality.  Each editor should have the posibility to have as its value
+`ValueLoading` specifying that no value has been set yet.
+"""
+  def __init__(self, parent):
+    QtGui.QWidget.__init__(self, parent)
+    AbstractCustomEditor.__init__(self)
+    
+class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
+ 
+  def __init__(self, parent, length, editable=True, **kwargs):
+    QtGui.QLineEdit.__init__(self, parent)
+    AbstractCustomEditor.__init__(self)
+    if length:
+      self.setMaxLength(length)
+    if not editable:
+      self.setEnabled(False)
+    
+  def set_value(self, value):
+    value = AbstractCustomEditor.set_value(self, value)
+    if value:
+      self.setText(value)
+    else:
+      self.setText('')
+      
+  def get_value(self):
+    return AbstractCustomEditor.get_value(self) or unicode(self.text())
+
+class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
+  
+  def __init__(self, parent, editable=True, **kwargs):
+    QtGui.QCheckBox.__init__(self, parent)
+    AbstractCustomEditor.__init__(self)
+    self.setEnabled(editable)
+    
+  def set_value(self, value):
+    value = AbstractCustomEditor.set_value(self, value)
+    if value:
+      self.setChecked(True)
+    else:
+      self.setChecked(False)
+      
+  def get_value(self):
+    return AbstractCustomEditor.get_value(self) or self.isChecked()
+  
+class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
+
+  def __init__(self, parent, editable=True, **kwargs):
+    QtGui.QComboBox.__init__(self, parent)
+    AbstractCustomEditor.__init__(self)  
+
+  def qvariantToPython(self, variant):
+    if variant.canConvert(QtCore.QVariant.String):
+      return unicode(variant.toString())
+    else:
+      return variant.toPyObject()
+    
+  def set_value(self, value):
+    value = AbstractCustomEditor.set_value(self, value)
+    if value!=None:
+      for i in range(self.count()):
+        if value == self.qvariantToPython(self.itemData(i)):
+          self.setCurrentIndex(i)
+          return
+      # it might happen, that when we set the editor data, the setChoices method has
+      # not happened yet, therefore, we temporary set ... in the text while setting the
+      # correct data to the editor
+      self.insertItem(self.count(), '...', QtCore.QVariant(value))
+      self.setCurrentIndex(self.count()-1)
+    
+  def get_value(self):
+    current_index = self.currentIndex()
+    if current_index>=0:
+      value = self.qvariantToPython(self.itemData(self.currentIndex()))
+    else:
+      value = None
+    return AbstractCustomEditor.get_value(self) or value
+    
 class DateTimeEditor(QtGui.QWidget):
   """Widget for editing date and time separated and with popups"""
   
@@ -132,11 +231,11 @@ class DateTimeEditor(QtGui.QWidget):
     parts = text.split(':')
     return QtCore.QTime(int(parts[0]), int(parts[1]))
     
-class DateEditor(QtGui.QWidget):
+class DateEditor(CustomEditor):
   """Widget for editing date values"""
 
-  def __init__(self, nullable=True, format='dd/MM/yyyy', parent=None):
-    QtGui.QWidget.__init__(self, parent)
+  def __init__(self, parent=None, nullable=True, format='dd/MM/yyyy', **kwargs):
+    CustomEditor.__init__(self, parent)
     self.format = format
     self.qdateedit = QtGui.QDateEdit()
     self.qdateedit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
@@ -201,18 +300,27 @@ class DateEditor(QtGui.QWidget):
     qdate_max = DateEditor._python_to_qt(self.maximum)
     self.qdateedit.setDateRange(qdate_min, qdate_max)
 
-  def date(self):
-    return self.qdateedit.date()
-
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value)
+    if value:
+      self.qdateedit.setDate(value)
+    else:
+      self.qdateedit.setDate(self.minimumDate())
+    
+  def get_value(self):
+    value = self.qdateedit.date()
+    if value == self.minimumDate():
+      value = None
+    else:
+      value = datetime.date(value.year(), value.month(), value.day())    
+    return CustomEditor.get_value(self) or value 
+    
   def minimumDate(self):
     return self.qdateedit.minimumDate()
 
   def setMinimumDate(self):
     self.qdateedit.setDate(self.minimumDate())
     self.emit(QtCore.SIGNAL('editingFinished()'))
-
-  def setDate(self, date):
-    self.qdateedit.setDate(date)
 
   def setSpecialDate(self, action):
     if action.text().compare('Today') == 0:
@@ -348,34 +456,22 @@ class VirtualAddressEditor(QtGui.QWidget):
     
 
   def editingFinished(self):
-    
-   
-      
-        
-
-        
-
-    
     self.value = []
     self.value.append(str(self.combo.currentText()))
     self.value.append(str(self.editor.text()))
     self.setData(self.value)
     self.label.setFocus()
-    self.emit(QtCore.SIGNAL('editingFinished()'))
-        
+    self.emit(QtCore.SIGNAL('editingFinished()'))    
 
-class CodeEditor(QtGui.QWidget):
+class CodeEditor(CustomEditor):
   
-  def __init__(self, parts=['99', 'AA'], parent=None):
-    QtGui.QWidget.__init__(self, parent)
+  def __init__(self, parent=None, parts=['99', 'AA'], **kwargs):
+    CustomEditor.__init__(self, parent)
     self.setFocusPolicy(Qt.StrongFocus)
     self.parts = parts
     self.part_editors = []
     layout = QtGui.QHBoxLayout()
-    #layout.setSpacing(0)
     layout.setMargin(0)
-    QtGui.QApplication.font()
-    #single_character_width = QtGui.QFontMetrics(self._header_font).size(Qt.TextSingleLine, ' ').width()
     for part in parts:
       editor = QtGui.QLineEdit()
       editor.setInputMask(part)
@@ -393,7 +489,21 @@ class CodeEditor(QtGui.QWidget):
 
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
-
+    
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value)
+    if value:
+      for part_editor, part in zip(self.part_editors, value):
+        part_editor.setText(unicode(part))
+    else:
+      for part_editor in self.part_editors:
+        part_editor.setText(u'')
+        
+  def get_value(self):
+    value = []
+    for part in self.part_editors:
+      value.append(unicode(part.text()))
+    return CustomEditor.get_value(self) or value
     
 class FloatEditor(QtGui.QWidget):
   """Widget for editing a float field, with a calculator"""
@@ -512,11 +622,12 @@ class IntegerEditor(QtGui.QWidget):
   def editingFinished(self, value):
     self.emit(QtCore.SIGNAL('editingFinished()'), value)    
     
-class ColoredFloatEditor(QtGui.QWidget):
+class ColoredFloatEditor(CustomEditor):
   """Widget for editing a float field, with a calculator"""
     
-  def __init__(self, parent, precision, minimum, maximum, editable=True):
-    super(ColoredFloatEditor, self).__init__(parent)
+  def __init__(self, parent, precision=2, minimum=camelot_minfloat, maximum=camelot_maxfloat, 
+               editable=True, **kwargs):
+    CustomEditor.__init__(self, parent)
     action = QtGui.QAction(self)
     action.setShortcut(Qt.Key_F3)
     self.setFocusPolicy(Qt.StrongFocus)
@@ -552,12 +663,11 @@ class ColoredFloatEditor(QtGui.QWidget):
     layout.addWidget(self.spinBox)
     if editable:
       layout.addWidget(calculatorButton)
-    
     self.setFocusProxy(self.spinBox)
-    
     self.setLayout(layout)
 
-  def setValue(self, value):
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value) or 0.0
     self.spinBox.setValue(value)
     if value >= 0:
       if value == 0:
@@ -567,10 +677,10 @@ class ColoredFloatEditor(QtGui.QWidget):
     else:
       self.arrow.setPixmap(Icon('tango/16x16/actions/go-down-red.png').getQPixmap())
     
-  def value(self):
+  def get_value(self):
     self.spinBox.interpretText()
     value = self.spinBox.value()
-    return value
+    return CustomEditor.get_value(self) or value
     
   def popupCalculator(self, value):
     from calculator import Calculator
@@ -585,13 +695,11 @@ class ColoredFloatEditor(QtGui.QWidget):
     
   def editingFinished(self, value):
     self.emit(QtCore.SIGNAL('editingFinished()'), value)
-          
 
-
-    
-class StarEditor(QtGui.QWidget):
-  def __init__(self, parent, maximum, editable):
-    QtGui.QWidget.__init__(self, parent)
+class StarEditor(CustomEditor):
+  
+  def __init__(self, parent, maximum=5, editable=True, **kwargs):
+    CustomEditor.__init__(self, parent)
     self.setFocusPolicy(Qt.StrongFocus)
     layout = QtGui.QHBoxLayout(self)
     layout.setMargin(0)
@@ -602,7 +710,6 @@ class StarEditor(QtGui.QWidget):
     #self.starCount = maximum
     self.starCount = 5
     self.buttons = []
-    
     for i in range(self.starCount):
       button = QtGui.QToolButton(self)
       button.setIcon(self.noStarIcon)
@@ -611,39 +718,26 @@ class StarEditor(QtGui.QWidget):
       else:
         button.setAutoRaise(True)
         button.setDisabled(True)
-        
       self.buttons.append(button)
-      
     
     def createStarClick(i):
       return lambda:self.starClick(i+1)
     
     for i in range(self.starCount):
       self.connect(self.buttons[i], QtCore.SIGNAL('clicked()'), createStarClick(i))
-      
-      
-    
     for i in range(self.starCount):
       layout.addWidget(self.buttons[i])
-      
-      
     layout.addStretch()
     self.setLayout(layout)
     
-    
-    
-  def getValue(self):
-    return self.stars
+  def get_value(self):
+    return CustomEditor.get_value(self) or self.stars
     
   def starClick(self, value):
-    
-    
     if self.stars == value:
       self.stars -= 1
     else:
       self.stars = int(value)
-
-   
     for i in range(self.starCount):
       if i+1 <= self.stars:
         self.buttons[i].setIcon(self.starIcon)
@@ -651,11 +745,9 @@ class StarEditor(QtGui.QWidget):
         self.buttons[i].setIcon(self.noStarIcon)
     self.emit(QtCore.SIGNAL('editingFinished()'), self.stars)
         
-
-      
-  def setValue(self, value):
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value) or 0
     self.stars = int(value)
-      
     for i in range(self.starCount):
       if i+1 <= self.stars:
         self.buttons[i].setIcon(self.starIcon)
@@ -976,7 +1068,7 @@ class Many2OneEditor(QtGui.QWidget, AbstractManyToOneEditor):
   def selectEntity(self, entity_instance_getter):
     self.setEntity(entity_instance_getter)
 
-class One2ManyEditor(QtGui.QWidget):
+class One2ManyEditor(CustomEditor):
   
   def __init__(self, admin=None, parent=None, create_inline=False, editable=True, **kw):
     """@param admin: the Admin interface for the objects on the one side of
@@ -988,7 +1080,7 @@ class One2ManyEditor(QtGui.QWidget):
     after creating the editor, setEntityInstance needs to be called to set the
     actual data to the editor
     """
-    QtGui.QWidget.__init__(self, parent)
+    CustomEditor.__init__(self, parent)
     layout = QtGui.QHBoxLayout()
     layout.setContentsMargins(0, 0, 0, 0)
     #
@@ -1051,26 +1143,28 @@ class One2ManyEditor(QtGui.QWidget):
   def getModel(self):
     return self.model
   
-  def setModel(self, model):
-    self.model = model
-    self.table.setModel(model)
-    
-    def create_fill_model_cache(model):
-      def fill_model_cache():
-        model._extend_cache(0, 10)
-        
-      return fill_model_cache
-    
-    def create_delegate_updater(model):
-      def update_delegates(*args):
-        self.table.setItemDelegate(model.getItemDelegate())
-        for i in range(self.model.columnCount()):
-          self.table.setColumnWidth(i, max(self.model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize().width(), self.table.columnWidth(i)))
-          
-      return update_delegates
+  def set_value(self, model):
+    model = CustomEditor.set_value(self, model)
+    if model:
+      self.model = model
+      self.table.setModel(model)
       
-    self.admin.mt.post(create_fill_model_cache(model),
-                       create_delegate_updater(model))
+      def create_fill_model_cache(model):
+        def fill_model_cache():
+          model._extend_cache(0, 10)
+          
+        return fill_model_cache
+      
+      def create_delegate_updater(model):
+        def update_delegates(*args):
+          self.table.setItemDelegate(model.getItemDelegate())
+          for i in range(self.model.columnCount()):
+            self.table.setColumnWidth(i, max(self.model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize().width(), self.table.columnWidth(i)))
+            
+        return update_delegates
+        
+      self.admin.mt.post(create_fill_model_cache(model),
+                         create_delegate_updater(model))
     
   def newRow(self):
     workspace = get_workspace()
@@ -1171,10 +1265,10 @@ filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm """\
 All files (*)"""
 
 
-class ImageEditor(QtGui.QWidget):
+class ImageEditor(CustomEditor):
     
   def __init__(self, parent=None):
-    QtGui.QWidget.__init__(self, parent)
+    CustomEditor.__init__(self, parent)
     
     self.clear_icon = Icon('tango/16x16/actions/edit-delete.png').getQIcon()
     self.new_icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
@@ -1249,6 +1343,24 @@ class ImageEditor(QtGui.QWidget):
         self.image = PILImage.open(fp)
         self.setPixmap(QtGui.QPixmap(self.dummy_image))
 
+  def set_value(self, value):
+    import StringIO
+    data = CustomEditor.set_value(self, value)
+    if data:
+      s = StringIO.StringIO()
+      self.image = data.image
+      data = data.image.copy()
+      data.thumbnail((100, 100))
+      data.save(s, 'png')
+      s.seek(0)
+      pixmap = QtGui.QPixmap()
+      pixmap.loadFromData(s.read())
+      s.close()
+      self.setPixmap(pixmap)
+      self.setModified(False)
+    else:
+      self.clearFirstImage()
+          
   def isModified(self):
     return self._modified
 
@@ -1320,12 +1432,12 @@ class ImageEditor(QtGui.QWidget):
     self.draw_border()
 
 
-class FileEditor(QtGui.QWidget):
+class FileEditor(CustomEditor):
   """Widget for editing File fields
   """
   
   def __init__(self, parent=None, storage=None, **kwargs):
-    QtGui.QWidget.__init__(self, parent)
+    CustomEditor.__init__(self, parent)
     self.storage = storage
     self.document_pixmap =  Icon('tango/16x16/mimetypes/x-office-document.png').getQPixmap()
     self.clear_icon = Icon('tango/16x16/actions/edit-delete.png').getQIcon()
@@ -1382,10 +1494,11 @@ class FileEditor(QtGui.QWidget):
     self.setLayout(self.layout)
     self.setAutoFillBackground(True)
     
-  def setValue(self, value):
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value)
     self.value = value
     if value:
-      self.filename.setText(value.verbose_name) 
+      self.filename.setText(value.verbose_name)
       self.open_button.setIcon(self.open_icon)
       self.open_button.setToolTip('Open file')
     else:
@@ -1393,15 +1506,15 @@ class FileEditor(QtGui.QWidget):
       self.open_button.setIcon(self.new_icon)
       self.open_button.setToolTip('Add file')
       
-  def getValue(self):
-    return self.value
+  def get_value(self):
+    return CustomEditor.get_value(self) or self.value
   
   def openButtonClicked(self):
     from camelot.view.storage import open_stored_file, create_stored_file
     if not self.value:
       
       def on_finish(stored_file):
-        self.setValue(stored_file)
+        self.set_value(stored_file)
         self.emit(editingFinished)
         
       create_stored_file(self, self.storage, on_finish)
@@ -1412,10 +1525,10 @@ class FileEditor(QtGui.QWidget):
     self.value = None
     self.emit(editingFinished)
     
-class ColorEditor(QtGui.QWidget):
+class ColorEditor(CustomEditor):
   
   def __init__(self, parent=None, editable=True, **kwargs):
-    QtGui.QWidget.__init__(self, parent)
+    CustomEditor.__init__(self, parent)
     layout = QtGui.QVBoxLayout(self)
     layout.setSpacing(0)
     layout.setMargin(0)
@@ -1429,6 +1542,23 @@ class ColorEditor(QtGui.QWidget):
     self.setLayout(layout)
     self._color = None
 
+  def get_value(self):
+    color = self.getColor()
+    if color:
+      value = (color.red(), color.green(), color.blue(), color.alpha())
+    else:
+      value = None
+    return CustomEditor.get_value(self) or value
+      
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value)
+    if value:
+      color = QtGui.QColor()
+      color.setRgb(*value)
+      self.setColor(color)
+    else:
+      self.setColor(value)    
+    
   def getColor(self):
     return self._color
   

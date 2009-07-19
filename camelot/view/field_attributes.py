@@ -33,25 +33,20 @@ import datetime
 import sys
 
 from PyQt4 import QtGui
-from controls.editors import *
-from controls.delegates import *
-
-camelot_maxint = 2147483647
-camelot_minint = -2147483648
-camelot_maxfloat = 1e15
-camelot_minfloat = -1e15
+from controls import delegates
+from camelot.core.constants import *
 
 _sqlalchemy_to_python_type_ = {
                                
   sqlalchemy.types.Boolean: lambda f: {'python_type': bool,
                                        'editable': True,
                                        'nullable':True,
-                                       'delegate': BoolColumnDelegate },
+                                       'delegate': delegates.BoolColumnDelegate },
 
   sqlalchemy.types.BOOLEAN: lambda f: {'python_type': bool,
                                        'editable': True,
                                        'nullable':True,
-                                       'delegate': BoolColumnDelegate},
+                                       'delegate': delegates.BoolColumnDelegate},
 
   sqlalchemy.types.Date: lambda f: {'python_type': datetime.date,
                                     'format': 'dd/MM/yyyy',
@@ -59,7 +54,7 @@ _sqlalchemy_to_python_type_ = {
                                     'min': None,
                                     'max': None,
                                     'nullable':True,
-                                    'delegate': DateColumnDelegate },
+                                    'delegate': delegates.DateColumnDelegate },
 
   sqlalchemy.types.Float: lambda f: {'python_type': float,
                                      'precision': f.precision,
@@ -67,14 +62,14 @@ _sqlalchemy_to_python_type_ = {
                                      'minimum': camelot_minfloat,
                                      'maximum': camelot_maxfloat,
                                      'nullable':True,
-                                     'delegate': FloatColumnDelegate},
+                                     'delegate': delegates.FloatColumnDelegate},
 
   sqlalchemy.types.Integer: lambda f: {'python_type': int,
                                        'editable': True,
                                        'minimum': camelot_minint,
                                        'maximum': camelot_maxint,
                                        'nullable':True,
-                                       'delegate':IntegerColumnDelegate,
+                                       'delegate':delegates.IntegerColumnDelegate,
                                        'widget': 'int'},
 
   sqlalchemy.types.INT: lambda f: {'python_type': int,
@@ -82,26 +77,26 @@ _sqlalchemy_to_python_type_ = {
                                    'minimum': camelot_minint,
                                    'maximum': camelot_maxint,
                                    'nullable':True,
-                                   'delegate':IntegerColumnDelegate,
+                                   'delegate':delegates.IntegerColumnDelegate,
                                    'widget': 'int'},
 
   sqlalchemy.types.String: lambda f: {'python_type': str,
                                       'length': f.length,
-                                      'delegate': PlainTextColumnDelegate,
+                                      'delegate': delegates.PlainTextColumnDelegate,
                                       'editable': True,
                                       'nullable':True,
                                       'widget': 'str'},
 
   sqlalchemy.types.TEXT: lambda f: {'python_type': str,
                                     'length': f.length,
-                                    'delegate': PlainTextColumnDelegate,
+                                    'delegate': delegates.PlainTextColumnDelegate,
                                     'editable': True,
                                     'nullable':True,
                                     'widget': 'str'},
 
   sqlalchemy.types.Unicode: lambda f: {'python_type': str,
                                        'length': f.length,
-                                       'delegate': PlainTextColumnDelegate,
+                                       'delegate': delegates.PlainTextColumnDelegate,
                                        'editable': True,
                                        'nullable':True,
                                        'widget': 'str'},
@@ -109,12 +104,12 @@ _sqlalchemy_to_python_type_ = {
   camelot.types.Image: lambda f: {'python_type': str,
                                   'editable': True,
                                   'nullable':True,
-                                  'delegate': ImageColumnDelegate,
+                                  'delegate': delegates.ImageColumnDelegate,
                                   'storage':f.storage,},
 
   camelot.types.Code: lambda f: {'python_type': str,
                                  'editable': True,
-                                 'delegate': CodeColumnDelegate,
+                                 'delegate': delegates.CodeColumnDelegate,
                                  'nullable':True,
                                  'parts': f.parts},
 
@@ -127,28 +122,28 @@ _sqlalchemy_to_python_type_ = {
   camelot.types.VirtualAddress: lambda f:{'python_type':str,
                                           'editable':True,
                                           'nullable':True,
-                                          'delegate':VirtualAddressColumnDelegate,
+                                          'delegate':delegates.VirtualAddressColumnDelegate,
                                           },
 
   camelot.types.RichText: lambda f:{'python_type':str,
                                     'editable':True,
                                     'nullable':True,
-                                    'delegate':RichTextColumnDelegate,
+                                    'delegate':delegates.RichTextColumnDelegate,
                                    },
                                    
-  camelot.types.Color: lambda f:{'delegate':ColorColumnDelegate,
+  camelot.types.Color: lambda f:{'delegate':delegates.ColorColumnDelegate,
                                  'python_type':str,
                                  'editable':True,
                                  'nullable':True,
                                  'widget':'color'},
                                  
-  camelot.types.Rating: lambda f:{'delegate':StarDelegate,
+  camelot.types.Rating: lambda f:{'delegate':delegates.StarDelegate,
                                   'editable':True,
                                   'nullable':True,
                                   'python_type':int,
                                   'widget':'star'},
                                   
-  camelot.types.Enumeration: lambda f:{'delegate':ComboBoxColumnDelegate,
+  camelot.types.Enumeration: lambda f:{'delegate':delegates.ComboBoxColumnDelegate,
                                        'python_type':str,
                                        'choices':lambda o:[(v,v.capitalize().replace('_',' ')) for v in f.choices],
                                        'editable':True,
@@ -160,7 +155,7 @@ _sqlalchemy_to_python_type_ = {
                                      'editable':True,
                                      'nullable':True,
                                      'widget':'time',
-                                     'delegate':TimeColumnDelegate,
+                                     'delegate':delegates.TimeColumnDelegate,
                                      'format':'hh:mm',
                                      'nullable':True},
                                      
@@ -171,10 +166,10 @@ _sqlalchemy_to_python_type_ = {
                                          'widget':'time',
                                          'format':'dd-MM-yyyy hh:mm',
                                          'nullable':True,
-                                         'delegate':DateTimeColumnDelegate},
+                                         'delegate':delegates.DateTimeColumnDelegate},
   camelot.types.File : lambda f: {'python_type':str,
                                   'editable':True,
-                                  'delegate':FileDelegate,
+                                  'delegate':delegates.FileDelegate,
                                   'storage':f.storage},
                                          
   
