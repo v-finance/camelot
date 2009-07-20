@@ -64,6 +64,7 @@ import datetime
 
 import camelot.types
 from camelot.view.art import Icon
+from camelot.view.proxy import ValueLoading
 
 def _paint_not_editable(painter, option, index):
   text = index.model().data(index, Qt.DisplayRole).toString()
@@ -225,6 +226,10 @@ class StarDelegate(CustomDelegate):
  
   editor = editors.StarEditor
 
+  def __init__(self, parent, editable=True, maximum=5, **kwargs):
+    CustomDelegate.__init__(self, parent=parent, editable=editable, maximum=maximum, **kwargs)
+    self.maximum = maximum
+    
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
@@ -477,11 +482,11 @@ class VirtualAddressColumnDelegate(QItemDelegate):
     painter.save()
     self.drawBackground(painter, option, index)
     virtual_address = index.model().data(index, Qt.EditRole).toPyObject()  
-    if virtual_address and virtual_address[1]:
-      painter.drawText(option.rect, Qt.AlignLeft, '%s : %s'%virtual_address)
+    if virtual_address and virtual_address!=ValueLoading and virtual_address[1]:
+      painter.drawText(option.rect, Qt.AlignLeft, '%s : %s'%(unicode(virtual_address[0]), unicode(virtual_address[1])))
       rect = option.rect
       rect = QtCore.QRect(rect.width()-19, rect.top()+6, 16, 16)
-      if virtual_adress[0] == 'email':
+      if virtual_address[0] == 'email':
         icon = Icon('tango/16x16/apps/internet-mail.png').getQPixmap()
         painter.drawPixmap(rect, icon)
       else:
@@ -788,20 +793,6 @@ class ComboBoxColumnDelegate(CustomDelegate):
         return list(self.choices(model._get_object(row)))
       
       return getChoices
-      
-    def create_choices_setter(editor):
-      
-      def setChoices(choices):
-        allready_in_combobox = dict((editor.qvariantToPython(editor.itemData(i)),i) for i in range(editor.count()))
-        for i,(value,name) in enumerate(choices):
-          if value not in allready_in_combobox:
-            editor.insertItem(i, unicode(name), QtCore.QVariant(value))
-          else:
-            # the editor data might allready have been set, but its name is still ...,
-            # therefor we set the name now correct
-            editor.setItemText(i, unicode(name))
-          
-      return setChoices
         
-    get_model_thread().post(create_choices_getter(index.model(), index.row()), create_choices_setter(editor))
+    get_model_thread().post(create_choices_getter(index.model(), index.row()), editor.set_choices)
     return editor

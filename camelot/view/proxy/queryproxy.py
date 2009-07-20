@@ -129,4 +129,8 @@ class QueryTableProxy(CollectionProxy):
       res = self._query_getter().offset(row)
       if isinstance(res, list):
         res = res[0]
-      return res.limit(1).first()
+      # @todo: remove this try catch and find out why it sometimes fails
+      try:
+        return res.limit(1).first()
+      except:
+        pass

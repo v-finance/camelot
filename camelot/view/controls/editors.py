@@ -117,7 +117,7 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
   
 class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
 
-  def __init__(self, parent, editable=True, **kwargs):
+  def __init__(self, parent=None, editable=True, **kwargs):
     QtGui.QComboBox.__init__(self, parent)
     AbstractCustomEditor.__init__(self)  
 
@@ -126,6 +126,16 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
       return unicode(variant.toString())
     else:
       return variant.toPyObject()
+    
+  def set_choices(self, choices):
+    allready_in_combobox = dict((self.qvariantToPython(self.itemData(i)),i) for i in range(self.count()))
+    for i,(value,name) in enumerate(choices):
+      if value not in allready_in_combobox:
+        self.insertItem(i, unicode(name), QtCore.QVariant(value))
+      else:
+        # the editor data might allready have been set, but its name is still ...,
+        # therefor we set the name now correct
+        self.setItemText(i, unicode(name))
     
   def set_value(self, value):
     value = AbstractCustomEditor.set_value(self, value)
@@ -147,6 +157,19 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
     else:
       value = None
     return AbstractCustomEditor.get_value(self) or value
+    
+class OneToManyChoicesEditor(ChoicesEditor):
+  
+  def __init__(self, parent, editable=True, target=None, **kwargs):
+    assert target!=None
+    ChoicesEditor.__init__(self, parent, editable, **kwargs)
+    
+    from camelot.view.model_thread import get_model_thread
+    
+    def get_choices():
+      return [(o, unicode(o)) for o in target.query.all()]
+      
+    get_model_thread().post(get_choices , self.set_choices)
     
 class DateTimeEditor(QtGui.QWidget):
   """Widget for editing date and time separated and with popups"""
@@ -243,6 +266,7 @@ class DateEditor(CustomEditor):
     
     special_date_menu = QtGui.QMenu(self)
     special_date_menu.addAction('Today')
+    special_date_menu.addAction('Last date')
     special_date = QtGui.QToolButton(self)
     special_date.setIcon(Icon('tango/16x16/apps/office-calendar.png').getQIcon())
     special_date.setAutoRaise(True)
@@ -325,6 +349,8 @@ class DateEditor(CustomEditor):
   def setSpecialDate(self, action):
     if action.text().compare('Today') == 0:
       self.qdateedit.setDate(QtCore.QDate.currentDate())
+    elif action.text().compare('Last date') == 0:
+      self.qdateedit.setDate(QtCore.QDate(2400, 12, 31))
     # minimum date is our special value text
     elif action.text().compare('Clear') == 0:
       self.qdateedit.setDate(self.qdateedit.minimumDate())
@@ -465,7 +491,7 @@ class VirtualAddressEditor(QtGui.QWidget):
 
 class CodeEditor(CustomEditor):
   
-  def __init__(self, parent=None, parts=['99', 'AA'], **kwargs):
+  def __init__(self, parent=None, parts=['99', 'AA'], editable=True, **kwargs):
     CustomEditor.__init__(self, parent)
     self.setFocusPolicy(Qt.StrongFocus)
     self.parts = parts
@@ -475,6 +501,8 @@ class CodeEditor(CustomEditor):
     for part in parts:
       editor = QtGui.QLineEdit()
       editor.setInputMask(part)
+      if not editable:
+        editor.setEnabled(False)
       space_width = editor.fontMetrics().size(Qt.TextSingleLine, 'A').width()
       editor.setMaximumWidth(space_width*5)
       editor.installEventFilter(self)
@@ -1209,8 +1237,7 @@ class One2ManyEditor(CustomEditor):
                             self.admin.getFields,
                             max_number_of_rows=1,
                             edits=None)
-    title = self.admin.get_verbose_name()
-    form = self.admin.createFormView(title, model, index, get_workspace())
+    form = self.admin.createFormView(u'', model, index, get_workspace())
     get_workspace().addSubWindow(form)
     form.show()
 
