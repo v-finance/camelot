@@ -1022,7 +1022,7 @@ class Many2OneEditor(QtGui.QWidget, AbstractManyToOneEditor):
       def get_admin_and_title():
         object = self.entity_instance_getter()
         admin = self.admin.getSubclassEntityAdmin(object.__class__)
-        return admin, '%s : %s'%(admin.get_verbose_name(),unicode(object))
+        return admin, ''
       
       def show_form_view(admin_and_title):
         admin, title = admin_and_title
