@@ -361,6 +361,8 @@ class ColorColumnDelegate(CustomDelegate):
 .. image:: ../_static/color.png
 """
     
+  editor = editors.ColorEditor
+  
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
@@ -476,7 +478,7 @@ class ColoredFloatColumnDelegate(CustomDelegate):
   
   def __init__(self, parent=None, minimum=-1e15, maximum=1e15, precision=2,
                editable=True, unicode_format=None, **kwargs):
-    CustomDelegate.__init__(parent=parent, editable=editable, minimum=minimum, maximum=maximum,
+    CustomDelegate.__init__(self, parent=parent, editable=editable, minimum=minimum, maximum=maximum,
                             precision=precision, unicode_format=unicode_format, **kwargs)
     self.minimum = minimum
     self.maximum = maximum
