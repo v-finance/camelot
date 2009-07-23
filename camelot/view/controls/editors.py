@@ -25,7 +25,16 @@
 #
 #  ============================================================================
 
-"""Editors for various type of values"""
+"""Camelot includes editors for various types of fields.  Each editor at least supports
+these features :
+
+- a set_value method to set a python type as the editor's value
+- a get_value method to retrieve a python type from the editor
+- the ValueLoading state : an editor has as its value ValueLoading upon construction and
+  the editor's value can be set to ValueLoading if the value that should be displayed is
+  not yet available in the GUI thread, but is still on it's way from the model to the GUI. 
+"""
+
 import os
 import os.path
 import tempfile
@@ -52,6 +61,9 @@ def create_constant_function(constant):
   return lambda:constant
 
 class AbstractCustomEditor(object):
+  """Helper class to be used to build custom editors.  This class provides functionallity
+  to store and retrieve ValueLoading as an editor's value.
+  """
   
   def __init__(self):
     self._value_loading = True
@@ -115,6 +127,25 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
   def get_value(self):
     return AbstractCustomEditor.get_value(self) or self.isChecked()
   
+class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):
+  
+  def __init__(self, parent, editable=True, format=camelot_time_format, **kwargs):
+    QtGui.QTimeEdit.__init__(self, parent)
+    AbstractCustomEditor.__init__(self)
+    self.setDisplayFormat(format)
+    
+  def set_value(self, value):
+    value = AbstractCustomEditor.set_value(self, value)
+    if value:
+      self.setTime(value)
+    else:
+      self.setTime(self.minimumTime())
+      
+  def get_value(self):
+    value = self.time()
+    value = datetime.time(hour=value.hour(), minute=value.minute(), second=value.second())
+    return AbstractCustomEditor.get_value(self) or value
+  
 class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
 
   def __init__(self, parent=None, editable=True, **kwargs):
@@ -171,13 +202,13 @@ class OneToManyChoicesEditor(ChoicesEditor):
       
     get_model_thread().post(get_choices , self.set_choices)
     
-class DateTimeEditor(QtGui.QWidget):
+class DateTimeEditor(CustomEditor):
   """Widget for editing date and time separated and with popups"""
   
-  def __init__(self, parent, format, nullable=True, **kwargs):
+  def __init__(self, parent, editable, format=camelot_datetime_format, nullable=True, **kwargs):
+    CustomEditor.__init__(self, parent)
     import itertools
     self.nullable = nullable
-    QtGui.QWidget.__init__(self, parent)
     dateformat, timeformat = format.split(' ')
     layout = QtGui.QHBoxLayout()
     self.dateedit = QtGui.QDateEdit(self)
@@ -236,7 +267,18 @@ class DateTimeEditor(QtGui.QWidget):
     layout.setSpacing(0)
     layout.addStretch(1)
         
-  def setDateTime(self, value):
+  def get_value(self):
+    time_value = self.time()
+    date_value = self.date()
+    if time_value!=None and date_value!=None:
+      value = datetime.datetime(hour=time_value.hour(), minute=time_value.minute(), second=time_value.second(),
+                                year=date_value.year(), month=date_value.month(), day=date_value.day())
+    else:
+      value = None
+    return CustomEditor.get_value(self) or value
+    
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value)
     if value:
       self.dateedit.setDate(QtCore.QDate(*value[:3]))
       self.timeedit.lineEdit().setText('%02i:%02i'%(value[3], value[4]))
@@ -356,9 +398,10 @@ class DateEditor(CustomEditor):
       self.qdateedit.setDate(self.qdateedit.minimumDate())
     self.emit(QtCore.SIGNAL('editingFinished()'))
 
-class VirtualAddressEditor(QtGui.QWidget):
+class VirtualAddressEditor(CustomEditor):
+  
   def __init__(self, parent=None):
-    QtGui.QWidget.__init__(self, parent)
+    CustomEditor.__init__(self, parent)
     self.layout = QtGui.QHBoxLayout()
     self.layout.setMargin(0)
     self.combo = QtGui.QComboBox()
@@ -366,10 +409,6 @@ class VirtualAddressEditor(QtGui.QWidget):
     self.layout.addWidget(self.combo)
     self.editor = QtGui.QLineEdit()
     self.layout.addWidget(self.editor)
-    
-    
-    
-    
 #    if virtual_adress[0] == 'email':
 #      icon = Icon('tango/16x16/apps/internet-mail.png').getQPixmap()
 #    else:
@@ -390,7 +429,8 @@ class VirtualAddressEditor(QtGui.QWidget):
     self.checkValue(self.editor.text())
     self.editingFinished()
     
-  def setData(self, value):
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value)
     if value:
       self.editor.setText(value[1])
       self.combo.setCurrentIndex(camelot.types.VirtualAddress.virtual_address_types.index(value[0]))
@@ -421,18 +461,14 @@ class VirtualAddressEditor(QtGui.QWidget):
         
       self.layout.addWidget(self.label)
   
-  
-  
-  def getData(self):
-    return self.value
-  
+  def get_value(self):
+    value = (unicode(self.combo.currentText()), unicode(self.editor.text()))
+    return CustomEditor.get_value(self) or value
   
   def checkValue(self, text):
     if self.combo.currentText() == 'email':
-        email = text
-
+        email = unicode(text)
         mailCheck = re.compile('^\S+@\S+\.\S+$')
-      
         if not mailCheck.match(email):
           palette = self.editor.palette()
           palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 0, 0))
@@ -442,7 +478,7 @@ class VirtualAddressEditor(QtGui.QWidget):
           palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 255, 255))
           self.editor.setPalette(palette)
         
-    if self.combo.currentText() == 'phone' or self.combo.currentText() == 'pager' or self.combo.currentText() == 'fax' or self.combo.currentText() == 'mobile':
+    elif self.combo.currentText() == 'phone' or self.combo.currentText() == 'pager' or self.combo.currentText() == 'fax' or self.combo.currentText() == 'mobile':
         number = text
       
         numberCheck = re.compile('^[0-9 ]*$')
@@ -455,37 +491,24 @@ class VirtualAddressEditor(QtGui.QWidget):
           palette = self.editor.palette()
           palette.setColor(QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(255, 255, 255))
           self.editor.setPalette(palette)
-    
-  
-  
-  
-  def editorValueChanged(self, text):
 
-    
+  def editorValueChanged(self, text):
     self.checkValue(text)
-  
-  
-  
+
   def mailClick(self, adress):
     url = QtCore.QUrl()
     url.setUrl('mailto:'+str(adress)+'?subject=Camelot')
     mailSent = QtGui.QDesktopServices.openUrl(url)
-    
     if not mailSent:
       print 'Failed to send Mail.'
     else:
       print 'mail client opened.'
       
-
-    
-    
-    
-
   def editingFinished(self):
     self.value = []
     self.value.append(str(self.combo.currentText()))
     self.value.append(str(self.editor.text()))
-    self.setData(self.value)
+    self.set_value(self.value)
     self.label.setFocus()
     self.emit(QtCore.SIGNAL('editingFinished()'))    
 
@@ -533,11 +556,11 @@ class CodeEditor(CustomEditor):
       value.append(unicode(part.text()))
     return CustomEditor.get_value(self) or value
     
-class FloatEditor(QtGui.QWidget):
+class FloatEditor(CustomEditor):
   """Widget for editing a float field, with a calculator"""
     
-  def __init__(self, parent, precision, minimum, maximum, editable=True):
-    QtGui.QWidget.__init__(self, parent)
+  def __init__(self, parent, precision=2, minimum=camelot_minfloat, maximum=camelot_maxfloat, editable=True):
+    CustomEditor.__init__(self, parent)
     action = QtGui.QAction(self)
     action.setShortcut(Qt.Key_F3)
     self.setFocusPolicy(Qt.StrongFocus)
@@ -570,13 +593,17 @@ class FloatEditor(QtGui.QWidget):
     
     self.setLayout(layout)
 
-  def setValue(self, value):
-    self.spinBox.setValue(value)
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value)
+    if value:
+      self.spinBox.setValue(value)
+    else:
+      self.spinBox.setValue(0.0)
     
-  def value(self):
+  def get_value(self):
     self.spinBox.interpretText()
     value = self.spinBox.value()
-    return value
+    return CustomEditor.get_value(self) or value
     
   def popupCalculator(self, value):
     from calculator import Calculator
@@ -592,11 +619,11 @@ class FloatEditor(QtGui.QWidget):
   def editingFinished(self, value):
     self.emit(QtCore.SIGNAL('editingFinished()'), value)
           
-class IntegerEditor(QtGui.QWidget):
+class IntegerEditor(CustomEditor):
   """Widget for editing an integer field, with a calculator"""
 
-  def __init__(self, parent, minimum, maximum, editable):
-    super(IntegerEditor, self).__init__(parent)
+  def __init__(self, parent=None, minimum=camelot_minint, maximum=camelot_maxint, editable=True, **kwargs):
+    CustomEditor.__init__(self, parent)
     action = QtGui.QAction(self)
     action.setShortcut(Qt.Key_F3)
     self.setFocusPolicy(Qt.StrongFocus)
@@ -627,14 +654,18 @@ class IntegerEditor(QtGui.QWidget):
     self.setFocusProxy(self.spinBox)
     self.setLayout(layout)
 
-  def setValue(self, value):
-    value = str(value).replace(',', '.')
-    self.spinBox.setValue(eval(value))
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value)
+    if value!=None:
+      value = str(value).replace(',', '.')
+      self.spinBox.setValue(eval(value))
+    else:
+      self.spinBox.setValue(0)
     
-  def value(self):
+  def get_value(self):
     self.spinBox.interpretText()
     value = self.spinBox.value()
-    return value
+    return CustomEditor.get_value(self) or value
     
   def popupCalculator(self, value):
     from calculator import Calculator
@@ -1294,7 +1325,7 @@ All files (*)"""
 
 class ImageEditor(CustomEditor):
     
-  def __init__(self, parent=None):
+  def __init__(self, parent=None, editable=True, **kwargs):
     CustomEditor.__init__(self, parent)
     
     self.clear_icon = Icon('tango/16x16/actions/edit-delete.png').getQIcon()
@@ -1607,10 +1638,10 @@ class ColorEditor(CustomEditor):
       self.setColor(color)
       self.emit(QtCore.SIGNAL('editingFinished()'))
     
-class RichTextEditor(QtGui.QWidget):
+class RichTextEditor(CustomEditor):
+  
   def __init__(self, parent=None, editable=True, **kwargs):
-    QtGui.QWidget.__init__(self, parent)
-    
+    CustomEditor.__init__(self, parent)
     self.layout = QtGui.QVBoxLayout(self)
     self.layout.setSpacing(0)
     self.layout.setMargin(0)
@@ -1880,21 +1911,19 @@ class RichTextEditor(QtGui.QWidget):
     if self.editable:
       self.update_alignment()
       self.update_color()
-  
-  #
-  # Textedit functions
-  #
-  def clear(self):
-    self.textedit.clear()
 
-  def setHtml(self, html):
-    if self.toHtml()!=html:
-      self.update_alignment()
-      self.textedit.setHtml(html)
-      self.update_color()
-   
-  def toHtml(self):
+  def get_value(self):
     from xml.dom import minidom
     tree = minidom.parseString(self.textedit.toHtml())
-    return u''.join([node.toxml() for node in tree.getElementsByTagName('html')[0].getElementsByTagName('body')[0].childNodes])
-  
+    value = u''.join([node.toxml() for node in tree.getElementsByTagName('html')[0].getElementsByTagName('body')[0].childNodes])
+    return CustomEditor.get_value(self) or value
+    
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value)
+    if value!=None:
+      if self.textedit.toHtml()!=value:
+        self.update_alignment()
+        self.textedit.setHtml(value)
+        self.update_color()
+    else:
+      self.textedit.clear()

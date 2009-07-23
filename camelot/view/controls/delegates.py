@@ -247,14 +247,10 @@ class StarDelegate(CustomDelegate):
 camelot_maxint = 2147483647
 camelot_minint = -2147483648
 
-class IntegerColumnDelegate(QItemDelegate):
+class IntegerColumnDelegate(CustomDelegate):
   """Custom delegate for integer values"""
 
-  def __init__(self, parent, minimum=camelot_minint, maximum=camelot_maxint, editable=True, **kwargs):
-    QtGui.QItemDelegate.__init__(self, parent)
-    self.minimum = minimum
-    self.maximum = maximum
-    self.editable = editable
+  editor = editors.IntegerEditor
 
   def paint(self, painter, option, index):
     self.drawBackground(painter, option, index)
@@ -273,34 +269,22 @@ class IntegerColumnDelegate(QItemDelegate):
                      Qt.AlignVCenter | Qt.AlignRight,
                      value)
     painter.restore()
-      
-  def createEditor(self, parent, option, index):
-    editor = editors.IntegerEditor(parent, self.minimum, self.maximum, self.editable)
-    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
-    return editor
 
   def setEditorData(self, editor, index):
     value = index.model().data(index, Qt.EditRole).toInt()[0]
-    editor.setValue(value)
+    editor.set_value(value)
 
-  def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(editor.value()))
-
-  def commitAndCloseEditor(self):
-    editor = self.sender()
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
-
-class SliderDelegate(IntegerColumnDelegate):
-  """A delegate for horizontal sliders"""
-  
-  def createEditor(self, parent, option, index):
-    editor = QtGui.QSlider(Qt.Horizontal, parent)
-    editor.setRange(self.minimum, self.maximum)
-    editor.setTickPosition(QtGui.QSlider.TicksBelow)
-    return editor
-  
-  def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(editor.value()))  
+#class SliderDelegate(IntegerColumnDelegate):
+#  """A delegate for horizontal sliders"""
+#  
+#  def createEditor(self, parent, option, index):
+#    editor = QtGui.QSlider(Qt.Horizontal, parent)
+#    editor.setRange(self.minimum, self.maximum)
+#    editor.setTickPosition(QtGui.QSlider.TicksBelow)
+#    return editor
+#  
+#  def setModelData(self, editor, model, index):
+#    model.setData(index, create_constant_function(editor.value()))  
 
 class PlainTextColumnDelegate(CustomDelegate):
   """Custom delegate for simple string values"""
@@ -393,55 +377,22 @@ class ColorColumnDelegate(CustomDelegate):
       QtGui.QApplication.style().drawItemPixmap(painter, option.rect, Qt.AlignVCenter, pixmap)
     painter.restore()
 
-class TimeColumnDelegate(QItemDelegate):
-  def __init__(self, parent, format='hh:mm', default=None, nullable=True, **kwargs):
-    QtGui.QItemDelegate.__init__(self, parent)
-    self.nullable = nullable
-    self.format = format
-    self.default = default
-    self.kwargs = kwargs
-    
-  def createEditor(self, parent, option, index):
-    editor = QtGui.QTimeEdit(parent)
-    editor.setDisplayFormat(self.format)
-    return editor
+class TimeColumnDelegate(CustomDelegate):
   
-  def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.EditRole).toTime()
-    editor.index = index
-    if value:
-      editor.setTime(value)
-    else:
-      editor.setTime(editor.minimumTime())
+  editor = editors.TimeEditor
   
   def setModelData(self, editor, model, index):
     value = editor.time()
     t = datetime.time(hour=value.hour(), minute=value.minute(), second=value.second())
     model.setData(index, create_constant_function(t))
-  
 
-class DateTimeColumnDelegate(QItemDelegate):
-  def __init__(self, parent, format, **kwargs):
-    from editors import DateTimeEditor
-    QtGui.QItemDelegate.__init__(self, parent)
-    self.format = format
-    self.kwargs = kwargs
-    self._dummy_editor = DateTimeEditor(parent, self.format, **self.kwargs)
-    
-  def createEditor(self, parent, option, index):
-    from editors import DateTimeEditor
-    editor = DateTimeEditor(parent, self.format, **self.kwargs)
-    return editor
+class DateTimeColumnDelegate(CustomDelegate):
   
-  def setEditorData(self, editor, index):
-    editor.setDateTime(index.model().data(index, Qt.EditRole).toPyObject())
-      
-  def setModelData(self, editor, model, index):
-    time_value = editor.time()
-    date_value = editor.date()
-    t = datetime.datetime(hour=time_value.hour(), minute=time_value.minute(), second=time_value.second(),
-                          year=date_value.year(), month=date_value.month(), day=date_value.day())
-    model.setData(index, create_constant_function(t))
+  editor = editors.DateTimeEditor
+  
+  def __init__(self, parent, editable, **kwargs):
+    CustomDelegate.__init__(self, parent, editable=editable, **kwargs)
+    self._dummy_editor = self.editor(parent, editable=editable, **kwargs)
     
   def sizeHint(self, option, index):
     return self._dummy_editor.sizeHint()
@@ -470,13 +421,10 @@ class CodeColumnDelegate(CustomDelegate):
   def sizeHint(self, option, index):
     return self._dummy_editor.sizeHint() 
     
-class VirtualAddressColumnDelegate(QItemDelegate):
+class VirtualAddressColumnDelegate(CustomDelegate):
   """
 .. image:: ../_static/virtualaddress_editor.png
 """
-
-  def __init__(self, parent=None, **kwargs):
-    QtGui.QItemDelegate.__init__(self, parent)
 
   def paint(self, painter, option, index):
     painter.save()
@@ -493,29 +441,9 @@ class VirtualAddressColumnDelegate(QItemDelegate):
       #if virtual_adress[0] == 'telephone':
         icon = Icon('tango/16x16/apps/preferences-desktop-sound.png').getQPixmap()
         painter.drawPixmap(rect, icon)
-        
-        
     painter.restore()
-    
-  def commitAndCloseEditor(self):
-    editor = self.sender()
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
-    #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
-  
-  def createEditor(self, parent, option, index):
-    editor = editors.VirtualAddressEditor(parent)
-    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
-    return editor
 
-  def setEditorData(self, editor, index):
-    value = index.data(Qt.EditRole).toPyObject()
-    editor.setData(value)
-      
-  def setModelData(self, editor, model, index):
-    value = (unicode(editor.combo.currentText()), unicode(editor.editor.text()))
-    model.setData(index, create_constant_function(value))
-
-class FloatColumnDelegate(QItemDelegate):
+class FloatColumnDelegate(CustomDelegate):
   """Custom delegate for float values
 
  
@@ -527,29 +455,18 @@ class FloatColumnDelegate(QItemDelegate):
 :param precision:  The number of digits after the decimal point displayed.  This defaults
 to the precision specified in the definition of the Field.     
 """
-    QtGui.QItemDelegate.__init__(self, parent)
+    CustomDelegate.__init__(self, parent=parent, editable=editable)
     self.minimum = minimum
     self.maximum = maximum
     self.precision = precision
     self.editable = editable
 
-  def createEditor(self, parent, option, index):
-    editor = editors.FloatEditor(parent, self.precision, self.minimum, self.maximum, self.editable)
-    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
-    return editor
-
   def setEditorData(self, editor, index):
     value = index.model().data(index, Qt.EditRole).toDouble()[0]
-    editor.setValue(value)
+    editor.set_value(value)
 
   def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(editor.value()))
-    
-    
-  def commitAndCloseEditor(self):
-    editor = self.sender()
-
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    model.setData(index, create_constant_function(editor.get_value()))
 
 class ColoredFloatColumnDelegate(CustomDelegate):
   """Custom delegate for float values, representing them in green when they are
@@ -715,29 +632,12 @@ class BoolColumnDelegate(CustomDelegate):
     QtGui.QApplication.style().drawControl(QtGui.QStyle.CE_CheckBox, check_option, painter)
     painter.restore()
 
-class ImageColumnDelegate(QItemDelegate):
+class ImageColumnDelegate(CustomDelegate):
   """
 .. image:: ../_static/image.png
 """
     
-  def __init__(self, parent = None, **kwargs):
-    QItemDelegate.__init__(self, parent)
-    self.kwargs = kwargs
-    
-  def createEditor(self, parent, option, index):
-    editor = editors.ImageEditor(parent)
-    self.connect(editor, 
-                 QtCore.SIGNAL('editingFinished()'),
-                 self.commitAndCloseEditor)
-    return editor
-
-  def setEditorData(self, editor, index):
-    value = index.data(Qt.EditRole).toPyObject()
-    editor.set_value(value)
-
-  def commitAndCloseEditor(self):
-    editor = self.sender()
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+  editor = editors.ImageEditor
     
   def setModelData(self, editor, model, index):
     if editor.isModified():
@@ -745,33 +645,12 @@ class ImageColumnDelegate(QItemDelegate):
                     create_constant_function(
                       camelot.types.StoredImage(editor.image)))
 
-class RichTextColumnDelegate(QItemDelegate):
+class RichTextColumnDelegate(CustomDelegate):
   """
 .. image:: ../_static/richtext.png
 """
 
-  def __init__(self, parent = None, **kwargs):
-    QtGui.QItemDelegate.__init__(self, parent)
-    self.kwargs = kwargs
-    
-  def createEditor(self, parent, option, index):
-    editor = editors.RichTextEditor(parent, **self.kwargs)
-    self.connect(editor, QtCore.SIGNAL('editingFinished()'), self.commitAndCloseEditor)
-    return editor
-
-  def commitAndCloseEditor(self):
-    editor = self.sender()
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
-    
-  def setEditorData(self, editor, index):
-    html = index.model().data(index, Qt.EditRole).toString()
-    if html:
-      editor.setHtml(html)
-    else:
-      editor.clear()
-
-  def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(unicode(editor.toHtml())))
+  editor = editors.RichTextEditor
 
 class ComboBoxColumnDelegate(CustomDelegate):
   """

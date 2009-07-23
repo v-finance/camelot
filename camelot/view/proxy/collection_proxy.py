@@ -124,7 +124,7 @@ from camelot.view.proxy import ValueLoading
 
 class EmptyRowData(object):
   def __getitem__(self, column):
-#    return ValueLoading
+    return ValueLoading
     return None
   
 empty_row_data = EmptyRowData()
