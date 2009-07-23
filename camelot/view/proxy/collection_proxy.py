@@ -425,7 +425,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           from sqlalchemy.exceptions import OperationalError
           from sqlalchemy import orm
           new_value = value()
-          self.logger.debug('set data for row %s;col %s to %s' % (row, column, new_value))
           self.logger.debug('set data for row %s;col %s' % (row, column))
           
           if new_value==ValueLoading:

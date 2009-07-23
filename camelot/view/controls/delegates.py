@@ -527,16 +527,16 @@ class ColoredFloatColumnDelegate(CustomDelegate):
                      value_str)
     painter.restore()
 
-class Many2OneColumnDelegate(QItemDelegate):
+class Many2OneColumnDelegate(CustomDelegate):
   """Custom delegate for many 2 one relations
   
 .. image:: ../_static/manytoone.png
 """
 
-  def __init__(self, parent=None, admin=None, embedded=False, **kwargs):
+  def __init__(self, parent=None, admin=None, embedded=False, editable=True, **kwargs):
     logger.debug('create many2onecolumn delegate')
     assert admin != None
-    QtGui.QItemDelegate.__init__(self, parent)
+    CustomDelegate.__init__(self, parent, editable, **kwargs)
     self.admin = admin
     self._embedded = embedded
     self._kwargs = kwargs
@@ -559,15 +559,15 @@ class Many2OneColumnDelegate(QItemDelegate):
     return editor
 
   def setEditorData(self, editor, index):
-    editor.setEntity(create_constant_function(index.data(Qt.EditRole).toPyObject()), propagate=False)
+    value = index.data(Qt.EditRole).toPyObject()
+    if value!=ValueLoading:
+      editor.set_value(create_constant_function(value))
+    else:
+      editor.set_value(ValueLoading)
 
   def setModelData(self, editor, model, index):
     if editor.entity_instance_getter:
       model.setData(index, editor.entity_instance_getter)
-
-  def commitAndCloseEditor(self):
-    editor = self.sender()
-    self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
     
   def sizeHint(self, option, index):
     return self._dummy_editor.sizeHint()    

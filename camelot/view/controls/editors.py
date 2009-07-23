@@ -299,7 +299,7 @@ class DateTimeEditor(CustomEditor):
 class DateEditor(CustomEditor):
   """Widget for editing date values"""
 
-  def __init__(self, parent=None, nullable=True, format='dd/MM/yyyy', **kwargs):
+  def __init__(self, parent=None, editable=True, nullable=True, format='dd/MM/yyyy', **kwargs):
     CustomEditor.__init__(self, parent)
     self.format = format
     self.qdateedit = QtGui.QDateEdit()
@@ -316,6 +316,10 @@ class DateEditor(CustomEditor):
     special_date.setMenu(special_date_menu)
     special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
     
+    if not editable:
+      special_date.setEnabled(False)
+      self.qdateedit.setEnabled(False)
+      
     if nullable:
       special_date_menu.addAction('Clear')
       self.qdateedit.setSpecialValueText('0/0/0')
@@ -813,14 +817,14 @@ class StarEditor(CustomEditor):
       else:
         self.buttons[i].setIcon(self.noStarIcon)
 
-class EmbeddedMany2OneEditor(QtGui.QWidget):
+class EmbeddedMany2OneEditor(CustomEditor):
   """Widget for editing a many 2 one relation a a form embedded in another
   form.
   """
   
   def __init__(self, admin=None, parent=None, **kwargs):
     assert admin != None
-    QtGui.QWidget.__init__(self, parent)
+    CustomEditor.__init__(self, parent)
     self.admin = admin    
     self.layout = QtGui.QHBoxLayout()
     self.entity_instance_getter = None
@@ -828,6 +832,11 @@ class EmbeddedMany2OneEditor(QtGui.QWidget):
     self.setLayout(self.layout)
     self.setEntity(lambda:None, propagate = False)
 
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value)
+    if value:
+      self.setEntity(value, propagate=False)
+      
   def setEntity(self, entity_instance_getter, propagate=True):
     
     def create_instance_getter(entity_instance):
@@ -835,6 +844,8 @@ class EmbeddedMany2OneEditor(QtGui.QWidget):
     
     def set_entity_instance():
       entity = entity_instance_getter()
+      if entity==ValueLoading:
+        raise Exception('Wooha')
       if entity:
         self.entity_instance_getter = create_instance_getter(entity)
       else:
@@ -894,13 +905,13 @@ class AbstractManyToOneEditor(object):
   def selectEntity(self, entity_instance_getter):
     raise Exception('Not implemented')
 
-class Many2OneEditor(QtGui.QWidget, AbstractManyToOneEditor):
+class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
   """Widget for editing many 2 one relations
   """
   
   class CompletionsModel(QtCore.QAbstractListModel):
     def __init__(self, parent=None):
-      super(Many2OneEditor.CompletionsModel, self).__init__(parent)
+      QtCore.QAbstractListModel.__init__(self, parent)
       self._completions = []
     
     def setCompletions(self, completions):
@@ -923,7 +934,7 @@ class Many2OneEditor(QtGui.QWidget, AbstractManyToOneEditor):
   def __init__(self, entity_admin=None, parent=None, **kwargs):
     """@param entity_admin : The Admin interface for the object on the one side of
        the relation"""    
-    super(Many2OneEditor, self).__init__(parent)
+    CustomEditor.__init__(self, parent)
     self.admin = entity_admin
     self.entity_instance_getter = None
     self._entity_representation = ''
@@ -1081,6 +1092,11 @@ class Many2OneEditor(QtGui.QWidget, AbstractManyToOneEditor):
   def editingFinished(self):
     self.search_input.setText(self._entity_representation)
     
+  def set_value(self, value):
+    value = CustomEditor.set_value(self, value)
+    if value:
+      self.setEntity(value, propagate=False)
+      
   def setEntity(self, entity_instance_getter, propagate=True):
     
     def create_instance_getter(entity_instance):
