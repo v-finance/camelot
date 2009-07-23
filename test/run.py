@@ -202,9 +202,11 @@ def testSuites():
 class EditorTest(unittest.TestCase):
   """
 Test the basic functionality of the editors :
+
 - get_value
 - set_value
 - support for ValueLoading
+
   """
   
   from camelot.view.controls import editors
@@ -266,6 +268,8 @@ Test the basic functionality of the editors :
   def testColoredFloatEditor(self):
     editor = self.editors.ColoredFloatEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 0.0 )
+    self.assertEqual( editor.get_value(), 0.0 )    
     editor.set_value( 3.14 )
     self.assertEqual( editor.get_value(), 3.14 )
     editor.set_value( self.ValueLoading )
@@ -287,7 +291,67 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    
+  def testDateTimeEditor(self):
+    import datetime
+    editor = self.editors.DateTimeEditor(parent=None, editable=True)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( (2009, 7, 19, 21, 5, 10, 0) )
+    self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )        
        
+  def testFloatEditor(self):
+    editor = self.editors.FloatEditor(parent=None, editable=True)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 0.0 )
+    self.assertEqual( editor.get_value(), 0.0 )    
+    editor.set_value( 3.14 )
+    self.assertEqual( editor.get_value(), 3.14 )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    
+  def testImageEditor(self):
+    editor = self.editors.ImageEditor(parent=None, editable=True)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+ 
+  def testIntegerEditor(self):
+    editor = self.editors.IntegerEditor(parent=None, editable=True)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 0 )
+    self.assertEqual( editor.get_value(), 0 )    
+    editor.set_value( 3 )
+    self.assertEqual( editor.get_value(), 3 )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+ 
+  def testRichTextEditor(self):
+    editor = self.editors.RichTextEditor(parent=None)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( u'<h1>Rich Text Editor</h1>' )
+    self.assertTrue( u'Rich Text Editor' in editor.get_value() )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    
+  def testTimeEditor(self):
+    import datetime
+    editor = self.editors.TimeEditor(parent=None, editable=True)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( datetime.time(21, 5, 0) )
+    self.assertEqual( editor.get_value(), datetime.time(21, 5, 0) )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    
+  def testVirtualAddressEditor(self):
+    editor = self.editors.VirtualAddressEditor(parent=None)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( ('email','project-camelot@conceptive.be') )
+    self.assertEqual( editor.get_value(),  ('email','project-camelot@conceptive.be') )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )    
+                                
 if __name__ == '__main__':
   logger.info('running unit tests')
   import sys
