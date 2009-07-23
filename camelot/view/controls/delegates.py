@@ -658,6 +658,17 @@ class RichTextColumnDelegate(CustomDelegate):
 
   editor = editors.RichTextEditor
 
+
+class OneToManyChoicesDelegate(CustomDelegate):
+  """
+Display a OneToMany field as a ComboBox, filling the list of choices with the
+objects of the target class. 
+
+.. image:: ../_static/enumeration.png   
+"""
+  
+  editor = editors.OneToManyChoicesEditor
+
 class ComboBoxColumnDelegate(CustomDelegate):
   """
 .. image:: ../_static/enumeration.png 
