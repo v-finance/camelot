@@ -150,7 +150,8 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
 
   def __init__(self, parent=None, editable=True, **kwargs):
     QtGui.QComboBox.__init__(self, parent)
-    AbstractCustomEditor.__init__(self)  
+    AbstractCustomEditor.__init__(self)
+    self.setEnabled(editable)
 
   def qvariantToPython(self, variant):
     if variant.canConvert(QtCore.QVariant.String):
@@ -194,6 +195,7 @@ class OneToManyChoicesEditor(ChoicesEditor):
   def __init__(self, parent, editable=True, target=None, **kwargs):
     assert target!=None
     ChoicesEditor.__init__(self, parent, editable, **kwargs)
+    self.setEnabled(editable)
     
     from camelot.view.model_thread import get_model_thread
     
