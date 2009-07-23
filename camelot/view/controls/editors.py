@@ -103,7 +103,7 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
   def set_value(self, value):
     value = AbstractCustomEditor.set_value(self, value)
     if value:
-      self.setText(value)
+      self.setText(unicode(value))
     else:
       self.setText('')
       

@@ -328,7 +328,7 @@ class IntervalsColumnDelegate(QItemDelegate):
     painter.save()
     self.drawBackground(painter, option, index)
     intervals = index.model().data(index, Qt.EditRole).toPyObject()
-    if intervals:
+    if intervals and intervals!=ValueLoading:
       rect = option.rect
       xscale = float(rect.width()-4)/(intervals.max-intervals.min)
       xoffset = intervals.min * xscale + rect.x()
@@ -428,6 +428,8 @@ class VirtualAddressColumnDelegate(CustomDelegate):
 .. image:: ../_static/virtualaddress_editor.png
 """
 
+  editor = editors.VirtualAddressEditor
+
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
@@ -451,6 +453,8 @@ class FloatColumnDelegate(CustomDelegate):
  
 """
 
+  editor = editors.FloatEditor
+  
   def __init__(self, minimum=-1e15, maximum=1e15, precision=2,
                editable=True, parent=None, **kwargs):
     """
