@@ -24,7 +24,7 @@ class TableViewAction(Action):
     return self.verbose_name or self.admin.get_verbose_name_plural()
     
   def run(self, parent):
-    tableview = self.admin.createTableView(parent)
+    tableview = self.admin.create_table_view(parent)
     return tableview
     
 def structure_to_action(structure):

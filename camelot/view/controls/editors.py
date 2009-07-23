@@ -866,7 +866,7 @@ class EmbeddedMany2OneEditor(CustomEditor):
       model = CollectionProxy(self.admin,
                               create_collection_getter(self.entity_instance_getter),
                               self.admin.getFields)
-      self.form = self.admin.createFormView('', model, 0, self)
+      self.form = self.admin.create_form_view('', model, 0, self)
       self.layout.addWidget(self.form)
       if propagate:
         self.emit(QtCore.SIGNAL('editingFinished()'))
@@ -892,7 +892,7 @@ class AbstractManyToOneEditor(object):
         layout.setMargin(0)
         layout.setSpacing(0)
         self.setWindowTitle('Select %s'%admin.get_verbose_name())
-        self.select = admin.createSelectView(query, parent=parent, search_text=search_text)
+        self.select = admin.create_select_view(query, parent=parent, search_text=search_text)
         layout.addWidget(self.select)
         self.setLayout(layout)
         self.connect(self.select, self.select.entity_selected_signal, self.selectEntity)
@@ -1053,7 +1053,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         admin = select_subclass.selected_subclass
       if selected:
         workspace = get_workspace()
-        form = admin.createNewView(workspace)
+        form = admin.create_new_view(workspace)
         workspace.addSubWindow(form)
         self.connect(form, form.entity_created_signal, self.selectEntity)
         form.show()
@@ -1082,7 +1082,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
                           admin.getFields)
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
         self.connect(model, QtCore.SIGNAL(sig), self.dataChanged)        
-        form = admin.createFormView(title, model, 0, workspace)
+        form = admin.create_form_view(title, model, 0, workspace)
         workspace.addSubWindow(form)
         form.show()
         
@@ -1163,9 +1163,9 @@ class One2ManyEditor(CustomEditor):
     #
     # Setup table
     #
-    from tableview import QueryTable
+    from tableview import TableWidget
     # parent set by layout manager
-    self.table = QueryTable()
+    self.table = TableWidget()
     layout.setSizeConstraint(QtGui.QLayout.SetNoConstraint)
     layout.addWidget(self.table) 
     self.setSizePolicy(QtGui.QSizePolicy.Expanding,
@@ -1267,7 +1267,7 @@ class One2ManyEditor(CustomEditor):
     else:
       prependentity = lambda o: self.model.insertEntityInstance(0, o)
       removeentity = lambda o: self.model.removeEntityInstance(o)
-      form = self.admin.createNewView(workspace,
+      form = self.admin.create_new_view(workspace,
                                       oncreate=prependentity,
                                       onexpunge=removeentity)
       workspace.addSubWindow(form)
@@ -1286,7 +1286,7 @@ class One2ManyEditor(CustomEditor):
                             self.admin.getFields,
                             max_number_of_rows=1,
                             edits=None)
-    form = self.admin.createFormView(u'', model, index, get_workspace())
+    form = self.admin.create_form_view(u'', model, index, get_workspace())
     get_workspace().addSubWindow(form)
     form.show()
 

@@ -183,6 +183,9 @@ Other field attributes process by the admin interface are:
     
   def getModelThread(self):
     return self.mt
+  
+  def getEntityAdmin(self, entity):
+    return self.app_admin.getEntityAdmin(entity)
 
   @model_function
   def getFormActions(self, entity):
@@ -309,7 +312,7 @@ Other field attributes process by the admin interface are:
     return Form([f for f, a in self.getFields()])
   
   @gui_function
-  def createFormView(self, title, model, index, parent):
+  def create_form_view(self, title, model, index, parent):
     """Creates a Qt widget containing a form view, for a specific index in a
     model; uses the Admin class
     """

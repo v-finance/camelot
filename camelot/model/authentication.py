@@ -90,8 +90,8 @@ class EmployerEmployee(PartyRelationship):
     return sql.select([Person.last_name], Person.c.party_id==self.established_to_party_id)
   
   @ColumnProperty
-  def passport_number(self):
-    return sql.select([Person.passport_number], Person.c.party_id==self.established_to_party_id)
+  def social_security_number(self):
+    return sql.select([Person.social_security_number], Person.c.party_id==self.established_to_party_id)
   
   def __unicode__(self):
     return u'%s employed by %s'%(unicode(self.established_to), unicode(self.established_from))

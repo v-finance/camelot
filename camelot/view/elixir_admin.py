@@ -257,7 +257,7 @@ class EntityAdmin(ObjectAdmin):
         pass
               
   @gui_function
-  def createNewView(admin, parent=None, oncreate=None, onexpunge=None):
+  def create_new_view(admin, parent=None, oncreate=None, onexpunge=None):
     """Create a QT widget containing a form to create a new instance of the
     entity related to this admin class
 
@@ -291,7 +291,7 @@ class EntityAdmin(ObjectAdmin):
         QtGui.QWidget.__init__(self, parent)
         self.widget_layout = QtGui.QVBoxLayout()
         self.widget_layout.setMargin(0)
-        self.form_view = admin.createFormView('New', model, 0, parent)
+        self.form_view = admin.create_form_view('New', model, 0, parent)
         self.widget_layout.insertWidget(0, self.form_view)
         self.setLayout(self.widget_layout)
         self.validate_before_close = True
@@ -381,7 +381,7 @@ class EntityAdmin(ObjectAdmin):
     return form
 
   @gui_function
-  def createSelectView(admin, query, search_text=None, parent=None):
+  def create_select_view(admin, query, search_text=None, parent=None):
     """Returns a QT widget that can be used to select an element from a query,
 
     @param query: sqlalchemy query object
@@ -442,7 +442,7 @@ class EntityAdmin(ObjectAdmin):
     return widget
 
   @gui_function
-  def createTableView(self, query_getter=None, parent=None):
+  def create_table_view(self, query_getter=None, parent=None):
     """Returns a QT widget containing a table view, for a certain query, using
     this Admin class; the table widget contains a model QueryTableModel
 
@@ -466,7 +466,7 @@ class EntityAdmin(ObjectAdmin):
                                 tableview.admin.getFields,
                                 max_number_of_rows=1)
 
-        formview = tableview.admin.createFormView('', model, index, parent)
+        formview = tableview.admin.create_form_view('', model, index, parent)
         get_workspace().addSubWindow(formview)
         formview.show()
 

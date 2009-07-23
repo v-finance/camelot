@@ -40,24 +40,27 @@ class EntityValidator(ObjectValidator):
     empty list if object is valid
     """
     from camelot.view.controls import delegates
+    from sqlalchemy import orm
     messages = []
-    for column in self.model.getColumns():
-      value = getattr(entity_instance, column[0])
-      if column[1]['nullable']!=True:
-        logger.debug('column %s is required'%(column[0]))
-        if 'delegate' not in column[1]:
-          raise Exception('no delegate specified for %s'%(column[0]))
+    fields_and_attributes = dict(self.admin.getColumns())
+    fields_and_attributes.update(dict(self.admin.getFields()))
+    for field, attributes in fields_and_attributes.items():
+      value = getattr(entity_instance, field)
+      if attributes['nullable']!=True:
+        logger.debug('column %s is required'%(field))
+        if 'delegate' not in attributes:
+          raise Exception('no delegate specified for %s'%(field))
         is_null = False
         if value==None:
           is_null = True
-        elif (column[1]['delegate'] == delegates.CodeColumnDelegate) and \
+        elif (attributes['delegate'] == delegates.CodeColumnDelegate) and \
              (sum(len(c) for c in value) == 0):
           is_null = True
-        elif (column[1]['delegate'] == delegates.PlainTextColumnDelegate) and (len(value) == 0):
+        elif (attributes['delegate'] == delegates.PlainTextColumnDelegate) and (len(value) == 0):
           is_null = True
-        elif (column[1]['delegate'] == delegates.Many2OneColumnDelegate) and (not value.id):
+        elif (attributes['delegate'] == delegates.Many2OneColumnDelegate) and (not value.id):
           is_null = True
         if is_null:
-          messages.append(u'%s is a required field' % (column[1]['name']))
+          messages.append(u'%s is a required field' % (attributes['name']))
     logger.debug(u'messages : %s'%(u','.join(messages)))
     return messages

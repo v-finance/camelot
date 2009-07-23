@@ -37,12 +37,12 @@ from PyQt4.QtCore import SIGNAL
 from PyQt4.QtCore import Qt
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
+from camelot.view.model_thread import model_function
 from camelot.view.art import Icon
 import settings
 
-
-class QueryTable(QtGui.QTableView):
-  """the actual displayed table"""
+class TableWidget(QtGui.QTableView):
+  """A widget displaying a table, to be used within a TableView"""
 
   def __init__(self, parent=None):
     QtGui.QTableView.__init__(self, parent)
@@ -53,8 +53,8 @@ class QueryTable(QtGui.QTableView):
     self.horizontalHeader().setClickable(False)
     #self.setSortingEnabled(True)
 
-class Header(QtGui.QWidget):
-  """Header for a tableview, containing the title, the search widget,
+class HeaderWidget(QtGui.QWidget):
+  """HeaderWidget for a tableview, containing the title, the search widget,
   and the number of rows in the table"""
   
   _title_font = QtGui.QApplication.font()
@@ -81,8 +81,26 @@ class Header(QtGui.QWidget):
     self.number_of_rows.setText(u'(%i rows)'%rows)
     
 class TableView(QtGui.QWidget):
-  """emits the row_selected signal when a row has been selected"""
+  """A generic tableview widget that puts together some other widgets.  The behaviour of this class and
+the resulting interface can be tuned by specifying specific class attributes which define the underlying
+widgets used :
 
+.. attribute:: table_widget
+
+The widget class used to display a table within the table view ::
+
+table_widget = TableWidget
+
+.. attribute:: title_format
+
+A string used to format the title of the view ::
+
+title_format = '%(verbose_name_plural)s'
+
+- emits the row_selected signal when a row has been selected"""
+
+  table_widget = TableWidget
+  
   #
   # The proxy class to use 
   #
@@ -90,13 +108,14 @@ class TableView(QtGui.QWidget):
   #
   # Format to use as the window title
   #
-  title_format = '%s'
+  title_format = '%(verbose_name_plural)s'
   
   def __init__(self, admin, search_text=None, parent=None):
     QtGui.QWidget.__init__(self, parent)
-    self.setWindowTitle(self.title_format%(admin.get_verbose_name_plural()))
+    self.admin = admin
+    admin.mt.post(self.get_title, self.setWindowTitle)
     widget_layout = QtGui.QVBoxLayout()
-    self.header = Header(admin, self)
+    self.header = HeaderWidget(admin, self)
     widget_layout.addWidget(self.header)
     widget_layout.setSpacing(0)
     widget_layout.setMargin(0)
@@ -108,7 +127,6 @@ class TableView(QtGui.QWidget):
     self.table_layout.setMargin(0)
     self.table = None
     self.filters = None
-    self.admin = admin
     self.table_model = None
     table_widget.setLayout(self.table_layout)
     self.setSubclass(admin)
@@ -125,6 +143,10 @@ class TableView(QtGui.QWidget):
     admin.mt.post(lambda: self.admin.getSubclasses(),
                   lambda subclasses: self.setSubclassTree(subclasses))      
 
+  @model_function
+  def get_title(self):
+    return self.title_format%{'verbose_name_plural':self.admin.get_verbose_name_plural()}
+    
   def setSubclassTree(self, subclasses):
     if len(subclasses) > 1:
       from inheritance import SubclassTree
@@ -143,7 +165,7 @@ class TableView(QtGui.QWidget):
     if self.table:
       self.table.deleteLater()
       self.table_model.deleteLater()
-    self.table = QueryTable(self)
+    self.table = self.table_widget(self)
       
     self.table_model = self.query_table_proxy(admin,
                                               lambda:admin.entity.query,
@@ -244,7 +266,7 @@ class TableView(QtGui.QWidget):
     """Create a new row in the tableview"""
     from camelot.view.workspace import get_workspace
     workspace = get_workspace()
-    form = self.admin.createNewView(workspace,
+    form = self.admin.create_new_view(workspace,
                                     oncreate=lambda o:self.table_model.insertEntityInstance(0,o), 
                                     onexpunge=lambda o:self.table_model.removeEntityInstance(o))
     workspace.addSubWindow(form)

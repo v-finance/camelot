@@ -73,7 +73,6 @@ class Filter(object):
     from sqlalchemy.sql import select
     from sqlalchemy import orm
     from elixir import session
-    #session.bind = self.entity.table.metadata.bind
     filter_names = []
     joins = []
     table = admin.entity.table
@@ -92,7 +91,6 @@ class Filter(object):
         
 
     col = getattr(admin.entity, field_name)
-
     query = select([col], distinct=True, order_by=col.asc()).select_from(table)
       
     def create_decorator(col, value, joins):
