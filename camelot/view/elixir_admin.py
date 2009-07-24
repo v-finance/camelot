@@ -413,13 +413,13 @@ class EntityAdmin(ObjectAdmin):
       def sectionClicked(self, index):
         # table model will be set by the model thread, we can't decently select
         # if it has not been set yet
-        if self.table_model:
+        if self._table_model:
           
           def create_constant_getter(cst):
             return lambda:cst
           
           def create_instance_getter():
-            entity = self.table_model._get_object(index)
+            entity = self._table_model._get_object(index)
             return create_constant_getter(entity)
             
           def create_emit_and_close(selectview):
@@ -462,7 +462,7 @@ class EntityAdmin(ObjectAdmin):
       def openForm(index):
         from workspace import get_workspace
         model = QueryTableProxy(tableview.admin,
-                                tableview.table_model._query_getter,
+                                tableview._table_model._query_getter,
                                 tableview.admin.getFields,
                                 max_number_of_rows=1)
 

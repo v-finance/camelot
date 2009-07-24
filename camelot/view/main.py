@@ -45,6 +45,14 @@ def main(application_admin,
   # regulary call processEvents to keep the splash alive
   app.processEvents()
   
+  #
+  # call set locale if not done yet
+  #
+  import locale
+  language, encoding = locale.getlocale(locale.LC_ALL)
+  if not language:
+    locale.setlocale(locale.LC_ALL, '')
+  
   import sqlalchemy, elixir
   logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)
   logger.debug('elixir version %s'%elixir.__version__)

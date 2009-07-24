@@ -31,14 +31,15 @@ __metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
 
-import locale
 import logging
 logger = logging.getLogger('camelot.model.i18n')
 
-locale.setlocale(locale.LC_ALL, '')
-language, encoding = locale.getlocale(locale.LC_ALL)
-
-tr = lambda source:Translation.translate_or_register(source, language) 
+def tr(source):
+  import locale
+  language, encoding = locale.getlocale(locale.LC_ALL)
+  if not language:
+    raise Exception("Locale is not set, call locale.setlocale(locale.LC_ALL, '') first")
+  return Translation.translate_or_register(source, language) 
 
 class Translation(Entity):
   using_options(tablename='translation')

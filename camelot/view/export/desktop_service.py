@@ -9,4 +9,4 @@ def open_html_in_desktop_service(html):
   html_file.write(html.encode('utf-8'))
   html_file.close()
   from PyQt4 import QtGui, QtCore
-  QtGui.QDesktopServices.openUrl(QtCore.QUrl('file://%s' % html_fn)) 
+  QtGui.QDesktopServices.openUrl(QtCore.QUrl('file://%s' % html_fn))

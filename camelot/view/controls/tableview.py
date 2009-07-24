@@ -27,7 +27,6 @@
 
 """Tableview"""
 
-import os
 import logging
 logger = logging.getLogger('camelot.view.controls.tableview')
 
@@ -38,8 +37,8 @@ from PyQt4.QtCore import Qt
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.model_thread import model_function
-from camelot.view.art import Icon
-import settings
+
+from search import SimpleSearchControl
 
 class TableWidget(QtGui.QTableView):
   """A widget displaying a table, to be used within a TableView"""
@@ -57,15 +56,17 @@ class HeaderWidget(QtGui.QWidget):
   """HeaderWidget for a tableview, containing the title, the search widget,
   and the number of rows in the table"""
   
+  search_widget = SimpleSearchControl
+  
   _title_font = QtGui.QApplication.font()
   _title_font.setBold(True)
   _number_of_rows_font = QtGui.QApplication.font()
   
   def __init__(self, admin, parent):
     QtGui.QWidget.__init__(self, parent)
-    from search import SimpleSearchControl
+    
     widget_layout = QtGui.QHBoxLayout()
-    self.search_control = SimpleSearchControl(self)
+    self.search_control = self.search_widget(self)
     title = QtGui.QLabel(admin.get_verbose_name_plural(), self)
     title.setFont(self._title_font)
     widget_layout.addWidget(title)
@@ -83,8 +84,19 @@ class HeaderWidget(QtGui.QWidget):
 class TableView(QtGui.QWidget):
   """A generic tableview widget that puts together some other widgets.  The behaviour of this class and
 the resulting interface can be tuned by specifying specific class attributes which define the underlying
-widgets used :
+widgets used ::
 
+  class MovieRentalTableView(TableView):
+    title_format = 'Grand overview of recent movie rentals'
+
+The attributes that can be specified are :
+
+.. attribute:: header_widget
+
+The widget class to be used as a header in the table view::
+ 
+  header_widget = HeaderWidget
+  
 .. attribute:: table_widget
 
 The widget class used to display a table within the table view ::
@@ -97,14 +109,22 @@ A string used to format the title of the view ::
 
 title_format = '%(verbose_name_plural)s'
 
-- emits the row_selected signal when a row has been selected"""
+.. attribute:: table_model
 
+A class implementing QAbstractTableModel that will be used as a model for the table view ::
+
+  table_model = QueryTableProxy
+
+- emits the row_selected signal when a row has been selected
+"""
+
+  header_widget = HeaderWidget
   table_widget = TableWidget
   
   #
   # The proxy class to use 
   #
-  query_table_proxy = QueryTableProxy
+  table_model = QueryTableProxy
   #
   # Format to use as the window title
   #
@@ -115,7 +135,7 @@ title_format = '%(verbose_name_plural)s'
     self.admin = admin
     admin.mt.post(self.get_title, self.setWindowTitle)
     widget_layout = QtGui.QVBoxLayout()
-    self.header = HeaderWidget(admin, self)
+    self.header = self.header_widget(admin, self)
     widget_layout.addWidget(self.header)
     widget_layout.setSpacing(0)
     widget_layout.setMargin(0)
@@ -127,9 +147,9 @@ title_format = '%(verbose_name_plural)s'
     self.table_layout.setMargin(0)
     self.table = None
     self.filters = None
-    self.table_model = None
+    self._table_model = None
     table_widget.setLayout(self.table_layout)
-    self.setSubclass(admin)
+    self.set_admin(admin)
     self.splitter.insertWidget(0, table_widget)
     self.setLayout(widget_layout)
     self.closeAfterValidation = QtCore.SIGNAL('closeAfterValidation()')
@@ -152,36 +172,40 @@ title_format = '%(verbose_name_plural)s'
       from inheritance import SubclassTree
       class_tree = SubclassTree(self.admin, self)
       self.splitter.insertWidget(0, class_tree)
-      self.connect(class_tree, SIGNAL('subclassClicked'), self.setSubclass)
+      self.connect(class_tree, SIGNAL('subclassClicked'), self.set_admin)
       
   def sectionClicked(self, section):
     """emits a row_selected signal"""
     self.emit(SIGNAL('row_selected'), section)
 
-  def setSubclass(self, admin):
+  def create_table_model(self, admin):
+    """Create a table model for the given admin interface"""
+    return self.table_model(admin,
+                            lambda:admin.entity.query,
+                            admin.getColumns)
+
+  def set_admin(self, admin):
     """Switch to a different subclass, where admin is the admin object of the
     subclass"""
     self.admin = admin
     if self.table:
       self.table.deleteLater()
-      self.table_model.deleteLater()
+      self._table_model.deleteLater()
     self.table = self.table_widget(self)
       
-    self.table_model = self.query_table_proxy(admin,
-                                              lambda:admin.entity.query,
-                                              admin.getColumns)
-    self.table.setModel(self.table_model)
+    self._table_model = self.create_table_model(admin)
+    self.table.setModel(self._table_model)
     self.connect(self.table.verticalHeader(),
                  SIGNAL('sectionClicked(int)'),
                  self.sectionClicked)
-    self.connect(self.table_model, QtCore.SIGNAL('layoutChanged()'), self.tableLayoutChanged)
+    self.connect(self._table_model, QtCore.SIGNAL('layoutChanged()'), self.tableLayoutChanged)
     self.table_layout.insertWidget(1, self.table)
 
     def update_delegates_and_column_width(*args):
       """update item delegate"""
-      self.table.setItemDelegate(self.table_model.getItemDelegate())
-      for i in range(self.table_model.columnCount()):
-        self.table.setColumnWidth(i, max(self.table_model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize().width(), self.table.columnWidth(i)))
+      self.table.setItemDelegate(self._table_model.getItemDelegate())
+      for i in range(self._table_model.columnCount()):
+        self.table.setColumnWidth(i, max(self._table_model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize().width(), self.table.columnWidth(i)))
       
 
     admin.mt.post(lambda: None, update_delegates_and_column_width)
@@ -191,7 +215,7 @@ title_format = '%(verbose_name_plural)s'
                   lambda charts: self.setCharts(charts))
 
   def tableLayoutChanged(self):
-    self.header.setNumberOfRows(self.table_model.rowCount())
+    self.header.setNumberOfRows(self._table_model.rowCount())
     
   def setCharts(self, charts):
     """creates and display charts"""
@@ -260,15 +284,15 @@ title_format = '%(verbose_name_plural)s'
     """delete the selected rows in this tableview"""
     logger.debug('delete selected rows called')
     for row in set(map(lambda x: x.row(), self.table.selectedIndexes())):
-      self.table_model.removeRow(row)
+      self._table_model.removeRow(row)
 
   def newRow(self):
     """Create a new row in the tableview"""
     from camelot.view.workspace import get_workspace
     workspace = get_workspace()
     form = self.admin.create_new_view(workspace,
-                                    oncreate=lambda o:self.table_model.insertEntityInstance(0,o), 
-                                    onexpunge=lambda o:self.table_model.removeEntityInstance(o))
+                                    oncreate=lambda o:self._table_model.insertEntityInstance(0,o), 
+                                    onexpunge=lambda o:self._table_model.removeEntityInstance(o))
     workspace.addSubWindow(form)
     form.show()
 
@@ -286,7 +310,7 @@ title_format = '%(verbose_name_plural)s'
 
   def getData(self):
     """generator for data queried by table model"""
-    for d in self.table_model.getData():
+    for d in self._table_model.getData():
       yield d
 
   def getTitle(self):
@@ -299,18 +323,18 @@ title_format = '%(verbose_name_plural)s'
 
   def viewLast(self):
     """selects last row"""
-    self.selectTableRow(self.table_model.rowCount()-1)
+    self.selectTableRow(self._table_model.rowCount()-1)
 
   def viewNext(self):
     """selects next row"""
     first = self.selectedTableIndexes()[0]
-    next = (first.row()+1) % self.table_model.rowCount()
+    next = (first.row()+1) % self._table_model.rowCount()
     self.selectTableRow(next)
 
   def viewPrevious(self):
     """selects previous row"""
     first = self.selectedTableIndexes()[0]
-    prev = (first.row()-1) % self.table_model.rowCount()
+    prev = (first.row()-1) % self._table_model.rowCount()
     self.selectTableRow(prev)
 
   def rebuildQuery(self):
@@ -322,7 +346,7 @@ title_format = '%(verbose_name_plural)s'
         query = self.filters.decorate_query(query)
       if self.search_filter:
         query = self.search_filter(query)
-      self.table_model.setQuery(lambda:query)
+      self._table_model.setQuery(lambda:query)
       
     self.admin.mt.post(rebuild_query)
 
@@ -374,7 +398,7 @@ title_format = '%(verbose_name_plural)s'
     del self.table_layout
     del self.table
     del self.filters
-    del self.table_model
+    del self._table_model
     event.accept()
     
   def __del__(self):

@@ -61,7 +61,28 @@ a list with the fields that should be displayed in a table view
 .. attribute:: form_display 
 
 a list with the fields that should be displayed in a form view, defaults to the same
-fields as those specified in list_display
+fields as those specified in list_display ::
+
+  class Admin(EntityAdmin):
+    form_display = ['title', 'rating', 'cover']
+    
+instead of telling which forms to display. It is also possible to define the form itself ::
+
+  from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
+
+  class Admin(EntityAdmin):
+    form_display = TabForm([
+      ('Movie', Form([
+        HBoxForm([['title', 'rating'], WidgetOnlyForm('cover')]),
+        'short_description',
+        'releasedate', 
+        'director',
+        'script', 
+        'genre', 
+        'description', 'tags'], scrollbars=True)),
+      ('Cast', WidgetOnlyForm('cast'))
+    ])
+
 
 .. attribute:: list_filter
 

@@ -183,7 +183,22 @@ class attribute specifies the editor class that should be used
     self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
 
   def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.EditRole).toPyObject()
+    qvariant = index.model().data(index, Qt.EditRole)
+    #
+    # Conversion from a qvariant to a python object is highly dependent on the
+    # version of pyqt that is being used, we'll try to circumvent most problems
+    # here and always return nice python objects.
+    #
+    type = qvariant.type()
+    if type==QtCore.QVariant.String:
+      value = unicode(qvariant.toString())
+    elif type==QtCore.QVariant.Date:
+      value = qvariant.toDate()
+      value = datetime.date(year=value.year(), month=value.month(), day=value.day())
+    elif type==QtCore.QVariant.Int:
+      value = int(qvariant.toInt())
+    else:
+      value = index.model().data(index, Qt.EditRole).toPyObject()
     editor.set_value(value)
 
   def setModelData(self, editor, model, index):
@@ -681,14 +696,14 @@ class ComboBoxColumnDelegate(CustomDelegate):
     self.choices = choices
               
   def createEditor(self, parent, option, index):
-    editor = self.editor(parent=parent, editable=self.editable)
     
     def create_choices_getter(model, row):
       
-      def getChoices():
+      def choices_getter():
         return list(self.choices(model._get_object(row)))
       
-      return getChoices
-        
-    get_model_thread().post(create_choices_getter(index.model(), index.row()), editor.set_choices)
+      return choices_getter
+    
+    editor = self.editor(parent=parent, editable=self.editable, 
+                         choices=create_choices_getter(index.model(), index.row()))
     return editor

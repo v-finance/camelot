@@ -148,11 +148,18 @@ class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):
   
 class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
 
-  def __init__(self, parent=None, editable=True, **kwargs):
+  def __init__(self, parent=None, editable=True, choices=None, **kwargs):
+    """
+:param choices: a function that returns a list (object, verbose_name) to be used as objects to
+choose from in the editor    
+    """
+    from camelot.view.model_thread import get_model_thread
+    assert choices != None
     QtGui.QComboBox.__init__(self, parent)
     AbstractCustomEditor.__init__(self)
     self.setEnabled(editable)
-
+    get_model_thread().post(choices , self.set_choices)
+    
   def qvariantToPython(self, variant):
     if variant.canConvert(QtCore.QVariant.String):
       return unicode(variant.toString())
@@ -194,16 +201,13 @@ class OneToManyChoicesEditor(ChoicesEditor):
   
   def __init__(self, parent, editable=True, target=None, **kwargs):
     assert target!=None
-    ChoicesEditor.__init__(self, parent, editable, **kwargs)
-    self.setEnabled(editable)
-    
-    from camelot.view.model_thread import get_model_thread
     
     def get_choices():
       return [(o, unicode(o)) for o in target.query.all()]
-      
-    get_model_thread().post(get_choices , self.set_choices)
-    
+        
+    ChoicesEditor.__init__(self, parent, editable, choices=get_choices, **kwargs)
+    self.setEnabled(editable)
+        
 class DateTimeEditor(CustomEditor):
   """Widget for editing date and time separated and with popups"""
   
