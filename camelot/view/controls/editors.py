@@ -1216,8 +1216,9 @@ class One2ManyEditor(CustomEditor):
     def export():
       title = self.admin.get_verbose_name_plural()
       columns = self.admin.getColumns()
-      data = list(self.model.getData())
-      open_data_with_excel(title, columns, data)
+      if not self.model:
+        data = list(self.model.getData())
+        open_data_with_excel(title, columns, data)
       
     self.admin.mt.post(export)
   
