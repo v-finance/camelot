@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,9 +23,9 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
-"""Action buttons"""
+"""Actions box"""
 import logging
 
 logger = logging.getLogger('controls.actions')
@@ -65,5 +65,3 @@ class ActionsBox(QtGui.QGroupBox):
  
   def __del__(self):
     logger.debug('delete actions box')
-
-
