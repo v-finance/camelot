@@ -137,9 +137,11 @@ def open_data_with_excel(title, headerList, dataList):
       pythoncom.CoInitialize()
       excel_app = win32com.client.Dispatch("Excel.Application")
     except Exception, e:
-      """We're probably not running windows, so try gnumeric"""
+      """We're probably not running windows, so OS handle it (used to be gnumeric)"""
       logger.warning('Unable to launch excel', exc_info=e)
-      os.system('gnumeric "%s"'%xls_fn)
+      from PyQt4 import QtGui, QtCore
+      QtGui.QDesktopServices.openUrl(QtCore.QUrl('file://%s' % xls_fn)) 
+#      os.system('gnumeric "%s"'%xls_fn)
       return
 
     excel_app.Visible = True

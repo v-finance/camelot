@@ -29,9 +29,11 @@ def open_html_in_word(html, template=art.file_('empty_document.doc'),
     pythoncom.CoInitialize()
     word_app = win32com.client.Dispatch("Word.Application")
   except Exception, e:
-    """We're probably not running windows, so try abiword"""
+    """We're probably not running windows, so let OS handle it (used to be abiword)"""
     logger.warn('unable to launch word', exc_info=e)
-    os.system('abiword "%s"'%html_fn)
+    from PyQt4 import QtGui, QtCore
+    QtGui.QDesktopServices.openUrl(QtCore.QUrl('file://%s' % html_fn)) 
+#    os.system('abiword "%s"'%html_fn)
     return
 
   doc_fd, doc_fn = tempfile.mkstemp(suffix='.doc')
