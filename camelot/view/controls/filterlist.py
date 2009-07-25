@@ -38,9 +38,9 @@ class FilterList(QtGui.QScrollArea):
   """A list with filters that can be applied on a query in the tableview"""
  
   def __init__(self, items, parent):
-    """@param item list of tubles (name, choices) for constructing the
-    different filterboxes
     """
+:param items: list of tubles (name, choices) for constructing the different filterboxes
+"""
     QtGui.QScrollArea.__init__(self, parent)
     self.widget = QtGui.QWidget()
     self.setFrameStyle(QtGui.QFrame.NoFrame)
