@@ -26,9 +26,9 @@
 #  ============================================================================
 
 """Actions box"""
-import logging
 
-logger = logging.getLogger('controls.actions')
+import logging
+logger = logging.getLogger('controls.actionsbox')
 
 from PyQt4 import QtCore, QtGui
 
