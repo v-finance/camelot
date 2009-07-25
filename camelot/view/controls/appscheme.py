@@ -25,7 +25,7 @@
 #
 #  ============================================================================
 
-"""encapsulates various ms office schemes"""
+"""Encapsulates various ms office schemes"""
 
 Office2003BlueStyle = {
   'SplitterDark' : '(21, 28, 171)',
