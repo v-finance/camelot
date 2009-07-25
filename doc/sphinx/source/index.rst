@@ -19,6 +19,22 @@ Contents:
    tutorial/index.rst
    doc/index.rst
 
+Support
+=======
+
+Commercial support
+------------------
+
++-----------------------------------+-------------------------+
+| Conceptive Engineering            | L Van Bauwelstraat 16   |
++-----------------------------------+-------------------------+
+| project-camelot@conceptive.be     | 2222 Heist-op-den-Berg  |
++-----------------------------------+-------------------------+
+| http://www.conceptive.be          | Belgium                 |
++-----------------------------------+-------------------------+
+| Fax : +32 3 303 64 41             | VAT BE 0878 169 209     |
++-----------------------------------+-------------------------+
+
 Indices and tables:
 
 * :ref:`genindex`

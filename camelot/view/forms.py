@@ -25,19 +25,27 @@
 #
 #  ============================================================================
 
-"""Python structures to represent interface forms.
-
-These structures can be transformed to QT forms.
+"""Classes to layout fields on a form.  These are mostly used for specifying the
+form_display attribute in Admin classes, but they can be used on their own as
+well.  Form classes can be used recursive.
 """
 
 import logging
 logger = logging.getLogger('camelot.view.forms')
 
 class Form(object):
-  """Use the QFormLayout widget to render a form"""
+  """Base Form class to put fields on a form.  A form can be converted to a
+QT widget by calling its render method.  The base form uses the QFormLayout 
+to render a form::
+
+  class Admin(EntityAdmin):
+    form_display = Form([Label('Please fill this form'), 'title', 'description'])
+
+"""
   
   def __init__(self, content, scrollbars=False):
-    """@param content: a list with the field names and forms to render"""
+    """:param content: a list with the field names and forms to render
+"""
     assert isinstance(content, list)
     self._content = content
     self._scrollbars = scrollbars
@@ -46,7 +54,8 @@ class Form(object):
 
   def _add_content(self, content):
     """add content to the form
-    @param content: a list with field names and forms"""
+    
+:param content: a list with field names and forms"""
     for c in content:
       if isinstance(c, Form):
         self._fields.extend(c.get_fields())
@@ -55,14 +64,15 @@ class Form(object):
         self._fields.append(c)    
      
   def get_fields(self):
-    """@return : the fields, visible in this form"""
+    """:return: the fields, visible in this form"""
     return self._fields
   
   def removeField(self, original_field):
     """Remove a field from the form, This function can be used to modify
-    inherited forms.
-    @param original_field: the name of the field to be removed
-    @return: True if the field was found and removed
+inherited forms.
+
+:param original_field: the name of the field to be removed
+:return: True if the field was found and removed
     """
     for c in self._content:
       if isinstance(c, Form):
@@ -76,10 +86,12 @@ class Form(object):
              
   def replaceField(self, original_field, new_field):
     """Replace a field on this form with another field.  This function can be used to 
-    modify inherited forms.
-    @param original_field : the name of the field to be replace
-    @param new_field : the name of the new field
-    @return: True if the original field was found and replaced.
+modify inherited forms.
+    
+:param original_field : the name of the field to be replace
+:param new_field : the name of the new field
+:return: True if the original field was found and replaced.
+    
     """
     for i,c in enumerate(self._content):
       if isinstance(c, Form):
@@ -98,10 +110,10 @@ class Form(object):
     return 'Form(%s)'%(u','.join(unicode(c) for c in self._content))
       
   def render(self, widgets, parent=None, nomargins=False):
-    """@param widgets: a dictionary mapping each field in this form to a tuple
-    of (label, widget editor) 
-
-    @return : a QWidget into which the form is rendered
+    """:param widgets: a dictionary mapping each field in this form to a tuple
+of (label, widget editor)
+ 
+:return: a QWidget into which the form is rendered
     """
     logger.debug('rendering %s' % self.__class__.__name__) 
     from camelot.view.controls.editors import One2ManyEditor
@@ -190,7 +202,7 @@ class TabForm(Form):
   """Render forms within a QTabWidget"""
   
   def __init__(self, tabs):
-    """@param tabs: a list of tuples of (tab_label, tab_form)"""
+    """:param tabs: a list of tuples of (tab_label, tab_form)"""
     assert isinstance(tabs, list)
     for tab in tabs:
       assert isinstance(tab, tuple)
@@ -203,8 +215,9 @@ class TabForm(Form):
   
   def addTab(self, tab_label, tab_form):
     """Add a tab to the form
-    @param tab_label: the name of the tab
-    @param tab_form: the form to display in the tab or a list of field names.
+    
+:param tab_label: the name of the tab
+:param tab_form: the form to display in the tab or a list of field names.
     """
     tab_form = structure_to_form(tab_form)
     self.tabs.append((tab_label, tab_form))
@@ -214,8 +227,8 @@ class TabForm(Form):
     """Get the tab form of associated with a tab_label, use this function to
     modify the underlying tab_form in case of inheritance
     
-    @param tab_label : a label of a tab as passed in the construction method
-    @return: the tab_form corresponding to tab_label
+:param tab_label : a label of a tab as passed in the construction method
+:return: the tab_form corresponding to tab_label
     """
     for label, form in self.tabs:
       if label==tab_label:
@@ -241,7 +254,7 @@ class HBoxForm(Form):
   """Render different forms in a horizontal box"""
   
   def __init__(self, columns):
-    """@param columns: a list of forms to display in the different columns
+    """:param columns: a list of forms to display in the different columns
     of the horizontal box"""
     assert isinstance(columns, list)
     self.columns = [structure_to_form(col) for col in columns]
@@ -273,7 +286,7 @@ class VBoxForm(Form):
   """Render different forms or widgets in a vertical box"""
   
   def __init__(self, rows):
-    """@param rows: a list of forms to display in the different columns
+    """:param rows: a list of forms to display in the different columns
     of the horizontal box
     """
     assert isinstance(rows, list)
@@ -302,12 +315,14 @@ class VBoxForm(Form):
     return form_layout
   
 class GridForm(Form):
-  """Put different fields into a grid"""
+  """Put different fields into a grid::
+
+  GridForm([['A1', 'B1'], ['A2','B2']])
+  
+"""
   
   def __init__(self, grid):
-    """:param grid: A list for each row in the grid, containing a list with all fields that should be put in that row::
-    
-  [['A1', 'B1'], ['A2','B2']]
+    """:param grid: A list for each row in the grid, containing a list with all fields that should be put in that row
     """
     assert isinstance(grid, list)
     self._grid = grid
@@ -344,7 +359,8 @@ class WidgetOnlyForm(Form):
     return editor
   
 class GroupBoxForm(Form):
-  """Renders a form within a QGroupBox::
+  """
+Renders a form within a QGroupBox::
   
   class Admin(EntityAdmin):
     form_display = ['title', GroupBoxForm('Ratings', ['expert_rating', 'public_rating'])]

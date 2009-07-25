@@ -18,7 +18,9 @@ All other sections can be read on an as needed base.
    install.rst
    models.rst
    admin.rst
+   forms.rst
    delegates.rst
+   data_model.rst
    fixtures.rst
    manage.rst
    schemas.rst
