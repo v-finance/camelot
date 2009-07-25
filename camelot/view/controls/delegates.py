@@ -86,7 +86,7 @@ def _paint_not_editable(painter, option, index):
 def create_constant_function(constant):
   return lambda:constant
 
-class GenericDelegate(QItemDelegate):
+class DelegateManager(QItemDelegate):
   """Manages custom delegates, should not be used by the application developer"""
 
   def __init__(self, parent=None, **kwargs):

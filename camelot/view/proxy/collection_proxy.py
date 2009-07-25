@@ -316,7 +316,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.column_count = len(columns)
     self._columns = columns
     
-    self.item_delegate = delegates.GenericDelegate()
+    self.item_delegate = delegates.DelegateManager()
     self.item_delegate.set_columns_desc(columns)
 
     for i, c in enumerate(columns):
