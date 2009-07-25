@@ -30,12 +30,11 @@ from camelot.view.art import Icon
 
 
 class SimpleSearchControl(QtGui.QWidget):
-  """A control that displays a single text field in which search
-  keywords can be typed
+  """A control that displays a single text field in which search keywords can
+be typed
   
-  emits a search and a cancel signal if the user starts or cancels
-  the search
-  """
+emits a search and a cancel signal if the user starts or cancels the search
+"""
   
   def __init__(self, parent):
     QtGui.QWidget.__init__(self, parent)
@@ -60,7 +59,9 @@ class SimpleSearchControl(QtGui.QWidget):
     self.connect(self.search_input,
                  QtCore.SIGNAL('returnPressed()'),
                  self.emit_search)
-    self.connect(self.search_input, QtCore.SIGNAL('textEdited(const QString&)'), self.emit_search)
+    self.connect(self.search_input,
+                 QtCore.SIGNAL('textEdited(const QString&)'),
+                 self.emit_search)
 
     # Cancel button
     self.cancel_button = QtGui.QToolButton()
