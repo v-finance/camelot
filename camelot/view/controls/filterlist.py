@@ -30,8 +30,7 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.filter')
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from PyQt4 import QtGui, QtCore
 
 _ = lambda x:x
 

@@ -365,7 +365,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
 
   def setFilters(self, items):
     """sets filters for the tableview"""
-    from filter import FilterList
+    from filterlist import FilterList
     #logger.debug('setting filters with items : %s' % str(items))
     logger.debug('setting filters for tableview')
     if self.filters:
