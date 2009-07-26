@@ -18,6 +18,7 @@ Contents:
 
    tutorial/index.rst
    doc/index.rst
+   advanced/index.rst
 
 Support
 =======
