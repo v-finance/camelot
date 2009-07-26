@@ -196,7 +196,11 @@ class attribute specifies the editor class that should be used
       value = qvariant.toDate()
       value = datetime.date(year=value.year(), month=value.month(), day=value.day())
     elif type==QtCore.QVariant.Int:
-      value = int(qvariant.toInt())
+      value = int(qvariant.toInt()[0])
+    elif type==QtCore.QVariant.Double:
+      value = float(qvariant.toDouble()[0])
+    elif type==QtCore.QVariant.Bool:
+      value = bool(qvariant.toBool())        
     else:
       value = index.model().data(index, Qt.EditRole).toPyObject()
     editor.set_value(value)
@@ -695,7 +699,8 @@ class ComboBoxColumnDelegate(CustomDelegate):
     CustomDelegate.__init__(self, parent, editable=editable, **kwargs)
     self.choices = choices
               
-  def createEditor(self, parent, option, index):
+  def setEditorData(self, editor, index):
+    value = index.data(Qt.EditRole).toPyObject()
     
     def create_choices_getter(model, row):
       
@@ -704,6 +709,7 @@ class ComboBoxColumnDelegate(CustomDelegate):
       
       return choices_getter
     
-    editor = self.editor(parent=parent, editable=self.editable, 
-                         choices=create_choices_getter(index.model(), index.row()))
-    return editor
+    editor.set_value(value)
+    from camelot.view.model_thread import get_model_thread
+    get_model_thread().post(create_choices_getter(index.model(), index.row()), editor.set_choices)
+    

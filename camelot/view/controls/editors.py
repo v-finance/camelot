@@ -148,17 +148,11 @@ class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):
   
 class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
 
-  def __init__(self, parent=None, editable=True, choices=None, **kwargs):
-    """
-:param choices: a function that returns a list (object, verbose_name) to be used as objects to
-choose from in the editor    
-    """
+  def __init__(self, parent=None, editable=True, **kwargs):
     from camelot.view.model_thread import get_model_thread
-    assert choices != None
     QtGui.QComboBox.__init__(self, parent)
     AbstractCustomEditor.__init__(self)
     self.setEnabled(editable)
-    get_model_thread().post(choices , self.set_choices)
     
   def qvariantToPython(self, variant):
     if variant.canConvert(QtCore.QVariant.String):
