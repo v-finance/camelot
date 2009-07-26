@@ -351,7 +351,25 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(),  ('email','project-camelot@conceptive.be') )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )    
-                                
+                            
+class DelegateTest(unittest.TestCase):
+  """Test the basic functionallity of the delegates :
+- createEditor
+- setEditorData
+- setModelData
+"""
+ 
+  from camelot.view.controls import delegates
+  from camelot.view.controls import editors
+    
+  def setUp(self):
+    self.kwargs = dict(editable=True)
+    
+  def testPlainTextColumnDelegate(self):
+    delegate = self.delegates.PlainTextColumnDelegate(parent=None, length=True, **self.kwargs)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue( isinstance(editor, self.editors.TextLineEditor) )
+                                     
 if __name__ == '__main__':
   logger.info('running unit tests')
   import sys
@@ -360,4 +378,7 @@ if __name__ == '__main__':
   editor_test =  unittest.makeSuite(EditorTest, 'test')
   runner=unittest.TextTestRunner(verbosity=2)
   runner.run(editor_test)
+  editor_test =  unittest.makeSuite(DelegateTest, 'test')
+  runner=unittest.TextTestRunner(verbosity=2)
+  runner.run(editor_test)  
   sys.exit()
