@@ -1,8 +1,8 @@
 
 from customdelegate import *
-from one2manycolumndelegate import One2ManyColumnDelegate
+from one2manydelegate import One2ManyDelegate
 
-class ManyToManyColumnDelegate(One2ManyColumnDelegate):
+class ManyToManyDelegate(One2ManyDelegate):
   """
 .. image:: ../_static/manytomany.png
 """

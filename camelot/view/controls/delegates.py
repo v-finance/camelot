@@ -25,12 +25,12 @@
 #
 #  ============================================================================
 
-"""Camelot includes a number of QT delegates, most of them are used as default delegates
-for the various sqlalchemy and camelot field types.
+"""Camelot includes a number of QT delegates, most of them are used as default
+delegates for the various sqlalchemy and camelot field types.
 
-Some delegates take specific arguments into account for their construction.  All :attr:`field_attributes`
-specified for a certain field will be propagated towards the constructor of the
-delegate.
+Some delegates take specific arguments into account for their construction.
+All :attr:`field_attributes` specified for a certain field will be propagated
+towards the constructor of the delegate.
 """
 
 import logging
@@ -266,7 +266,7 @@ class StarDelegate(CustomDelegate):
 camelot_maxint = 2147483647
 camelot_minint = -2147483648
 
-class IntegerColumnDelegate(CustomDelegate):
+class IntegerDelegate(CustomDelegate):
   """Custom delegate for integer values"""
 
   editor = editors.IntegerEditor
@@ -293,7 +293,7 @@ class IntegerColumnDelegate(CustomDelegate):
     value = index.model().data(index, Qt.EditRole).toInt()[0]
     editor.set_value(value)
 
-#class SliderDelegate(IntegerColumnDelegate):
+#class SliderDelegate(IntegerDelegate):
 #  """A delegate for horizontal sliders"""
 #  
 #  def createEditor(self, parent, option, index):
@@ -305,7 +305,7 @@ class IntegerColumnDelegate(CustomDelegate):
 #  def setModelData(self, editor, model, index):
 #    model.setData(index, create_constant_function(editor.value()))  
 
-class PlainTextColumnDelegate(CustomDelegate):
+class PlainTextDelegate(CustomDelegate):
   """Custom delegate for simple string values"""
 
   editor = editors.TextLineEditor
@@ -318,7 +318,7 @@ class PlainTextColumnDelegate(CustomDelegate):
     else:
       QtGui.QItemDelegate.paint(self, painter, option, index)
 
-class TextEditColumnDelegate(QItemDelegate):
+class TextEditDelegate(QItemDelegate):
   """Edit plain text with a QTextEdit widget"""
   
   def __init__(self, parent=None, editable=True, **kwargs):
@@ -336,7 +336,7 @@ class TextEditColumnDelegate(QItemDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(unicode(editor.toPlainText())))
 
-class IntervalsColumnDelegate(QItemDelegate):
+class IntervalsDelegate(QItemDelegate):
   """Custom delegate for visualizing camelot.container.IntervalsContainer
   data"""
 
@@ -375,7 +375,7 @@ class IntervalsColumnDelegate(QItemDelegate):
   def setModelData(self, editor, model, index):
     pass
 
-class ColorColumnDelegate(CustomDelegate):
+class ColorDelegate(CustomDelegate):
   """
 .. image:: ../_static/color.png
 """
@@ -398,7 +398,7 @@ class ColorColumnDelegate(CustomDelegate):
       QtGui.QApplication.style().drawItemPixmap(painter, option.rect, Qt.AlignVCenter, pixmap)
     painter.restore()
 
-class TimeColumnDelegate(CustomDelegate):
+class TimeDelegate(CustomDelegate):
   
   editor = editors.TimeEditor
   
@@ -407,7 +407,7 @@ class TimeColumnDelegate(CustomDelegate):
     t = datetime.time(hour=value.hour(), minute=value.minute(), second=value.second())
     model.setData(index, create_constant_function(t))
 
-class DateTimeColumnDelegate(CustomDelegate):
+class DateTimeDelegate(CustomDelegate):
   
   editor = editors.DateTimeEditor
   
@@ -418,7 +418,7 @@ class DateTimeColumnDelegate(CustomDelegate):
   def sizeHint(self, option, index):
     return self._dummy_editor.sizeHint()
     
-class DateColumnDelegate(CustomDelegate):
+class DateDelegate(CustomDelegate):
   """Custom delegate for date values"""
 
   editor = editors.DateEditor
@@ -431,7 +431,7 @@ class DateColumnDelegate(CustomDelegate):
   def sizeHint(self, option, index):
     return editors.DateEditor().sizeHint()
 
-class CodeColumnDelegate(CustomDelegate):
+class CodeDelegate(CustomDelegate):
   
   editor = editors.CodeEditor
   
@@ -442,7 +442,7 @@ class CodeColumnDelegate(CustomDelegate):
   def sizeHint(self, option, index):
     return self._dummy_editor.sizeHint() 
     
-class VirtualAddressColumnDelegate(CustomDelegate):
+class VirtualAddressDelegate(CustomDelegate):
   """
 .. image:: ../_static/virtualaddress_editor.png
 """
@@ -466,7 +466,7 @@ class VirtualAddressColumnDelegate(CustomDelegate):
         painter.drawPixmap(rect, icon)
     painter.restore()
 
-class FloatColumnDelegate(CustomDelegate):
+class FloatDelegate(CustomDelegate):
   """Custom delegate for float values
 
  
@@ -493,7 +493,7 @@ to the precision specified in the definition of the Field.
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(editor.get_value()))
 
-class ColoredFloatColumnDelegate(CustomDelegate):
+class ColoredFloatDelegate(CustomDelegate):
   """Custom delegate for float values, representing them in green when they are
   positive and in red when they are negative."""
 
@@ -546,7 +546,7 @@ class ColoredFloatColumnDelegate(CustomDelegate):
                      value_str)
     painter.restore()
 
-class Many2OneColumnDelegate(CustomDelegate):
+class Many2OneDelegate(CustomDelegate):
   """Custom delegate for many 2 one relations
   
 .. image:: ../_static/manytoone.png
@@ -591,7 +591,7 @@ class Many2OneColumnDelegate(CustomDelegate):
   def sizeHint(self, option, index):
     return self._dummy_editor.sizeHint()    
 
-class One2ManyColumnDelegate(QItemDelegate):
+class One2ManyDelegate(QItemDelegate):
   """Custom delegate for many 2 one relations
 
 .. image:: ../_static/onetomany.png  
@@ -617,7 +617,7 @@ class One2ManyColumnDelegate(QItemDelegate):
   def setModelData(self, editor, model, index):
     pass
 
-class ManyToManyColumnDelegate(One2ManyColumnDelegate):
+class ManyToManyDelegate(One2ManyDelegate):
   """
 .. image:: ../_static/manytomany.png
 """
@@ -638,7 +638,7 @@ class ManyToManyColumnDelegate(One2ManyColumnDelegate):
     if editor.getModel():
       model.setData(index, editor.getModel().collection_getter)
 
-class BoolColumnDelegate(CustomDelegate):
+class BoolDelegate(CustomDelegate):
   """Custom delegate for boolean values"""
 
   editor = editors.BoolEditor
@@ -657,7 +657,7 @@ class BoolColumnDelegate(CustomDelegate):
     QtGui.QApplication.style().drawControl(QtGui.QStyle.CE_CheckBox, check_option, painter)
     painter.restore()
 
-class ImageColumnDelegate(CustomDelegate):
+class ImageDelegate(CustomDelegate):
   """
 .. image:: ../_static/image.png
 """
@@ -670,7 +670,7 @@ class ImageColumnDelegate(CustomDelegate):
                     create_constant_function(
                       camelot.types.StoredImage(editor.image)))
 
-class RichTextColumnDelegate(CustomDelegate):
+class RichTextDelegate(CustomDelegate):
   """
 .. image:: ../_static/richtext.png
 """
@@ -688,7 +688,7 @@ objects of the target class.
   
   editor = editors.OneToManyChoicesEditor
 
-class ComboBoxColumnDelegate(CustomDelegate):
+class ComboBoxDelegate(CustomDelegate):
   """
 .. image:: ../_static/enumeration.png 
 """

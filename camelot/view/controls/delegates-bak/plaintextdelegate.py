@@ -18,7 +18,7 @@ def _paint_not_editable(painter, option, index):
                    text)
   painter.restore()
 
-class PlainTextColumnDelegate(CustomDelegate):
+class PlainTextDelegate(CustomDelegate):
   """Custom delegate for simple string values"""
 
   editor = editors.TextLineEditor

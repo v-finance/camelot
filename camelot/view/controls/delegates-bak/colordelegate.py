@@ -1,7 +1,7 @@
 
 from customdelegate import *
 
-class ColorColumnDelegate(CustomDelegate):
+class ColorDelegate(CustomDelegate):
   """
 .. image:: ../_static/color.png
 """

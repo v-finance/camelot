@@ -250,7 +250,7 @@ Other field attributes process by the admin interface are:
                         nullable=True,
                         widget='str',
                         blank=True,
-                        delegate=delegates.PlainTextColumnDelegate,
+                        delegate=delegates.PlainTextDelegate,
                         validator_list=[],
                         name=field_name.replace('_', ' ').capitalize())
       

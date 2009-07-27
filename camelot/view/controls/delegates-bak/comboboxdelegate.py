@@ -1,7 +1,7 @@
 
 from customdelegate import *
 
-class ComboBoxColumnDelegate(CustomDelegate):
+class ComboBoxDelegate(CustomDelegate):
   """
 .. image:: ../_static/enumeration.png 
 """

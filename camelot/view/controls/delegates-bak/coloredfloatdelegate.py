@@ -2,7 +2,7 @@
 from customdelegate import *
 from camelot.view.art import Icon
 
-class ColoredFloatColumnDelegate(CustomDelegate):
+class ColoredFloatDelegate(CustomDelegate):
   """Custom delegate for float values, representing them in green when they are
 positive and in red when they are negative.
 """

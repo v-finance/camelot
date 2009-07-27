@@ -328,13 +328,13 @@ class CollectionProxy(QtCore.QAbstractTableModel):
         continue
       elif c[1]['python_type'] == str:
         if c[1]['length']:
-          delegate = delegates.PlainTextColumnDelegate(maxlength=c[1]['length'])
+          delegate = delegates.PlainTextDelegate(maxlength=c[1]['length'])
           self.item_delegate.insertColumnDelegate(i, delegate)
         else:
-          delegate = delegates.TextEditColumnDelegate(**c[1])
+          delegate = delegates.TextEditDelegate(**c[1])
           self.item_delegate.insertColumnDelegate(i, delegate)
       else:
-        delegate = delegates.PlainTextColumnDelegate()
+        delegate = delegates.PlainTextDelegate()
         self.item_delegate.insertColumnDelegate(i, delegate)
     self.emit(QtCore.SIGNAL('layoutChanged()'))
 

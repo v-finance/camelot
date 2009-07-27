@@ -2,7 +2,7 @@
 from customdelegate import *
 from camelot.view.art import Icon
 
-class VirtualAddressColumnDelegate(CustomDelegate):
+class VirtualAddressDelegate(CustomDelegate):
   """
 .. image:: ../_static/virtualaddress_editor.png
 """

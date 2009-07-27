@@ -2,7 +2,7 @@
 from customdelegate import *
 from camelot.core.constants import *
 
-class FloatColumnDelegate(CustomDelegate):
+class FloatDelegate(CustomDelegate):
   """Custom delegate for float values"""
 
   editor = editors.FloatEditor

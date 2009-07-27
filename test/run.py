@@ -386,60 +386,60 @@ class DelegateTest(unittest.TestCase):
   def setUp(self):
     self.kwargs = dict(editable=True)
 
-  def testPlainTextColumnDelegate(self):
-    delegate = self.delegates.PlainTextColumnDelegate(parent=None,
-                                                      length=True,
-                                                      **self.kwargs)
+  def testPlainTextDelegate(self):
+    delegate = self.delegates.PlainTextDelegate(parent=None,
+                                                length=True,
+                                                **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
 
-  def testTextEditColumnDelegate(self):
+  def testTextEditDelegate(self):
     from PyQt4.QtGui import QTextEdit
-    delegate = self.delegates.TextEditColumnDelegate(parent=None, **self.kwargs)
+    delegate = self.delegates.TextEditDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, QTextEdit))
 
-  def testRichTextColumnDelegate(self):
-    delegate = self.delegates.RichTextColumnDelegate(parent=None, **self.kwargs)
+  def testRichTextDelegate(self):
+    delegate = self.delegates.RichTextDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.RichTextEditor))
     
-  def testBoolColumnDelegate(self):
-    delegate = self.delegates.BoolColumnDelegate(parent=None, **self.kwargs)
+  def testBoolDelegate(self):
+    delegate = self.delegates.BoolDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.BoolEditor))
   
-  def testDateColumnDelegate(self):
-    delegate = self.delegates.DateColumnDelegate(parent=None, **self.kwargs)
+  def testDateDelegate(self):
+    delegate = self.delegates.DateDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.DateEditor))
 
-  def testDateTimeColumnDelegate(self):
-    delegate = self.delegates.DateTimeColumnDelegate(parent=None, **self.kwargs)
+  def testDateTimeDelegate(self):
+    delegate = self.delegates.DateTimeDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
 
-  def testTimeColumnDelegate(self):
-    delegate = self.delegates.TimeColumnDelegate(parent=None, **self.kwargs)
+  def testTimeDelegate(self):
+    delegate = self.delegates.TimeDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.TimeEditor))
 
-  def testIntegerColumnDelegate(self):
-    delegate = self.delegates.IntegerColumnDelegate(parent=None, **self.kwargs)
+  def testIntegerDelegate(self):
+    delegate = self.delegates.IntegerDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
 
-  def testFloatColumnDelegate(self):
+  def testFloatDelegate(self):
     from camelot.core.constants import camelot_minfloat, camelot_maxfloat
-    delegate = self.delegates.FloatColumnDelegate(parent=None, **self.kwargs)
+    delegate = self.delegates.FloatDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.FloatEditor))
     self.assertEqual(delegate.minimum, camelot_minfloat)
     self.assertEqual(delegate.maximum, camelot_maxfloat)
 
-  def testColoredFloatColumnDelegate(self):
-    delegate = self.delegates.ColoredFloatColumnDelegate(parent=None,
-                                                         **self.kwargs)
+  def testColoredFloatDelegate(self):
+    delegate = self.delegates.ColoredFloatDelegate(parent=None,
+                                                   **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
   
@@ -454,32 +454,32 @@ class DelegateTest(unittest.TestCase):
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.FileEditor))
 
-  def testColorColumnDelegate(self):
-    delegate = self.delegates.ColorColumnDelegate(parent=None, **self.kwargs)
+  def testColorDelegate(self):
+    delegate = self.delegates.ColorDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.ColorEditor))
   
-  def testCodeColumnDelegate(self):
-    delegate = self.delegates.CodeColumnDelegate(parent=None, **self.kwargs)
+  def testCodeDelegate(self):
+    delegate = self.delegates.CodeDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.CodeEditor))
   
-  def testComboBoxColumnDelegate(self):
+  def testComboBoxDelegate(self):
     CHOICES = ('1', '2', '3')
-    delegate = self.delegates.ComboBoxColumnDelegate(parent=None,
-                                                     choices=CHOICES,
-                                                     **self.kwargs)
+    delegate = self.delegates.ComboBoxDelegate(parent=None,
+                                               choices=CHOICES,
+                                               **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.ChoicesEditor))
 
-  def testImageColumnDelegate(self):
-    delegate = self.delegates.ImageColumnDelegate(parent=None, **self.kwargs)
+  def testImageDelegate(self):
+    delegate = self.delegates.ImageDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.ImageEditor))
 
-  def testVirtualAddressColumnDelegate(self):
-    delegate = self.delegates.VirtualAddressColumnDelegate(parent=None,
-                                                           **self.kwargs)
+  def testVirtualAddressDelegate(self):
+    delegate = self.delegates.VirtualAddressDelegate(parent=None,
+                                                     **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.VirtualAddressEditor))
 

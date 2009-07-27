@@ -1,7 +1,7 @@
 
 from customdelegate import *
 
-class TextEditColumnDelegate(QItemDelegate):
+class TextEditDelegate(QItemDelegate):
   """Edit plain text with a QTextEdit widget"""
   
   def __init__(self, parent=None, editable=True, **kwargs):

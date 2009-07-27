@@ -51,7 +51,7 @@ is calculated by the database ::
 	   class Admin(EntityAdmin):
 	    name = 'Budgets'
 	    list_display = [ 'total', 'lines']
-	    field_attributes = {'total':{'delegate':delegates.FloatColumnDelegate}} 
+	    field_attributes = {'total':{'delegate':delegates.FloatDelegate}} 
 	
 	class BudgetLine(Entity):
 	  budget = ManyToOne('Budget', required=True, ondelete='cascade', onupdate='cascade')

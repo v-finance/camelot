@@ -1,7 +1,7 @@
 
 from customdelegate import *
 
-class CodeColumnDelegate(CustomDelegate):
+class CodeDelegate(CustomDelegate):
   
   editor = editors.CodeEditor
   

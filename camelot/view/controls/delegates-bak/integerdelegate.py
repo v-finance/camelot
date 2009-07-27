@@ -1,7 +1,7 @@
 
 from customdelegate import *
 
-class IntegerColumnDelegate(CustomDelegate):
+class IntegerDelegate(CustomDelegate):
   """Custom delegate for integer values"""
 
   editor = editors.IntegerEditor

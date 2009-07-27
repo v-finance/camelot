@@ -2,9 +2,9 @@
 from customdelegate import *
 
 import logging
-logger = logging.getLogger('camelot.view.controls.delegates.one2manycolumndelegate')
+logger = logging.getLogger('camelot.view.controls.delegates.one2manydelegate')
 
-class One2ManyColumnDelegate(QItemDelegate):
+class One2ManyDelegate(QItemDelegate):
   """Custom delegate for many 2 one relations
 
 .. image:: ../_static/onetomany.png  

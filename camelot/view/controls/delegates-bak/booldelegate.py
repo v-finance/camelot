@@ -1,7 +1,7 @@
 
 from customdelegate import *
 
-class BoolColumnDelegate(CustomDelegate):
+class BoolDelegate(CustomDelegate):
   """Custom delegate for boolean values"""
 
   editor = editors.BoolEditor

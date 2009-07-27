@@ -1,7 +1,7 @@
 
 from customdelegate import *
 
-class DateColumnDelegate(CustomDelegate):
+class DateDelegate(CustomDelegate):
   """Custom delegate for date values"""
 
   editor = editors.DateEditor

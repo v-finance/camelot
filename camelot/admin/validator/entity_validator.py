@@ -53,12 +53,12 @@ class EntityValidator(ObjectValidator):
         is_null = False
         if value==None:
           is_null = True
-        elif (attributes['delegate'] == delegates.CodeColumnDelegate) and \
+        elif (attributes['delegate'] == delegates.CodeDelegate) and \
              (sum(len(c) for c in value) == 0):
           is_null = True
-        elif (attributes['delegate'] == delegates.PlainTextColumnDelegate) and (len(value) == 0):
+        elif (attributes['delegate'] == delegates.PlainTextDelegate) and (len(value) == 0):
           is_null = True
-        elif (attributes['delegate'] == delegates.Many2OneColumnDelegate) and (not value.id):
+        elif (attributes['delegate'] == delegates.Many2OneDelegate) and (not value.id):
           is_null = True
         if is_null:
           messages.append(u'%s is a required field' % (attributes['name']))

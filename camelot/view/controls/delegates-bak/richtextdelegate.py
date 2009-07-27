@@ -1,7 +1,7 @@
 
 from customdelegate import *
 
-class RichTextColumnDelegate(CustomDelegate):
+class RichTextDelegate(CustomDelegate):
   """
 .. image:: ../_static/richtext.png
 """

@@ -110,7 +110,7 @@ class EntityAdmin(ObjectAdmin):
                         nullable=True,
                         widget='str',
                         blank=True,
-                        delegate=delegates.PlainTextColumnDelegate,
+                        delegate=delegates.PlainTextDelegate,
                         validator_list=[],
                         name=field_name.replace('_', ' ').capitalize())
       
@@ -159,7 +159,7 @@ class EntityAdmin(ObjectAdmin):
             attributes.update(python_type=list,
                               editable=True,
                               nullable=True,
-                              delegate=delegates.One2ManyColumnDelegate,
+                              delegate=delegates.One2ManyDelegate,
                               target=target,
                               create_inline=False,
                               backref=property.backref.key,
@@ -168,7 +168,7 @@ class EntityAdmin(ObjectAdmin):
           elif property.direction == orm.sync.MANYTOONE:
             attributes.update(python_type=str,
                               editable=True,
-                              delegate=delegates.Many2OneColumnDelegate,
+                              delegate=delegates.Many2OneDelegate,
                               target=target,
                               #@todo: take into account all foreign keys instead of only the first one
                               nullable=foreign_keys[0].nullable,
@@ -181,7 +181,7 @@ class EntityAdmin(ObjectAdmin):
                               nullable=True,
                               create_inline=False,
                               direction=property.direction,
-                              delegate=delegates.ManyToManyColumnDelegate,
+                              delegate=delegates.ManyToManyDelegate,
                               admin=get_entity_admin(target))
           else:
             raise Exception('PropertyLoader has unknown direction')
@@ -193,7 +193,7 @@ class EntityAdmin(ObjectAdmin):
         pass
       
       if 'choices' in forced_attributes:
-        attributes['delegate'] = delegates.ComboBoxColumnDelegate
+        attributes['delegate'] = delegates.ComboBoxDelegate
         attributes['editable'] = True
                 
       #

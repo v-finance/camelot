@@ -1,7 +1,7 @@
 
 from customdelegate import *
 
-class IntervalsColumnDelegate(QItemDelegate):
+class IntervalsDelegate(QItemDelegate):
   """Custom delegate for visualizing camelot.container.IntervalsContainer
 data
 """

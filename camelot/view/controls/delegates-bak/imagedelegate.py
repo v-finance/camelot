@@ -1,7 +1,7 @@
 
 from customdelegate import *
 
-class ImageColumnDelegate(CustomDelegate):
+class ImageDelegate(CustomDelegate):
   """
 .. image:: ../_static/image.png
 """
