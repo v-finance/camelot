@@ -99,6 +99,7 @@ class ModelThread(threading.Thread):
     everything, by default this will setup the model.  set to None if nothing should
     be done. 
     """
+    self.logger = logging.getLogger(logger.name + '.%s'%id(self))
     self._setup_thread = setup_thread
     threading.Thread.__init__(self)
     self._request_queue = Queue.Queue()
@@ -106,20 +107,21 @@ class ModelThread(threading.Thread):
     self._response_signaler = response_signaler
     self._traceback = ''
     self.post(setup_thread)
-    logger.debug('model thread constructed')
+    self.logger.debug('model thread constructed')
 
   def run(self):
-    logger.debug('model thread started')
+    self.logger.debug('model thread started')
     try:
       if self._setup_thread:
         self._setup_thread()
-      logger.debug('start handling requests')
+      self.logger.debug('start handling requests')
       while True:
         new_event = threading.Event()
         try:
           (event, request, response, exception) = self._request_queue.get()
+          self.logger.debug('execute request %s'%id(request))
           #self._response_queue.join()
-          logger.debug('start handling request')
+          self.logger.debug('start handling request')
 #          import inspect
 #          print inspect.getsource(request)
           self._response_signaler.startProcessingRequest(self)
@@ -128,7 +130,7 @@ class ModelThread(threading.Thread):
           self._request_queue.task_done()
           self._response_signaler.responseAvailable(self)
           self._response_signaler.stopProcessingRequest(self)
-          logger.debug('finished handling request')
+          self.logger.debug('finished handling request')
           event.set()
           #self._response_queue.join()
         except Exception, e:
@@ -137,7 +139,7 @@ class ModelThread(threading.Thread):
           traceback.print_exc(file=sio)
           self._traceback = sio.getvalue()
           sio.close()
-          logger.error('exception caught in model thread', exc_info=e)
+          self.logger.error('exception caught in model thread', exc_info=e)
           exception_info = (e, self)
           self._response_queue.put((new_event, exception_info, exception))
           self._request_queue.task_done()
@@ -145,11 +147,11 @@ class ModelThread(threading.Thread):
           self._response_signaler.stopProcessingRequest(self)
           event.set()
         except:
-          logger.error('unhandled exception in model thread')
+          self.logger.error('unhandled exception in model thread')
     except Exception, e:
-      logger.error('exception caught in model thread', exc_info=e)
+      self.logger.error('exception caught in model thread', exc_info=e)
     except:
-      logger.error('unhandled exception')
+      self.logger.error('unhandled exception')
 
   def traceback(self):
     """The formatted traceback of the last exception in the model thread"""
@@ -163,10 +165,11 @@ class ModelThread(threading.Thread):
     try:
       while True:
         (event, result, response) = self._response_queue.get_nowait()
+        self.logger.debug('execute response %s'%id(response))
         try:
           response(result)
         except Exception, e:
-          logger.error('exception in response', exc_info=e)
+          self.logger.error('exception in response %s'%id(response), exc_info=e)
         self._response_queue.task_done()
         event.set()
     except Queue.Empty, e:
@@ -189,6 +192,7 @@ class ModelThread(threading.Thread):
     @return a threading Event object which will be set to True when the
     request function is finished and the response has been put on the queue
     """
+    self.logger.debug('post request %s %s with response %s %s'%(id(request), request.__name__, id(response), response.__name__))
     event = threading.Event()
     self._request_queue.put_nowait((event, request, response, exception))
     return event

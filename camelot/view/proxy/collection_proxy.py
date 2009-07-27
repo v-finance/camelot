@@ -312,7 +312,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     @param columns a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
     returned by the getColumns method of the ElixirAdmin class
     """
-
+    self.logger.debug('setColumns')
     self.column_count = len(columns)
     self._columns = columns
     

@@ -66,11 +66,11 @@ class HeaderWidget(QtGui.QWidget):
     QtGui.QWidget.__init__(self, parent)
     
     widget_layout = QtGui.QHBoxLayout()
-    self.search_control = self.search_widget(self)
+    self.search = self.search_widget(self)
     title = QtGui.QLabel(admin.get_verbose_name_plural(), self)
     title.setFont(self._title_font)
     widget_layout.addWidget(title)
-    widget_layout.addWidget(self.search_control)
+    widget_layout.addWidget(self.search)
     self.number_of_rows = QtGui.QLabel(self)
     self.number_of_rows.setFont(self._number_of_rows_font)
     widget_layout.addWidget(self.number_of_rows)
@@ -153,13 +153,13 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     self.splitter.insertWidget(0, table_widget)
     self.setLayout(widget_layout)
     self.closeAfterValidation = QtCore.SIGNAL('closeAfterValidation()')
-    self.connect(self.header.search_control, SIGNAL('search'), self.startSearch)
-    self.connect(self.header.search_control, SIGNAL('cancel'), self.cancelSearch)
+    self.connect(self.header.search, SIGNAL('search'), self.startSearch)
+    self.connect(self.header.search, SIGNAL('cancel'), self.cancelSearch)
     
     self.search_filter = lambda q: q
     self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
     if search_text:
-      self.header.search_control.search(search_text)
+      self.header.search.search(search_text)
     admin.mt.post(lambda: self.admin.getSubclasses(),
                   lambda subclasses: self.setSubclassTree(subclasses))      
 
@@ -201,14 +201,19 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     self.connect(self._table_model, QtCore.SIGNAL('layoutChanged()'), self.tableLayoutChanged)
     self.table_layout.insertWidget(1, self.table)
 
-    def update_delegates_and_column_width(*args):
-      """update item delegate"""
-      self.table.setItemDelegate(self._table_model.getItemDelegate())
-      for i in range(self._table_model.columnCount()):
-        self.table.setColumnWidth(i, max(self._table_model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize().width(), self.table.columnWidth(i)))
+    def create_update_degates_and_column_width(table, model):
+      """Curry table and model, since member variables might have changed when executing response"""
+      
+      def update_delegates_and_column_width(*args):
+        """update item delegate"""
+        table.setItemDelegate(model.getItemDelegate())
+        for i in range(model.columnCount()):
+          table.setColumnWidth(i, max(model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize().width(), table.columnWidth(i)))
+          
+      return update_delegates_and_column_width
       
 
-    admin.mt.post(lambda: None, update_delegates_and_column_width)
+    admin.mt.post(lambda: None, create_update_degates_and_column_width(self.table, self._table_model))
     admin.mt.post(lambda: admin.getFilters(),
                   lambda items: self.setFilters(items))
     admin.mt.post(lambda: admin.getListCharts(),
