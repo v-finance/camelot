@@ -28,7 +28,7 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
     
   def set_value(self, value):
     value = AbstractCustomEditor.set_value(self, value)
-    if value!=None:
+    if value not in (None, NotImplemented):
       for i in range(self.count()):
         if value == self.qvariantToPython(self.itemData(i)):
           self.setCurrentIndex(i)
