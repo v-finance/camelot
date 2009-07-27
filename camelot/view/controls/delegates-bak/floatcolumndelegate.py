@@ -1,5 +1,6 @@
 
 from customdelegate import *
+from camelot.core.constants import *
 
 class FloatColumnDelegate(CustomDelegate):
   """Custom delegate for float values"""
@@ -7,8 +8,8 @@ class FloatColumnDelegate(CustomDelegate):
   editor = editors.FloatEditor
   
   def __init__(self,
-               minimum=-1e15,
-               maximum=1e15,
+               minimum=camelot_minfloat,
+               maximum=camelot_maxfloat,
                precision=2,
                editable=True,
                parent=None,
