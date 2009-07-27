@@ -11,7 +11,11 @@ class StarDelegate(CustomDelegate):
   editor = editors.StarEditor
 
   def __init__(self, parent, editable=True, maximum=5, **kwargs):
-    CustomDelegate.__init__(self, parent=parent, editable=editable, maximum=maximum, **kwargs)
+    CustomDelegate.__init__(self,
+                            parent=parent,
+                            editable=editable,
+                            maximum=maximum,
+                            **kwargs)
     self.maximum = maximum
     
   def paint(self, painter, option, index):
