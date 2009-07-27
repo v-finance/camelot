@@ -211,6 +211,12 @@ Test the basic functionality of the editors :
   from camelot.view.controls import editors
   from camelot.view.proxy import ValueLoading
   
+  def grab_widget(self, widget):
+    import sys
+    pixmap = QPixmap.grabWidget(widget)
+    test_case_name = sys._getframe(1).f_code.co_name[4:]
+    pixmap.save('%s.png'%test_case_name, 'PNG')
+
   def testDateEditor(self):
     import datetime
     editor = self.editors.DateEditor()
@@ -218,6 +224,7 @@ Test the basic functionality of the editors :
     editor.set_value( None )
     self.assertEqual( editor.get_value(), None )
     editor.set_value( datetime.date(1980, 12, 31) )
+    self.grab_widget( editor )
     self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -226,6 +233,7 @@ Test the basic functionality of the editors :
     editor = self.editors.TextLineEditor(parent=None, length=10)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( u'za coś tam' )
+    self.grab_widget( editor )
     self.assertEqual( editor.get_value(), u'za coś tam' )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -234,6 +242,7 @@ Test the basic functionality of the editors :
     editor = self.editors.StarEditor(parent=None, maximum=5)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( 4 )
+    self.grab_widget( editor )
     self.assertEqual( editor.get_value(), 4 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -242,6 +251,7 @@ Test the basic functionality of the editors :
     editor = self.editors.BoolEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( True )
+    self.grab_widget( editor )
     self.assertEqual( editor.get_value(), True )
     editor.set_value( False )
     self.assertEqual( editor.get_value(), False )
@@ -252,6 +262,7 @@ Test the basic functionality of the editors :
     editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'])
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( ['XYZ', '123'] )
+    self.grab_widget( editor )
     self.assertEqual( editor.get_value(), ['XYZ', '123'] )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )     
@@ -259,8 +270,9 @@ Test the basic functionality of the editors :
   def testColorEditor(self):
     editor = self.editors.ColorEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( (255, 255, 255, 255) )
-    self.assertEqual( editor.get_value(), (255, 255, 255, 255) )
+    editor.set_value( (255, 200, 255, 255) )
+    self.grab_widget( editor )
+    self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
      
@@ -270,6 +282,7 @@ Test the basic functionality of the editors :
     editor.set_value( 0.0 )
     self.assertEqual( editor.get_value(), 0.0 )    
     editor.set_value( 3.14 )
+    self.grab_widget( editor )
     self.assertEqual( editor.get_value(), 3.14 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -281,6 +294,7 @@ Test the basic functionality of the editors :
       editor.insertItem(i, name, QtCore.QVariant(value))
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( 2 )
+    self.grab_widget( editor )
     self.assertEqual( editor.get_value(), '2' )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -289,6 +303,7 @@ Test the basic functionality of the editors :
     editor = self.editors.FileEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( self.ValueLoading )
+    self.grab_widget( editor )
     self.assertEqual( editor.get_value(), self.ValueLoading )
     
   def testDateTimeEditor(self):
@@ -297,6 +312,7 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( (2009, 7, 19, 21, 5, 10, 0) )
     self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
+    self.grab_widget( editor )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )        
        
@@ -306,6 +322,7 @@ Test the basic functionality of the editors :
     editor.set_value( 0.0 )
     self.assertEqual( editor.get_value(), 0.0 )    
     editor.set_value( 3.14 )
+    self.grab_widget( editor )
     self.assertEqual( editor.get_value(), 3.14 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -315,6 +332,7 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    self.grab_widget( editor )
  
   def testIntegerEditor(self):
     editor = self.editors.IntegerEditor(parent=None, editable=True)
@@ -322,6 +340,7 @@ Test the basic functionality of the editors :
     editor.set_value( 0 )
     self.assertEqual( editor.get_value(), 0 )    
     editor.set_value( 3 )
+    self.grab_widget( editor )
     self.assertEqual( editor.get_value(), 3 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -330,6 +349,7 @@ Test the basic functionality of the editors :
     editor = self.editors.RichTextEditor(parent=None)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( u'<h1>Rich Text Editor</h1>' )
+    self.grab_widget( editor )
     self.assertTrue( u'Rich Text Editor' in editor.get_value() )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -339,6 +359,7 @@ Test the basic functionality of the editors :
     editor = self.editors.TimeEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( datetime.time(21, 5, 0) )
+    self.grab_widget( editor )
     self.assertEqual( editor.get_value(), datetime.time(21, 5, 0) )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -347,6 +368,7 @@ Test the basic functionality of the editors :
     editor = self.editors.VirtualAddressEditor(parent=None)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( ('email','project-camelot@conceptive.be') )
+    self.grab_widget( editor )
     self.assertEqual( editor.get_value(),  ('email','project-camelot@conceptive.be') )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )    
