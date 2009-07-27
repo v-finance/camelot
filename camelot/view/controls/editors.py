@@ -405,7 +405,7 @@ class DateEditor(CustomEditor):
 
 class VirtualAddressEditor(CustomEditor):
   
-  def __init__(self, parent=None):
+  def __init__(self, parent=None, editable=True):
     CustomEditor.__init__(self, parent)
     self.layout = QtGui.QHBoxLayout()
     self.layout.setMargin(0)
@@ -428,8 +428,8 @@ class VirtualAddressEditor(CustomEditor):
     self.connect(self.combo, QtCore.SIGNAL('currentIndexChanged(int)'), lambda:self.comboIndexChanged())
     self.setLayout(self.layout)
     self.setAutoFillBackground(True);
-    
-    
+
+
   def comboIndexChanged(self):
     self.checkValue(self.editor.text())
     self.editingFinished()

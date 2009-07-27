@@ -4,7 +4,7 @@ from camelot.view.art import Icon
 
 class VirtualAddressEditor(CustomEditor):
   
-  def __init__(self, parent=None):
+  def __init__(self, parent=None, editable=True):
     CustomEditor.__init__(self, parent)
     self.layout = QtGui.QHBoxLayout()
     self.layout.setMargin(0)
