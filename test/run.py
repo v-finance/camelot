@@ -309,7 +309,6 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), 3.14 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value('string')
     
   def testImageEditor(self):
     editor = self.editors.ImageEditor(parent=None, editable=True)
