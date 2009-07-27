@@ -196,7 +196,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     # in that way the number of rows is requested as well
     self.mt.post(self.getRowCount,  self.setRowCount)
     self.logger.debug('initialization finished')
-    self.item_delegate = None
+    self.delegate_manager = None
     
   @model_function
   def updateUnflushedRows(self):
@@ -298,9 +298,9 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     
   def getItemDelegate(self):
     self.logger.debug('getItemDelegate')
-    if not self.item_delegate:
+    if not self.delegate_manager:
       raise Exception('item delegate not yet available')
-    return self.item_delegate 
+    return self.delegate_manager
     
   def getColumns(self):
     """@return: the columns as set by the setColumns method"""
@@ -316,26 +316,26 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.column_count = len(columns)
     self._columns = columns
     
-    self.item_delegate = delegates.DelegateManager()
-    self.item_delegate.set_columns_desc(columns)
+    self.delegate_manager = delegates.DelegateManager()
+    self.delegate_manager.set_columns_desc(columns)
 
     for i, c in enumerate(columns):
       field_name = c[0]
       self.logger.debug('creating delegate for %s' % field_name)
       if 'delegate' in c[1]:
         delegate = c[1]['delegate'](parent=None, **c[1])
-        self.item_delegate.insertColumnDelegate(i, delegate)
+        self.delegate_manager.insertColumnDelegate(i, delegate)
         continue
       elif c[1]['python_type'] == str:
         if c[1]['length']:
           delegate = delegates.PlainTextDelegate(maxlength=c[1]['length'])
-          self.item_delegate.insertColumnDelegate(i, delegate)
+          self.delegate_manager.insertColumnDelegate(i, delegate)
         else:
           delegate = delegates.TextEditDelegate(**c[1])
-          self.item_delegate.insertColumnDelegate(i, delegate)
+          self.delegate_manager.insertColumnDelegate(i, delegate)
       else:
         delegate = delegates.PlainTextDelegate()
-        self.item_delegate.insertColumnDelegate(i, delegate)
+        self.delegate_manager.insertColumnDelegate(i, delegate)
     self.emit(QtCore.SIGNAL('layoutChanged()'))
 
   def rowCount(self, index=None):
@@ -363,7 +363,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           return QtCore.QVariant(self._header_font)
       elif role == Qt.SizeHintRole:
         option = QtGui.QStyleOptionViewItem()
-        editor_size = self.item_delegate.sizeHint(option, self.index(0, section))
+        editor_size = self.delegate_manager.sizeHint(option, self.index(0, section))
         if 'minimal_column_width' in c[1]:
           minimal_column_width = QtGui.QFontMetrics(self._header_font).size(Qt.TextSingleLine, 'A').width()*c[1]['minimal_column_width']
         else:
