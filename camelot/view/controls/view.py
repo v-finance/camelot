@@ -36,29 +36,46 @@ class AbstractView(object):
   """A string used to format the title of the view ::
 
 title_format = 'Movie rental overview'
+
+.. attribute:: header_widget
+
+The widget class to be used as a header in the table view::
+ 
+  header_widget = None
 """  
   
   title_format = ''
+  header_widget = None
 
-class TabView(QtGui.QTabWidget, AbstractView):
+class TabView(QtGui.QWidget, AbstractView):
   """Class to combine multiple views in Tabs and let them behave as one view.  This class can be
 used when defining custom create_table_view methods on an ObjectAdmin class to group multiple
 table views together in one view.
 """
   
-  def __init__(self, parent, views=[]):
+  def __init__(self, parent, views=[], admin=None):
     """
 :param views: a list of the views to combine
 """
-    QtGui.QTabWidget.__init__(self, parent)
+    QtGui.QWidget.__init__(self, parent)
     AbstractView.__init__(self, parent)
     self.setWindowTitle(self.title_format)
+    
+    layout = QtGui.QVBoxLayout()
+    if self.header_widget:
+      self.header = self.header_widget(self, admin)
+    else:
+      self.header = None
+    layout.addWidget(self.header)
+    tab_widget = QtGui.QTabWidget(self)
+    layout.addWidget(tab_widget)
+    self.setLayout(layout)
     
     def get_views_and_titles():
       return [(view, view.get_title()) for view in views]
     
     def set_views_and_titles(views_and_titles):
       for view, title in views_and_titles:
-        self.addTab(view, title)
+        tab_widget.addTab(view, title)
 
     get_model_thread().post(get_views_and_titles, set_views_and_titles)

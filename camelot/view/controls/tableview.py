@@ -62,7 +62,7 @@ class HeaderWidget(QtGui.QWidget):
   _title_font.setBold(True)
   _number_of_rows_font = QtGui.QApplication.font()
   
-  def __init__(self, admin, parent):
+  def __init__(self, parent, admin):
     QtGui.QWidget.__init__(self, parent)
     
     widget_layout = QtGui.QHBoxLayout()
@@ -135,7 +135,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     self.admin = admin
     admin.mt.post(self.get_title, self.setWindowTitle)
     widget_layout = QtGui.QVBoxLayout()
-    self.header = self.header_widget(admin, self)
+    self.header = self.header_widget(self, admin)
     widget_layout.addWidget(self.header)
     widget_layout.setSpacing(0)
     widget_layout.setMargin(0)
