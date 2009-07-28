@@ -34,4 +34,5 @@ class AbstractManyToOneEditor(object):
     selectDialog.exec_()
     
   def selectEntity(self, entity_instance_getter):
-    raise Exception('Not implemented')
+    #raise Exception('Not implemented')
+    raise NotImplementedError
