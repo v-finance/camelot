@@ -32,7 +32,7 @@ developer
     
   def removeColumnDelegate(self, column):
     """Removes custom column delegate"""
-    logger.debug('removing a new custom column delegate')
+    logger.debug('removing a custom column delegate')
     if column in self.delegates:
       del self.delegates[column]
 
@@ -48,9 +48,10 @@ developer
     """Use a custom delegate createEditor method if it exists"""
     delegate = self.delegates.get(index.column())
     if delegate is not None:
-      return delegate.createEditor(parent, option, index)
+      editor = delegate.createEditor(parent, option, index)
     else:
-      QItemDelegate.createEditor(self, parent, option, index)
+      editor = QItemDelegate.createEditor(self, parent, option, index)
+    return editor
 
   def setEditorData(self, editor, index):
     """Use a custom delegate setEditorData method if it exists"""
