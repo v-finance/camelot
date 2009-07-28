@@ -8,8 +8,8 @@ def _paint_not_editable(painter, option, index):
     painter.fillRect(option.rect, option.palette.highlight())
     painter.setPen(option.palette.highlightedText().color())
   else:
-    painter.fillRect(option.rect, QtGui.QColor(_not_editable_background_))
-    painter.setPen(QtGui.QColor(_not_editable_foreground_))
+    painter.fillRect(option.rect, QtGui.QColor(not_editable_background))
+    painter.setPen(QtGui.QColor(not_editable_foreground))
   painter.drawText(option.rect.x()+2,
                    option.rect.y(),
                    option.rect.width()-4,

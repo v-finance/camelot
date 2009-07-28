@@ -16,8 +16,8 @@ class FileDelegate(CustomDelegate):
       painter.fillRect(option.rect, option.palette.highlight())
       painter.setPen(option.palette.highlightedText().color())
     elif not self.editable:
-      painter.fillRect(option.rect, QtGui.QColor(_not_editable_background_))
-      painter.setPen(QtGui.QColor(_not_editable_foreground_))
+      painter.fillRect(option.rect, QtGui.QColor(not_editable_background))
+      painter.setPen(QtGui.QColor(not_editable_foreground))
     value =  index.model().data(index, Qt.EditRole).toPyObject()
     if value:
       painter.drawText(option.rect.x()+2,

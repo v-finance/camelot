@@ -13,8 +13,8 @@ class IntegerDelegate(CustomDelegate):
       painter.fillRect(option.rect, option.palette.highlight())
       painter.setPen(option.palette.highlightedText().color())
     elif not self.editable:
-      painter.fillRect(option.rect, QtGui.Color(_not_editable_background_))
-      painter.setPen(QtGui.Color(_not_editable_foreground_))
+      painter.fillRect(option.rect, QtGui.QColor(not_editable_background))
+      painter.setPen(QtGui.QColor(not_editable_foreground))
     value =  index.model().data(index, Qt.DisplayRole).toString()
     painter.drawText(option.rect.x()+2,
                      option.rect.y(),

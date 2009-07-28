@@ -1,6 +1,9 @@
 
+import re
+
 from customeditor import *
 from camelot.view.art import Icon
+import camelot.types
 
 class VirtualAddressEditor(CustomEditor):
   

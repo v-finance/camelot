@@ -3,6 +3,7 @@ try:
   from PyQt4 import QtGui, QtCore
   from PyQt4.QtCore import Qt, SIGNAL
   from PyQt4.QtGui import QItemDelegate
+  from PyQt4.QtCore import Qt
   
   from camelot.view.controls import editors
 except ImportError:
@@ -25,9 +26,9 @@ import datetime
 import camelot.types
 
 # custom color
-_not_editable_background_ = (235, 233, 237)
+not_editable_background = QtGui.QColor(235, 233, 237)
 # darkgray
-_not_editable_foreground_ = (128, 128, 128)
+not_editable_foreground = QtGui.QColor(Qt.darkGray)
 
 class CustomDelegate(QItemDelegate):
   """Base class for implementing custom delegates.
