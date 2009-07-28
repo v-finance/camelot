@@ -384,30 +384,51 @@ class DelegateTest(unittest.TestCase):
   from camelot.view.controls import editors
     
   def setUp(self):
-    self.kwargs = dict(editable=True)
+    self.kwargs = dict(editable=False)
 
+  def grab_delegate(self, delegate, data):
+    import sys
+    model = QStandardItemModel(1, 1)
+    model.setData(model.index(0,0), QVariant('Plain text'))
+    for state_name, state in zip(('selected', 'none'), (QStyle.State_Selected, QStyle.State_None)):
+      option = QStyleOptionViewItem()
+      option.state = state
+      pixmap = QPixmap(640, 480)
+      pixmap.fill()
+      painter = QPainter(pixmap)
+      test_case_name = sys._getframe(1).f_code.co_name[4:]
+      try:
+        delegate.paint(painter, option, model.index(0, 0))
+      finally:
+        painter.end()
+      pixmap.save('%s_%s.png'%(test_case_name, state_name), 'PNG') 
+            
   def testPlainTextDelegate(self):
     delegate = self.delegates.PlainTextDelegate(parent=None,
                                                 length=True,
                                                 **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
-
+    self.grab_delegate(delegate, 'Plain Text')
+    
   def testTextEditDelegate(self):
     from PyQt4.QtGui import QTextEdit
     delegate = self.delegates.TextEditDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, QTextEdit))
+    self.grab_delegate(delegate, 'Plain Text')
 
   def testRichTextDelegate(self):
     delegate = self.delegates.RichTextDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.RichTextEditor))
+    self.grab_delegate(delegate, '<b>Rich Text</b>')
     
   def testBoolDelegate(self):
     delegate = self.delegates.BoolDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.BoolEditor))
+    self.grab_delegate(delegate, True)
   
   def testDateDelegate(self):
     delegate = self.delegates.DateDelegate(parent=None, **self.kwargs)
@@ -428,6 +449,7 @@ class DelegateTest(unittest.TestCase):
     delegate = self.delegates.IntegerDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
+    self.grab_delegate(delegate, 3)
 
   def testFloatDelegate(self):
     from camelot.core.constants import camelot_minfloat, camelot_maxfloat
@@ -436,18 +458,21 @@ class DelegateTest(unittest.TestCase):
     self.assertTrue(isinstance(editor, self.editors.FloatEditor))
     self.assertEqual(delegate.minimum, camelot_minfloat)
     self.assertEqual(delegate.maximum, camelot_maxfloat)
+    self.grab_delegate(delegate, 3.14)
 
   def testColoredFloatDelegate(self):
     delegate = self.delegates.ColoredFloatDelegate(parent=None,
                                                    **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
+    self.grab_delegate(delegate, 3.14)
   
   def testStarDelegate(self):
     delegate = self.delegates.StarDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(delegate.maximum, 5)
     self.assertTrue(isinstance(editor, self.editors.StarEditor))
+    self.grab_delegate(delegate, 5)
 
   def testFileDelegate(self):
     delegate = self.delegates.FileDelegate(parent=None, **self.kwargs)
