@@ -5,7 +5,9 @@ import logging
 logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
 class DelegateManager(QItemDelegate):
-  """Manages custom delegates, should not be used by the application developer"""
+  """Manages custom delegates, should not be used by the application
+developer
+"""
 
   def __init__(self, parent=None, **kwargs):
     QItemDelegate.__init__(self, parent)
@@ -20,7 +22,7 @@ class DelegateManager(QItemDelegate):
     delegate.setParent(self)
     self.delegates[column] = delegate
     self.connect(delegate, SIGNAL('commitData(QWidget*)'), self.commitData)
-    self.connect(delegate, SIGNAL('closeEditor(QWidget*)'), self.closeEditor)   
+    self.connect(delegate, SIGNAL('closeEditor(QWidget*)'), self.closeEditor)
 
   def commitData(self, editor):
     self.emit(SIGNAL('commitData(QWidget*)'), editor)
