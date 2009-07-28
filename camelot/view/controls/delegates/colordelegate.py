@@ -14,7 +14,7 @@ class ColorDelegate(CustomDelegate):
     if (option.state & QtGui.QStyle.State_Selected):
       pass
     elif not self.editable:
-      painter.fillRect(option.rect, QtGui.Color(not_editable_background))
+      painter.fillRect(option.rect, QtGui.QColor(not_editable_background))
     color = index.model().data(index, Qt.EditRole).toPyObject()
     if color:
       pixmap = QtGui.QPixmap(16, 16)

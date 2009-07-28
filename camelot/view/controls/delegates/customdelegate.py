@@ -25,9 +25,9 @@ import datetime
 import camelot.types
 
 # custom color
-not_editable_background = QtGui.QColor(235, 233, 237)
+not_editable_background = (235, 233, 237)
 # darkgray
-not_editable_foreground = QtGui.QColor(Qt.darkGray)
+not_editable_foreground = Qt.darkGray
 
 class CustomDelegate(QItemDelegate):
   """Base class for implementing custom delegates.
