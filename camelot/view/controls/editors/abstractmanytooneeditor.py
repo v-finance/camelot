@@ -1,4 +1,6 @@
 
+from customeditor import * 
+
 class AbstractManyToOneEditor(object):
   """Helper functions for implementing a `ManyToOneEditor`, to be used in the
 `ManyToOneEditor` and in the `ManyToManyEditor`
