@@ -3,7 +3,6 @@ try:
   from PyQt4 import QtGui, QtCore
   from PyQt4.QtCore import Qt, SIGNAL
   from PyQt4.QtGui import QItemDelegate
-  from PyQt4.QtCore import Qt
   
   from camelot.view.controls import editors
 except ImportError:
@@ -25,10 +24,9 @@ from camelot.core.utils import create_constant_function
 import datetime
 import camelot.types
 
-# custom color
-not_editable_background = QtGui.QColor(235, 233, 237)
-# darkgray
-not_editable_foreground = QtGui.QColor(Qt.darkGray)
+# not editable colors tuples
+not_editable_background = (235, 233, 237)
+not_editable_foreground = Qt.darkGray
 
 class CustomDelegate(QItemDelegate):
   """Base class for implementing custom delegates.
@@ -53,6 +51,7 @@ class attribute specifies the editor class that should be used
   def commitAndCloseEditor(self):
     editor = self.sender()
     self.emit(SIGNAL('commitData(QWidget*)'), editor)
+    self.emit(SIGNAL('closeEditor(QWidget*)'), editor)
 
   def setEditorData(self, editor, index):
     qvariant = index.model().data(index, Qt.EditRole)
