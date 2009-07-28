@@ -17,6 +17,7 @@ from choiceseditor import ChoicesEditor
 from codeeditor import CodeEditor
 from coloredfloateditor import ColoredFloatEditor
 from coloreditor import ColorEditor
+from customeditor import CustomEditor
 from dateeditor import DateEditor
 from datetimeeditor import DateTimeEditor
 from embeddedmany2oneeditor import EmbeddedMany2OneEditor
@@ -33,3 +34,4 @@ from stareditor import StarEditor
 from textlineeditor import TextLineEditor
 from timeeditor import TimeEditor
 from virtualaddresseditor import VirtualAddressEditor
+

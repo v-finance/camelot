@@ -13,6 +13,7 @@ from codedelegate import CodeDelegate
 from colordelegate import ColorDelegate
 from coloredfloatdelegate import ColoredFloatDelegate
 from comboboxdelegate import ComboBoxDelegate
+from customdelegate import CustomDelegate
 from datedelegate import DateDelegate
 from datetimedelegate import DateTimeDelegate
 from filedelegate import FileDelegate
