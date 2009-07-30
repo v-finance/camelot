@@ -5,10 +5,9 @@ import logging
 import settings
 import unittest
 import sys
-logger = logging.getLogger('unittest')
 
-from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from PyQt4.QtCore import *
            
 logger = logging.getLogger('view.unittests')
 
@@ -213,6 +212,8 @@ Test the basic functionality of the editors :
   
   def grab_widget(self, widget):
     import sys
+    # any show method will work there, minimized is appropriate
+    widget.showMinimized()
     pixmap = QPixmap.grabWidget(widget)
     test_case_name = sys._getframe(1).f_code.co_name[4:]
     pixmap.save('%s.png'%test_case_name, 'PNG')
@@ -388,20 +389,44 @@ class DelegateTest(unittest.TestCase):
 
   def grab_delegate(self, delegate, data):
     import sys
+    
     model = QStandardItemModel(1, 1)
-    model.setData(model.index(0,0), QVariant('Plain text'))
-    for state_name, state in zip(('selected', 'none'), (QStyle.State_Selected, QStyle.State_None)):
-      option = QStyleOptionViewItem()
-      option.state = state
-      pixmap = QPixmap(640, 480)
-      pixmap.fill()
-      painter = QPainter(pixmap)
-      test_case_name = sys._getframe(1).f_code.co_name[4:]
-      try:
-        delegate.paint(painter, option, model.index(0, 0))
-      finally:
-        painter.end()
-      pixmap.save('%s_%s.png'%(test_case_name, state_name), 'PNG') 
+    index = model.index(0, 0, QModelIndex())
+    model.setData(index, QVariant(data))
+    
+    tableview = QTableView()
+    tableview.setModel(model)
+    tableview.setItemDelegate(delegate)
+    
+    test_case_name = sys._getframe(1).f_code.co_name[4:]
+    
+    for state_name, state in zip(('selected', 'none'), 
+                                 (QStyle.State_Selected, QStyle.State_None)):
+      #option = QStyleOptionViewItem()
+      #option.state = state
+      #
+      #pixmap = QPixmap(800, 600)
+      #pixmap.fill()
+      #painter = QPainter(pixmap)
+      #
+      #try:
+      #  delegate.paint(painter, option, index)
+      #finally:
+      #  painter.end()
+      #
+      #pixmap.save('%s_%s.png'%(test_case_name, state_name), 'PNG') 
+
+      tableview.showMinimized()
+      
+      if state == QStyle.State_Selected:
+        tableview.selectionModel().select(index, QItemSelectionModel.Select)
+      else:
+        tableview.selectionModel().select(index, QItemSelectionModel.Clear)
+
+      rect = tableview.visualRect(index)
+      
+      pixmap = QPixmap.grabWidget(tableview)
+      pixmap.save('%s_%s.png'%(test_case_name, state_name), 'PNG')
             
   def testPlainTextDelegate(self):
     delegate = self.delegates.PlainTextDelegate(parent=None,
