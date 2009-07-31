@@ -45,6 +45,8 @@ class FloatEditor(CustomEditor):
     layout.addWidget(self.spinBox)
     if editable:
       layout.addWidget(calculatorButton)
+    else:
+      self.spinBox.setEnabled(False)
 
     self.setFocusProxy(self.spinBox)
 
