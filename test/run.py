@@ -213,7 +213,9 @@ Test the basic functionality of the editors :
   def grab_widget(self, widget):
     import sys
     # any show method will work there, minimized is appropriate
-    widget.showMinimized()
+    widget.adjustSize()
+    #print widget.width(), widget.height()
+    #widget.showMinimized()
     pixmap = QPixmap.grabWidget(widget)
     test_case_name = sys._getframe(1).f_code.co_name[4:]
     pixmap.save('%s.png'%test_case_name, 'PNG')
@@ -416,7 +418,8 @@ class DelegateTest(unittest.TestCase):
       #
       #pixmap.save('%s_%s.png'%(test_case_name, state_name), 'PNG') 
 
-      tableview.showMinimized()
+      #tableview.showMinimized()
+      tableview.adjustSize()
       
       if state == QStyle.State_Selected:
         tableview.selectionModel().select(index, QItemSelectionModel.Select)
