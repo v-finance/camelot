@@ -87,7 +87,9 @@ class DateEditor(CustomEditor):
   def set_value(self, value):
     value = CustomEditor.set_value(self, value)
     if value:
-      self.qdateedit.setDate(value)
+      newDate = QtCore.QDate()
+      newDate.setDate(value.year, value.month, value.day)
+      self.qdateedit.setDate(newDate)
     else:
       self.qdateedit.setDate(self.minimumDate())
 
