@@ -115,6 +115,7 @@ actual data to the editor
                          create_delegate_updater(model))
     
   def newRow(self):
+    from camelot.view.workspace import get_workspace
     workspace = get_workspace()
 
     if self.create_inline:

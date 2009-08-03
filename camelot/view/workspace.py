@@ -29,7 +29,6 @@ class NoDesktopWorkspace(QtCore.QObject):
 
 
   def addSubWindow(self, widget, *args):
-    print 'add sub'
     self.widget = widget
     self.widget.setParent(None)
     self.widget.show()

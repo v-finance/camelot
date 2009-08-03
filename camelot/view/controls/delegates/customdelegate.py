@@ -51,6 +51,7 @@ class attribute specifies the editor class that should be used
 
   def commitAndCloseEditor(self):
     editor = self.sender()
+    #print "commitAndCloseEditor"
     self.emit(SIGNAL('commitData(QWidget*)'), editor)
     self.emit(SIGNAL('closeEditor(QWidget*)'), editor)
 
@@ -80,4 +81,6 @@ class attribute specifies the editor class that should be used
     editor.set_value(value)
 
   def setModelData(self, editor, model, index):
+    value = editor.get_value()
+    #print value, type(value)
     model.setData(index, create_constant_function(editor.get_value()))

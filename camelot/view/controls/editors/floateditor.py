@@ -10,7 +10,8 @@ class FloatEditor(CustomEditor):
                precision=2,
                minimum=camelot_minfloat,
                maximum=camelot_maxfloat,
-               editable=True):
+               editable=True,
+               **kwargs):
     CustomEditor.__init__(self, parent)
     action = QtGui.QAction(self)
     action.setShortcut(Qt.Key_F3)
@@ -75,7 +76,8 @@ class FloatEditor(CustomEditor):
 
   def calculationFinished(self, value):
     self.spinBox.setValue(float(value))
-    self.emit(QtCore.SIGNAL('editingFinished()'), value)
+    #print value
+    self.emit(QtCore.SIGNAL('editingFinished()'), float(value))
 
   def editingFinished(self, value):
-    self.emit(QtCore.SIGNAL('editingFinished()'), value)
+    self.emit(QtCore.SIGNAL('editingFinished()'), float(value))

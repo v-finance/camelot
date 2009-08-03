@@ -1,6 +1,7 @@
 
 from customeditor import *
 from camelot.view.art import Icon
+from math import floor
 
 class IntegerEditor(CustomEditor):
   """Widget for editing an integer field, with a calculator"""
@@ -71,7 +72,7 @@ class IntegerEditor(CustomEditor):
     calculator.exec_()
 
   def calculationFinished(self, value):
-    self.spinBox.setValue(float(value))
+    self.spinBox.setValue(floor(float(value)))
     self.emit(QtCore.SIGNAL('editingFinished()'), value)
 
   def editingFinished(self, value):

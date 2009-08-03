@@ -28,6 +28,3 @@ to the precision specified in the definition of the Field.
   def setEditorData(self, editor, index):
     value = index.model().data(index, Qt.EditRole).toDouble()[0]
     editor.set_value(value)
-
-  def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(editor.get_value()))

@@ -149,7 +149,7 @@ class ModelThread(threading.Thread):
         except:
           self.logger.error('unhandled exception in model thread')
     except Exception, e:
-      self.logger.error('exception caught in model thread', exc_info=e)
+      self.logger.error('1exception caught in model thread', exc_info=e)
     except:
       self.logger.error('unhandled exception')
 
