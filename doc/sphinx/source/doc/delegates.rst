@@ -46,9 +46,55 @@ on the sqlalchemy field type.
 Available delegates
 ===================
 
-All available delegates can be found in :file:`camelot.view.controls.delegates.py`
+All available delegates can be found in :mod:`camelot.view.controls.delegates`
 
-.. automodule:: camelot.view.controls.delegates
+.. automodule:: camelot.view.controls.delegates.delegatemanager
+   :members:
+.. automodule:: camelot.view.controls.delegates.booldelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.codedelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.colordelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.coloredfloatdelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.comboboxdelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.customdelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.datedelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.datetimedelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.filedelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.floatdelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.imagedelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.integerdelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.intervalsdelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.manytomanydelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.many2onedelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.one2manydelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.onetomanychoicesdelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.plaintextdelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.richtextdelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.stardelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.texteditdelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.timedelegate
+   :members:
+.. automodule:: camelot.view.controls.delegates.virtualaddressdelegate
    :members:
 
 Attributes common to most delegates
