@@ -29,6 +29,14 @@ not_editable_background = QtGui.QColor(235, 233, 237)
 # darkgray
 not_editable_foreground = QtGui.QColor(Qt.darkGray)
 
+
+def DocumentationMetaclass(name, bases, dct):
+    print dct['__doc__']
+    dct['__doc__'] = dct['__doc__'] + """
+    Images of a %s :
+    """%(name)
+    return type(name, bases, dct)
+  
 class CustomDelegate(QItemDelegate):
   """Base class for implementing custom delegates.
 

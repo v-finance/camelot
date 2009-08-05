@@ -4,6 +4,8 @@ from customdelegate import *
 class BoolDelegate(CustomDelegate):
   """Custom delegate for boolean values"""
 
+  __metaclass__ = DocumentationMetaclass
+  
   editor = editors.BoolEditor
 
   def paint(self, painter, option, index):
