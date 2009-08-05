@@ -8,7 +8,7 @@ import sys
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-           
+
 logger = logging.getLogger('view.unittests')
 
 def create_getter(getable):
@@ -212,13 +212,12 @@ Test the basic functionality of the editors :
   
   def grab_widget(self, widget, suffix='editable'):
     import sys
-    # any show method will work there, minimized is appropriate
     widget.adjustSize()
-    #print widget.width(), widget.height()
-    #widget.showMinimized()
     pixmap = QPixmap.grabWidget(widget)
+    # TODO checks if path exists
+    path_to_doc = '../doc/sphinx/source/_static/editors'
     test_case_name = sys._getframe(1).f_code.co_name[4:]
-    pixmap.save('%s_%s.png'%(test_case_name, suffix), 'PNG')
+    pixmap.save('%s/%s_%s.png'%(path_to_doc, test_case_name, suffix), 'PNG')
 
   def testDateEditor(self):
     import datetime
@@ -555,18 +554,29 @@ class DelegateTest(unittest.TestCase):
       #
       #pixmap.save('%s_%s.png'%(test_case_name, state_name), 'PNG') 
 
-      #tableview.showMinimized()
       tableview.adjustSize()
       
       if state == QStyle.State_Selected:
         tableview.selectionModel().select(index, QItemSelectionModel.Select)
       else:
         tableview.selectionModel().select(index, QItemSelectionModel.Clear)
-
-      rect = tableview.visualRect(index)
       
+      cell_size = tableview.visualRect(index).size()
+      
+      headers_size = QSize(tableview.verticalHeader().width(),
+                           tableview.horizontalHeader().height())
+      
+      extra_size = QSize(tableview.verticalScrollBar().width(),
+                         tableview.horizontalScrollBar().height())
+
+      tableview.resize(cell_size + headers_size + extra_size)
+
+      # TODO checks if path exists
+      path_to_doc = '../doc/sphinx/source/_static/delegates'
       pixmap = QPixmap.grabWidget(tableview)
-      pixmap.save('%s_%s_%s.png'%(test_case_name, state_name, suffix), 'PNG')
+      pixmap.save('%s/%s_%s_%s.png' % 
+                  (path_to_doc, test_case_name, state_name, suffix),
+                  'PNG')
             
   def testPlainTextDelegate(self):
     delegate = self.delegates.PlainTextDelegate(parent=None,
