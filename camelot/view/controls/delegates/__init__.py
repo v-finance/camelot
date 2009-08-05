@@ -31,3 +31,4 @@ from stardelegate import StarDelegate
 from texteditdelegate import TextEditDelegate
 from timedelegate import TimeDelegate
 from virtualaddressdelegate import VirtualAddressDelegate
+from smileydelegate import SmileyDelegate

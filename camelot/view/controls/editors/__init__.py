@@ -34,4 +34,5 @@ from stareditor import StarEditor
 from textlineeditor import TextLineEditor
 from timeeditor import TimeEditor
 from virtualaddresseditor import VirtualAddressEditor
+from smileyeditor import SmileyEditor
 

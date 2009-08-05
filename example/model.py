@@ -8,6 +8,7 @@ from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, ManyToM
                           Unicode, Date, Integer, using_options
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
+from camelot.view.controls import delegates
 
 __metadata__ = metadata
 
@@ -30,6 +31,7 @@ def burn_to_disk(o_getter):
 class Movie(Entity):
   using_options(tablename='movies')
   title = Field(Unicode(60), required=True)
+  smiley = Field(Unicode(30))
   short_description = Field(Unicode(512))
   releasedate = Field(Date)
   # 
@@ -74,6 +76,7 @@ class Movie(Entity):
         'short_description',
         'releasedate', 
         'director',
+        'smiley',
         'script', 
         'genre', 
         'description', 'tags'], scrollbars=True)),
@@ -89,7 +92,8 @@ class Movie(Entity):
     # field_attributes dictionary
     #
     field_attributes = dict(cast=dict(create_inline=True),
-                            genre=dict(choices=genre_choices),)
+                            genre=dict(choices=genre_choices),
+                            smiley=dict(delegate=delegates.SmileyDelegate))
 
   def __unicode__(self):
     return self.title or ''

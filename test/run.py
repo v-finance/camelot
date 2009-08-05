@@ -210,7 +210,7 @@ Test the basic functionality of the editors :
   from camelot.view.controls import editors
   from camelot.view.proxy import ValueLoading
   
-  def grab_widget(self, widget):
+  def grab_widget(self, widget, suffix='editable'):
     import sys
     # any show method will work there, minimized is appropriate
     widget.adjustSize()
@@ -218,7 +218,7 @@ Test the basic functionality of the editors :
     #widget.showMinimized()
     pixmap = QPixmap.grabWidget(widget)
     test_case_name = sys._getframe(1).f_code.co_name[4:]
-    pixmap.save('%s.png'%test_case_name, 'PNG')
+    pixmap.save('%s_%s.png'%(test_case_name, suffix), 'PNG')
 
   def testDateEditor(self):
     import datetime
@@ -231,12 +231,28 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.DateEditor(editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( None )
+    self.assertEqual( editor.get_value(), None )
+    editor.set_value( datetime.date(1980, 12, 31) )
+    self.grab_widget( editor, 'disabled' )
+    self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
     
   def testTextLineEditor(self):
     editor = self.editors.TextLineEditor(parent=None, length=10)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( u'za coś tam' )
     self.grab_widget( editor )
+    self.assertEqual( editor.get_value(), u'za coś tam' )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.TextLineEditor(parent=None, length=10, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( u'za coś tam' )
+    self.grab_widget( editor, 'disabled' )
     self.assertEqual( editor.get_value(), u'za coś tam' )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -249,12 +265,45 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), 4 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.StarEditor(parent=None, maximum=5, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 4 )
+    self.grab_widget( editor, 'disabled' )
+    self.assertEqual( editor.get_value(), 4 )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    
+  def testSmileyEditor(self):
+    editor = self.editors.SmileyEditor(parent=None)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 'face-devil-grin' )
+    self.grab_widget( editor )
+    self.assertEqual( editor.get_value(), 'face-devil-grin' )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.SmileyEditor(parent=None, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 'face-kiss' )
+    self.grab_widget( editor, 'disabled' )
+    self.assertEqual( editor.get_value(), 'face-kiss' )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+      
          
   def testBoolEditor(self):
     editor = self.editors.BoolEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( True )
     self.grab_widget( editor )
+    self.assertEqual( editor.get_value(), True )
+    editor.set_value( False )
+    self.assertEqual( editor.get_value(), False )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.BoolEditor(parent=None, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( True )
+    self.grab_widget( editor, 'disabled' )
     self.assertEqual( editor.get_value(), True )
     editor.set_value( False )
     self.assertEqual( editor.get_value(), False )
@@ -268,13 +317,27 @@ Test the basic functionality of the editors :
     self.grab_widget( editor )
     self.assertEqual( editor.get_value(), ['XYZ', '123'] )
     editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )     
+    self.assertEqual( editor.get_value(), self.ValueLoading ) 
+    editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'], editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( ['XYZ', '123'] )
+    self.grab_widget( editor, 'disabled' )
+    self.assertEqual( editor.get_value(), ['XYZ', '123'] )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )    
 
   def testColorEditor(self):
     editor = self.editors.ColorEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( (255, 200, 255, 255) )
     self.grab_widget( editor )
+    self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.ColorEditor(parent=None, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( (255, 200, 255, 255) )
+    self.grab_widget( editor, 'disabled' )
     self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -286,6 +349,15 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), 0.0 )    
     editor.set_value( 3.14 )
     self.grab_widget( editor )
+    self.assertEqual( editor.get_value(), 3.14 )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.ColoredFloatEditor(parent=None, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 0.0 )
+    self.assertEqual( editor.get_value(), 0.0 )    
+    editor.set_value( 3.14 )
+    self.grab_widget( editor,'disabled' )
     self.assertEqual( editor.get_value(), 3.14 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -301,12 +373,26 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), '2' )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.ChoicesEditor(parent=None, editable=False)
+    for i,(name,value) in enumerate([(u'A',1), (u'B',2), (u'C',3)]):
+      editor.insertItem(i, name, QtCore.QVariant(value))
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 2 )
+    self.grab_widget( editor, 'disabled' )
+    self.assertEqual( editor.get_value(), '2' )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
     
   def testFileEditor(self):
     editor = self.editors.FileEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( self.ValueLoading )
     self.grab_widget( editor )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.FileEditor(parent=None, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( self.ValueLoading )
+    self.grab_widget( editor, 'disabled' )
     self.assertEqual( editor.get_value(), self.ValueLoading )
     
   def testDateTimeEditor(self):
@@ -317,7 +403,14 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
     self.grab_widget( editor )
     editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )        
+    self.assertEqual( editor.get_value(), self.ValueLoading )    
+    editor = self.editors.DateTimeEditor(parent=None, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( (2009, 7, 19, 21, 5, 10, 0) )
+    self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
+    self.grab_widget( editor, 'disabled' )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )    
        
   def testFloatEditor(self):
     editor = self.editors.FloatEditor(parent=None, editable=True)
@@ -329,6 +422,15 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), 3.14 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.FloatEditor(parent=None, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 0.0 )
+    self.assertEqual( editor.get_value(), 0.0 )    
+    editor.set_value( 3.14 )
+    self.grab_widget( editor, 'disabled' )
+    self.assertEqual( editor.get_value(), 3.14 )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
     
   def testImageEditor(self):
     editor = self.editors.ImageEditor(parent=None, editable=True)
@@ -336,6 +438,11 @@ Test the basic functionality of the editors :
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
     self.grab_widget( editor )
+    editor = self.editors.ImageEditor(parent=None, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    self.grab_widget( editor, 'disabled' )
  
   def testIntegerEditor(self):
     editor = self.editors.IntegerEditor(parent=None, editable=True)
@@ -347,12 +454,28 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), 3 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.IntegerEditor(parent=None, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 0 )
+    self.assertEqual( editor.get_value(), 0 )    
+    editor.set_value( 3 )
+    self.grab_widget( editor, 'disabled' )
+    self.assertEqual( editor.get_value(), 3 )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
  
   def testRichTextEditor(self):
     editor = self.editors.RichTextEditor(parent=None)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( u'<h1>Rich Text Editor</h1>' )
     self.grab_widget( editor )
+    self.assertTrue( u'Rich Text Editor' in editor.get_value() )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.RichTextEditor(parent=None, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( u'<h1>Rich Text Editor</h1>' )
+    self.grab_widget( editor, 'disabled' )
     self.assertTrue( u'Rich Text Editor' in editor.get_value() )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -366,6 +489,13 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), datetime.time(21, 5, 0) )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor = self.editors.TimeEditor(parent=None, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( datetime.time(21, 5, 0) )
+    self.grab_widget( editor, 'disabled' )
+    self.assertEqual( editor.get_value(), datetime.time(21, 5, 0) )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )
     
   def testVirtualAddressEditor(self):
     editor = self.editors.VirtualAddressEditor(parent=None)
@@ -374,7 +504,14 @@ Test the basic functionality of the editors :
     self.grab_widget( editor )
     self.assertEqual( editor.get_value(),  ('email','project-camelot@conceptive.be') )
     editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )    
+    self.assertEqual( editor.get_value(), self.ValueLoading )  
+    editor = self.editors.VirtualAddressEditor(parent=None, editable=False)
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( ('email','project-camelot@conceptive.be') )
+    self.grab_widget( editor, 'disabled' )
+    self.assertEqual( editor.get_value(),  ('email','project-camelot@conceptive.be') )
+    editor.set_value( self.ValueLoading )
+    self.assertEqual( editor.get_value(), self.ValueLoading )  
                             
 class DelegateTest(unittest.TestCase):
   """Test the basic functionallity of the delegates :
@@ -389,7 +526,7 @@ class DelegateTest(unittest.TestCase):
   def setUp(self):
     self.kwargs = dict(editable=False)
 
-  def grab_delegate(self, delegate, data):
+  def grab_delegate(self, delegate, data, suffix='editable'):
     import sys
     
     model = QStandardItemModel(1, 1)
@@ -429,7 +566,7 @@ class DelegateTest(unittest.TestCase):
       rect = tableview.visualRect(index)
       
       pixmap = QPixmap.grabWidget(tableview)
-      pixmap.save('%s_%s.png'%(test_case_name, state_name), 'PNG')
+      pixmap.save('%s_%s_%s.png'%(test_case_name, state_name, suffix), 'PNG')
             
   def testPlainTextDelegate(self):
     delegate = self.delegates.PlainTextDelegate(parent=None,
@@ -438,6 +575,12 @@ class DelegateTest(unittest.TestCase):
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
     self.grab_delegate(delegate, 'Plain Text')
+    delegate = self.delegates.PlainTextDelegate(parent=None,
+                                                length=True,
+                                                editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
+    self.grab_delegate(delegate, 'Plain Text', 'disabled')
     
   def testTextEditDelegate(self):
     from PyQt4.QtGui import QTextEdit
@@ -445,39 +588,81 @@ class DelegateTest(unittest.TestCase):
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, QTextEdit))
     self.grab_delegate(delegate, 'Plain Text')
+    delegate = self.delegates.TextEditDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, QTextEdit))
+    self.grab_delegate(delegate, 'Plain Text', 'disabled')
 
   def testRichTextDelegate(self):
     delegate = self.delegates.RichTextDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.RichTextEditor))
     self.grab_delegate(delegate, '<b>Rich Text</b>')
+    delegate = self.delegates.RichTextDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.RichTextEditor))
+    self.grab_delegate(delegate, '<b>Rich Text</b>', 'disabled')
     
   def testBoolDelegate(self):
     delegate = self.delegates.BoolDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.BoolEditor))
     self.grab_delegate(delegate, True)
+    delegate = self.delegates.BoolDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.BoolEditor))
+    self.grab_delegate(delegate, True, 'disabled')
   
   def testDateDelegate(self):
+    from datetime import date
     delegate = self.delegates.DateDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.DateEditor))
+    date = date.today()
+    self.grab_delegate(delegate, date)
+    delegate = self.delegates.DateDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.DateEditor))
+    date = date.today()
+    self.grab_delegate(delegate, date, 'disabled')
+    #TODO  !!
 
   def testDateTimeDelegate(self):
+    from datetime import datetime
     delegate = self.delegates.DateTimeDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
+    datetime = datetime.now()
+    self.grab_delegate(delegate, datetime)
+    delegate = self.delegates.DateTimeDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
+    datetime = datetime.now()
+    self.grab_delegate(delegate, datetime, 'disabled')
+    
 
   def testTimeDelegate(self):
+    from time import localtime
     delegate = self.delegates.TimeDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.TimeEditor))
-
+    time = localtime()
+    self.grab_delegate(delegate, time)
+    delegate = self.delegates.TimeDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.TimeEditor))
+    time = localtime()
+    self.grab_delegate(delegate, time, 'disabled')
+    
   def testIntegerDelegate(self):
     delegate = self.delegates.IntegerDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
     self.grab_delegate(delegate, 3)
+    delegate = self.delegates.IntegerDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
+    self.grab_delegate(delegate, 3, 'disabled')
 
   def testFloatDelegate(self):
     from camelot.core.constants import camelot_minfloat, camelot_maxfloat
@@ -487,13 +672,22 @@ class DelegateTest(unittest.TestCase):
     self.assertEqual(delegate.minimum, camelot_minfloat)
     self.assertEqual(delegate.maximum, camelot_maxfloat)
     self.grab_delegate(delegate, 3.14)
+    delegate = self.delegates.FloatDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.FloatEditor))
+    self.assertEqual(delegate.minimum, camelot_minfloat)
+    self.assertEqual(delegate.maximum, camelot_maxfloat)
+    self.grab_delegate(delegate, 3.14, 'disabled')
 
   def testColoredFloatDelegate(self):
-    delegate = self.delegates.ColoredFloatDelegate(parent=None,
-                                                   **self.kwargs)
+    delegate = self.delegates.ColoredFloatDelegate(parent=None, editable=True)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
     self.grab_delegate(delegate, 3.14)
+    delegate = self.delegates.ColoredFloatDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
+    self.grab_delegate(delegate, 3.14, 'disabled')
   
   def testStarDelegate(self):
     delegate = self.delegates.StarDelegate(parent=None, **self.kwargs)
@@ -501,6 +695,21 @@ class DelegateTest(unittest.TestCase):
     self.assertTrue(delegate.maximum, 5)
     self.assertTrue(isinstance(editor, self.editors.StarEditor))
     self.grab_delegate(delegate, 5)
+    delegate = self.delegates.StarDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(delegate.maximum, 5)
+    self.assertTrue(isinstance(editor, self.editors.StarEditor))
+    self.grab_delegate(delegate, 5)
+    
+  def testSmileyDelegate(self):
+    delegate = self.delegates.SmileyDelegate(parent=None, **self.kwargs)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.SmileyEditor))
+    self.grab_delegate(delegate, 'face-glasses')
+    delegate = self.delegates.SmileyDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.SmileyEditor))
+    self.grab_delegate(delegate, 'face-glasses')
 
   def testFileDelegate(self):
     delegate = self.delegates.FileDelegate(parent=None, **self.kwargs)
@@ -511,11 +720,22 @@ class DelegateTest(unittest.TestCase):
     delegate = self.delegates.ColorDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.ColorEditor))
+    color = [255, 255, 0]
+    self.grab_delegate(delegate, color)
+    delegate = self.delegates.ColorDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.ColorEditor))
+    self.grab_delegate(delegate, color, 'disabled')
   
   def testCodeDelegate(self):
     delegate = self.delegates.CodeDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.CodeEditor))
+    self.grab_delegate(delegate, ['XYZ', '123'])
+    delegate = self.delegates.CodeDelegate(parent=None, editable=False)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.CodeEditor))
+    self.grab_delegate(delegate, ['XYZ', '123'], 'disabled')
   
   def testComboBoxDelegate(self):
     CHOICES = ('1', '2', '3')
