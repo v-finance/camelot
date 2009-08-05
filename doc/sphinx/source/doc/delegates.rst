@@ -90,6 +90,8 @@ All available delegates can be found in :mod:`camelot.view.controls.delegates`
    :members:
 .. automodule:: camelot.view.controls.delegates.stardelegate
    :members:
+.. automodule:: camelot.view.controls.delegates.smileydelegate
+   :members:
 .. automodule:: camelot.view.controls.delegates.texteditdelegate
    :members:
 .. automodule:: camelot.view.controls.delegates.timedelegate
