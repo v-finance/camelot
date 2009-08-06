@@ -7,15 +7,15 @@
 :Release: |version|
 :Date: |today|
 
-:term:`Delegates <delegate>` are a cornerstone of the Qt model/view framework.
-A delegate is used to display and edit data from a :term:`model`.
+`Delegates` are a cornerstone of the Qt model/view framework.  A delegate is
+used to display and edit data from a `model`.
 
-In the Camelot framework, every field of an :term:`Entity` has an associated
-delegate that specifies how the field will be displayed and edited.  When a new
-form or table is constructed, the delegates of all fields on the form or table
-will construct :term:`editors <editor>` for their fields and fill them with
-data from the model.  When the data has been edited in the form, the delegates
-will take care of updating the model with the new data.
+In the Camelot framework, every field of an `Entity` has an associated delegate
+that specifies how the field will be displayed and edited.  When a new form or
+table is constructed, the delegates of all fields on the form or table will
+construct `editors` for their fields and fill them with data from the model.
+When the data has been edited in the form, the delegates will take care of
+updating the model with the new data.
 
 All Camelot delegates are subclasses of :class:`QAbstractItemDelegate`.
 
@@ -23,8 +23,8 @@ Specifying delegates
 ====================
 
 The use of a specific delegate can be forced by using the ``delegate`` field
-attribute.  Suppose ``rating`` is a field of type :ctype:`integer`, then it
-can be forced to be visualized as stars::
+attribute.  Suppose ``rating`` is a field of type :ctype:`integer`, then it can
+be forced to be visualized as stars::
 
   from camelot.view.controls import delegates
   
@@ -40,8 +40,8 @@ The above code will result in:
 
 .. image:: ../_static/rating.png
 
-If no ``delegate`` field attribute is given, a default one will be taken depending
-on the sqlalchemy field type.
+If no `delegate` field attribute is given, a default one will be taken
+depending on the sqlalchemy field type.
 
 Available delegates
 ===================

@@ -48,6 +48,5 @@ Others:
    :maxdepth: 2
 
    Complete Table of Contents <contents.rst>
-   glossary.rst
    license.rst
    copyright.rst

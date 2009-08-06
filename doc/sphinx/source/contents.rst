@@ -10,6 +10,5 @@
    doc/index.rst
    advanced/index.rst
 
-   glossary.rst
    license.rst
    copyright.rst
