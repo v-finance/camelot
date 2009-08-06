@@ -523,7 +523,7 @@ class DelegateTest(unittest.TestCase):
   from camelot.view.controls import editors
     
   def setUp(self):
-    self.kwargs = dict(editable=False)
+    self.kwargs = dict(editable=True)
 
   def grab_delegate(self, delegate, data, suffix='editable'):
     import sys
@@ -581,7 +581,7 @@ class DelegateTest(unittest.TestCase):
   def testPlainTextDelegate(self):
     delegate = self.delegates.PlainTextDelegate(parent=None,
                                                 length=True,
-                                                **self.kwargs)
+                                                editable=True)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
     self.grab_delegate(delegate, 'Plain Text')
@@ -653,7 +653,7 @@ class DelegateTest(unittest.TestCase):
 
   def testTimeDelegate(self):
     from time import localtime
-    delegate = self.delegates.TimeDelegate(parent=None, **self.kwargs)
+    delegate = self.delegates.TimeDelegate(parent=None, editable=True)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.TimeEditor))
     time = localtime()
@@ -665,7 +665,7 @@ class DelegateTest(unittest.TestCase):
     self.grab_delegate(delegate, time, 'disabled')
     
   def testIntegerDelegate(self):
-    delegate = self.delegates.IntegerDelegate(parent=None, **self.kwargs)
+    delegate = self.delegates.IntegerDelegate(parent=None, editable=True)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
     self.grab_delegate(delegate, 3)
@@ -738,14 +738,14 @@ class DelegateTest(unittest.TestCase):
     self.grab_delegate(delegate, color, 'disabled')
   
   def testCodeDelegate(self):
-    delegate = self.delegates.CodeDelegate(parent=None, **self.kwargs)
+    delegate = self.delegates.CodeDelegate(parent=None, parts=['99','AA'], **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.CodeEditor))
-    self.grab_delegate(delegate, ['XYZ', '123'])
-    delegate = self.delegates.CodeDelegate(parent=None, editable=False)
+    self.grab_delegate(delegate, ['76','AB'])
+    delegate = self.delegates.CodeDelegate(parent=None, parts=['99','AA', '99', 'AA'], editable=False)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.CodeEditor))
-    self.grab_delegate(delegate, ['XYZ', '123'], 'disabled')
+    self.grab_delegate(delegate, ['76','AB', '12', '34'], 'disabled')
   
   def testComboBoxDelegate(self):
     CHOICES = ('1', '2', '3')

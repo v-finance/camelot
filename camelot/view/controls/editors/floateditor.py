@@ -18,6 +18,8 @@ class FloatEditor(CustomEditor):
     self.setFocusPolicy(Qt.StrongFocus)
     self.spinBox = QtGui.QDoubleSpinBox(parent)
     self.spinBox.setReadOnly(not editable)
+    self.spinBox.setEnabled(editable)
+    self.spinBox.setDisabled(not editable)
     self.spinBox.setRange(minimum, maximum)
     self.spinBox.setDecimals(precision)
     self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)

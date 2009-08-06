@@ -12,7 +12,7 @@ class ColorDelegate(CustomDelegate):
     painter.save()
     self.drawBackground(painter, option, index)
     if (option.state & QtGui.QStyle.State_Selected):
-      pass
+      painter.fillRect(option.rect, option.palette.highlight())
     elif not self.editable:
       painter.fillRect(option.rect, QtGui.QColor(not_editable_background))
     color = index.model().data(index, Qt.EditRole).toPyObject()
@@ -21,8 +21,12 @@ class ColorDelegate(CustomDelegate):
       qcolor = QtGui.QColor()
       qcolor.setRgb(*color)
       pixmap.fill(qcolor)
+      rect = QtCore.QRect(option.rect.left()+40,
+                        option.rect.top(),
+                        option.rect.width()-23,
+                        option.rect.height())
       QtGui.QApplication.style().drawItemPixmap(painter,
-                                                option.rect,
+                                                rect,
                                                 Qt.AlignVCenter,
                                                 pixmap)
     painter.restore()

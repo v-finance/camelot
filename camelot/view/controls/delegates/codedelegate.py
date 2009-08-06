@@ -8,6 +8,61 @@ class CodeDelegate(CustomDelegate):
   def __init__(self, parent=None, parts=[], **kwargs):
     CustomDelegate.__init__(self, parent=parent, parts=parts, **kwargs)
     self._dummy_editor = editors.CodeEditor(parent=None, parts=parts)
+    self.parts = parts
+    
+    
+
+
+  def paint(self, painter, option, index):
+    painter.save()
+    numParts = len(self.parts)
+    self.drawBackground(painter, option, index)
+    
+    
+    
+    if( option.state & QtGui.QStyle.State_Selected ):
+        painter.fillRect(option.rect, option.palette.highlight())
+        fontColor = QtGui.QColor()
+        fontColor.setRgb(255,255,255)
+    else:
+        fontColor = QtGui.QColor()
+        fontColor.setRgb(0,0,0)
+        
+    if not self.editable:
+        fontColor = QtGui.QColor()
+        fontColor.setRgb(130,130,130)
+    
+    rect = option.rect
+    rect = QtCore.QRect(rect.left()+3, rect.top()+6, rect.width(), rect.height()-3)
+    
+    
+    if numParts != 0:
+     
+
+      
+      
+      value = index.model().data(index, Qt.EditRole).toPyObject()
+      value = '.'.join(value)
+
+      digits = len(value)
+      
+      
+      painter.setPen(fontColor.toRgb())
+      
+      painter.drawText(rect.x(),
+                     rect.y()-4,
+                     rect.width()-6,
+                     #rect.width()-(int(digits)-(0.04*(int(digits)*int(digits)))),
+                     rect.height(),
+                     Qt.AlignVCenter | Qt.AlignRight,
+                     value)  
+      
+
+        
+      
+  
+    painter.restore()
+  
 
   def sizeHint(self, option, index):
     return self._dummy_editor.sizeHint() 

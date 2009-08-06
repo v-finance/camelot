@@ -13,6 +13,7 @@ class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):
     QtGui.QTimeEdit.__init__(self, parent)
     AbstractCustomEditor.__init__(self)
     self.setDisplayFormat(format)
+    self.setEnabled(editable)
     
   def set_value(self, value):
     value = AbstractCustomEditor.set_value(self, value)

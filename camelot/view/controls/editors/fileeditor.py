@@ -5,7 +5,7 @@ from camelot.view.art import Icon
 class FileEditor(CustomEditor):
   """Widget for editing File fields"""
   
-  def __init__(self, parent=None, storage=None, **kwargs):
+  def __init__(self, parent=None, storage=None, editable=True, **kwargs):
     CustomEditor.__init__(self, parent)
     self.storage = storage
     self.document_pixmap = Icon('tango/16x16/mimetypes/x-office-document.png').getQPixmap()
@@ -25,6 +25,7 @@ class FileEditor(CustomEditor):
     self.clear_button.setIcon(self.clear_icon)
     self.clear_button.setToolTip('Delete file')
     self.clear_button.setAutoRaise(True)
+    self.clear_button.setEnabled(editable)
     self.connect(self.clear_button,
                  QtCore.SIGNAL('clicked()'),
                  self.clearButtonClicked)
@@ -34,6 +35,7 @@ class FileEditor(CustomEditor):
     self.open_button.setFocusPolicy(Qt.ClickFocus)
     self.open_button.setIcon(self.new_icon)
     self.open_button.setToolTip('Add file')
+    self.open_button.setEnabled(editable)
     self.connect(self.open_button,
                  QtCore.SIGNAL('clicked()'),
                  self.openButtonClicked)
@@ -50,8 +52,8 @@ class FileEditor(CustomEditor):
     
     # Filename
     self.filename = QtGui.QLineEdit(self)
-    self.filename.setEnabled(False)
-    self.filename.setReadOnly(True)
+    self.filename.setEnabled(editable  )
+    self.filename.setReadOnly(not editable)
     
     # Setup layout
     document_label = QtGui.QLabel(self)

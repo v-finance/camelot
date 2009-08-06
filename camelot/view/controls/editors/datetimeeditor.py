@@ -42,7 +42,7 @@ class DateTimeEditor(CustomEditor):
         return (QtGui.QValidator.Acceptable, pos)
 
     self.timeedit = QtGui.QComboBox(self)
-    self.timeedit.setEditable(True)
+    self.timeedit.setEditable(editable)
     time_entries = [entry
                     for entry in itertools.chain(*(('%02i:00'%i, '%02i:30'%i)
                     for i in range(0,24)))]

@@ -43,6 +43,13 @@ positive and in red when they are negative.
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
     fontColor = QtGui.QColor()
+    
+    if( option.state & QtGui.QStyle.State_Selected ):
+        painter.fillRect(option.rect, option.palette.highlight())
+    else:
+        if not self.editable:
+          painter.fillRect(option.rect, option.palette.window())
+    
     if value >= 0:
       if value == 0:
         icon = Icon('tango/16x16/actions/zero.png').getQPixmap()
@@ -60,6 +67,12 @@ positive and in red when they are negative.
     value_str = str(value)
     if self.unicode_format != None:
         value_str = self.unicode_format(value)
+        
+        
+        
+    
+
+
 
     fontColor = fontColor.darker()
     painter.setPen(fontColor.toRgb())
