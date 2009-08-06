@@ -5,11 +5,14 @@ import logging
 import settings
 import unittest
 import sys
+import os
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 logger = logging.getLogger('view.unittests')
+
+static_images_path = os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinx', 'source', '_static')
 
 def create_getter(getable):
   
@@ -215,9 +218,11 @@ Test the basic functionality of the editors :
     widget.adjustSize()
     pixmap = QPixmap.grabWidget(widget)
     # TODO checks if path exists
-    path_to_doc = '../doc/sphinx/source/_static/editors'
+    editor_images_path = os.path.join(static_images_path, 'editors')
+    if not os.path.exists(editor_images_path):
+      os.makedirs(editor_images_path)
     test_case_name = sys._getframe(1).f_code.co_name[4:]
-    pixmap.save('%s/%s_%s.png'%(path_to_doc, test_case_name, suffix), 'PNG')
+    pixmap.save(os.path.join(editor_images_path, '%s_%s.png'%(test_case_name, suffix)), 'PNG')
 
   def testDateEditor(self):
     import datetime
@@ -538,22 +543,8 @@ class DelegateTest(unittest.TestCase):
     
     test_case_name = sys._getframe(1).f_code.co_name[4:]
     
-    for state_name, state in zip(('selected', 'none'), 
+    for state_name, state in zip(('selected', 'unselected'), 
                                  (QStyle.State_Selected, QStyle.State_None)):
-      #option = QStyleOptionViewItem()
-      #option.state = state
-      #
-      #pixmap = QPixmap(800, 600)
-      #pixmap.fill()
-      #painter = QPainter(pixmap)
-      #
-      #try:
-      #  delegate.paint(painter, option, index)
-      #finally:
-      #  painter.end()
-      #
-      #pixmap.save('%s_%s.png'%(test_case_name, state_name), 'PNG') 
-
       tableview.adjustSize()
       
       if state == QStyle.State_Selected:
@@ -572,10 +563,11 @@ class DelegateTest(unittest.TestCase):
       tableview.resize(cell_size + headers_size + extra_size)
 
       # TODO checks if path exists
-      path_to_doc = '../doc/sphinx/source/_static/delegates'
+      delegate_images_path = os.path.join(static_images_path, 'delegates')
+      if not os.path.exists(delegate_images_path):
+        os.makedirs(delegate_images_path)
       pixmap = QPixmap.grabWidget(tableview)
-      pixmap.save('%s/%s_%s_%s.png' % 
-                  (path_to_doc, test_case_name, state_name, suffix),
+      pixmap.save(os.path.join(delegate_images_path, '%s_%s_%s.png'%(test_case_name, state_name, suffix)),
                   'PNG')
             
   def testPlainTextDelegate(self):
@@ -766,7 +758,6 @@ class DelegateTest(unittest.TestCase):
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.VirtualAddressEditor))
 
-
 if __name__ == '__main__':
   logger.info('running unit tests')
   import sys
@@ -778,4 +769,4 @@ if __name__ == '__main__':
   editor_test =  unittest.makeSuite(DelegateTest, 'test')
   runner=unittest.TextTestRunner(verbosity=2)
   runner.run(editor_test)  
-  sys.exit()
+  #sys.exit()
