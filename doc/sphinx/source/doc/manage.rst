@@ -36,9 +36,9 @@ Command line options are:
 manage.py
 =========
 
-:program:`camelot_manage.py` is oriented towards administrators of an installed camelot
-project. It is used for interacting with and migration of the database to a
-certain schema revision.
+:program:`camelot_manage.py` is oriented towards administrators of an installed
+camelot project. It is used for interacting with and migration of the database
+to a certain schema revision.
 
 Available options are:
 
