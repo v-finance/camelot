@@ -48,8 +48,6 @@ Available delegates
 
 All available delegates can be found in :mod:`camelot.view.controls.delegates`
 
-.. automodule:: camelot.view.controls.delegates.delegatemanager
-   :members:
 .. automodule:: camelot.view.controls.delegates.booldelegate
    :members:
 .. automodule:: camelot.view.controls.delegates.codedelegate
@@ -59,8 +57,6 @@ All available delegates can be found in :mod:`camelot.view.controls.delegates`
 .. automodule:: camelot.view.controls.delegates.coloredfloatdelegate
    :members:
 .. automodule:: camelot.view.controls.delegates.comboboxdelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.customdelegate
    :members:
 .. automodule:: camelot.view.controls.delegates.datedelegate
    :members:
