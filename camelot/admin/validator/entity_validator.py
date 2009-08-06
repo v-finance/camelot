@@ -46,7 +46,8 @@ class EntityValidator(ObjectValidator):
     fields_and_attributes.update(dict(self.admin.getFields()))
     for field, attributes in fields_and_attributes.items():
       value = getattr(entity_instance, field)
-      if attributes['nullable']!=True:
+      #@todo: check if field is a primary key instead of checking wether the name is id
+      if attributes['nullable']!=True and field!='id':
         logger.debug('column %s is required'%(field))
         if 'delegate' not in attributes:
           raise Exception('no delegate specified for %s'%(field))

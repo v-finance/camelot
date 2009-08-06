@@ -7,7 +7,7 @@ import camelot.types
 
 class VirtualAddressEditor(CustomEditor):
   
-  def __init__(self, parent=None, editable=True):
+  def __init__(self, parent=None, editable=True, **kwargs):
     CustomEditor.__init__(self, parent)
     self.layout = QtGui.QHBoxLayout()
     self.layout.setMargin(0)

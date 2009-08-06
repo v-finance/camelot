@@ -163,6 +163,7 @@ the relation
         selected = select_subclass.exec_()
         admin = select_subclass.selected_subclass
       if selected:
+        from camelot.view.workspace import get_workspace
         workspace = get_workspace()
         form = admin.create_new_view(workspace)
         workspace.addSubWindow(form)

@@ -43,12 +43,8 @@ class CodeDelegate(CustomDelegate):
     
     
     if numParts != 0:
-     
-
-      
-      
-      value = index.model().data(index, Qt.EditRole).toPyObject()
-      value = '.'.join(value)
+      value = index.model().data(index, Qt.EditRole).toPyObject() or []
+      value = '.'.join([unicode(i) for i in value])
 
       digits = len(value)
       

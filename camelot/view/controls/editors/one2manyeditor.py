@@ -153,6 +153,7 @@ actual data to the editor
 
   def createFormForIndex(self, index):
     from camelot.view.proxy.collection_proxy import CollectionProxy
+    from camelot.view.workspace import get_workspace
     model = CollectionProxy(self.admin,
                             self.model.collection_getter,
                             self.admin.getFields,
