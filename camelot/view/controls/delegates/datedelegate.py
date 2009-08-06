@@ -31,18 +31,20 @@ class DateDelegate(CustomDelegate):
     if( option.state & QtGui.QStyle.State_Selected ):
         painter.fillRect(option.rect, option.palette.highlight())
         fontColor = QtGui.QColor()
-        Color = option.palette.highlightedText().color()
-        fontColor.setRgb(Color.red(), Color.green(), Color.blue())
+        if self.editable:
+          Color = option.palette.highlightedText().color()
+          fontColor.setRgb(Color.red(), Color.green(), Color.blue())
+        else:
+          fontColor.setRgb(130,130,130)
     else:
-        fontColor = QtGui.QColor()
-        fontColor.setRgb(0,0,0)
+        if self.editable:
+          fontColor = QtGui.QColor()
+          fontColor.setRgb(0,0,0)
+        else:
+          painter.fillRect(option.rect, option.palette.window())
+          fontColor = QtGui.QColor()
+          fontColor.setRgb(130,130,130)
         
-        
-    
-    
-    if not self.editable:
-        fontColor = QtGui.QColor()
-        fontColor.setRgb(130,130,130)
         
     painter.setPen(fontColor.toRgb())
     rect = QtCore.QRect(option.rect.left()+23,

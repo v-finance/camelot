@@ -49,10 +49,19 @@ to the precision specified in the definition of the Field.
     if( option.state & QtGui.QStyle.State_Selected ):
         painter.fillRect(option.rect, option.palette.highlight())
         fontColor = QtGui.QColor()
-        fontColor.setRgb(255,255,255)
+        if self.editable:
+          Color = option.palette.highlightedText().color()
+          fontColor.setRgb(Color.red(), Color.green(), Color.blue())
+        else:
+          fontColor.setRgb(130,130,130)
     else:
-        fontColor = QtGui.QColor()
-        fontColor.setRgb(0,0,0)
+        if self.editable:
+          fontColor = QtGui.QColor()
+          fontColor.setRgb(0,0,0)
+        else:
+          painter.fillRect(option.rect, option.palette.window())
+          fontColor = QtGui.QColor()
+          fontColor.setRgb(130,130,130)
     
 
     value_str = str(value)
@@ -61,9 +70,7 @@ to the precision specified in the definition of the Field.
 
     #fontColor = fontColor.darker()
     
-    if not self.editable:
-        fontColor = QtGui.QColor()
-        fontColor.setRgb(130,130,130)
+
 
     painter.setPen(fontColor.toRgb())
     rect = QtCore.QRect(option.rect.left()+23,
