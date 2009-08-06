@@ -5,6 +5,8 @@ from camelot.core.constants import *
 class FloatDelegate(CustomDelegate):
   """Custom delegate for float values"""
 
+  __metaclass__ = DocumentationMetaclass
+  
   editor = editors.FloatEditor
   
   def __init__(self,

@@ -3,6 +3,8 @@ from customdelegate import *
 
 class CodeDelegate(CustomDelegate):
   
+  __metaclass__ = DocumentationMetaclass
+    
   editor = editors.CodeEditor
   
   def __init__(self, parent=None, parts=[], **kwargs):

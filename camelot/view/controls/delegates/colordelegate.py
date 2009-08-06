@@ -2,10 +2,9 @@
 from customdelegate import *
 
 class ColorDelegate(CustomDelegate):
-  """
-.. image:: ../_static/color.png
-"""
-
+  
+  __metaclass__ = DocumentationMetaclass
+  
   editor = editors.ColorEditor
   
   def paint(self, painter, option, index):

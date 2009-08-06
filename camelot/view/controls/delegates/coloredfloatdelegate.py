@@ -7,6 +7,8 @@ class ColoredFloatDelegate(CustomDelegate):
 positive and in red when they are negative.
 """
 
+  __metaclass__ = DocumentationMetaclass
+  
   editor = editors.ColoredFloatEditor
   
   def __init__(self,

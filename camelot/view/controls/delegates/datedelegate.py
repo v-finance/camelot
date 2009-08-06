@@ -4,6 +4,8 @@ from customdelegate import *
 class DateDelegate(CustomDelegate):
   """Custom delegate for date values"""
 
+  __metaclass__ = DocumentationMetaclass
+  
   editor = editors.DateEditor
   
   

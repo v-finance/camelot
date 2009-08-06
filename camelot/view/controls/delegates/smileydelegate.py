@@ -3,10 +3,10 @@ from camelot.view.art import Icon
 
 class SmileyDelegate(CustomDelegate):
   """Delegate for Smiley's
-
-
 """
 
+  __metaclass__ = DocumentationMetaclass
+  
   editor = editors.SmileyEditor
 
   def __init__(self, parent, editable=True,  **kwargs):

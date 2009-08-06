@@ -5,10 +5,9 @@ from camelot.core.constants import *
 class IntegerDelegate(CustomDelegate):
   """Custom delegate for integer values"""
 
+  __metaclass__ = DocumentationMetaclass
+  
   editor = editors.IntegerEditor
-
-
-
 
   def __init__(self,
                minimum=camelot_minint,

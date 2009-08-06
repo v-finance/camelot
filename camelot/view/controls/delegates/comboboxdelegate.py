@@ -2,9 +2,8 @@
 from customdelegate import *
 
 class ComboBoxDelegate(CustomDelegate):
-  """
-.. image:: ../_static/enumeration.png 
-"""
+  
+  __metaclass__ = DocumentationMetaclass
 
   editor = editors.ChoicesEditor
   

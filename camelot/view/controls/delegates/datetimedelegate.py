@@ -3,6 +3,8 @@ from customdelegate import *
 
 class DateTimeDelegate(CustomDelegate):
   
+  __metaclass__ = DocumentationMetaclass
+  
   editor = editors.DateTimeEditor
   
   def __init__(self, parent, editable, **kwargs):

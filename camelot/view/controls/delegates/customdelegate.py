@@ -32,12 +32,12 @@ not_editable_foreground = QtGui.QColor(Qt.darkGray)
 
 def DocumentationMetaclass(name, bases, dct):
     #print dct['__doc__']
-    dct['__doc__'] = dct['__doc__'] + """
+    dct['__doc__'] = dct.get('__doc__','') + """
 
-.. image:: /_static/delegates/%s_none_disabled.png
-.. image:: /_static/delegates/%s_none_editable.png
-.. image:: /_static/delegates/%s_selected_disabled.png
-.. image:: /_static/delegates/%s_selected_editable.png
+.. image:: ../_static/delegates/%s_unselected_disabled.png
+.. image:: ../_static/delegates/%s_unselected_editable.png
+.. image:: ../_static/delegates/%s_selected_disabled.png
+.. image:: ../_static/delegates/%s_selected_editable.png
 """%(name, name, name, name)
     return type(name, bases, dct)
   
