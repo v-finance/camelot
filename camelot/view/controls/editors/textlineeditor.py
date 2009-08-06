@@ -3,7 +3,7 @@ from customeditor import *
 
 class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
 
-  def __init__(self, parent, length, editable=True, **kwargs):
+  def __init__(self, parent, length=20, editable=True, **kwargs):
     QtGui.QLineEdit.__init__(self, parent)
     AbstractCustomEditor.__init__(self)
     if length:

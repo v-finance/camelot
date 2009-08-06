@@ -580,13 +580,13 @@ class DelegateTest(unittest.TestCase):
             
   def testPlainTextDelegate(self):
     delegate = self.delegates.PlainTextDelegate(parent=None,
-                                                length=True,
+                                                length=20,
                                                 editable=True)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
     self.grab_delegate(delegate, 'Plain Text')
     delegate = self.delegates.PlainTextDelegate(parent=None,
-                                                length=True,
+                                                length=20,
                                                 editable=False)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
