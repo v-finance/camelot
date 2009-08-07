@@ -32,7 +32,6 @@ class Movie(Entity):
   using_options(tablename='movies')
   title = Field(Unicode(60), required=True)
   smiley = Field(Unicode(30))
-  boolveld = Field(Boolean)
   short_description = Field(Unicode(512))
   releasedate = Field(Date)
   # 
@@ -78,7 +77,6 @@ class Movie(Entity):
         'releasedate', 
         'director',
         'smiley',
-        'boolveld',
         'script', 
         'genre', 
         'description', 'tags'], scrollbars=True)),
@@ -95,8 +93,7 @@ class Movie(Entity):
     #
     field_attributes = dict(cast=dict(create_inline=True),
                             genre=dict(choices=genre_choices),
-                            smiley=dict(delegate=delegates.SmileyDelegate),
-                            boolveld=dict(delegate=delegates.BoolDelegate))
+                            smiley=dict(delegate=delegates.SmileyDelegate))
 
   def __unicode__(self):
     return self.title or ''

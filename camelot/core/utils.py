@@ -32,7 +32,9 @@ def create_constant_function(constant):
 
 
 def variant_to_pyobject(qvariant=None, index=None):
-    from PyQt4 import QtCore, QtGui, Qt
+    from PyQt4 import QtCore, QtGui
+    from PyQt4.QtCore import Qt
+    from datetime import datetime
     if not qvariant:
         return None
     if not index:
