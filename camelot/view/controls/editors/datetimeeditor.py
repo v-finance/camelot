@@ -7,7 +7,7 @@ class DateTimeEditor(CustomEditor):
 
   def __init__(self,
                parent,
-               editable,
+               editable=True,
                format=camelot_datetime_format,
                nullable=True,
                **kwargs):
@@ -17,6 +17,7 @@ class DateTimeEditor(CustomEditor):
     dateformat, timeformat = format.split(' ')
     layout = QtGui.QHBoxLayout()
     self.dateedit = QtGui.QDateEdit(self)
+    self.dateedit.setEnabled(editable)
     self.dateedit.setDisplayFormat(dateformat)
     self.dateedit.setCalendarPopup(True)
     layout.addWidget(self.dateedit)
@@ -42,7 +43,8 @@ class DateTimeEditor(CustomEditor):
         return (QtGui.QValidator.Acceptable, pos)
 
     self.timeedit = QtGui.QComboBox(self)
-    self.timeedit.setEditable(editable)
+    self.timeedit.setEditable(True)
+    self.timeedit.setEnabled(editable)
     time_entries = [entry
                     for entry in itertools.chain(*(('%02i:00'%i, '%02i:30'%i)
                     for i in range(0,24)))]
@@ -100,7 +102,7 @@ class DateTimeEditor(CustomEditor):
     return self.dateedit.date()
 
   def time(self):
-    text = str(self.timeedit.lineEdit().text())
+    text = str(self.timeedit.currentText())
     if text=='--:--':
       return None
     parts = text.split(':')

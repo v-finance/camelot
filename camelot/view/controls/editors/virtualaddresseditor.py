@@ -13,8 +13,10 @@ class VirtualAddressEditor(CustomEditor):
     self.layout.setMargin(0)
     self.combo = QtGui.QComboBox()
     self.combo.addItems(camelot.types.VirtualAddress.virtual_address_types)
+    self.combo.setEnabled(editable)
     self.layout.addWidget(self.combo)
     self.editor = QtGui.QLineEdit()
+    self.editor.setEnabled(editable)
     self.layout.addWidget(self.editor)
 #    if virtual_adress[0] == 'email':
 #      icon = Icon('tango/16x16/apps/internet-mail.png').getQPixmap()
