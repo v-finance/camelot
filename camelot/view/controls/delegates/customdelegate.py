@@ -3,6 +3,7 @@ try:
   from PyQt4 import QtGui, QtCore
   from PyQt4.QtCore import Qt, SIGNAL
   from PyQt4.QtGui import QItemDelegate
+  from camelot.core.utils import VarianttoPyobject
   
   from camelot.view.controls import editors
 except ImportError:
@@ -74,27 +75,31 @@ class attribute specifies the editor class that should be used
     # version of pyqt that is being used, we'll try to circumvent most problems
     # here and always return nice python objects.
     #
-    type = qvariant.type()
-    if type == QtCore.QVariant.String:
-      value = unicode(qvariant.toString())
-    elif type == QtCore.QVariant.Date:
-      value = qvariant.toDate()
-      value = datetime.date(year=value.year(),
-                            month=value.month(),
-                            day=value.day())
-    elif type == QtCore.QVariant.Int:
-      value = int(qvariant.toInt()[0])
-    elif type == QtCore.QVariant.Double:
-      value = float(qvariant.toDouble()[0])
-    elif type == QtCore.QVariant.Bool:
-      value = bool(qvariant.toBool())
-    elif type == QtCore.QVariant.Time:
-        value = qvariant.toTime()
-        value = datetime.time(hour = value.hour(),
-                              minute = value.minute(),
-                              second = value.second())
-    else:
-      value = index.model().data(index, Qt.EditRole).toPyObject()
+#    type = qvariant.type()
+#    if type == QtCore.QVariant.String:
+#      value = unicode(qvariant.toString())
+#    elif type == QtCore.QVariant.Date:
+#      value = qvariant.toDate()
+#      value = datetime.date(year=value.year(),
+#                            month=value.month(),
+#                            day=value.day())
+#    elif type == QtCore.QVariant.Int:
+#      value = int(qvariant.toInt()[0])
+#    elif type == QtCore.QVariant.Double:
+#      value = float(qvariant.toDouble()[0])
+#    elif type == QtCore.QVariant.Bool:
+#      value = bool(qvariant.toBool())
+#    elif type == QtCore.QVariant.Time:
+#        value = qvariant.toTime()
+#        value = datetime.time(hour = value.hour(),
+#                              minute = value.minute(),
+#                              second = value.second())
+#    else:
+#      value = index.model().data(index, Qt.EditRole).toPyObject()
+      
+      
+    value = VarianttoPyobject(qvariant)
+      
     editor.set_value(value)
 
   def setModelData(self, editor, model, index):

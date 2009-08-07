@@ -29,3 +29,34 @@
 
 def create_constant_function(constant):
   return lambda:constant
+
+
+def variant_to_pyobject(qvariant=None):
+    if not qvariant:
+        return None
+    
+    type = qvariant.type()
+    if type == QtCore.QVariant.String:
+      value = unicode(qvariant.toString())
+    elif type == QtCore.QVariant.Date:
+      value = qvariant.toDate()
+      value = datetime.date(year=value.year(),
+                            month=value.month(),
+                            day=value.day())
+    elif type == QtCore.QVariant.Int:
+      value = int(qvariant.toInt()[0])
+    elif type == QtCore.QVariant.Double:
+      value = float(qvariant.toDouble()[0])
+    elif type == QtCore.QVariant.Bool:
+      value = bool(qvariant.toBool())
+    elif type == QtCore.QVariant.Time:
+        value = qvariant.toTime()
+        value = datetime.time(hour = value.hour(),
+                              minute = value.minute(),
+                              second = value.second())
+    else:
+      value = index.model().data(index, Qt.EditRole).toPyObject()
+      
+    
+    return value
+
