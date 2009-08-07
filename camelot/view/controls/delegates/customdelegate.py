@@ -98,7 +98,7 @@ class attribute specifies the editor class that should be used
 #      value = index.model().data(index, Qt.EditRole).toPyObject()
       
       
-    value = variant_to_pyobject(qvariant, index)
+    value = variant_to_pyobject(qvariant)
       
     editor.set_value(value)
 

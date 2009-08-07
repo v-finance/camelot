@@ -31,13 +31,11 @@ def create_constant_function(constant):
   return lambda:constant
 
 
-def variant_to_pyobject(qvariant=None, index=None):
+def variant_to_pyobject(qvariant=None):
     from PyQt4 import QtCore, QtGui
     from PyQt4.QtCore import Qt
     import datetime
     if not qvariant:
-        return None
-    if not index:
         return None
     
     type = qvariant.type()
@@ -60,7 +58,7 @@ def variant_to_pyobject(qvariant=None, index=None):
                               minute = value.minute(),
                               second = value.second())
     else:
-      value = index.model().data(index, Qt.EditRole).toPyObject()
+      value = qvariant.toPyObject()
       
     
     return value
