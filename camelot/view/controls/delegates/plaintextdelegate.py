@@ -18,15 +18,14 @@ class PlainTextDelegate(CustomDelegate):
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
-    
-    text = index.model().data(index, Qt.EditRole).toString()
-    
-    
+
+    text = unicode(variant_to_pyobject(index.model().data(index, Qt.EditRole)))
+
     editor = editors.TextLineEditor(None, self.length, self.editable)     
-      
+
     rect = option.rect
     rect = QtCore.QRect(rect.left(), rect.top(), rect.width(), rect.height())  
-      
+
     if( option.state & QtGui.QStyle.State_Selected ):
         painter.fillRect(option.rect, option.palette.highlight())
         fontColor = QtGui.QColor()

@@ -33,16 +33,10 @@ to the precision specified in the definition of the Field.
     self.prefix = prefix
     self.suffix = suffix
 
-  def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.EditRole).toDouble()[0]
-    editor.set_value(value)
-
-
-
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
-    value = index.model().data(index, Qt.EditRole).toDouble()[0]
+    value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
     editor = editors.FloatEditor(parent=None,
                                  minimum=self.minimum,
                                  maximum=self.maximum,
