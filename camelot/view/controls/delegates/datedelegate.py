@@ -22,7 +22,11 @@ class DateDelegate(CustomDelegate):
     painter.save()
     self.drawBackground(painter, option, index)
     
-    formattedDate = QtCore.QDate(variant_to_pyobject(index.model().data(index, Qt.EditRole))).toString(self.date_format)
+    dateObj = variant_to_pyobject(index.model().data(index, Qt.EditRole))
+    if dateObj and dateObj != camelot.view.proxy.ValueLoading:
+      formattedDate = QtCore.QDate(dateObj).toString(self.date_format)
+    else:
+      formattedDate = ""
 
     editor = editors.DateEditor( None, 
                                  self.editable )
