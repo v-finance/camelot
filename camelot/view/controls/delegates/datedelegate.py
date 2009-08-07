@@ -22,8 +22,8 @@ class DateDelegate(CustomDelegate):
     painter.save()
     self.drawBackground(painter, option, index)
     
-    formattedDate = index.model().data(index, Qt.EditRole).toDate().toString(self.date_format)
-    
+    formattedDate = QtCore.QDate(variant_to_pyobject(index.model().data(index, Qt.EditRole))).toString(self.date_format)
+
     editor = editors.DateEditor( None, 
                                  self.editable )
     
