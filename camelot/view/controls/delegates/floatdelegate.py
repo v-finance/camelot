@@ -16,6 +16,8 @@ class FloatDelegate(CustomDelegate):
                editable=True,
                parent=None,
                unicode_format = None,
+               prefix = '',
+               suffix = '',
                **kwargs):
     """
 :param precision:  The number of digits after the decimal point displayed.  This defaults
@@ -28,6 +30,8 @@ to the precision specified in the definition of the Field.
     self.precision = precision
     self.editable = editable
     self.unicode_format = unicode_format
+    self.prefix = prefix
+    self.suffix = suffix
 
   def setEditorData(self, editor, index):
     value = index.model().data(index, Qt.EditRole).toDouble()[0]
@@ -40,10 +44,12 @@ to the precision specified in the definition of the Field.
     self.drawBackground(painter, option, index)
     value = index.model().data(index, Qt.EditRole).toDouble()[0]
     editor = editors.FloatEditor(parent=None,
-                                        minimum=self.minimum,
-                                        maximum=self.maximum,
-                                        precision=self.precision,
-                                        editable=self.editable)
+                                 minimum=self.minimum,
+                                 maximum=self.maximum,
+                                 precision=self.precision,
+                                 editable=self.editable,
+                                 prefix=self.prefix,
+                                 suffix=self.suffix)
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
     #fontColor = QtGui.QColor()
@@ -66,7 +72,16 @@ to the precision specified in the definition of the Field.
           fontColor.setRgb(130,130,130)
     
 
-    value_str = str(value)
+    value_str = '%.*f'%(self.precision, value)
+    
+    
+    
+    
+    value_str = str(self.prefix) + ' ' + str(value_str) + ' ' + str(self.suffix)
+    
+    value_str = value_str.strip()
+    
+    #value_str = str(value)
     if self.unicode_format != None:
         value_str = self.unicode_format(value)
 
@@ -84,5 +99,5 @@ to the precision specified in the definition of the Field.
                      rect.width()-4,
                      rect.height(),
                      Qt.AlignVCenter | Qt.AlignRight,
-                     value_str)
+                     str(value_str))
     painter.restore()

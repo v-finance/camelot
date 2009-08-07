@@ -35,4 +35,5 @@ from textlineeditor import TextLineEditor
 from timeeditor import TimeEditor
 from virtualaddresseditor import VirtualAddressEditor
 from smileyeditor import SmileyEditor
+from textediteditor import TextEditEditor
 

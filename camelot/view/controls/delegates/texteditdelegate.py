@@ -1,20 +1,58 @@
 
 from customdelegate import *
 
-class TextEditDelegate(QItemDelegate):
-  """Edit plain text with a QTextEdit widget"""
+
+class TextEditDelegate(CustomDelegate):
+  """Custom delegate for simple string values"""
+
+  editor = editors.TextEditEditor
+  
   
   def __init__(self, parent=None, editable=True, **kwargs):
-    QItemDelegate.__init__(self, parent)
-    self.editable = editable
+    CustomDelegate.__init__(self, parent, editable)
     
-  def createEditor(self, parent, option, index):
-    editor = QtGui.QTextEdit(parent)
-    return editor
+    self.editable = editable
 
-  def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.EditRole).toString()
-    editor.setText(value)
 
-  def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(unicode(editor.toPlainText())))
+  def paint(self, painter, option, index):
+    painter.save()
+    self.drawBackground(painter, option, index)
+    
+    text = index.model().data(index, Qt.EditRole).toString()
+    
+    
+    editor = editors.TextLineEditor(None, self.editable)     
+      
+    rect = option.rect
+    rect = QtCore.QRect(rect.left(), rect.top(), rect.width(), rect.height())  
+      
+    if( option.state & QtGui.QStyle.State_Selected ):
+        painter.fillRect(option.rect, option.palette.highlight())
+        fontColor = QtGui.QColor()
+        if self.editable:         
+          Color = option.palette.highlightedText().color()
+          fontColor.setRgb(Color.red(), Color.green(), Color.blue())
+        else:          
+          fontColor.setRgb(130,130,130)
+    else:
+        if self.editable:
+          fontColor = QtGui.QColor()
+          fontColor.setRgb(0,0,0)
+        else:
+          painter.fillRect(option.rect, option.palette.window())
+          fontColor = QtGui.QColor()
+          fontColor.setRgb(130,130,130)
+        
+        
+    painter.setPen(fontColor.toRgb())
+    rect = QtCore.QRect(option.rect.left(),
+                        option.rect.top(),
+                        option.rect.width(),
+                        option.rect.height())
+    painter.drawText(rect.x(),
+                     rect.y(),
+                     rect.width(),
+                     rect.height(),
+                     Qt.AlignVCenter | Qt.AlignLeft,
+                     text)
+    painter.restore()

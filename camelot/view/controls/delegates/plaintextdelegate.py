@@ -30,10 +30,10 @@ class PlainTextDelegate(CustomDelegate):
     if( option.state & QtGui.QStyle.State_Selected ):
         painter.fillRect(option.rect, option.palette.highlight())
         fontColor = QtGui.QColor()
-        if self.editable:
+        if self.editable:         
           Color = option.palette.highlightedText().color()
           fontColor.setRgb(Color.red(), Color.green(), Color.blue())
-        else:
+        else:          
           fontColor.setRgb(130,130,130)
     else:
         if self.editable:

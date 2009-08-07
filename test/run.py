@@ -644,16 +644,16 @@ class DelegateTest(unittest.TestCase):
     
 
   def testTimeDelegate(self):
-    from time import localtime
+    from datetime import time
     delegate = self.delegates.TimeDelegate(parent=None, editable=True)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.TimeEditor))
-    time = localtime()
+    time = time(10, 30, 15)
     self.grab_delegate(delegate, time)
     delegate = self.delegates.TimeDelegate(parent=None, editable=False)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.TimeEditor))
-    time = localtime()
+    #time = time(10, 30, 15)
     self.grab_delegate(delegate, time, 'disabled')
     
   def testIntegerDelegate(self):
@@ -668,18 +668,18 @@ class DelegateTest(unittest.TestCase):
 
   def testFloatDelegate(self):
     from camelot.core.constants import camelot_minfloat, camelot_maxfloat
-    delegate = self.delegates.FloatDelegate(parent=None, **self.kwargs)
+    delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.FloatEditor))
     self.assertEqual(delegate.minimum, camelot_minfloat)
     self.assertEqual(delegate.maximum, camelot_maxfloat)
-    self.grab_delegate(delegate, 3.14)
-    delegate = self.delegates.FloatDelegate(parent=None, editable=False)
+    self.grab_delegate(delegate, 3.145)
+    delegate = self.delegates.FloatDelegate(parent=None, prefix='prefix', editable=False)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.FloatEditor))
     self.assertEqual(delegate.minimum, camelot_minfloat)
     self.assertEqual(delegate.maximum, camelot_maxfloat)
-    self.grab_delegate(delegate, 3.14, 'disabled')
+    self.grab_delegate(delegate, 3.1, 'disabled')
 
   def testColoredFloatDelegate(self):
     delegate = self.delegates.ColoredFloatDelegate(parent=None, editable=True)

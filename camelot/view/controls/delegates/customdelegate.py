@@ -88,6 +88,11 @@ class attribute specifies the editor class that should be used
       value = float(qvariant.toDouble()[0])
     elif type == QtCore.QVariant.Bool:
       value = bool(qvariant.toBool())
+    elif type == QtCore.QVariant.Time:
+        value = qvariant.toTime()
+        value = datetime.time(hour = value.hour(),
+                              minute = value.minute(),
+                              second = value.second())
     else:
       value = index.model().data(index, Qt.EditRole).toPyObject()
     editor.set_value(value)

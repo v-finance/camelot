@@ -11,6 +11,8 @@ class FloatEditor(CustomEditor):
                minimum=camelot_minfloat,
                maximum=camelot_maxfloat,
                editable=True,
+               prefix='',
+               suffix='',
                **kwargs):
     CustomEditor.__init__(self, parent)
     action = QtGui.QAction(self)
