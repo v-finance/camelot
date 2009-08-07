@@ -701,7 +701,7 @@ class DelegateTest(unittest.TestCase):
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(delegate.maximum, 5)
     self.assertTrue(isinstance(editor, self.editors.StarEditor))
-    self.grab_delegate(delegate, 5)
+    self.grab_delegate(delegate, 5, 'disabled')
     
   def testSmileyDelegate(self):
     delegate = self.delegates.SmileyDelegate(parent=None, **self.kwargs)
@@ -711,7 +711,7 @@ class DelegateTest(unittest.TestCase):
     delegate = self.delegates.SmileyDelegate(parent=None, editable=False)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.SmileyEditor))
-    self.grab_delegate(delegate, 'face-glasses')
+    self.grab_delegate(delegate, 'face-glasses', 'disabled')
 
   def testFileDelegate(self):
     delegate = self.delegates.FileDelegate(parent=None, **self.kwargs)

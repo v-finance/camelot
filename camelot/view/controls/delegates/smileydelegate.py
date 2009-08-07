@@ -31,6 +31,13 @@ class SmileyDelegate(CustomDelegate):
     editor = editors.SmileyEditor(parent=None, img=img, editable=self.editable)
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, rect.width()-5, rect.height())
+    
+    if( option.state & QtGui.QStyle.State_Selected ):
+        painter.fillRect(option.rect, option.palette.highlight())
+    else:
+        if not self.editable:
+          painter.fillRect(option.rect, option.palette.window())
+    
     icon = Icon(imgPath).getQPixmap()
     QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
     rect = QtCore.QRect(rect.left()+20, rect.top(), rect.width(), rect.height())
