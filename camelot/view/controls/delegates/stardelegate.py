@@ -25,6 +25,13 @@ class StarDelegate(CustomDelegate):
     editor = editors.StarEditor(parent=None, maximum=self.maximum, editable=self.editable)
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, rect.width()-5, rect.height())
+    
+    if( option.state & QtGui.QStyle.State_Selected ):
+        painter.fillRect(option.rect, option.palette.highlight())
+    else:
+        if not self.editable:
+          painter.fillRect(option.rect, option.palette.window())
+    
     for i in range(5):
       if i+1<=stars:
         icon = Icon('tango/16x16/status/weather-clear.png').getQPixmap()
