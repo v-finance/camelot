@@ -23,7 +23,7 @@ def main(application_admin,
   splash = QtGui.QSplashScreen(application_admin.getSplashscreen())
   splash.show()
   
-  # regulary call processEvents to keep the splash alive
+  # regularly call processEvents to keep the splash alive
   splash.showMessage('Initialize application')
   app.processEvents()
   
@@ -42,11 +42,11 @@ def main(application_admin,
                (QtCore.QT_VERSION_STR, QtCore.PYQT_VERSION_STR))
   logger.debug('qt major version %f' % QT_MAJOR_VERSION)
 
-  # regulary call processEvents to keep the splash alive
+  # regularly call processEvents to keep the splash alive
   app.processEvents()
   
   #
-  # call set locale if not done yet
+  # call set local if not done yet
   #
   import locale
   language, encoding = locale.getlocale(locale.LC_ALL)
@@ -57,7 +57,7 @@ def main(application_admin,
   logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)
   logger.debug('elixir version %s'%elixir.__version__)
 
-  # regulary call processEvents to keep the splash alive
+  # regularly call processEvents to keep the splash alive
   app.processEvents()
     
   app.setOrganizationName(application_admin.getOrganizationName())
@@ -67,7 +67,7 @@ def main(application_admin,
   pre_initialization()
   app.processEvents()
 
-  # regulary call processEvents to keep the splash alive
+  # regularly call processEvents to keep the splash alive
   splash.showMessage('Setup database')
   app.processEvents()
   #
@@ -82,19 +82,19 @@ def main(application_admin,
   construct_signal_handler()
   get_model_thread().start()
   
-  # Set the stylesheet
+  # Set the style sheet
   splash.showMessage('Create main window')
   stylesheet = application_admin.getStylesheet()
   if stylesheet:
     app.setStyleSheet(stylesheet)
   
-  # regulary call processEvents to keep the splash alive
+  # regularly call processEvents to keep the splash alive
   app.processEvents()
   
-  # Application specific intialization instructions
+  # Application specific initialization instructions
   initialization()
 
-  # regulary call processEvents to keep the splash alive
+  # regularly call processEvents to keep the splash alive
   app.processEvents()
   
   mainwindow = application_admin.createMainWindow()
