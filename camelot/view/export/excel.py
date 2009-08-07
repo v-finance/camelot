@@ -130,19 +130,8 @@ def open_data_with_excel(title, headerList, dataList):
     import tempfile
     xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
     write_data_to_excel(xls_fn, title, headerList, dataList)
-
-    try:
-      import pythoncom
-      import win32com.client
-      pythoncom.CoInitialize()
-      excel_app = win32com.client.Dispatch("Excel.Application")
-    except Exception, e:
-      """We're probably not running windows, so OS handle it (used to be gnumeric)"""
-      logger.warning('Unable to launch excel', exc_info=e)
-      from PyQt4 import QtGui, QtCore
-      QtGui.QDesktopServices.openUrl(QtCore.QUrl('file://%s' % xls_fn)) 
-#      os.system('gnumeric "%s"'%xls_fn)
-      return
+    from PyQt4 import QtGui, QtCore
+    QtGui.QDesktopServices.openUrl(QtCore.QUrl('file://%s' % xls_fn)) 
 
     excel_app.Visible = True
     excel_app.Workbooks.Open(xls_fn)  

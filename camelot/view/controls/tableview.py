@@ -52,34 +52,49 @@ class TableWidget(QtGui.QTableView):
     self.horizontalHeader().setClickable(False)
     #self.setSortingEnabled(True)
 
+class RowsWidget(QtGui.QLabel):
+  """Widget that is part of the header widget, displaying the number of rows
+  in the table view"""
+  
+  _number_of_rows_font = QtGui.QApplication.font()
+  
+  def __init__(self, parent):
+    QtGui.QLabel.__init__(self, parent)
+    self.setFont(self._number_of_rows_font)
+    
+  def setNumberOfRows(self, rows):
+    self.setText(u'(%i rows)'%rows)    
+    
 class HeaderWidget(QtGui.QWidget):
   """HeaderWidget for a tableview, containing the title, the search widget,
   and the number of rows in the table"""
   
   search_widget = SimpleSearchControl
+  rows_widget = RowsWidget
   
   _title_font = QtGui.QApplication.font()
   _title_font.setBold(True)
-  _number_of_rows_font = QtGui.QApplication.font()
   
   def __init__(self, parent, admin):
     QtGui.QWidget.__init__(self, parent)
-    
     widget_layout = QtGui.QHBoxLayout()
     self.search = self.search_widget(self)
     title = QtGui.QLabel(admin.get_verbose_name_plural(), self)
     title.setFont(self._title_font)
     widget_layout.addWidget(title)
     widget_layout.addWidget(self.search)
-    self.number_of_rows = QtGui.QLabel(self)
-    self.number_of_rows.setFont(self._number_of_rows_font)
-    widget_layout.addWidget(self.number_of_rows)
+    if self.rows_widget:
+      self.number_of_rows = self.rows_widget(self)
+      widget_layout.addWidget(self.number_of_rows)
+    else:
+      self.number_of_rows = None
     self.setLayout(widget_layout)
     self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
     self.setNumberOfRows(0)
     
   def setNumberOfRows(self, rows):
-    self.number_of_rows.setText(u'(%i rows)'%rows)
+    if self.number_of_rows:
+      self.number_of_rows.setNumberOfRows(rows)
     
 class TableView(QtGui.QWidget):
   """A generic tableview widget that puts together some other widgets.  The behaviour of this class and
@@ -135,8 +150,15 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     self.admin = admin
     admin.mt.post(self.get_title, self.setWindowTitle)
     widget_layout = QtGui.QVBoxLayout()
-    self.header = self.header_widget(self, admin)
-    widget_layout.addWidget(self.header)
+    if self.header_widget:
+      self.header = self.header_widget(self, admin)
+      widget_layout.addWidget(self.header)
+      self.connect(self.header.search, SIGNAL('search'), self.startSearch)
+      self.connect(self.header.search, SIGNAL('cancel'), self.cancelSearch)
+      if search_text:
+        self.header.search.search(search_text)         
+    else:
+      self.header = None
     widget_layout.setSpacing(0)
     widget_layout.setMargin(0)
     self.splitter = QtGui.QSplitter(self)
@@ -153,13 +175,8 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     self.splitter.insertWidget(0, table_widget)
     self.setLayout(widget_layout)
     self.closeAfterValidation = QtCore.SIGNAL('closeAfterValidation()')
-    self.connect(self.header.search, SIGNAL('search'), self.startSearch)
-    self.connect(self.header.search, SIGNAL('cancel'), self.cancelSearch)
-    
     self.search_filter = lambda q: q
     self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-    if search_text:
-      self.header.search.search(search_text)
     admin.mt.post(lambda: self.admin.getSubclasses(),
                   lambda subclasses: self.setSubclassTree(subclasses))      
 
@@ -220,7 +237,8 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
                   lambda charts: self.setCharts(charts))
 
   def tableLayoutChanged(self):
-    self.header.setNumberOfRows(self._table_model.rowCount())
+    if self.header:
+      self.header.setNumberOfRows(self._table_model.rowCount())
     
   def setCharts(self, charts):
     """creates and display charts"""

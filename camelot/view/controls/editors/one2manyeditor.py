@@ -80,7 +80,7 @@ actual data to the editor
     def export():
       title = self.admin.get_verbose_name_plural()
       columns = self.admin.getColumns()
-      if not self.model:
+      if self.model:
         data = list(self.model.getData())
         open_data_with_excel(title, columns, data)
 

@@ -49,7 +49,7 @@ _sqlalchemy_to_python_type_ = {
                                        'delegate': delegates.BoolDelegate},
 
   sqlalchemy.types.Date: lambda f: {'python_type': datetime.date,
-                                    'format': 'dd/MM/yyyy',
+                                    'format': 'dd-MM-yyyy',
                                     'editable': True,
                                     'min': None,
                                     'max': None,
