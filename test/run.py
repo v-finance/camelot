@@ -417,7 +417,7 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), self.ValueLoading )    
        
   def testFloatEditor(self):
-    editor = self.editors.FloatEditor(parent=None, editable=True)
+    editor = self.editors.FloatEditor(parent=None, editable=True, prefix='prefix')
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( 0.0 )
     self.assertEqual( editor.get_value(), 0.0 )    
@@ -426,7 +426,7 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), 3.14 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.FloatEditor(parent=None, editable=False)
+    editor = self.editors.FloatEditor(parent=None, editable=False, suffix='suffix')
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( 0.0 )
     self.assertEqual( editor.get_value(), 0.0 )    

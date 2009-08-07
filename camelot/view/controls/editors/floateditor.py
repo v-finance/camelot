@@ -26,6 +26,16 @@ class FloatEditor(CustomEditor):
     self.spinBox.setDecimals(precision)
     self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
     self.spinBox.setSingleStep(1.0)
+    
+    prefix = str(prefix) + ' '
+    prefix = prefix.lstrip()
+    
+    suffix = ' ' + str(suffix)
+    suffix = suffix.rstrip()
+    
+    
+    self.spinBox.setPrefix(prefix)
+    self.spinBox.setSuffix(suffix)
     self.spinBox.addAction(action)
     calculatorButton = QtGui.QToolButton()
     icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
