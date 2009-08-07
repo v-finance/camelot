@@ -1,6 +1,7 @@
 
 from customdelegate import *
 from camelot.core.constants import *
+from camelot.core.utils import *
 
 class IntegerDelegate(CustomDelegate):
   """Custom delegate for integer values"""
@@ -26,7 +27,7 @@ class IntegerDelegate(CustomDelegate):
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
-    value = index.model().data(index, Qt.EditRole).toInt()[0]
+    value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
     editor = editors.IntegerEditor( None, 
                                     self.minimum,
                                     self.maximum,
@@ -56,7 +57,7 @@ class IntegerDelegate(CustomDelegate):
           fontColor.setRgb(130,130,130)
     
 
-    value_str = str(value)
+    value_str = str(value or '')
     if self.unicode_format != None:
         value_str = self.unicode_format(value)
 
