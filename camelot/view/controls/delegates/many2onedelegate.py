@@ -45,11 +45,9 @@ class Many2OneDelegate(CustomDelegate):
         painter.fillRect(option.rect, option.palette.highlight())
         fontColor = QtGui.QColor()
         if self.editable:
-          print 'SELECTED AND EDITABLE'
           Color = option.palette.highlightedText().color()
           fontColor.setRgb(Color.red(), Color.green(), Color.blue())
         else:
-          print 'SELECTED AND NOT EDITABLE'
           fontColor.setRgb(130,130,130)
     else:
         if self.editable:
