@@ -3,7 +3,7 @@ try:
   from PyQt4 import QtGui, QtCore
   from PyQt4.QtCore import Qt, SIGNAL
   from PyQt4.QtGui import QItemDelegate
-  from camelot.core.utils import VarianttoPyobject
+  from camelot.core.utils import variant_to_pyobject
   
   from camelot.view.controls import editors
 except ImportError:
@@ -98,7 +98,7 @@ class attribute specifies the editor class that should be used
 #      value = index.model().data(index, Qt.EditRole).toPyObject()
       
       
-    value = VarianttoPyobject(qvariant)
+    value = variant_to_pyobject(qvariant, index)
       
     editor.set_value(value)
 

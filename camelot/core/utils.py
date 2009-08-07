@@ -31,8 +31,11 @@ def create_constant_function(constant):
   return lambda:constant
 
 
-def variant_to_pyobject(qvariant=None):
+def variant_to_pyobject(qvariant=None, index=None):
+    from PyQt4 import QtCore, QtGui
     if not qvariant:
+        return None
+    if not index:
         return None
     
     type = qvariant.type()
