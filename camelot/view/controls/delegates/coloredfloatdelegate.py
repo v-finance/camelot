@@ -66,7 +66,7 @@ positive and in red when they are negative.
       QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
       fontColor.setRgb(255, 0, 0)
 
-    value_str = str(value)
+    value_str = '%.*f'%(self.precision, value)
     if self.unicode_format != None:
         value_str = self.unicode_format(value)
         

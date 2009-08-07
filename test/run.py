@@ -682,14 +682,14 @@ class DelegateTest(unittest.TestCase):
     self.grab_delegate(delegate, 3.1, 'disabled')
 
   def testColoredFloatDelegate(self):
-    delegate = self.delegates.ColoredFloatDelegate(parent=None, editable=True)
+    delegate = self.delegates.ColoredFloatDelegate(parent=None, precision=3, editable=True)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
-    self.grab_delegate(delegate, 3.14)
+    self.grab_delegate(delegate, 3.14456)
     delegate = self.delegates.ColoredFloatDelegate(parent=None, editable=False)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
-    self.grab_delegate(delegate, 3.14, 'disabled')
+    self.grab_delegate(delegate, 3.1, 'disabled')
   
   def testStarDelegate(self):
     delegate = self.delegates.StarDelegate(parent=None, **self.kwargs)
