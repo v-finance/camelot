@@ -24,16 +24,53 @@ class Many2OneDelegate(CustomDelegate):
     self._kwargs = kwargs
     self._dummy_editor = editors.Many2OneEditor(self.admin, None)
 
-#  def paint(self, painter, option, index):
-#    painter.save()
-#    self.drawBackground(painter, option, index)
-#    print option.state, '%08x'%(option.state)
+  def paint(self, painter, option, index):
+    painter.save()
+    self.drawBackground(painter, option, index)
+    #print option.state, '%08x'%(option.state)
+    
+    
+    
+    value = index.data(Qt.DisplayRole).toString()
+    
+    
 #    if not (option.state & QtGui.QStyle.State_Editing):
 #      self.drawDisplay(painter,
 #                       option,
 #                       option.rect,
 #                       index.data(Qt.DisplayRole).toString())
-#    painter.restore()
+    
+    
+    if( option.state & QtGui.QStyle.State_Selected ):
+        painter.fillRect(option.rect, option.palette.highlight())
+        fontColor = QtGui.QColor()
+        if self.editable:
+          print 'SELECTED AND EDITABLE'
+          Color = option.palette.highlightedText().color()
+          fontColor.setRgb(Color.red(), Color.green(), Color.blue())
+        else:
+          print 'SELECTED AND NOT EDITABLE'
+          fontColor.setRgb(130,130,130)
+    else:
+        if self.editable:
+          fontColor = QtGui.QColor()
+          fontColor.setRgb(0,0,0)
+        else:
+          painter.fillRect(option.rect, option.palette.window())
+          fontColor = QtGui.QColor()
+          fontColor.setRgb(130,130,130)
+          
+    painter.setPen(fontColor.toRgb())
+    
+    painter.drawText(option.rect.x()+2,
+                     option.rect.y(),
+                     option.rect.width()-4,
+                     option.rect.height(),
+                     Qt.AlignVCenter | Qt.AlignRight,
+                     str(value))
+    
+    
+    painter.restore()
     
   def createEditor(self, parent, option, index):
     if self._embedded:
