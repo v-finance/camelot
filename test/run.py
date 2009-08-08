@@ -683,6 +683,14 @@ class DelegateTest(unittest.TestCase):
     self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
     self.grab_delegate(delegate, 3, 'disabled')
 
+  def testIntervalsDelegate(self):
+    from camelot.container import IntervalsContainer, Interval
+    intervals = IntervalsContainer(0, 24, [Interval(8, 18, 'work', (255,0,0,255)), Interval(19, 21, 'play', (0,255,0,255))])
+    delegate = self.delegates.IntervalsDelegate(parent=None, editable=True)
+    self.grab_delegate(delegate, intervals)
+    delegate = self.delegates.IntervalsDelegate(parent=None, editable=False)
+    self.grab_delegate(delegate, intervals, 'disabled')
+    
   def testFloatDelegate(self):
     from camelot.core.constants import camelot_minfloat, camelot_maxfloat
     delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', **self.kwargs)
@@ -755,14 +763,27 @@ class DelegateTest(unittest.TestCase):
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.CodeEditor))
     self.grab_delegate(delegate, ['76','AB', '12', '34'], 'disabled')
+    
+  def testCurrencyDelegate(self):
+    delegate = self.delegates.CurrencyDelegate(parent=None, suffix='euro', **self.kwargs)
+    editor = delegate.createEditor(None, None, None)
+    self.assertTrue(isinstance(editor, self.editors.FloatEditor))
+    self.grab_delegate(delegate, 1000000.12)
+    delegate = self.delegates.CurrencyDelegate(parent=None, prefix='prefix', editable=False)
+    self.grab_delegate(delegate, 1000000.12, 'disabled')    
   
   def testComboBoxDelegate(self):
-    CHOICES = ('1', '2', '3')
+    CHOICES = (('1','A'), ('2','B'), ('3','C'))
     delegate = self.delegates.ComboBoxDelegate(parent=None,
                                                choices=CHOICES,
                                                **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.ChoicesEditor))
+    self.grab_delegate(delegate, 1)
+    delegate = self.delegates.ComboBoxDelegate(parent=None,
+                                               choices=CHOICES,
+                                               editable=False)
+    self.grab_delegate(delegate, 1, 'disabled')
 
   def testImageDelegate(self):
     delegate = self.delegates.ImageDelegate(parent=None, **self.kwargs)
@@ -774,6 +795,9 @@ class DelegateTest(unittest.TestCase):
                                                      **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.VirtualAddressEditor))
+    self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'))
+    delegate = self.delegates.VirtualAddressDelegate(parent=None, editable=False)
+    self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'), 'disabled')
 
 class ControlsTest(ModelThreadTests):
   
