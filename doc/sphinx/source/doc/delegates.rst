@@ -58,6 +58,8 @@ All available delegates can be found in :mod:`camelot.view.controls.delegates`
    :members:
 .. automodule:: camelot.view.controls.delegates.comboboxdelegate
    :members:
+.. automodule:: camelot.view.controls.delegates.currencydelegate
+   :members:   
 .. automodule:: camelot.view.controls.delegates.datedelegate
    :members:
 .. automodule:: camelot.view.controls.delegates.datetimedelegate
