@@ -101,6 +101,7 @@ class ModelThread(threading.Thread):
     """
     self.logger = logging.getLogger(logger.name + '.%s'%id(self))
     self._setup_thread = setup_thread
+    self._exit = False
     threading.Thread.__init__(self)
     self._request_queue = Queue.Queue()
     self._response_queue = Queue.Queue()
@@ -115,7 +116,7 @@ class ModelThread(threading.Thread):
       if self._setup_thread:
         self._setup_thread()
       self.logger.debug('start handling requests')
-      while True:
+      while not self._exit:
         new_event = threading.Event()
         try:
           (event, request, response, exception) = self._request_queue.get()
@@ -209,6 +210,15 @@ class ModelThread(threading.Thread):
     self._response_signaler.responseAvailable(self)
     self._response_signaler.stopProcessingRequest(self)
             
+  def exit(self):
+    """Ask the model thread to exit"""
+    self._exit = True
+    
+    def exit_message():
+      self.logger.debug('exit requested')
+    
+    self.post(exit_message)
+    
   def post_and_block(self, request):
     """Post a request tot the model thread, block until it is finished, and
     then return it results.  This function only exists for testing purposes,
