@@ -31,7 +31,6 @@ def burn_to_disk(o_getter):
 class Movie(Entity):
   using_options(tablename='movies')
   title = Field(Unicode(60), required=True)
-  smiley = Field(Unicode(30))
   short_description = Field(Unicode(512))
   releasedate = Field(Date)
   # 
@@ -76,7 +75,6 @@ class Movie(Entity):
         'short_description',
         'releasedate', 
         'director',
-        'smiley',
         'script', 
         'genre', 
         'description', 'tags'], scrollbars=True)),
