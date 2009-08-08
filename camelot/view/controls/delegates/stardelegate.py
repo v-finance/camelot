@@ -5,8 +5,9 @@ from camelot.view.art import Icon
 class StarDelegate(CustomDelegate):
   """Delegate for integer values from (1 to 5)(Rating Delegate)
 
-.. image:: ../_static/rating.png
 """
+
+  __metaclass__ = DocumentationMetaclass
 
   editor = editors.StarEditor
 

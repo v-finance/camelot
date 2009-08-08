@@ -3,9 +3,10 @@ from customdelegate import *
 
 class RichTextDelegate(CustomDelegate):
   """
-.. image:: ../_static/richtext.png
 """
 
+  __metaclass__ = DocumentationMetaclass
+  
   editor = editors.RichTextEditor
   
   

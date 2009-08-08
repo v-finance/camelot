@@ -6,6 +6,8 @@ class IntervalsDelegate(QItemDelegate):
 data
 """
 
+  __metaclass__ = DocumentationMetaclass
+
   def __init__(self, parent=None, **kwargs):
     QItemDelegate.__init__(self, parent)
 

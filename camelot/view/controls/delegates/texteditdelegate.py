@@ -5,9 +5,10 @@ from customdelegate import *
 class TextEditDelegate(CustomDelegate):
   """Custom delegate for simple string values"""
 
+  __metaclass__ = DocumentationMetaclass
+
   editor = editors.TextEditEditor
-  
-  
+    
   def __init__(self, parent=None, editable=True, **kwargs):
     CustomDelegate.__init__(self, parent, editable)
     

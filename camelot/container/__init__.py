@@ -75,7 +75,7 @@ class IntervalsContainer(Container):
   eg : representing the time frame of 8pm till 6am that someone was at work using an hourly
   precision :
   
-  intervals = IntervalsContainer(0, 24, [Interval(8, 18, 'work)])
+  intervals = IntervalsContainer(0, 24, [Interval(8, 18, 'work')])
   """
   
   def __init__(self, min, max, intervals):

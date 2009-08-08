@@ -4,8 +4,9 @@ from camelot.view.art import Icon
 
 class VirtualAddressDelegate(CustomDelegate):
   """
-.. image:: ../_static/virtualaddress_editor.png
 """
+
+  __metaclass__ = DocumentationMetaclass
 
   editor = editors.VirtualAddressEditor
 
