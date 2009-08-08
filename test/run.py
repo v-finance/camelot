@@ -21,6 +21,23 @@ def create_getter(getable):
   
   return getter
   
+class ModelThreadTests(unittest.TestCase):
+  """Base class for implementing test cases that need a running model_thread"""
+  
+  def setUp(self):
+    from camelot.view.model_thread import get_model_thread, construct_model_thread
+    from camelot.view.response_handler import ResponseHandler
+    from camelot.view.remote_signals import construct_signal_handler
+    rh = ResponseHandler()
+    construct_model_thread(rh)
+    construct_signal_handler()
+    construct_model_thread(rh)
+    self.mt = get_model_thread()
+    self.mt.start()
+    
+  def tearDown(self):
+    self.mt.exit()
+      
 def testSuites():
 
   from camelot.view.model_thread import get_model_thread, construct_model_thread
@@ -758,6 +775,11 @@ class DelegateTest(unittest.TestCase):
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.VirtualAddressEditor))
 
+class ControlsTest(ModelThreadTests):
+  
+  def testTableView(self):
+    pass
+    
 if __name__ == '__main__':
   logger.info('running unit tests')
   import sys
@@ -768,5 +790,8 @@ if __name__ == '__main__':
   runner.run(editor_test)
   editor_test =  unittest.makeSuite(DelegateTest, 'test')
   runner=unittest.TextTestRunner(verbosity=2)
-  runner.run(editor_test)  
+  runner.run(editor_test)
+  controls_test = unittest.makeSuite(ControlsTest, 'test')
+  runner.run(controls_test)
+    
   #sys.exit()
