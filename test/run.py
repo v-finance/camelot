@@ -21,54 +21,6 @@ def create_getter(getable):
     return getable
   
   return getter
-  
-class ModelThreadTests(unittest.TestCase):
-  """Base class for implementing test cases that need a running model_thread"""
-  
-  def grab_widget(self, widget, suffix=None):
-    """Save the widget as a png file :
-
-- the name of the png file is the name of the test case, without 'test'
-- it is stored in the directory with the same name as the class, without 'test'     
-    """
-    import sys
-    self.process()
-    widget.adjustSize()
-    pixmap = QPixmap.grabWidget(widget)
-    # TODO checks if path exists
-    images_path = os.path.join(static_images_path, self.__class__.__name__.lower()[:-len('Test')])
-    if not os.path.exists(images_path):
-      os.makedirs(images_path)
-    test_case_name = sys._getframe(1).f_code.co_name[5:]
-    image_name = '%s.png'%test_case_name
-    if suffix:
-      image_name = '%s_%s.png'%(test_case_name, suffix)
-    pixmap.save(os.path.join(images_path, image_name), 'PNG')
-    
-  def process(self):
-    """Wait until all events are processed and the queues of the model thread are empty"""
-    self.mt.post_and_block(lambda:None)
-    print self.mt._request_queue.empty()
-    print self.mt._response_queue.empty()
-    self.app.processEvents()
-    self.mt.process_responses()
-    self.app.processEvents()
-
-  def setUp(self):
-    from camelot.test import get_application
-    self.app = get_application()
-    from camelot.view.model_thread import get_model_thread, construct_model_thread
-    from camelot.view.response_handler import ResponseHandler
-    from camelot.view.remote_signals import construct_signal_handler
-    rh = ResponseHandler()
-    construct_model_thread(rh)
-    construct_signal_handler()
-    self.mt = get_model_thread()
-    if not self.mt.ident:
-      self.mt.start()
-    
-  def tearDown(self):
-    self.mt.exit()
       
 def testSuites():
 
@@ -342,7 +294,6 @@ Test the basic functionality of the editors :
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
       
-         
   def testBoolEditor(self):
     editor = self.editors.BoolEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -831,7 +782,10 @@ class DelegateTest(unittest.TestCase):
     delegate = self.delegates.VirtualAddressDelegate(parent=None, editable=False)
     self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'), 'disabled')
 
-class ControlsTest(ModelThreadTests):
+class ControlsTest(ModelThreadTestCase):
+  """Test some basic controls"""
+  
+  images_path = static_images_path
   
   def setUp(self):
     super(ControlsTest, self).setUp()
@@ -849,6 +803,29 @@ class ControlsTest(ModelThreadTests):
     widget = navpane.NavigationPane(self.app_admin)
     self.grab_widget(widget)
     
+  def test_main_window(self):
+    from camelot.view.mainwindow import MainWindow
+    widget = MainWindow(self.app_admin)
+    self.grab_widget(widget)
+    
+class EntityViewsTest(ModelThreadTestCase):
+  """Test the views of all the Entity subclasses"""
+  
+  images_path = static_images_path
+
+  def setUp(self):
+    super(EntityViewsTest, self).setUp()
+    from elixir import entities
+    from camelot.admin.application_admin import ApplicationAdmin
+    self.app_admin = ApplicationAdmin()
+    self.admins = [self.app_admin.getEntityAdmin(e) for e in entities if self.app_admin.getEntityAdmin(e)]
+    
+  def test_table_view(self):
+    for admin in self.admins:
+      widget = admin.create_table_view()
+      self.grab_widget(widget, suffix=admin.entity.__name__.lower())
+  
+    
 if __name__ == '__main__':
   logger.info('running unit tests')
   app = get_application()
@@ -861,3 +838,5 @@ if __name__ == '__main__':
   runner.run(editor_test)
   controls_test = unittest.makeSuite(ControlsTest, 'test')
   runner.run(controls_test)
+  entity_views_test = unittest.makeSuite(EntityViewsTest, 'test')
+  runner.run(entity_views_test)  
