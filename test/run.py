@@ -824,8 +824,12 @@ class EntityViewsTest(ModelThreadTestCase):
     for admin in self.admins:
       widget = admin.create_table_view()
       self.grab_widget(widget, suffix=admin.entity.__name__.lower())
+      
+  def test_new_view(self):
+    for admin in self.admins:
+      widget = admin.create_new_view()
+      self.grab_widget(widget, suffix=admin.entity.__name__.lower())
   
-    
 if __name__ == '__main__':
   logger.info('running unit tests')
   app = get_application()
