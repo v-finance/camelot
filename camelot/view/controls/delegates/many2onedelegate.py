@@ -10,6 +10,8 @@ class Many2OneDelegate(CustomDelegate):
 .. image:: ../_static/manytoone.png
 """
 
+  editor = editors.Many2OneEditor
+                                  
   def __init__(self,
                parent=None,
                admin=None,

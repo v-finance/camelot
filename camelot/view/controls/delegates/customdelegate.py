@@ -56,6 +56,7 @@ class attribute specifies the editor class that should be used
     QItemDelegate.__init__(self, parent)
     self.editable = editable
     self.kwargs = kwargs
+    self._dummy_editor = self.editor(parent=None, editable=editable, **kwargs)
     
   def createEditor(self, parent, option, index):
     editor = self.editor(parent, editable=self.editable, **self.kwargs)

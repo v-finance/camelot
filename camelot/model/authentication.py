@@ -276,6 +276,7 @@ class AuthenticationMechanism(Entity):
   
   class Admin(EntityAdmin):
     verbose_name = 'Authentication mechanism'
+    list_display = ['last_login', 'is_active']
   
 class UsernameAuthenticationMechanism(AuthenticationMechanism):
   using_options(tablename='authentication_mechanism_username', inheritance='multi')
@@ -299,12 +300,7 @@ class UsernameAuthenticationMechanism(AuthenticationMechanism):
     list_display = ['username', 'last_login', 'is_active']
   
 class Person(Party):
-  """Person represents natural persons, these can be given access to the system
-  and as such require a username.
-  
-  Username is required, other fields are optional, there is no password because
-  authentication is supposed to happen through the operating system services or
-  other.
+  """Person represents natural persons
   """
   using_options(tablename='person', inheritance='multi')
   first_name = Field(Unicode(40), required=True)
@@ -417,10 +413,9 @@ class Address(Entity):
   class Admin(EntityAdmin):
     verbose_name = 'Address'
     verbose_name_plural = 'Addresses'
-    section = 'relations'
     list_display = ['street1', 'street2', 'city']
     form_size = (700,150)
-    field_attributes = {'street1':{'minimal_column_width':100}}
+    field_attributes = {'street1':{'minimal_column_width':30}}
     form_actions = [('Show map',lambda address:address.showMap())]
   
 class PartyAddressRoleType(Entity):
@@ -474,10 +469,9 @@ class ContactMechanism(Entity):
   class Admin(EntityAdmin):
     form_size = (700,150)
     verbose_name = 'Contact mechanism'
-    section = 'relations'
     list_display = ['mechanism']
     form_display = Form(['mechanism', 'party_address'])
-    field_attributes = {'mechanism':{'minimal_column_width':120}}
+    field_attributes = {'mechanism':{'minimal_column_width':25}}
 
 class PartyContactMechanism(Entity):
   using_options(tablename='party_contact_mechanism')
