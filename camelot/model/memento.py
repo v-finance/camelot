@@ -67,9 +67,10 @@ class BeforeUpdate(Memento):
   
   @property
   def description(self):
-    return u'Update %s when previous value was %s' % (
-        ','.join(self.previous_attributes.keys()),
-        ','.join(unicode(v) for v in self.previous_attributes.values()))
+    if self.previous_attributes:
+      return u'Update %s when previous value was %s' % (
+          ','.join(self.previous_attributes.keys()),
+          ','.join(unicode(v) for v in self.previous_attributes.values()))
   
   class Admin(EntityAdmin):
     name = 'Updates'

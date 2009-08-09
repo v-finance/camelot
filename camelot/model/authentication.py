@@ -207,6 +207,10 @@ class Party(Entity):
   shares = OneToMany('SharedShareholder', inverse='established_to')
   directed_organizations = OneToMany('DirectedDirector', inverse='established_to')
     
+  @property
+  def name(self):
+    return ''
+  
   @ColumnProperty
   def full_name(c):
     aliased_organisation = Organization.table.alias('organisation_alias')

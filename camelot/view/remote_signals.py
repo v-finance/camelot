@@ -38,7 +38,6 @@ import logging
 import re
 
 logger = logging.getLogger('remote_signals')
-logger.setLevel(logging.DEBUG)
 
 from PyQt4.QtCore import *
   
