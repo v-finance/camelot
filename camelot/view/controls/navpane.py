@@ -36,7 +36,6 @@ logger = logging.getLogger('camelot.view.controls.navpane')
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
-import settings
 from camelot.view.model_thread import get_model_thread
 from camelot.action import addActions, createAction
 from camelot.view.controls.modeltree import ModelItem, ModelTree

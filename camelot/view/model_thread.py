@@ -239,7 +239,7 @@ class ModelThread(threading.Thread):
     return results[-1]
     
 def construct_model_thread(*args, **kwargs):
-  _model_thread_.append(ModelThread(*args, **kwargs))
+  _model_thread_.insert(0, ModelThread(*args, **kwargs))
   
 def get_model_thread():
   return _model_thread_[0]

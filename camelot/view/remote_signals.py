@@ -34,7 +34,6 @@ As a messaging server, Apache active MQ was tested in combination
 with the stomp library (http://docs.codehaus.org/display/STOMP/Python)
 """
 
-import settings
 import logging
 import re
 
@@ -46,6 +45,7 @@ from PyQt4.QtCore import *
 class SignalHandler(QObject):
   def __init__(self):
     QObject.__init__(self)
+    import settings
     self.entity_update_signal = SIGNAL("entity_update")
     self.entity_delete_signal = SIGNAL("entity_delete")
     self.entity_create_signal = SIGNAL("entity_create")
@@ -58,7 +58,7 @@ class SignalHandler(QObject):
       logger.debug('connection to servers started')
     else:
       self.connection = None
-      logger.warn('not connected to a server')
+      logger.debug('not connected to a server')
   def on_error(self, headers, message):
     logger.error('received an error %s'%message)
   def on_message(self, headers, message):

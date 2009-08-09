@@ -53,7 +53,7 @@ class ApplicationAdmin(object):
   """
   
   name = 'Camelot'
-  sections = []
+  sections = ['Relations', 'Configuration']
   admins = {}
   
   def __init__(self):
