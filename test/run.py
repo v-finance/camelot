@@ -808,27 +808,10 @@ class ControlsTest(ModelThreadTestCase):
     widget = MainWindow(self.app_admin)
     self.grab_widget(widget)
     
-class EntityViewsTest(ModelThreadTestCase):
+class CamelotEntityViewsTest(EntityViewsTest):
   """Test the views of all the Entity subclasses"""
   
   images_path = static_images_path
-
-  def setUp(self):
-    super(EntityViewsTest, self).setUp()
-    from elixir import entities
-    from camelot.admin.application_admin import ApplicationAdmin
-    self.app_admin = ApplicationAdmin()
-    self.admins = [self.app_admin.getEntityAdmin(e) for e in entities if self.app_admin.getEntityAdmin(e)]
-    
-  def test_table_view(self):
-    for admin in self.admins:
-      widget = admin.create_table_view()
-      self.grab_widget(widget, suffix=admin.entity.__name__.lower())
-      
-  def test_new_view(self):
-    for admin in self.admins:
-      widget = admin.create_new_view()
-      self.grab_widget(widget, suffix=admin.entity.__name__.lower())
   
 if __name__ == '__main__':
   logger.info('running unit tests')
@@ -842,5 +825,5 @@ if __name__ == '__main__':
   runner.run(editor_test)
   controls_test = unittest.makeSuite(ControlsTest, 'test')
   runner.run(controls_test)
-  entity_views_test = unittest.makeSuite(EntityViewsTest, 'test')
+  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
   runner.run(entity_views_test)  

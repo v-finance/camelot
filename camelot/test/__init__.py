@@ -64,3 +64,25 @@ class ModelThreadTestCase(unittest.TestCase):
     
   def tearDown(self):
     self.mt.exit()
+    
+class EntityViewsTest(ModelThreadTestCase):
+  """Test the views of all the Entity subclasses, subclass this class to test all views
+  in your application, and if needed overwrite the setUp method in such a way that self.admins
+  contains all instances of admin classes that need to be checked"""
+
+  def setUp(self):
+    super(EntityViewsTest, self).setUp()
+    from elixir import entities
+    from camelot.admin.application_admin import ApplicationAdmin
+    self.app_admin = ApplicationAdmin()
+    self.admins = [self.app_admin.getEntityAdmin(e) for e in entities if self.app_admin.getEntityAdmin(e)]
+    
+  def test_table_view(self):
+    for admin in self.admins:
+      widget = admin.create_table_view()
+      self.grab_widget(widget, suffix=admin.entity.__name__.lower())
+      
+  def test_new_view(self):
+    for admin in self.admins:
+      widget = admin.create_new_view()
+      self.grab_widget(widget, suffix=admin.entity.__name__.lower())    
