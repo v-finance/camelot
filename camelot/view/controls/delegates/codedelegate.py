@@ -46,6 +46,8 @@ class CodeDelegate(CustomDelegate):
     
     if numParts != 0:
       value = index.model().data(index, Qt.EditRole).toPyObject() or []
+      if value == ValueLoading:
+        value = []
       value = '.'.join([unicode(i) for i in value])
       
       

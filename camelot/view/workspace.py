@@ -19,26 +19,25 @@ class DesktopWorkspace(QtGui.QMdiArea):
     subwindow = QtGui.QMdiArea.addSubWindow(self, widget, *args)
     if hasattr(widget, 'closeAfterValidation'):
       subwindow.connect(widget, widget.closeAfterValidation, subwindow, QtCore.SLOT("close()"))
-    
-_workspace_ = []
-
 
 class NoDesktopWorkspace(QtCore.QObject):
   def __init__(self):
     QtCore.QObject.__init__(self)
-
+    self._windowlist = []
 
   def addSubWindow(self, widget, *args):
     self.widget = widget
     self.widget.setParent(None)
     self.widget.show()
-    _workspace_.append(self.widget)
+    self._windowlist.append(self.widget)
     self.connect(widget, QtCore.SIGNAL('WidgetClosed()'), self.removeWidgetFromWorkspace)
     
+  def subWindowList(self):
+    return self._windowlist
+  
   def removeWidgetFromWorkspace(self):
-    _workspace_.remove(self.widget)
+    self._windowlist.remove(self.widget)
     
-
 _workspace_ = []
         
 def construct_workspace(*args, **kwargs):
@@ -50,4 +49,5 @@ def construct_no_desktop_workspace(*args, **kwargs):
   return _workspace_[0]
 
 def get_workspace():
+  print _workspace_
   return _workspace_[0]

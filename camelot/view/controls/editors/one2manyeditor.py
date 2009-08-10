@@ -1,4 +1,6 @@
+import logging
 
+logger = logging.getLogger('camelot.view.controls.editors.onetomanyeditor')
 from customeditor import *
 
 from camelot.view.art import Icon
@@ -139,9 +141,13 @@ actual data to the editor
     else:
       prependentity = lambda o: self.model.insertEntityInstance(0, o)
       removeentity = lambda o: self.model.removeEntityInstance(o)
-      form = self.admin.create_new_view(workspace,
-                                      oncreate=prependentity,
-                                      onexpunge=removeentity)
+      #
+      # We cannot use the workspace as a parent, in case of working with 
+      # the NoDesktopWorkspaces
+      #
+      form = self.admin.create_new_view(parent = None,
+                                        oncreate=prependentity,
+                                        onexpunge=removeentity)
       workspace.addSubWindow(form)
       form.show()
     

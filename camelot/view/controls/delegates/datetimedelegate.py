@@ -24,7 +24,13 @@ class DateTimeDelegate(CustomDelegate):
     
     self.drawBackground(painter, option, index)
     
-    formattedDateTime = index.model().data(index, Qt.EditRole).toDateTime().toString(self.dateTime_format)
+    DateTimeArray = variant_to_pyobject(index.model().data(index, Qt.EditRole))
+    
+    
+    dateTime = QtCore.QDateTime(*DateTimeArray[:-1])
+    
+    formattedDateTime = dateTime.toString(self.dateTime_format)
+    
     
     editor = editors.DateTimeEditor( None, 
                                  self.editable )

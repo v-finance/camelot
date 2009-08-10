@@ -358,10 +358,14 @@ class EntityAdmin(ObjectAdmin):
                   self.emit(self.entity_created_signal,
                             create_instance_getter(new_object))
                 self.validate_before_close = False
-                from camelot.view.workspace import get_workspace
-                for window in get_workspace().subWindowList():
-                  if window.widget() == self:
-                    window.close()
+                from camelot.view.workspace import get_workspace, NoDesktopWorkspace
+                workspace = get_workspace()
+                if isinstance(workspace, (NoDesktopWorkspace)):
+                  self.close()
+                else:
+                  for window in get_workspace().subWindowList():
+                    if window.widget() == self:
+                      window.close()
             
             admin.mt.post(validate, showMessage)
             return False

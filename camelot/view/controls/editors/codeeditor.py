@@ -1,5 +1,6 @@
 
 from customeditor import *
+import re
 
 class CodeEditor(CustomEditor):
   
@@ -11,12 +12,14 @@ class CodeEditor(CustomEditor):
     layout = QtGui.QHBoxLayout()
     layout.setMargin(0)
     for part in parts:
+      part = re.sub('\W*', '', part)
+      part_length = len(part)
       editor = QtGui.QLineEdit()
       editor.setInputMask(part)
       if not editable:
         editor.setEnabled(False)
       space_width = editor.fontMetrics().size(Qt.TextSingleLine, 'A').width()
-      editor.setMaximumWidth(space_width*5)
+      editor.setMaximumWidth(space_width*(part_length+1))
       editor.installEventFilter(self)
       self.part_editors.append(editor)
       layout.addWidget(editor)
