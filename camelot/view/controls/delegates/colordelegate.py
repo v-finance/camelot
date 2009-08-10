@@ -24,8 +24,10 @@ class ColorDelegate(CustomDelegate):
                         option.rect.top(),
                         option.rect.width()-23,
                         option.rect.height())
+      
       QtGui.QApplication.style().drawItemPixmap(painter,
                                                 rect,
                                                 Qt.AlignVCenter,
                                                 pixmap)
+      
     painter.restore()

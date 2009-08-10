@@ -51,9 +51,9 @@ to the precision specified in the definition of the Field.
                                         editable=self.editable,
                                         prefix=self.prefix,
                                         suffix=self.suffix)
+    
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
-    #fontColor = QtGui.QColor()
     
     if( option.state & QtGui.QStyle.State_Selected ):
         painter.fillRect(option.rect, option.palette.highlight())
@@ -80,10 +80,12 @@ to the precision specified in the definition of the Field.
                         option.rect.top(),
                         option.rect.width()-23,
                         option.rect.height())
+    
     painter.drawText(rect.x()+2,
                      rect.y(),
                      rect.width()-4,
                      rect.height(),
                      Qt.AlignVCenter | Qt.AlignRight,
                      value_str_formatted)
+    
     painter.restore()

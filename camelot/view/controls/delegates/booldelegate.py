@@ -31,7 +31,13 @@ class BoolDelegate(CustomDelegate):
     else:
       check_option.state = option.state | QtGui.QStyle.State_Off
       
+      
+      
     QtGui.QApplication.style().drawControl(QtGui.QStyle.CE_CheckBox,
                                            check_option,
                                            painter)
+    
+    
     painter.restore()
+
+

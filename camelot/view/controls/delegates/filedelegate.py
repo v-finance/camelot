@@ -20,10 +20,12 @@ class FileDelegate(CustomDelegate):
       painter.setPen(QtGui.QColor(not_editable_foreground))
     value =  index.model().data(index, Qt.EditRole).toPyObject()
     if value:
+      
       painter.drawText(option.rect.x()+2,
                        option.rect.y(),
                        option.rect.width()-4,
                        option.rect.height(),
                        Qt.AlignVCenter | Qt.AlignLeft,
                        value.verbose_name)
+      
     painter.restore()

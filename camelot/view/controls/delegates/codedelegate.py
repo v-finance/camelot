@@ -47,8 +47,6 @@ class CodeDelegate(CustomDelegate):
     if numParts != 0:
       value = index.model().data(index, Qt.EditRole).toPyObject() or []
       value = '.'.join([unicode(i) for i in value])
-
-      digits = len(value)
       
       
       painter.setPen(fontColor.toRgb())
@@ -56,7 +54,6 @@ class CodeDelegate(CustomDelegate):
       painter.drawText(rect.x(),
                      rect.y()-4,
                      rect.width()-6,
-                     #rect.width()-(int(digits)-(0.04*(int(digits)*int(digits)))),
                      rect.height(),
                      Qt.AlignVCenter | Qt.AlignRight,
                      value)  
