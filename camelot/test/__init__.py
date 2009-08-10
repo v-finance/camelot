@@ -59,7 +59,7 @@ class ModelThreadTestCase(unittest.TestCase):
     construct_model_thread(rh)
     construct_signal_handler()
     self.mt = get_model_thread()
-    if not self.mt.ident:
+    if not self.mt.isAlive():
       self.mt.start()
     
   def tearDown(self):

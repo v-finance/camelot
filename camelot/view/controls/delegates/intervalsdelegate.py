@@ -8,13 +8,25 @@ data
 
   __metaclass__ = DocumentationMetaclass
 
-  def __init__(self, parent=None, **kwargs):
+  def __init__(self, parent=None, editable=False, **kwargs):
     QItemDelegate.__init__(self, parent)
+    self.editable = editable
 
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
     intervals = index.model().data(index, Qt.EditRole).toPyObject()
+    
+    
+    if( option.state & QtGui.QStyle.State_Selected ):
+        painter.fillRect(option.rect, option.palette.highlight())
+        fontColor = QtGui.QColor()
+    else:
+        if not self.editable:
+          painter.fillRect(option.rect, option.palette.window())
+    
+    
+    
     if intervals and intervals!=ValueLoading:
       rect = option.rect
       xscale = float(rect.width()-4)/(intervals.max-intervals.min)
