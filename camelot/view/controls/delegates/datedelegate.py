@@ -11,9 +11,7 @@ class DateDelegate(CustomDelegate):
   
   def __init__(self, parent=None, editable=True, **kwargs):
     CustomDelegate.__init__(self, parent, editable)
-    
     locale = QtCore.QLocale()
-    
     self.date_format = locale.dateFormat(locale.ShortFormat)
 
   def paint(self, painter, option, index):

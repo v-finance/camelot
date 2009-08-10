@@ -49,5 +49,4 @@ def construct_no_desktop_workspace(*args, **kwargs):
   return _workspace_[0]
 
 def get_workspace():
-  print _workspace_
   return _workspace_[0]
