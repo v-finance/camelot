@@ -139,6 +139,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
   _header_font_required.setBold(True)
   header_icon = Icon('tango/16x16/places/folder.png').getQIcon()
   
+  
   @gui_function
   def __init__(self, admin, collection_getter, columns_getter,
                max_number_of_rows=10, edits=None, flush_changes=True):
@@ -157,7 +158,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
     QtCore.QAbstractTableModel.__init__(self)
     self.admin = admin
-    self.form_icon = QtCore.QVariant(self.header_icon)
+    self.iconSize = QtCore.QSize(QtGui.QFontMetrics(self._header_font_required).height()-4,QtGui.QFontMetrics(self._header_font_required).height()-4)
+    self.form_icon = QtCore.QVariant(self.header_icon.pixmap(self.iconSize))
     self.validator = admin.createValidator(self)
     self.collection_getter = collection_getter
     self.column_count = 0
@@ -368,13 +370,21 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           minimal_column_width = QtGui.QFontMetrics(self._header_font).size(Qt.TextSingleLine, 'A').width()*c[1]['minimal_column_width']
         else:
           minimal_column_width = 0
+          
         label_size = QtGui.QFontMetrics(self._header_font_required).size(Qt.TextSingleLine, c[1]['name']+' ')
         return QtCore.QVariant(QtCore.QSize(max(minimal_column_width, editor_size.width(),label_size.width()+10), label_size.height()+10))
     else:
+      
+      if role == Qt.SizeHintRole:
+        return QtCore.QVariant(QtCore.QSize(self.iconSize.width()+8, self.iconSize.height()+4))
+        
+      
+      
+      
       if role == Qt.DecorationRole:
         return self.form_icon
-      elif role == Qt.DisplayRole:
-        return QtCore.QVariant()
+#      elif role == Qt.DisplayRole:
+#        return QtCore.QVariant()
     return QtCore.QAbstractTableModel.headerData(self, section, orientation, role)
   
   @gui_function
