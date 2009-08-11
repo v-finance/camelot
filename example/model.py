@@ -64,7 +64,7 @@ class Movie(Entity):
   class Admin(EntityAdmin):
     # the list_display attribute specifies which entity attributes should
     # be visible in the table view        
-    list_display = ['title', 'releasedate', 'director',]
+    list_display = ['title', 'releasedate', 'director', 'description']
     # define filters to be available in the table view
     list_filter = ['genre']
     # the form_display attribute specifies which entity attributes should be
