@@ -86,6 +86,7 @@ class HeaderWidget(QtGui.QWidget):
     if self.rows_widget:
       self.number_of_rows = self.rows_widget(self)
       widget_layout.addWidget(self.number_of_rows)
+      
     else:
       self.number_of_rows = None
     self.setLayout(widget_layout)
@@ -155,6 +156,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
       widget_layout.addWidget(self.header)
       self.connect(self.header.search, SIGNAL('search'), self.startSearch)
       self.connect(self.header.search, SIGNAL('cancel'), self.cancelSearch)
+      
       if search_text:
         self.header.search.search(search_text)         
     else:
@@ -212,6 +214,8 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
       
     self._table_model = self.create_table_model(admin)
     self.table.setModel(self._table_model)
+    rowHeight = QtGui.QFontMetrics(self.font()).height()+5
+    self.table.verticalHeader().setDefaultSectionSize(rowHeight)
     self.connect(self.table.verticalHeader(),
                  SIGNAL('sectionClicked(int)'),
                  self.sectionClicked)

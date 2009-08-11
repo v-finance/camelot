@@ -66,7 +66,7 @@ class Many2OneDelegate(CustomDelegate):
                      option.rect.y(),
                      option.rect.width()-4,
                      option.rect.height(),
-                     Qt.AlignVCenter | Qt.AlignRight,
+                     Qt.AlignVCenter | Qt.AlignLeft,
                      str(value))
     
     

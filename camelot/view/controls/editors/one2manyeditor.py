@@ -34,6 +34,8 @@ actual data to the editor
     from camelot.view.controls.tableview import TableWidget
     # parent set by layout manager
     self.table = TableWidget()
+    rowHeight = QtGui.QFontMetrics(self.font()).height()+5
+    self.table.verticalHeader().setDefaultSectionSize(rowHeight)
     layout.setSizeConstraint(QtGui.QLayout.SetNoConstraint)
     layout.addWidget(self.table) 
     self.setSizePolicy(QtGui.QSizePolicy.Expanding,

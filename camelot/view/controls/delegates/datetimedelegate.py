@@ -78,5 +78,4 @@ class DateTimeDelegate(CustomDelegate):
     
     
     
-  def sizeHint(self, option, index):
-    return self._dummy_editor.sizeHint()
+

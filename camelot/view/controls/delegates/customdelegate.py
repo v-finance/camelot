@@ -62,6 +62,9 @@ class attribute specifies the editor class that should be used
     editor = self.editor(parent, editable=self.editable, **self.kwargs)
     self.connect(editor, editors.editingFinished, self.commitAndCloseEditor)
     return editor
+  
+  def sizeHint(self, option, index):
+    return self._dummy_editor.sizeHint()
 
   def commitAndCloseEditor(self):
     editor = self.sender()
