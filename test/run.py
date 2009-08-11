@@ -533,9 +533,15 @@ class DelegateTest(unittest.TestCase):
   def grab_delegate(self, delegate, data, suffix='editable'):
     import sys
     
+    
+    
+    
     model = QStandardItemModel(1, 1)
     index = model.index(0, 0, QModelIndex())
     model.setData(index, QVariant(data))
+    
+    
+    print delegate.sizeHint(option=None, index=index)
     
     tableview = QTableView()
     tableview.setModel(model)
