@@ -533,15 +533,11 @@ class DelegateTest(unittest.TestCase):
   def grab_delegate(self, delegate, data, suffix='editable'):
     import sys
     
-    
-    
-    
     model = QStandardItemModel(1, 1)
     index = model.index(0, 0, QModelIndex())
     model.setData(index, QVariant(data))
     
-    
-    print delegate.sizeHint(option=None, index=index)
+    delegate.sizeHint(option=None, index=index)
     
     tableview = QTableView()
     tableview.setModel(model)
@@ -788,36 +784,36 @@ class DelegateTest(unittest.TestCase):
     delegate = self.delegates.VirtualAddressDelegate(parent=None, editable=False)
     self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'), 'disabled')
 
-#class ControlsTest(ModelThreadTestCase):
-#  """Test some basic controls"""
-#  
-#  images_path = static_images_path
-#  
-#  def setUp(self):
-#    super(ControlsTest, self).setUp()
-#    from camelot.admin.application_admin import ApplicationAdmin
-#    self.app_admin = ApplicationAdmin()
-#        
-#  def test_table_view(self):
-#    from camelot.view.controls.tableview import TableView
-#    from camelot.model.authentication import Person
-#    widget = TableView(self.app_admin.getEntityAdmin(Person))
-#    self.grab_widget(widget)
-#  
-#  def test_navigation_pane(self):
-#    from camelot.view.controls import navpane
-#    widget = navpane.NavigationPane(self.app_admin)
-#    self.grab_widget(widget)
-#    
-#  def test_main_window(self):
-#    from camelot.view.mainwindow import MainWindow
-#    widget = MainWindow(self.app_admin)
-#    self.grab_widget(widget)
-#    
-#class CamelotEntityViewsTest(EntityViewsTest):
-#  """Test the views of all the Entity subclasses"""
-#  
-#  images_path = static_images_path
+class ControlsTest(ModelThreadTestCase):
+  """Test some basic controls"""
+  
+  images_path = static_images_path
+  
+  def setUp(self):
+    super(ControlsTest, self).setUp()
+    from camelot.admin.application_admin import ApplicationAdmin
+    self.app_admin = ApplicationAdmin()
+        
+  def test_table_view(self):
+    from camelot.view.controls.tableview import TableView
+    from camelot.model.authentication import Person
+    widget = TableView(self.app_admin.getEntityAdmin(Person))
+    self.grab_widget(widget)
+  
+  def test_navigation_pane(self):
+    from camelot.view.controls import navpane
+    widget = navpane.NavigationPane(self.app_admin)
+    self.grab_widget(widget)
+    
+  def test_main_window(self):
+    from camelot.view.mainwindow import MainWindow
+    widget = MainWindow(self.app_admin)
+    self.grab_widget(widget)
+    
+class CamelotEntityViewsTest(EntityViewsTest):
+  """Test the views of all the Entity subclasses"""
+  
+  images_path = static_images_path
   
 if __name__ == '__main__':
   logger.info('running unit tests')
@@ -829,7 +825,7 @@ if __name__ == '__main__':
   editor_test =  unittest.makeSuite(DelegateTest, 'test')
   runner=unittest.TextTestRunner(verbosity=2)
   runner.run(editor_test)
-#  controls_test = unittest.makeSuite(ControlsTest, 'test')
-#  runner.run(controls_test)
-#  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
-#  runner.run(entity_views_test)  
+  controls_test = unittest.makeSuite(ControlsTest, 'test')
+  runner.run(controls_test)
+  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
+  runner.run(entity_views_test)  
