@@ -51,6 +51,15 @@ class TableWidget(QtGui.QTableView):
     self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     self.horizontalHeader().setClickable(False)
     #self.setSortingEnabled(True)
+    self.connect(self, SIGNAL('activated(const QModelIndex&)'), self.activated )
+    self.connect(self, SIGNAL('clicked(const QModelIndex&)'), self.activated )
+    self.connect(self, SIGNAL('doubleClicked(const QModelIndex&)'), self.activated )
+    self.connect(self, SIGNAL('entered(const QModelIndex&)'), self.activated )
+    self.connect(self, SIGNAL('selected(const QModelIndex&)'), self.activated )
+  
+  def activated(self, index):
+    print 'INDEX ACTIVATED', index
+    print self.itemDelegate(index).sizeHint()
 
 class RowsWidget(QtGui.QLabel):
   """Widget that is part of the header widget, displaying the number of rows
@@ -195,6 +204,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
       
   def sectionClicked(self, section):
     """emits a row_selected signal"""
+    print section
     self.emit(SIGNAL('row_selected'), section)
 
   def create_table_model(self, admin):

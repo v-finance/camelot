@@ -56,8 +56,10 @@ class IntegerDelegate(CustomDelegate):
           fontColor = QtGui.QColor()
           fontColor.setRgb(130,130,130)
     
-
-    value_str = str(value or '')
+    if value == None:
+      value_str = ''
+    else:
+      value_str = str(value)
     if self.unicode_format != None:
         value_str = self.unicode_format(value)
 

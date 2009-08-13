@@ -666,7 +666,7 @@ class DelegateTest(unittest.TestCase):
     delegate = self.delegates.IntegerDelegate(parent=None, editable=False)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
-    self.grab_delegate(delegate, 3, 'disabled')
+    self.grab_delegate(delegate, 0, 'disabled')
 
   def testIntervalsDelegate(self):
     from camelot.container import IntervalsContainer, Interval
