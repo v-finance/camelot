@@ -242,7 +242,7 @@ class Party(Entity):
                             name=dict(minimal_column_width=50),
                             )
       
-@documented_entity()       
+#@documented_entity()       
 class Organization(Party):
   """An organization represents any internal or external organization.  Organizations can include
   businesses and groups of individuals"""
@@ -305,7 +305,7 @@ class UsernameAuthenticationMechanism(AuthenticationMechanism):
     verbose_name = 'Authentication mechanism'
     list_display = ['username', 'last_login', 'is_active']
     
-@documented_entity()    
+#@documented_entity()    
 class Person(Party):
   """Person represents natural persons
   """
@@ -394,7 +394,7 @@ class City(GeographicBoundary):
     form_size = (700,150)
     list_display = ['code', 'name', 'country']
     
-@documented_entity() 
+#@documented_entity() 
 class Address(Entity):
   using_options(tablename='address')
   street1 = Field(Unicode(128), required=True)
@@ -465,7 +465,7 @@ class PartyAddress(Entity):
     form_size = (700,200)
     form_actions = [('Show map',lambda address:address.showMap())]
     
-@documented_entity() 
+#@documented_entity() 
 class ContactMechanism(Entity):
   using_options(tablename='contact_mechanism')
   mechanism = Field(camelot.types.VirtualAddress(256), required=True)
