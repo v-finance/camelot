@@ -37,6 +37,7 @@ to the precision specified in the definition of the Field.
     painter.save()
     self.drawBackground(painter, option, index)
     value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
+
     editor = editors.FloatEditor(parent=None,
                                  minimum=self.minimum,
                                  maximum=self.maximum,
@@ -65,9 +66,13 @@ to the precision specified in the definition of the Field.
           fontColor = QtGui.QColor()
           fontColor.setRgb(130,130,130)
     
+    
+
+    
     value_str = ""
-    if value == None and value != camelot.view.proxy.ValueLoading:
+    if value != None and value != camelot.view.proxy.ValueLoading:
       value_str = '%.*f'%(self.precision, value)
+      
     
     
     

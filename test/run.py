@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from PyQt4 import QtGui
 
 
 import logging
@@ -523,7 +524,7 @@ class DelegateTest(unittest.TestCase):
 - setEditorData
 - setModelData
 """
- 
+
   from camelot.view.controls import delegates
   from camelot.view.controls import editors
     
@@ -537,7 +538,11 @@ class DelegateTest(unittest.TestCase):
     index = model.index(0, 0, QModelIndex())
     model.setData(index, QVariant(data))
     
-    delegate.sizeHint(option=None, index=index)
+
+
+    option = QtGui.QStyleOptionViewItem()
+    
+    delegate.sizeHint(option, index)
     
     tableview = QTableView()
     tableview.setModel(model)
@@ -636,13 +641,13 @@ class DelegateTest(unittest.TestCase):
     delegate = self.delegates.DateTimeDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
-    datetime = datetime.now()
-    self.grab_delegate(delegate, datetime)
+    DateTime = datetime.now()
+    self.grab_delegate(delegate, DateTime)
     delegate = self.delegates.DateTimeDelegate(parent=None, editable=False)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
-    datetime = datetime.now()
-    self.grab_delegate(delegate, datetime, 'disabled')
+    datetime = DateTime.now()
+    self.grab_delegate(delegate, DateTime, 'disabled')
     
 
   def testTimeDelegate(self):
@@ -678,7 +683,7 @@ class DelegateTest(unittest.TestCase):
     
   def testFloatDelegate(self):
     from camelot.core.constants import camelot_minfloat, camelot_maxfloat
-    delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', **self.kwargs)
+    delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.FloatEditor))
     self.assertEqual(delegate.minimum, camelot_minfloat)
@@ -689,7 +694,7 @@ class DelegateTest(unittest.TestCase):
     self.assertTrue(isinstance(editor, self.editors.FloatEditor))
     self.assertEqual(delegate.minimum, camelot_minfloat)
     self.assertEqual(delegate.maximum, camelot_maxfloat)
-    self.grab_delegate(delegate, 3.1, 'disabled')
+    self.grab_delegate(delegate, 0, 'disabled')
 
   def testColoredFloatDelegate(self):
     delegate = self.delegates.ColoredFloatDelegate(parent=None, precision=3, editable=True)
@@ -822,10 +827,10 @@ if __name__ == '__main__':
   editor_test =  unittest.makeSuite(EditorTest, 'test')
   runner=unittest.TextTestRunner(verbosity=2)
   runner.run(editor_test)
-  editor_test =  unittest.makeSuite(DelegateTest, 'test')
+  delegate_test =  unittest.makeSuite(DelegateTest, 'test')
   runner=unittest.TextTestRunner(verbosity=2)
-  runner.run(editor_test)
-  controls_test = unittest.makeSuite(ControlsTest, 'test')
-  runner.run(controls_test)
-  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
-  runner.run(entity_views_test)  
+  runner.run(delegate_test)
+#  controls_test = unittest.makeSuite(ControlsTest, 'test')
+#  runner.run(controls_test)
+#  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
+#  runner.run(entity_views_test)  

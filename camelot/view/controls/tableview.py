@@ -59,7 +59,8 @@ class TableWidget(QtGui.QTableView):
   
   def activated(self, index):
     print 'INDEX ACTIVATED', index
-    print self.itemDelegate(index).sizeHint()
+    option = QtGui.QStyleOptionViewItem()
+    print self.itemDelegate(index).sizeHint(option, index)
 
 class RowsWidget(QtGui.QLabel):
   """Widget that is part of the header widget, displaying the number of rows
