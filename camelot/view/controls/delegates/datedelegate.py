@@ -15,16 +15,15 @@ class DateDelegate(CustomDelegate):
     self.date_format = locale.dateFormat(locale.ShortFormat)
 
   def paint(self, painter, option, index):
-    
-    
     painter.save()
     self.drawBackground(painter, option, index)
     
     dateObj = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-    if dateObj and dateObj != camelot.view.proxy.ValueLoading:
+    
+    if dateObj != None and dateObj != camelot.view.proxy.ValueLoading:
       formattedDate = QtCore.QDate(dateObj).toString(self.date_format)
     else:
-      formattedDate = ""
+      formattedDate = "0/0/0"
 
     editor = editors.DateEditor( None, 
                                  self.editable )

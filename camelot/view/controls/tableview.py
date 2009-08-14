@@ -53,22 +53,30 @@ class TableWidget(QtGui.QTableView):
     
     self._header_font_required = QtGui.QApplication.font()
     self._header_font_required.setBold(True)
+    
+    
+    
+    
+    
 
   def setModel(self, model):
     QtGui.QTableView.setModel(self, model)
     self.connect( self.selectionModel(), SIGNAL('currentChanged(const QModelIndex&,const QModelIndex&)'), self.activated )
+    #self.connect( self.selectionModel(), SIGNAL('selectionChanged(const QItemSelection&,const QItemSelection&)'), self.activated )
     
-  def activated(self, selectedIndex, previousSelectedIndex):
+  def activated(self, selectedIndex=None, previousSelectedIndex=None):
     option = QtGui.QStyleOptionViewItem()
-    newSize = self.itemDelegate(selectedIndex).sizeHint(option, selectedIndex)
-    if previousSelectedIndex.row() >= 0:
+    if selectedIndex.row() >= 0 and selectedIndex != None:
+      newSize = self.itemDelegate(selectedIndex).sizeHint(option, selectedIndex)
+      row = selectedIndex.row()
+      self.setRowHeight(row, newSize.height())
+    if previousSelectedIndex.row() >= 0 and previousSelectedIndex != None:
       normalSize = QtGui.QFontMetrics(self._header_font_required).height()+4
       previousRow = previousSelectedIndex.row()
       self.setRowHeight(previousRow, normalSize)
  
-    row = selectedIndex.row()
-    self.setRowHeight(row, newSize.height())
-    self.selectedRow = row
+    
+    #self.selectedRow = row
 
 class RowsWidget(QtGui.QLabel):
   """Widget that is part of the header widget, displaying the number of rows
