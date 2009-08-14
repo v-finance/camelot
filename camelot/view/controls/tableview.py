@@ -54,33 +54,18 @@ class TableWidget(QtGui.QTableView):
     self._header_font_required = QtGui.QApplication.font()
     self._header_font_required.setBold(True)
 
-    
-    #self.setSortingEnabled(True)
-    #self.connect(self, SIGNAL('activated(const QModelIndex&)'), self.activated )
-    #self.connect(self, SIGNAL('clicked(const QModelIndex&)'), self.activated )
-    #self.connect(self, SIGNAL('doubleClicked(const QModelIndex&)'), self.activated )
-    #self.connect(self, SIGNAL('entered(const QModelIndex&)'), self.activated )
-    #self.connect(self, SIGNAL('selected(const QModelIndex&)'), self.activated )
-    
-    #self.connect(self.itemSelectionModel, SIGNAL('currentChanged(const QModelIndex &current, const QModelIndex &previous)'), self.activated )
-  
   def setModel(self, model):
     QtGui.QTableView.setModel(self, model)
-    print "selectionModel :", self.selectionModel()
-    self.connect(self.selectionModel(), SIGNAL('currentChanged(const QModelIndex&,const QModelIndex&)'), self.activated )
-    
+    self.connect( self.selectionModel(), SIGNAL('currentChanged(const QModelIndex&,const QModelIndex&)'), self.activated )
     
   def activated(self, selectedIndex, previousSelectedIndex):
-    print "prevselindex :", previousSelectedIndex
     option = QtGui.QStyleOptionViewItem()
     newSize = self.itemDelegate(selectedIndex).sizeHint(option, selectedIndex)
-    if previousSelectedIndex >= 0:
+    if previousSelectedIndex.row() >= 0:
       normalSize = QtGui.QFontMetrics(self._header_font_required).height()+4
       previousRow = previousSelectedIndex.row()
-      print "prevRow: ", previousRow
       self.setRowHeight(previousRow, normalSize)
-      
-      
+ 
     row = selectedIndex.row()
     self.setRowHeight(row, newSize.height())
     self.selectedRow = row
