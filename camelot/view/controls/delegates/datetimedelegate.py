@@ -24,10 +24,9 @@ class DateTimeDelegate(CustomDelegate):
     
     self.drawBackground(painter, option, index)
     
-    DateTimeArray = variant_to_pyobject(index.model().data(index, Qt.EditRole))
     
-    
-    dateTime = QtCore.QDateTime(*DateTimeArray[:-1])
+    dateTime = index.model().data(index, Qt.EditRole).toDateTime()
+  
     
     formattedDateTime = dateTime.toString(self.dateTime_format)
     
@@ -35,7 +34,7 @@ class DateTimeDelegate(CustomDelegate):
     editor = editors.DateTimeEditor( None, 
                                  self.editable )
     
-    print formattedDateTime
+    #print formattedDateTime
     
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
@@ -71,7 +70,7 @@ class DateTimeDelegate(CustomDelegate):
                      Qt.AlignVCenter | Qt.AlignRight,
                      str(formattedDateTime))
     
-    print str(formattedDateTime)
+    #print str(formattedDateTime)
     
     
     painter.restore()

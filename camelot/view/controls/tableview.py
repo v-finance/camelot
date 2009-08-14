@@ -50,17 +50,40 @@ class TableWidget(QtGui.QTableView):
     self.setEditTriggers(QtGui.QAbstractItemView.AllEditTriggers)
     self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     self.horizontalHeader().setClickable(False)
+    
+    self._header_font_required = QtGui.QApplication.font()
+    self._header_font_required.setBold(True)
+
+    
     #self.setSortingEnabled(True)
-    self.connect(self, SIGNAL('activated(const QModelIndex&)'), self.activated )
-    self.connect(self, SIGNAL('clicked(const QModelIndex&)'), self.activated )
-    self.connect(self, SIGNAL('doubleClicked(const QModelIndex&)'), self.activated )
-    self.connect(self, SIGNAL('entered(const QModelIndex&)'), self.activated )
-    self.connect(self, SIGNAL('selected(const QModelIndex&)'), self.activated )
+    #self.connect(self, SIGNAL('activated(const QModelIndex&)'), self.activated )
+    #self.connect(self, SIGNAL('clicked(const QModelIndex&)'), self.activated )
+    #self.connect(self, SIGNAL('doubleClicked(const QModelIndex&)'), self.activated )
+    #self.connect(self, SIGNAL('entered(const QModelIndex&)'), self.activated )
+    #self.connect(self, SIGNAL('selected(const QModelIndex&)'), self.activated )
+    
+    #self.connect(self.itemSelectionModel, SIGNAL('currentChanged(const QModelIndex &current, const QModelIndex &previous)'), self.activated )
   
-  def activated(self, index):
-    print 'INDEX ACTIVATED', index
+  def setModel(self, model):
+    QtGui.QTableView.setModel(self, model)
+    print "selectionModel :", self.selectionModel()
+    self.connect(self.selectionModel(), SIGNAL('currentChanged(const QModelIndex&,const QModelIndex&)'), self.activated )
+    
+    
+  def activated(self, selectedIndex, previousSelectedIndex):
+    print "prevselindex :", previousSelectedIndex
     option = QtGui.QStyleOptionViewItem()
-    print self.itemDelegate(index).sizeHint(option, index)
+    newSize = self.itemDelegate(selectedIndex).sizeHint(option, selectedIndex)
+    if previousSelectedIndex >= 0:
+      normalSize = QtGui.QFontMetrics(self._header_font_required).height()+4
+      previousRow = previousSelectedIndex.row()
+      print "prevRow: ", previousRow
+      self.setRowHeight(previousRow, normalSize)
+      
+      
+    row = selectedIndex.row()
+    self.setRowHeight(row, newSize.height())
+    self.selectedRow = row
 
 class RowsWidget(QtGui.QLabel):
   """Widget that is part of the header widget, displaying the number of rows

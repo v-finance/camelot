@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 
 
 import logging
@@ -642,11 +642,12 @@ class DelegateTest(unittest.TestCase):
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
     DateTime = datetime.now()
+    DateTime = QtCore.QDateTime(DateTime.year, DateTime.month, DateTime.day, DateTime.hour, DateTime.minute, DateTime.second)
+    print DateTime
     self.grab_delegate(delegate, DateTime)
     delegate = self.delegates.DateTimeDelegate(parent=None, editable=False)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
-    datetime = DateTime.now()
     self.grab_delegate(delegate, DateTime, 'disabled')
     
 
