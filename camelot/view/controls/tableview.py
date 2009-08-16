@@ -34,8 +34,12 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QSizePolicy
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtCore import Qt
+from model import Movie
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
+from camelot.view.art import Icon
+import datetime
+import settings
 from camelot.view.model_thread import model_function
 
 from search import SimpleSearchControl
@@ -456,11 +460,28 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
   def importFromFile(self):
     """"import data : the data will be imported in the activeMdiChild """
     from camelot.view.wizard.import_data import ImportWizard
+    from camelot.model.authentication import Person
     logger.info('call import method')  
     importWizard = ImportWizard(self)
     importWizard.start()
     data = importWizard.getImportedData()
-    for row in data:
-        print row
-        self.query_table_proxy.append(self.query_table_proxy, row)
     
+    def makeImport():
+        for row in data:
+            movie = self.admin.entity()            
+            movie.title = row[0]
+            name = row[2].split(' ') #director
+            director = Person()
+            director.first_name = name[0]  
+            director.last_name = name[1]
+            movie.director = director
+            movie.short_description = "korte beschrijving"
+            date = row[1].split('/') # date 12/03/2009
+            movie.releasedate = datetime.date(year=int(date[2]), month=int(date[1]), day=int(date[0]))
+            movie.genre = ""
+            from camelot.view.workspace import get_workspace
+            workspace = get_workspace()
+            self.table_model.insertEntityInstance(0,movie)
+            self.table_model.insertEntityInstance(0,director)
+            
+    self.admin.mt.post(makeImport)                   

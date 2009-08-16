@@ -51,6 +51,7 @@ from camelot.view.controls.printer import Printer
 from camelot.view.model_thread import get_model_thread, construct_model_thread
 from camelot.view.response_handler import ResponseHandler
 from camelot.view.remote_signals import construct_signal_handler
+from camelot.view.importer import db_import
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
@@ -438,6 +439,15 @@ class MainWindow(QtGui.QMainWindow):
       #wizard.start()
       from camelot.view.controls.tableview import TableView
       self.activeMdiChild().widget().importFromFile()
+
+#      mt = get_model_thread()
+#      def importData():
+#          from proxy.collection_proxy import RowDataFromObject
+#          from importer.db_import import Importer
+#          importer = Importer(self.app_admin, self, self.workspace)
+#          importer.import_data_in_db(data)
+#
+#      mt.post(importData)    
         
   # Menus
 
