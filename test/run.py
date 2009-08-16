@@ -830,5 +830,5 @@ if __name__ == '__main__':
   runner.run(delegate_test)
   controls_test = unittest.makeSuite(ControlsTest, 'test')
   runner.run(controls_test)
-  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
-  runner.run(entity_views_test)  
+#  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
+#  runner.run(entity_views_test)  
