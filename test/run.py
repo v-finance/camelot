@@ -533,18 +533,16 @@ class DelegateTest(unittest.TestCase):
 
   def grab_delegate(self, delegate, data, suffix='editable'):
     import sys
+    from camelot.view.controls.tableview import TableWidget
     
     model = QStandardItemModel(1, 1)
     index = model.index(0, 0, QModelIndex())
     model.setData(index, QVariant(data))
     
-
-
     option = QtGui.QStyleOptionViewItem()
-    
     delegate.sizeHint(option, index)
     
-    tableview = QTableView()
+    tableview = TableWidget()
     tableview.setModel(model)
     tableview.setItemDelegate(delegate)
     
@@ -643,7 +641,6 @@ class DelegateTest(unittest.TestCase):
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
     DateTime = datetime.now()
     DateTime = QtCore.QDateTime(DateTime.year, DateTime.month, DateTime.day, DateTime.hour, DateTime.minute, DateTime.second)
-    print DateTime
     self.grab_delegate(delegate, DateTime)
     delegate = self.delegates.DateTimeDelegate(parent=None, editable=False)
     editor = delegate.createEditor(None, None, None)
@@ -831,7 +828,7 @@ if __name__ == '__main__':
   delegate_test =  unittest.makeSuite(DelegateTest, 'test')
   runner=unittest.TextTestRunner(verbosity=2)
   runner.run(delegate_test)
-#  controls_test = unittest.makeSuite(ControlsTest, 'test')
-#  runner.run(controls_test)
-#  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
-#  runner.run(entity_views_test)  
+  controls_test = unittest.makeSuite(ControlsTest, 'test')
+  runner.run(controls_test)
+  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
+  runner.run(entity_views_test)  

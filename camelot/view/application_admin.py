@@ -75,6 +75,9 @@ class ApplicationAdmin(object):
       pass
     if hasattr(entity, 'Admin'):
       return entity.Admin(self, entity)
+    
+  def get_entity_admin(self, entity):
+    return self.getEntityAdmin(entity)
   
   def getEntityQuery(self, entity):
     """Get the root query for an entity"""

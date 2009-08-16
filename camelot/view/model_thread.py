@@ -219,7 +219,7 @@ class ModelThread(threading.Thread):
     
     self.post(exit_message)
     
-  def post_and_block(self, request):
+  def post_and_block(self, request, timeout=None):
     """Post a request tot the model thread, block until it is finished, and
     then return it results.  This function only exists for testing purposes,
     it should never be used from within the gui thread
@@ -234,7 +234,7 @@ class ModelThread(threading.Thread):
     event = self.post(request,
                       lambda result:results.append(result),
                       exception=re_raise)
-    event.wait()
+    event.wait(timeout)
     self.process_responses()
     return results[-1]
     

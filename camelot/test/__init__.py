@@ -44,13 +44,12 @@ class ModelThreadTestCase(unittest.TestCase):
     
   def process(self):
     """Wait until all events are processed and the queues of the model thread are empty"""
-    self.mt.post_and_block(lambda:None)
+    self.mt.post_and_block(lambda:None, 2)
     self.app.processEvents()
     self.mt.process_responses()
     self.app.processEvents()
 
   def setUp(self):
-    from camelot.test import get_application
     self.app = get_application()
     from camelot.view.model_thread import get_model_thread, construct_model_thread
     from camelot.view.response_handler import ResponseHandler
@@ -67,22 +66,35 @@ class ModelThreadTestCase(unittest.TestCase):
     
 class EntityViewsTest(ModelThreadTestCase):
   """Test the views of all the Entity subclasses, subclass this class to test all views
-  in your application, and if needed overwrite the setUp method in such a way that self.admins
-  contains all instances of admin classes that need to be checked"""
+  in your application.  This is done by calling the create_table_view and create_new_view
+  on a set of admin objects.  To tell the test case which admin objects should be tested,
+  overwrite the get_admins method ::
+  
+  class MyEntityViewsTest(EntityViewsTest):
+    
+      def get_admins(self):
+        from elixir import entities
+        application_admin import MyApplicationAdmin
+        self.app_admin = MyApplicationAdmin()
+        return [self.app_admin.get_entity_admin(e) for e in entities if self.app_admin.get_entity_admin(e)]
+  
+  """
 
   def setUp(self):
     super(EntityViewsTest, self).setUp()
+    
+  def get_admins(self):
     from elixir import entities
     from camelot.admin.application_admin import ApplicationAdmin
     self.app_admin = ApplicationAdmin()
-    self.admins = [self.app_admin.getEntityAdmin(e) for e in entities if self.app_admin.getEntityAdmin(e)]
+    return [self.app_admin.get_entity_admin(e) for e in entities if self.app_admin.get_entity_admin(e)]
     
   def test_table_view(self):
-    for admin in self.admins:
+    for admin in self.get_admins():
       widget = admin.create_table_view()
       self.grab_widget(widget, suffix=admin.entity.__name__.lower())
       
   def test_new_view(self):
-    for admin in self.admins:
+    for admin in self.get_admins():
       widget = admin.create_new_view()
       self.grab_widget(widget, suffix=admin.entity.__name__.lower())    

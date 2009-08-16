@@ -50,14 +50,8 @@ class TableWidget(QtGui.QTableView):
     self.setEditTriggers(QtGui.QAbstractItemView.AllEditTriggers)
     self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     self.horizontalHeader().setClickable(False)
-    
     self._header_font_required = QtGui.QApplication.font()
     self._header_font_required.setBold(True)
-    
-    
-    
-    
-    
 
   def setModel(self, model):
     QtGui.QTableView.setModel(self, model)

@@ -242,7 +242,6 @@ class Party(Entity):
                             name=dict(minimal_column_width=50),
                             )
       
-#@documented_entity()       
 class Organization(Party):
   """An organization represents any internal or external organization.  Organizations can include
   businesses and groups of individuals"""
@@ -274,6 +273,8 @@ class Organization(Party):
                             ('Suppliers', Form(['suppliers'])),
                             ('Corporate', Form(['directors', 'shareholders', 'shares'])),
                             ('Branding', Form(['logo'])), ])
+    
+Organization = documented_entity()(Organization)       
 
 class AuthenticationMechanism(Entity):
   using_options(tablename='authentication_mechanism')
@@ -304,8 +305,7 @@ class UsernameAuthenticationMechanism(AuthenticationMechanism):
   class Admin(EntityAdmin):
     verbose_name = 'Authentication mechanism'
     list_display = ['username', 'last_login', 'is_active']
-    
-#@documented_entity()    
+      
 class Person(Party):
   """Person represents natural persons
   """
@@ -349,6 +349,8 @@ class Person(Party):
                             ('Work', Form(['employers', 'directed_organizations', 'shares'], scrollbars=True))
                             ])
     
+Person = documented_entity()(Person)   
+
 class GeographicBoundary(Entity):
   using_options(tablename='geographic_boundary')
   code = Field(Unicode(10))
@@ -394,7 +396,6 @@ class City(GeographicBoundary):
     form_size = (700,150)
     list_display = ['code', 'name', 'country']
     
-#@documented_entity() 
 class Address(Entity):
   using_options(tablename='address')
   street1 = Field(Unicode(128), required=True)
@@ -426,6 +427,8 @@ class Address(Entity):
     field_attributes = {'street1':{'minimal_column_width':30}}
     form_actions = [('Show map',lambda address:address.showMap())]
   
+Address = documented_entity()(Address) 
+
 class PartyAddressRoleType(Entity):
   using_options(tablename='party_address_role_type')
   code = Field(Unicode(10))
@@ -465,7 +468,6 @@ class PartyAddress(Entity):
     form_size = (700,200)
     form_actions = [('Show map',lambda address:address.showMap())]
     
-#@documented_entity() 
 class ContactMechanism(Entity):
   using_options(tablename='contact_mechanism')
   mechanism = Field(camelot.types.VirtualAddress(256), required=True)
@@ -481,6 +483,8 @@ class ContactMechanism(Entity):
     list_display = ['mechanism']
     form_display = Form(['mechanism', 'party_address'])
     field_attributes = {'mechanism':{'minimal_column_width':25}}
+
+ContactMechanism = documented_entity()(ContactMechanism) 
 
 class PartyContactMechanism(Entity):
   using_options(tablename='party_contact_mechanism')
