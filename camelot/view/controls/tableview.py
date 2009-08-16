@@ -471,17 +471,17 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
             movie = self.admin.entity()            
             movie.title = row[0]
             name = row[2].split(' ') #director
-            director = Person()
-            director.first_name = name[0]  
-            director.last_name = name[1]
-            movie.director = director
+            #director = Person()
+            #director.first_name = name[0]  
+            #director.last_name = name[1]
+            #movie.director = director
             movie.short_description = "korte beschrijving"
             date = row[1].split('/') # date 12/03/2009
             movie.releasedate = datetime.date(year=int(date[2]), month=int(date[1]), day=int(date[0]))
             movie.genre = ""
             from camelot.view.workspace import get_workspace
             workspace = get_workspace()
-            self.table_model.insertEntityInstance(0,movie)
-            self.table_model.insertEntityInstance(0,director)
+            self._table_model.insertEntityInstance(0,movie)
+            #self._table_model.insertEntityInstance(0,director)
             
     self.admin.mt.post(makeImport)                   
