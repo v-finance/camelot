@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt4 import QtGui, QtCore
 
-
 import logging
 import settings
 import unittest
@@ -517,7 +516,48 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(),  ('email','project-camelot@conceptive.be') )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )  
-                            
+  
+from camelot.view import forms
+  
+class FormTest(ModelThreadTestCase):
+    
+  images_path = static_images_path
+  
+  def setUp(self):
+    ModelThreadTestCase.setUp(self)
+    from camelot.view.controls.editors import TextLineEditor, DateEditor
+    self.widgets = {
+      'title':(QLabel('Title'), TextLineEditor(parent=None, editable=True)),
+      'short_description':(QLabel('Short description'), TextLineEditor(parent=None, editable=True)),
+      'director':(QLabel('Director'), TextLineEditor(parent=None, editable=True)),
+      'release_date':(QLabel('Release date'), DateEditor(parent=None, editable=True)),
+    }
+    
+  def test_form(self):
+    form = forms.Form(['title', 'short_description', 'director', 'release_date'])
+    self.grab_widget(form.render(self.widgets))
+    
+  def test_tab_form(self):
+    form = forms.TabForm([('First tab', ['title', 'short_description']),
+                          ('Second tab', ['director', 'release_date'])])
+    self.grab_widget(form.render(self.widgets))
+    
+  def test_group_box_form(self):
+    form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
+    self.grab_widget(form.render(self.widgets))
+    
+  def test_grid_form(self):
+    form = forms.GridForm([['title', 'short_description'], ['director','release_date']])
+    self.grab_widget(form.render(self.widgets))
+    
+  def test_vbox_form(self):
+    form = forms.VBoxForm([['title', 'short_description'], ['director', 'release_date']])
+    self.grab_widget(form.render(self.widgets))
+    
+  def test_hbox_form(self):
+    form = forms.HBoxForm([['title', 'short_description'], ['director', 'release_date']])
+    self.grab_widget(form.render(self.widgets))    
+                          
 class DelegateTest(unittest.TestCase):
   """Test the basic functionallity of the delegates :
 - createEditor
@@ -821,14 +861,18 @@ class CamelotEntityViewsTest(EntityViewsTest):
 if __name__ == '__main__':
   logger.info('running unit tests')
   app = get_application()
-  
+
+  runner=unittest.TextTestRunner(verbosity=2)
+
   editor_test =  unittest.makeSuite(EditorTest, 'test')
+  runner.run(editor_test)
+  editor_test =  unittest.makeSuite(DelegateTest, 'test')
   runner=unittest.TextTestRunner(verbosity=2)
   runner.run(editor_test)
-  delegate_test =  unittest.makeSuite(DelegateTest, 'test')
-  runner=unittest.TextTestRunner(verbosity=2)
-  runner.run(delegate_test)
   controls_test = unittest.makeSuite(ControlsTest, 'test')
   runner.run(controls_test)
+  form_test = unittest.makeSuite(FormTest, 'test')
+  runner.run(form_test)  
 #  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
 #  runner.run(entity_views_test)  
+
