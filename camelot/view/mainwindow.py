@@ -51,7 +51,7 @@ from camelot.view.controls.printer import Printer
 from camelot.view.model_thread import get_model_thread, construct_model_thread
 from camelot.view.response_handler import ResponseHandler
 from camelot.view.remote_signals import construct_signal_handler
-from camelot.view.importer import db_import
+#from camelot.view.importer import db_import
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 

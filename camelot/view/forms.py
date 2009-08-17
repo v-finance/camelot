@@ -39,8 +39,9 @@ QT widget by calling its render method.  The base form uses the QFormLayout
 to render a form::
 
   class Admin(EntityAdmin):
-    form_display = Form([Label('Please fill this form'), 'title', 'description'])
+    form_display = Form(['title', 'short_description', 'director', 'release_date'])
 
+.. image:: ../_static/form/form.png
 """
   
   def __init__(self, content, scrollbars=False):
@@ -199,7 +200,14 @@ class Label(Form):
     return widget
 
 class TabForm(Form):
-  """Render forms within a QTabWidget"""
+  """
+Render forms within a QTabWidget::
+
+  from = TabForm([('First tab', ['title', 'short_description']),
+                  ('Second tab', ['director', 'release_date'])])  
+  
+.. image:: ../_static/form/tab_form.png
+  """
   
   def __init__(self, tabs):
     """:param tabs: a list of tuples of (tab_label, tab_form)"""
@@ -251,7 +259,14 @@ class TabForm(Form):
   
 
 class HBoxForm(Form):
-  """Render different forms in a horizontal box"""
+  """
+Render different forms in a horizontal box::
+
+  form = forms.HBoxForm([['title', 'short_description'], ['director', 'release_date']])
+  
+.. image:: ../_static/form/hbox_form.png 
+  
+"""
   
   def __init__(self, columns):
     """:param columns: a list of forms to display in the different columns
@@ -273,17 +288,25 @@ class HBoxForm(Form):
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
+    widget = QtGui.QWidget(parent)
     form_layout = QtGui.QHBoxLayout()
     for form in self.columns:
-      f = form.render(widgets, parent, nomargins)
+      f = form.render(widgets, widget, nomargins)
       if isinstance(f, QtGui.QLayout):
         form_layout.addLayout(f)
       else:
         form_layout.addWidget(f)
-    return form_layout
+    widget.setLayout(form_layout)
+    return widget
 
 class VBoxForm(Form):
-  """Render different forms or widgets in a vertical box"""
+  """
+Render different forms or widgets in a vertical box::
+
+  form = forms.VBoxForm([['title', 'short_description'], ['director', 'release_date']])
+  
+.. image:: ../_static/form/vbox_form.png  
+"""
   
   def __init__(self, rows):
     """:param rows: a list of forms to display in the different columns
@@ -305,20 +328,24 @@ class VBoxForm(Form):
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
+    widget = QtGui.QWidget(parent)
     form_layout = QtGui.QVBoxLayout()
     for form in self.rows:
-      f = form.render(widgets, parent, nomargins)
+      f = form.render(widgets, widget, nomargins)
       if isinstance(f, QtGui.QLayout):
         form_layout.addLayout(f)
       else:
         form_layout.addWidget(f)
-    return form_layout
+    widget.setLayout(form_layout)
+    return widget
   
 class GridForm(Form):
-  """Put different fields into a grid::
+  """Put different fields into a grid, without a label.  Row or column labels can be added
+using the Label form::
 
-  GridForm([['A1', 'B1'], ['A2','B2']])
+  GridForm([['title', 'short_description'], ['director','release_date']])
   
+.. image:: ../_static/form/grid_form.png
 """
   
   def __init__(self, grid):
@@ -341,7 +368,7 @@ class GridForm(Form):
         if isinstance(field, Form):
           grid_layout.addWidget(field.render([], grid_layout), i, j)
         else:
-          label, editor = widgets[field]
+          _label, editor = widgets[field]
           grid_layout.addWidget(editor, i, j)
     widget.setLayout(grid_layout)
     return widget
@@ -355,7 +382,7 @@ class WidgetOnlyForm(Form):
     
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
-    label, editor = widgets[self.get_fields()[0]]
+    _label, editor = widgets[self.get_fields()[0]]
     return editor
   
 class GroupBoxForm(Form):
@@ -363,9 +390,10 @@ class GroupBoxForm(Form):
 Renders a form within a QGroupBox::
   
   class Admin(EntityAdmin):
-    form_display = ['title', GroupBoxForm('Ratings', ['expert_rating', 'public_rating'])]
+    form_display = GroupBoxForm('Movie', ['title', 'short_description'])
   
-  """
+.. image:: ../_static/form/group_box_form.png
+"""
   
   def __init__(self, title, content):
     self.title = title

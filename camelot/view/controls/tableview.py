@@ -34,7 +34,6 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QSizePolicy
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtCore import Qt
-from model import Movie
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.art import Icon
