@@ -10,6 +10,8 @@
 This section describes the various field types that can be used to construct
 models. Fields from SQLAlchemy and Camelot are described.
 
+.. automodule:: camelot.view.field_attributes
+
 SQLAlchemy field types
 ======================
 

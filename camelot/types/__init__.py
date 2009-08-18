@@ -40,7 +40,8 @@ logger = logging.getLogger('camelot.types')
 logger.setLevel(logging.DEBUG)
 
 from sqlalchemy import types
-from camelot.core.files.storage import StoredFile, Storage
+
+from camelot.core.files.storage import StoredFile, StoredImage, Storage
 
 class VirtualAddress(types.TypeDecorator):
   """A single field that can be used to enter phone numbers, fax numbers, email
@@ -140,12 +141,11 @@ class Code(types.TypeDecorator):
       return ['' for p in self.parts]
       
     return processor
-  
 
 class IPAddress(Code):
   def __init__(self, **kwargs):
     super(IPAddress, self).__init__(parts=['900','900','900','900'])
- 
+
 class Rating(types.TypeDecorator):
   """The rating field is an integer field that is visualized as a number of stars that
 can be selected::
@@ -282,14 +282,6 @@ box are the capitalized strings::
           logger.error('could not process %s'%value, exc_info=e)
       
     return processor  
-  
-class StoredImage(StoredFile):
-  """Helper class for the Image field type Class linking a PIL image and the 
-location and filename where the image is stored"""
-  
-  def __init__(self, image, storage=None, name=''):
-    self.image = image
-    StoredFile.__init__(self, storage, name)
 
 class Image(types.TypeDecorator):
   """Sqlalchemy column type to store images

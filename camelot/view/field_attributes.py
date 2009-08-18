@@ -167,6 +167,7 @@ _sqlalchemy_to_python_type_ = {
                                          'format':'dd-MM-yyyy hh:mm',
                                          'nullable':True,
                                          'delegate':delegates.DateTimeDelegate},
+                                         
   camelot.types.File : lambda f: {'python_type':str,
                                   'editable':True,
                                   'delegate':delegates.FileDelegate,
@@ -174,3 +175,21 @@ _sqlalchemy_to_python_type_ = {
                                          
   
 }
+
+doc = """Field types handled through introspection : 
+
++--------------------+--------------------+
+"""
+
+for field_type, value in _sqlalchemy_to_python_type_.items():
+  doc += """| %-18s | %-18s |
++--------------------+--------------------+  
+"""%(str(field_type.__name__), 'info')
+  
+doc += """
+"""
+
+print doc
+
+__doc__ = doc
+  

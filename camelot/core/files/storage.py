@@ -27,6 +27,14 @@ class StoredFile(object):
   def __unicode__(self):
     return self.verbose_name
   
+class StoredImage(StoredFile):
+  """Helper class for the Image field type Class linking a PIL image and the 
+location and filename where the image is stored"""
+  
+  def __init__(self, image, storage=None, name=''):
+    self.image = image
+    StoredFile.__init__(self, storage, name)
+    
 class Storage(object):
   """Helper class that opens and saves StoredFile objects
 The default implementation stores files in the settings.CAMELOT_MEDIA_ROOT
@@ -84,7 +92,7 @@ a local filesystem path where the file can be opened"""
   @model_function
   def delete(self, name):
     pass
-
+    
 class S3Storage(object):
   """Helper class that opens and saves StoredFile objects into Amazon S3.
   
