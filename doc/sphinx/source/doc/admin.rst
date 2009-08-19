@@ -61,13 +61,13 @@ of an object, to make sure it will be able to write the object to the
 database.
 
 But this might not be enough.  If more validation is needed, a custom Validator
-class can be defined.  The default Validator class is located in 
-camelot/view/validator::
+class can be defined.  The default EntityValidator class is located in 
+camelot/admin/validator/entity_validator::
 
-  class MyValidator(Validator):
+  class MyValidator(EntityValidator):
   
     def objectValidity(self, entity_instance):
-      messages = super(MyValidator.self).objectValidity(entity_instance)
+      messages = super(MyValidator,self).objectValidity(entity_instance)
       if 'Star' not in entity_instance.title:
         messages.append("The movie title should always contain 'Star'.")
       return messages
