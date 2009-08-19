@@ -4,10 +4,10 @@ SQLALCHEMY_LIB_PATH=""
 XVFB_DISPLAY=":99"
 XVFB_SCREEN="0"
 set -e
-if [ `id -u` = 1000 ]; then
-        echo "Running as test user. Good."
+if [ "$(id -u)" != "0" ]; then
+        echo "Not running as root user. Good."
 else   
-        echo "This script must be run as test user (uid=1000)";
+        echo "This script must be run as a normal user (uid>=1000)";
         exit 1
 fi
 svn co http://www.conceptive.be/camelot/svn/trunk --username guest --password guest --non-interactive
