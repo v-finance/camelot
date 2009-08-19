@@ -7,7 +7,7 @@ set -e
 if [ `id -u` = 1000 ]; then
         echo "Running as test user. Good."
 else   
-        echo "This script must be run as test user (uid=1000) in a chroot (/var/chroot)";
+        echo "This script must be run as test user (uid=1000)";
         exit 1
 fi
 svn co http://www.conceptive.be/camelot/svn/trunk --username guest --password guest --non-interactive
