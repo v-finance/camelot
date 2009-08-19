@@ -10,7 +10,7 @@ else
         echo "This script must be run as a normal user (uid>=1000)";
         exit 1
 fi
-svn co http://www.conceptive.be/camelot/svn/trunk . --username guest --password guest --non-interactive
+svn update http://www.conceptive.be/camelot/svn/trunk . --username guest --password guest --non-interactive
 echo "Checking if Xvfb is running..."
 if [ -n "`ps -e | grep Xvfb`" ]; then
         echo "Xvfb is running. Good."
@@ -28,4 +28,4 @@ else
 fi
 export DISPLAY="$XVFB_DISPLAY"
 export PYTHONPATH=".:../libraries"
-python ./trunk/build.py
+python build.py
