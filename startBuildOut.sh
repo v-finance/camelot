@@ -11,7 +11,6 @@ else
         exit 1
 fi
 svn co http://www.conceptive.be/camelot/svn/trunk --username guest --password guest --non-interactive
-cd /home/test/camelotTesting/trunk
 echo "Checking if Xvfb is running..."
 if [ -n "`ps -e | grep Xvfb`" ]; then
         echo "Xvfb is running. Good."
@@ -29,5 +28,4 @@ else
 fi
 export DISPLAY="$XVFB_DISPLAY"
 export PYTHONPATH=".:../libraries"
-python /home/test/camelotTesting/trunk/build.py
-python /home/test/camelotTesting/testBuildOut.py
+python ./trunk/build.py
