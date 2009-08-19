@@ -429,7 +429,7 @@ Test the basic functionality of the editors :
     editor = self.editors.FloatEditor(parent=None, editable=False, suffix='suffix')
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( 0.0 )
-    self.assertEqual( editor.get_value(), 0.0 )    
+    self.assertEqual( editor.get_value(), 0.0 )
     editor.set_value( 3.14 )
     self.grab_widget( editor, 'disabled' )
     self.assertEqual( editor.get_value(), 3.14 )
@@ -617,9 +617,10 @@ class DelegateTest(unittest.TestCase):
             
   def testPlainTextDelegate(self):
     delegate = self.delegates.PlainTextDelegate(parent=None,
-                                                length=20,
+                                                length=30,
                                                 editable=True)
     editor = delegate.createEditor(None, None, None)
+    self.assertEqual(editor.maxLength(), 30)
     self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
     self.grab_delegate(delegate, 'Plain Text')
     delegate = self.delegates.PlainTextDelegate(parent=None,
