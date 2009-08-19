@@ -68,9 +68,8 @@ class attribute specifies the editor class that should be used
 
   def commitAndCloseEditor(self):
     editor = self.sender()
-    #print "commitAndCloseEditor"
     self.emit(SIGNAL('commitData(QWidget*)'), editor)
-    self.emit(SIGNAL('closeEditor(QWidget*)'), editor)
+    self.emit(SIGNAL('closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)'), editor, QtGui.QAbstractItemDelegate.NoHint)
 
   def setEditorData(self, editor, index):
     qvariant = index.model().data(index, Qt.EditRole)
