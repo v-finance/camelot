@@ -97,6 +97,8 @@ field name of the related entity ::
     class Admin(EntityAdmin):
       list_display = ['organization']
       list_filter = ['organization.name']
+      
+.. image:: ../_static/filter/group_box_filter.png
 
 .. attribute:: list_search
 

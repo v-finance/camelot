@@ -114,10 +114,12 @@ _sqlalchemy_to_python_type_ = {
                                  'parts': f.parts},
 
   camelot.types.IPAddress: lambda f: {'python_type': str,
-                                 'editable': True,
-                                 'widget': 'code',
-                                 'nullable':True,
-                                 'parts': f.parts},
+                                      'editable': True,
+                                      'widget': 'code',
+                                      'nullable':True,
+                                      'parts': f.parts,
+                                      'delegate': delegates.CodeDelegate,
+                                      },
                                                                   
   camelot.types.VirtualAddress: lambda f:{'python_type':str,
                                           'editable':True,
@@ -176,20 +178,40 @@ _sqlalchemy_to_python_type_ = {
   
 }
 
+#
+# Generate a restructured text table out of the prevous data structure
+#
+
+class DummyField(object):
+  def __init__(self):
+    self.length = 20
+    self.parts = ['AAA', '99']
+    self.choices = ['planned', 'canceled']
+    self.precision = 2
+    self.storage = None
+
+row_separator = '+' + '-'*20 + '+' + '-'*30 + '+' + '-'*70 + '+'
+row_format = """| %-18s | %-28s | %-68s |"""
+
 doc = """Field types handled through introspection : 
 
-+--------------------+--------------------+
+""" + row_separator + """
+""" + row_format%('**Field type**', '**Default delegate**', '**Default editor**') + """
+""" + row_separator + """
 """
 
-for field_type, value in _sqlalchemy_to_python_type_.items():
-  doc += """| %-18s | %-18s |
-+--------------------+--------------------+  
-"""%(str(field_type.__name__), 'info')
+field_types = _sqlalchemy_to_python_type_.keys()
+field_types.sort(lambda x,y:cmp(x.__name__, y.__name__))
+for field_type in field_types:
+  field_attributes = _sqlalchemy_to_python_type_[field_type](DummyField())
+  delegate = field_attributes['delegate']
+  row = row_format%(field_type.__name__, delegate.__name__, '.. image:: ../_static/editors/%s_editable.png'%(delegate.editor.__name__))
+  doc += row + """ 
+""" + row_separator + """
+"""
   
 doc += """
 """
-
-print doc
 
 __doc__ = doc
   

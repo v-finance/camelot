@@ -827,6 +827,21 @@ class DelegateTest(unittest.TestCase):
     delegate = self.delegates.VirtualAddressDelegate(parent=None, editable=False)
     self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'), 'disabled')
 
+class FilterTest(ModelThreadTestCase):
+  """Test the filters in the table view"""
+  
+  images_path = static_images_path
+  
+  def test_group_box_filter(self):
+    from camelot.view import filters
+    filter = filters.GroupBoxFilter('state')
+    self.grab_widget(filter.render(None, 'Organization', [('Nokia',None), ('Apple',None)]))
+
+  def test_combo_box_filter(self):
+    from camelot.view import filters
+    filter = filters.ComboBoxFilter('state')
+    self.grab_widget(filter.render(None, 'Organization', [('Nokia',None), ('Apple',None)]))
+    
 class ControlsTest(ModelThreadTestCase):
   """Test some basic controls"""
   
@@ -872,7 +887,9 @@ if __name__ == '__main__':
   controls_test = unittest.makeSuite(ControlsTest, 'test')
   runner.run(controls_test)
   form_test = unittest.makeSuite(FormTest, 'test')
-  runner.run(form_test)  
+  runner.run(form_test)
+  filter_test = unittest.makeSuite(FilterTest, 'test')
+  runner.run(filter_test)    
 #  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
 #  runner.run(entity_views_test)  
 
