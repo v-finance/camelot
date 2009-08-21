@@ -370,9 +370,14 @@ class CollectionProxy(QtCore.QAbstractTableModel):
           minimal_column_width = QtGui.QFontMetrics(self._header_font).size(Qt.TextSingleLine, 'A').width()*c[1]['minimal_column_width']
         else:
           minimal_column_width = 0
-          
+        editable = True
+        if 'editable' in c[1]:
+          editable = c[1]['editable']
         label_size = QtGui.QFontMetrics(self._header_font_required).size(Qt.TextSingleLine, c[1]['name']+' ')
-        return QtCore.QVariant(QtCore.QSize(max(minimal_column_width, editor_size.width(),label_size.width()+10), label_size.height()+10))
+        size = max(minimal_column_width, label_size.width()+10)
+        if editable:
+          size = max(size, editor_size.width())
+        return QtCore.QVariant(QtCore.QSize(size, label_size.height()+10))
     else:
       
       if role == Qt.SizeHintRole:
