@@ -48,6 +48,8 @@ def variant_to_pyobject(qvariant=None):
                             day=value.day())
     elif type == QtCore.QVariant.Int:
       value = int(qvariant.toInt()[0])
+    elif type == QtCore.QVariant.LongLong:
+      value = int(qvariant.toLongLong()[0])      
     elif type == QtCore.QVariant.Double:
       value = float(qvariant.toDouble()[0])
     elif type == QtCore.QVariant.Bool:
