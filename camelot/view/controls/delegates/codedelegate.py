@@ -11,9 +11,6 @@ class CodeDelegate(CustomDelegate):
     CustomDelegate.__init__(self, parent=parent, parts=parts, **kwargs)
     self._dummy_editor = editors.CodeEditor(parent=None, parts=parts)
     self.parts = parts
-    
-    
-
 
   def paint(self, painter, option, index):
     painter.save()

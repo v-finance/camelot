@@ -28,12 +28,6 @@ class IntegerDelegate(CustomDelegate):
     painter.save()
     self.drawBackground(painter, option, index)
     value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-    editor = editors.IntegerEditor( None, 
-                                    self.minimum,
-                                    self.maximum,
-                                    self.editable )
-    
-    
     
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)

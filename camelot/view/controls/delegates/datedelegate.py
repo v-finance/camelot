@@ -63,13 +63,6 @@ class DateDelegate(CustomDelegate):
                      str(formattedDate))
     
     painter.restore()
-    
-    
-    
-    
-#    myoption = QtGui.QStyleOptionViewItem(option)
-#    myoption.displayAlignment |= Qt.AlignRight | Qt.AlignVCenter
-#    QtGui.QItemDelegate.paint(self, painter, myoption, index)
 
   def sizeHint(self, option, index):
     return editors.DateEditor().sizeHint()

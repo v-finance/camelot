@@ -38,13 +38,6 @@ to the precision specified in the definition of the Field.
     self.drawBackground(painter, option, index)
     value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
 
-    editor = editors.FloatEditor(parent=None,
-                                 minimum=self.minimum,
-                                 maximum=self.maximum,
-                                 precision=self.precision,
-                                 editable=self.editable,
-                                 prefix=self.prefix,
-                                 suffix=self.suffix)
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
     #fontColor = QtGui.QColor()
@@ -66,28 +59,14 @@ to the precision specified in the definition of the Field.
           fontColor = QtGui.QColor()
           fontColor.setRgb(130,130,130)
     
-    
-
-    
-    value_str = ""
+    value_str = u''
     if value != None and value != camelot.view.proxy.ValueLoading:
-      value_str = '%.*f'%(self.precision, value)
-      
+      value_str = u'%.*f'%(self.precision, value)
     
-    
-    
-    
-    value_str = str(self.prefix) + ' ' + str(value_str) + ' ' + str(self.suffix)
-    
+    value_str = unicode(self.prefix) + ' ' + unicode(value_str) + ' ' + unicode(self.suffix)
     value_str = value_str.strip()
-    
-    #value_str = str(value)
     if self.unicode_format != None:
         value_str = self.unicode_format(value)
-
-    #fontColor = fontColor.darker()
-    
-
 
     painter.setPen(fontColor.toRgb())
     rect = QtCore.QRect(option.rect.left()+23,
