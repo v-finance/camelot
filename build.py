@@ -4,7 +4,7 @@ import sys
 import os
 sys.argv += ['-style', 'cleanlooks']
 sys.path.append( os.path.join(os.path.dirname(__file__), 'test') )
-runpy.run_module('test.run', run_name='__main__')
+runpy.run_module('test.test_view', run_name='__main__')
 del sys.argv[-2:]
 
 import sphinx
