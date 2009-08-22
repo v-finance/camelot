@@ -1,6 +1,5 @@
-
-from customeditor import *
-from one2manyeditor import One2ManyEditor
+from one2manyeditor import One2ManyEditor, QtGui, QtCore
+from customeditor import editingFinished
 from abstractmanytooneeditor import AbstractManyToOneEditor
 
 from camelot.view.art import Icon
@@ -42,7 +41,6 @@ class ManyToManyEditor(One2ManyEditor, AbstractManyToOneEditor):
 
   def removeSelectedRows(self):
     """Remove the selected rows in this tableview, but don't delete them"""
-    logger.debug('delete selected rows called')
     for row in set(map(lambda x: x.row(), self.table.selectedIndexes())):
       self.model.removeRow(row, delete=False)
     self.emit(editingFinished)

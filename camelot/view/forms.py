@@ -117,11 +117,9 @@ of (label, widget editor)
 :return: a QWidget into which the form is rendered
     """
     logger.debug('rendering %s' % self.__class__.__name__) 
-    from camelot.view.controls.editors import One2ManyEditor
-    from camelot.view.controls.editors import RichTextEditor
+    from camelot.view.controls.editors.wideeditor import WideEditor
 
     from PyQt4 import QtGui
-    from PyQt4.QtCore import Qt
 
     form_layout = QtGui.QGridLayout()
     row = 0
@@ -140,7 +138,7 @@ of (label, widget editor)
         col = 0
         row_span = 1
         label, editor = widgets[field]
-        if isinstance(editor, (One2ManyEditor, RichTextEditor)):
+        if isinstance(editor, (WideEditor,)):
           col_span = 2
           form_layout.addWidget(label, row, col, row_span, col_span)
           row += 1
@@ -162,7 +160,7 @@ of (label, widget editor)
       w = last_item.widget()
   
       # add stretch only if last item is not expandable
-      if isinstance(w, (One2ManyEditor, RichTextEditor)):
+      if isinstance(w, (WideEditor,)):
         pass
       else:
         form_layout.setRowStretch(form_layout.rowCount(), 1)

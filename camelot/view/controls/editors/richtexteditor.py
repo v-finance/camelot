@@ -1,8 +1,8 @@
-
-from customeditor import *
+from customeditor import CustomEditor, QtCore, QtGui, Qt
+from wideeditor import WideEditor
 from camelot.view.art import Icon
 
-class RichTextEditor(CustomEditor):
+class RichTextEditor(CustomEditor, WideEditor):
   
   def __init__(self, parent=None, editable=True, **kwargs):
     CustomEditor.__init__(self, parent)

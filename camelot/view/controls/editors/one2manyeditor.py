@@ -1,12 +1,13 @@
 import logging
 
 logger = logging.getLogger('camelot.view.controls.editors.onetomanyeditor')
-from customeditor import *
+from customeditor import CustomEditor, QtCore, QtGui, Qt
+from wideeditor import WideEditor
 
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function
 
-class One2ManyEditor(CustomEditor):
+class One2ManyEditor(CustomEditor, WideEditor):
   
   def __init__(self,
                admin=None,

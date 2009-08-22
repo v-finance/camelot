@@ -1,7 +1,7 @@
+from wideeditor import WideEditor
+from customeditor import AbstractCustomEditor, QtGui
 
-from customeditor import *
-
-class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor):
+class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
 
   def __init__(self, parent, length=20, editable=True, **kwargs):
     QtGui.QTextEdit.__init__(self, parent)

@@ -1,7 +1,8 @@
 
-from customeditor import *
+from customeditor import CustomEditor, QtCore, QtGui
+from wideeditor import WideEditor
 
-class EmbeddedMany2OneEditor(CustomEditor):
+class EmbeddedMany2OneEditor(CustomEditor, WideEditor):
   """Widget for editing a many 2 one relation a a form embedded in another
 form.
 """
@@ -28,8 +29,6 @@ form.
     
     def set_entity_instance():
       entity = entity_instance_getter()
-      if entity==ValueLoading:
-        raise Exception('Wooha')
       if entity:
         self.entity_instance_getter = create_instance_getter(entity)
       else:
