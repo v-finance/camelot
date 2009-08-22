@@ -149,6 +149,7 @@ class ModelThread(threading.Thread):
           self._response_signaler.responseAvailable(self)
           self._response_signaler.stopProcessingRequest(self)
           event.set()
+          self.logger.error('function causing exception was %s'%(request.__name__))
         except:
           self.logger.error('unhandled exception in model thread')
     except Exception, e:

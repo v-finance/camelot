@@ -46,6 +46,8 @@ The widget class to be used as a header in the table view::
   
   title_format = ''
   header_widget = None
+  
+  title_changed_signal = QtCore.SIGNAL('titleChanged(const QString&)')
 
 class TabView(QtGui.QWidget, AbstractView):
   """Class to combine multiple views in Tabs and let them behave as one view.  This class can be

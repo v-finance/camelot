@@ -33,8 +33,9 @@ logger = logging.getLogger('camelot.view.controls.formview')
 from PyQt4 import QtCore
 from PyQt4 import QtGui
 from camelot.view.model_thread import model_function
+from camelot.view.controls.view import AbstractView
 
-class FormView(QtGui.QWidget):
+class FormView(QtGui.QWidget, AbstractView):
   def __init__(self, title, admin, model, index):
     QtGui.QWidget.__init__(self)
     self.title_prefix = title
@@ -78,7 +79,9 @@ class FormView(QtGui.QWidget):
       return u'%s %s'%(self.title_prefix, self.admin.get_verbose_identifier(obj))
     
     def set_title(title):
-      self.setWindowTitle(title)
+      import sip
+      if not sip.isdeleted(self):
+        self.setWindowTitle(title)
     
     self.admin.mt.post(get_title, set_title)
 
@@ -88,8 +91,10 @@ class FormView(QtGui.QWidget):
     self.update_title()
 
   def handleGetColumnsAndForm(self, columns, form):
-    delegate = self.model.getItemDelegate()
-    self.setColumnsFormAndDelegate(columns, form, delegate)
+    import sip
+    if not sip.isdeleted(self):
+      delegate = self.model.getItemDelegate()
+      self.setColumnsFormAndDelegate(columns, form, delegate)
 
   def setColumnsFormAndDelegate(self, columns, form, delegate):
     """Create value and label widgets"""
