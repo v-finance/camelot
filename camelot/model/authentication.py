@@ -44,8 +44,9 @@ __metadata__ = metadata
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, VBoxForm, HBoxForm, WidgetOnlyForm
 import datetime
+import threading
 
-_current_authentication_ = None
+_current_authentication_ = threading.local()
 
 def end_of_times():
   return datetime.date(year=2400, month=12, day=31)
@@ -53,10 +54,10 @@ def end_of_times():
 def getCurrentAuthentication():
   """Get the currently logged in person"""
   global _current_authentication_
-  if not _current_authentication_:
+  if not hasattr(_current_authentication_, 'mechanism'):
     import getpass
-    _current_authentication_ = UsernameAuthenticationMechanism.getOrCreateAuthentication(unicode(getpass.getuser()))
-  return _current_authentication_
+    _current_authentication_.mechanism = UsernameAuthenticationMechanism.getOrCreateAuthentication(unicode(getpass.getuser()))
+  return _current_authentication_.mechanism
 
 def updateLastLogin():
   """Update the last login of the current person to now"""

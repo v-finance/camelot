@@ -45,10 +45,12 @@ def model_function(original_function):
   """
   
   def new_function(*args, **kwargs):
-    if threading.currentThread() != get_model_thread():
-      logger.error('%s was called outside the model thread' % 
-                   (original_function.__name__))
-      raise ModelThreadException()
+    current_thread = threading.currentThread()
+    if current_thread  != get_model_thread():
+      message = '%s was called outside the model thread' % original_function.__name__
+      logger.error(message)
+      logger.error('calling thread is %s'%id(current_thread))
+      raise ModelThreadException(message)
     return original_function(*args, **kwargs)
   
   new_function.__name__ = original_function.__name__
@@ -240,6 +242,9 @@ class ModelThread(threading.Thread):
     
 def construct_model_thread(*args, **kwargs):
   _model_thread_.insert(0, ModelThread(*args, **kwargs))
+  
+def has_model_thread():
+  return len(_model_thread_) > 0
   
 def get_model_thread():
   return _model_thread_[0]

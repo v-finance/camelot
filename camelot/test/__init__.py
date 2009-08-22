@@ -51,7 +51,7 @@ class ModelThreadTestCase(unittest.TestCase):
 
   def setUp(self):
     self.app = get_application()
-    from camelot.view.model_thread import get_model_thread, construct_model_thread
+    from camelot.view.model_thread import get_model_thread, construct_model_thread, has_model_thread
     from camelot.view.response_handler import ResponseHandler
     from camelot.view.remote_signals import construct_signal_handler
     rh = ResponseHandler()
@@ -97,4 +97,4 @@ class EntityViewsTest(ModelThreadTestCase):
   def test_new_view(self):
     for admin in self.get_admins():
       widget = admin.create_new_view()
-      self.grab_widget(widget, suffix=admin.entity.__name__.lower())    
+      self.grab_widget(widget, suffix=admin.entity.__name__.lower())
