@@ -67,7 +67,7 @@ class FormView(QtGui.QWidget, AbstractView):
                        self.handleGetColumnsAndForm(columns, form))
 
     def getActions():
-      return admin.getFormActions(None)
+      return admin.get_form_actions(None)
 
     self.admin.mt.post(getActions, self.setActions)
     self.update_title()
@@ -125,7 +125,8 @@ class FormView(QtGui.QWidget, AbstractView):
     return self.model._get_object(self.widget_mapper.currentIndex())
 
   def setActions(self, actions):
-    if actions:
+    import sip
+    if not sip.isdeleted(self) and actions:
       from actionsbox import ActionsBox
       logger.debug('setting Actions for formview')
       self.actions_widget = ActionsBox(self, self.admin.mt, self.getEntity)

@@ -30,38 +30,25 @@
 import logging
 logger = logging.getLogger('controls.actionsbox')
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtGui
 
 _ = lambda x:x
-
-from camelot.view.remote_signals import get_signal_handler
 
 class ActionsBox(QtGui.QGroupBox):
   """A box containing actions to be applied to a form view"""
 
   def __init__(self, parent, model_thread, entity_getter):
-    logger.debug('create actions box')
     QtGui.QGroupBox.__init__(self, _('Actions'), parent)
-    self.group = QtGui.QButtonGroup()
-    self.mt = model_thread
-    self.rsh = get_signal_handler()
+    logger.debug('create actions box')
     self.entity_getter = entity_getter
-    self.connect(self.group, QtCore.SIGNAL('buttonPressed(int)'), self.executeAction)
 
   def setActions(self, actions):
     logger.debug('setting actions to %s'%str(actions))
-    self.actions = []
+    # keep action object alive to allow them to receive signals
+    self.actions = actions
     layout = QtGui.QVBoxLayout()
-    for i,(name,functor) in enumerate(actions):
-      button = QtGui.QPushButton(_(name))
-      layout.addWidget(button)
-      self.group.addButton(button, i)
-      self.actions.append((name, functor))
+    for action in actions:
+      action_widget = action.render(self, self.entity_getter)
+      layout.addWidget(action_widget)
     layout.addStretch()
     self.setLayout(layout)
-
-  def executeAction(self, button_id):
-    self.actions[button_id][1](self.entity_getter)
- 
-  def __del__(self):
-    logger.debug('delete actions box')

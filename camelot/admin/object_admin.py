@@ -211,8 +211,9 @@ Other field attributes process by the admin interface are:
     return self.app_admin.getEntityAdmin(entity)
 
   @model_function
-  def getFormActions(self, entity):
-    return self.form_actions
+  def get_form_actions(self, entity):
+    from camelot.admin.form_action import structure_to_form_actions
+    return structure_to_form_actions(self.form_actions)
   
   def getRelatedEntityAdmin(self, entity):
     """
