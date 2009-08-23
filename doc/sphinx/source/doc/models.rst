@@ -23,6 +23,15 @@ Camelot field types
 
 .. automodule:: camelot.types
    :members:
+   
+Python properties as fields
+===========================
+
+Normal python properties can be used as fields on forms as well.  In that case, there
+will be no introspection to find out how to display the property.  Therefore the delegate 
+attribute should be specified explicitely.
+
+  .. literalinclude:: ../../../../test/snippet/properties_as_fields.py 
 
 Fields calculated by the database
 =================================
