@@ -51,6 +51,12 @@ class Pixmap(object):
     else:
       self._module_name = module.__name__
     
+  def __unicode__(self):
+    return self._path
+  
+  def __repr__(self):
+    return self.__class__.__name__ + "('" + self._path + "')"
+  
   def fullpath(self):
     """Obsolete : avoid this method, since it will copy the resource file from its package
     and copy it to a temp folder if the resource is packaged.

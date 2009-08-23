@@ -1,7 +1,26 @@
 """
 Form actions are objects that can be put in the form_actions list of the
 object admin interfaces.  Those actions then appear on the form and can
-be executed by the end users.
+be executed by the end users.  The most convenient method to create custom actions
+is to subclass FormAction and implement a custom run method ::
+
+  class MyAction(FormAction):
+  
+    def run(self, entity_getter):
+      print 'Hello World'
+  
+  class Movie(Entity):
+    title = Field(Unicode(60), required=True)
+    
+    Admin(EntityAdmin):
+      list_display = ['title']
+      form_actions = [MyAction('Hello')]
+
+Several subclasses of FormAction exist to provide common use cases such as executing
+a function in the model thread or printing a report.
+
+To customize the look of the action button on the form, the render method should be
+overwritten.
 """
 
 from PyQt4 import QtGui, QtCore
@@ -15,6 +34,7 @@ class FormAction(object):
     self._icon = icon
     
   def render(self, parent, entity_getter):
+    """Returns a QWidget the user can use to trigger the action"""
     
     def create_clicked_function(self, entity_getter):
       
@@ -89,6 +109,10 @@ Overwrite the html function to customize the html that should be shown::
       list_display = ['title', 'description']
       form_actions = [PrintMovieAction('Summary')]
     
+will put a print button on the form :
+
+.. image:: ../_static/formaction/print_html_form_action.png
+
   """
   
   def __init__(self, name, icon=Icon('tango/22x22/actions/document-print.png')):
