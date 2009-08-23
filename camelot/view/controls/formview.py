@@ -176,6 +176,7 @@ class FormView(QtGui.QWidget, AbstractView):
         return self.validator.isValid(self.widget_mapper.currentIndex())
                           
       def showMessage(valid):
+        import sip
         if not valid:
           reply = self.validator.validityDialog(self.widget_mapper.currentIndex(), self).exec_()
           if reply == QtGui.QMessageBox.Discard:
@@ -187,7 +188,8 @@ class FormView(QtGui.QWidget, AbstractView):
             self.emit(self.closeAfterValidation)
         else:
           self.validate_before_close = False
-          self.emit(self.closeAfterValidation)
+          if not sip.isdeleted(self):
+            self.emit(self.closeAfterValidation)
       
       self.admin.mt.post(validate, showMessage)
       return False
