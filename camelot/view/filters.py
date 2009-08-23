@@ -62,7 +62,7 @@ class Filter(object):
     of tuples containting (option_name, query_decorator)  
     
     The name and the list of options can be fetched with get_name_and_options"""
-    raise NotImplementedException()
+    raise NotImplementedError()
     
   def get_name_and_options(self, admin):
     """return a tuple of the name of the filter and a list of options that can be selected. 

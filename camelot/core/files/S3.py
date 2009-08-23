@@ -284,7 +284,7 @@ class AWSAuthConnection:
                     = urlparse.urlparse(location)
             if scheme == "http":    is_secure = True
             elif scheme == "https": is_secure = False
-            else: raise invalidURL("Not http/https: " + location)
+            else: raise Exception("Invalid url : Not http/https: " + location)
             if query: path += "?" + query
             # retry with redirect
 

@@ -119,8 +119,10 @@ the relation
   
   @gui_function
   def display_search_completions(self, completions):
-    self.completions_model.setCompletions(completions)
-    self.completer.complete()
+    import sip
+    if not sip.isdeleted(self):
+      self.completions_model.setCompletions(completions)
+      self.completer.complete()
 
   def completionActivated(self, index):
     object_getter = index.data(Qt.EditRole)
@@ -234,23 +236,25 @@ or ('', False) if the instance was None
     
     def set_instance_represenation(representation):
       """Update the gui"""
+      import sip
       desc, pk = representation
       self._entity_representation = desc
-      self.search_input.setText(desc)
-      if pk != False:
-        icon = Icon('tango/16x16/places/folder.png').getQIcon()
-        self.open_button.setIcon(icon)
-        icon = Icon('tango/16x16/actions/edit-clear.png').getQIcon()
-        self.search_button.setIcon(icon)
-        self.entity_set = True
-        #self.search_input.setReadOnly(True)
-      else:
-        icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
-        self.open_button.setIcon(icon)
-        icon = Icon('tango/16x16/actions/system-search.png').getQIcon()
-        self.search_button.setIcon(icon)
-        self.entity_set = False
-        #self.search_input.setReadOnly(False)
+      if not sip.isdeleted(self):
+        self.search_input.setText(desc)
+        if pk != False:
+          icon = Icon('tango/16x16/places/folder.png').getQIcon()
+          self.open_button.setIcon(icon)
+          icon = Icon('tango/16x16/actions/edit-clear.png').getQIcon()
+          self.search_button.setIcon(icon)
+          self.entity_set = True
+          #self.search_input.setReadOnly(True)
+        else:
+          icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
+          self.open_button.setIcon(icon)
+          icon = Icon('tango/16x16/actions/system-search.png').getQIcon()
+          self.search_button.setIcon(icon)
+          self.entity_set = False
+          #self.search_input.setReadOnly(False)
       if propagate:
         self.emit(QtCore.SIGNAL('editingFinished()'))
       

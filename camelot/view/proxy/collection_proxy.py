@@ -279,13 +279,13 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     else:
       self.logger.debug('duplicate update')
 
-  def handleEntityDelete(self, sender, entity, primary_keys):
+  def handleEntityDelete(self, sender, entity):
     """Handles the entity signal, indicating that the model is out of date"""
     self.logger.debug('received entity delete signal')
     if sender != self:
       self.refresh()
                  
-  def handleEntityCreate(self, entity, primary_keys):
+  def handleEntityCreate(self, sender, entity):
     """Handles the entity signal, indicating that the model is out of date"""
     self.logger.debug('received entity create signal')
     if sender != self:

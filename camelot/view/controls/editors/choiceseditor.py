@@ -4,7 +4,6 @@ from customeditor import *
 class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
 
   def __init__(self, parent=None, editable=True, **kwargs):
-    from camelot.view.model_thread import get_model_thread
     QtGui.QComboBox.__init__(self, parent)
     AbstractCustomEditor.__init__(self)
     self.setEnabled(editable)
@@ -16,15 +15,17 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
       return variant.toPyObject()
     
   def set_choices(self, choices):
-    allready_in_combobox = dict((self.qvariantToPython(self.itemData(i)),i)
-                                 for i in range(self.count()))
-    for i,(value,name) in enumerate(choices):
-      if value not in allready_in_combobox:
-        self.insertItem(i, unicode(name), QtCore.QVariant(value))
-      else:
-        # the editor data might allready have been set, but its name is
-        # still ..., therefore we set the name now correct
-        self.setItemText(i, unicode(name))
+    import sip
+    if not sip.isdeleted(self):
+      allready_in_combobox = dict((self.qvariantToPython(self.itemData(i)),i)
+                                   for i in range(self.count()))
+      for i,(value,name) in enumerate(choices):
+        if value not in allready_in_combobox:
+          self.insertItem(i, unicode(name), QtCore.QVariant(value))
+        else:
+          # the editor data might allready have been set, but its name is
+          # still ..., therefore we set the name now correct
+          self.setItemText(i, unicode(name))
     
   def set_value(self, value):
     value = AbstractCustomEditor.set_value(self, value)
