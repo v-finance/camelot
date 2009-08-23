@@ -30,10 +30,10 @@ fields"""
 
 def notEditableAdmin(original_admin):
   """Turn all fields visualized with original_admin into read only fields
-  @type original_admin: an implementation of ObjectAdmin
-  
-  usage :
-  
+:param original_admin: an implementation of ObjectAdmin
+
+usage ::
+
   class Movie(Entity):
     name = Field(Unicode(50))
     
@@ -50,10 +50,4 @@ def notEditableAdmin(original_admin):
       attribs['editable'] = False
       return attribs
       
-  return newAdmin
-  
-
-    
-  
-  
-  
+  return newAdmin  
