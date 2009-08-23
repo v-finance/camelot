@@ -520,6 +520,17 @@ class FormTest(ModelThreadTestCase):
     form = forms.HBoxForm([['title', 'short_description'], ['director', 'release_date']])
     self.grab_widget(form.render(self.widgets))    
                           
+from camelot.admin import form_action
+  
+class FormActionTest(ModelThreadTestCase):
+    
+  images_path = static_images_path
+  
+  def test_print_html_form_action(self):
+    action = form_action.PrintHtmlFormAction('Summary')
+    widget = action.render(None, None)
+    self.grab_widget(widget)
+                            
 class DelegateTest(unittest.TestCase):
   """Test the basic functionallity of the delegates :
 - createEditor
@@ -845,6 +856,8 @@ if __name__ == '__main__':
   runner.run(proxy_test)
 #  proxy_one_to_many_test =  unittest.makeSuite(ProxyOneToManyTest, 'test')
 #  runner.run(proxy_one_to_many_test)
+  form_action_test =  unittest.makeSuite(FormActionTest, 'test')
+  runner.run(form_action_test)
   editor_test =  unittest.makeSuite(EditorTest, 'test')
   runner.run(editor_test)
   editor_test =  unittest.makeSuite(DelegateTest, 'test')
