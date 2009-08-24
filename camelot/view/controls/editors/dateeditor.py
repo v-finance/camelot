@@ -54,8 +54,10 @@ class DateEditor(CustomEditor):
     self.minimum = datetime.date.min
     self.maximum = datetime.date.max
     self.set_date_range()
+    
+    self.qdateedit.setFocus(Qt.OtherFocusReason)
 
-    self.setFocusProxy(self.qdateedit)
+    #self.setFocusProxy(self.qdateedit)
     self.setAutoFillBackground(True)
 
     self.connect(self.qdateedit,
@@ -76,6 +78,9 @@ class DateEditor(CustomEditor):
     return datetime.date(value.year(), value.month(), value.day())
 
   def editingFinished(self):
+    self.emit(QtCore.SIGNAL('editingFinished()'))
+    
+  def focusOutEvent(self, event):
     self.emit(QtCore.SIGNAL('editingFinished()'))
 
   # TODO: consider using QDate.toPyDate(), PyQt4.1
