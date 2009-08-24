@@ -59,18 +59,18 @@ class TableWidget(QtGui.QTableView):
   def setModel(self, model):
     QtGui.QTableView.setModel(self, model)
     self.connect( self.selectionModel(), SIGNAL('currentChanged(const QModelIndex&,const QModelIndex&)'), self.activated )
-    #self.connect( self.selectionModel(), SIGNAL('selectionChanged(const QItemSelection&,const QItemSelection&)'), self.activated )
-    
-  def activated(self, selectedIndex=None, previousSelectedIndex=None):
+
+  def activated(self, selectedIndex, previousSelectedIndex):
     option = QtGui.QStyleOptionViewItem()
-    if selectedIndex.row() >= 0 and selectedIndex != None:
-      newSize = self.itemDelegate(selectedIndex).sizeHint(option, selectedIndex)
-      row = selectedIndex.row()
-      self.setRowHeight(row, newSize.height())
-    if previousSelectedIndex.row() >= 0 and previousSelectedIndex != None:
+    newSize = self.itemDelegate(selectedIndex).sizeHint(option, selectedIndex)
+    row = selectedIndex.row()
+    if previousSelectedIndex.row() >= 0:
       normalSize = QtGui.QFontMetrics(self._header_font_required).height()+4
       previousRow = previousSelectedIndex.row()
       self.setRowHeight(previousRow, normalSize)
+      
+    
+    self.setRowHeight(row, newSize.height())
  
     
     #self.selectedRow = row
