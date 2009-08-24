@@ -29,6 +29,8 @@ class DateEditor(CustomEditor):
     special_date.setToolTip('Special dates')
     special_date.setMenu(special_date_menu)
     special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
+    special_date.setFixedHeight(20)
+    #print special_date.height()
 
     if not editable:
       special_date.setEnabled(False)

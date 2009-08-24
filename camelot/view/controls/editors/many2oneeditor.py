@@ -52,6 +52,7 @@ the relation
     icon = Icon('tango/16x16/actions/edit-clear.png').getQIcon()
     self.search_button.setIcon(icon)
     self.search_button.setAutoRaise(True)
+    self.search_button.setFixedHeight(20)
     self.connect(self.search_button,
                  QtCore.SIGNAL('clicked()'),
                  self.searchButtonClicked)
@@ -61,6 +62,7 @@ the relation
     self.open_button.setFocusPolicy(Qt.ClickFocus)
     icon = Icon('tango/16x16/actions/document-new.png').getQIcon()
     self.open_button.setIcon(icon)
+    self.open_button.setFixedHeight(20)
     self.connect(self.open_button,
                  QtCore.SIGNAL('clicked()'),
                  self.openButtonClicked)

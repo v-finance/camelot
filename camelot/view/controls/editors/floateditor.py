@@ -41,6 +41,7 @@ class FloatEditor(CustomEditor):
     icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
     calculatorButton.setIcon(icon)
     calculatorButton.setAutoRaise(True)
+    calculatorButton.setFixedHeight(20)
     
     self.connect(calculatorButton,
                  QtCore.SIGNAL('clicked()'),

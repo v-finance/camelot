@@ -13,12 +13,14 @@ class ManyToManyEditor(One2ManyEditor, AbstractManyToOneEditor):
     remove_button = QtGui.QToolButton()
     remove_button.setIcon(Icon('tango/16x16/actions/list-remove.png').getQIcon())
     remove_button.setAutoRaise(True)
+    remove_button.setFixedHeight(20)
     self.connect(remove_button,
                  QtCore.SIGNAL('clicked()'),
                  self.removeSelectedRows)
     add_button = QtGui.QToolButton()
     add_button.setIcon(Icon('tango/16x16/actions/list-add.png').getQIcon())
     add_button.setAutoRaise(True)
+    add_button.setFixedHeight(20)
     self.connect(add_button, QtCore.SIGNAL('clicked()'), self.createSelectView)    
 #    new_button = QtGui.QToolButton()
 #    new_button.setIcon(Icon('tango/16x16/actions/document-new.png').getQIcon())

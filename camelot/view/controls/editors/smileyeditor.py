@@ -37,6 +37,7 @@ class SmileyEditor(CustomEditor):
         icon = Icon(imgPath).getQIcon()
         
         self.box.addItem(icon, '')
+        self.box.setFixedHeight(20)
         
         if value == 'face-plain':
             self.box.setCurrentIndex(i)

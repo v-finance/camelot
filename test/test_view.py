@@ -553,6 +553,10 @@ class DelegateTest(unittest.TestCase):
     model.setData(index, QVariant(data))
     
     option = QtGui.QStyleOptionViewItem()
+    
+    if suffix == 'editable':
+      print 'Height = ' + str(delegate.sizeHint(option, index).height())
+    
     delegate.sizeHint(option, index)
     
     tableview = TableWidget()
