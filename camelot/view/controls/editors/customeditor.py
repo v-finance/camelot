@@ -40,7 +40,8 @@ functionallity to store and retrieve `ValueLoading` as an editor's value.
            QtGui.QDateEdit().sizeHint().height(),
            QtGui.QDateTimeEdit().sizeHint().height(),
            QtGui.QSpinBox().sizeHint().height(),
-           QtGui.QDateEdit().sizeHint().height()]
+           QtGui.QDateEdit().sizeHint().height(),
+           QtGui.QComboBox().sizeHint().height()]
     
     finalHeight = max(height)
 
