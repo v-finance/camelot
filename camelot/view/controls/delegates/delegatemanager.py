@@ -25,8 +25,6 @@ developer
     self.connect(delegate, SIGNAL('closeEditor(QWidget*)'), self.closeEditor)
 
   def commitData(self, editor):
-    #print 'commitData - delegatemanager'
-    #print editor.get_value()
     self.emit(SIGNAL('commitData(QWidget*)'), editor)
     
   def closeEditor(self, editor):

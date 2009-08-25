@@ -19,6 +19,7 @@ class DateEditor(CustomEditor):
     self.qdateedit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
     self.qdateedit.setDisplayFormat(QtCore.QString(format))
 
+
     special_date_menu = QtGui.QMenu(self)
     special_date_menu.addAction('Today')
     special_date_menu.addAction('Last date')
@@ -29,8 +30,7 @@ class DateEditor(CustomEditor):
     special_date.setToolTip('Special dates')
     special_date.setMenu(special_date_menu)
     special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
-    special_date.setFixedHeight(20)
-    #print special_date.height()
+    special_date.setFixedHeight(self.get_height())
 
     if not editable:
       special_date.setEnabled(False)

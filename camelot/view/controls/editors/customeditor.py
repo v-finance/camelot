@@ -29,6 +29,13 @@ functionallity to store and retrieve `ValueLoading` as an editor's value.
     if self._value_loading:
       return ValueLoading
     return None
+  
+  
+  """
+  Get the 'standard' height for a cell
+  """
+  def get_height(self):
+    return QtGui.QFontMetrics(QtGui.QApplication.font()).height()+6
       
 class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
   """Base class for implementing custom editor widgets.  This class provides

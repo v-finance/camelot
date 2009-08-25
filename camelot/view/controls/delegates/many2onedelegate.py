@@ -29,18 +29,11 @@ class Many2OneDelegate(CustomDelegate):
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
-    #print option.state, '%08x'%(option.state)
     
     
     
     value = index.data(Qt.DisplayRole).toString()
     
-    
-#    if not (option.state & QtGui.QStyle.State_Editing):
-#      self.drawDisplay(painter,
-#                       option,
-#                       option.rect,
-#                       index.data(Qt.DisplayRole).toString())
     
     
     if( option.state & QtGui.QStyle.State_Selected ):

@@ -37,7 +37,7 @@ class SmileyEditor(CustomEditor):
         icon = Icon(imgPath).getQIcon()
         
         self.box.addItem(icon, '')
-        self.box.setFixedHeight(20)
+        self.box.setFixedHeight(self.get_height())
         
         if value == 'face-plain':
             self.box.setCurrentIndex(i)
@@ -84,7 +84,6 @@ class SmileyEditor(CustomEditor):
         if value == i:
             imgName = emot
             
-    print 'sending -- ' + imgName
     self.emit(QtCore.SIGNAL('editingFinished()'), imgName)
 
   def set_value(self, value):

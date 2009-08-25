@@ -34,7 +34,7 @@ class DateTimeDelegate(CustomDelegate):
     editor = editors.DateTimeEditor( None, 
                                  self.editable )
     
-    #print formattedDateTime
+
     
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
@@ -70,7 +70,6 @@ class DateTimeDelegate(CustomDelegate):
                      Qt.AlignVCenter | Qt.AlignRight,
                      str(formattedDateTime))
     
-    #print str(formattedDateTime)
     
     
     painter.restore()

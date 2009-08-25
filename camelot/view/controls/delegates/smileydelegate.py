@@ -20,7 +20,7 @@ class SmileyDelegate(CustomDelegate):
     self.maximum = maximum
     
     
-    #print self.imgPath
+
     
   def paint(self, painter, option, index):
     painter.save()

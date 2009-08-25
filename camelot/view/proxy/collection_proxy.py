@@ -381,7 +381,6 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     else:
       
       if role == Qt.SizeHintRole:
-        print self.iconSize.height()
         return QtCore.QVariant(QtCore.QSize(self.iconSize.width()+8, self.iconSize.height()+5))
         
       

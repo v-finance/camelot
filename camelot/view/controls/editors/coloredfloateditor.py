@@ -27,7 +27,7 @@ class ColoredFloatEditor(CustomEditor):
     self.spinBox.addAction(action)
     self.arrow = QtGui.QLabel()
     self.arrow.setPixmap(Icon('tango/16x16/actions/go-up.png').getQPixmap())
-    self.arrow.setFixedHeight(20)
+    self.arrow.setFixedHeight(self.get_height())
 
     self.arrow.setAutoFillBackground(False)
     self.arrow.setMaximumWidth(19)
@@ -36,7 +36,7 @@ class ColoredFloatEditor(CustomEditor):
     icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
     calculatorButton.setIcon(icon)
     calculatorButton.setAutoRaise(True)
-    calculatorButton.setFixedHeight(20)
+    calculatorButton.setFixedHeight(self.get_height())
 
     self.connect(calculatorButton,
                  QtCore.SIGNAL('clicked()'),

@@ -65,9 +65,10 @@ class TableWidget(QtGui.QTableView):
     newSize = self.itemDelegate(selectedIndex).sizeHint(option, selectedIndex)
     row = selectedIndex.row()
     if previousSelectedIndex.row() >= 0:
-      normalSize = QtGui.QFontMetrics(self._header_font_required).height()+4
+      normalSize = QtGui.QFontMetrics(self._header_font_required).height()+5
       previousRow = previousSelectedIndex.row()
       self.setRowHeight(previousRow, normalSize)
+    
       
     
     self.setRowHeight(row, newSize.height())
@@ -218,7 +219,6 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
       
   def sectionClicked(self, section):
     """emits a row_selected signal"""
-    print section
     self.emit(SIGNAL('row_selected'), section)
 
   def create_table_model(self, admin):

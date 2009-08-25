@@ -41,7 +41,7 @@ class FloatEditor(CustomEditor):
     icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
     calculatorButton.setIcon(icon)
     calculatorButton.setAutoRaise(True)
-    calculatorButton.setFixedHeight(20)
+    calculatorButton.setFixedHeight(self.get_height())
     
     self.connect(calculatorButton,
                  QtCore.SIGNAL('clicked()'),
@@ -91,7 +91,6 @@ class FloatEditor(CustomEditor):
 
   def calculationFinished(self, value):
     self.spinBox.setValue(float(value))
-    #print value
     self.emit(QtCore.SIGNAL('editingFinished()'), float(value))
 
   def editingFinished(self, value):

@@ -24,7 +24,7 @@ class StarEditor(CustomEditor):
       else:
         button.setAutoRaise(True)
         button.setDisabled(True)
-      button.setFixedHeight(20)
+      button.setFixedHeight(self.get_height())
       self.buttons.append(button)
 
     def createStarClick(i):

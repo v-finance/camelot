@@ -141,8 +141,6 @@ class Calculator(QtGui.QDialog):
   
     def SaveValue(self):
         self.emit(QtCore.SIGNAL('calculationFinished'), str(self.output.text()))
-        #print 'Save Click'
-        #raise Exception('test')
         
         self.close()
         return
