@@ -115,7 +115,7 @@ will put a print button on the form :
 
   """
   
-  def __init__(self, name, icon=Icon('tango/22x22/actions/document-print.png')):
+  def __init__(self, name, icon=Icon('tango/16x16/actions/document-print.png')):
     
     def model_function(o):
       from camelot.view.export.printer import open_html_in_print_preview
