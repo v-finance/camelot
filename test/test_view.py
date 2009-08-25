@@ -19,7 +19,6 @@ def create_getter(getable):
   
   def getter():
     return getable
-  
   return getter
         
 class ProxyEntityTest(ModelThreadTestCase):
