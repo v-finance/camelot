@@ -29,6 +29,7 @@
 """
 
 from PyQt4 import QtCore, QtGui
+import sip
 
 from camelot.view.model_thread import get_model_thread
 
@@ -77,7 +78,8 @@ table views together in one view.
       return [(view, view.get_title()) for view in views]
     
     def set_views_and_titles(views_and_titles):
-      for view, title in views_and_titles:
-        tab_widget.addTab(view, title)
+      if not sip.isdeleted(tab_widget):
+        for view, title in views_and_titles:
+          tab_widget.addTab(view, title)
 
     get_model_thread().post(get_views_and_titles, set_views_and_titles)

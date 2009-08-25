@@ -217,7 +217,7 @@ class EntityAdmin(ObjectAdmin):
     return self.list_charts
 
   @model_function
-  def getFilters(self):
+  def get_filters(self):
     """Return the filters applicable for these entities each filter is 
 
     @return: [(filter_name, [(option_name, query_decorator), ...), ... ]

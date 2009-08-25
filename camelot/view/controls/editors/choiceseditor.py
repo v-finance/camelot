@@ -1,5 +1,6 @@
 
 from customeditor import *
+import sip
 
 class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
 
@@ -13,7 +14,6 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
 :param choices: a list of (value,name) tuples.  name will be displayed in the combobox,
 while value will be used within get_value and set_value
     """
-    import sip
     if not sip.isdeleted(self):
       allready_in_combobox = dict(self.get_choices())
       items_to_remove = []
@@ -42,24 +42,26 @@ while value will be used within get_value and set_value
     return [(variant_to_pyobject(self.itemData(i)),unicode(self.itemText(i))) for i in range(self.count())]
     
   def set_value(self, value):
-    from camelot.core.utils import variant_to_pyobject
-    value = AbstractCustomEditor.set_value(self, value)
-    if value not in (None, NotImplemented):
-      for i in range(self.count()):
-        if value == variant_to_pyobject(self.itemData(i)):
-          self.setCurrentIndex(i)
-          return
-      # it might happen, that when we set the editor data, the set_choices 
-      # method has not happened yet, therefore, we temporary set ... in the
-      # text while setting the correct data to the editor
-      self.insertItem(self.count(), '...', QtCore.QVariant(value))
-      self.setCurrentIndex(self.count()-1)
+    if not sip.isdeleted(self):
+      from camelot.core.utils import variant_to_pyobject
+      value = AbstractCustomEditor.set_value(self, value)
+      if value not in (None, NotImplemented):
+        for i in range(self.count()):
+          if value == variant_to_pyobject(self.itemData(i)):
+            self.setCurrentIndex(i)
+            return
+        # it might happen, that when we set the editor data, the set_choices 
+        # method has not happened yet, therefore, we temporary set ... in the
+        # text while setting the correct data to the editor
+        self.insertItem(self.count(), '...', QtCore.QVariant(value))
+        self.setCurrentIndex(self.count()-1)
     
   def get_value(self):
-    from camelot.core.utils import variant_to_pyobject
-    current_index = self.currentIndex()
-    if current_index>=0:
-      value = variant_to_pyobject(self.itemData(self.currentIndex()))
-    else:
-      value = None
-    return AbstractCustomEditor.get_value(self) or value
+    if not sip.isdeleted(self):
+      from camelot.core.utils import variant_to_pyobject
+      current_index = self.currentIndex()
+      if current_index>=0:
+        value = variant_to_pyobject(self.itemData(self.currentIndex()))
+      else:
+        value = None
+      return AbstractCustomEditor.get_value(self) or value

@@ -129,7 +129,7 @@ class FormView(QtGui.QWidget, AbstractView):
     if not sip.isdeleted(self) and actions:
       from actionsbox import ActionsBox
       logger.debug('setting Actions for formview')
-      self.actions_widget = ActionsBox(self, self.admin.mt, self.getEntity)
+      self.actions_widget = ActionsBox(self, self.getEntity)
       self.actions_widget.setActions(actions)
       self.widget_layout.insertWidget(1, self.actions_widget)
 

@@ -258,9 +258,12 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
       return update_delegates_and_column_width
       
 
+    def get_filters_and_actions():
+      return (admin.get_filters(), admin.get_list_actions())
+    
     admin.mt.post(lambda: None, create_update_degates_and_column_width(self.table, self._table_model))
-    admin.mt.post(lambda: admin.getFilters(),
-                  lambda items: self.setFilters(items))
+    admin.mt.post(get_filters_and_actions,
+                  lambda items: self.set_filters_and_actions(items))
     admin.mt.post(lambda: admin.getListCharts(),
                   lambda charts: self.setCharts(charts))
 
@@ -414,18 +417,24 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     self.search_filter = lambda q: q
     self.rebuildQuery()
 
-  def setFilters(self, items):
+  def set_filters_and_actions(self, filters_and_actions):
     """sets filters for the tableview"""
+    filters, actions = filters_and_actions
     from filterlist import FilterList
+    from actionsbox import ActionsBox
     #logger.debug('setting filters with items : %s' % str(items))
     logger.debug('setting filters for tableview')
     if self.filters:
       self.filters.deleteLater()
       self.filters = None
-    if items:
-      self.filters = FilterList(items, self)
+    if filters:
+      self.filters = FilterList(filters, self)
       self.splitter.insertWidget(2, self.filters)
       self.connect(self.filters, SIGNAL('filters_changed'), self.rebuildQuery)
+    elif actions:
+      self.filters = ActionsBox(self, self._table_model.collection_getter, lambda:[])
+      self.filters.setActions(actions)
+      self.splitter.insertWidget(2, self.filters)
 
   def toHtml(self):
     """generates html of the table"""

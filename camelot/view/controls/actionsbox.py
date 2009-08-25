@@ -35,12 +35,13 @@ from PyQt4 import QtGui
 _ = lambda x:x
 
 class ActionsBox(QtGui.QGroupBox):
-  """A box containing actions to be applied to a form view"""
+  """A box containing actions to be applied to a view"""
 
-  def __init__(self, parent, model_thread, entity_getter):
+  def __init__(self, parent, *args, **kwargs):
     QtGui.QGroupBox.__init__(self, _('Actions'), parent)
     logger.debug('create actions box')
-    self.entity_getter = entity_getter
+    self.args = args
+    self.kwargs = kwargs
 
   def setActions(self, actions):
     logger.debug('setting actions to %s'%str(actions))
@@ -48,7 +49,7 @@ class ActionsBox(QtGui.QGroupBox):
     self.actions = actions
     layout = QtGui.QVBoxLayout()
     for action in actions:
-      action_widget = action.render(self, self.entity_getter)
+      action_widget = action.render(self, *self.args)
       layout.addWidget(action_widget)
     layout.addStretch()
     self.setLayout(layout)
