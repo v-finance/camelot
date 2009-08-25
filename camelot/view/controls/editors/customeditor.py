@@ -44,7 +44,7 @@ functionallity to store and retrieve `ValueLoading` as an editor's value.
            QtGui.QComboBox().sizeHint().height()]
     
     finalHeight = max(height)
-
+    
     return finalHeight
       
 class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
