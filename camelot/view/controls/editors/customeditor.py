@@ -35,7 +35,9 @@ functionallity to store and retrieve `ValueLoading` as an editor's value.
   Get the 'standard' height for a cell
   """
   def get_height(self):
-    return QtGui.QFontMetrics(QtGui.QApplication.font()).height()+6
+    height = QtGui.QLineEdit().sizeHint().height()
+    print height
+    return height
       
 class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
   """Base class for implementing custom editor widgets.  This class provides
