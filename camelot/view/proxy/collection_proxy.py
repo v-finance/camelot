@@ -35,11 +35,11 @@ returned and an update signal is emitted when the correct data is available.
 import logging
 logger = logging.getLogger('camelot.view.proxy.collection_proxy')
 
-import pickle
 import elixir
 import datetime
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
+import sip
 
 from sqlalchemy.orm.session import Session
 from camelot.view.art import Icon
@@ -296,7 +296,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     @param rows the new number of rows
     """ 
     self.rows = rows
-    self.emit(QtCore.SIGNAL('layoutChanged()'))
+    if not sip.isdeleted(self):
+      self.emit(QtCore.SIGNAL('layoutChanged()'))
     
   def getItemDelegate(self):
     self.logger.debug('getItemDelegate')
@@ -338,7 +339,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
       else:
         delegate = delegates.PlainTextDelegate()
         self.delegate_manager.insertColumnDelegate(i, delegate)
-    self.emit(QtCore.SIGNAL('layoutChanged()'))
+    if not sip.isdeleted(self):
+      self.emit(QtCore.SIGNAL('layoutChanged()'))
 
   def rowCount(self, index=None):
     return self.rows

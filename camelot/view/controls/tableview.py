@@ -34,11 +34,10 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QSizePolicy
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtCore import Qt
+import sip
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
-from camelot.view.art import Icon
 import datetime
-import settings
 from camelot.view.model_thread import model_function
 
 from search import SimpleSearchControl
@@ -251,9 +250,10 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
       
       def update_delegates_and_column_width(*args):
         """update item delegate"""
-        table.setItemDelegate(model.getItemDelegate())
-        for i in range(model.columnCount()):
-          table.setColumnWidth(i, max(model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize().width(), table.columnWidth(i)))
+        if not sip.isdeleted(table):
+          table.setItemDelegate(model.getItemDelegate())
+          for i in range(model.columnCount()):
+            table.setColumnWidth(i, max(model.headerData(i, Qt.Horizontal, Qt.SizeHintRole).toSize().width(), table.columnWidth(i)))
           
       return update_delegates_and_column_width
       
