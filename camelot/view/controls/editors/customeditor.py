@@ -35,9 +35,16 @@ functionallity to store and retrieve `ValueLoading` as an editor's value.
   Get the 'standard' height for a cell
   """
   def get_height(self):
-    height = QtGui.QLineEdit().sizeHint().height()
-    print height
-    return height
+    
+    height = [QtGui.QLineEdit().sizeHint().height(),
+           QtGui.QDateEdit().sizeHint().height(),
+           QtGui.QDateTimeEdit().sizeHint().height(),
+           QtGui.QSpinBox().sizeHint().height(),
+           QtGui.QDateEdit().sizeHint().height()]
+    
+    finalHeight = max(height)
+
+    return finalHeight
       
 class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
   """Base class for implementing custom editor widgets.  This class provides
