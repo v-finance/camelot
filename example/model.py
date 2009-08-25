@@ -28,16 +28,6 @@ def genre_choices(entity_instance):
 def burn_to_disk(o_getter):
   print 'burn burn burn'
     
-from camelot.admin.form_action import PrintHtmlFormAction
-
-class PrintMovieAction(PrintHtmlFormAction):
-  """Action object to print movie information"""
-  
-  def html(self, movie):
-    html = '<h1>' + movie.title + '</h1>'
-    html += movie.description
-    return html
-    
 class Movie(Entity):
   using_options(tablename='movies')
   title = Field(Unicode(60), required=True)
@@ -94,7 +84,7 @@ class Movie(Entity):
     # create a list of actions available for the user on the form view
     # those actions will be executed within the model thread
     #
-    form_actions = [('Burn DVD', burn_to_disk), PrintMovieAction('Summary')]
+    form_actions = [('Burn DVD', burn_to_disk)]
     #
     # additional attributes for a field can be specified in the
     # field_attributes dictionary
