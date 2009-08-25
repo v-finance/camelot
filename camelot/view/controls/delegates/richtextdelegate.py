@@ -19,15 +19,7 @@ class RichTextDelegate(CustomDelegate):
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
-    
-    
-    
-    
-    
-    
     unstrippedText = unicode(index.model().data(index, Qt.EditRole).toString())
-    
-    
     if not unstrippedText:
       text = ''
     else:
@@ -43,22 +35,8 @@ class RichTextDelegate(CustomDelegate):
       parser = HtmlToTextParser()
       parser.feed(unstrippedText)
 
-      text = (' '.join(string))[:256]
+      text = (' '.join(string))[:256]  
     
-    
-    
-    
-    #text = index.model().data(index, Qt.EditRole).toString()
-    
-   
-   
-   
-   
-   
-   
-    
-    editor = editors.TextLineEditor(None, 250, self.editable)     
-      
     rect = option.rect
     rect = QtCore.QRect(rect.left(), rect.top(), rect.width(), rect.height())  
       

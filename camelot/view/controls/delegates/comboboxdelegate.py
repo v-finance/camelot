@@ -12,7 +12,8 @@ class ComboBoxDelegate(CustomDelegate):
     self.choices = choices
               
   def setEditorData(self, editor, index):
-    value = index.data(Qt.EditRole).toPyObject()
+    from camelot.core.utils import variant_to_pyobject
+    value = variant_to_pyobject(index.data(Qt.EditRole))
     
     def create_choices_getter(model, row):
       
