@@ -866,6 +866,6 @@ if __name__ == '__main__':
   runner.run(form_test)
   filter_test = unittest.makeSuite(FilterTest, 'test')
   runner.run(filter_test)    
-#  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
-#  runner.run(entity_views_test)  
+  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
+  runner.run(entity_views_test)  
 
