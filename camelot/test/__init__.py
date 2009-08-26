@@ -23,7 +23,7 @@ class ModelThreadTestCase(unittest.TestCase):
   def grab_widget(self, widget, suffix=None):
     """Save a widget as a png file :
 
-- the name of the png file is the name of the test case, without 'test'
+- the name of the png file is the name of the test case, without 'test_'
 - it is stored in the directory with the same name as the class, without 'test'     
     """
     import sys
@@ -58,7 +58,7 @@ class ModelThreadTestCase(unittest.TestCase):
     construct_model_thread(rh)
     construct_signal_handler()
     self.mt = get_model_thread()
-    if not self.mt.isAlive():
+    if not self.mt.isRunning():
       self.mt.start()
     
   def tearDown(self):

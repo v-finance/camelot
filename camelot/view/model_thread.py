@@ -25,11 +25,11 @@
 #
 #  ============================================================================
 
-import os
-import sys
 import logging
 import threading
 import Queue
+
+from PyQt4 import QtCore
 
 logger = logging.getLogger('camelot.view.model_thread')
 
@@ -45,7 +45,7 @@ def model_function(original_function):
   """
   
   def new_function(*args, **kwargs):
-    current_thread = threading.currentThread()
+    current_thread = QtCore.QThread.currentThread()
     if current_thread  != get_model_thread():
       message = '%s was called outside the model thread' % original_function.__name__
       logger.error(message)
@@ -66,7 +66,8 @@ def gui_function(original_function):
   """  
 
   def new_function(*args, **kwargs):
-    if threading.currentThread() == get_model_thread():
+    current_thread = QtCore.QThread.currentThread()
+    if current_thread == get_model_thread():
       logger.error('%s was called outside the gui thread' %
                    (original_function.__name__))
       raise ModelThreadException()
@@ -82,7 +83,7 @@ def setup_model():
   from settings import setup_model
   setup_model()
   
-class ModelThread(threading.Thread):
+class ModelThread(QtCore.QThread):
   """Thread in which the model runs, all requests to the model should be
   posted to the the model thread.
 
@@ -101,10 +102,10 @@ class ModelThread(threading.Thread):
     everything, by default this will setup the model.  set to None if nothing should
     be done. 
     """
+    QtCore.QThread.__init__(self)
     self.logger = logging.getLogger(logger.name + '.%s'%id(self))
     self._setup_thread = setup_thread
     self._exit = False
-    threading.Thread.__init__(self)
     self._request_queue = Queue.Queue()
     self._response_queue = Queue.Queue()
     self._response_signaler = response_signaler
