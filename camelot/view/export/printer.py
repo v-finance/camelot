@@ -5,6 +5,8 @@ def open_html_in_print_preview_from_gui_thread(html):
   from PyQt4 import QtGui, QtCore
   printer = QtGui.QPrinter()
   printer.setPageSize(QtGui.QPrinter.A4)
+# TODO: make landscape optional
+#  printer.setOrientation(QtGui.QPrinter.Landscape)
   # TODO: maximize button
   dialog = QtGui.QPrintPreviewDialog(printer)
   
