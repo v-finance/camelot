@@ -12,7 +12,7 @@ class TimeDelegate(CustomDelegate):
     locale = QtCore.QLocale()
     self.time_format = locale.timeFormat(locale.ShortFormat)
     
-  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
+  def paint(self, painter, option, index):
     
     
     painter.save()
@@ -20,7 +20,7 @@ class TimeDelegate(CustomDelegate):
     
     formattedTime = unicode(index.model().data(index, Qt.EditRole).toTime().toString(self.time_format))
     
-
+    background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
     
     editor = editors.TimeEditor( None, 
                                  self.editable )

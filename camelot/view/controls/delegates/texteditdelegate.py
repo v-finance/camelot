@@ -15,12 +15,13 @@ class TextEditDelegate(CustomDelegate):
     self.editable = editable
 
 
-  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
+  def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
     
     text = index.model().data(index, Qt.EditRole).toString()
     
+    background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
     
     editor = editors.TextLineEditor(None, self.editable)     
       

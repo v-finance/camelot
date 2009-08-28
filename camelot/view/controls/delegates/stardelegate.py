@@ -19,11 +19,14 @@ class StarDelegate(CustomDelegate):
                             **kwargs)
     self.maximum = maximum
     
-  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
+  def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
     stars = index.model().data(index, Qt.EditRole).toInt()[0]
     editor = editors.StarEditor(parent=None, maximum=self.maximum, editable=self.editable)
+    
+    background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
+    
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, rect.width()-5, rect.height())
     
