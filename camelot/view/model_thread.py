@@ -146,7 +146,7 @@ class ModelThread( QtCore.QThread ):
           sio.close()
           self.logger.error( 'exception caught in model thread', exc_info = e )
           exception_info = ( e, self )
-          self._response_queue.put( ( new_event, exception_info, exception ) )
+          self._response_queue.put( ( new_event, exception_info, exception, dependency ) )
           self._request_queue.task_done()
           self._response_signaler.responseAvailable( self )
           self._response_signaler.stopProcessingRequest( self )
