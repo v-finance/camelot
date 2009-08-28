@@ -28,53 +28,54 @@
 import logging
 import threading
 import Queue
+import sip
 
 from PyQt4 import QtCore
 
-logger = logging.getLogger('camelot.view.model_thread')
+logger = logging.getLogger( 'camelot.view.model_thread' )
 
 _model_thread_ = []
 
-class ModelThreadException(Exception):
+class ModelThreadException( Exception ):
   pass
 
-def model_function(original_function):
+def model_function( original_function ):
   """Decorator to ensure a function is only called from within the model
   thread.  If this function is called in another thread, an exception will be 
   thrown
   """
-  
-  def new_function(*args, **kwargs):
+
+  def new_function( *args, **kwargs ):
     current_thread = QtCore.QThread.currentThread()
-    if current_thread  != get_model_thread():
+    if current_thread != get_model_thread():
       message = '%s was called outside the model thread' % original_function.__name__
-      logger.error(message)
-      logger.error('calling thread is %s'%id(current_thread))
-      raise ModelThreadException(message)
-    return original_function(*args, **kwargs)
-  
+      logger.error( message )
+      logger.error( 'calling thread is %s' % id( current_thread ) )
+      raise ModelThreadException( message )
+    return original_function( *args, **kwargs )
+
   new_function.__name__ = original_function.__name__
-  
+
   return new_function
-  
-def gui_function(original_function):
+
+def gui_function( original_function ):
   """Decorator to ensure a function is only called from within the gui thread.
   If this function is called in another thread, an exception will be thrown
 
   @todo: now it only checks if the function is not called within the model
   thread, this is incomplete
-  """  
+  """
 
-  def new_function(*args, **kwargs):
+  def new_function( *args, **kwargs ):
     current_thread = QtCore.QThread.currentThread()
     if current_thread == get_model_thread():
-      logger.error('%s was called outside the gui thread' %
-                   (original_function.__name__))
+      logger.error( '%s was called outside the gui thread' %
+                   ( original_function.__name__ ) )
       raise ModelThreadException()
-    return original_function(*args, **kwargs)
-  
+    return original_function( *args, **kwargs )
+
   new_function.__name__ = original_function.__name__
-  
+
   return new_function
 
 
@@ -82,8 +83,8 @@ def setup_model():
   """Call the setup_model function in the settings"""
   from settings import setup_model
   setup_model()
-  
-class ModelThread(QtCore.QThread):
+
+class ModelThread( QtCore.QThread ):
   """Thread in which the model runs, all requests to the model should be
   posted to the the model thread.
 
@@ -92,7 +93,7 @@ class ModelThread(QtCore.QThread):
   the model thread and the gui thread
   """
 
-  def __init__(self, response_signaler, setup_thread=setup_model):
+  def __init__( self, response_signaler, setup_thread = setup_model ):
     """
     @param response_signaler: an object with methods called :
       responseAvailable(self, model_thread) : this method will be called when a response is available
@@ -102,86 +103,90 @@ class ModelThread(QtCore.QThread):
     everything, by default this will setup the model.  set to None if nothing should
     be done. 
     """
-    QtCore.QThread.__init__(self)
-    self.logger = logging.getLogger(logger.name + '.%s'%id(self))
+    QtCore.QThread.__init__( self )
+    self.logger = logging.getLogger( logger.name + '.%s' % id( self ) )
     self._setup_thread = setup_thread
     self._exit = False
     self._request_queue = Queue.Queue()
     self._response_queue = Queue.Queue()
     self._response_signaler = response_signaler
     self._traceback = ''
-    self.post(setup_thread)
-    self.logger.debug('model thread constructed')
+    self.post( setup_thread )
+    self.logger.debug( 'model thread constructed' )
 
-  def run(self):
-    self.logger.debug('model thread started')
+  def run( self ):
+    self.logger.debug( 'model thread started' )
     try:
       if self._setup_thread:
         self._setup_thread()
-      self.logger.debug('start handling requests')
+      self.logger.debug( 'start handling requests' )
       while not self._exit:
         new_event = threading.Event()
         try:
-          (event, request, response, exception) = self._request_queue.get()
-          self.logger.debug('execute request %s'%id(request))
+          ( event, request, response, exception, dependency ) = self._request_queue.get()
+          self.logger.debug( 'execute request %s' % id( request ) )
           #self._response_queue.join()
-          self.logger.debug('start handling request')
+          self.logger.debug( 'start handling request' )
 #          import inspect
 #          print inspect.getsource(request)
-          self._response_signaler.startProcessingRequest(self)
+          self._response_signaler.startProcessingRequest( self )
           result = request()
-          self._response_queue.put((new_event, result, response))
+          self._response_queue.put( ( new_event, result, response, dependency ) )
           self._request_queue.task_done()
-          self._response_signaler.responseAvailable(self)
-          self._response_signaler.stopProcessingRequest(self)
-          self.logger.debug('finished handling request')
+          self._response_signaler.responseAvailable( self )
+          self._response_signaler.stopProcessingRequest( self )
+          self.logger.debug( 'finished handling request' )
           event.set()
           #self._response_queue.join()
         except Exception, e:
           import traceback, sys, cStringIO
           sio = cStringIO.StringIO()
-          traceback.print_exc(file=sio)
+          traceback.print_exc( file = sio )
           self._traceback = sio.getvalue()
           sio.close()
-          self.logger.error('exception caught in model thread', exc_info=e)
-          exception_info = (e, self)
-          self._response_queue.put((new_event, exception_info, exception))
+          self.logger.error( 'exception caught in model thread', exc_info = e )
+          exception_info = ( e, self )
+          self._response_queue.put( ( new_event, exception_info, exception ) )
           self._request_queue.task_done()
-          self._response_signaler.responseAvailable(self)
-          self._response_signaler.stopProcessingRequest(self)
+          self._response_signaler.responseAvailable( self )
+          self._response_signaler.stopProcessingRequest( self )
           event.set()
-          self.logger.error('function causing exception was %s'%(request.__name__))
+          self.logger.error( 'function causing exception was %s' % ( request.__name__ ) )
         except:
-          self.logger.error('unhandled exception in model thread')
+          self.logger.error( 'unhandled exception in model thread' )
     except Exception, e:
-      self.logger.error('1exception caught in model thread', exc_info=e)
+      self.logger.error( '1exception caught in model thread', exc_info = e )
     except:
-      self.logger.error('unhandled exception')
+      self.logger.error( 'unhandled exception' )
 
-  def traceback(self):
+  def traceback( self ):
     """The formatted traceback of the last exception in the model thread"""
     return self._traceback
-  
-  def process_responses(self):
+
+  def process_responses( self ):
     """Process all responses that are generated by completed requests
     from the ModelThread.  This method should be called from time
     to time from within the GUI thread.
     """
     try:
       while True:
-        (event, result, response) = self._response_queue.get_nowait()
-        self.logger.debug('execute response %s'%id(response))
+        ( event, result, response, dependency ) = self._response_queue.get_nowait()
+        self.logger.debug( 'execute response %s' % id( response ) )
         try:
-          response(result)
+            if dependency != None:
+                if sip.isdeleted( dependency ):
+                    pass
+            else:
+                response( result )
         except Exception, e:
-          self.logger.error('exception in response %s'%id(response), exc_info=e)
+          self.logger.error( 'exception in response %s' % id( response ), exc_info = e )
         self._response_queue.task_done()
         event.set()
     except Queue.Empty, e:
       pass
 
-  def post(self, request, response=lambda result:None,
-           exception=lambda exc:None):
+  def post( self, request, response = lambda result:None,
+           exception = lambda exc:None , dependency = None ):
     """Post a request to the model thread, request should be
     a function that takes no arguments.  The request function
     will be called within the model thread.  When the request
@@ -194,15 +199,16 @@ class ModelThread(QtCore.QThread):
     as its argument the result of the request function
     @param exception: function to be called in case of an exception in the
     request function
+    @param dependency: The dependent posting object. Usually this will be self.
     @return a threading Event object which will be set to True when the
     request function is finished and the response has been put on the queue
     """
-    self.logger.debug('post request %s %s with response %s %s'%(id(request), request.__name__, id(response), response.__name__))
+    self.logger.debug( 'post request %s %s with response %s %s' % ( id( request ), request.__name__, id( response ), response.__name__ ) )
     event = threading.Event()
-    self._request_queue.put_nowait((event, request, response, exception))
+    self._request_queue.put_nowait( ( event, request, response, exception, dependency ) )
     return event
-  
-  def post_response(self, response, arg):
+
+  def post_response( self, response, arg ):
     """Post a function to the response queue
     @param response: function to be called within the gui thread
     @param arg: the argument to use when calling the response function
@@ -210,20 +216,20 @@ class ModelThread(QtCore.QThread):
     response function is finished
     """
     event = threading.Event()
-    self._response_queue.put((event, arg, response))
-    self._response_signaler.responseAvailable(self)
-    self._response_signaler.stopProcessingRequest(self)
-            
-  def exit(self):
+    self._response_queue.put( ( event, arg, response ) )
+    self._response_signaler.responseAvailable( self )
+    self._response_signaler.stopProcessingRequest( self )
+
+  def exit( self ):
     """Ask the model thread to exit"""
     self._exit = True
-    
+
     def exit_message():
-      self.logger.debug('exit requested')
-    
-    self.post(exit_message)
-    
-  def post_and_block(self, request, timeout=None):
+      self.logger.debug( 'exit requested' )
+
+    self.post( exit_message )
+
+  def post_and_block( self, request, timeout = None ):
     """Post a request tot the model thread, block until it is finished, and
     then return it results.  This function only exists for testing purposes,
     it should never be used from within the gui thread
@@ -231,22 +237,22 @@ class ModelThread(QtCore.QThread):
     # make sure there are no responses in the queue
     self.process_responses()
     results = []
-    
-    def re_raise(exc):
+
+    def re_raise( exc ):
       raise exc
-    
-    event = self.post(request,
-                      lambda result:results.append(result),
-                      exception=re_raise)
-    event.wait(timeout)
+
+    event = self.post( request,
+                      lambda result:results.append( result ),
+                      exception = re_raise )
+    event.wait( timeout )
     self.process_responses()
     return results[-1]
-    
-def construct_model_thread(*args, **kwargs):
-  _model_thread_.insert(0, ModelThread(*args, **kwargs))
-  
+
+def construct_model_thread( *args, **kwargs ):
+  _model_thread_.insert( 0, ModelThread( *args, **kwargs ) )
+
 def has_model_thread():
-  return len(_model_thread_) > 0
-  
+  return len( _model_thread_ ) > 0
+
 def get_model_thread():
   return _model_thread_[0]
