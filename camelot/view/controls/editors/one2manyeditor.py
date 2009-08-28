@@ -117,7 +117,7 @@ actual data to the editor
         return update_delegates
 
       self.admin.mt.post( create_fill_model_cache( model ),
-                         create_delegate_updater( model ), dependency = self )
+                         create_delegate_updater( model ), dependency = self.table )
 
   def newRow( self ):
     from camelot.view.workspace import get_workspace

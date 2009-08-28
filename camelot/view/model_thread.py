@@ -26,7 +26,6 @@
 #  ============================================================================
 
 import logging
-import threading
 import Queue
 import sip
 
@@ -121,36 +120,33 @@ class ModelThread( QtCore.QThread ):
         self._setup_thread()
       self.logger.debug( 'start handling requests' )
       while not self._exit:
-        new_event = threading.Event()
         try:
-          ( event, request, response, exception, dependency ) = self._request_queue.get()
-          self.logger.debug( 'execute request %s' % id( request ) )
+          ( request, response, exception, dependency ) = self._request_queue.get()
+          #self.logger.debug( 'execute request %s' % id( request ) )
           #self._response_queue.join()
-          self.logger.debug( 'start handling request' )
+          #self.logger.debug( 'start handling request' )
 #          import inspect
 #          print inspect.getsource(request)
           self._response_signaler.startProcessingRequest( self )
           result = request()
-          self._response_queue.put( ( new_event, result, response, dependency ), timeout = 10 )
+          self._response_queue.put( ( result, response, dependency ), timeout = 10 )
           self._request_queue.task_done()
           self._response_signaler.responseAvailable( self )
           self._response_signaler.stopProcessingRequest( self )
-          self.logger.debug( 'finished handling request' )
-          event.set()
+          #self.logger.debug( 'finished handling request' )
           #self._response_queue.join()
         except Exception, e:
-          import traceback, sys, cStringIO
+          import traceback, cStringIO
           sio = cStringIO.StringIO()
           traceback.print_exc( file = sio )
           self._traceback = sio.getvalue()
           sio.close()
           self.logger.error( 'exception caught in model thread', exc_info = e )
           exception_info = ( e, self )
-          self._response_queue.put( ( new_event, exception_info, exception ), timeout = 10 )
+          self._response_queue.put( ( exception_info, exception ), timeout = 10 )
           self._request_queue.task_done()
           self._response_signaler.responseAvailable( self )
           self._response_signaler.stopProcessingRequest( self )
-          event.set()
           self.logger.error( 'function causing exception was %s' % ( request.__name__ ) )
         except:
           self.logger.error( 'unhandled exception in model thread' )
@@ -170,7 +166,7 @@ class ModelThread( QtCore.QThread ):
     """
     try:
       while True:
-        ( event, result, response, dependency ) = self._response_queue.get_nowait()
+        ( result, response, dependency ) = self._response_queue.get_nowait()
         self.logger.debug( 'execute response %s' % id( response ) )
         try:
             if dependency != None:
@@ -183,7 +179,6 @@ class ModelThread( QtCore.QThread ):
         except Exception, e:
           self.logger.error( 'exception in response %s' % id( response ), exc_info = e )
         self._response_queue.task_done()
-        event.set()
     except Queue.Empty, e:
       pass
 
@@ -202,13 +197,9 @@ class ModelThread( QtCore.QThread ):
     @param exception: function to be called in case of an exception in the
     request function
     @param dependency: The dependent posting object. Usually this will be self.
-    @return a threading Event object which will be set to True when the
-    request function is finished and the response has been put on the queue
     """
     self.logger.debug( 'post request %s %s with response %s %s' % ( id( request ), request.__name__, id( response ), response.__name__ ) )
-    event = threading.Event()
-    self._request_queue.put_nowait( ( event, request, response, exception, dependency ) )
-    return event
+    self._request_queue.put_nowait( ( request, response, exception, dependency ) )
 
   def post_response( self, response, arg ):
     """Post a function to the response queue
@@ -217,8 +208,7 @@ class ModelThread( QtCore.QThread ):
     @return a threading Event object which will be set to True when the
     response function is finished
     """
-    event = threading.Event()
-    self._response_queue.put( ( event, arg, response ) )
+    self._response_queue.put( ( arg, response ) )
     self._response_signaler.responseAvailable( self )
     self._response_signaler.stopProcessingRequest( self )
 
@@ -230,25 +220,6 @@ class ModelThread( QtCore.QThread ):
       self.logger.debug( 'exit requested' )
 
     self.post( exit_message )
-
-  def post_and_block( self, request, timeout = None ):
-    """Post a request tot the model thread, block until it is finished, and
-    then return it results.  This function only exists for testing purposes,
-    it should never be used from within the gui thread
-    """
-    # make sure there are no responses in the queue
-    self.process_responses()
-    results = []
-
-    def re_raise( exc ):
-      raise exc
-
-    event = self.post( request,
-                      lambda result:results.append( result ),
-                      exception = re_raise )
-    event.wait( timeout )
-    self.process_responses()
-    return results[-1]
 
 def construct_model_thread( *args, **kwargs ):
   _model_thread_.insert( 0, ModelThread( *args, **kwargs ) )

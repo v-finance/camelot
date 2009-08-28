@@ -61,7 +61,6 @@ table views together in one view.
 :param views: a list of the views to combine
 """
     QtGui.QWidget.__init__(self, parent)
-    AbstractView.__init__(self, parent)
     self.setWindowTitle(self.title_format)
     
     layout = QtGui.QVBoxLayout()
