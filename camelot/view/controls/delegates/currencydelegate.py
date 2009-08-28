@@ -40,7 +40,7 @@ to the precision specified in the definition of the Field.
 
 
 
-  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
+  def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
     value = index.model().data(index, Qt.EditRole).toDouble()[0]
@@ -54,6 +54,9 @@ to the precision specified in the definition of the Field.
     
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
+    
+    
+    background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
     
     if( option.state & QtGui.QStyle.State_Selected ):
         painter.fillRect(option.rect, option.palette.highlight())

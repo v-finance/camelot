@@ -22,9 +22,12 @@ class SmileyDelegate(CustomDelegate):
     
 
     
-  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
+  def paint(self, painter, option, index):
     painter.save()
     img = index.model().data(index, Qt.DisplayRole).toString()
+    
+    background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
+    
     imgPath = 'tango/16x16/emotes/' + img + '.png'
     self.drawBackground(painter, option, index)
     smiley = index.model().data(index, Qt.EditRole)

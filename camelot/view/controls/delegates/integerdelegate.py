@@ -24,10 +24,12 @@ class IntegerDelegate(CustomDelegate):
     self.editable = editable
     self.unicode_format = unicode_format
     
-  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
+  def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
     value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
+    
+    background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
     
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)

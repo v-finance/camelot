@@ -12,12 +12,12 @@ class CodeDelegate(CustomDelegate):
     self._dummy_editor = editors.CodeEditor(parent=None, parts=parts)
     self.parts = parts
 
-  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
+  def paint(self, painter, option, index):
     painter.save()
     numParts = len(self.parts)
     self.drawBackground(painter, option, index)
     
-    
+    background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
     
     if( option.state & QtGui.QStyle.State_Selected ):
         painter.fillRect(option.rect, option.palette.highlight())

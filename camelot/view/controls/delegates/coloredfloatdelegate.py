@@ -58,7 +58,6 @@ positive and in red when they are negative.
           painter.fillRect(option.rect, option.palette.window())
         else:
           painter.fillRect(option.rect, background_color)
-          print 'test'
     
     
     
@@ -68,7 +67,7 @@ positive and in red when they are negative.
     
     if value >= 0:
       if value == 0:
-        QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap()).paint(painter, option.rect.left(), option.rect.top(), rect.height(), rect.height())
+        QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap()).paint(painter, option.rect.top(), option.rect.left(), rect.height(), rect.height())
         #QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
         fontColor.setRgb(0, 0, 0)
       else:

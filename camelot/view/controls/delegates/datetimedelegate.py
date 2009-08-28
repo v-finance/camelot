@@ -19,13 +19,15 @@ class DateTimeDelegate(CustomDelegate):
     #self._dummy_editor = self.editor(parent, editable=editable, **kwargs)
     
     
-  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
+  def paint(self, painter, option, index):
     painter.save()
     
     self.drawBackground(painter, option, index)
     
     
     dateTime = index.model().data(index, Qt.EditRole).toDateTime()
+    
+    background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
   
     
     formattedDateTime = dateTime.toString(self.dateTime_format)

@@ -26,7 +26,7 @@ class Many2OneDelegate(CustomDelegate):
     self._kwargs = kwargs
     self._dummy_editor = editors.Many2OneEditor(self.admin, None)
 
-  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
+  def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
     
@@ -34,7 +34,7 @@ class Many2OneDelegate(CustomDelegate):
     
     value = index.data(Qt.DisplayRole).toString()
     
-    
+    background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
     
     if( option.state & QtGui.QStyle.State_Selected ):
         painter.fillRect(option.rect, option.palette.highlight())
