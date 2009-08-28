@@ -24,6 +24,7 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
+from twisted.protocols.sip import SIPError
 
 """Proxy representing a collection of entities that live in the model thread.
 
@@ -33,7 +34,7 @@ returned and an update signal is emitted when the correct data is available.
 """
 
 import logging
-logger = logging.getLogger('camelot.view.proxy.collection_proxy')
+logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 
 import elixir
 import datetime
@@ -51,98 +52,98 @@ from camelot.view.model_thread import gui_function, \
                                       get_model_thread
 
 
-class DelayedProxy(object):
+class DelayedProxy( object ):
   """A proxy object needs to be constructed within the GUI thread. Construct
   a delayed proxy when the construction of a proxy is needed within the Model
   thread.  On first occasion the delayed proxy will be converted to a real
   proxy within the GUI thread
   """
-  
+
   @model_function
-  def __init__(self, *args, **kwargs):
+  def __init__( self, *args, **kwargs ):
     self.args = args
     self.kwargs = kwargs
-    
+
   @gui_function
-  def __call__(self):
-    return CollectionProxy(*self.args, **self.kwargs)
-  
+  def __call__( self ):
+    return CollectionProxy( *self.args, **self.kwargs )
+
 @model_function
-def RowDataFromObject(obj, columns):
+def RowDataFromObject( obj, columns ):
   """Create row data from an object, by fetching its attributes"""
   row_data = []
   mt = get_model_thread()
-  
-  def create_collection_getter(o, attr):
-    return lambda: getattr(o, attr)
-  
-  for i,col in enumerate(columns):
+
+  def create_collection_getter( o, attr ):
+    return lambda: getattr( o, attr )
+
+  for i, col in enumerate( columns ):
     field_attributes = col[1]
     if field_attributes['python_type'] == list:
-      row_data.append(DelayedProxy(field_attributes['admin'],
-                      create_collection_getter(obj, col[0]), 
-                      field_attributes['admin'].getColumns))
+      row_data.append( DelayedProxy( field_attributes['admin'],
+                      create_collection_getter( obj, col[0] ),
+                      field_attributes['admin'].getColumns ) )
     else:
-      row_data.append(getattr(obj, col[0]))
+      row_data.append( getattr( obj, col[0] ) )
   return row_data
-  
+
 @model_function
-def RowDataAsUnicode(obj, columns):
+def RowDataAsUnicode( obj, columns ):
   """Extract for each field in the row data a 'visible' form of 
   data"""
-  
+
   row_data = []
-  
-  for i,(field_name,field_attributes) in enumerate(columns):
-    field_data = getattr(obj, field_name)
+
+  for i, ( field_name, field_attributes ) in enumerate( columns ):
+    field_data = getattr( obj, field_name )
     unicode_data = u''
     if 'unicode_format' in field_attributes:
         unicode_format = field_attributes['unicode_format']
         if field_data != None:
-            unicode_data = unicode_format(field_data)
+            unicode_data = unicode_format( field_data )
     elif 'choices' in field_attributes:
-      for key,value in field_attributes['choices'](obj):
-        if key==field_data:
+      for key, value in field_attributes['choices']( obj ):
+        if key == field_data:
           unicode_data = value
           continue
-    elif isinstance(field_data, list):
-      unicode_data = u'.'.join([unicode(e) for e in field_data])
-    elif isinstance(field_data, datetime.datetime):
+    elif isinstance( field_data, list ):
+      unicode_data = u'.'.join( [unicode( e ) for e in field_data] )
+    elif isinstance( field_data, datetime.datetime ):
       # datetime should come before date since datetime is a subtype of date
       if field_data.year >= 1900:
-        unicode_data = field_data.strftime('%d/%m/%Y %H:%M')   
-    elif isinstance(field_data, datetime.date):
+        unicode_data = field_data.strftime( '%d/%m/%Y %H:%M' )
+    elif isinstance( field_data, datetime.date ):
       if field_data.year >= 1900:
-        unicode_data = field_data.strftime('%d/%m/%Y')
-    elif field_data!=None:
-      unicode_data = unicode(field_data)
-    row_data.append(unicode_data)
-  
+        unicode_data = field_data.strftime( '%d/%m/%Y' )
+    elif field_data != None:
+      unicode_data = unicode( field_data )
+    row_data.append( unicode_data )
+
   return row_data
 
 from camelot.view.proxy import ValueLoading
 
-class EmptyRowData(object):
-  def __getitem__(self, column):
+class EmptyRowData( object ):
+  def __getitem__( self, column ):
     return ValueLoading
     return None
-  
+
 empty_row_data = EmptyRowData()
 
-class CollectionProxy(QtCore.QAbstractTableModel):
+class CollectionProxy( QtCore.QAbstractTableModel ):
   """The CollectionProxy contains a limited copy of the data in the actual
   collection, usable for fast visualisation in a QTableView 
   """
-  
+
   _header_font = QtGui.QApplication.font()
   _header_font_required = QtGui.QApplication.font()
-  _header_font_required.setBold(True)
-  header_icon = Icon('tango/16x16/places/folder.png').getQIcon()
-  
-  
+  _header_font_required.setBold( True )
+  header_icon = Icon( 'tango/16x16/places/folder.png' ).getQIcon()
+
+
   @gui_function
-  def __init__(self, admin, collection_getter, columns_getter,
-               max_number_of_rows=10, edits=None, flush_changes=True):
+  def __init__( self, admin, collection_getter, columns_getter,
+               max_number_of_rows = 10, edits = None, flush_changes = True ):
     """@param admin: the admin interface for the items in the collection
 
     @param collection_getter: a function that takes no arguments and returns
@@ -154,13 +155,13 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     columns that will be cached in the proxy. This function will be called
     inside the model thread.
     """
-    self.logger = logging.getLogger(logger.name + '.%s'%id(self))
-    self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
-    QtCore.QAbstractTableModel.__init__(self)
+    self.logger = logging.getLogger( logger.name + '.%s' % id( self ) )
+    self.logger.debug( 'initialize query table for %s' % ( admin.get_verbose_name() ) )
+    QtCore.QAbstractTableModel.__init__( self )
     self.admin = admin
-    self.iconSize = QtCore.QSize(QtGui.QFontMetrics(self._header_font_required).height()-4,QtGui.QFontMetrics(self._header_font_required).height()-4)
-    self.form_icon = QtCore.QVariant(self.header_icon.pixmap(self.iconSize))
-    self.validator = admin.createValidator(self)
+    self.iconSize = QtCore.QSize( QtGui.QFontMetrics( self._header_font_required ).height() - 4, QtGui.QFontMetrics( self._header_font_required ).height() - 4 )
+    self.form_icon = QtCore.QVariant( self.header_icon.pixmap( self.iconSize ) )
+    self.validator = admin.createValidator( self )
     self.collection_getter = collection_getter
     self.column_count = 0
     self.flush_changes = flush_changes
@@ -169,8 +170,8 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     self.rows = 0
     self._columns = []
     self.max_number_of_rows = max_number_of_rows
-    self.cache = {Qt.DisplayRole:fifo(10*self.max_number_of_rows),
-                  Qt.EditRole:fifo(10*self.max_number_of_rows)}
+    self.cache = {Qt.DisplayRole:fifo( 10 * self.max_number_of_rows ),
+                  Qt.EditRole:fifo( 10 * self.max_number_of_rows )}
     # The rows in the table for which a cache refill is under request
     self.rows_under_request = set()
     # The rows that have unflushed changes
@@ -178,393 +179,396 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     # Set edits
     self.edits = edits or []
     self.rsh = get_signal_handler()
-    self.rsh.connect(self.rsh,
+    self.rsh.connect( self.rsh,
                      self.rsh.entity_update_signal,
-                     self.handleEntityUpdate)
-    self.rsh.connect(self.rsh,
+                     self.handleEntityUpdate )
+    self.rsh.connect( self.rsh,
                      self.rsh.entity_delete_signal,
-                     self.handleEntityDelete)
-    self.rsh.connect(self.rsh,
+                     self.handleEntityDelete )
+    self.rsh.connect( self.rsh,
                      self.rsh.entity_create_signal,
-                     self.handleEntityCreate)
-    
+                     self.handleEntityCreate )
+
     def get_columns():
       self._columns = columns_getter()
       return self._columns
-    
-    self.mt.post(get_columns, lambda columns:self.setColumns(columns))
+
+    self.mt.post( get_columns, lambda columns:self.setColumns( columns ), dependency = self )
     # the initial collection might contain unflushed rows
-    self.mt.post(self.updateUnflushedRows)    
+    self.mt.post( self.updateUnflushedRows, dependency = self )
     # in that way the number of rows is requested as well
-    self.mt.post(self.getRowCount,  self.setRowCount)
-    self.logger.debug('initialization finished')
+    self.mt.post( self.getRowCount, self.setRowCount, dependency = self )
+    self.logger.debug( 'initialization finished' )
     self.delegate_manager = None
-    
+
   @model_function
-  def updateUnflushedRows(self):
+  def updateUnflushedRows( self ):
     """Verify all rows to see if some of them should be added to the
     unflushed rows"""
-    for i,e in enumerate(self.collection_getter()):
+    for i, e in enumerate( self.collection_getter() ):
       if not e.id:
-        self.unflushed_rows.add(i)
-    
-  def hasUnflushedRows(self):
+        self.unflushed_rows.add( i )
+
+  def hasUnflushedRows( self ):
     """The model has rows that have not been flushed to the database yet,
     because the row is invalid
     """
-    has_unflushed_rows = (len(self.unflushed_rows) > 0)
-    self.logger.debug('hasUnflushed rows : %s'%has_unflushed_rows)
+    has_unflushed_rows = ( len( self.unflushed_rows ) > 0 )
+    self.logger.debug( 'hasUnflushed rows : %s' % has_unflushed_rows )
     return has_unflushed_rows
-  
+
   @model_function
-  def getRowCount(self):
-    return len(self.collection_getter())
-  
+  def getRowCount( self ):
+    return len( self.collection_getter() )
+
   @gui_function
-  def revertRow(self, row):
-    def create_refresh_entity(row):
-      
+  def revertRow( self, row ):
+    def create_refresh_entity( row ):
+
       @model_function
       def refresh_entity():
-        o = self._get_object(row)
-        elixir.session.refresh(o)
+        o = self._get_object( row )
+        elixir.session.refresh( o )
         return row, o
-      
+
       return refresh_entity
 
-    def refresh(row_and_entity):
+    def refresh( row_and_entity ):
       row, entity = row_and_entity
-      self.handleRowUpdate(row)
-      self.rsh.sendEntityUpdate(self, entity)
-      
-    self.mt.post(create_refresh_entity(row), refresh)
-              
-  def refresh(self):
-    
-    def refresh_content(rows):
-      self.cache = {Qt.DisplayRole: fifo(10*self.max_number_of_rows),
-                    Qt.EditRole: fifo(10*self.max_number_of_rows)}
-      self.setRowCount(rows)
-      
-    self.mt.post(self.getRowCount, refresh_content)
-    
-  def setCollectionGetter(self, collection_getter):
+      self.handleRowUpdate( row )
+      self.rsh.sendEntityUpdate( self, entity )
+
+
+    self.mt.post( create_refresh_entity( row ), refresh, dependency = self )
+
+  def refresh( self ):
+
+    def refresh_content( rows ):
+      self.cache = {Qt.DisplayRole: fifo( 10 * self.max_number_of_rows ),
+                    Qt.EditRole: fifo( 10 * self.max_number_of_rows )}
+      self.setRowCount( rows )
+
+    self.mt.post( self.getRowCount, refresh_content, dependency = self )
+
+  def setCollectionGetter( self, collection_getter ):
     self.collection_getter = collection_getter
     self.refresh()
-    
-  def handleRowUpdate(self, row):
-    """Handles the update of a row when this row might be out of date"""
-    self.cache[Qt.DisplayRole].delete_by_row(row)
-    self.cache[Qt.EditRole].delete_by_row(row) 
-    sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
-    self.emit(QtCore.SIGNAL(sig),
-              self.index(row, 0),
-              self.index(row, self.column_count))
-    
-  def handleEntityUpdate(self, sender, entity):
-    """Handles the entity signal, indicating that the model is out of date"""
-    self.logger.debug('%s %s received entity update signal' % \
-                 (self.__class__.__name__, self.admin.get_verbose_name()))
-    if sender != self:
-      row = self.cache[Qt.DisplayRole].delete_by_entity(entity)
-      row = self.cache[Qt.EditRole].delete_by_entity(entity)
-      if row!=None:
-        self.logger.debug('updated row %i' % row)
-        sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
-        self.emit(QtCore.SIGNAL(sig),
-                  self.index(row, 0),
-                  self.index(row, self.column_count))
-      else:
-        self.logger.debug('entity not in cache')
-    else:
-      self.logger.debug('duplicate update')
 
-  def handleEntityDelete(self, sender, entity):
+  def handleRowUpdate( self, row ):
+    """Handles the update of a row when this row might be out of date"""
+    self.cache[Qt.DisplayRole].delete_by_row( row )
+    self.cache[Qt.EditRole].delete_by_row( row )
+    sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
+    self.emit( QtCore.SIGNAL( sig ),
+              self.index( row, 0 ),
+              self.index( row, self.column_count ) )
+
+  def handleEntityUpdate( self, sender, entity ):
     """Handles the entity signal, indicating that the model is out of date"""
-    self.logger.debug('received entity delete signal')
+    self.logger.debug( '%s %s received entity update signal' % \
+                 ( self.__class__.__name__, self.admin.get_verbose_name() ) )
+    if sender != self:
+      row = self.cache[Qt.DisplayRole].delete_by_entity( entity )
+      row = self.cache[Qt.EditRole].delete_by_entity( entity )
+      if row != None:
+        self.logger.debug( 'updated row %i' % row )
+        sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
+        import sip
+        if not sip.isdeleted( self ):
+            self.emit( QtCore.SIGNAL( sig ),
+                  self.index( row, 0 ),
+                  self.index( row, self.column_count ) )
+      else:
+        self.logger.debug( 'entity not in cache' )
+    else:
+      self.logger.debug( 'duplicate update' )
+
+  def handleEntityDelete( self, sender, entity ):
+    """Handles the entity signal, indicating that the model is out of date"""
+    self.logger.debug( 'received entity delete signal' )
     if sender != self:
       self.refresh()
-                 
-  def handleEntityCreate(self, sender, entity):
+
+  def handleEntityCreate( self, sender, entity ):
     """Handles the entity signal, indicating that the model is out of date"""
-    self.logger.debug('received entity create signal')
+    self.logger.debug( 'received entity create signal' )
     if sender != self:
       self.refresh()
-                 
-  def setRowCount(self, rows):
+
+  def setRowCount( self, rows ):
     """Callback method to set the number of rows
     @param rows the new number of rows
-    """ 
+    """
     self.rows = rows
-    if not sip.isdeleted(self):
-      self.emit(QtCore.SIGNAL('layoutChanged()'))
-    
-  def getItemDelegate(self):
-    self.logger.debug('getItemDelegate')
+    if not sip.isdeleted( self ):
+      self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
+
+  def getItemDelegate( self ):
+    self.logger.debug( 'getItemDelegate' )
     if not self.delegate_manager:
-      raise Exception('item delegate not yet available')
+      raise Exception( 'item delegate not yet available' )
     return self.delegate_manager
-    
-  def getColumns(self):
+
+  def getColumns( self ):
     """@return: the columns as set by the setColumns method"""
     return self._columns
-  
-  def setColumns(self, columns):
+
+  def setColumns( self, columns ):
     """Callback method to set the columns
 
     @param columns a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
     returned by the getColumns method of the ElixirAdmin class
     """
-    self.logger.debug('setColumns')
-    self.column_count = len(columns)
+    self.logger.debug( 'setColumns' )
+    self.column_count = len( columns )
     self._columns = columns
-    
-    self.delegate_manager = delegates.DelegateManager()
-    self.delegate_manager.set_columns_desc(columns)
 
-    for i, c in enumerate(columns):
+    self.delegate_manager = delegates.DelegateManager()
+    self.delegate_manager.set_columns_desc( columns )
+
+    for i, c in enumerate( columns ):
       field_name = c[0]
-      self.logger.debug('creating delegate for %s' % field_name)
+      self.logger.debug( 'creating delegate for %s' % field_name )
       if 'delegate' in c[1]:
-        delegate = c[1]['delegate'](parent=None, **c[1])
-        self.delegate_manager.insertColumnDelegate(i, delegate)
+        delegate = c[1]['delegate']( parent = None, **c[1] )
+        self.delegate_manager.insertColumnDelegate( i, delegate )
         continue
       elif c[1]['python_type'] == str:
         if c[1]['length']:
-          delegate = delegates.PlainTextDelegate(maxlength=c[1]['length'])
-          self.delegate_manager.insertColumnDelegate(i, delegate)
+          delegate = delegates.PlainTextDelegate( maxlength = c[1]['length'] )
+          self.delegate_manager.insertColumnDelegate( i, delegate )
         else:
-          delegate = delegates.TextEditDelegate(**c[1])
-          self.delegate_manager.insertColumnDelegate(i, delegate)
+          delegate = delegates.TextEditDelegate( **c[1] )
+          self.delegate_manager.insertColumnDelegate( i, delegate )
       else:
         delegate = delegates.PlainTextDelegate()
-        self.delegate_manager.insertColumnDelegate(i, delegate)
-    if not sip.isdeleted(self):
-      self.emit(QtCore.SIGNAL('layoutChanged()'))
+        self.delegate_manager.insertColumnDelegate( i, delegate )
+    if not sip.isdeleted( self ):
+      self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
 
-  def rowCount(self, index=None):
+  def rowCount( self, index = None ):
     return self.rows
-  
-  def columnCount(self, index=None):
+
+  def columnCount( self, index = None ):
     return self.column_count
-  
+
   @gui_function
-  def headerData(self, section, orientation, role):
+  def headerData( self, section, orientation, role ):
     """In case the columns have not been set yet, don't even try to get
     information out of them
     """
     if orientation == Qt.Horizontal:
       if section >= self.column_count:
-        return QtCore.QAbstractTableModel.headerData(self, section, orientation, role)
+        return QtCore.QAbstractTableModel.headerData( self, section, orientation, role )
       c = self.getColumns()[section]
       if role == Qt.DisplayRole:
-        return QtCore.QVariant(c[1]['name'])
+        return QtCore.QVariant( c[1]['name'] )
       elif role == Qt.FontRole:
-        if ('nullable' in c[1]) and \
-           (c[1]['nullable']==False):
-          return QtCore.QVariant(self._header_font_required)
+        if ( 'nullable' in c[1] ) and \
+           ( c[1]['nullable'] == False ):
+          return QtCore.QVariant( self._header_font_required )
         else:
-          return QtCore.QVariant(self._header_font)
+          return QtCore.QVariant( self._header_font )
       elif role == Qt.SizeHintRole:
         option = QtGui.QStyleOptionViewItem()
-        editor_size = self.delegate_manager.sizeHint(option, self.index(0, section))
+        editor_size = self.delegate_manager.sizeHint( option, self.index( 0, section ) )
         if 'minimal_column_width' in c[1]:
-          minimal_column_width = QtGui.QFontMetrics(self._header_font).size(Qt.TextSingleLine, 'A').width()*c[1]['minimal_column_width']
+          minimal_column_width = QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, 'A' ).width()*c[1]['minimal_column_width']
         else:
           minimal_column_width = 0
         editable = True
         if 'editable' in c[1]:
           editable = c[1]['editable']
-        label_size = QtGui.QFontMetrics(self._header_font_required).size(Qt.TextSingleLine, c[1]['name']+' ')
-        size = max(minimal_column_width, label_size.width()+10)
+        label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, c[1]['name'] + ' ' )
+        size = max( minimal_column_width, label_size.width() + 10 )
         if editable:
-          size = max(size, editor_size.width())
-        return QtCore.QVariant(QtCore.QSize(size, label_size.height()+10))
+          size = max( size, editor_size.width() )
+        return QtCore.QVariant( QtCore.QSize( size, label_size.height() + 10 ) )
     else:
-      
+
       if role == Qt.SizeHintRole:
-        return QtCore.QVariant(QtCore.QSize(self.iconSize.width()+8, self.iconSize.height()+5))
-        
-      
-      
-      
+        return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 8, self.iconSize.height() + 5 ) )
+
+
+
+
       if role == Qt.DecorationRole:
         return self.form_icon
 #      elif role == Qt.DisplayRole:
 #        return QtCore.QVariant()
-    return QtCore.QAbstractTableModel.headerData(self, section, orientation, role)
-  
+    return QtCore.QAbstractTableModel.headerData( self, section, orientation, role )
+
   @gui_function
-  def data(self, index, role):
+  def data( self, index, role ):
     import datetime
     if not index.isValid() or \
-       not (0 <= index.row() <= self.rowCount(index)) or \
-       not (0 <= index.column() <= self.columnCount(index)):
+       not ( 0 <= index.row() <= self.rowCount( index ) ) or \
+       not ( 0 <= index.column() <= self.columnCount( index ) ):
       return QtCore.QVariant()
-    if role in (Qt.DisplayRole, Qt.EditRole):
-      data = self._get_row_data(index.row(), role)
+    if role in ( Qt.DisplayRole, Qt.EditRole ):
+      data = self._get_row_data( index.row(), role )
       try:
         value = data[index.column()]
-        if isinstance(value, DelayedProxy):
+        if isinstance( value, DelayedProxy ):
           value = value()
           data[index.column()] = value
-        if isinstance(value, datetime.datetime):
+        if isinstance( value, datetime.datetime ):
           # Putting a python datetime into a QVariant and returning it to a PyObject seems
           # to be buggy, therefor we convert it here to a tuple of date and time
-          if role==Qt.EditRole and value:
-            return QtCore.QVariant((value.year, value.month, value.day, value.hour, value.minute, value.second, value.microsecond))
-        self.logger.debug('get data for row %s;col %s : %s' % (index.row(), index.column(), unicode(value)))
+          if role == Qt.EditRole and value:
+            return QtCore.QVariant( ( value.year, value.month, value.day, value.hour, value.minute, value.second, value.microsecond ) )
+        self.logger.debug( 'get data for row %s;col %s : %s' % ( index.row(), index.column(), unicode( value ) ) )
       except KeyError:
-        self.logger.error('Programming error, could not find data of column %s in %s'%(index.column(), str(data)))
+        self.logger.error( 'Programming error, could not find data of column %s in %s' % ( index.column(), str( data ) ) )
         value = None
-      return QtCore.QVariant(value)
+      return QtCore.QVariant( value )
     elif role == Qt.ForegroundRole:
       pass
     elif role == Qt.BackgroundRole:
       return QtCore.QVariant(QtGui.QColor('white'))
     return QtCore.QVariant()
 
-  def setData(self, index, value, role=Qt.EditRole):
+  def setData( self, index, value, role = Qt.EditRole ):
     """Value should be a function taking no arguments that returns the data to
     be set
     
     This function will then be called in the model_thread
     """
     if role == Qt.EditRole:
-      
-      flushed = (index.row() not in self.unflushed_rows)
-      self.unflushed_rows.add(index.row())
-      
-      def make_update_function(row, column, value):
-        
+
+      flushed = ( index.row() not in self.unflushed_rows )
+      self.unflushed_rows.add( index.row() )
+
+      def make_update_function( row, column, value ):
+
         @model_function
         def update_model_and_cache():
           from sqlalchemy.exceptions import OperationalError
           from sqlalchemy import orm
           new_value = value()
-          self.logger.debug('set data for row %s;col %s' % (row, column))
-          
-          if new_value==ValueLoading:
+          self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
+
+          if new_value == ValueLoading:
             return None
-          o = self._get_object(row)
+          o = self._get_object( row )
           if not o:
             # the object might have been deleted from the collection while the editor
             # was still open
-            self.logger.debug('this object is no longer in the collection')
+            self.logger.debug( 'this object is no longer in the collection' )
             try:
-              self.unflushed_rows.remove(row)
+              self.unflushed_rows.remove( row )
             except KeyError:
               pass
-            return            
+            return
           attribute, field_attributes = self.getColumns()[column]
-          old_value = getattr(o, attribute)
-          changed = (new_value!=old_value)
+          old_value = getattr( o, attribute )
+          changed = ( new_value != old_value )
           #
           # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
           # old and new value to know if the object was changed, so we'll
           # consider it changed anyway
           #
-          direction = field_attributes.get('direction', None)
-          if direction in (orm.sync.MANYTOMANY, orm.sync.ONETOMANY):
+          direction = field_attributes.get( 'direction', None )
+          if direction in ( orm.sync.MANYTOMANY, orm.sync.ONETOMANY ):
             changed = True
-          if changed and field_attributes['editable']==True:
+          if changed and field_attributes['editable'] == True:
             # update the model
             model_updated = False
             try:
-              setattr(o, attribute, new_value)
+              setattr( o, attribute, new_value )
               model_updated = True
             except AttributeError, e:
-              self.logger.error(u"Can't set attribute %s to %s"%(attribute, unicode(new_value)), exc_info=e)
+              self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
             except TypeError:
               # type error can be raised in case we try to set to a collection
               pass
             # update the cache
-            row_data = RowDataFromObject(o, self.getColumns())
-            self.cache[Qt.EditRole].add_data(row, o, row_data)
-            self.cache[Qt.DisplayRole].add_data(row, o, RowDataAsUnicode(o, self.getColumns()))
-            if self.flush_changes and self.validator.isValid(row):
+            row_data = RowDataFromObject( o, self.getColumns() )
+            self.cache[Qt.EditRole].add_data( row, o, row_data )
+            self.cache[Qt.DisplayRole].add_data( row, o, RowDataAsUnicode( o, self.getColumns() ) )
+            if self.flush_changes and self.validator.isValid( row ):
               # save the state before the update
               try:
-                elixir.session.flush([o])
+                elixir.session.flush( [o] )
               except OperationalError, e:
-                self.logger.error('Programming Error, could not flush object', exc_info=e)
+                self.logger.error( 'Programming Error, could not flush object', exc_info = e )
               try:
-                self.unflushed_rows.remove(row)
+                self.unflushed_rows.remove( row )
               except KeyError:
                 pass
               if model_updated:
                 #
                 # in case of images or relations, we cannot pickle them
                 #
-                if (not 'Imag' in old_value.__class__.__name__) and not direction:
+                if ( not 'Imag' in old_value.__class__.__name__ ) and not direction:
                   from camelot.model.memento import BeforeUpdate
                   from camelot.model.authentication import getCurrentAuthentication
-                  history = BeforeUpdate(model=unicode(self.admin.entity.__name__), 
-                                         primary_key=o.id, 
-                                         previous_attributes={attribute:old_value},
-                                         authentication = getCurrentAuthentication())
-                  
+                  history = BeforeUpdate( model = unicode( self.admin.entity.__name__ ),
+                                         primary_key = o.id,
+                                         previous_attributes = {attribute:old_value},
+                                         authentication = getCurrentAuthentication() )
+
                   try:
-                    elixir.session.flush([history])
+                    elixir.session.flush( [history] )
                   except OperationalError, e:
-                    self.logger.error('Programming Error, could not flush history', exc_info=e)                  
+                    self.logger.error( 'Programming Error, could not flush history', exc_info = e )
             #@todo: update should only be sent remotely when flush was done 
-            self.rsh.sendEntityUpdate(self, o)
-            return ((row,0), (row,len(self.getColumns())))
+            self.rsh.sendEntityUpdate( self, o )
+            return ( ( row, 0 ), ( row, len( self.getColumns() ) ) )
           elif flushed:
-            self.logger.debug('old value equals new value, no need to flush this object')
+            self.logger.debug( 'old value equals new value, no need to flush this object' )
             try:
-              self.unflushed_rows.remove(row)
+              self.unflushed_rows.remove( row )
             except KeyError:
               pass
-        
+
         return update_model_and_cache
-      
-      def emit_changes(region):
+
+      def emit_changes( region ):
         if region:
-          self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), 
-                    self.index(region[0][0],region[0][1]), self.index(region[1][0],region[1][1]))
-      
-      self.mt.post(make_update_function(index.row(), index.column(), value), emit_changes)
-    
+          self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
+                    self.index( region[0][0], region[0][1] ), self.index( region[1][0], region[1][1] ) )
+
+      self.mt.post( make_update_function( index.row(), index.column(), value ), emit_changes, dependency = self )
+
     return True
-  
-  def flags(self, index):
+
+  def flags( self, index ):
     flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
     if self.getColumns()[index.column()][1]['editable']:
      flags = flags | Qt.ItemIsEditable
     return flags
 
   @model_function
-  def _extend_cache(self, offset, limit):
+  def _extend_cache( self, offset, limit ):
     """Extend the cache around row"""
     #@TODO : also store the primary key, here we just saved the id
     columns = self.getColumns()
-    offset = min(offset, self.rows)
-    limit = min(limit, self.rows-offset)
-    for i,o in enumerate(self.collection_getter()[offset:offset+limit+1]):
-      row_data = RowDataFromObject(o, columns)
-      self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
-      self.cache[Qt.DisplayRole].add_data(i+offset, o, RowDataAsUnicode(o, columns))
-    return (offset, limit)
-        
+    offset = min( offset, self.rows )
+    limit = min( limit, self.rows - offset )
+    for i, o in enumerate( self.collection_getter()[offset:offset + limit + 1] ):
+      row_data = RowDataFromObject( o, columns )
+      self.cache[Qt.EditRole].add_data( i + offset, o, row_data )
+      self.cache[Qt.DisplayRole].add_data( i + offset, o, RowDataAsUnicode( o, columns ) )
+    return ( offset, limit )
+
   @model_function
-  def _get_object(self, row):
+  def _get_object( self, row ):
     """Get the object corresponding to row"""
     try:
       # first try to get the primary key out of the cache, if it's not
       # there, query the collection_getter
-      return self.cache[Qt.EditRole].get_entity_at_row(row)
+      return self.cache[Qt.EditRole].get_entity_at_row( row )
     except KeyError:
       pass
     return self.collection_getter()[row]
-  
-  def _cache_extended(self, offset, limit):
-    self.rows_under_request.difference_update(set(range(offset, offset+limit)))
-    self.emit(QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
-              self.index(offset,0), self.index(offset+limit,self.column_count))
-    
-  def _get_row_data(self, row, role):
+
+  def _cache_extended( self, offset, limit ):
+    self.rows_under_request.difference_update( set( range( offset, offset + limit ) ) )
+    self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
+              self.index( offset, 0 ), self.index( offset + limit, self.column_count ) )
+
+  def _get_row_data( self, row, role ):
     """Get the data which is to be visualized at a certain row of the
     table, if needed, post a refill request the cache to get the object
     and its neighbours in the cache, meanwhile, return an empty object
@@ -572,90 +576,90 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     """
     role_cache = self.cache[role]
     try:
-      return role_cache.get_data_at_row(row)
+      return role_cache.get_data_at_row( row )
     except KeyError:
       if row not in self.rows_under_request:
-        offset = max(row-self.max_number_of_rows/2,0)
+        offset = max( row - self.max_number_of_rows / 2, 0 )
         limit = self.max_number_of_rows
-        self.rows_under_request.update(set(range(offset, offset+limit)))
-        self.mt.post(lambda :self._extend_cache(offset, limit),
-                     lambda interval:self._cache_extended(*interval))
+        self.rows_under_request.update( set( range( offset, offset + limit ) ) )
+        self.mt.post( lambda :self._extend_cache( offset, limit ),
+                     lambda interval:self._cache_extended( *interval ) , dependency = self )
       return empty_row_data
 
   @model_function
-  def remove(self, o):
-    self.collection_getter().remove(o)
+  def remove( self, o ):
+    self.collection_getter().remove( o )
     self.rows -= 1
-    
+
   @model_function
-  def append(self, o):
-    self.collection_getter().append(o)
+  def append( self, o ):
+    self.collection_getter().append( o )
     self.rows += 1
- 
+
   @model_function
-  def removeEntityInstance(self, o, delete=True):
+  def removeEntityInstance( self, o, delete = True ):
     """Remove the entity instance o from this collection
     @param o: the object to be removed from this collection
     @param delete: delete the object after removing it from the collection 
     """
-    self.logger.debug('remove entity instance with id %s' % o.id)
-    self.remove(o)
+    self.logger.debug( 'remove entity instance with id %s' % o.id )
+    self.remove( o )
     # remove the entity from the cache
-    self.cache[Qt.DisplayRole].delete_by_entity(o)
-    self.cache[Qt.EditRole].delete_by_entity(o)
+    self.cache[Qt.DisplayRole].delete_by_entity( o )
+    self.cache[Qt.EditRole].delete_by_entity( o )
     if delete:
-      self.rsh.sendEntityDelete(self, o)
+      self.rsh.sendEntityDelete( self, o )
     if o.id:
       if delete:
         pk = o.id
         # save the state before the update
         from camelot.model.memento import BeforeDelete
         from camelot.model.authentication import getCurrentAuthentication
-        history = BeforeDelete(model=unicode(self.admin.entity.__name__), 
-                               primary_key=pk, 
-                               previous_attributes={},
-                               authentication = getCurrentAuthentication())
-        self.logger.debug('delete the object')
+        history = BeforeDelete( model = unicode( self.admin.entity.__name__ ),
+                               primary_key = pk,
+                               previous_attributes = {},
+                               authentication = getCurrentAuthentication() )
+        self.logger.debug( 'delete the object' )
         o.delete()
-        Session.object_session(o).flush([o])
-        Session.object_session(history).flush([history])
+        Session.object_session( o ).flush( [o] )
+        Session.object_session( history ).flush( [history] )
       else:
         # even if the object is not deleted, it needs to be flushed to make
         # sure it's out of the collection
-        Session.object_session(o).flush([o])
-    self.mt.post(lambda:None, lambda *args:self.refresh())  
-    
+        Session.object_session( o ).flush( [o] )
+    self.mt.post( lambda:None, lambda * args:self.refresh() , dependency = self )
+
   @gui_function
-  def removeRow(self, row, delete=True):
+  def removeRow( self, row, delete = True ):
     """Remove the entity associated with this row from this collection
     @param delete: delete the entity as well
     """
-    self.logger.debug('remove row %s' % row)
-    
-    def create_delete_function(row):
-      
+    self.logger.debug( 'remove row %s' % row )
+
+    def create_delete_function( row ):
+
       def delete_function():
-        o = self._get_object(row)
-        self.removeEntityInstance(o, delete)
-      
+        o = self._get_object( row )
+        self.removeEntityInstance( o, delete )
+
       return delete_function
-  
-    self.mt.post(create_delete_function(row))
+
+    self.mt.post( create_delete_function( row ), dependency = self )
     return True
-    
+
   @model_function
-  def insertEntityInstance(self, row, o):
+  def insertEntityInstance( self, row, o ):
     """Insert object o into this collection
     :param o: the object to be added to the collection
     :return: the row at which the object was inserted
     """
-    self.append(o)
-    row = self.getRowCount()-1
-    self.unflushed_rows.add(row)
-    if self.flush_changes and not len(self.validator.objectValidity(o)):
-      elixir.session.flush([o])
+    self.append( o )
+    row = self.getRowCount() - 1
+    self.unflushed_rows.add( row )
+    if self.flush_changes and not len( self.validator.objectValidity( o ) ):
+      elixir.session.flush( [o] )
       try:
-        self.unflushed_rows.remove(row)
+        self.unflushed_rows.remove( row )
       except KeyError:
         pass
 # TODO : it's not because an object is added to this list, that it was created
@@ -667,25 +671,25 @@ class CollectionProxy(QtCore.QAbstractTableModel):
 #                       authentication = getCurrentAuthentication())
 #      elixir.session.flush([history])
 #      self.rsh.sendEntityCreate(self, o)
-    self.mt.post(lambda:None, lambda *args:self.refresh())
+    self.mt.post( lambda:None, lambda * args:self.refresh(), dependency = self )
     return row
-              
+
   @gui_function
-  def insertRow(self, row, entity_instance_getter):
-    
-    def create_insert_function(getter):
-      
+  def insertRow( self, row, entity_instance_getter ):
+
+    def create_insert_function( getter ):
+
       @model_function
       def insert_function():
-        self.insertEntityInstance(row, getter())
-          
+        self.insertEntityInstance( row, getter() )
+
       return insert_function
-  
-    self.mt.post(create_insert_function(entity_instance_getter))
-        
+
+    self.mt.post( create_insert_function( entity_instance_getter ) , dependency = self )
+
   @model_function
-  def getData(self):
+  def getData( self ):
     """Generator for all the data queried by this proxy"""
-    for i,o in enumerate(self.collection_getter()):
-      yield RowDataFromObject(o, self.getColumns())
-    
+    for i, o in enumerate( self.collection_getter() ):
+      yield RowDataFromObject( o, self.getColumns() )
+

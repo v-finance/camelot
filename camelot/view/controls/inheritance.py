@@ -30,7 +30,7 @@
 import os
 import logging
 
-logger = logging.getLogger('camelot.view.controls.inheritance')
+logger = logging.getLogger( 'camelot.view.controls.inheritance' )
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -40,69 +40,69 @@ import settings
 from camelot.view.controls.modeltree import ModelTree
 from camelot.view.controls.modeltree import ModelItem
 
-QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
+QT_MAJOR_VERSION = float( '.'.join( str( QtCore.QT_VERSION_STR ).split( '.' )[0:2] ) )
 
 
-class SubclassItem(ModelItem):
-  def __init__(self, parent, admin):
-    ModelItem.__init__(self, parent, [admin.get_verbose_name()])
+class SubclassItem( ModelItem ):
+  def __init__( self, parent, admin ):
+    ModelItem.__init__( self, parent, [admin.get_verbose_name()] )
     self.admin = admin
 
-class SubclassTree(ModelTree):
+class SubclassTree( ModelTree ):
   """Widget to select subclasses of a certain entity, where the
   subclasses are represented in a tree
   
   emits subclassClicked when a subclass has been selected
   """
-  
-  def __init__(self, admin, parent):
+
+  def __init__( self, admin, parent ):
     header_labels = ['Types']
-    ModelTree.__init__(self, header_labels, parent)
-    self.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+    ModelTree.__init__( self, header_labels, parent )
+    self.setSizePolicy( QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding )
     #self.setSelectionBehavior(QtGui.QAbstractItemView.SelectItems)
     self.admin = admin
     self.subclasses = []
     self.mt = admin.getModelThread()
-    self.mt.post(lambda: self.admin.getSubclasses(),
-                 lambda subclasses: self.setSubclasses(subclasses))
-    self.connect(self,
-                 QtCore.SIGNAL('clicked(const QModelIndex&)'),
-                 self.emitSubclassClicked)
-        
-  def setSubclasses(self, subclasses):
-    logger.debug('setting subclass tree')
-    
-    self.subclasses = subclasses
-    if len(subclasses) > 1:
-      self.clear_model_items()
-      top_level_item = SubclassItem(self, self.admin)
-      self.modelitems.append(top_level_item)
-      for cls in subclasses:
-        item = SubclassItem(top_level_item, cls)
-        self.modelitems.append(item)
-      top_level_item.setExpanded(True)
-      self.setMaximumWidth(self.fontMetrics().width(' ')*70)
-    else:
-      self.setMaximumWidth(0)
+    self.mt.post( lambda: self.admin.getSubclasses(),
+                 lambda subclasses: self.setSubclasses( subclasses ), dependency = self )
+    self.connect( self,
+                 QtCore.SIGNAL( 'clicked(const QModelIndex&)' ),
+                 self.emitSubclassClicked )
 
-  def emitSubclassClicked(self, index):
-    logger.debug('subclass clicked at position %s' % index.row())
-    item = self.itemFromIndex(index)
-    self.emit(QtCore.SIGNAL('subclassClicked'), item.admin)
-    
-class SubclassDialog(QtGui.QDialog):
+  def setSubclasses( self, subclasses ):
+    logger.debug( 'setting subclass tree' )
+
+    self.subclasses = subclasses
+    if len( subclasses ) > 1:
+      self.clear_model_items()
+      top_level_item = SubclassItem( self, self.admin )
+      self.modelitems.append( top_level_item )
+      for cls in subclasses:
+        item = SubclassItem( top_level_item, cls )
+        self.modelitems.append( item )
+      top_level_item.setExpanded( True )
+      self.setMaximumWidth( self.fontMetrics().width( ' ' )*70 )
+    else:
+      self.setMaximumWidth( 0 )
+
+  def emitSubclassClicked( self, index ):
+    logger.debug( 'subclass clicked at position %s' % index.row() )
+    item = self.itemFromIndex( index )
+    self.emit( QtCore.SIGNAL( 'subclassClicked' ), item.admin )
+
+class SubclassDialog( QtGui.QDialog ):
   """A dialog requesting the user to select a subclass"""
-  
-  def __init__(self, parent, admin):
-    QtGui.QDialog.__init__(self, parent)
+
+  def __init__( self, parent, admin ):
+    QtGui.QDialog.__init__( self, parent )
     layout = QtGui.QVBoxLayout()
-    subclass_tree = SubclassTree(admin, self)
-    layout.addWidget(subclass_tree)
-    layout.addStretch(1)
-    self.setLayout(layout)
+    subclass_tree = SubclassTree( admin, self )
+    layout.addWidget( subclass_tree )
+    layout.addStretch( 1 )
+    self.setLayout( layout )
     self.selected_subclass = None
-    self.connect(subclass_tree, QtCore.SIGNAL('subclassClicked'), self.subclassClicked)
-    
-  def subclassClicked(self, admin):
+    self.connect( subclass_tree, QtCore.SIGNAL( 'subclassClicked' ), self.subclassClicked )
+
+  def subclassClicked( self, admin ):
     self.selected_subclass = admin
-    self.accept()    
+    self.accept()

@@ -107,8 +107,8 @@ class ModelThread( QtCore.QThread ):
     self.logger = logging.getLogger( logger.name + '.%s' % id( self ) )
     self._setup_thread = setup_thread
     self._exit = False
-    self._request_queue = Queue.Queue()
-    self._response_queue = Queue.Queue()
+    self._request_queue = Queue.Queue( 1000 )
+    self._response_queue = Queue.Queue( 1000 )
     self._response_signaler = response_signaler
     self._traceback = ''
     self.post( setup_thread )
@@ -131,7 +131,7 @@ class ModelThread( QtCore.QThread ):
 #          print inspect.getsource(request)
           self._response_signaler.startProcessingRequest( self )
           result = request()
-          self._response_queue.put( ( new_event, result, response, dependency ) )
+          self._response_queue.put( ( new_event, result, response, dependency ), timeout = 10 )
           self._request_queue.task_done()
           self._response_signaler.responseAvailable( self )
           self._response_signaler.stopProcessingRequest( self )
@@ -146,7 +146,7 @@ class ModelThread( QtCore.QThread ):
           sio.close()
           self.logger.error( 'exception caught in model thread', exc_info = e )
           exception_info = ( e, self )
-          self._response_queue.put( ( new_event, exception_info, exception, dependency ) )
+          self._response_queue.put( ( new_event, exception_info, exception ), timeout = 10 )
           self._request_queue.task_done()
           self._response_signaler.responseAvailable( self )
           self._response_signaler.stopProcessingRequest( self )
@@ -176,6 +176,8 @@ class ModelThread( QtCore.QThread ):
             if dependency != None:
                 if sip.isdeleted( dependency ):
                     pass
+                else:
+                    response( result )
             else:
                 response( result )
         except Exception, e:

@@ -26,71 +26,71 @@ overwritten.
 from PyQt4 import QtGui, QtCore
 from camelot.view.art import Icon
 
-class FormAction(object):
+class FormAction( object ):
   """Abstract base class to implement form actions"""
-  
-  def __init__(self, name, icon=None):
+
+  def __init__( self, name, icon = None ):
     self._name = name
     self._icon = icon
-    
-  def render(self, parent, entity_getter):
+
+  def render( self, parent, entity_getter ):
     """Returns a QWidget the user can use to trigger the action"""
-    
-    def create_clicked_function(self, entity_getter):
-      
-      def clicked(*args):
-        self.run(entity_getter)
-        
+
+    def create_clicked_function( self, entity_getter ):
+
+      def clicked( *args ):
+        self.run( entity_getter )
+
       return clicked
-    
-    button = QtGui.QPushButton(self._name)
+
+    button = QtGui.QPushButton( self._name )
     if self._icon:
-      button.setIcon(self._icon.getQIcon())
-    button.connect(button, QtCore.SIGNAL('clicked()'), create_clicked_function(self, entity_getter))
+      button.setIcon( self._icon.getQIcon() )
+    button.connect( button, QtCore.SIGNAL( 'clicked()' ), create_clicked_function( self, entity_getter ) )
     return button
-  
-  def run(self, entity_getter):
+
+  def run( self, entity_getter ):
     """Overwrite this method to create an action that does something"""
     raise NotImplementedError
-  
-class FormActionFromGuiFunction(FormAction):
+
+class FormActionFromGuiFunction( FormAction ):
   """Convert a function that is supposed to run in the GUI thread to a FormAction"""
-  
-  def __init__(self, name, gui_function, icon=None):
-    FormAction.__init__(self, name, icon)
+
+  def __init__( self, name, gui_function, icon = None ):
+    FormAction.__init__( self, name, icon )
     self._gui_function = gui_function
-    
-  def run(self, entity_getter):
-    self._gui_function(entity_getter)
-    
-class FormActionFromModelFunction(FormAction):
+
+  def run( self, entity_getter ):
+    self._gui_function( entity_getter )
+
+class FormActionFromModelFunction( FormAction ):
   """Convert a function that is supposed to run in the model thread to a FormAction"""
 
-  def __init__(self, name, model_function, icon=None):
-    FormAction.__init__(self, name, icon)
+  def __init__( self, name, model_function, icon = None ):
+    FormAction.__init__( self, name, icon )
     self._model_function = model_function
-    
-  def run(self, entity_getter):
-    progress = QtGui.QProgressDialog('Please wait', QtCore.QString(), 0, 0)
-    progress.setWindowTitle(self._name)
+
+  def run( self, entity_getter ):
+    progress = QtGui.QProgressDialog( 'Please wait', QtCore.QString(), 0, 0 )
+    progress.setWindowTitle( self._name )
     progress.show()
-    
-    def create_request(entity_getter):
-      
+
+    def create_request( entity_getter ):
+
       def request():
         o = entity_getter()
-        self._model_function(o)
-        
+        self._model_function( o )
+
       return request
-    
-    def exception(exc):
+
+    def exception( exc ):
       progress.close()
-       
+
     from camelot.view.model_thread import get_model_thread
     mt = get_model_thread()
-    mt.post(create_request(entity_getter), lambda *a:progress.close(), exception=exception)
+    mt.post( create_request( entity_getter ), lambda * a:progress.close(), exception = exception, dependency = progress )
 
-class PrintHtmlFormAction(FormActionFromModelFunction):
+class PrintHtmlFormAction( FormActionFromModelFunction ):
   """Create an action for a form that pops up a print preview for generated html.
 Overwrite the html function to customize the html that should be shown::
 
@@ -114,30 +114,30 @@ will put a print button on the form :
 .. image:: ../_static/formaction/print_html_form_action.png
 
   """
-  
-  def __init__(self, name, icon=Icon('tango/16x16/actions/document-print.png')):
-    
-    def model_function(o):
-      from camelot.view.export.printer import open_html_in_print_preview
-      html = self.html(o)
-      open_html_in_print_preview(html)
-      
-    FormActionFromModelFunction.__init__(self, name, model_function, icon)
 
-  def html(self, o):
+  def __init__( self, name, icon = Icon( 'tango/16x16/actions/document-print.png' ) ):
+
+    def model_function( o ):
+      from camelot.view.export.printer import open_html_in_print_preview
+      html = self.html( o )
+      open_html_in_print_preview( html )
+
+    FormActionFromModelFunction.__init__( self, name, model_function, icon )
+
+  def html( self, o ):
     """Overwrite this function to generate custom html to be printed
-    :arg o: the object that is displayed in the form""" 
-    return '<h1>' + unicode(o) + '<h1>'
-  
-def structure_to_form_actions(structure):
+    :arg o: the object that is displayed in the form"""
+    return '<h1>' + unicode( o ) + '<h1>'
+
+def structure_to_form_actions( structure ):
   """Convert a list of python objects to a list of form actions.  If the python
   object is a tuple, a FormActionFromGuiFunction is constructed with this tuple as arguments.  If
   the python object is an instance of a FormAction, it is kept as is.
   """
-  
-  def object_to_action(o):
-    if isinstance(o, FormAction):
+
+  def object_to_action( o ):
+    if isinstance( o, FormAction ):
       return o
-    return FormActionFromGuiFunction(o[0], o[1])
-  
-  return [object_to_action(o) for o in structure]
+    return FormActionFromGuiFunction( o[0], o[1] )
+
+  return [object_to_action( o ) for o in structure]

@@ -3,6 +3,7 @@
 	<name>Camelot</name>
 	<comment></comment>
 	<projects>
+		<project>cantate</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

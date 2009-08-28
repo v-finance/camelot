@@ -35,8 +35,8 @@ import logging
 
 #FORMAT = '[%(levelname)-5s] [%(name)-35s] - %(message)s' 
 #logging.basicConfig(level=logging.DEBUG, format=FORMAT)
-logger = logging.getLogger('printer')
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger( 'printer' )
+logger.setLevel( logging.DEBUG )
 
 import settings
 
@@ -47,23 +47,23 @@ from PyQt4.QtCore import Qt
 icon = '../art/tango/32x32/apps/system-users.png'
 
 class Printer:
-  def __init__(self):
+  def __init__( self ):
     self.printer = QtGui.QPrinter()
-    self.printer.setPageSize(QtGui.QPrinter.Letter)
+    self.printer.setPageSize( QtGui.QPrinter.Letter )
 
-  def printView(self, view, parent):
-    logger.debug('printing table view')
-    dialog = QtGui.QPrintDialog(self.printer, parent)
+  def printView( self, view, parent ):
+    logger.debug( 'printing table view' )
+    dialog = QtGui.QPrintDialog( self.printer, parent )
     if not dialog.exec_():
       return
-    
-    client_address = '<br/>'.join(['2 Azalea St.',
+
+    client_address = '<br/>'.join( ['2 Azalea St.',
                                    'Fredericksburg',
-                                   '22406 VA'])
+                                   '22406 VA'] )
 
     import datetime
     ts = datetime.datetime.today()
-    datestring = 'Date: %s/%s/%s' % (ts.month, ts.day, ts.year) 
+    datestring = 'Date: %s/%s/%s' % ( ts.month, ts.day, ts.year )
 
     view_content = view.toHtml()
     context = {
@@ -71,7 +71,7 @@ class Printer:
       'company_name' : 'Conceptive Engineering',
       'company_address_1' : 'L. Van Bauwelstraat 16',
       'company_address_2' : '2220 Heist-op-den-Berg',
-      'city' : 'Belgium', 
+      'city' : 'Belgium',
       'date' : datestring,
       'client_address' : client_address,
       'client_name' : 'Client',
@@ -80,26 +80,26 @@ class Printer:
     }
 
     from jinja import Environment, FileSystemLoader
-    fileloader = FileSystemLoader(settings.CANTATE_TEMPLATES_DIRECTORY) 
-    e = Environment(loader=fileloader)
-    t = e.get_template('base.html')
-    html = t.render(context)
+    fileloader = FileSystemLoader( settings.CANTATE_TEMPLATES_DIRECTORY )
+    e = Environment( loader = fileloader )
+    t = e.get_template( 'base.html' )
+    html = t.render( context )
 
     doc = QtGui.QTextDocument()
-    doc.setHtml(html)
-    doc.print_(self.printer)
+    doc.setHtml( html )
+    doc.print_( self.printer )
 
-  def preview(self, view, parent):
-    logger.debug('print preview dialog')
+  def preview( self, view, parent ):
+    logger.debug( 'print preview dialog' )
 
     def generate_html():
-      client_address = '<br/>'.join(['2 Azalea St.',
+      client_address = '<br/>'.join( ['2 Azalea St.',
                                      'Fredericksburg',
-                                     '22406 VA'])
+                                     '22406 VA'] )
 
       import datetime
       ts = datetime.datetime.today()
-      datestring = 'Date: %s/%s/%s' % (ts.month, ts.day, ts.year) 
+      datestring = 'Date: %s/%s/%s' % ( ts.month, ts.day, ts.year )
 
       view_content = view.toHtml()
       context = {
@@ -107,7 +107,7 @@ class Printer:
         'company_name' : 'Conceptive Engineering',
         'company_address_1' : 'L. Van Bauwelstraat 16',
         'company_address_2' : '2220 Heist-op-den-Berg',
-        'city' : 'Belgium', 
+        'city' : 'Belgium',
         'date' : datestring,
         'client_address' : client_address,
         'client_name' : 'Client',
@@ -117,13 +117,13 @@ class Printer:
 
       from jinja import Environment
       from camelot.view.templates import loader
-      e = Environment(loader=loader)
-      t = e.get_template('base.html')
-      html = t.render(context)
+      e = Environment( loader = loader )
+      t = e.get_template( 'base.html' )
+      html = t.render( context )
       return html
 
     from camelot.view.model_thread import get_model_thread
     from camelot.view.export.printer import open_html_in_print_preview_from_gui_thread
-    mt = get_model_thread()  
-    mt.post(generate_html, open_html_in_print_preview_from_gui_thread)
+    mt = get_model_thread()
+    mt.post( generate_html, open_html_in_print_preview_from_gui_thread, dependency = self.printer )
 
