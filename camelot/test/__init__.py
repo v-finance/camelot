@@ -44,10 +44,7 @@ class ModelThreadTestCase(unittest.TestCase):
     
   def process(self):
     """Wait until all events are processed and the queues of the model thread are empty"""
-    self.mt.post_and_block(lambda:None, 2)
-    self.app.processEvents()
-    self.mt.process_responses()
-    self.app.processEvents()
+    self.mt.wait_on_work()
 
   def setUp(self):
     self.app = get_application()

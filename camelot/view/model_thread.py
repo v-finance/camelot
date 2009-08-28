@@ -116,9 +116,9 @@ class ModelThread( QtCore.QThread ):
   def run( self ):
     self.logger.debug( 'model thread started' )
     try:
-      if self._setup_thread:
-        self._setup_thread()
-      self.logger.debug( 'start handling requests' )
+#      if self._setup_thread:
+#        self._setup_thread()
+#      self.logger.debug( 'start handling requests' )
       while not self._exit:
         try:
           ( request, response, exception, dependency ) = self._request_queue.get()
@@ -134,7 +134,6 @@ class ModelThread( QtCore.QThread ):
           self._response_signaler.responseAvailable( self )
           self._response_signaler.stopProcessingRequest( self )
           #self.logger.debug( 'finished handling request' )
-          #self._response_queue.join()
         except Exception, e:
           import traceback, cStringIO
           sio = cStringIO.StringIO()
@@ -143,7 +142,7 @@ class ModelThread( QtCore.QThread ):
           sio.close()
           self.logger.error( 'exception caught in model thread', exc_info = e )
           exception_info = ( e, self )
-          self._response_queue.put( ( exception_info, exception ), timeout = 10 )
+          self._response_queue.put( ( exception_info, exception, dependency ), timeout = 10 )
           self._request_queue.task_done()
           self._response_signaler.responseAvailable( self )
           self._response_signaler.stopProcessingRequest( self )
@@ -151,9 +150,15 @@ class ModelThread( QtCore.QThread ):
         except:
           self.logger.error( 'unhandled exception in model thread' )
     except Exception, e:
-      self.logger.error( '1exception caught in model thread', exc_info = e )
+      self.logger.error( 'exception caught in model thread', exc_info = e )
     except:
       self.logger.error( 'unhandled exception' )
+    # empty the request queue, before tearing down
+    self.logger.debug('tearing down')
+    while not self._request_queue.empty():
+      _element = self._request_queue.get()
+      self._request_queue.task_done()
+    self.logger.debug('finished')
 
   def traceback( self ):
     """The formatted traceback of the last exception in the model thread"""
@@ -212,6 +217,19 @@ class ModelThread( QtCore.QThread ):
     self._response_signaler.responseAvailable( self )
     self._response_signaler.stopProcessingRequest( self )
 
+  @gui_function
+  def wait_on_work(self):
+    """Wait for all work to be finished, this function should only be used
+    to do unit testing and such, since it will block the calling thread until
+    all work is done"""
+    from PyQt4.QtCore import QCoreApplication
+    app = QCoreApplication.instance()
+    while not (self._request_queue.empty() and self._response_queue.empty()):
+      logger.debug('queues not yet empty : %s requests and %s responses'%(self._request_queue.qsize(), self._response_queue.qsize()))
+      self._request_queue.join()
+      self.process_responses()
+      app.processEvents()
+    
   def exit( self ):
     """Ask the model thread to exit"""
     self._exit = True
