@@ -24,7 +24,6 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-from twisted.protocols.sip import SIPError
 
 """Proxy representing a collection of entities that live in the model thread.
 
