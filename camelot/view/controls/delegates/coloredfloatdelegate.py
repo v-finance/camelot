@@ -40,7 +40,6 @@ positive and in red when they are negative.
     color = index.model().data(index, Qt.BackgroundRole)
     background_color = QtGui.QColor(color)
     #background_color.setRgb(*color)
-    print background_color.name()
     #print background_color
     editor = editors.ColoredFloatEditor(parent=None,
                                         minimum=self.minimum,
