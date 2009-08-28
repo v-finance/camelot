@@ -37,13 +37,18 @@ positive and in red when they are negative.
     painter.save()
     self.drawBackground(painter, option, index)
     value = index.model().data(index, Qt.EditRole).toDouble()[0]
+    color = index.model().data(index, Qt.BackgroundRole)
+    background_color = QtGui.QColor(color)
+    #background_color.setRgb(*color)
+    print background_color.name()
+    #print background_color
     editor = editors.ColoredFloatEditor(parent=None,
                                         minimum=self.minimum,
                                         maximum=self.maximum,
                                         precision=self.precision,
                                         editable=self.editable)
     rect = option.rect
-    rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
+    #rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
     fontColor = QtGui.QColor()
     
     if( option.state & QtGui.QStyle.State_Selected ):
@@ -51,19 +56,28 @@ positive and in red when they are negative.
     else:
         if not self.editable:
           painter.fillRect(option.rect, option.palette.window())
+        else:
+          painter.fillRect(option.rect, background_color)
+          print 'test'
+    
+    
+    
+    
+      
+
     
     if value >= 0:
       if value == 0:
-        icon = Icon('tango/16x16/actions/zero.png').getQPixmap()
-        QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
+        QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap()).paint(painter, 0, 0, rect.height(), rect.height())
+        #QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
         fontColor.setRgb(0, 0, 0)
       else:
-        icon = Icon('tango/16x16/actions/go-up.png').getQPixmap()
-        QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
+        QtGui.QIcon(Icon('tango/16x16/actions/go-up.png').getQPixmap()).paint(painter, 0, 0, rect.height(), rect.height())
+        #QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
         fontColor.setRgb(0, 255, 0)
     else:
-      icon = Icon('tango/16x16/actions/go-down-red.png').getQPixmap()
-      QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
+      QtGui.QIcon(Icon('tango/16x16/actions/go-down-red.png').getQPixmap()).paint(painter, 0, 0, rect.height(), rect.height())
+#      QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
       fontColor.setRgb(255, 0, 0)
 
     value_str = '%.*f'%(self.precision, value)

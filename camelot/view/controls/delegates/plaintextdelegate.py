@@ -14,7 +14,7 @@ class PlainTextDelegate(CustomDelegate):
     self.editable = editable
     self.length = length
 
-  def paint(self, painter, option, index):
+  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
     painter.save()
     self.drawBackground(painter, option, index)
     text = variant_to_pyobject(index.model().data(index, Qt.EditRole))   
@@ -32,6 +32,7 @@ class PlainTextDelegate(CustomDelegate):
           fontColor.setRgb(130,130,130)
     else:
         if self.editable:
+          painter.fillRect(option.rect, background_color)
           fontColor = QtGui.QColor()
           fontColor.setRgb(0,0,0)
         else:

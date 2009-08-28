@@ -9,7 +9,7 @@ class FileDelegate(CustomDelegate):
   
   editor = editors.FileEditor
   
-  def paint(self, painter, option, index):
+  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
     self.drawBackground(painter, option, index)
     painter.save()
     if (option.state & QtGui.QStyle.State_Selected):
@@ -18,6 +18,8 @@ class FileDelegate(CustomDelegate):
     elif not self.editable:
       painter.fillRect(option.rect, QtGui.QColor(not_editable_background))
       painter.setPen(QtGui.QColor(not_editable_foreground))
+    else:
+      painter.fillRect(option.rect, background_color)
     value =  index.model().data(index, Qt.EditRole).toPyObject()
     if value:
       

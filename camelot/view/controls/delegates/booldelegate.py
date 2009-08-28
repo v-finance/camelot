@@ -8,7 +8,7 @@ class BoolDelegate(CustomDelegate):
   
   editor = editors.BoolEditor
 
-  def paint(self, painter, option, index):
+  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
     painter.save()
     self.drawBackground(painter, option, index)
     checked = index.model().data(index, Qt.EditRole).toBool()
@@ -25,6 +25,8 @@ class BoolDelegate(CustomDelegate):
       painter.fillRect(option.rect, option.palette.highlight())
     elif not self.editable:
       painter.fillRect(option.rect, QtGui.QColor(not_editable_background))
+    else:
+      painter.fillRect(option.rect, background_color)
       
     if checked:
       check_option.state = option.state | QtGui.QStyle.State_On

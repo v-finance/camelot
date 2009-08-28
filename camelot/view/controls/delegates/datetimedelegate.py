@@ -19,7 +19,7 @@ class DateTimeDelegate(CustomDelegate):
     #self._dummy_editor = self.editor(parent, editable=editable, **kwargs)
     
     
-  def paint(self, painter, option, index):
+  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
     painter.save()
     
     self.drawBackground(painter, option, index)
@@ -49,6 +49,7 @@ class DateTimeDelegate(CustomDelegate):
           fontColor.setRgb(130,130,130)
     else:
         if self.editable:
+          painter.fillRect(option.rect, background_color)
           fontColor = QtGui.QColor()
           fontColor.setRgb(0,0,0)
         else:

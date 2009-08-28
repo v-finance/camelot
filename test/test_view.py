@@ -540,10 +540,12 @@ class DelegateTest(unittest.TestCase):
   def grab_delegate(self, delegate, data, suffix='editable'):
     import sys
     from camelot.view.controls.tableview import TableWidget
+    from PyQt4.QtCore import Qt
     
     model = QStandardItemModel(1, 1)
     index = model.index(0, 0, QModelIndex())
     model.setData(index, QVariant(data))
+    model.setData(index, QVariant(QtGui.QColor('white')), Qt.BackgroundRole)
     
     option = QtGui.QStyleOptionViewItem()
     

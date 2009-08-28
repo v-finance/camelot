@@ -12,7 +12,7 @@ data
     QItemDelegate.__init__(self, parent)
     self.editable = editable
 
-  def paint(self, painter, option, index):
+  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
     painter.save()
     self.drawBackground(painter, option, index)
     intervals = index.model().data(index, Qt.EditRole).toPyObject()
@@ -24,6 +24,8 @@ data
     else:
         if not self.editable:
           painter.fillRect(option.rect, option.palette.window())
+        else:
+          painter.fillRect(option.rect, background_color)
     
     
     

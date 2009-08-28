@@ -15,7 +15,7 @@ class TextEditDelegate(CustomDelegate):
     self.editable = editable
 
 
-  def paint(self, painter, option, index):
+  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
     painter.save()
     self.drawBackground(painter, option, index)
     
@@ -37,6 +37,7 @@ class TextEditDelegate(CustomDelegate):
           fontColor.setRgb(130,130,130)
     else:
         if self.editable:
+          painter.fillRect(option.rect, background_color)
           fontColor = QtGui.QColor()
           fontColor.setRgb(0,0,0)
         else:

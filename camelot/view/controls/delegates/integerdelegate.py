@@ -24,7 +24,7 @@ class IntegerDelegate(CustomDelegate):
     self.editable = editable
     self.unicode_format = unicode_format
     
-  def paint(self, painter, option, index):
+  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
     painter.save()
     self.drawBackground(painter, option, index)
     value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
@@ -43,6 +43,7 @@ class IntegerDelegate(CustomDelegate):
           fontColor.setRgb(130,130,130)
     else:
         if self.editable:
+          painter.fillRect(option.rect, background_color)
           fontColor = QtGui.QColor()
           fontColor.setRgb(0,0,0)
         else:

@@ -22,7 +22,7 @@ class SmileyDelegate(CustomDelegate):
     
 
     
-  def paint(self, painter, option, index):
+  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
     painter.save()
     img = index.model().data(index, Qt.DisplayRole).toString()
     imgPath = 'tango/16x16/emotes/' + img + '.png'
@@ -37,6 +37,8 @@ class SmileyDelegate(CustomDelegate):
     else:
         if not self.editable:
           painter.fillRect(option.rect, option.palette.window())
+        else:
+          painter.fillRect(option.rect, background_color)
     
     icon = Icon(imgPath).getQPixmap()
     QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)

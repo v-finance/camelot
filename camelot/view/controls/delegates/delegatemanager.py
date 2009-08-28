@@ -1,4 +1,3 @@
-
 from customdelegate import *
 
 import logging

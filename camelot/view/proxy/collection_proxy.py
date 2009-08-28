@@ -421,7 +421,7 @@ class CollectionProxy(QtCore.QAbstractTableModel):
     elif role == Qt.ForegroundRole:
       pass
     elif role == Qt.BackgroundRole:
-      pass
+      return QtCore.QVariant(QtGui.QColor('white'))
     return QtCore.QVariant()
 
   def setData(self, index, value, role=Qt.EditRole):

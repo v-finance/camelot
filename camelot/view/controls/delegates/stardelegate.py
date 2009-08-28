@@ -19,7 +19,7 @@ class StarDelegate(CustomDelegate):
                             **kwargs)
     self.maximum = maximum
     
-  def paint(self, painter, option, index):
+  def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
     painter.save()
     self.drawBackground(painter, option, index)
     stars = index.model().data(index, Qt.EditRole).toInt()[0]
@@ -32,6 +32,8 @@ class StarDelegate(CustomDelegate):
     else:
         if not self.editable:
           painter.fillRect(option.rect, option.palette.window())
+        else:
+          painter.fillRect(option.rect, background_color)
     
     for i in range(5):
       if i+1<=stars:
