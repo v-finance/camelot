@@ -15,7 +15,7 @@ Once a project has been created and set up as described in the tutorial
 Two tools exist to assist in the management of Camelot projects:
 :program:`camelot_admin.py` and :program:`camelot_manage.py`.
 
-camelot-admin.py
+camelot_admin.py
 ================
 
 :program:`camelot_admin.py` is oriented towards the developers of the project.
@@ -33,8 +33,8 @@ Command line options are:
 
    Starts a new project
 
-manage.py
-=========
+camelot_manage.py
+=================
 
 :program:`camelot_manage.py` is oriented towards administrators of an installed
 camelot project. It is used for interacting with and migration of the database
@@ -60,3 +60,12 @@ Available options are:
 .. cmdoption:: version
 
 .. cmdoption:: upgrade
+
+.. cmdoption:: version_control
+
+   Put the database under version control
+   
+.. cmdoption:: schema_display
+
+   Generate a graph of the database schema.  The result is stored in schema.png.  This
+   option requires pydot to be installed.
