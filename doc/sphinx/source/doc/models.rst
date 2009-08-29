@@ -31,7 +31,16 @@ Normal python properties can be used as fields on forms as well.  In that case, 
 will be no introspection to find out how to display the property.  Therefore the delegate 
 attribute should be specified explicitely.
 
-  .. literalinclude:: ../../../../test/snippet/properties_as_fields.py 
+  .. literalinclude:: ../../../../test/snippet/properties_as_fields.py
+  
+Attach actions to field changes
+===============================
+
+Whenever the value of a field is changed, an action on the model can be triggered by
+using properties to manipulate the field instead of manipulating it directly.  The
+example below demonstrates how the value of y should be chopped when x is changed.
+
+  .. literalinclude:: ../../../../test/snippet/fields_with_actions.py
 
 Fields calculated by the database
 =================================

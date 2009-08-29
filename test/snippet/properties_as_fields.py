@@ -4,6 +4,7 @@ from camelot.view.controls import delegates
 class Coordinate(object):
   
   def __init__(self):
+    self.id = 1
     self.x = 0
     self.y = 0
     

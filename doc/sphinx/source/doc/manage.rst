@@ -69,3 +69,6 @@ Available options are:
 
    Generate a graph of the database schema.  The result is stored in schema.png.  This
    option requires pydot to be installed.
+   
+   .. image:: ../_static/schema.png
+      :width: 1000

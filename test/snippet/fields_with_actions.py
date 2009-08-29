@@ -19,5 +19,5 @@ class Coordinate(object):
       
   class Admin(ObjectAdmin):
     form_display = ['_x', 'y',]
-    field_attributes = dict(x=dict(delegate=delegates.FloatDelegate, name='x'),
+    field_attributes = dict(_x=dict(delegate=delegates.FloatDelegate, name='x'),
                             y=dict(delegate=delegates.FloatDelegate),)
