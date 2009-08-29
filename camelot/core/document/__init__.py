@@ -28,3 +28,20 @@ The resulting docstring of the Movie entity will be ::
     return model
   
   return document_entity
+
+
+def documented_type():
+  """Class decorator to append an image of the default editor of
+a field type to the docstring of the type"""
+
+  from camelot.view.field_attributes import _sqlalchemy_to_python_type_
+#  attributes =  
+  
+  def document_type(field_type):
+    field_type.__doc__ = (field_type.__doc__ or '') + """
+
+.. image:: ../_static/editors/%s_editable.png
+"""
+    return field_type
+  
+  return document_type

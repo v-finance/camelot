@@ -20,9 +20,12 @@ class ModelThreadTestCase(unittest.TestCase):
   
   images_path = ''
   
-  def grab_widget(self, widget, suffix=None):
+  def grab_widget(self, widget, suffix=None, subdir=None):
     """Save a widget as a png file :
-
+:param widget: the widget to take a screenshot of
+:param suffix: string to add to the default filename of the image
+:param subdir: subdirectory of images_path in which to put the image file, defaults to
+the name of the test class
 - the name of the png file is the name of the test case, without 'test_'
 - it is stored in the directory with the same name as the class, without 'test'     
     """
@@ -32,8 +35,10 @@ class ModelThreadTestCase(unittest.TestCase):
     self.process()
     widget.adjustSize()
     pixmap = QPixmap.grabWidget(widget)
-    # TODO checks if path exists
-    images_path = os.path.join(self.images_path, self.__class__.__name__.lower()[:-len('Test')])
+    if not subdir:
+      images_path = os.path.join(self.images_path, self.__class__.__name__.lower()[:-len('Test')])
+    else:
+      images_path = os.path.join(self.images_path, subdir)
     if not os.path.exists(images_path):
       os.makedirs(images_path)
     test_case_name = sys._getframe(1).f_code.co_name[5:]
@@ -64,6 +69,14 @@ class ModelThreadTestCase(unittest.TestCase):
     #self.process()
     self.mt.exit()
     
+class SchemaTest(ModelThreadTestCase):
+  """Test the database schema"""
+  
+  def test_schema_display(self):
+    from camelot.bin.camelot_manage import schema_display
+    import os
+    schema_display(os.path.join(self.images_path, 'schema.png'))
+    
 class EntityViewsTest(ModelThreadTestCase):
   """Test the views of all the Entity subclasses, subclass this class to test all views
   in your application.  This is done by calling the create_table_view and create_new_view
@@ -92,9 +105,9 @@ class EntityViewsTest(ModelThreadTestCase):
   def test_table_view(self):
     for admin in self.get_admins():
       widget = admin.create_table_view()
-      self.grab_widget(widget, suffix=admin.entity.__name__.lower())
+      self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
       
   def test_new_view(self):
     for admin in self.get_admins():
       widget = admin.create_new_view()
-      self.grab_widget(widget, suffix=admin.entity.__name__.lower())
+      self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
