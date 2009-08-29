@@ -57,6 +57,8 @@ class ModelThreadTestCase(unittest.TestCase):
     self.mt = get_model_thread()
     if not self.mt.isRunning():
       self.mt.start()
+    # make sure the startup sequence has passed
+    self.process()
     
   def tearDown(self):
     self.mt.exit()
