@@ -87,6 +87,17 @@ def main():
     settings.setup_model()
     sh = Shell()
     sh.interact()
+  elif args[0]=='schema_display':
+    settings.setup_model()
+    from camelot.core.schema_display import create_uml_graph
+    from sqlalchemy import orm
+    from elixir import entities
+    mappers = [orm.class_mapper(e) for e in entities]
+    graph = create_uml_graph(mappers,
+        show_operations=False, # not necessary in this case
+        show_multiplicity_one=False # some people like to see the ones, some don't
+    )
+    graph.write_png('schema.png')
   else:
     from migrate.versioning.repository import Repository
     from migrate.versioning.schema import ControlledSchema
@@ -105,7 +116,7 @@ def main():
         transaction.rollback()
         raise
       finally:
-        migrate_connection.close()        
+        migrate_connection.close()            
     try:
       schema = ControlledSchema(migrate_engine, repository)
     except NoSuchTableError, e:

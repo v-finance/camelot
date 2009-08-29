@@ -61,6 +61,7 @@ class ModelThreadTestCase(unittest.TestCase):
     self.process()
     
   def tearDown(self):
+    #self.process()
     self.mt.exit()
     
 class EntityViewsTest(ModelThreadTestCase):

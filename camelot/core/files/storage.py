@@ -74,7 +74,6 @@ as all of it's methods might block.
     import tempfile
     import shutil
     import os
-    print 'checkin', local_path
     root, extension = os.path.splitext(os.path.basename(local_path))
     (handle, to_path) = tempfile.mkstemp(suffix=extension, prefix=root, dir=self.upload_to, text='b')
     os.close(handle)
@@ -118,5 +117,4 @@ class S3Storage(object):
     if (conn.check_bucket_exists(settings.AWS_BUCKET_NAME).status == 200):
       pass
     else:
-      print '----- creating bucket -----'
-      print conn.create_located_bucket(settings.AWS_BUCKET_NAME, settings.AWS_LOCATION).message
+      conn.create_located_bucket(settings.AWS_BUCKET_NAME, settings.AWS_LOCATION).message

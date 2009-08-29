@@ -154,9 +154,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     columns that will be cached in the proxy. This function will be called
     inside the model thread.
     """
-    self.logger = logging.getLogger( logger.name + '.%s' % id( self ) )
-    self.logger.debug( 'initialize query table for %s' % ( admin.get_verbose_name() ) )
-    QtCore.QAbstractTableModel.__init__( self )
+    from camelot.view.model_thread import get_model_thread
+    self.logger = logging.getLogger(logger.name + '.%s'%id(self))
+    self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
+    QtCore.QAbstractTableModel.__init__(self)
     self.admin = admin
     self.iconSize = QtCore.QSize( QtGui.QFontMetrics( self._header_font_required ).height() - 4, QtGui.QFontMetrics( self._header_font_required ).height() - 4 )
     self.form_icon = QtCore.QVariant( self.header_icon.pixmap( self.iconSize ) )
@@ -164,7 +165,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     self.collection_getter = collection_getter
     self.column_count = 0
     self.flush_changes = flush_changes
-    self.mt = admin.getModelThread()
+    self.mt = get_model_thread()
     # Set database connection and load data
     self.rows = 0
     self._columns = []

@@ -151,7 +151,7 @@ of (label, widget editor)
           form_layout.addWidget(editor, row, col + 1, row_span, col_span)
           row += 1
 
-    if self._content:
+    if self._content and form_layout.count():
       # get last item in the layout
       last_item = form_layout.itemAt(form_layout.count() - 1)
   
