@@ -224,12 +224,13 @@ class ModelThread( QtCore.QThread ):
     all work is done"""
     from PyQt4.QtCore import QCoreApplication
     app = QCoreApplication.instance()
-    while not (self._request_queue.empty() and self._response_queue.empty()):
+    self._request_queue.join()
+    while not self._response_queue.empty():
       logger.debug('queues not yet empty : %s requests and %s responses'%(self._request_queue.qsize(), self._response_queue.qsize()))
-      self._request_queue.join()
       self.process_responses()
       app.processEvents()
-    
+      self._request_queue.join()
+      
   def exit( self ):
     """Ask the model thread to exit"""
     self._exit = True
