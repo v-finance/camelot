@@ -121,19 +121,22 @@ class ModelThread( QtCore.QThread ):
 #      self.logger.debug( 'start handling requests' )
       while not self._exit:
         try:
-          ( request, response, exception, dependency ) = self._request_queue.get()
-          #self.logger.debug( 'execute request %s' % id( request ) )
-          #self._response_queue.join()
-          #self.logger.debug( 'start handling request' )
-#          import inspect
-#          print inspect.getsource(request)
-          self._response_signaler.startProcessingRequest( self )
-          result = request()
-          self._response_queue.put( ( result, response, dependency ), timeout = 10 )
-          self._request_queue.task_done()
-          self._response_signaler.responseAvailable( self )
-          self._response_signaler.stopProcessingRequest( self )
-          #self.logger.debug( 'finished handling request' )
+          try:
+            ( request, response, exception, dependency ) = self._request_queue.get(timeout = 5)
+            #self.logger.debug( 'execute request %s' % id( request ) )
+            #self._response_queue.join()
+            #self.logger.debug( 'start handling request' )
+  #          import inspect
+  #          print inspect.getsource(request)
+            self._response_signaler.startProcessingRequest( self )
+            result = request()
+            self._response_queue.put( ( result, response, dependency ), timeout = 10 )
+            self._request_queue.task_done()
+            self._response_signaler.responseAvailable( self )
+            self._response_signaler.stopProcessingRequest( self )
+            #self.logger.debug( 'finished handling request' )            
+          except Queue.Empty, e:
+            self.logger.debug('model thread still allive, nothing in queue')
         except Exception, e:
           import traceback, cStringIO
           sio = cStringIO.StringIO()
