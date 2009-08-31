@@ -18,14 +18,30 @@ class VirtualAddressEditor(CustomEditor):
     self.editor = QtGui.QLineEdit()
     self.editor.setEnabled(editable)
     self.layout.addWidget(self.editor)
+    self.editable = editable
+    
+    
+    nullIcon = Icon('tango/16x16/actions/zero.png').getQIcon()
+    self.label = QtGui.QToolButton()
+    self.label.setIcon(nullIcon)
+    self.label.setAutoFillBackground(False)
+    self.label.setAutoRaise(True)
+    self.label.setEnabled(False)
+    self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
+    
+
+    self.layout.addWidget(self.label)
+    
+    
 #    if virtual_adress[0] == 'email':
 #      icon = Icon('tango/16x16/apps/internet-mail.png').getQPixmap()
 #    else:
 #      #if virtual_adress[0] == 'telephone':
-    icon = Icon('tango/16x16/actions/zero.png').getQPixmap()
 #      
-    self.label = QtGui.QLabel()
-    self.label.setPixmap(icon)
+
+    
+    
+    
     
     self.connect(self.editor,
                  QtCore.SIGNAL('editingFinished()'),
@@ -50,33 +66,39 @@ class VirtualAddressEditor(CustomEditor):
       idx = camelot.types.VirtualAddress.virtual_address_types.index(value[0])
       self.combo.setCurrentIndex(idx)
       if str(self.combo.currentText()) == 'phone':
-        icon = Icon('tango/16x16/devices/phone.png').getQPixmap()
+        icon = Icon('tango/16x16/devices/phone.png').getQIcon()
       if str(self.combo.currentText()) == 'fax':
-        icon = Icon('tango/16x16/devices/printer.png').getQPixmap()
+        icon = Icon('tango/16x16/devices/printer.png').getQIcon()
       if str(self.combo.currentText()) == 'mobile':
-        icon = Icon('tango/16x16/devices/mobile.png').getQPixmap()
+        icon = Icon('tango/16x16/devices/mobile.png').getQIcon()
       if str(self.combo.currentText()) == 'im':
-        icon = Icon('tango/16x16/places/instant-messaging.png').getQPixmap()
+        icon = Icon('tango/16x16/places/instant-messaging.png').getQIcon()
       if str(self.combo.currentText()) == 'pager':
-        icon = Icon('tango/16x16/devices/pager.png').getQPixmap()
-        
+        icon = Icon('tango/16x16/devices/pager.png').getQIcon()
       if str(self.combo.currentText()) == 'email':
         icon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
-        self.label.deleteLater()
-        self.label = QtGui.QToolButton()
         self.label.setFocusPolicy(Qt.StrongFocus)
         self.label.setAutoRaise(True)
         self.label.setAutoFillBackground(True)
         self.label.setIcon(icon)
+        self.label.setEnabled(self.editable)
+        self.label.setDisabled(not self.editable)
         self.connect(self.label,
                      QtCore.SIGNAL('clicked()'),
                      lambda:self.mailClick(self.editor.text()))
       else:
-        self.label.deleteLater()
-        self.label = QtGui.QLabel()
-        self.label.setPixmap(icon)
-
-      self.layout.addWidget(self.label)
+        self.label.setIcon(icon)
+        self.label.setAutoFillBackground(False)
+        self.label.setAutoRaise(True)
+        self.label.setEnabled(False)
+        self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
+      
+#      self.update()
+#      self.label.update()
+#      self.layout.update()
+      
+      
+      self.checkValue(value[1])
 
   def get_value(self):
     value = (unicode(self.combo.currentText()), unicode(self.editor.text()))
@@ -125,7 +147,7 @@ class VirtualAddressEditor(CustomEditor):
 
   def mailClick(self, adress):
     url = QtCore.QUrl()
-    url.setUrl('mailto:'+str(adress)+'?subject=Camelot')
+    url.setUrl('mailto:' + str(adress) + '?subject=Camelot')
     mailSent = QtGui.QDesktopServices.openUrl(url)
     if not mailSent:
       print 'Failed to send Mail.'

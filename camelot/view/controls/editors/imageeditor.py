@@ -30,6 +30,7 @@ class ImageEditor(CustomEditor):
     # Setup label
     #
     self.label = QtGui.QLabel(parent)
+    self.label.setEnabled(editable)
     self.layout.addWidget(self.label)
     self.label.setAcceptDrops(True)
     # self.draw_border()
@@ -46,18 +47,21 @@ class ImageEditor(CustomEditor):
 
     file_button = QtGui.QToolButton()
     file_button.setIcon(self.new_icon)
+    file_button.setEnabled(editable)
     file_button.setAutoRaise(True)
     file_button.setToolTip('Select image')
     self.connect(file_button, QtCore.SIGNAL('clicked()'), self.openFileDialog)
     
     app_button = QtGui.QToolButton()
     app_button.setIcon(self.open_icon)
+    app_button.setEnabled(editable)
     app_button.setAutoRaise(True)
     app_button.setToolTip('Open image')
     self.connect(app_button, QtCore.SIGNAL('clicked()'), self.openInApp)
     
     clear_button = QtGui.QToolButton()
     clear_button.setIcon(self.clear_icon)
+    clear_button.setEnabled(editable)
     clear_button.setToolTip('Delete image')
     clear_button.setAutoRaise(True)
     self.connect(clear_button, QtCore.SIGNAL('clicked()'), self.clearImage)

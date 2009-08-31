@@ -17,9 +17,9 @@ class BoolDelegate(CustomDelegate):
     
     check_option = QtGui.QStyleOptionButton()
     
-    rect = QtCore.QRect(option.rect.left()+40,
+    rect = QtCore.QRect(option.rect.left(),
                         option.rect.top(),
-                        option.rect.width()-23,
+                        option.rect.width(),
                         option.rect.height())
     
     check_option.rect = rect
@@ -27,7 +27,7 @@ class BoolDelegate(CustomDelegate):
     if (option.state & QtGui.QStyle.State_Selected):
       painter.fillRect(option.rect, option.palette.highlight())
     elif not self.editable:
-      painter.fillRect(option.rect, QtGui.QColor(not_editable_background))
+      painter.fillRect(option.rect, option.palette.window())
     else:
       painter.fillRect(option.rect, background_color)
       

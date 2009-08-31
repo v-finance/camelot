@@ -63,14 +63,14 @@ class TableWidget( QtGui.QTableView ):
     option = QtGui.QStyleOptionViewItem()
     newSize = self.itemDelegate( selectedIndex ).sizeHint( option, selectedIndex )
     row = selectedIndex.row()
+    normalSize = QtGui.QFontMetrics( self._header_font_required ).height() + 5
     if previousSelectedIndex.row() >= 0:
-      normalSize = QtGui.QFontMetrics( self._header_font_required ).height() + 5
       previousRow = previousSelectedIndex.row()
       self.setRowHeight( previousRow, normalSize )
 
 
 
-    self.setRowHeight( row, newSize.height() )
+    self.setRowHeight( row, max(normalSize, QtGui.QLineEdit().sizeHint().height(), newSize.height()) )
 
 
     #self.selectedRow = row

@@ -361,14 +361,17 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
       if section >= self.column_count:
         return QtCore.QAbstractTableModel.headerData( self, section, orientation, role )
       c = self.getColumns()[section]
+      
       if role == Qt.DisplayRole:
         return QtCore.QVariant( c[1]['name'] )
+      
       elif role == Qt.FontRole:
         if ( 'nullable' in c[1] ) and \
            ( c[1]['nullable'] == False ):
           return QtCore.QVariant( self._header_font_required )
         else:
           return QtCore.QVariant( self._header_font )
+        
       elif role == Qt.SizeHintRole:
         option = QtGui.QStyleOptionViewItem()
         editor_size = self.delegate_manager.sizeHint( option, self.index( 0, section ) )
@@ -384,6 +387,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         if editable:
           size = max( size, editor_size.width() )
         return QtCore.QVariant( QtCore.QSize( size, label_size.height() + 10 ) )
+    
     else:
 
       if role == Qt.SizeHintRole:

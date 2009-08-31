@@ -34,7 +34,6 @@ class ComboBoxDelegate(CustomDelegate):
     self.drawBackground(painter, option, index)
     value = variant_to_pyobject(index.data(Qt.EditRole))
     
-    
     editor = editors.ChoicesEditor(parent=None)
     
     background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
@@ -61,15 +60,6 @@ class ComboBoxDelegate(CustomDelegate):
           fontColor.setRgb(130, 130, 130)
           
     
-    choice = ''
-    for i, (number, name) in enumerate(self.choices):
-      if int(number) == int(value):
-        choice = str(name)
-            
-    
-    
-    text = choice
-    
     
     painter.setPen(fontColor.toRgb())
     rect = QtCore.QRect(option.rect.left()+2,
@@ -81,5 +71,5 @@ class ComboBoxDelegate(CustomDelegate):
                      rect.width(),
                      rect.height(),
                      Qt.AlignVCenter | Qt.AlignLeft,
-                     unicode(text))
+                     unicode(value))
     painter.restore()

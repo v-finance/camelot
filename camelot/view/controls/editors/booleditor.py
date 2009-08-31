@@ -1,19 +1,71 @@
-
-from customeditor import *
-
-class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
+#
+#from customeditor import *
+#
+#class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
+#  
+#  def __init__(self, parent, editable=True, **kwargs):
+#    QtGui.QCheckBox.__init__(self, parent)
+#    AbstractCustomEditor.__init__(self)
+#    self.setEnabled(editable)
+#    
+#  def set_value(self, value):
+#    print 'VALUE : ', value
+#    value = AbstractCustomEditor.set_value(self, value)
+#    if value:
+#      self.setCheckState(Qt.Checked)
+#    else:
+#      self.setCheckState(Qt.Unchecked)
+#    
+#    
+#    print 'ISCHECKED? : ', self.isChecked()
+#      
+#  def get_value(self):
+#    return AbstractCustomEditor.get_value(self) or self.isChecked()
+#  
+#  
   
-  def __init__(self, parent, editable=True, **kwargs):
-    QtGui.QCheckBox.__init__(self, parent)
-    AbstractCustomEditor.__init__(self)
-    self.setEnabled(editable)
-    
+  
+  
+from customeditor import *
+from PyQt4 import QtGui
+
+class BoolEditor(CustomEditor):
+  """Widget for editing a boolean field"""
+
+  def __init__(self,
+               parent=None,
+               minimum=camelot_minint,
+               maximum=camelot_maxint,
+               editable=True,
+               **kwargs):
+    CustomEditor.__init__(self, parent)
+    self.checkBox = QtGui.QCheckBox()
+    self.checkBox.setEnabled(editable)
+
+    layout = QtGui.QHBoxLayout()
+    layout.setMargin(0)
+    layout.setSpacing(0)
+    layout.addWidget(self.checkBox)
+    self.setFocusProxy(self.checkBox)
+    self.setLayout(layout)
+
   def set_value(self, value):
-    value = AbstractCustomEditor.set_value(self, value)
+    value = CustomEditor.set_value(self, value)
     if value:
-      self.setChecked(True)
+      self.checkBox.setCheckState(Qt.Checked)
     else:
-      self.setChecked(False)
-      
+      self.checkBox.setCheckState(Qt.Unchecked)
+
   def get_value(self):
-    return AbstractCustomEditor.get_value(self) or self.isChecked()
+    value = self.checkBox.isChecked()
+    return CustomEditor.get_value(self) or value
+
+  def editingFinished(self, value=None):
+    if value == None:
+      value = self.checkBox.isChecked()
+    self.emit(QtCore.SIGNAL('editingFinished()'), value)
+    
+    
+  def sizeHint(self):
+    size = QtGui.QComboBox().sizeHint()
+    return size

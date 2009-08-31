@@ -58,6 +58,7 @@ class FileEditor(CustomEditor):
     # Setup layout
     document_label = QtGui.QLabel(self)
     document_label.setPixmap(self.document_pixmap)
+    document_label.setEnabled(editable)
     self.layout.addWidget(document_label)
     self.layout.addWidget(self.filename)
     self.layout.addWidget(self.clear_button)
