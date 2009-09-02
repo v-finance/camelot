@@ -66,6 +66,13 @@ class BoolEditor(CustomEditor):
     self.emit(QtCore.SIGNAL('editingFinished()'), value)
     
     
+  
+  
+  def set_enabled(self, editable=True):
+    value = self.get_value()
+    self.checkBox.setDisabled(not editable)
+    self.set_value(value)
+  
   def sizeHint(self):
     size = QtGui.QComboBox().sizeHint()
     return size

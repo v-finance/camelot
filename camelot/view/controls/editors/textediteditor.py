@@ -19,3 +19,7 @@ class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
 
   def get_value(self):
     return AbstractCustomEditor.get_value(self) or unicode(self.text())
+  
+  
+  def set_enabled(self, editable=True):
+    self.setEnabled(editable)

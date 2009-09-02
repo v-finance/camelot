@@ -28,3 +28,6 @@ class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):
                           minute=value.minute(),
                           second=value.second())
     return AbstractCustomEditor.get_value(self) or value
+  
+  def set_enabled(self, editable=True):
+    self.setEnabled(editable)

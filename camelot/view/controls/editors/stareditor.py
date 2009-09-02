@@ -41,6 +41,13 @@ class StarEditor(CustomEditor):
 
   def get_value(self):
     return CustomEditor.get_value(self) or self.stars
+  
+  
+  def set_enabled(self, editable=True):
+    for button in self.buttons:
+      button.setEnabled(editable)
+      button.update()
+    self.set_value(self.stars)
 
   def starClick(self, value):
     if self.stars == value:

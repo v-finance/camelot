@@ -21,7 +21,7 @@ class VirtualAddressEditor(CustomEditor):
     self.editable = editable
     
     
-    nullIcon = Icon('tango/16x16/actions/zero.png').getQIcon()
+    nullIcon = Icon('tango/16x16/devices/phone.png').getQIcon()
     self.label = QtGui.QToolButton()
     self.label.setIcon(nullIcon)
     self.label.setAutoFillBackground(False)
@@ -54,6 +54,7 @@ class VirtualAddressEditor(CustomEditor):
                  lambda:self.comboIndexChanged())
     self.setLayout(self.layout)
     self.setAutoFillBackground(True)
+    self.checkValue(self.editor.text())
 
   def comboIndexChanged(self):
     self.checkValue(self.editor.text())
@@ -103,6 +104,17 @@ class VirtualAddressEditor(CustomEditor):
   def get_value(self):
     value = (unicode(self.combo.currentText()), unicode(self.editor.text()))
     return CustomEditor.get_value(self) or value
+  
+  
+  def set_enabled(self, editable=True):
+    self.combo.setEnabled(editable)
+    self.editor.setEnabled(editable)
+    if not editable:
+      self.label.setEnabled(False)
+    else:
+      if self.combo.currentText() == 'email':
+        self.label.setEnabled(True)
+  
 
   def checkValue(self, text):
     if self.combo.currentText() == 'email':
@@ -127,7 +139,7 @@ class VirtualAddressEditor(CustomEditor):
      or self.combo.currentText() == 'mobile':
 
       number = text
-      numberCheck = re.compile('^[0-9 ]*$')
+      numberCheck = re.compile('^[0-9 ]+$')
 
       if not numberCheck.match(number):
         palette = self.editor.palette()
@@ -140,6 +152,22 @@ class VirtualAddressEditor(CustomEditor):
         palette.setColor(QtGui.QPalette.Active,
                          QtGui.QPalette.Base,
                          QtGui.QColor(255, 255, 255))
+        self.editor.setPalette(palette)
+        
+    else:
+      Check = re.compile('^.+$')
+        
+      if not Check.match(text):
+        palette = self.editor.palette()
+        palette.setColor(QtGui.QPalette.Active,
+                         QtGui.QPalette.Base,
+                          QtGui.QColor(255, 0, 0))
+        self.editor.setPalette(palette)
+      else:
+        palette = self.editor.palette()
+        palette.setColor(QtGui.QPalette.Active,
+                          QtGui.QPalette.Base,
+                          QtGui.QColor(255, 255, 255))
         self.editor.setPalette(palette)
 
   def editorValueChanged(self, text):

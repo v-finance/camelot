@@ -107,3 +107,7 @@ class DateTimeEditor(CustomEditor):
       return None
     parts = text.split(':')
     return QtCore.QTime(int(parts[0]), int(parts[1]))
+  
+  def set_enabled(self, editable=True):
+    self.timeedit.setEnabled(editable)
+    self.dateedit.setEnabled(editable)

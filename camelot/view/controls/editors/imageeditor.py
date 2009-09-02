@@ -115,6 +115,9 @@ class ImageEditor(CustomEditor):
           
   def isModified(self):
     return self._modified
+  
+  def set_enabled(self, editable=True):
+    self.__init__(None, editable)
 
   def setModified(self, modified):
     self._modified = modified

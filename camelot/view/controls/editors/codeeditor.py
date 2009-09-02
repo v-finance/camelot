@@ -11,6 +11,8 @@ class CodeEditor(CustomEditor):
     self.part_editors = []
     layout = QtGui.QHBoxLayout()
     layout.setMargin(0)
+    layout.setSpacing(0)
+    layout.setAlignment(Qt.AlignCenter)
     for part in parts:
       part = re.sub('\W*', '', part)
       part_length = len(part)
@@ -32,6 +34,13 @@ class CodeEditor(CustomEditor):
 
   def editingFinished(self):
     self.emit(QtCore.SIGNAL('editingFinished()'))
+    
+  
+  def set_enabled(self, editable=True):
+    for editor in self.part_editors:
+      value = editor.text()
+      editor.setEnabled(editable)
+      editor.setText(value)
 
   def set_value(self, value):
     value = CustomEditor.set_value(self, value)

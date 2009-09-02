@@ -38,6 +38,9 @@ class ColorEditor(CustomEditor):
   def getColor(self):
     return self._color
   
+  def set_enabled(self, editable=True):
+    self.color_button.setEnabled(editable)
+  
   def setColor(self, color):
     pixmap = QtGui.QPixmap(16, 16)
     if color:

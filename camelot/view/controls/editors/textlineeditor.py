@@ -20,3 +20,9 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
 
   def get_value(self):
     return AbstractCustomEditor.get_value(self) or unicode(self.text())
+  
+  def set_enabled(self, editable=True):
+    value = self.text()
+    print value
+    self.setEnabled(editable)
+    self.setText(value)

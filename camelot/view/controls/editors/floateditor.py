@@ -37,13 +37,13 @@ class FloatEditor(CustomEditor):
     self.spinBox.setPrefix(prefix)
     self.spinBox.setSuffix(suffix)
     self.spinBox.addAction(action)
-    calculatorButton = QtGui.QToolButton()
+    self.calculatorButton = QtGui.QToolButton()
     icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
-    calculatorButton.setIcon(icon)
-    calculatorButton.setAutoRaise(True)
-    calculatorButton.setFixedHeight(self.get_height())
+    self.calculatorButton.setIcon(icon)
+    self.calculatorButton.setAutoRaise(True)
+    self.calculatorButton.setFixedHeight(self.get_height())
     
-    self.connect(calculatorButton,
+    self.connect(self.calculatorButton,
                  QtCore.SIGNAL('clicked()'),
                  lambda:self.popupCalculator(self.spinBox.value()))
     self.connect(action,
@@ -60,7 +60,7 @@ class FloatEditor(CustomEditor):
     layout.setSpacing(0)
     layout.addWidget(self.spinBox)
     if editable:
-      layout.addWidget(calculatorButton)
+      layout.addWidget(self.calculatorButton)
     else:
       self.spinBox.setEnabled(False)
 
@@ -74,6 +74,16 @@ class FloatEditor(CustomEditor):
       self.spinBox.setValue(value)
     else:
       self.spinBox.setValue(0.0)
+      
+  
+  def set_enabled(self, editable=True):
+    if self.spinBox.isEnabled() != editable:
+      if not editable:
+        self.layout().removeWidget(self.calculatorButton)
+      else:
+        self.layout().addWidget(self.calculatorButton)
+      self.spinBox.setEnabled(editable)
+  
 
   def get_value(self):
     self.spinBox.interpretText()

@@ -75,6 +75,10 @@ class SmileyEditor(CustomEditor):
             imgName = emot
             
     return CustomEditor.get_value(self) or imgName
+  
+  
+  def set_enabled(self, editable=True):
+    self.box.setEnabled(editable)
 
   def smileyChanged(self):
     

@@ -19,7 +19,6 @@ class DateEditor(CustomEditor):
     self.qdateedit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
     self.qdateedit.setDisplayFormat(QtCore.QString(format))
 
-
     special_date_menu = QtGui.QMenu(self)
     special_date_menu.addAction('Today')
     special_date_menu.addAction('Last date')
@@ -44,6 +43,7 @@ class DateEditor(CustomEditor):
 
     self.hlayout = QtGui.QHBoxLayout()
     self.hlayout.addWidget(special_date)
+    self.special_date = special_date
     self.hlayout.addWidget(self.qdateedit)
 
     self.hlayout.setContentsMargins(0, 0, 0, 0)
@@ -107,6 +107,10 @@ class DateEditor(CustomEditor):
     else:
       value = datetime.date(value.year(), value.month(), value.day())    
     return CustomEditor.get_value(self) or value 
+  
+  def set_enabled(self, editable=True):
+      self.qdateedit.setEnabled(editable)
+      self.special_date.setEnabled(editable)
 
   def minimumDate(self):
     return self.qdateedit.minimumDate()

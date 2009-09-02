@@ -33,6 +33,14 @@ while value will be used within get_value and set_value
       for i in items_to_remove:
         self.removeItem(i-removed_items)
         removed_items += 1
+
+
+
+  def set_enabled(self, editable=True):
+    self.setEnabled(editable)
+
+
+
           
   def get_choices(self):
     """

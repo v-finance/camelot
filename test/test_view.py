@@ -197,6 +197,9 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( datetime.date(2008, 3, 28) )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
     
   def test_TextLineEditor(self):
     editor = self.editors.TextLineEditor(parent=None, length=10)
@@ -213,6 +216,9 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), u'za coś tam' )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( u'editor.set_enabled() Test' )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
  
   def test_StarEditor(self):
     editor = self.editors.StarEditor(parent=None, maximum=5)
@@ -229,6 +235,9 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), 4 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 5 )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
     
   def test_SmileyEditor(self):
     editor = self.editors.SmileyEditor(parent=None)
@@ -245,6 +254,9 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), 'face-kiss' )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 'face-monkey' )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
       
   def test_BoolEditor(self):
     editor = self.editors.BoolEditor(parent=None, editable=False)
@@ -265,6 +277,9 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), False )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( True )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
     
   def test_CodeEditor(self):
     editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'])
@@ -280,7 +295,10 @@ Test the basic functionality of the editors :
     self.grab_widget( editor, 'disabled' )
     self.assertEqual( editor.get_value(), ['XYZ', '123'] )
     editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )    
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( ['SAM', '321'] )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )    
 
   def test_ColorEditor(self):
     editor = self.editors.ColorEditor(parent=None, editable=True)
@@ -297,6 +315,9 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( (150, 200, 100, 255) )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
      
   def test_ColoredFloatEditor(self):
     editor = self.editors.ColoredFloatEditor(parent=None, editable=True)
@@ -317,6 +338,9 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), 3.14 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( -7.45 )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
     
   def test_ChoicesEditor(self):
     editor = self.editors.ChoicesEditor(parent=None, editable=True)
@@ -341,6 +365,9 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), 2 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 1 )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
     
   def test_FileEditor(self):
     editor = self.editors.FileEditor(parent=None, editable=True)
@@ -353,6 +380,8 @@ Test the basic functionality of the editors :
     editor.set_value( self.ValueLoading )
     self.grab_widget( editor, 'disabled' )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
     
   def test_DateTimeEditor(self):
     import datetime
@@ -369,7 +398,10 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
     self.grab_widget( editor, 'disabled' )
     editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )    
+    self.assertEqual( editor.get_value(), self.ValueLoading ) 
+    editor.set_value( (2009, 5, 21, 16, 16, 5, 0) )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )   
        
   def test_FloatEditor(self):
     editor = self.editors.FloatEditor(parent=None, editable=True, prefix='prefix')
@@ -390,6 +422,9 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), 3.14 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 5.45 )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
     
   def test_ImageEditor(self):
     editor = self.editors.ImageEditor(parent=None, editable=True)
@@ -402,6 +437,8 @@ Test the basic functionality of the editors :
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
     self.grab_widget( editor, 'disabled' )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
  
   def test_IntegerEditor(self):
     editor = self.editors.IntegerEditor(parent=None, editable=True)
@@ -422,6 +459,9 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), 3 )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( 134 )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
  
   def test_RichTextEditor(self):
     editor = self.editors.RichTextEditor(parent=None)
@@ -438,6 +478,9 @@ Test the basic functionality of the editors :
     self.assertTrue( u'Rich Text Editor' in editor.get_value() )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( u'<h2>Rich Text Editor, set_enabled() test</h2>' )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
     
   def test_TimeEditor(self):
     import datetime
@@ -455,6 +498,9 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), datetime.time(21, 5, 0) )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( datetime.time(15, 6, 3) )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )
     
   def test_VirtualAddressEditor(self):
     editor = self.editors.VirtualAddressEditor(parent=None)
@@ -470,7 +516,10 @@ Test the basic functionality of the editors :
     self.grab_widget( editor, 'disabled' )
     self.assertEqual( editor.get_value(),  ('im','test') )
     editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )  
+    self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( ('email', 'test@conceptive.be') )
+    editor.set_enabled( True )
+    self.grab_widget( editor, 'set_enabled()_editable' )  
   
 from camelot.view import forms
   

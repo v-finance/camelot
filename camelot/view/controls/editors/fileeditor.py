@@ -56,10 +56,10 @@ class FileEditor(CustomEditor):
     self.filename.setReadOnly(not editable)
     
     # Setup layout
-    document_label = QtGui.QLabel(self)
-    document_label.setPixmap(self.document_pixmap)
-    document_label.setEnabled(editable)
-    self.layout.addWidget(document_label)
+    self.document_label = QtGui.QLabel(self)
+    self.document_label.setPixmap(self.document_pixmap)
+    self.document_label.setEnabled(editable)
+    self.layout.addWidget(self.document_label)
     self.layout.addWidget(self.filename)
     self.layout.addWidget(self.clear_button)
     self.layout.addWidget(self.open_button)
@@ -80,6 +80,12 @@ class FileEditor(CustomEditor):
       
   def get_value(self):
     return CustomEditor.get_value(self) or self.value
+  
+  def set_enabled(self, editable=True):
+    self.clear_button.setEnabled(editable)
+    self.open_button.setEnabled(editable)
+    self.filename.setEnabled(editable)
+    self.document_label.setEnabled(editable)
   
   def openButtonClicked(self):
     from camelot.view.storage import open_stored_file, create_stored_file
