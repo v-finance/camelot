@@ -12,7 +12,7 @@ class CodeEditor(CustomEditor):
     layout = QtGui.QHBoxLayout()
     layout.setMargin(0)
     layout.setSpacing(0)
-    layout.setAlignment(Qt.AlignCenter)
+    layout.setAlignment(Qt.AlignLeft)
     for part in parts:
       part = re.sub('\W*', '', part)
       part_length = len(part)
