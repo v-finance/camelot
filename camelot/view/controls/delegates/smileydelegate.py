@@ -30,8 +30,6 @@ class SmileyDelegate(CustomDelegate):
     
     imgPath = 'tango/16x16/emotes/' + img + '.png'
     self.drawBackground(painter, option, index)
-    smiley = index.model().data(index, Qt.EditRole)
-    editor = editors.SmileyEditor(parent=None, img=img, editable=self.editable)
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, rect.width()-5, rect.height())
     

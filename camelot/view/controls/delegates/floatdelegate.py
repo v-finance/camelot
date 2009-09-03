@@ -39,10 +39,6 @@ to the precision specified in the definition of the Field.
     value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
     
     background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
-
-    rect = option.rect
-    rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
-    #fontColor = QtGui.QColor()
     
     if( option.state & QtGui.QStyle.State_Selected ):
         painter.fillRect(option.rect, option.palette.highlight())
@@ -72,14 +68,10 @@ to the precision specified in the definition of the Field.
         value_str = self.unicode_format(value)
 
     painter.setPen(fontColor.toRgb())
-    rect = QtCore.QRect(option.rect.left()+23,
-                        option.rect.top(),
-                        option.rect.width()-23,
-                        option.rect.height())
-    painter.drawText(rect.x()+2,
-                     rect.y(),
-                     rect.width()-4,
-                     rect.height(),
+    painter.drawText(option.rect.left()+3,
+                     option.rect.top(),
+                     option.rect.width()-6,
+                     option.rect.height(),
                      Qt.AlignVCenter | Qt.AlignRight,
                      str(value_str))
     painter.restore()

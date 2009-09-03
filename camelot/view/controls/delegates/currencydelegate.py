@@ -44,14 +44,6 @@ to the precision specified in the definition of the Field.
     painter.save()
     self.drawBackground(painter, option, index)
     value = index.model().data(index, Qt.EditRole).toDouble()[0]
-    editor = editors.FloatEditor(parent=None,
-                                        minimum=self.minimum,
-                                        maximum=self.maximum,
-                                        precision=self.precision,
-                                        editable=self.editable,
-                                        prefix=self.prefix,
-                                        suffix=self.suffix)
-    
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
     
@@ -75,8 +67,7 @@ to the precision specified in the definition of the Field.
           painter.fillRect(option.rect, option.palette.window())
           fontColor = QtGui.QColor()
           fontColor.setRgb(130,130,130)
-        
-    qlocale = QtCore.QLocale()
+          
     value_str_formatted  = QtCore.QString("%L1").arg(value or 0.0,0,'f',2);
     
     painter.setPen(fontColor.toRgb())

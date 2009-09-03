@@ -21,7 +21,6 @@ data
     
     if( option.state & QtGui.QStyle.State_Selected ):
         painter.fillRect(option.rect, option.palette.highlight())
-        fontColor = QtGui.QColor()
     else:
         if not self.editable:
           painter.fillRect(option.rect, option.palette.window())

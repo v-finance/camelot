@@ -26,9 +26,6 @@ class DateDelegate(CustomDelegate):
       formattedDate = QtCore.QDate(dateObj).toString(self.date_format)
     else:
       formattedDate = "0/0/0"
-
-    editor = editors.DateEditor( None, 
-                                 self.editable )
     
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)

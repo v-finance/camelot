@@ -41,12 +41,6 @@ positive and in red when they are negative.
     background_color = QtGui.QColor(color)
     #background_color.setRgb(*color)
     #print background_color
-    editor = editors.ColoredFloatEditor(parent=None,
-                                        minimum=self.minimum,
-                                        maximum=self.maximum,
-                                        precision=self.precision,
-                                        editable=self.editable)
-    rect = option.rect
     #rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
     fontColor = QtGui.QColor()
     

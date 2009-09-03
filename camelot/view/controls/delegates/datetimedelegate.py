@@ -31,13 +31,6 @@ class DateTimeDelegate(CustomDelegate):
   
     
     formattedDateTime = dateTime.toString(self.dateTime_format)
-    
-    
-    editor = editors.DateTimeEditor( None, 
-                                 self.editable )
-    
-
-    
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
     

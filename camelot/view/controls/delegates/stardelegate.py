@@ -23,7 +23,6 @@ class StarDelegate(CustomDelegate):
     painter.save()
     self.drawBackground(painter, option, index)
     stars = index.model().data(index, Qt.EditRole).toInt()[0]
-    editor = editors.StarEditor(parent=None, maximum=self.maximum, editable=self.editable)
     
     background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
     
