@@ -29,7 +29,6 @@ class VirtualAddressEditor(CustomEditor):
     self.label.setEnabled(False)
     self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
     
-
     self.layout.addWidget(self.label)
     
     
@@ -156,8 +155,7 @@ class VirtualAddressEditor(CustomEditor):
         
     else:
       Check = re.compile('^.+$')
-        
-      if not Check.match(text):
+      if not Check.match(unicode(text)):
         palette = self.editor.palette()
         palette.setColor(QtGui.QPalette.Active,
                          QtGui.QPalette.Base,

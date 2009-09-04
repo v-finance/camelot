@@ -23,6 +23,5 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
   
   def set_enabled(self, editable=True):
     value = self.text()
-    print value
     self.setEnabled(editable)
     self.setText(value)
