@@ -53,6 +53,10 @@ class attribute specifies the editor class that should be used
   editor = None
   
   def __init__(self, parent=None, editable=True, **kwargs):
+    """
+:param parent: the parent object for the delegate
+:param editable: a boolean indicating if the field associated to the delegate is editable
+"""
     QItemDelegate.__init__(self, parent)
     self.editable = editable
     self.kwargs = kwargs
@@ -72,9 +76,14 @@ class attribute specifies the editor class that should be used
     self.emit(SIGNAL('closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)'), editor, QtGui.QAbstractItemDelegate.NoHint)
 
   def setEditorData(self, editor, index):
-    qvariant = index.model().data(index, Qt.EditRole)
-    value = variant_to_pyobject(qvariant)
+    value = variant_to_pyobject( index.model().data(index, Qt.EditRole) )
     editor.set_value(value)
+    index.model().data(index, Qt.ToolTipRole)
+    tooltip = variant_to_pyobject( index.model().data(index, Qt.ToolTipRole) )
+    if tooltip!=None:
+      editor.setToolTip(unicode(tooltip))
+    else:
+      editor.setToolTip('')
 
   def setModelData(self, editor, model, index):
     model.setData(index, create_constant_function(editor.get_value()))

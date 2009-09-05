@@ -252,3 +252,9 @@ def has_model_thread():
 
 def get_model_thread():
   return _model_thread_[0]
+
+def post(request, response = lambda result:None,
+         exception = lambda exc:None , dependency = None):
+  """Post a request and a response to the default model thread"""
+  mt = get_model_thread()
+  mt.post(request, response, exception, dependency)

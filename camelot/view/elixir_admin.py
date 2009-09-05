@@ -105,6 +105,7 @@ class EntityAdmin( ObjectAdmin ):
       #
       attributes = dict( python_type = str,
                         length = None,
+                        tooltip = None,
                         minimal_column_width = 0,
                         editable = False,
                         nullable = True,

@@ -37,7 +37,8 @@ def variant_to_pyobject(qvariant=None):
     import datetime
     if not qvariant:
         return None
-    
+    if qvariant.isNull():
+      return None
     type = qvariant.type()
     if type == QtCore.QVariant.String:
       value = unicode(qvariant.toString())

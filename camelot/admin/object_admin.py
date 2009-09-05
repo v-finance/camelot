@@ -253,6 +253,7 @@ Other field attributes process by the admin interface are:
       #
       attributes = dict(python_type=str,
                         length=None,
+                        tooltip=None,
                         minimal_column_width=0,
                         editable=False,
                         nullable=True,

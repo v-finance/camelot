@@ -68,15 +68,28 @@ class DelayedProxy( object ):
     return CollectionProxy( *self.args, **self.kwargs )
 
 @model_function
+def ToolTipDataFromObject(obj, columns):
+  
+  data = []
+  
+  for col in columns:
+    tooltip_getter = col[1]['tooltip']
+    if tooltip_getter:
+      data.append( tooltip_getter(obj) )
+    else:
+      data.append( None )
+      
+  return data
+
+@model_function
 def RowDataFromObject( obj, columns ):
   """Create row data from an object, by fetching its attributes"""
   row_data = []
-  mt = get_model_thread()
 
   def create_collection_getter( o, attr ):
     return lambda: getattr( o, attr )
 
-  for i, col in enumerate( columns ):
+  for _i, col in enumerate( columns ):
     field_attributes = col[1]
     if field_attributes['python_type'] == list:
       row_data.append( DelayedProxy( field_attributes['admin'],
@@ -170,8 +183,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     self.rows = 0
     self._columns = []
     self.max_number_of_rows = max_number_of_rows
-    self.cache = {Qt.DisplayRole:fifo( 10 * self.max_number_of_rows ),
-                  Qt.EditRole:fifo( 10 * self.max_number_of_rows )}
+    self.cache = {Qt.DisplayRole : fifo( 10 * self.max_number_of_rows ),
+                  Qt.EditRole    : fifo( 10 * self.max_number_of_rows ),
+                  Qt.ToolTipRole : fifo( 10 * self.max_number_of_rows ),}
     # The rows in the table for which a cache refill is under request
     self.rows_under_request = set()
     # The rows that have unflushed changes
@@ -244,8 +258,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
   def refresh( self ):
 
     def refresh_content( rows ):
-      self.cache = {Qt.DisplayRole: fifo( 10 * self.max_number_of_rows ),
-                    Qt.EditRole: fifo( 10 * self.max_number_of_rows )}
+      self.cache = {Qt.DisplayRole : fifo( 10 * self.max_number_of_rows ),
+                    Qt.EditRole    : fifo( 10 * self.max_number_of_rows ),
+                    Qt.ToolTipRole : fifo( 10 * self.max_number_of_rows )}
       self.setRowCount( rows )
 
     self.mt.post( self.getRowCount, refresh_content, dependency = self )
@@ -258,6 +273,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     """Handles the update of a row when this row might be out of date"""
     self.cache[Qt.DisplayRole].delete_by_row( row )
     self.cache[Qt.EditRole].delete_by_row( row )
+    self.cache[Qt.ToolTipRole].delete_by_row( row )
     sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
     self.emit( QtCore.SIGNAL( sig ),
               self.index( row, 0 ),
@@ -270,6 +286,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     if sender != self:
       row = self.cache[Qt.DisplayRole].delete_by_entity( entity )
       row = self.cache[Qt.EditRole].delete_by_entity( entity )
+      row = self.cache[Qt.ToolTipRole].delete_by_entity( entity )
       if row != None:
         self.logger.debug( 'updated row %i' % row )
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
@@ -410,7 +427,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
        not ( 0 <= index.row() <= self.rowCount( index ) ) or \
        not ( 0 <= index.column() <= self.columnCount( index ) ):
       return QtCore.QVariant()
-    if role in ( Qt.DisplayRole, Qt.EditRole ):
+    if role in ( Qt.DisplayRole, Qt.EditRole, Qt.ToolTipRole ):
       data = self._get_row_data( index.row(), role )
       try:
         value = data[index.column()]
@@ -490,6 +507,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             # update the cache
             row_data = RowDataFromObject( o, self.getColumns() )
             self.cache[Qt.EditRole].add_data( row, o, row_data )
+            self.cache[Qt.ToolTipRole].add_data( row, o, ToolTipDataFromObject( o, self.getColumns()) )
             self.cache[Qt.DisplayRole].add_data( row, o, RowDataAsUnicode( o, self.getColumns() ) )
             if self.flush_changes and self.validator.isValid( row ):
               # save the state before the update
@@ -554,6 +572,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     for i, o in enumerate( self.collection_getter()[offset:offset + limit + 1] ):
       row_data = RowDataFromObject( o, columns )
       self.cache[Qt.EditRole].add_data( i + offset, o, row_data )
+      self.cache[Qt.ToolTipRole].add_data( i + offset, o, ToolTipDataFromObject( o, self.getColumns()) )
       self.cache[Qt.DisplayRole].add_data( i + offset, o, RowDataAsUnicode( o, columns ) )
     return ( offset, limit )
 
@@ -611,6 +630,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     self.remove( o )
     # remove the entity from the cache
     self.cache[Qt.DisplayRole].delete_by_entity( o )
+    self.cache[Qt.ToolTipRole].delete_by_entity( o )
     self.cache[Qt.EditRole].delete_by_entity( o )
     if delete:
       self.rsh.sendEntityDelete( self, o )
