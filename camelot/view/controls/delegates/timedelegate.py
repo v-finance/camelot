@@ -22,9 +22,6 @@ class TimeDelegate(CustomDelegate):
     
     background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
     
-    editor = editors.TimeEditor( None, 
-                                 self.editable )
-    
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
     

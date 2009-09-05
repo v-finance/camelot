@@ -6,15 +6,20 @@ from PyQt4.QtCore import Qt
 
 import logging
 
+from camelot.view.model_thread import gui_function
+
 logger = logging.getLogger('camelot.view.workspace')
 
 class DesktopWorkspace(QtGui.QMdiArea):
+  
+  @gui_function
   def __init__(self, *args):
     QtGui.QMdiArea.__init__(self, *args)
     self.setOption(QtGui.QMdiArea.DontMaximizeSubWindowOnActivation)
     self.setBackground(QtGui.QBrush(QtGui.QColor('white')))
     self.setActivationOrder(QtGui.QMdiArea.ActivationHistoryOrder)
 
+  @gui_function
   def addSubWindow(self, widget, *args):
     subwindow = QtGui.QMdiArea.addSubWindow(self, widget, *args)
     if hasattr(widget, 'closeAfterValidation'):
@@ -25,6 +30,7 @@ class NoDesktopWorkspace(QtCore.QObject):
     QtCore.QObject.__init__(self)
     self._windowlist = []
 
+  @gui_function
   def addSubWindow(self, widget, *args):
     self.widget = widget
     self.widget.setParent(None)
@@ -32,21 +38,26 @@ class NoDesktopWorkspace(QtCore.QObject):
     self._windowlist.append(self.widget)
     self.connect(widget, QtCore.SIGNAL('WidgetClosed()'), self.removeWidgetFromWorkspace)
     
+  @gui_function
   def subWindowList(self):
     return self._windowlist
   
+  @gui_function
   def removeWidgetFromWorkspace(self):
     self._windowlist.remove(self.widget)
     
 _workspace_ = []
         
+@gui_function
 def construct_workspace(*args, **kwargs):
   _workspace_.append(DesktopWorkspace())
   return _workspace_[0]
   
+@gui_function
 def construct_no_desktop_workspace(*args, **kwargs):
   _workspace_.append(NoDesktopWorkspace())
   return _workspace_[0]
 
+@gui_function
 def get_workspace():
   return _workspace_[0]

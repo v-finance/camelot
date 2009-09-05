@@ -33,6 +33,8 @@ well.  Form classes can be used recursive.
 import logging
 logger = logging.getLogger('camelot.view.forms')
 
+from camelot.view.model_thread import gui_function
+
 class Form(object):
   """Base Form class to put fields on a form.  A form can be converted to a
 QT widget by calling its render method.  The base form uses the QFormLayout 
@@ -110,6 +112,7 @@ modify inherited forms.
   def __unicode__(self):
     return 'Form(%s)'%(u','.join(unicode(c) for c in self._content))
       
+  @gui_function
   def render(self, widgets, parent=None, nomargins=False):
     """:param widgets: a dictionary mapping each field in this form to a tuple
 of (label, widget editor)
@@ -192,6 +195,7 @@ class Label(Form):
     super(Label, self).__init__([])
     self.label = label
 
+  @gui_function
   def render(self, widgets, parent=None, nomargins=False):
     from PyQt4 import QtGui
     widget = QtGui.QLabel(self.label)
@@ -246,6 +250,7 @@ Render forms within a QTabWidget::
         return True
     return False
     
+  @gui_function
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
@@ -283,6 +288,7 @@ Render different forms in a horizontal box::
         return True
     return False
   
+  @gui_function
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
@@ -323,6 +329,7 @@ Render different forms or widgets in a vertical box::
   def __unicode__(self):
     return 'VBoxForm [ %s\n         ]'%('         \n'.join([unicode(form) for form in self.rows]))
   
+  @gui_function
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     from PyQt4 import QtGui
@@ -357,6 +364,7 @@ using the Label form::
       fields.extend(row)
     super(GridForm, self).__init__(fields)
 
+  @gui_function
   def render(self, widgets, parent=None, nomargins=False):
     from PyQt4 import QtGui
     widget = QtGui.QWidget(parent)
@@ -378,6 +386,7 @@ class WidgetOnlyForm(Form):
     assert isinstance(field, (str, unicode))
     super(WidgetOnlyForm, self).__init__([field])
     
+  @gui_function
   def render(self, widgets, parent=None, nomargins=False):
     logger.debug('rendering %s' % self.__class__.__name__) 
     _label, editor = widgets[self.get_fields()[0]]
@@ -397,6 +406,7 @@ Renders a form within a QGroupBox::
     self.title = title
     Form.__init__(self, content)
 
+  @gui_function
   def render(self, widgets, parent=None, nomargins=False):
     from PyQt4 import QtGui
     widget = QtGui.QGroupBox(self.title, parent)

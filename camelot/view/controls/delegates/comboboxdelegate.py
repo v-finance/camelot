@@ -28,9 +28,6 @@ class ComboBoxDelegate(CustomDelegate):
                                                   editor.set_choices)
 
   def paint(self, painter, option, index):
-    self.painter = painter
-    self.option = option
-    self.index = index
     painter.save()
     self.drawBackground(painter, option, index)
     value = variant_to_pyobject(index.data(Qt.EditRole))

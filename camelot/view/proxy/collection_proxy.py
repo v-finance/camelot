@@ -313,6 +313,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     """@return: the columns as set by the setColumns method"""
     return self._columns
 
+  @gui_function
   def setColumns( self, columns ):
     """Callback method to set the columns
 

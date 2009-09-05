@@ -38,7 +38,7 @@ import sip
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
 import datetime
-from camelot.view.model_thread import model_function
+from camelot.view.model_thread import model_function, gui_function
 
 from search import SimpleSearchControl
 
@@ -67,12 +67,7 @@ class TableWidget( QtGui.QTableView ):
     if previousSelectedIndex.row() >= 0:
       previousRow = previousSelectedIndex.row()
       self.setRowHeight( previousRow, normalSize )
-
-
-
     self.setRowHeight( row, max(normalSize, QtGui.QLineEdit().sizeHint().height(), newSize.height()) )
-
-
     #self.selectedRow = row
 
 class RowsWidget( QtGui.QLabel ):
@@ -116,6 +111,7 @@ class HeaderWidget( QtGui.QWidget ):
     self.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
     self.setNumberOfRows( 0 )
 
+  @gui_function
   def setNumberOfRows( self, rows ):
     if self.number_of_rows:
       self.number_of_rows.setNumberOfRows( rows )
@@ -209,6 +205,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
   def get_title( self ):
     return self.title_format % {'verbose_name_plural':self.admin.get_verbose_name_plural()}
 
+  @gui_function
   def setSubclassTree( self, subclasses ):
     if len( subclasses ) > 1:
       from inheritance import SubclassTree
@@ -226,6 +223,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
                             lambda:admin.entity.query,
                             admin.getColumns )
 
+  @gui_function
   def set_admin( self, admin ):
     """Switch to a different subclass, where admin is the admin object of the
     subclass"""
@@ -248,6 +246,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     def create_update_degates_and_column_width( table, model ):
       """Curry table and model, since member variables might have changed when executing response"""
 
+      @gui_function
       def update_delegates_and_column_width( *args ):
         """update item delegate"""
         if not sip.isdeleted( table ):
@@ -267,10 +266,12 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     admin.mt.post( lambda: admin.getListCharts(),
                   lambda charts: self.setCharts( charts ), dependency = self )
 
+  @gui_function
   def tableLayoutChanged( self ):
     if self.header:
       self.header.setNumberOfRows( self._table_model.rowCount() )
 
+  @gui_function
   def setCharts( self, charts ):
     """creates and display charts"""
     if charts:
@@ -340,6 +341,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
       self._table_model.removeRow( row )
 
+  @gui_function
   def newRow( self ):
     """Create a new row in the tableview"""
     from camelot.view.workspace import get_workspace
@@ -416,7 +418,8 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     logger.debug( 'cancel search' )
     self.search_filter = lambda q: q
     self.rebuildQuery()
-
+    
+  @gui_function
   def set_filters_and_actions( self, filters_and_actions ):
     """sets filters for the tableview"""
     filters, actions = filters_and_actions
@@ -460,10 +463,6 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     del self.filters
     del self._table_model
     event.accept()
-
-  def __del__( self ):
-    """deletes the tableview object"""
-    logger.debug( '%s deleted' % self.__class__.__name__ )
 
   def importFromFile( self ):
     """"import data : the data will be imported in the activeMdiChild """
