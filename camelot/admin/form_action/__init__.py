@@ -25,6 +25,7 @@ overwritten.
 
 from PyQt4 import QtGui, QtCore
 from camelot.view.art import Icon
+from camelot.view.model_thread import gui_function
 
 class FormAction( object ):
   """Abstract base class to implement form actions"""
@@ -33,6 +34,7 @@ class FormAction( object ):
     self._name = name
     self._icon = icon
 
+  @gui_function
   def render( self, parent, entity_getter ):
     """Returns a QWidget the user can use to trigger the action"""
 
@@ -49,6 +51,7 @@ class FormAction( object ):
     button.connect( button, QtCore.SIGNAL( 'clicked()' ), create_clicked_function( self, entity_getter ) )
     return button
 
+  @gui_function
   def run( self, entity_getter ):
     """Overwrite this method to create an action that does something"""
     raise NotImplementedError
@@ -60,6 +63,7 @@ class FormActionFromGuiFunction( FormAction ):
     FormAction.__init__( self, name, icon )
     self._gui_function = gui_function
 
+  @gui_function
   def run( self, entity_getter ):
     self._gui_function( entity_getter )
 
@@ -70,6 +74,7 @@ class FormActionFromModelFunction( FormAction ):
     FormAction.__init__( self, name, icon )
     self._model_function = model_function
 
+  @gui_function
   def run( self, entity_getter ):
     progress = QtGui.QProgressDialog( 'Please wait', QtCore.QString(), 0, 0 )
     progress.setWindowTitle( self._name )

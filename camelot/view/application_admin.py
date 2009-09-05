@@ -25,8 +25,6 @@
 #
 #  ============================================================================
 
-import os
-
 _application_admin_ = []
 
 def get_application_admin():
@@ -114,14 +112,13 @@ class ApplicationAdmin(object):
     return self.name
   
   def getIcon(self):
-    from PyQt4 import QtGui
-    import art
-    return QtGui.QIcon(art.Icon('tango/32x32/apps/system-users.png').fullpath())
+    from camelot.view.art import Icon
+    return Icon('tango/32x32/apps/system-users.png').getQIcon()
   
   def getSplashscreen(self):
     """@return: a QtGui.QPixmap"""
-    import camelot.view.art
-    return camelot.view.art.Pixmap('splashscreen.png').getQPixmap()
+    from camelot.view.art import Pixmap
+    return Pixmap('splashscreen.png').getQPixmap()
   
   def getOrganizationName(self):
     return 'Conceptive Engineering'

@@ -37,12 +37,13 @@ from PyQt4.QtCore import Qt
 import sip
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
+from camelot.view.controls.view import AbstractView
 import datetime
 from camelot.view.model_thread import model_function, gui_function
 
 from search import SimpleSearchControl
 
-class TableWidget( QtGui.QTableView ):
+class TableWidget( QtGui.QTableView):
   """A widget displaying a table, to be used within a TableView"""
 
   def __init__( self, parent = None ):
@@ -116,7 +117,7 @@ class HeaderWidget( QtGui.QWidget ):
     if self.number_of_rows:
       self.number_of_rows.setNumberOfRows( rows )
 
-class TableView( QtGui.QWidget ):
+class TableView( QtGui.QWidget, AbstractView  ):
   """A generic tableview widget that puts together some other widgets.  The behaviour of this class and
 the resulting interface can be tuned by specifying specific class attributes which define the underlying
 widgets used ::
@@ -168,7 +169,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
   def __init__( self, admin, search_text = None, parent = None ):
     QtGui.QWidget.__init__( self, parent )
     self.admin = admin
-    admin.mt.post( self.get_title, self.setWindowTitle, dependency = self )
+    admin.mt.post( self.get_title, self.change_title, dependency = self )
     widget_layout = QtGui.QVBoxLayout()
     if self.header_widget:
       self.header = self.header_widget( self, admin )
@@ -199,7 +200,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     self.search_filter = lambda q: q
     self.setAttribute( QtCore.Qt.WA_DeleteOnClose )
     admin.mt.post( lambda: self.admin.getSubclasses(),
-                  lambda subclasses: self.setSubclassTree( subclasses ), dependency = self )
+                   lambda subclasses: self.setSubclassTree( subclasses ), dependency = self )
 
   @model_function
   def get_title( self ):

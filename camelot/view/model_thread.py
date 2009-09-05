@@ -29,7 +29,7 @@ import logging
 import Queue
 import sip
 
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 
 logger = logging.getLogger( 'camelot.view.model_thread' )
 
@@ -66,8 +66,9 @@ def gui_function( original_function ):
   """
 
   def new_function( *args, **kwargs ):
+    app = QtGui.QApplication.instance()
     current_thread = QtCore.QThread.currentThread()
-    if current_thread == get_model_thread():
+    if current_thread != app.thread():
       logger.error( '%s was called outside the gui thread' %
                    ( original_function.__name__ ) )
       raise ModelThreadException()

@@ -137,8 +137,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
   _header_font = QtGui.QApplication.font()
   _header_font_required = QtGui.QApplication.font()
   _header_font_required.setBold( True )
+  
   header_icon = Icon( 'tango/16x16/places/folder.png' ).getQIcon()
-
 
   @gui_function
   def __init__( self, admin, collection_getter, columns_getter,

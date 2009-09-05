@@ -31,7 +31,7 @@
 from PyQt4 import QtCore, QtGui
 import sip
 
-from camelot.view.model_thread import get_model_thread
+from camelot.view.model_thread import get_model_thread, gui_function
 
 class AbstractView(object):
   """A string used to format the title of the view ::
@@ -49,6 +49,11 @@ The widget class to be used as a header in the table view::
   header_widget = None
   
   title_changed_signal = QtCore.SIGNAL('titleChanged(const QString&)')
+  
+  @gui_function
+  def change_title(self, new_title):
+    """Will emit the title_changed_signal"""
+    self.emit(self.title_changed_signal, new_title)
 
 class TabView(QtGui.QWidget, AbstractView):
   """Class to combine multiple views in Tabs and let them behave as one view.  This class can be

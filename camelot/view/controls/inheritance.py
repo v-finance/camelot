@@ -27,16 +27,13 @@
 
 """Controls related to visualizing object hierarchy"""
 
-import os
 import logging
 
 logger = logging.getLogger( 'camelot.view.controls.inheritance' )
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
 
-import settings
 from camelot.view.controls.modeltree import ModelTree
 from camelot.view.controls.modeltree import ModelItem
 

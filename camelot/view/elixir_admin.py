@@ -267,6 +267,7 @@ class EntityAdmin( ObjectAdmin ):
     from PyQt4 import QtCore
     from PyQt4 import QtGui
     from PyQt4.QtCore import SIGNAL
+    from camelot.view.controls.view import AbstractView
     from proxy.collection_proxy import CollectionProxy
     new_object = []
 
@@ -285,13 +286,12 @@ class EntityAdmin( ObjectAdmin ):
                             max_number_of_rows = 1 )
     validator = admin.createValidator( model )
 
-    class NewForm( QtGui.QWidget ):
+    class NewForm( QtGui.QWidget, AbstractView ):
 
       def __init__( self, parent ):
         QtGui.QWidget.__init__( self, parent )
         self.widget_layout = QtGui.QVBoxLayout()
         self.widget_layout.setMargin( 0 )
-        self.setWindowTitle( 'New' )
         self.form_view = admin.create_form_view( 'New', model, 0, parent )
         self.widget_layout.insertWidget( 0, self.form_view )
         self.setLayout( self.widget_layout )
@@ -304,6 +304,7 @@ class EntityAdmin( ObjectAdmin ):
         self.connect( model,
                      QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
                      self.dataChanged )
+        self.connect( self.form_view, AbstractView.title_changed_signal, self.change_title)
 
       def dataChanged( self, index1, index2 ):
 
@@ -460,7 +461,6 @@ class EntityAdmin( ObjectAdmin ):
     from controls.tableview import TableView
     from proxy.queryproxy import QueryTableProxy
     tableview = TableView( self )
-    admin = self
 
     def createOpenForm( self, tableview ):
 

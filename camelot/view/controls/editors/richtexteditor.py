@@ -459,14 +459,14 @@ class RichTextEditor(CustomEditor, WideEditor):
 
   def get_value(self):
     from xml.dom import minidom
-    tree = minidom.parseString(self.textedit.toHtml())
+    tree = minidom.parseString(unicode(self.textedit.toHtml()))
     value = u''.join([node.toxml() for node in tree.getElementsByTagName('html')[0].getElementsByTagName('body')[0].childNodes])
     return CustomEditor.get_value(self) or value
     
   def set_value(self, value):
     value = CustomEditor.set_value(self, value)
     if value!=None:
-      if self.textedit.toHtml()!=value:
+      if unicode(self.textedit.toHtml())!=value:
         self.update_alignment()
         self.textedit.setHtml(value)
         self.update_color()

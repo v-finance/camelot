@@ -42,7 +42,7 @@ class FormView( QtGui.QWidget, AbstractView ):
     self.admin = admin
     self.model = model
     self.index = index
-    self.setWindowTitle( title )
+    self.change_title(title)
     self.widget_mapper = QtGui.QDataWidgetMapper()
     self.widget_layout = QtGui.QHBoxLayout()
 
@@ -78,12 +78,7 @@ class FormView( QtGui.QWidget, AbstractView ):
       obj = self.getEntity()
       return u'%s %s' % ( self.title_prefix, self.admin.get_verbose_identifier( obj ) )
 
-    def set_title( title ):
-      import sip
-      if not sip.isdeleted( self ):
-        self.setWindowTitle( title )
-
-    self.admin.mt.post( get_title, set_title, dependency = self )
+    self.admin.mt.post( get_title, self.change_title, dependency = self )
 
   def dataChanged( self, index_from, index_to ):
     #@TODO: only revert if this form is in the changed range
