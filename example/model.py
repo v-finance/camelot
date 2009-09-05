@@ -91,6 +91,13 @@ class Movie(Entity):
     #
     field_attributes = dict(cast=dict(create_inline=True),
                             genre=dict(choices=genre_choices),
+                            rating=dict(tooltip=lambda o:'''<table>
+                                                              <tr><td>1 star</td><td>Not that good</td></tr>
+                                                              <tr><td>2 stars</td><td>Almost good</td></tr>
+                                                              <tr><td>3 stars</td><td>Good</td></tr>
+                                                              <tr><td>4 stars</td><td>Very good</td></tr>
+                                                              <tr><td>5 stars</td><td>Awesome !</td></tr>
+                                                            </table>'''),
                             smiley=dict(delegate=delegates.SmileyDelegate))
 
   def __unicode__(self):
