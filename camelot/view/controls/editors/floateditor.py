@@ -101,7 +101,7 @@ class FloatEditor(CustomEditor):
 
   def calculationFinished(self, value):
     self.spinBox.setValue(float(value))
-    self.emit(QtCore.SIGNAL('editingFinished()'), float(value))
+    self.emit(QtCore.SIGNAL('editingFinished()'))
 
   def editingFinished(self, value):
-    self.emit(QtCore.SIGNAL('editingFinished()'), float(value))
+    self.emit(QtCore.SIGNAL('editingFinished()'))
