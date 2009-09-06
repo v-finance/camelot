@@ -126,6 +126,11 @@ class ApplicationAdmin(object):
   def getOrganizationDomain(self):
     return 'conceptive.be'
   
+  def get_help_url(self):
+    """:return: a QUrl pointing to the index page for help"""
+    from PyQt4.QtCore import QUrl
+    return QUrl('http://www.conceptive.be/projects/camelot/')
+  
   def getStylesheet(self):
     """
     @return: the qt stylesheet to be used for this application as a string or None
