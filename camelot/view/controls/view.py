@@ -31,7 +31,7 @@
 from PyQt4 import QtCore, QtGui
 import sip
 
-from camelot.view.model_thread import get_model_thread, gui_function
+from camelot.view.model_thread import post, gui_function
 
 class AbstractView(object):
   """A string used to format the title of the view ::
@@ -66,8 +66,6 @@ table views together in one view.
 :param views: a list of the views to combine
 """
     QtGui.QWidget.__init__(self, parent)
-    self.setWindowTitle(self.title_format)
-    
     layout = QtGui.QVBoxLayout()
     if self.header_widget:
       self.header = self.header_widget(self, admin)
@@ -82,8 +80,8 @@ table views together in one view.
       return [(view, view.get_title()) for view in views]
     
     def set_views_and_titles(views_and_titles):
-      if not sip.isdeleted(tab_widget):
-        for view, title in views_and_titles:
-          tab_widget.addTab(view, title)
+      for view, title in views_and_titles:
+        tab_widget.addTab(view, title)
 
-    get_model_thread().post(get_views_and_titles, set_views_and_titles)
+    post(get_views_and_titles, set_views_and_titles, dependency=tab_widget)
+    post(lambda:self.title_format, self.change_title, dependency=self)
