@@ -20,11 +20,16 @@ def main(application_admin,
   import sys
   from PyQt4 import QtGui, QtCore
   app = QtGui.QApplication([a for a in sys.argv if a])
-  splash = QtGui.QSplashScreen(application_admin.getSplashscreen())
+  pixmap = application_admin.getSplashscreen()
+  flag = QtCore.Qt.WindowStaysOnTopHint
+  splash = QtGui.QSplashScreen(pixmap, flag)
   splash.show()
   
+  msgalign = QtCore.Qt.AlignBottom | QtCore.Qt.AlignRight
+  msgcolor = QtCore.Qt.white
+
   # regularly call processEvents to keep the splash alive
-  splash.showMessage('Initialize application')
+  splash.showMessage('Initialize application...', msgalign, msgcolor)
   app.processEvents()
   
 #  font = app.font()
@@ -35,7 +40,7 @@ def main(application_admin,
   import logging
   logger = logging.getLogger('camelot.view.main')
   import settings
-  from PyQt4 import QtCore
+  #from PyQt4 import QtCore
 
   QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
   logger.debug('qt version %s, pyqt version %s' % 
@@ -68,7 +73,7 @@ def main(application_admin,
   app.processEvents()
 
   # regularly call processEvents to keep the splash alive
-  splash.showMessage('Setup database')
+  splash.showMessage('Setup database...', msgalign, msgcolor)
   app.processEvents()
   #
   # Start the model thread
@@ -83,7 +88,7 @@ def main(application_admin,
   get_model_thread().start()
   
   # Set the style sheet
-  splash.showMessage('Create main window')
+  splash.showMessage('Create main window...', msgalign, msgcolor)
   stylesheet = application_admin.getStylesheet()
   if stylesheet:
     app.setStyleSheet(stylesheet)
