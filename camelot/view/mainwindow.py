@@ -43,6 +43,7 @@ import sqlite3
 from PyQt4.QtCore import Qt
 from PyQt4.QtTest import QTest
 from PyQt4 import QtGui, QtCore
+from PyQt4 import QtWebKit
 
 from camelot.view.art import Icon
 from camelot.action import createAction, addActions
@@ -167,6 +168,8 @@ class MainWindow( QtGui.QMainWindow ):
     icon_mail = Icon( 'tango/16x16/actions/mail-message-new.png' ).fullpath()
 
     icon_import = Icon( 'tango/16x16/mimetypes/text-x-generic.png' ).fullpath()
+    
+    icon_help = Icon( 'tango/16x16/apps/help-browser.png' ).fullpath()
 
     # TODO: change some of the status tips
     self.saveAct = createAction( parent = self,
@@ -253,6 +256,13 @@ class MainWindow( QtGui.QMainWindow ):
                                  text = _( '&About' ),
                                  slot = self.about,
                                  tip = _( "Show the application's About box" ) )
+
+    self.helpAct = createAction( parent = self,
+                                 text = _( 'Help' ),
+                                 slot = self.help,
+                                 shortcut = QtGui.QKeySequence.HelpContents,
+                                 actionicon = icon_help,
+                                 tip = _( 'Help content' ) )
 
     self.newAct = createAction( parent = self,
                                text = _( 'New' ),
@@ -343,6 +353,14 @@ class MainWindow( QtGui.QMainWindow ):
                                            tip = name ) )
 
   # QAction slots and methods implementations
+
+  def help( self ):
+    TOP_LEVEL = None
+    self.view = QtWebKit.QWebView( TOP_LEVEL )
+    self.view.load( self.app_admin.get_help_url() )
+    self.view.setWindowTitle( _('Help Browser') )
+    self.view.setWindowIcon( self.helpAct.icon() )
+    self.view.show()
 
   def save( self ):
     pass
@@ -493,7 +511,7 @@ class MainWindow( QtGui.QMainWindow ):
     self.menuBar().addSeparator()
 
     self.helpMenu = self.menuBar().addMenu( _( '&Help' ) )
-    addActions( self.helpMenu, ( self.aboutAct, ) )
+    addActions( self.helpMenu, ( self.helpAct, self.aboutAct) )
 
   def updateMenus( self ):
     hasMdiChild = ( self.activeMdiChild() is not None )
@@ -598,6 +616,12 @@ class MainWindow( QtGui.QMainWindow ):
     addActions( self.exportToolBar, ( self.exportToExcelAct,
                                     self.exportToWordAct,
                                     self.exportToMailAct, ) )
+
+    self.helpToolBar = self.addToolBar( _( 'Help' ) )
+    self.helpToolBar.setObjectName( 'HelpToolBar' )
+    self.helpToolBar.setMovable( False )
+    self.helpToolBar.setFloatable( False )
+    addActions( self.helpToolBar, (self.helpAct, ) )
 
     if self.app_actions:
       self.applicationToolBar = self.addToolBar( _( 'Application' ) )
