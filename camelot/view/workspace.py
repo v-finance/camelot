@@ -34,6 +34,7 @@ class DesktopWorkspace(QtGui.QMdiArea):
       return set_window_title
       
     self.connect(widget, AbstractView.title_changed_signal, create_set_window_title(subwindow))
+    return subwindow
 
 class NoDesktopWorkspace(QtCore.QObject):
   def __init__(self):

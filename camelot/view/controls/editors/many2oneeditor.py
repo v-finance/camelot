@@ -170,9 +170,9 @@ the relation
         from camelot.view.workspace import get_workspace
         workspace = get_workspace()
         form = admin.create_new_view( workspace )
-        workspace.addSubWindow( form )
         self.connect( form, form.entity_created_signal, self.selectEntity )
-        form.show()
+        sub_window = workspace.addSubWindow( form )
+        sub_window.show()
 
     self.admin.mt.post( get_has_subclasses, show_new_view, dependency = self )
 
