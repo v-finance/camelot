@@ -25,7 +25,7 @@ def main(application_admin,
   splash = QtGui.QSplashScreen(pixmap, flag)
   splash.show()
   
-  msgalign = QtCore.Qt.AlignBottom | QtCore.Qt.AlignRight
+  msgalign = QtCore.Qt.AlignBottom #| QtCore.Qt.AlignRight
   msgcolor = QtCore.Qt.white
 
   # regularly call processEvents to keep the splash alive
