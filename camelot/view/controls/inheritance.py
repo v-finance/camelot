@@ -60,15 +60,14 @@ class SubclassTree( ModelTree ):
     self.admin = admin
     self.subclasses = []
     self.mt = admin.getModelThread()
-    self.mt.post( lambda: self.admin.getSubclasses(),
-                 lambda subclasses: self.setSubclasses( subclasses ), dependency = self )
+    self.mt.post( self.admin.getSubclasses,
+                  self.setSubclasses, dependency = self )
     self.connect( self,
-                 QtCore.SIGNAL( 'clicked(const QModelIndex&)' ),
-                 self.emitSubclassClicked )
+                  QtCore.SIGNAL( 'clicked(const QModelIndex&)' ),
+                  self.emitSubclassClicked )
 
   def setSubclasses( self, subclasses ):
     logger.debug( 'setting subclass tree' )
-
     self.subclasses = subclasses
     if len( subclasses ) > 1:
       self.clear_model_items()

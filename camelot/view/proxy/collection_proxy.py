@@ -178,6 +178,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     self.collection_getter = collection_getter
     self.column_count = 0
     self.flush_changes = flush_changes
+    self.delegate_manager = None
     self.mt = get_model_thread()
     # Set database connection and load data
     self.rows = 0
@@ -213,7 +214,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     # in that way the number of rows is requested as well
     self.mt.post( self.getRowCount, self.setRowCount, dependency = self )
     self.logger.debug( 'initialization finished' )
-    self.delegate_manager = None
+    
 
   @model_function
   def updateUnflushedRows( self ):
@@ -392,7 +393,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         
       elif role == Qt.SizeHintRole:
         option = QtGui.QStyleOptionViewItem()
-        editor_size = self.delegate_manager.sizeHint( option, self.index( 0, section ) )
+        if self.delegate_manager:
+          editor_size = self.delegate_manager.sizeHint( option, self.index( 0, section ) )
+        else:
+          editor_size = 0
         if 'minimal_column_width' in c[1]:
           minimal_column_width = QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, 'A' ).width()*c[1]['minimal_column_width']
         else:
@@ -559,7 +563,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
   def flags( self, index ):
     flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
     if self.getColumns()[index.column()][1]['editable']:
-     flags = flags | Qt.ItemIsEditable
+      flags = flags | Qt.ItemIsEditable
     return flags
 
   @model_function

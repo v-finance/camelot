@@ -199,8 +199,9 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
     self.search_filter = lambda q: q
     self.setAttribute( QtCore.Qt.WA_DeleteOnClose )
-    admin.mt.post( lambda: self.admin.getSubclasses(),
-                   lambda subclasses: self.setSubclassTree( subclasses ), dependency = self )
+    admin.mt.post( self.admin.getSubclasses,
+                   self.setSubclassTree, 
+                   dependency = self )
 
   @model_function
   def get_title( self ):
@@ -221,8 +222,8 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
   def create_table_model( self, admin ):
     """Create a table model for the given admin interface"""
     return self.table_model( admin,
-                            lambda:admin.entity.query,
-                            admin.getColumns )
+                             lambda:admin.entity.query,
+                             admin.getColumns )
 
   @gui_function
   def set_admin( self, admin ):
@@ -230,47 +231,37 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     subclass"""
     self.admin = admin
     if self.table:
+      self.disconnect(self._table_model, QtCore.SIGNAL( 'layoutChanged()' ), self.tableLayoutChanged )
       self.table.deleteLater()
       self._table_model.deleteLater()
     self.table = self.table_widget( self )
-
     self._table_model = self.create_table_model( admin )
     self.table.setModel( self._table_model )
     rowHeight = QtGui.QFontMetrics( self.font() ).height() + 5
     self.table.verticalHeader().setDefaultSectionSize( rowHeight )
     self.connect( self.table.verticalHeader(),
-                 SIGNAL( 'sectionClicked(int)' ),
-                 self.sectionClicked )
+                  SIGNAL( 'sectionClicked(int)' ),
+                  self.sectionClicked )
     self.connect( self._table_model, QtCore.SIGNAL( 'layoutChanged()' ), self.tableLayoutChanged )
+    self.tableLayoutChanged()
     self.table_layout.insertWidget( 1, self.table )
-
-    def create_update_degates_and_column_width( table, model ):
-      """Curry table and model, since member variables might have changed when executing response"""
-
-      @gui_function
-      def update_delegates_and_column_width( *args ):
-        """update item delegate"""
-        if not sip.isdeleted( table ):
-          table.setItemDelegate( model.getItemDelegate() )
-          for i in range( model.columnCount() ):
-            table.setColumnWidth( i, max( model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width(), table.columnWidth( i ) ) )
-
-      return update_delegates_and_column_width
-
 
     def get_filters_and_actions():
       return ( admin.get_filters(), admin.get_list_actions() )
 
-    admin.mt.post( lambda: None, create_update_degates_and_column_width( self.table, self._table_model ), dependency = self )
     admin.mt.post( get_filters_and_actions,
-                  lambda items: self.set_filters_and_actions( items ), dependency = self )
+                   self.set_filters_and_actions, dependency = self )
     admin.mt.post( lambda: admin.getListCharts(),
-                  lambda charts: self.setCharts( charts ), dependency = self )
+                   self.setCharts, dependency = self )
 
   @gui_function
   def tableLayoutChanged( self ):
     if self.header:
       self.header.setNumberOfRows( self._table_model.rowCount() )
+    self.table.setItemDelegate( self._table_model.getItemDelegate() )
+    for i in range( self._table_model.columnCount() ):
+      self.table.setColumnWidth( i, max( self._table_model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width(), 
+                                         self.table.columnWidth( i ) ) )
 
   @gui_function
   def setCharts( self, charts ):

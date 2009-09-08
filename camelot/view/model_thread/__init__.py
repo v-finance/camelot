@@ -146,10 +146,9 @@ class NoThreadModelThread(AbstractModelThread):
     self._response_signaler.responseAvailable( self )
     
   def process_responses(self):
-    print 'process responses'
-    for response,result in self.responses:
+    while self.responses:
+      response,result = self.responses.pop(0)
       response(result)
-    self.responses = []
   
 class ModelThread( QtCore.QThread, AbstractModelThread ):
   """Thread in which the model runs, all requests to the model should be
@@ -294,6 +293,7 @@ class ModelThread( QtCore.QThread, AbstractModelThread ):
 
 def construct_model_thread( *args, **kwargs ):
   _model_thread_.insert( 0, ModelThread( *args, **kwargs ) )
+  #_model_thread_.insert( 0, NoThreadModelThread( *args, **kwargs ) )
 
 def has_model_thread():
   return len( _model_thread_ ) > 0
