@@ -323,8 +323,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
   def getItemDelegate( self ):
     self.logger.debug( 'getItemDelegate' )
-    if not self.delegate_manager:
-      raise Exception( 'item delegate not yet available' )
     return self.delegate_manager
 
   def getColumns( self ):
