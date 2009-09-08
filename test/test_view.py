@@ -893,15 +893,31 @@ class CamelotEntityViewsTest(EntityViewsTest):
   
   images_path = static_images_path
   
+class SnippetsTest(ModelThreadTestCase):
+    
+  images_path = static_images_path
+  
+  def test_fields_with_actions(self):
+    from snippet.fields_with_actions import Coordinate
+    from camelot.view.proxy.collection_proxy import CollectionProxy
+    coordinate = Coordinate()
+    admin = Coordinate.Admin(None, Coordinate)
+    proxy = CollectionProxy(admin, lambda:[coordinate], admin.getFields )
+    form = admin.create_form_view('Coordinate', proxy, 0, None)
+    form.show()
+    self.grab_widget(form)
+  
 class CamelotSchemaTest(SchemaTest):
   
   images_path = static_images_path
   
+
 if __name__ == '__main__':
   logger.info('running unit tests')
   app = get_application()
-
   runner=unittest.TextTestRunner(verbosity=2)
+  snippets_test =  unittest.makeSuite(SnippetsTest, 'test')
+  runner.run(snippets_test)
 #  proxy_test =  unittest.makeSuite(ProxyEntityTest, 'test')
 #  runner.run(proxy_test)
 #  proxy_one_to_many_test =  unittest.makeSuite(ProxyOneToManyTest, 'test')

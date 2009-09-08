@@ -41,6 +41,8 @@ using properties to manipulate the field instead of manipulating it directly.  T
 example below demonstrates how the value of y should be chopped when x is changed.
 
   .. literalinclude:: ../../../../test/snippet/fields_with_actions.py
+  
+  .. image:: ../_static/snippets/fields_with_actions.png
 
 Fields calculated by the database
 =================================

@@ -8,16 +8,17 @@ class Coordinate(object):
     self.x = 0.0
     self.y = 0.0
     
-  def _get_x(self, x):
-    return self._x
+  def _get_x(self):
+    return self.x
   
   def _set_x(self, x):
-    self._x = x
+    self.x = x
     self.y = max(self.y,x)
     
-  _x = property(_set_x, _get_x)
+  _x = property(_get_x, _set_x)
       
   class Admin(ObjectAdmin):
     form_display = ['_x', 'y',]
     field_attributes = dict(_x=dict(delegate=delegates.FloatDelegate, name='x'),
                             y=dict(delegate=delegates.FloatDelegate),)
+    form_size = (100,100)
