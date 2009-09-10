@@ -31,11 +31,11 @@ well.  Form classes can be used recursive.
 """
 
 import logging
-logger = logging.getLogger('camelot.view.forms')
+logger = logging.getLogger( 'camelot.view.forms' )
 
 from camelot.view.model_thread import gui_function
 
-class Form(object):
+class Form( object ):
   """Base Form class to put fields on a form.  A form can be converted to a
 QT widget by calling its render method.  The base form uses the QFormLayout 
 to render a form::
@@ -45,32 +45,32 @@ to render a form::
 
 .. image:: ../_static/form/form.png
 """
-  
-  def __init__(self, content, scrollbars=False):
+
+  def __init__( self, content, scrollbars = False ):
     """:param content: a list with the field names and forms to render
 """
-    assert isinstance(content, list)
+    assert isinstance( content, list )
     self._content = content
     self._scrollbars = scrollbars
     self._fields = []
-    self._add_content(content)
+    self._add_content( content )
 
-  def _add_content(self, content):
+  def _add_content( self, content ):
     """add content to the form
     
 :param content: a list with field names and forms"""
     for c in content:
-      if isinstance(c, Form):
-        self._fields.extend(c.get_fields())
+      if isinstance( c, Form ):
+        self._fields.extend( c.get_fields() )
       else:
-        assert isinstance(c, (str, unicode))
-        self._fields.append(c)    
-     
-  def get_fields(self):
+        assert isinstance( c, ( str, unicode ) )
+        self._fields.append( c )
+
+  def get_fields( self ):
     """:return: the fields, visible in this form"""
     return self._fields
-  
-  def removeField(self, original_field):
+
+  def removeField( self, original_field ):
     """Remove a field from the form, This function can be used to modify
 inherited forms.
 
@@ -78,16 +78,16 @@ inherited forms.
 :return: True if the field was found and removed
     """
     for c in self._content:
-      if isinstance(c, Form):
-        c.removeField(original_field)
+      if isinstance( c, Form ):
+        c.removeField( original_field )
     if original_field in self._content:
-      self._content.remove(original_field)
+      self._content.remove( original_field )
     if original_field in self._fields:
-      self._fields.remove(original_field)
+      self._fields.remove( original_field )
       return True
     return False
-             
-  def replaceField(self, original_field, new_field):
+
+  def replaceField( self, original_field, new_field ):
     """Replace a field on this form with another field.  This function can be used to 
 modify inherited forms.
     
@@ -96,30 +96,39 @@ modify inherited forms.
 :return: True if the original field was found and replaced.
     
     """
-    for i,c in enumerate(self._content):
-      if isinstance(c, Form):
-        c.replaceField(original_field, new_field)
-      elif c==original_field:
+    for i, c in enumerate( self._content ):
+      if isinstance( c, Form ):
+        c.replaceField( original_field, new_field )
+      elif c == original_field:
         self._content[i] = new_field
     try:
-      i = self._fields.index(original_field)
+      i = self._fields.index( original_field )
       self._fields[i] = new_field
       return True
     except ValueError:
       pass
     return False
-  
-  def __unicode__(self):
-    return 'Form(%s)'%(u','.join(unicode(c) for c in self._content))
-      
+
+  def add_field( self, new_field ):
+    self._content.append( new_field )
+    try:
+      self._fields.append( new_field )
+      return True
+    except ValueError:
+      pass
+    return False
+
+  def __unicode__( self ):
+    return 'Form(%s)' % ( u','.join( unicode( c ) for c in self._content ) )
+
   @gui_function
-  def render(self, widgets, parent=None, nomargins=False):
+  def render( self, widgets, parent = None, nomargins = False ):
     """:param widgets: a dictionary mapping each field in this form to a tuple
 of (label, widget editor)
  
 :return: a QWidget into which the form is rendered
     """
-    logger.debug('rendering %s' % self.__class__.__name__) 
+    logger.debug( 'rendering %s' % self.__class__.__name__ )
     from camelot.view.controls.editors.wideeditor import WideEditor
 
     from PyQt4 import QtGui
@@ -127,81 +136,81 @@ of (label, widget editor)
     form_layout = QtGui.QGridLayout()
     row = 0
     for field in self._content:
-      if isinstance(field, Form):
+      if isinstance( field, Form ):
         col = 0
         row_span = 1
         col_span = 2
-        f = field.render(widgets, parent, True)
-        if isinstance(f, QtGui.QLayout):
-          form_layout.addLayout(f, row, col, row_span, col_span)
+        f = field.render( widgets, parent, True )
+        if isinstance( f, QtGui.QLayout ):
+          form_layout.addLayout( f, row, col, row_span, col_span )
         else:
-          form_layout.addWidget(f, row, col, row_span, col_span)
+          form_layout.addWidget( f, row, col, row_span, col_span )
         row += 1
       elif field in widgets:
         col = 0
         row_span = 1
         label, editor = widgets[field]
-        if isinstance(editor, (WideEditor,)):
+        if isinstance( editor, ( WideEditor, ) ):
           col_span = 2
-          form_layout.addWidget(label, row, col, row_span, col_span)
+          form_layout.addWidget( label, row, col, row_span, col_span )
           row += 1
-          form_layout.addWidget(editor, row, col, row_span, col_span)
+          form_layout.addWidget( editor, row, col, row_span, col_span )
           row += 1
         else:
           col_span = 1
-          form_layout.addWidget(label, row, col, row_span, col_span)
+          form_layout.addWidget( label, row, col, row_span, col_span )
           #form_layout.addWidget(editor, row, col + 1, row_span, col_span, Qt.AlignRight)
-          form_layout.addWidget(editor, row, col + 1, row_span, col_span)
+          form_layout.addWidget( editor, row, col + 1, row_span, col_span )
           row += 1
 
     if self._content and form_layout.count():
       # get last item in the layout
-      last_item = form_layout.itemAt(form_layout.count() - 1)
-  
+      last_item = form_layout.itemAt( form_layout.count() - 1 )
+
       # if last item does not contain a widget, 0 is returned
       # which is fine with the isinstance test
       w = last_item.widget()
-  
+
       # add stretch only if last item is not expandable
-      if isinstance(w, (WideEditor,)):
+      if isinstance( w, ( WideEditor, ) ):
         pass
       else:
-        form_layout.setRowStretch(form_layout.rowCount(), 1)
+        form_layout.setRowStretch( form_layout.rowCount(), 1 )
 
-    form_widget = QtGui.QWidget(parent)
-    
+    form_widget = QtGui.QWidget( parent )
+
     # fix embedded forms
     if nomargins:
-      form_layout.setContentsMargins(0, 0, 0, 0)
+      form_layout.setContentsMargins( 0, 0, 0, 0 )
 
-    form_widget.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                              QtGui.QSizePolicy.Expanding)
-    form_widget.setLayout(form_layout)
-    
+    form_widget.setSizePolicy( QtGui.QSizePolicy.Expanding,
+                              QtGui.QSizePolicy.Expanding )
+    form_widget.setLayout( form_layout )
+
     if self._scrollbars:
-      scroll_area = QtGui.QScrollArea(parent)
-      scroll_area.setWidget(form_widget)
-      scroll_area.setWidgetResizable(True)
-      scroll_area.setFrameStyle(QtGui.QFrame.NoFrame)
+      scroll_area = QtGui.QScrollArea( parent )
+      scroll_area.setWidget( form_widget )
+      scroll_area.setWidgetResizable( True )
+      scroll_area.setFrameStyle( QtGui.QFrame.NoFrame )
       return scroll_area
- 
-    return form_widget
-  
 
-class Label(Form):
+    return form_widget
+
+
+class Label( Form ):
   """Render a label with a QLabel"""
 
-  def __init__(self, label):
-    super(Label, self).__init__([])
+  def __init__( self, label ):
+    super( Label, self ).__init__( [] )
     self.label = label
 
   @gui_function
-  def render(self, widgets, parent=None, nomargins=False):
+  def render( self, widgets, parent = None, nomargins = False ):
     from PyQt4 import QtGui
-    widget = QtGui.QLabel(self.label)
+    widget = QtGui.QLabel( self.label )
     return widget
 
-class TabForm(Form):
+class TabForm( Form ):
   """
 Render forms within a QTabWidget::
 
@@ -210,30 +219,41 @@ Render forms within a QTabWidget::
   
 .. image:: ../_static/form/tab_form.png
   """
-  
-  def __init__(self, tabs):
+
+  def __init__( self, tabs ):
     """:param tabs: a list of tuples of (tab_label, tab_form)"""
-    assert isinstance(tabs, list)
+    assert isinstance( tabs, list )
     for tab in tabs:
-      assert isinstance(tab, tuple)
-    self.tabs = [(tab_label,structure_to_form(tab_form)) for tab_label, tab_form in tabs]
-    super(TabForm, self).__init__(sum((tab_form.get_fields()
-                                  for tab_label, tab_form in self.tabs), []))
-    
-  def __unicode__(self):
-    return 'TabForm { %s\n        }'%(u'\n  '.join('%s : %s'%(label,unicode(form)) for label, form in self.tabs))
-  
-  def addTab(self, tab_label, tab_form):
+      assert isinstance( tab, tuple )
+    self.tabs = [( tab_label, structure_to_form( tab_form ) ) for tab_label, tab_form in tabs]
+    super( TabForm, self ).__init__( sum( ( tab_form.get_fields()
+                                  for tab_label, tab_form in self.tabs ), [] ) )
+
+  def __unicode__( self ):
+    return 'TabForm { %s\n        }' % ( u'\n  '.join( '%s : %s' % ( label, unicode( form ) ) for label, form in self.tabs ) )
+
+  def add_tab_at_index( self, tab_label, tab_form, index ):
+      """Add a tab to the form at the specified index
+      
+:param tab_label: the name to the tab
+:param tab_form: the form to display in the tab or a list of field names.
+:param index: the position of tab in the tabs list.
+      """
+      tab_form = structure_to_form( tab_form )
+      self.tabs.insert( index, ( tab_label, tab_form ) )
+      self._add_content( [tab_form] )
+
+  def add_tab( self, tab_label, tab_form ):
     """Add a tab to the form
     
 :param tab_label: the name of the tab
 :param tab_form: the form to display in the tab or a list of field names.
     """
-    tab_form = structure_to_form(tab_form)
-    self.tabs.append((tab_label, tab_form))
-    self._add_content([tab_form])
-                       
-  def getTab(self, tab_label):
+    tab_form = structure_to_form( tab_form )
+    self.tabs.append( ( tab_label, tab_form ) )
+    self._add_content( [tab_form] )
+
+  def get_tab( self, tab_label ):
     """Get the tab form of associated with a tab_label, use this function to
     modify the underlying tab_form in case of inheritance
     
@@ -241,27 +261,27 @@ Render forms within a QTabWidget::
 :return: the tab_form corresponding to tab_label
     """
     for label, form in self.tabs:
-      if label==tab_label:
+      if label == tab_label:
         return form
-      
-  def replaceField(self, original_field, new_field):
+
+  def replaceField( self, original_field, new_field ):
     for tabel, form in self.tabs:
-      if form.replaceField(original_field, new_field):
+      if form.replaceField( original_field, new_field ):
         return True
     return False
-    
+
   @gui_function
-  def render(self, widgets, parent=None, nomargins=False):
-    logger.debug('rendering %s' % self.__class__.__name__) 
+  def render( self, widgets, parent = None, nomargins = False ):
+    logger.debug( 'rendering %s' % self.__class__.__name__ )
     from PyQt4 import QtGui
     from PyQt4.QtCore import Qt
-    widget = QtGui.QTabWidget(parent)
-    for tab_label, tab_form in self.tabs:      
-      widget.addTab(tab_form.render(widgets, widget), tab_label)
+    widget = QtGui.QTabWidget( parent )
+    for tab_label, tab_form in self.tabs:
+      widget.addTab( tab_form.render( widgets, widget ), tab_label )
     return widget
-  
 
-class HBoxForm(Form):
+
+class HBoxForm( Form ):
   """
 Render different forms in a horizontal box::
 
@@ -270,40 +290,40 @@ Render different forms in a horizontal box::
 .. image:: ../_static/form/hbox_form.png 
   
 """
-  
-  def __init__(self, columns):
+
+  def __init__( self, columns ):
     """:param columns: a list of forms to display in the different columns
     of the horizontal box"""
-    assert isinstance(columns, list)
-    self.columns = [structure_to_form(col) for col in columns]
-    super(HBoxForm, self).__init__(sum((column_form.get_fields()
-                                  for column_form in self.columns), []))
+    assert isinstance( columns, list )
+    self.columns = [structure_to_form( col ) for col in columns]
+    super( HBoxForm, self ).__init__( sum( ( column_form.get_fields()
+                                  for column_form in self.columns ), [] ) )
 
-  def __unicode__(self):
-    return 'HBoxForm [ %s\n         ]'%('         \n'.join([unicode(form) for form in self.columns])) 
-  
-  def replaceField(self, original_field, new_field):
+  def __unicode__( self ):
+    return 'HBoxForm [ %s\n         ]' % ( '         \n'.join( [unicode( form ) for form in self.columns] ) )
+
+  def replaceField( self, original_field, new_field ):
     for form in self.columns:
-      if form.replaceField(original_field, new_field):
+      if form.replaceField( original_field, new_field ):
         return True
     return False
-  
+
   @gui_function
-  def render(self, widgets, parent=None, nomargins=False):
-    logger.debug('rendering %s' % self.__class__.__name__) 
+  def render( self, widgets, parent = None, nomargins = False ):
+    logger.debug( 'rendering %s' % self.__class__.__name__ )
     from PyQt4 import QtGui
-    widget = QtGui.QWidget(parent)
+    widget = QtGui.QWidget( parent )
     form_layout = QtGui.QHBoxLayout()
     for form in self.columns:
-      f = form.render(widgets, widget, nomargins)
-      if isinstance(f, QtGui.QLayout):
-        form_layout.addLayout(f)
+      f = form.render( widgets, widget, nomargins )
+      if isinstance( f, QtGui.QLayout ):
+        form_layout.addLayout( f )
       else:
-        form_layout.addWidget(f)
-    widget.setLayout(form_layout)
+        form_layout.addWidget( f )
+    widget.setLayout( form_layout )
     return widget
 
-class VBoxForm(Form):
+class VBoxForm( Form ):
   """
 Render different forms or widgets in a vertical box::
 
@@ -311,40 +331,40 @@ Render different forms or widgets in a vertical box::
   
 .. image:: ../_static/form/vbox_form.png  
 """
-  
-  def __init__(self, rows):
+
+  def __init__( self, rows ):
     """:param rows: a list of forms to display in the different columns
     of the horizontal box
     """
-    assert isinstance(rows, list)
-    self.rows = [structure_to_form(row) for row in rows]
-    super(VBoxForm, self).__init__(sum((row_form.get_fields() for row_form in self.rows), []))
+    assert isinstance( rows, list )
+    self.rows = [structure_to_form( row ) for row in rows]
+    super( VBoxForm, self ).__init__( sum( ( row_form.get_fields() for row_form in self.rows ), [] ) )
 
-  def replaceField(self, original_field, new_field):
+  def replaceField( self, original_field, new_field ):
     for form in self.rows:
-      if form.replaceField(original_field, new_field):
+      if form.replaceField( original_field, new_field ):
         return True
     return False
-  
-  def __unicode__(self):
-    return 'VBoxForm [ %s\n         ]'%('         \n'.join([unicode(form) for form in self.rows]))
-  
+
+  def __unicode__( self ):
+    return 'VBoxForm [ %s\n         ]' % ( '         \n'.join( [unicode( form ) for form in self.rows] ) )
+
   @gui_function
-  def render(self, widgets, parent=None, nomargins=False):
-    logger.debug('rendering %s' % self.__class__.__name__) 
+  def render( self, widgets, parent = None, nomargins = False ):
+    logger.debug( 'rendering %s' % self.__class__.__name__ )
     from PyQt4 import QtGui
-    widget = QtGui.QWidget(parent)
+    widget = QtGui.QWidget( parent )
     form_layout = QtGui.QVBoxLayout()
     for form in self.rows:
-      f = form.render(widgets, widget, nomargins)
-      if isinstance(f, QtGui.QLayout):
-        form_layout.addLayout(f)
+      f = form.render( widgets, widget, nomargins )
+      if isinstance( f, QtGui.QLayout ):
+        form_layout.addLayout( f )
       else:
-        form_layout.addWidget(f)
-    widget.setLayout(form_layout)
+        form_layout.addWidget( f )
+    widget.setLayout( form_layout )
     return widget
-  
-class GridForm(Form):
+
+class GridForm( Form ):
   """Put different fields into a grid, without a label.  Row or column labels can be added
 using the Label form::
 
@@ -352,47 +372,47 @@ using the Label form::
   
 .. image:: ../_static/form/grid_form.png
 """
-  
-  def __init__(self, grid):
+
+  def __init__( self, grid ):
     """:param grid: A list for each row in the grid, containing a list with all fields that should be put in that row
     """
-    assert isinstance(grid, list)
+    assert isinstance( grid, list )
     self._grid = grid
     fields = []
     for row in grid:
-      assert isinstance(row, list)
-      fields.extend(row)
-    super(GridForm, self).__init__(fields)
+      assert isinstance( row, list )
+      fields.extend( row )
+    super( GridForm, self ).__init__( fields )
 
   @gui_function
-  def render(self, widgets, parent=None, nomargins=False):
+  def render( self, widgets, parent = None, nomargins = False ):
     from PyQt4 import QtGui
-    widget = QtGui.QWidget(parent)
+    widget = QtGui.QWidget( parent )
     grid_layout = QtGui.QGridLayout()
-    for i,row in enumerate(self._grid):
-      for j,field in enumerate(row):
-        if isinstance(field, Form):
-          grid_layout.addWidget(field.render([], grid_layout), i, j)
+    for i, row in enumerate( self._grid ):
+      for j, field in enumerate( row ):
+        if isinstance( field, Form ):
+          grid_layout.addWidget( field.render( [], grid_layout ), i, j )
         else:
           _label, editor = widgets[field]
-          grid_layout.addWidget(editor, i, j)
-    widget.setLayout(grid_layout)
+          grid_layout.addWidget( editor, i, j )
+    widget.setLayout( grid_layout )
     return widget
 
-class WidgetOnlyForm(Form):
+class WidgetOnlyForm( Form ):
   """Renders a single widget without its label, typically a one2many widget"""
-  
-  def __init__(self, field):
-    assert isinstance(field, (str, unicode))
-    super(WidgetOnlyForm, self).__init__([field])
-    
+
+  def __init__( self, field ):
+    assert isinstance( field, ( str, unicode ) )
+    super( WidgetOnlyForm, self ).__init__( [field] )
+
   @gui_function
-  def render(self, widgets, parent=None, nomargins=False):
-    logger.debug('rendering %s' % self.__class__.__name__) 
+  def render( self, widgets, parent = None, nomargins = False ):
+    logger.debug( 'rendering %s' % self.__class__.__name__ )
     _label, editor = widgets[self.get_fields()[0]]
     return editor
-  
-class GroupBoxForm(Form):
+
+class GroupBoxForm( Form ):
   """
 Renders a form within a QGroupBox::
   
@@ -401,22 +421,22 @@ Renders a form within a QGroupBox::
   
 .. image:: ../_static/form/group_box_form.png
 """
-  
-  def __init__(self, title, content):
+
+  def __init__( self, title, content ):
     self.title = title
-    Form.__init__(self, content)
+    Form.__init__( self, content )
 
   @gui_function
-  def render(self, widgets, parent=None, nomargins=False):
+  def render( self, widgets, parent = None, nomargins = False ):
     from PyQt4 import QtGui
-    widget = QtGui.QGroupBox(self.title, parent)
+    widget = QtGui.QGroupBox( self.title, parent )
     layout = QtGui.QVBoxLayout()
-    widget.setLayout(layout)
-    form = Form.render(self, widgets, widget, nomargins)
-    layout.addWidget(form)
+    widget.setLayout( layout )
+    form = Form.render( self, widgets, widget, nomargins )
+    layout.addWidget( form )
     return widget
 
-def structure_to_form(structure):
+def structure_to_form( structure ):
   """Convert a python data structure to a form, using the following rules :
   
  * if structure is an instance of Form, return structure
@@ -425,6 +445,6 @@ def structure_to_form(structure):
 This function is mainly used in the Admin class to construct forms out of
 the form_display attribute   
   """
-  if isinstance(structure, Form):
+  if isinstance( structure, Form ):
     return structure
-  return Form(structure)
+  return Form( structure )
