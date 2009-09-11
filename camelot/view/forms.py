@@ -53,19 +53,6 @@ class Form( object ):
         assert isinstance( content, list )
         self._content = content
         self._scrollbars = scrollbars
-#        self._fields = []
-#        self._add_content( content )
-
-#    def _add_content( self, content ):
-#        """add content to the form
-#
-#    :param content: a list with field names and forms"""
-#        for c in content:
-#            if isinstance( c, Form ):
-#                self._fields.extend( c.get_fields() )
-#        else:
-#            assert isinstance( c, ( str, unicode ) )
-#            self._fields.append( c )
 
     def get_fields( self ):
         """:return: the fields, visible in this form"""
@@ -113,22 +100,10 @@ class Form( object ):
             elif c == original_field:
                 self._content[i] = new_field
                 return True
-#        try:
-#            i = self._fields.index( original_field )
-#            self._fields[i] = new_field
-#            return True
-#        except ValueError:
-#            pass
         return False
 
     def add_field( self, new_field ):
         self._content.append( new_field )
-#        try:
-#            self._fields.append( new_field )
-#            return True
-#        except ValueError:
-#            pass
-#        return False
 
     def __unicode__( self ):
         return 'Form(%s)' % ( u','.join( unicode( c ) for c in self._content ) )
