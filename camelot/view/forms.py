@@ -36,179 +36,191 @@ logger = logging.getLogger( 'camelot.view.forms' )
 from camelot.view.model_thread import gui_function
 
 class Form( object ):
-  """Base Form class to put fields on a form.  A form can be converted to a
-QT widget by calling its render method.  The base form uses the QFormLayout 
-to render a form::
+    """Base Form class to put fields on a form.  A form can be converted to a
+    QT widget by calling its render method.  The base form uses the QFormLayout 
+    to render a form::
 
-  class Admin(EntityAdmin):
-    form_display = Form(['title', 'short_description', 'director', 'release_date'])
+    class Admin(EntityAdmin):
+      form_display = Form(['title', 'short_description', 'director', 'release_date'])
 
-.. image:: ../_static/form/form.png
-"""
-
-  def __init__( self, content, scrollbars = False ):
-    """:param content: a list with the field names and forms to render
-"""
-    assert isinstance( content, list )
-    self._content = content
-    self._scrollbars = scrollbars
-    self._fields = []
-    self._add_content( content )
-
-  def _add_content( self, content ):
-    """add content to the form
-    
-:param content: a list with field names and forms"""
-    for c in content:
-      if isinstance( c, Form ):
-        self._fields.extend( c.get_fields() )
-      else:
-        assert isinstance( c, ( str, unicode ) )
-        self._fields.append( c )
-
-  def get_fields( self ):
-    """:return: the fields, visible in this form"""
-    return self._fields
-
-  def removeField( self, original_field ):
-    """Remove a field from the form, This function can be used to modify
-inherited forms.
-
-:param original_field: the name of the field to be removed
-:return: True if the field was found and removed
+    .. image:: ../_static/form/form.png
     """
-    for c in self._content:
-      if isinstance( c, Form ):
-        c.removeField( original_field )
-    if original_field in self._content:
-      self._content.remove( original_field )
-    if original_field in self._fields:
-      self._fields.remove( original_field )
-      return True
-    return False
 
-  def replaceField( self, original_field, new_field ):
-    """Replace a field on this form with another field.  This function can be used to 
-modify inherited forms.
+    def __init__( self, content, scrollbars = False ):
+        """:param content: a list with the field names and forms to render
+        """
+        #TODO work only with self._content, remove self._fields
+        assert isinstance( content, list )
+        self._content = content
+        self._scrollbars = scrollbars
+#        self._fields = []
+#        self._add_content( content )
+
+#    def _add_content( self, content ):
+#        """add content to the form
+#
+#    :param content: a list with field names and forms"""
+#        for c in content:
+#            if isinstance( c, Form ):
+#                self._fields.extend( c.get_fields() )
+#        else:
+#            assert isinstance( c, ( str, unicode ) )
+#            self._fields.append( c )
+
+    def get_fields( self ):
+        """:return: the fields, visible in this form"""
+        return [field for field in self._get_fields_from_form()]
+
+    def _get_fields_from_form( self ):
+        for field in self._content:
+            if isinstance( field, Form ):
+                for nested_field in  field._get_fields_from_form():
+                    yield nested_field
+            else:
+                assert isinstance( field, ( str, unicode ) )
+                yield field;
+
+
+    def removeField( self, original_field ):
+        """Remove a field from the form, This function can be used to modify
+        inherited forms.
+
+        :param original_field: the name of the field to be removed
+        :return: True if the field was found and removed
+        """
+        for c in self._content:
+            if isinstance( c, Form ):
+                c.removeField( original_field )
+            if original_field in self._content:
+                self._content.remove( original_field )
+                return True
+            if original_field in self._fields:
+                self._fields.remove( original_field )
+                return True
+        return False
+
+    def replaceField( self, original_field, new_field ):
+        """Replace a field on this form with another field.  This function can be used to 
+        modify inherited forms.
     
-:param original_field : the name of the field to be replace
-:param new_field : the name of the new field
-:return: True if the original field was found and replaced.
-    
-    """
-    for i, c in enumerate( self._content ):
-      if isinstance( c, Form ):
-        c.replaceField( original_field, new_field )
-      elif c == original_field:
-        self._content[i] = new_field
-    try:
-      i = self._fields.index( original_field )
-      self._fields[i] = new_field
-      return True
-    except ValueError:
-      pass
-    return False
+        :param original_field : the name of the field to be replace
+        :param new_field : the name of the new field
+        :return: True if the original field was found and replaced. 
+        """
+        for i, c in enumerate( self._content ):
+            if isinstance( c, Form ):
+                c.replaceField( original_field, new_field )
+            elif c == original_field:
+                self._content[i] = new_field
+                return True
+#        try:
+#            i = self._fields.index( original_field )
+#            self._fields[i] = new_field
+#            return True
+#        except ValueError:
+#            pass
+        return False
 
-  def add_field( self, new_field ):
-    self._content.append( new_field )
-    try:
-      self._fields.append( new_field )
-      return True
-    except ValueError:
-      pass
-    return False
+    def add_field( self, new_field ):
+        self._content.append( new_field )
+#        try:
+#            self._fields.append( new_field )
+#            return True
+#        except ValueError:
+#            pass
+#        return False
 
-  def __unicode__( self ):
-    return 'Form(%s)' % ( u','.join( unicode( c ) for c in self._content ) )
+    def __unicode__( self ):
+        return 'Form(%s)' % ( u','.join( unicode( c ) for c in self._content ) )
 
-  @gui_function
-  def render( self, widgets, parent = None, nomargins = False ):
-    """:param widgets: a dictionary mapping each field in this form to a tuple
-of (label, widget editor)
+    @gui_function
+    def render( self, widgets, parent = None, nomargins = False ):
+        """:param widgets: a dictionary mapping each field in this form to a tuple
+        of (label, widget editor)
  
-:return: a QWidget into which the form is rendered
-    """
-    logger.debug( 'rendering %s' % self.__class__.__name__ )
-    from camelot.view.controls.editors.wideeditor import WideEditor
+        :return: a QWidget into which the form is rendered
+        """
+        logger.debug( 'rendering %s' % self.__class__.__name__ )
+        from camelot.view.controls.editors.wideeditor import WideEditor
 
-    from PyQt4 import QtGui
+        from PyQt4 import QtGui
 
-    form_layout = QtGui.QGridLayout()
-    row = 0
-    for field in self._content:
-      if isinstance( field, Form ):
-        col = 0
-        row_span = 1
-        col_span = 2
-        f = field.render( widgets, parent, True )
-        if isinstance( f, QtGui.QLayout ):
-          form_layout.addLayout( f, row, col, row_span, col_span )
-        else:
-          form_layout.addWidget( f, row, col, row_span, col_span )
-        row += 1
-      elif field in widgets:
-        col = 0
-        row_span = 1
-        label, editor = widgets[field]
-        if isinstance( editor, ( WideEditor, ) ):
-          col_span = 2
-          form_layout.addWidget( label, row, col, row_span, col_span )
-          row += 1
-          form_layout.addWidget( editor, row, col, row_span, col_span )
-          row += 1
-        else:
-          col_span = 1
-          form_layout.addWidget( label, row, col, row_span, col_span )
-          #form_layout.addWidget(editor, row, col + 1, row_span, col_span, Qt.AlignRight)
-          form_layout.addWidget( editor, row, col + 1, row_span, col_span )
-          row += 1
+        form_layout = QtGui.QGridLayout()
+        row = 0
+        for field in self._content:
+            if isinstance( field, Form ):
+                col = 0
+                row_span = 1
+                col_span = 2
+                f = field.render( widgets, parent, True )
+                if isinstance( f, QtGui.QLayout ):
+                    form_layout.addLayout( f, row, col, row_span, col_span )
+                else:
+                    form_layout.addWidget( f, row, col, row_span, col_span )
+                row += 1
+            elif field in widgets:
+                col = 0
+                row_span = 1
+                label, editor = widgets[field]
+                if isinstance( editor, ( WideEditor, ) ):
+                    col_span = 2
+                    form_layout.addWidget( label, row, col, row_span, col_span )
+                    row += 1
+                    form_layout.addWidget( editor, row, col, row_span, col_span )
+                    row += 1
+                else:
+                    col_span = 1
+                    form_layout.addWidget( label, row, col, row_span, col_span )
+                    #form_layout.addWidget(editor, row, col + 1, row_span, col_span, Qt.AlignRight)
+                    form_layout.addWidget( editor, row, col + 1, row_span, col_span )
+                    row += 1
 
-    if self._content and form_layout.count():
-      # get last item in the layout
-      last_item = form_layout.itemAt( form_layout.count() - 1 )
+        if self._content and form_layout.count():
+            # get last item in the layout
+            last_item = form_layout.itemAt( form_layout.count() - 1 )
 
-      # if last item does not contain a widget, 0 is returned
-      # which is fine with the isinstance test
-      w = last_item.widget()
+            # if last item does not contain a widget, 0 is returned
+            # which is fine with the isinstance test
+            w = last_item.widget()
 
-      # add stretch only if last item is not expandable
-      if isinstance( w, ( WideEditor, ) ):
-        pass
-      else:
-        form_layout.setRowStretch( form_layout.rowCount(), 1 )
+            # add stretch only if last item is not expandable
+            if isinstance( w, ( WideEditor, ) ):
+                pass
+            else:
+                form_layout.setRowStretch( form_layout.rowCount(), 1 )
 
-    form_widget = QtGui.QWidget( parent )
+        form_widget = QtGui.QWidget( parent )
 
-    # fix embedded forms
-    if nomargins:
-      form_layout.setContentsMargins( 0, 0, 0, 0 )
+        # fix embedded forms
+        if nomargins:
+            form_layout.setContentsMargins( 0, 0, 0, 0 )
 
-    form_widget.setSizePolicy( QtGui.QSizePolicy.Expanding,
-                              QtGui.QSizePolicy.Expanding )
-    form_widget.setLayout( form_layout )
+        form_widget.setSizePolicy( QtGui.QSizePolicy.Expanding,
+                             QtGui.QSizePolicy.Expanding )
+        form_widget.setLayout( form_layout )
 
-    if self._scrollbars:
-      scroll_area = QtGui.QScrollArea( parent )
-      scroll_area.setWidget( form_widget )
-      scroll_area.setWidgetResizable( True )
-      scroll_area.setFrameStyle( QtGui.QFrame.NoFrame )
-      return scroll_area
+        if self._scrollbars:
+            scroll_area = QtGui.QScrollArea( parent )
+            scroll_area.setWidget( form_widget )
+            scroll_area.setWidgetResizable( True )
+            scroll_area.setFrameStyle( QtGui.QFrame.NoFrame )
+            return scroll_area
 
-    return form_widget
+        return form_widget
 
 
 class Label( Form ):
-  """Render a label with a QLabel"""
+    """Render a label with a QLabel"""
 
-  def __init__( self, label ):
-    super( Label, self ).__init__( [] )
-    self.label = label
+    def __init__( self, label ):
+        super( Label, self ).__init__( [] )
+        self.label = label
 
-  @gui_function
-  def render( self, widgets, parent = None, nomargins = False ):
-    from PyQt4 import QtGui
-    widget = QtGui.QLabel( self.label )
-    return widget
+    @gui_function
+    def render( self, widgets, parent = None, nomargins = False ):
+        from PyQt4 import QtGui
+        widget = QtGui.QLabel( self.label )
+        return widget
 
 class TabForm( Form ):
   """
@@ -241,7 +253,7 @@ Render forms within a QTabWidget::
       """
       tab_form = structure_to_form( tab_form )
       self.tabs.insert( index, ( tab_label, tab_form ) )
-      self._add_content( [tab_form] )
+      self._content.extend( [tab_form] )
 
   def add_tab( self, tab_label, tab_form ):
     """Add a tab to the form
@@ -251,7 +263,7 @@ Render forms within a QTabWidget::
     """
     tab_form = structure_to_form( tab_form )
     self.tabs.append( ( tab_label, tab_form ) )
-    self._add_content( [tab_form] )
+    self._content.extend( [tab_form] )
 
   def get_tab( self, tab_label ):
     """Get the tab form of associated with a tab_label, use this function to
