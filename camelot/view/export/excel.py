@@ -126,15 +126,20 @@ topleftCellStyle.pattern = pat1
 toprightCellStyle.pattern = pat1
 
 def open_data_with_excel(title, headerList, dataList):
-    import os
+    import sys
     import tempfile
     xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
     write_data_to_excel(xls_fn, title, headerList, dataList)
     from PyQt4 import QtGui, QtCore
-    QtGui.QDesktopServices.openUrl(QtCore.QUrl('file://%s' % xls_fn)) 
-
-    excel_app.Visible = True
-    excel_app.Workbooks.Open(xls_fn)  
+    if not 'win' in sys.platform:
+      QtGui.QDesktopServices.openUrl(QtCore.QUrl('file://%s' % xls_fn)) 
+    else:
+      import pythoncom
+      import win32com.client
+      pythoncom.CoInitialize()
+      excel_app = win32com.client.Dispatch("Excel.Application")
+      excel_app.Visible = True
+      excel_app.Workbooks.Open(xls_fn)  
 
 def write_data_to_excel(filename, title, headerList, dataList):
   """
