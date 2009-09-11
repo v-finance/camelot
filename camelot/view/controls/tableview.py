@@ -461,26 +461,34 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     from camelot.view.wizard.import_data import ImportWizard
     from camelot.model.authentication import Person
     logger.info( 'call import method' )
-    importWizard = ImportWizard( self )
+    #o = self.admin.entity()
+    attributes = self.admin.entity().Admin.form_display.get_fields()
+    #print attributes 
+    importWizard = ImportWizard( self, attributes )
     importWizard.start()
     data = importWizard.getImportedData()
 
     def makeImport():
         for row in data:
-            movie = self.admin.entity()
-            movie.title = row[0]
+            # get all possible fields (=attributes) from this object
+            #attributes = o.Admin.form_display.get_fields()            
+            #print attributes
+            # set title
+            o = self.admin.entity()
+            setattr(o, attributes[0], row[0])
+            print o.title
+            #movie.title = row[0]
             name = row[2].split( ' ' ) #director
             #director = Person()
             #director.first_name = name[0]  
             #director.last_name = name[1]
             #movie.director = director
-            movie.short_description = "korte beschrijving"
-            date = row[1].split( '/' ) # date 12/03/2009
-            movie.releasedate = datetime.date( year = int( date[2] ), month = int( date[1] ), day = int( date[0] ) )
-            movie.genre = ""
-            from camelot.view.workspace import get_workspace
-            workspace = get_workspace()
-            self._table_model.insertEntityInstance( 0, movie )
-            #self._table_model.insertEntityInstance(0,director)
+            o.short_description = "korte beschrijving"
+            #date = row[1].split('/') # date 12/03/2009
+            #o.releasedate = datetime.date(year=int(date[2]), month=int(date[1]), day=int(date[0]))
+            o.genre = ""
+            #print o[attributes[0]]
+            from sqlalchemy.orm.session import Session
+            Session.object_session(o).flush([o])
 
     self.admin.mt.post( makeImport, dependency = self )

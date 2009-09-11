@@ -1,25 +1,31 @@
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QWizard, QWizardPage, QToolBar, QFileDialog, QPushButton, QTableView, QFont, QVBoxLayout, QLabel
-from PyQt4.QtCore import QString, QAbstractTableModel, QVariant, Qt
+from PyQt4.QtGui import QWizard, QWizardPage, QToolBar, QFileDialog, QPushButton, QTableView, QFont, QVBoxLayout, QGridLayout, QLabel, QComboBox, QItemDelegate, QStandardItemModel, QColor
+from PyQt4.QtCore import QString, QAbstractTableModel, QVariant, Qt, QAbstractListModel, QModelIndex, QStringList, QPoint
 from camelot.view import art
 from camelot.view.art import Icon
 from camelot.action import createAction, addActions
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.model_thread import get_model_thread
 from camelot.view.controls.exception import model_thread_exception_message_box
+from camelot.view.controls.delegates.comboboxdelegate import ComboBoxEditorDelegate, TestComboBoxDelegate, ComboBoxDelegate
+from camelot.view.controls.editors.choiceseditor import ChoicesEditor
 import csv, itertools
 
 _ = lambda x: x
 
 class ImportWizard(QtGui.QWizard):
     """Import wizard GUI"""
-    def __init__(self, parent):
+    def __init__(self, parent, attributes):
         QWizard.__init__(self)
         self.parent = parent
+        # the attributes of the object that will be imported
+        self.attributes = attributes
  
+    """ Make a wizard and the pages """
     def start(self):
         self.qWizard = QWizard()
         self.qWizard.setEnabled(True)
+        # qPage is the introduction page
         self.qPage = ImportWizardPage(self.qWizard)
         self.qPage.setTitle(QString('import wizard'))
         
@@ -35,6 +41,7 @@ class ImportWizard(QtGui.QWizard):
         #make the page that shows the table
         self.qTablePage = QWizardPage(self.qWizard)
         self.qTablePage.setTitle(QString('Data from file'))
+        
         self.qWizard.addPage(self.qTablePage)
         
         cancelButton = QPushButton(QString('cancel'), self.qWizard)
@@ -46,46 +53,84 @@ class ImportWizard(QtGui.QWizard):
         self.qWizard.show()
         self.qWizard.exec_()
     
+    """
+        makes toolbar with button to open a csv-file. this is added at the qpage of a qwizard
+    """
     def makeToolBarToSearchFile(self):
         self.openToolBar = QToolBar(self.qPage)
         icon_file_open = Icon('tango/32x32/actions/fileopen.png').fullpath()
         openAct = QtGui.QAction(QtGui.QIcon(icon_file_open), 'Open File', self.openToolBar)
         self.openToolBar.connect(openAct, QtCore.SIGNAL('triggered()'), self.showOpenFileDialog)
         self.openToolBar.addAction(openAct)       
-        
+    
+    """
+        makes the openfiledialog: when the file is committed, the table is shown
+    """    
     def showOpenFileDialog(self):
         filename = QtGui.QFileDialog.getOpenFileName(None, 'Open file', '/')
+        #make label
+        self.label.clear()
         self.label = QtGui.QLabel(filename, self.qPage)
         self.qPage.initializePath(filename)
         self.grid.addWidget(self.label, 2, 0)
+        
+        #open file
         file=open(filename)
         csvreader = csv.reader(file)
         array = list(csvreader)
         self.data = array
-        tableView = self.makeTable(array)
-        layout = QVBoxLayout()
-        layout.addWidget(tableView) 
-        self.qTablePage.setLayout(layout)
+        #tableview
+        tableView = self.makeTable(array, self.attributes)
+        
+        #delegate
+        CHOICES = (('1','A'), ('2','B'), ('3','C'))
+        #delegate = ComboBoxEditorDelegate(choices=lambda o:CHOICES, editable=False)
+        #tableView.setItemDelegate(delegate)
+        
+        #layout
+        #gridLayout = QGridLayout()
+        #gridLayout.addWidget(lv, 0, 0)
+        #gridLayout.addWidget(lv2, 0, 2) 
+        vLayout = QVBoxLayout()
+        #vLayout.addLayout(gridLayout)
+        vLayout.addWidget(tableView)
+        self.qTablePage.setLayout(vLayout)
+        
     
+    """ the layout for the wizard """
     def makeGridLayout(self):
         self.grid = QtGui.QGridLayout()
         self.grid.setSpacing(10)
         self.grid.addWidget(self.openToolBar, 1, 0)
-        self.label = QtGui.QLabel('', self.qPage)
-        self.grid.addWidget(self.label, 1, 1)
-        
-    def makeTable(self, data):
+        self.label = QtGui.QLabel('select file', self.qPage)
+        self.grid.addWidget(self.label, 2, 0)
+    
+    """ make the table for the page"""    
+    def makeTable(self, data, headerData):
         # create the view
         tv = QTableView()
 
-        # set the table model
-        #header = ['naam', 'voornaam', 'rijksregisternr', 'geslacht']
-        header = ['title', 'releasedate', 'director']
-        tm = InputTableModel(data, header, parent=self.qTablePage) 
+        # set the table model    
+        #tm = InputTableModel(data, headerData, parent=self.qTablePage)
+        
+        # add one to the length for the header
+        tm = QStandardItemModel((len(data) + 1) , len(self.attributes), self.qTablePage)
         tv.setModel(tm)
+        self.makeHeader(tm, headerData)
+        self.makeBody(tm, data)
+        
+#        for row in range(4):
+#            for column in range(2):
+#                index = tm.index(row, column, QModelIndex())
+#                tm.setData(index, QVariant('A')
+        #CHOICES = self.makeChoices(self.attributes)
+        CHOICES = (('1','first choice'), ('2','second choice'), ('3','third choice'))
+        delegate = ComboBoxDelegate(choices=lambda o:CHOICES, parent=tv )
+        #delegate = TestComboBoxDelegate(self.attributes, parent=tv )
+        tv.setItemDelegateForRow(0,delegate)
 
         # set the minimum size
-        self.setMinimumSize(400, 300)
+        self.setMinimumSize(800, 600)
 
         # hide grid
         tv.setShowGrid(True)
@@ -98,49 +143,100 @@ class ImportWizard(QtGui.QWizard):
         vh = tv.verticalHeader()
         vh.setVisible(False)
 
-        # set horizontal header properties
+        # hide horizontal header, the first row will be used as header
         hh = tv.horizontalHeader()
-        hh.setStretchLastSection(True)
-
+        hh.setVisible(False)
+        
         # set column width to fit contents
-        tv.resizeColumnsToContents()
+        # will fale if to much data
+        #tv.resizeColumnsToContents()
 
         # set row height
         nrows = len(list(data))
         for row in xrange(nrows):
             tv.setRowHeight(row, 18)
-
         return tv
     
+ #   def makeChoices(self, choices):
+ #       for choice in choices:
+            
+    
+    def makeHeader(self, model, header):
+        for column in range(len(header)):
+            index = model.index(0, column, QModelIndex())
+            model.setData(index, QVariant(header[column]))
+            # can be done with the delegate, change this!!!!
+            #model.setData(index, QVariant(QColor(Qt.gray)), Qt.BackgroundColorRole)
+        
+    def makeBody(self, model, data):
+        for row in range(len(data)):
+            for column in range(len(self.attributes)):
+                index = model.index((row+1), column, QModelIndex())
+                model.setData(index, QVariant(self.data[row][column]))
+
+    
+    """method returning the imported data"""
     def getImportedData(self):
         return list(self.data)
         
 class InputTableModel(QAbstractTableModel): 
-    def __init__(self, datain, headerdata, parent=None, *args): 
+    """ class representing the table """
+    def __init__(self, datain, headerData, parent=None, *args): 
         QAbstractTableModel.__init__(self, parent, *args) 
         self.arraydata = list(datain)
-        self.headerdata = headerdata
+        self.arraydata.insert(0, headerData)
+        # the headerdata will be the first row in the table
+        # it is impossible to add a delegate to a qheaderview (it is possible but ignored)
+        # so add the data to the first row and add there the delegate
+        # you can add a (different) delegate for each row
+        #self.headerRow = headerData
+        self.fill_up_header()
+ 
+    def fill_up_header(self, hints=None):
+        #first row of data can be a hint
+        if not hints == None:
+            for column in range(len(self.arraydata[0])):
+                self.setData(self.index(0, column), hints[column], Qt.DisplayRole)
+        #if no hints are given, fill up the header with first attribute
+        else:
+            for column in range(len(self.arraydata[0])):
+                self.setData(self.index(0, column), self.arraydata[0][0], Qt.DisplayRole)
+        
  
     def rowCount(self, parent):
-        return len(self.arraydata) 
+        #return len(self.arraydata) + len(self.headerRow[0])
+        return   len(self.arraydata)
  
     def columnCount(self, parent):
         return len(self.arraydata[0]) 
  
-    def data(self, index, role): 
+    def data(self, index, role):
+        #if headerData != None:
+        #     makeHeaderData()
+        #TODO, now the table is filled from (row = 0, column = 0)
+        # first row will have always a comboboxdelegate (index + 1)
+        # second row is maybe a "hint" for the choices of the comboboxdelegate (index + 2)
+        # so the actual data starts maybe at the index + 1 or index + 2    
         if not index.isValid(): 
             return QVariant() 
         elif role != Qt.DisplayRole: 
-            return QVariant() 
+           return QVariant()
+        print index.row()
+        print index.column()
         return QVariant(self.arraydata[index.row()][index.column()]) 
 
-    def headerData(self, col, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return QVariant(self.headerdata[col])
-        return QVariant()
+    def setData(self, index, value, role):
+        self.arraydata[index.row()][index.column()] = value
+  
+    """every item is editable, so no need to keep it for each object """
+    def flags(self, index):
+        return Qt.ItemIsEditable
+    
     
 class ImportWizardPage(QtGui.QWizardPage):
-    
+    """
+        class for the page shown in the wizard
+    """
     def __init__(self, parent=None, path=None, *args):
         QWizardPage.__init__(self, parent, *args)
         self.path = path
