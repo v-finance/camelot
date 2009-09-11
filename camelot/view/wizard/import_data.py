@@ -7,7 +7,7 @@ from camelot.action import createAction, addActions
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.model_thread import get_model_thread
 from camelot.view.controls.exception import model_thread_exception_message_box
-from camelot.view.controls.delegates.comboboxdelegate import ComboBoxEditorDelegate, TestComboBoxDelegate, ComboBoxDelegate
+from camelot.view.controls.delegates.comboboxdelegate import ComboBoxDelegate
 from camelot.view.controls.editors.choiceseditor import ChoicesEditor
 import csv, itertools
 

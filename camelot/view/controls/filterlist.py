@@ -70,6 +70,3 @@ class FilterList(QtGui.QScrollArea):
   def emit_filters_changed(self):
     logger.debug('filters changed')
     self.emit(QtCore.SIGNAL('filters_changed'))
-
-  def __del__(self):
-    logger.debug('delete filter list')

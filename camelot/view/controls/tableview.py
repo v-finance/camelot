@@ -456,18 +456,12 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     del self._table_model
     event.accept()
 
-  def importFromFile( self ):
-    """"import data : the data will be imported in the activeMdiChild """
+  def importWizard(self, attributes):
     from camelot.view.wizard.import_data import ImportWizard
-    from camelot.model.authentication import Person
-    logger.info( 'call import method' )
-    #o = self.admin.entity()
-    attributes = self.admin.entity().Admin.form_display.get_fields()
-    #print attributes 
     importWizard = ImportWizard( self, attributes )
     importWizard.start()
-    data = importWizard.getImportedData()
-
+    data = importWizard.getImportedData()    
+    
     def makeImport():
         for row in data:
             # get all possible fields (=attributes) from this object
@@ -492,3 +486,8 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
             Session.object_session(o).flush([o])
 
     self.admin.mt.post( makeImport, dependency = self )
+        
+  def importFromFile( self ):
+    """"import data : the data will be imported in the activeMdiChild """
+    logger.info( 'call import method' )
+    self.admin.mt.post(self.admin.getColumns, self.importWizard)
