@@ -92,8 +92,8 @@ class DateTimeEditor(CustomEditor):
   def set_value(self, value):
     value = CustomEditor.set_value(self, value)
     if value:
-      self.dateedit.setDate(QtCore.QDate(*value[:3]))
-      self.timeedit.lineEdit().setText('%02i:%02i'%(value[3], value[4]))
+      self.dateedit.setDate(QtCore.QDate(value.year, value.month, value.day))
+      self.timeedit.lineEdit().setText('%02i:%02i'%(value.hour, value.minute))
     else:
       self.dateedit.setDate(self.dateedit.minimumDate())
       self.timeedit.lineEdit().setText('--:--')

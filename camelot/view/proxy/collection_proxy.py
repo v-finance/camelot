@@ -436,9 +436,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
           data[index.column()] = value
         if isinstance( value, datetime.datetime ):
           # Putting a python datetime into a QVariant and returning it to a PyObject seems
-          # to be buggy, therefor we convert it here to a tuple of date and time
-          if role == Qt.EditRole and value:
-            return QtCore.QVariant( ( value.year, value.month, value.day, value.hour, value.minute, value.second, value.microsecond ) )
+          # to be buggy, therefor we chop the microseconds
+          if value:
+            value = QtCore.QDateTime(value.year, value.month, value.day, value.hour, value.minute, value.second)
         self.logger.debug( 'get data for row %s;col %s : %s' % ( index.row(), index.column(), unicode( value ) ) )
       except KeyError:
         self.logger.error( 'Programming error, could not find data of column %s in %s' % ( index.column(), str( data ) ) )

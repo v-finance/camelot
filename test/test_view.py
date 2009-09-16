@@ -387,19 +387,19 @@ Test the basic functionality of the editors :
     import datetime
     editor = self.editors.DateTimeEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( (2009, 7, 19, 21, 5, 10, 0) )
+    editor.set_value( datetime.datetime(2009, 7, 19, 21, 5, 10, 0) )
     self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
     self.grab_widget( editor, 'editable' )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )    
     editor = self.editors.DateTimeEditor(parent=None, editable=False)
     self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( (2009, 7, 19, 21, 5, 10, 0) )
+    editor.set_value( datetime.datetime(2009, 7, 19, 21, 5, 10, 0) )
     self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
     self.grab_widget( editor, 'disabled' )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading ) 
-    editor.set_value( (2009, 5, 21, 16, 16, 5, 0) )
+    editor.set_value( datetime.datetime(2009, 5, 21, 16, 16, 5, 0) )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )   
        
@@ -700,13 +700,11 @@ class DelegateTest(unittest.TestCase):
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
     DateTime = datetime.now()
-    DateTime = QtCore.QDateTime(DateTime.year, DateTime.month, DateTime.day, DateTime.hour, DateTime.minute, DateTime.second)
     self.grab_delegate(delegate, DateTime)
     delegate = self.delegates.DateTimeDelegate(parent=None, editable=False)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
     self.grab_delegate(delegate, DateTime, 'disabled')
-    
 
   def testTimeDelegate(self):
     from datetime import time

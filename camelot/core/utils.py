@@ -27,13 +27,12 @@
 
 """Utility functions"""
 
+from PyQt4 import QtCore
+
 def create_constant_function(constant):
   return lambda:constant
 
-
 def variant_to_pyobject(qvariant=None):
-    from PyQt4 import QtCore, QtGui
-    from PyQt4.QtCore import Qt
     import datetime
     if not qvariant:
         return None
@@ -60,6 +59,9 @@ def variant_to_pyobject(qvariant=None):
         value = datetime.time(hour = value.hour(),
                               minute = value.minute(),
                               second = value.second())
+    elif type == QtCore.QVariant.DateTime:
+      value = qvariant.toDateTime()
+      value = value.toPyDateTime ()
     else:
       value = qvariant.toPyObject()
       
