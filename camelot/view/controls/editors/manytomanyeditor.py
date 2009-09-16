@@ -3,7 +3,7 @@ from customeditor import editingFinished
 from abstractmanytooneeditor import AbstractManyToOneEditor
 
 from camelot.view.art import Icon
-from camelot.view.model_thread import model_function
+from camelot.view.model_thread import model_function, post
 
 class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
 
@@ -39,7 +39,10 @@ class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
       o = entity_instance_getter()
       self.model.insertEntityInstance( 0, o )
 
-    self.admin.mt.post( insert, lambda * args:self.emit( editingFinished ), dependency = self )
+    post( insert, self.editingFinished )
+  
+  def editingFinished(self, *args):
+    self.emit( editingFinished )
 
   def removeSelectedRows( self ):
     """Remove the selected rows in this tableview, but don't delete them"""

@@ -59,7 +59,7 @@ to the precision specified in the definition of the Field.
           fontColor.setRgb(130,130,130)
     
     value_str = u''
-    if value != None and value != camelot.view.proxy.ValueLoading:
+    if value != None and value != ValueLoading:
       value_str = u'%.*f'%(self.precision, value)
     
     value_str = unicode(self.prefix) + ' ' + unicode(value_str) + ' ' + unicode(self.suffix)

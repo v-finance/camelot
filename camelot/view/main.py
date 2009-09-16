@@ -79,11 +79,9 @@ def main(application_admin,
   # Start the model thread
   #
   from camelot.view.model_thread import get_model_thread, construct_model_thread
-  from camelot.view.response_handler import ResponseHandler
   from camelot.view.remote_signals import construct_signal_handler
 
-  rh = ResponseHandler()
-  construct_model_thread(rh)
+  construct_model_thread()
   construct_signal_handler()
   get_model_thread().start()
   

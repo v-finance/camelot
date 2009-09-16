@@ -1,29 +1,11 @@
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtGui import QItemDelegate
+from camelot.core.utils import variant_to_pyobject
 
-try:
-  from PyQt4 import QtGui, QtCore
-  from PyQt4.QtCore import Qt, SIGNAL
-  from PyQt4.QtGui import QItemDelegate
-  from camelot.core.utils import variant_to_pyobject
-  
-  from camelot.view.controls import editors
-except ImportError:
-  raise
-  #
-  # dummy class when Qt has not been found, this allows the documentation to be
-  # build without qt dependency
-  #
-  class QItemDelegate(object):
-    pass
-  
-  class editors(object):
-    FileEditor = None 
-
-from camelot.view.proxy import ValueLoading
-from camelot.view.model_thread import get_model_thread
+from camelot.view.controls import editors
 from camelot.core.utils import create_constant_function
-
-import datetime
-import camelot.types
+from camelot.view.proxy import ValueLoading
 
 # custom color
 not_editable_background = QtGui.QColor(235, 233, 237)
@@ -73,7 +55,7 @@ class attribute specifies the editor class that should be used
   def commitAndCloseEditor(self):
     editor = self.sender()
     self.emit(SIGNAL('commitData(QWidget*)'), editor)
-    self.emit(SIGNAL('closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)'), editor, QtGui.QAbstractItemDelegate.NoHint)
+    #self.emit(SIGNAL('closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)'), editor, QtGui.QAbstractItemDelegate.NoHint)
 
   def setEditorData(self, editor, index):
     value = variant_to_pyobject( index.model().data(index, Qt.EditRole) )

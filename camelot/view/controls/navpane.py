@@ -27,19 +27,16 @@
 
 """left navigation pane"""
 
-import os
-import sys
 import logging
-
 logger = logging.getLogger( 'camelot.view.controls.navpane' )
 
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
-from camelot.view.model_thread import get_model_thread
+from camelot.view.model_thread import post
 from camelot.action import addActions, createAction
 from camelot.view.controls.modeltree import ModelItem, ModelTree
-from appscheme import scheme, defaultUI
+from appscheme import scheme
 
 QT_MAJOR_VERSION = float( '.'.join( str( QtCore.QT_VERSION_STR ).split( '.' )[0:2] ) )
 
@@ -250,7 +247,6 @@ class NavigationPane( QtGui.QDockWidget ):
 
     self.content.setStyleSheet( style )
 
-    self.mt = get_model_thread()
     # TODO: Should a separator be added between the tree
     #       and the buttons?
     #self.treewidget = PaneTree(self)
@@ -325,8 +321,7 @@ class NavigationPane( QtGui.QDockWidget ):
       section = self.sections[index]
       return section.get_items()
 
-    self.mt.post( get_models_for_tree,
-                 lambda models:self.set_items_in_tree( models ), dependency = self )
+    post( get_models_for_tree, self.set_items_in_tree )
 
   def createContextMenu( self, point ):
     logger.debug( 'creating context menu' )

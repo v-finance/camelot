@@ -34,8 +34,8 @@ logger = logging.getLogger( 'camelot.view.controls.inheritance' )
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from camelot.view.controls.modeltree import ModelTree
-from camelot.view.controls.modeltree import ModelItem
+from camelot.view.controls.modeltree import ModelTree, ModelItem
+from camelot.view.model_thread import post
 
 QT_MAJOR_VERSION = float( '.'.join( str( QtCore.QT_VERSION_STR ).split( '.' )[0:2] ) )
 
@@ -59,9 +59,7 @@ class SubclassTree( ModelTree ):
     #self.setSelectionBehavior(QtGui.QAbstractItemView.SelectItems)
     self.admin = admin
     self.subclasses = []
-    self.mt = admin.getModelThread()
-    self.mt.post( self.admin.getSubclasses,
-                  self.setSubclasses, dependency = self )
+    post( self.admin.getSubclasses, self.setSubclasses )
     self.connect( self,
                   QtCore.SIGNAL( 'clicked(const QModelIndex&)' ),
                   self.emitSubclassClicked )

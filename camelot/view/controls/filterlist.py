@@ -42,29 +42,28 @@ class FilterList(QtGui.QScrollArea):
 :param items: list of tubles (name, choices) for constructing the different filterboxes
 """
     QtGui.QScrollArea.__init__(self, parent)
-    self.widget = QtGui.QWidget()
+    widget = QtGui.QWidget(self)
     self.setFrameStyle(QtGui.QFrame.NoFrame)
     layout = QtGui.QVBoxLayout()
-    self.filters = []
     
     for filter,(name,options) in items:
-      widget = filter.render(self, name, options)
-      layout.addWidget(widget)
-      self.filters.append(widget)
-      self.connect(widget,
+      filter_widget = filter.render(widget, name, options)
+      layout.addWidget(filter_widget)
+      self.connect(filter_widget,
                    QtCore.SIGNAL('filter_changed'),
                    self.emit_filters_changed)
 
     layout.addStretch()
-    self.widget.setLayout(layout)
-    self.setWidget(self.widget)
-    self.setMaximumWidth(self.widget.width() + 10)
-    if len(self.filters) == 0:
+    widget.setLayout(layout)
+    self.setWidget(widget)
+    self.setMaximumWidth(widget.width() + 10)
+    if len(items) == 0:
       self.setMaximumWidth(0)
 
   def decorate_query(self, query):
-    for filter in self.filters:
-      query = filter.decorate_query(query)
+    for i in range(self.widget().layout().count()):
+      if self.widget().layout().itemAt(i).widget():
+        query = self.widget().layout().itemAt(i).widget().decorate_query(query)
     return query
 
   def emit_filters_changed(self):

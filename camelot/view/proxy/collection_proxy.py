@@ -47,8 +47,7 @@ from camelot.view.fifo import fifo
 from camelot.view.controls import delegates
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import gui_function, \
-                                      model_function, \
-                                      get_model_thread
+                                      model_function, post
 
 
 class DelayedProxy( object ):
@@ -151,7 +150,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
   _header_font_required = QtGui.QApplication.font()
   _header_font_required.setBold( True )
   
-  header_icon = Icon( 'tango/16x16/places/folder.png' ).getQIcon()
+  header_icon = Icon( 'tango/16x16/places/folder.png' )
 
   @gui_function
   def __init__( self, admin, collection_getter, columns_getter,
@@ -173,7 +172,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     QtCore.QAbstractTableModel.__init__(self)
     self.admin = admin
     self.iconSize = QtCore.QSize( QtGui.QFontMetrics( self._header_font_required ).height() - 4, QtGui.QFontMetrics( self._header_font_required ).height() - 4 )
-    self.form_icon = QtCore.QVariant( self.header_icon.pixmap( self.iconSize ) )
+    self.form_icon = QtCore.QVariant( self.header_icon.getQIcon().pixmap( self.iconSize ) )
     self.validator = admin.createValidator( self )
     self.collection_getter = collection_getter
     self.column_count = 0
@@ -208,11 +207,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
       self._columns = columns_getter()
       return self._columns
 
-    self.mt.post( get_columns, lambda columns:self.setColumns( columns ), dependency = self )
+    post( get_columns, self.setColumns )
     # the initial collection might contain unflushed rows
-    self.mt.post( self.updateUnflushedRows, dependency = self )
+    post( self.updateUnflushedRows )
     # in that way the number of rows is requested as well
-    self.mt.post( self.getRowCount, self.setRowCount, dependency = self )
+    post( self.getRowCount, self.setRowCount )
     self.logger.debug( 'initialization finished' )
     
 
@@ -247,24 +246,24 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         return row, o
 
       return refresh_entity
+    
+    post( create_refresh_entity( row ), self._revert_row )
 
-    def refresh( row_and_entity ):
-      row, entity = row_and_entity
-      self.handleRowUpdate( row )
-      self.rsh.sendEntityUpdate( self, entity )
+  def _revert_row(self, row_and_entity ):
+    row, entity = row_and_entity
+    self.handleRowUpdate( row )
+    self.rsh.sendEntityUpdate( self, entity )
 
-
-    self.mt.post( create_refresh_entity( row ), refresh, dependency = self )
-
+  @gui_function
   def refresh( self ):
+    post( self.getRowCount, self._refresh_content )
 
-    def refresh_content( rows ):
-      self.cache = {Qt.DisplayRole : fifo( 10 * self.max_number_of_rows ),
-                    Qt.EditRole    : fifo( 10 * self.max_number_of_rows ),
-                    Qt.ToolTipRole : fifo( 10 * self.max_number_of_rows )}
-      self.setRowCount( rows )
-
-    self.mt.post( self.getRowCount, refresh_content, dependency = self )
+  @gui_function
+  def _refresh_content(self, rows ):
+    self.cache = {Qt.DisplayRole : fifo( 10 * self.max_number_of_rows ),
+                  Qt.EditRole    : fifo( 10 * self.max_number_of_rows ),
+                  Qt.ToolTipRole : fifo( 10 * self.max_number_of_rows )}
+    self.setRowCount( rows )
 
   def setCollectionGetter( self, collection_getter ):
     self.collection_getter = collection_getter
@@ -318,8 +317,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     @param rows the new number of rows
     """
     self.rows = rows
-    if not sip.isdeleted( self ):
-      self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
+    self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
 
   def getItemDelegate( self ):
     self.logger.debug( 'getItemDelegate' )
@@ -549,14 +547,14 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
         return update_model_and_cache
 
-      def emit_changes( region ):
-        if region:
-          self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
-                    self.index( region[0][0], region[0][1] ), self.index( region[1][0], region[1][1] ) )
-
-      self.mt.post( make_update_function( index.row(), index.column(), value ), emit_changes, dependency = self )
+      post( make_update_function( index.row(), index.column(), value ), self._emit_changes )
 
     return True
+
+  def _emit_changes( self, region ):
+    if region:
+      self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
+                 self.index( region[0][0], region[0][1] ), self.index( region[1][0], region[1][1] ) )
 
   def flags( self, index ):
     flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
@@ -589,7 +587,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
       pass
     return self.collection_getter()[row]
 
-  def _cache_extended( self, offset, limit ):
+  def _cache_extended( self, interval ):
+    offset, limit = interval
     self.rows_under_request.difference_update( set( range( offset, offset + limit ) ) )
     self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
               self.index( offset, 0 ), self.index( offset + limit, self.column_count ) )
@@ -608,8 +607,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         offset = max( row - self.max_number_of_rows / 2, 0 )
         limit = self.max_number_of_rows
         self.rows_under_request.update( set( range( offset, offset + limit ) ) )
-        self.mt.post( lambda :self._extend_cache( offset, limit ),
-                     lambda interval:self._cache_extended( *interval ) , dependency = self )
+        post( lambda :self._extend_cache( offset, limit ), self._cache_extended )
       return empty_row_data
 
   @model_function
@@ -654,7 +652,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         # even if the object is not deleted, it needs to be flushed to make
         # sure it's out of the collection
         Session.object_session( o ).flush( [o] )
-    self.mt.post( lambda:None, lambda * args:self.refresh() , dependency = self )
+    post( self.getRowCount, self._refresh_content )
 
   @gui_function
   def removeRow( self, row, delete = True ):
@@ -671,7 +669,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
       return delete_function
 
-    self.mt.post( create_delete_function( row ), dependency = self )
+    post( create_delete_function( row ) )
     return True
 
   @model_function
@@ -698,7 +696,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 #                       authentication = getCurrentAuthentication())
 #      elixir.session.flush([history])
 #      self.rsh.sendEntityCreate(self, o)
-    self.mt.post( lambda:None, lambda * args:self.refresh(), dependency = self )
+    post( self.getRowCount, self._refresh_content )
     return row
 
   @gui_function
@@ -712,7 +710,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
       return insert_function
 
-    self.mt.post( create_insert_function( entity_instance_getter ) , dependency = self )
+    post( create_insert_function( entity_instance_getter ) )
 
   @model_function
   def getData( self ):

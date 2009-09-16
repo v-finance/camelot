@@ -58,6 +58,8 @@ def create_entity_search_query_decorator(admin, text):
     def append_column(c):
       if issubclass(c.type.__class__, camelot.types.Color):
         pass
+      elif issubclass(c.type.__class__, camelot.types.File):
+        pass
       elif issubclass(c.type.__class__, camelot.types.Code):
         codes = text.split('.')
         args.append(c.like(['%'] + codes + ['%']))

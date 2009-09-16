@@ -39,9 +39,6 @@ positive and in red when they are negative.
     value = index.model().data(index, Qt.EditRole).toDouble()[0]
     color = index.model().data(index, Qt.BackgroundRole)
     background_color = QtGui.QColor(color)
-    #background_color.setRgb(*color)
-    #print background_color
-    #rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
     fontColor = QtGui.QColor()
     
     if( option.state & QtGui.QStyle.State_Selected ):

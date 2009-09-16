@@ -1,5 +1,5 @@
 
-from customeditor import *
+from camelot.view.model_thread import post
 from choiceseditor import ChoicesEditor
 
 class OneToManyChoicesEditor(ChoicesEditor):
@@ -11,5 +11,4 @@ class OneToManyChoicesEditor(ChoicesEditor):
     def get_choices():
       return [(o, unicode(o)) for o in target.query.all()]
 
-    from camelot.view.model_thread import get_model_thread
-    get_model_thread().post(get_choices, self.set_choices) 
+    post(get_choices, self.set_choices) 

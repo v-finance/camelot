@@ -5,7 +5,7 @@ from customeditor import CustomEditor, QtCore, QtGui, Qt
 from wideeditor import WideEditor
 
 from camelot.view.art import Icon
-from camelot.view.model_thread import gui_function, model_function
+from camelot.view.model_thread import gui_function, model_function, post
 
 class One2ManyEditor( CustomEditor, WideEditor ):
 
@@ -89,10 +89,20 @@ actual data to the editor
         data = list( self.model.getData() )
         open_data_with_excel( title, columns, data )
 
-    self.admin.mt.post( export, dependency = self )
+    post( export )
 
   def getModel( self ):
     return self.model
+
+  def update_delegates( self, *args ):
+    if self.model:
+      delegate = self.model.getItemDelegate()
+      if delegate:
+        self.table.setItemDelegate( delegate )
+        for i in range( self.model.columnCount() ):
+          txtwidth = self.model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
+          colwidth = self.table.columnWidth( i )
+          self.table.setColumnWidth( i, max( txtwidth, colwidth ) )
 
   def set_value( self, model ):
     model = CustomEditor.set_value( self, model )
@@ -101,24 +111,21 @@ actual data to the editor
       self.table.setModel( model )
 
       def create_fill_model_cache( model ):
+        
         def fill_model_cache():
           model._extend_cache( 0, 10 )
 
         return fill_model_cache
 
-      def create_delegate_updater( model ):
-        def update_delegates( *args ):
-          self.table.setItemDelegate( model.getItemDelegate() )
-          for i in range( self.model.columnCount() ):
-            txtwidth = self.model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
-            colwidth = self.table.columnWidth( i )
-            self.table.setColumnWidth( i, max( txtwidth, colwidth ) )
+      post( create_fill_model_cache( model ), self.update_delegates )
 
-        return update_delegates
-
-      self.admin.mt.post( create_fill_model_cache( model ),
-                         create_delegate_updater( model ), dependency = self.table )
-
+  @gui_function
+  def activate_editor( self, row ):
+    index = self.model.index( row, 0 )
+    self.table.scrollToBottom()
+    self.table.setCurrentIndex( index )
+    self.table.edit( index )
+        
   def newRow( self ):
     from camelot.view.workspace import get_workspace
     workspace = get_workspace()
@@ -132,14 +139,7 @@ actual data to the editor
         self.admin.setDefaults( o )
         return row
 
-      @gui_function
-      def activate_editor( row ):
-        index = self.model.index( row, 0 )
-        self.table.scrollToBottom()
-        self.table.setCurrentIndex( index )
-        self.table.edit( index )
-
-      self.admin.mt.post( create, activate_editor )
+      post( create, self.activate_editor )
 
     else:
       prependentity = lambda o: self.model.insertEntityInstance( 0, o )

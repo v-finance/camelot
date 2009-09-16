@@ -3,7 +3,7 @@ from customeditor import *
 from abstractmanytooneeditor import AbstractManyToOneEditor
 
 from camelot.view.art import Icon
-from camelot.view.model_thread import gui_function, model_function
+from camelot.view.model_thread import gui_function, model_function, post
 from camelot.view.search import create_entity_search_query_decorator
 
 class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
@@ -105,8 +105,8 @@ the relation
     def create_search_completion( text ):
       return lambda: self.search_completions( text )
 
-    self.admin.mt.post( create_search_completion( unicode( text ) ),
-                       self.display_search_completions, dependency = self )
+    post( create_search_completion( unicode( text ) ),
+          self.display_search_completions )
     self.completer.complete()
 
   @model_function
@@ -121,10 +121,8 @@ the relation
 
   @gui_function
   def display_search_completions( self, completions ):
-    import sip
-    if not sip.isdeleted( self ):
-      self.completions_model.setCompletions( completions )
-      self.completer.complete()
+    self.completions_model.setCompletions( completions )
+    self.completer.complete()
 
   def completionActivated( self, index ):
     object_getter = index.data( Qt.EditRole )
@@ -156,25 +154,25 @@ the relation
     def get_has_subclasses():
       return len( self.admin.getSubclasses() )
 
-    @gui_function
-    def show_new_view( has_subclasses ):
-      selected = QtGui.QDialog.Accepted
-      admin = self.admin
-      if has_subclasses:
-        from camelot.view.controls.inheritance import SubclassDialog
-        select_subclass = SubclassDialog( self, self.admin )
-        select_subclass.setWindowTitle( 'Select' )
-        selected = select_subclass.exec_()
-        admin = select_subclass.selected_subclass
-      if selected:
-        from camelot.view.workspace import get_workspace
-        workspace = get_workspace()
-        form = admin.create_new_view( workspace )
-        self.connect( form, form.entity_created_signal, self.selectEntity )
-        sub_window = workspace.addSubWindow( form )
-        sub_window.show()
+    post( get_has_subclasses, self.show_new_view )
 
-    self.admin.mt.post( get_has_subclasses, show_new_view, dependency = self )
+  @gui_function
+  def show_new_view( self, has_subclasses ):
+    selected = QtGui.QDialog.Accepted
+    admin = self.admin
+    if has_subclasses:
+      from camelot.view.controls.inheritance import SubclassDialog
+      select_subclass = SubclassDialog( self, self.admin )
+      select_subclass.setWindowTitle( 'Select' )
+      selected = select_subclass.exec_()
+      admin = select_subclass.selected_subclass
+    if selected:
+      from camelot.view.workspace import get_workspace
+      workspace = get_workspace()
+      form = admin.create_new_view( workspace )
+      self.connect( form, form.entity_created_signal, self.selectEntity )
+      sub_window = workspace.addSubWindow( form )
+      sub_window.show()
 
   def createFormView( self ):
     if self.entity_instance_getter:
@@ -184,27 +182,29 @@ the relation
         admin = self.admin.getSubclassEntityAdmin( object.__class__ )
         return admin, ''
 
-      def show_form_view( admin_and_title ):
-        admin, title = admin_and_title
+      post( get_admin_and_title, self.show_form_view)
+      
+  def show_form_view( self, admin_and_title ):
+    admin, title = admin_and_title
 
-        def create_collection_getter( instance_getter ):
-          return lambda:[instance_getter()]
+    def create_collection_getter( instance_getter ):
+      return lambda:[instance_getter()]
 
-        from camelot.view.proxy.collection_proxy import CollectionProxy
-        from camelot.view.workspace import get_workspace
+    from camelot.view.proxy.collection_proxy import CollectionProxy
+    from camelot.view.workspace import get_workspace
 
-        workspace = get_workspace()
-        model = CollectionProxy( admin,
-                         create_collection_getter( self.entity_instance_getter ),
-                         admin.getFields )
-        self.connect( model,
-                     QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
-                     self.dataChanged )
-        form = admin.create_form_view( title, model, 0, workspace )
-        workspace.addSubWindow( form )
-        form.show()
+    workspace = get_workspace()
+    model = CollectionProxy( admin,
+                     create_collection_getter( self.entity_instance_getter ),
+                     admin.getFields )
+    self.connect( model,
+                 QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
+                 self.dataChanged )
+    form = admin.create_form_view( title, model, 0, workspace )
+    workspace.addSubWindow( form )
+    form.show()
 
-      self.admin.mt.post( get_admin_and_title, show_form_view, dependency = self )
+
 
   def dataChanged( self, index1, index2 ):
     self.setEntity( self.entity_instance_getter, False )
@@ -217,6 +217,28 @@ the relation
     if value:
       self.setEntity( value, propagate = False )
 
+  def set_instance_represenation( self, representation_and_propagate ):
+    """Update the gui"""
+    ((desc, pk), propagate) = representation_and_propagate
+    self._entity_representation = desc
+    self.search_input.setText( desc )
+    if pk != False:
+      icon = Icon( 'tango/16x16/places/folder.png' ).getQIcon()
+      self.open_button.setIcon( icon )
+      icon = Icon( 'tango/16x16/actions/edit-clear.png' ).getQIcon()
+      self.search_button.setIcon( icon )
+      self.entity_set = True
+      #self.search_input.setReadOnly(True)
+    else:
+      icon = Icon( 'tango/16x16/actions/document-new.png' ).getQIcon()
+      self.open_button.setIcon( icon )
+      icon = Icon( 'tango/16x16/actions/system-search.png' ).getQIcon()
+      self.search_button.setIcon( icon )
+      self.entity_set = False
+      #self.search_input.setReadOnly(False)
+    if propagate:
+      self.emit( QtCore.SIGNAL( 'editingFinished()' ) )
+        
   def setEntity( self, entity_instance_getter, propagate = True ):
 
     def create_instance_getter( entity_instance ):
@@ -231,36 +253,12 @@ or ('', False) if the instance was None
       entity = entity_instance_getter()
       self.entity_instance_getter = create_instance_getter( entity )
       if entity and hasattr( entity, 'id' ):
-        return ( unicode( entity ), entity.id )
+        return (( unicode( entity ), entity.id ), propagate)
       elif entity:
-        return ( unicode( entity ), False )
-      return ( '', False )
+        return (( unicode( entity ), False ), propagate)
+      return (( '', False ), propagate)
 
-    def set_instance_represenation( representation ):
-      """Update the gui"""
-      import sip
-      desc, pk = representation
-      self._entity_representation = desc
-      if not sip.isdeleted( self ):
-        self.search_input.setText( desc )
-        if pk != False:
-          icon = Icon( 'tango/16x16/places/folder.png' ).getQIcon()
-          self.open_button.setIcon( icon )
-          icon = Icon( 'tango/16x16/actions/edit-clear.png' ).getQIcon()
-          self.search_button.setIcon( icon )
-          self.entity_set = True
-          #self.search_input.setReadOnly(True)
-        else:
-          icon = Icon( 'tango/16x16/actions/document-new.png' ).getQIcon()
-          self.open_button.setIcon( icon )
-          icon = Icon( 'tango/16x16/actions/system-search.png' ).getQIcon()
-          self.search_button.setIcon( icon )
-          self.entity_set = False
-          #self.search_input.setReadOnly(False)
-      if propagate:
-        self.emit( QtCore.SIGNAL( 'editingFinished()' ) )
-
-    self.admin.mt.post( get_instance_represenation, set_instance_represenation, dependency = self )
+    post( get_instance_represenation, self.set_instance_represenation )
 
   def selectEntity( self, entity_instance_getter ):
     self.setEntity( entity_instance_getter )

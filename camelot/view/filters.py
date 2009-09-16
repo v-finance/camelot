@@ -30,6 +30,8 @@ Python structures to represent filters.
 These structures can be transformed to QT forms.
 """
 
+from camelot.view.model_thread import gui_function
+
 def structure_to_filter(structure):
   """Convert a python data structure to a filter, using the following rules :
   
@@ -53,7 +55,8 @@ class Filter(object):
     """
     self.attribute = attribute
     self._value_to_string = value_to_string
-     
+
+  @gui_function     
   def render(self, parent, name, options):
     """Render this filter as a qt object
     @param parent: its parent widget
@@ -109,6 +112,7 @@ class Filter(object):
 class GroupBoxFilter(Filter):
   """Filter where the items are displayed in a QGroupBox"""
   
+  @gui_function
   def render(self, parent, name, options):
     
     from PyQt4 import QtCore, QtGui
@@ -119,7 +123,7 @@ class GroupBoxFilter(Filter):
     
       def __init__(self, name, choices, parent):
         QtGui.QGroupBox.__init__(self, name, parent)
-        self.group = QtGui.QButtonGroup()
+        self.group = QtGui.QButtonGroup(self)
         self.item = name
         self.unique_values = []
         self.choices = None
@@ -132,7 +136,7 @@ class GroupBoxFilter(Filter):
         self.choices = choices
         layout = QtGui.QVBoxLayout()
         for i,name in enumerate([unicode(c[0]) for c in choices]):
-          button = QtGui.QRadioButton(name)
+          button = QtGui.QRadioButton(name, self)
           layout.addWidget(button)
           self.group.addButton(button, i)
           if i==0:
@@ -152,6 +156,7 @@ class GroupBoxFilter(Filter):
 class ComboBoxFilter(Filter):
   """Filter where the items are displayed in a QComboBox"""
   
+  @gui_function
   def render(self, parent, name, options):
     
     from PyQt4 import QtCore, QtGui

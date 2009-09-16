@@ -1,31 +1,4 @@
-#
-#from customeditor import *
-#
-#class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
-#  
-#  def __init__(self, parent, editable=True, **kwargs):
-#    QtGui.QCheckBox.__init__(self, parent)
-#    AbstractCustomEditor.__init__(self)
-#    self.setEnabled(editable)
-#    
-#  def set_value(self, value):
-#    print 'VALUE : ', value
-#    value = AbstractCustomEditor.set_value(self, value)
-#    if value:
-#      self.setCheckState(Qt.Checked)
-#    else:
-#      self.setCheckState(Qt.Unchecked)
-#    
-#    
-#    print 'ISCHECKED? : ', self.isChecked()
-#      
-#  def get_value(self):
-#    return AbstractCustomEditor.get_value(self) or self.isChecked()
-#  
-#  
-  
-  
-  
+
 from customeditor import *
 from PyQt4 import QtGui
 

@@ -29,8 +29,6 @@
 class to handle printing
 """
 
-import os
-import sys
 import logging
 
 #FORMAT = '[%(levelname)-5s] [%(name)-35s] - %(message)s' 
@@ -38,11 +36,8 @@ import logging
 logger = logging.getLogger( 'printer' )
 logger.setLevel( logging.DEBUG )
 
-import settings
-
 from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
+from camelot.view.model_thread import post
 
 icon = '../art/tango/32x32/apps/system-users.png'
 
@@ -52,6 +47,7 @@ class Printer:
     self.printer.setPageSize( QtGui.QPrinter.Letter )
 
   def printView( self, view, parent ):
+    import settings
     logger.debug( 'printing table view' )
     dialog = QtGui.QPrintDialog( self.printer, parent )
     if not dialog.exec_():
@@ -124,6 +120,5 @@ class Printer:
 
     from camelot.view.model_thread import get_model_thread
     from camelot.view.export.printer import open_html_in_print_preview_from_gui_thread
-    mt = get_model_thread()
-    mt.post( generate_html, open_html_in_print_preview_from_gui_thread, dependency = self.printer )
+    post( generate_html, open_html_in_print_preview_from_gui_thread )
 

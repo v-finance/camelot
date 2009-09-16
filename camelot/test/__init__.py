@@ -54,10 +54,9 @@ the name of the test class
   def setUp(self):
     self.app = get_application()
     from camelot.view.model_thread import get_model_thread, construct_model_thread, has_model_thread
-    from camelot.view.response_handler import ResponseHandler
     from camelot.view.remote_signals import construct_signal_handler
-    rh = ResponseHandler()
-    construct_model_thread(rh)
+    if not has_model_thread():
+      construct_model_thread()
     construct_signal_handler()
     self.mt = get_model_thread()
     if not self.mt.isRunning():
@@ -66,8 +65,9 @@ the name of the test class
     self.process()
     
   def tearDown(self):
-    #self.process()
-    self.mt.exit()
+    self.process()
+    #self.mt.exit(0)
+    #self.mt.wait()
     
 class SchemaTest(ModelThreadTestCase):
   """Test the database schema"""

@@ -34,7 +34,7 @@ logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
 from collection_proxy import CollectionProxy, RowDataAsUnicode, RowDataFromObject, ToolTipDataFromObject
 from collection_proxy import RowDataFromObject
-from camelot.view.model_thread import model_function
+from camelot.view.model_thread import model_function, gui_function
 
 
 class QueryTableProxy(CollectionProxy):
@@ -69,6 +69,7 @@ class QueryTableProxy(CollectionProxy):
     self._clean_appended_rows()
     return self._query_getter().count() + len(self._appended_rows)
 
+  @gui_function
   def setQuery(self, query_getter):
     """Set the query and refresh the view"""
     self._query_getter = query_getter

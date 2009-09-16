@@ -49,7 +49,7 @@ from camelot.view.art import Icon
 from camelot.action import createAction, addActions
 from camelot.view.controls.navpane import PaneButton, NavigationPane
 from camelot.view.controls.printer import Printer
-from camelot.view.model_thread import get_model_thread, construct_model_thread
+from camelot.view.model_thread import get_model_thread, construct_model_thread, post
 from camelot.view.response_handler import ResponseHandler
 from camelot.view.remote_signals import construct_signal_handler
 #from camelot.view.importer import db_import
@@ -139,10 +139,9 @@ class MainWindow( QtGui.QMainWindow ):
     progress = QtGui.QProgressDialog( 'Please wait', 'Run in background', 0, 0 )
     progress.setWindowTitle( name )
     progress.show()
-    mt = get_model_thread()
 
     from controls.exception import model_thread_exception_message_box
-    mt.post( callable, lambda * args:progress.close(), model_thread_exception_message_box, dependency = self )
+    post( callable, progress.close, model_thread_exception_message_box )
 
   # QAction objects creation methods
   def createActions( self ):
@@ -416,8 +415,6 @@ class MainWindow( QtGui.QMainWindow ):
   def exportToExcel( self ):
     """creates an excel file from the view"""
 
-    mt = get_model_thread()
-
     def export():
       from export.excel import open_data_with_excel
       title = self.activeMdiChild().widget().getTitle()
@@ -425,49 +422,31 @@ class MainWindow( QtGui.QMainWindow ):
       data = [d for d in self.activeMdiChild().widget().getData()]
       open_data_with_excel( title, columns, data )
 
-    mt.post( export, dependency = self )
+    post( export )
 
   def exportToWord( self ):
     """Use windows COM to export the active child window to MS word,
     by using its toHtml function"""
-
-    mt = get_model_thread()
 
     def export():
       from export.word import open_html_in_word
       html = self.activeMdiChild().widget().toHtml()
       open_html_in_word( html )
 
-    mt.post( export, dependency = self )
+    post( export )
 
   def exportToMail( self ):
-
-    mt = get_model_thread()
 
     def export():
       from export.outlook import open_html_in_outlook
       html = self.activeMdiChild().widget().toHtml()
       open_html_in_outlook( html )
 
-    mt.post( export, dependency = self )
+    post( export )
 
   def importFromFile( self ):
-      #from camelot.view.wizard.import_data import ImportWizard
-      #wizard = ImportWizard(self.activeMdiChild().widget())
-      #wizard.start()
       from camelot.view.controls.tableview import TableView
       self.activeMdiChild().widget().importFromFile()
-
-#      mt = get_model_thread()
-#      def importData():
-#          from proxy.collection_proxy import RowDataFromObject
-#          from importer.db_import import Importer
-#          importer = Importer(self.app_admin, self, self.workspace)
-#          importer.import_data_in_db(data)
-#
-#      mt.post(importData)    
-
-  # Menus
 
   def createMenus( self ):
     self.fileMenu = self.menuBar().addMenu( _( '&File' ) )

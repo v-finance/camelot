@@ -1,5 +1,8 @@
 
-from customeditor import *
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
+
+from customeditor import CustomEditor, editingFinished
 from camelot.view.art import Icon
 
 class FileEditor(CustomEditor):

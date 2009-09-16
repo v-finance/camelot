@@ -906,6 +906,16 @@ class SnippetsTest(ModelThreadTestCase):
     form = admin.create_form_view('Coordinate', proxy, 0, None)
     form.show()
     self.grab_widget(form)
+    
+  def test_fields_with_tooltips(self):
+    from snippet.fields_with_tooltips import Coordinate
+    from camelot.view.proxy.collection_proxy import CollectionProxy
+    coordinate = Coordinate()
+    admin = Coordinate.Admin(None, Coordinate)
+    proxy = CollectionProxy(admin, lambda:[coordinate], admin.getFields )
+    form = admin.create_form_view('Coordinate', proxy, 0, None)
+    form.show()
+    self.grab_widget(form)
   
 class CamelotSchemaTest(SchemaTest):
   
@@ -924,6 +934,7 @@ if __name__ == '__main__':
 #  runner.run(proxy_one_to_many_test)
 #  schema_test =  unittest.makeSuite(CamelotSchemaTest, 'test')
 #  runner.run(schema_test)
+
   form_action_test =  unittest.makeSuite(FormActionTest, 'test')
   runner.run(form_action_test)
   editors_test =  unittest.makeSuite(EditorsTest, 'test')

@@ -29,11 +29,10 @@
 """
 
 from PyQt4 import QtCore, QtGui
-import sip
 
 from camelot.view.model_thread import post, gui_function
 
-class AbstractView(object):
+class AbstractView(QtGui.QWidget):
   """A string used to format the title of the view ::
 
 title_format = 'Movie rental overview'
@@ -53,9 +52,11 @@ The widget class to be used as a header in the table view::
   @gui_function
   def change_title(self, new_title):
     """Will emit the title_changed_signal"""
-    self.emit(self.title_changed_signal, new_title)
+    import sip
+    if not sip.isdeleted(self):
+      self.emit(self.title_changed_signal, unicode(new_title))
 
-class TabView(QtGui.QWidget, AbstractView):
+class TabView(AbstractView):
   """Class to combine multiple views in Tabs and let them behave as one view.  This class can be
 used when defining custom create_table_view methods on an ObjectAdmin class to group multiple
 table views together in one view.
@@ -65,7 +66,7 @@ table views together in one view.
     """
 :param views: a list of the views to combine
 """
-    QtGui.QWidget.__init__(self, parent)
+    AbstractView.__init__(self, parent)
     layout = QtGui.QVBoxLayout()
     if self.header_widget:
       self.header = self.header_widget(self, admin)
@@ -83,5 +84,5 @@ table views together in one view.
       for view, title in views_and_titles:
         tab_widget.addTab(view, title)
 
-    post(get_views_and_titles, set_views_and_titles, dependency=tab_widget)
-    post(lambda:self.title_format, self.change_title, dependency=self)
+    post(get_views_and_titles, set_views_and_titles )
+    post(lambda:self.title_format, self.change_title )

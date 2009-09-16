@@ -32,12 +32,12 @@ logger = logging.getLogger( 'camelot.view.controls.formview' )
 
 from PyQt4 import QtCore
 from PyQt4 import QtGui
-from camelot.view.model_thread import model_function
+from camelot.view.model_thread import model_function, post
 from camelot.view.controls.view import AbstractView
 
-class FormView( QtGui.QWidget, AbstractView ):
+class FormView( AbstractView ):
   def __init__( self, title, admin, model, index ):
-    QtGui.QWidget.__init__( self )
+    AbstractView.__init__( self )
     self.title_prefix = title
     self.admin = admin
     self.model = model
@@ -62,14 +62,12 @@ class FormView( QtGui.QWidget, AbstractView ):
     def getColumnsAndForm():
       return ( self.model.getColumns(), self.admin.getForm() )
 
-    self.admin.mt.post( getColumnsAndForm,
-                       lambda ( columns, form ):
-                       self.handleGetColumnsAndForm( columns, form ), dependency = self )
+    post( getColumnsAndForm, self.handleGetColumnsAndForm )
 
     def getActions():
       return admin.get_form_actions( None )
 
-    self.admin.mt.post( getActions, self.setActions, dependency = self )
+    post( getActions, self.setActions )
     self.update_title()
 
   def update_title( self ):
@@ -78,18 +76,17 @@ class FormView( QtGui.QWidget, AbstractView ):
       obj = self.getEntity()
       return u'%s %s' % ( self.title_prefix, self.admin.get_verbose_identifier( obj ) )
 
-    self.admin.mt.post( get_title, self.change_title, dependency = self )
+    post( get_title, self.change_title )
 
   def dataChanged( self, index_from, index_to ):
     #@TODO: only revert if this form is in the changed range
     self.widget_mapper.revert()
     self.update_title()
 
-  def handleGetColumnsAndForm( self, columns, form ):
-    import sip
-    if not sip.isdeleted( self ):
-      delegate = self.model.getItemDelegate()
-      self.setColumnsFormAndDelegate( columns, form, delegate )
+  def handleGetColumnsAndForm( self, columns_and_form ):
+    columns, form = columns_and_form
+    delegate = self.model.getItemDelegate()
+    self.setColumnsFormAndDelegate( columns, form, delegate )
 
   def setColumnsFormAndDelegate( self, columns, form, delegate ):
     """Create value and label widgets"""
@@ -120,8 +117,7 @@ class FormView( QtGui.QWidget, AbstractView ):
     return self.model._get_object( self.widget_mapper.currentIndex() )
 
   def setActions( self, actions ):
-    import sip
-    if not sip.isdeleted( self ) and actions:
+    if actions:
       from actionsbox import ActionsBox
       logger.debug( 'setting Actions for formview' )
       self.actions_widget = ActionsBox( self, self.getEntity )
@@ -160,6 +156,22 @@ class FormView( QtGui.QWidget, AbstractView ):
     self.widget_mapper.toPrevious()
     self.update_title()
 
+  def showMessage( self, valid ):
+    import sip
+    if not valid:
+      reply = self.validator.validityDialog( self.widget_mapper.currentIndex(), self ).exec_()
+      if reply == QtGui.QMessageBox.Discard:
+        # clear mapping to prevent data being written again to the model,
+        # then we reverted the row
+        self.widget_mapper.clearMapping()
+        self.model.revertRow( self.widget_mapper.currentIndex() )
+        self.validate_before_close = False
+        self.emit( self.closeAfterValidation )
+    else:
+      self.validate_before_close = False
+      if not sip.isdeleted( self ):
+        self.emit( self.closeAfterValidation )
+            
   def validateClose( self ):
     logger.debug( 'validate before close : %s' % self.validate_before_close )
     if self.validate_before_close:
@@ -170,23 +182,7 @@ class FormView( QtGui.QWidget, AbstractView ):
       def validate():
         return self.validator.isValid( self.widget_mapper.currentIndex() )
 
-      def showMessage( valid ):
-        import sip
-        if not valid:
-          reply = self.validator.validityDialog( self.widget_mapper.currentIndex(), self ).exec_()
-          if reply == QtGui.QMessageBox.Discard:
-            # clear mapping to prevent data being written again to the model,
-            # then we reverted the row
-            self.widget_mapper.clearMapping()
-            self.model.revertRow( self.widget_mapper.currentIndex() )
-            self.validate_before_close = False
-            self.emit( self.closeAfterValidation )
-        else:
-          self.validate_before_close = False
-          if not sip.isdeleted( self ):
-            self.emit( self.closeAfterValidation )
-
-      self.admin.mt.post( validate, showMessage, dependency = self )
+      post( validate, self.showMessage )
       return False
 
     return True

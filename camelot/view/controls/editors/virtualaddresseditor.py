@@ -175,10 +175,6 @@ class VirtualAddressEditor(CustomEditor):
     url = QtCore.QUrl()
     url.setUrl('mailto:' + str(adress) + '?subject=Camelot')
     mailSent = QtGui.QDesktopServices.openUrl(url)
-    if not mailSent:
-      print 'Failed to send Mail.'
-    else:
-      print 'mail client opened.'
 
   def editingFinished(self):
     self.value = []

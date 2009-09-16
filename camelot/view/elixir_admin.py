@@ -40,6 +40,7 @@ import settings
 _ = lambda x: x
 
 from camelot.admin.object_admin import *
+from camelot.view.model_thread import post
 from camelot.admin.validator.entity_validator import EntityValidator
 
 class EntityAdmin( ObjectAdmin ):
@@ -226,7 +227,6 @@ class EntityAdmin( ObjectAdmin ):
     from filters import structure_to_filter
 
     def filter_generator():
-      from filters import GroupBoxFilter
       for structure in self.list_filter:
         filter = structure_to_filter( structure )
         yield ( filter, filter.get_name_and_options( self ) )
@@ -287,10 +287,10 @@ class EntityAdmin( ObjectAdmin ):
                             max_number_of_rows = 1 )
     validator = admin.createValidator( model )
 
-    class NewForm( QtGui.QWidget, AbstractView ):
+    class NewForm( AbstractView ):
 
       def __init__( self, parent ):
-        QtGui.QWidget.__init__( self, parent )
+        AbstractView.__init__( self, parent )
         self.widget_layout = QtGui.QVBoxLayout()
         self.widget_layout.setMargin( 0 )
         self.form_view = admin.create_form_view( 'New', model, 0, parent )
@@ -307,23 +307,58 @@ class EntityAdmin( ObjectAdmin ):
                      self.dataChanged )
         self.connect( self.form_view, AbstractView.title_changed_signal, self.change_title)
 
+      def emit_if_valid( self, valid ):
+        if valid:
+
+          def create_instance_getter( new_object ):
+            return lambda:new_object[0]
+
+          self.emit( self.entity_created_signal,
+                     create_instance_getter( new_object ) )
+              
       def dataChanged( self, index1, index2 ):
 
         def validate():
           return validator.isValid( 0 )
 
-        def emit_if_valid( valid ):
-          if valid:
+        post( validate, self.emit_if_valid )
 
-            def create_instance_getter( new_object ):
-              return lambda:new_object[0]
+      def showMessage( self, valid ):
+        if not valid:
+          reply = validator.validityDialog( 0, self ).exec_()
+          if reply == QtGui.QMessageBox.Discard:
+            # clear mapping to prevent data being written again to the model, after we
+            # reverted the row
+            self.form_view.widget_mapper.clearMapping()
 
-            for o in new_object:
-              self.emit( self.entity_created_signal,
-                        create_instance_getter( new_object ) )
+            def onexpunge_on_all():
+              if onexpunge:
+                for o in new_object:
+                  onexpunge( o )
 
-        admin.mt.post( validate, emit_if_valid, dependency = self )
+            post( onexpunge_on_all )
+            self.validate_before_close = False
+            from camelot.view.workspace import get_workspace
+            for window in get_workspace().subWindowList():
+              if window.widget() == self:
+                window.close()
+        else:
+          def create_instance_getter( new_object ):
+            return lambda:new_object[0]
 
+          for o in new_object:
+            self.emit( self.entity_created_signal,
+                       create_instance_getter( new_object ) )
+          self.validate_before_close = False
+          from camelot.view.workspace import get_workspace, NoDesktopWorkspace
+          workspace = get_workspace()
+          if isinstance( workspace, ( NoDesktopWorkspace ) ):
+            self.close()
+          else:
+            for window in get_workspace().subWindowList():
+              if window.widget() == self:
+                window.close()
+                      
       def validateClose( self ):
         logger.debug( 'validate before close : %s' % self.validate_before_close )
         if self.validate_before_close:
@@ -334,43 +369,7 @@ class EntityAdmin( ObjectAdmin ):
             def validate():
               return validator.isValid( 0 )
 
-            def showMessage( valid ):
-              if not valid:
-                reply = validator.validityDialog( 0, self ).exec_()
-                if reply == QtGui.QMessageBox.Discard:
-                  # clear mapping to prevent data being written again to the model, after we
-                  # reverted the row
-                  self.form_view.widget_mapper.clearMapping()
-
-                  def onexpunge_on_all():
-                    if onexpunge:
-                      for o in new_object:
-                        onexpunge( o )
-
-                  admin.mt.post( onexpunge_on_all, dependency = self )
-                  self.validate_before_close = False
-                  from camelot.view.workspace import get_workspace
-                  for window in get_workspace().subWindowList():
-                    if window.widget() == self:
-                      window.close()
-              else:
-                def create_instance_getter( new_object ):
-                  return lambda:new_object[0]
-
-                for o in new_object:
-                  self.emit( self.entity_created_signal,
-                            create_instance_getter( new_object ) )
-                self.validate_before_close = False
-                from camelot.view.workspace import get_workspace, NoDesktopWorkspace
-                workspace = get_workspace()
-                if isinstance( workspace, ( NoDesktopWorkspace ) ):
-                  self.close()
-                else:
-                  for window in get_workspace().subWindowList():
-                    if window.widget() == self:
-                      window.close()
-
-            admin.mt.post( validate, showMessage, dependency = self )
+            post( validate, self.showMessage )
             return False
           else:
             return True
@@ -417,6 +416,13 @@ class EntityAdmin( ObjectAdmin ):
         self.connect( self, SIGNAL( 'row_selected' ), self.sectionClicked )
         self.setUpdatesEnabled( True )
 
+      def emit_and_close( self, instance_getter ):
+        self.emit( self.entity_selected_signal, instance_getter )
+        from camelot.view.workspace import get_workspace
+        for window in get_workspace().subWindowList():
+          if window.widget() == self:
+            window.close()
+                  
       def sectionClicked( self, index ):
         # table model will be set by the model thread, we can't decently select
         # if it has not been set yet
@@ -429,18 +435,7 @@ class EntityAdmin( ObjectAdmin ):
             entity = self._table_model._get_object( index )
             return create_constant_getter( entity )
 
-          def create_emit_and_close( selectview ):
-
-            def emit_and_close( instance_getter ):
-              selectview.emit( self.entity_selected_signal, instance_getter )
-              from camelot.view.workspace import get_workspace
-              for window in get_workspace().subWindowList():
-                if window.widget() == selectview:
-                  window.close()
-
-            return emit_and_close
-
-          self.admin.mt.post( create_instance_getter, create_emit_and_close( self ) , dependency = self )
+          post( create_instance_getter, self.emit_and_close )
 
     widget = SelectView( admin, parent )
     widget.setUpdatesEnabled( True )

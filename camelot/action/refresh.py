@@ -32,6 +32,7 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.art import Icon
+from camelot.view.model_thread import post
 
 import logging
 logger = logging.getLogger( 'camelot.action.refresh' )
@@ -48,10 +49,12 @@ class SessionRefresh( QtGui.QAction ):
     from camelot.view.remote_signals import get_signal_handler
     self.signal_handler = get_signal_handler()
 
+  def refreshed(self, refreshed_objects ):
+    for o in refreshed_objects:
+      self.signal_handler.sendEntityUpdate( self, o )
+
   def sessionRefresh( self, checked ):
     logger.debug( 'session refresh requested' )
-    from camelot.view.model_thread import get_model_thread
-    mt = get_model_thread()
 
     def refresh_objects():
       from elixir import session
@@ -63,8 +66,5 @@ class SessionRefresh( QtGui.QAction ):
 
       return refreshed_objects
 
-    def signal_refresh( refreshed_objects ):
-      for o in refreshed_objects:
-        self.signal_handler.sendEntityUpdate( self, o )
 
-    mt.post( refresh_objects, signal_refresh, dependency = self )
+    post( refresh_objects, self.refreshed)

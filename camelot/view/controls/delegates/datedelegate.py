@@ -22,7 +22,7 @@ class DateDelegate(CustomDelegate):
     
     background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
     
-    if dateObj != None and dateObj != camelot.view.proxy.ValueLoading:
+    if dateObj != None and dateObj != ValueLoading:
       formattedDate = QtCore.QDate(dateObj).toString(self.date_format)
     else:
       formattedDate = "0/0/0"

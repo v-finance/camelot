@@ -25,7 +25,7 @@ overwritten.
 
 from PyQt4 import QtGui, QtCore
 from camelot.view.art import Icon
-from camelot.view.model_thread import gui_function
+from camelot.view.model_thread import gui_function, post
 
 class FormAction( object ):
   """Abstract base class to implement form actions"""
@@ -88,12 +88,7 @@ class FormActionFromModelFunction( FormAction ):
 
       return request
 
-    def exception( exc ):
-      progress.close()
-
-    from camelot.view.model_thread import get_model_thread
-    mt = get_model_thread()
-    mt.post( create_request( entity_getter ), lambda * a:progress.close(), exception = exception, dependency = progress )
+    post( create_request( entity_getter ), progress.close, exception = progress.close )
 
 class PrintHtmlFormAction( FormActionFromModelFunction ):
   """Create an action for a form that pops up a print preview for generated html.

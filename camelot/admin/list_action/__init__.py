@@ -1,5 +1,6 @@
 from PyQt4 import QtGui, QtCore
 from camelot.view.art import Icon
+from camelot.view.model_thread import post
 
 class ListAction( object ):
   """Abstract base class to implement list actions"""
@@ -59,12 +60,7 @@ class ListActionFromModelFunction( ListAction ):
 
       return request
 
-    def exception( exc ):
-      progress.close()
-
-    from camelot.view.model_thread import get_model_thread
-    mt = get_model_thread()
-    mt.post( create_request( collection_getter ), lambda * a:progress.close(), exception = exception, dependency = progress )
+    post( create_request( collection_getter ), progress.close, exception = progress.close )
 
 class PrintHtmlListAction( ListActionFromModelFunction ):
 

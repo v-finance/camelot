@@ -1,6 +1,7 @@
 
 from customeditor import CustomEditor, QtCore, QtGui
 from wideeditor import WideEditor
+from camelot.view.model_thread import post
 
 class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
   """Widget for editing a many 2 one relation a a form embedded in another
@@ -33,25 +34,24 @@ form.
         self.entity_instance_getter = create_instance_getter( entity )
       else:
         self.entity_instance_getter = create_instance_getter( self.admin.entity() )
+      return propagate
 
-    def update_form( existing_entity ):
-      import sip
-      if not sip.isdeleted( self ):
-        if self.form:
-          self.form.deleteLater()
-          self.layout.removeWidget( self.form )
+    post( set_entity_instance, self.update_form )
 
-        from camelot.view.proxy.collection_proxy import CollectionProxy
+  def update_form(self, propagate ):
+    if self.form:
+      self.form.deleteLater()
+      self.layout.removeWidget( self.form )
 
-        def create_collection_getter( instance_getter ):
-          return lambda:[instance_getter()]
+    from camelot.view.proxy.collection_proxy import CollectionProxy
 
-        model = CollectionProxy( self.admin,
-                                create_collection_getter( self.entity_instance_getter ),
-                                self.admin.getFields )
-        self.form = self.admin.create_form_view( '', model, 0, self )
-        self.layout.addWidget( self.form )
-        if propagate:
-          self.emit( QtCore.SIGNAL( 'editingFinished()' ) )
+    def create_collection_getter( instance_getter ):
+      return lambda:[instance_getter()]
 
-    self.admin.mt.post( set_entity_instance, update_form, dependency = self )
+    model = CollectionProxy( self.admin,
+                            create_collection_getter( self.entity_instance_getter ),
+                            self.admin.getFields )
+    self.form = self.admin.create_form_view( '', model, 0, self )
+    self.layout.addWidget( self.form )
+    if propagate:
+      self.emit( QtCore.SIGNAL( 'editingFinished()' ) )

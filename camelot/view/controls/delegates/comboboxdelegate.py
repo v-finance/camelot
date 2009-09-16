@@ -1,5 +1,6 @@
 
 from customdelegate import *
+from camelot.view.model_thread import post
 
 class ComboBoxDelegate(CustomDelegate):
   
@@ -23,9 +24,7 @@ class ComboBoxDelegate(CustomDelegate):
       return choices_getter
     
     editor.set_value(value)
-    get_model_thread().post(create_choices_getter(index.model(),
-                                                  index.row()),
-                                                  editor.set_choices)
+    post(create_choices_getter(index.model(),index.row()), editor.set_choices)
 
   def paint(self, painter, option, index):
     painter.save()

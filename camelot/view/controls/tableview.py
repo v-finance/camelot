@@ -34,12 +34,11 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QSizePolicy
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtCore import Qt
-import sip
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
 import datetime
-from camelot.view.model_thread import model_function, gui_function
+from camelot.view.model_thread import model_function, gui_function, post
 
 from search import SimpleSearchControl
 
@@ -117,7 +116,7 @@ class HeaderWidget( QtGui.QWidget ):
     if self.number_of_rows:
       self.number_of_rows.setNumberOfRows( rows )
 
-class TableView( QtGui.QWidget, AbstractView  ):
+class TableView( AbstractView  ):
   """A generic tableview widget that puts together some other widgets.  The behaviour of this class and
 the resulting interface can be tuned by specifying specific class attributes which define the underlying
 widgets used ::
@@ -167,16 +166,15 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
   title_format = '%(verbose_name_plural)s'
 
   def __init__( self, admin, search_text = None, parent = None ):
-    QtGui.QWidget.__init__( self, parent )
+    AbstractView.__init__( self, parent )
     self.admin = admin
-    admin.mt.post( self.get_title, self.change_title, dependency = self )
+    post( self.get_title, self.change_title )
     widget_layout = QtGui.QVBoxLayout()
     if self.header_widget:
       self.header = self.header_widget( self, admin )
       widget_layout.addWidget( self.header )
       self.connect( self.header.search, SIGNAL( 'search' ), self.startSearch )
       self.connect( self.header.search, SIGNAL( 'cancel' ), self.cancelSearch )
-
       if search_text:
         self.header.search.search( search_text )
     else:
@@ -198,10 +196,8 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     self.setLayout( widget_layout )
     self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
     self.search_filter = lambda q: q
-    self.setAttribute( QtCore.Qt.WA_DeleteOnClose )
-    admin.mt.post( self.admin.getSubclasses,
-                   self.setSubclassTree, 
-                   dependency = self )
+    #self.setAttribute( QtCore.Qt.WA_DeleteOnClose )
+    post( self.admin.getSubclasses, self.setSubclassTree )
 
   @model_function
   def get_title( self ):
@@ -209,7 +205,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
 
   @gui_function
   def setSubclassTree( self, subclasses ):
-    if len( subclasses ) > 1:
+    if len( subclasses ) > 0:
       from inheritance import SubclassTree
       class_tree = SubclassTree( self.admin, self )
       self.splitter.insertWidget( 0, class_tree )
@@ -229,9 +225,11 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
   def set_admin( self, admin ):
     """Switch to a different subclass, where admin is the admin object of the
     subclass"""
+    logger.debug('set_admin called')
     self.admin = admin
     if self.table:
       self.disconnect(self._table_model, QtCore.SIGNAL( 'layoutChanged()' ), self.tableLayoutChanged )
+      self.table_layout.removeWidget(self.table)
       self.table.deleteLater()
       self._table_model.deleteLater()
     self.table = self.table_widget( self )
@@ -249,13 +247,12 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     def get_filters_and_actions():
       return ( admin.get_filters(), admin.get_list_actions() )
 
-    admin.mt.post( get_filters_and_actions,
-                   self.set_filters_and_actions, dependency = self )
-    admin.mt.post( lambda: admin.getListCharts(),
-                   self.setCharts, dependency = self )
+    post( get_filters_and_actions,  self.set_filters_and_actions )
+    post( admin.getListCharts, self.setCharts )
 
   @gui_function
   def tableLayoutChanged( self ):
+    logger.debug('tableLayoutChanged')
     if self.header:
       self.header.setNumberOfRows( self._table_model.rowCount() )
     self.table.setItemDelegate( self._table_model.getItemDelegate() )
@@ -266,66 +263,67 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
   @gui_function
   def setCharts( self, charts ):
     """creates and display charts"""
-    if charts:
-
-      from matplotlib.figure import Figure
-      from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as \
-                                                     FigureCanvas
-
-      chart = charts[0]
-
-      def getData():
-        """fetches data for chart"""
-        from sqlalchemy.sql import select, func
-        from elixir import session
-        xcol = getattr( self.admin.entity, chart['x'] )
-        ycol = getattr( self.admin.entity, chart['y'] )
-        session.bind = self.admin.entity.table.metadata.bind
-        result = session.execute( select( [xcol, func.sum( ycol )] ).group_by( xcol ) )
-        summary = result.fetchall()
-        return [s[0] for s in summary], [s[1] for s in summary]
-
-      class MyMplCanvas( FigureCanvas ):
-        """Ultimately, this is a QWidget (as well as a FigureCanvasAgg)"""
-
-        def __init__( self, parent = None, width = 5, height = 4, dpi = 100 ):
-          fig = Figure( figsize = ( width, height ), dpi = dpi, facecolor = 'w' )
-          self.axes = fig.add_subplot( 111, axisbg = 'w' )
-          # We want the axes cleared every time plot() is called
-          self.axes.hold( False )
-          self.compute_initial_figure()
-          FigureCanvas.__init__( self, fig )
-          self.setParent( parent )
-          FigureCanvas.setSizePolicy( self,
-                                     QSizePolicy.Expanding,
-                                     QSizePolicy.Expanding )
-          FigureCanvas.updateGeometry( self )
-
-
-        def compute_initial_figure( self ):
-          pass
-
-      def setData( data ):
-        """set chart data"""
-
-        class MyStaticMplCanvas( MyMplCanvas ):
-          """simple canvas with a sine plot"""
-
-          def compute_initial_figure( self ):
-            """computes initial figure"""
-            x, y = data
-            bar_positions = [i - 0.25 for i in range( 1, len( x ) + 1 )]
-            width = 0.5
-            self.axes.bar( bar_positions, y, width, color = 'b' )
-            self.axes.set_xlabel( 'Year' )
-            self.axes.set_ylabel( 'Sales' )
-            self.axes.set_xticks( range( len( x ) + 1 ) )
-            self.axes.set_xticklabels( [''] + [str( d ) for d in x] )
-
-        sc = MyStaticMplCanvas( self, width = 5, height = 4, dpi = 100 )
-        self.table_layout.addWidget( sc )
-
-      self.admin.mt.post( getData, setData, dependency = self )
+    pass
+#    if charts:
+#
+#      from matplotlib.figure import Figure
+#      from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as \
+#                                                     FigureCanvas
+#
+#      chart = charts[0]
+#
+#      def getData():
+#        """fetches data for chart"""
+#        from sqlalchemy.sql import select, func
+#        from elixir import session
+#        xcol = getattr( self.admin.entity, chart['x'] )
+#        ycol = getattr( self.admin.entity, chart['y'] )
+#        session.bind = self.admin.entity.table.metadata.bind
+#        result = session.execute( select( [xcol, func.sum( ycol )] ).group_by( xcol ) )
+#        summary = result.fetchall()
+#        return [s[0] for s in summary], [s[1] for s in summary]
+#
+#      class MyMplCanvas( FigureCanvas ):
+#        """Ultimately, this is a QWidget (as well as a FigureCanvasAgg)"""
+#
+#        def __init__( self, parent = None, width = 5, height = 4, dpi = 100 ):
+#          fig = Figure( figsize = ( width, height ), dpi = dpi, facecolor = 'w' )
+#          self.axes = fig.add_subplot( 111, axisbg = 'w' )
+#          # We want the axes cleared every time plot() is called
+#          self.axes.hold( False )
+#          self.compute_initial_figure()
+#          FigureCanvas.__init__( self, fig )
+#          self.setParent( parent )
+#          FigureCanvas.setSizePolicy( self,
+#                                     QSizePolicy.Expanding,
+#                                     QSizePolicy.Expanding )
+#          FigureCanvas.updateGeometry( self )
+#
+#
+#        def compute_initial_figure( self ):
+#          pass
+#
+#      def setData( data ):
+#        """set chart data"""
+#
+#        class MyStaticMplCanvas( MyMplCanvas ):
+#          """simple canvas with a sine plot"""
+#
+#          def compute_initial_figure( self ):
+#            """computes initial figure"""
+#            x, y = data
+#            bar_positions = [i - 0.25 for i in range( 1, len( x ) + 1 )]
+#            width = 0.5
+#            self.axes.bar( bar_positions, y, width, color = 'b' )
+#            self.axes.set_xlabel( 'Year' )
+#            self.axes.set_ylabel( 'Sales' )
+#            self.axes.set_xticks( range( len( x ) + 1 ) )
+#            self.axes.set_xticklabels( [''] + [str( d ) for d in x] )
+#
+#        sc = MyStaticMplCanvas( self, width = 5, height = 4, dpi = 100 )
+#        self.table_layout.addWidget( sc )
+#
+#      self.admin.mt.post( getData, setData )
 
   def deleteSelectedRows( self ):
     """delete the selected rows in this tableview"""
@@ -339,8 +337,8 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     from camelot.view.workspace import get_workspace
     workspace = get_workspace()
     form = self.admin.create_new_view( workspace,
-                                    oncreate = lambda o:self._table_model.insertEntityInstance( 0, o ),
-                                    onexpunge = lambda o:self._table_model.removeEntityInstance( o ) )
+                                       oncreate = lambda o:self._table_model.insertEntityInstance( 0, o ),
+                                       onexpunge = lambda o:self._table_model.removeEntityInstance( o ) )
     workspace.addSubWindow( form )
     form.show()
 
@@ -394,9 +392,10 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
         query = self.filters.decorate_query( query )
       if self.search_filter:
         query = self.search_filter( query )
-      self._table_model.setQuery( lambda:query )
+      query_getter = lambda:query
+      return query_getter
 
-    self.admin.mt.post( rebuild_query, dependency = self )
+    post( rebuild_query, self._table_model.setQuery )
 
   def startSearch( self, text ):
     """rebuilds query based on filtering text"""
@@ -417,13 +416,13 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     filters, actions = filters_and_actions
     from filterlist import FilterList
     from actionsbox import ActionsBox
-    #logger.debug('setting filters with items : %s' % str(items))
     logger.debug( 'setting filters for tableview' )
     if self.filters:
+      self.disconnect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
       self.filters.deleteLater()
       self.filters = None
     if filters:
-      self.filters = FilterList( filters, self )
+      self.filters = FilterList( filters, parent=self )
       self.splitter.insertWidget( 2, self.filters )
       self.connect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
     elif actions:
@@ -470,7 +469,6 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
             # set title
             o = self.admin.entity()
             setattr(o, attributes[0], row[0])
-            print o.title
             #movie.title = row[0]
             name = row[2].split( ' ' ) #director
             #director = Person()
@@ -485,9 +483,9 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
             from sqlalchemy.orm.session import Session
             Session.object_session(o).flush([o])
 
-    self.admin.mt.post( makeImport, dependency = self )
+    post( makeImport )
         
   def importFromFile( self ):
     """"import data : the data will be imported in the activeMdiChild """
     logger.info( 'call import method' )
-    self.admin.mt.post(self.admin.getColumns, self.importWizard)
+    post(self.admin.getColumns, self.importWizard)
