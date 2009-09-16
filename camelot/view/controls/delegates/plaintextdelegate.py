@@ -42,7 +42,10 @@ class PlainTextDelegate(CustomDelegate):
           fontColor = QtGui.QColor()
           fontColor.setRgb(130,130,130)
 
-    text = text or ''
+    if text!=ValueLoading:
+      text = text or ''
+    else:
+      text = ''
       
     painter.setPen(fontColor.toRgb())
     rect = QtCore.QRect(option.rect.left(),
