@@ -43,6 +43,7 @@ __metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, VBoxForm, HBoxForm, WidgetOnlyForm
+from camelot.admin.form_action import FormActionFromModelFunction
 import datetime
 import threading
 
@@ -426,7 +427,7 @@ class Address(Entity):
     list_display = ['street1', 'street2', 'city']
     form_size = (700,150)
     field_attributes = {'street1':{'minimal_column_width':30}}
-    form_actions = [('Show map',lambda address:address.showMap())]
+    form_actions = [FormActionFromModelFunction('Show on map', lambda address:address.showMap())]
   
 Address = documented_entity()(Address) 
 
@@ -467,7 +468,7 @@ class PartyAddress(Entity):
     list_display = ['address', 'comment']
     fields = ['address', 'comment', 'from_date', 'thru_date']
     form_size = (700,200)
-    form_actions = [('Show map',lambda address:address.showMap())]
+    form_actions = [FormActionFromModelFunction('Show on map', lambda address:address.showMap())]
     
 class ContactMechanism(Entity):
   using_options(tablename='contact_mechanism')

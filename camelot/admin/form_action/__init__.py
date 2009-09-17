@@ -67,6 +67,15 @@ class FormActionFromGuiFunction( FormAction ):
   def run( self, entity_getter ):
     self._gui_function( entity_getter )
 
+class FormActionProgressDialog(QtGui.QProgressDialog):
+  
+  def __init__(self, name):
+    QtGui.QProgressDialog.__init__( self, 'Please wait', QtCore.QString(), 0, 0 )
+    self.setWindowTitle( name )
+    
+  def finished(self, success):
+    self.close()
+    
 class FormActionFromModelFunction( FormAction ):
   """Convert a function that is supposed to run in the model thread to a FormAction"""
 
@@ -76,19 +85,19 @@ class FormActionFromModelFunction( FormAction ):
 
   @gui_function
   def run( self, entity_getter ):
-    progress = QtGui.QProgressDialog( 'Please wait', QtCore.QString(), 0, 0 )
-    progress.setWindowTitle( self._name )
-    progress.show()
-
+    progress = FormActionProgressDialog(self._name)
+    
     def create_request( entity_getter ):
 
       def request():
         o = entity_getter()
         self._model_function( o )
+        return True
 
       return request
 
-    post( create_request( entity_getter ), progress.close, exception = progress.close )
+    post( create_request( entity_getter ), progress.finished, exception = progress.finished )
+    progress.exec_()
 
 class PrintHtmlFormAction( FormActionFromModelFunction ):
   """Create an action for a form that pops up a print preview for generated html.
