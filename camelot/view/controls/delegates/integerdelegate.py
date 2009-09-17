@@ -53,7 +53,7 @@ class IntegerDelegate(CustomDelegate):
           fontColor = QtGui.QColor()
           fontColor.setRgb(130,130,130)
     
-    if value == None:
+    if value in (None, ValueLoading):
       value_str = ''
     else:
       value_str = str(value)
