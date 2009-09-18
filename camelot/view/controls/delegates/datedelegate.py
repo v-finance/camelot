@@ -1,5 +1,6 @@
 
 from customdelegate import *
+import re
 
 class DateDelegate(CustomDelegate):
   """Custom delegate for date values"""
@@ -8,11 +9,13 @@ class DateDelegate(CustomDelegate):
   
   editor = editors.DateEditor
   
-  
   def __init__(self, parent=None, editable=True, **kwargs):
     CustomDelegate.__init__(self, parent, editable)
     locale = QtCore.QLocale()
-    self.date_format = locale.dateFormat(locale.ShortFormat)
+    format_sequence = re.split('y*', str(locale.dateFormat(locale.ShortFormat)))
+    # make sure a year always has 4 numbers
+    format_sequence.insert(-1, 'yyyy')
+    self.date_format = ''.join(format_sequence)
 
   def paint(self, painter, option, index):
     painter.save()
