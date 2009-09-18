@@ -149,8 +149,8 @@ actual data to the editor
       # the NoDesktopWorkspaces
       #
       form = self.admin.create_new_view( parent = None,
-                                        oncreate = prependentity,
-                                        onexpunge = removeentity )
+                                         oncreate = prependentity,
+                                         onexpunge = removeentity )
       workspace.addSubWindow( form )
       form.show()
 

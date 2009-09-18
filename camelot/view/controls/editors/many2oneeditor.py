@@ -49,8 +49,8 @@ the relation
     # Search button
     self.search_button = QtGui.QToolButton()
     self.search_button.setFocusPolicy( Qt.ClickFocus )
-    icon = Icon( 'tango/16x16/actions/edit-clear.png' ).getQIcon()
-    self.search_button.setIcon( icon )
+    self.search_button.setIcon( Icon( 'tango/16x16/actions/edit-clear.png' ).getQIcon() )
+    self.search_button.setToolTip('Clear')
     self.search_button.setAutoRaise( True )
     self.search_button.setFixedHeight( self.get_height() )
     self.connect( self.search_button,
@@ -60,8 +60,8 @@ the relation
     # Open button
     self.open_button = QtGui.QToolButton()
     self.open_button.setFocusPolicy( Qt.ClickFocus )
-    icon = Icon( 'tango/16x16/actions/document-new.png' ).getQIcon()
-    self.open_button.setIcon( icon )
+    self.open_button.setIcon( Icon( 'tango/16x16/actions/document-new.png' ).getQIcon() )
+    self.open_button.setToolTip( 'New' )
     self.open_button.setFixedHeight( self.get_height() )
     self.connect( self.open_button,
                  QtCore.SIGNAL( 'clicked()' ),
@@ -222,18 +222,18 @@ the relation
     ((desc, pk), propagate) = representation_and_propagate
     self._entity_representation = desc
     self.search_input.setText( desc )
-    if pk != False:
-      icon = Icon( 'tango/16x16/places/folder.png' ).getQIcon()
-      self.open_button.setIcon( icon )
-      icon = Icon( 'tango/16x16/actions/edit-clear.png' ).getQIcon()
-      self.search_button.setIcon( icon )
+    if pk != False: 
+      self.open_button.setIcon( Icon( 'tango/16x16/places/folder.png' ).getQIcon() )
+      self.open_button.setToolTip('Open')
+      self.search_button.setIcon( Icon( 'tango/16x16/actions/edit-clear.png' ).getQIcon() )
+      self.search_button.setToolTip('Clear')
       self.entity_set = True
       #self.search_input.setReadOnly(True)
     else:
-      icon = Icon( 'tango/16x16/actions/document-new.png' ).getQIcon()
-      self.open_button.setIcon( icon )
-      icon = Icon( 'tango/16x16/actions/system-search.png' ).getQIcon()
-      self.search_button.setIcon( icon )
+      self.open_button.setIcon( Icon( 'tango/16x16/actions/document-new.png' ).getQIcon() )
+      self.open_button.setToolTip('New')
+      self.search_button.setIcon( Icon( 'tango/16x16/actions/system-search.png' ).getQIcon() )
+      self.search_button.setToolTip('Search')
       self.entity_set = False
       #self.search_input.setReadOnly(False)
     if propagate:
