@@ -73,16 +73,16 @@ table views together in one view.
     else:
       self.header = None
     layout.addWidget(self.header)
-    tab_widget = QtGui.QTabWidget(self)
-    layout.addWidget(tab_widget)
+    self.tab_widget = QtGui.QTabWidget(self)
+    layout.addWidget(self.tab_widget)
     self.setLayout(layout)
     
     def get_views_and_titles():
       return [(view, view.get_title()) for view in views]
     
-    def set_views_and_titles(views_and_titles):
-      for view, title in views_and_titles:
-        tab_widget.addTab(view, title)
-
-    post(get_views_and_titles, set_views_and_titles )
+    post(get_views_and_titles, self.set_views_and_titles )
     post(lambda:self.title_format, self.change_title )
+    
+  def set_views_and_titles(self, views_and_titles):
+    for view, title in views_and_titles:
+      self.tab_widget.addTab(view, title)

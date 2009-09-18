@@ -1,8 +1,9 @@
 import logging
 logger = logging.getLogger( 'camelot.view.export.printer' )
 
-from camelot.view.model_thread import post
+from camelot.view.model_thread import gui_function
 
+@gui_function
 def open_html_in_print_preview_from_gui_thread( html ):
   from PyQt4 import QtGui, QtCore
   printer = QtGui.QPrinter()
@@ -19,10 +20,3 @@ def open_html_in_print_preview_from_gui_thread( html ):
 
   dialog.connect( dialog, QtCore.SIGNAL( 'paintRequested(QPrinter*)' ), render )
   dialog.exec_()
-
-def open_html_in_print_preview( html ):
-
-  def create_html_getter( html ):
-    return lambda:html
-
-  post( create_html_getter( html ), open_html_in_print_preview_from_gui_thread )

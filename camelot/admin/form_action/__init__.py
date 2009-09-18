@@ -76,6 +76,11 @@ class FormActionProgressDialog(QtGui.QProgressDialog):
   def finished(self, success):
     self.close()
     
+  def print_result(self, html):
+    from camelot.view.export.printer import open_html_in_print_preview_from_gui_thread
+    open_html_in_print_preview_from_gui_thread(html)
+    self.close()
+    
 class FormActionFromModelFunction( FormAction ):
   """Convert a function that is supposed to run in the model thread to a FormAction"""
 
@@ -125,18 +130,27 @@ will put a print button on the form :
   """
 
   def __init__( self, name, icon = Icon( 'tango/16x16/actions/document-print.png' ) ):
-
-    def model_function( o ):
-      from camelot.view.export.printer import open_html_in_print_preview
-      html = self.html( o )
-      open_html_in_print_preview( html )
-
-    FormActionFromModelFunction.__init__( self, name, model_function, icon )
+    FormActionFromModelFunction.__init__( self, name, self.html, icon )
 
   def html( self, o ):
     """Overwrite this function to generate custom html to be printed
     :arg o: the object that is displayed in the form"""
     return '<h1>' + unicode( o ) + '<h1>'
+  
+  @gui_function
+  def run( self, entity_getter ):
+    progress = FormActionProgressDialog(self._name)
+    
+    def create_request( entity_getter ):
+
+      def request():
+        o = entity_getter()
+        return self.html( o )
+
+      return request
+
+    post( create_request( entity_getter ), progress.print_result, exception = progress.finished )
+    progress.exec_()
 
 def structure_to_form_actions( structure ):
   """Convert a list of python objects to a list of form actions.  If the python
