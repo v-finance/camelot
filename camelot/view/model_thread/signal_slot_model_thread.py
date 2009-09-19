@@ -95,6 +95,7 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
     self._task_handler = TaskHandler(self)
     self.connect(self, self.task_available, self._task_handler.handle_task, QtCore.Qt.QueuedConnection)
     self._setup_thread()
+    self.logger.debug('thread setup finished')
     self.exec_()
     self.logger.debug('model thread stopped')
 

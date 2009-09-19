@@ -140,7 +140,6 @@ def construct_model_thread( *args, **kwargs ):
   from signal_slot_model_thread import SignalSlotModelThread
   from no_thread_model_thread import NoThreadModelThread
   _model_thread_.insert( 0, SignalSlotModelThread( *args, **kwargs ) )
-  #_model_thread_.insert( 0, NoThreadModelThread( *args, **kwargs ) )
 
 def has_model_thread():
   return len( _model_thread_ ) > 0

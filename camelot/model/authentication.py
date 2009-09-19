@@ -35,11 +35,12 @@ from sqlalchemy import sql, and_
 import camelot
 import camelot.types
 
-from camelot.core.document import documented_entity
 from camelot.model import *
-from camelot.model.synchronization import *
 
 __metadata__ = metadata
+
+from camelot.model.synchronization import *
+from camelot.core.document import documented_entity
 
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, VBoxForm, HBoxForm, WidgetOnlyForm

@@ -253,7 +253,10 @@ class EntityAdmin( ObjectAdmin ):
           default_value = default
         logger.debug( 'set default for %s to %s' % \
                     ( field, unicode( default_value ) ) )
-        setattr( entity_instance, field, default_value )
+        try:
+          setattr( entity_instance, field, default_value )
+        except AttributeError, e:
+          logger.error('Programming Error : could not set attribute %s to %s on %s'%(field, default_value, entity_instance.__class__.__name__))   
       except KeyError, e:
         pass
 
