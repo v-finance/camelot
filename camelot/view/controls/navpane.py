@@ -239,7 +239,7 @@ class NavigationPane( QtGui.QDockWidget ):
     self.content.setObjectName( 'NavPaneContent' )
 
     style = """
-    QWidget#NavPaneContent { 
+    QWidget#NavPaneContent {
       margin-left: 3px;
       background-color: %s;
     }
@@ -255,9 +255,10 @@ class NavigationPane( QtGui.QDockWidget ):
     self.treewidget.setObjectName( 'NavPaneTree' )
 
     style = """
-    QWidget#NavPaneTree { 
+    QWidget#NavPaneTree {
       margin-left: 3px;
       border: 1px solid %s;
+      background-color: rgb(255, 255, 255);
     }
     """ % scheme.bordercolor()
 
@@ -327,9 +328,6 @@ class NavigationPane( QtGui.QDockWidget ):
     logger.debug( 'creating context menu' )
     item = self.treewidget.itemAt( point )
     if item:
-      #column = 0
-      #flag = QtGui.QItemSelectionModel.SelectCurrent
-      #self.treewidget.setCurrentItem(item, column, flag)
       self.treewidget.setCurrentItem( item )
       self.treewidget.contextmenu.popup( self.cursor().pos() )
 
@@ -337,6 +335,4 @@ class NavigationPane( QtGui.QDockWidget ):
     """pops a model window in parent's workspace"""
     logger.debug( 'poping a window in parent' )
     item = self.treewidget.currentItem()
-    #column = 0
-    #self.parent.createMdiChild(item, column)
     self.parent.createMdiChild( item )

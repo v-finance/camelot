@@ -191,6 +191,9 @@ class Scheme(object):
   def __init__(self, styledict=Office2007BlueStyle):
     self.styledict = styledict
 
+  def color(self, r, g, b):
+    return 'rgb(%s, %s, %s)' % (r, g, b)
+
   def bordercolor(self):
     return 'rgb%(BorderColor)s' % self.styledict
 
