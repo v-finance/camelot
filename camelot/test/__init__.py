@@ -32,9 +32,6 @@ the name of the test class
     import sys
     import os
     from PyQt4.QtGui import QPixmap
-    self.process()
-    widget.adjustSize()
-    pixmap = QPixmap.grabWidget(widget)
     if not subdir:
       images_path = os.path.join(self.images_path, self.__class__.__name__.lower()[:-len('Test')])
     else:
@@ -44,7 +41,10 @@ the name of the test class
     test_case_name = sys._getframe(1).f_code.co_name[5:]
     image_name = '%s.png'%test_case_name
     if suffix:
-      image_name = '%s_%s.png'%(test_case_name, suffix)
+      image_name = '%s_%s.png'%(test_case_name, suffix)    
+    self.process()
+    widget.adjustSize()
+    pixmap = QPixmap.grabWidget(widget)
     pixmap.save(os.path.join(images_path, image_name), 'PNG')
     
   def process(self):
@@ -104,10 +104,8 @@ class EntityViewsTest(ModelThreadTestCase):
     
   def test_table_view(self):
     for admin in self.get_admins():
-      print admin.get_verbose_name()
-      for i in range(20):
-        widget = admin.create_table_view()
-        self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
+      widget = admin.create_table_view()
+      self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
       
   def test_new_view(self):
     for admin in self.get_admins():

@@ -14,6 +14,9 @@ logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 class Task(QtCore.QObject):
   
+  finished = QtCore.SIGNAL('finished')
+  exception = QtCore.SIGNAL('exception')
+  
   def __init__(self, request, name=''):
     QtCore.QObject.__init__(self)
     self._request = request

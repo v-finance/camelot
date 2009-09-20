@@ -48,7 +48,7 @@ def model_function( original_function ):
     from no_thread_model_thread import NoThreadModelThread
     current_thread = QtCore.QThread.currentThread()
     model_thread = get_model_thread()
-    return current_thread==model_thread
+    return (current_thread==model_thread) or isinstance(model_thread, (NoThreadModelThread,))
 
   @wraps(original_function)
   def wrapper( *args, **kwargs ):
