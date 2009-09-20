@@ -902,7 +902,6 @@ class SnippetsTest(ModelThreadTestCase):
     admin = Coordinate.Admin(None, Coordinate)
     proxy = CollectionProxy(admin, lambda:[coordinate], admin.getFields )
     form = admin.create_form_view('Coordinate', proxy, 0, None)
-    form.show()
     self.grab_widget(form)
     
   def test_fields_with_tooltips(self):
@@ -912,7 +911,6 @@ class SnippetsTest(ModelThreadTestCase):
     admin = Coordinate.Admin(None, Coordinate)
     proxy = CollectionProxy(admin, lambda:[coordinate], admin.getFields )
     form = admin.create_form_view('Coordinate', proxy, 0, None)
-    form.show()
     self.grab_widget(form)
   
 class CamelotSchemaTest(SchemaTest):
