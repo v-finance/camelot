@@ -104,8 +104,10 @@ class EntityViewsTest(ModelThreadTestCase):
     
   def test_table_view(self):
     for admin in self.get_admins():
-      widget = admin.create_table_view()
-      self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
+      print admin.get_verbose_name()
+      for i in range(20):
+        widget = admin.create_table_view()
+        self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
       
   def test_new_view(self):
     for admin in self.get_admins():
