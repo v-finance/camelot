@@ -1,5 +1,6 @@
 
 from customdelegate import *
+from camelot.core.utils import variant_to_pyobject
 
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.one2manydelegate')
@@ -24,7 +25,7 @@ class One2ManyDelegate(QItemDelegate):
 
   def setEditorData(self, editor, index):
     logger.debug('set one2many editor data')
-    model = index.data(Qt.EditRole).toPyObject()
+    model = variant_to_pyobject(index.data(Qt.EditRole))
     editor.set_value(model)
 
   def setModelData(self, editor, model, index):

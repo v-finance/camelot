@@ -1,5 +1,6 @@
 
 from customdelegate import *
+from camelot.core.utils import variant_to_pyobject
 
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
@@ -77,7 +78,7 @@ class Many2OneDelegate(CustomDelegate):
     return editor
 
   def setEditorData(self, editor, index):
-    value = index.data(Qt.EditRole).toPyObject()
+    value = variant_to_pyobject(index.data(Qt.EditRole))
     if value!=ValueLoading:
       editor.set_value(create_constant_function(value))
     else:

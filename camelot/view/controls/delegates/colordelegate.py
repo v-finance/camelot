@@ -1,5 +1,6 @@
 
 from customdelegate import *
+from camelot.core.utils import variant_to_pyobject
 
 class ColorDelegate(CustomDelegate):
   
@@ -17,7 +18,7 @@ class ColorDelegate(CustomDelegate):
       painter.fillRect(option.rect, QtGui.QColor(not_editable_background))
     else:
       painter.fillRect(option.rect, background_color)
-    color = index.model().data(index, Qt.EditRole).toPyObject()
+    color = variant_to_pyobject(index.model().data(index, Qt.EditRole))
     if color:
       pixmap = QtGui.QPixmap(16, 16)
       qcolor = QtGui.QColor()

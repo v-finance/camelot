@@ -1,5 +1,6 @@
 
 from customdelegate import *
+from camelot.core.utils import variant_to_pyobject
 
 class IntervalsDelegate(QItemDelegate):
   """Custom delegate for visualizing camelot.container.IntervalsContainer
@@ -15,7 +16,7 @@ data
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
-    intervals = index.model().data(index, Qt.EditRole).toPyObject()
+    intervals = variant_to_pyobject(index.model().data(index, Qt.EditRole))
     
     background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
     

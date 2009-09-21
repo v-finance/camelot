@@ -1,5 +1,6 @@
 
 from customdelegate import *
+from camelot.core.utils import variant_to_pyobject
 
 class CodeDelegate(CustomDelegate):
   
@@ -43,7 +44,7 @@ class CodeDelegate(CustomDelegate):
     
     
     if numParts != 0:
-      value = index.model().data(index, Qt.EditRole).toPyObject() or []
+      value = variant_to_pyobject(index.model().data(index, Qt.EditRole)) or []
       if value == ValueLoading:
         value = []
       value = '.'.join([unicode(i) for i in value])

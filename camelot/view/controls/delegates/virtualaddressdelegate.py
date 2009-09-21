@@ -1,6 +1,7 @@
 
 from customdelegate import *
 from camelot.view.art import Icon
+from camelot.core.utils import variant_to_pyobject
 
 class VirtualAddressDelegate(CustomDelegate):
   """
@@ -13,7 +14,7 @@ class VirtualAddressDelegate(CustomDelegate):
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
-    virtual_address = index.model().data(index, Qt.EditRole).toPyObject()  
+    virtual_address = variant_to_pyobject(index.model().data(index, Qt.EditRole))  
     
     background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
     

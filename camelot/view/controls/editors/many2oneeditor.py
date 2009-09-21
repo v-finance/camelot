@@ -1,6 +1,7 @@
 
 from customeditor import *
 from abstractmanytooneeditor import AbstractManyToOneEditor
+from camelot.core.utils import variant_to_pyobject
 
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post
@@ -126,7 +127,7 @@ the relation
 
   def completionActivated( self, index ):
     object_getter = index.data( Qt.EditRole )
-    self.setEntity( object_getter.toPyObject() )
+    self.setEntity( variant_to_pyobject(object_getter) )
 
   def openButtonClicked( self ):
     if self.entity_set:

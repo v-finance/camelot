@@ -1,5 +1,6 @@
 
 from customdelegate import *
+from camelot.core.utils import variant_to_pyobject
 
 class FileDelegate(CustomDelegate):
   """Delegate for camelot.types.file fields
@@ -20,7 +21,7 @@ class FileDelegate(CustomDelegate):
       painter.setPen(QtGui.QColor(not_editable_foreground))
     else:
       painter.fillRect(option.rect, background_color)
-    value =  index.model().data(index, Qt.EditRole).toPyObject()
+    value =  variant_to_pyobject(index.model().data(index, Qt.EditRole))
     if value:
       
       painter.drawText(option.rect.x()+2,
