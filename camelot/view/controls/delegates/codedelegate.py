@@ -10,7 +10,6 @@ class CodeDelegate(CustomDelegate):
   
   def __init__(self, parent=None, parts=[], **kwargs):
     CustomDelegate.__init__(self, parent=parent, parts=parts, **kwargs)
-    self._dummy_editor = editors.CodeEditor(parent=None, parts=parts)
     self.parts = parts
 
   def paint(self, painter, option, index):
@@ -66,5 +65,5 @@ class CodeDelegate(CustomDelegate):
     painter.restore()
   
 
-  def sizeHint(self, option, index):
-    return self._dummy_editor.sizeHint() 
+#  def sizeHint(self, option, index):
+#    return self._dummy_editor.sizeHint() 

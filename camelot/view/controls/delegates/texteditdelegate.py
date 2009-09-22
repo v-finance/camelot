@@ -21,9 +21,7 @@ class TextEditDelegate(CustomDelegate):
     
     text = index.model().data(index, Qt.EditRole).toString()
     
-    background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
-    
-    editor = editors.TextLineEditor(None, self.editable)     
+    background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole)) 
       
     rect = option.rect
     rect = QtCore.QRect(rect.left(), rect.top(), rect.width(), rect.height())  

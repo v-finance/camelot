@@ -37,7 +37,6 @@ from PyQt4.QtCore import Qt
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
-import datetime
 from camelot.view.model_thread import model_function, gui_function, post
 
 from search import SimpleSearchControl
@@ -196,7 +195,6 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     self.setLayout( widget_layout )
     self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
     self.search_filter = lambda q: q
-    #self.setAttribute( QtCore.Qt.WA_DeleteOnClose )
     post( self.admin.getSubclasses, self.setSubclassTree )
 
   @model_function

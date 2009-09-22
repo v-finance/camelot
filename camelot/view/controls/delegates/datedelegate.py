@@ -67,5 +67,5 @@ class DateDelegate(CustomDelegate):
     
     painter.restore()
 
-  def sizeHint(self, option, index):
-    return editors.DateEditor().sizeHint()
+#  def sizeHint(self, option, index):
+#    return editors.DateEditor().sizeHint()

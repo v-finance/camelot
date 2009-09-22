@@ -13,8 +13,6 @@ class TimeDelegate(CustomDelegate):
     self.time_format = locale.timeFormat(locale.ShortFormat)
     
   def paint(self, painter, option, index):
-    
-    
     painter.save()
     self.drawBackground(painter, option, index)
     

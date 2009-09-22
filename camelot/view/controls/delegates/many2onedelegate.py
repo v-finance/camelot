@@ -25,7 +25,6 @@ class Many2OneDelegate(CustomDelegate):
     self.admin = admin
     self._embedded = embedded
     self._kwargs = kwargs
-    self._dummy_editor = editors.Many2OneEditor(self.admin, None)
 
   def paint(self, painter, option, index):
     painter.save()
@@ -88,5 +87,5 @@ class Many2OneDelegate(CustomDelegate):
     if editor.entity_instance_getter:
       model.setData(index, editor.entity_instance_getter)
     
-  def sizeHint(self, option, index):
-    return self._dummy_editor.sizeHint()    
+#  def sizeHint(self, option, index):
+#    return self._dummy_editor.sizeHint()    
