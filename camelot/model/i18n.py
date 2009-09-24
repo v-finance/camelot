@@ -35,10 +35,8 @@ import logging
 logger = logging.getLogger('camelot.model.i18n')
 
 def tr(source):
-  import locale
-  language, encoding = locale.getlocale(locale.LC_ALL)
-  if not language:
-    raise Exception("Locale is not set, call locale.setlocale(locale.LC_ALL, '') first")
+  from PyQt4 import QtCore
+  language = unicode(QtCore.QLocale().name())
   return Translation.translate_or_register(source, language) 
 
 class Translation(Entity):
