@@ -462,11 +462,13 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     def makeImport():
         for row in data:
             # get all possible fields (=attributes) from this object
-            #attributes = o.Admin.form_display.get_fields()            
+            #attributes = o.Admin.form_display.get_fields() 
+            object_attributes = ['title', 'releasedate', 'name', 'description' ]           
             #print attributes
             # set title
             o = self.admin.entity()
-            setattr(o, attributes[0], row[0])
+            #For example, setattr(x, 'foobar', 123) is equivalent to x.foobar = 123
+            setattr(o, object_attributes[0], row[0])
             #movie.title = row[0]
             name = row[2].split( ' ' ) #director
             #director = Person()

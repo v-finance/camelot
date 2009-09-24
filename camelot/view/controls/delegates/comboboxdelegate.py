@@ -1,6 +1,9 @@
 
 from customdelegate import *
+from PyQt4.QtGui import QComboBox, QItemDelegate
+from PyQt4.QtCore import QVariant, QString
 from camelot.view.model_thread import post
+
 
 class ComboBoxDelegate(CustomDelegate):
   
@@ -70,5 +73,76 @@ class ComboBoxDelegate(CustomDelegate):
     painter.restore()
     
     
-  
+class ComboBoxEditorDelegate(ComboBoxDelegate):  
+    """ 
+        Delegate for combobox which makes sure that the editor (of the combobox) is visible
+        even if it isn't selected
+    """
+    def __init__(self, choices, parent=None, editable=True, **kwargs):
+         ComboBoxDelegate.__init__(self, parent, choices, editable, **kwargs)
+    
+    """ adapted from booldelegate """     
+    def paint(self, painter, option, index):
+        painter.save()
+        self.drawBackground(painter, option, index)
+        checked = index.model().data(index, Qt.EditRole).toString().__str__()
+        
+        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
+        
+        check_option = QtGui.QStyleOptionComboBox()
+        
+        rect = QtCore.QRect(option.rect.left(),
+                            option.rect.top(),
+                            option.rect.width(),
+                            option.rect.height())
+        
+        check_option.rect = rect
+        check_option.palette = option.palette
+        if (option.state & QtGui.QStyle.State_Selected):
+          painter.fillRect(option.rect, option.palette.highlight())
+        elif not self.editable:
+          painter.fillRect(option.rect, option.palette.window())
+        else:
+          painter.fillRect(option.rect, background_color)
+          
+        if checked:
+          check_option.state = option.state | QtGui.QStyle.State_On
+        else:
+          check_option.state = option.state | QtGui.QStyle.State_Off
+          
+          
+          
+        QtGui.QApplication.style().drawControl(QtGui.QStyle.CE_CheckBox,
+                                               check_option,
+                                               painter)
+        
+        
+        painter.restore()
+             
+class TestComboBoxDelegate(QItemDelegate):
 
+
+    def __init__(self, choices, parent = None):
+
+        QItemDelegate.__init__(self, parent)
+        self.choices = choices
+
+    def createEditor(self, parent, option, index):
+        editor = QComboBox( parent )
+        i = 0
+        for choice in self.choices:
+            editor.insertItem(i, unicode(choice), QVariant(QString(choice)))
+            i = i + 1
+        return editor
+
+    def setEditorData( self, comboBox, index ):
+        value = index.model().data(index, Qt.DisplayRole).toInt()
+        comboBox.setCurrentIndex(value[0])
+
+    def setModelData(self, editor, model, index):
+        value = editor.currentIndex()
+        model.setData( index, editor.itemData( value, Qt.DisplayRole ) )
+
+    def updateEditorGeometry( self, editor, option, index ):
+
+        editor.setGeometry(option.rect)

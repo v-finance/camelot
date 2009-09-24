@@ -1,5 +1,5 @@
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QWizard, QWizardPage, QToolBar, QFileDialog, QPushButton, QTableView, QFont, QVBoxLayout, QGridLayout, QLabel, QComboBox, QItemDelegate, QStandardItemModel, QColor
+from PyQt4.QtGui import QWizard, QWizardPage, QToolBar, QFileDialog, QPushButton, QTableView, QFont, QVBoxLayout, QGridLayout, QLabel, QComboBox, QItemDelegate, QStandardItemModel, QColor, QCheckBox
 from PyQt4.QtCore import QString, QAbstractTableModel, QVariant, Qt, QAbstractListModel, QModelIndex, QStringList, QPoint
 from camelot.view import art
 from camelot.view.art import Icon
@@ -63,8 +63,21 @@ class ImportWizard(QtGui.QWizard):
         self.openToolBar.connect(openAct, QtCore.SIGNAL('triggered()'), self.showOpenFileDialog)
         self.openToolBar.addAction(openAct)       
     
+    def makeCheckBoxForFirstRow(self):
+        checkBox = QCheckBox('first row of data is column name')
+        action = QtGui.QAction('CheckBox', checkBox)
+        checkBox.connect(action, QtCore.SIGNAL('clicked()'), self.repaintTable)
+        checkBox.addAction(action)
+        return checkBox 
+    
+    def repaintTable(self):
+        dataWithoutFirstRow = self.data[1:]
+        self.makeTable(dataWithoutFirstRow, self.attributes)
+        
+    
     """
-        makes the openfiledialog: when the file is committed, the table is shown
+        makes the openfiledialog: when the file is committed, the table is shown.
+        the method prepares also the table to show
     """    
     def showOpenFileDialog(self):
         filename = QtGui.QFileDialog.getOpenFileName(None, 'Open file', '/')
@@ -79,23 +92,16 @@ class ImportWizard(QtGui.QWizard):
         csvreader = csv.reader(file)
         array = list(csvreader)
         self.data = array
+        #checkbox
+        checkBox = self.makeCheckBoxForFirstRow()
         #tableview
-        tableView = self.makeTable(array, self.attributes)
-        
-        #delegate
-        CHOICES = (('1','A'), ('2','B'), ('3','C'))
-        #delegate = ComboBoxEditorDelegate(choices=lambda o:CHOICES, editable=False)
-        #tableView.setItemDelegate(delegate)
-        
-        #layout
-        #gridLayout = QGridLayout()
-        #gridLayout.addWidget(lv, 0, 0)
-        #gridLayout.addWidget(lv2, 0, 2) 
+        tableView = self.makeTable(array, self.attributes, False)
+
         vLayout = QVBoxLayout()
-        #vLayout.addLayout(gridLayout)
+        vLayout.addWidget(checkBox)
         vLayout.addWidget(tableView)
         self.qTablePage.setLayout(vLayout)
-        
+    
     
     """ the layout for the wizard """
     def makeGridLayout(self):
@@ -106,7 +112,7 @@ class ImportWizard(QtGui.QWizard):
         self.grid.addWidget(self.label, 2, 0)
     
     """ make the table for the page"""    
-    def makeTable(self, data, headerData):
+    def makeTable(self, data, headerData, firstRow=False):
         # create the view
         tv = QTableView()
 
@@ -114,16 +120,15 @@ class ImportWizard(QtGui.QWizard):
         #tm = InputTableModel(data, headerData, parent=self.qTablePage)
         
         # add one to the length for the header
-        tm = QStandardItemModel((len(data) + 1) , len(self.attributes), self.qTablePage)
+        if firstRow:
+            tm = QStandardItemModel((len(data) + 2) , len(self.attributes), self.qTablePage)
+        else :
+            tm = QStandardItemModel((len(data) + 1) , len(self.attributes), self.qTablePage)
+
         tv.setModel(tm)
         self.makeHeader(tm, headerData)
         self.makeBody(tm, data)
         
-#        for row in range(4):
-#            for column in range(2):
-#                index = tm.index(row, column, QModelIndex())
-#                tm.setData(index, QVariant('A')
-        #CHOICES = self.makeChoices(self.attributes)
         CHOICES = (('1','first choice'), ('2','second choice'), ('3','third choice'))
         delegate = ComboBoxDelegate(choices=lambda o:CHOICES, parent=tv )
         #delegate = TestComboBoxDelegate(self.attributes, parent=tv )
@@ -221,8 +226,6 @@ class InputTableModel(QAbstractTableModel):
             return QVariant() 
         elif role != Qt.DisplayRole: 
            return QVariant()
-        print index.row()
-        print index.column()
         return QVariant(self.arraydata[index.row()][index.column()]) 
 
     def setData(self, index, value, role):
