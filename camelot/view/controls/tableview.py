@@ -53,6 +53,8 @@ class TableWidget( QtGui.QTableView):
     self.horizontalHeader().setClickable( False )
     self._header_font_required = QtGui.QApplication.font()
     self._header_font_required.setBold( True )
+    self._minimal_row_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing() + 10
+    self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
 
   def setModel( self, model ):
     QtGui.QTableView.setModel( self, model )
@@ -62,12 +64,11 @@ class TableWidget( QtGui.QTableView):
     option = QtGui.QStyleOptionViewItem()
     newSize = self.itemDelegate( selectedIndex ).sizeHint( option, selectedIndex )
     row = selectedIndex.row()
-    normalSize = QtGui.QFontMetrics( self._header_font_required ).height() + 5
     if previousSelectedIndex.row() >= 0:
+      oldSize = self.itemDelegate( previousSelectedIndex ).sizeHint( option, selectedIndex )
       previousRow = previousSelectedIndex.row()
-      self.setRowHeight( previousRow, normalSize )
-    self.setRowHeight( row, max(normalSize, QtGui.QLineEdit().sizeHint().height(), newSize.height()) )
-    #self.selectedRow = row
+      self.setRowHeight( previousRow, oldSize.height() )
+    self.setRowHeight( row, newSize.height() )
 
 class RowsWidget( QtGui.QLabel ):
   """Widget that is part of the header widget, displaying the number of rows
@@ -233,8 +234,6 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     self.table = self.table_widget( self )
     self._table_model = self.create_table_model( admin )
     self.table.setModel( self._table_model )
-    rowHeight = QtGui.QFontMetrics( self.font() ).height() + 5
-    self.table.verticalHeader().setDefaultSectionSize( rowHeight )
     self.connect( self.table.verticalHeader(),
                   SIGNAL( 'sectionClicked(int)' ),
                   self.sectionClicked )

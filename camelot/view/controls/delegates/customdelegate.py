@@ -42,15 +42,17 @@ class attribute specifies the editor class that should be used
     QItemDelegate.__init__(self, parent)
     self.editable = editable
     self.kwargs = kwargs
-    #self._dummy_editor = self.editor(parent=None, editable=editable, **kwargs)
+    font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
+    self._height = font_metrics.lineSpacing() + 10
+    self._width = font_metrics.averageCharWidth() * 20
     
   def createEditor(self, parent, option, index):
     editor = self.editor(parent, editable=self.editable, **self.kwargs)
     self.connect(editor, editors.editingFinished, self.commitAndCloseEditor)
     return editor
   
-#  def sizeHint(self, option, index):
-#    return self._dummy_editor.sizeHint()
+  def sizeHint(self, option, index):
+    return QtCore.QSize(self._width, self._height)
 
   def commitAndCloseEditor(self):
     editor = self.sender()

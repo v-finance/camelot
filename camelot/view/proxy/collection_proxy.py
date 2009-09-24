@@ -208,9 +208,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
       return self._columns
 
     post( get_columns, self.setColumns )
-    # the initial collection might contain unflushed rows
+#    # the initial collection might contain unflushed rows
     post( self.updateUnflushedRows )
-    # in that way the number of rows is requested as well
+#    # in that way the number of rows is requested as well
     post( self.getRowCount, self.setRowCount )
     self.logger.debug( 'initialization finished' )
     
@@ -405,15 +405,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         if editable:
           size = max( size, editor_size.width() )
         return QtCore.QVariant( QtCore.QSize( size, label_size.height() + 10 ) )
-    
     else:
-
       if role == Qt.SizeHintRole:
         return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 8, self.iconSize.height() + 5 ) )
-
-
-
-
       if role == Qt.DecorationRole:
         return self.form_icon
 #      elif role == Qt.DisplayRole:

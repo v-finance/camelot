@@ -25,6 +25,7 @@ class Many2OneDelegate(CustomDelegate):
     self.admin = admin
     self._embedded = embedded
     self._kwargs = kwargs
+    self._width = self._width * 2    
 
   def paint(self, painter, option, index):
     painter.save()

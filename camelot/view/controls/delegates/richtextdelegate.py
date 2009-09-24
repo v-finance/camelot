@@ -12,9 +12,9 @@ class RichTextDelegate(CustomDelegate):
   
   def __init__(self, parent=None, editable=True, **kwargs):
     CustomDelegate.__init__(self, parent, editable)
-    
     self.editable = editable
-
+    self._height = self._height * 10
+    self._width = self._width * 3
 
   def paint(self, painter, option, index):
     painter.save()
