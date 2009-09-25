@@ -33,7 +33,6 @@ class FloatEditor(CustomEditor):
     suffix = ' ' + str(suffix)
     suffix = suffix.rstrip()
     
-    
     self.spinBox.setPrefix(prefix)
     self.spinBox.setSuffix(suffix)
     self.spinBox.addAction(action)
@@ -63,9 +62,7 @@ class FloatEditor(CustomEditor):
       layout.addWidget(self.calculatorButton)
     else:
       self.spinBox.setEnabled(False)
-
     self.setFocusProxy(self.spinBox)
-
     self.setLayout(layout)
 
   def set_value(self, value):
@@ -74,7 +71,6 @@ class FloatEditor(CustomEditor):
       self.spinBox.setValue(value)
     else:
       self.spinBox.setValue(0.0)
-      
   
   def set_enabled(self, editable=True):
     if self.spinBox.isEnabled() != editable:
@@ -84,7 +80,6 @@ class FloatEditor(CustomEditor):
         self.layout().addWidget(self.calculatorButton)
       self.spinBox.setEnabled(editable)
   
-
   def get_value(self):
     self.spinBox.interpretText()
     value = self.spinBox.value()

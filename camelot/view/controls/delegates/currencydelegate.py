@@ -65,7 +65,7 @@ to the precision specified in the definition of the Field.
           fontColor = QtGui.QColor()
           fontColor.setRgb(130,130,130)
           
-    value_str_formatted  = QtCore.QString("%L1").arg(value,0,'f',2);
+    value_str_formatted  = QtCore.QString("%L1").arg(value,0,'f',2)
     
     painter.setPen(fontColor.toRgb())
     rect = QtCore.QRect(option.rect.left()+23,

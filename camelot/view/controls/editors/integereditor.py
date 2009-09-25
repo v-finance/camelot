@@ -11,12 +11,23 @@ class IntegerEditor(CustomEditor):
                minimum=camelot_minint,
                maximum=camelot_maxint,
                editable=True,
+               prefix='',
+               suffix='',               
                **kwargs):
     CustomEditor.__init__(self, parent)
     action = QtGui.QAction(self)
     action.setShortcut(Qt.Key_F3)
     self.setFocusPolicy(Qt.StrongFocus)
+    
+    prefix = str(prefix) + ' '
+    prefix = prefix.lstrip()
+    
+    suffix = ' ' + str(suffix)
+    suffix = suffix.rstrip()
+        
     self.spinBox = QtGui.QDoubleSpinBox(parent)
+    self.spinBox.setPrefix(prefix)
+    self.spinBox.setSuffix(suffix)
     self.spinBox.setReadOnly(not editable)
     self.spinBox.setRange(minimum, maximum)
     self.spinBox.setDecimals(0)

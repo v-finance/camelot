@@ -23,10 +23,9 @@ class FloatDelegate(CustomDelegate):
 :param precision:  The number of digits after the decimal point displayed.  This defaults
 to the precision specified in the definition of the Field.     
 """
-    CustomDelegate.__init__(self, parent=parent, editable=editable, minimum=minimum, maximum=maximum,
+    CustomDelegate.__init__(self, parent=parent, editable=editable,
+                            suffix=suffix, prefix=prefix,
                             precision=precision, **kwargs)
-    self.minimum = minimum
-    self.maximum = maximum
     self.precision = precision
     self.editable = editable
     self.unicode_format = unicode_format
