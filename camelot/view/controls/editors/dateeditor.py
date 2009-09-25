@@ -42,6 +42,7 @@ class DateEditor(CustomEditor):
       self.qdateedit.setCalendarPopup(True)
 
     self.hlayout = QtGui.QHBoxLayout()
+    
     self.hlayout.addWidget(special_date)
     self.special_date = special_date
     self.hlayout.addWidget(self.qdateedit)

@@ -64,7 +64,7 @@ class attribute specifies the editor class that should be used
     editor.set_value(value)
     index.model().data(index, Qt.ToolTipRole)
     tooltip = variant_to_pyobject( index.model().data(index, Qt.ToolTipRole) )
-    if tooltip!=None:
+    if tooltip not in (None, ValueLoading):
       editor.setToolTip(unicode(tooltip))
     else:
       editor.setToolTip('')

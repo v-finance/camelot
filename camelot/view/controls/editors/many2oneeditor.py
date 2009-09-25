@@ -205,8 +205,6 @@ the relation
     workspace.addSubWindow( form )
     form.show()
 
-
-
   def dataChanged( self, index1, index2 ):
     self.setEntity( self.entity_instance_getter, False )
 

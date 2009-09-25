@@ -1,7 +1,6 @@
 
 from customdelegate import *
 from camelot.core.constants import *
-import locale
 
 class CurrencyDelegate(CustomDelegate):
   """Custom delegate for float values"""
@@ -16,7 +15,6 @@ class CurrencyDelegate(CustomDelegate):
                precision=2,
                editable=True,
                parent=None,
-               unicode_format = None,
                prefix="",
                suffix="",
                **kwargs):
@@ -32,18 +30,17 @@ to the precision specified in the definition of the Field.
     self.editable = editable
     self.prefix = prefix
     self.suffix = suffix
-    self.unicode_format = unicode_format
     
   def setEditorData(self, editor, index):
-    value = index.model().data(index, Qt.EditRole).toDouble()[0]
+    value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
     editor.set_value(value)
-
-
 
   def paint(self, painter, option, index):
     painter.save()
     self.drawBackground(painter, option, index)
-    value = index.model().data(index, Qt.EditRole).toDouble()[0]
+    value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
+    if value in (None, ValueLoading):
+      value = 0.0
     rect = option.rect
     rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
     
@@ -68,7 +65,7 @@ to the precision specified in the definition of the Field.
           fontColor = QtGui.QColor()
           fontColor.setRgb(130,130,130)
           
-    value_str_formatted  = QtCore.QString("%L1").arg(value or 0.0,0,'f',2);
+    value_str_formatted  = QtCore.QString("%L1").arg(value,0,'f',2);
     
     painter.setPen(fontColor.toRgb())
     rect = QtCore.QRect(option.rect.left()+23,
