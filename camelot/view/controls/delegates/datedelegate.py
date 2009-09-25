@@ -1,5 +1,6 @@
 
 from customdelegate import *
+from camelot.core.constants import camelot_small_icon_width
 import re
 
 class DateDelegate(CustomDelegate):
@@ -16,6 +17,7 @@ class DateDelegate(CustomDelegate):
     # make sure a year always has 4 numbers
     format_sequence.insert(-1, 'yyyy')
     self.date_format = ''.join(format_sequence)
+    self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 4)  + (camelot_small_icon_width*2) * 2 
 
   def paint(self, painter, option, index):
     painter.save()

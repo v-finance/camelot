@@ -42,9 +42,9 @@ class attribute specifies the editor class that should be used
     QItemDelegate.__init__(self, parent)
     self.editable = editable
     self.kwargs = kwargs
-    font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
-    self._height = font_metrics.lineSpacing() + 10
-    self._width = font_metrics.averageCharWidth() * 20
+    self._font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
+    self._height = self._font_metrics.lineSpacing() + 10
+    self._width = self._font_metrics.averageCharWidth() * 20
     
   def createEditor(self, parent, option, index):
     editor = self.editor(parent, editable=self.editable, **self.kwargs)
@@ -57,7 +57,7 @@ class attribute specifies the editor class that should be used
   def commitAndCloseEditor(self):
     editor = self.sender()
     self.emit(SIGNAL('commitData(QWidget*)'), editor)
-    #self.emit(SIGNAL('closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)'), editor, QtGui.QAbstractItemDelegate.NoHint)
+    self.emit(SIGNAL('closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)'), editor, QtGui.QAbstractItemDelegate.NoHint)
 
   def setEditorData(self, editor, index):
     value = variant_to_pyobject( index.model().data(index, Qt.EditRole) )
