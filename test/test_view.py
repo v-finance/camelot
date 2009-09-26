@@ -742,14 +742,14 @@ class DelegateTest(unittest.TestCase):
     delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-    self.assertEqual(delegate.minimum, camelot_minfloat)
-    self.assertEqual(delegate.maximum, camelot_maxfloat)
+    self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
+    self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
     self.grab_delegate(delegate, 3.145)
     delegate = self.delegates.FloatDelegate(parent=None, prefix='prefix', editable=False)
     editor = delegate.createEditor(None, None, None)
     self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-    self.assertEqual(delegate.minimum, camelot_minfloat)
-    self.assertEqual(delegate.maximum, camelot_maxfloat)
+    self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
+    self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
     self.grab_delegate(delegate, 0, 'disabled')
 
   def testColoredFloatDelegate(self):
@@ -873,7 +873,7 @@ class ControlsTest(ModelThreadTestCase):
   def test_table_view(self):
     from camelot.view.controls.tableview import TableView
     from camelot.model.authentication import Person
-    widget = TableView(self.app_admin.getEntityAdmin(Person))
+    widget = TableView(self.app_admin.get_entity_admin(Person))
     self.grab_widget(widget)
   
   def test_navigation_pane(self):
@@ -928,8 +928,8 @@ if __name__ == '__main__':
 #  runner.run(proxy_test)
 #  proxy_one_to_many_test =  unittest.makeSuite(ProxyOneToManyTest, 'test')
 #  runner.run(proxy_one_to_many_test)
-#  schema_test =  unittest.makeSuite(CamelotSchemaTest, 'test')
-#  runner.run(schema_test)
+  schema_test =  unittest.makeSuite(CamelotSchemaTest, 'test')
+  runner.run(schema_test)
 
   form_action_test =  unittest.makeSuite(FormActionTest, 'test')
   runner.run(form_action_test)
