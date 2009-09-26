@@ -78,8 +78,9 @@ class FormActionProgressDialog(QtGui.QProgressDialog):
     
   def print_result(self, html):
     from camelot.view.export.printer import open_html_in_print_preview_from_gui_thread
-    open_html_in_print_preview_from_gui_thread(html)
     self.close()
+    open_html_in_print_preview_from_gui_thread(html)
+    
     
 class FormActionFromModelFunction( FormAction ):
   """Convert a function that is supposed to run in the model thread to a FormAction"""
