@@ -227,7 +227,7 @@ Other field attributes process by the admin interface are:
     application admin object.
     @param entity: the entity class for which an admin object is requested 
     """
-    related_admin = self.app_admin.getEntityAdmin(entity)
+    related_admin = self.app_admin.get_entity_admin(entity)
     if not related_admin:
       logger.warn('no related admin found for %s'%(entity.__name__))
     return related_admin

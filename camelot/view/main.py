@@ -20,7 +20,7 @@ def main(application_admin,
   import sys
   from PyQt4 import QtGui, QtCore
   app = QtGui.QApplication([a for a in sys.argv if a])
-  pixmap = application_admin.getSplashscreen()
+  pixmap = application_admin.get_splashscreen()
   flag = QtCore.Qt.WindowStaysOnTopHint
   splash = QtGui.QSplashScreen(pixmap, flag)
   splash.show()
@@ -65,10 +65,10 @@ def main(application_admin,
   # regularly call processEvents to keep the splash alive
   app.processEvents()
     
-  app.setOrganizationName(application_admin.getOrganizationName())
-  app.setOrganizationDomain(application_admin.getOrganizationDomain())
-  app.setApplicationName(application_admin.getName())
-  app.setWindowIcon(application_admin.getIcon())
+  app.setOrganizationName(application_admin.get_organization_name())
+  app.setOrganizationDomain(application_admin.get_organization_domain())
+  app.setApplicationName(application_admin.get_name())
+  app.setWindowIcon(application_admin.get_icon())
   pre_initialization()
   app.processEvents()
 
@@ -87,7 +87,7 @@ def main(application_admin,
   
   # Set the style sheet
   splash.showMessage('Create main window...', msgalign, msgcolor)
-  stylesheet = application_admin.getStylesheet()
+  stylesheet = application_admin.get_stylesheet()
   if stylesheet:
     app.setStyleSheet(stylesheet)
   
@@ -100,7 +100,7 @@ def main(application_admin,
   # regularly call processEvents to keep the splash alive
   app.processEvents()
   
-  mainwindow = application_admin.createMainWindow()
+  mainwindow = application_admin.create_main_window()
     
   mainwindow.show()
   splash.finish(mainwindow)

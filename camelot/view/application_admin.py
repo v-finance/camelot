@@ -64,7 +64,7 @@ class ApplicationAdmin(object):
     from camelot.admin.section import structure_to_sections
     return structure_to_sections(self.sections)
   
-  def getEntityAdmin(self, entity):
+  def get_entity_admin(self, entity):
     """Get the default entity admin for this entity, return None, if not
     existant"""
     try:
@@ -73,33 +73,30 @@ class ApplicationAdmin(object):
       pass
     if hasattr(entity, 'Admin'):
       return entity.Admin(self, entity)
-    
-  def get_entity_admin(self, entity):
-    return self.getEntityAdmin(entity)
   
-  def getEntityQuery(self, entity):
+  def get_entity_query(self, entity):
     """Get the root query for an entity"""
     return entity.query
   
-  def createMainWindow(self):
-    """createMainWindow"""
+  def create_main_window(self):
+    """create_main_window"""
     from camelot.view.mainwindow import MainWindow
     mainwindow = MainWindow(self)
     
     return mainwindow
   
-  def getEntitiesAndQueriesInSection(self, section):
+  def get_entities_and_queries_in_section(self, section):
     """@return: a list of tuples of (admin, query) instances related to
     the entities in this section.
     """
-    result = [(self.getEntityAdmin(e), self.getEntityQuery(e))
+    result = [(self.get_entity_admin(e), self.get_entity_query(e))
               for e, a in self.admins.items()
               if hasattr(a, 'section') 
               and a.section == section]
     result.sort(cmp = lambda x, y: cmp(x[0].get_verbose_name_plural(), y[0].get_verbose_name_plural()))
     return result
   
-  def getActions(self):
+  def get_actions(self):
     """@return: a list of actions that should be added to the menu and the icon
     bar for this application, each action is a tuple of (name, icon, callable),
     where callable is a function taking no arguments that will be called when
@@ -107,23 +104,24 @@ class ApplicationAdmin(object):
     """
     return []
   
-  def getName(self):
+  def get_name(self):
     """@return: the name of the application"""
     return self.name
   
-  def getIcon(self):
+  def get_icon(self):
+    """:return: the QIcon that should be used for the application"""
     from camelot.view.art import Icon
     return Icon('tango/32x32/apps/system-users.png').getQIcon()
   
-  def getSplashscreen(self):
-    """@return: a QtGui.QPixmap"""
+  def get_splashscreen(self):
+    """:return: a QtGui.QPixmap to be used as splash screen"""
     from camelot.view.art import Pixmap
     return Pixmap('splashscreen.png').getQPixmap()
   
-  def getOrganizationName(self):
+  def get_organization_name(self):
     return 'Conceptive Engineering'
     
-  def getOrganizationDomain(self):
+  def get_organization_domain(self):
     return 'conceptive.be'
   
   def get_help_url(self):
@@ -131,15 +129,15 @@ class ApplicationAdmin(object):
     from PyQt4.QtCore import QUrl
     return QUrl('http://www.conceptive.be/projects/camelot/')
   
-  def getStylesheet(self):
+  def get_stylesheet(self):
     """
-    @return: the qt stylesheet to be used for this application as a string or None
+    :return: the qt stylesheet to be used for this application as a string or None
     if no stylesheet needed
     """
     return None
   
-  def getAbout(self):
-    """@return: the content of the About dialog"""
+  def get_about(self):
+    """:return: the content of the About dialog, a string with html syntax"""
     return """<b>Camelot Project</b>
               <p>
               Copyright &copy; 2008-2009 Conceptive Engineering.

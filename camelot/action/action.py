@@ -16,7 +16,7 @@ class TableViewAction(Action):
     if admin:
       self.admin = admin(self.parent_admin, entity)
     else:
-      self.admin = self.parent_admin.getEntityAdmin(entity)
+      self.admin = self.parent_admin.get_entity_admin(entity)
     self.entity = entity
     self.verbose_name = verbose_name
   

@@ -106,7 +106,7 @@ class MainWindow( QtGui.QMainWindow ):
     self.printer = Printer()
 
     logger.debug( 'setting up window title' )
-    self.setWindowTitle( self.app_admin.getName() )
+    self.setWindowTitle( self.app_admin.get_name() )
 
     #QtCore.QTimer.singleShot(0, self.doInitialization)
     logger.debug( 'initialization complete' )
@@ -115,7 +115,7 @@ class MainWindow( QtGui.QMainWindow ):
 
   def about( self ):
     logger.debug( 'showing about message box' )
-    abtmsg = self.app_admin.getAbout()
+    abtmsg = self.app_admin.get_about()
     QtGui.QMessageBox.about( self, _( 'About' ), _( abtmsg ) )
     logger.debug( 'about message closed' )
 
@@ -340,7 +340,7 @@ class MainWindow( QtGui.QMainWindow ):
     self.sessionRefreshAct = SessionRefresh( self )
 
     self.app_actions = []
-    for name, icon, callable in self.app_admin.getActions():
+    for name, icon, callable in self.app_admin.get_actions():
 
       def bind_callable( name, callable ):
         return lambda:self.runAction( name, callable )
