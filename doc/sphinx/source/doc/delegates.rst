@@ -126,3 +126,12 @@ Attributes common to most delegates
     field_attributes = {'name':{'minimal_column_width':50}}
   
   will make the column wide enough to display at least 50 characters.
+  
+**tooltip**
+  A function taking as a single argument the object to which the field
+  belongs.  The function should return a string that will be used as a
+  tooltip.  The string may contain html markup.
+  
+  .. literalinclude:: ../../../../test/snippet/fields_with_tooltips.py
+  
+  .. image:: ../_static/snippets/fields_with_tooltips.png  

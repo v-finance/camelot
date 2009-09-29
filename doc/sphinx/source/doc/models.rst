@@ -7,6 +7,9 @@
 :Release: |version|
 :Date: |today|
 
+The `Elixir website <http://elixir.ematia.de/trac/wiki>`_ provides a complete overview of 
+the creation of models that should be read before reading this section. 
+
 This section describes the various field types that can be used to construct
 models. Fields from SQLAlchemy and Camelot are described.
 

@@ -536,10 +536,21 @@ class FormTest(ModelThreadTestCase):
       'director':(QLabel('Director'), TextLineEditor(parent=None, editable=True)),
       'release_date':(QLabel('Release date'), DateEditor(parent=None, editable=True)),
     }
+    from elixir import entities
+    self.entities = [e for e in entities]
+    
+  def tearDown(self):
+    #
+    # The global list of entities should remain clean for subsequent tests
+    #
+    from elixir import entities
+    for e in entities:
+      if e not in self.entities:
+        entities.remove(e)
     
   def test_form(self):
-    form = forms.Form(['title', 'short_description', 'director', 'release_date'])
-    self.grab_widget(form.render(self.widgets))
+    from snippet.form.simple_form import Movie
+    self.grab_widget(Movie.Admin.form_display.render(self.widgets))
     
   def test_tab_form(self):
     form = forms.TabForm([('First tab', ['title', 'short_description']),
