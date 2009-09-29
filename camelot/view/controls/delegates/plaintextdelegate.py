@@ -52,9 +52,9 @@ class PlainTextDelegate(CustomDelegate):
                         option.rect.top(),
                         option.rect.width(),
                         option.rect.height())
-    painter.drawText(rect.x(),
+    painter.drawText(rect.x() + 2,
                      rect.y(),
-                     rect.width(),
+                     rect.width() - 4,
                      rect.height(),
                      Qt.AlignVCenter | Qt.AlignLeft,
                      unicode(text))

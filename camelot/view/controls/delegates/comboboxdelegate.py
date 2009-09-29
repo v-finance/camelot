@@ -62,7 +62,7 @@ class ComboBoxDelegate(CustomDelegate):
     painter.setPen(fontColor.toRgb())
     rect = QtCore.QRect(option.rect.left()+2,
                         option.rect.top(),
-                        option.rect.width()-2,
+                        option.rect.width()-4,
                         option.rect.height())
     painter.drawText(rect.x(),
                      rect.y(),

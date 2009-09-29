@@ -74,7 +74,7 @@ class VirtualAddressDelegate(CustomDelegate):
         
         
       textRect = option.rect
-      textRect = QtCore.QRect(textRect.left(), textRect.top()+6, textRect.width()-16, textRect.height())
+      textRect = QtCore.QRect(textRect.left() + 2, textRect.top()+6, textRect.width()-18, textRect.height())
       
       
       painter.drawText(textRect,
