@@ -58,6 +58,7 @@ actual data to the editor
     icon = Icon( 'tango/16x16/places/user-trash.png' ).getQIcon()
     delete_button.setIcon( icon )
     delete_button.setAutoRaise( True )
+    delete_button.setToolTip('Delete')
     self.connect( delete_button,
                  QtCore.SIGNAL( 'clicked()' ),
                  self.deleteSelectedRows )
@@ -65,10 +66,12 @@ actual data to the editor
     icon = Icon( 'tango/16x16/actions/document-new.png' ).getQIcon()
     add_button.setIcon( icon )
     add_button.setAutoRaise( True )
+    add_button.setToolTip('New')
     self.connect( add_button, QtCore.SIGNAL( 'clicked()' ), self.newRow )
     export_button = QtGui.QToolButton()
     export_button.setIcon( Icon( 'tango/16x16/mimetypes/x-office-spreadsheet.png' ).getQIcon() )
     export_button.setAutoRaise( True )
+    export_button.setToolTip('Export as spreadsheet')
     self.connect( export_button,
                  QtCore.SIGNAL( 'clicked()' ),
                  self.exportToExcel )
