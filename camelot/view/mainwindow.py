@@ -563,20 +563,6 @@ class MainWindow( QtGui.QMainWindow ):
   # Toolbars
 
   def createToolBars( self ):
-    self.printToolBar = self.addToolBar( _( 'Print' ) )
-    self.printToolBar.setObjectName( 'PrintToolBar' )
-    self.printToolBar.setMovable( False )
-    self.printToolBar.setFloatable( False )
-    addActions( self.printToolBar, ( self.printAct, self.previewAct ) )
-
-    self.editToolBar = self.addToolBar( _( 'Edit' ) )
-    self.editToolBar.setObjectName( 'EditToolBar' )
-    self.editToolBar.setMovable( False )
-    self.editToolBar.setFloatable( False )
-    addActions( self.editToolBar, ( self.cutAct,
-                                  self.copyAct,
-                                  self.pasteAct ) )
-
     self.viewToolBar = self.addToolBar( _( 'View' ) )
     self.viewToolBar.setObjectName( 'ViewToolBar' )
     self.viewToolBar.setMovable( False )
@@ -588,6 +574,14 @@ class MainWindow( QtGui.QMainWindow ):
                                   self.viewNextAct,
                                   self.viewLastAct ) )
 
+    self.editToolBar = self.addToolBar( _( 'Edit' ) )
+    self.editToolBar.setObjectName( 'EditToolBar' )
+    self.editToolBar.setMovable( False )
+    self.editToolBar.setFloatable( False )
+    addActions( self.editToolBar, ( self.cutAct,
+                                  self.copyAct,
+                                  self.pasteAct ) )
+    
     self.exportToolBar = self.addToolBar( _( 'Export' ) )
     self.exportToolBar.setObjectName( 'ExportToolBar' )
     self.exportToolBar.setMovable( False )
@@ -595,6 +589,12 @@ class MainWindow( QtGui.QMainWindow ):
     addActions( self.exportToolBar, ( self.exportToExcelAct,
                                     self.exportToWordAct,
                                     self.exportToMailAct, ) )
+
+    self.printToolBar = self.addToolBar( _( 'Print' ) )
+    self.printToolBar.setObjectName( 'PrintToolBar' )
+    self.printToolBar.setMovable( False )
+    self.printToolBar.setFloatable( False )
+    addActions( self.printToolBar, ( self.printAct, self.previewAct ) )    
 
     self.helpToolBar = self.addToolBar( _( 'Help' ) )
     self.helpToolBar.setObjectName( 'HelpToolBar' )
