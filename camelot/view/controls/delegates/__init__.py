@@ -25,7 +25,7 @@ from intervalsdelegate import IntervalsDelegate
 from manytomanydelegate import ManyToManyDelegate
 from many2onedelegate import Many2OneDelegate
 from one2manydelegate import One2ManyDelegate
-from onetomanychoicesdelegate import OneToManyChoicesDelegate
+from manytoonechoicesdelegate import ManyToOneChoicesDelegate
 from plaintextdelegate import PlainTextDelegate
 from richtextdelegate import RichTextDelegate
 from stardelegate import StarDelegate
