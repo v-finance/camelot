@@ -48,7 +48,7 @@ class TableWidget( QtGui.QTableView):
     QtGui.QTableView.__init__( self, parent )
     logger.debug( 'create querytable' )
     self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
-    self.setEditTriggers( QtGui.QAbstractItemView.AllEditTriggers )
+    self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | QtGui.QAbstractItemView.DoubleClicked )
     self.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
     self.horizontalHeader().setClickable( False )
     self._header_font_required = QtGui.QApplication.font()
