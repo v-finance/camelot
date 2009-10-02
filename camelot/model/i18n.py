@@ -30,6 +30,7 @@ from camelot.model import *
 __metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
+from camelot.core.utils import ugettext_lazy as _
 
 import logging
 logger = logging.getLogger('camelot.model.i18n')
@@ -51,6 +52,7 @@ class Translation(Entity):
   _cache = dict()
     
   class Admin(EntityAdmin):
+    verbose_name_plural = _('Translations')      
     form_size = (700,150)
     section = 'configuration'
     list_display = ['source', 'language', 'value', 'uid']
