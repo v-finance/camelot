@@ -194,7 +194,7 @@ class Label( Form ):
     @gui_function
     def render( self, widgets, parent = None, nomargins = False ):
         from PyQt4 import QtGui
-        widget = QtGui.QLabel( self.label )
+        widget = QtGui.QLabel( unicode(self.label) )
         return widget
 
 class TabForm( Form ):
@@ -264,7 +264,7 @@ Render forms within a QTabWidget::
     from PyQt4.QtCore import Qt
     widget = QtGui.QTabWidget( parent )
     for tab_label, tab_form in self.tabs:
-      widget.addTab( tab_form.render( widgets, widget ), tab_label )
+      widget.addTab( tab_form.render( widgets, widget ), unicode(tab_label) )
     return widget
 
 
@@ -416,7 +416,7 @@ Renders a form within a QGroupBox::
   @gui_function
   def render( self, widgets, parent = None, nomargins = False ):
     from PyQt4 import QtGui
-    widget = QtGui.QGroupBox( self.title, parent )
+    widget = QtGui.QGroupBox( unicode(self.title), parent )
     layout = QtGui.QVBoxLayout()
     widget.setLayout( layout )
     form = Form.render( self, widgets, widget, nomargins )
