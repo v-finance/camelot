@@ -45,6 +45,7 @@ class TaskHandler(QtCore.QObject):
   def __init__(self, queue):
     """:param queue: the queue from which to pop a task when handle_task 
     is called"""
+    QtCore.QObject.__init__(self)
     self._queue = queue
     self._tasks_done = []
       
@@ -104,6 +105,7 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
 
   @synchronized
   def post( self, request, response = None, exception = None ):
+    # response should be a slot method of a QObject
     if response:
       name = '%s -> %s.%s'%(request.__name__, response.im_self.__class__.__name__, response.__name__)
     else:
