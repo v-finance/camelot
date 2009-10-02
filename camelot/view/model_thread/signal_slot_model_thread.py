@@ -28,6 +28,7 @@ class Task(QtCore.QObject):
     self._name = None
     
   def execute(self):
+    #logger.debug('executing %s' % (self))
     try:
       result = self._request()
       import sip
@@ -48,18 +49,19 @@ class TaskHandler(QtCore.QObject):
     QtCore.QObject.__init__(self)
     self._queue = queue
     self._tasks_done = []
+    #logger.debug("TaskHandler created.")
       
   def handle_task(self):
     task = self._queue.pop()
     if task:
       task.execute()
-    # we keep track of the tasks done to prevent them being garbage collected
-    # apparently when they are garbage collected, they are recycled, but their
-    # signal slot connections seem to survive this recycling.
-    # @todo: this should be investigated in more detail, since we are causing 
-    #        a deliberate memory leak here
-    task.clear()
-    self._tasks_done.append(task)
+      # we keep track of the tasks done to prevent them being garbage collected
+      # apparently when they are garbage collected, they are recycled, but their
+      # signal slot connections seem to survive this recycling.
+      # @todo: this should be investigated in more detail, since we are causing 
+      #        a deliberate memory leak here
+      task.clear()
+      self._tasks_done.append(task)
             
 def synchronized( original_function ):
   """Decorator for synchronized access to an object, the object should
@@ -93,6 +95,7 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
     self._task_handler = None
     self._mutex = QtCore.QMutex()
     self._request_queue = []
+    self._connected = False
     
   def run( self ):
     self.logger.debug( 'model thread started' )
@@ -105,6 +108,13 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
 
   @synchronized
   def post( self, request, response = None, exception = None ):
+    while not self._task_handler:
+        import time
+        time.sleep(1)
+    assert self._task_handler
+    if not self._connected:
+        self.connect(self, self.task_available, self._task_handler.handle_task, QtCore.Qt.QueuedConnection)
+        self._connected = True
     # response should be a slot method of a QObject
     if response:
       name = '%s -> %s.%s'%(request.__name__, response.im_self.__class__.__name__, response.__name__)
