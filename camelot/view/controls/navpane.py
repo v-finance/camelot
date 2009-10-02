@@ -221,9 +221,17 @@ class NavigationPane( QtGui.QDockWidget ):
     self.caption = PaneCaption( '' )
     self.setTitleBarWidget( self.caption )
     self.setObjectName( objectname )
+    self.content = QtGui.QWidget()
+    self.content.setObjectName( 'NavPaneContent' )    
     header_labels = ['']
+    layout = QtGui.QVBoxLayout()
+    layout.setSpacing( 1 )
+    layout.setContentsMargins( 1, 1, 1, 1 )
     self.treewidget = ModelTree( header_labels, self )
+    layout.addWidget( self.treewidget )    
     self.setMinimumWidth(QtGui.QFontMetrics(QtGui.QApplication.font()).averageCharWidth()*40)
+    self.content.setLayout( layout )
+    self.setWidget( self.content )    
     post(app_admin.get_sections, self.set_sections)
     # Tried selecting QDockWidget but it's not working
     # so we must undo this margin in children stylesheets :)
@@ -242,8 +250,6 @@ class NavigationPane( QtGui.QDockWidget ):
       
   def setcontent( self, buttons ):
     logger.debug( 'setting up pane content' )
-    self.content = QtGui.QWidget()
-    self.content.setObjectName( 'NavPaneContent' )
 
     style = """
     QWidget#NavPaneContent {
@@ -284,21 +290,15 @@ class NavigationPane( QtGui.QDockWidget ):
                  QtCore.SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
                  self.createContextMenu )
 
-    layout = QtGui.QVBoxLayout()
-    layout.setSpacing( 1 )
-    layout.setContentsMargins( 1, 1, 1, 1 )
-    layout.addWidget( self.treewidget )
-
     if buttons:
       for b in buttons:
-        layout.addWidget( b )
+        self.content.layout().addWidget( b )
         self.connect( b, QtCore.SIGNAL( 'indexselected' ), self.change_current )
       self.buttons = buttons
     else:
       self.buttons = []
 
-    self.content.setLayout( layout )
-    self.setWidget( self.content )
+
 
   def set_items_in_tree( self, items ):
     self.treewidget.clear()
