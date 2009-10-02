@@ -80,8 +80,9 @@ def load_translations():
     database, to be able to do fast gui thread lookups of translations"""
     language = unicode(QtCore.QLocale().name())
     from camelot.model.i18n import Translation
-    for t in Translation.query.filter_by(language=language).all():
-        _translations_[t.source] = t.value
+    for t in Translation.query.filter(Translation.language==language).filter(Translation.value!=None).all():
+        if t.value:
+            _translations_[t.source] = t.value
   
 def ugettext(string_to_translate):
     """Translate the string_to_translate to the language of the current locale.  This
