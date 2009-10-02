@@ -215,24 +215,31 @@ class NavigationPane( QtGui.QDockWidget ):
     QtGui.QDockWidget.__init__( self, parent )
     self.app_admin = app_admin
     self.sections = app_admin.get_sections()
-    buttons = [PaneButton( section.get_verbose_name(), section.get_icon().getQPixmap() ) for section in self.sections]
     self.setFeatures( QtGui.QDockWidget.NoDockWidgetFeatures )
-
-    self.setcontent( buttons )
     self.parent = parent
-
     self.currentbutton = -1
-
     self.caption = PaneCaption( '' )
     self.setTitleBarWidget( self.caption )
-
     self.setObjectName( objectname )
-
+    header_labels = ['']
+    self.treewidget = ModelTree( header_labels, self )
+    self.setMinimumWidth(QtGui.QFontMetrics(QtGui.QApplication.font()).averageCharWidth()*40)
+    post(app_admin.get_sections, self.set_sections)
     # Tried selecting QDockWidget but it's not working
     # so we must undo this margin in children stylesheets :)
     #style = 'margin: 0 0 0 3px;'
     #self.setStyleSheet(style)
 
+  def set_sections(self, sections):
+      from PyQt4.QtTest import QTest
+      self.sections = sections
+      self.buttons = [PaneButton( section.get_verbose_name(), section.get_icon().getQPixmap() ) for section in sections]
+      self.setcontent( self.buttons )
+      # use QTest to auto select first button :)
+      if len( self.buttons ):
+         firstbutton = self.buttons[0]
+         QTest.mousePress( firstbutton, Qt.LeftButton )      
+      
   def setcontent( self, buttons ):
     logger.debug( 'setting up pane content' )
     self.content = QtGui.QWidget()
@@ -250,8 +257,8 @@ class NavigationPane( QtGui.QDockWidget ):
     # TODO: Should a separator be added between the tree
     #       and the buttons?
     #self.treewidget = PaneTree(self)
-    header_labels = ['']
-    self.treewidget = ModelTree( header_labels, self )
+    
+    
     self.treewidget.setObjectName( 'NavPaneTree' )
 
     style = """

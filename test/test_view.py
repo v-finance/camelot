@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 
 import logging
-import settings
-import unittest
-import sys
 import os
 
 from camelot.test import *

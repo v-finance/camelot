@@ -31,6 +31,7 @@ import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
 from camelot.view.model_thread import gui_function, model_function
+from camelot.core.utils import ugettext as _
 from validator.object_validator import ObjectValidator
 
 class ObjectAdmin(object):
@@ -188,10 +189,10 @@ Other field attributes process by the admin interface are:
     return 'Admin %s' % str(self.entity.__name__)
 
   def getName(self):
-    return (self.name or self.entity.__name__)
+    return self.get_verbose_name()
   
   def get_verbose_name(self):
-    return (self.verbose_name or self.name or self.entity.__name__)
+    return (self.verbose_name or self.name or _(self.entity.__name__))
   
   def get_verbose_name_plural(self):
     return (self.verbose_name_plural or self.name or (self.get_verbose_name()+'s'))
@@ -246,7 +247,6 @@ Other field attributes process by the admin interface are:
     try:
       return self._field_attributes[field_name]
     except KeyError:
-      from camelot.model.i18n import tr
       from camelot.view.controls import delegates
       #
       # Default attributes for all fields
@@ -261,7 +261,7 @@ Other field attributes process by the admin interface are:
                         blank=True,
                         delegate=delegates.PlainTextDelegate,
                         validator_list=[],
-                        name=field_name.replace('_', ' ').capitalize())
+                        name=_(field_name.replace('_', ' ').capitalize()))
       
       #
       # Field attributes forced by the field_attributes property
@@ -299,7 +299,7 @@ Other field attributes process by the admin interface are:
       if 'target' in attributes:
         attributes['admin'] = get_entity_admin(attributes['target'])
       
-      attributes['name'] = tr(attributes['name'])
+      attributes['name'] = attributes['name']
       self._field_attributes[field_name] = attributes
       return attributes
     

@@ -33,6 +33,8 @@ def create_constant_function(constant):
   return lambda:constant
 
 def variant_to_pyobject(qvariant=None):
+    """Try to convert a QVariant to a python object as good
+    as possible"""
     import datetime
     if not qvariant:
         return None
@@ -65,7 +67,29 @@ def variant_to_pyobject(qvariant=None):
     else:
       value = qvariant.toPyObject()
       
-    
     return value
-  
 
+#
+# Global dictionary containing all user defined translations in the
+# current locale
+#  
+_translations_ = {}
+
+def load_translations():
+    """Fill the global dictionary of translations with all data from the
+    database, to be able to do fast gui thread lookups of translations"""
+    language = unicode(QtCore.QLocale().name())
+    from camelot.model.i18n import Translation
+    for t in Translation.query.filter_by(language=language).all():
+        _translations_[t.source] = t.value
+  
+def ugettext(string_to_translate):
+    """Translate the string_to_translate to the language of the current locale.  This
+    is a two step process.  First the function will try to get the translation out
+    of the Translation entity, if this is not successfull, the function will ask
+    QCoreApplication to translate string_to_translate 
+    (which tries to get the translation from the .po files)"""
+    result = _translations_.get(string_to_translate, None)
+    if not result:
+        result = QtCore.QCoreApplication.translate('', string_to_translate)
+    return result

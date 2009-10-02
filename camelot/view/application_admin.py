@@ -32,6 +32,8 @@ def get_application_admin():
     raise Exception('No application admin class has been constructed yet')
   return _application_admin_[0]
 
+from camelot.view.model_thread import model_function
+
 class ApplicationAdmin(object):
   """The Application Admin class defines how the application should look like, it also ties
   python classes to their associated admin classes.  It's behaviour can be steered by 
@@ -60,6 +62,7 @@ class ApplicationAdmin(object):
   def register(self, entity, admin_class):
     self.admins[entity] = admin_class
         
+  @model_function
   def get_sections(self):
     from camelot.admin.section import structure_to_sections
     return structure_to_sections(self.sections)
@@ -82,7 +85,6 @@ class ApplicationAdmin(object):
     """create_main_window"""
     from camelot.view.mainwindow import MainWindow
     mainwindow = MainWindow(self)
-    
     return mainwindow
   
   def get_entities_and_queries_in_section(self, section):

@@ -1,4 +1,5 @@
 from camelot.view.model_thread import model_function
+from camelot.core.utils import ugettext as _
 
 class Section(object):
   """A Section as displayed in the left pane of the application.  Each Section
@@ -22,7 +23,7 @@ in the definition of the ApplicationAdmin.
     return self.name
       
   def get_verbose_name(self):
-    return self.verbose_name or self.name.capitalize()
+    return self.verbose_name or _(self.name.capitalize())
   
   def get_icon(self):
     from camelot.view.art import Icon

@@ -50,13 +50,7 @@ def main(application_admin,
   # regularly call processEvents to keep the splash alive
   app.processEvents()
   
-  #
-  # call set local if not done yet
-  #
-  import locale
-  language, encoding = locale.getlocale(locale.LC_ALL)
-  if not language:
-    locale.setlocale(locale.LC_ALL, '')
+
   
   import sqlalchemy, elixir
   logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)
@@ -84,6 +78,17 @@ def main(application_admin,
   construct_model_thread()
   construct_signal_handler()
   get_model_thread().start()
+  
+  #
+  # Load camelot translations
+  #
+  from camelot.core.utils import load_translations
+  get_model_thread().post(load_translations)
+  splash.showMessage('Load translations...', msgalign, msgcolor)
+  translator = QtCore.QTranslator()
+  app.installTranslator(translator)
+  
+  app.processEvents()
   
   # Set the style sheet
   splash.showMessage('Create main window...', msgalign, msgcolor)

@@ -1,4 +1,4 @@
-.. _doc-delegates:
+.. _doc-deployment:
 
 #############
   Deployment

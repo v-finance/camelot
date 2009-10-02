@@ -1,0 +1,30 @@
+.. _doc-i18n:
+
+######################
+  Internationalization
+######################
+
+:Release: |version|
+:Date: |today|
+
+How to Specify Translation Strings
+==================================
+
+Translation strings specify “This text should be translated.”. It’s your responsibility 
+to mark translatable strings; the system can only translate strings it knows about.
+
+.. literalinclude:: ../../../../test/snippet/i18n/specify_translation_string.py
+
+How to Create Language Files
+============================
+
+Create a message catalog template ::
+
+  pybabel extract -k "tr, _" camelot/ > camelot.pot
+  
+Create a message catalog
+
+Edit the message catalog with linguist ::
+
+  linquist camelot.po
+  

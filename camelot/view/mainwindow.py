@@ -41,7 +41,6 @@ from sqlalchemy.databases import sqlite
 import sqlite3
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtTest import QTest
 from PyQt4 import QtGui, QtCore
 from PyQt4 import QtWebKit
 
@@ -56,8 +55,7 @@ from camelot.view.remote_signals import construct_signal_handler
 
 QT_MAJOR_VERSION = float( '.'.join( str( QtCore.QT_VERSION_STR ).split( '.' )[0:2] ) )
 
-_ = lambda x: x
-
+from camelot.core.utils import ugettext as _
 
 class MainWindow( QtGui.QMainWindow ):
   """Main window GUI"""
@@ -618,11 +616,6 @@ class MainWindow( QtGui.QMainWindow ):
     self.connect( self.navpane.treewidget,
                  QtCore.SIGNAL( 'itemClicked(QTreeWidgetItem *, int)' ),
                  self.createMdiChild )
-
-    # use QTest to auto select first button :)
-    if len( self.navpane.buttons ):
-      firstbutton = self.navpane.buttons[0]
-      QTest.mousePress( firstbutton, Qt.LeftButton )
 
   # Interface for child windows
 
