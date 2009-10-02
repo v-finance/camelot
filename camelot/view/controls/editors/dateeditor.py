@@ -60,7 +60,7 @@ class DateEditor(CustomEditor):
     
     self.qdateedit.setFocus(Qt.OtherFocusReason)
 
-    #self.setFocusProxy(self.qdateedit)
+    self.setFocusProxy(self.qdateedit)
     self.setAutoFillBackground(True)
 
     self.connect(self.qdateedit,

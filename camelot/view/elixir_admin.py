@@ -35,7 +35,6 @@ import datetime
 import sqlalchemy.types
 import sqlalchemy.sql.expression
 import camelot.types
-import settings
 
 _ = lambda x: x
 
@@ -142,7 +141,6 @@ class EntityAdmin( ObjectAdmin ):
       from sqlalchemy import orm
       from sqlalchemy.exceptions import InvalidRequestError
       from field_attributes import _sqlalchemy_to_python_type_
-      from camelot.view.controls import delegates
       mapper = orm.class_mapper( self.entity )
       try:
         property = mapper.get_property( field_name, resolve_synonyms = True )
@@ -158,7 +156,7 @@ class EntityAdmin( ObjectAdmin ):
           target = property._get_target_class()
           foreign_keys = property.foreign_keys
           if property.direction == orm.sync.ONETOMANY:
-            attributes.update( python_type = list,
+            attributes.update(python_type = list,
                               editable = True,
                               nullable = True,
                               delegate = delegates.One2ManyDelegate,
@@ -166,16 +164,16 @@ class EntityAdmin( ObjectAdmin ):
                               create_inline = False,
                               backref = property.backref.key,
                               direction = property.direction,
-                              admin = get_entity_admin( target ) )
+                              admin = get_entity_admin( target ))
           elif property.direction == orm.sync.MANYTOONE:
-            attributes.update( python_type = str,
+            attributes.update(python_type = str,
                               editable = True,
                               delegate = delegates.Many2OneDelegate,
                               target = target,
                               #@todo: take into account all foreign keys instead of only the first one
                               nullable = foreign_keys[0].nullable,
                               direction = property.direction,
-                              admin = get_entity_admin( target ) )
+                              admin = get_entity_admin( target ))
           elif property.direction == orm.sync.MANYTOMANY:
             attributes.update( python_type = list,
                               editable = True,
@@ -184,7 +182,7 @@ class EntityAdmin( ObjectAdmin ):
                               create_inline = False,
                               direction = property.direction,
                               delegate = delegates.ManyToManyDelegate,
-                              admin = get_entity_admin( target ) )
+                              admin = get_entity_admin( target ))
           else:
             raise Exception( 'PropertyLoader has unknown direction' )
       except InvalidRequestError:
@@ -234,7 +232,7 @@ class EntityAdmin( ObjectAdmin ):
     return list( filter_generator() )
 
   @model_function
-  def setDefaults( self, entity_instance ):
+  def set_defaults( self, entity_instance ):
     """Set the defaults of an object"""
     from sqlalchemy.schema import ColumnDefault
     for field, attributes in self.getFields():
@@ -282,7 +280,7 @@ class EntityAdmin( ObjectAdmin ):
         if oncreate:
           oncreate( entity_instance )
         # Give the default fields their value
-        admin.setDefaults( entity_instance )
+        admin.set_defaults( entity_instance )
         new_object.append( entity_instance )
       return new_object
 

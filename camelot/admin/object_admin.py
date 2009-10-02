@@ -192,10 +192,10 @@ Other field attributes process by the admin interface are:
     return self.get_verbose_name()
   
   def get_verbose_name(self):
-    return (self.verbose_name or self.name or _(self.entity.__name__))
+    return unicode(self.verbose_name or self.name or _(self.entity.__name__))
   
   def get_verbose_name_plural(self):
-    return (self.verbose_name_plural or self.name or (self.get_verbose_name()+'s'))
+    return unicode(self.verbose_name_plural or self.name or (self.get_verbose_name()+'s'))
 
   @model_function
   def get_verbose_identifier(self, obj):
@@ -327,7 +327,7 @@ Other field attributes process by the admin interface are:
   @model_function
   def getFields(self):
     if self.form or self.form_display:
-      fields = self.getForm().get_fields()
+      fields = self.get_form_display().get_fields()
     elif self.fields:
       fields = self.fields
     else:
@@ -335,11 +335,20 @@ Other field attributes process by the admin interface are:
     fields_and_attributes =  [(field, self.getFieldAttributes(field)) for field in fields]
     return fields_and_attributes
   
-  def getForm(self):
+  @model_function
+  def get_all_fields_and_attributes(self):
+    """A list of (field_name, field_attributes) for all fields that can possibly
+    appear in a list or a form or for which field attributes have been defined"""
+    pass
+  
+  @model_function
+  def get_form_display(self):
     from camelot.view.forms import Form, structure_to_form
     if self.form or self.form_display:
       return structure_to_form(self.form or self.form_display)
-    return Form([f for f, a in self.getFields()])
+    if self.list_display:
+      return Form(self.list_display)
+    return Form()
   
   @gui_function
   def create_form_view(self, title, model, index, parent):

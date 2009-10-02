@@ -31,7 +31,7 @@ class Task(QtCore.QObject):
     #logger.debug('executing %s' % (self))
     try:
       result = self._request()
-      import sip
+      #import sip
       #print '===', self._name, '==='
       #print self.receivers(QtCore.SIGNAL('finished'))
       #sip.dump(self)

@@ -60,7 +60,7 @@ class FormView( AbstractView ):
     self.validate_before_close = True
 
     def getColumnsAndForm():
-      return ( self.model.getColumns(), self.admin.getForm() )
+      return ( self.model.getColumns(), self.admin.get_form_display() )
 
     post( getColumnsAndForm, self.handleGetColumnsAndForm )
 

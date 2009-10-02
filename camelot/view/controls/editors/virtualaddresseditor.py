@@ -18,9 +18,8 @@ class VirtualAddressEditor(CustomEditor):
     self.editor = QtGui.QLineEdit()
     self.editor.setEnabled(editable)
     self.layout.addWidget(self.editor)
+    self.setFocusProxy(self.editor)
     self.editable = editable
-    
-    
     nullIcon = Icon('tango/16x16/devices/phone.png').getQIcon()
     self.label = QtGui.QToolButton()
     self.label.setIcon(nullIcon)
@@ -29,19 +28,7 @@ class VirtualAddressEditor(CustomEditor):
     self.label.setEnabled(False)
     self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
     
-    self.layout.addWidget(self.label)
-    
-    
-#    if virtual_adress[0] == 'email':
-#      icon = Icon('tango/16x16/apps/internet-mail.png').getQPixmap()
-#    else:
-#      #if virtual_adress[0] == 'telephone':
-#      
-
-    
-    
-    
-    
+    self.layout.addWidget(self.label)    
     self.connect(self.editor,
                  QtCore.SIGNAL('editingFinished()'),
                  self.editingFinished)

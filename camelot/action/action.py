@@ -21,7 +21,7 @@ class TableViewAction(Action):
     self.verbose_name = verbose_name
   
   def get_verbose_name(self):
-    return self.verbose_name or self.admin.get_verbose_name_plural()
+    return unicode(self.verbose_name or self.admin.get_verbose_name_plural())
     
   def run(self, parent):
     tableview = self.admin.create_table_view(parent)

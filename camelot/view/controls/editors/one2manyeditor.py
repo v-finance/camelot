@@ -139,7 +139,7 @@ actual data to the editor
       def create():
         o = self.admin.entity()
         row = self.model.insertEntityInstance( 0, o )
-        self.admin.setDefaults( o )
+        self.admin.set_defaults( o )
         return row
 
       post( create, self.activate_editor )
