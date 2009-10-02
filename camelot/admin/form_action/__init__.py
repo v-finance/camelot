@@ -45,7 +45,7 @@ class FormAction( object ):
 
       return clicked
 
-    button = QtGui.QPushButton( self._name )
+    button = QtGui.QPushButton( unicode(self._name) )
     if self._icon:
       button.setIcon( self._icon.getQIcon() )
     button.connect( button, QtCore.SIGNAL( 'clicked()' ), create_clicked_function( self, entity_getter ) )
@@ -71,7 +71,7 @@ class FormActionProgressDialog(QtGui.QProgressDialog):
   
   def __init__(self, name):
     QtGui.QProgressDialog.__init__( self, 'Please wait', QtCore.QString(), 0, 0 )
-    self.setWindowTitle( name )
+    self.setWindowTitle( unicode(name) )
     
   def finished(self, success):
     self.close()

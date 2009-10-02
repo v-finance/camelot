@@ -19,7 +19,7 @@ class ListAction( object ):
 
       return clicked
 
-    button = QtGui.QPushButton( self._name )
+    button = QtGui.QPushButton( unicode(self._name) )
     if self._icon:
       button.setIcon( self._icon.getQIcon() )
     button.connect( button, QtCore.SIGNAL( 'clicked()' ), create_clicked_function( self, collection_getter, selection_getter ) )
@@ -48,7 +48,7 @@ class ListActionFromModelFunction( ListAction ):
 
   def run( self, collection_getter, selection_getter ):
     progress = QtGui.QProgressDialog( 'Please wait', QtCore.QString(), 0, 0 )
-    progress.setWindowTitle( self._name )
+    progress.setWindowTitle( unicode(self._name) )
     progress.show()
 
     def create_request( collection_getter ):
