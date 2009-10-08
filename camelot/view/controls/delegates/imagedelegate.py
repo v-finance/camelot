@@ -1,5 +1,6 @@
 
 from customdelegate import *
+import camelot.types
 
 class ImageDelegate(CustomDelegate):
   """
