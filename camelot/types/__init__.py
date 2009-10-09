@@ -281,8 +281,59 @@ box are the capitalized strings::
         except KeyError, e:
           logger.error('could not process %s'%value, exc_info=e)
       
-    return processor  
+    return processor
 
+class File(types.TypeDecorator):
+  """Sqlalchemy column type to store files.  Only the location of the file is stored
+  
+This column type accepts and returns a StoredFile, and stores them in the directory
+specified by settings.MEDIA_ROOT.  The name of the file is stored as a string in
+the database.  A subdirectory upload_to can be specified::
+
+  class Movie(Entity):
+    script = Field(camelot.types.File(upload_to='script'))
+    
+.. image:: ../_static/file_delegate.png
+  """
+  
+  impl = types.Unicode
+  stored_file_implementation = StoredFile
+  
+  def __init__(self, max_length=100, upload_to='', storage=Storage, **kwargs):
+    self.max_length = max_length
+    self.storage = storage(upload_to)
+    types.TypeDecorator.__init__(self, length=max_length, **kwargs)
+    
+  def bind_processor(self, dialect):
+
+    impl_processor = self.impl.bind_processor(dialect)
+    if not impl_processor:
+      impl_processor = lambda x:x
+    
+    def processor(value):
+      if value is not None:
+        import tempfile
+        import shutil
+        assert isinstance(value, (self.stored_file_implementation))
+        return impl_processor(value.name)
+      return impl_processor(value)
+    
+    return processor
+
+  def result_processor(self, dialect):
+    
+    impl_processor = self.impl.result_processor(dialect)
+    if not impl_processor:
+      impl_processor = lambda x:x
+      
+    def processor(value):
+
+      if value:
+        value = impl_processor(value)
+        return self.stored_file_implementation(self.storage, value)
+      
+    return processor
+  
 class Image(types.TypeDecorator):
   """Sqlalchemy column type to store images
   
@@ -347,54 +398,4 @@ the files stored should be images.
         else:
           logger.warn('Image at %s does not exist'%value)
       
-    return processor
-
-class File(types.TypeDecorator):
-  """Sqlalchemy column type to store files.  Only the location of the file is stored
-  
-This column type accepts and returns a StoredFile, and stores them in the directory
-specified by settings.MEDIA_ROOT.  The name of the file is stored as a string in
-the database.  A subdirectory upload_to can be specified::
-
-  class Movie(Entity):
-    script = Field(camelot.types.File(upload_to='script'))
-    
-.. image:: ../_static/file_delegate.png
-  """
-  
-  impl = types.Unicode
-  
-  def __init__(self, max_length=100, upload_to='', storage=Storage, **kwargs):
-    self.max_length = max_length
-    self.storage = storage(upload_to)
-    types.TypeDecorator.__init__(self, length=max_length, **kwargs)
-    
-  def bind_processor(self, dialect):
-
-    impl_processor = self.impl.bind_processor(dialect)
-    if not impl_processor:
-      impl_processor = lambda x:x
-    
-    def processor(value):
-      if value is not None:
-        import tempfile
-        import shutil
-        assert isinstance(value, (StoredFile))
-        return impl_processor(value.name)
-      return impl_processor(value)
-    
-    return processor
-
-  def result_processor(self, dialect):
-    
-    impl_processor = self.impl.result_processor(dialect)
-    if not impl_processor:
-      impl_processor = lambda x:x
-      
-    def processor(value):
-
-      if value:
-        value = impl_processor(value)
-        return StoredFile(self.storage, value)
-      
-    return processor
+    return processor  
