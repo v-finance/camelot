@@ -103,7 +103,9 @@ _sqlalchemy_to_python_type_ = {
                                   'editable': True,
                                   'nullable':True,
                                   'delegate': delegates.ImageDelegate,
-                                  'storage':f.storage,},
+                                  'storage':f.storage,
+                                  'preview_width':100,
+                                  'preview_height':100,},
 
   camelot.types.Code: lambda f: {'python_type': str,
                                  'editable': True,

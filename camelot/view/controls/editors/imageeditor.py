@@ -11,7 +11,15 @@ class ImageEditor(FileEditor):
     filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm)
 All files (*)"""
     
-    def __init__(self, parent=None, editable=True, storage=None, **kwargs):
+    def __init__(self, 
+                 parent=None, 
+                 editable=True, 
+                 storage=None,
+                 preview_width=100,
+                 preview_height=100, 
+                 **kwargs):
+        self.preview_width = preview_width
+        self.preview_height = preview_height
         FileEditor.__init__(self, parent=parent, storage=storage, editable=editable, **kwargs)
       
     def setup_widget(self):
@@ -89,7 +97,7 @@ All files (*)"""
             self.open_button.setToolTip('Open file')
             if value!=self.value:
                 from camelot.view.model_thread import post
-                post(lambda:value.checkout_thumbnail(100,100), self.set_image)            
+                post(lambda:value.checkout_thumbnail(self.preview_width,self.preview_height), self.set_image)            
         else:
             self.clear_image()
             self.open_button.setIcon(self.new_icon)
@@ -101,4 +109,4 @@ All files (*)"""
         self.label.setFrameShape(QtGui.QFrame.Box)
         self.label.setFrameShadow(QtGui.QFrame.Plain)
         self.label.setLineWidth(1)
-        self.label.setFixedSize(100, 100)
+        self.label.setFixedSize(self.preview_width, self.preview_height)
