@@ -165,12 +165,6 @@ rendered in a rich text editor.
 .. image:: ../_static/richtext.png"""
   
   impl = types.UnicodeText
-  
-# Try to import PIL in various ways
-try:
-  from PIL import Image as PILImage
-except:
-  import Image as PILImage
     
 class Color(types.TypeDecorator):
   """The Color field returns and accepts tuples of the form (r,g,b,a) where
@@ -301,7 +295,7 @@ the database.  A subdirectory upload_to can be specified::
   
   def __init__(self, max_length=100, upload_to='', storage=Storage, **kwargs):
     self.max_length = max_length
-    self.storage = storage(upload_to)
+    self.storage = storage(upload_to, self.stored_file_implementation)
     types.TypeDecorator.__init__(self, length=max_length, **kwargs)
     
   def bind_processor(self, dialect):
@@ -334,7 +328,7 @@ the database.  A subdirectory upload_to can be specified::
       
     return processor
   
-class Image(types.TypeDecorator):
+class Image(File):
   """Sqlalchemy column type to store images
   
 This column type accepts and returns a StoredImage, and stores them in the directory
@@ -346,56 +340,5 @@ the files stored should be images.
 
 .. image:: ../_static/image.png  
   """
-  
-  impl = types.Unicode
-  
-  def __init__(self, max_length=100, upload_to='', prefix='image-', format='png', storage=Storage, **kwargs):
-    import settings
-    self.upload_to = os.path.join(settings.CAMELOT_MEDIA_ROOT, upload_to)
-    self.prefix = prefix
-    self.format = format
-    self.storage = Storage(self.upload_to)
-    self.max_length = max_length
-    try:
-      if not os.path.exists(self.upload_to):
-        os.makedirs(self.upload_to)
-    except Exception, e:
-      logger.warn('Could not access or create image path %s, images will be unreachable'%self.upload_to, exc_info=e)
-    types.TypeDecorator.__init__(self, length=max_length, **kwargs)
-    
-  def bind_processor(self, dialect):
 
-    impl_processor = self.impl.bind_processor(dialect)
-    if not impl_processor:
-      impl_processor = lambda x:x
-    
-    def processor(value):
-      if value is not None:
-        import tempfile
-        (handle, name) = tempfile.mkstemp(suffix='.%s'%self.format, prefix=self.prefix, dir=os.path.join(self.upload_to))
-        value.image.save(os.fdopen(handle, 'wb'), 'png')
-        value = os.path.basename(name)
-      return impl_processor(value)
-    
-    return processor
-
-  def result_processor(self, dialect):
-    
-    impl_processor = self.impl.result_processor(dialect)
-    if not impl_processor:
-      impl_processor = lambda x:x
-      
-    def processor(value):
-
-      if value:
-        value = os.path.join(self.upload_to, impl_processor(value))
-        if os.path.exists(value):
-          try:
-            return StoredImage(PILImage.open( open(value, 'rb') ), self.storage, value)
-          except Exception, e:
-            logger.warn('Cannot open image at %s'%value, exc_info=e)
-            return None
-        else:
-          logger.warn('Image at %s does not exist'%value)
-      
-    return processor  
+  stored_file_implementation = StoredImage

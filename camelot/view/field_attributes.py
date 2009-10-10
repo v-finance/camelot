@@ -30,11 +30,9 @@
 import sqlalchemy.types
 import camelot.types
 import datetime
-import sys
 
-from PyQt4 import QtGui
 from controls import delegates
-from camelot.core.constants import *
+from camelot.core import constants
 
 _sqlalchemy_to_python_type_ = {
                                
@@ -59,23 +57,23 @@ _sqlalchemy_to_python_type_ = {
   sqlalchemy.types.Float: lambda f: {'python_type': float,
                                      'precision': f.precision,
                                      'editable': True,
-                                     'minimum': camelot_minfloat,
-                                     'maximum': camelot_maxfloat,
+                                     'minimum': constants.camelot_minfloat,
+                                     'maximum': constants.camelot_maxfloat,
                                      'nullable':True,
                                      'delegate': delegates.FloatDelegate},
 
   sqlalchemy.types.Integer: lambda f: {'python_type': int,
                                        'editable': True,
-                                       'minimum': camelot_minint,
-                                       'maximum': camelot_maxint,
+                                       'minimum': constants.camelot_minint,
+                                       'maximum': constants.camelot_maxint,
                                        'nullable':True,
                                        'delegate':delegates.IntegerDelegate,
                                        'widget': 'int'},
 
   sqlalchemy.types.INT: lambda f: {'python_type': int,
                                    'editable': True,
-                                   'minimum': camelot_minint,
-                                   'maximum': camelot_maxint,
+                                   'minimum': constants.camelot_minint,
+                                   'maximum': constants.camelot_maxint,
                                    'nullable':True,
                                    'delegate':delegates.IntegerDelegate,
                                    'widget': 'int'},
@@ -173,7 +171,7 @@ _sqlalchemy_to_python_type_ = {
   camelot.types.File : lambda f: {'python_type':str,
                                   'editable':True,
                                   'delegate':delegates.FileDelegate,
-                                  'storage':f.storage},
+                                  'storage':f.storage, },
                                          
   
 }

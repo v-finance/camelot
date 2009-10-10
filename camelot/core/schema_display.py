@@ -174,15 +174,3 @@ def create_schema_graph(tables=None, metadata=None, show_indexes=True, show_data
 #                graph.edge_dst_list.append(fk.column.table.name)
 #            graph.sorted_graph_elements.append(graph_edge)
     return graph
-
-def show_uml_graph(*args, **kwargs):
-    from cStringIO import StringIO
-    from PIL import Image
-    iostream = StringIO(create_uml_graph(*args, **kwargs).create_png())
-    Image.open(iostream).show(command=kwargs.get('command','gwenview'))
-
-def show_schema_graph(*args, **kwargs):
-    from cStringIO import StringIO
-    from PIL import Image
-    iostream = StringIO(create_schema_graph(*args, **kwargs).create_png())
-    Image.open(iostream).show(command=kwargs.get('command','gwenview'))

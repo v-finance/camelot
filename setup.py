@@ -23,7 +23,7 @@ setup(
                       'sqlalchemy-migrate>=0.5.3',
                       'pyExcelerator>=0.6.4a',
                       'Jinja>=1.2',
-                      'PIL>=1.1.6', ],
+                      'Babel>=0.9.4' ],
   entry_points = {'console_scripts':[
                    'camelot_admin = camelot.bin.camelot_admin:main',
                    'camelot_manage = camelot.bin.camelot_manage:main',

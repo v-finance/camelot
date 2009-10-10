@@ -35,11 +35,12 @@ def open_stored_file(parent, stored_file):
   post(get_path, progress.open_path, model_thread_exception_message_box)
   progress.exec_()
   
-def create_stored_file(parent, storage, on_finish):
+def create_stored_file(parent, storage, on_finish, filter="""All files (*)"""):
   """Popup a QFileDialog, put the selected file in the storage and return the
   call on_finish with the StoredFile when done"""
   filename = QtGui.QFileDialog.getOpenFileName(parent, 'Open file', 
-                                               QtCore.QDir.currentPath())
+                                               QtCore.QDir.currentPath(),
+                                               filter)
   if filename:
     progress = SaveFileProgressDialog()
     

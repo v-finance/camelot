@@ -28,12 +28,23 @@ class StoredFile(object):
     return self.verbose_name
   
 class StoredImage(StoredFile):
-  """Helper class for the Image field type Class linking a PIL image and the 
+    """Helper class for the Image field type Class linking an image and the 
 location and filename where the image is stored"""
-  
-  def __init__(self, image, storage=None, name=''):
-    self.image = image
-    StoredFile.__init__(self, storage, name)
+    
+    @model_function
+    def checkout_image(self):
+        """Checkout the image from the storage, and return a QImage"""
+        from PyQt4.QtGui import QImage
+        p = self.storage.checkout(self)
+        return QImage(p)
+    
+    @model_function
+    def checkout_thumbnail(self, width, height):
+        """Checkout a thumbnail for this image form the storage
+        :return: a QImage"""
+        from PyQt4.QtCore import Qt
+        original_image = self.checkout_image()
+        return original_image.scaled(width, height, Qt.KeepAspectRatio)
     
 class Storage(object):
   """Helper class that opens and saves StoredFile objects
@@ -42,13 +53,16 @@ directory.  The storage object should only be used within the model thread,
 as all of it's methods might block.
   """
 
-  def __init__(self, upload_to=''):
+  def __init__(self, upload_to='', stored_file_implementation=StoredFile):
     """
 :param upload_to: the sub directory in which to put files
+:param stored_file_implementation: the subclass of StoredFile to be used when
+checking out files from the storage
 """
     import settings
     import os
     self.upload_to = os.path.join(settings.CAMELOT_MEDIA_ROOT, upload_to)
+    self.stored_file_implementation = stored_file_implementation
     try:
       if not os.path.exists(self.upload_to):
         os.makedirs(self.upload_to)
@@ -79,7 +93,7 @@ as all of it's methods might block.
     os.close(handle)
     logger.debug('copy file from %s to %s', local_path, to_path)
     shutil.copy(local_path, to_path)
-    return StoredFile(self, os.path.basename(to_path))
+    return self.stored_file_implementation(self, os.path.basename(to_path))
   
   @model_function
   def checkout(self, stored_file):
@@ -102,7 +116,7 @@ class S3Storage(object):
    * AWS_LOCATION = S3.Location.DEFAULT
   """
 
-  def __init__(self, upload_to=''):
+  def __init__(self, upload_to='', stored_file_implementation=StoredFile):
     import locale
     # try to work around bug S3 code which uses bad names of days
     # http://code.google.com/p/boto/issues/detail?id=140
