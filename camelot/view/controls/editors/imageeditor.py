@@ -1,10 +1,11 @@
 from fileeditor import FileEditor, CustomEditor
+from wideeditor import WideEditor
 from camelot.view.art import Icon
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
-class ImageEditor(FileEditor):
+class ImageEditor(FileEditor, WideEditor):
     """Editor to view and edit image files, this is a customized implementation
     of a FileEditor"""
     
