@@ -159,7 +159,8 @@ class Form( object ):
             w = last_item.widget()
 
             # add stretch only if last item is not expandable
-            if isinstance( w, ( WideEditor, ) ):
+            last_size_policy = w.sizePolicy()
+            if last_size_policy.verticalPolicy()==QtGui.QSizePolicy.Expanding:
                 pass
             else:
                 form_layout.setRowStretch( form_layout.rowCount(), 1 )

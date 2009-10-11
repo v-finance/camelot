@@ -25,6 +25,7 @@ All files (*)"""
       
     def setup_widget(self):
         self.layout = QtGui.QHBoxLayout()
+        self.layout.setContentsMargins( 0, 0, 0, 0 )
         #
         # Setup label
         #
@@ -32,9 +33,6 @@ All files (*)"""
         self.label.setEnabled(self.editable)
         self.layout.addWidget(self.label)
         self.label.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
-        self.label.__class__.dragEnterEvent = self.dragEnterEvent
-        self.label.__class__.dragMoveEvent = self.dragEnterEvent
-        self.label.__class__.dropEvent = self.dropEvent
         #
         # Setup buttons
         #
@@ -55,24 +53,13 @@ All files (*)"""
         self.clear_button.setToolTip('Delete image')
         self.clear_button.setAutoRaise(True)
         self.connect(self.clear_button, QtCore.SIGNAL('clicked()'), self.clear_button_clicked)
-        
-        vspacerItem = QtGui.QSpacerItem(20,
-                                        20,
-                                        QtGui.QSizePolicy.Minimum,
-                                        QtGui.QSizePolicy.Expanding)
-        
-        button_layout.addItem(vspacerItem)   
+
+        button_layout.addStretch() 
         button_layout.addWidget(self.open_button)
         button_layout.addWidget(self.clear_button)    
         
         self.layout.addLayout(button_layout)
-        
-        hspacerItem = QtGui.QSpacerItem(20,
-                                        20,
-                                        QtGui.QSizePolicy.Expanding,
-                                        QtGui.QSizePolicy.Minimum)
-        self.layout.addItem(hspacerItem)
-                
+        self.layout.addStretch()                
         self.setLayout(self.layout)
         self.clear_image()
       

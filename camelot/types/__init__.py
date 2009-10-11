@@ -123,7 +123,7 @@ class Code(types.TypeDecorator):
     
     def processor(value):
       if value is not None:
-        value = '.'.join(value)
+        value = u'.'.join(value)
       return impl_processor(value)
     
     return processor
