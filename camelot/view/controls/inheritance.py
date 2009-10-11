@@ -59,7 +59,7 @@ class SubclassTree( ModelTree ):
     #self.setSelectionBehavior(QtGui.QAbstractItemView.SelectItems)
     self.admin = admin
     self.subclasses = []
-    post( self.admin.getSubclasses, self.setSubclasses )
+    post( self.admin.get_subclass_tree, self.setSubclasses )
     self.connect( self,
                   QtCore.SIGNAL( 'clicked(const QModelIndex&)' ),
                   self.emitSubclassClicked )
@@ -67,13 +67,18 @@ class SubclassTree( ModelTree ):
   def setSubclasses( self, subclasses ):
     logger.debug( 'setting subclass tree' )
     self.subclasses = subclasses
-    if len( subclasses ) > 1:
+    
+    def append_subclasses(class_item, subclasses):
+      for subclass_admin, subsubclasses in subclasses:
+        subclass_item = SubclassItem(class_item, subclass_admin)
+        self.modelitems.append(subclass_item)
+        append_subclasses(subclass_item, subsubclasses)
+        
+    if len( subclasses ):
       self.clear_model_items()
       top_level_item = SubclassItem( self, self.admin )
       self.modelitems.append( top_level_item )
-      for cls in subclasses:
-        item = SubclassItem( top_level_item, cls )
-        self.modelitems.append( item )
+      append_subclasses(top_level_item, subclasses)
       top_level_item.setExpanded( True )
       self.setMaximumWidth( self.fontMetrics().width( ' ' )*70 )
     else:

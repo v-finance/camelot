@@ -187,6 +187,9 @@ Other field attributes process by the admin interface are:
 
   def __str__(self):
     return 'Admin %s' % str(self.entity.__name__)
+  
+  def __repr__(self):
+    return 'ObjectAdmin(%s)'%str(self.entity.__name__)
 
   def getName(self):
     return self.get_verbose_name()
@@ -209,7 +212,7 @@ Other field attributes process by the admin interface are:
     return self.mt
   
   def getEntityAdmin(self, entity):
-    return self.app_admin.getEntityAdmin(entity)
+    return self.app_admin.get_entity_admin(entity)
 
   @model_function
   def get_form_actions(self, entity):
@@ -220,6 +223,17 @@ Other field attributes process by the admin interface are:
   def get_list_actions(self):
     from camelot.admin.list_action import structure_to_list_actions
     return structure_to_list_actions(self.list_actions)
+  
+  @model_function
+  def get_subclass_tree( self ):
+    """Get a tree of admin classes representing the subclasses of the class
+represented by this admin class
+:return: [(subclass_admin, [(subsubclass_admin, [...]),...]),...]"""
+    subclasses = []
+    for subclass in self.entity.__subclasses__():
+      subclass_admin = self.getRelatedEntityAdmin(subclass)
+      subclasses.append( (subclass_admin, subclass_admin.get_subclass_tree()) )
+    return subclasses
   
   def getRelatedEntityAdmin(self, entity):
     """

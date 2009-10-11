@@ -153,7 +153,7 @@ the relation
 
     @model_function
     def get_has_subclasses():
-      return len( self.admin.getSubclasses() )
+      return len( self.admin.get_subclass_tree() )
 
     post( get_has_subclasses, self.show_new_view )
 

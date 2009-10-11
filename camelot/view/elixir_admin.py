@@ -56,7 +56,7 @@ class EntityAdmin( ObjectAdmin ):
       if subclass_admin.entity == entity:
         return subclass_admin
     return self
-
+  
   @model_function
   def getSubclasses( self ):
     """

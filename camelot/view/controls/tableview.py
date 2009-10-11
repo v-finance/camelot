@@ -196,7 +196,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
     self.setLayout( widget_layout )
     self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
     self.search_filter = lambda q: q
-    post( self.admin.getSubclasses, self.setSubclassTree )
+    post( self.admin.get_subclass_tree, self.setSubclassTree )
 
   @model_function
   def get_title( self ):
