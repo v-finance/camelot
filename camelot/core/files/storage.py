@@ -103,7 +103,10 @@ checking out files from the storage
     import tempfile
     import os
     (handle, to_path) = tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=self.upload_to, text='b')
-    os.fdopen(handle, 'wb').write(stream.read())
+    file = os.fdopen(handle, 'wb')
+    file.write(stream.read())
+    file.flush()
+    file.close()
     return self.stored_file_implementation(self, os.path.basename(to_path))
   
   def checkout(self, stored_file):
