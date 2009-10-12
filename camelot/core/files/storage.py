@@ -51,6 +51,9 @@ class Storage(object):
 The default implementation stores files in the settings.CAMELOT_MEDIA_ROOT
 directory.  The storage object should only be used within the model thread,
 as all of it's methods might block.
+
+The methods of this class don't verify if they are called on the model
+thread, because these classes can be used on the server as well.
   """
 
   def __init__(self, upload_to='', stored_file_implementation=StoredFile):
@@ -69,19 +72,16 @@ checking out files from the storage
     except Exception, e:
       logger.warn('Could not access or create path %s, files will be unreachable'%self.upload_to, exc_info=e)
  
-  @model_function
   def exists(self, name):
     """True if a file exists given some name"""
     import os
     os.path.exists(self.path(name))
     
-  @model_function
   def path(self, name):
     """The local filesystem path where the file can be opened using Python’s standard open"""
     import os
     return os.path.join(self.upload_to, name)
 
-  @model_function
   def checkin(self, local_path):
     """Check the file pointed to by local_path into the storage, and
     return a StoredFile"""
@@ -95,14 +95,30 @@ checking out files from the storage
     shutil.copy(local_path, to_path)
     return self.stored_file_implementation(self, os.path.basename(to_path))
   
-  @model_function
+  def checkin_stream(self, prefix, suffix, stream):
+    """Check the datastream in as a file into the storage
+    :param prefix: the prefix to use for generating a file name
+    :param suffix: the suffix to use for generating a filen name, eg '.png'
+    :return: a StoredFile"""
+    import tempfile
+    import os
+    (handle, to_path) = tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=self.upload_to, text='b')
+    os.fdopen(handle, 'wb').write(stream.read())
+    return self.stored_file_implementation(self, os.path.basename(to_path))
+  
   def checkout(self, stored_file):
     """Check the file pointed to by the local_path out of the storage and return
 a local filesystem path where the file can be opened"""
     import os
     return os.path.join(self.upload_to, stored_file.name)
+  
+  def checkout_stream(self, stored_file):
+    """Check the file stored_file out of the storage as a datastream
+    :return: a file object
+    """
+    import os
+    return open(os.path.join(self.upload_to, stored_file.name), 'rb')
 
-  @model_function
   def delete(self, name):
     pass
     
