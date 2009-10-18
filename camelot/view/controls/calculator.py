@@ -219,5 +219,3 @@ class Calculator(QtGui.QDialog):
           self.input.setText('')
           self.Calculate()
           self.input.setFocus()
-    
-    

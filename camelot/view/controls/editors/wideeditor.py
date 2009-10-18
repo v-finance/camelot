@@ -7,6 +7,3 @@ on top of the editor and the editor itself should take two columns::
   
 will generate a test line editor where the text line takes the whole with of the 
 form"""
-
-    
-  

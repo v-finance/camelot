@@ -30,7 +30,6 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.statusbar')
 
-from PyQt4 import QtCore
 from PyQt4 import QtGui
 
 class StatusBar(QtGui.QStatusBar):

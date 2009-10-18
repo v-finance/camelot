@@ -29,7 +29,6 @@ import logging
 logger = logging.getLogger('camelot.view.export.excel')
 
 from pyExcelerator import *
-import time
 import datetime
 
 titleFont = Font()              # initializing titleFont Object

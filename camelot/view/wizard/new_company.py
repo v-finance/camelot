@@ -1,11 +1,4 @@
-import sys
 import urllib
-from camelot.view.model_thread import get_model_thread
-from camelot.view.workspace import get_workspace
-from camelot.view.controls.exception import model_thread_exception_message_box
-from camelot.view import art
-from camelot.view.elixir_admin import EntityAdmin
-from xml.etree.ElementTree import fromstring
 from PyQt4 import QtGui, QtCore
 
 class NewCompanyWizard(QtGui.QWizard):
@@ -167,5 +160,3 @@ class NewCompanyWizard(QtGui.QWizard):
   
   def finished(self, result):
     pass
-    
-    
