@@ -43,11 +43,15 @@ usage ::
     Admin = notEditableAdmin(Admin)
   """
      
-  class newAdmin(original_admin):
+  class NewAdmin(original_admin):
+    
+#    def get_related_entity_admin(self, entity):
+#      admin = original_admin.get_related_entity_admin(self, entity)
+#      return notEditableAdmin(admin)
     
     def getFieldAttributes(self, field_name):
       attribs = original_admin.getFieldAttributes(self, field_name)
       attribs['editable'] = False
       return attribs
       
-  return newAdmin  
+  return NewAdmin  

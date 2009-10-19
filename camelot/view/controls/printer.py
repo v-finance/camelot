@@ -30,11 +30,7 @@ class to handle printing
 """
 
 import logging
-
-#FORMAT = '[%(levelname)-5s] [%(name)-35s] - %(message)s' 
-#logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 logger = logging.getLogger( 'printer' )
-logger.setLevel( logging.DEBUG )
 
 from PyQt4 import QtGui
 from camelot.view.model_thread import post
@@ -118,7 +114,6 @@ class Printer:
       html = t.render( context )
       return html
 
-    from camelot.view.model_thread import get_model_thread
     from camelot.view.export.printer import open_html_in_print_preview_from_gui_thread
     post( generate_html, open_html_in_print_preview_from_gui_thread )
 

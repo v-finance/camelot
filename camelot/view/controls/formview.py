@@ -92,9 +92,12 @@ class FormView( AbstractView ):
     """Create value and label widgets"""
     widgets = {}
     self.widget_mapper.setItemDelegate( delegate )
+    option = QtGui.QStyleOptionViewItem()
+    # set version to 5 to indicate the widget will appear on a
+    # a form view and not on a table view
+    option.version = 5
 
     for i, ( field_name, field_attributes ) in enumerate( columns ):
-      option = None
       model_index = self.model.index( self.index, i )
       widget_label = QtGui.QLabel( field_attributes['name'] )
       widget_editor = delegate.createEditor( None, option, model_index )

@@ -126,7 +126,7 @@ class EntityAdmin( ObjectAdmin ):
           admin_class = self.field_attributes[field_name]['admin']
           return admin_class( self.app_admin, target )
         except KeyError:
-          return self.getRelatedEntityAdmin( target )
+          return self.get_related_entity_admin( target )
 
       #
       # Get the default field_attributes trough introspection if the field
@@ -414,7 +414,7 @@ class EntityAdmin( ObjectAdmin ):
         self.emit( self.entity_selected_signal, instance_getter )
         from camelot.view.workspace import get_workspace
         for window in get_workspace().subWindowList():
-          if window.widget() == self:
+          if hasattr(window, 'widget') and window.widget() == self:
             window.close()
                   
       def sectionClicked( self, index ):

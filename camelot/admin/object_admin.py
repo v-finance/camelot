@@ -231,11 +231,11 @@ represented by this admin class
 :return: [(subclass_admin, [(subsubclass_admin, [...]),...]),...]"""
     subclasses = []
     for subclass in self.entity.__subclasses__():
-      subclass_admin = self.getRelatedEntityAdmin(subclass)
+      subclass_admin = self.get_related_entity_admin(subclass)
       subclasses.append( (subclass_admin, subclass_admin.get_subclass_tree()) )
     return subclasses
   
-  def getRelatedEntityAdmin(self, entity):
+  def get_related_entity_admin(self, entity):
     """
     Get an admin object for another entity.  Taking into account preferences of this
     admin object or for those of admin object higher up the chain such as the
@@ -308,7 +308,7 @@ represented by this admin class
           admin_class = self.field_attributes[field_name]['admin']
           return admin_class(self.app_admin, target)
         except KeyError:
-          return self.getRelatedEntityAdmin(target)
+          return self.get_related_entity_admin(target)
         
       if 'target' in attributes:
         attributes['admin'] = get_entity_admin(attributes['target'])

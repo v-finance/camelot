@@ -47,7 +47,11 @@ class attribute specifies the editor class that should be used
     self._width = self._font_metrics.averageCharWidth() * 20
     
   def createEditor(self, parent, option, index):
+    """:param option: use an option with version 5 to indicate the widget will
+    be put onto a form"""
     editor = self.editor(parent, editable=self.editable, **self.kwargs)
+    if option.version!=5:
+      editor.setAutoFillBackground(True)
     self.connect(editor, editors.editingFinished, self.commitAndCloseEditor)
     return editor
   

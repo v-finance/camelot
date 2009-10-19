@@ -369,11 +369,19 @@ class MainWindow( QtGui.QMainWindow ):
     pass
 
   def printDoc( self ):
-    active = self.activeMdiChild()
-    self.printer.printView( active.widget(), self )
+    self.previewDoc()
 
   def previewDoc( self ):
-    self.printer.preview( self.activeMdiChild().widget(), self )
+    active = self.activeMdiChild()
+    from camelot.admin.form_action import PrintHtmlFormAction
+    
+    class PrintPreview(PrintHtmlFormAction):
+      
+      def html( self, entity_getter ):
+        return active.widget().toHtml()
+    
+    action = PrintPreview('Print Preview')
+    action.run(lambda:None)
 
   def new( self ):
     self.activeMdiChild().widget().newRow()

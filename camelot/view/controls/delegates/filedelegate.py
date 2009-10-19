@@ -22,7 +22,7 @@ class FileDelegate(CustomDelegate):
     else:
       painter.fillRect(option.rect, background_color)
     value =  variant_to_pyobject(index.model().data(index, Qt.EditRole))
-    if value:
+    if value not in (None, ValueLoading):
       
       painter.drawText(option.rect.x()+2,
                        option.rect.y(),

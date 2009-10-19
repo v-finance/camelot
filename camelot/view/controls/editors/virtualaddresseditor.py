@@ -160,8 +160,8 @@ class VirtualAddressEditor(CustomEditor):
 
   def mailClick(self, adress):
     url = QtCore.QUrl()
-    url.setUrl('mailto:' + str(adress) + '?subject=Camelot')
-    mailSent = QtGui.QDesktopServices.openUrl(url)
+    url.setUrl('mailto:%s?subject=Subject'%str(adress))
+    QtGui.QDesktopServices.openUrl(url)
 
   def editingFinished(self):
     self.value = []
