@@ -25,9 +25,6 @@
 #
 #  ============================================================================
 
-import settings
-import os
-import sys
 import logging
 
 logger = logging.getLogger( 'mainwindow' )
@@ -46,12 +43,9 @@ from PyQt4 import QtWebKit
 
 from camelot.view.art import Icon
 from camelot.action import createAction, addActions
-from camelot.view.controls.navpane import PaneButton, NavigationPane
+from camelot.view.controls.navpane import NavigationPane
 from camelot.view.controls.printer import Printer
-from camelot.view.model_thread import get_model_thread, construct_model_thread, post
-from camelot.view.response_handler import ResponseHandler
-from camelot.view.remote_signals import construct_signal_handler
-#from camelot.view.importer import db_import
+from camelot.view.model_thread import post
 
 QT_MAJOR_VERSION = float( '.'.join( str( QtCore.QT_VERSION_STR ).split( '.' )[0:2] ) )
 

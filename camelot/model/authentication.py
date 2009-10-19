@@ -30,9 +30,8 @@ permissions
 These structures are modeled like described in 'The Data Model Resource Book'
 by Len Silverston, Chapter 2
 """
-from sqlalchemy import sql, and_
+from sqlalchemy import sql
 
-import camelot
 import camelot.types
 
 from camelot.model import *
@@ -43,7 +42,7 @@ from camelot.model.synchronization import *
 from camelot.core.document import documented_entity
 
 from camelot.view.elixir_admin import EntityAdmin
-from camelot.view.forms import Form, TabForm, VBoxForm, HBoxForm, WidgetOnlyForm
+from camelot.view.forms import Form, TabForm, HBoxForm
 from camelot.admin.form_action import FormActionFromModelFunction
 import datetime
 import threading

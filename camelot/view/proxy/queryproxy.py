@@ -33,7 +33,6 @@ import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
 from collection_proxy import CollectionProxy, RowDataAsUnicode, RowDataFromObject, ToolTipDataFromObject
-from collection_proxy import RowDataFromObject
 from camelot.view.model_thread import model_function, gui_function
 
 
@@ -90,7 +89,7 @@ class QueryTableProxy(CollectionProxy):
   @model_function
   def getData(self):
     """Generator for all the data queried by this proxy"""
-    for i,o in enumerate(self._query_getter().all()):
+    for _i,o in enumerate(self._query_getter().all()):
       yield RowDataFromObject(o, self.getColumns())
       
   @model_function

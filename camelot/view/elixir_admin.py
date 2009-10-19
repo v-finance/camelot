@@ -25,21 +25,15 @@
 #
 #  ============================================================================
 
-import os
-import sys
 import logging
 logger = logging.getLogger( 'camelot.view.elixir_admin' )
 
-import datetime
-
-import sqlalchemy.types
 import sqlalchemy.sql.expression
-import camelot.types
 
 _ = lambda x: x
 
-from camelot.admin.object_admin import *
-from camelot.view.model_thread import post
+from camelot.admin.object_admin import ObjectAdmin
+from camelot.view.model_thread import post, model_function, gui_function
 from camelot.admin.validator.entity_validator import EntityValidator
 
 class EntityAdmin( ObjectAdmin ):
@@ -242,7 +236,7 @@ class EntityAdmin( ObjectAdmin ):
           default_value = default.execute()
         elif callable( default ):
           import inspect
-          args, varargs, kwargs, defs = inspect.getargspec( default )
+          args, _varargs, _kwargs, _defs = inspect.getargspec( default )
           if len( args ):
             default_value = default( entity_instance )
           else:
@@ -254,8 +248,8 @@ class EntityAdmin( ObjectAdmin ):
         try:
           setattr( entity_instance, field, default_value )
         except AttributeError, e:
-          logger.error('Programming Error : could not set attribute %s to %s on %s'%(field, default_value, entity_instance.__class__.__name__))   
-      except KeyError, e:
+          logger.error('Programming Error : could not set attribute %s to %s on %s'%(field, default_value, entity_instance.__class__.__name__), exc_info=e)   
+      except KeyError, _e:
         pass
 
   @gui_function
@@ -347,11 +341,11 @@ class EntityAdmin( ObjectAdmin ):
           def create_instance_getter( new_object ):
             return lambda:new_object[0]
 
-          for o in new_object:
+          for _o in new_object:
             self.emit( self.entity_created_signal,
                        create_instance_getter( new_object ) )
           self.validate_before_close = False
-          from camelot.view.workspace import get_workspace, NoDesktopWorkspace
+          from camelot.view.workspace import NoDesktopWorkspace
           workspace = get_workspace()
           if isinstance( workspace, ( NoDesktopWorkspace ) ):
             self.close()
@@ -400,7 +394,6 @@ class EntityAdmin( ObjectAdmin ):
     from controls.tableview import TableView
     from art import Icon
     from proxy.queryproxy import QueryTableProxy
-    from PyQt4 import QtCore
     from PyQt4.QtCore import SIGNAL
 
     class SelectQueryTableProxy( QueryTableProxy ):

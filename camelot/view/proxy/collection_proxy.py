@@ -105,7 +105,7 @@ def RowDataAsUnicode( obj, columns ):
 
   row_data = []
 
-  for i, ( field_name, field_attributes ) in enumerate( columns ):
+  for _i, ( field_name, field_attributes ) in enumerate( columns ):
     field_data = getattr( obj, field_name )
     unicode_data = u''
     if 'unicode_format' in field_attributes:
@@ -290,7 +290,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
       if row != None:
         self.logger.debug( 'updated row %i' % row )
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
-        import sip
         if not sip.isdeleted( self ):
             self.emit( QtCore.SIGNAL( sig ),
                   self.index( row, 0 ),
@@ -416,7 +415,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
   @gui_function
   def data( self, index, role ):
-    import datetime
     if not index.isValid() or \
        not ( 0 <= index.row() <= self.rowCount( index ) ) or \
        not ( 0 <= index.column() <= self.columnCount( index ) ):
@@ -709,6 +707,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
   @model_function
   def getData( self ):
     """Generator for all the data queried by this proxy"""
-    for i, o in enumerate( self.collection_getter() ):
+    for _i, o in enumerate( self.collection_getter() ):
       yield RowDataFromObject( o, self.getColumns() )
 
