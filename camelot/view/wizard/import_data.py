@@ -7,7 +7,7 @@ from camelot.action import createAction, addActions
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.model_thread import get_model_thread
 from camelot.view.controls.exception import model_thread_exception_message_box
-from camelot.view.controls.delegates.comboboxdelegate import ComboBoxDelegate
+from camelot.view.controls.delegates.comboboxdelegate import ComboBoxEditorDelegate
 from camelot.view.controls.editors.choiceseditor import ChoicesEditor
 import csv, itertools
 
@@ -20,6 +20,7 @@ class ImportWizard(QtGui.QWizard):
         self.parent = parent
         # the attributes of the object that will be imported
         self.attributes = attributes
+        print self.attributes
  
     """ Make a wizard and the pages """
     def start(self):
@@ -117,20 +118,20 @@ class ImportWizard(QtGui.QWizard):
         tv = QTableView()
 
         # set the table model    
-        #tm = InputTableModel(data, headerData, parent=self.qTablePage)
+        tm = InputTableModel(data, headerData, parent=self.qTablePage)
         
         # add one to the length for the header
-        if firstRow:
-            tm = QStandardItemModel((len(data) + 2) , len(self.attributes), self.qTablePage)
-        else :
-            tm = QStandardItemModel((len(data) + 1) , len(self.attributes), self.qTablePage)
+        #if firstRow:
+        #    tm = QStandardItemModel((len(data) + 2) , len(self.attributes), self.qTablePage)
+        #else :
+        #    tm = QStandardItemModel((len(data) + 1) , len(self.attributes), self.qTablePage)
 
         tv.setModel(tm)
-        self.makeHeader(tm, headerData)
-        self.makeBody(tm, data)
+        #self.makeHeader(tm, headerData)
+        #self.makeBody(tm, data)
+        CHOICES = self.makeChoices(headerData)
         
-        CHOICES = (('1','first choice'), ('2','second choice'), ('3','third choice'))
-        delegate = ComboBoxDelegate(choices=lambda o:CHOICES, parent=tv )
+        delegate = ComboBoxEditorDelegate(choices=lambda o:CHOICES, parent=tv )
         #delegate = TestComboBoxDelegate(self.attributes, parent=tv )
         tv.setItemDelegateForRow(0,delegate)
 
@@ -162,10 +163,13 @@ class ImportWizard(QtGui.QWizard):
             tv.setRowHeight(row, 18)
         return tv
     
- #   def makeChoices(self, choices):
- #       for choice in choices:
+    def makeChoices(self, choices):
+        CHOICES = []
+        for i in range(len(choices)):
+            CHOICES = CHOICES + [(str(i) , choices[i])]
+        CHOICES = tuple(CHOICES)
+
             
-    
     def makeHeader(self, model, header):
         for column in range(len(header)):
             index = model.index(0, column, QModelIndex())
@@ -178,7 +182,6 @@ class ImportWizard(QtGui.QWizard):
             for column in range(len(self.attributes)):
                 index = model.index((row+1), column, QModelIndex())
                 model.setData(index, QVariant(self.data[row][column]))
-
     
     """method returning the imported data"""
     def getImportedData(self):
@@ -188,24 +191,32 @@ class InputTableModel(QAbstractTableModel):
     """ class representing the table """
     def __init__(self, datain, headerData, parent=None, *args): 
         QAbstractTableModel.__init__(self, parent, *args) 
-        self.arraydata = list(datain)
-        self.arraydata.insert(0, headerData)
         # the headerdata will be the first row in the table
         # it is impossible to add a delegate to a qheaderview (it is possible but ignored)
         # so add the data to the first row and add there the delegate
         # you can add a (different) delegate for each row
         #self.headerRow = headerData
-        self.fill_up_header()
+        self.fill_up_table(datain, headerData)
  
-    def fill_up_header(self, hints=None):
+ 
+    def fill_up_table(self, datain, headerData, hints = None):
+        self.arraydata = list(datain)
+        self.arraydata.insert(0, headerData)
+        self.fill_up_header(hints)
+ 
+    def fill_up_header(self, hints):
         #first row of data can be a hint
-        if not hints == None:
-            for column in range(len(self.arraydata[0])):
-                self.setData(self.index(0, column), hints[column], Qt.DisplayRole)
+        print "hints" , hints
+        if not hints == None :
+            self.arraydata.insert(1, hints)
+            #for column in range(len(self.arraydata[0])):
+            #    self.setData(self.index(0, column), hints[column], Qt.DisplayRole)
         #if no hints are given, fill up the header with first attribute
-        else:
-            for column in range(len(self.arraydata[0])):
-                self.setData(self.index(0, column), self.arraydata[0][0], Qt.DisplayRole)
+        #else:
+            #for column in range(len(self.arraydata[0])):
+            #    self.setData(self.index(0, column), self.arraydata[0][0], Qt.DisplayRole)
+        
+        self.emit(QtCore.SIGNAL("layoutChanged()"))
         
  
     def rowCount(self, parent):
@@ -228,7 +239,7 @@ class InputTableModel(QAbstractTableModel):
            return QVariant()
         return QVariant(self.arraydata[index.row()][index.column()]) 
 
-    def setData(self, index, value, role):
+    def setData(self, index, value, role=Qt.ItemIsEditable):
         self.arraydata[index.row()][index.column()] = value
   
     """every item is editable, so no need to keep it for each object """

@@ -454,7 +454,8 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
 
   def importWizard(self, attributes):
     from camelot.view.wizard.import_data import ImportWizard
-    importWizard = ImportWizard( self, attributes )
+    object_attributes = ['title', 'releasedate', 'name', 'description' ]
+    importWizard = ImportWizard( self, object_attributes )
     importWizard.start()
     data = importWizard.getImportedData()    
     
@@ -462,7 +463,7 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
         for row in data:
             # get all possible fields (=attributes) from this object
             #attributes = o.Admin.form_display.get_fields() 
-            object_attributes = ['title', 'releasedate', 'name', 'description' ]           
+            #object_attributes = ['title', 'releasedate', 'name', 'description' ]           
             #print attributes
             # set title
             o = self.admin.entity()
