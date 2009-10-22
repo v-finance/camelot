@@ -1,0 +1,233 @@
+Country,"Capital City"
+Afghanistan,Kabul
+Albania,Tirana
+Algeria,Alger
+"American Samoa",Fagatogo
+Andorra,"Andorra la Vella"
+Angola,Luanda
+Anguilla,"The Valley"
+"Antigua and Barbuda","Saint John's"
+Argentina,"Buenos Aires"
+Armenia,Yerevan
+Aruba,Oranjestad
+Australia,Canberra
+Austria,Wien
+Azerbaijan,Baku
+Bahamas,Nassau
+Bahrain,al-Manama
+Bangladesh,Dhaka
+Barbados,Bridgetown
+Belarus,Minsk
+Belgium,Bruxelles
+Belize,Belmopan
+Benin,Porto-Novo
+Bermuda,Hamilton
+Bhutan,Thimphu
+Bolivia,"La Paz"
+"Bosnia and Herzegovina",Sarajevo
+Botswana,Gaborone
+Brazil,Brasília
+Brunei,"Bandar Seri Begawan"
+Bulgaria,Sofija
+"Burkina Faso",Ouagadougou
+Burundi,Bujumbura
+Cambodia,"Phnom Penh"
+Cameroon,Yaoundé
+Canada,Ottawa
+"Cape Verde",Praia
+"Cayman Islands","George Town"
+"Central African Republic",Bangui
+Chad,N'Djaména
+Chile,"Santiago de Chile"
+China,Peking
+"Christmas Island","Flying Fish Cove"
+"Cocos (Keeling) Islands","West Island"
+Colombia,"Santafé de Bogotá"
+Comoros,Moroni
+Congo,Brazzaville
+"Democratic Republic of Congo",Kinshasa
+"Cook Islands",Avarua
+"Costa Rica","San José"
+"Côte d'Ivoire",Yamoussoukro
+Croatia,Zagreb
+Cuba,"La Habana"
+Cyprus,Nicosia
+"Czech Republic",Praha
+Denmark,København
+Djibouti,Djibouti
+Dominica,Roseau
+"Dominican Republic","Santo Domingo de Guzmán"
+"East Timor",Dili
+Ecuador,Quito
+Egypt,Cairo
+"El Salvador","San Salvador"
+"Equatorial Guinea",Malabo
+Eritrea,Asmara
+Estonia,Tallinn
+Ethiopia,"Addis Abeba"
+"Falkland Islands",Stanley
+"Faroe Islands",Tórshavn
+"Fiji Islands",Suva
+Finland,Helsinki
+France,Paris
+"French Guiana",Cayenne
+"French Polynesia",Papeete
+Gabon,Libreville
+Gambia,Banjul
+Georgia,Tbilisi
+Germany,Berlin
+Ghana,Accra
+Gibraltar,Gibraltar
+Greece,Athenai
+Greenland,Nuuk
+Grenada,"Saint George's"
+Guadeloupe,Basse-Terre
+Guam,Agaña
+Guatemala,"Ciudad de Guatemala"
+Guinea,Conakry
+Guinea-Bissau,Bissau
+Guyana,Georgetown
+Haiti,Port-au-Prince
+"Holy See (Vatican City State)","Città del Vaticano"
+Honduras,Tegucigalpa
+"Hong Kong",Victoria
+Hungary,Budapest
+Iceland,Reykjavík
+India,"New Delhi"
+Indonesia,Jakarta
+Iran,Teheran
+Iraq,Baghdad
+Ireland,Dublin
+Israel,Jerusalem
+Italy,Roma
+Jamaica,Kingston
+Japan,Tokyo
+Jordan,Amman
+Kazakstan,Astana
+Kenya,Nairobi
+Kiribati,Bairiki
+Kuwait,Kuwait
+Kyrgyzstan,Bishkek
+Laos,Vientiane
+Latvia,Riga
+Lebanon,Beirut
+Lesotho,Maseru
+Liberia,Monrovia
+"Libyan Arab Jamahiriya",Tripoli
+Liechtenstein,Vaduz
+Lithuania,Vilnius
+Luxembourg,Luxembourg
+Macao,Macao
+Macedonia,Skopje
+Madagascar,Antananarivo
+Malawi,Lilongwe
+Malaysia,"Kuala Lumpur"
+Maldives,Male
+Mali,Bamako
+Malta,Valletta
+"Marshall Islands",Dalap-Uliga-Darrit
+Martinique,Fort-de-France
+Mauritania,Nouakchott
+Mauritius,Port-Louis
+Mayotte,Mamoutzou
+Mexico,"Ciudad de México"
+Micronesia,"Federated States of Palikir"
+Moldova,Chisinau
+Monaco,Monaco-Ville
+Mongolia,"Ulan Bator"
+Montserrat,Plymouth
+Morocco,Rabat
+Mozambique,Maputo
+Myanmar,Rangoon
+Namibia,Windhoek
+Nauru,Yaren
+Nepal,Kathmandu
+Netherlands,Amsterdam
+"Netherlands Antilles",Willemstad
+"New Caledonia",Nouméa
+"New Zealand",Wellington
+Nicaragua,Managua
+Niger,Niamey
+Nigeria,Abuja
+Niue,Alofi
+"Norfolk Island",Kingston
+"North Korea",Pyongyang
+"Northern Mariana Islands",Garapan
+Norway,Oslo
+Oman,Masqat
+Pakistan,Islamabad
+Palau,Koror
+Palestine,Gaza
+Panama,"Ciudad de Panamá"
+"Papua New Guinea","Port Moresby"
+Paraguay,Asunción
+Peru,Lima
+Philippines,Manila
+Pitcairn,Adamstown
+Poland,Warszawa
+Portugal,Lisboa
+"Puerto Rico","San Juan"
+Qatar,Doha
+Réunion,Saint-Denis
+Romania,Bucuresti
+"Russian Federation",Moscow
+Rwanda,Kigali
+"Saint Helena",Jamestown
+"Saint Kitts and Nevis",Basseterre
+"Saint Lucia",Castries
+"Saint Pierre and Miquelon",Saint-Pierre
+"Saint Vincent and the Grenadines",Kingstown
+Samoa,Apia
+"San Marino","San Marino"
+"Sao Tome and Principe","São Tomé"
+"Saudi Arabia",Riyadh
+Senegal,Dakar
+Seychelles,Victoria
+"Sierra Leone",Freetown
+Singapore,Singapore
+Slovakia,Bratislava
+Slovenia,Ljubljana
+"Solomon Islands",Honiara
+Somalia,Mogadishu
+"South Africa",Pretoria
+"South Korea",Seoul
+Spain,Madrid
+"Sri Lanka",Colombo
+Sudan,Khartum
+Suriname,Paramaribo
+"Svalbard and Jan Mayen",Longyearbyen
+Swaziland,Mbabane
+Sweden,Stockholm
+Switzerland,Bern
+Syria,Damascus
+Taiwan,Taipei
+Tajikistan,Dushanbe
+Tanzania,Dodoma
+Thailand,Bangkok
+Togo,Lomé
+Tokelau,Fakaofo
+Tonga,Nuku'alofa
+"Trinidad and Tobago",Port-of-Spain
+Tunisia,Tunis
+Turkey,Ankara
+Turkmenistan,Ashgabat
+"Turks and Caicos Islands","Cockburn Town"
+Tuvalu,Funafuti
+Uganda,Kampala
+Ukraine,Kyiv
+"United Arab Emirates","Abu Dhabi"
+"United Kingdom",London
+"United States",Washington
+Uruguay,Montevideo
+Uzbekistan,Toskent
+Vanuatu,Port-Vila
+Venezuela,Caracas
+Vietnam,Hanoi
+"Virgin Islands, British","Road Town"
+"Virgin Islands, U.S.","Charlotte Amalie"
+"Wallis and Futuna",Mata-Utu
+"Western Sahara",El-Aaiún
+Yemen,Sanaa
+Yugoslavia,Beograd
+Zambia,Lusaka
+Zimbabwe,Harare

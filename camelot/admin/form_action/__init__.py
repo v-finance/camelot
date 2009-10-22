@@ -122,7 +122,7 @@ Overwrite the html function to customize the html that should be shown::
 
     class Admin(EntityAdmin):      
       list_display = ['title', 'description']
-      form_actions = [PrintMovieAction('Summary')]
+      form_actions = [PrintMovieAction('summary')]
     
 will put a print button on the form :
 

@@ -80,14 +80,14 @@ class Filter(object):
     joins = []
     table = admin.entity.table
     path = self.attribute.split('.')
-    for i,field_name in enumerate(path):
+    for field_name in path:
       attributes = admin.getFieldAttributes(field_name)
       filter_names.append(attributes['name'])
       # @todo: if the filter is not on an attribute of the relation, but on the relation itselves
       if 'target' in attributes:
         admin = attributes['admin']
         joins.append(field_name)
-        if attributes['direction'] == orm.sync.MANYTOONE:
+        if attributes['direction'] == orm.interfaces.MANYTOONE:
           table = admin.entity.table.join(table)
         else:
           table = admin.entity.table
@@ -107,6 +107,7 @@ class Filter(object):
 
     options = [(self._value_to_string(value[0]), create_decorator(col, value[0], joins))
                for value in session.execute(query)]
+
     return (filter_names[0],[('All', lambda q: q)] + options)
     
 class GroupBoxFilter(Filter):

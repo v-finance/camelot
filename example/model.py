@@ -9,6 +9,7 @@ from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, ManyToM
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
 from camelot.view.controls import delegates
+from camelot.view.filters import ComboBoxFilter
 
 __metadata__ = metadata
 
@@ -66,7 +67,10 @@ class Movie(Entity):
     # be visible in the table view        
     list_display = ['title', 'releasedate', 'director', 'description']
     # define filters to be available in the table view
-    list_filter = ['genre']
+    list_filter = ['genre', ComboBoxFilter('director.full_name')]
+    # if the search function needs to look in related object attributes,
+    # those should be specified within list_search
+    list_search = ['director.full_name']
     # the form_display attribute specifies which entity attributes should be
     # visible in the form view
     form_display = TabForm([

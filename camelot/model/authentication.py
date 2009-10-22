@@ -40,12 +40,14 @@ __metadata__ = metadata
 
 from camelot.model.synchronization import *
 from camelot.core.document import documented_entity
+from camelot.core.utils import ugettext_lazy as _
 
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, HBoxForm
 from camelot.admin.form_action import FormActionFromModelFunction
 import datetime
 import threading
+
 
 _current_authentication_ = threading.local()
 
@@ -86,15 +88,15 @@ class EmployerEmployee(PartyRelationship):
   
   @ColumnProperty
   def first_name(self):
-    return sql.select([Person.first_name], Person.c.party_id==self.established_to_party_id)
+    return sql.select([Person.first_name], Person.party_id==self.established_to_party_id)
   
   @ColumnProperty
   def last_name(self):
-    return sql.select([Person.last_name], Person.c.party_id==self.established_to_party_id)
+    return sql.select([Person.last_name], Person.party_id==self.established_to_party_id)
   
   @ColumnProperty
   def social_security_number(self):
-    return sql.select([Person.social_security_number], Person.c.party_id==self.established_to_party_id)
+    return sql.select([Person.social_security_number], Person.party_id==self.established_to_party_id)
   
   def __unicode__(self):
     return u'%s employed by %s'%(unicode(self.established_to), unicode(self.established_from))
@@ -225,7 +227,7 @@ class Party(Entity):
                                   sql.select([aliased_organisation.c.name],
                                              whereclause=and_(aliased_party.c.id==c.id),
                                              from_obj=[aliased_party.join(aliased_organisation, aliased_organisation.c.party_id==aliased_party.c.id)]).limit(1).as_scalar() )
-
+    
   class Admin(EntityAdmin):
     verbose_name = 'Party'
     verbose_name_plural = 'Parties'
@@ -265,8 +267,8 @@ class Organization(Party):
     return sum((shareholder.shares for shareholder in self.shareholders), 0)
   
   class Admin(Party.Admin):
-    verbose_name = 'Organization'
-    verbose_name_plural = 'Organizations'
+    verbose_name = _('organization')
+    verbose_name_plural = _('organizations')
     section = 'relations'
     list_display = ['name', 'tax_id',]
     form_display = TabForm([('Basic', Form(['name', 'tax_id', 'addresses', 'contact_mechanisms'])),
@@ -339,8 +341,8 @@ class Person(Party):
     return self.name
 
   class Admin(Party.Admin):
-    verbose_name = 'Person'
-    verbose_name_plural = 'Persons'
+    verbose_name = _('person')
+    verbose_name_plural = _('persons')
     section = 'relations'
     list_display = ['first_name', 'last_name', ]
     form_display = TabForm([('Basic', Form([HBoxForm([Form(['first_name', 'last_name', 'sex']),

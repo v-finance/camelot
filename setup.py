@@ -18,7 +18,7 @@ setup(
   include_package_data = True,
   license = 'GPL, Commercial',
   platforms = 'Linux, Windows, OS X',
-  install_requires = ['SQLAlchemy==0.4.7',
+  install_requires = ['SQLAlchemy==0.5.6',
                       'Elixir>=0.6.1',
                       'sqlalchemy-migrate>=0.5.3',
                       'pyExcelerator>=0.6.4a',

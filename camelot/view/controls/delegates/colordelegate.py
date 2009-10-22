@@ -19,7 +19,7 @@ class ColorDelegate(CustomDelegate):
     else:
       painter.fillRect(option.rect, background_color)
     color = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-    if color:
+    if color not in (None, ValueLoading):
       pixmap = QtGui.QPixmap(16, 16)
       qcolor = QtGui.QColor()
       qcolor.setRgb(*color)

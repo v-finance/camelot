@@ -23,7 +23,7 @@ in the definition of the ApplicationAdmin.
     return self.name
       
   def get_verbose_name(self):
-    return self.verbose_name or _(self.name.capitalize())
+    return self.verbose_name or unicode(_(self.name)).capitalize()
   
   def get_icon(self):
     from camelot.view.art import Icon
@@ -60,7 +60,7 @@ class SectionItem(object):
     self.verbose_name = verbose_name
     
   def get_verbose_name(self):
-    return self.verbose_name or self.action.get_verbose_name()
+    return self.verbose_name or unicode(_(self.action.get_verbose_name())).capitalize()
   
   def get_action(self):
     return self.action

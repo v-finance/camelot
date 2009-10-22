@@ -399,7 +399,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         editable = True
         if 'editable' in c[1]:
           editable = c[1]['editable']
-        label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, c[1]['name'] + ' ' )
+        label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, unicode(c[1]['name']) + ' ' )
         size = max( minimal_column_width, label_size.width() + 10 )
         if editable:
           size = max( size, editor_size.width() )
@@ -483,7 +483,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
           # consider it changed anyway
           #
           direction = field_attributes.get( 'direction', None )
-          if direction in ( orm.sync.MANYTOMANY, orm.sync.ONETOMANY ):
+          if direction in ( orm.interfaces.MANYTOMANY, orm.interfaces.ONETOMANY ):
             changed = True
           if changed and field_attributes['editable'] == True:
             # update the model

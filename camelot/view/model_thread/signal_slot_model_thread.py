@@ -28,7 +28,7 @@ class Task(QtCore.QObject):
     self._name = None
     
   def execute(self):
-    #logger.debug('executing %s' % (self))
+    #logger.debug('executing %s' % (self._name))
     try:
       result = self._request()
       #import sip

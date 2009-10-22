@@ -30,10 +30,9 @@ logger = logging.getLogger( 'camelot.view.elixir_admin' )
 
 import sqlalchemy.sql.expression
 
-_ = lambda x: x
-
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function, gui_function
+from camelot.core.utils import ugettext as _
 from camelot.admin.validator.entity_validator import EntityValidator
 
 class EntityAdmin( ObjectAdmin ):
@@ -92,22 +91,23 @@ class EntityAdmin( ObjectAdmin ):
     try:
       return self._field_attributes[field_name]
     except KeyError:
-      from camelot.model.i18n import tr
       from camelot.view.controls import delegates
       #
       # Default attributes for all fields
       #
-      attributes = dict( python_type = str,
-                        length = None,
-                        tooltip = None,
-                        minimal_column_width = 0,
-                        editable = False,
-                        nullable = True,
-                        widget = 'str',
-                        blank = True,
-                        delegate = delegates.PlainTextDelegate,
-                        validator_list = [],
-                        name = field_name.replace( '_', ' ' ).capitalize() )
+      attributes = dict( 
+        python_type = str,
+        length = None,
+        tooltip = None,
+        minimal_column_width = 0,
+        editable = False,
+        nullable = True,
+        widget = 'str',
+        blank = True,
+        delegate = delegates.PlainTextDelegate,
+        validator_list = [],
+        name = unicode(_(field_name.replace( '_', ' ' ))).capitalize()
+      )                
 
       #
       # Field attributes forced by the field_attributes property
@@ -147,9 +147,9 @@ class EntityAdmin( ObjectAdmin ):
             attributes['nullable'] = property.columns[0].nullable
             attributes['default'] = property.columns[0].default
         elif isinstance( property, orm.properties.PropertyLoader ):
-          target = property._get_target_class()
-          foreign_keys = property.foreign_keys
-          if property.direction == orm.sync.ONETOMANY:
+          target = property._get_target().class_
+          foreign_keys = list(property._foreign_keys)
+          if property.direction == orm.interfaces.ONETOMANY:
             attributes.update(python_type = list,
                               editable = True,
                               nullable = True,
@@ -159,7 +159,7 @@ class EntityAdmin( ObjectAdmin ):
                               backref = property.backref.key,
                               direction = property.direction,
                               admin = get_entity_admin( target ))
-          elif property.direction == orm.sync.MANYTOONE:
+          elif property.direction == orm.interfaces.MANYTOONE:
             attributes.update(python_type = str,
                               editable = True,
                               delegate = delegates.Many2OneDelegate,
@@ -168,7 +168,7 @@ class EntityAdmin( ObjectAdmin ):
                               nullable = foreign_keys[0].nullable,
                               direction = property.direction,
                               admin = get_entity_admin( target ))
-          elif property.direction == orm.sync.MANYTOMANY:
+          elif property.direction == orm.interfaces.MANYTOMANY:
             attributes.update( python_type = list,
                               editable = True,
                               target = target,
@@ -202,7 +202,6 @@ class EntityAdmin( ObjectAdmin ):
       if 'target' in attributes:
         attributes['admin'] = get_entity_admin( attributes['target'] )
 
-      attributes['name'] = tr( attributes['name'] )
       self._field_attributes[field_name] = attributes
       return attributes
 

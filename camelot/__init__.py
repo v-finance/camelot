@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,10 +23,10 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
-"""Camelot is a python GUI framework on top of Elixir / Sqlalchemy inspired by the Django admin 
-interface.  Start building applications at warp speed, simply by adding some additional 
-information to you Elixir model."""
+"""Camelot is a python GUI framework on top of Elixir / Sqlalchemy inspired by
+the Django admin interface.  Start building applications at warp speed, simply
+by adding some additional information to you Elixir model."""
 
 __version__ = '09.09.26'

@@ -593,6 +593,11 @@ class DelegateTest(unittest.TestCase):
     
   def setUp(self):
     self.kwargs = dict(editable=True)
+    self.option = QtGui.QStyleOptionViewItem()
+    # set version to 5 to indicate the widget will appear on a
+    # a form view and not on a table view, so it should not
+    # set its background
+    self.option.version = 5
 
   def grab_delegate(self, delegate, data, suffix='editable'):
     import sys
@@ -646,57 +651,57 @@ class DelegateTest(unittest.TestCase):
     delegate = self.delegates.PlainTextDelegate(parent=None,
                                                 length=30,
                                                 editable=True)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertEqual(editor.maxLength(), 30)
     self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
     self.grab_delegate(delegate, 'Plain Text')
     delegate = self.delegates.PlainTextDelegate(parent=None,
                                                 length=20,
                                                 editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
     self.grab_delegate(delegate, 'Plain Text', 'disabled')
     
   def testTextEditDelegate(self):
     from PyQt4.QtGui import QTextEdit
     delegate = self.delegates.TextEditDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, QTextEdit))
     self.grab_delegate(delegate, 'Plain Text')
     delegate = self.delegates.TextEditDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, QTextEdit))
     self.grab_delegate(delegate, 'Plain Text', 'disabled')
 
   def testRichTextDelegate(self):
     delegate = self.delegates.RichTextDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.RichTextEditor))
     self.grab_delegate(delegate, '<b>Rich Text</b>')
     delegate = self.delegates.RichTextDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.RichTextEditor))
     self.grab_delegate(delegate, '<b>Rich Text</b>', 'disabled')
     
   def testBoolDelegate(self):
     delegate = self.delegates.BoolDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.BoolEditor))
     self.grab_delegate(delegate, True)
     delegate = self.delegates.BoolDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.BoolEditor))
     self.grab_delegate(delegate, True, 'disabled')
   
   def testDateDelegate(self):
     from datetime import date
     delegate = self.delegates.DateDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.DateEditor))
     date = date.today()
     self.grab_delegate(delegate, date)
     delegate = self.delegates.DateDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.DateEditor))
     date = date.today()
     self.grab_delegate(delegate, date, 'disabled')
@@ -705,35 +710,35 @@ class DelegateTest(unittest.TestCase):
   def testDateTimeDelegate(self):
     from datetime import datetime
     delegate = self.delegates.DateTimeDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
     DateTime = datetime.now()
     self.grab_delegate(delegate, DateTime)
     delegate = self.delegates.DateTimeDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
     self.grab_delegate(delegate, DateTime, 'disabled')
 
   def testTimeDelegate(self):
     from datetime import time
     delegate = self.delegates.TimeDelegate(parent=None, editable=True)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.TimeEditor))
     time = time(10, 30, 15)
     self.grab_delegate(delegate, time)
     delegate = self.delegates.TimeDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.TimeEditor))
     #time = time(10, 30, 15)
     self.grab_delegate(delegate, time, 'disabled')
     
   def testIntegerDelegate(self):
     delegate = self.delegates.IntegerDelegate(parent=None, editable=True)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
     self.grab_delegate(delegate, 3)
     delegate = self.delegates.IntegerDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
     self.grab_delegate(delegate, 0, 'disabled')
 
@@ -748,13 +753,13 @@ class DelegateTest(unittest.TestCase):
   def testFloatDelegate(self):
     from camelot.core.constants import camelot_minfloat, camelot_maxfloat
     delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.FloatEditor))
     self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
     self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
     self.grab_delegate(delegate, 3.145)
     delegate = self.delegates.FloatDelegate(parent=None, prefix='prefix', editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.FloatEditor))
     self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
     self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
@@ -762,65 +767,65 @@ class DelegateTest(unittest.TestCase):
 
   def testColoredFloatDelegate(self):
     delegate = self.delegates.ColoredFloatDelegate(parent=None, precision=3, editable=True)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
     self.grab_delegate(delegate, 3.14456)
     delegate = self.delegates.ColoredFloatDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
     self.grab_delegate(delegate, 3.1, 'disabled')
   
   def testStarDelegate(self):
     delegate = self.delegates.StarDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(delegate.maximum, 5)
     self.assertTrue(isinstance(editor, self.editors.StarEditor))
     self.grab_delegate(delegate, 5)
     delegate = self.delegates.StarDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(delegate.maximum, 5)
     self.assertTrue(isinstance(editor, self.editors.StarEditor))
     self.grab_delegate(delegate, 5, 'disabled')
     
   def testSmileyDelegate(self):
     delegate = self.delegates.SmileyDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.SmileyEditor))
     self.grab_delegate(delegate, 'face-glasses')
     delegate = self.delegates.SmileyDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.SmileyEditor))
     self.grab_delegate(delegate, 'face-glasses', 'disabled')
 
   def testFileDelegate(self):
     delegate = self.delegates.FileDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.FileEditor))
 
   def testColorDelegate(self):
     delegate = self.delegates.ColorDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.ColorEditor))
     color = [255, 255, 0]
     self.grab_delegate(delegate, color)
     delegate = self.delegates.ColorDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.ColorEditor))
     self.grab_delegate(delegate, color, 'disabled')
   
   def testCodeDelegate(self):
     delegate = self.delegates.CodeDelegate(parent=None, parts=['99','AA'], **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.CodeEditor))
     self.grab_delegate(delegate, ['76','AB'])
     delegate = self.delegates.CodeDelegate(parent=None, parts=['99','AA', '99', 'AA'], editable=False)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.CodeEditor))
     self.grab_delegate(delegate, ['76','AB', '12', '34'], 'disabled')
     
   def testCurrencyDelegate(self):
     delegate = self.delegates.CurrencyDelegate(parent=None, suffix='euro', **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.FloatEditor))
     self.grab_delegate(delegate, 1000000.12)
     delegate = self.delegates.CurrencyDelegate(parent=None, prefix='prefix', editable=False)
@@ -831,7 +836,7 @@ class DelegateTest(unittest.TestCase):
     delegate = self.delegates.ComboBoxDelegate(parent=None,
                                                choices=CHOICES,
                                                **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.ChoicesEditor))
     self.grab_delegate(delegate, 1)
     delegate = self.delegates.ComboBoxDelegate(parent=None,
@@ -841,13 +846,13 @@ class DelegateTest(unittest.TestCase):
 
   def testImageDelegate(self):
     delegate = self.delegates.ImageDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.ImageEditor))
 
   def testVirtualAddressDelegate(self):
     delegate = self.delegates.VirtualAddressDelegate(parent=None,
                                                      **self.kwargs)
-    editor = delegate.createEditor(None, None, None)
+    editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.VirtualAddressEditor))
     self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'))
     delegate = self.delegates.VirtualAddressDelegate(parent=None, editable=False)

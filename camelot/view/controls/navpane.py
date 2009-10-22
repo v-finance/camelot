@@ -214,7 +214,6 @@ class NavigationPane( QtGui.QDockWidget ):
   def __init__( self, app_admin, objectname = 'NavigationPane', parent = None ):
     QtGui.QDockWidget.__init__( self, parent )
     self.app_admin = app_admin
-    self.sections = app_admin.get_sections()
     self.setFeatures( QtGui.QDockWidget.NoDockWidgetFeatures )
     self.parent = parent
     self.currentbutton = -1
@@ -326,8 +325,10 @@ class NavigationPane( QtGui.QDockWidget ):
 
     def get_models_for_tree():
       """Return pairs of (Admin, query) classes for items in the tree"""
-      section = self.sections[index]
-      return section.get_items()
+      if index<len(self.sections):
+        section = self.sections[index]
+        return section.get_items()
+      return []
 
     post( get_models_for_tree, self.set_items_in_tree )
 

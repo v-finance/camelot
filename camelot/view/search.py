@@ -87,7 +87,7 @@ def create_entity_search_query_decorator(admin, text):
         property = mapper.get_property(p, resolve_synonyms=True)
         if isinstance(property, orm.properties.PropertyLoader):
           joins.append(getattr(target, p))
-          target = property._get_target_class()
+          target = property._get_target().class_
         else:
           append_column(property.columns[0])
           #args.append(property.columns[0].like('%'+text+'%'))

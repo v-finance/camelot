@@ -32,6 +32,7 @@ be able to restore their state
 from camelot.model import *
 __metadata__ = metadata
 
+from camelot.core.utils import ugettext_lazy as _
 from camelot.view.elixir_admin import EntityAdmin
 import datetime
 
@@ -51,6 +52,8 @@ class Memento(Entity):
  
   class Admin(EntityAdmin):
     name = 'History'
+    verbose_name = _('history')
+    verbose_name_plural = _('history')
     section = 'configuration'
     list_display = ['creation_date',
                     'authentication',

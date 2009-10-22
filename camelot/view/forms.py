@@ -49,7 +49,6 @@ class Form( object ):
     def __init__( self, content, scrollbars = False ):
         """:param content: a list with the field names and forms to render
         """
-        #TODO work only with self._content, remove self._fields
         assert isinstance( content, list )
         self._content = content
         self._scrollbars = scrollbars
@@ -172,7 +171,7 @@ class Form( object ):
             form_layout.setContentsMargins( 0, 0, 0, 0 )
 
         form_widget.setSizePolicy( QtGui.QSizePolicy.Expanding,
-                             QtGui.QSizePolicy.Expanding )
+                                   QtGui.QSizePolicy.Expanding )
         form_widget.setLayout( form_layout )
 
         if self._scrollbars:
@@ -187,7 +186,7 @@ class Form( object ):
 
 class Label( Form ):
     """Render a label with a QLabel"""
-
+    
     def __init__( self, label ):
         super( Label, self ).__init__( [] )
         self.label = label
@@ -195,7 +194,7 @@ class Label( Form ):
     @gui_function
     def render( self, widgets, parent = None, nomargins = False ):
         from PyQt4 import QtGui
-        widget = QtGui.QLabel( unicode(self.label) )
+        widget = QtGui.QLabel( unicode(self.label).capitalize() )
         return widget
 
 class TabForm( Form ):
@@ -265,7 +264,7 @@ Render forms within a QTabWidget::
     from PyQt4.QtCore import Qt
     widget = QtGui.QTabWidget( parent )
     for tab_label, tab_form in self.tabs:
-      widget.addTab( tab_form.render( widgets, widget ), unicode(tab_label) )
+      widget.addTab( tab_form.render( widgets, widget ), unicode(tab_label).capitalize() )
     return widget
 
 
@@ -372,6 +371,21 @@ using the Label form::
       fields.extend( row )
     super( GridForm, self ).__init__( fields )
 
+  def append_row(self, row):
+    """:param row: the list of fields that should come in the additional row
+    use this method to modify inherited grid forms"""
+    assert isinstance( row, list )
+    self._content.extend(row)
+    self._grid.append(row)
+  
+  def append_column(self, column):
+    """:param column: the list of fields that should come in the additional column
+    use this method to modify inherited grid forms"""
+    assert isinstance( column, list )
+    self._content.extend(column)
+    for row, additional_field in zip(self._grid, column):
+      row.append(additional_field)
+    
   @gui_function
   def render( self, widgets, parent = None, nomargins = False ):
     from PyQt4 import QtGui
