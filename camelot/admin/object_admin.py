@@ -362,7 +362,7 @@ represented by this admin class
       return structure_to_form(self.form or self.form_display)
     if self.list_display:
       return Form(self.list_display)
-    return Form()
+    return Form([])
   
   @gui_function
   def create_form_view(self, title, model, index, parent):
