@@ -257,7 +257,7 @@ box are the capitalized strings::
           value = self._string_to_int[value]
           return impl_processor(value)
         except KeyError, e:
-          logger.error('could not process %s'%value, exc_info=e)
+          logger.error('could not process enumeration value %s, possible values are %s'%(value, u', '.join(list(self._string_to_int.keys()))), exc_info=e)
               
     return processor
 
