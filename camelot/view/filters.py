@@ -123,7 +123,7 @@ class GroupBoxFilter(Filter):
       based on the distinct values in a certain column"""
     
       def __init__(self, name, choices, parent):
-        QtGui.QGroupBox.__init__(self, name, parent)
+        QtGui.QGroupBox.__init__(self, unicode(name), parent)
         self.group = QtGui.QButtonGroup(self)
         self.item = name
         self.unique_values = []
