@@ -81,7 +81,7 @@ class Filter(object):
     table = admin.entity.table
     path = self.attribute.split('.')
     for field_name in path:
-      attributes = admin.getFieldAttributes(field_name)
+      attributes = admin.get_field_attributes(field_name)
       filter_names.append(attributes['name'])
       # @todo: if the filter is not on an attribute of the relation, but on the relation itselves
       if 'target' in attributes:

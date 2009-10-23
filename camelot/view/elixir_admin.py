@@ -76,7 +76,7 @@ class EntityAdmin( ObjectAdmin ):
       return self.get_verbose_name()
 
   @model_function
-  def getFieldAttributes( self, field_name ):
+  def get_field_attributes( self, field_name ):
     """
     Get the attributes needed to visualize the field field_name
     @param field_name : the name of the field

@@ -49,8 +49,8 @@ usage ::
 #      admin = original_admin.get_related_entity_admin(self, entity)
 #      return notEditableAdmin(admin)
     
-    def getFieldAttributes(self, field_name):
-      attribs = original_admin.getFieldAttributes(self, field_name)
+    def get_field_attributes(self, field_name):
+      attribs = original_admin.get_field_attributes(self, field_name)
       attribs['editable'] = False
       return attribs
       

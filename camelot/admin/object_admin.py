@@ -247,7 +247,7 @@ represented by this admin class
       logger.warn('no related admin found for %s'%(entity.__name__))
     return related_admin
   
-  def getFieldAttributes(self, field_name):
+  def get_field_attributes(self, field_name):
     """
     Get the attributes needed to visualize the field field_name
     @param field_name : the name of the field
@@ -333,7 +333,7 @@ represented by this admin class
                'name':'Field name'}),
              ...]
     """
-    return [(field, self.getFieldAttributes(field))
+    return [(field, self.get_field_attributes(field))
             for field in self.list_display]
 
   def createValidator(self, model):
@@ -347,7 +347,7 @@ represented by this admin class
       fields = self.fields
     else:
       fields = self.list_display
-    fields_and_attributes =  [(field, self.getFieldAttributes(field)) for field in fields]
+    fields_and_attributes =  [(field, self.get_field_attributes(field)) for field in fields]
     return fields_and_attributes
   
   @model_function
