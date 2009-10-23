@@ -92,7 +92,7 @@ def ugettext(string_to_translate):
     (which tries to get the translation from the .po files)"""
     result = _translations_.get(string_to_translate, None)
     if not result:
-        result = QtCore.QCoreApplication.translate('', string_to_translate)
+        result = unicode(QtCore.QCoreApplication.translate('', string_to_translate))
     return result
   
 class ugettext_lazy(object):

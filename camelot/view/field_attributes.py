@@ -33,6 +33,7 @@ import datetime
 
 from controls import delegates
 from camelot.core import constants
+from camelot.core.utils import ugettext as _
 
 _sqlalchemy_to_python_type_ = {
                                
@@ -147,7 +148,7 @@ _sqlalchemy_to_python_type_ = {
                                   
   camelot.types.Enumeration: lambda f:{'delegate':delegates.ComboBoxDelegate,
                                        'python_type':str,
-                                       'choices':lambda o:[(v,unicode(v).capitalize().replace('_',' ')) for v in f.choices],
+                                       'choices':lambda o:[(v,unicode(_(unicode(v).replace('_',' '))).capitalize()) for v in f.choices],
                                        'editable':True,
                                        'nullable':False,
                                        'widget':'combobox',

@@ -32,10 +32,6 @@ version_control
 
 Puts the database under version control
 
-use : python manage.py -h 
-
-to get a list of commands and options
-
 eg : python manage.py console
 launches a python console with the model being set up
 
@@ -91,20 +87,21 @@ def schema_display(image_path='schema.png'):
       
 def main():
   from optparse import OptionParser
- 
-  parser = OptionParser(usage='usage: %prog [options] console')
-  (options, args) = parser.parse_args()
-  if args[0]=='console':
+  import camelot
+  parser = OptionParser(__doc__, version=camelot.__version__)
+  (_options, args) = parser.parse_args()
+  if not args:
+    parser.print_help()
+  elif args[0]=='console':
     settings.setup_model()
     sh = Shell()
     sh.interact()
   elif args[0]=='schema_display':
     settings.setup_model()
     schema_display()
-  else:
+  elif args[0] in ('version_control', 'db_version', 'version', 'upgrade'):
     from migrate.versioning.repository import Repository
     from migrate.versioning.schema import ControlledSchema
-    from migrate.versioning.exceptions import DatabaseAlreadyControlledError
     from sqlalchemy.exceptions import NoSuchTableError
     migrate_engine = settings.ENGINE()
     repository = Repository(settings.REPOSITORY)
@@ -112,18 +109,19 @@ def main():
     if args[0]=='version_control':
       migrate_connection = migrate_engine.connect()
       transaction = migrate_connection.begin()
-      try:      
+      try:
         schema = ControlledSchema.create(migrate_engine, repository)
         transaction.commit()
       except:
         transaction.rollback()
         raise
       finally:
-        migrate_connection.close()            
+        migrate_connection.close()
+      print 'database was put under version control'
     try:
       schema = ControlledSchema(migrate_engine, repository)
-    except NoSuchTableError, e:
-      print 'database not yet under version control, use manage.py version_control first.'
+    except NoSuchTableError, _e:
+      print 'database not yet under version control, use the version_control command first.'
     if schema:
       if args[0]=='db_version':
         print schema.version
@@ -141,6 +139,8 @@ def main():
           raise
         finally:
           migrate_connection.close()
+  else:
+    parser.print_help()          
          
 if __name__ == '__main__':
   main()
