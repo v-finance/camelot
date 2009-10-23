@@ -187,14 +187,20 @@ class Form( object ):
 class Label( Form ):
     """Render a label with a QLabel"""
     
-    def __init__( self, label ):
+    def __init__( self, label, alignment="left" ):
+        """
+        :param label : string to be displayed in the label
+        :param alignment : alignment of text in the label. values that make sense 'left', 'right' or 'center'
+        """
         super( Label, self ).__init__( [] )
         self.label = label
+        self.alignment = alignment
 
     @gui_function
     def render( self, widgets, parent = None, nomargins = False ):
         from PyQt4 import QtGui
-        widget = QtGui.QLabel( unicode(self.label).capitalize() )
+        widget = QtGui.QLabel( '<p align="%s">%s</p>' % (self.alignment, unicode(self.label).capitalize()) )
+            
         return widget
 
 class TabForm( Form ):
