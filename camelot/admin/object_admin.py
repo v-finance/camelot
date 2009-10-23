@@ -275,7 +275,8 @@ represented by this admin class
                         blank=True,
                         delegate=delegates.PlainTextDelegate,
                         validator_list=[],
-                        name=_(field_name.replace('_', ' ').capitalize()))
+                        name = unicode(_(field_name.replace( '_', ' ' ))).capitalize()
+                        )
       
       #
       # Field attributes forced by the field_attributes property
