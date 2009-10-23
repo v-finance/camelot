@@ -30,9 +30,12 @@
 import csv
 import codecs
 import chardet
+from PyQt4.QtCore import Qt
+from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import QModelIndex, QVariant, QStringList
 
 
-# from http://docs.python.org/library/csv.html
+# see http://docs.python.org/library/csv.html
 class UTF8Recoder:
     """Iterator that reads an encoded stream
 and reencodes the input to UTF-8."""
@@ -47,7 +50,7 @@ and reencodes the input to UTF-8."""
         return self.reader.next().encode('utf-8')
 
 
-# from http://docs.python.org/library/csv.html
+# see http://docs.python.org/library/csv.html
 class UnicodeReader:
     """A CSV reader which will iterate over lines in the CSV file
 "f", which is encoded in the given encoding."""
@@ -66,7 +69,53 @@ class UnicodeReader:
 
 def import_csv_data(source):
     """Uses chardet to try to detect the encoding of a source"""
-    result = chardet.detect(open(source).read())
-    enc = result['encoding'] or 'utf-8'
-    
-    return list(UnicodeReader(open(source), encoding=enc))
+    detected = chardet.detect(open(source).read())['encoding']
+    enc = detected or 'utf-8'
+    try: result = UnicodeReader(open(source), encoding=enc)
+    except: return list()
+    return list(result)
+
+
+def header_columns_iter(model):
+    """Qt model header column iterator"""
+    for col in range(model.columnCount()):
+        qvar = model.headerData(col, Qt.Horizontal, Qt.DisplayRole)
+        yield (col, qvar.toString())
+
+
+def columns_iter(model, row):
+    """Qt model column iterator"""
+    for col in range(model.columnCount()):
+        idx = model.index(row, col, QModelIndex())
+        qvar = model.data(idx)
+        yield (col, qvar.toString())
+
+
+def set_header_labels(model, labels):
+    """Set a Qt model's header labels"""
+    for section, label in labels:
+        model.setHeaderData(section, Qt.Horizontal, QVariant(label))
+
+
+class LabelListDelegate(QtGui.QItemDelegate):
+
+    def __init__(self, parent=None):
+        super(LabelListDelegate, self).__init__(parent)
+
+    def createEditor(self, parent, option, index):
+        ed = QtGui.QComboBox(parent)
+        model = index.model()
+        labels = [label for i, label in columns_iter(model, 0)]
+        for i, l in enumerate(labels): ed.insertItem(i, l)
+        return ed
+        
+    def setEditorData(self, editor, index):
+        val = index.model().data(index, Qt.EditRole).toString()
+        editor.setCurrentIndex(editor.findText(val))
+
+    def setModelData(self, editor, model, index):
+        text = editor.itemText(editor.currentIndex())
+        model.setData(index, QVariant(text), Qt.EditRole)
+
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)

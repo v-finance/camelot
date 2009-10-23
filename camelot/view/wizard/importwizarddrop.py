@@ -92,7 +92,7 @@ class SelectFilePage(QtGui.QWizardPage):
         layout.addLayout(hlayout)
         self.setLayout(layout)
 
-        #self.setButtonText(QtGui.QWizard.NextButton, _('Import'))
+        self.setButtonText(QtGui.QWizard.NextButton, _('Import'))
         self.connect(browsebutton,
                      QtCore.SIGNAL('clicked()'),
                      lambda: self.setpath())
@@ -110,25 +110,25 @@ class PreviewTable(QtGui.QTableView):
 
     def __init__(self, parent=None):
         super(PreviewTable, self).__init__(parent)
-        self.horizontalHeader().setMovable(True)
+        self.verticalHeader().setVisible(False)
+        self.horizontalHeader().setVisible(False)
         self.firstrow = None
         self.datamodel = None
 
-    def unlabel_header(self):
-        self.datamodel.insertRow(0, self.firstrow)
-        ncols = self.datamodel.columnCount()
-        labels = enumerate([str(i) for i in range(1, ncols+1)])
-        set_header_labels(self.datamodel, labels)
+    def disable_drops(self):
+        pass
 
-    def label_header(self):
+    def enable_drops(self):
         if self.datamodel is None: return
-        
-        if self.firstrow:
-            self.unlabel_header()
-            self.firstrow = None
-        else:
-            set_header_labels(self.datamodel, columns_iter(self.datamodel, 0))
-            self.firstrow = self.datamodel.takeRow(0)
+
+        #from camelot.view.controls.delegates.comboboxdelegate \
+        #    import ComboBoxEditorDelegate
+        #labels = tuple((str(i+1), label) \
+        #               for i, label in columns_iter(self.datamodel, 0))
+        #delegate = ComboBoxEditorDelegate(choices=lambda o:labels, parent=self)
+        #self.setItemDelegateForRow(0, delegate)
+
+        self.setItemDelegateForRow(0, LabelListDelegate(self))
 
     def feed(self, data=None):
         """Feeds model with imported data"""
@@ -164,14 +164,13 @@ class PreviewTablePage(QtGui.QWizardPage):
         icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
 
-        self.setButtonText(QtGui.QWizard.FinishButton, _('Import'))
-
         self.previewtable = PreviewTable()
-        cb = QtGui.QCheckBox(_('Use first row as columns labels'))
+
+        cb = QtGui.QCheckBox(_('Use first row as labels selector'))
         
         self.connect(cb,
                      QtCore.SIGNAL('stateChanged(int)'),
-                     lambda state: self.previewtable.label_header())
+                     lambda checked: self.previewtable.enable_drops())
 
         ly = QtGui.QVBoxLayout()
         ly.addWidget(cb)
