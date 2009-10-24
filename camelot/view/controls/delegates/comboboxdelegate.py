@@ -25,11 +25,14 @@
 #
 #  ============================================================================
 
-from customdelegate import *
-from PyQt4.QtGui import QComboBox, QItemDelegate, QStyleOption
-from PyQt4.QtCore import QVariant, QString
-from camelot.view.model_thread import post
+from customdelegate import CustomDelegate, DocumentationMetaclass
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtGui import QComboBox, QItemDelegate
+from PyQt4.QtCore import QVariant, QString, Qt
 
+from camelot.view.model_thread import post
+from camelot.view.controls import editors
+from camelot.core.utils import variant_to_pyobject
 
 class ComboBoxDelegate(CustomDelegate):
   
@@ -41,16 +44,19 @@ class ComboBoxDelegate(CustomDelegate):
         self.choices = choices
               
     def setEditorData(self, editor, index):
+        
         value = variant_to_pyobject(index.data(Qt.EditRole))
-    
-        def create_choices_getter(model, row):      
-            def choices_getter():
-                return list(self.choices(model._get_object(row)))
-            return choices_getter
-    
         editor.set_value(value)
-        post(create_choices_getter(index.model(), index.row()),
-             editor.set_choices)
+    
+        if callable(self.choices):
+            def create_choices_getter(model, row):      
+                def choices_getter():
+                    return list(self.choices(model._get_object(row)))
+                return choices_getter
+            post(create_choices_getter(index.model(), index.row()),
+                 editor.set_choices)            
+        else:
+            editor.set_choices(self.choices)
 
     def paint(self, painter, option, index):
         painter.save()
@@ -131,7 +137,6 @@ is visible even if it isn't selected"""
         self.drawBackground(painter, option, index)
         #checked = index.model().data(index, Qt.EditRole).toString().__str__()
         value = index.model().data(index, Qt.DisplayRole).toString().__str__()
-        print "value", value
         #c = index.model().data(index, Qt.BackgroundRole)
         #background_color = QtGui.QColor(c)
         background_color = QtGui.QColor(Qt.blue)

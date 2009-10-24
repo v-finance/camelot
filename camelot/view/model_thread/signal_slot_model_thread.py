@@ -28,7 +28,7 @@ class Task(QtCore.QObject):
     self._name = None
     
   def execute(self):
-    #logger.debug('executing %s' % (self._name))
+    logger.debug('executing %s' % (self._name))
     try:
       result = self._request()
       #import sip
@@ -101,7 +101,10 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
     self.logger.debug( 'model thread started' )
     self._task_handler = TaskHandler(self)
     self.connect(self, self.task_available, self._task_handler.handle_task, QtCore.Qt.QueuedConnection)
-    self._setup_thread()
+    try:
+      self._setup_thread()
+    except Exception, e:
+      self.logger.error('thread setup incomplete', exc_info=e)
     self.logger.debug('thread setup finished')
     self.exec_()
     self.logger.debug('model thread stopped')

@@ -28,6 +28,7 @@
 """Module for managing imports"""
 
 import logging
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('camelot.view.wizard.importwizard')
 
 from PyQt4.QtCore import Qt
@@ -121,14 +122,16 @@ class PreviewTable(QtGui.QTableView):
     def enable_drops(self):
         if self.datamodel is None: return
 
-        #from camelot.view.controls.delegates.comboboxdelegate \
-        #    import ComboBoxEditorDelegate
-        #labels = tuple((str(i+1), label) \
-        #               for i, label in columns_iter(self.datamodel, 0))
-        #delegate = ComboBoxEditorDelegate(choices=lambda o:labels, parent=self)
-        #self.setItemDelegateForRow(0, delegate)
+        from camelot.view.controls.delegates.comboboxdelegate \
+            import ComboBoxDelegate
+        labels = tuple((unicode(label), unicode(label)) \
+                       for i_, label in columns_iter(self.datamodel, 0))
+        print labels
+          
+        delegate = ComboBoxDelegate(choices=labels, parent=self)
+        self.setItemDelegateForRow(0, delegate)
 
-        self.setItemDelegateForRow(0, LabelListDelegate(self))
+        #self.setItemDelegateForRow(0, LabelListDelegate(self))
 
     def feed(self, data=None):
         """Feeds model with imported data"""
@@ -187,6 +190,13 @@ def test_wizard(wizardclass):
     import sys
     from camelot.view.art import Icon
     app = QtGui.QApplication(sys.argv)
+    
+    from camelot.view.model_thread import get_model_thread, construct_model_thread
+    from camelot.view.remote_signals import construct_signal_handler
+  
+    construct_model_thread()
+    construct_signal_handler()
+    get_model_thread().start()
     
     wizard = wizardclass()
     app.setWindowIcon(Icon('tango/32x32/apps/system-users.png').getQIcon())
