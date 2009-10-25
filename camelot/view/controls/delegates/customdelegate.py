@@ -104,4 +104,8 @@ will be put onto a form"""
             editor.setToolTip('')
 
     def setModelData(self, editor, model, index):
-        model.setData(index, create_constant_function(editor.get_value()))
+        if isinstance(model, QtGui.QStandardItemModel):
+            val = QtCore.QVariant(editor.get_value())
+        else:
+            val = create_constant_function(editor.get_value())
+        model.setData(index, val)
