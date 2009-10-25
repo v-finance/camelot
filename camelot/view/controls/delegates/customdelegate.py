@@ -1,4 +1,4 @@
-#  ============================================================================
+#  ===========================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,7 +23,7 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ============================================================================
+#  ===========================================================================
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt, SIGNAL
@@ -41,7 +41,6 @@ not_editable_foreground = QtGui.QColor(Qt.darkGray)
 
 
 def DocumentationMetaclass(name, bases, dct):
-
     dct['__doc__'] = dct.get('__doc__','') + """
 
 .. image:: ../_static/delegates/%s_unselected_disabled.png
@@ -50,55 +49,59 @@ def DocumentationMetaclass(name, bases, dct):
 .. image:: ../_static/delegates/%s_selected_editable.png
 """%(name, name, name, name)
     return type(name, bases, dct)
+
   
 class CustomDelegate(QItemDelegate):
-  """Base class for implementing custom delegates.
+    """Base class for implementing custom delegates.
 
 .. attribute:: editor 
 
 class attribute specifies the editor class that should be used
 """
 
-  editor = None
+    editor = None
   
-  def __init__(self, parent=None, editable=True, **kwargs):
-    """
-:param parent: the parent object for the delegate
-:param editable: a boolean indicating if the field associated to the delegate is editable
-"""
-    QItemDelegate.__init__(self, parent)
-    self.editable = editable
-    self.kwargs = kwargs
-    self._font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
-    self._height = self._font_metrics.lineSpacing() + 10
-    self._width = self._font_metrics.averageCharWidth() * 20
+    def __init__(self, parent=None, editable=True, **kwargs):
+        """:param parent: the parent object for the delegate
+:param editable: a boolean indicating if the field associated to the delegate
+is editable"""
+        QItemDelegate.__init__(self, parent)
+        self.editable = editable
+        self.kwargs = kwargs
+        self._font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
+        self._height = self._font_metrics.lineSpacing() + 10
+        self._width = self._font_metrics.averageCharWidth() * 20
     
-  def createEditor(self, parent, option, index):
-    """:param option: use an option with version 5 to indicate the widget will
-    be put onto a form"""
-    editor = self.editor(parent, editable=self.editable, **self.kwargs)
-    if option.version!=5:
-      editor.setAutoFillBackground(True)
-    self.connect(editor, editors.editingFinished, self.commitAndCloseEditor)
-    return editor
+    def createEditor(self, parent, option, index):
+        """:param option: use an option with version 5 to indicate the widget
+will be put onto a form"""
+        editor = self.editor(parent, editable=self.editable, **self.kwargs)
+        if option.version != 5:
+            editor.setAutoFillBackground(True)
+        self.connect(editor,
+                     editors.editingFinished,
+                     self.commitAndCloseEditor)
+        return editor
   
-  def sizeHint(self, option, index):
-    return QtCore.QSize(self._width, self._height)
+    def sizeHint(self, option, index):
+        return QtCore.QSize(self._width, self._height)
 
-  def commitAndCloseEditor(self):
-    editor = self.sender()
-    self.emit(SIGNAL('commitData(QWidget*)'), editor)
-    self.emit(SIGNAL('closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)'), editor, QtGui.QAbstractItemDelegate.NoHint)
+    def commitAndCloseEditor(self):
+        editor = self.sender()
+        self.emit(SIGNAL('commitData(QWidget*)'), editor)
+        sig = SIGNAL('closeEditor(QWidget*, \
+                                  QAbstractItemDelegate::EndEditHint)')
+        self.emit(sig, editor, QtGui.QAbstractItemDelegate.NoHint)
 
-  def setEditorData(self, editor, index):
-    value = variant_to_pyobject( index.model().data(index, Qt.EditRole) )
-    editor.set_value(value)
-    index.model().data(index, Qt.ToolTipRole)
-    tooltip = variant_to_pyobject( index.model().data(index, Qt.ToolTipRole) )
-    if tooltip not in (None, ValueLoading):
-      editor.setToolTip(unicode(tooltip))
-    else:
-      editor.setToolTip('')
+    def setEditorData(self, editor, index):
+        value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
+        editor.set_value(value)
+        index.model().data(index, Qt.ToolTipRole)
+        tip = variant_to_pyobject(index.model().data(index, Qt.ToolTipRole))
+        if tooltip not in (None, ValueLoading):
+            editor.setToolTip(unicode(tip))
+        else:
+            editor.setToolTip('')
 
-  def setModelData(self, editor, model, index):
-    model.setData(index, create_constant_function(editor.get_value()))
+    def setModelData(self, editor, model, index):
+        model.setData(index, create_constant_function(editor.get_value()))
