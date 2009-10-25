@@ -83,9 +83,9 @@ def load_translations():
     database, to be able to do fast gui thread lookups of translations"""
     language = unicode(QtCore.QLocale().name())
     from camelot.model.i18n import Translation
-    translations = Translation.query.filter(Translation.language==language)
-    translations = translations.filter(Translation.value!=None).all()
-    for t in translations:
+    tls = Translation.query.filter(Translation.language==language)
+    tls = tls.filter(Translation.value!=None).all()
+    for t in tls:
         if t.value:
             _translations_[t.source] = t.value
   
