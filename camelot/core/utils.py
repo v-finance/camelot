@@ -28,7 +28,7 @@
 """Utility functions"""
 
 from PyQt4 import QtCore
-from PyQt4.QtCore.QCoreApplication import translate
+from PyQt4.QtCore import QCoreApplication
 
 
 def create_constant_function(constant):
@@ -97,7 +97,7 @@ def ugettext(string_to_translate):
     (which tries to get the translation from the .po files)"""
     result = _translations_.get(string_to_translate, None)
     if not result:
-        result = unicode(translate('', string_to_translate))
+        result = unicode(QCoreApplication.translate('', string_to_translate))
     return result
   
 class ugettext_lazy(object):
