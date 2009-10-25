@@ -1,5 +1,10 @@
 
-from customdelegate import *
+from customdelegate import CustomDelegate, DocumentationMetaclass, ValueLoading
+from camelot.view.controls import editors
+from camelot.core.utils import variant_to_pyobject
+
+from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import Qt
 
 class DateTimeDelegate(CustomDelegate):
   
@@ -16,7 +21,7 @@ class DateTimeDelegate(CustomDelegate):
     painter.save()
     self.drawBackground(painter, option, index)
     dateTime = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-    if dateTime!=ValueLoading:
+    if dateTime not in (ValueLoading, None):
       dateTime = QtCore.QDateTime(dateTime.year, dateTime.month, dateTime.day,
                                   dateTime.hour, dateTime.minute, dateTime.second)
       formattedDateTime = dateTime.toString(self.dateTime_format)
@@ -57,9 +62,6 @@ class DateTimeDelegate(CustomDelegate):
                      rect.height(),
                      Qt.AlignVCenter | Qt.AlignRight,
                      str(formattedDateTime))
-    
-    
-    
     painter.restore()
     
     
