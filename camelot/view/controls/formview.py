@@ -98,19 +98,22 @@ class FormView( AbstractView ):
     option.version = 5
 
     for i, ( field_name, field_attributes ) in enumerate( columns ):
-      model_index = self.model.index( self.index, i )
-      widget_label = QtGui.QLabel( unicode(field_attributes['name']) )
-      widget_editor = delegate.createEditor( None, option, model_index )
-
-      # required fields font is bold
-      if ( 'nullable' in field_attributes ) and \
-         ( not field_attributes['nullable'] ):
-        font = QtGui.QApplication.font()
-        font.setBold( True )
-        widget_label.setFont( font )
-
-      self.widget_mapper.addMapping( widget_editor, i )
-      widgets[field_name] = ( widget_label, widget_editor )
+        model_index = self.model.index( self.index, i )
+        widget_label = QtGui.QLabel( unicode(field_attributes['name']) )
+        widget_editor = delegate.createEditor( self, option, model_index )
+  
+        # required fields font is bold
+        if ( 'nullable' in field_attributes ) and \
+           ( not field_attributes['nullable'] ):
+          font = QtGui.QApplication.font()
+          font.setBold( True )
+          widget_label.setFont( font )
+  
+        assert widget_editor
+        assert isinstance(widget_editor, QtGui.QWidget)
+        
+        self.widget_mapper.addMapping( widget_editor, i )
+        widgets[field_name] = ( widget_label, widget_editor )
 
     self.widget_mapper.setCurrentIndex( self.index )
     self.widget_layout.insertWidget( 0, form.render( widgets, self ) )
