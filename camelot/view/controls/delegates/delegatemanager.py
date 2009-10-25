@@ -18,6 +18,7 @@ developer
   def insertColumnDelegate(self, column, delegate):
     """Inserts a custom column delegate"""
     logger.debug('inserting delegate for column %s' % column)
+    assert delegate
     delegate.setParent(self)
     self.delegates[column] = delegate
     self.connect(delegate, QtCore.SIGNAL('commitData(QWidget*)'), self.commitData)
@@ -48,8 +49,10 @@ developer
     delegate = self.delegates.get(index.column())
     if delegate is not None:
       editor = delegate.createEditor(parent, option, index)
+      assert editor
     else:
       editor = QtGui.QItemDelegate.createEditor(self, parent, option, index)
+      assert editor
     return editor
 
   def setEditorData(self, editor, index):

@@ -344,18 +344,18 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
       field_name = c[0]
       self.logger.debug( 'creating delegate for %s' % field_name )
       if 'delegate' in c[1]:
-        delegate = c[1]['delegate']( parent = None, **c[1] )
+        delegate = c[1]['delegate']( parent = self.delegate_manager, **c[1] )
         self.delegate_manager.insertColumnDelegate( i, delegate )
         continue
       elif c[1]['python_type'] == str:
         if c[1]['length']:
-          delegate = delegates.PlainTextDelegate( maxlength = c[1]['length'] )
+          delegate = delegates.PlainTextDelegate( parent = self.delegate_manager, maxlength = c[1]['length'] )
           self.delegate_manager.insertColumnDelegate( i, delegate )
         else:
-          delegate = delegates.TextEditDelegate( **c[1] )
+          delegate = delegates.TextEditDelegate( parent = self.delegate_manager, **c[1] )
           self.delegate_manager.insertColumnDelegate( i, delegate )
       else:
-        delegate = delegates.PlainTextDelegate()
+        delegate = delegates.PlainTextDelegate(parent = self.delegate_manager)
         self.delegate_manager.insertColumnDelegate( i, delegate )
     if not sip.isdeleted( self ):
       self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
