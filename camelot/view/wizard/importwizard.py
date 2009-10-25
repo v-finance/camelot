@@ -57,12 +57,6 @@ importing data into Camelot"""
 
         self.setWindowTitle(_('Import Data'))
 
-    def accept(self):
-        """slot called when the finish button is clicked"""
-        logger.debug('finish button clicked')
-        # this is where the splitting of the data
-        # into camelot models takes place
-
 
 class SelectFilePage(QtGui.QWizardPage):
     """SelectFilePage is the file selection page of the import wizard"""
@@ -93,7 +87,6 @@ class SelectFilePage(QtGui.QWizardPage):
         layout.addLayout(hlayout)
         self.setLayout(layout)
 
-        self.setButtonText(QtGui.QWizard.NextButton, _('Import'))
         self.connect(browsebutton,
                      QtCore.SIGNAL('clicked()'),
                      lambda: self.setpath())
@@ -113,25 +106,32 @@ class PreviewTable(QtGui.QTableView):
         super(PreviewTable, self).__init__(parent)
         self.verticalHeader().setVisible(False)
         self.horizontalHeader().setVisible(False)
-        self.firstrow = None
+        self.oldgate = None
         self.datamodel = None
 
-    def disable_drops(self):
-        pass
-
-    def enable_drops(self):
+    def enable_drops(self, enable):
+        """Shows and hide dropdown label selectors in first row"""
         if self.datamodel is None: return
+
+        if not enable:
+            self.setItemDelegateForRow(0, self.oldgate)
+            return
 
         from camelot.view.controls.delegates.comboboxdelegate \
             import ComboBoxDelegate
         labels = tuple((unicode(label), unicode(label)) \
-                       for i_, label in columns_iter(self.datamodel, 0))
-        print labels
+                       for _, label in columns_iter(self.datamodel, 0))
           
         delegate = ComboBoxDelegate(choices=labels, parent=self)
+        self.oldgate = self.itemDelegateForRow(0)
         self.setItemDelegateForRow(0, delegate)
 
-        #self.setItemDelegateForRow(0, LabelListDelegate(self))
+    def are_drops_synced(self):
+        """Returns true if no two columns have the same label"""
+        if self.datamodel is None: return False
+
+        labels = [label for _, label in columns_iter(self.datamodel, 0)]
+        return len(set(labels)) == len(labels)
 
     def feed(self, data=None):
         """Feeds model with imported data"""
@@ -167,13 +167,14 @@ class PreviewTablePage(QtGui.QWizardPage):
         icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
 
+        self.setButtonText(QtGui.QWizard.FinishButton, _('Import'))
+
         self.previewtable = PreviewTable()
 
         cb = QtGui.QCheckBox(_('Use first row as labels selector'))
-        
         self.connect(cb,
                      QtCore.SIGNAL('stateChanged(int)'),
-                     lambda checked: self.previewtable.enable_drops())
+                     lambda checked: self.previewtable.enable_drops(checked))
 
         ly = QtGui.QVBoxLayout()
         ly.addWidget(cb)
@@ -184,6 +185,10 @@ class PreviewTablePage(QtGui.QWizardPage):
         """Gets all info needed from SelectFilePage and feeds table"""
         source = self.field('datasource').toString()
         self.previewtable.feed(self.importfunc(source))
+
+    def validatePage(self):
+        """Called when the button labelled "import" is clicked"""
+        return self.previewtable.are_drops_synced()
 
 
 def test_wizard(wizardclass):
