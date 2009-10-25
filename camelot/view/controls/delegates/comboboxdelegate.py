@@ -44,7 +44,6 @@ class ComboBoxDelegate(CustomDelegate):
         self.choices = choices
               
     def setEditorData(self, editor, index):
-        
         value = variant_to_pyobject(index.data(Qt.EditRole))
         editor.set_value(value)
     
@@ -63,7 +62,11 @@ class ComboBoxDelegate(CustomDelegate):
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject(index.data(Qt.EditRole))
         c = index.model().data(index, Qt.BackgroundRole)
-        background_color = QtGui.QColor(c)
+        # let us be safe Qt.BackgroundRole valid only if set
+        if c.type() == QVariant.Invalid:
+            background_color = QtGui.QBrush()
+        else:
+            background_color = QtGui.QColor(c)
         
         rect = option.rect
         rect = QtCore.QRect(rect.left() + 3,
