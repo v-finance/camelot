@@ -74,6 +74,8 @@ class SchemaTest(ModelThreadTestCase):
   
   def test_schema_display(self):
     from camelot.bin.camelot_manage import schema_display
+    from camelot.view.model_thread import get_model_thread
+    get_model_thread().wait_on_work()
     import os
     schema_display(os.path.join(self.images_path, 'schema.png'))
     
