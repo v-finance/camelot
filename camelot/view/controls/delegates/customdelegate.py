@@ -98,7 +98,7 @@ will be put onto a form"""
         editor.set_value(value)
         index.model().data(index, Qt.ToolTipRole)
         tip = variant_to_pyobject(index.model().data(index, Qt.ToolTipRole))
-        if tooltip not in (None, ValueLoading):
+        if tip not in (None, ValueLoading):
             editor.setToolTip(unicode(tip))
         else:
             editor.setToolTip('')
