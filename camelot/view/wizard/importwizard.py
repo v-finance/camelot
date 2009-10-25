@@ -188,7 +188,13 @@ class PreviewTablePage(QtGui.QWizardPage):
 
     def validatePage(self):
         """Called when the button labelled "import" is clicked"""
-        return self.previewtable.are_drops_synced()
+        if not self.previewtable.are_drops_synced():
+            from PyQt4.QtGui import QMessageBox
+            QMessageBox.critical(self,
+                                 _('Duplicate labels'),
+                                 _('Please check duplicate labels'))
+            return False
+        return True
 
 
 def test_wizard(wizardclass):
