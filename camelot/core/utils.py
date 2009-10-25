@@ -32,7 +32,7 @@ from PyQt4.QtCore.QCoreApplication import translate
 
 
 def create_constant_function(constant):
-  return lambda:constant
+    return lambda:constant
 
 
 def variant_to_pyobject(qvariant=None):
