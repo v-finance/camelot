@@ -84,8 +84,10 @@ class FormView( AbstractView ):
     self.update_title()
 
   def handleGetColumnsAndForm( self, columns_and_form ):
+    from camelot.view.controls.delegates.delegatemanager import DelegateManager
     columns, form = columns_and_form
     delegate = self.model.getItemDelegate()
+    assert isinstance(delegate, DelegateManager)
     self.setColumnsFormAndDelegate( columns, form, delegate )
 
   def setColumnsFormAndDelegate( self, columns, form, delegate ):
