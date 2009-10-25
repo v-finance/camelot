@@ -61,7 +61,9 @@ class ComboBoxDelegate(CustomDelegate):
         painter.save()
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject(index.data(Qt.EditRole))
+        
         c = index.model().data(index, Qt.BackgroundRole)
+
         # let us be safe Qt.BackgroundRole valid only if set
         if c.type() == QVariant.Invalid:
             background_color = QtGui.QBrush()
