@@ -83,39 +83,15 @@ def header_columns_iter(model):
         yield (col, qvar.toString())
 
 
-def columns_iter(model, row):
-    """Qt model column iterator"""
-    for col in range(model.columnCount()):
-        idx = model.index(row, col, QModelIndex())
-        qvar = model.data(idx)
-        yield (col, qvar.toString())
-
-
 def set_header_labels(model, labels):
     """Set a Qt model's header labels"""
     for section, label in labels:
         model.setHeaderData(section, Qt.Horizontal, QVariant(label))
 
 
-class LabelListDelegate(QtGui.QItemDelegate):
-
-    def __init__(self, parent=None):
-        super(LabelListDelegate, self).__init__(parent)
-
-    def createEditor(self, parent, option, index):
-        ed = QtGui.QComboBox(parent)
-        model = index.model()
-        labels = [label for i, label in columns_iter(model, 0)]
-        for i, l in enumerate(labels): ed.insertItem(i, l)
-        return ed
-        
-    def setEditorData(self, editor, index):
-        val = index.model().data(index, Qt.EditRole).toString()
-        editor.setCurrentIndex(editor.findText(val))
-
-    def setModelData(self, editor, model, index):
-        text = editor.itemText(editor.currentIndex())
-        model.setData(index, QVariant(text), Qt.EditRole)
-
-    def updateEditorGeometry(self, editor, option, index):
-        editor.setGeometry(option.rect)
+def columns_iter(model, row):
+    """Qt model column iterator"""
+    for col in range(model.columnCount()):
+        idx = model.index(row, col, QModelIndex())
+        qvar = model.data(idx)
+        yield (col, qvar.toString())
