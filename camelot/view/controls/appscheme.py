@@ -188,77 +188,77 @@ Office2007SilverStyle = {
 }
 
 class Scheme(object):
-  def __init__(self, styledict=Office2007BlueStyle):
-    self.styledict = styledict
+    def __init__(self, styledict=Office2007BlueStyle):
+        self.styledict = styledict
 
-  def color(self, r, g, b):
-    return 'rgb(%s, %s, %s)' % (r, g, b)
+    def color(self, r, g, b):
+        return 'rgb(%s, %s, %s)' % (r, g, b)
 
-  def bordercolor(self):
-    return 'rgb%(BorderColor)s' % self.styledict
+    def bordercolor(self):
+        return 'rgb%(BorderColor)s' % self.styledict
 
-  def textcolor(self):
-    return 'rgb%(TextColor)s' % self.styledict
+    def textcolor(self):
+        return 'rgb%(TextColor)s' % self.styledict
 
-  def selectedcolor(self):
-    return 'rgb%(SelectedTextColor)s' % self.styledict
+    def selectedcolor(self):
+        return 'rgb%(SelectedTextColor)s' % self.styledict
 
-  def captiontextcolor(self):
-    return 'rgb%(CaptionTextColor)s' % self.styledict
+    def captiontextcolor(self):
+        return 'rgb%(CaptionTextColor)s' % self.styledict
 
-  def twocolorgradient(self, rgb1, rgb2):
-    s = 'qlineargradient(spread:pad, ' \
-        'x1:0.5, y1:0, x2:0.5, y2:1, ' \
-        'stop:0 rgba%s, 255), ' \
-        'stop:1 rgba%s, 255))' % (rgb1, rgb2)
+    def twocolorgradient(self, rgb1, rgb2):
+        s = 'qlineargradient(spread:pad, ' \
+            'x1:0.5, y1:0, x2:0.5, y2:1, ' \
+            'stop:0 rgba%s, 255), ' \
+            'stop:1 rgba%s, 255))' % (rgb1, rgb2)
 
-    return s
+        return s
 
-  def fourcolorgradient(self, rgb1, rgb2, rgb3, rgb4):
-    s = 'qlineargradient(spread:pad, ' \
-        'x1:0.5, y1:0, x2:0.5, y2:1, ' \
-        'stop:0 rgba%s, 255), ' \
-        'stop:0.4 rgba%s, 255), ' \
-        'stop:0.401 rgba%s, 255), ' \
-        'stop:1 rgba%s, 255))' % (rgb1, rgb2, rgb3, rgb4)
+    def fourcolorgradient(self, rgb1, rgb2, rgb3, rgb4):
+        s = 'qlineargradient(spread:pad, ' \
+            'x1:0.5, y1:0, x2:0.5, y2:1, ' \
+            'stop:0 rgba%s, 255), ' \
+            'stop:0.4 rgba%s, 255), ' \
+            'stop:0.401 rgba%s, 255), ' \
+            'stop:1 rgba%s, 255))' % (rgb1, rgb2, rgb3, rgb4)
 
-    return s
+        return s
 
-  def normalbackground(self):
-    rgb1 = self.styledict['ButtonNormalBegin'].rstrip(')')
-    rgb2 = self.styledict['ButtonNormalMiddleBegin'].rstrip(')')
-    rgb3 = self.styledict['ButtonNormalMiddleEnd'].rstrip(')')
-    rgb4 = self.styledict['ButtonNormalEnd'].rstrip(')')
-    
-    return self.fourcolorgradient(rgb1, rgb2, rgb3, rgb4)
+    def normalbackground(self):
+        rgb1 = self.styledict['ButtonNormalBegin'].rstrip(')')
+        rgb2 = self.styledict['ButtonNormalMiddleBegin'].rstrip(')')
+        rgb3 = self.styledict['ButtonNormalMiddleEnd'].rstrip(')')
+        rgb4 = self.styledict['ButtonNormalEnd'].rstrip(')')
 
-  def hoveredbackground(self):
-    rgb1 = self.styledict['ButtonMouseOverBegin'].rstrip(')')
-    rgb2 = self.styledict['ButtonMouseOverMiddleBegin'].rstrip(')')
-    rgb3 = self.styledict['ButtonMouseOverMiddleEnd'].rstrip(')')
-    rgb4 = self.styledict['ButtonMouseOverEnd'].rstrip(')')
-    
-    return self.fourcolorgradient(rgb1, rgb2, rgb3, rgb4)
+        return self.fourcolorgradient(rgb1, rgb2, rgb3, rgb4)
 
-  def selectedbackground(self, inverted=False):
-    if inverted:
-      rgb1 = self.styledict['ButtonSelectedOverBegin'].rstrip(')')
-      rgb2 = self.styledict['ButtonSelectedOverMiddleBegin'].rstrip(')')
-      rgb3 = self.styledict['ButtonSelectedOverMiddleEnd'].rstrip(')')
-      rgb4 = self.styledict['ButtonSelectedOverEnd'].rstrip(')')
-    else:
-      rgb1 = self.styledict['ButtonSelectedBegin'].rstrip(')')
-      rgb2 = self.styledict['ButtonSelectedMiddleBegin'].rstrip(')')
-      rgb3 = self.styledict['ButtonSelectedMiddleEnd'].rstrip(')')
-      rgb4 = self.styledict['ButtonSelectedEnd'].rstrip(')')
+    def hoveredbackground(self):
+        rgb1 = self.styledict['ButtonMouseOverBegin'].rstrip(')')
+        rgb2 = self.styledict['ButtonMouseOverMiddleBegin'].rstrip(')')
+        rgb3 = self.styledict['ButtonMouseOverMiddleEnd'].rstrip(')')
+        rgb4 = self.styledict['ButtonMouseOverEnd'].rstrip(')')
 
-    return self.fourcolorgradient(rgb1, rgb2, rgb3, rgb4)
+        return self.fourcolorgradient(rgb1, rgb2, rgb3, rgb4)
 
-  def captionbackground(self):
-    rgb1 = self.styledict['CaptionBegin'].rstrip(')')
-    rgb2 = self.styledict['CaptionEnd'].rstrip(')')
-    
-    return self.twocolorgradient(rgb1, rgb2)
+    def selectedbackground(self, inverted=False):
+        if inverted:
+            rgb1 = self.styledict['ButtonSelectedOverBegin'].rstrip(')')
+            rgb2 = self.styledict['ButtonSelectedOverMiddleBegin'].rstrip(')')
+            rgb3 = self.styledict['ButtonSelectedOverMiddleEnd'].rstrip(')')
+            rgb4 = self.styledict['ButtonSelectedOverEnd'].rstrip(')')
+        else:
+            rgb1 = self.styledict['ButtonSelectedBegin'].rstrip(')')
+            rgb2 = self.styledict['ButtonSelectedMiddleBegin'].rstrip(')')
+            rgb3 = self.styledict['ButtonSelectedMiddleEnd'].rstrip(')')
+            rgb4 = self.styledict['ButtonSelectedEnd'].rstrip(')')
+
+        return self.fourcolorgradient(rgb1, rgb2, rgb3, rgb4)
+
+    def captionbackground(self):
+        rgb1 = self.styledict['CaptionBegin'].rstrip(')')
+        rgb2 = self.styledict['CaptionEnd'].rstrip(')')
+
+        return self.twocolorgradient(rgb1, rgb2)
 
 scheme = Scheme()
 defaultUI = Office2007BlueStyle

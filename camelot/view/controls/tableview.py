@@ -42,225 +42,225 @@ from camelot.view.model_thread import model_function, gui_function, post
 from search import SimpleSearchControl
 
 class TableWidget( QtGui.QTableView):
-  """A widget displaying a table, to be used within a TableView"""
-
-  def __init__( self, parent = None ):
-    QtGui.QTableView.__init__( self, parent )
-    logger.debug( 'create querytable' )
-    self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
-    self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | QtGui.QAbstractItemView.DoubleClicked )
-    self.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-    self.horizontalHeader().setClickable( False )
-    self._header_font_required = QtGui.QApplication.font()
-    self._header_font_required.setBold( True )
-    self._minimal_row_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing() + 10
-    self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
-
-  def setModel( self, model ):
-    QtGui.QTableView.setModel( self, model )
-    self.connect( self.selectionModel(), SIGNAL( 'currentChanged(const QModelIndex&,const QModelIndex&)' ), self.activated )
-
-  def activated( self, selectedIndex, previousSelectedIndex ):
-    option = QtGui.QStyleOptionViewItem()
-    newSize = self.itemDelegate( selectedIndex ).sizeHint( option, selectedIndex )
-    row = selectedIndex.row()
-    if previousSelectedIndex.row() >= 0:
-      oldSize = self.itemDelegate( previousSelectedIndex ).sizeHint( option, selectedIndex )
-      previousRow = previousSelectedIndex.row()
-      self.setRowHeight( previousRow, oldSize.height() )
-    self.setRowHeight( row, newSize.height() )
-
-class RowsWidget( QtGui.QLabel ):
-  """Widget that is part of the header widget, displaying the number of rows
-  in the table view"""
-
-  _number_of_rows_font = QtGui.QApplication.font()
-
-  def __init__( self, parent ):
-    QtGui.QLabel.__init__( self, parent )
-    self.setFont( self._number_of_rows_font )
-
-  def setNumberOfRows( self, rows ):
-    self.setText( u'(%i rows)' % rows )
-
-class HeaderWidget( QtGui.QWidget ):
-  """HeaderWidget for a tableview, containing the title, the search widget,
-  and the number of rows in the table"""
-
-  search_widget = SimpleSearchControl
-  rows_widget = RowsWidget
-
-  _title_font = QtGui.QApplication.font()
-  _title_font.setBold( True )
-
-  def __init__( self, parent, admin ):
-    QtGui.QWidget.__init__( self, parent )
-    widget_layout = QtGui.QHBoxLayout()
-    self.search = self.search_widget( self )
-    title = QtGui.QLabel( admin.get_verbose_name_plural(), self )
-    title.setFont( self._title_font )
-    widget_layout.addWidget( title )
-    widget_layout.addWidget( self.search )
-    if self.rows_widget:
-      self.number_of_rows = self.rows_widget( self )
-      widget_layout.addWidget( self.number_of_rows )
-
-    else:
-      self.number_of_rows = None
-    self.setLayout( widget_layout )
-    self.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
-    self.setNumberOfRows( 0 )
-
-  @gui_function
-  def setNumberOfRows( self, rows ):
-    if self.number_of_rows:
-      self.number_of_rows.setNumberOfRows( rows )
-
-class TableView( AbstractView  ):
-  """A generic tableview widget that puts together some other widgets.  The behaviour of this class and
-the resulting interface can be tuned by specifying specific class attributes which define the underlying
-widgets used ::
-
-  class MovieRentalTableView(TableView):
-    title_format = 'Grand overview of recent movie rentals'
-
-The attributes that can be specified are :
-
-.. attribute:: header_widget
-
-The widget class to be used as a header in the table view::
- 
-  header_widget = HeaderWidget
+    """A widget displaying a table, to be used within a TableView"""
   
-.. attribute:: table_widget
-
-The widget class used to display a table within the table view ::
-
-table_widget = TableWidget
-
-.. attribute:: title_format
-
-A string used to format the title of the view ::
-
-title_format = '%(verbose_name_plural)s'
-
-.. attribute:: table_model
-
-A class implementing QAbstractTableModel that will be used as a model for the table view ::
-
-  table_model = QueryTableProxy
-
-- emits the row_selected signal when a row has been selected
-"""
-
-  header_widget = HeaderWidget
+    def __init__( self, parent = None ):
+        QtGui.QTableView.__init__( self, parent )
+        logger.debug( 'create querytable' )
+        self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
+        self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | QtGui.QAbstractItemView.DoubleClicked )
+        self.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
+        self.horizontalHeader().setClickable( False )
+        self._header_font_required = QtGui.QApplication.font()
+        self._header_font_required.setBold( True )
+        self._minimal_row_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing() + 10
+        self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
+    
+    def setModel( self, model ):
+        QtGui.QTableView.setModel( self, model )
+        self.connect( self.selectionModel(), SIGNAL( 'currentChanged(const QModelIndex&,const QModelIndex&)' ), self.activated )
+    
+    def activated( self, selectedIndex, previousSelectedIndex ):
+        option = QtGui.QStyleOptionViewItem()
+        newSize = self.itemDelegate( selectedIndex ).sizeHint( option, selectedIndex )
+        row = selectedIndex.row()
+        if previousSelectedIndex.row() >= 0:
+            oldSize = self.itemDelegate( previousSelectedIndex ).sizeHint( option, selectedIndex )
+            previousRow = previousSelectedIndex.row()
+            self.setRowHeight( previousRow, oldSize.height() )
+        self.setRowHeight( row, newSize.height() )
+    
+class RowsWidget( QtGui.QLabel ):
+    """Widget that is part of the header widget, displaying the number of rows
+    in the table view"""
+  
+    _number_of_rows_font = QtGui.QApplication.font()
+  
+    def __init__( self, parent ):
+        QtGui.QLabel.__init__( self, parent )
+        self.setFont( self._number_of_rows_font )
+    
+    def setNumberOfRows( self, rows ):
+        self.setText( u'(%i rows)' % rows )
+    
+class HeaderWidget( QtGui.QWidget ):
+    """HeaderWidget for a tableview, containing the title, the search widget,
+    and the number of rows in the table"""
+  
+    search_widget = SimpleSearchControl
+    rows_widget = RowsWidget
+  
+    _title_font = QtGui.QApplication.font()
+    _title_font.setBold( True )
+  
+    def __init__( self, parent, admin ):
+        QtGui.QWidget.__init__( self, parent )
+        widget_layout = QtGui.QHBoxLayout()
+        self.search = self.search_widget( self )
+        title = QtGui.QLabel( admin.get_verbose_name_plural(), self )
+        title.setFont( self._title_font )
+        widget_layout.addWidget( title )
+        widget_layout.addWidget( self.search )
+        if self.rows_widget:
+            self.number_of_rows = self.rows_widget( self )
+            widget_layout.addWidget( self.number_of_rows )
+      
+        else:
+            self.number_of_rows = None
+        self.setLayout( widget_layout )
+        self.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
+        self.setNumberOfRows( 0 )
+    
+    @gui_function
+    def setNumberOfRows( self, rows ):
+        if self.number_of_rows:
+            self.number_of_rows.setNumberOfRows( rows )
+      
+class TableView( AbstractView  ):
+    """A generic tableview widget that puts together some other widgets.  The behaviour of this class and
+  the resulting interface can be tuned by specifying specific class attributes which define the underlying
+  widgets used ::
+  
+    class MovieRentalTableView(TableView):
+      title_format = 'Grand overview of recent movie rentals'
+  
+  The attributes that can be specified are :
+  
+  .. attribute:: header_widget
+  
+  The widget class to be used as a header in the table view::
+   
+    header_widget = HeaderWidget
+    
+  .. attribute:: table_widget
+  
+  The widget class used to display a table within the table view ::
+  
   table_widget = TableWidget
-
-  #
-  # The proxy class to use 
-  #
-  table_model = QueryTableProxy
-  #
-  # Format to use as the window title
-  #
+  
+  .. attribute:: title_format
+  
+  A string used to format the title of the view ::
+  
   title_format = '%(verbose_name_plural)s'
-
-  def __init__( self, admin, search_text = None, parent = None ):
-    AbstractView.__init__( self, parent )
-    self.admin = admin
-    post( self.get_title, self.change_title )
-    widget_layout = QtGui.QVBoxLayout()
-    if self.header_widget:
-      self.header = self.header_widget( self, admin )
-      widget_layout.addWidget( self.header )
-      self.connect( self.header.search, SIGNAL( 'search' ), self.startSearch )
-      self.connect( self.header.search, SIGNAL( 'cancel' ), self.cancelSearch )
-      if search_text:
-        self.header.search.search( search_text )
-    else:
-      self.header = None
-    widget_layout.setSpacing( 0 )
-    widget_layout.setMargin( 0 )
-    self.splitter = QtGui.QSplitter( self )
-    widget_layout.addWidget( self.splitter )
-    table_widget = QtGui.QWidget( self )
-    self.table_layout = QtGui.QVBoxLayout()
-    self.table_layout.setSpacing( 0 )
-    self.table_layout.setMargin( 0 )
-    self.table = None
-    self.filters = None
-    self._table_model = None
-    table_widget.setLayout( self.table_layout )
-    self.set_admin( admin )
-    self.splitter.insertWidget( 0, table_widget )
-    self.setLayout( widget_layout )
-    self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
-    self.search_filter = lambda q: q
-    post( self.admin.get_subclass_tree, self.setSubclassTree )
-
-  @model_function
-  def get_title( self ):
-    return self.title_format % {'verbose_name_plural':self.admin.get_verbose_name_plural()}
-
-  @gui_function
-  def setSubclassTree( self, subclasses ):
-    if len( subclasses ) > 0:
-      from inheritance import SubclassTree
-      class_tree = SubclassTree( self.admin, self )
-      self.splitter.insertWidget( 0, class_tree )
-      self.connect( class_tree, SIGNAL( 'subclassClicked' ), self.set_admin )
-
-  def sectionClicked( self, section ):
-    """emits a row_selected signal"""
-    self.emit( SIGNAL( 'row_selected' ), section )
-
-  def create_table_model( self, admin ):
-    """Create a table model for the given admin interface"""
-    return self.table_model( admin,
-                             lambda:admin.entity.query,
-                             admin.getColumns )
-
-  @gui_function
-  def set_admin( self, admin ):
-    """Switch to a different subclass, where admin is the admin object of the
-    subclass"""
-    logger.debug('set_admin called')
-    self.admin = admin
-    if self.table:
-      self.disconnect(self._table_model, QtCore.SIGNAL( 'layoutChanged()' ), self.tableLayoutChanged )
-      self.table_layout.removeWidget(self.table)
-      self.table.deleteLater()
-      self._table_model.deleteLater()
-    self.table = self.table_widget( self )
-    self._table_model = self.create_table_model( admin )
-    self.table.setModel( self._table_model )
-    self.connect( self.table.verticalHeader(),
-                  SIGNAL( 'sectionClicked(int)' ),
-                  self.sectionClicked )
-    self.connect( self._table_model, QtCore.SIGNAL( 'layoutChanged()' ), self.tableLayoutChanged )
-    self.tableLayoutChanged()
-    self.table_layout.insertWidget( 1, self.table )
-
-    def get_filters_and_actions():
-      return ( admin.get_filters(), admin.get_list_actions() )
-
-    post( get_filters_and_actions,  self.set_filters_and_actions )
-    post( admin.getListCharts, self.setCharts )
-
-  @gui_function
-  def tableLayoutChanged( self ):
-    logger.debug('tableLayoutChanged')
-    if self.header:
-      self.header.setNumberOfRows( self._table_model.rowCount() )
-    self.table.setItemDelegate( self._table_model.getItemDelegate() )
-    for i in range( self._table_model.columnCount() ):
-      self.table.setColumnWidth( i, max( self._table_model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width(), 
-                                         self.table.columnWidth( i ) ) )
-
-  @gui_function
-  def setCharts( self, charts ):
-    """creates and display charts"""
-    pass
+  
+  .. attribute:: table_model
+  
+  A class implementing QAbstractTableModel that will be used as a model for the table view ::
+  
+    table_model = QueryTableProxy
+  
+  - emits the row_selected signal when a row has been selected
+  """
+  
+    header_widget = HeaderWidget
+    table_widget = TableWidget
+  
+    #
+    # The proxy class to use 
+    #
+    table_model = QueryTableProxy
+    #
+    # Format to use as the window title
+    #
+    title_format = '%(verbose_name_plural)s'
+  
+    def __init__( self, admin, search_text = None, parent = None ):
+        AbstractView.__init__( self, parent )
+        self.admin = admin
+        post( self.get_title, self.change_title )
+        widget_layout = QtGui.QVBoxLayout()
+        if self.header_widget:
+            self.header = self.header_widget( self, admin )
+            widget_layout.addWidget( self.header )
+            self.connect( self.header.search, SIGNAL( 'search' ), self.startSearch )
+            self.connect( self.header.search, SIGNAL( 'cancel' ), self.cancelSearch )
+            if search_text:
+                self.header.search.search( search_text )
+        else:
+            self.header = None
+        widget_layout.setSpacing( 0 )
+        widget_layout.setMargin( 0 )
+        self.splitter = QtGui.QSplitter( self )
+        widget_layout.addWidget( self.splitter )
+        table_widget = QtGui.QWidget( self )
+        self.table_layout = QtGui.QVBoxLayout()
+        self.table_layout.setSpacing( 0 )
+        self.table_layout.setMargin( 0 )
+        self.table = None
+        self.filters = None
+        self._table_model = None
+        table_widget.setLayout( self.table_layout )
+        self.set_admin( admin )
+        self.splitter.insertWidget( 0, table_widget )
+        self.setLayout( widget_layout )
+        self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
+        self.search_filter = lambda q: q
+        post( self.admin.get_subclass_tree, self.setSubclassTree )
+    
+    @model_function
+    def get_title( self ):
+        return self.title_format % {'verbose_name_plural':self.admin.get_verbose_name_plural()}
+    
+    @gui_function
+    def setSubclassTree( self, subclasses ):
+        if len( subclasses ) > 0:
+            from inheritance import SubclassTree
+            class_tree = SubclassTree( self.admin, self )
+            self.splitter.insertWidget( 0, class_tree )
+            self.connect( class_tree, SIGNAL( 'subclassClicked' ), self.set_admin )
+      
+    def sectionClicked( self, section ):
+        """emits a row_selected signal"""
+        self.emit( SIGNAL( 'row_selected' ), section )
+    
+    def create_table_model( self, admin ):
+        """Create a table model for the given admin interface"""
+        return self.table_model( admin,
+                                 lambda:admin.entity.query,
+                                 admin.getColumns )
+    
+    @gui_function
+    def set_admin( self, admin ):
+        """Switch to a different subclass, where admin is the admin object of the
+        subclass"""
+        logger.debug('set_admin called')
+        self.admin = admin
+        if self.table:
+            self.disconnect(self._table_model, QtCore.SIGNAL( 'layoutChanged()' ), self.tableLayoutChanged )
+            self.table_layout.removeWidget(self.table)
+            self.table.deleteLater()
+            self._table_model.deleteLater()
+        self.table = self.table_widget( self )
+        self._table_model = self.create_table_model( admin )
+        self.table.setModel( self._table_model )
+        self.connect( self.table.verticalHeader(),
+                      SIGNAL( 'sectionClicked(int)' ),
+                      self.sectionClicked )
+        self.connect( self._table_model, QtCore.SIGNAL( 'layoutChanged()' ), self.tableLayoutChanged )
+        self.tableLayoutChanged()
+        self.table_layout.insertWidget( 1, self.table )
+    
+        def get_filters_and_actions():
+            return ( admin.get_filters(), admin.get_list_actions() )
+      
+        post( get_filters_and_actions,  self.set_filters_and_actions )
+        post( admin.getListCharts, self.setCharts )
+    
+    @gui_function
+    def tableLayoutChanged( self ):
+        logger.debug('tableLayoutChanged')
+        if self.header:
+            self.header.setNumberOfRows( self._table_model.rowCount() )
+        self.table.setItemDelegate( self._table_model.getItemDelegate() )
+        for i in range( self._table_model.columnCount() ):
+            self.table.setColumnWidth( i, max( self._table_model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width(), 
+                                               self.table.columnWidth( i ) ) )
+      
+    @gui_function
+    def setCharts( self, charts ):
+        """creates and display charts"""
+        pass
 #    if charts:
 #
 #      from matplotlib.figure import Figure
@@ -322,170 +322,170 @@ A class implementing QAbstractTableModel that will be used as a model for the ta
 #
 #      self.admin.mt.post( getData, setData )
 
-  def deleteSelectedRows( self ):
-    """delete the selected rows in this tableview"""
-    logger.debug( 'delete selected rows called' )
-    for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-      self._table_model.removeRow( row )
-
-  @gui_function
-  def newRow( self ):
-    """Create a new row in the tableview"""
-    from camelot.view.workspace import get_workspace
-    workspace = get_workspace()
-    form = self.admin.create_new_view( workspace,
-                                       oncreate = lambda o:self._table_model.insertEntityInstance( 0, o ),
-                                       onexpunge = lambda o:self._table_model.removeEntityInstance( o ) )
-    workspace.addSubWindow( form )
-    form.show()
-
-  def selectTableRow( self, row ):
-    """selects the specified row"""
-    self.table.selectRow( row )
-
-  def selectedTableIndexes( self ):
-    """returns a list of selected rows indexes"""
-    return self.table.selectedIndexes()
-
-  def getColumns( self ):
-    """return the columns to be displayed in the table view"""
-    return self.admin.getColumns()
-
-  def getData( self ):
-    """generator for data queried by table model"""
-    for d in self._table_model.getData():
-      yield d
-
-  def getTitle( self ):
-    """return the name of the entity managed by the admin attribute"""
-    return self.admin.get_verbose_name()
-
-  def viewFirst( self ):
-    """selects first row"""
-    self.selectTableRow( 0 )
-
-  def viewLast( self ):
-    """selects last row"""
-    self.selectTableRow( self._table_model.rowCount() - 1 )
-
-  def viewNext( self ):
-    """selects next row"""
-    first = self.selectedTableIndexes()[0]
-    next = ( first.row() + 1 ) % self._table_model.rowCount()
-    self.selectTableRow( next )
-
-  def viewPrevious( self ):
-    """selects previous row"""
-    first = self.selectedTableIndexes()[0]
-    prev = ( first.row() - 1 ) % self._table_model.rowCount()
-    self.selectTableRow( prev )
-
-  def rebuildQuery( self ):
-    """resets the table model query"""
-
-    def rebuild_query():
-      query = self.admin.entity.query
-      if self.filters:
-        query = self.filters.decorate_query( query )
-      if self.search_filter:
-        query = self.search_filter( query )
-      query_getter = lambda:query
-      return query_getter
-
-    post( rebuild_query, self._table_model.setQuery )
-
-  def startSearch( self, text ):
-    """rebuilds query based on filtering text"""
-    from camelot.view.search import create_entity_search_query_decorator
-    logger.debug( 'search %s' % text )
-    self.search_filter = create_entity_search_query_decorator( self.admin, text )
-    self.rebuildQuery()
-
-  def cancelSearch( self ):
-    """resets search filtering to default"""
-    logger.debug( 'cancel search' )
-    self.search_filter = lambda q: q
-    self.rebuildQuery()
+    def deleteSelectedRows( self ):
+        """delete the selected rows in this tableview"""
+        logger.debug( 'delete selected rows called' )
+        for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
+            self._table_model.removeRow( row )
+      
+    @gui_function
+    def newRow( self ):
+        """Create a new row in the tableview"""
+        from camelot.view.workspace import get_workspace
+        workspace = get_workspace()
+        form = self.admin.create_new_view( workspace,
+                                           oncreate = lambda o:self._table_model.insertEntityInstance( 0, o ),
+                                           onexpunge = lambda o:self._table_model.removeEntityInstance( o ) )
+        workspace.addSubWindow( form )
+        form.show()
     
-  @gui_function
-  def set_filters_and_actions( self, filters_and_actions ):
-    """sets filters for the tableview"""
-    filters, actions = filters_and_actions
-    from filterlist import FilterList
-    from actionsbox import ActionsBox
-    logger.debug( 'setting filters for tableview' )
-    if self.filters:
-      self.disconnect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
-      self.filters.deleteLater()
-      self.filters = None
-    if filters:
-      self.filters = FilterList( filters, parent=self )
-      self.splitter.insertWidget( 2, self.filters )
-      self.connect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
-    elif actions:
-      self.filters = ActionsBox( self, self._table_model.collection_getter, lambda:[] )
-      self.filters.setActions( actions )
-      self.splitter.insertWidget( 2, self.filters )
-
-  def toHtml( self ):
-    """generates html of the table"""
-    table = [[getattr( row, col[0] ) for col in self.admin.getColumns()]
-             for row in self.admin.entity.query.all()]
-    context = {
-      'title': self.admin.get_verbose_name_plural(),
-      'table': table,
-      'columns': [c[0] for c in self.admin.getColumns()],
-    }
-    from camelot.view.templates import loader
-    from jinja import Environment, FileSystemLoader
-    env = Environment( loader = loader )
-    tp = env.get_template( 'table_view.html' )
-    return tp.render( context )
-
-  def closeEvent( self, event ):
-    """reimplements close event"""
-    logger.debug( 'tableview closed' )
-    # remove all references we hold, to enable proper garbage collection
-    del self.table_layout
-    del self.table
-    del self.filters
-    del self._table_model
-    event.accept()
-
-  def importWizard(self, attributes):
-    from camelot.view.wizard.import_data import ImportWizard
-    object_attributes = ['title', 'releasedate', 'name', 'description' ]
-    importWizard = ImportWizard( self, object_attributes )
-    importWizard.start()
-    data = importWizard.getImportedData()    
+    def selectTableRow( self, row ):
+        """selects the specified row"""
+        self.table.selectRow( row )
     
-    def makeImport():
-        for row in data:
-            # get all possible fields (=attributes) from this object
-            #attributes = o.Admin.form_display.get_fields() 
-            #object_attributes = ['title', 'releasedate', 'name', 'description' ]           
-            #print attributes
-            # set title
-            o = self.admin.entity()
-            #For example, setattr(x, 'foobar', 123) is equivalent to x.foobar = 123
-            setattr(o, object_attributes[0], row[0])
-            #movie.title = row[0]
-            name = row[2].split( ' ' ) #director
-            #director = Person()
-            #director.first_name = name[0]  
-            #director.last_name = name[1]
-            #movie.director = director
-            o.short_description = "korte beschrijving"
-            #date = row[1].split('/') # date 12/03/2009
-            #o.releasedate = datetime.date(year=int(date[2]), month=int(date[1]), day=int(date[0]))
-            o.genre = ""
-            #print o[attributes[0]]
-            from sqlalchemy.orm.session import Session
-            Session.object_session(o).flush([o])
-
-    post( makeImport )
+    def selectedTableIndexes( self ):
+        """returns a list of selected rows indexes"""
+        return self.table.selectedIndexes()
+    
+    def getColumns( self ):
+        """return the columns to be displayed in the table view"""
+        return self.admin.getColumns()
+    
+    def getData( self ):
+        """generator for data queried by table model"""
+        for d in self._table_model.getData():
+            yield d
+      
+    def getTitle( self ):
+        """return the name of the entity managed by the admin attribute"""
+        return self.admin.get_verbose_name()
+    
+    def viewFirst( self ):
+        """selects first row"""
+        self.selectTableRow( 0 )
+    
+    def viewLast( self ):
+        """selects last row"""
+        self.selectTableRow( self._table_model.rowCount() - 1 )
+    
+    def viewNext( self ):
+        """selects next row"""
+        first = self.selectedTableIndexes()[0]
+        next = ( first.row() + 1 ) % self._table_model.rowCount()
+        self.selectTableRow( next )
+    
+    def viewPrevious( self ):
+        """selects previous row"""
+        first = self.selectedTableIndexes()[0]
+        prev = ( first.row() - 1 ) % self._table_model.rowCount()
+        self.selectTableRow( prev )
+    
+    def rebuildQuery( self ):
+        """resets the table model query"""
+    
+        def rebuild_query():
+            query = self.admin.entity.query
+            if self.filters:
+                query = self.filters.decorate_query( query )
+            if self.search_filter:
+                query = self.search_filter( query )
+            query_getter = lambda:query
+            return query_getter
+      
+        post( rebuild_query, self._table_model.setQuery )
+    
+    def startSearch( self, text ):
+        """rebuilds query based on filtering text"""
+        from camelot.view.search import create_entity_search_query_decorator
+        logger.debug( 'search %s' % text )
+        self.search_filter = create_entity_search_query_decorator( self.admin, text )
+        self.rebuildQuery()
+    
+    def cancelSearch( self ):
+        """resets search filtering to default"""
+        logger.debug( 'cancel search' )
+        self.search_filter = lambda q: q
+        self.rebuildQuery()
         
-  def importFromFile( self ):
-    """"import data : the data will be imported in the activeMdiChild """
-    logger.info( 'call import method' )
-    post(self.admin.getColumns, self.importWizard)
+    @gui_function
+    def set_filters_and_actions( self, filters_and_actions ):
+        """sets filters for the tableview"""
+        filters, actions = filters_and_actions
+        from filterlist import FilterList
+        from actionsbox import ActionsBox
+        logger.debug( 'setting filters for tableview' )
+        if self.filters:
+            self.disconnect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
+            self.filters.deleteLater()
+            self.filters = None
+        if filters:
+            self.filters = FilterList( filters, parent=self )
+            self.splitter.insertWidget( 2, self.filters )
+            self.connect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
+        elif actions:
+            self.filters = ActionsBox( self, self._table_model.collection_getter, lambda:[] )
+            self.filters.setActions( actions )
+            self.splitter.insertWidget( 2, self.filters )
+      
+    def toHtml( self ):
+        """generates html of the table"""
+        table = [[getattr( row, col[0] ) for col in self.admin.getColumns()]
+                 for row in self.admin.entity.query.all()]
+        context = {
+          'title': self.admin.get_verbose_name_plural(),
+          'table': table,
+          'columns': [c[0] for c in self.admin.getColumns()],
+        }
+        from camelot.view.templates import loader
+        from jinja import Environment, FileSystemLoader
+        env = Environment( loader = loader )
+        tp = env.get_template( 'table_view.html' )
+        return tp.render( context )
+    
+    def closeEvent( self, event ):
+        """reimplements close event"""
+        logger.debug( 'tableview closed' )
+        # remove all references we hold, to enable proper garbage collection
+        del self.table_layout
+        del self.table
+        del self.filters
+        del self._table_model
+        event.accept()
+    
+    def importWizard(self, attributes):
+        from camelot.view.wizard.import_data import ImportWizard
+        object_attributes = ['title', 'releasedate', 'name', 'description' ]
+        importWizard = ImportWizard( self, object_attributes )
+        importWizard.start()
+        data = importWizard.getImportedData()    
+        
+        def makeImport():
+            for row in data:
+                # get all possible fields (=attributes) from this object
+                #attributes = o.Admin.form_display.get_fields() 
+                #object_attributes = ['title', 'releasedate', 'name', 'description' ]           
+                #print attributes
+                # set title
+                o = self.admin.entity()
+                #For example, setattr(x, 'foobar', 123) is equivalent to x.foobar = 123
+                setattr(o, object_attributes[0], row[0])
+                #movie.title = row[0]
+                name = row[2].split( ' ' ) #director
+                #director = Person()
+                #director.first_name = name[0]  
+                #director.last_name = name[1]
+                #movie.director = director
+                o.short_description = "korte beschrijving"
+                #date = row[1].split('/') # date 12/03/2009
+                #o.releasedate = datetime.date(year=int(date[2]), month=int(date[1]), day=int(date[0]))
+                o.genre = ""
+                #print o[attributes[0]]
+                from sqlalchemy.orm.session import Session
+                Session.object_session(o).flush([o])
+    
+        post( makeImport )
+            
+    def importFromFile( self ):
+        """"import data : the data will be imported in the activeMdiChild """
+        logger.info( 'call import method' )
+        post(self.admin.getColumns, self.importWizard)

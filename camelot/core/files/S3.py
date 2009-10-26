@@ -253,7 +253,7 @@ class AWSAuthConnection:
 
 
         # build the path_argument string
-        # add the ? in all cases since 
+        # add the ? in all cases since
         # signature and credentials follow path args
         if len(query_args):
             path += "?" + query_args_hash_to_string(query_args)
@@ -290,7 +290,7 @@ class AWSAuthConnection:
 
     def _add_aws_auth_header(self, headers, method, bucket, key, query_args):
         if not headers.has_key('Date'):
-          headers['Date'] = time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime())
+            headers['Date'] = time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime())
         c_string = canonical_string(method, bucket, key, query_args, headers)
         headers['Authorization'] = \
             "AWS %s:%s" % (self.aws_access_key_id, encode(self.aws_secret_access_key, c_string))
@@ -470,7 +470,7 @@ class ListBucketResponse(Response):
 class ListAllMyBucketsResponse(Response):
     def __init__(self, http_response):
         Response.__init__(self, http_response)
-        if http_response.status < 300: 
+        if http_response.status < 300:
             handler = ListAllMyBucketsHandler()
             xml.sax.parseString(self.body, handler)
             self.entries = handler.entries
@@ -496,7 +496,7 @@ class GetResponse(Response):
 class LocationResponse(Response):
     def __init__(self, http_response):
         Response.__init__(self, http_response)
-        if http_response.status < 300: 
+        if http_response.status < 300:
             handler = LocationHandler()
             xml.sax.parseString(self.body, handler)
             self.location = handler.location

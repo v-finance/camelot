@@ -34,8 +34,8 @@ from PyQt4 import QtGui
 
 class StatusBar(QtGui.QStatusBar):
   
-  def __init__(self, parent):
-    QtGui.QStatusBar.__init__(self, parent)
+    def __init__(self, parent):
+        QtGui.QStatusBar.__init__(self, parent)
 #    progress = QtGui.QProgressBar(self)
 #    #progress.setFixedWidth(60)
 #    progress.setMaximum(0)

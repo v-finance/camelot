@@ -37,19 +37,19 @@ logger = logging.getLogger('response_handler')
 logger.setLevel(logging.INFO)
 
 from PyQt4.QtCore import QObject, SIGNAL
-  
+
 class ResponseHandler(QObject):
-  def __init__(self):
-    QObject.__init__(self)
-    self.response_signal = SIGNAL("responseAvailable")
-    self.start_signal = SIGNAL("startProcessingRequest")
-    self.stop_signal = SIGNAL("stopProcessingRequest")
-    self.connect(self, self.response_signal, self.handleResponse)
-  def handleResponse(self, mt):
-    mt.process_responses()
-  def responseAvailable(self, mt):
-    self.emit(self.response_signal, mt)
-  def startProcessingRequest(self, mt):
-    self.emit(self.start_signal)
-  def stopProcessingRequest(self, mt):
-    self.emit(self.stop_signal)
+    def __init__(self):
+        QObject.__init__(self)
+        self.response_signal = SIGNAL("responseAvailable")
+        self.start_signal = SIGNAL("startProcessingRequest")
+        self.stop_signal = SIGNAL("stopProcessingRequest")
+        self.connect(self, self.response_signal, self.handleResponse)
+    def handleResponse(self, mt):
+        mt.process_responses()
+    def responseAvailable(self, mt):
+        self.emit(self.response_signal, mt)
+    def startProcessingRequest(self, mt):
+        self.emit(self.start_signal)
+    def stopProcessingRequest(self, mt):
+        self.emit(self.stop_signal)

@@ -102,11 +102,11 @@ def ugettext(string_to_translate):
   
 class ugettext_lazy(object):
   
-  def __init__(self, string_to_translate):
-      self._string_to_translate = string_to_translate
+    def __init__(self, string_to_translate):
+        self._string_to_translate = string_to_translate
+      
+    def __str__(self):
+        return ugettext(self._string_to_translate)
     
-  def __str__(self):
-      return ugettext(self._string_to_translate)
-  
-  def __unicode__(self):
-      return ugettext(self._string_to_translate)
+    def __unicode__(self):
+        return ugettext(self._string_to_translate)

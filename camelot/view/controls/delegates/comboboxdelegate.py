@@ -35,25 +35,25 @@ from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject
 
 class ComboBoxDelegate(CustomDelegate):
-  
+
     __metaclass__ = DocumentationMetaclass
     editor = editors.ChoicesEditor
-    
+
     def __init__(self, parent, choices, editable=True, **kwargs):
         CustomDelegate.__init__(self, parent, editable=editable, **kwargs)
         self.choices = choices
-              
+
     def setEditorData(self, editor, index):
         value = variant_to_pyobject(index.data(Qt.EditRole))
         editor.set_value(value)
-    
+
         if callable(self.choices):
-            def create_choices_getter(model, row):      
+            def create_choices_getter(model, row):
                 def choices_getter():
                     return list(self.choices(model._get_object(row)))
                 return choices_getter
             post(create_choices_getter(index.model(), index.row()),
-                 editor.set_choices)            
+                 editor.set_choices)
         else:
             editor.set_choices(self.choices)
 
@@ -61,7 +61,7 @@ class ComboBoxDelegate(CustomDelegate):
         painter.save()
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject(index.data(Qt.EditRole))
-        
+
         c = index.model().data(index, Qt.BackgroundRole)
 
         # let us be safe Qt.BackgroundRole valid only if set
@@ -69,20 +69,20 @@ class ComboBoxDelegate(CustomDelegate):
             background_color = QtGui.QBrush()
         else:
             background_color = QtGui.QColor(c)
-        
+
         rect = option.rect
         rect = QtCore.QRect(rect.left() + 3,
                             rect.top() + 6,
                             rect.width() - 5,
                             rect.height())
-        
+
         if (option.state & QtGui.QStyle.State_Selected):
             painter.fillRect(option.rect, option.palette.highlight())
             fontColor = QtGui.QColor()
-            if self.editable:         
+            if self.editable:
                 Color = option.palette.highlightedText().color()
                 fontColor.setRgb(Color.red(), Color.green(), Color.blue())
-            else:          
+            else:
                 fontColor.setRgb(130, 130, 130)
         else:
             if self.editable:
@@ -93,7 +93,7 @@ class ComboBoxDelegate(CustomDelegate):
                 painter.fillRect(option.rect, option.palette.window())
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(130, 130, 130)
-    
+
         painter.setPen(fontColor.toRgb())
         rect = QtCore.QRect(option.rect.left()+2,
                             option.rect.top(),
@@ -106,9 +106,9 @@ class ComboBoxDelegate(CustomDelegate):
                          Qt.AlignVCenter | Qt.AlignLeft,
                          unicode(value))
         painter.restore()
-    
-    
-class ComboBoxEditorDelegate(ComboBoxDelegate):  
+
+
+class ComboBoxEditorDelegate(ComboBoxDelegate):
     """Delegate for combobox which makes sure that the editor (of the combobox)
 is visible even if it isn't selected"""
 
@@ -121,11 +121,11 @@ is visible even if it isn't selected"""
 
         def create_choices_getter(model, row):
 
-          def choices_getter():
-            print 'in set editor data', self.choices(None)
-            return list(self.choices(None))
+            def choices_getter():
+                print 'in set editor data', self.choices(None)
+                return list(self.choices(None))
 
-          return choices_getter
+            return choices_getter
 
         #editor.set_value(value)
         post(create_choices_getter(index.model(),index.row()),
@@ -134,7 +134,7 @@ is visible even if it isn't selected"""
     def setModelData(self, editor, model, index):
         return None
         #model.setData(index, create_constant_function(editor.get_value()))
-    
+
     def paint(self, painter, option, index):
         """adapted from booldelegate"""
 
@@ -145,19 +145,19 @@ is visible even if it isn't selected"""
         #c = index.model().data(index, Qt.BackgroundRole)
         #background_color = QtGui.QColor(c)
         background_color = QtGui.QColor(Qt.blue)
-        
+
         #check_option = QtGui.QStyleOptionComboBox()
         #check_option = QtGui.QStyleOptionButton()
         check_option = QtGui.QStyleOptionMenuItem()
         #check_option.OptionType = QStyleOption.SO_ComboBox
-        
+
         #check_option.text = QString('choice')
-        
+
         rect = QtCore.QRect(option.rect.left(),
                             option.rect.top(),
                             option.rect.width(),
                             option.rect.height())
-        
+
         #check_option.rect = rect
         check_option.palette = option.palette
 
@@ -167,24 +167,24 @@ is visible even if it isn't selected"""
         #    painter.fillRect(option.rect, option.palette.window())
         #else:
         #    painter.fillRect(option.rect, background_color)
-          
+
         #if checked:
         #    check_option.state = option.state | QtGui.QStyle.State_On
         #else:
         #    check_option.state = option.state | QtGui.QStyle.State_Off
-        check_option.state = QtGui.QStyle.State_DownArrow  
-          
+        check_option.state = QtGui.QStyle.State_DownArrow
+
         QtGui.QApplication.style().drawControl(QtGui.QStyle.CE_MenuBarItem,
                                                check_option,
                                                painter)
-        
-        QtGui.QApplication.style().drawItemText(painter, 
+
+        QtGui.QApplication.style().drawItemText(painter,
                                                 rect,
                                                 0,
                                                 option.palette,
                                                 True,
                                                 QString('choice'))
-        
+
         painter.restore()
 
 

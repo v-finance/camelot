@@ -33,156 +33,156 @@ These structures can be transformed to QT forms.
 from camelot.view.model_thread import gui_function
 
 def structure_to_filter(structure):
-  """Convert a python data structure to a filter, using the following rules :
+    """Convert a python data structure to a filter, using the following rules :
+    
+    if structure is an instance of Filter, return structure
+    else create a GroupBoxFilter from the structure
+    """
+    if isinstance(structure, Filter):
+        return structure
+    return GroupBoxFilter(structure)
   
-  if structure is an instance of Filter, return structure
-  else create a GroupBoxFilter from the structure
-  """
-  if isinstance(structure, Filter):
-    return structure
-  return GroupBoxFilter(structure)
-
 class Filter(object):
-  """Base class for filters"""
-  
-  def __init__(self, attribute, value_to_string=lambda x:unicode(x)):
-    """
-    @param attribute: the attribute on which to filter, this attribute
-    may contain dots to indicate relationships that need to be followed, 
-    eg.  'person.groups.name'
-    @param value_to_string: function that converts a value of the attribute to
-    a string that will be displayed in the filter 
-    """
-    self.attribute = attribute
-    self._value_to_string = value_to_string
-
-  @gui_function     
-  def render(self, parent, name, options):
-    """Render this filter as a qt object
-    @param parent: its parent widget
-    @param name: the name of the filter
-    @param options: the options that can be selected, where each option is a list
-    of tuples containting (option_name, query_decorator)  
+    """Base class for filters"""
     
-    The name and the list of options can be fetched with get_name_and_options"""
-    raise NotImplementedError()
+    def __init__(self, attribute, value_to_string=lambda x:unicode(x)):
+        """
+        @param attribute: the attribute on which to filter, this attribute
+        may contain dots to indicate relationships that need to be followed, 
+        eg.  'person.groups.name'
+        @param value_to_string: function that converts a value of the attribute to
+        a string that will be displayed in the filter 
+        """
+        self.attribute = attribute
+        self._value_to_string = value_to_string
     
-  def get_name_and_options(self, admin):
-    """return a tuple of the name of the filter and a list of options that can be selected. 
-    Each option is a tuple of the name of the option, and a filter function to
-    decorate a query
-    @return:  (filter_name, [(option_name, query_decorator), ...)
-    """
-    from sqlalchemy.sql import select
-    from sqlalchemy import orm
-    from elixir import session
-    filter_names = []
-    joins = []
-    table = admin.entity.table
-    path = self.attribute.split('.')
-    for field_name in path:
-      attributes = admin.get_field_attributes(field_name)
-      filter_names.append(attributes['name'])
-      # @todo: if the filter is not on an attribute of the relation, but on the relation itselves
-      if 'target' in attributes:
-        admin = attributes['admin']
-        joins.append(field_name)
-        if attributes['direction'] == orm.interfaces.MANYTOONE:
-          table = admin.entity.table.join(table)
-        else:
-          table = admin.entity.table
+    @gui_function     
+    def render(self, parent, name, options):
+        """Render this filter as a qt object
+        @param parent: its parent widget
+        @param name: the name of the filter
+        @param options: the options that can be selected, where each option is a list
+        of tuples containting (option_name, query_decorator)  
         
-
-    col = getattr(admin.entity, field_name)
-    query = select([col], distinct=True, order_by=col.asc()).select_from(table)
+        The name and the list of options can be fetched with get_name_and_options"""
+        raise NotImplementedError()
+        
+    def get_name_and_options(self, admin):
+        """return a tuple of the name of the filter and a list of options that can be selected. 
+        Each option is a tuple of the name of the option, and a filter function to
+        decorate a query
+        @return:  (filter_name, [(option_name, query_decorator), ...)
+        """
+        from sqlalchemy.sql import select
+        from sqlalchemy import orm
+        from elixir import session
+        filter_names = []
+        joins = []
+        table = admin.entity.table
+        path = self.attribute.split('.')
+        for field_name in path:
+            attributes = admin.get_field_attributes(field_name)
+            filter_names.append(attributes['name'])
+            # @todo: if the filter is not on an attribute of the relation, but on the relation itselves
+            if 'target' in attributes:
+                admin = attributes['admin']
+                joins.append(field_name)
+                if attributes['direction'] == orm.interfaces.MANYTOONE:
+                    table = admin.entity.table.join(table)
+                else:
+                    table = admin.entity.table
+                  
+          
+        col = getattr(admin.entity, field_name)
+        query = select([col], distinct=True, order_by=col.asc()).select_from(table)
+          
+        def create_decorator(col, value, joins):
+          
+            def decorator(q):
+                if joins:
+                    q = q.join(joins, aliased=True)
+                return q.filter(col==value)
+              
+            return decorator
       
-    def create_decorator(col, value, joins):
-      
-      def decorator(q):
-        if joins:
-          q = q.join(joins, aliased=True)
-        return q.filter(col==value)
-      
-      return decorator
-
-    options = [(self._value_to_string(value[0]), create_decorator(col, value[0], joins))
-               for value in session.execute(query)]
-
-    return (filter_names[0],[('All', lambda q: q)] + options)
+        options = [(self._value_to_string(value[0]), create_decorator(col, value[0], joins))
+                   for value in session.execute(query)]
     
+        return (filter_names[0],[('All', lambda q: q)] + options)
+        
 class GroupBoxFilter(Filter):
-  """Filter where the items are displayed in a QGroupBox"""
-  
-  @gui_function
-  def render(self, parent, name, options):
+    """Filter where the items are displayed in a QGroupBox"""
     
-    from PyQt4 import QtCore, QtGui
-    
-    class FilterWidget(QtGui.QGroupBox):
-      """A box containing a filter that can be applied on a table view, this filter is
-      based on the distinct values in a certain column"""
-    
-      def __init__(self, name, choices, parent):
-        QtGui.QGroupBox.__init__(self, unicode(name), parent)
-        self.group = QtGui.QButtonGroup(self)
-        self.item = name
-        self.unique_values = []
-        self.choices = None
-        self.setChoices(choices)
-         
-      def emit_filter_changed(self, state):
-        self.emit(QtCore.SIGNAL('filter_changed'))
-    
-      def setChoices(self, choices):
-        self.choices = choices
-        layout = QtGui.QVBoxLayout()
-        for i,name in enumerate([unicode(c[0]) for c in choices]):
-          button = QtGui.QRadioButton(name, self)
-          layout.addWidget(button)
-          self.group.addButton(button, i)
-          if i==0:
-            button.setChecked(True)
-          self.connect(button, QtCore.SIGNAL('toggled(bool)'), self.emit_filter_changed)
-        layout.addStretch()
-        self.setLayout(layout)
-    
-      def decorate_query(self, query):
-        checked = self.group.checkedId()
-        if checked>=0:
-          return self.choices[checked][1](query)
-        return query
-        
-    return FilterWidget(name, options, parent)
-  
-class ComboBoxFilter(Filter):
-  """Filter where the items are displayed in a QComboBox"""
-  
-  @gui_function
-  def render(self, parent, name, options):
-    
-    from PyQt4 import QtCore, QtGui
-    
-    class FilterWidget(QtGui.QGroupBox):
+    @gui_function
+    def render(self, parent, name, options):
       
-      def __init__(self, name, choices, parent):
-        QtGui.QGroupBox.__init__(self, name, parent)
-        layout = QtGui.QVBoxLayout()
-        self.choices = choices
-        combobox = QtGui.QComboBox(self)
-        for i,(name,decorator) in enumerate(choices):
-          combobox.insertItem(i, unicode(name), QtCore.QVariant(decorator))
-        layout.addWidget(combobox)
-        self.setLayout(layout)
-        self.current_index = 0
-        self.connect(combobox, QtCore.SIGNAL('currentIndexChanged(int)'), self.emit_filter_changed)
+        from PyQt4 import QtCore, QtGui
+        
+        class FilterWidget(QtGui.QGroupBox):
+            """A box containing a filter that can be applied on a table view, this filter is
+            based on the distinct values in a certain column"""
+          
+            def __init__(self, name, choices, parent):
+                QtGui.QGroupBox.__init__(self, unicode(name), parent)
+                self.group = QtGui.QButtonGroup(self)
+                self.item = name
+                self.unique_values = []
+                self.choices = None
+                self.setChoices(choices)
+                 
+            def emit_filter_changed(self, state):
+                self.emit(QtCore.SIGNAL('filter_changed'))
             
-      def emit_filter_changed(self, index):
-        self.current_index = index
-        self.emit(QtCore.SIGNAL('filter_changed'))
-        
-      def decorate_query(self, query):
-        if self.current_index>=0:
-          return self.choices[self.current_index][1](query)
-        return query
+            def setChoices(self, choices):
+                self.choices = choices
+                layout = QtGui.QVBoxLayout()
+                for i,name in enumerate([unicode(c[0]) for c in choices]):
+                    button = QtGui.QRadioButton(name, self)
+                    layout.addWidget(button)
+                    self.group.addButton(button, i)
+                    if i==0:
+                        button.setChecked(True)
+                    self.connect(button, QtCore.SIGNAL('toggled(bool)'), self.emit_filter_changed)
+                layout.addStretch()
+                self.setLayout(layout)
+            
+            def decorate_query(self, query):
+                checked = self.group.checkedId()
+                if checked>=0:
+                    return self.choices[checked][1](query)
+                return query
+                
+        return FilterWidget(name, options, parent)
       
-    return FilterWidget(name, options, parent)
+class ComboBoxFilter(Filter):
+    """Filter where the items are displayed in a QComboBox"""
+    
+    @gui_function
+    def render(self, parent, name, options):
+      
+        from PyQt4 import QtCore, QtGui
+        
+        class FilterWidget(QtGui.QGroupBox):
+          
+            def __init__(self, name, choices, parent):
+                QtGui.QGroupBox.__init__(self, name, parent)
+                layout = QtGui.QVBoxLayout()
+                self.choices = choices
+                combobox = QtGui.QComboBox(self)
+                for i,(name,decorator) in enumerate(choices):
+                    combobox.insertItem(i, unicode(name), QtCore.QVariant(decorator))
+                layout.addWidget(combobox)
+                self.setLayout(layout)
+                self.current_index = 0
+                self.connect(combobox, QtCore.SIGNAL('currentIndexChanged(int)'), self.emit_filter_changed)
+                    
+            def emit_filter_changed(self, index):
+                self.current_index = index
+                self.emit(QtCore.SIGNAL('filter_changed'))
+                
+            def decorate_query(self, query):
+                if self.current_index>=0:
+                    return self.choices[self.current_index][1](query)
+                return query
+              
+        return FilterWidget(name, options, parent)

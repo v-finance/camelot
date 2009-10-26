@@ -38,73 +38,73 @@ import datetime
 
 
 class Memento(Entity):
-  """Keeps information on the previous state of objects, to keep track
-  of changes and enable restore to that previous state"""
-  using_options(tablename='memento')
-  model = Field(Unicode(256), index=True, required=True)
-  primary_key = Field(INT(), index=True, required=True)
-  creation_date = Field(DateTime(), default=datetime.datetime.now)
-  authentication = ManyToOne('AuthenticationMechanism',
-                             required=True,
-                             ondelete='restrict',
-                             onupdate='cascade')
-  description = property(lambda self:'Change')
- 
-  class Admin(EntityAdmin):
-    name = 'History'
-    verbose_name = _('history')
-    verbose_name_plural = _('history')
-    section = 'configuration'
-    list_display = ['creation_date',
-                    'authentication',
-                    'model',
-                    'primary_key',
-                    'description']
-    list_filter = ['model']
-     
+    """Keeps information on the previous state of objects, to keep track
+    of changes and enable restore to that previous state"""
+    using_options(tablename='memento')
+    model = Field(Unicode(256), index=True, required=True)
+    primary_key = Field(INT(), index=True, required=True)
+    creation_date = Field(DateTime(), default=datetime.datetime.now)
+    authentication = ManyToOne('AuthenticationMechanism',
+                               required=True,
+                               ondelete='restrict',
+                               onupdate='cascade')
+    description = property(lambda self:'Change')
+
+    class Admin(EntityAdmin):
+        name = 'History'
+        verbose_name = _('history')
+        verbose_name_plural = _('history')
+        section = 'configuration'
+        list_display = ['creation_date',
+                        'authentication',
+                        'model',
+                        'primary_key',
+                        'description']
+        list_filter = ['model']
+
 
 class BeforeUpdate(Memento):
-  """The state of the object before an update took place"""
-  using_options(inheritance='multi', tablename='memento_update',)
-  previous_attributes = Field(PickleType())
-  
-  @property
-  def description(self):
-    if self.previous_attributes:
-      return u'Update %s when previous value was %s' % (
-          ','.join(self.previous_attributes.keys()),
-          ','.join(unicode(v) for v in self.previous_attributes.values()))
-  
-  class Admin(EntityAdmin):
-    name = 'Updates'
-    list_display = Memento.Admin.list_display
-    list_filter = ['model']
-    
+    """The state of the object before an update took place"""
+    using_options(inheritance='multi', tablename='memento_update',)
+    previous_attributes = Field(PickleType())
+
+    @property
+    def description(self):
+        if self.previous_attributes:
+            return u'Update %s when previous value was %s' % (
+                ','.join(self.previous_attributes.keys()),
+                ','.join(unicode(v) for v in self.previous_attributes.values()))
+
+    class Admin(EntityAdmin):
+        name = 'Updates'
+        list_display = Memento.Admin.list_display
+        list_filter = ['model']
+
 
 class BeforeDelete(Memento):
-  """The state of the object before it is deleted"""
-  using_options(inheritance='multi', tablename='memento_delete',)
-  previous_attributes = Field(PickleType())
-  
-  @property
-  def description(self):
-    return 'Delete'
-  
-  class Admin(EntityAdmin):
-    name = 'Deletes'
-    list_display = Memento.Admin.list_display
-    list_filter = ['model']
+    """The state of the object before it is deleted"""
+    using_options(inheritance='multi', tablename='memento_delete',)
+    previous_attributes = Field(PickleType())
+
+    @property
+    def description(self):
+        return 'Delete'
+
+    class Admin(EntityAdmin):
+        name = 'Deletes'
+        list_display = Memento.Admin.list_display
+        list_filter = ['model']
 
 
 class Create(Memento):
-  """Marks the creation of an object"""
-  using_options(inheritance='multi', tablename='memento_create',)
-  
-  @property
-  def description(self):
-    return 'Create'
-  
-  class Admin(EntityAdmin):
-    name = 'Creates'
-    list_display = Memento.Admin.list_display
-    list_filter = ['model']
+    """Marks the creation of an object"""
+    using_options(inheritance='multi', tablename='memento_create',)
+
+    @property
+    def description(self):
+        return 'Create'
+
+    class Admin(EntityAdmin):
+        name = 'Creates'
+        list_display = Memento.Admin.list_display
+        list_filter = ['model']

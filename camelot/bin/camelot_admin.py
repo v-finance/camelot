@@ -35,36 +35,36 @@ to get a list of commands and options
 """
 
 def startproject(project):
-  import shutil, os, sys
-  if os.path.exists(project):
-    raise Exception('Directory %s allready exists, cannot start a project in it'%project)
-
-  def ignore(directory, content):
-    """ignore .svn files"""
-    for c in content:
-      if c.startswith('.'):
-        yield c
-        
-  # ignore is only supported as of python 2.6
-  v = sys.version_info
-  if v[0]>2 or (v[0]==2 and v[1]>=6):
-    print 'ignore .svn files'
-    shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
-                    project, ignore=ignore)
-  else:
-    shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
-                    project)    
-  from migrate.versioning.api import create
-  create(os.path.join(project, 'repository'), project)
+    import shutil, os, sys
+    if os.path.exists(project):
+        raise Exception('Directory %s allready exists, cannot start a project in it'%project)
     
+    def ignore(directory, content):
+        """ignore .svn files"""
+        for c in content:
+            if c.startswith('.'):
+                yield c
+                
+    # ignore is only supported as of python 2.6
+    v = sys.version_info
+    if v[0]>2 or (v[0]==2 and v[1]>=6):
+        print 'ignore .svn files'
+        shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
+                        project, ignore=ignore)
+    else:
+        shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
+                        project)    
+    from migrate.versioning.api import create
+    create(os.path.join(project, 'repository'), project)
+      
 commands = locals()
 
 def main():
-  from optparse import OptionParser
-  parser = OptionParser(usage='usage: %prog [options] startproject project')
-  (options, args) = parser.parse_args()
-  command, project = args
-  commands[command](*args[1:])
-  
+    from optparse import OptionParser
+    parser = OptionParser(usage='usage: %prog [options] startproject project')
+    (options, args) = parser.parse_args()
+    command, project = args
+    commands[command](*args[1:])
+    
 if __name__ == '__main__':
-  main()
+    main()

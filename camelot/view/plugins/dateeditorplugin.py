@@ -30,9 +30,9 @@ from camelot.view.plugins import CamelotEditorPlugin
 
 class DateEditorPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin, CamelotEditorPlugin):
     
-  def __init__(self, parent = None):
-    QtDesigner.QPyDesignerCustomWidgetPlugin.__init__(self)
-    from camelot.view.controls.editors import DateEditor
-    CamelotEditorPlugin.__init__(self)
-    self._widget = DateEditor
-
+    def __init__(self, parent = None):
+        QtDesigner.QPyDesignerCustomWidgetPlugin.__init__(self)
+        from camelot.view.controls.editors import DateEditor
+        CamelotEditorPlugin.__init__(self)
+        self._widget = DateEditor
+    

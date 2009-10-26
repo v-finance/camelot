@@ -35,37 +35,37 @@ from PyQt4 import QtGui, QtCore
 _ = lambda x:x
 
 class FilterList(QtGui.QScrollArea):
-  """A list with filters that can be applied on a query in the tableview"""
- 
-  def __init__(self, items, parent):
+    """A list with filters that can be applied on a query in the tableview"""
+
+    def __init__(self, items, parent):
+        """
+    :param items: list of tubles (name, choices) for constructing the different filterboxes
     """
-:param items: list of tubles (name, choices) for constructing the different filterboxes
-"""
-    QtGui.QScrollArea.__init__(self, parent)
-    widget = QtGui.QWidget(self)
-    self.setFrameStyle(QtGui.QFrame.NoFrame)
-    layout = QtGui.QVBoxLayout()
-    
-    for filter,(name,options) in items:
-      filter_widget = filter.render(widget, name, options)
-      layout.addWidget(filter_widget)
-      self.connect(filter_widget,
-                   QtCore.SIGNAL('filter_changed'),
-                   self.emit_filters_changed)
+        QtGui.QScrollArea.__init__(self, parent)
+        widget = QtGui.QWidget(self)
+        self.setFrameStyle(QtGui.QFrame.NoFrame)
+        layout = QtGui.QVBoxLayout()
 
-    layout.addStretch()
-    widget.setLayout(layout)
-    self.setWidget(widget)
-    self.setMaximumWidth(widget.width() + 10)
-    if len(items) == 0:
-      self.setMaximumWidth(0)
+        for filter,(name,options) in items:
+            filter_widget = filter.render(widget, name, options)
+            layout.addWidget(filter_widget)
+            self.connect(filter_widget,
+                         QtCore.SIGNAL('filter_changed'),
+                         self.emit_filters_changed)
 
-  def decorate_query(self, query):
-    for i in range(self.widget().layout().count()):
-      if self.widget().layout().itemAt(i).widget():
-        query = self.widget().layout().itemAt(i).widget().decorate_query(query)
-    return query
+        layout.addStretch()
+        widget.setLayout(layout)
+        self.setWidget(widget)
+        self.setMaximumWidth(widget.width() + 10)
+        if len(items) == 0:
+            self.setMaximumWidth(0)
 
-  def emit_filters_changed(self):
-    logger.debug('filters changed')
-    self.emit(QtCore.SIGNAL('filters_changed'))
+    def decorate_query(self, query):
+        for i in range(self.widget().layout().count()):
+            if self.widget().layout().itemAt(i).widget():
+                query = self.widget().layout().itemAt(i).widget().decorate_query(query)
+        return query
+
+    def emit_filters_changed(self):
+        logger.debug('filters changed')
+        self.emit(QtCore.SIGNAL('filters_changed'))

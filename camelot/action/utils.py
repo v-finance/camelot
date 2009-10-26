@@ -31,48 +31,48 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
 def getAction(parent, widgetaction):
-  if widgetaction:
-    return QtGui.QWidgetAction(parent)
-  else:
-    return QtGui.QAction(parent)
+    if widgetaction:
+        return QtGui.QWidgetAction(parent)
+    else:
+        return QtGui.QAction(parent)
 
 def createAction(*a, **kw):
-  """creates and returns a QAction object"""
+    """creates and returns a QAction object"""
 
-  # collect params
-  parent = kw['parent']
-  text = kw['text']
-  slot = kw.get('slot', None)
-  shortcut = kw.get('shortcut', '')
-  actionicon = kw.get('actionicon', '')
-  tip = kw.get('tip', '')
-  checkable = kw.get('checkable', False)
-  signal = kw.get('signal', 'triggered()')
-  widgetaction = kw.get('widgetaction', False)
+    # collect params
+    parent = kw['parent']
+    text = kw['text']
+    slot = kw.get('slot', None)
+    shortcut = kw.get('shortcut', '')
+    actionicon = kw.get('actionicon', '')
+    tip = kw.get('tip', '')
+    checkable = kw.get('checkable', False)
+    signal = kw.get('signal', 'triggered()')
+    widgetaction = kw.get('widgetaction', False)
 
-  action = getAction(parent, widgetaction)
+    action = getAction(parent, widgetaction)
 
-  action.setText(text)
+    action.setText(text)
 
-  if actionicon:
-    action.setIcon(QtGui.QIcon(actionicon))
-  if shortcut: 
-    action.setShortcut(shortcut)
-  if tip:
-    action.setToolTip(tip)
-    action.setStatusTip(tip)
-  if slot is not None:
-    parent.connect(action, QtCore.SIGNAL(signal), slot)
-  if checkable:
-    action.setCheckable(True)
-  return action
+    if actionicon:
+        action.setIcon(QtGui.QIcon(actionicon))
+    if shortcut:
+        action.setShortcut(shortcut)
+    if tip:
+        action.setToolTip(tip)
+        action.setStatusTip(tip)
+    if slot is not None:
+        parent.connect(action, QtCore.SIGNAL(signal), slot)
+    if checkable:
+        action.setCheckable(True)
+    return action
 
 def addActions(target, actions):
-  """add action objects to menus, menubars, and toolbars
-  if action is None, add a separator.
-  """
-  for action in actions:
-    if action is None:
-      target.addSeparator()
-    else:
-      target.addAction(action)
+    """add action objects to menus, menubars, and toolbars
+    if action is None, add a separator.
+    """
+    for action in actions:
+        if action is None:
+            target.addSeparator()
+        else:
+            target.addAction(action)

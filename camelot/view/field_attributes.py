@@ -36,7 +36,7 @@ from camelot.core import constants
 from camelot.core.utils import ugettext as _
 
 _sqlalchemy_to_python_type_ = {
-                               
+
   sqlalchemy.types.Boolean: lambda f: {'python_type': bool,
                                        'editable': True,
                                        'nullable':True,
@@ -121,7 +121,7 @@ _sqlalchemy_to_python_type_ = {
                                       'parts': f.parts,
                                       'delegate': delegates.CodeDelegate,
                                       },
-                                                                  
+
   camelot.types.VirtualAddress: lambda f:{'python_type':str,
                                           'editable':True,
                                           'nullable':True,
@@ -133,19 +133,19 @@ _sqlalchemy_to_python_type_ = {
                                     'nullable':True,
                                     'delegate':delegates.RichTextDelegate,
                                    },
-                                   
+
   camelot.types.Color: lambda f:{'delegate':delegates.ColorDelegate,
                                  'python_type':str,
                                  'editable':True,
                                  'nullable':True,
                                  'widget':'color'},
-                                 
+
   camelot.types.Rating: lambda f:{'delegate':delegates.StarDelegate,
                                   'editable':True,
                                   'nullable':True,
                                   'python_type':int,
                                   'widget':'star'},
-                                  
+
   camelot.types.Enumeration: lambda f:{'delegate':delegates.ComboBoxDelegate,
                                        'python_type':str,
                                        'choices':lambda o:[(v,unicode(_(unicode(v).replace('_',' '))).capitalize()) for v in f.choices],
@@ -153,7 +153,7 @@ _sqlalchemy_to_python_type_ = {
                                        'nullable':False,
                                        'widget':'combobox',
                                        },
-                                                                           
+
   sqlalchemy.types.Time : lambda f: {'python_type':datetime.time,
                                      'editable':True,
                                      'nullable':True,
@@ -161,8 +161,8 @@ _sqlalchemy_to_python_type_ = {
                                      'delegate':delegates.TimeDelegate,
                                      'format':'hh:mm',
                                      'nullable':True},
-                                     
-  
+
+
   sqlalchemy.types.DateTime : lambda f: {'python_type':datetime.datetime,
                                          'editable':True,
                                          'nullable':True,
@@ -170,13 +170,13 @@ _sqlalchemy_to_python_type_ = {
                                          'format':'dd-MM-yyyy hh:mm',
                                          'nullable':True,
                                          'delegate':delegates.DateTimeDelegate},
-                                         
+
   camelot.types.File : lambda f: {'python_type':str,
                                   'editable':True,
                                   'delegate':delegates.FileDelegate,
                                   'storage':f.storage, },
-                                         
-  
+
+
 }
 
 #
@@ -184,17 +184,17 @@ _sqlalchemy_to_python_type_ = {
 #
 
 class DummyField(object):
-  def __init__(self):
-    self.length = 20
-    self.parts = ['AAA', '99']
-    self.choices = ['planned', 'canceled']
-    self.precision = 2
-    self.storage = None
+    def __init__(self):
+        self.length = 20
+        self.parts = ['AAA', '99']
+        self.choices = ['planned', 'canceled']
+        self.precision = 2
+        self.storage = None
 
 row_separator = '+' + '-'*20 + '+' + '-'*30 + '+' + '-'*70 + '+'
 row_format = """| %-18s | %-28s | %-68s |"""
 
-doc = """Field types handled through introspection : 
+doc = """Field types handled through introspection :
 
 """ + row_separator + """
 """ + row_format%('**Field type**', '**Default delegate**', '**Default editor**') + """
@@ -204,13 +204,13 @@ doc = """Field types handled through introspection :
 field_types = _sqlalchemy_to_python_type_.keys()
 field_types.sort(lambda x,y:cmp(x.__name__, y.__name__))
 for field_type in field_types:
-  field_attributes = _sqlalchemy_to_python_type_[field_type](DummyField())
-  delegate = field_attributes['delegate']
-  row = row_format%(field_type.__name__, delegate.__name__, '.. image:: ../_static/editors/%s_editable.png'%(delegate.editor.__name__))
-  doc += row + """ 
-""" + row_separator + """
-"""
-  
+    field_attributes = _sqlalchemy_to_python_type_[field_type](DummyField())
+    delegate = field_attributes['delegate']
+    row = row_format%(field_type.__name__, delegate.__name__, '.. image:: ../_static/editors/%s_editable.png'%(delegate.editor.__name__))
+    doc += row + """
+  """ + row_separator + """
+  """
+
 doc += """
 """
 

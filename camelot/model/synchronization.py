@@ -35,12 +35,12 @@ __metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
 import datetime
-  
+
 class Synchronized(Entity):
-  using_options(tablename='synchronized')
-  database = Field(Unicode(30), index=True)
-  tablename = Field(Unicode(30), index=True)
-  primary_key = Field(Integer(), index=True)
-  last_update = Field(DateTime(), index=True, default=datetime.datetime.now, onupdate=datetime.datetime.now)
-  
+    using_options(tablename='synchronized')
+    database = Field(Unicode(30), index=True)
+    tablename = Field(Unicode(30), index=True)
+    primary_key = Field(Integer(), index=True)
+    last_update = Field(DateTime(), index=True, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+
 is_synchronized = associable(Synchronized)

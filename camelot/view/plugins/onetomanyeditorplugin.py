@@ -29,9 +29,9 @@ from PyQt4 import QtGui, QtDesigner
 from camelot.view.plugins import CamelotEditorPlugin
 
 class OneToManyEditorPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin, CamelotEditorPlugin):
-    
-  def __init__(self, parent = None):
-    QtDesigner.QPyDesignerCustomWidgetPlugin.__init__(self)
-    from camelot.view.controls.editors import One2ManyEditor
-    CamelotEditorPlugin.__init__(self)
-    self._widget = One2ManyEditor
+
+    def __init__(self, parent = None):
+        QtDesigner.QPyDesignerCustomWidgetPlugin.__init__(self)
+        from camelot.view.controls.editors import One2ManyEditor
+        CamelotEditorPlugin.__init__(self)
+        self._widget = One2ManyEditor

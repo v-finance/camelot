@@ -38,33 +38,33 @@ import logging
 logger = logging.getLogger( 'camelot.action.refresh' )
 
 class SessionRefresh( QtGui.QAction ):
-  """Session refresh expires all objects in the current session and sends
-  a local entity update signal via the remote_signals mechanism"""
+    """Session refresh expires all objects in the current session and sends
+    a local entity update signal via the remote_signals mechanism"""
 
-  def __init__( self, parent ):
-    super( SessionRefresh, self ).__init__( 'Refresh', parent )
-    self.setShortcut( Qt.Key_F9 )
-    self.setIcon( Icon( 'tango/16x16/actions/view-refresh.png' ).getQIcon() )
-    self.connect( self, QtCore.SIGNAL( 'triggered(bool)' ), self.sessionRefresh )
-    from camelot.view.remote_signals import get_signal_handler
-    self.signal_handler = get_signal_handler()
+    def __init__( self, parent ):
+        super( SessionRefresh, self ).__init__( 'Refresh', parent )
+        self.setShortcut( Qt.Key_F9 )
+        self.setIcon( Icon( 'tango/16x16/actions/view-refresh.png' ).getQIcon() )
+        self.connect( self, QtCore.SIGNAL( 'triggered(bool)' ), self.sessionRefresh )
+        from camelot.view.remote_signals import get_signal_handler
+        self.signal_handler = get_signal_handler()
 
-  def refreshed(self, refreshed_objects ):
-    for o in refreshed_objects:
-      self.signal_handler.sendEntityUpdate( self, o )
+    def refreshed(self, refreshed_objects ):
+        for o in refreshed_objects:
+            self.signal_handler.sendEntityUpdate( self, o )
 
-  def sessionRefresh( self, checked ):
-    logger.debug( 'session refresh requested' )
+    def sessionRefresh( self, checked ):
+        logger.debug( 'session refresh requested' )
 
-    def refresh_objects():
-      from elixir import session
-      refreshed_objects = []
+        def refresh_objects():
+            from elixir import session
+            refreshed_objects = []
 
-      for key, value in session.identity_map.items():
-        session.refresh( value )
-        refreshed_objects.append( value )
+            for key, value in session.identity_map.items():
+                session.refresh( value )
+                refreshed_objects.append( value )
 
-      return refreshed_objects
+            return refreshed_objects
 
 
-    post( refresh_objects, self.refreshed)
+        post( refresh_objects, self.refreshed)

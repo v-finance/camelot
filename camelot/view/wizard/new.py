@@ -30,20 +30,20 @@
 from PyQt4 import QtGui, QtCore
 
 class SelectSubclassPage(QtGui.QWizardPage):
-  """Page for a wizard that allows the selection of a subclass"""
-  
-  def __init__(self, parent, admin):
-    super(SelectSubclassPage, self).__init__(parent)
-    from camelot.view.controls.inheritance import SubclassTree
+    """Page for a wizard that allows the selection of a subclass"""
+
+    def __init__(self, parent, admin):
+        super(SelectSubclassPage, self).__init__(parent)
+        from camelot.view.controls.inheritance import SubclassTree
 #    self.setTitle('Dossiers to synchronize')
 #    self.setSubTitle('Either synchronize all dossiers in the selected cabinets (more complete), or select a single dossier (faster).')
-    layout = QtGui.QVBoxLayout()
-    layout.addWidget(SubclassTree(admin, self))
-    layout.addStretch(1)
-    self.setLayout(layout)
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(SubclassTree(admin, self))
+        layout.addStretch(1)
+        self.setLayout(layout)
 
 class NewObjectWizard(QtGui.QWizard):
 
-  def __init__(self, parent, admin):
-    super(NewObjectWizard, self).__init__(parent)
-    self.addPage(SelectSubclassPage(self, admin))
+    def __init__(self, parent, admin):
+        super(NewObjectWizard, self).__init__(parent)
+        self.addPage(SelectSubclassPage(self, admin))

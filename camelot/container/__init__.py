@@ -30,63 +30,63 @@ model thread and the GUI thread.
 
 When complex data sets need to be visualized (eg.: charts, intervals), built-in
 python types don't contain enough information, while dictionary like structures
-are not self documented.  Hence the need of specialized container classes to 
+are not self documented.  Hence the need of specialized container classes to
 transport this data between the model and the GUI.
 
-To use this classes : 
+To use this classes :
 
 1. On your model class, define properties returning a container class
 2. In the admin class, add the property to the list of fields to visualize, and
    specify its delegate
-   
+
 eg:
 
 class MyEntity(Entity):
 
   @property
   def my_interval(self):
-    return IntervalsContainer() 
+    return IntervalsContainer()
 
   class Admin(EntityAdmin):
     form_display = ['my_interval']
     field_attributes = dict(my_interval=dict(delegate=IntervalsDelegate))
-    
+
 """
 
 class Container(object):
-  """Top level class for all container classes"""
-  pass
+    """Top level class for all container classes"""
+    pass
 
 class Interval(object):
-  """Helper class for IntervalsContainer, specifications for one interval"""
-  
-  def __init__(self, begin, end, name, color):
-    self.begin = begin
-    self.end = end
-    self.name = name
-    self.color = color
-    
-  def __unicode__(self):
-    return u'[%s,%s]'%(self.begin, self.end)
+    """Helper class for IntervalsContainer, specifications for one interval"""
+
+    def __init__(self, begin, end, name, color):
+        self.begin = begin
+        self.end = end
+        self.name = name
+        self.color = color
+
+    def __unicode__(self):
+        return u'[%s,%s]'%(self.begin, self.end)
 
 class IntervalsContainer(Container):
-  """Containter to hold interval data
-  
-  eg : representing the time frame of 8pm till 6am that someone was at work using an hourly
-  precision :
-  
-  intervals = IntervalsContainer(0, 24, [Interval(8, 18, 'work')])
-  """
-  
-  def __init__(self, min, max, intervals):
-    """
-    @param min: minimum value that the begin value of an interval is allowed to have
-    @param max: maximum ...
-    @param intervals: list of Interval classes   
-    """
-    self.min = min
-    self.max = max
-    self.intervals = intervals
+    """Containter to hold interval data
 
-  def __unicode__(self):
-    return u', '.join(unicode(i) for i in self.intervals)
+    eg : representing the time frame of 8pm till 6am that someone was at work using an hourly
+    precision :
+
+    intervals = IntervalsContainer(0, 24, [Interval(8, 18, 'work')])
+    """
+
+    def __init__(self, min, max, intervals):
+        """
+        @param min: minimum value that the begin value of an interval is allowed to have
+        @param max: maximum ...
+        @param intervals: list of Interval classes
+        """
+        self.min = min
+        self.max = max
+        self.intervals = intervals
+
+    def __unicode__(self):
+        return u', '.join(unicode(i) for i in self.intervals)

@@ -29,39 +29,39 @@
 
 class CamelotEditorPlugin(object):
   
-  def __init__(self):
-    self.initialized = False
-    self._widget = None
-    
-  def initialize(self, core):
-    if self.initialized:
-      return
-    self.initialized = True
-    
-  def isInitialized(self):
-    return self.initialized
-  
-  def createWidget(self, parent):
-    return self._widget(parent=parent)
-  
-  def name(self):
-    return self._widget.__name__
-  
-  def group(self):
-    return 'Camelot'
-  
-  def toolTip(self):
-    return ""
-  
-  def whatsThis(self):
-    return ""
-  
-  def isContainer(self):
-    return False
-  
-  def domXml(self):
-    name = self._widget.__name__
-    return '<widget class="%s" name=\"%s\" />\n'%(name, name)
-  
-  def includeFile(self):
-    return "camelot.view.controls.editors"
+    def __init__(self):
+        self.initialized = False
+        self._widget = None
+        
+    def initialize(self, core):
+        if self.initialized:
+            return
+        self.initialized = True
+        
+    def isInitialized(self):
+        return self.initialized
+      
+    def createWidget(self, parent):
+        return self._widget(parent=parent)
+      
+    def name(self):
+        return self._widget.__name__
+      
+    def group(self):
+        return 'Camelot'
+      
+    def toolTip(self):
+        return ""
+      
+    def whatsThis(self):
+        return ""
+      
+    def isContainer(self):
+        return False
+      
+    def domXml(self):
+        name = self._widget.__name__
+        return '<widget class="%s" name=\"%s\" />\n'%(name, name)
+      
+    def includeFile(self):
+        return "camelot.view.controls.editors"

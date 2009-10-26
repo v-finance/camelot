@@ -35,6 +35,6 @@ freeze the gui
 """
 
 class ValueLoading(object):
-  """Class indicating that a value was not yet loaded into the
-  proxy"""
-  pass
+    """Class indicating that a value was not yet loaded into the
+    proxy"""
+    pass
