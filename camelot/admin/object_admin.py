@@ -191,7 +191,7 @@ class ObjectAdmin(object):
     def __repr__(self):
         return 'ObjectAdmin(%s)'%str(self.entity.__name__)
 
-    def getName(self):
+    def get_name(self):
         return self.get_verbose_name()
 
     def get_verbose_name(self):
@@ -208,10 +208,7 @@ class ObjectAdmin(object):
         """
         return u'%s : %s'%(self.get_verbose_name(), unicode(obj))
 
-    def getModelThread(self):
-        return self.mt
-
-    def getEntityAdmin(self, entity):
+    def get_entity_admin(self, entity):
         return self.app_admin.get_entity_admin(entity)
 
     @model_function
@@ -320,7 +317,7 @@ class ObjectAdmin(object):
 
 
     @model_function
-    def getColumns(self):
+    def get_columns(self):
         """
         The columns to be displayed in the list view, returns a list of pairs of
         the name of the field and its attributes needed to display it properly
@@ -336,11 +333,11 @@ class ObjectAdmin(object):
         return [(field, self.get_field_attributes(field))
                 for field in self.list_display]
 
-    def createValidator(self, model):
+    def create_validator(self, model):
         return self.validator(self, model)
 
     @model_function
-    def getFields(self):
+    def get_fields(self):
         if self.form or self.form_display:
             fields = self.get_form_display().get_fields()
         elif self.fields:

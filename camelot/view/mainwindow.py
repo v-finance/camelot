@@ -418,7 +418,7 @@ class MainWindow( QtGui.QMainWindow ):
         def export():
             from export.excel import open_data_with_excel
             title = self.activeMdiChild().widget().getTitle()
-            columns = self.activeMdiChild().widget().getColumns()
+            columns = self.activeMdiChild().widget().get_columns()
             data = [d for d in self.activeMdiChild().widget().getData()]
             open_data_with_excel( title, columns, data )
 

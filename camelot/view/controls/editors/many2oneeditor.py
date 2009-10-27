@@ -180,7 +180,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
     
             def get_admin_and_title():
                 object = self.entity_instance_getter()
-                admin = self.admin.getSubclassEntityAdmin( object.__class__ )
+                admin = self.admin.get_subclass_entity_admin( object.__class__ )
                 return admin, ''
         
             post( get_admin_and_title, self.show_form_view)
@@ -197,7 +197,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         workspace = get_workspace()
         model = CollectionProxy( admin,
                          create_collection_getter( self.entity_instance_getter ),
-                         admin.getFields )
+                         admin.get_fields )
         self.connect( model,
                      QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
                      self.dataChanged )

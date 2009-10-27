@@ -87,7 +87,7 @@ class One2ManyEditor( CustomEditor, WideEditor ):
     
         def export():
             title = self.admin.get_verbose_name_plural()
-            columns = self.admin.getColumns()
+            columns = self.admin.get_columns()
             if self.model:
                 data = list( self.model.getData() )
                 open_data_with_excel( title, columns, data )
@@ -168,7 +168,7 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         from camelot.view.workspace import get_workspace
         model = CollectionProxy( self.admin,
                                 self.model.collection_getter,
-                                self.admin.getFields,
+                                self.admin.get_fields,
                                 max_number_of_rows = 1,
                                 edits = None )
         form = self.admin.create_form_view( u'', model, index, get_workspace() )

@@ -42,16 +42,16 @@ class EntityAdmin( ObjectAdmin ):
     validator = EntityValidator
   
     @model_function
-    def getSubclassEntityAdmin( self, entity ):
+    def get_subclass_entity_admin( self, entity ):
         """Get the admin class for an entity that is a subclass of this admin's entity
         or this admin's entity itself."""
-        for subclass_admin in self.getSubclasses():
+        for subclass_admin in self.get_subclasses():
             if subclass_admin.entity == entity:
                 return subclass_admin
         return self
     
     @model_function
-    def getSubclasses( self ):
+    def get_subclasses( self ):
         """
         Return admin objects for the subclasses of the Entity represented by this
         admin object
@@ -206,7 +206,7 @@ class EntityAdmin( ObjectAdmin ):
             return attributes
       
     @model_function
-    def getListCharts( self ):
+    def get_list_charts( self ):
         return self.list_charts
     
     @model_function
@@ -228,7 +228,7 @@ class EntityAdmin( ObjectAdmin ):
     def set_defaults( self, entity_instance ):
         """Set the defaults of an object"""
         from sqlalchemy.schema import ColumnDefault
-        for field, attributes in self.getFields():
+        for field, attributes in self.get_fields():
             try:
                 default = attributes['default']
                 if isinstance( default, ColumnDefault ):
@@ -277,9 +277,9 @@ class EntityAdmin( ObjectAdmin ):
                 new_object.append( entity_instance )
             return new_object
       
-        model = CollectionProxy( admin, collection_getter, admin.getFields,
+        model = CollectionProxy( admin, collection_getter, admin.get_fields,
                                 max_number_of_rows = 1 )
-        validator = admin.createValidator( model )
+        validator = admin.create_validator( model )
     
         class NewForm( AbstractView ):
     
@@ -458,7 +458,7 @@ class EntityAdmin( ObjectAdmin ):
                 from workspace import get_workspace
                 model = QueryTableProxy( tableview.admin,
                                         tableview._table_model._query_getter,
-                                        tableview.admin.getFields,
+                                        tableview.admin.get_fields,
                                         max_number_of_rows = 1 )
         
                 formview = tableview.admin.create_form_view( '', model, index, parent )

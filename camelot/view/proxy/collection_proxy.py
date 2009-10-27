@@ -93,7 +93,7 @@ def RowDataFromObject( obj, columns ):
         if field_attributes['python_type'] == list:
             row_data.append( DelayedProxy( field_attributes['admin'],
                             create_collection_getter( obj, col[0] ),
-                            field_attributes['admin'].getColumns ) )
+                            field_attributes['admin'].get_columns ) )
         else:
             row_data.append( getattr( obj, col[0] ) )
     return row_data
@@ -173,7 +173,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.admin = admin
         self.iconSize = QtCore.QSize( QtGui.QFontMetrics( self._header_font_required ).height() - 4, QtGui.QFontMetrics( self._header_font_required ).height() - 4 )
         self.form_icon = QtCore.QVariant( self.header_icon.getQIcon().pixmap( self.iconSize ) )
-        self.validator = admin.createValidator( self )
+        self.validator = admin.create_validator( self )
         self.collection_getter = collection_getter
         self.column_count = 0
         self.flush_changes = flush_changes

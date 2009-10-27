@@ -50,7 +50,7 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
       
         model = CollectionProxy( self.admin,
                                 create_collection_getter( self.entity_instance_getter ),
-                                self.admin.getFields )
+                                self.admin.get_fields )
         self.form = self.admin.create_form_view( '', model, 0, self )
         self.layout.addWidget( self.form )
         if propagate:

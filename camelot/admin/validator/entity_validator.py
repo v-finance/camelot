@@ -42,8 +42,8 @@ class EntityValidator(ObjectValidator):
         from camelot.view.controls import delegates
         from sqlalchemy import orm
         messages = []
-        fields_and_attributes = dict(self.admin.getColumns())
-        fields_and_attributes.update(dict(self.admin.getFields()))
+        fields_and_attributes = dict(self.admin.get_columns())
+        fields_and_attributes.update(dict(self.admin.get_fields()))
         for field, attributes in fields_and_attributes.items():
             value = getattr(entity_instance, field)
             #@todo: check if field is a primary key instead of checking wether the name is id

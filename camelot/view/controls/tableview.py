@@ -218,7 +218,7 @@ class TableView( AbstractView  ):
         """Create a table model for the given admin interface"""
         return self.table_model( admin,
                                  lambda:admin.entity.query,
-                                 admin.getColumns )
+                                 admin.get_columns )
     
     @gui_function
     def set_admin( self, admin ):
@@ -245,7 +245,7 @@ class TableView( AbstractView  ):
             return ( admin.get_filters(), admin.get_list_actions() )
       
         post( get_filters_and_actions,  self.set_filters_and_actions )
-        post( admin.getListCharts, self.setCharts )
+        post( admin.get_list_charts, self.setCharts )
     
     @gui_function
     def tableLayoutChanged( self ):

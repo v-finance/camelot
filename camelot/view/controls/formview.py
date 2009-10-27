@@ -56,7 +56,7 @@ class FormView( AbstractView ):
         if hasattr( admin, 'form_size' ) and admin.form_size:
             self.setMinimumSize( admin.form_size[0], admin.form_size[1] )
       
-        self.validator = admin.createValidator( model )
+        self.validator = admin.create_validator( model )
         self.validate_before_close = True
     
         def getColumnsAndForm():
@@ -222,7 +222,7 @@ class FormView( AbstractView ):
             return wrapped_in_table
       
         entity = self.getEntity()
-        fields = self.admin.getFields()
+        fields = self.admin.get_fields()
         table = [dict( field_attributes = field_attributes,
                       value = getattr( entity, name ) )
                       for name, field_attributes in fields]
