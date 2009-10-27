@@ -43,7 +43,7 @@ _ = lambda x: x
 class ImportWizard(QtGui.QWizard):
     """ImportWizard inherits QWizard and provides a two-step wizard for
 importing data into Camelot"""
-    
+
     def __init__(self, importfunc=None, admin=None, parent=None):
         """:param importfunc: function to use for importing data
 :param admin: camelot model admin"""
@@ -60,7 +60,7 @@ importing data into Camelot"""
 
 class SelectFilePage(QtGui.QWizardPage):
     """SelectFilePage is the file selection page of the import wizard"""
-    
+
     def __init__(self, parent=None):
         super(SelectFilePage, self).__init__(parent)
         self.setTitle(_('Import data from a file'))
@@ -90,7 +90,7 @@ class SelectFilePage(QtGui.QWizardPage):
         self.connect(browsebutton,
                      QtCore.SIGNAL('clicked()'),
                      lambda: self.setpath())
-      
+
     def setpath(self):
         caption = _('Import Wizard - Set File Path')
         dir = self.field('datasource').toString()
@@ -108,6 +108,7 @@ class PreviewTable(QtGui.QTableView):
         self.horizontalHeader().setVisible(False)
         self.oldgate = None
         self.datamodel = None
+        self.nolabels = True
 
     def enable_drops(self, enable):
         """Shows and hide dropdown label selectors in first row"""
@@ -115,27 +116,46 @@ class PreviewTable(QtGui.QTableView):
 
         if not enable:
             self.setItemDelegateForRow(0, self.oldgate)
+            self.nolabels = True
             return
 
         from camelot.view.controls.delegates.comboboxdelegate \
             import ComboBoxDelegate
+        
         labels = tuple((unicode(label), unicode(label)) \
                        for _, label in columns_iter(self.datamodel, 0))
-          
+
         delegate = ComboBoxDelegate(choices=labels, parent=self)
         self.oldgate = self.itemDelegateForRow(0)
         self.setItemDelegateForRow(0, delegate)
+        
+        self.nolabels = False
 
     def are_drops_synced(self):
         """Returns true if no two columns have the same label"""
         if self.datamodel is None: return False
+        
+        if self.nolabels: return True
 
         labels = [label for _, label in columns_iter(self.datamodel, 0)]
         return len(set(labels)) == len(labels)
 
+    def rows(self):
+        """Returns an iterator over the rows of data"""
+        if self.datamodel is None: return []
+
+        if self.nolabels:
+            iter = rows_iter(self.datamodel)
+        else:
+            labels = [label for _, label in columns_iter(self.datamodel, 0)]
+            iter = labeled_rows_iter(self.datamodel, labels)
+
+        return iter
+
+
     def feed(self, data=None):
         """Feeds model with imported data"""
-        
+
         # premature optimization is evil :)
         from PyQt4.QtCore import QModelIndex, QVariant
 
@@ -194,6 +214,19 @@ class PreviewTablePage(QtGui.QWizardPage):
                                  _('Duplicate labels'),
                                  _('Please check duplicate labels'))
             return False
+
+        dia = QtGui.QDialog()
+        log = QtGui.QTextBrowser()
+        log.setLineWrapMode(QtGui.QTextEdit.NoWrap)
+        ly = QtGui.QVBoxLayout()
+        ly.addWidget(log)
+        dia.setLayout(ly)
+
+        for r in self.previewtable.rows():
+            log.append(unicode(r))
+
+        dia.exec_()
+
         return True
 
 
@@ -201,14 +234,14 @@ def test_wizard(wizardclass):
     import sys
     from camelot.view.art import Icon
     app = QtGui.QApplication(sys.argv)
-    
+
     from camelot.view.model_thread import get_model_thread, construct_model_thread
     from camelot.view.remote_signals import construct_signal_handler
-  
+
     construct_model_thread()
     construct_signal_handler()
     get_model_thread().start()
-    
+
     wizard = wizardclass()
     app.setWindowIcon(Icon('tango/32x32/apps/system-users.png').getQIcon())
     app.connect(wizard,

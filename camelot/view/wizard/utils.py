@@ -76,22 +76,34 @@ def import_csv_data(source):
     return list(result)
 
 
-def header_columns_iter(model):
-    """Qt model header column iterator"""
-    for col in range(model.columnCount()):
-        qvar = model.headerData(col, Qt.Horizontal, Qt.DisplayRole)
-        yield (col, qvar.toString())
-
-
-def set_header_labels(model, labels):
-    """Set a Qt model's header labels"""
-    for section, label in labels:
-        model.setHeaderData(section, Qt.Horizontal, QVariant(label))
-
-
 def columns_iter(model, row):
-    """Qt model column iterator"""
+    """iterates over the columns of a Qt model's row"""
     for col in range(model.columnCount()):
         idx = model.index(row, col, QModelIndex())
         qvar = model.data(idx)
-        yield (col, qvar.toString())
+        yield (col+1, qvar.toString())
+
+
+def labeled_columns_iter(model, row, labels):
+    """labeled version of column_iter"""
+    assert len(labels) == model.columnCount()
+    for label, col in zip(labels, range(model.columnCount())):
+        idx = model.index(row, col, QModelIndex())
+        qvar = model.data(idx)
+        yield (label, qvar.toString())
+
+
+def rows_iter(model, startrow=0):
+    """iterates over the rows of a Qt model"""
+    for row in range(startrow, model.rowCount()):
+        cols = ((col, val) for col, val in columns_iter(model, row))
+        yield dict(cols)
+
+
+def labeled_rows_iter(model, labels, startrow=0):
+    """labeled version of rows_iter"""
+    for row in range(startrow, model.rowCount()):
+        cols = ((label, val) \
+                for label, val in \
+                    labeled_columns_iter(model, row, labels))
+        yield dict(cols)
