@@ -7,6 +7,8 @@
 Camelot License
 ===============
 
+.. include:: ../../../license.txt
+
 PyQt License
 ============
 

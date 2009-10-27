@@ -3,7 +3,7 @@ import os
 import camelot
 from setuptools import setup, find_packages
 
-README = os.path.join(os.path.dirname(__file__), 'README.txt')
+README = os.path.join(os.path.dirname(__file__), 'readme.txt')
 long_description = open(README).read() + '\n\n'
 
 setup(
