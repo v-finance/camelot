@@ -60,7 +60,7 @@ class SessionRefresh( QtGui.QAction ):
             from elixir import session
             refreshed_objects = []
 
-            for key, value in session.identity_map.items():
+            for _key, value in session.identity_map.items():
                 session.refresh( value )
                 refreshed_objects.append( value )
 
