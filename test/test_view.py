@@ -30,8 +30,8 @@ def create_getter(getable):
 #    self.block = self.mt.post_and_block
 #    person_admin = self.app_admin.getEntityAdmin(Person)
 #    party_address_role_type_admin = self.app_admin.getEntityAdmin(PartyAddressRoleType)
-#    self.person_proxy = QueryTableProxy(person_admin, lambda:Person.query, person_admin.getFields)
-#    self.party_address_role_type_proxy = QueryTableProxy(party_address_role_type_admin, lambda:PartyAddressRoleType.query, party_address_role_type_admin.getFields)
+#    self.person_proxy = QueryTableProxy(person_admin, lambda:Person.query, person_admin.get_fields)
+#    self.party_address_role_type_proxy = QueryTableProxy(party_address_role_type_admin, lambda:PartyAddressRoleType.query, party_address_role_type_admin.get_fields)
 #    # get the columns of the proxy
 #    self.person_columns = dict((c[0],i) for i,c in enumerate(self.block(lambda:self.person_proxy.getColumns())))
 #    self.rows_before_insert = 0
@@ -121,7 +121,7 @@ def create_getter(getable):
 #    from camelot.view.proxy.queryproxy import QueryTableProxy
 #    from camelot.model.authentication import Country, City, Address, PartyAddress
 #    party_address_admin = self.app_admin.getEntityAdmin(PartyAddress)
-#    self.party_address_proxy = QueryTableProxy(party_address_admin, PartyAddress.query, party_address_admin.getFields)
+#    self.party_address_proxy = QueryTableProxy(party_address_admin, PartyAddress.query, party_address_admin.get_fields)
 #    self.party_address_columns = dict((c[0],i) for i,c in enumerate(self.block(lambda:self.party_address_proxy.getColumns())))
 #    self.country = self.block(lambda:Country(code=u'BE', name=u'Belgium'))
 #    self.city = self.block(lambda:City(code=u'2000', name=u'Antwerp', country=self.country))
@@ -913,7 +913,7 @@ class SnippetsTest(ModelThreadTestCase):
     from camelot.view.proxy.collection_proxy import CollectionProxy
     coordinate = Coordinate()
     admin = Coordinate.Admin(None, Coordinate)
-    proxy = CollectionProxy(admin, lambda:[coordinate], admin.getFields )
+    proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
     form = admin.create_form_view('Coordinate', proxy, 0, None)
     self.grab_widget(form)
     
@@ -922,7 +922,7 @@ class SnippetsTest(ModelThreadTestCase):
     from camelot.view.proxy.collection_proxy import CollectionProxy
     coordinate = Coordinate()
     admin = Coordinate.Admin(None, Coordinate)
-    proxy = CollectionProxy(admin, lambda:[coordinate], admin.getFields )
+    proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
     form = admin.create_form_view('Coordinate', proxy, 0, None)
     self.grab_widget(form)
   
