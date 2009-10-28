@@ -33,6 +33,7 @@ from PyQt4.QtCore import QVariant, QString, Qt
 from camelot.view.model_thread import post
 from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject
+from camelot.view.proxy import ValueLoading
 
 class ComboBoxDelegate(CustomDelegate):
 
@@ -61,7 +62,8 @@ class ComboBoxDelegate(CustomDelegate):
         painter.save()
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject(index.data(Qt.EditRole))
-
+        if value in (None, ValueLoading):
+            value = ''
         c = index.model().data(index, Qt.BackgroundRole)
 
         # let us be safe Qt.BackgroundRole valid only if set

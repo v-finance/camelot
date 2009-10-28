@@ -32,7 +32,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         def columnCount( self, index = None ):
             return 1
       
-    def __init__( self, entity_admin = None, parent = None, **kwargs ):
+    def __init__( self, entity_admin = None, parent = None, editable=True, **kwargs ):
         """
     :param entity_admin : The Admin interface for the object on the one side of
     the relation
@@ -40,6 +40,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
     
         CustomEditor.__init__( self, parent )
         self.admin = entity_admin
+        self._editable = editable
         self.entity_instance_getter = None
         self._entity_representation = ''
         self.entity_set = False
@@ -99,8 +100,13 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.layout.addWidget( self.search_button )
         self.layout.addWidget( self.open_button )
         self.setLayout( self.layout )
-        self.setAutoFillBackground( True );
+        self.set_editable(editable)
     
+    def set_editable(self, editable):
+        self._editable = editable
+        self.search_input.setEnabled(editable)
+        self.search_button.setEnabled(editable)
+      
     def textEdited( self, text ):
   
         def create_search_completion( text ):
@@ -224,6 +230,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         if pk != False: 
             self.open_button.setIcon( Icon( 'tango/16x16/places/folder.png' ).getQIcon() )
             self.open_button.setToolTip('Open')
+            self.open_button.setEnabled(True)
             self.search_button.setIcon( Icon( 'tango/16x16/actions/edit-clear.png' ).getQIcon() )
             self.search_button.setToolTip('Clear')
             self.entity_set = True
@@ -231,6 +238,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         else:
             self.open_button.setIcon( Icon( 'tango/16x16/actions/document-new.png' ).getQIcon() )
             self.open_button.setToolTip('New')
+            self.open_button.setEnabled(self._editable)
             self.search_button.setIcon( Icon( 'tango/16x16/actions/system-search.png' ).getQIcon() )
             self.search_button.setToolTip('Search')
             self.entity_set = False
