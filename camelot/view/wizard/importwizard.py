@@ -224,7 +224,7 @@ class PreviewTablePage(QtGui.QWizardPage):
         return True
 
 
-def test_wizard(wizardclass):
+def test_wizard(wizardclass, attrs={}):
     import sys
     from camelot.view.art import Icon
     app = QtGui.QApplication(sys.argv)
@@ -237,7 +237,13 @@ def test_wizard(wizardclass):
     construct_signal_handler()
     get_model_thread().start()
 
-    wizard = wizardclass()
+    try:
+        ad = attrs.get('admin', None)
+        pa = attrs.get('parent', None)
+        wizard = wizardclass(admin=ad, parent=pa)
+    except AttributeError:
+        wizard = wizardclass()
+
     app.setWindowIcon(Icon('tango/32x32/apps/system-users.png').getQIcon())
     app.connect(wizard,
                 QtCore.SIGNAL('accepted()'),
