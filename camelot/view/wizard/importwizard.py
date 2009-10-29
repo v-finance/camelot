@@ -35,7 +35,6 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtCore, QtGui
 from camelot.view.art import Pixmap
 from camelot.view.wizard.utils import *
-from camelot.action import createAction, addActions
 
 _ = lambda x: x
 
