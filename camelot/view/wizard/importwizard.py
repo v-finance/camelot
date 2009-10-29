@@ -44,16 +44,14 @@ class ImportWizard(QtGui.QWizard):
     """ImportWizard inherits QWizard and provides a two-step wizard for
 importing data into Camelot"""
 
-    def __init__(self, importfunc=None, admin=None, parent=None):
-        """:param importfunc: function to use for importing data
-:param admin: camelot model admin"""
+    def __init__(self, admin=None, parent=None):
+        """:param admin: camelot model admin"""
         super(ImportWizard, self).__init__(parent)
 
         self.admin = admin
 
         self.addPage(SelectFilePage())
-        func = (importfunc or import_csv_data)
-        self.addPage(PreviewTablePage(importfunc=func))
+        self.addPage(PreviewTablePage())
 
         self.setWindowTitle(_('Import Data'))
 
@@ -152,7 +150,6 @@ class PreviewTable(QtGui.QTableView):
 
         return iter
 
-
     def feed(self, data=None):
         """Feeds model with imported data"""
 
@@ -175,10 +172,8 @@ class PreviewTable(QtGui.QTableView):
 class PreviewTablePage(QtGui.QWizardPage):
     """PreviewTablePage is the previewing page of the import wizard"""
 
-    def __init__(self, importfunc, parent=None):
+    def __init__(self, parent=None):
         super(PreviewTablePage, self).__init__(parent)
-
-        self.importfunc = importfunc
 
         self.setTitle(_('Data Preview'))
         msg = 'Below is a preview of the data being imported.'
@@ -204,7 +199,7 @@ class PreviewTablePage(QtGui.QWizardPage):
     def initializePage(self):
         """Gets all info needed from SelectFilePage and feeds table"""
         source = self.field('datasource').toString()
-        self.previewtable.feed(self.importfunc(source))
+        self.previewtable.feed(import_csv_data(source))
 
     def validatePage(self):
         """Called when the button labelled "import" is clicked"""
@@ -235,7 +230,8 @@ def test_wizard(wizardclass):
     from camelot.view.art import Icon
     app = QtGui.QApplication(sys.argv)
 
-    from camelot.view.model_thread import get_model_thread, construct_model_thread
+    from camelot.view.model_thread import get_model_thread, \
+                                          construct_model_thread
     from camelot.view.remote_signals import construct_signal_handler
 
     construct_model_thread()
