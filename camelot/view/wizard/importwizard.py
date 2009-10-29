@@ -41,8 +41,7 @@ _ = lambda x: x
 
 
 class ImportWizard(QtGui.QWizard):
-    """ImportWizard inherits QWizard and provides a two-step wizard for
-importing data into Camelot"""
+    """ImportWizard provides a two-step wizard for importing csv data"""
 
     def __init__(self, admin=None, parent=None):
         """:param admin: camelot model admin"""
