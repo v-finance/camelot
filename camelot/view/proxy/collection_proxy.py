@@ -320,6 +320,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     
     def getItemDelegate( self ):
         self.logger.debug( 'getItemDelegate' )
+        assert self.delegate_manager
         return self.delegate_manager
     
     def getColumns( self ):
@@ -337,26 +338,28 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.column_count = len( columns )
         self._columns = columns
     
-        self.delegate_manager = delegates.DelegateManager()
-        self.delegate_manager.set_columns_desc( columns )
+        delegate_manager = delegates.DelegateManager()
+        delegate_manager.set_columns_desc( columns )
     
         for i, c in enumerate( columns ):
             field_name = c[0]
             self.logger.debug( 'creating delegate for %s' % field_name )
             if 'delegate' in c[1]:
-                delegate = c[1]['delegate']( parent = self.delegate_manager, **c[1] )
-                self.delegate_manager.insertColumnDelegate( i, delegate )
+                delegate = c[1]['delegate']( parent = delegate_manager, **c[1] )
+                delegate_manager.insertColumnDelegate( i, delegate )
                 continue
             elif c[1]['python_type'] == str:
                 if c[1]['length']:
-                    delegate = delegates.PlainTextDelegate( parent = self.delegate_manager, maxlength = c[1]['length'] )
-                    self.delegate_manager.insertColumnDelegate( i, delegate )
+                    delegate = delegates.PlainTextDelegate( parent = delegate_manager, maxlength = c[1]['length'] )
+                    delegate_manager.insertColumnDelegate( i, delegate )
                 else:
-                    delegate = delegates.TextEditDelegate( parent = self.delegate_manager, **c[1] )
-                    self.delegate_manager.insertColumnDelegate( i, delegate )
+                    delegate = delegates.TextEditDelegate( parent = delegate_manager, **c[1] )
+                    delegate_manager.insertColumnDelegate( i, delegate )
             else:
-                delegate = delegates.PlainTextDelegate(parent = self.delegate_manager)
-                self.delegate_manager.insertColumnDelegate( i, delegate )
+                delegate = delegates.PlainTextDelegate(parent = delegate_manager)
+                delegate_manager.insertColumnDelegate( i, delegate )
+        # Only set the delegate manager when it is fully set up
+        self.delegate_manager = delegate_manager
         if not sip.isdeleted( self ):
             self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
       
