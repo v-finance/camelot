@@ -27,7 +27,6 @@
 
 """Manage QAction objects"""
 
-from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
 def getAction(parent, widgetaction):

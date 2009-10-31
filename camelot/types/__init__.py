@@ -33,11 +33,8 @@ care of the visualisation.
 Those fields are stored in the :mod:`camelot.types` module.
 """
 
-import os
-
 import logging
 logger = logging.getLogger('camelot.types')
-logger.setLevel(logging.DEBUG)
 
 from sqlalchemy import types
 
@@ -138,7 +135,7 @@ class Code(types.TypeDecorator):
     
             if value:
                 return value.split('.')
-            return ['' for p in self.parts]
+            return ['' for _p in self.parts]
             
         return processor
     
@@ -306,8 +303,6 @@ class File(types.TypeDecorator):
           
         def processor(value):
             if value is not None:
-                import tempfile
-                import shutil
                 assert isinstance(value, (self.stored_file_implementation))
                 return impl_processor(value.name)
             return impl_processor(value)

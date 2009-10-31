@@ -258,7 +258,7 @@ class TabForm( Form ):
                 return form
 
     def replaceField( self, original_field, new_field ):
-        for tabel, form in self.tabs:
+        for _label, form in self.tabs:
             if form.replaceField( original_field, new_field ):
                 return True
         return False
@@ -267,7 +267,6 @@ class TabForm( Form ):
     def render( self, widgets, parent = None, nomargins = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         from PyQt4 import QtGui
-        from PyQt4.QtCore import Qt
         widget = QtGui.QTabWidget( parent )
         for tab_label, tab_form in self.tabs:
             widget.addTab( tab_form.render( widgets, widget ), unicode(tab_label).capitalize() )

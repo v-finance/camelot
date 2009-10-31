@@ -30,11 +30,8 @@ a model thread. Construct this response handler within the
 GUI thread to have all responses being handled within the
 event loop of the GUI thread."""
 
-import threading
 import logging
-
 logger = logging.getLogger('response_handler')
-logger.setLevel(logging.INFO)
 
 from PyQt4.QtCore import QObject, SIGNAL
 

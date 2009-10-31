@@ -25,7 +25,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui, QtDesigner
+from PyQt4 import QtDesigner
 from camelot.view.plugins import CamelotEditorPlugin
 
 class DateEditorPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin, CamelotEditorPlugin):

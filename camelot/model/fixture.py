@@ -30,8 +30,6 @@ database"""
 from camelot.model import *
 __metadata__ = metadata
 
-from camelot.view.elixir_admin import EntityAdmin
-
 class Fixture(Entity):
     """Keep track of static data loaded into the database"""
     using_options(tablename='fixture')

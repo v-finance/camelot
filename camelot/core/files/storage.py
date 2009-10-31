@@ -136,17 +136,17 @@ class S3Storage(object):
     """
 
     def __init__(self, upload_to='', stored_file_implementation=StoredFile):
-        import locale
         # try to work around bug S3 code which uses bad names of days
         # http://code.google.com/p/boto/issues/detail?id=140
         # but workaround doesn't work :(
+        #import locale
 #    locale.setlocale(locale.LC_TIME, 'en_US.utf8')
 #    print 'create S3 storage'
         import settings
         import S3
         self.upload_to=upload_to
         conn = S3.AWSAuthConnection(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY)
-        generator = S3.QueryStringAuthGenerator(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY)
+        _generator = S3.QueryStringAuthGenerator(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY)
         if (conn.check_bucket_exists(settings.AWS_BUCKET_NAME).status == 200):
             pass
         else:

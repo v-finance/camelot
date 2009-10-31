@@ -99,10 +99,10 @@ class MainWindow( QtGui.QMainWindow ):
 
         logger.debug( 'setting up window title' )
         self.setWindowTitle( self.app_admin.get_name() )
-
+        
         #QtCore.QTimer.singleShot(0, self.doInitialization)
         logger.debug( 'initialization complete' )
-
+        
     # Application settings
 
     def about( self ):
@@ -449,6 +449,7 @@ class MainWindow( QtGui.QMainWindow ):
         self.activeMdiChild().widget().importFromFile()
 
     def createMenus( self ):
+        
         self.fileMenu = self.menuBar().addMenu( _( '&File' ) )
         addActions( self.fileMenu, ( self.closeAct,
                                    None, self.saveAct,

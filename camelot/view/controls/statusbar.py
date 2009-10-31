@@ -25,7 +25,7 @@
 #
 #  ============================================================================
 
-"""form view"""
+"""A custom status bar containing a progress indicator"""
 
 import logging
 logger = logging.getLogger('camelot.view.controls.statusbar')
@@ -36,7 +36,9 @@ class StatusBar(QtGui.QStatusBar):
   
     def __init__(self, parent):
         QtGui.QStatusBar.__init__(self, parent)
-#    progress = QtGui.QProgressBar(self)
-#    #progress.setFixedWidth(60)
-#    progress.setMaximum(0)
-#    self.addPermanentWidget(progress, 0)
+        from camelot.view.controls.busy_widget import BusyWidget
+        self.busy_widget = BusyWidget(self)
+        self.busy_widget.setMinimumWidth(100)
+        self.addPermanentWidget(self.busy_widget, 0)
+        self.busy_widget.show()
+

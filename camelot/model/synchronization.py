@@ -33,7 +33,6 @@ from elixir.ext.associable import *
 
 __metadata__ = metadata
 
-from camelot.view.elixir_admin import EntityAdmin
 import datetime
 
 class Synchronized(Entity):

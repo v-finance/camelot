@@ -40,7 +40,6 @@ class EntityValidator(ObjectValidator):
         empty list if object is valid
         """
         from camelot.view.controls import delegates
-        from sqlalchemy import orm
         messages = []
         fields_and_attributes = dict(self.admin.get_columns())
         fields_and_attributes.update(dict(self.admin.get_fields()))
