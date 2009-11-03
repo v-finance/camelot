@@ -874,30 +874,36 @@ class FilterTest(ModelThreadTestCase):
     self.grab_widget(filter.render(None, 'Organization', [('Nokia',None), ('Apple',None)]))
     
 class ControlsTest(ModelThreadTestCase):
-  """Test some basic controls"""
-  
-  images_path = static_images_path
-  
-  def setUp(self):
-    super(ControlsTest, self).setUp()
-    from camelot.admin.application_admin import ApplicationAdmin
-    self.app_admin = ApplicationAdmin()
-        
-  def test_table_view(self):
-    from camelot.view.controls.tableview import TableView
-    from camelot.model.authentication import Person
-    widget = TableView(self.app_admin.get_entity_admin(Person))
-    self.grab_widget(widget)
-  
-  def test_navigation_pane(self):
-    from camelot.view.controls import navpane
-    widget = navpane.NavigationPane(self.app_admin)
-    self.grab_widget(widget)
+    """Test some basic controls"""
     
-  def test_main_window(self):
-    from camelot.view.mainwindow import MainWindow
-    widget = MainWindow(self.app_admin)
-    self.grab_widget(widget)
+    images_path = static_images_path
+    
+    def setUp(self):
+        super(ControlsTest, self).setUp()
+        from camelot.admin.application_admin import ApplicationAdmin
+        self.app_admin = ApplicationAdmin()
+          
+    def test_table_view(self):
+        from camelot.view.controls.tableview import TableView
+        from camelot.model.authentication import Person
+        widget = TableView(self.app_admin.get_entity_admin(Person))
+        self.grab_widget(widget)
+    
+    def test_navigation_pane(self):
+        from camelot.view.controls import navpane
+        widget = navpane.NavigationPane(self.app_admin)
+        self.grab_widget(widget)
+      
+    def test_main_window(self):
+        from camelot.view.mainwindow import MainWindow
+        widget = MainWindow(self.app_admin)
+        self.grab_widget(widget)
+        
+    def test_status_bar(self):
+        from camelot.view.controls.statusbar import StatusBar
+        status_bar = StatusBar(None)
+        status_bar.busy_widget.set_busy(True)
+        self.grab_widget(status_bar)
     
 class CamelotEntityViewsTest(EntityViewsTest):
   """Test the views of all the Entity subclasses"""
