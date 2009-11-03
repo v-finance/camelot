@@ -1,6 +1,9 @@
+from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import Qt
 
-from customeditor import *
+from customeditor import CustomEditor, editingFinished
 from camelot.view.art import Icon
+from camelot.core import constants
 from math import floor
 
 class IntegerEditor(CustomEditor):
@@ -8,8 +11,8 @@ class IntegerEditor(CustomEditor):
   
     def __init__(self,
                  parent=None,
-                 minimum=camelot_minint,
-                 maximum=camelot_maxint,
+                 minimum=constants.camelot_minint,
+                 maximum=constants.camelot_maxint,
                  editable=True,
                  prefix='',
                  suffix='',               
@@ -93,7 +96,7 @@ class IntegerEditor(CustomEditor):
     
     def calculationFinished(self, value):
         self.spinBox.setValue(floor(float(value)))
-        self.emit(QtCore.SIGNAL('editingFinished()'), value)
+        self.emit(editingFinished)
     
     def editingFinished(self, value):
-        self.emit(QtCore.SIGNAL('editingFinished()'), value)
+        self.emit(editingFinished)
