@@ -87,6 +87,7 @@ class FormView( AbstractView ):
         from camelot.view.controls.delegates.delegatemanager import DelegateManager
         columns, form = columns_and_form
         delegate = self.model.getItemDelegate()
+        assert delegate
         assert isinstance(delegate, DelegateManager)
         self.setColumnsFormAndDelegate( columns, form, delegate )
     

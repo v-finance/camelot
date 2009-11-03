@@ -73,11 +73,15 @@ class SchemaTest(ModelThreadTestCase):
     """Test the database schema"""
 
     def test_schema_display(self):
-        from camelot.bin.camelot_manage import schema_display
-        from camelot.view.model_thread import get_model_thread
+      
+        def schema_display_task():
+            import os
+            from camelot.bin.camelot_manage import schema_display
+            schema_display(os.path.join(self.images_path, 'schema.png'))
+            
+        from camelot.view.model_thread import get_model_thread, post
+        post( schema_display_task )
         get_model_thread().wait_on_work()
-        import os
-        schema_display(os.path.join(self.images_path, 'schema.png'))
 
 class EntityViewsTest(ModelThreadTestCase):
     """Test the views of all the Entity subclasses, subclass this class to test all views

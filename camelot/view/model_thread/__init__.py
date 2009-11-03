@@ -90,6 +90,8 @@ class AbstractModelThread(object):
   the model thread and the gui thread
   """
 
+    thread_busy_signal = QtCore.SIGNAL('thread_busy')
+    
     def __init__(self, setup_thread = setup_model ):
         """
         @param setup_thread: function to be called at startup of the thread to initialize

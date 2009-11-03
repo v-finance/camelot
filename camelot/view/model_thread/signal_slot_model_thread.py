@@ -4,13 +4,11 @@ Created on Sep 9, 2009
 @author: tw55413
 '''
 import logging
-from copy import copy
+logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 from PyQt4 import QtCore
 
 from camelot.view.model_thread import AbstractModelThread, gui_function, model_function, setup_model
-
-logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 class Task(QtCore.QObject):
 
@@ -54,6 +52,7 @@ class TaskHandler(QtCore.QObject):
     def handle_task(self):
         task = self._queue.pop()
         if task:
+            self.emit( AbstractModelThread.thread_busy_signal, True  )
             task.execute()
             # we keep track of the tasks done to prevent them being garbage collected
             # apparently when they are garbage collected, they are recycled, but their
@@ -62,6 +61,7 @@ class TaskHandler(QtCore.QObject):
             #        a deliberate memory leak here
             task.clear()
             self._tasks_done.append(task)
+            self.emit( AbstractModelThread.thread_busy_signal, False  )
 
 def synchronized( original_function ):
     """Decorator for synchronized access to an object, the object should
@@ -109,6 +109,9 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
         self.exec_()
         self.logger.debug('model thread stopped')
 
+    def _thread_busy(self, busy_state):
+        self.emit(self.thread_busy_signal, busy_state)
+                
     @synchronized
     def post( self, request, response = None, exception = None ):
         while not self._task_handler:
@@ -117,6 +120,7 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
         assert self._task_handler
         if not self._connected:
             self.connect(self, self.task_available, self._task_handler.handle_task, QtCore.Qt.QueuedConnection)
+            self.connect(self._task_handler, self.thread_busy_signal, self._thread_busy, QtCore.Qt.QueuedConnection)
             self._connected = True
         # response should be a slot method of a QObject
         if response:

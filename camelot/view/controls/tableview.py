@@ -252,7 +252,9 @@ class TableView( AbstractView  ):
         logger.debug('tableLayoutChanged')
         if self.header:
             self.header.setNumberOfRows( self._table_model.rowCount() )
-        self.table.setItemDelegate( self._table_model.getItemDelegate() )
+        item_delegate = self._table_model.getItemDelegate()
+        if item_delegate:
+            self.table.setItemDelegate( item_delegate )
         for i in range( self._table_model.columnCount() ):
             self.table.setColumnWidth( i, max( self._table_model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width(), 
                                                self.table.columnWidth( i ) ) )
@@ -349,7 +351,7 @@ class TableView( AbstractView  ):
     
     def getColumns( self ):
         """return the columns to be displayed in the table view"""
-        return self.admin.getColumns()
+        return self.admin.get_columns()
     
     def getData( self ):
         """generator for data queried by table model"""
@@ -429,15 +431,15 @@ class TableView( AbstractView  ):
       
     def toHtml( self ):
         """generates html of the table"""
-        table = [[getattr( row, col[0] ) for col in self.admin.getColumns()]
+        table = [[getattr( row, col[0] ) for col in self.admin.get_columns()]
                  for row in self.admin.entity.query.all()]
         context = {
           'title': self.admin.get_verbose_name_plural(),
           'table': table,
-          'columns': [c[0] for c in self.admin.getColumns()],
+          'columns': [field_attributes['name'] for _field, field_attributes in self.admin.get_columns()],
         }
         from camelot.view.templates import loader
-        from jinja import Environment, FileSystemLoader
+        from jinja import Environment
         env = Environment( loader = loader )
         tp = env.get_template( 'table_view.html' )
         return tp.render( context )

@@ -31,6 +31,7 @@ import logging
 logger = logging.getLogger('camelot.view.controls.statusbar')
 
 from PyQt4 import QtGui
+from camelot.view.model_thread import get_model_thread
 
 class StatusBar(QtGui.QStatusBar):
   
@@ -40,5 +41,5 @@ class StatusBar(QtGui.QStatusBar):
         self.busy_widget = BusyWidget(self)
         self.busy_widget.setMinimumWidth(100)
         self.addPermanentWidget(self.busy_widget, 0)
-        self.busy_widget.show()
-
+        mt = get_model_thread()
+        self.connect(mt, mt.thread_busy_signal, self.busy_widget.set_busy)

@@ -112,7 +112,7 @@ leftCellStyle.borders = brdLeft
 leftCellStyle.font = cellFont
 
 rightCellStyle.borders = brdRight
-leftCellStyle.font = cellFont
+rightCellStyle.font = cellFont
 
 bottomCellStyle.borders = brdBottom
 bottomCellStyle.font = cellFont
@@ -127,7 +127,7 @@ toprightCellStyle.pattern = pat1
 def open_data_with_excel(title, headerList, dataList):
     import sys
     import tempfile
-    xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
+    _xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
     write_data_to_excel(xls_fn, title, headerList, dataList)
     from PyQt4 import QtGui, QtCore
     if not 'win' in sys.platform:
@@ -202,7 +202,7 @@ def write_data_to_excel(filename, title, headerList, dataList):
                         formatStr = '0'
                     elif myDataTypeDict[ column ] == float:
                         formatStr = '0.'
-                        for j in range( 0 , myPrecisionDict[ column ]):
+                        for _j in range( 0 , myPrecisionDict[ column ]):
                             formatStr += '0'
                         valueAddedInSize = len(formatStr) # To fit the cell width + 1 (of dot(.))
                     elif myDataTypeDict[ column ] == datetime.date:
@@ -231,7 +231,7 @@ def write_data_to_excel(filename, title, headerList, dataList):
             else:
                 if i==0:
                     ws.write(row , column, val , leftCellStyle)
-                elif  i + 1 == len(dictCounter) and row - 2 != len(dataList):            #right column
+                elif  i == len(dictCounter)-1:
                     ws.write(row , column, val , rightCellStyle)
                 else:
                     ws.write(row , column, val , cellStyle)

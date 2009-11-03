@@ -319,8 +319,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
     
     def getItemDelegate( self ):
+        """:return: a DelegateManager for this model, or None if no DelegateManager yet available"""
         self.logger.debug( 'getItemDelegate' )
-        assert self.delegate_manager
         return self.delegate_manager
     
     def getColumns( self ):
