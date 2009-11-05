@@ -2,7 +2,6 @@
 and widget to create new windows or raise existing ones"""
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
 
 import logging
 

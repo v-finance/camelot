@@ -1,4 +1,3 @@
-import sys
 from camelot.view.art import Icon
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -160,9 +159,9 @@ class Calculator(QtGui.QDialog):
         
         try:
             self.output.setText(str(eval(input)))
-        except SyntaxError, e:
+        except SyntaxError, _e:
             pass
-        except NameError, e:
+        except NameError, _e:
             self.output.setText('Please input numeric characters')
             pass
         
@@ -183,10 +182,10 @@ class Calculator(QtGui.QDialog):
           
         try:
             self.input.setText(str(eval(input)))
-        except SyntaxError, e:
+        except SyntaxError, _e:
             self.output.setText('Invalid input')
             pass
-        except NameError, e:
+        except NameError, _e:
             self.output.setText('Please input numeric characters')
             pass
       

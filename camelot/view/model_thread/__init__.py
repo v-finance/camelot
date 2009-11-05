@@ -140,7 +140,6 @@ class AbstractModelThread(object):
 
 def construct_model_thread( *args, **kwargs ):
     from signal_slot_model_thread import SignalSlotModelThread
-    from no_thread_model_thread import NoThreadModelThread
     _model_thread_.insert( 0, SignalSlotModelThread( *args, **kwargs ) )
 
 def has_model_thread():

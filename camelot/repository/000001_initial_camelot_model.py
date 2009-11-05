@@ -5,7 +5,6 @@ from elixir import *
 from elixir.ext.associable import *
 
 import datetime
-import inspect
 
 import camelot.types
 

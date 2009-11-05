@@ -14,6 +14,14 @@ class DelegateManager(QtGui.QItemDelegate):
     
     def set_columns_desc(self, columnsdesc):
         self.columnsdesc = columnsdesc
+        
+    def get_column_delegate(self, column):
+        try:
+            return self.delegates[column]
+        except KeyError:
+            logger.error('Programming Error, no delegate available for column %s'%column)
+            logger.error('Available columns : %s'%unicode(self.delegates.keys()))
+            raise KeyError
     
     def insertColumnDelegate(self, column, delegate):
         """Inserts a custom column delegate"""
@@ -38,45 +46,29 @@ class DelegateManager(QtGui.QItemDelegate):
       
     def paint(self, painter, option, index):
         """Use a custom delegate paint method if it exists"""
-        delegate = self.delegates.get(index.column())
-        if delegate is not None:
-            delegate.paint(painter, option, index)
-        else:
-            QtGui.QItemDelegate.paint(self, painter, option, index)
+        delegate = self.get_column_delegate(index.column())
+        delegate.paint(painter, option, index)
       
     def createEditor(self, parent, option, index):
         """Use a custom delegate createEditor method if it exists"""
-        delegate = self.delegates.get(index.column())
-        if delegate is not None:
-            editor = delegate.createEditor(parent, option, index)
-            assert editor
-        else:
-            editor = QtGui.QItemDelegate.createEditor(self, parent, option, index)
-            assert editor
+        delegate = self.get_column_delegate(index.column())
+        editor = delegate.createEditor(parent, option, index)
+        assert editor
         return editor
     
     def setEditorData(self, editor, index):
         """Use a custom delegate setEditorData method if it exists"""
         logger.debug('setting editor data for column %s' % index.column())
-        delegate = self.delegates.get(index.column())
-        if delegate is not None:
-            delegate.setEditorData(editor, index)
-        else:
-            QtGui.QItemDelegate.setEditorData(self, editor, index)
+        delegate = self.get_column_delegate(index.column())
+        delegate.setEditorData(editor, index)
       
     def setModelData(self, editor, model, index):
         """Use a custom delegate setModelData method if it exists"""
         logger.debug('setting model data for column %s' % index.column())
-        delegate = self.delegates.get(index.column())
-        if delegate is not None:
-            delegate.setModelData(editor, model, index)
-        else:
-            QtGui.QItemDelegate.setModelData(self, editor, model, index)
+        delegate = self.get_column_delegate(index.column())
+        delegate.setModelData(editor, model, index)
             
     def sizeHint(self, option, index):
         option = QtGui.QStyleOptionViewItem()
-        delegate = self.delegates.get(index.column())
-        if delegate is not None:
-            return delegate.sizeHint(option, index)
-        else:
-            return QtGui.QItemDelegate.sizeHint(self, option, index)
+        delegate = self.get_column_delegate(index.column())
+        return delegate.sizeHint(option, index)

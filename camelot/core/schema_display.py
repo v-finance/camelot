@@ -9,7 +9,6 @@ http://www.sqlalchemy.org/trac/wiki/UsageRecipes/SchemaDisplay
 # updated SQLA schema display to work with pydot 1.0.2
 
 from sqlalchemy.orm.properties import PropertyLoader
-from sqlalchemy.orm import sync
 import pydot
 import types
 
@@ -98,7 +97,7 @@ def create_uml_graph(mappers, show_operations=True, show_attributes=True, show_m
     return graph
 
 from sqlalchemy.databases.postgres import PGDialect
-from sqlalchemy import Table, text
+from sqlalchemy import text
 
 def _render_table_html(table, metadata, show_indexes, show_datatypes):
     def format_col_type(col):
@@ -119,7 +118,7 @@ def _render_table_html(table, metadata, show_indexes, show_datatypes):
         indexes = dict((name,defin) for name,defin in metadata.bind.execute(text("SELECT indexname, indexdef FROM pg_indexes WHERE tablename = '%s'" % table.name)))
         if indexes and show_indexes:
             html += '<TR><TD BORDER="1" CELLPADDING="0"></TD></TR>'
-            for index, defin in indexes.items():
+            for _index, defin in indexes.items():
                 ilabel = 'UNIQUE' in defin and 'UNIQUE ' or 'INDEX '
                 ilabel += defin[defin.index('('):]
                 html += '<TR><TD ALIGN="LEFT">%s</TD></TR>' % ilabel

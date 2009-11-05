@@ -39,8 +39,6 @@ def main(application_admin,
     
     import logging
     logger = logging.getLogger('camelot.view.main')
-    import settings
-    #from PyQt4 import QtCore
   
     QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
     logger.debug('qt version %s, pyqt version %s' % 

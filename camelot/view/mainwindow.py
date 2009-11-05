@@ -445,7 +445,6 @@ class MainWindow( QtGui.QMainWindow ):
         post( export )
 
     def importFromFile( self ):
-        from camelot.view.controls.tableview import TableView
         self.activeMdiChild().widget().importFromFile()
 
     def createMenus( self ):

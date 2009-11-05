@@ -10,9 +10,7 @@
 import base64
 import hmac
 import httplib
-import re
 import sha
-import sys
 import time
 import urllib
 import urlparse

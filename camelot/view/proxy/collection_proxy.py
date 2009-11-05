@@ -341,6 +341,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         delegate_manager = delegates.DelegateManager()
         delegate_manager.set_columns_desc( columns )
     
+        # set a delegate for the vertical header
+        delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate(parent = delegate_manager) )
+        
         for i, c in enumerate( columns ):
             field_name = c[0]
             self.logger.debug( 'creating delegate for %s' % field_name )

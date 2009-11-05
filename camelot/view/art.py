@@ -64,7 +64,7 @@ class Pixmap(object):
         """Obsolete : avoid this method, since it will copy the resource file
         from its package and copy it to a temp folder if the resource is
         packaged."""
-        from pkg_resources import resource_string, resource_filename
+        from pkg_resources import resource_filename
         pth = resource_filename(self._module_name, 'art/%s'%(self._path))
         if os.path.exists(pth):
             return pth
