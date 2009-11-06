@@ -38,7 +38,7 @@ from camelot.model import *
 
 __metadata__ = metadata
 
-from camelot.model.synchronization import *
+from camelot.model.synchronization import is_synchronized
 from camelot.core.document import documented_entity
 from camelot.core.utils import ugettext_lazy as _
 
@@ -215,23 +215,37 @@ class Party(Entity):
     @property
     def name(self):
         return ''
-      
+    
     @ColumnProperty
-    def full_name(c):
+    def email(self):
+        return sql.select([ContactMechanism.mechanism],
+                          whereclause=and_(PartyContactMechanism.table.c.party_id==self.id,
+                                           ContactMechanism.table.c.mechanism.like(('email','%'))),
+                          from_obj=[ContactMechanism.table.join(PartyContactMechanism.table)])
+        
+    @ColumnProperty
+    def phone(self):
+        return sql.select([ContactMechanism.mechanism],
+                          whereclause=and_(PartyContactMechanism.table.c.party_id==self.id,
+                                           ContactMechanism.table.c.mechanism.like(('phone','%'))),
+                          from_obj=[ContactMechanism.table.join(PartyContactMechanism.table)])        
+        
+    @ColumnProperty
+    def full_name(self):
         aliased_organisation = Organization.table.alias('organisation_alias')
         aliased_person = Person.table.alias('person_alias')
         aliased_party = Party.table.alias('party_alias')
         return sql.functions.coalesce(sql.select([aliased_person.c.first_name + ' ' + aliased_person.c.last_name],
-                                                  whereclause=and_(aliased_party.c.id==c.id),
+                                                  whereclause=and_(aliased_party.c.id==self.id),
                                                   from_obj=[aliased_party.join(aliased_person, aliased_person.c.party_id==aliased_party.c.id)]).limit(1).as_scalar(),
                                       sql.select([aliased_organisation.c.name],
-                                                 whereclause=and_(aliased_party.c.id==c.id),
+                                                 whereclause=and_(aliased_party.c.id==self.id),
                                                  from_obj=[aliased_party.join(aliased_organisation, aliased_organisation.c.party_id==aliased_party.c.id)]).limit(1).as_scalar() )
         
     class Admin(EntityAdmin):
         verbose_name = 'Party'
         verbose_name_plural = 'Parties'
-        list_display = ['name'] # don't use full name, since it might be None for new objects
+        list_display = ['name', 'email', 'phone'] # don't use full name, since it might be None for new objects
         list_search = ['full_name']
         fields = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
         field_attributes = dict(suppliers={'admin':SupplierCustomer.SupplierAdmin}, 
@@ -244,6 +258,8 @@ class Party(Entity):
                                 shareholders={'admin':SharedShareholder.ShareholderAdmin},
                                 sex=dict(choices=lambda obj:[(u'M',u'Male'), (u'F',u'Female')],),
                                 name=dict(minimal_column_width=50),
+                                email=dict(editable=False, minimal_column_width=20),
+                                phone=dict(editable=False, minimal_column_width=20)
                                 )
           
 class Organization(Party):
@@ -270,7 +286,7 @@ class Organization(Party):
         verbose_name = _('organization')
         verbose_name_plural = _('organizations')
         section = 'relations'
-        list_display = ['name', 'tax_id',]
+        list_display = ['name', 'tax_id', 'email', 'phone']
         form_display = TabForm([('Basic', Form(['name', 'tax_id', 'addresses', 'contact_mechanisms'])),
                                 ('Employment', Form(['employees'])),
                                 ('Customers', Form(['customers'])),
@@ -344,7 +360,7 @@ class Person(Party):
         verbose_name = _('person')
         verbose_name_plural = _('persons')
         section = 'relations'
-        list_display = ['first_name', 'last_name', ]
+        list_display = ['first_name', 'last_name', 'email', 'phone']
         form_display = TabForm([('Basic', Form([HBoxForm([Form(['first_name', 'last_name', 'sex']),
                                                           Form(['picture',]),
                                                          ]), 

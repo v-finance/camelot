@@ -1,6 +1,10 @@
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
-from customdelegate import *
-from camelot.core.utils import variant_to_pyobject
+from customdelegate import CustomDelegate
+from camelot.view.controls import editors
+from camelot.core.utils import variant_to_pyobject, create_constant_function
+from camelot.view.proxy import ValueLoading
 
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
@@ -75,7 +79,7 @@ class Many2OneDelegate(CustomDelegate):
         if option.version != 5:
             editor.setAutoFillBackground(True)            
         self.connect(editor,
-                     SIGNAL('editingFinished()'),
+                     QtCore.SIGNAL('editingFinished()'),
                      self.commitAndCloseEditor)
         return editor
     

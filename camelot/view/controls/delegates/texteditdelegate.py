@@ -1,6 +1,8 @@
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
-from customdelegate import *
-
+from customdelegate import CustomDelegate, DocumentationMetaclass
+from camelot.view.controls import editors
 
 class TextEditDelegate(CustomDelegate):
     """Custom delegate for simple string values"""

@@ -1,5 +1,9 @@
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
-from customdelegate import *
+from customdelegate import CustomDelegate, DocumentationMetaclass
+from camelot.view.controls import editors
+from camelot.view.proxy import ValueLoading
 from camelot.view.art import Icon
 from camelot.core.utils import variant_to_pyobject
 
@@ -41,30 +45,30 @@ class VirtualAddressDelegate(CustomDelegate):
         if virtual_address and virtual_address!=ValueLoading \
          and virtual_address[1]:
           
-            rect = option.rect
-            rect = QtCore.QRect(rect.width()-16, rect.top()+6, 16, 16)
+            x, y, w, h = option.rect.getRect()
+            icon_rect = QtCore.QRect(x + w - 18, y + (h-16)/2, 16, 16)
             if virtual_address[0] == 'email':
                 icon = Icon('tango/16x16/apps/internet-mail.png').getQPixmap()
-                painter.drawPixmap(rect, icon)
+                painter.drawPixmap(icon_rect, icon)
             elif virtual_address[0] == 'phone':
                 icon = Icon('tango/16x16/devices/phone.png').getQPixmap()
-                painter.drawPixmap(rect, icon)
+                painter.drawPixmap(icon_rect, icon)
             elif virtual_address[0] == 'fax':
                 icon = Icon('tango/16x16/devices/printer.png').getQPixmap()
-                painter.drawPixmap(rect, icon)
+                painter.drawPixmap(icon_rect, icon)
             elif virtual_address[0] == 'mobile':
                 icon = Icon('tango/16x16/devices/mobile.png').getQPixmap()
-                painter.drawPixmap(rect, icon)
+                painter.drawPixmap(icon_rect, icon)
             elif virtual_address[0] == 'im':
                 icon = Icon('tango/16x16/places/instant-messaging.png').getQPixmap()
-                painter.drawPixmap(rect, icon)
+                painter.drawPixmap(icon_rect, icon)
             elif virtual_address[0] == 'pager':
                 icon = Icon('tango/16x16/devices/pager.png').getQPixmap()
-                painter.drawPixmap(rect, icon)  
+                painter.drawPixmap(icon_rect, icon)  
             else:
             #if virtual_adress[0] == 'telephone':
                 icon = Icon('tango/16x16/apps/preferences-desktop-sound.png').getQPixmap()
-                painter.drawPixmap(rect, icon)
+                painter.drawPixmap(icon_rect, icon)
         
                 
                 
@@ -79,10 +83,6 @@ class VirtualAddressDelegate(CustomDelegate):
             
             painter.drawText(textRect,
                              Qt.AlignLeft,
-                             '%s : %s' % (unicode(virtual_address[0]), 
-                                                   unicode(virtual_address[1])))  
-              
-              
-              
-            
+                             unicode(virtual_address[1]))  
+
         painter.restore()

@@ -1,6 +1,10 @@
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
-from customdelegate import *
+from customdelegate import CustomDelegate, DocumentationMetaclass
+from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject
+from camelot.view.proxy import ValueLoading
 
 class CodeDelegate(CustomDelegate):
   

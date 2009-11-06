@@ -311,7 +311,8 @@ class ObjectAdmin(object):
             if 'target' in attributes:
                 attributes['admin'] = get_entity_admin(attributes['target'])
 
-            attributes['name'] = attributes['name']
+            # if name should be translated, do so now
+            attributes['name'] = unicode(attributes['name'])
             self._field_attributes[field_name] = attributes
             return attributes
 

@@ -463,7 +463,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
       
                 @model_function
                 def update_model_and_cache():
-                    from sqlalchemy.exceptions import OperationalError
+                    from sqlalchemy.exceptions import DatabaseError
                     from sqlalchemy import orm
                     new_value = value()
                     self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
@@ -511,13 +511,18 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                             # save the state before the update
                             try:
                                 elixir.session.flush( [o] )
-                            except OperationalError, e:
+                            except DatabaseError, e:
+                                #@todo: when flushing fails, the object should not be removed from the unflushed rows ??
                                 self.logger.error( 'Programming Error, could not flush object', exc_info = e )
                             try:
                                 self.unflushed_rows.remove( row )
                             except KeyError:
                                 pass
-                            if model_updated:
+                            #
+                            # we can only track history if the model was updated, and it was
+                            # flushed before, otherwise it has no primary key yet
+                            #
+                            if model_updated and hasattr(o, 'id') and o.id:
                                 #
                                 # in case of images or relations, we cannot pickle them
                                 #
@@ -531,7 +536,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                   
                                     try:
                                         elixir.session.flush( [history] )
-                                    except OperationalError, e:
+                                    except DatabaseError, e:
                                         self.logger.error( 'Programming Error, could not flush history', exc_info = e )
                         #@todo: update should only be sent remotely when flush was done 
                         self.rsh.sendEntityUpdate( self, o )

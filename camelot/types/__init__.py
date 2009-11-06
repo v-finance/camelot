@@ -48,7 +48,7 @@ class VirtualAddress(types.TypeDecorator):
     This column type accepts and returns tuples of strings, the first string is
     the :attr:`virtual_address_type`, and the second the address itself.
   
-    eg: ``('mail','project-camelot@conceptive.be')`` is stored as
+    eg: ``('email','project-camelot@conceptive.be')`` is stored as
     ``mail://project-camelot@conceptive.be``
   
     .. image:: ../_static/virtualaddress_editor.png

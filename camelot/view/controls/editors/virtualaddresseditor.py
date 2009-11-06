@@ -1,7 +1,10 @@
 
 import re
 
-from customeditor import *
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
+
+from customeditor import CustomEditor, editingFinished
 from camelot.view.art import Icon
 import camelot.types
 
@@ -91,7 +94,6 @@ class VirtualAddressEditor(CustomEditor):
         value = (unicode(self.combo.currentText()), unicode(self.editor.text()))
         return CustomEditor.get_value(self) or value
       
-      
     def set_enabled(self, editable=True):
         self.combo.setEnabled(editable)
         self.editor.setEnabled(editable)
@@ -124,7 +126,7 @@ class VirtualAddressEditor(CustomEditor):
          or self.combo.currentText() == 'fax' \
          or self.combo.currentText() == 'mobile':
     
-            number = text
+            number = unicode(text)
             numberCheck = re.compile('^[0-9 ]+$')
       
             if not numberCheck.match(number):
@@ -169,4 +171,7 @@ class VirtualAddressEditor(CustomEditor):
         self.value.append(str(self.editor.text()))
         self.set_value(self.value)
         self.label.setFocus()
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+        # emiting editingFinished without a value for the mechanism itself will lead to
+        # integrity errors
+        if self.value[1]:
+            self.emit(editingFinished)

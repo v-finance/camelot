@@ -1,5 +1,6 @@
+from PyQt4 import QtCore
 
-from customdelegate import *
+from camelot.view.controls import editors
 from one2manydelegate import One2ManyDelegate
 
 class ManyToManyDelegate(One2ManyDelegate):
@@ -17,7 +18,7 @@ class ManyToManyDelegate(One2ManyDelegate):
       
     def commitAndCloseEditor(self):
         editor = self.sender()
-        self.emit(SIGNAL('commitData(QWidget*)'), editor)
+        self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
         
     def setModelData(self, editor, model, index):
         if editor.getModel():

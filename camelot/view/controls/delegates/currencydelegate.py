@@ -1,6 +1,11 @@
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
-from customdelegate import *
-from camelot.core.constants import *
+from customdelegate import CustomDelegate, DocumentationMetaclass
+from camelot.view.controls import editors
+from camelot.core.utils import variant_to_pyobject
+from camelot.core import constants
+from camelot.view.proxy import ValueLoading
 
 class CurrencyDelegate(CustomDelegate):
     """Custom delegate for float values"""
@@ -10,8 +15,8 @@ class CurrencyDelegate(CustomDelegate):
     editor = editors.FloatEditor
     
     def __init__(self,
-                 minimum=camelot_minfloat,
-                 maximum=camelot_maxfloat,
+                 minimum=constants.camelot_minfloat,
+                 maximum=constants.camelot_maxfloat,
                  precision=2,
                  editable=True,
                  parent=None,

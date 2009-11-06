@@ -1,8 +1,11 @@
+from PyQt4 import QtGui
+from PyQt4.QtCore import Qt
 
-from customdelegate import *
+from customdelegate import DocumentationMetaclass
 from camelot.core.utils import variant_to_pyobject
+from camelot.view.proxy import ValueLoading
 
-class IntervalsDelegate(QItemDelegate):
+class IntervalsDelegate(QtGui.QItemDelegate):
     """Custom delegate for visualizing camelot.container.IntervalsContainer
   data
   """
@@ -10,7 +13,7 @@ class IntervalsDelegate(QItemDelegate):
     __metaclass__ = DocumentationMetaclass
   
     def __init__(self, parent=None, editable=False, **kwargs):
-        QItemDelegate.__init__(self, parent)
+        QtGui.QItemDelegate.__init__(self, parent)
         self.editable = editable
     
     def paint(self, painter, option, index):

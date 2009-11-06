@@ -1,5 +1,9 @@
 
-from customdelegate import *
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
+
+from customdelegate import CustomDelegate, DocumentationMetaclass
+from camelot.view.controls import editors
 
 class BoolDelegate(CustomDelegate):
     """Custom delegate for boolean values"""

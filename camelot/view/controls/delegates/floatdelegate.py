@@ -1,6 +1,9 @@
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
-from customdelegate import *
-from camelot.core.constants import *
+from customdelegate import CustomDelegate, DocumentationMetaclass
+from camelot.view.controls import editors
+from camelot.core import constants
 
 class FloatDelegate(CustomDelegate):
     """Custom delegate for float values"""
@@ -10,8 +13,8 @@ class FloatDelegate(CustomDelegate):
     editor = editors.FloatEditor
     
     def __init__(self,
-                 minimum=camelot_minfloat,
-                 maximum=camelot_maxfloat,
+                 minimum=constants.camelot_minfloat,
+                 maximum=constants.camelot_maxfloat,
                  precision=2,
                  editable=True,
                  parent=None,
