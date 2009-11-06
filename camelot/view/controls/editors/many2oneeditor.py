@@ -1,7 +1,9 @@
+from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import Qt
 
-from customeditor import *
+from customeditor import CustomEditor
 from abstractmanytooneeditor import AbstractManyToOneEditor
-from camelot.core.utils import variant_to_pyobject
+from camelot.core.utils import variant_to_pyobject, create_constant_function
 
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post

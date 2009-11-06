@@ -1,6 +1,10 @@
 
 import datetime
-from customeditor import *
+
+from PyQt4 import QtGui, QtCore
+
+from customeditor import CustomEditor
+from camelot.core import constants
 
 class DateTimeEditor(CustomEditor):
     """Widget for editing date and time separated and with popups"""
@@ -8,13 +12,13 @@ class DateTimeEditor(CustomEditor):
     def __init__(self,
                  parent,
                  editable=True,
-                 format=camelot_datetime_format,
+                 format=constants.camelot_datetime_format,
                  nullable=True,
                  **kwargs):
         CustomEditor.__init__(self, parent)
         import itertools
         self.nullable = nullable
-        dateformat, timeformat = format.split(' ')
+        dateformat, _timeformat = format.split(' ')
         layout = QtGui.QHBoxLayout()
         self.dateedit = QtGui.QDateEdit(self)
         self.dateedit.setEnabled(editable)

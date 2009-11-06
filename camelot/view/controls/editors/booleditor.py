@@ -1,14 +1,16 @@
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
-from customeditor import *
-from PyQt4 import QtGui
+from customeditor import CustomEditor
+from camelot.core import constants
 
 class BoolEditor(CustomEditor):
     """Widget for editing a boolean field"""
   
     def __init__(self,
                  parent=None,
-                 minimum=camelot_minint,
-                 maximum=camelot_maxint,
+                 minimum=constants.camelot_minint,
+                 maximum=constants.camelot_maxint,
                  editable=True,
                  **kwargs):
         CustomEditor.__init__(self, parent)

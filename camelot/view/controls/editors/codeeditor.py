@@ -1,5 +1,7 @@
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
-from customeditor import *
+from customeditor import CustomEditor
 import re
 
 class CodeEditor(CustomEditor):

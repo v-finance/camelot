@@ -60,6 +60,8 @@ class EntityValidator(ObjectValidator):
                     is_null = True
                 elif (attributes['delegate'] == delegates.Many2OneDelegate) and (not value.id):
                     is_null = True
+                elif (attributes['delegate'] == delegates.VirtualAddressDelegate) and (not value[1]):
+                    is_null = True                    
                 if is_null:
                     messages.append(u'%s is a required field' % (attributes['name']))
         logger.debug(u'messages : %s'%(u','.join(messages)))

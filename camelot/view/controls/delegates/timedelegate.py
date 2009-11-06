@@ -1,8 +1,11 @@
+import datetime
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
+from camelot.core.utils import create_constant_function
 
 class TimeDelegate(CustomDelegate):
  

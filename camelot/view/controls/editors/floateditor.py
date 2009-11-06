@@ -1,6 +1,9 @@
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
-from customeditor import *
+from customeditor import CustomEditor
 from camelot.view.art import Icon
+from camelot.core import constants
 
 class FloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator"""
@@ -8,8 +11,8 @@ class FloatEditor(CustomEditor):
     def __init__(self,
                  parent,
                  precision=2,
-                 minimum=camelot_minfloat,
-                 maximum=camelot_maxfloat,
+                 minimum=constants.camelot_minfloat,
+                 maximum=constants.camelot_maxfloat,
                  editable=True,
                  prefix='',
                  suffix='',

@@ -1,5 +1,7 @@
+from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import Qt
 
-from customeditor import *
+from customeditor import CustomEditor
 from camelot.view.art import Icon
 
 class SmileyEditor(CustomEditor):

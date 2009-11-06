@@ -1,7 +1,11 @@
 
 import datetime
 
-from customeditor import *
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
+
+from customeditor import CustomEditor
+from camelot.core import constants
 from camelot.view.art import Icon
 
 class DateEditor(CustomEditor):
@@ -11,7 +15,7 @@ class DateEditor(CustomEditor):
                  parent=None,
                  editable=True,
                  nullable=True,
-                 format=camelot_date_format,
+                 format=constants.camelot_date_format,
                  **kwargs):
         CustomEditor.__init__(self, parent)
         self.format = format

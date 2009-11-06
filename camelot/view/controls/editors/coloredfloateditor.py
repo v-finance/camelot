@@ -1,5 +1,8 @@
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
-from customeditor import *
+from customeditor import CustomEditor
+from camelot.core import constants
 from camelot.view.art import Icon
 
 class ColoredFloatEditor(CustomEditor):
@@ -8,8 +11,8 @@ class ColoredFloatEditor(CustomEditor):
     def __init__(self,
                  parent,
                  precision=2,
-                 minimum=camelot_minfloat,
-                 maximum=camelot_maxfloat, 
+                 minimum=constants.camelot_minfloat,
+                 maximum=constants.camelot_maxfloat, 
                  editable=True,
                  **kwargs):
         CustomEditor.__init__(self, parent)

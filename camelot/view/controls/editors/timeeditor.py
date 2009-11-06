@@ -1,14 +1,16 @@
-
 import datetime
 
-from customeditor import *
+from PyQt4 import QtGui
+
+from customeditor import AbstractCustomEditor
+from camelot.core import constants
 
 class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):
   
     def __init__(self,
                  parent,
                  editable=True,
-                 format=camelot_time_format,
+                 format=constants.camelot_time_format,
                  **kwargs):
         QtGui.QTimeEdit.__init__(self, parent)
         AbstractCustomEditor.__init__(self)

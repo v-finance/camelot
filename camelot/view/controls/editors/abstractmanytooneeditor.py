@@ -1,5 +1,4 @@
-
-from customeditor import * 
+from PyQt4 import QtGui, QtCore
 
 class AbstractManyToOneEditor(object):
     """Helper functions for implementing a `ManyToOneEditor`, to be used in the

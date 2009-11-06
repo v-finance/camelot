@@ -1,5 +1,6 @@
+from PyQt4 import QtGui
 
-from customeditor import *
+from customeditor import AbstractCustomEditor
 
 class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
 

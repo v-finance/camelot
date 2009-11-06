@@ -1,5 +1,6 @@
+from PyQt4 import QtGui, QtCore
 
-from customeditor import *
+from customeditor import AbstractCustomEditor
 import sip
 
 class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
