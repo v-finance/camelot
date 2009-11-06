@@ -203,7 +203,7 @@ class EntityAdmin( ObjectAdmin ):
                 attributes['admin'] = get_entity_admin( attributes['target'] )
         
             # if name should be translated, do so now
-            attributes['name'] = unicode(attributes['name'])
+            attributes['name'] = unicode(attributes['name']).capitalize()
                                                  
             self._field_attributes[field_name] = attributes
             return attributes
