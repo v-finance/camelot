@@ -15,6 +15,16 @@ to mark translatable strings; the system can only translate strings it knows abo
 
 .. literalinclude:: ../../../../test/snippet/i18n/specify_translation_string.py
 
+The above example translates the given string immediately.  This is not always desired,
+since the message catalog might not yet be loaded at the time of execution.  Therefore
+translation strings can be specified as lazy.  They will only get translated when they
+are used in the GUI.
+
+.. literalinclude:: ../../../../test/snippet/i18n/specify_lazy_translation_string.py
+
+Translation strings in model definitions should always be specified as lazy translation
+strings.
+
 How to Create Language Files
 ============================
 
@@ -27,4 +37,16 @@ Create a message catalog
 Edit the message catalog with linguist ::
 
   linquist camelot.po
+  
+Where to put Translations
+=========================
+
+Translations can be put in 2 places :
+
+  * in po files which have to be loaded at application startup
+  
+  * in the Translation table : this table is editable by the users via the Configuration
+    menu.  This is the place to put translations that should be editable by the users.  At
+    application startup, all records in this table related to the current language will be 
+    put in memory.
   

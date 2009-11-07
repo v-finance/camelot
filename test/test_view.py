@@ -535,6 +535,11 @@ class FormTest(ModelThreadTestCase):
     }
     from elixir import entities
     self.entities = [e for e in entities]
+    from camelot.admin.application_admin import ApplicationAdmin
+    from camelot.model.authentication import Person
+    self.app_admin = ApplicationAdmin()
+    self.person_entity = Person
+    self.collection_getter = lambda:[Person()]   
     
   def tearDown(self):
     #
@@ -568,7 +573,17 @@ class FormTest(ModelThreadTestCase):
     
   def test_hbox_form(self):
     form = forms.HBoxForm([['title', 'short_description'], ['director', 'release_date']])
-    self.grab_widget(form.render(self.widgets))    
+    self.grab_widget(form.render(self.widgets))
+    
+  def test_nested_form(self):
+      from snippet.form.nested_form import Admin
+      person_admin = Admin(self.app_admin, self.person_entity)
+      self.grab_widget( person_admin.create_new_view() )
+      
+  def test_inherited_form(self):
+      from snippet.form.inherited_form import InheritedAdmin
+      person_admin = InheritedAdmin(self.app_admin, self.person_entity)
+      self.grab_widget( person_admin.create_new_view() )      
                           
 from camelot.admin import form_action
   
@@ -912,29 +927,43 @@ class CamelotEntityViewsTest(EntityViewsTest):
   
 class SnippetsTest(ModelThreadTestCase):
     
-  images_path = static_images_path
-  
-  def test_fields_with_actions(self):
-    from snippet.fields_with_actions import Coordinate
-    from camelot.view.proxy.collection_proxy import CollectionProxy
-    coordinate = Coordinate()
-    admin = Coordinate.Admin(None, Coordinate)
-    proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
-    form = admin.create_form_view('Coordinate', proxy, 0, None)
-    self.grab_widget(form)
+    images_path = static_images_path
     
-  def test_fields_with_tooltips(self):
-    from snippet.fields_with_tooltips import Coordinate
-    from camelot.view.proxy.collection_proxy import CollectionProxy
-    coordinate = Coordinate()
-    admin = Coordinate.Admin(None, Coordinate)
-    proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
-    form = admin.create_form_view('Coordinate', proxy, 0, None)
-    self.grab_widget(form)
+    def test_fields_with_actions(self):
+        from snippet.fields_with_actions import Coordinate
+        from camelot.view.proxy.collection_proxy import CollectionProxy
+        coordinate = Coordinate()
+        admin = Coordinate.Admin(None, Coordinate)
+        proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
+        form = admin.create_form_view('Coordinate', proxy, 0, None)
+        self.grab_widget(form)
+      
+    def test_fields_with_tooltips(self):
+        from snippet.fields_with_tooltips import Coordinate
+        from camelot.view.proxy.collection_proxy import CollectionProxy
+        coordinate = Coordinate()
+        admin = Coordinate.Admin(None, Coordinate)
+        proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
+        form = admin.create_form_view('Coordinate', proxy, 0, None)
+        self.grab_widget(form)
+        
+    def test_entity_validator(self):
+        from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.model.authentication import Person
+        from camelot.admin.application_admin import ApplicationAdmin
+        from snippet.entity_validator import PersonValidator, Admin
+        app_admin = ApplicationAdmin()
+        person_admin = Admin(app_admin, Person)
+        proxy = CollectionProxy(person_admin, lambda:[Person()], person_admin.get_columns)
+        validator = PersonValidator(person_admin, proxy)
+        self.mt.post(lambda:validator.isValid(0))
+        self.process()
+        self.assertEqual(len(validator.validityMessages(0)), 3)
+        self.grab_widget(validator.validityDialog(0, parent=None))
   
 class CamelotSchemaTest(SchemaTest):
   
-  images_path = static_images_path
+    images_path = static_images_path
   
 
 if __name__ == '__main__':

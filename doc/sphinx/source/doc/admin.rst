@@ -72,15 +72,11 @@ database.
 
 But this might not be enough.  If more validation is needed, a custom Validator
 class can be defined.  The default EntityValidator class is located in 
-camelot/admin/validator/entity_validator::
+camelot/admin/validator/entity_validator.  This class can be subclassed to
+create a custom validator.  The new class should then be bound to the
+Admin class :
 
-  class MyValidator(EntityValidator):
-  
-    def objectValidity(self, entity_instance):
-      messages = super(MyValidator,self).objectValidity(entity_instance)
-      if 'Star' not in entity_instance.title:
-        messages.append("The movie title should always contain 'Star'.")
-      return messages
+  .. literalinclude:: ../../../../test/snippet/entity_validator.py
 
 Its most important method is objectValidity, which takes an object as argument and
 should return a list of strings explaining why the object is invalid.  These
@@ -89,15 +85,10 @@ strings will then be presented to the user.
 Notice that this method will always get called outside of the GUI thread, so the
 call will never block the GUI.
 
-Then tell the Admin interface to pickup the custom Validator ::
+When the user tries to leave a form in an invalid state, a platform dependent dialog
+box will appear.
 
-  class Movie(Entity):
-    title = Field(Unicode(60), required=True)
-
-    class Admin(EntityAdmin):
-      name = 'Movies'
-      list_display = ['title']
-      validator = MyValidator
+  .. image:: ../_static/snippets/entity_validator.png
 
 ApplicationAdmin
 ================
