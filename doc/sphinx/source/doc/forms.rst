@@ -56,3 +56,65 @@ various layouts.  Each subclass maps to a QT Layout class.
 
 .. automodule:: camelot.view.forms
    :members:
+   
+Customizing Forms
+=================
+
+Several options exist for completely customizing the forms of an application.
+
+Layout
+------
+
+When the desired layout cannot be achieved with Camelot's form classes, a custom
+Form subclass can be made to lay out the widgets.
+
+When subclassing the Form class, it's 'render' method should be reimplemented to
+put the labels and the editors in a custom layout.  The 'render' method will be
+called by Camelot each time it needs a form for the related entity.  It should thus
+return a QWidget to be used as the needed form. 
+
+The 'render' method its most important argument is widgets which is a dictionary
+containing for each field of the form a widget representing the label of the field
+and a widget for editing the field.  The editor widgets are bound to the
+model.
+
+.. literalinclude:: ../../../../test/snippet/form/custom_layout.py
+
+The form defined above puts the widgets into a QFormLayout using a different
+background color, and adds some instructions for the user :
+
+.. image:: ../_static/form/custom_layout.png
+
+Editors
+-------
+
+The editor of a specific field can be changed, by specifying an alternative delegate
+for that field, using the field attributes, see :ref:`specifying-delgates`.
+
+Tooltips
+--------
+
+Each field on the form can be given a dynamic tooltip, using the 'tooltip' field
+attribute : :ref:`tooltips`.
+
+Buttons
+-------
+
+Buttons bound to a specific action can be put on a form, using the 'form_actions' 
+attribute of the Admin class : :ref:`form-actions`.
+
+Validation
+----------
+
+Validation is done at the object level.  Before a form is closed validation of the
+bound object takes place, an invalid object will prevent closing the form.  A custom
+validator can be defined : :ref:`validators`
+
+Behaviour
+---------
+
+To change what happens when Camelot requires a form for an object, some methods
+on the Admin class can be overwritten :
+
+  * create_form_view
+  * create_new_view

@@ -583,6 +583,11 @@ class FormTest(ModelThreadTestCase):
   def test_inherited_form(self):
       from snippet.form.inherited_form import InheritedAdmin
       person_admin = InheritedAdmin(self.app_admin, self.person_entity)
+      self.grab_widget( person_admin.create_new_view() )
+      
+  def test_custom_layout(self):
+      from snippet.form.custom_layout import Admin
+      person_admin = Admin(self.app_admin, self.person_entity)
       self.grab_widget( person_admin.create_new_view() )      
                           
 from camelot.admin import form_action

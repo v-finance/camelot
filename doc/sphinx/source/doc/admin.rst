@@ -50,6 +50,8 @@ EntityAdmin is a specialization of ObjectAdmin, to be used for classes that are 
 Sqlalchemy.  EntityAdmin will use introspection to determine field types and assign 
 according delegates and editors.
 
+.. _form-actions:
+
 Form View Actions
 =================
 
@@ -59,6 +61,8 @@ Printing reports in the form view
 ---------------------------------
 
 .. autoclass:: camelot.admin.form_action.PrintHtmlFormAction
+
+.. _validators:
 
 Validators
 ==========

@@ -19,6 +19,8 @@ updating the model with the new data.
 
 All Camelot delegates are subclasses of :class:`QAbstractItemDelegate`.
 
+.. _specifying-delgates:
+
 Specifying delegates
 ====================
 
@@ -100,38 +102,52 @@ All available delegates can be found in :mod:`camelot.view.controls.delegates`
 Attributes common to most delegates
 ===================================
 
-**editable** :const:`True` or :const:`False`
-  Indicates whether the user can edit the field.
+editable 
+--------
 
-**minimum, maximum**
-  The minimum and maximum allowed values for :ctype:`Integer` and
-  :ctype:`Float` delegates or their related delegates like the Star delegate.
+:const:`True` or :const:`False`
+  
+Indicates whether the user can edit the field.
 
-**choices**
-  A function taking as a single argument the object to which the field
-  belongs.  The function returns a list of tuples containing for each
-  possible choice the value to be stored on the model and the value
-  displayed to the user.
+minimum, maximum
+----------------
 
-  The use of :attr:`choices` forces the use of the ComboBox delegate::
+The minimum and maximum allowed values for :ctype:`Integer` and
+:ctype:`Float` delegates or their related delegates like the Star delegate.
 
-    field_attributes = {'state':{'choices':lambda o:[(1, 'Active'), 
-                                                     (2, 'Passive')]}}
+choices
+-------
+
+A function taking as a single argument the object to which the field
+belongs.  The function returns a list of tuples containing for each
+possible choice the value to be stored on the model and the value
+displayed to the user.
+
+The use of :attr:`choices` forces the use of the ComboBox delegate::
+
+  field_attributes = {'state':{'choices':lambda o:[(1, 'Active'), 
+                                                   (2, 'Passive')]}}
 	                                                 
-**minimal_column_width**
-  An integer specifying the minimal column width when this field is 
-  displayed in a table view.  The width is expressed as the number of 
-  characters that should fit in the column::
+minimal_column_width
+--------------------
 
-    field_attributes = {'name':{'minimal_column_width':50}}
+An integer specifying the minimal column width when this field is 
+displayed in a table view.  The width is expressed as the number of 
+characters that should fit in the column::
+
+  field_attributes = {'name':{'minimal_column_width':50}}
   
-  will make the column wide enough to display at least 50 characters.
+will make the column wide enough to display at least 50 characters.
   
-**tooltip**
-  A function taking as a single argument the object to which the field
-  belongs.  The function should return a string that will be used as a
-  tooltip.  The string may contain html markup.
+.. _tooltips:
+
+tooltip
+-------
+
+A function taking as a single argument the object to which the field
+belongs.  The function should return a string that will be used as a
+tooltip.  The string may contain html markup.
   
-  .. literalinclude:: ../../../../test/snippet/fields_with_tooltips.py
+.. literalinclude:: ../../../../test/snippet/fields_with_tooltips.py
   
-  .. image:: ../_static/snippets/fields_with_tooltips.png  
+.. image:: ../_static/snippets/fields_with_tooltips.png
