@@ -19,31 +19,9 @@ class VirtualAddressDelegate(CustomDelegate):
         painter.save()
         self.drawBackground(painter, option, index)
         virtual_address = variant_to_pyobject(index.model().data(index, Qt.EditRole))  
-        
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
-        
-        if( option.state & QtGui.QStyle.State_Selected ):
-            painter.fillRect(option.rect, option.palette.highlight())
-            fontColor = QtGui.QColor()
-            if self.editable:
-                Color = option.palette.highlightedText().color()
-                fontColor.setRgb(Color.red(), Color.green(), Color.blue())
-            else:
-                fontColor.setRgb(130,130,130)
-        else:
-            if self.editable:
-                painter.fillRect(option.rect, background_color)
-                fontColor = QtGui.QColor()
-                fontColor.setRgb(0,0,0)
-            else:
-                painter.fillRect(option.rect, option.palette.window())
-                fontColor = QtGui.QColor()
-                fontColor.setRgb(130,130,130)
-          
-          
-          
-        if virtual_address and virtual_address!=ValueLoading \
-         and virtual_address[1]:
+  
+        if virtual_address and virtual_address!=ValueLoading:
+            self.paint_text(painter, option, index, unicode(virtual_address[1] or ''), margin_left=0, margin_right=18)
           
             x, y, w, h = option.rect.getRect()
             icon_rect = QtCore.QRect(x + w - 18, y + (h-16)/2, 16, 16)
@@ -69,20 +47,5 @@ class VirtualAddressDelegate(CustomDelegate):
             #if virtual_adress[0] == 'telephone':
                 icon = Icon('tango/16x16/apps/preferences-desktop-sound.png').getQPixmap()
                 painter.drawPixmap(icon_rect, icon)
-        
-                
-                
-                
-            painter.setPen(fontColor.toRgb())
-              
-              
-              
-            textRect = option.rect
-            textRect = QtCore.QRect(textRect.left() + 2, textRect.top()+6, textRect.width()-18, textRect.height())
-            
-            
-            painter.drawText(textRect,
-                             Qt.AlignLeft,
-                             unicode(virtual_address[1]))  
 
         painter.restore()

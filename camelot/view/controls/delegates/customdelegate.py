@@ -113,3 +113,39 @@ will be put onto a form"""
         else:
             val = create_constant_function(editor.get_value())
         model.setData(index, val)
+        
+    def paint_text(self, painter, option, index, text, margin_left=0, margin_right=0):
+        """Paint unicode text into the given rect defined by option, and fill the rect with
+        the background color
+        :arg margin_left: additional margin to the left, to be used for icons or others
+        :arg margin_right: additional margin to the right, to be used for icons or others"""
+        
+        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
+        rect = option.rect
+        
+        if( option.state & QtGui.QStyle.State_Selected ):
+            painter.fillRect(option.rect, option.palette.highlight())
+            fontColor = QtGui.QColor()
+            if self.editable:         
+                Color = option.palette.highlightedText().color()
+                fontColor.setRgb(Color.red(), Color.green(), Color.blue())
+            else:          
+                fontColor.setRgb(130,130,130)
+        else:
+            if self.editable:
+                painter.fillRect(rect, background_color)
+                fontColor = QtGui.QColor()
+                fontColor.setRgb(0,0,0)
+            else:
+                painter.fillRect(rect, option.palette.window())
+                fontColor = QtGui.QColor()
+                fontColor.setRgb(130,130,130)
+              
+              
+        painter.setPen(fontColor.toRgb())
+        painter.drawText(rect.x() + 2 + margin_left,
+                         rect.y(),
+                         rect.width() - 4 - (margin_left + margin_right),
+                         rect.height(),
+                         Qt.AlignVCenter | Qt.AlignLeft,
+                         text)        

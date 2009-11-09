@@ -42,6 +42,14 @@ class EntityAdmin( ObjectAdmin ):
     validator = EntityValidator
   
     @model_function
+    def get_query(self):
+        """:return: an sqlalchemy query for all the objects that should be displayed in the table or
+        the selection view.  overwrite this method to change the default query, which selects all rows
+        in the database.
+        """
+        return self.entity.query
+        
+    @model_function
     def get_subclass_entity_admin( self, entity ):
         """Get the admin class for an entity that is a subclass of this admin's entity
         or this admin's entity itself."""

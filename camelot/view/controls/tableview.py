@@ -217,7 +217,7 @@ class TableView( AbstractView  ):
     def create_table_model( self, admin ):
         """Create a table model for the given admin interface"""
         return self.table_model( admin,
-                                 lambda:admin.entity.query,
+                                 admin.get_query,
                                  admin.get_columns )
     
     @gui_function
