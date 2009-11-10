@@ -69,6 +69,8 @@ _sqlalchemy_to_python_type_ = {
                                        'maximum': constants.camelot_maxint,
                                        'nullable':True,
                                        'delegate':delegates.IntegerDelegate,
+                                       'from_string':int,
+                                       'to_string':unicode,
                                        'widget': 'int'},
 
   sqlalchemy.types.INT: lambda f: {'python_type': int,
