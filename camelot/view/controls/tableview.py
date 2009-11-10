@@ -184,15 +184,22 @@ class TableView( AbstractView  ):
         self.splitter = QtGui.QSplitter( self )
         widget_layout.addWidget( self.splitter )
         table_widget = QtGui.QWidget( self )
+        filters_widget = QtGui.QWidget( self )
         self.table_layout = QtGui.QVBoxLayout()
         self.table_layout.setSpacing( 0 )
         self.table_layout.setMargin( 0 )
         self.table = None
+        self.filters_layout = QtGui.QVBoxLayout()
+        self.filters_layout.setSpacing( 0 )
+        self.filters_layout.setMargin( 0 )     
         self.filters = None
         self._table_model = None
         table_widget.setLayout( self.table_layout )
+        filters_widget.setLayout( self.filters_layout )
+        #filters_widget.hide()
         self.set_admin( admin )
-        self.splitter.insertWidget( 0, table_widget )
+        self.splitter.addWidget( table_widget )
+        self.splitter.addWidget( filters_widget )
         self.setLayout( widget_layout )
         self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
         self.search_filter = lambda q: q
@@ -206,7 +213,7 @@ class TableView( AbstractView  ):
     def setSubclassTree( self, subclasses ):
         if len( subclasses ) > 0:
             from inheritance import SubclassTree
-            class_tree = SubclassTree( self.admin, self )
+            class_tree = SubclassTree( self.admin, self.splitter )
             self.splitter.insertWidget( 0, class_tree )
             self.connect( class_tree, SIGNAL( 'subclassClicked' ), self.set_admin )
       
@@ -231,7 +238,7 @@ class TableView( AbstractView  ):
             self.table_layout.removeWidget(self.table)
             self.table.deleteLater()
             self._table_model.deleteLater()
-        self.table = self.table_widget( self )
+        self.table = self.table_widget( self.splitter )
         self._table_model = self.create_table_model( admin )
         self.table.setModel( self._table_model )
         self.connect( self.table.verticalHeader(),
@@ -416,18 +423,20 @@ class TableView( AbstractView  ):
         from filterlist import FilterList
         from actionsbox import ActionsBox
         logger.debug( 'setting filters for tableview' )
+        
         if self.filters:
             self.disconnect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
+            self.filters_layout.removeWidget(self.table)
             self.filters.deleteLater()
             self.filters = None
         if filters:
-            self.filters = FilterList( filters, parent=self )
-            self.splitter.insertWidget( 2, self.filters )
+            self.filters = FilterList( filters, parent=self.splitter )
+            self.filters_layout.addWidget( self.filters )
             self.connect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
         elif actions:
             self.filters = ActionsBox( self, self._table_model.collection_getter, lambda:[] )
             self.filters.setActions( actions )
-            self.splitter.insertWidget( 2, self.filters )
+            self.filters_layout.addWidget( self.filters )
       
     def toHtml( self ):
         """generates html of the table"""
