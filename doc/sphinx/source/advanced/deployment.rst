@@ -84,7 +84,7 @@ the shared drive and put shortcuts to it on the desktops of the users.  The
 .vbs script can look like this::
 
 	Set WshShell = WScript.CreateObject("WScript.Shell")
-	WshShell.Environment("User").item("PYTHONPATH") = "R:\movie_store-01.01-py2.5.egg;"
+	WshShell.Environment("Process").item("PYTHONPATH") = "R:\movie_store-01.01-py2.5.egg;"
 	WshShell.Run """R:\Python2.5\pythonw.exe"" -m movie_store.main"
 
 Creating installers
