@@ -674,6 +674,25 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
       
         post( create_delete_function( row ) )
         return True
+     
+    @gui_function 
+    def copy_row( self, row ):
+        """Copy the entity associated with this row to the end of the collection
+        :param row: the row number
+        """
+        
+        def create_copy_function( row ):
+            
+            def copy_function():
+                o = self._get_object(row)
+                new_object = self.admin.entity()
+                new_object.from_dict( o.to_dict(exclude=['id']) )
+                self.insertEntityInstance(self.getRowCount(), new_object)
+                
+            return copy_function
+                
+        post( create_copy_function( row ) )
+        return True
     
     @model_function
     def insertEntityInstance( self, row, o ):
