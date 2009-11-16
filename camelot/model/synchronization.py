@@ -24,22 +24,27 @@
 #  project-camelot@conceptive.be
 #
 #  ==================================================================================
+from camelot.model import metadata
+from elixir.entity import Entity
+from elixir.options import using_options
+from elixir.fields import Field
+from sqlalchemy.types import Unicode, Integer, DateTime
+from elixir.ext.associable import associable
 """Functionallity to synchronize elements from the camelot database against
 other databases
 """
-
-from camelot.model import *
-from elixir.ext.associable import *
 
 __metadata__ = metadata
 
 import datetime
 
-class Synchronized(Entity):
-    using_options(tablename='synchronized')
-    database = Field(Unicode(30), index=True)
-    tablename = Field(Unicode(30), index=True)
-    primary_key = Field(Integer(), index=True)
-    last_update = Field(DateTime(), index=True, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+class Synchronized( Entity ):
+    using_options( tablename = 'synchronized' )
+    database = Field( Unicode( 30 ), index = True )
+    tablename = Field( Unicode( 30 ), index = True )
+    primary_key = Field( Integer(), index = True )
+    last_update = Field( DateTime(), index = True,
+                          default = datetime.datetime.now,
+                           onupdate = datetime.datetime.now )
 
-is_synchronized = associable(Synchronized)
+is_synchronized = associable( Synchronized )

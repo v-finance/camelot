@@ -24,69 +24,74 @@
 #  project-camelot@conceptive.be
 #
 #  =============================================================================
+from camelot.model import metadata
+from elixir.entity import Entity
+from elixir.options import using_options
+from elixir.fields import Field
+from sqlalchemy.types import Unicode, INT
 """Set of classes to enable internationalization of the user interface"""
 
-from camelot.model import *
+
 __metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.core.utils import ugettext_lazy as _
 
 import logging
-logger = logging.getLogger('camelot.model.i18n')
+logger = logging.getLogger( 'camelot.model.i18n' )
 
-def tr(source):
+def tr( source ):
     from PyQt4 import QtCore
-    language = unicode(QtCore.QLocale().name())
-    return Translation.translate_or_register(source, language) 
-  
-class Translation(Entity):
-    using_options(tablename='translation')
-    language = Field(Unicode(20), index=True)
-    source = Field(Unicode(500), index=True)
-    value = Field(Unicode(500))
-    cid = Field(INT(), default=0, index=True)
-    uid = Field(INT(), default=0, index=True)
-      
+    language = unicode( QtCore.QLocale().name() )
+    return Translation.translate_or_register( source, language )
+
+class Translation( Entity ):
+    using_options( tablename = 'translation' )
+    language = Field( Unicode( 20 ), index = True )
+    source = Field( Unicode( 500 ), index = True )
+    value = Field( Unicode( 500 ) )
+    cid = Field( INT(), default = 0, index = True )
+    uid = Field( INT(), default = 0, index = True )
+
     # cache, to prevent too much of the same sql queries
     _cache = dict()
-      
-    class Admin(EntityAdmin):
-        verbose_name_plural = _('translations')      
-        form_size = (700,150)
+
+    class Admin( EntityAdmin ):
+        verbose_name_plural = _( 'translations' )
+        form_size = ( 700, 150 )
         section = 'configuration'
         list_display = ['source', 'language', 'value', 'uid']
         list_filter = ['language']
-            
+
     @classmethod
-    def translate(cls, source, language):
+    def translate( cls, source, language ):
         """Translate source to language, return None if no translation is found"""
         if source:
-            key = (source, language)
+            key = ( source, language )
             if key in cls._cache:
                 return cls._cache[key]
-            translation = cls.query.filter_by(source=unicode(source), language=language).filter(Translation.uid!=0).first()
+            translation = cls.query.filter_by( source = unicode( source ), language = language ).filter( Translation.uid != 0 ).first()
             if translation:
                 cls._cache[key] = translation.value
                 return translation.value
             return None
         return ''
-    
+
     @classmethod
-    def translate_or_register(cls, source, language):
+    def translate_or_register( cls, source, language ):
         """Translate source to language, if no translation is found, register the
         source as to be translated and return the source"""
         if source:
-            source = unicode(source)
-            translation = cls.translate(source, language)
+            source = unicode( source )
+            translation = cls.translate( source, language )
             if not translation:
-                if not cls.query.filter_by(source=source, language=language).first():
-                    if (source, language) not in cls._cache:
+                if not cls.query.filter_by( source = source, language = language ).first():
+                    if ( source, language ) not in cls._cache:
                         from elixir import session
-                        registered_translation = Translation(source=source, language=language)
-                        cls._cache[(source, language)] = source
-                        session.flush([registered_translation])
-                        logger.debug('registed %s with id %s'%(source, registered_translation.id))
+                        registered_translation = Translation( source = source, language = language )
+                        cls._cache[( source, language )] = source
+                        session.flush( [registered_translation] )
+                        logger.debug( 'registed %s with id %s' % ( source, registered_translation.id ) )
                 return source
             return translation
         return ''
