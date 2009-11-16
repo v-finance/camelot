@@ -24,6 +24,14 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
+from camelot.model import metadata
+from elixir.entity import Entity
+from elixir.options import using_options
+from elixir.fields import Field
+from sqlalchemy.types import Date, Unicode, Integer, DateTime, Boolean
+from elixir.relationships import ManyToOne, OneToMany
+from elixir.properties import ColumnProperty
+from sqlalchemy.sql.expression import and_
 """Set of classes to store persons, organizations, relationships and
 permissions
 
@@ -34,7 +42,7 @@ from sqlalchemy import sql
 
 import camelot.types
 
-from camelot.model import *
+#from camelot.model import *
 
 __metadata__ = metadata
 
@@ -53,6 +61,8 @@ _current_authentication_ = threading.local()
 
 def end_of_times():
     return datetime.date( year = 2400, month = 12, day = 31 )
+
+from camelot.model.type_and_status import type_3_status
 
 def getCurrentAuthentication():
     """Get the currently logged in person"""
@@ -211,6 +221,7 @@ class Party( Entity ):
     contact_mechanisms = OneToMany( 'PartyContactMechanism', lazy = True )
     shares = OneToMany( 'SharedShareholder', inverse = 'established_to' )
     directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to' )
+    status = OneToMany( type_3_status( 'Party' ) )
 
     @property
     def name( self ):
@@ -292,7 +303,9 @@ class Organization( Party ):
                                 ( 'Customers', Form( ['customers'] ) ),
                                 ( 'Suppliers', Form( ['suppliers'] ) ),
                                 ( 'Corporate', Form( ['directors', 'shareholders', 'shares'] ) ),
-                                ( 'Branding', Form( ['logo'] ) ), ] )
+                                ( 'Branding', Form( ['logo'] ) ),
+                                ( 'Status', Form( ['status'] ) ),
+                                ] )
 
 Organization = documented_entity()( Organization )
 
@@ -365,7 +378,8 @@ class Person( Party ):
                                                          ] ),
                                                          'contact_mechanisms', 'comment', ], scrollbars = True ) ),
                                 ( 'Official', Form( ['birthdate', 'social_security_number', 'passport_number', 'passport_expiry_date', 'addresses', ], scrollbars = True ) ),
-                                ( 'Work', Form( ['employers', 'directed_organizations', 'shares'], scrollbars = True ) )
+                                ( 'Work', Form( ['employers', 'directed_organizations', 'shares'], scrollbars = True ) ),
+                                ( 'Status', Form( ['status'] ) ),
                                 ] )
 
 Person = documented_entity()( Person )
