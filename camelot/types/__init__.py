@@ -66,7 +66,7 @@ class VirtualAddress(types.TypeDecorator):
         def processor(value):
             if value is not None:
                 if value[1]:
-                    value = '://'.join(value)
+                    value = u'://'.join(value)
                 else:
                     value = None
             return impl_processor(value)
@@ -82,8 +82,10 @@ class VirtualAddress(types.TypeDecorator):
         def processor(value):
     
             if value:
-                return tuple(value.split('://'))
-            return ('phone','')
+                split = value.split('://')
+                if len(split)>1:
+                    return tuple(split)
+            return (u'phone',u'')
             
         return processor  
         

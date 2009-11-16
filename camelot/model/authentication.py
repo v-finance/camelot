@@ -39,6 +39,7 @@ These structures are modeled like described in 'The Data Model Resource Book'
 by Len Silverston, Chapter 2
 """
 from sqlalchemy import sql
+from sqlalchemy.orm import aliased
 
 import camelot.types
 
@@ -229,17 +230,25 @@ class Party( Entity ):
 
     @ColumnProperty
     def email( self ):
-        return sql.select( [ContactMechanism.mechanism],
-                          whereclause = and_( PartyContactMechanism.table.c.party_id == self.id,
-                                           ContactMechanism.table.c.mechanism.like( ( u'email', '%' ) ) ),
-                          from_obj = [ContactMechanism.table.join( PartyContactMechanism.table )] )
+        
+        cm = ContactMechanism
+        pcm = PartyContactMechanism
+        
+        return sql.select( [cm.mechanism],
+                          whereclause = and_( pcm.table.c.party_id == self.id,
+                                           cm.table.c.mechanism.like( ( u'email', u'%' ) ) ),
+                          from_obj = [cm.table.join( pcm.table )] ).limit(1)
 
     @ColumnProperty
     def phone( self ):
-        return sql.select( [ContactMechanism.mechanism],
-                          whereclause = and_( PartyContactMechanism.table.c.party_id == self.id,
-                                           ContactMechanism.table.c.mechanism.like( ( u'phone', '%' ) ) ),
-                          from_obj = [ContactMechanism.table.join( PartyContactMechanism.table )] )
+        
+        cm = ContactMechanism
+        pcm = PartyContactMechanism
+                
+        return sql.select( [cm.mechanism],
+                          whereclause = and_( pcm.table.c.party_id == self.id,
+                                           cm.table.c.mechanism.like( ( u'phone', u'%' ) ) ),
+                          from_obj = [cm.table.join( pcm.table )] ).limit(1)
 
     @ColumnProperty
     def full_name( self ):
