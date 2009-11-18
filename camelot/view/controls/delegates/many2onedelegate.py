@@ -66,7 +66,7 @@ class Many2OneDelegate(CustomDelegate):
                          option.rect.width()-4,
                          option.rect.height(),
                          Qt.AlignVCenter | Qt.AlignLeft,
-                         str(value))
+                         unicode(value))
         
         
         painter.restore()

@@ -213,9 +213,19 @@ class TabForm( Form ):
   .. image:: ../_static/form/tab_form.png
     """
 
-    def __init__( self, tabs ):
-        """:param tabs: a list of tuples of (tab_label, tab_form)"""
+    NORTH = 'North' 
+    SOUTH = 'South'
+    WEST = 'West'
+    EAST = 'East'
+    
+    def __init__( self, tabs, position=NORTH ):
+        """
+        :param tabs: a list of tuples of (tab_label, tab_form)
+        :param position: the position of the tabs with respect to the pages
+        """
         assert isinstance( tabs, list )
+        assert position in [self.NORTH, self.SOUTH, self.WEST, self.EAST]
+        self.position = position
         for tab in tabs:
             assert isinstance( tab, tuple )
         self.tabs = [( tab_label, structure_to_form( tab_form ) ) for tab_label, tab_form in tabs]
@@ -268,6 +278,7 @@ class TabForm( Form ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         from PyQt4 import QtGui
         widget = QtGui.QTabWidget( parent )
+        widget.setTabPosition(getattr(QtGui.QTabWidget, self.position))
         for tab_label, tab_form in self.tabs:
             widget.addTab( tab_form.render( widgets, widget ), unicode(tab_label).capitalize() )
         return widget
