@@ -38,6 +38,7 @@ class DateEditor(CustomEditor):
         if not editable:
             special_date.setEnabled(False)
             self.qdateedit.setEnabled(False)
+            self.qdateedit.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
       
         if nullable:
             special_date_menu.addAction('Clear')

@@ -25,7 +25,7 @@ class DateTimeEditor(CustomEditor):
         self.dateedit.setDisplayFormat(dateformat)
         self.dateedit.setCalendarPopup(True)
         layout.addWidget(self.dateedit)
-    
+            
         class TimeValidator(QtGui.QValidator):
             def __init__(self, parent):
                 QtGui.QValidator.__init__(self, parent)
@@ -48,7 +48,10 @@ class DateTimeEditor(CustomEditor):
         
         self.timeedit = QtGui.QComboBox(self)
         self.timeedit.setEditable(True)
-        self.timeedit.setEnabled(editable)
+        if not editable:
+            self.timeedit.setEnabled(False)
+            self.timeedit.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+        
         time_entries = [entry
                         for entry in itertools.chain(*(('%02i:00'%i, '%02i:30'%i)
                         for i in range(0,24)))]

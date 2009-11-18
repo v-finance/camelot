@@ -65,6 +65,7 @@ class FloatEditor(CustomEditor):
             layout.addWidget(self.calculatorButton)
         else:
             self.spinBox.setEnabled(False)
+            self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         self.setFocusProxy(self.spinBox)
         self.setLayout(layout)
     
