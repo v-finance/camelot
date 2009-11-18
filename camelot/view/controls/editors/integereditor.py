@@ -15,7 +15,8 @@ class IntegerEditor(CustomEditor):
                  maximum=constants.camelot_maxint,
                  editable=True,
                  prefix='',
-                 suffix='',               
+                 suffix='',
+                 calculator=True               
                  **kwargs):
         CustomEditor.__init__(self, parent)
         action = QtGui.QAction(self)
@@ -57,9 +58,9 @@ class IntegerEditor(CustomEditor):
         layout.setMargin(0)
         layout.setSpacing(0)
         layout.addWidget(self.spinBox)
-        if editable:
+        if editable and calculator:
             layout.addWidget(self.calculatorButton)
-        else:
+        if not editable:
             self.spinBox.setEnabled(False)
             self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         self.setFocusProxy(self.spinBox)
