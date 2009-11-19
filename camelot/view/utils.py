@@ -35,12 +35,13 @@ class ParsingError(Exception): pass
 
 
 def bool_from_string(s):
-    if s.lower() not in ['false', 'true']:
-        raise ParsingError()
+    if s is None: raise ParsingError()
+    if s.lower() not in ['false', 'true']: raise ParsingError()
     return eval(s.lower().capitalize())
 
 
 def date_from_string(s, format=constants.strftime_date_format):
+    if s is None: raise ParsingError()
     s = s.strip()
 
     try:
@@ -51,6 +52,7 @@ def date_from_string(s, format=constants.strftime_date_format):
 
 
 def time_from_string(s, format=constants.strftime_time_format):
+    if s is None: raise ParsingError()
     s = s.strip()
 
     try:
@@ -61,6 +63,7 @@ def time_from_string(s, format=constants.strftime_time_format):
 
 
 def datetime_from_string(s, format=constants.strftime_datetime_format):
+    if s is None: raise ParsingError()
     s = s.strip()
 
     try:
@@ -71,10 +74,11 @@ def datetime_from_string(s, format=constants.strftime_datetime_format):
 
 
 def int_from_string(s):
-    if s in None: raise ParsingError()
-    if s.empty(): return float()
+    if s is None: raise ParsingError()
+    if s.isspace(): return int()
 
     s = s.strip()
+    if len(s) == 0: return int()
 
     try:
         i = int(s)
@@ -82,12 +86,12 @@ def int_from_string(s):
         raise ParsingError()
     return i
 
-
-def float_from_string(s, precision):
+def float_from_string(s):
     if s is None: raise ParsingError()
-    if s.empty(): return float()
+    if s.isspace(): return float()
 
     s = s.strip()
+    if len(s) == 0: return float()
     
     try:
         f = float(s)
