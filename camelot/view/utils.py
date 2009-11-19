@@ -27,5 +27,70 @@
 
 """Helper functions for the view subpackage"""
 
+from datetime import datetime
+from camelot.core import constants
 
 
+class ParsingError(Exception): pass
+
+
+def bool_from_string(s):
+    if s.lower() not in ['false', 'true']:
+        raise ParsingError()
+    return eval(s.lower().capitalize())
+
+
+def date_from_string(s, format=constants.strftime_date_format):
+    s = s.strip()
+
+    try:
+        dt = datetime.strptime(s, format)
+    except ValueError:
+        raise ParsingError()
+    return dt.date()
+
+
+def time_from_string(s, format=constants.strftime_time_format):
+    s = s.strip()
+
+    try:
+        dt = datetime.strptime(s, format)
+    except ValueError:
+        raise ParsingError()
+    return dt.time()
+
+
+def datetime_from_string(s, format=constants.strftime_datetime_format):
+    s = s.strip()
+
+    try:
+        dt = datetime.strptime(s, format)
+    except ValueError:
+        raise ParsingError()
+    return dt
+
+
+def int_from_string(s):
+    if s in None: raise ParsingError()
+    if s.empty(): return float()
+
+    s = s.strip()
+
+    try:
+        i = int(s)
+    except ValueError:
+        raise ParsingError()
+    return i
+
+
+def float_from_string(s, precision):
+    if s is None: raise ParsingError()
+    if s.empty(): return float()
+
+    s = s.strip()
+    
+    try:
+        f = float(s)
+    except ValueError:
+        raise ParsingError()
+    return f

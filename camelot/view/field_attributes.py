@@ -34,151 +34,202 @@ import datetime
 from controls import delegates
 from camelot.core import constants
 from camelot.core.utils import ugettext as _
+from camelot.view.utils import (bool_from_string,
+                                date_from_string,
+                                time_from_string,
+                                datetime_from_string,
+                                int_from_string,
+                                float_from_string)
+
 
 _sqlalchemy_to_python_type_ = {
 
-  sqlalchemy.types.Boolean: lambda f: {'python_type': bool,
-                                       'editable': True,
-                                       'nullable':True,
-                                       'delegate': delegates.BoolDelegate },
+    sqlalchemy.types.Boolean: lambda f: {
+        'python_type': bool,
+        'editable': True,
+        'nullable': True,
+        'delegate': delegates.BoolDelegate,
+        'from_string': bool_from_string
+    },
 
-  sqlalchemy.types.BOOLEAN: lambda f: {'python_type': bool,
-                                       'editable': True,
-                                       'nullable':True,
-                                       'delegate': delegates.BoolDelegate},
+    sqlalchemy.types.BOOLEAN: lambda f: {
+        'python_type': bool,
+        'editable': True,
+        'nullable': True,
+        'delegate': delegates.BoolDelegate,
+        'from_string': bool_from_string
+    },
 
-  sqlalchemy.types.Date: lambda f: {'python_type': datetime.date,
-                                    'format': 'dd-MM-yyyy',
-                                    'editable': True,
-                                    'min': None,
-                                    'max': None,
-                                    'nullable':True,
-                                    'delegate': delegates.DateDelegate },
+    sqlalchemy.types.Date: lambda f: {
+        'python_type': datetime.date,
+        'format': constants.camelot_date_format,
+        'editable': True,
+        'min': None,
+        'max': None,
+        'nullable': True,
+        'delegate': delegates.DateDelegate,
+        'from_string': date_from_string
+    },
 
-  sqlalchemy.types.Float: lambda f: {'python_type': float,
-                                     'precision': f.precision,
-                                     'editable': True,
-                                     'minimum': constants.camelot_minfloat,
-                                     'maximum': constants.camelot_maxfloat,
-                                     'nullable':True,
-                                     'delegate': delegates.FloatDelegate},
+    sqlalchemy.types.Time : lambda f: {
+            'python_type': datetime.time,
+            'editable': True,
+            'nullable': True,
+            'widget': 'time',
+            'delegate': delegates.TimeDelegate,
+            'format': constants.camelot_time_format,
+            'nullable': True,
+            'from_string': time_from_string
+    },
 
-  sqlalchemy.types.Integer: lambda f: {'python_type': int,
-                                       'editable': True,
-                                       'minimum': constants.camelot_minint,
-                                       'maximum': constants.camelot_maxint,
-                                       'nullable':True,
-                                       'delegate':delegates.IntegerDelegate,
-                                       'from_string':int,
-                                       'to_string':unicode,
-                                       'widget': 'int'},
+    sqlalchemy.types.DateTime : lambda f: {
+        'python_type': datetime.datetime,
+        'editable': True,
+        'nullable': True,
+        'widget': 'time',
+        'format': constants.camelot_datetime_format,
+        'nullable': True,
+        'delegate': delegates.DateTimeDelegate,
+        'from_string': datetime_from_string
+    },
 
-  sqlalchemy.types.INT: lambda f: {'python_type': int,
-                                   'editable': True,
-                                   'minimum': constants.camelot_minint,
-                                   'maximum': constants.camelot_maxint,
-                                   'nullable':True,
-                                   'delegate':delegates.IntegerDelegate,
-                                   'widget': 'int'},
+    sqlalchemy.types.Float: lambda f: {
+        'python_type': float,
+        'precision': f.precision,
+        'editable': True,
+        'minimum': constants.camelot_minfloat,
+        'maximum': constants.camelot_maxfloat,
+        'nullable': True,
+        'delegate': delegates.FloatDelegate,
+        'from_string': float_from_string
+    },
 
-  sqlalchemy.types.String: lambda f: {'python_type': str,
-                                      'length': f.length,
-                                      'delegate': delegates.PlainTextDelegate,
-                                      'editable': True,
-                                      'nullable':True,
-                                      'widget': 'str'},
+    sqlalchemy.types.Integer: lambda f: {
+        'python_type': int,
+        'editable': True,
+        'minimum': constants.camelot_minint,
+        'maximum': constants.camelot_maxint,
+        'nullable': True,
+        'delegate': delegates.IntegerDelegate,
+        'from_string': int_from_string,
+        'to_string': unicode,
+        'widget': 'int'
+    },
 
-  sqlalchemy.types.TEXT: lambda f: {'python_type': str,
-                                    'length': f.length,
-                                    'delegate': delegates.PlainTextDelegate,
-                                    'editable': True,
-                                    'nullable':True,
-                                    'widget': 'str'},
+    sqlalchemy.types.INT: lambda f: {
+        'python_type': int,
+        'editable': True,
+        'minimum': constants.camelot_minint,
+        'maximum': constants.camelot_maxint,
+        'nullable': True,
+        'delegate': delegates.IntegerDelegate,
+        'from_string': int_from_string,
+        'widget': 'int'
+    },
 
-  sqlalchemy.types.Unicode: lambda f: {'python_type': str,
-                                       'length': f.length,
-                                       'delegate': delegates.PlainTextDelegate,
-                                       'editable': True,
-                                       'nullable':True,
-                                       'widget': 'str'},
+    sqlalchemy.types.String: lambda f: {
+        'python_type': str,
+        'length': f.length,
+        'delegate': delegates.PlainTextDelegate,
+        'editable': True,
+        'nullable': True,
+        'widget': 'str'
+    },
 
-  camelot.types.Image: lambda f: {'python_type': str,
-                                  'editable': True,
-                                  'nullable':True,
-                                  'delegate': delegates.ImageDelegate,
-                                  'storage':f.storage,
-                                  'preview_width':100,
-                                  'preview_height':100,},
+    sqlalchemy.types.TEXT: lambda f: {
+        'python_type': str,
+        'length': f.length,
+        'delegate': delegates.PlainTextDelegate,
+        'editable': True,
+        'nullable': True,
+        'widget': 'str'
+    },
 
-  camelot.types.Code: lambda f: {'python_type': str,
-                                 'editable': True,
-                                 'delegate': delegates.CodeDelegate,
-                                 'nullable':True,
-                                 'parts': f.parts},
+    sqlalchemy.types.Unicode: lambda f: {
+        'python_type': str,
+        'length': f.length,
+        'delegate': delegates.PlainTextDelegate,
+        'editable': True,
+        'nullable': True,
+        'widget': 'str'
+    },
 
-  camelot.types.IPAddress: lambda f: {'python_type': str,
-                                      'editable': True,
-                                      'widget': 'code',
-                                      'nullable':True,
-                                      'parts': f.parts,
-                                      'delegate': delegates.CodeDelegate,
-                                      },
+    camelot.types.Image: lambda f: {
+        'python_type': str,
+        'editable': True,
+        'nullable': True,
+        'delegate': delegates.ImageDelegate,
+        'storage': f.storage,
+        'preview_width': 100,
+        'preview_height': 100
+    },
 
-  camelot.types.VirtualAddress: lambda f:{'python_type':str,
-                                          'editable':True,
-                                          'nullable':True,
-                                          'delegate':delegates.VirtualAddressDelegate,
-                                          },
+    camelot.types.Code: lambda f: {
+        'python_type': str,
+        'editable': True,
+        'delegate': delegates.CodeDelegate,
+        'nullable': True,
+        'parts': f.parts
+    },
 
-  camelot.types.RichText: lambda f:{'python_type':str,
-                                    'editable':True,
-                                    'nullable':True,
-                                    'delegate':delegates.RichTextDelegate,
-                                   },
+    camelot.types.IPAddress: lambda f: {
+        'python_type': str,
+        'editable': True,
+        'nullable': True,
+        'parts': f.parts,
+        'delegate': delegates.CodeDelegate,
+        'widget': 'code'
+    },
 
-  camelot.types.Color: lambda f:{'delegate':delegates.ColorDelegate,
-                                 'python_type':str,
-                                 'editable':True,
-                                 'nullable':True,
-                                 'widget':'color'},
+    camelot.types.VirtualAddress: lambda f: {
+        'python_type': str,
+        'editable': True,
+        'nullable': True,
+        'delegate': delegates.VirtualAddressDelegate
+    },
 
-  camelot.types.Rating: lambda f:{'delegate':delegates.StarDelegate,
-                                  'editable':True,
-                                  'nullable':True,
-                                  'python_type':int,
-                                  'widget':'star'},
+    camelot.types.RichText: lambda f: {
+        'python_type': str,
+        'editable': True,
+        'nullable': True,
+        'delegate': delegates.RichTextDelegate
+    },
 
-  camelot.types.Enumeration: lambda f:{'delegate':delegates.ComboBoxDelegate,
-                                       'python_type':str,
-                                       'choices':lambda o:[(v,unicode(_(unicode(v).replace('_',' '))).capitalize()) for v in f.choices],
-                                       'editable':True,
-                                       'nullable':False,
-                                       'widget':'combobox',
-                                       },
+    camelot.types.Color: lambda f: {
+        'delegate': delegates.ColorDelegate,
+        'python_type': str,
+        'editable': True,
+        'nullable': True,
+        'widget': 'color'
+    },
 
-  sqlalchemy.types.Time : lambda f: {'python_type':datetime.time,
-                                     'editable':True,
-                                     'nullable':True,
-                                     'widget':'time',
-                                     'delegate':delegates.TimeDelegate,
-                                     'format':'hh:mm',
-                                     'nullable':True},
+    camelot.types.Rating: lambda f: {
+        'delegate': delegates.StarDelegate,
+        'editable': True,
+        'nullable': True,
+        'python_type': int,
+        'widget': 'star',
+        'from_string': int_from_string
+    },
 
+    camelot.types.Enumeration: lambda f: {
+        'delegate': delegates.ComboBoxDelegate,
+        'python_type': str,
+        'choices': lambda o: [
+            (v, unicode(_(unicode(v).replace('_', ' '))).capitalize()) 
+            for v in f.choices
+        ],
+        'editable': True,
+        'nullable': False,
+        'widget': 'combobox',
+    },
 
-  sqlalchemy.types.DateTime : lambda f: {'python_type':datetime.datetime,
-                                         'editable':True,
-                                         'nullable':True,
-                                         'widget':'time',
-                                         'format':'dd-MM-yyyy hh:mm',
-                                         'nullable':True,
-                                         'delegate':delegates.DateTimeDelegate},
-
-  camelot.types.File : lambda f: {'python_type':str,
-                                  'editable':True,
-                                  'delegate':delegates.FileDelegate,
-                                  'storage':f.storage, },
-
-
+    camelot.types.File : lambda f: {
+        'python_type': str,
+        'editable': True,
+        'delegate': delegates.FileDelegate,
+        'storage': f.storage
+    },
 }
 
 #
