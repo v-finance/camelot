@@ -232,6 +232,9 @@ _sqlalchemy_to_python_type_ = {
     },
 }
 
+field_types = _sqlalchemy_to_python_type_.keys()
+field_types.sort(lambda x, y: cmp(x.__name__, y.__name__))
+
 #
 # Generate a restructured text table out of the prevous data structure
 #
@@ -254,8 +257,6 @@ doc = """Field types handled through introspection :
 """ + row_separator + """
 """
 
-field_types = _sqlalchemy_to_python_type_.keys()
-field_types.sort(lambda x,y:cmp(x.__name__, y.__name__))
 for field_type in field_types:
     field_attributes = _sqlalchemy_to_python_type_[field_type](DummyField())
     delegate = field_attributes['delegate']
