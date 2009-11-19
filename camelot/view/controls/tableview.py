@@ -97,7 +97,7 @@ class HeaderWidget( QtGui.QWidget ):
         QtGui.QWidget.__init__( self, parent )
         widget_layout = QtGui.QHBoxLayout()
         self.search = self.search_widget( self )
-        title = QtGui.QLabel( admin.get_verbose_name_plural(), self )
+        title = QtGui.QLabel( admin.get_verbose_name_plural().capitalize(), self )
         title.setFont( self._title_font )
         widget_layout.addWidget( title )
         widget_layout.addWidget( self.search )
