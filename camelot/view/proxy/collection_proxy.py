@@ -81,8 +81,13 @@ def ToolTipDataFromObject(obj, columns):
     return data
   
 @model_function
-def RowDataFromObject( obj, columns ):
-    """Create row data from an object, by fetching its attributes"""
+def strip_data_from_object( obj, columns ):
+    """For every column in columns, get the corresponding value from the
+    object.  Getting a value from an object is time consuming, so using
+    this function should be minimized.
+    :param obj: the object of which to get data
+    :param columns: a list of columns for which to get data
+    """
     row_data = []
   
     def create_collection_getter( o, attr ):
@@ -99,14 +104,13 @@ def RowDataFromObject( obj, columns ):
     return row_data
   
 @model_function
-def RowDataAsUnicode( obj, columns ):
+def stripped_data_to_unicode( stripped_data, columns ):
     """Extract for each field in the row data a 'visible' form of 
     data"""
   
     row_data = []
   
-    for _i, ( field_name, field_attributes ) in enumerate( columns ):
-        field_data = getattr( obj, field_name )
+    for field_data, ( _field_name, field_attributes ) in zip( stripped_data, columns ):
         unicode_data = u''
         if 'unicode_format' in field_attributes:
             unicode_format = field_attributes['unicode_format']
@@ -117,6 +121,8 @@ def RowDataAsUnicode( obj, columns ):
                 if key == field_data:
                     unicode_data = value
                     continue
+        elif isinstance( field_data, DelayedProxy ):
+            unicode_data = u'...'
         elif isinstance( field_data, list ):
             unicode_data = u'.'.join( [unicode( e ) for e in field_data] )
         elif isinstance( field_data, datetime.datetime ):
@@ -509,10 +515,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                             # type error can be raised in case we try to set to a collection
                             pass
                         # update the cache
-                        row_data = RowDataFromObject( o, self.getColumns() )
+                        row_data = strip_data_from_object( o, self.getColumns() )
                         self.cache[Qt.EditRole].add_data( row, o, row_data )
                         self.cache[Qt.ToolTipRole].add_data( row, o, ToolTipDataFromObject( o, self.getColumns()) )
-                        self.cache[Qt.DisplayRole].add_data( row, o, RowDataAsUnicode( o, self.getColumns() ) )
+                        self.cache[Qt.DisplayRole].add_data( row, o, stripped_data_to_unicode( row_data, self.getColumns() ) )
                         if self.flush_changes and self.validator.isValid( row ):
                             # save the state before the update
                             try:
@@ -579,10 +585,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         offset = min( offset, self.rows )
         limit = min( limit, self.rows - offset )
         for i, o in enumerate( self.collection_getter()[offset:offset + limit + 1] ):
-            row_data = RowDataFromObject( o, columns )
+            row_data = strip_data_from_object( o, columns )
             self.cache[Qt.EditRole].add_data( i + offset, o, row_data )
             self.cache[Qt.ToolTipRole].add_data( i + offset, o, ToolTipDataFromObject( o, self.getColumns()) )
-            self.cache[Qt.DisplayRole].add_data( i + offset, o, RowDataAsUnicode( o, columns ) )
+            self.cache[Qt.DisplayRole].add_data( i + offset, o, stripped_data_to_unicode( row_data, columns ) )
         return ( offset, limit )
     
     @model_function
@@ -744,5 +750,5 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     def getData( self ):
         """Generator for all the data queried by this proxy"""
         for _i, o in enumerate( self.collection_getter() ):
-            yield RowDataFromObject( o, self.getColumns() )
+            yield strip_data_from_object( o, self.getColumns() )
       

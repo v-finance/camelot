@@ -44,25 +44,27 @@ class EntityValidator(ObjectValidator):
         fields_and_attributes = dict(self.admin.get_columns())
         fields_and_attributes.update(dict(self.admin.get_fields()))
         for field, attributes in fields_and_attributes.items():
-            value = getattr(entity_instance, field)
-            #@todo: check if field is a primary key instead of checking wether the name is id
-            if attributes['nullable']!=True and field!='id':
-                logger.debug('column %s is required'%(field))
-                if 'delegate' not in attributes:
-                    raise Exception('no delegate specified for %s'%(field))
-                is_null = False
-                if value==None:
-                    is_null = True
-                elif (attributes['delegate'] == delegates.CodeDelegate) and \
-                     (sum(len(c) for c in value) == 0):
-                    is_null = True
-                elif (attributes['delegate'] == delegates.PlainTextDelegate) and (len(value) == 0):
-                    is_null = True
-                elif (attributes['delegate'] == delegates.Many2OneDelegate) and (not value.id):
-                    is_null = True
-                elif (attributes['delegate'] == delegates.VirtualAddressDelegate) and (not value[1]):
-                    is_null = True                    
-                if is_null:
-                    messages.append(u'%s is a required field' % (attributes['name']))
+            # if the field was not editable, don't waste any time
+            if attributes['editable']:
+              value = getattr(entity_instance, field)
+              #@todo: check if field is a primary key instead of checking wether the name is id
+              if attributes['nullable']!=True and field!='id':
+                  logger.debug('column %s is required'%(field))
+                  if 'delegate' not in attributes:
+                      raise Exception('no delegate specified for %s'%(field))
+                  is_null = False
+                  if value==None:
+                      is_null = True
+                  elif (attributes['delegate'] == delegates.CodeDelegate) and \
+                       (sum(len(c) for c in value) == 0):
+                      is_null = True
+                  elif (attributes['delegate'] == delegates.PlainTextDelegate) and (len(value) == 0):
+                      is_null = True
+                  elif (attributes['delegate'] == delegates.Many2OneDelegate) and (not value.id):
+                      is_null = True
+                  elif (attributes['delegate'] == delegates.VirtualAddressDelegate) and (not value[1]):
+                      is_null = True                    
+                  if is_null:
+                      messages.append(u'%s is a required field' % (attributes['name']))
         logger.debug(u'messages : %s'%(u','.join(messages)))
         return messages

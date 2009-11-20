@@ -32,7 +32,7 @@ from PyQt4.QtCore import Qt
 import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
-from collection_proxy import CollectionProxy, RowDataAsUnicode, RowDataFromObject, ToolTipDataFromObject
+from collection_proxy import CollectionProxy, stripped_data_to_unicode, strip_data_from_object, ToolTipDataFromObject
 from camelot.view.model_thread import model_function, gui_function
 
 
@@ -90,7 +90,7 @@ class QueryTableProxy(CollectionProxy):
     def getData(self):
         """Generator for all the data queried by this proxy"""
         for _i,o in enumerate(self._query_getter().all()):
-            yield RowDataFromObject(o, self.getColumns())
+            yield strip_data_from_object(o, self.getColumns())
 
     @model_function
     def _extend_cache(self, offset, limit):
@@ -98,19 +98,19 @@ class QueryTableProxy(CollectionProxy):
         q = self._query_getter().offset(offset).limit(limit)
         columns = self.getColumns()
         for i, o in enumerate(q.all()):
-            row_data = RowDataFromObject(o, columns)
+            row_data = strip_data_from_object(o, columns)
             self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
             self.cache[Qt.ToolTipRole].add_data(i+offset, o, ToolTipDataFromObject(o, columns))
-            self.cache[Qt.DisplayRole].add_data(i+offset, o, RowDataAsUnicode(o, columns))
+            self.cache[Qt.DisplayRole].add_data(i+offset, o, stripped_data_to_unicode(row_data, columns))
         rows_in_query = (self.rows - len(self._appended_rows))
         # Verify if rows that have not yet been flushed have been requested
         if offset+limit>=rows_in_query:
             for row in range(max(rows_in_query,offset), min(offset+limit, self.rows)):
                 o = self._get_object(row)
-                row_data = RowDataFromObject(o, columns)
+                row_data = strip_data_from_object(o, columns)
                 self.cache[Qt.EditRole].add_data(row, o, row_data)
                 self.cache[Qt.ToolTipRole].add_data(row, o, ToolTipDataFromObject(o, columns))
-                self.cache[Qt.DisplayRole].add_data(row, o, RowDataAsUnicode(o, columns))
+                self.cache[Qt.DisplayRole].add_data(row, o, stripped_data_to_unicode(row_data, columns))
         return (offset, limit)
 
     @model_function
