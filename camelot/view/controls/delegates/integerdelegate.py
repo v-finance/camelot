@@ -60,7 +60,7 @@ class IntegerDelegate(CustomDelegate):
         if value in (None, ValueLoading):
             value_str = ''
         else:
-            value_str = str(value)
+            value_str = '%i'%value
         if self.unicode_format != None:
             value_str = self.unicode_format(value)
     
