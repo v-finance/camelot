@@ -77,9 +77,9 @@ class EntityAdmin( ObjectAdmin ):
     def get_verbose_identifier( self, obj ):
         if hasattr( obj, 'id' ) and obj.id:
             if hasattr( obj, '__unicode__' ):
-                return u'%s %s : %s' % ( unicode( self.get_verbose_name() ), unicode( obj.id ), unicode( obj ) )
+                return u'%s %s : %s' % ( unicode( self.get_verbose_name().capitalize() ), unicode( obj.id ), unicode( obj ) )
             else:
-                return u'%s %s' % ( self.get_verbose_name(), unicode( obj.id ) )
+                return u'%s %s' % ( self.get_verbose_name().capitalize(), unicode( obj.id ) )
         else:
             return self.get_verbose_name()
       
@@ -298,7 +298,7 @@ class EntityAdmin( ObjectAdmin ):
                 AbstractView.__init__( self, parent )
                 self.widget_layout = QtGui.QVBoxLayout()
                 self.widget_layout.setMargin( 0 )
-                self.form_view = admin.create_form_view( 'New', model, 0, parent )
+                self.form_view = admin.create_form_view( _('new'), model, 0, parent )
                 self.widget_layout.insertWidget( 0, self.form_view )
                 self.setLayout( self.widget_layout )
                 self.validate_before_close = True

@@ -110,7 +110,7 @@ class EmployerEmployee( PartyRelationship ):
         return sql.select( [Person.social_security_number], Person.party_id == self.established_to_party_id )
 
     def __unicode__( self ):
-        return u'%s employed by %s' % ( unicode( self.established_to ), unicode( self.established_from ) )
+        return u'%s %s %s' % ( unicode( self.established_to ), _('employed by'),unicode( self.established_from ) )
 
     class Admin( EntityAdmin ):
         name = 'Employer - Employee'
