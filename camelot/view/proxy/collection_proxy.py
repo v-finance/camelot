@@ -104,7 +104,7 @@ def strip_data_from_object( obj, columns ):
     return row_data
   
 @model_function
-def stripped_data_to_unicode( stripped_data, columns ):
+def stripped_data_to_unicode( stripped_data, obj, columns ):
     """Extract for each field in the row data a 'visible' form of 
     data"""
   
@@ -518,7 +518,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                         row_data = strip_data_from_object( o, self.getColumns() )
                         self.cache[Qt.EditRole].add_data( row, o, row_data )
                         self.cache[Qt.ToolTipRole].add_data( row, o, ToolTipDataFromObject( o, self.getColumns()) )
-                        self.cache[Qt.DisplayRole].add_data( row, o, stripped_data_to_unicode( row_data, self.getColumns() ) )
+                        self.cache[Qt.DisplayRole].add_data( row, o, stripped_data_to_unicode( row_data, o, self.getColumns() ) )
                         if self.flush_changes and self.validator.isValid( row ):
                             # save the state before the update
                             try:
@@ -588,7 +588,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             row_data = strip_data_from_object( o, columns )
             self.cache[Qt.EditRole].add_data( i + offset, o, row_data )
             self.cache[Qt.ToolTipRole].add_data( i + offset, o, ToolTipDataFromObject( o, self.getColumns()) )
-            self.cache[Qt.DisplayRole].add_data( i + offset, o, stripped_data_to_unicode( row_data, columns ) )
+            self.cache[Qt.DisplayRole].add_data( i + offset, o, stripped_data_to_unicode( row_data, o, columns ) )
         return ( offset, limit )
     
     @model_function

@@ -101,7 +101,7 @@ class QueryTableProxy(CollectionProxy):
             row_data = strip_data_from_object(o, columns)
             self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
             self.cache[Qt.ToolTipRole].add_data(i+offset, o, ToolTipDataFromObject(o, columns))
-            self.cache[Qt.DisplayRole].add_data(i+offset, o, stripped_data_to_unicode(row_data, columns))
+            self.cache[Qt.DisplayRole].add_data(i+offset, o, stripped_data_to_unicode(row_data, o, columns))
         rows_in_query = (self.rows - len(self._appended_rows))
         # Verify if rows that have not yet been flushed have been requested
         if offset+limit>=rows_in_query:
@@ -110,7 +110,7 @@ class QueryTableProxy(CollectionProxy):
                 row_data = strip_data_from_object(o, columns)
                 self.cache[Qt.EditRole].add_data(row, o, row_data)
                 self.cache[Qt.ToolTipRole].add_data(row, o, ToolTipDataFromObject(o, columns))
-                self.cache[Qt.DisplayRole].add_data(row, o, stripped_data_to_unicode(row_data, columns))
+                self.cache[Qt.DisplayRole].add_data(row, o, stripped_data_to_unicode(row_data, o, columns))
         return (offset, limit)
 
     @model_function
