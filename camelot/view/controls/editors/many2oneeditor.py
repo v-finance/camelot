@@ -55,7 +55,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.search_button = QtGui.QToolButton()
         self.search_button.setFocusPolicy( Qt.ClickFocus )
         self.search_button.setIcon( Icon( 'tango/16x16/actions/edit-clear.png' ).getQIcon() )
-        self.search_button.setToolTip(_('clear'))
+        self.search_button.setToolTip(unicode(_('clear')))
         self.search_button.setAutoRaise( True )
         self.search_button.setFixedHeight( self.get_height() )
         self.connect( self.search_button,
@@ -66,7 +66,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.open_button = QtGui.QToolButton()
         self.open_button.setFocusPolicy( Qt.ClickFocus )
         self.open_button.setIcon( Icon( 'tango/16x16/actions/document-new.png' ).getQIcon() )
-        self.open_button.setToolTip( _('new') )
+        self.open_button.setToolTip( unicode(_('new')) )
         self.open_button.setFixedHeight( self.get_height() )
         self.connect( self.open_button,
                      QtCore.SIGNAL( 'clicked()' ),
@@ -232,15 +232,15 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.search_input.setText( desc )
         if pk != False: 
             self.open_button.setIcon( Icon( 'tango/16x16/places/folder.png' ).getQIcon() )
-            self.open_button.setToolTip(_('open'))
+            self.open_button.setToolTip(unicode(_('open')))
             self.open_button.setEnabled(True)
             self.search_button.setIcon( Icon( 'tango/16x16/actions/edit-clear.png' ).getQIcon() )
-            self.search_button.setToolTip(_('clear'))
+            self.search_button.setToolTip(unicode(_('clear')))
             self.entity_set = True
             #self.search_input.setReadOnly(True)
         else:
             self.open_button.setIcon( Icon( 'tango/16x16/actions/document-new.png' ).getQIcon() )
-            self.open_button.setToolTip( _('new') )
+            self.open_button.setToolTip( unicode(_('new')) )
             self.open_button.setEnabled(self._editable)
             self.search_button.setIcon( Icon( 'tango/16x16/actions/system-search.png' ).getQIcon() )
             self.search_button.setToolTip(_('search'))
