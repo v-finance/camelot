@@ -463,6 +463,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
       
                 @model_function
                 def update_model_and_cache():
+                    attribute, field_attributes = self.getColumns()[column]
+                    # if the field is not editable, don't waste any time and get out of here
+                    if not field_attributes['editable']:
+                        return False
+                      
                     from sqlalchemy.exceptions import DatabaseError
                     from sqlalchemy import orm
                     new_value = value()
@@ -470,6 +475,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
           
                     if new_value == ValueLoading:
                         return None
+                      
                     o = self._get_object( row )
                     if not o:
                         # the object might have been deleted from the collection while the editor
@@ -480,7 +486,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                         except KeyError:
                             pass
                         return
-                    attribute, field_attributes = self.getColumns()[column]
+                    
                     old_value = getattr( o, attribute )
                     changed = ( new_value != old_value )
                     #
