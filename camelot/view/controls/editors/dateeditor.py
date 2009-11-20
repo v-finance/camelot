@@ -31,7 +31,7 @@ class DateEditor(CustomEditor):
         special_date.setIcon(
             Icon('tango/16x16/apps/office-calendar.png').getQIcon())
         special_date.setAutoRaise(True)
-        special_date.setToolTip(_('special dates'))
+        special_date.setToolTip('Special dates')
         special_date.setMenu(special_date_menu)
         special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
         special_date.setFixedHeight(self.get_height())

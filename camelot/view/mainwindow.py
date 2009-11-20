@@ -348,6 +348,10 @@ class MainWindow( QtGui.QMainWindow ):
     def help( self ):
         TOP_LEVEL = None
         self.view = QtWebKit.QWebView( TOP_LEVEL )
+        #print self.app_admin.get_help_url()
+        #print self.app_admin.get_help_base()
+        #index_file = open(self.app_admin.get_help_url(),'r')
+        #self.view.setHtml ( index_file.read(), self.app_admin.get_help_base() )
         self.view.load( self.app_admin.get_help_url() )
         self.view.setWindowTitle( _('Help Browser') )
         self.view.setWindowIcon( self.helpAct.icon() )
