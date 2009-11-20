@@ -25,6 +25,7 @@
 #
 #  ============================================================================
 from camelot.model import metadata
+from camelot.model import entities
 from elixir.entity import Entity
 from elixir.options import using_options
 from elixir.fields import Field
@@ -222,7 +223,7 @@ class Party( Entity ):
     contact_mechanisms = OneToMany( 'PartyContactMechanism', lazy = True )
     shares = OneToMany( 'SharedShareholder', inverse = 'established_to' )
     directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to' )
-    status = OneToMany( type_3_status( 'Party' ) )
+    status = OneToMany( type_3_status( 'Party', metadata, entities ) )
 
     @property
     def name( self ):

@@ -8,7 +8,7 @@ from camelot.core.utils import variant_to_pyobject, create_constant_function
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post
 from camelot.view.search import create_entity_search_query_decorator
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext as _
 
 class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
     """Widget for editing many 2 one relations"""

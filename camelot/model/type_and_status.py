@@ -17,15 +17,13 @@ from camelot.view.elixir_admin import EntityAdmin
 from camelot.types import Code
 import datetime
 
-__metadata__ = metadata
-
-def type_3_status( statusable_entity, verbose_entity_name = None ):
+def type_3_status( statusable_entity, metadata, collection, verbose_entity_name = None ):
     '''
     Creates a new type 3 status related to the given entity
     .. statusable_entity:: A string referring to an entity.
     '''
-    t3_status_name = statusable_entity + '_t3status'
-    t3_status_type_name = statusable_entity + '_t3status_type'
+    t3_status_name = statusable_entity + '_status'
+    t3_status_type_name = statusable_entity + '_status_type'
 
     class Type3StatusTypeMeta( EntityMeta ):
         def __new__( cls, classname, bases, dictionary ):
@@ -36,7 +34,7 @@ def type_3_status( statusable_entity, verbose_entity_name = None ):
                                   bases, dictionary )
 
     class Type3StatusType( Entity, ):
-        using_options( tablename = t3_status_type_name )
+        using_options( tablename = t3_status_type_name.lower(), metadata=metadata, collection=collection )
         __metaclass__ = Type3StatusTypeMeta
 
         code = Field( Code( parts = ['>AAAA'] ), index = True,
@@ -67,7 +65,7 @@ def type_3_status( statusable_entity, verbose_entity_name = None ):
         .. attribute:: status_from_date For statuses that require a date range
         .. attribute:: from_date When a status was enacted or set
         """
-        using_options( tablename = t3_status_name )
+        using_options( tablename = t3_status_name.lower(), metadata=metadata, collection=collection )
         __metaclass__ = Type3StatusMeta
 
         status_datetime = Field( Date, required = False )
@@ -94,7 +92,7 @@ def type_3_status( statusable_entity, verbose_entity_name = None ):
 
     return t3_status_name
 
-def entity_type( typable_entity, verbose_entity_name = None ):
+def entity_type( typable_entity, metadata, collection, verbose_entity_name = None ):
     '''
     Creates a new type related to the given entity.
     .. typeable_entity:: A string referring to an entity.
@@ -110,7 +108,7 @@ def entity_type( typable_entity, verbose_entity_name = None ):
                                  bases, dictionary )
 
     class Type( Entity ):
-        using_options( tablename = type_name )
+        using_options( tablename = type_name.lower(), metadata=metadata, collection=collection )
         __metaclass__ = TypeMeta
 
         type_description_for = OneToMany( typable_entity )
