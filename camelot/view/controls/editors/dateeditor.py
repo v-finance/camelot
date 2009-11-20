@@ -25,8 +25,8 @@ class DateEditor(CustomEditor):
         self.qdateedit.setDisplayFormat(QtCore.QString(format))
     
         special_date_menu = QtGui.QMenu(self)
-        special_date_menu.addAction(_('today'))
-        special_date_menu.addAction(_('last date'))
+        special_date_menu.addAction('Today')
+        special_date_menu.addAction('Last date')
         special_date = QtGui.QToolButton(self)
         special_date.setIcon(
             Icon('tango/16x16/apps/office-calendar.png').getQIcon())
@@ -42,7 +42,7 @@ class DateEditor(CustomEditor):
             self.qdateedit.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
       
         if nullable:
-            special_date_menu.addAction(_('clear'))
+            special_date_menu.addAction('Clear')
             self.qdateedit.setSpecialValueText('0/0/0')
         else:
             self.qdateedit.setCalendarPopup(True)
