@@ -45,13 +45,13 @@ All files (*)"""
         self.open_button.setIcon(self.open_icon)
         self.open_button.setEnabled(self.editable)
         self.open_button.setAutoRaise(True)
-        self.open_button.setToolTip(_('open image'))
+        self.open_button.setToolTip(unicode(_('open image')))
         self.connect(self.open_button, QtCore.SIGNAL('clicked()'), self.open_button_clicked)
         
         self.clear_button = QtGui.QToolButton()
         self.clear_button.setIcon(self.clear_icon)
         self.clear_button.setEnabled(self.editable)
-        self.clear_button.setToolTip(_('delete image'))
+        self.clear_button.setToolTip(unicode(_('delete image')))
         self.clear_button.setAutoRaise(True)
         self.connect(self.clear_button, QtCore.SIGNAL('clicked()'), self.clear_button_clicked)
 
@@ -83,14 +83,14 @@ All files (*)"""
         value = CustomEditor.set_value(self, value)
         if value:
             self.open_button.setIcon(self.open_icon)
-            self.open_button.setToolTip(_('open file'))
+            self.open_button.setToolTip(unicode(_('open file')))
             if value!=self.value:
                 from camelot.view.model_thread import post
                 post(lambda:value.checkout_thumbnail(self.preview_width,self.preview_height), self.set_image)            
         else:
             self.clear_image()
             self.open_button.setIcon(self.new_icon)
-            self.open_button.setToolTip(_('add file'))
+            self.open_button.setToolTip(unicode(_('add file')))
         self.value = value
         return value
     

@@ -31,6 +31,7 @@ These structures can be transformed to QT forms.
 """
 
 from camelot.view.model_thread import gui_function
+from camelot.core.utils import ugettext_lazy as _
 
 def structure_to_filter(structure):
     """Convert a python data structure to a filter, using the following rules :
@@ -108,7 +109,7 @@ class Filter(object):
         options = [(self._value_to_string(value[0]), create_decorator(col, value[0], joins))
                    for value in session.execute(query)]
     
-        return (filter_names[0],[('All', lambda q: q)] + options)
+        return (filter_names[0],[(_('all'), lambda q: q)] + options)
         
 class GroupBoxFilter(Filter):
     """Filter where the items are displayed in a QGroupBox"""
