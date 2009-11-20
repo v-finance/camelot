@@ -59,7 +59,7 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         icon = Icon( 'tango/16x16/places/user-trash.png' ).getQIcon()
         delete_button.setIcon( icon )
         delete_button.setAutoRaise( True )
-        delete_button.setToolTip(_('Delete'))
+        delete_button.setToolTip(_('delete'))
         self.connect( delete_button,
                      QtCore.SIGNAL( 'clicked()' ),
                      self.deleteSelectedRows )
@@ -67,18 +67,18 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         icon = Icon( 'tango/16x16/actions/document-new.png' ).getQIcon()
         add_button.setIcon( icon )
         add_button.setAutoRaise( True )
-        add_button.setToolTip(_('New'))
+        add_button.setToolTip(_('new'))
         self.connect( add_button, QtCore.SIGNAL( 'clicked()' ), self.newRow )
         copy_button = QtGui.QToolButton()
         icon = Icon( 'tango/16x16/actions/edit-copy.png' ).getQIcon()
         copy_button.setIcon( icon )
         copy_button.setAutoRaise( True )
-        copy_button.setToolTip(_('Copy'))
+        copy_button.setToolTip(_('copy'))
         self.connect( copy_button, QtCore.SIGNAL( 'clicked()' ), self.copy_selected_rows )        
         export_button = QtGui.QToolButton()
         export_button.setIcon( Icon( 'tango/16x16/mimetypes/x-office-spreadsheet.png' ).getQIcon() )
         export_button.setAutoRaise( True )
-        export_button.setToolTip(_('Export as spreadsheet'))
+        export_button.setToolTip(_('export as spreadsheet'))
         self.connect( export_button,
                      QtCore.SIGNAL( 'clicked()' ),
                      self.exportToExcel )

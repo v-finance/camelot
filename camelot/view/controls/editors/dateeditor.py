@@ -7,6 +7,7 @@ from PyQt4.QtCore import Qt
 from customeditor import CustomEditor
 from camelot.core import constants
 from camelot.view.art import Icon
+from camelot.core.utils import ugettext_lazy as _
 
 class DateEditor(CustomEditor):
     """Widget for editing date values"""
@@ -24,13 +25,13 @@ class DateEditor(CustomEditor):
         self.qdateedit.setDisplayFormat(QtCore.QString(format))
     
         special_date_menu = QtGui.QMenu(self)
-        special_date_menu.addAction('Today')
-        special_date_menu.addAction('Last date')
+        special_date_menu.addAction(_('today'))
+        special_date_menu.addAction(_('last date'))
         special_date = QtGui.QToolButton(self)
         special_date.setIcon(
             Icon('tango/16x16/apps/office-calendar.png').getQIcon())
         special_date.setAutoRaise(True)
-        special_date.setToolTip('Special dates')
+        special_date.setToolTip(_('special dates'))
         special_date.setMenu(special_date_menu)
         special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
         special_date.setFixedHeight(self.get_height())
@@ -41,7 +42,7 @@ class DateEditor(CustomEditor):
             self.qdateedit.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
       
         if nullable:
-            special_date_menu.addAction('Clear')
+            special_date_menu.addAction(_('clear'))
             self.qdateedit.setSpecialValueText('0/0/0')
         else:
             self.qdateedit.setCalendarPopup(True)

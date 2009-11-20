@@ -27,7 +27,7 @@
 
 from PyQt4 import QtCore, QtGui
 from camelot.view.art import Icon
-
+from camelot.core.utils import ugettext as _
 
 class SimpleSearchControl(QtGui.QWidget):
     """A control that displays a single text field in which search keywords can
@@ -54,7 +54,7 @@ class SimpleSearchControl(QtGui.QWidget):
 
         # Search input
         self.search_input = QtGui.QLineEdit()
-        self.search_input.setToolTip('Type words to search for')
+        self.search_input.setToolTip(_('type words to search for'))
         #self.search_input.setStyleSheet('QLineEdit{ border-radius: 0.25em;}')
         self.connect(self.search_input,
                      QtCore.SIGNAL('returnPressed()'),

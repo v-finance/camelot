@@ -4,6 +4,7 @@ from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor, editingFinished
 from camelot.view.art import Icon
+from camelot.core.utils import ugettext_lazy as _
 
 class FileEditor(CustomEditor):
     """Widget for editing File fields"""
@@ -35,7 +36,7 @@ class FileEditor(CustomEditor):
         self.clear_button = QtGui.QToolButton()
         self.clear_button.setFocusPolicy(Qt.ClickFocus)
         self.clear_button.setIcon(self.clear_icon)
-        self.clear_button.setToolTip('Delete file')
+        self.clear_button.setToolTip(_('delete file'))
         self.clear_button.setAutoRaise(True)
         self.clear_button.setEnabled(self.editable)
         self.connect(self.clear_button,
@@ -46,7 +47,7 @@ class FileEditor(CustomEditor):
         self.open_button = QtGui.QToolButton()
         self.open_button.setFocusPolicy(Qt.ClickFocus)
         self.open_button.setIcon(self.new_icon)
-        self.open_button.setToolTip('Add file')
+        self.open_button.setToolTip(_('add file'))
         self.open_button.setEnabled(self.editable)
         self.connect(self.open_button,
                      QtCore.SIGNAL('clicked()'),
@@ -74,11 +75,11 @@ class FileEditor(CustomEditor):
         if value:
             self.filename.setText(value.verbose_name)
             self.open_button.setIcon(self.open_icon)
-            self.open_button.setToolTip('Open file')
+            self.open_button.setToolTip(_('open file'))
         else:
             self.filename.setText('')
             self.open_button.setIcon(self.new_icon)
-            self.open_button.setToolTip('Add file')
+            self.open_button.setToolTip(_('add file'))
         return value
         
     def get_value(self):
