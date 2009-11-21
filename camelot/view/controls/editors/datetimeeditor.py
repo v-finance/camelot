@@ -50,7 +50,6 @@ class DateTimeEditor(CustomEditor):
         self.timeedit.setEditable(True)
         if not editable:
             self.timeedit.setEnabled(False)
-            self.timeedit.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         
         time_entries = [entry
                         for entry in itertools.chain(*(('%02i:00'%i, '%02i:30'%i)
