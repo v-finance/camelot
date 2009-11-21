@@ -1,6 +1,4 @@
 import logging
-import inspect
-import camelot
 import os
 
 logging.basicConfig(level=logging.ERROR)
@@ -14,10 +12,8 @@ REPOSITORY = 'repository'
 ENGINE = lambda:'sqlite:///model-data.sqlite'
 
 def setup_model():
-    from model import *
-    from camelot.model.memento import *
-    from camelot.model.synchronization import *
-    from camelot.model.authentication import *
-    from camelot.model.i18n import *
+    import camelot.model
+    from elixir import setup_all
     setup_all(create_tables=True)
+    from camelot.model.authentication import updateLastLogin
     updateLastLogin()

@@ -4,7 +4,7 @@ from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor, editingFinished
 from camelot.view.art import Icon
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext as _
 
 class FileEditor(CustomEditor):
     """Widget for editing File fields"""
