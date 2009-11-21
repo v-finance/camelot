@@ -120,6 +120,7 @@ class EntityAdmin(ObjectAdmin):
                 python_type = str,
                 length = None,
                 tooltip = None,
+                background_color = None,
                 minimal_column_width = 0,
                 editable = False,
                 nullable = True,

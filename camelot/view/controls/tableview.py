@@ -46,7 +46,7 @@ class TableWidget( QtGui.QTableView):
   
     def __init__( self, parent = None ):
         QtGui.QTableView.__init__( self, parent )
-        logger.debug( 'create querytable' )
+        logger.debug( 'create TableWidget' )
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
         self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | QtGui.QAbstractItemView.DoubleClicked )
         self.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )

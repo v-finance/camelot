@@ -32,7 +32,9 @@ from PyQt4.QtCore import Qt
 import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
-from collection_proxy import CollectionProxy, stripped_data_to_unicode, strip_data_from_object, ToolTipDataFromObject
+from collection_proxy import CollectionProxy, stripped_data_to_unicode, \
+                             strip_data_from_object, tool_tips_from_object, \
+                             background_colors_from_object
 from camelot.view.model_thread import model_function, gui_function
 
 
@@ -100,7 +102,8 @@ class QueryTableProxy(CollectionProxy):
         for i, o in enumerate(q.all()):
             row_data = strip_data_from_object(o, columns)
             self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
-            self.cache[Qt.ToolTipRole].add_data(i+offset, o, ToolTipDataFromObject(o, columns))
+            self.cache[Qt.ToolTipRole].add_data(i+offset, o, tool_tips_from_object(o, columns))
+            self.cache[Qt.BackroundColorRole].add_data(i+offset, o, background_colors_from_object(o, columns))
             self.cache[Qt.DisplayRole].add_data(i+offset, o, stripped_data_to_unicode(row_data, o, columns))
         rows_in_query = (self.rows - len(self._appended_rows))
         # Verify if rows that have not yet been flushed have been requested
@@ -109,7 +112,8 @@ class QueryTableProxy(CollectionProxy):
                 o = self._get_object(row)
                 row_data = strip_data_from_object(o, columns)
                 self.cache[Qt.EditRole].add_data(row, o, row_data)
-                self.cache[Qt.ToolTipRole].add_data(row, o, ToolTipDataFromObject(o, columns))
+                self.cache[Qt.ToolTipRole].add_data(row, o, tool_tips_from_object(o, columns))
+                self.cache[Qt.BackgroundColorRole].add_data(row, o, background_colors_from_object(o, columns))
                 self.cache[Qt.DisplayRole].add_data(row, o, stripped_data_to_unicode(row_data, o, columns))
         return (offset, limit)
 

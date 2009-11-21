@@ -67,7 +67,7 @@ class DelayedProxy( object ):
         return CollectionProxy( *self.args, **self.kwargs )
     
 @model_function
-def ToolTipDataFromObject(obj, columns):
+def tool_tips_from_object(obj, columns):
   
     data = []
     
@@ -75,6 +75,21 @@ def ToolTipDataFromObject(obj, columns):
         tooltip_getter = col[1]['tooltip']
         if tooltip_getter:
             data.append( tooltip_getter(obj) )
+        else:
+            data.append( None )
+            
+    return data
+
+@model_function
+def background_colors_from_object(obj, columns):
+  
+    data = []
+    
+    for col in columns:
+        background_color_getter = col[1]['background_color']
+        if background_color_getter:
+            background_color = background_color_getter(obj)
+            data.append( background_color )
         else:
             data.append( None )
             
@@ -189,9 +204,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.rows = 0
         self._columns = []
         self.max_number_of_rows = max_number_of_rows
-        self.cache = {Qt.DisplayRole : fifo( 10 * self.max_number_of_rows ),
-                      Qt.EditRole    : fifo( 10 * self.max_number_of_rows ),
-                      Qt.ToolTipRole : fifo( 10 * self.max_number_of_rows ),}
+        self.cache = {Qt.DisplayRole         : fifo( 10 * self.max_number_of_rows ),
+                      Qt.EditRole            : fifo( 10 * self.max_number_of_rows ),
+                      Qt.ToolTipRole         : fifo( 10 * self.max_number_of_rows ),
+                      Qt.BackgroundColorRole : fifo( 10 * self.max_number_of_rows ), }
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         # The rows that have unflushed changes
@@ -266,9 +282,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     
     @gui_function
     def _refresh_content(self, rows ):
-        self.cache = {Qt.DisplayRole : fifo( 10 * self.max_number_of_rows ),
-                      Qt.EditRole    : fifo( 10 * self.max_number_of_rows ),
-                      Qt.ToolTipRole : fifo( 10 * self.max_number_of_rows )}
+        self.cache = {Qt.DisplayRole         : fifo( 10 * self.max_number_of_rows ),
+                      Qt.EditRole            : fifo( 10 * self.max_number_of_rows ),
+                      Qt.ToolTipRole         : fifo( 10 * self.max_number_of_rows ),
+                      Qt.BackgroundColorRole : fifo( 10 * self.max_number_of_rows ),}
         self.setRowCount( rows )
     
     def setCollectionGetter( self, collection_getter ):
@@ -280,6 +297,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.cache[Qt.DisplayRole].delete_by_row( row )
         self.cache[Qt.EditRole].delete_by_row( row )
         self.cache[Qt.ToolTipRole].delete_by_row( row )
+        self.cache[Qt.BackgroundColorRole].delete_by_row( row )
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
         self.emit( QtCore.SIGNAL( sig ),
                   self.index( row, 0 ),
@@ -293,6 +311,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             row = self.cache[Qt.DisplayRole].delete_by_entity( entity )
             row = self.cache[Qt.EditRole].delete_by_entity( entity )
             row = self.cache[Qt.ToolTipRole].delete_by_entity( entity )
+            row = self.cache[Qt.BackgroundColorRole].delete_by_entity( entity )
             if row != None:
                 self.logger.debug( 'updated row %i' % row )
                 sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
@@ -431,7 +450,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
            not ( 0 <= index.row() <= self.rowCount( index ) ) or \
            not ( 0 <= index.column() <= self.columnCount( index ) ):
             return QtCore.QVariant()
-        if role in ( Qt.DisplayRole, Qt.EditRole, Qt.ToolTipRole ):
+        if role in ( Qt.DisplayRole, Qt.EditRole, Qt.ToolTipRole,):
             data = self._get_row_data( index.row(), role )
             try:
                 value = data[index.column()]
@@ -451,7 +470,16 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         elif role == Qt.ForegroundRole:
             pass
         elif role == Qt.BackgroundRole:
-            return QtCore.QVariant(QtGui.QColor('white'))
+            data = self._get_row_data( index.row(), role )
+            try:
+                value = data[index.column()]
+            except:
+                self.logger.error( 'Programming error, could not find data of column %s in %s' % ( index.column(), str( data ) ) )
+                value = None
+            if value in (None, ValueLoading):
+                return QtCore.QVariant(QtGui.QColor('white'))
+            else:
+                return QtCore.QVariant(value)
         return QtCore.QVariant()
     
     def setData( self, index, value, role = Qt.EditRole ):
@@ -517,7 +545,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                         # update the cache
                         row_data = strip_data_from_object( o, self.getColumns() )
                         self.cache[Qt.EditRole].add_data( row, o, row_data )
-                        self.cache[Qt.ToolTipRole].add_data( row, o, ToolTipDataFromObject( o, self.getColumns()) )
+                        self.cache[Qt.ToolTipRole].add_data( row, o, tool_tips_from_object( o, self.getColumns()) )
+                        self.cache[Qt.BackgroundColorRole].add_data( row, o, background_colors_from_object( o, self.getColumns()) )
                         self.cache[Qt.DisplayRole].add_data( row, o, stripped_data_to_unicode( row_data, o, self.getColumns() ) )
                         if self.flush_changes and self.validator.isValid( row ):
                             # save the state before the update
@@ -587,7 +616,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         for i, o in enumerate( self.collection_getter()[offset:offset + limit + 1] ):
             row_data = strip_data_from_object( o, columns )
             self.cache[Qt.EditRole].add_data( i + offset, o, row_data )
-            self.cache[Qt.ToolTipRole].add_data( i + offset, o, ToolTipDataFromObject( o, self.getColumns()) )
+            self.cache[Qt.ToolTipRole].add_data( i + offset, o, tool_tips_from_object( o, self.getColumns()) )
+            self.cache[Qt.BackgroundColorRole].add_data( i + offset, o, background_colors_from_object( o, self.getColumns()) )
             self.cache[Qt.DisplayRole].add_data( i + offset, o, stripped_data_to_unicode( row_data, o, columns ) )
         return ( offset, limit )
     
@@ -646,6 +676,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         # remove the entity from the cache
         self.cache[Qt.DisplayRole].delete_by_entity( o )
         self.cache[Qt.ToolTipRole].delete_by_entity( o )
+        self.cache[Qt.BackgroundColorRole].delete_by_entity( o )
         self.cache[Qt.EditRole].delete_by_entity( o )
         if delete:
             self.rsh.sendEntityDelete( self, o )
