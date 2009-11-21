@@ -162,5 +162,5 @@ class ApplicationAdmin(object):
     def get_default_field_attributes(self, type_, field):
         """:return: the default field attributes"""
         from camelot.core.view.field_attributes import \
-            _sqlalchemy_to_python_type
-        return _sqlalchemy_to_python_type[type_](field)
+            _sqlalchemy_to_python_type_
+        return _sqlalchemy_to_python_type_[type_](field)

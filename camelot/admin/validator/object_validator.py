@@ -30,6 +30,7 @@ logger = logging.getLogger('camelot.admin.validator.object_validator')
 
 from camelot.view.fifo import fifo
 
+
 class ObjectValidator(object):
     """A validator class for normal python objects.  By default this validator
     declares all objects valid.  Subclass this class and overwrite it's
@@ -42,7 +43,7 @@ class ObjectValidator(object):
         self.message_cache = fifo(10)
 
     def objectValidity(self, entity_instance):
-        """@return: list of messages explaining invalid data
+        """:return: list of messages explaining invalid data
         empty list if object is valid
         """
         return []
@@ -59,26 +60,32 @@ class ObjectValidator(object):
                 messages = self.objectValidity(entity_instance)
                 self.message_cache.add_data(row, entity_instance.id, messages)
         except Exception, e:
-            logger.error('programming error while validating object', exc_info=e)
+            logger.error(
+                'programming error while validating object',
+                exc_info=e
+            )
         valid = (len(messages) == 0)
-        logger.debug('valid : %s'%valid)
+        logger.debug('valid : %s' % valid)
         return valid
 
     def validityMessages(self, row):
         try:
             return self.message_cache.get_data_at_row(row)
         except KeyError:
-            raise Exception('Programming error : isValid should be called ' \
-                            'before calling validityMessage')
+            raise Exception(
+                'Programming error : isValid should be called '
+                'before calling validityMessage'
+            )
 
     def validityDialog(self, row, parent):
-        """Return a QDialog that asks the user to discard his changes or continue
-        to edit the row until it is valid.
+        """Return a QDialog that asks the user to discard his changes or
+        continue to edit the row until it is valid.
         """
         from PyQt4 import QtGui
-        return QtGui.QMessageBox(QtGui.QMessageBox.Warning,
-                                 'Invalid form',
-                                 '\n'.join(self.validityMessages(row)),
-                                 QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard,
-                                 parent
-                                 )
+        return QtGui.QMessageBox(
+            QtGui.QMessageBox.Warning,
+            'Invalid form',
+            '\n'.join(self.validityMessages(row)),
+            QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard,
+            parent
+        )

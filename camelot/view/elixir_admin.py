@@ -38,7 +38,8 @@ from camelot.admin.validator.entity_validator import EntityValidator
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
-    This allows for much more introspection than the standard ObjectAdmin."""
+    This allows for much more introspection than the standard ObjectAdmin.
+    """
 
     validator = EntityValidator
 
@@ -46,13 +47,15 @@ class EntityAdmin(ObjectAdmin):
     def get_query(self):
         """:return: an sqlalchemy query for all the objects that should be
         displayed in the table or the selection view.  Overwrite this method to
-        change the default query, which selects all rows in the database."""
+        change the default query, which selects all rows in the database.
+        """
         return self.entity.query
 
     @model_function
     def get_subclass_entity_admin(self, entity):
         """Get the admin class for an entity that is a subclass of this admin's
-        entity or this admin's entity itself."""
+        entity or this admin's entity itself.
+        """
         for subclass_admin in self.get_subclasses():
             if subclass_admin.entity == entity:
                 return subclass_admin
@@ -61,7 +64,8 @@ class EntityAdmin(ObjectAdmin):
     @model_function
     def get_subclasses(self):
         """Returns admin objects for the subclasses of the Entity represented
-        by this admin object."""
+        by this admin object.
+        """
         if not self._subclasses:
             from elixir import entities
             self._subclasses = [
@@ -140,7 +144,8 @@ class EntityAdmin(ObjectAdmin):
                 target entity class.
 
                 :param target: an entity class for which an Admin object is
-                needed."""
+                needed.
+                """
                 try:
                     fa = self.field_attributes[field_name]
                     target = fa.get('target', target)
@@ -311,7 +316,8 @@ class EntityAdmin(ObjectAdmin):
         entity related to this admin class
 
         The returned class has an 'entity_created_signal' that will be fired
-        when a valid new entity was created by the form"""
+        when a valid new entity was created by the form
+        """
         from PyQt4 import QtCore
         from PyQt4 import QtGui
         from PyQt4.QtCore import SIGNAL
@@ -467,7 +473,8 @@ class EntityAdmin(ObjectAdmin):
 
         :param parent: the widget that will contain this select view, the
         returned widget has an entity_selected_signal signal that will be fired
-        when a entity has been selected."""
+        when a entity has been selected.
+        """
         from controls.tableview import TableView
         from art import Icon
         from proxy.queryproxy import QueryTableProxy

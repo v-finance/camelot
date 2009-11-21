@@ -30,13 +30,14 @@ logger = logging.getLogger('camelot.admin.validator.entity_validator')
 
 from object_validator import ObjectValidator
 
+
 class EntityValidator(ObjectValidator):
     """A validator class validates an entity before flushing it to the database
     and provides the user with feedback if the entity is not ready to flush
     """
 
     def objectValidity(self, entity_instance):
-        """@return: list of messages explaining invalid data
+        """:return: list of messages explaining invalid data
         empty list if object is valid
         """
         from camelot.view.controls import delegates
@@ -47,7 +48,8 @@ class EntityValidator(ObjectValidator):
             # if the field was not editable, don't waste any time
             if attributes['editable']:
               value = getattr(entity_instance, field)
-              #@todo: check if field is a primary key instead of checking wether the name is id
+              #@todo: check if field is a primary key instead of checking 
+              # whether the name is id
               if attributes['nullable']!=True and field!='id':
                   logger.debug('column %s is required'%(field))
                   if 'delegate' not in attributes:
