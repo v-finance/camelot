@@ -35,18 +35,20 @@ def get_application_admin():
 from camelot.view.model_thread import model_function
 
 class ApplicationAdmin(object):
-    """The Application Admin class defines how the application should look like, it also ties
-    python classes to their associated admin classes.  It's behaviour can be steered by
-    overwriting its static attributes or it's methods :
+    """The Application Admin class defines how the application should look
+    like, it also ties python classes to their associated admin classes.  It's
+    behaviour can be steered by overwriting its static attributes or it's
+    methods :
 
     .. attribute:: name
 
-    The name of the application, as it will appear in the title of the main window.
+    The name of the application, as it will appear in the title of the main
+    window.
 
     .. attribute:: sections
 
-    A list containing the various sections that should appear in the left panel of the
-    mainwindow.
+    A list containing the various sections that should appear in the left panel
+    of the mainwindow.
 
     .. image:: ../_static/picture2.png
 
@@ -88,26 +90,28 @@ class ApplicationAdmin(object):
         return mainwindow
 
     def get_entities_and_queries_in_section(self, section):
-        """@return: a list of tuples of (admin, query) instances related to
+        """:return: a list of tuples of (admin, query) instances related to
         the entities in this section.
         """
         result = [(self.get_entity_admin(e), self.get_entity_query(e))
                   for e, a in self.admins.items()
                   if hasattr(a, 'section')
                   and a.section == section]
-        result.sort(cmp = lambda x, y: cmp(x[0].get_verbose_name_plural(), y[0].get_verbose_name_plural()))
+        result.sort(cmp = lambda x, y: cmp(x[0].get_verbose_name_plural(),
+                                           y[0].get_verbose_name_plural()))
         return result
 
     def get_actions(self):
-        """@return: a list of actions that should be added to the menu and the icon
-        bar for this application, each action is a tuple of (name, icon, callable),
-        where callable is a function taking no arguments that will be called when
-        the action is executed.  Callable will be called in the model thread.
+        """:return: a list of actions that should be added to the menu and the
+        icon bar for this application, each action is a tuple of
+        (name, icon, callable), where callable is a function taking no
+        arguments that will be called when the action is executed.  Callable
+        will be called in the model thread.
         """
         return []
 
     def get_name(self):
-        """@return: the name of the application"""
+        """:return: the name of the application"""
         return self.name
 
     def get_icon(self):
@@ -133,13 +137,14 @@ class ApplicationAdmin(object):
 
     def get_stylesheet(self):
         """
-        :return: the qt stylesheet to be used for this application as a string or None
-        if no stylesheet needed
+        :return: the qt stylesheet to be used for this application as a string
+        or None if no stylesheet needed
         """
         return None
 
     def get_about(self):
-        """:return: the content of the About dialog, a string with html syntax"""
+        """:return: the content of the About dialog, a string with html
+        syntax"""
         return """<b>Camelot Project</b>
                   <p>
                   Copyright &copy; 2008-2009 Conceptive Engineering.
@@ -149,3 +154,9 @@ class ApplicationAdmin(object):
                   http://www.conceptive.be/projects/camelot
                   </p>
                   """
+
+    def get_default_field_attributes(self, type_, field):
+        """:return: the default field attributes"""
+        from camelot.core.view.field_attributes import \
+            _sqlalchemy_to_python_type
+        return _sqlalchemy_to_python_type[type_](field)
