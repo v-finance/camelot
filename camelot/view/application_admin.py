@@ -25,14 +25,18 @@
 #
 #  ============================================================================
 
+
+from camelot.view.model_thread import model_function
+
+
 _application_admin_ = []
+
 
 def get_application_admin():
     if not len(_application_admin_):
         raise Exception('No application admin class has been constructed yet')
     return _application_admin_[0]
 
-from camelot.view.model_thread import model_function
 
 class ApplicationAdmin(object):
     """The Application Admin class defines how the application should look
