@@ -103,7 +103,7 @@ class QueryTableProxy(CollectionProxy):
             row_data = strip_data_from_object(o, columns)
             self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
             self.cache[Qt.ToolTipRole].add_data(i+offset, o, tool_tips_from_object(o, columns))
-            self.cache[Qt.BackroundColorRole].add_data(i+offset, o, background_colors_from_object(o, columns))
+            self.cache[Qt.BackgroundColorRole].add_data(i+offset, o, background_colors_from_object(o, columns))
             self.cache[Qt.DisplayRole].add_data(i+offset, o, stripped_data_to_unicode(row_data, o, columns))
         rows_in_query = (self.rows - len(self._appended_rows))
         # Verify if rows that have not yet been flushed have been requested
