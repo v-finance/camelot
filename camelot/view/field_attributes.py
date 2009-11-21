@@ -34,12 +34,14 @@ import datetime
 from controls import delegates
 from camelot.core import constants
 from camelot.core.utils import ugettext as _
-from camelot.view.utils import (bool_from_string,
-                                date_from_string,
-                                time_from_string,
-                                datetime_from_string,
-                                int_from_string,
-                                float_from_string)
+from camelot.view.utils import (
+    bool_from_string,
+    date_from_string,
+    time_from_string,
+    datetime_from_string,
+    int_from_string,
+    float_from_string
+)
 
 
 _sqlalchemy_to_python_type_ = {
