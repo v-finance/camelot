@@ -151,3 +151,10 @@ tooltip.  The string may contain html markup.
 .. literalinclude:: ../../../../test/snippet/fields_with_tooltips.py
   
 .. image:: ../_static/snippets/fields_with_tooltips.png
+
+background_color
+----------------
+
+A function taking as a single argument the object to which the field
+belongs.  The function should return None if the default background should
+be used, or a QColor to be used as the background.
