@@ -443,7 +443,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                     # to be buggy, therefor we chop the microseconds
                     if value:
                         value = QtCore.QDateTime(value.year, value.month, value.day, value.hour, value.minute, value.second)
-                self.logger.debug( 'get data for row %s;col %s : %s' % ( index.row(), index.column(), unicode( value ) ) )
+                self.logger.debug( 'get data for row %s;col %s; role %s : %s' % ( index.row(), index.column(), role, unicode( value ) ) )
             except KeyError:
                 self.logger.error( 'Programming error, could not find data of column %s in %s' % ( index.column(), str( data ) ) )
                 value = None
