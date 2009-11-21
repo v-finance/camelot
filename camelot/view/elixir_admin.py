@@ -75,7 +75,7 @@ class EntityAdmin(ObjectAdmin):
                         issubclass(e, (self.entity,))
                         and hasattr(e, 'Admin')
                         and e != self.entity
-                    }
+                    )
             ]
         return self._subclasses
 
