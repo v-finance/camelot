@@ -27,7 +27,7 @@
 
 """Helper functions for the view subpackage"""
 
-from datetime import datetime
+from datetime import datetime, time, date
 from camelot.core import constants
 
 
@@ -86,6 +86,7 @@ def int_from_string(s):
         raise ParsingError()
     return i
 
+
 def float_from_string(s):
     if s is None: raise ParsingError()
     if s.isspace(): return float()
@@ -98,3 +99,22 @@ def float_from_string(s):
     except ValueError:
         raise ParsingError()
     return f
+
+
+def pyvalue_from_string(pytype, s):
+    if pytype is str:
+        return str(s)
+    elif pytype is unicode:
+        return unicode(s)
+    elif pytype is bool:
+        return bool_from_string(s)
+    elif pytype is date:
+        return date_from_string(s)
+    elif pytype is time:
+        return date_from_string(s)
+    elif pytype is datetime:
+        return datetime_from_string(s)
+    elif pytype is float:
+        return float_from_string(s)
+    elif pytype is int:
+        return int_from_string(s)
