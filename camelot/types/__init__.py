@@ -164,7 +164,16 @@ class RichText(types.TypeDecorator):
   .. image:: ../_static/richtext.png"""
     
     impl = types.UnicodeText
-      
+     
+class Language(types.TypeDecorator):
+    """The language codes are stored in the database as strings
+    """
+    
+    impl = types.Unicode
+    
+    def __init__(self):
+        types.TypeDecorator.__init__(self, length=50)
+        
 class Color(types.TypeDecorator):
     """The Color field returns and accepts tuples of the form (r,g,b,a) where
   r,g,b,a are integers between 0 and 255. The color is stored as an hexadecimal

@@ -5,7 +5,6 @@ Created on Sep 25, 2009
 @author: Erik De Rijcke
 
 '''
-from camelot.model import metadata
 from elixir.entity import Entity, EntityMeta
 
 from sqlalchemy.types import Date, Unicode
