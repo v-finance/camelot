@@ -214,33 +214,10 @@ class SharedShareholder( PartyRelationship ):
         fields = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
         field_attributes = {'established_from':{'name':_( 'name' )}}
 
-class PartyAddress( Entity ):
-    using_options( tablename = 'party_address' )
-    party = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    address = ManyToOne( 'Address', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
-    thru_date = Field( Date(), default = end_of_times, required = True, index = True )
-    comment = Field( Unicode( 256 ) )
-
-    def __unicode__( self ):
-        return '%s : %s' % ( unicode( self.party ), unicode( self.address ) )
-
-    def showMap( self ):
-        if self.address:
-            self.address.showMap()
-
-    class Admin( EntityAdmin ):
-        verbose_name = 'Address'
-        verbose_name_plural = 'Addresses'
-        list_display = ['party', 'address', 'comment']
-        fields = ['party', 'address', 'comment', 'from_date', 'thru_date']
-        form_size = ( 700, 200 )
-        form_actions = [FormActionFromModelFunction( 'Show on map', lambda address:address.showMap() )]
-
-    class AddressAdmin( Admin ):
-        """Admin with only the Address information and not the Party information"""
-        list_display = ['address', 'comment']
-        fields = ['address', 'comment', 'from_date', 'thru_date']
+class AddressAdmin( EntityAdmin ):
+    """Admin with only the Address information and not the Party information"""
+    list_display = ['address', 'comment']
+    fields = ['address', 'comment', 'from_date', 'thru_date']
         
 class Party( Entity ):
     """Base class for persons and organizations.  Use this base class to refer to either persons or
@@ -297,7 +274,7 @@ class Party( Entity ):
         list_display = ['name', 'email', 'phone'] # don't use full name, since it might be None for new objects
         list_search = ['full_name']
         fields = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
-        field_attributes = dict(addresses = {'admin':PartyAddress.AddressAdmin}, 
+        field_attributes = dict(addresses = {'admin':AddressAdmin}, 
                                 suppliers = {'admin':SupplierCustomer.SupplierAdmin},
                                 customers = {'admin':SupplierCustomer.CustomerAdmin},
                                 employers = {'admin':EmployerEmployee.EmployerAdmin},
@@ -348,6 +325,36 @@ class Organization( Party ):
 
 Organization = documented_entity()( Organization )
 
+class PartyAddress( Entity ):
+    using_options( tablename = 'party_address' )
+    party = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    address = ManyToOne( 'Address', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
+    thru_date = Field( Date(), default = end_of_times, required = True, index = True )
+    comment = Field( Unicode( 256 ) )
+
+    @ColumnProperty
+    def party_name( self ):
+        return sql.select( [Party.full_name],
+                           whereclause = (Party.id==self.party_id))
+                          
+    def __unicode__( self ):
+        return '%s : %s' % ( unicode( self.party ), unicode( self.address ) )
+
+    def showMap( self ):
+        if self.address:
+            self.address.showMap()
+
+    class Admin( EntityAdmin ):
+        verbose_name = 'Address'
+        verbose_name_plural = 'Addresses'
+        list_search = ['party_name']
+        list_display = ['party_name', 'address', 'comment']
+        fields = ['party', 'address', 'comment', 'from_date', 'thru_date']
+        form_size = ( 700, 200 )
+        form_actions = [FormActionFromModelFunction( 'Show on map', lambda address:address.showMap() )]
+        field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30))
+        
 class AuthenticationMechanism( Entity ):
     using_options( tablename = 'authentication_mechanism' )
     last_login = Field( DateTime() )
@@ -543,11 +550,18 @@ class PartyContactMechanism( Entity ):
     thru_date = Field( Date(), default = end_of_times, index = True )
     comment = Field( Unicode( 256 ) )
 
+    @ColumnProperty
+    def party_name( self ):
+        return sql.select( [Party.full_name],
+                           whereclause = (Party.id==self.party_id))
+        
     def __unicode__( self ):
         return unicode( self.contact_mechanism )
 
     class Admin( EntityAdmin ):
         form_size = ( 700, 200 )
-        verbose_name = 'Party contact mechanism'
-        list_display = ['contact_mechanism', 'comment', 'from_date', ]
+        verbose_name = 'Contact mechanism'
+        list_search = ['party_name']
+        list_display = ['party_name', 'contact_mechanism', 'comment', 'from_date', ]
         form_display = Form( ['contact_mechanism', 'comment', 'from_date', 'thru_date', ] )
+        field_attributes = {'party_name':{'minimal_column_width':20, 'editable':False}}
