@@ -56,9 +56,11 @@ class FilterList(QtGui.QScrollArea):
         layout.addStretch()
         widget.setLayout(layout)
         self.setWidget(widget)
-        self.setMaximumWidth(widget.width() + 10)
+        #self.setMaximumWidth(self.fontMetrics().width( ' ' )*70)
         if len(items) == 0:
             self.setMaximumWidth(0)
+        else:
+            self.setSizePolicy( QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding )
 
     def decorate_query(self, query):
         for i in range(self.widget().layout().count()):
