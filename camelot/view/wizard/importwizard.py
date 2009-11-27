@@ -221,6 +221,19 @@ class RowData(object):
         for i, data in enumerate(row_data):
             self.__setattr__('column_%i'%i, data)
 
+class CsvCollectionGetter(object):
+    """class that when called returns the data in filename as a list of RowData
+    objects"""
+
+    def __init__(self, filename):
+        self.filename = filename
+        self._data = None
+
+    def __call__(self):
+        if self._data==None:
+            self._data = []
+        return self._data
+    
 class RowDataAdminDecorator(object):
     """Decorator that transforms the Admin of the class to be imported to an
     Admin of the RowData objects to be used when previewing and validating the
@@ -364,7 +377,7 @@ class ImportWizard(QtGui.QWizard):
     select_file_page = SelectFilePage
     data_preview_page = DataPreviewPage
     final_page = FinalPage
-    collection_getter = None
+    collection_getter = CsvCollectionGetter
     window_title = 'Import CSV data'
     
     def __init__(self, parent=None, admin=None):
@@ -378,7 +391,7 @@ class ImportWizard(QtGui.QWizard):
             row_data_admin,
             lambda:[],
             row_data_admin.get_columns
-        )  
+        )
         
         self.addPage(SelectFilePage(parent=self))
         self.addPage(DataPreviewPage(parent=self, model=model, collection_getter=self.collection_getter))

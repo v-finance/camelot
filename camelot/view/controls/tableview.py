@@ -499,4 +499,6 @@ class TableView( AbstractView  ):
     def importFromFile( self ):
         """"import data : the data will be imported in the activeMdiChild """
         logger.info( 'call import method' )
-        post(self.admin.getColumns, self.importWizard)
+        from camelot.view.wizard.importwizard import ImportWizard
+        wizard = ImportWizard(self, self.admin)
+        wizard.exec_()
