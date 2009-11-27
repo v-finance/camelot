@@ -36,9 +36,9 @@ def model_thread_exception_message_box(exception_info):
   model thread in which the exception was thrown  
   """
     from PyQt4 import QtGui
-    exc, model_thread = exception_info
+    exc, traceback = exception_info
     msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
                                'Exception', 'An unexpected event occurred')
-    msgBox.setInformativeText(str(exc))
-    msgBox.setDetailedText(model_thread.traceback())
+    msgBox.setInformativeText(unicode(exc))
+    msgBox.setDetailedText(traceback)
     msgBox.exec_()

@@ -772,4 +772,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         """Generator for all the data queried by this proxy"""
         for _i, o in enumerate( self.collection_getter() ):
             yield strip_data_from_object( o, self.getColumns() )
+            
+    def get_admin( self ):
+        """Get the admin object associated with this model"""
+        return self.admin
       
