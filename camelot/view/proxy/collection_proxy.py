@@ -288,9 +288,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                       Qt.BackgroundColorRole : fifo( 10 * self.max_number_of_rows ),}
         self.setRowCount( rows )
     
-    def setCollectionGetter( self, collection_getter ):
+    def set_collection_getter( self, collection_getter ):
         self.collection_getter = collection_getter
         self.refresh()
+        
+    def get_collection_getter( self ):
+        return self.collection_getter
     
     def handleRowUpdate( self, row ):
         """Handles the update of a row when this row might be out of date"""
@@ -671,7 +674,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         @param o: the object to be removed from this collection
         @param delete: delete the object after removing it from the collection 
         """
-        self.logger.debug( 'remove entity instance with id %s' % o.id )
+        self.logger.debug( 'remove entity instance')
         self.remove( o )
         # remove the entity from the cache
         self.cache[Qt.DisplayRole].delete_by_entity( o )
@@ -680,24 +683,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.cache[Qt.EditRole].delete_by_entity( o )
         if delete:
             self.rsh.sendEntityDelete( self, o )
-        if o.id:
-            if delete:
-                pk = o.id
-                # save the state before the update
-                from camelot.model.memento import BeforeDelete
-                from camelot.model.authentication import getCurrentAuthentication
-                history = BeforeDelete( model = unicode( self.admin.entity.__name__ ),
-                                       primary_key = pk,
-                                       previous_attributes = {},
-                                       authentication = getCurrentAuthentication() )
-                self.logger.debug( 'delete the object' )
-                o.delete()
-                Session.object_session( o ).flush( [o] )
-                Session.object_session( history ).flush( [history] )
-            else:
-                # even if the object is not deleted, it needs to be flushed to make
-                # sure it's out of the collection
-                Session.object_session( o ).flush( [o] )
+            self.admin.delete( o )
+        else:
+            # even if the object is not deleted, it needs to be flushed to make
+            # sure it's out of the collection
+            self.admin.flush( o )
         post( self.getRowCount, self._refresh_content )
     
     @gui_function

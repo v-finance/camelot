@@ -570,3 +570,27 @@ class EntityAdmin(ObjectAdmin):
         )
 
         return tableview
+    
+    @model_function
+    def delete(self, entity_instance):
+        """Delete an entity instance"""
+        from sqlalchemy.orm.session import Session
+        if entity_instance.id:
+                pk = entity_instance.id
+                # save the state before the update
+                from camelot.model.memento import BeforeDelete
+                from camelot.model.authentication import getCurrentAuthentication
+                history = BeforeDelete( model = unicode( self.admin.entity.__name__ ),
+                                       primary_key = pk,
+                                       previous_attributes = {},
+                                       authentication = getCurrentAuthentication() )
+                self.logger.debug( 'delete the object' )
+                entity_instance.delete()
+                Session.object_session( entity_instance ).flush( [entity_instance] )
+                Session.object_session( history ).flush( [history] )
+
+    @model_function
+    def flush(self, entity_instance):
+        """Flush the pending changes of this entity instance to the backend"""
+        from sqlalchemy.orm.session import Session
+        Session.object_session( entity_instance ).flush( [entity_instance] )

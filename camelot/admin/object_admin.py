@@ -398,3 +398,18 @@ class ObjectAdmin(object):
         from camelot.view.controls.formview import FormView
         form = FormView(title, self, model, index)
         return form
+    
+    @model_function
+    def delete(self, entity_instance):
+        """Delete an entity instance"""
+        del entity_instance
+        
+    @model_function
+    def flush(self, entity_instance):
+        """Flush the pending changes of this entity instance to the backend"""
+        pass
+    
+    @model_function
+    def add(self, entity_instance):
+        """Add an entity instance as a managed entity instance"""
+        pass

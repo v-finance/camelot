@@ -6,8 +6,7 @@ from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
 from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
-
-import re
+from camelot.view.utils import local_date_format
 
 class DateDelegate(CustomDelegate):
     """Custom delegate for date values"""
@@ -18,11 +17,7 @@ class DateDelegate(CustomDelegate):
     
     def __init__(self, parent=None, editable=True, **kwargs):
         CustomDelegate.__init__(self, parent, editable)
-        locale = QtCore.QLocale()
-        format_sequence = re.split('y*', str(locale.dateFormat(locale.ShortFormat)))
-        # make sure a year always has 4 numbers
-        format_sequence.insert(-1, 'yyyy')
-        self.date_format = ''.join(format_sequence)
+        self.date_format = local_date_format()
         self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 4)  + (camelot_small_icon_width*2) * 2 
     
     def paint(self, painter, option, index):

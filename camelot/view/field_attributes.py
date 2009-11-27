@@ -40,7 +40,8 @@ from camelot.view.utils import (
     time_from_string,
     datetime_from_string,
     int_from_string,
-    float_from_string
+    float_from_string,
+    string_from_string,
 )
 
 
@@ -135,7 +136,8 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.PlainTextDelegate,
         'editable': True,
         'nullable': True,
-        'widget': 'str'
+        'widget': 'str',
+        'from_string': string_from_string,
     },
 
     sqlalchemy.types.TEXT: lambda f: {
@@ -144,7 +146,8 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.PlainTextDelegate,
         'editable': True,
         'nullable': True,
-        'widget': 'str'
+        'widget': 'str',
+        'from_string': string_from_string,
     },
 
     sqlalchemy.types.Unicode: lambda f: {
@@ -153,7 +156,8 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.PlainTextDelegate,
         'editable': True,
         'nullable': True,
-        'widget': 'str'
+        'widget': 'str',
+        'from_string': string_from_string,
     },
 
     camelot.types.Image: lambda f: {
@@ -194,7 +198,8 @@ _sqlalchemy_to_python_type_ = {
         'python_type': str,
         'editable': True,
         'nullable': True,
-        'delegate': delegates.RichTextDelegate
+        'delegate': delegates.RichTextDelegate,
+        'from_string': string_from_string,
     },
 
     camelot.types.Color: lambda f: {
@@ -221,6 +226,8 @@ _sqlalchemy_to_python_type_ = {
             (v, unicode(_(unicode(v).replace('_', ' '))).capitalize()) 
             for v in f.choices
         ],
+        'from_string': lambda s:dict((unicode(_(unicode(v).replace('_', ' '))).capitalize(), v)
+                                     for v in f.choices)[s],
         'editable': True,
         'nullable': False,
         'widget': 'combobox',

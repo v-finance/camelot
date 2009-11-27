@@ -27,12 +27,32 @@
 
 """Helper functions for the view subpackage"""
 
+from PyQt4 import QtCore
+
 from datetime import datetime, time, date
+import re
+
 from camelot.core import constants
 
+_local_date_format = None
+ 
+def local_date_format():
+    """Get the local data format and cache it for reuse"""
+    global _local_date_format
+    if not _local_date_format:
+        locale = QtCore.QLocale()
+        format_sequence = re.split('y*', str(locale.dateFormat(locale.ShortFormat)))
+        # make sure a year always has 4 numbers
+        format_sequence.insert(-1, 'yyyy')
+        _local_date_format = ''.join(format_sequence)
+    return _local_date_format
 
 class ParsingError(Exception): pass
 
+def string_from_string(s):
+    if not s:
+        return None
+    return unicode(s)
 
 def bool_from_string(s):
     if s is None: raise ParsingError()
@@ -40,15 +60,16 @@ def bool_from_string(s):
     return eval(s.lower().capitalize())
 
 
-def date_from_string(s, format=constants.strftime_date_format):
-    if s is None: raise ParsingError()
+def date_from_string(s):
+    from PyQt4.QtCore import QDate
     s = s.strip()
-
+    if not s:
+        return None
     try:
-        dt = datetime.strptime(s, format)
+        dt = QDate.fromString(s, local_date_format())
     except ValueError:
         raise ParsingError()
-    return dt.date()
+    return date(dt.year(), dt.month(), dt.day())
 
 
 def time_from_string(s, format=constants.strftime_time_format):
@@ -88,16 +109,12 @@ def int_from_string(s):
 
 
 def float_from_string(s):
-    if s is None: raise ParsingError()
-    if s.isspace(): return float()
-
-    s = s.strip()
-    if len(s) == 0: return float()
-    
-    try:
-        f = float(s)
-    except ValueError:
-        raise ParsingError()
+    if not s:
+        return None
+    locale = QtCore.QLocale()
+    f, ok = locale.toFloat(s)
+    if not ok:
+        raise ParsingError
     return f
 
 
