@@ -965,6 +965,22 @@ class SnippetsTest(ModelThreadTestCase):
         self.process()
         self.assertEqual(len(validator.validityMessages(0)), 3)
         self.grab_widget(validator.validityDialog(0, parent=None))
+        
+    def test_background_color(self):
+        from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.model.authentication import Person
+        from camelot.admin.application_admin import ApplicationAdmin
+        from snippet.background_color import Admin
+        app_admin = ApplicationAdmin()
+        person_admin = Admin(app_admin, Person)
+        proxy = CollectionProxy(person_admin, lambda:[Person(first_name='John', last_name='Cleese'),
+                                                      Person(first_name='eric', last_name='Idle')],
+                                                       person_admin.get_columns)
+        from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
+        editor = One2ManyEditor(admin=person_admin)
+        editor.set_value(proxy)
+        self.process()
+        self.grab_widget(editor)
   
 class CamelotSchemaTest(SchemaTest):
   
@@ -972,31 +988,31 @@ class CamelotSchemaTest(SchemaTest):
   
 
 if __name__ == '__main__':
-  logger.info('running unit tests')
-  app = get_application()
-  runner=unittest.TextTestRunner(verbosity=2)
-  snippets_test =  unittest.makeSuite(SnippetsTest, 'test')
-  runner.run(snippets_test)
+    logger.info('running unit tests')
+    app = get_application()
+    runner=unittest.TextTestRunner(verbosity=2)
+    snippets_test =  unittest.makeSuite(SnippetsTest, 'test')
+    runner.run(snippets_test)
 #  proxy_test =  unittest.makeSuite(ProxyEntityTest, 'test')
 #  runner.run(proxy_test)
 #  proxy_one_to_many_test =  unittest.makeSuite(ProxyOneToManyTest, 'test')
 #  runner.run(proxy_one_to_many_test)
-  schema_test =  unittest.makeSuite(CamelotSchemaTest, 'test')
-  runner.run(schema_test)
-
-  form_action_test =  unittest.makeSuite(FormActionTest, 'test')
-  runner.run(form_action_test)
-  editors_test =  unittest.makeSuite(EditorsTest, 'test')
-  runner.run(editors_test)
-  editor_test =  unittest.makeSuite(DelegateTest, 'test')
-  runner=unittest.TextTestRunner(verbosity=2)
-  runner.run(editor_test)
-  controls_test = unittest.makeSuite(ControlsTest, 'test')
-  runner.run(controls_test)
-  form_test = unittest.makeSuite(FormTest, 'test')
-  runner.run(form_test)
-  filter_test = unittest.makeSuite(FilterTest, 'test')
-  runner.run(filter_test)    
-  entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
-  runner.run(entity_views_test)
+    schema_test =  unittest.makeSuite(CamelotSchemaTest, 'test')
+    runner.run(schema_test)
+    
+    form_action_test =  unittest.makeSuite(FormActionTest, 'test')
+    runner.run(form_action_test)
+    editors_test =  unittest.makeSuite(EditorsTest, 'test')
+    runner.run(editors_test)
+    editor_test =  unittest.makeSuite(DelegateTest, 'test')
+    runner=unittest.TextTestRunner(verbosity=2)
+    runner.run(editor_test)
+    controls_test = unittest.makeSuite(ControlsTest, 'test')
+    runner.run(controls_test)
+    form_test = unittest.makeSuite(FormTest, 'test')
+    runner.run(form_test)
+    filter_test = unittest.makeSuite(FilterTest, 'test')
+    runner.run(filter_test)    
+    entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
+    runner.run(entity_views_test)
 

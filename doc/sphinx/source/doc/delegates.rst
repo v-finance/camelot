@@ -158,3 +158,7 @@ background_color
 A function taking as a single argument the object to which the field
 belongs.  The function should return None if the default background should
 be used, or a QColor to be used as the background.
+
+.. literalinclude:: ../../../../test/snippet/background_color.py
+  
+.. image:: ../_static/snippets/background_color.png
