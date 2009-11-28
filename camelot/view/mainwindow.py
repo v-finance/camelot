@@ -629,6 +629,7 @@ class MainWindow( QtGui.QMainWindow ):
         index = self.navpane.treewidget.indexFromItem( item )
         section_item = self.navpane.items[index.row()]
         child = section_item.get_action().run( self.workspace )
+        assert child != None
         self.connect( child, QtCore.SIGNAL( "copyAvailable(bool)" ),
                       self.cutAct.setEnabled )
         self.connect( child, QtCore.SIGNAL( "copyAvailable(bool)" ),

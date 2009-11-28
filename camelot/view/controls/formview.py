@@ -102,7 +102,12 @@ class FormView( AbstractView ):
     
         for i, ( field_name, field_attributes ) in enumerate( columns ):
             model_index = self.model.index( self.index, i )
-            widget_label = QtGui.QLabel( unicode(field_attributes['name']) )
+            hide_title = False
+            if 'hide_title' in field_attributes:
+                hide_title = field_attributes['hide_title']
+            widget_label = None
+            if not hide_title:
+                widget_label = QtGui.QLabel( unicode(field_attributes['name']) )
             widget_editor = delegate.createEditor( self, option, model_index )
       
             # required fields font is bold

@@ -138,13 +138,15 @@ class Form( object ):
                 label, editor = widgets[field]
                 if isinstance( editor, ( WideEditor, ) ):
                     col_span = 2
-                    form_layout.addWidget( label, row, col, row_span, col_span )
-                    row += 1
+                    if label:
+                        form_layout.addWidget( label, row, col, row_span, col_span )
+                        row += 1
                     form_layout.addWidget( editor, row, col, row_span, col_span )
                     row += 1
                 else:
                     col_span = 1
-                    form_layout.addWidget( label, row, col, row_span, col_span )
+                    if label:
+                        form_layout.addWidget( label, row, col, row_span, col_span )
                     #form_layout.addWidget(editor, row, col + 1, row_span, col_span, Qt.AlignRight)
                     form_layout.addWidget( editor, row, col + 1, row_span, col_span )
                     row += 1
