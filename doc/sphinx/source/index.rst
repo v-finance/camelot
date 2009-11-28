@@ -10,7 +10,12 @@ Welcome to Camelot's documentation!
 
 :Release: |version|
 :Date: |today|
-
+   
+.. toctree::
+   :maxdepth: 1
+   
+   news.rst
+   
 Contents:
 
 .. toctree::

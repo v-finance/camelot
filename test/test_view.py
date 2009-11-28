@@ -2,9 +2,10 @@
 from PyQt4 import QtGui
 
 import logging
+import unittest
 import os
 
-from camelot.test import *
+from camelot.test import ModelThreadTestCase, EntityViewsTest, SchemaTest
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
@@ -14,9 +15,10 @@ static_images_path = os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphin
 
 def create_getter(getable):
   
-  def getter():
-    return getable
-  return getter
+    def getter():
+        return getable
+    
+    return getter
         
 #class ProxyEntityTest(ModelThreadTestCase):
 #  """Test the functionality of the proxies to perform CRUD operations on stand

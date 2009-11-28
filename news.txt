@@ -1,0 +1,28 @@
+Trunk
+-----
+
+ * Sqlalchemy 5.6 compatible
+ 
+ * Dynamic background colors and tooltips
+ 
+   .. image:: _static/snippets/background_color.png
+   
+ * Generic import wizard
+ 
+   .. image:: _static/importwizard/csv_wizard.png
+ 
+ * A Language field type
+ 
+ * The busy indicator in the status bar
+ 
+   .. image:: _static/controls/status_bar.png
+ 
+ * Support for lazy translations
+ 
+ * Remove PIL dependency and only depend on QImage
+ 
+ * Support multiple levels of class inheritance in the model
+ 
+ * Various bugfixes, usability and speed improvements
+ 
+ * Code cleanup
