@@ -31,6 +31,9 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('camelot.view.wizard.importwizard')
 
+import csv
+import codecs
+
 from PyQt4.QtCore import Qt
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QColor
@@ -38,7 +41,7 @@ from PyQt4.QtGui import QColor
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Pixmap
-from camelot.view.wizard.utils import *
+
 
 class SelectFilePage(QtGui.QWizardPage):
     """SelectFilePage is the file selection page of the import wizard"""
@@ -46,9 +49,10 @@ class SelectFilePage(QtGui.QWizardPage):
     def __init__(self, parent=None):
         super(SelectFilePage, self).__init__(parent)
         self.setTitle(_('Import data from a file'))
-        msg = "To import data, click 'Browse' to " \
-              "select a file then click 'Import'."
-        self.setSubTitle(_(msg))
+        self.setSubTitle(_(
+            "To import data, click 'Browse' to "
+            "select a file then click 'Import'."
+        ))
 
         icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
@@ -69,9 +73,11 @@ class SelectFilePage(QtGui.QWizardPage):
         layout.addLayout(hlayout)
         self.setLayout(layout)
 
-        self.connect(browsebutton,
-                     QtCore.SIGNAL('clicked()'),
-                     lambda: self.setpath())
+        self.connect(
+            browsebutton,
+            QtCore.SIGNAL('clicked()'),
+            lambda: self.setpath()
+        )
 
     def setpath(self):
         caption = _('Import Wizard - Set File Path')
@@ -81,145 +87,51 @@ class SelectFilePage(QtGui.QWizardPage):
             self.filelineedit.setText(QtCore.QDir.toNativeSeparators(path))
 
 
-class PreviewTable(QtGui.QTableView):
-    """PreviewTable subclasses QTableView and displays preview data"""
-
-    def __init__(self, parent=None):
-        super(PreviewTable, self).__init__(parent)
-        self.verticalHeader().setVisible(False)
-        self.horizontalHeader().setVisible(False)
-        self.oldgate = None
-        self.datamodel = None
-        self.nolabels = True
-
-    def enable_drops(self, enable):
-        """Shows and hide dropdown label selectors in first row"""
-        if self.datamodel is None: return
-
-        if not enable:
-            self.setItemDelegateForRow(0, self.oldgate)
-            self.nolabels = True
-            return
-
-        from camelot.view.controls.delegates.comboboxdelegate \
-            import ComboBoxDelegate
-        
-        labels = tuple((unicode(label), unicode(label)) \
-                       for _, label in columns_iter(self.datamodel, 0))
-
-        delegate = ComboBoxDelegate(choices=labels, parent=self)
-        self.oldgate = self.itemDelegateForRow(0)
-        self.setItemDelegateForRow(0, delegate)
-        
-        self.nolabels = False
-
-    def are_drops_synced(self):
-        """Returns true if no two columns have the same label"""
-        if self.datamodel is None: return False
-        
-        if self.nolabels: return True
-
-        labels = [label for _, label in columns_iter(self.datamodel, 0)]
-        return len(set(labels)) == len(labels)
-
-    def rows(self):
-        """Returns an iterator over the rows of data"""
-        if self.datamodel is None: return []
-
-        if self.nolabels:
-            iter = rows_iter(self.datamodel)
-        else:
-            labels = [label for _, label in columns_iter(self.datamodel, 0)]
-            iter = labeled_rows_iter(self.datamodel, labels)
-
-        return iter
-
-    def feed(self, data=None):
-        """Feeds model with imported data"""
-
-        # premature optimization is evil :)
-        from PyQt4.QtCore import QModelIndex, QVariant
-
-        if data:
-            nrows = len(data)
-            ncols = len(data[0])
-            self.datamodel = QtGui.QStandardItemModel(nrows, ncols)
-            self.setModel(self.datamodel)
-
-            for row in range(nrows):
-                for col in range(ncols):
-                    idx = self.datamodel.index(row, col, QModelIndex())
-                    val = QVariant(data[row][col])
-                    self.datamodel.setData(idx, val)
-
-
-class PreviewTablePage(QtGui.QWizardPage):
-    """PreviewTablePage is the previewing page of the import wizard"""
-
-    def __init__(self, parent=None):
-        super(PreviewTablePage, self).__init__(parent)
-
-        self.setTitle(_('Data Preview'))
-        msg = 'Below is a preview of the data being imported.'
-        self.setSubTitle(_(msg))
-
-        icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
-        self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
-
-        self.setButtonText(QtGui.QWizard.FinishButton, _('Import'))
-
-        self.previewtable = PreviewTable()
-
-        cb = QtGui.QCheckBox(_('Use first row as labels selector'))
-        self.connect(cb,
-                     QtCore.SIGNAL('stateChanged(int)'),
-                     lambda checked: self.previewtable.enable_drops(checked))
-
-        ly = QtGui.QVBoxLayout()
-        ly.addWidget(cb)
-        ly.addWidget(self.previewtable)
-        self.setLayout(ly)
-
-    def initializePage(self):
-        """Gets all info needed from SelectFilePage and feeds table"""
-        source = self.field('datasource').toString()
-        self.previewtable.feed(import_csv_data(source))
-
-    def validatePage(self):
-        """Called when the button labelled "import" is clicked"""
-        if not self.previewtable.are_drops_synced():
-            from PyQt4.QtGui import QMessageBox
-            QMessageBox.critical(self,
-                                 _('Duplicate labels'),
-                                 _('Please check duplicate labels'))
-            return False
-
-        dia = QtGui.QDialog()
-        log = QtGui.QTextBrowser()
-        log.setLineWrapMode(QtGui.QTextEdit.NoWrap)
-        ly = QtGui.QVBoxLayout()
-        ly.addWidget(log)
-        dia.setLayout(ly)
-
-        for r in self.previewtable.rows():
-            log.append(unicode(r))
-
-        dia.exec_()
-
-        return True
-
 class RowData(object):
     """Class representing the data in a single row of the imported file as an
     object with attributes column_1, column_2, ..., each representing the data
     in a single column of that row"""
 
     def __init__(self, row_number, row_data):
-        """:param row_data: a list containing the data [column_1_data,
-        column_2_data, ...] for a single row
+        """:param row_data: a list containing the data
+        [column_1_data, column_2_data, ...] for a single row
         """
         self.id = row_number + 1
         for i, data in enumerate(row_data):
-            self.__setattr__('column_%i'%i, data)
+            self.__setattr__('column_%i' % i, data)
+
+
+# see http://docs.python.org/library/csv.html
+class UTF8Recoder:
+    """Iterator that reads an encoded stream and reencodes the input to
+    UTF-8."""
+
+    def __init__(self, f, encoding):
+        self.reader = codecs.getreader(encoding)(f)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        return self.reader.next().encode('utf-8')
+
+
+# see http://docs.python.org/library/csv.html
+class UnicodeReader:
+    """A CSV reader which will iterate over lines in the CSV file "f", which is
+    encoded in the given encoding."""
+
+    def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwds):
+        f = UTF8Recoder(f, encoding)
+        self.reader = csv.reader(f, dialect=dialect, **kwds)
+
+    def next(self):
+        row = self.reader.next()
+        return [unicode(s, 'utf-8') for s in row]
+
+    def __iter__(self):
+        return self
+
 
 class CsvCollectionGetter(object):
     """class that when called returns the data in filename as a list of RowData
@@ -232,8 +144,22 @@ class CsvCollectionGetter(object):
     def __call__(self):
         if self._data==None:
             self._data = []
+            import chardet
+            
+            enc = (
+                chardet.detect(open(self.filename).read())['encoding']
+                or 'utf-8'
+            )
+            items = UnicodeReader(open(self.filename), encoding=enc)
+
+            self._data = [
+                RowData(i, row_data)
+                for i, row_data in enumerate(items)
+            ]
+
         return self._data
-    
+
+
 class RowDataAdminDecorator(object):
     """Decorator that transforms the Admin of the class to be imported to an
     Admin of the RowData objects to be used when previewing and validating the
@@ -260,8 +186,9 @@ class RowDataAdminDecorator(object):
             if 'from_string' in attributes:
 
                 def get_background_color(o):
-                    """If the string is not convertible with from_string, or the result
-                    is None when a value is required, set the background to pink"""
+                    """If the string is not convertible with from_string, or
+                    the result is None when a value is required, set the
+                    background to pink"""
                     value = getattr(o, 'column_%i'%i)
                     if not value and (attributes['nullable']==False):
                         return QColor('Pink')
@@ -276,7 +203,10 @@ class RowDataAdminDecorator(object):
             return attributes
 
         new_columns = [
-            ('column_%i'%i, new_field_attributes(i, attributes, original_field))
+            (
+                'column_%i' %i,
+                new_field_attributes(i, attributes, original_field)
+            )
             for i, (original_field, attributes) in enumerate(original_columns)
         ]
 
@@ -291,8 +221,7 @@ class DataPreviewPage(QtGui.QWizardPage):
         assert model
         assert collection_getter
         self.setTitle(_('Data Preview'))
-        msg = 'Please review the data below.'
-        self.setSubTitle(_(msg))
+        self.setSubTitle(_('Please review the data below.'))
         self.model = model
         self.collection_getter = collection_getter
 
@@ -300,7 +229,11 @@ class DataPreviewPage(QtGui.QWizardPage):
         self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
 
         self.setButtonText(QtGui.QWizard.NextButton, _('Import'))
-        self.previewtable = One2ManyEditor(admin=model.get_admin(), parent=self, create_inline=True)
+        self.previewtable = One2ManyEditor(
+            admin = model.get_admin(),
+            parent=self,
+            create_inline=True
+        )
 
         ly = QtGui.QVBoxLayout()
         ly.addWidget(self.previewtable)
@@ -309,12 +242,13 @@ class DataPreviewPage(QtGui.QWizardPage):
     def initializePage(self):
         """Gets all info needed from SelectFilePage and feeds table"""
         filename = self.field('datasource').toString()
-        self.model.set_collection_getter( self.collection_getter(filename) )
+        self.model.set_collection_getter(self.collection_getter(filename))
         self.previewtable.set_value(self.model)
         self.emit(QtCore.SIGNAL('completeChanged()'))
 
     def isComplete(self):
         return True
+
 
 class FinalPage(QtGui.QWizardPage):
     """FinalPage is the final page in the import process"""
@@ -324,9 +258,8 @@ class FinalPage(QtGui.QWizardPage):
         self.setTitle(_('Import Progress'))
         self.model = model
         self.admin = model.get_admin()
-        msg = 'Please wait while data is being imported.'
-        self.setSubTitle(_(msg))
-        
+        self.setSubTitle(_('Please wait while data is being imported.'))
+
         icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
         self.setButtonText(QtGui.QWizard.FinishButton, _('Close'))
@@ -342,44 +275,49 @@ class FinalPage(QtGui.QWizardPage):
         ly.addWidget(label)
         ly.addWidget(self.progressbar)
         self.setLayout(ly)
-        
+
     def run_import(self):
         for row in self.model.get_collection_getter()():
             new_entity_instance = self.admin.entity()
             for field_name, attributes in self.admin.get_columns():
-                setattr( new_entity_instance,
-                         attributes['original_field'],
-                         attributes['from_string'](getattr(row, field_name)) )
+                setattr(
+                    new_entity_instance,
+                    attributes['original_field'],
+                    attributes['from_string'](getattr(row, field_name))
+                )
             self.admin.add(new_entity_instance)
             self.admin.flush(new_entity_instance)
-        
+
     def import_finished(self):
         self.progressbar.setMaximum(1)
         self.progressbar.setValue(1)
         self.emit(QtCore.SIGNAL('completeChanged()'))
-    
+
     def isComplete(self):
         return self.progressbar.value() == self.progressbar.maximum()
-            
+
     def initializePage(self):
         from camelot.view.model_thread import post
         self.progressbar.setMaximum(0)
-        self.progressbar.setValue(0)        
+        self.progressbar.setValue(0)
         post(self.run_import, self.import_finished, self.import_finished)
-        
+
+
 class ImportWizard(QtGui.QWizard):
-    """ImportWizard provides a two-step wizard for importing data as objects into Camelot.  To create a
-    custom wizard, subclass this ImportWizard and overwrite its class attributes.
-    
-    To import different file formats, you probably need a custom collection_getter for this file type.
+    """ImportWizard provides a two-step wizard for importing data as objects
+    into Camelot.  To create a custom wizard, subclass this ImportWizard and
+    overwrite its class attributes.
+
+    To import a different file format, you probably need a custom
+    collection_getter for this file type.
     """
-    
+
     select_file_page = SelectFilePage
     data_preview_page = DataPreviewPage
     final_page = FinalPage
     collection_getter = CsvCollectionGetter
     window_title = 'Import CSV data'
-    
+
     def __init__(self, parent=None, admin=None):
         """:param admin: camelot model admin"""
         from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -392,8 +330,14 @@ class ImportWizard(QtGui.QWizard):
             lambda:[],
             row_data_admin.get_columns
         )
-        
+
         self.addPage(SelectFilePage(parent=self))
-        self.addPage(DataPreviewPage(parent=self, model=model, collection_getter=self.collection_getter))
+        self.addPage(
+            DataPreviewPage(
+                parent=self,
+                model=model,
+                collection_getter=self.collection_getter
+            )
+        )
         self.addPage(FinalPage(parent=self, model=model))
         self.setWindowTitle(_(self.window_title))
