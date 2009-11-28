@@ -228,7 +228,6 @@ class DataPreviewPage(QtGui.QWizardPage):
         icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
 
-        self.setButtonText(QtGui.QWizard.NextButton, _('Import'))
         self.previewtable = One2ManyEditor(
             admin = model.get_admin(),
             parent=self,
@@ -238,6 +237,9 @@ class DataPreviewPage(QtGui.QWizardPage):
         ly = QtGui.QVBoxLayout()
         ly.addWidget(self.previewtable)
         self.setLayout(ly)
+
+        self.setCommitPage(True)
+        self.setButtonText(QtGui.QWizard.CommitButton, _('Import'))
 
     def initializePage(self):
         """Gets all info needed from SelectFilePage and feeds table"""
@@ -266,8 +268,7 @@ class FinalPage(QtGui.QWizardPage):
         self.progressbar = QtGui.QProgressBar()
 
         label = QtGui.QLabel(_(
-            'The data will be ready when the progress reaches 100%. '
-            'The import can be cancelled at any time.'
+            'The data will be ready when the progress reaches 100%.'
         ))
         label.setWordWrap(True)
 
@@ -341,3 +342,5 @@ class ImportWizard(QtGui.QWizard):
         )
         self.addPage(FinalPage(parent=self, model=model))
         self.setWindowTitle(_(self.window_title))
+
+        self.setOption(QtGui.QWizard.NoCancelButton)
