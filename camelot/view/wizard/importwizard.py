@@ -255,6 +255,9 @@ class DataPreviewPage(QtGui.QWizardPage):
 class FinalPage(QtGui.QWizardPage):
     """FinalPage is the final page in the import process"""
 
+    change_maximum_signal = QtCore.SIGNAL('change_maximum')
+    change_value_signal = QtCore.SIGNAL('change_value')
+    
     def __init__(self, parent=None, model=None):
         super(FinalPage, self).__init__(parent)
         self.setTitle(_('Import Progress'))
@@ -276,9 +279,13 @@ class FinalPage(QtGui.QWizardPage):
         ly.addWidget(label)
         ly.addWidget(self.progressbar)
         self.setLayout(ly)
+        self.connect(self, self.change_maximum_signal, self.progressbar.setMaximum)
+        self.connect(self, self.change_value_signal, self.progressbar.setValue)
 
     def run_import(self):
-        for row in self.model.get_collection_getter()():
+        collection = self.model.get_collection_getter()()
+        self.emit(self.change_maximum_signal, len(collection))
+        for i,row in enumerate(collection):
             new_entity_instance = self.admin.entity()
             for field_name, attributes in self.admin.get_columns():
                 setattr(
@@ -288,6 +295,7 @@ class FinalPage(QtGui.QWizardPage):
                 )
             self.admin.add(new_entity_instance)
             self.admin.flush(new_entity_instance)
+            self.emit(self.change_value_signal, i)
 
     def import_finished(self):
         self.progressbar.setMaximum(1)
@@ -299,8 +307,9 @@ class FinalPage(QtGui.QWizardPage):
 
     def initializePage(self):
         from camelot.view.model_thread import post
-        self.progressbar.setMaximum(0)
+        self.progressbar.setMaximum(1)
         self.progressbar.setValue(0)
+        self.emit(QtCore.SIGNAL('completeChanged()'))
         post(self.run_import, self.import_finished, self.import_finished)
 
 
