@@ -17,6 +17,7 @@ from currencydelegate import CurrencyDelegate
 from customdelegate import CustomDelegate
 from datedelegate import DateDelegate
 from datetimedelegate import DateTimeDelegate
+from enumerationdelegate import EnumerationDelegate
 from filedelegate import FileDelegate
 from floatdelegate import FloatDelegate
 from imagedelegate import ImageDelegate

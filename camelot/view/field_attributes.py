@@ -220,9 +220,9 @@ _sqlalchemy_to_python_type_ = {
     },
 
     camelot.types.Enumeration: lambda f: {
-        'delegate': delegates.ComboBoxDelegate,
+        'delegate': delegates.EnumerationDelegate,
         'python_type': str,
-        'choices': lambda o: [
+        'choices': [
             (v, unicode(_(unicode(v).replace('_', ' '))).capitalize()) 
             for v in f.choices
         ],
@@ -232,6 +232,16 @@ _sqlalchemy_to_python_type_ = {
         'nullable': False,
         'widget': 'combobox',
     },
+    
+    camelot.types.Language: lambda f: {
+        'delegate': delegates.EnumerationDelegate,
+        'python_type': str,
+        'choices': f.choices,
+        'from_string': string_from_string,
+        'editable': True,
+        'nullable': False,
+        'widget': 'combobox',
+    },    
 
     camelot.types.File : lambda f: {
         'python_type': str,

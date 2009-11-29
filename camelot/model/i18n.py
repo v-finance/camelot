@@ -25,6 +25,7 @@
 #
 #  =============================================================================
 from camelot.model import metadata
+import camelot.types
 from elixir.entity import Entity
 from elixir.options import using_options
 from elixir.fields import Field
@@ -47,7 +48,7 @@ def tr( source ):
 
 class Translation( Entity ):
     using_options( tablename = 'translation' )
-    language = Field( Unicode( 20 ), index = True )
+    language = Field( camelot.types.Language, index = True )
     source = Field( Unicode( 500 ), index = True )
     value = Field( Unicode( 500 ) )
     cid = Field( INT(), default = 0, index = True )

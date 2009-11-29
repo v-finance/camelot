@@ -132,10 +132,14 @@ def stripped_data_to_unicode( stripped_data, obj, columns ):
             if field_data != None:
                 unicode_data = unicode_format( field_data )
         elif 'choices' in field_attributes:
-            for key, value in field_attributes['choices']( obj ):
-                if key == field_data:
-                    unicode_data = value
-                    continue
+            choices = field_attributes['choices']
+            if callable(choices):
+                for key, value in choices( obj ):
+                    if key == field_data:
+                        unicode_data = value
+                        continue
+            else:
+                unicode_data = field_data
         elif isinstance( field_data, DelayedProxy ):
             unicode_data = u'...'
         elif isinstance( field_data, list ):

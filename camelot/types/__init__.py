@@ -166,13 +166,23 @@ class RichText(types.TypeDecorator):
     impl = types.UnicodeText
      
 class Language(types.TypeDecorator):
-    """The language codes are stored in the database as strings
+    """The languages are stored as ISO codes in the database
     """
     
+    import babel
+    
     impl = types.Unicode
+    choices = []
+    for code in babel.localedata.list():
+        locale = babel.Locale(code)
+        display_name = locale.get_display_name()
+        if display_name:
+            choices.append((code, u'%s (%s)'%(code, display_name)))
+        else:
+            choices.append((code, code))
     
     def __init__(self):
-        types.TypeDecorator.__init__(self, length=50)
+        types.TypeDecorator.__init__(self, length=20)
         
 class Color(types.TypeDecorator):
     """The Color field returns and accepts tuples of the form (r,g,b,a) where
