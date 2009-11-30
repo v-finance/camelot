@@ -118,6 +118,7 @@ class GroupBoxFilter(Filter):
     def render(self, parent, name, options):
       
         from PyQt4 import QtCore, QtGui
+        from camelot.view.controls.filterlist import filter_changed_signal
         
         class FilterWidget(QtGui.QGroupBox):
             """A box containing a filter that can be applied on a table view, this filter is
@@ -132,7 +133,7 @@ class GroupBoxFilter(Filter):
                 self.setChoices(choices)
                  
             def emit_filter_changed(self, state):
-                self.emit(QtCore.SIGNAL('filter_changed'))
+                self.emit(filter_changed_signal)
             
             def setChoices(self, choices):
                 self.choices = choices
@@ -162,6 +163,7 @@ class ComboBoxFilter(Filter):
     def render(self, parent, name, options):
       
         from PyQt4 import QtCore, QtGui
+        from camelot.view.controls.filterlist import filter_changed_signal
         
         class FilterWidget(QtGui.QGroupBox):
           
@@ -179,7 +181,7 @@ class ComboBoxFilter(Filter):
                     
             def emit_filter_changed(self, index):
                 self.current_index = index
-                self.emit(QtCore.SIGNAL('filter_changed'))
+                self.emit(filter_changed_signal)
                 
             def decorate_query(self, query):
                 if self.current_index>=0:
@@ -187,3 +189,58 @@ class ComboBoxFilter(Filter):
                 return query
               
         return FilterWidget(name, options, parent)
+    
+class ValidDateFilter(Filter):
+    """Filters entities that are valid a certain date.  This filter will present
+    a date to the user and filter the entities that have their from date before this
+    date and their end date after this date.  If no date is given, all entities will
+    be shown"""
+
+    def __init__(self, from_attribute, thru_attribute, verbose_name):
+        """
+        :param from_attribute: the name of the attribute representing the from date
+        :param thru_attribute: the name of the attribute representing the thru date
+        :param verbose_name: the displayed name of the filter"""
+        self._from_attribute = from_attribute
+        self._thru_attribute = thru_attribute
+        self._verbose_name = verbose_name
+        
+    def render(self, parent, name, options):
+        
+        from datetime import date
+        from PyQt4 import QtGui, QtCore
+        from camelot.view.controls.filterlist import filter_changed_signal
+        from camelot.view.controls.editors import DateEditor, editingFinished
+        
+        class FilterWidget(QtGui.QGroupBox):
+          
+            def __init__(self, name, query_decorator, parent):
+                QtGui.QGroupBox.__init__(self, name, parent)
+                layout = QtGui.QVBoxLayout()
+                self.date_editor = DateEditor(parent=self, nullable=True)
+                self.date_editor.set_value(date.today())
+                self.query_decorator = query_decorator
+                layout.addWidget(self.date_editor)
+                self.setLayout(layout)
+                self.connect(self.date_editor, editingFinished, self.emit_filter_changed)
+                    
+            def emit_filter_changed(self):
+                self.emit(filter_changed_signal)
+                
+            def decorate_query(self, query):
+                return self.query_decorator(query, self.date_editor.get_value())
+              
+        return FilterWidget(name, options, parent)
+        
+    def get_name_and_options(self, admin):
+        from sqlalchemy.sql import and_
+        
+        def query_decorator(query, date):
+            e = admin.entity
+            if date:
+                print 'filter on', date
+                return query.filter(and_(getattr(e, self._from_attribute)<=date,
+                                         getattr(e, self._thru_attribute)>=date))
+            return query
+        
+        return (self._verbose_name, query_decorator)

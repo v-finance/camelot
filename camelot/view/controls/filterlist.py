@@ -34,6 +34,8 @@ from PyQt4 import QtGui, QtCore
 
 _ = lambda x:x
 
+filter_changed_signal = QtCore.SIGNAL('filter_changed')
+
 class FilterList(QtGui.QScrollArea):
     """A list with filters that can be applied on a query in the tableview"""
 
@@ -50,7 +52,7 @@ class FilterList(QtGui.QScrollArea):
             filter_widget = filter.render(widget, name, options)
             layout.addWidget(filter_widget)
             self.connect(filter_widget,
-                         QtCore.SIGNAL('filter_changed'),
+                         filter_changed_signal,
                          self.emit_filters_changed)
 
         layout.addStretch()
