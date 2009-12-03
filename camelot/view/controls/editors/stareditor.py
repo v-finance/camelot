@@ -61,7 +61,7 @@ class StarEditor(CustomEditor):
                 self.buttons[i].setIcon(self.starIcon)
             else:
                 self.buttons[i].setIcon(self.noStarIcon)
-        self.emit(QtCore.SIGNAL('editingFinished()'), self.stars)
+        self.emit(QtCore.SIGNAL('editingFinished()'))
     
     def set_value(self, value):
         value = CustomEditor.set_value(self, value) or 0

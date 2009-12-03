@@ -49,6 +49,7 @@ class FormView( AbstractView ):
         self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
         self.connect( self.model, QtCore.SIGNAL( sig ), self.dataChanged )
+        self.connect( self.model, self.model.item_delegate_changed_signal, self.item_delegate_changed )
     
         self.widget_mapper.setModel( model )
         self.setLayout( self.widget_layout )
@@ -58,6 +59,9 @@ class FormView( AbstractView ):
       
         self.validator = admin.create_validator( model )
         self.validate_before_close = True
+        self.form = None
+        self.columns = None
+        self.delegate = None
     
         def getColumnsAndForm():
             return ( self.model.getColumns(), self.admin.get_form_display() )
@@ -84,23 +88,30 @@ class FormView( AbstractView ):
         self.update_title()
     
     def handleGetColumnsAndForm( self, columns_and_form ):
+        self.columns, self.form = columns_and_form
+        self.setColumnsFormAndDelegate()
+
+
+    def item_delegate_changed(self):
         from camelot.view.controls.delegates.delegatemanager import DelegateManager
-        columns, form = columns_and_form
-        delegate = self.model.getItemDelegate()
-        assert delegate
-        assert isinstance(delegate, DelegateManager)
-        self.setColumnsFormAndDelegate( columns, form, delegate )
+        self.delegate = self.model.getItemDelegate()
+        assert self.delegate
+        assert isinstance(self.delegate, DelegateManager)
+        self.setColumnsFormAndDelegate()
     
-    def setColumnsFormAndDelegate( self, columns, form, delegate ):
+    def setColumnsFormAndDelegate( self ):
         """Create value and label widgets"""
+        # only if all information is available, we can start building the form
+        if not (self.form and self.columns and self.delegate):
+            return
         widgets = {}
-        self.widget_mapper.setItemDelegate( delegate )
+        self.widget_mapper.setItemDelegate( self.delegate )
         option = QtGui.QStyleOptionViewItem()
         # set version to 5 to indicate the widget will appear on a
         # a form view and not on a table view
         option.version = 5
     
-        for i, ( field_name, field_attributes ) in enumerate( columns ):
+        for i, ( field_name, field_attributes ) in enumerate( self.columns ):
             model_index = self.model.index( self.index, i )
             hide_title = False
             if 'hide_title' in field_attributes:
@@ -108,7 +119,7 @@ class FormView( AbstractView ):
             widget_label = None
             if not hide_title:
                 widget_label = QtGui.QLabel( unicode(field_attributes['name']) )
-            widget_editor = delegate.createEditor( self, option, model_index )
+            widget_editor = self.delegate.createEditor( self, option, model_index )
       
             # required fields font is bold
             if ( 'nullable' in field_attributes ) and \
@@ -124,7 +135,7 @@ class FormView( AbstractView ):
             widgets[field_name] = ( widget_label, widget_editor )
     
         self.widget_mapper.setCurrentIndex( self.index )
-        self.widget_layout.insertWidget( 0, form.render( widgets, self ) )
+        self.widget_layout.insertWidget( 0, self.form.render( widgets, self ) )
         self.widget_layout.setContentsMargins( 7, 7, 7, 7 )
     
     def getEntity( self ):

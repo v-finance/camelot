@@ -176,6 +176,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     _header_font_required.setBold( True )
     
     header_icon = Icon( 'tango/16x16/places/folder.png' )
+
+    item_delegate_changed_signal = QtCore.SIGNAL('itemDelegateChanged')
   
     @gui_function
     def __init__( self, admin, collection_getter, columns_getter,
@@ -351,7 +353,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
     
     def getItemDelegate( self ):
-        """:return: a DelegateManager for this model, or None if no DelegateManager yet available"""
+        """:return: a DelegateManager for this model, or None if no DelegateManager yet available
+        a DelegateManager will be available once the item_delegate_changed signal has been emitted"""
         self.logger.debug( 'getItemDelegate' )
         return self.delegate_manager
     
@@ -396,6 +399,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         # Only set the delegate manager when it is fully set up
         self.delegate_manager = delegate_manager
         if not sip.isdeleted( self ):
+            self.emit( self.item_delegate_changed_signal )
             self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
       
     def rowCount( self, index = None ):
