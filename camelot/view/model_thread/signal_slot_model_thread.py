@@ -47,12 +47,18 @@ class TaskHandler(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self._queue = queue
         self._tasks_done = []
+        self._busy = False
         #logger.debug("TaskHandler created.")
 
+    def busy(self):
+        """:return True/False: indicating if this task handler is busy"""
+        return self._busy
+
     def handle_task(self):
+        self._busy = True
+        self.emit( AbstractModelThread.thread_busy_signal, True  )
         task = self._queue.pop()
-        if task:
-            self.emit( AbstractModelThread.thread_busy_signal, True  )
+        while task:
             task.execute()
             # we keep track of the tasks done to prevent them being garbage collected
             # apparently when they are garbage collected, they are recycled, but their
@@ -61,7 +67,9 @@ class TaskHandler(QtCore.QObject):
             #        a deliberate memory leak here
             task.clear()
             self._tasks_done.append(task)
-            self.emit( AbstractModelThread.thread_busy_signal, False  )
+            task = self._queue.pop()
+        self.emit( AbstractModelThread.thread_busy_signal, False  )
+        self._busy = False
 
 def synchronized( original_function ):
     """Decorator for synchronized access to an object, the object should
@@ -100,12 +108,15 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
     def run( self ):
         self.logger.debug( 'model thread started' )
         self._task_handler = TaskHandler(self)
-        self.connect(self, self.task_available, self._task_handler.handle_task, QtCore.Qt.QueuedConnection)
+        self.connect(self._task_handler, self.thread_busy_signal, self._thread_busy, QtCore.Qt.QueuedConnection)
         try:
             self._setup_thread()
         except Exception, e:
             self.logger.error('thread setup incomplete', exc_info=e)
         self.logger.debug('thread setup finished')
+        # Some tasks might have been posted before the signals were connected to the task handler,
+        # so once force the handling of tasks
+        self._task_handler.handle_task()
         self.exec_()
         self.logger.debug('model thread stopped')
 
@@ -114,13 +125,9 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
                 
     @synchronized
     def post( self, request, response = None, exception = None ):
-        while not self._task_handler:
-            import time
-            time.sleep(1)
-        assert self._task_handler
-        if not self._connected:
+        if not self._connected and self._task_handler:
+            # creating this connection in the model thread throws QT exceptions
             self.connect(self, self.task_available, self._task_handler.handle_task, QtCore.Qt.QueuedConnection)
-            self.connect(self._task_handler, self.thread_busy_signal, self._thread_busy, QtCore.Qt.QueuedConnection)
             self._connected = True
         # response should be a slot method of a QObject
         if response:
@@ -153,8 +160,11 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
     def busy( self ):
         """Return True or False indicating wether either the model or the
         gui thread is doing something"""
+        while not self._task_handler:
+            import time
+            time.sleep(1)
         app = QtCore.QCoreApplication.instance()
-        return app.hasPendingEvents() or len(self._request_queue)
+        return app.hasPendingEvents() or len(self._request_queue) or self._task_handler.busy()
 
     @gui_function
     def wait_on_work(self):
