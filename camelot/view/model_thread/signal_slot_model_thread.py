@@ -39,21 +39,38 @@ class Task(QtCore.QObject):
             exception_info = (e, '')
             self.emit(QtCore.SIGNAL('exception'), exception_info)
 
+def synchronized( original_function ):
+    """Decorator for synchronized access to an object, the object should
+    have an attribute _mutex which is of type QMutex
+    """
+
+    from functools import wraps
+
+    @wraps( original_function )
+    def wrapper(self, *args, **kwargs):
+        QtCore.QMutexLocker(self._mutex)
+        return original_function(self, *args, **kwargs)
+
+    return wrapper
+
 class TaskHandler(QtCore.QObject):
 
     def __init__(self, queue):
         """:param queue: the queue from which to pop a task when handle_task
         is called"""
         QtCore.QObject.__init__(self)
+        self._mutex = QtCore.QMutex()
         self._queue = queue
         self._tasks_done = []
         self._busy = False
         #logger.debug("TaskHandler created.")
 
+    @synchronized
     def busy(self):
         """:return True/False: indicating if this task handler is busy"""
         return self._busy
 
+    @synchronized
     def handle_task(self):
         self._busy = True
         self.emit( AbstractModelThread.thread_busy_signal, True  )
@@ -70,20 +87,6 @@ class TaskHandler(QtCore.QObject):
             task = self._queue.pop()
         self.emit( AbstractModelThread.thread_busy_signal, False  )
         self._busy = False
-
-def synchronized( original_function ):
-    """Decorator for synchronized access to an object, the object should
-    have an attribute _mutex which is of type QMutex
-    """
-
-    from functools import wraps
-
-    @wraps( original_function )
-    def wrapper(self, *args, **kwargs):
-        QtCore.QMutexLocker(self._mutex)
-        return original_function(self, *args, **kwargs)
-
-    return wrapper
 
 class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
     """A model thread implementation that uses signals and slots
@@ -144,6 +147,8 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
         if exception:
             self.connect(task, QtCore.SIGNAL('exception'), exception, QtCore.Qt.QueuedConnection)
         task.moveToThread(self)
+        # only put the task in the queue when it is completely set up 
+        self._request_queue.append(task)
         #print 'task created --->', id(task)
         self.emit(self.task_available)
 
