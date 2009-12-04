@@ -138,7 +138,6 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
         else:
             name = request.__name__
         task = Task(request, name=name)
-        self._request_queue.append(task)
         # QObject::connect is a thread safe function
         if response:
             assert response.im_self
