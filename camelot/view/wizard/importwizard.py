@@ -326,7 +326,7 @@ class ImportWizard(QtGui.QWizard):
     data_preview_page = DataPreviewPage
     final_page = FinalPage
     collection_getter = CsvCollectionGetter
-    window_title = 'Import CSV data'
+    window_title = _('Import CSV data')
 
     def __init__(self, parent=None, admin=None):
         """:param admin: camelot model admin"""
