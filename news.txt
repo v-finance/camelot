@@ -11,8 +11,6 @@ Trunk
  
    .. image:: _static/importwizard/csv_wizard.png
  
- * A Language field type
- 
  * The busy indicator in the status bar
  
    .. image:: _static/controls/status_bar.png
