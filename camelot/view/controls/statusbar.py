@@ -43,3 +43,5 @@ class StatusBar(QtGui.QStatusBar):
         self.addPermanentWidget(self.busy_widget, 0)
         mt = get_model_thread()
         self.connect(mt, mt.thread_busy_signal, self.busy_widget.set_busy)
+        # the model thread might allready be busy before we connected to it
+        self.busy_widget.set_busy(mt.busy())

@@ -76,7 +76,10 @@ class SignalHandler(QObject):
         self.connection.subscribe(destination='/topic/Camelot.Entity.>', ack='auto')
     def on_disconnected(self):
         logger.debug('stomp service disconnected')
+    def send_entity_update(self, sender, entity, scope='local'):
+        self.sendEntityUpdate(sender, entity, scope)    
     def sendEntityUpdate(self, sender, entity, scope='local'):
+        # deprecated
         self.emit(self.entity_update_signal, sender, entity)
         if self.connection and scope=='remote':
             self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.update'%entity.__class__.__name__)

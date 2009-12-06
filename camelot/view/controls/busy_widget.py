@@ -84,4 +84,4 @@ class BusyWidget(QtGui.QWidget):
         self.counter += 1
         self.highlighted_orb -= 1
         if self.highlighted_orb < 0:
-          self.highlighted_orb = self.orbs
+            self.highlighted_orb = self.orbs

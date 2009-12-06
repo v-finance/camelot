@@ -248,7 +248,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         """Verify all rows to see if some of them should be added to the
         unflushed rows"""
         for i, e in enumerate( self.collection_getter() ):
-            if not e.id:
+            if hasattr(e, 'id') and not e.id:
                 self.unflushed_rows.add( i )
         
     def hasUnflushedRows( self ):

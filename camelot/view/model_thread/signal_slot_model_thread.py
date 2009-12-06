@@ -112,10 +112,12 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
         self.logger.debug( 'model thread started' )
         self._task_handler = TaskHandler(self)
         self.connect(self._task_handler, self.thread_busy_signal, self._thread_busy, QtCore.Qt.QueuedConnection)
+        self._thread_busy(True)
         try:
             self._setup_thread()
         except Exception, e:
             self.logger.error('thread setup incomplete', exc_info=e)
+        self._thread_busy(False)
         self.logger.debug('thread setup finished')
         # Some tasks might have been posted before the signals were connected to the task handler,
         # so once force the handling of tasks
