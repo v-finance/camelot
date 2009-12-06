@@ -54,8 +54,9 @@ def startproject(project):
     else:
         shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
                         project)    
-    from migrate.versioning.api import create
-    create(os.path.join(project, 'repository'), project)
+    # creating a repository doesn't seems to work when migrate is easy intalled
+    #from migrate.versioning.api import create
+    #create(os.path.join(project, 'repository'), project)
       
 commands = locals()
 
