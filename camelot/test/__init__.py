@@ -42,8 +42,9 @@ class ModelThreadTestCase(unittest.TestCase):
         image_name = '%s.png'%test_case_name
         if suffix:
             image_name = '%s_%s.png'%(test_case_name, suffix)
-        self.process()
         widget.adjustSize()
+        self.process()
+        pixmap = QPixmap.grabWidget(widget)
         pixmap = QPixmap.grabWidget(widget)
         pixmap.save(os.path.join(images_path, image_name), 'PNG')
 
