@@ -115,7 +115,12 @@ def strip_data_from_object( obj, columns ):
                             create_collection_getter( obj, col[0] ),
                             field_attributes['admin'].get_columns ) )
         else:
-            row_data.append( getattr( obj, col[0] ) )
+            try:
+                row_data.append( getattr( obj, col[0] ) )
+            except Exception, e:
+                logger.error('ProgrammingError : could not get attribute %s of object of type %s'%(col[0], obj.__class__.__name__), 
+                             exc_info=e)
+                row_data.append( None )
     return row_data
   
 @model_function
@@ -383,7 +388,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             field_name = c[0]
             self.logger.debug( 'creating delegate for %s' % field_name )
             if 'delegate' in c[1]:
-                delegate = c[1]['delegate']( parent = delegate_manager, **c[1] )
+                try:
+                    delegate = c[1]['delegate']( parent = delegate_manager, **c[1] )
+                except Exception, e:
+                    logger.error('ProgrammingError : could not create delegate for field %s'%field_name, exc_info=e)
+                    delegate = delegates.PlainTextDelegate( parent = delegate_manager, **c[1] )
                 delegate_manager.insertColumnDelegate( i, delegate )
                 continue
             elif c[1]['python_type'] == str:
