@@ -593,3 +593,10 @@ class EntityAdmin(ObjectAdmin):
         """Flush the pending changes of this entity instance to the backend"""
         from sqlalchemy.orm.session import Session
         Session.object_session( entity_instance ).flush( [entity_instance] )
+        
+    @model_function
+    def copy(self, entity_instance):
+        """Duplicate this entity instance"""
+        new_entity_instance = entity_instance.__class__()
+        new_entity_instance.from_dict( entity_instance.to_dict(exclude=['id']) )
+        return new_entity_instance        

@@ -254,6 +254,8 @@ class ObjectAdmin(object):
 
         :param entity: the entity class for which an admin object is requested
         """
+        if entity==self.entity:
+            return self
         related_admin = self.app_admin.get_entity_admin(entity)
         if not related_admin:
             logger.warn('no related admin found for %s' % (entity.__name__))
@@ -413,3 +415,9 @@ class ObjectAdmin(object):
     def add(self, entity_instance):
         """Add an entity instance as a managed entity instance"""
         pass
+    
+    @model_function
+    def copy(self, entity_instance):
+        """Duplicate this entity instance"""
+        new_entity_instance = entity_instance.__class__()
+        return new_entity_instance

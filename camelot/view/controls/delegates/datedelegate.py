@@ -16,9 +16,9 @@ class DateDelegate(CustomDelegate):
     editor = editors.DateEditor
     
     def __init__(self, parent=None, editable=True, **kwargs):
-        CustomDelegate.__init__(self, parent, editable)
+        CustomDelegate.__init__(self, parent, editable, **kwargs)
         self.date_format = local_date_format()
-        self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 4)  + (camelot_small_icon_width*2) * 2 
+        self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 4)  + (camelot_small_icon_width*2) * 2
     
     def paint(self, painter, option, index):
         painter.save()

@@ -7,7 +7,6 @@ from PyQt4.QtCore import Qt
 from customeditor import CustomEditor
 from camelot.core import constants
 from camelot.view.art import Icon
-from camelot.core.utils import ugettext_lazy as _
 
 class DateEditor(CustomEditor):
     """Widget for editing date values"""

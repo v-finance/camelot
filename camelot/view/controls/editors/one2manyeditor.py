@@ -169,7 +169,7 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         """Copy the selected rows in this tableview"""
         logger.debug( 'delete selected rows called' )
         for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-            self.model.copy_row( row )        
+            self.model.copy_row( row )
       
     def deleteSelectedRows( self ):
         """Delete the selected rows in this tableview"""

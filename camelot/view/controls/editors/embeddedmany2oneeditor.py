@@ -13,6 +13,12 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
         assert admin != None
         CustomEditor.__init__( self, parent )
         self.admin = admin
+        #
+        # The admin class of the current entity can be different from
+        # self.admin, since the current entity can be a subclass of 
+        # the entity for which self.admin was made
+        #
+        self.current_entity_admin = None
         self.layout = QtGui.QHBoxLayout()
         self.entity_instance_getter = None
         self.form = None
@@ -31,19 +37,22 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
       
         def set_entity_instance():
             entity = entity_instance_getter()
+            current_entity_admin = None
             if entity:
                 if entity!=ValueLoading:
                     self.entity_instance_getter = create_instance_getter( entity )
+                    current_entity_admin = self.admin.get_related_entity_admin( entity.__class__ )
                 else:
-                    return False, False
+                    return False, False, current_entity_admin
             else:
                 self.entity_instance_getter = create_instance_getter( self.admin.entity() )
-            return True, propagate
+                current_entity_admin = self.admin
+            return True, propagate, current_entity_admin
       
         post( set_entity_instance, self.update_form )
     
     def update_form(self, update_form_and_propagate ):
-        update_form, propagate = update_form_and_propagate
+        update_form, propagate, current_entity_admin = update_form_and_propagate
 
         if update_form:
             if self.form:
@@ -55,10 +64,10 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
             def create_collection_getter( instance_getter ):
                 return lambda:[instance_getter()]
           
-            model = CollectionProxy( self.admin,
-                                    create_collection_getter( self.entity_instance_getter ),
-                                    self.admin.get_fields )
-            self.form = self.admin.create_form_view( '', model, 0, self )
+            model = CollectionProxy( current_entity_admin,
+                                     create_collection_getter( self.entity_instance_getter ),
+                                     current_entity_admin.get_fields )
+            self.form = current_entity_admin.create_form_view( '', model, 0, self )
             self.layout.addWidget( self.form )
             
         if propagate:

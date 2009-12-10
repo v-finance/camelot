@@ -735,8 +735,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             
             def copy_function():
                 o = self._get_object(row)
-                new_object = self.admin.entity()
-                new_object.from_dict( o.to_dict(exclude=['id']) )
+                new_object = self.admin.copy( o )
                 self.insertEntityInstance(self.getRowCount(), new_object)
                 
             return copy_function

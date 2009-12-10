@@ -238,7 +238,6 @@ class ValidDateFilter(Filter):
         def query_decorator(query, date):
             e = admin.entity
             if date:
-                print 'filter on', date
                 return query.filter(and_(getattr(e, self._from_attribute)<=date,
                                          getattr(e, self._thru_attribute)>=date))
             return query
