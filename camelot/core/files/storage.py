@@ -133,6 +133,9 @@ class S3Storage( object ):
      * AWS_SECRET_ACCESS_KEY = '<INSERT YOUR AWS SECRET ACCESS KEY HERE>'
      * AWS_BUCKET_NAME = 'camelot'
      * AWS_LOCATION = S3.Location.DEFAULT
+     
+    Using this Storage requires the availability of S3.py on your PYTHONPATH.
+    S3.py can be found on the amazon.com website
     """
 
     def __init__( self, upload_to = '', stored_file_implementation = StoredFile ):

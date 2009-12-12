@@ -1,0 +1,5 @@
+include readme.txt
+include news.txt
+recursive-include camelot *.png *.doc
+recursive-include doc *.rst *.html *.png
+
