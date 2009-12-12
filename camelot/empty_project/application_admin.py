@@ -9,9 +9,9 @@ class MyApplicationAdmin(ApplicationAdmin):
         from camelot.model.authentication import Person, Organization
         from camelot.model.i18n import Translation
         return [Section('relation',
-                        Icon('tango/24x24/apps/system-users.png'),
+                        Icon('tango/22x22/apps/system-users.png'),
                         items = [Person, Organization]),
                 Section('configuration',
-                        Icon('tango/24x24/categories/preferences-system.png'),
+                        Icon('tango/22x22/categories/preferences-system.png'),
                         items = [Memento, Translation])
                 ]

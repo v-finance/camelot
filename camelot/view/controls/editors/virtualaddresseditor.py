@@ -23,7 +23,7 @@ class VirtualAddressEditor(CustomEditor):
         self.layout.addWidget(self.editor)
         self.setFocusProxy(self.editor)
         self.editable = editable
-        nullIcon = Icon('tango/16x16/devices/phone.png').getQIcon()
+        nullIcon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
         self.label = QtGui.QToolButton()
         self.label.setIcon(nullIcon)
         self.label.setAutoFillBackground(False)
@@ -55,15 +55,17 @@ class VirtualAddressEditor(CustomEditor):
             self.editor.setText(value[1])
             idx = camelot.types.VirtualAddress.virtual_address_types.index(value[0])
             self.combo.setCurrentIndex(idx)
-            if str(self.combo.currentText()) == 'phone':
-                icon = Icon('tango/16x16/devices/phone.png').getQIcon()
+            icon = Icon('tango/16x16/devices/printer.png').getQIcon()
+# These icons don't exist any more in the new tango icon set
+#            if str(self.combo.currentText()) == 'phone':
+#                icon = Icon('tango/16x16/devices/phone.png').getQIcon()
             if str(self.combo.currentText()) == 'fax':
                 icon = Icon('tango/16x16/devices/printer.png').getQIcon()
-            if str(self.combo.currentText()) == 'mobile':
-                icon = Icon('tango/16x16/devices/mobile.png').getQIcon()
-            if str(self.combo.currentText()) == 'im':
-                icon = Icon('tango/16x16/places/instant-messaging.png').getQIcon()
-            if str(self.combo.currentText()) == 'pager':
+#            if str(self.combo.currentText()) == 'mobile':
+#                icon = Icon('tango/16x16/devices/mobile.png').getQIcon()
+#            if str(self.combo.currentText()) == 'im':
+#                icon = Icon('tango/16x16/places/instant-messaging.png').getQIcon()
+#            if str(self.combo.currentText()) == 'pager':
                 icon = Icon('tango/16x16/devices/pager.png').getQIcon()
             if str(self.combo.currentText()) == 'email':
                 icon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
