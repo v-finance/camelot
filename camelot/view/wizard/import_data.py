@@ -7,7 +7,7 @@ from camelot.action import createAction, addActions
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.model_thread import get_model_thread
 from camelot.view.controls.exception import model_thread_exception_message_box
-from camelot.view.controls.delegates.comboboxdelegate import ComboBoxEditorDelegate
+from camelot.view.controls.delegates.comboboxdelegate import ComboBoxEditorDelegate, TestComboBoxDelegate
 from camelot.view.controls.editors.choiceseditor import ChoicesEditor
 import csv, itertools
 
@@ -20,7 +20,6 @@ class ImportWizard(QtGui.QWizard):
         self.parent = parent
         # the attributes of the object that will be imported
         self.attributes = attributes
-        print self.attributes
 
     """ Make a wizard and the pages """
     def start(self):
@@ -65,13 +64,30 @@ class ImportWizard(QtGui.QWizard):
         self.openToolBar.addAction(openAct)
 
     def makeCheckBoxForFirstRow(self):
+        self.checkBox = QCheckBox('first row of data is column name')
+        action = QtGui.QAction('CheckBox', self.checkBox)
+        self.checkBox.connect(self.checkBox, QtCore.SIGNAL("clicked()"), self.repaintTable)
+        self.checkBox.addAction(action)
+    
         checkBox = QCheckBox('first row of data is column name')
         action = QtGui.QAction('CheckBox', checkBox)
         checkBox.connect(action, QtCore.SIGNAL('clicked()'), self.repaintTable)
         checkBox.addAction(action)
         return checkBox
 
+    """
+        depending on the checkbox the table must be drawn again
+    """
     def repaintTable(self):
+        print 'repaint table'
+        if self.checkBox.checkState() == Qt.Unchecked:
+            newTable = self.makeTable(self.data, self.attributes)
+            self.updateTable(newTable)
+        else:
+            dataWithoutFirstRow = self.data[1:]
+            newTable = self.makeTable(dataWithoutFirstRow, self.attributes)
+            self.updateTable(newTable)
+    
         dataWithoutFirstRow = self.data[1:]
         self.makeTable(dataWithoutFirstRow, self.attributes)
 
@@ -94,16 +110,29 @@ class ImportWizard(QtGui.QWizard):
         array = list(csvreader)
         self.data = array
         #checkbox
-        checkBox = self.makeCheckBoxForFirstRow()
+        self.makeCheckBoxForFirstRow()
         #tableview
-        tableView = self.makeTable(array, self.attributes, False)
+        self.tableView = self.makeTable(array, self.attributes, False)
+        self.setTableViewLayout()
 
-        vLayout = QVBoxLayout()
-        vLayout.addWidget(checkBox)
-        vLayout.addWidget(tableView)
-        self.qTablePage.setLayout(vLayout)
-
-
+    """ layout of the page with the table 
+        above a checkbox, below the table
+    """    
+    def setTableViewLayout(self):
+        self.vLayout = QVBoxLayout()
+        self.vLayout.addWidget(self.checkBox)
+        self.vLayout.addWidget(self.tableView)
+        self.qTablePage.setLayout(self.vLayout)
+    
+    """
+        if the checkbox is checked the first row isn't drawn anymore but used for the delegate
+    """
+    def updateTable(self, newTable):
+        self.vLayout.removeWidget(self.tableView)
+        self.vLayout.addWidget(newTable)
+        self.tableView = newTable
+        self.vLayout.update()
+    
     """ the layout for the wizard """
     def makeGridLayout(self):
         self.grid = QtGui.QGridLayout()
@@ -118,21 +147,12 @@ class ImportWizard(QtGui.QWizard):
         tv = QTableView()
 
         # set the table model
-        tm = InputTableModel(data, headerData, parent=self.qTablePage)
-
-        # add one to the length for the header
-        #if firstRow:
-        #    tm = QStandardItemModel((len(data) + 2) , len(self.attributes), self.qTablePage)
-        #else :
-        #    tm = QStandardItemModel((len(data) + 1) , len(self.attributes), self.qTablePage)
+        tm = InputTableModel(data, self.attributes, self.qTablePage)
 
         tv.setModel(tm)
-        #self.makeHeader(tm, headerData)
-        #self.makeBody(tm, data)
         CHOICES = self.makeChoices(headerData)
 
         delegate = ComboBoxEditorDelegate(choices=lambda o:CHOICES, parent=tv )
-        #delegate = TestComboBoxDelegate(self.attributes, parent=tv )
         tv.setItemDelegateForRow(0,delegate)
 
         # set the minimum size
@@ -163,12 +183,12 @@ class ImportWizard(QtGui.QWizard):
             tv.setRowHeight(row, 18)
         return tv
 
+    """" method for initializing the choices of the delegate. a tuple is returned"""
     def makeChoices(self, choices):
         CHOICES = []
         for i in range(len(choices)):
             CHOICES = CHOICES + [(str(i) , choices[i])]
-        CHOICES = tuple(CHOICES)
-
+        return tuple(CHOICES)
 
     def makeHeader(self, model, header):
         for column in range(len(header)):
@@ -186,9 +206,16 @@ class ImportWizard(QtGui.QWizard):
     """method returning the imported data"""
     def getImportedData(self):
         return list(self.data)
-
-class InputTableModel(QAbstractTableModel):
+        
+#class InputTableModel(QAbstractTableModel): 
+class InputTableModel(QStandardItemModel):
     """ class representing the table """
+    def __init__(self, datain, headerData, parent=None, *args): 
+#        QAbstractTableModel.__init__(self, parent, *args) 
+        table = [headerData] + datain
+        QStandardItemModel.__init__(self, len(table), len(headerData), parent, *args) 
+        self.fill_up_model(table)
+ 
     def __init__(self, datain, headerData, parent=None, *args):
         QAbstractTableModel.__init__(self, parent, *args)
         # the headerdata will be the first row in the table
@@ -199,6 +226,7 @@ class InputTableModel(QAbstractTableModel):
         self.fill_up_table(datain, headerData)
 
 
+ 
     def fill_up_table(self, datain, headerData, hints = None):
         self.arraydata = list(datain)
         self.arraydata.insert(0, headerData)
@@ -227,6 +255,12 @@ class InputTableModel(QAbstractTableModel):
         return len(self.arraydata[0])
 
     def data(self, index, role):
+        if not index.isValid(): 
+            return QVariant() 
+        elif role != Qt.DisplayRole: 
+           return QVariant()
+        else:
+            return QVariant(QStandardItemModel.data(self, index, role))
         #if headerData != None:
         #     makeHeaderData()
         #TODO, now the table is filled from (row = 0, column = 0)
@@ -238,7 +272,15 @@ class InputTableModel(QAbstractTableModel):
         elif role != Qt.DisplayRole:
             return QVariant()
         return QVariant(self.arraydata[index.row()][index.column()])
+ 
+    def fill_up_model(self, table):
+        for row in range(len(table)):
+            data = table[row]
+            for column in range(len(data)):
+                index = self.index(row, column, QModelIndex())
+                self.setData(index, QVariant(data[column]))
 
+    
     def setData(self, index, value, role=Qt.ItemIsEditable):
         self.arraydata[index.row()][index.column()] = value
 

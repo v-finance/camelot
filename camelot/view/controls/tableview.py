@@ -348,9 +348,80 @@ class TableView( AbstractView  ):
         workspace.addSubWindow( form )
         form.show()
     
+
+    
+    @gui_function
+    def set_filters_and_actions( self, filters_and_actions ):
+        """sets filters for the tableview"""
+        filters, actions = filters_and_actions
+        from filterlist import FilterList
+        from actionsbox import ActionsBox
+        logger.debug( 'setting filters for tableview' )
+        if self.filters:
+          self.disconnect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
+          self.filters.deleteLater()
+          self.filters = None
+        if filters:
+          self.filters = FilterList( filters, parent=self )
+          self.splitter.insertWidget( 2, self.filters )
+          self.connect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
+        elif actions:
+          self.filters = ActionsBox( self, self._table_model.collection_getter, lambda:[] )
+          self.filters.setActions( actions )
+          self.splitter.insertWidget( 2, self.filters )
+
+    def toHtml( self ):
+        """generates html of the table"""
+        table = [[getattr( row, col[0] ) for col in self.admin.getColumns()]
+                 for row in self.admin.entity.query.all()]
+        context = {
+          'title': self.admin.get_verbose_name_plural(),
+          'table': table,
+          'columns': [c[0] for c in self.admin.getColumns()],
+        }
+        from camelot.view.templates import loader
+        from jinja import Environment, FileSystemLoader
+        env = Environment( loader = loader )
+        tp = env.get_template( 'table_view.html' )
+        return tp.render( context )
+
+    def closeEvent( self, event ):
+        """reimplements close event"""
+        logger.debug( 'tableview closed' )
+        # remove all references we hold, to enable proper garbage collection
+        del self.table_layout
+        del self.table
+        del self.filters
+        del self._table_model
+        event.accept()
+    
+    def importWizard(self, attributes):
+        from camelot.view.wizard.import_data import ImportWizard
+        #object_attributes = ['title', 'releasedate', 'name', 'description' ]
+        object_attributes = self.admin.entity().Admin.form_display.get_fields()
+        importWizard = ImportWizard( self, object_attributes )
+        importWizard.start()
+        data = importWizard.getImportedData()    
+    
     def selectTableRow( self, row ):
         """selects the specified row"""
         self.table.selectRow( row )
+    
+    def makeImport():
+        for row in data:
+            o = self.admin.entity()
+            #For example, setattr(x, 'foobar', 123) is equivalent to x.foobar = 123
+            # if you want to import all attributes, you must link them to other objects
+            #for example: a movie has a director, this isn't a primitive like a string
+            # but a object fetched from the db
+            setattr(o, object_attributes[0], row[0])
+            name = row[2].split( ' ' ) #director
+            o.short_description = "korte beschrijving"
+            o.genre = ""
+            from sqlalchemy.orm.session import Session
+            Session.object_session(o).flush([o])
+    
+    post( makeImport )
     
     def selectedTableIndexes( self ):
         """returns a list of selected rows indexes"""
@@ -469,7 +540,6 @@ class TableView( AbstractView  ):
         importWizard = ImportWizard( self, object_attributes )
         importWizard.start()
         data = importWizard.getImportedData()    
-        
         def makeImport():
             for row in data:
                 # get all possible fields (=attributes) from this object
