@@ -12,7 +12,6 @@ class RichTextDelegate(CustomDelegate):
     
     editor = editors.RichTextEditor
     
-    
     def __init__(self, parent=None, editable=True, **kwargs):
         CustomDelegate.__init__(self, parent, editable)
         self.editable = editable

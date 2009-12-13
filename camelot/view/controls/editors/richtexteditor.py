@@ -459,7 +459,7 @@ class RichTextEditor(CustomEditor, WideEditor):
       
     def get_value(self):
         from xml.dom import minidom
-        tree = minidom.parseString(unicode(self.textedit.toHtml()))
+        tree = minidom.parseString(unicode(self.textedit.toHtml()).encode('utf-8'))
         value = u''.join([node.toxml() for node in tree.getElementsByTagName('html')[0].getElementsByTagName('body')[0].childNodes])
         return CustomEditor.get_value(self) or value
         
