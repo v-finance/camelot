@@ -78,6 +78,10 @@ def variant_to_pyobject(qvariant=None):
 #  
 _translations_ = {}
 
+def set_translation(source, value):
+    """Store a tranlation in the global translation dictionary"""
+    _translations_[source] = value
+    
 def load_translations():
     """Fill the global dictionary of translations with all data from the
     database, to be able to do fast gui thread lookups of translations"""

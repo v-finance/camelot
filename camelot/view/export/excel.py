@@ -160,15 +160,15 @@ def write_data_to_excel(filename, title, headerList, dataList):
     for n,desc in enumerate(headerList):
         lst =  desc[1]
         if n==0:
-            ws.write(2, n, lst['name'], topleftCellStyle)
+            ws.write(2, n, unicode(lst['name']), topleftCellStyle)
         elif n==len(headerList)-1:
-            ws.write(2, n, lst['name'], toprightCellStyle)
+            ws.write(2, n, unicode(lst['name']), toprightCellStyle)
         else:
-            ws.write(2, n, lst['name'], headerStyle)
-        if len(lst['name']) < 8:
+            ws.write(2, n, unicode(lst['name']), headerStyle)
+        if len(unicode(lst['name'])) < 8:
             ws.col(n).width = 8 *  375
         else:
-            ws.col(n).width = len(lst['name']) *  375
+            ws.col(n).width = len(unicode(lst['name'])) *  375
         myDataTypeDict[ n ] = lst["python_type"]
         if lst["python_type"] == float:
             myPrecisionDict [ n ] = lst["precision"]    #Populating precision dictionary

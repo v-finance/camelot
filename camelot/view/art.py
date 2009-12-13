@@ -48,6 +48,7 @@ class Pixmap(object):
     :param module: the module that contains the art directory, if None is given
     this will be camelot"""
         self._path = path
+        self._cached_pixmap = None
         if not module:
             import camelot
             self._module_name = camelot.__name__
@@ -74,6 +75,8 @@ class Pixmap(object):
     @gui_function
     def getQPixmap(self):
         """QPixmaps can only be used in the gui thread"""
+        if self._cached_pixmap:
+            return self._cached_pixmap
         from pkg_resources import resource_string
         from PyQt4.QtGui import QPixmap
         qpm = QPixmap()
@@ -82,6 +85,7 @@ class Pixmap(object):
         if not success:
             msg = u'Could not load pixmap %s from camelot art library'
             logger.warn(msg % self._path)
+        self._cached_pixmap = qpm
         return qpm
 
 class Icon(Pixmap):

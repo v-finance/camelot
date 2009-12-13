@@ -428,7 +428,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             c = self.getColumns()[section]
             
             if role == Qt.DisplayRole:
-                return QtCore.QVariant( c[1]['name'] )
+                return QtCore.QVariant( unicode(c[1]['name']) )
               
             elif role == Qt.FontRole:
                 if ( 'nullable' in c[1] ) and \

@@ -33,6 +33,7 @@ import sqlalchemy.sql.expression
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function, gui_function
 from camelot.core.utils import ugettext as _
+from camelot.core.utils import ugettext_lazy
 from camelot.admin.validator.entity_validator import EntityValidator
 
 
@@ -128,7 +129,7 @@ class EntityAdmin(ObjectAdmin):
                 blank = True,
                 delegate = delegates.PlainTextDelegate,
                 validator_list = [],
-                name = unicode(_(field_name.replace('_', ' '))).capitalize()
+                name = ugettext_lazy(field_name.replace('_', ' ').capitalize())
             )
 
             #
@@ -245,9 +246,6 @@ class EntityAdmin(ObjectAdmin):
             #
             if 'target' in attributes:
                 attributes['admin'] = get_entity_admin(attributes['target'])
-
-            # if name should be translated, do so now
-            attributes['name'] = unicode(attributes['name']).capitalize()
 
             self._field_attributes[field_name] = attributes
             return attributes

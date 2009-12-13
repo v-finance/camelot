@@ -101,6 +101,7 @@ class FormView( AbstractView ):
     
     def setColumnsFormAndDelegate( self ):
         """Create value and label widgets"""
+        from camelot.view.controls.user_translatable_label import UserTranslatableLabel
         # only if all information is available, we can start building the form
         if not (self.form and self.columns and self.delegate):
             return
@@ -118,7 +119,7 @@ class FormView( AbstractView ):
                 hide_title = field_attributes['hide_title']
             widget_label = None
             if not hide_title:
-                widget_label = QtGui.QLabel( unicode(field_attributes['name']) )
+                widget_label = UserTranslatableLabel( field_attributes['name'] )
             widget_editor = self.delegate.createEditor( self, option, model_index )
       
             # required fields font is bold

@@ -32,6 +32,7 @@ logger = logging.getLogger('camelot.view.object_admin')
 
 from camelot.view.model_thread import gui_function, model_function
 from camelot.core.utils import ugettext as _
+from camelot.core.utils import ugettext_lazy
 from validator.object_validator import ObjectValidator
 
 
@@ -292,7 +293,7 @@ class ObjectAdmin(object):
                 blank=True,
                 delegate=delegates.PlainTextDelegate,
                 validator_list=[],
-                name=unicode(_(field_name.replace( '_', ' ' ))).capitalize()
+                name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
             )
             #
             # Field attributes forced by the field_attributes property
@@ -335,8 +336,6 @@ class ObjectAdmin(object):
             if 'target' in attributes:
                 attributes['admin'] = get_entity_admin(attributes['target'])
 
-            # if name should be translated, do so now
-            attributes['name'] = unicode(attributes['name'])
             self._field_attributes[field_name] = attributes
             return attributes
 
