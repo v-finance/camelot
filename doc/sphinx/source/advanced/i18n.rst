@@ -23,7 +23,8 @@ are used in the GUI.
 .. literalinclude:: ../../../../test/snippet/i18n/specify_lazy_translation_string.py
 
 Translation strings in model definitions should always be specified as lazy translation
-strings.
+strings.  Only lazy translation strings can be translated by the end user in various
+forms.
 
 How to Create Language Files
 ============================
@@ -50,3 +51,16 @@ Translations can be put in 2 places :
     application startup, all records in this table related to the current language will be 
     put in memory.
   
+End user translations
+=====================
+
+Often it is convenient to let the end user create or update the translations of an
+application, this allows the end user to put a lot of domain knowledge into the application.
+
+Therefore, all lazy translation strings can be translated by the end user.  When the user
+right-clicks on a label in a form, he can select 'Change translation' from the menu and
+update the current translation (for the current language).  This effectively updates the
+content of the 'Translation' table.
+
+After some time the developer can take a copy of this table and decide to put these translations
+in po files.
