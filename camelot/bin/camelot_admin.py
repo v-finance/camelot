@@ -25,15 +25,52 @@
 #
 #  ============================================================================
 
-"""
-Tool to assist in the creation and management of Camelot
+from optparse import OptionParser
+
+#
+# Description of the application, out of which the help text as well as the
+# __doc__ strings can be generated
+#
+
+description = """camelot_admin is a tool to assist in the creation and development of Camelot
 projects.
-
-use : python camelot-admin.py -h 
-
-to get a list of commands and options
 """
 
+usage = "usage: %prog [options] command"
+
+command_description = [
+    ('startproject', """Starts a new project, use startproject project_name."""),
+]
+
+#
+# Generate a docstring in restructured text format
+#
+
+__doc__ = description
+
+for command, desc in command_description:
+    __doc__ += "\n.. cmdoption:: %s\n\n"%command
+    for line in desc.split('\n'):
+        __doc__ += "    %s\n"%line
+        
+#
+# A custom OptionParser that generates help information on the commands
+#
+class CommandOptionParser(OptionParser):
+    
+    def format_help(self, formatter=None):
+        command_help = """
+The available commands are :
+
+"""
+        command_help += '\n\n'.join(['%s\n%s\n%s'%(command,'-'*len(command), desc) for command,desc in command_description])
+        command_help += """
+        
+For the management of deployed Camelot applications, see camelot_manage
+
+"""
+        return OptionParser.format_help(self) + ''.join(command_help)
+    
 def startproject(project):
     import shutil, os, sys
     if os.path.exists(project):
@@ -48,7 +85,6 @@ def startproject(project):
     # ignore is only supported as of python 2.6
     v = sys.version_info
     if v[0]>2 or (v[0]==2 and v[1]>=6):
-        print 'ignore .svn files'
         shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
                         project, ignore=ignore)
     else:
@@ -61,11 +97,16 @@ def startproject(project):
 commands = locals()
 
 def main():
-    from optparse import OptionParser
-    parser = OptionParser(usage='usage: %prog [options] startproject project')
-    (options, args) = parser.parse_args()
-    command, project = args
-    commands[command](*args[1:])
+    import camelot
+    parser = CommandOptionParser(description=description,
+                                 usage=usage,
+                                 version=camelot.__version__,)
+    (_options, args) = parser.parse_args()
+    if not len(args)==2:
+        parser.print_help()
+    else:
+        command, _project = args 
+        commands[command](*args[1:])
     
 if __name__ == '__main__':
     main()

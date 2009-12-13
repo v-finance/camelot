@@ -25,22 +25,81 @@
 #
 #  ============================================================================
 
-"""
-Tool to assist in the management of Camelot projects.
-
-version_control
-
-Puts the database under version control
-
-eg : python manage.py console
-launches a python console with the model being set up
-
-"""
-
+from optparse import OptionParser
 from code import InteractiveConsole
 import sys
 
-import settings
+#
+# Description of the application, out of which the help text as well as the
+# __doc__ strings can be generated
+#
+
+usage = "usage: %prog [options] command"
+
+description = """
+camelot_manage is oriented towards administrators of an installed
+camelot application. It is used for interacting the database, the model
+and migration of the database to a certain schema revision.
+
+To use this application, PYTHONPATH should contain a valid settings.py file that
+will be used to resolve the database engine and the model.
+"""
+
+command_description = [
+    ('console', """Launches a python console with the model all setup for command line
+interaction.
+
+Within the example movie project one could do
+the following to print a list of all movie titles to the screen::
+
+    from model import Movie
+    for movie in Movie.query.all():
+    print movie.title
+"""),
+    ('db_version', """Get the version of the database schema from the current database"""),
+
+    ('version', """Get the latest available database schema version"""),
+
+    ('upgrade', """Upgrade or downgrade the database to the specified version, use upgrade version_number."""),
+
+    ('version_control', """Put the database under version control"""),
+   
+    ('schema_display', """Generate a graph of the database schema.  The result is stored in schema.png.  This
+option requires pydot to be installed."""),
+]
+
+#
+# Generate a docstring in restructured text format
+#
+
+__doc__ = description
+
+for command, desc in command_description:
+    __doc__ += "\n.. cmdoption:: %s\n\n"%command
+    for line in desc.split('\n'):
+        __doc__ += "    %s\n"%line
+
+__doc__ += """
+   .. image:: ../_static/schema.png
+      :width: 400"""
+
+#
+# A custom OptionParser that generates help information on the commands
+#
+class CommandOptionParser(OptionParser):
+    
+    def format_help(self, formatter=None):
+        command_help = """
+The available commands are :
+
+"""
+        command_help += '\n\n'.join(['%s\n%s\n%s'%(command,'-'*len(command), desc) for command,desc in command_description])
+        command_help += """
+        
+For the creation and development of Camelot projects, see camelot_admin
+
+"""
+        return OptionParser.format_help(self) + ''.join(command_help)
 
 class FileCacher:
     "Cache the stdout text so we can analyze it before returning it"
@@ -84,22 +143,28 @@ def schema_display(image_path='schema.png'):
         show_multiplicity_one=False # some people like to see the ones, some don't
     )
     graph.write_png(image_path)
-      
+     
+def setup_model():
+    import settings
+    settings.setup_model()
+     
 def main():
-    from optparse import OptionParser
     import camelot
-    parser = OptionParser(__doc__, version=camelot.__version__)
+    parser = CommandOptionParser(usage=usage,
+                                 description=description, 
+                                 version=camelot.__version__)
     (_options, args) = parser.parse_args()
     if not args:
         parser.print_help()
     elif args[0]=='console':
-        settings.setup_model()
+        setup_model()
         sh = Shell()
         sh.interact()
     elif args[0]=='schema_display':
-        settings.setup_model()
+        setup_model()
         schema_display()
     elif args[0] in ('version_control', 'db_version', 'version', 'upgrade'):
+        import settings
         from migrate.versioning.repository import Repository
         from migrate.versioning.schema import ControlledSchema
         from sqlalchemy.exceptions import NoSuchTableError
@@ -140,7 +205,7 @@ def main():
                 finally:
                     migrate_connection.close()
     else:
-        parser.print_help()          
+        parser.print_help()
              
 if __name__ == '__main__':
     main()
