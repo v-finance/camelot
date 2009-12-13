@@ -208,6 +208,7 @@ class RowDataAdminDecorator(object):
                 new_field_attributes(i, attributes, original_field)
             )
             for i, (original_field, attributes) in enumerate(original_columns)
+            if attributes['editable']
         ]
 
         return new_columns
