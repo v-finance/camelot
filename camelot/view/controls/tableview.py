@@ -408,18 +408,19 @@ class TableView( AbstractView  ):
         self.table.selectRow( row )
     
     def makeImport():
-        for row in data:
-            o = self.admin.entity()
-            #For example, setattr(x, 'foobar', 123) is equivalent to x.foobar = 123
-            # if you want to import all attributes, you must link them to other objects
-            #for example: a movie has a director, this isn't a primitive like a string
-            # but a object fetched from the db
-            setattr(o, object_attributes[0], row[0])
-            name = row[2].split( ' ' ) #director
-            o.short_description = "korte beschrijving"
-            o.genre = ""
-            from sqlalchemy.orm.session import Session
-            Session.object_session(o).flush([o])
+        pass
+#        for row in data:
+#            o = self.admin.entity()
+#            #For example, setattr(x, 'foobar', 123) is equivalent to x.foobar = 123
+#            # if you want to import all attributes, you must link them to other objects
+#            #for example: a movie has a director, this isn't a primitive like a string
+#            # but a object fetched from the db
+#            setattr(o, object_attributes[0], row[0])
+#            name = row[2].split( ' ' ) #director
+#            o.short_description = "korte beschrijving"
+#            o.genre = ""
+#            from sqlalchemy.orm.session import Session
+#            Session.object_session(o).flush([o])
     
     post( makeImport )
     
