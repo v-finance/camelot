@@ -33,6 +33,7 @@ logger = logging.getLogger('camelot.view.art')
 
 from camelot.view.model_thread import gui_function
 
+from PyQt4 import QtGui
 
 def file_(name):
     from pkg_resources import resource_filename
@@ -96,3 +97,22 @@ class Icon(Pixmap):
         """QPixmaps can only be used in the gui thread"""
         from PyQt4.QtGui import QIcon
         return QIcon(self.getQPixmap())
+
+class ColorScheme(object):
+    """The default color scheme for camelot, based on the Tango icon set
+    see http://tango.freedesktop.org/Generic_Icon_Theme_Guidelines
+    """
+    yellow_1 = QtGui.QColor('#fce947')
+    yellow_2 = QtGui.QColor('#edd400')
+    yellow_3 = QtGui.QColor('#c4a000')
+    orange_1 = QtGui.QColor('#fcaf3e')
+    orange_2 = QtGui.QColor('#f57900')
+    orange_3 = QtGui.QColor('#cd5c00')
+    brown_1  = QtGui.QColor('#e9b96e')
+    brown_2  = QtGui.QColor('#c17d11')
+    brown_3  = QtGui.QColor('#8f5902')
+    red_1    = QtGui.QColor('#ef2929')
+    red_2    = QtGui.QColor('#cc0000')
+    red_3    = QtGui.QColor('#a40000')
+    
+    VALIDATION_ERROR = red_1
