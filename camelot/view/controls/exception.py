@@ -27,6 +27,8 @@
 
 """Functions and widget to represent exceptions to the user"""
 
+from camelot.core.utils import ugettext as _
+
 def model_thread_exception_message_box(exception_info):
     """Display an exception that occurred in the model thread in a message box,
   use this function as the exception argument in the model thread's post function
@@ -38,7 +40,7 @@ def model_thread_exception_message_box(exception_info):
     from PyQt4 import QtGui
     exc, traceback = exception_info
     msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
-                               'Exception', 'An unexpected event occurred')
+                               _('Exception'), _('An unexpected event occurred'))
     msgBox.setInformativeText(unicode(exc))
     msgBox.setDetailedText(traceback)
     msgBox.exec_()

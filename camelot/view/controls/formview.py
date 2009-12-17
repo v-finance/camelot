@@ -31,6 +31,7 @@ import logging
 logger = logging.getLogger( 'camelot.view.controls.formview' )
 
 from PyQt4 import QtCore
+from PyQt4.QtCore import Qt
 from PyQt4 import QtGui
 from camelot.view.model_thread import model_function, post
 from camelot.view.controls.view import AbstractView
@@ -102,6 +103,7 @@ class FormView( AbstractView ):
     def setColumnsFormAndDelegate( self ):
         """Create value and label widgets"""
         from camelot.view.controls.user_translatable_label import UserTranslatableLabel
+        from camelot.view.controls.editors.wideeditor import WideEditor
         # only if all information is available, we can start building the form
         if not (self.form and self.columns and self.delegate):
             return
@@ -118,9 +120,11 @@ class FormView( AbstractView ):
             if 'hide_title' in field_attributes:
                 hide_title = field_attributes['hide_title']
             widget_label = None
+            widget_editor = self.delegate.createEditor( self, option, model_index )
             if not hide_title:
                 widget_label = UserTranslatableLabel( field_attributes['name'] )
-            widget_editor = self.delegate.createEditor( self, option, model_index )
+                if not isinstance(widget_editor, WideEditor):
+                    widget_label.setAlignment( Qt.AlignVCenter | Qt.AlignRight )
       
             # required fields font is bold
             if ( 'nullable' in field_attributes ) and \
@@ -144,7 +148,7 @@ class FormView( AbstractView ):
     
     def setActions( self, actions ):
         if actions:
-            from actionsbox import ActionsBox
+            from camelot.view.controls.actionsbox import ActionsBox
             logger.debug( 'setting Actions for formview' )
             self.actions_widget = ActionsBox( self, self.getEntity )
             self.actions_widget.setActions( actions )

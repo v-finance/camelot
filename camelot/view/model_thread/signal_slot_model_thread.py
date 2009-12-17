@@ -8,7 +8,7 @@ logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 from PyQt4 import QtCore
 
-from camelot.view.model_thread import AbstractModelThread, gui_function, model_function, setup_model
+from camelot.view.model_thread import AbstractModelThread, gui_function, setup_model
 
 class Task(QtCore.QObject):
 
@@ -36,8 +36,15 @@ class Task(QtCore.QObject):
             self.emit(QtCore.SIGNAL('finished'), result )
         except Exception, e:
             logger.error( 'exception caught in model thread', exc_info = e )
-            exception_info = (e, '')
+            import traceback, cStringIO
+            sio = cStringIO.StringIO()
+            traceback.print_exc(file=sio)
+            traceback_print = sio.getvalue()
+            sio.close()
+            exception_info = (e, traceback_print)
             self.emit(QtCore.SIGNAL('exception'), exception_info)
+        except:
+            logger.error( 'unhandled exception in model thread')
 
 def synchronized( original_function ):
     """Decorator for synchronized access to an object, the object should
@@ -91,6 +98,9 @@ class TaskHandler(QtCore.QObject):
 class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
     """A model thread implementation that uses signals and slots
     to communicate between the model thread and the gui thread
+    
+    there is no explicit model thread verification on these methods,
+    since this model thread might not be THE model thread.
     """
 
     task_available = QtCore.SIGNAL('task_available')
@@ -154,7 +164,6 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
         self.emit(self.task_available)
 
     @synchronized
-    @model_function
     def pop( self ):
         """Pop a task from the queue, return None if the queue is empty"""
         if len(self._request_queue):
@@ -162,7 +171,6 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
             return task
 
     @synchronized
-    @gui_function
     def busy( self ):
         """Return True or False indicating wether either the model or the
         gui thread is doing something"""
