@@ -42,8 +42,9 @@ QT_MAJOR_VERSION = float( '.'.join( str( QtCore.QT_VERSION_STR ).split( '.' )[0:
 
 _ = lambda x:x
 
+from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 
-class PaneCaption( QtGui.QLabel ):
+class PaneCaption( UserTranslatableLabel ):
     """Navigation pane Caption"""
     def __init__( self,
                  text,
@@ -54,9 +55,7 @@ class PaneCaption( QtGui.QLabel ):
                  objectname = 'PaneCaption',
                  parent = None ):
 
-        QtGui.QLabel.__init__( self, parent )
-
-        self.setText( text )
+        super(UserTranslatableLabel, self).__init__(text, parent)
 
         if textbold:
             self.textbold()
@@ -120,7 +119,7 @@ class PaneButton( QtGui.QWidget ):
             self.icon.setPixmap( QtGui.QPixmap( buttonicon ) )
             self.layout.addWidget( self.icon )
 
-        self.label = QtGui.QLabel( text )
+        self.label = UserTranslatableLabel(text, parent)
 
         self.layout.addWidget( self.label, 2 )
 

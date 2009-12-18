@@ -57,8 +57,8 @@ class Memento( Entity ):
 
     class Admin( EntityAdmin ):
         name = 'History'
-        verbose_name = _( 'history' )
-        verbose_name_plural = _( 'history' )
+        verbose_name = _( 'History' )
+        verbose_name_plural = _( 'History' )
         section = 'configuration'
         list_display = ['creation_date',
                         'authentication',

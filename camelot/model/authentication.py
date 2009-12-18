@@ -324,8 +324,8 @@ class Organization( Party ):
         return sum( ( shareholder.shares for shareholder in self.shareholders ), 0 )
 
     class Admin( Party.Admin ):
-        verbose_name = _( 'organization' )
-        verbose_name_plural = _( 'organizations' )
+        verbose_name = _( 'Organization' )
+        verbose_name_plural = _( 'Organizations' )
         section = 'relations'
         list_display = ['name', 'tax_id', 'email', 'phone']
         form_display = TabForm( [( 'Basic', Form( ['name', 'tax_id', 'addresses', 'contact_mechanisms'] ) ),
@@ -368,7 +368,7 @@ class UsernameAuthenticationMechanism( AuthenticationMechanism ):
         return self.username
 
     class Admin( EntityAdmin ):
-        verbose_name = 'Authentication mechanism'
+        verbose_name = _('Authentication mechanism')
         list_display = ['username', 'last_login', 'is_active']
 
 class Person( Party ):
@@ -402,8 +402,8 @@ class Person( Party ):
         return self.name
 
     class Admin( Party.Admin ):
-        verbose_name = _( 'person' )
-        verbose_name_plural = _( 'persons' )
+        verbose_name = _( 'Person' )
+        verbose_name_plural = _( 'Persons' )
         list_display = ['first_name', 'last_name', 'email', 'phone']
         form_display = TabForm( [( 'Basic', Form( [HBoxForm( [Form( ['first_name', 'last_name', 'sex'] ),
                                                           Form( ['picture', ] ),
@@ -442,8 +442,8 @@ class Country( GeographicBoundary ):
 
     class Admin( EntityAdmin ):
         form_size = ( 700, 150 )
-        verbose_name = 'Country'
-        verbose_name_plural = 'Countries'
+        verbose_name = _('Country')
+        verbose_name_plural = _('Countries')
         list_display = ['name', 'code']
 
 class City( GeographicBoundary ):
@@ -460,8 +460,8 @@ class City( GeographicBoundary ):
         return city
 
     class Admin( EntityAdmin ):
-        verbose_name = 'City'
-        verbose_name_plural = 'Cities'
+        verbose_name = _('City')
+        verbose_name_plural = _('Cities')
         form_size = ( 700, 150 )
         list_display = ['code', 'name', 'country']
 
@@ -494,8 +494,8 @@ class Address( Entity ):
         QtGui.QDesktopServices.openUrl ( QtCore.QUrl( 'http://www.google.be/maps?f=q&source=s_q&geocode=%s&q=%s+%s' % ( self.city.country.code, self.street1, self.city.name ) ) )
 
     class Admin( EntityAdmin ):
-        verbose_name = 'Address'
-        verbose_name_plural = 'Addresses'
+        verbose_name = _('Address')
+        verbose_name_plural = _('Addresses')
         list_display = ['street1', 'street2', 'city']
         form_size = ( 700, 150 )
         field_attributes = {'street1':{'minimal_column_width':30}}
@@ -529,8 +529,8 @@ class PartyAddress( Entity ):
             self.address.showMap()
 
     class Admin( EntityAdmin ):
-        verbose_name = 'Address'
-        verbose_name_plural = 'Addresses'
+        verbose_name = _('Address')
+        verbose_name_plural = _('Addresses')
         list_search = ['party_name', 'address_name']
         list_display = ['party_name', 'address_name', 'comment']
         form_display = ['party', 'address', 'comment', 'from_date', 'thru_date']
@@ -545,7 +545,7 @@ class PartyAddressRoleType( Entity ):
     description = Field( Unicode( 40 ) )
 
     class Admin( EntityAdmin ):
-        verbose_name = 'Address role type'
+        verbose_name = _('Address role type')
         list_display = ['code', 'description']
 
 class PartyAuthentication( Entity ):
@@ -566,7 +566,7 @@ class ContactMechanism( Entity ):
 
     class Admin( EntityAdmin ):
         form_size = ( 700, 150 )
-        verbose_name = 'Contact mechanism'
+        verbose_name = _('Contact mechanism')
         list_display = ['mechanism']
         form_display = Form( ['mechanism', 'party_address'] )
         field_attributes = {'mechanism':{'minimal_column_width':25}}

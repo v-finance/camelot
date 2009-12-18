@@ -85,13 +85,13 @@ class EntityAdmin(ObjectAdmin):
         if hasattr(obj, 'id') and obj.id:
             if hasattr(obj, '__unicode__'):
                 return u'%s %s : %s' % (
-                    unicode(self.get_verbose_name().capitalize()),
+                    unicode(self.get_verbose_name()),
                     unicode(obj.id),
                     unicode(obj)
                 )
             else:
                 return u'%s %s' % (
-                    self.get_verbose_name().capitalize(),
+                    self.get_verbose_name(),
                     unicode(obj.id)
                 )
         else:

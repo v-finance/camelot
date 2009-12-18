@@ -201,7 +201,7 @@ class ObjectAdmin(object):
 
     def get_verbose_name(self):
         return unicode(
-            self.verbose_name or self.name or _(self.entity.__name__)
+            self.verbose_name or self.name or _(self.entity.__name__.capitalize())
         )
 
     def get_verbose_name_plural(self):

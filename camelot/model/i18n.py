@@ -58,7 +58,7 @@ class Translation( Entity ):
     _cache = dict()
 
     class Admin( EntityAdmin ):
-        verbose_name_plural = _( 'translations' )
+        verbose_name_plural = _( 'Translations' )
         form_size = ( 700, 150 )
         section = 'configuration'
         list_display = ['source', 'language', 'value', 'uid']
