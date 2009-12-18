@@ -189,7 +189,6 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.setFontItalic(False)
         self.textedit.setFontUnderline(False)
         self.textedit.setFocus(Qt.OtherFocusReason)
-        self.textedit.setEnabled(editable)
         self.update_alignment()
     
         if self.editable:
