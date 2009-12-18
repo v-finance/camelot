@@ -20,6 +20,7 @@ class ColoredFloatDelegate(CustomDelegate):
                  maximum=1e15,
                  precision=2,
                  editable=True,
+                 reverse=False,
                  unicode_format=None,
                  **kwargs):
         CustomDelegate.__init__(self,
@@ -27,6 +28,7 @@ class ColoredFloatDelegate(CustomDelegate):
                                 editable=editable,
                                 minimum=minimum,
                                 maximum=maximum,
+                                reverse=reverse,
                                 precision=precision,
                                 unicode_format=unicode_format,
                                 **kwargs)
@@ -34,7 +36,20 @@ class ColoredFloatDelegate(CustomDelegate):
         self.maximum = maximum
         self.precision = precision
         self.editable = editable
+        self.reverse = reverse
         self.unicode_format = unicode_format
+        if not self.reverse:
+            self.icons = {
+                1:QtGui.QIcon(Icon('tango/16x16/actions/go-up.png').getQPixmap()), 
+                -1:QtGui.QIcon(Icon('tango/16x16/actions/go-down-red.png').getQPixmap()),
+                0:QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap())
+            }
+        else:
+            self.icons = {
+                -1:QtGui.QIcon(Icon('tango/16x16/actions/go-up.png').getQPixmap()), 
+                1:QtGui.QIcon(Icon('tango/16x16/actions/go-down-red.png').getQPixmap()),
+                0:QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap())
+            }
         
     def paint(self, painter, option, index):
         painter.save()
@@ -51,37 +66,13 @@ class ColoredFloatDelegate(CustomDelegate):
                 painter.fillRect(option.rect, option.palette.window())
             else:
                 painter.fillRect(option.rect, background_color)
-          
-          
-          
-          
-            
-      
-          
-        if value >= 0:
-            if value == 0:
-                QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap()).paint(painter, option.rect.top(), option.rect.left()+1, option.rect.height(), option.rect.height(), Qt.AlignVCenter)
-                #QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
-                fontColor.setRgb(0, 0, 0)
-            else:
-                QtGui.QIcon(Icon('tango/16x16/actions/go-up.png').getQPixmap()).paint(painter, option.rect.left(), option.rect.top()+1, option.rect.height(), option.rect.height(), Qt.AlignVCenter)
-                #QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
-                fontColor.setRgb(0, 255, 0)
-        else:
-            QtGui.QIcon(Icon('tango/16x16/actions/go-down-red.png').getQPixmap()).paint(painter, option.rect.left(), option.rect.top()+1, option.rect.height(), option.rect.height(), Qt.AlignVCenter)
-#      QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
-            fontColor.setRgb(255, 0, 0)
+
+        self.icons[cmp(value,0)].paint(painter, option.rect.left(), option.rect.top()+1, option.rect.height(), option.rect.height(), Qt.AlignVCenter)
       
         value_str = '%.*f'%(self.precision, value)
         if self.unicode_format != None:
             value_str = self.unicode_format(value)
-            
-            
-            
-        
-    
-    
-    
+       
         fontColor = fontColor.darker()
         painter.setPen(fontColor.toRgb())
         rect = QtCore.QRect(option.rect.left()+23,

@@ -14,6 +14,7 @@ class ColoredFloatEditor(CustomEditor):
                  minimum=constants.camelot_minfloat,
                  maximum=constants.camelot_maxfloat, 
                  editable=True,
+                 reverse=False,
                  **kwargs):
         CustomEditor.__init__(self, parent)
         action = QtGui.QAction(self)
@@ -61,20 +62,27 @@ class ColoredFloatEditor(CustomEditor):
         layout.addWidget(self.spinBox)
         if editable:
             layout.addWidget(self.calculatorButton)
+        self.reverse = reverse
         self.setFocusProxy(self.spinBox)
         self.setLayout(layout)
-    
+        if not self.reverse:
+            self.icons = {
+                -1:Icon('tango/16x16/actions/go-down-red.png').getQPixmap(), 
+                1:Icon('tango/16x16/actions/go-up.png').getQPixmap(),
+                0:Icon('tango/16x16/actions/zero.png').getQPixmap()
+            }
+        else:
+            self.icons = {
+                1:Icon('tango/16x16/actions/go-down-red.png').getQPixmap(), 
+                -1:Icon('tango/16x16/actions/go-up.png').getQPixmap(),
+                0:Icon('tango/16x16/actions/zero.png').getQPixmap()
+            }
+            
     def set_value(self, value):
         value = CustomEditor.set_value(self, value) or 0.0
         self.spinBox.setValue(value)
-        if value >= 0:
-            if value == 0:
-                self.arrow.setPixmap(Icon('tango/16x16/actions/zero.png').getQPixmap())
-            else:
-                self.arrow.setPixmap(Icon('tango/16x16/actions/go-up.png').getQPixmap())
-        else:
-            self.arrow.setPixmap(Icon('tango/16x16/actions/go-down-red.png').getQPixmap())
-      
+        self.arrow.setPixmap(self.icons[cmp(value,0)])
+            
     def get_value(self):
         self.spinBox.interpretText()
         value = self.spinBox.value()
