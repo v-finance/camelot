@@ -145,6 +145,15 @@ class ApplicationAdmin(object):
         or None if no stylesheet needed
         """
         return None
+    
+    def get_translator(self):
+        """Reimplement this method to add application specific translations
+        to your application.
+        
+        :return: a QTranslator that should be used to translate the application
+        """
+        from PyQt4 import QtCore
+        return QtCore.QTranslator()
 
     def get_about(self):
         """:return: the content of the About dialog, a string with html

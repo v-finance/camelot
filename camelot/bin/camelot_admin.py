@@ -40,6 +40,8 @@ usage = "usage: %prog [options] command"
 
 command_description = [
     ('startproject', """Starts a new project, use startproject project_name."""),
+    ('makemessages', """Outputs a message file with all field names of all entities.  This command
+    requires settings.py of the project to be in the PYTHONPATH"""),
 ]
 
 #
@@ -94,6 +96,12 @@ def startproject(project):
     #from migrate.versioning.api import create
     #create(os.path.join(project, 'repository'), project)
       
+def makemessages():
+    print 'Not yet implemented'
+    import settings
+    settings.setup_model()
+    
+    
 commands = locals()
 
 def main():

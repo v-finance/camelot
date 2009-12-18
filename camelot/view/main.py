@@ -83,7 +83,7 @@ def main(application_admin,
     from camelot.core.utils import load_translations
     get_model_thread().post(load_translations)
     splash.showMessage('Load translations...', msgalign, msgcolor)
-    translator = QtCore.QTranslator()
+    translator = application_admin.get_translator()
     app.installTranslator(translator)
     
     app.processEvents()
