@@ -106,11 +106,8 @@ class ApplicationAdmin(object):
         return result
 
     def get_actions(self):
-        """:return: a list of actions that should be added to the menu and the
-        icon bar for this application, each action is a tuple of
-        (name, icon, callable), where callable is a function taking no
-        arguments that will be called when the action is executed.  Callable
-        will be called in the model thread.
+        """:return: a list of camelot.admin.application_action.ApplicationAction objects
+        that should be added to the menu and the icon bar for this application
         """
         return []
 

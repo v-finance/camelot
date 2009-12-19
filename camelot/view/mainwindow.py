@@ -127,13 +127,15 @@ class MainWindow( QtGui.QMainWindow ):
         settings.setValue( 'state', QtCore.QVariant( self.saveState() ) )
         logger.debug( 'settings written' )
 
+    def display_exception_message_box(self, exc_info):
+        from controls.exception import model_thread_exception_message_box
+        model_thread_exception_message_box( exc_info )
+        
     def runAction( self, name, callable ):
-        progress = QtGui.QProgressDialog( 'Please wait', 'Run in background', 0, 0 )
+        progress = QtGui.QProgressDialog( 'Please wait', QtCore.QString(), 0, 0 )
         progress.setWindowTitle( name )
         progress.show()
-
-        from controls.exception import model_thread_exception_message_box
-        post( callable, progress.close, model_thread_exception_message_box )
+        post( callable, progress.close, exception=self.display_exception_message_box )
 
     # QAction objects creation methods
     def createActions( self ):
@@ -332,16 +334,20 @@ class MainWindow( QtGui.QMainWindow ):
         self.sessionRefreshAct = SessionRefresh( self )
 
         self.app_actions = []
-        for name, icon, callable in self.app_admin.get_actions():
+        for action in self.app_admin.get_actions():
 
-            def bind_callable( name, callable ):
-                return lambda:self.runAction( name, callable )
-
+            def bind_action(parent, action):
+                
+                def slot(*args):
+                    action.run(parent)
+                    
+                return slot
+                    
             self.app_actions.append( createAction( parent = self,
-                                                 text = name,
-                                                 slot = bind_callable( name, callable ),
-                                                 actionicon = icon,
-                                                 tip = name ) )
+                                                   text = unicode(action.get_verbose_name()),
+                                                   slot = bind_action(self, action),
+                                                   actionicon = action.get_icon().getQIcon(),
+                                                   tip = unicode(action.get_verbose_name()) ) )
 
     # QAction slots and methods implementations
 

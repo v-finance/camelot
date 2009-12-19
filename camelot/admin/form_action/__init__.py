@@ -81,7 +81,6 @@ class FormActionProgressDialog(QtGui.QProgressDialog):
         self.close()
         open_html_in_print_preview_from_gui_thread(html)
 
-
 class FormActionFromModelFunction( FormAction ):
     """Convert a function that is supposed to run in the model thread to a FormAction"""
 

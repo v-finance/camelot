@@ -193,6 +193,7 @@ class TableView( AbstractView  ):
         self.filters_layout.setSpacing( 0 )
         self.filters_layout.setMargin( 0 )     
         self.filters = None
+        self.actions = None
         self._table_model = None
         table_widget.setLayout( self.table_layout )
         filters_widget.setLayout( self.filters_layout )
@@ -350,25 +351,28 @@ class TableView( AbstractView  ):
     
 
     
-    @gui_function
-    def set_filters_and_actions( self, filters_and_actions ):
-        """sets filters for the tableview"""
-        filters, actions = filters_and_actions
-        from filterlist import FilterList
-        from actionsbox import ActionsBox
-        logger.debug( 'setting filters for tableview' )
-        if self.filters:
-          self.disconnect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
-          self.filters.deleteLater()
-          self.filters = None
-        if filters:
-          self.filters = FilterList( filters, parent=self )
-          self.splitter.insertWidget( 2, self.filters )
-          self.connect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
-        elif actions:
-          self.filters = ActionsBox( self, self._table_model.collection_getter, lambda:[] )
-          self.filters.setActions( actions )
-          self.splitter.insertWidget( 2, self.filters )
+#    @gui_function
+#    def set_filters_and_actions( self, filters_and_actions ):
+#        """sets filters for the tableview"""
+#        filters, actions = filters_and_actions
+#        from filterlist import FilterList
+#        from actionsbox import ActionsBox
+#        logger.debug( 'setting filters for tableview' )
+#        if self.filters:
+#          self.disconnect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
+#          self.filters.deleteLater()
+#          self.filters = None
+#        if self.actions:
+#          self.actions.deleteLater()
+#          self.actions = None          
+#        if filters:
+#          self.filters = FilterList( filters, parent=self )
+#          self.splitter.insertWidget( 2, self.filters )
+#          self.connect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
+#        if actions:
+#          self.actions = ActionsBox( self, self._table_model.collection_getter, lambda:[] )
+#          self.actions.setActions( actions )
+#          self.splitter.insertWidget( 2, self.filters )
 
     def toHtml( self ):
         """generates html of the table"""
@@ -498,17 +502,21 @@ class TableView( AbstractView  ):
         
         if self.filters:
             self.disconnect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
-            self.filters_layout.removeWidget(self.table)
+            self.filters_layout.removeWidget(self.filters)
             self.filters.deleteLater()
             self.filters = None
+        if self.actions:
+            self.filters_layout.removeWidget(self.actions)
+            self.actions.deleteLater()
+            self.actions = None            
         if filters:
             self.filters = FilterList( filters, parent=self.splitter )
             self.filters_layout.addWidget( self.filters )
             self.connect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
-        elif actions:
-            self.filters = ActionsBox( self, self._table_model.collection_getter, lambda:[] )
-            self.filters.setActions( actions )
-            self.filters_layout.addWidget( self.filters )
+        if actions:
+            self.actions = ActionsBox( self, self._table_model.get_collection_getter(), lambda:[] )
+            self.actions.setActions( actions )
+            self.filters_layout.addWidget( self.actions )
       
     def toHtml( self ):
         """generates html of the table"""

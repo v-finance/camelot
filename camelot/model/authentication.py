@@ -118,13 +118,13 @@ class EmployerEmployee( PartyRelationship ):
         list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
 
     class EmployeeAdmin( EntityAdmin ):
-        verbose_name = 'Employee'
+        verbose_name = _('Employee')
         list_display = ['established_to', 'from_date', 'thru_date']
         form_display = ['established_to', 'comment', 'from_date', 'thru_date']
         field_attributes = {'established_to':{'name':_( 'name' )}}
 
     class EmployerAdmin( EntityAdmin ):
-        verbose_name = 'Employer'
+        verbose_name = _('Employer')
         list_display = ['established_from', 'from_date', 'thru_date']
         form_display = ['established_from', 'comment', 'from_date', 'thru_date']
         field_attributes = {'established_from':{'name':_( 'name' )}}
@@ -142,16 +142,16 @@ class DirectedDirector( PartyRelationship ):
         list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
 
     class DirectorAdmin( EntityAdmin ):
-        verbose_name = 'Director'
-        list_display = ['established_to', 'from_date', 'thru_date']
-        fields = ['established_to', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
-        field_attributes = {'established_to':{'name':_( 'name' )}}
+        verbose_name = _('Director')
+        list_display = ['established_to', 'title', 'from_date', 'thru_date']
+        form_display = ['established_to', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
+        field_attributes = {'established_to':{'name':_( 'Name' )}}
 
     class DirectedAdmin( EntityAdmin ):
-        verbose_name = 'Directed organization'
-        list_display = ['established_from', 'from_date', 'thru_date']
-        fields = ['established_from', 'from_date', 'thru_date', 'represented_by', 'comment']
-        field_attributes = {'established_from':{'name':_( 'name' )}}
+        verbose_name = _('Directed organization')
+        list_display = ['established_from', 'title', 'from_date', 'thru_date']
+        form_display = ['established_from', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
+        field_attributes = {'established_from':{'name':_( 'Name' )}}
 
 class RepresentedRepresentor( Entity ):
     """Relation from a representing party to the person representing the party"""
@@ -163,7 +163,7 @@ class RepresentedRepresentor( Entity ):
     established_to = ManyToOne( 'DirectedDirector', required = True, ondelete = 'cascade', onupdate = 'cascade' )
 
     class Admin( EntityAdmin ):
-        verbose_name = 'Represented by'
+        verbose_name = _('Represented by')
         list_display = ['established_from', 'from_date', 'thru_date']
         form_display = ['established_from', 'from_date', 'thru_date', 'comment']
         field_attributes = {'established_from':{'name':_( 'name' )}}
@@ -179,16 +179,16 @@ class SupplierCustomer( PartyRelationship ):
         list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
 
     class CustomerAdmin( EntityAdmin ):
-        verbose_name = 'Customer'
+        verbose_name = _('Customer')
         list_display = ['established_to', ]
-        fields = ['established_to', 'comment', 'from_date', 'thru_date']
-        field_attributes = {'established_to':{'name':_( 'name' )}}
+        form_display = ['established_to', 'comment', 'from_date', 'thru_date']
+        field_attributes = {'established_to':{'name':_( 'Name' )}}
 
     class SupplierAdmin( EntityAdmin ):
-        verbose_name = 'Supplier'
+        verbose_name = _('Supplier')
         list_display = ['established_from', ]
-        fields = ['established_from', 'comment', 'from_date', 'thru_date']
-        field_attributes = {'established_from':{'name':_( 'name' )}}
+        form_display = ['established_from', 'comment', 'from_date', 'thru_date']
+        field_attributes = {'established_from':{'name':_( 'Name' )}}
 
 class SharedShareholder( PartyRelationship ):
     """Relation from a shared organization to a shareholder"""
@@ -202,16 +202,16 @@ class SharedShareholder( PartyRelationship ):
         list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
 
     class ShareholderAdmin( EntityAdmin ):
-        verbose_name = 'Shareholder'
+        verbose_name = _('Shareholder')
         list_display = ['established_to', 'shares', 'from_date', 'thru_date']
-        fields = ['established_to', 'shares', 'from_date', 'thru_date', 'comment']
-        field_attributes = {'established_to':{'name':'shareholder name'}}
+        form_display = ['established_to', 'shares', 'from_date', 'thru_date', 'comment']
+        field_attributes = {'established_to':{'name':_('Shareholder name')}}
 
     class SharedAdmin( EntityAdmin ):
-        verbose_name = 'Shares'
-        verbose_name_plural = 'Shares'
+        verbose_name = _('Shares')
+        verbose_name_plural = _('Shares')
         list_display = ['established_from', 'shares', 'from_date', 'thru_date']
-        fields = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
+        form_display = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
         field_attributes = {'established_from':{'name':_( 'name' )}}
 
 class AddressAdmin( EntityAdmin ):
@@ -282,11 +282,11 @@ class Party( Entity ):
                                                  from_obj = [aliased_party.join( aliased_organisation, aliased_organisation.c.party_id == aliased_party.c.id )] ).limit( 1 ).as_scalar() )
 
     class Admin( EntityAdmin ):
-        verbose_name = 'Party'
-        verbose_name_plural = 'Parties'
+        verbose_name = _('Party')
+        verbose_name_plural = _('Parties')
         list_display = ['name', 'email', 'phone'] # don't use full name, since it might be None for new objects
         list_search = ['full_name']
-        fields = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
+        form_display = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
         field_attributes = dict(addresses = {'admin':AddressAdmin},
                                 contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin}, 
                                 suppliers = {'admin':SupplierCustomer.SupplierAdmin},
@@ -326,7 +326,6 @@ class Organization( Party ):
     class Admin( Party.Admin ):
         verbose_name = _( 'Organization' )
         verbose_name_plural = _( 'Organizations' )
-        section = 'relations'
         list_display = ['name', 'tax_id', 'email', 'phone']
         form_display = TabForm( [( 'Basic', Form( ['name', 'tax_id', 'addresses', 'contact_mechanisms'] ) ),
                                 ( 'Employment', Form( ['employees'] ) ),
@@ -339,15 +338,13 @@ class Organization( Party ):
 
 Organization = documented_entity()( Organization )
 
-
-        
 class AuthenticationMechanism( Entity ):
     using_options( tablename = 'authentication_mechanism' )
     last_login = Field( DateTime() )
     is_active = Field( Boolean, default = True, index = True )
 
     class Admin( EntityAdmin ):
-        verbose_name = 'Authentication mechanism'
+        verbose_name = _('Authentication mechanism')
         list_display = ['last_login', 'is_active']
 
 class UsernameAuthenticationMechanism( AuthenticationMechanism ):

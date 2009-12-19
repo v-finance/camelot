@@ -25,6 +25,7 @@
 #
 #  =============================================================================
 from camelot.model import metadata
+from camelot.admin.list_action import ListAction
 import camelot.types
 from elixir.entity import Entity
 from elixir.options import using_options
@@ -36,6 +37,7 @@ from sqlalchemy.types import Unicode, INT
 __metadata__ = metadata
 
 from camelot.view.elixir_admin import EntityAdmin
+from camelot.view.art import Icon
 from camelot.core.utils import ugettext_lazy as _
 
 import logging
@@ -46,6 +48,30 @@ def tr( source ):
     language = unicode( QtCore.QLocale().name() )
     return Translation.translate_or_register( source, language )
 
+class ExportAsPO(ListAction):
+    
+    def __init__(self):
+        super(ExportAsPO, self).__init__(name=_('po export'), 
+                                         icon=Icon('tango/16x16/actions/document-save.png'))
+        
+    def run( self, collection_getter, selection_getter ):
+        from PyQt4 import QtGui
+        from camelot.view.model_thread import post
+        from camelot.core.utils import ugettext as _
+        filename = unicode(QtGui.QFileDialog.getSaveFileName(None, _("Save File"),))
+        
+        def create_po_exporter(filename, collection_getter):
+            
+            def po_exporter():
+                file = open(filename, 'w')
+                for translation in collection_getter():
+                    file.write( (u'msgid  "%s"\n'%translation.source).encode('utf-8') )
+                    file.write( (u'msgstr "%s"\n\n'%translation.value).encode('utf-8') )
+                
+            return po_exporter
+        
+        post(create_po_exporter(filename, collection_getter))
+        
 class Translation( Entity ):
     using_options( tablename = 'translation' )
     language = Field( camelot.types.Language, index = True )
@@ -63,6 +89,7 @@ class Translation( Entity ):
         section = 'configuration'
         list_display = ['source', 'language', 'value', 'uid']
         list_filter = ['language']
+        list_actions = [ExportAsPO()]
 
     @classmethod
     def translate( cls, source, language ):

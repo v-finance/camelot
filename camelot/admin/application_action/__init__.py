@@ -1,4 +1,6 @@
 
+from camelot.core.utils import ugettext_lazy as _
+
 class ApplicationAction(object):
     """An action that can be triggered by the user at the application level"""
 
@@ -13,6 +15,37 @@ execution of the action
     def get_verbose_name(self):
         """:return: the name of the action, as it can be shown to the user"""
         raise NotImplemented()
+    
+    def get_icon(self):
+        """:return: a camelot.view.art.Icon object"""
+        raise NotImplemented()
+        
+class ApplicationActionFromGuiFunction( ApplicationAction ):
+    """Create an application action object from a function that is supposed to run
+    in the GUI thread"""
+    
+    def __init__(self, name, gui_function, icon=None, verbose_name=None):
+        """
+        :param name: a unicode string naming this action
+        :param gui_function: the function that will be called when the action
+        is triggered, this function takes a its single argument a parent QObject
+        :param icon: a camelot.view.art.Icon object
+        :param verbose_name: the name used to display the action, if not given,
+        the capitalized name will be used
+        """
+        self._name = name
+        self._verbose_name = verbose_name or _(name.capitalize())
+        self._icon = icon
+        self._gui_function = gui_function
+        
+    def run(self, parent):
+        self._gui_function(parent)
+        
+    def get_icon(self):
+        return self._icon
+    
+    def get_verbose_name(self):
+        return self._verbose_name
 
 class TableViewAction(ApplicationAction):
     """An application action that opens a TableView for an Entity"""

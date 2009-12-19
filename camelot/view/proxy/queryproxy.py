@@ -75,6 +75,13 @@ class QueryTableProxy(CollectionProxy):
         """Set the query and refresh the view"""
         self._query_getter = query_getter
         self.refresh()
+        
+    def get_collection_getter(self):
+        
+        def collection_getter():
+            return self._query_getter().all()
+        
+        return collection_getter        
 
     def append(self, o):
         """Add an object to this collection, used when inserting a new
