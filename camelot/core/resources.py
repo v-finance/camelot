@@ -54,11 +54,11 @@ def resource_filename(module_name, filename, settings_attribute=None):
         if not settings_attribute:
             logger.error('resources of module %s cannot be loaded because no settings_attribute is specified and the module is inside a zip file')
             return ''
-        directory = getattr(settings, settings_attribute)
-        if not os.path.exists(directory):
-            logger.error('resources of module %s cannot be loaded because %s does not exist'%directory)
+        absolute_path = os.path.join(getattr(settings, settings_attribute), filename)
+        if not os.path.exists(absolute_path):
+            logger.error('resources of module %s cannot be loaded because %s does not exist'%(module_name, absolute_path))
             return ''
-        return os.path.join(directory, filename)
+        return os.path.join(absolute_path)
     else:
         return pkg_resources.resource_filename(module_name, filename)
     
