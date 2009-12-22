@@ -28,12 +28,9 @@
 """Utility functions"""
 
 from PyQt4 import QtCore
-from PyQt4.QtCore import QCoreApplication
-
 
 def create_constant_function(constant):
     return lambda:constant
-
 
 def variant_to_pyobject(qvariant=None):
     """Try to convert a QVariant to a python object as good
@@ -101,7 +98,7 @@ def ugettext(string_to_translate):
     (which tries to get the translation from the .po files)"""
     result = _translations_.get(string_to_translate, None)
     if not result:
-        result = unicode(QCoreApplication.translate('', string_to_translate))
+        result = unicode(QtCore.QCoreApplication.translate('', string_to_translate))
     return result
   
 class ugettext_lazy(object):

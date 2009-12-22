@@ -61,10 +61,13 @@ class Application(object):
         :param application: the QApplication on which to install the translator
         """
         from camelot.core.utils import load_translations
-        from camelot.view.model_thread import post
-        post(load_translations)
+        from camelot.view.model_thread import get_model_thread
+        get_model_thread().post(load_translations)
         translator = self.application_admin.get_translator()
         application.installTranslator(translator)
+        print 'TRANSLATOR INSTALLED'
+        print translator.translate('', 'Person')
+        print application.translate('', 'Person')
         
     def initialization(self):
         """Method that is called afther the model has been set up, before the main
@@ -124,8 +127,19 @@ class Application(object):
         app.processEvents()        
         self.start_model_thread()
         app.processEvents()
+        
+        #
+        # WEIRD, if we put this code in a method, the translations
+        # don't work
+        #
+        from camelot.core.utils import load_translations
+        from camelot.view.model_thread import get_model_thread
+        get_model_thread().post(load_translations)
         self.show_splash_message(splash_window, 'Load translations...')
-        self.load_translations(app)
+        translator = self.application_admin.get_translator()
+        app.installTranslator(translator)
+        
+        #self.load_translations(app)
         app.processEvents()
         # Set the style sheet
         self.show_splash_message(splash_window, 'Create main window...')

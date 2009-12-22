@@ -36,9 +36,9 @@ from camelot.view.model_thread import gui_function
 from PyQt4 import QtGui
 
 def file_(name):
-    from pkg_resources import resource_filename
+    from camelot.core.resources import resource_filename
     import camelot
-    return resource_filename(camelot.__name__, 'art/%s'%name)
+    return resource_filename(camelot.__name__, 'art/%s'%name, 'CAMELOT_MAIN_DIRECTORY')
 
 class Pixmap(object):
     """Load pixmaps from the camelot art library"""
@@ -66,8 +66,8 @@ class Pixmap(object):
         """Obsolete : avoid this method, since it will copy the resource file
         from its package and copy it to a temp folder if the resource is
         packaged."""
-        from pkg_resources import resource_filename
-        pth = resource_filename(self._module_name, 'art/%s'%(self._path))
+        from camelot.core.resources import resource_filename
+        pth = resource_filename(self._module_name, 'art/%s'%(self._path), 'CAMELOT_MAIN_DIRECTORY')
         if os.path.exists(pth):
             return pth
         else:
@@ -78,11 +78,12 @@ class Pixmap(object):
         """QPixmaps can only be used in the gui thread"""
         if self._cached_pixmap:
             return self._cached_pixmap
-        from pkg_resources import resource_string
+        from camelot.core.resources import resource_string
         from PyQt4.QtGui import QPixmap
         qpm = QPixmap()
         success = qpm.loadFromData(resource_string(self._module_name,
-                                                   'art/%s'%(self._path)))
+                                                   'art/%s'%(self._path),
+                                                   'CAMELOT_MAIN_DIRECTORY'))
         if not success:
             msg = u'Could not load pixmap %s from camelot art library'
             logger.warn(msg % self._path)
