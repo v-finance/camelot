@@ -88,7 +88,6 @@ class ColoredFloatEditor(CustomEditor):
         value = self.spinBox.value()
         return CustomEditor.get_value(self) or value
       
-    
     def set_enabled(self, editable=True):
         if self.spinBox.isEnabled() != editable:
             if not editable:
@@ -96,7 +95,6 @@ class ColoredFloatEditor(CustomEditor):
             else:
                 self.layout().addWidget(self.calculatorButton)
             self.spinBox.setEnabled(editable)
-          
       
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator
@@ -109,7 +107,7 @@ class ColoredFloatEditor(CustomEditor):
     
     def calculationFinished(self, value):
         self.spinBox.setValue(float(value))
-        self.emit(QtCore.SIGNAL('editingFinished()'), value)
+        self.emit(QtCore.SIGNAL('editingFinished()'))
     
     def editingFinished(self, value):
-        self.emit(QtCore.SIGNAL('editingFinished()'), value)
+        self.emit(QtCore.SIGNAL('editingFinished()'))
