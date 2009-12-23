@@ -96,6 +96,7 @@ def ugettext(string_to_translate):
     translation out of the Translation entity, if this is not successfull, the
     function will ask QCoreApplication to translate string_to_translate 
     (which tries to get the translation from the .po files)"""
+    assert isinstance(string_to_translate, basestring)
     result = _translations_.get(string_to_translate, None)
     if not result:
         result = unicode(QtCore.QCoreApplication.translate('', string_to_translate))
@@ -104,6 +105,7 @@ def ugettext(string_to_translate):
 class ugettext_lazy(object):
   
     def __init__(self, string_to_translate):
+        assert isinstance(string_to_translate, basestring)
         self._string_to_translate = string_to_translate
       
     def __str__(self):
