@@ -59,7 +59,7 @@ class SectionItem(object):
         self.verbose_name = verbose_name
 
     def get_verbose_name(self):
-        return self.verbose_name or unicode(_(self.action.get_verbose_name())).capitalize()
+        return self.verbose_name or self.action.get_verbose_name()
 
     def get_action(self):
         return self.action
