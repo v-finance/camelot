@@ -483,16 +483,15 @@ class MainWindow( QtGui.QMainWindow ):
 
         addActions( self.editMenu, ( self.cutAct,
                                    self.copyAct,
-                                   self.pasteAct,
-                                   self.sessionRefreshAct ) )
-        # TODO: add refresh action
+                                   self.pasteAct ) )
+        
         self.viewMenu = self.menuBar().addMenu( _( 'View' ) )
+        addActions( self.viewMenu, ( self.sessionRefreshAct, ) )
         gotoMenu = self.viewMenu.addMenu( _( 'Go To' ) )
         addActions( gotoMenu, ( self.viewFirstAct,
                               self.viewPreviousAct,
                               self.viewNextAct,
                               self.viewLastAct ) )
-
         self.windowMenu = self.menuBar().addMenu( _( '&Window' ) )
         self.connect( self.windowMenu, QtCore.SIGNAL( 'aboutToShow()' ),
                      self.updateWindowMenu )
