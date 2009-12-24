@@ -64,7 +64,12 @@ class FloatDelegate( CustomDelegate ):
 
         value_str = u''
         if value != None and value != ValueLoading:
-            value_str = QtCore.QString("%L1").arg(value,0,'f',self.precision)
+            #
+            # we need to convert value explicitely to a float, since it might be of some
+            # other type when using ColumnProperty (eg Decimal, int), and then another
+            # arg method will be called with a different signature (this is C++ remember) 
+            #
+            value_str = QtCore.QString("%L1").arg(float(value),0,'f',self.precision)
 
         value_str = unicode( self.prefix ) + ' ' + unicode( value_str ) + ' ' + unicode( self.suffix )
         value_str = value_str.strip()

@@ -70,7 +70,11 @@ class CurrencyDelegate(CustomDelegate):
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(130,130,130)
                 
-        value_str_formatted  = QtCore.QString("%L1").arg(value,0,'f',2)
+        #
+        # explicit conversion of value to float needed, see floatdelegate.py for
+        # explanation
+        #
+        value_str_formatted  = QtCore.QString("%L1").arg(float(value),0,'f',2)
         
         painter.setPen(fontColor.toRgb())
         rect = QtCore.QRect(option.rect.left()+23,
