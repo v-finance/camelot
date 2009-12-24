@@ -1,4 +1,4 @@
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from customdelegate import CustomDelegate, DocumentationMetaclass
@@ -64,7 +64,7 @@ class FloatDelegate( CustomDelegate ):
 
         value_str = u''
         if value != None and value != ValueLoading:
-            value_str = u'%.*f' % ( self.precision, value )
+            value_str = QtCore.QString("%L1").arg(value,0,'f',self.precision)
 
         value_str = unicode( self.prefix ) + ' ' + unicode( value_str ) + ' ' + unicode( self.suffix )
         value_str = value_str.strip()
