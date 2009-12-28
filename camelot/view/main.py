@@ -65,14 +65,16 @@ class Application(object):
         get_model_thread().post(load_translations)
         translator = self.application_admin.get_translator()
         application.installTranslator(translator)
-        print 'TRANSLATOR INSTALLED'
-        print translator.translate('', 'Person')
-        print application.translate('', 'Person')
         
     def initialization(self):
         """Method that is called afther the model has been set up, before the main
         window is constructed"""
         pass
+        
+    def create_main_window(self):
+        """:return: a QWidget representing the main window, upon its appearance, the splash
+        screen will be closed"""
+        return self.application_admin.create_main_window()
         
     def close_splashscreen(self, splash_window, main_window):
         """closes the splashcreen on appearance of the main window
@@ -149,7 +151,7 @@ class Application(object):
         app.processEvents()
         self.initialization()
         app.processEvents()
-        main_window = self.application_admin.create_main_window()
+        main_window = self.create_main_window()
         self.close_splashscreen(splash_window, main_window)
         self.start_event_loop(app)
         

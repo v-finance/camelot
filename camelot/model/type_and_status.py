@@ -118,7 +118,7 @@ def entity_type( typable_entity, metadata, collection, verbose_entity_name = Non
             list_display = ['description', ]
             verbose_name = typable_entity + ' Type'
             if verbose_entity_name is not None:
-                verbose_name = verbose_entity_name + ' Status'
+                verbose_name = verbose_entity_name + ' Type'
 
         def __unicode__( self ):
             return u'Type: %s' % ( self.description )
