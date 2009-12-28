@@ -35,7 +35,7 @@ class Task(QtCore.QObject):
             #sip.dump(self)
             self.emit(QtCore.SIGNAL('finished'), result )
         except Exception, e:
-            logger.error( 'exception caught in model thread', exc_info = e )
+            logger.error( 'exception caught in model thread while executing %s'%self._name, exc_info = e )
             import traceback, cStringIO
             sio = cStringIO.StringIO()
             traceback.print_exc(file=sio)
@@ -44,7 +44,7 @@ class Task(QtCore.QObject):
             exception_info = (e, traceback_print)
             self.emit(QtCore.SIGNAL('exception'), exception_info)
         except:
-            logger.error( 'unhandled exception in model thread')
+            logger.error( 'unhandled exception in model thread' )
 
 def synchronized( original_function ):
     """Decorator for synchronized access to an object, the object should
@@ -61,6 +61,10 @@ def synchronized( original_function ):
     return wrapper
 
 class TaskHandler(QtCore.QObject):
+    """A task handler is an object that handles tasks that appear in a queue,
+    when its handle_task method is called, it will sequentially handle all tasks
+    that are in the queue.
+    """
 
     def __init__(self, queue):
         """:param queue: the queue from which to pop a task when handle_task
@@ -70,7 +74,7 @@ class TaskHandler(QtCore.QObject):
         self._queue = queue
         self._tasks_done = []
         self._busy = False
-        #logger.debug("TaskHandler created.")
+        logger.debug("TaskHandler created.")
 
     @synchronized
     def busy(self):
@@ -79,6 +83,7 @@ class TaskHandler(QtCore.QObject):
 
     @synchronized
     def handle_task(self):
+        """Handle all tasks that are in the queue"""
         self._busy = True
         self.emit( AbstractModelThread.thread_busy_signal, True  )
         task = self._queue.pop()
@@ -117,6 +122,7 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
         self._mutex = QtCore.QMutex()
         self._request_queue = []
         self._connected = False
+        self._setup_busy = True
 
     def run( self ):
         self.logger.debug( 'model thread started' )
@@ -132,6 +138,7 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
         # Some tasks might have been posted before the signals were connected to the task handler,
         # so once force the handling of tasks
         self._task_handler.handle_task()
+        self._setup_busy = False
         self.exec_()
         self.logger.debug('model thread stopped')
 
@@ -178,7 +185,7 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
             import time
             time.sleep(1)
         app = QtCore.QCoreApplication.instance()
-        return app.hasPendingEvents() or len(self._request_queue) or self._task_handler.busy()
+        return app.hasPendingEvents() or len(self._request_queue) or self._task_handler.busy() or self._setup_busy
 
     @gui_function
     def wait_on_work(self):
