@@ -130,11 +130,13 @@ class ColorScheme(object):
     magenta  = QtGui.QColor('#ff00ff')
     magenta_0= magenta 
     magenta_1= QtGui.QColor('#800080')
+    pink_1   = QtGui.QColor('#f16c6c')
+    pink_2   = QtGui.QColor('#f13c3c')
     
     VALIDATION_ERROR = red_1
     STATUS_SIMULATION = yellow_1
-    STATUS_EXTRAPOLATION = red_3
-    STATUS_SIMULATION_EXTRAPOLATION = red_2
+    STATUS_EXTRAPOLATION = pink_1
+    STATUS_SIMULATION_EXTRAPOLATION = red_3
     
     """
     for consistency with QT:
