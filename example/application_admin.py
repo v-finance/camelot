@@ -12,13 +12,13 @@ class MyApplicationAdmin(ApplicationAdmin):
     from camelot.model.i18n import Translation    
     from example.model import Movie, Tag
     return [Section('movies', 
-                    Icon('tango/24x24/mimetypes/x-office-presentation.png'),
+                    Icon('tango/22x22/mimetypes/x-office-presentation.png'),
                     items = [Movie, Tag]),
             Section('relation',
-                    Icon('tango/24x24/apps/system-users.png'),
+                    Icon('tango/22x22/apps/system-users.png'),
                     items = [Person, Organization]),
             Section('configuration',
-                    Icon('tango/24x24/categories/preferences-system.png'),
+                    Icon('tango/22x22/categories/preferences-system.png'),
                     items = [Memento, Translation])
             ]
 

@@ -27,6 +27,7 @@
 
 
 from camelot.view.model_thread import model_function
+from camelot.core.utils import ugettext as _
 
 
 _application_admin_ = []
@@ -170,3 +171,42 @@ class ApplicationAdmin(object):
         from camelot.core.view.field_attributes import \
             _sqlalchemy_to_python_type_
         return _sqlalchemy_to_python_type_[type_](field)
+
+    def update_window_menu(self, mainwin):
+        from PyQt4 import QtCore
+
+        def add_actions():
+            mainwin.windowMenu.clear()
+            mainwin.windowMenu.addAction(mainwin.closeAllAct)
+            mainwin.windowMenu.addAction(mainwin.cascadeAct)
+            mainwin.windowMenu.addAction(mainwin.separatorAct)
+
+            windows = mainwin.workspace.subWindowList()
+
+            mainwin.separatorAct.setVisible(len(windows) != 0)
+
+            for i, child in enumerate(windows):
+                title = child.windowTitle()
+                if i < 9:
+                    text = _('&%s %s' % (i+1, title))
+                else:
+                    text = _('%s %s' % (i+1, title))
+
+                action = mainwin.windowMenu.addAction(text)
+                action.setCheckable(True)
+                action.setChecked(child == mainwin.activeMdiChild())
+
+                def create_window_activator(window):
+
+                    def activate_window():
+                        mainwin.workspace.setActiveSubWindow(window)
+
+                    return activate_window
+
+                mainwin.connect(
+                    action,
+                    QtCore.SIGNAL('triggered()'),
+                    create_window_activator(child)
+                )
+        
+        return add_actions
