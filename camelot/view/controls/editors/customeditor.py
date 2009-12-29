@@ -46,6 +46,14 @@ class AbstractCustomEditor(object):
         finalHeight = max(height)
         
         return finalHeight
+    
+    def set_background_color(self, background_color):        
+        if background_color:
+            palette = self.palette()
+            palette.setColor(self.backgroundRole(), background_color)
+            self.setPalette(palette)
+        else:
+            return False
           
 class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     """Base class for implementing custom editor widgets.  This class provides

@@ -103,6 +103,8 @@ class ColorScheme(object):
     """The default color scheme for camelot, based on the Tango icon set
     see http://tango.freedesktop.org/Generic_Icon_Theme_Guidelines
     """
+    yellow   = QtGui.QColor('#ffff00')
+    yellow_0 = yellow
     yellow_1 = QtGui.QColor('#fce947')
     yellow_2 = QtGui.QColor('#edd400')
     yellow_3 = QtGui.QColor('#c4a000')
@@ -112,8 +114,48 @@ class ColorScheme(object):
     brown_1  = QtGui.QColor('#e9b96e')
     brown_2  = QtGui.QColor('#c17d11')
     brown_3  = QtGui.QColor('#8f5902')
+    red      = QtGui.QColor('#ff0000')
+    red_0    = red
     red_1    = QtGui.QColor('#ef2929')
     red_2    = QtGui.QColor('#cc0000')
     red_3    = QtGui.QColor('#a40000')
+    blue     = QtGui.QColor('#0000ff')
+    blue_0   = blue
+    blue_1   = QtGui.QColor('#000080')
+    green    = QtGui.QColor('#00ff00')
+    green_0  = green
+    cyan     = QtGui.QColor('#00ffff')
+    cyan_0   = cyan
+    cyan_1   = QtGui.QColor('#008080')
+    magenta  = QtGui.QColor('#ff00ff')
+    magenta_0= magenta 
+    magenta_1= QtGui.QColor('#800080')
     
     VALIDATION_ERROR = red_1
+    STATUS_SIMULATION = yellow_1
+    STATUS_EXTRAPOLATION = red_3
+    STATUS_SIMULATION_EXTRAPOLATION = red_2
+    
+    """
+    for consistency with QT:
+    Qt::white	3	 White (#ffffff)
+    Qt::black	2	Black (#000000)
+    Qt::red	7	Red (#ff0000)
+    Qt::darkRed	13	Dark red (#800000)
+    Qt::green	8	Green (#00ff00)
+    Qt::darkGreen	14	Dark green (#008000)
+    Qt::blue	9	Blue (#0000ff)
+    Qt::darkBlue	15	Dark blue ()
+    Qt::cyan	10	Cyan (#00ffff)
+    Qt::darkCyan	16	Dark cyan (#008080)
+    Qt::magenta	11	Magenta (#ff00ff)
+    Qt::darkMagenta	17	Dark magenta (#800080)
+    Qt::yellow	12	Yellow (#ffff00)
+    Qt::darkYellow	18	Dark yellow (#808000)
+    Qt::gray	5	Gray (#a0a0a4)
+    Qt::darkGray	4	Dark gray (#808080)
+    Qt::lightGray	6	Light gray (#c0c0c0)
+    Qt::transparent	19	a transparent black value (i.e., QColor(0, 0, 0, 0))
+    Qt::color0	0	0 pixel value (for bitmaps)
+    Qt::color1	1	1 pixel value (for bitmaps)
+    """

@@ -27,11 +27,27 @@
 
 """Utility functions"""
 
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 
 def create_constant_function(constant):
     return lambda:constant
+"""
+A Note on GUI Types
 
+Because QVariant is part of the QtCore library, it cannot provide conversion functions to data types defined in QtGui, such as 
+QColor, QImage, and QPixmap. In other words, there is no toColor() function. 
+Instead, you can use the QVariant.value() or the qVariantValue() template function. For example:
+
+ QVariant variant;
+ ...
+ QColor color = variant.value<QColor>();
+
+The inverse conversion (e.g., from QColor to QVariant) is automatic for all data types supported by QVariant, including GUI-related 
+types:
+
+ QColor color = palette().background().color();
+ QVariant variant = color;
+"""
 def variant_to_pyobject(qvariant=None):
     """Try to convert a QVariant to a python object as good
     as possible"""
@@ -64,9 +80,11 @@ def variant_to_pyobject(qvariant=None):
     elif type == QtCore.QVariant.DateTime:
         value = qvariant.toDateTime()
         value = value.toPyDateTime ()
+    elif type == QtCore.QVariant.Color:
+        value = QtGui.QColor(qvariant)
     else:
         value = qvariant.toPyObject()
-      
+
     return value
 
 #
