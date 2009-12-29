@@ -32,8 +32,8 @@ class fifo(object):
     with zero delay as you scroll down the table view, fifo is filled and
     refilled with data queried from the database
     
-    the cache can be queried either by the row number or by the primary key
-    of the object represented by the row data.
+    the cache can be queried either by the row number or by object represented 
+    by the row data.
     """
     def __init__(self, max_entries):
         self.max_entries = max_entries
@@ -56,7 +56,7 @@ class fifo(object):
             del self.rows_by_entity[entity]
       
     def delete_by_row(self, row):
-        (entity, value) = self.data_by_rows[row]
+        (entity, value_) = self.data_by_rows[row]
         del self.data_by_rows[row]
         del self.rows_by_entity[entity] 
         return row

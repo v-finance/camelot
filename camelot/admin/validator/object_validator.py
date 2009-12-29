@@ -30,7 +30,6 @@ logger = logging.getLogger('camelot.admin.validator.object_validator')
 
 from camelot.view.fifo import fifo
 
-
 class ObjectValidator(object):
     """A validator class for normal python objects.  By default this validator
     declares all objects valid.  Subclass this class and overwrite it's
@@ -58,7 +57,7 @@ class ObjectValidator(object):
             entity_instance = self.model._get_object(row)
             if entity_instance:
                 messages = self.objectValidity(entity_instance)
-                self.message_cache.add_data(row, entity_instance.id, messages)
+                self.message_cache.add_data(row, entity_instance, messages)
         except Exception, e:
             logger.error(
                 'programming error while validating object',
@@ -82,9 +81,10 @@ class ObjectValidator(object):
         continue to edit the row until it is valid.
         """
         from PyQt4 import QtGui
+        from camelot.core.utils import ugettext as _
         return QtGui.QMessageBox(
             QtGui.QMessageBox.Warning,
-            'Invalid form',
+            _('Invalid form'),
             '\n'.join(self.validityMessages(row)),
             QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard,
             parent
