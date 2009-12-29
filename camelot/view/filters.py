@@ -196,7 +196,7 @@ class ValidDateFilter(Filter):
     date and their end date after this date.  If no date is given, all entities will
     be shown"""
 
-    def __init__(self, from_attribute, thru_attribute, verbose_name):
+    def __init__(self, from_attribute='from_date', thru_attribute='thru_date', verbose_name=_('Valid at')):
         """
         :param from_attribute: the name of the attribute representing the from date
         :param thru_attribute: the name of the attribute representing the thru date
@@ -215,7 +215,7 @@ class ValidDateFilter(Filter):
         class FilterWidget(QtGui.QGroupBox):
           
             def __init__(self, name, query_decorator, parent):
-                QtGui.QGroupBox.__init__(self, name, parent)
+                QtGui.QGroupBox.__init__(self, unicode(name), parent)
                 layout = QtGui.QVBoxLayout()
                 self.date_editor = DateEditor(parent=self, nullable=True)
                 self.date_editor.set_value(date.today())
