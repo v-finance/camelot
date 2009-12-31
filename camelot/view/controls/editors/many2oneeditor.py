@@ -126,8 +126,10 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
     :return: a list of tuples of (object_representation, object_getter)
     """
         search_decorator = create_entity_search_query_decorator( self.admin, text )
-        return [( unicode( e ), create_constant_function( e ) )
-                for e in search_decorator( self.admin.entity.query ).limit( 20 )]
+        if search_decorator:
+            return [( unicode( e ), create_constant_function( e ) )
+                    for e in search_decorator( self.admin.entity.query ).limit( 20 )]
+        return []
     
     @gui_function
     def display_search_completions( self, completions ):

@@ -39,7 +39,8 @@ def create_entity_search_query_decorator(admin, text):
     @param admin: the admin interface of the entity
     @param text: the text to search for
     @return: a function that can be applied to a query to make the query filter
-    only the objects related to the requested text
+    only the objects related to the requested text or None if no such decorator
+    could be build
     """
     from elixir import entities
     from sqlalchemy import orm
