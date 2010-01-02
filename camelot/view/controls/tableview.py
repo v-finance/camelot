@@ -50,12 +50,27 @@ class TableWidget( QtGui.QTableView):
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
         self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | QtGui.QAbstractItemView.DoubleClicked )
         self.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
+        # set to false while sorting is not implemented in CollectionProxy
         self.horizontalHeader().setClickable( False )
         self._header_font_required = QtGui.QApplication.font()
         self._header_font_required.setBold( True )
         self._minimal_row_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing() + 10
         self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
+        self.connect( self.horizontalHeader(), QtCore.SIGNAL('sectionClicked(int)'), self.horizontal_section_clicked )
     
+    def horizontal_section_clicked( self, logical_index ):
+        """Update the sorting of the model and the header"""
+        header = self.horizontalHeader()
+        order = Qt.AscendingOrder
+        if not header.isSortIndicatorShown():
+            header.setSortIndicatorShown( True )
+        elif header.sortIndicatorSection()==logical_index:
+            # apparently, the sort order on the header is allready switched when the section
+            # was clicked, so there is no need to reverse it
+            order = header.sortIndicatorOrder()
+        header.setSortIndicator( logical_index, order )
+        self.model().sort( logical_index, order )
+        
     def setModel( self, model ):
         QtGui.QTableView.setModel( self, model )
         self.connect( self.selectionModel(), SIGNAL( 'currentChanged(const QModelIndex&,const QModelIndex&)' ), self.activated )

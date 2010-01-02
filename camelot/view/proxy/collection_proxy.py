@@ -465,6 +465,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         return QtCore.QAbstractTableModel.headerData( self, section, orientation, role )
     
     @gui_function
+    def sort( self, column, order ):
+        """reimplementation of the QAbstractItemModel its sort function"""
+        pass
+    
+    @gui_function
     def data( self, index, role ):
         if not index.isValid() or \
            not ( 0 <= index.row() <= self.rowCount( index ) ) or \

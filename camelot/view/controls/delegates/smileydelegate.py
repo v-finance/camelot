@@ -19,12 +19,6 @@ class SmileyDelegate(CustomDelegate):
                                 editable=editable,
                                 maximum=1,
                                 **kwargs)
-        maximum = 1
-        
-        self.maximum = maximum
-        
-        
-    
         
     def paint(self, painter, option, index):
         painter.save()

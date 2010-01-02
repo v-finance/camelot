@@ -97,3 +97,6 @@ def construct_signal_handler(*args, **kwargs):
 
 def get_signal_handler():
     return _signal_handler_[-1]
+
+def has_signal_handler():
+    return len(_signal_handler_)

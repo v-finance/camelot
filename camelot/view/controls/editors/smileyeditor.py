@@ -8,21 +8,14 @@ class SmileyEditor(CustomEditor):
 
     def __init__(self, parent, img='face-plain', editable=True, **kwargs):
         CustomEditor.__init__(self, parent)
-        
-        
-    
-        
         self.box = QtGui.QComboBox()
-        
         self.box.setFrame(True)
         self.box.setEditable(False)
-        
-        
         self.allSmileys = []
         
         self.allSmileys.append('face-angel')
         self.allSmileys.append('face-crying')
-        self.allSmileys.append('face-devil-grin')
+        self.allSmileys.append('face-devilish')
         self.allSmileys.append('face-glasses')
         self.allSmileys.append('face-grin')
         self.allSmileys.append('face-kiss')

@@ -31,6 +31,7 @@ class ModelThreadTestCase(unittest.TestCase):
         """
         import sys
         import os
+        from PyQt4 import QtGui
         from PyQt4.QtGui import QPixmap
         if not subdir:
             images_path = os.path.join(self.images_path, self.__class__.__name__.lower()[:-len('Test')])
@@ -44,6 +45,7 @@ class ModelThreadTestCase(unittest.TestCase):
             image_name = '%s_%s.png'%(test_case_name, suffix)
         widget.adjustSize()
         self.process()
+        app = QtGui.QApplication.flush()
         pixmap = QPixmap.grabWidget(widget)
         pixmap = QPixmap.grabWidget(widget)
         pixmap.save(os.path.join(images_path, image_name), 'PNG')
@@ -55,10 +57,11 @@ class ModelThreadTestCase(unittest.TestCase):
     def setUp(self):
         self.app = get_application()
         from camelot.view.model_thread import get_model_thread, construct_model_thread, has_model_thread
-        from camelot.view.remote_signals import construct_signal_handler
+        from camelot.view.remote_signals import construct_signal_handler, has_signal_handler
         if not has_model_thread():
             construct_model_thread()
-        construct_signal_handler()
+        if not has_signal_handler():
+            construct_signal_handler()
         self.mt = get_model_thread()
         if not self.mt.isRunning():
             self.mt.start()

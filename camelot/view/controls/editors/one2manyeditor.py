@@ -119,6 +119,8 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         model = CustomEditor.set_value( self, model )
         if model:
             self.model = model
+#            sorted_model = QtGui.QSortFilterProxyModel( self )
+#            sorted_model.setSourceModel( model )
             self.table.setModel( model )
       
             def create_fill_model_cache( model ):

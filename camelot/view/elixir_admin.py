@@ -161,8 +161,16 @@ class EntityAdmin(ObjectAdmin):
             #
             from sqlalchemy import orm
             from sqlalchemy.exceptions import InvalidRequestError
+            from sqlalchemy.orm.exc import UnmappedClassError
             from field_attributes import _sqlalchemy_to_python_type_
-            mapper = orm.class_mapper(self.entity)
+            try:
+                mapper = orm.class_mapper(self.entity)
+            except UnmappedClassError, exception:
+                from elixir import entities
+                mapped_entities = [str(e) for e in entities]
+                logger.error(u'%s is not a mapped class, mapped classes include %s'%(self.entity, u','.join(mapped_entities)),
+                             exc_info=exception)
+                raise exception
             try:
                 property = mapper.get_property(
                     field_name,
