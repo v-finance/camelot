@@ -29,7 +29,9 @@ from elixir.options import using_options
 from elixir.fields import Field
 from sqlalchemy.types import Unicode, INT, DateTime, PickleType
 from elixir.relationships import ManyToOne
+
 from camelot.model import metadata
+from camelot.view import filters
 
 """Set of classes to keep track of changes to objects and
 be able to restore their state
@@ -56,16 +58,14 @@ class Memento( Entity ):
     description = property( lambda self:'Change' )
 
     class Admin( EntityAdmin ):
-        name = 'History'
         verbose_name = _( 'History' )
         verbose_name_plural = _( 'History' )
-        section = 'configuration'
         list_display = ['creation_date',
                         'authentication',
                         'model',
                         'primary_key',
                         'description']
-        list_filter = ['model']
+        list_filter = [filters.ComboBoxFilter('model')]
 
 
 class BeforeUpdate( Memento ):
@@ -80,11 +80,9 @@ class BeforeUpdate( Memento ):
                 ','.join( self.previous_attributes.keys() ),
                 ','.join( unicode( v ) for v in self.previous_attributes.values() ) )
 
-    class Admin( EntityAdmin ):
-        name = 'Updates'
-        list_display = Memento.Admin.list_display
-        list_filter = ['model']
-
+    class Admin( Memento.Admin ):
+        verbose_name = _('Update')
+        verbose_name_plural = _('Updates')
 
 class BeforeDelete( Memento ):
     """The state of the object before it is deleted"""
@@ -95,11 +93,9 @@ class BeforeDelete( Memento ):
     def description( self ):
         return 'Delete'
 
-    class Admin( EntityAdmin ):
-        name = 'Deletes'
-        list_display = Memento.Admin.list_display
-        list_filter = ['model']
-
+    class Admin( Memento.Admin ):
+        verbose_name = _('Delete')
+        verbose_name_plural = _('Deletes')
 
 class Create( Memento ):
     """Marks the creation of an object"""
@@ -109,7 +105,6 @@ class Create( Memento ):
     def description( self ):
         return 'Create'
 
-    class Admin( EntityAdmin ):
-        name = 'Creates'
-        list_display = Memento.Admin.list_display
-        list_filter = ['model']
+    class Admin( Memento.Admin ):
+        verbose_name = _('Create')
+        verbose_name_plural = _('Creates')

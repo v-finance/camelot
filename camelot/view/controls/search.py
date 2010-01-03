@@ -26,6 +26,7 @@
 #  ============================================================================
 
 from PyQt4 import QtCore, QtGui
+
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 
@@ -53,7 +54,9 @@ class SimpleSearchControl(QtGui.QWidget):
                      self.emit_search)
 
         # Search input
-        self.search_input = QtGui.QLineEdit()
+        from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
+        self.search_input = DecoratedLineEdit(self)
+        self.search_input.set_background_text(_('Search...'))
         self.search_input.setToolTip(_('type words to search for'))
         #self.search_input.setStyleSheet('QLineEdit{ border-radius: 0.25em;}')
         self.connect(self.search_input,
@@ -85,7 +88,7 @@ class SimpleSearchControl(QtGui.QWidget):
         self.emit_search()
 
     def emit_search(self):
-        text = str(self.search_input.text())
+        text = str(self.search_input.user_input())
         self.emit(QtCore.SIGNAL('search'), text)
 
     def emit_cancel(self):

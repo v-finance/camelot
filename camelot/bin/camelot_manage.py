@@ -195,8 +195,12 @@ def main():
             elif args[0]=='upgrade':
                 migrate_connection = migrate_engine.connect()
                 transaction = migrate_connection.begin()
+                if len(args)>=2:
+                    version = args[1]
+                else:
+                    version = repository.latest
                 try:
-                    schema.upgrade(args[1])
+                    schema.upgrade(version)
                     transaction.commit()
                     print schema.version
                 except:

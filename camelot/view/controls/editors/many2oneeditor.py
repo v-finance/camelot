@@ -8,6 +8,7 @@ from camelot.core.utils import variant_to_pyobject, create_constant_function
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post
 from camelot.view.search import create_entity_search_query_decorator
+from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 from camelot.core.utils import ugettext as _
 
 class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
@@ -74,7 +75,8 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.open_button.setAutoRaise( True )
     
         # Search input
-        self.search_input = QtGui.QLineEdit( self )
+        self.search_input = DecoratedLineEdit( self )
+        self.search_input.set_background_text(_('Search...'))
         self.setFocusProxy( self.search_input )
         #self.search_input.setReadOnly(True)
         #self.connect(self.search_input, 
@@ -111,6 +113,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.search_button.setEnabled(editable)
       
     def textEdited( self, text ):
+        text = self.search_input.user_input()
   
         def create_search_completion( text ):
             return lambda: self.search_completions( text )
@@ -220,7 +223,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.setEntity( self.entity_instance_getter, False )
     
     def editingFinished( self ):
-        self.search_input.setText( self._entity_representation )
+        self.search_input.set_user_input( self._entity_representation )
     
     def set_value( self, value ):
         value = CustomEditor.set_value( self, value )
@@ -231,7 +234,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         """Update the gui"""
         ((desc, pk), propagate) = representation_and_propagate
         self._entity_representation = desc
-        self.search_input.setText( desc )
+        self.search_input.set_user_input( desc )
         if pk != False: 
             self.open_button.setIcon( Icon( 'tango/16x16/places/folder.png' ).getQIcon() )
             self.open_button.setToolTip(unicode(_('open')))
@@ -239,7 +242,6 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
             self.search_button.setIcon( Icon( 'tango/16x16/actions/edit-clear.png' ).getQIcon() )
             self.search_button.setToolTip(unicode(_('clear')))
             self.entity_set = True
-            #self.search_input.setReadOnly(True)
         else:
             self.open_button.setIcon( Icon( 'tango/16x16/actions/document-new.png' ).getQIcon() )
             self.open_button.setToolTip( unicode(_('new')) )
@@ -247,7 +249,6 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
             self.search_button.setIcon( Icon( 'tango/16x16/actions/system-search.png' ).getQIcon() )
             self.search_button.setToolTip(_('search'))
             self.entity_set = False
-            #self.search_input.setReadOnly(False)
         if propagate:
             self.emit( QtCore.SIGNAL( 'editingFinished()' ) )
               
@@ -268,7 +269,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
                 return (( unicode( entity ), entity.id ), propagate)
             elif entity:
                 return (( unicode( entity ), False ), propagate)
-            return (( '', False ), propagate)
+            return (( None, False ), propagate)
       
         post( get_instance_represenation, self.set_instance_represenation )
     

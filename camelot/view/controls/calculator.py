@@ -1,7 +1,8 @@
 from camelot.view.art import Icon
+from camelot.core.utils import ugettext as _
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-
 
 class Calculator(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -12,13 +13,8 @@ class Calculator(QtGui.QDialog):
         bottomRightLayout = QtGui.QHBoxLayout()
         bottomLayout = QtGui.QGridLayout()
     
-        self.setWindowTitle('Live Calculator')
-    
-    
+        self.setWindowTitle(_('Calculator'))
         self.input = QtGui.QLineEdit(self)
-      
-  
-    
         self.connect(self.input, QtCore.SIGNAL('textEdited(const QString&)'), self.Calculate)
         #self.connect(self.input, QtCore.SIGNAL('returnPressed()'), self.ShowCalculate)
   
