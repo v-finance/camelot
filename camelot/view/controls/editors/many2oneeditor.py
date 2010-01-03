@@ -15,6 +15,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
     """Widget for editing many 2 one relations"""
   
     class CompletionsModel( QtCore.QAbstractListModel ):
+        
         def __init__( self, parent = None ):
             QtCore.QAbstractListModel.__init__( self, parent )
             self._completions = []
@@ -48,6 +49,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.entity_instance_getter = None
         self._entity_representation = ''
         self.entity_set = False
+        self._last_highlighted_entity_getter = None
         self.layout = QtGui.QHBoxLayout()
         self.layout.setSpacing( 0 )
         self.layout.setMargin( 0 )
@@ -98,6 +100,9 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.connect( self.completer,
                      QtCore.SIGNAL( 'activated(const QModelIndex&)' ),
                      self.completionActivated )
+        self.connect( self.completer,
+                      QtCore.SIGNAL( 'highlighted (const QModelIndex&)' ),
+                      self.completion_highlighted )
         self.search_input.setCompleter( self.completer )
     
         # Setup layout
@@ -113,6 +118,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.search_button.setEnabled(editable)
       
     def textEdited( self, text ):
+        self._last_highlighted_entity_getter = None
         text = self.search_input.user_input()
   
         def create_search_completion( text ):
@@ -130,18 +136,24 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
     """
         search_decorator = create_entity_search_query_decorator( self.admin, text )
         if search_decorator:
-            return [( unicode( e ), create_constant_function( e ) )
-                    for e in search_decorator( self.admin.entity.query ).limit( 20 )]
-        return []
+            return text, [( unicode( e ), create_constant_function( e ) )
+                          for e in search_decorator( self.admin.entity.query ).limit( 20 )]
+        return text, []
     
     @gui_function
-    def display_search_completions( self, completions ):
+    def display_search_completions( self, prefix_and_completions ):
+        prefix, completions = prefix_and_completions
         self.completions_model.setCompletions( completions )
+        self.completer.setCompletionPrefix( prefix )
         self.completer.complete()
     
     def completionActivated( self, index ):
         object_getter = index.data( Qt.EditRole )
         self.setEntity( variant_to_pyobject(object_getter) )
+        
+    def completion_highlighted(self, index ):
+        object_getter = index.data( Qt.EditRole )
+        self._last_highlighted_entity_getter = variant_to_pyobject(object_getter)
     
     def openButtonClicked( self ):
         if self.entity_set:
@@ -223,9 +235,21 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.setEntity( self.entity_instance_getter, False )
     
     def editingFinished( self ):
+        if not self.entity_set:
+            # Only try to 'guess' what the user meant when no entity is set
+            # to avoid inappropriate removal of data, (eg when the user presses
+            # Esc, editingfinished will be called as well, and we should not
+            # overwrite the current entity set)
+            if self._last_highlighted_entity_getter:
+                self.setEntity( self._last_highlighted_entity_getter )
+            elif not self.entity_set and self.completions_model.rowCount()==1:
+                # There is only one possible option
+                enity_getter = variant_to_pyobject( self.completions_model.index(0,0).data( Qt.EditRole ) )
+                self.setEntity( enity_getter )
         self.search_input.set_user_input( self._entity_representation )
     
     def set_value( self, value ):
+        self._last_highlighted_entity_getter = None
         value = CustomEditor.set_value( self, value )
         if value:
             self.setEntity( value, propagate = False )
