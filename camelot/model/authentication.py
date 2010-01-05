@@ -95,8 +95,8 @@ class PartyRelationship( Entity ):
 class EmployerEmployee( PartyRelationship ):
     """Relation from employer to employee"""
     using_options( tablename = 'party_relationship_empl', inheritance = 'multi' )
-    established_from = ManyToOne( 'Organization', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    established_to = ManyToOne( 'Person', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    established_from = ManyToOne( 'Organization', required = True, ondelete = 'cascade', onupdate = 'cascade' )    # the employer
+    established_to = ManyToOne( 'Person', required = True, ondelete = 'cascade', onupdate = 'cascade' )            # the employee
 
     @ColumnProperty
     def first_name( self ):

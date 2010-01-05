@@ -219,8 +219,17 @@ class TableView( AbstractView  ):
         self.setLayout( widget_layout )
         self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
         self.search_filter = lambda q: q
+        shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find), self)
+        self.connect( shortcut, QtCore.SIGNAL( 'activated()' ), self.activate_search )
+        # give the table widget focus to prevent the header and its search control to
+        # receive default focus, as this would prevent the displaying of 'Search...' in the
+        # search control
+        table_widget.setFocus( QtCore.Qt.OtherFocusReason )
         post( self.admin.get_subclass_tree, self.setSubclassTree )
     
+    def activate_search(self):
+        self.header.search.setFocus(QtCore.Qt.ShortcutFocusReason)
+        
     @model_function
     def get_title( self ):
         return self.title_format % {'verbose_name_plural':self.admin.get_verbose_name_plural()}

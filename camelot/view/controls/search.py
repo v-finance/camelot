@@ -65,6 +65,7 @@ class SimpleSearchControl(QtGui.QWidget):
         self.connect(self.search_input,
                      QtCore.SIGNAL('textEdited(const QString&)'),
                      self.emit_search)
+        self.setFocusProxy( self.search_input )
 
         # Cancel button
         self.cancel_button = QtGui.QToolButton()
@@ -74,7 +75,7 @@ class SimpleSearchControl(QtGui.QWidget):
         self.cancel_button.setAutoRaise(True)
         self.connect(self.cancel_button,
                      QtCore.SIGNAL('clicked()'),
-                     self.emit_cancel)
+                     self.emit_cancel)        
 
         # Setup layout
         layout.addWidget(self.search_button)
