@@ -21,6 +21,7 @@ class ColoredFloatDelegate(CustomDelegate):
                  precision=2,
                  editable=True,
                  reverse=False,
+                 neutral=False,
                  unicode_format=None,
                  **kwargs):
         CustomDelegate.__init__(self,
@@ -29,6 +30,7 @@ class ColoredFloatDelegate(CustomDelegate):
                                 minimum=minimum,
                                 maximum=maximum,
                                 reverse=reverse,
+                                neutral=neutral,
                                 precision=precision,
                                 unicode_format=unicode_format,
                                 **kwargs)
@@ -37,13 +39,21 @@ class ColoredFloatDelegate(CustomDelegate):
         self.precision = precision
         self.editable = editable
         self.reverse = reverse
+        self.neutral = neutral
         self.unicode_format = unicode_format
         if not self.reverse:
-            self.icons = {
-                1:QtGui.QIcon(Icon('tango/16x16/actions/go-up.png').getQPixmap()), 
-                -1:QtGui.QIcon(Icon('tango/16x16/actions/go-down-red.png').getQPixmap()),
-                0:QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap())
-            }
+            if not self.neutral:
+                self.icons = {
+                    1:QtGui.QIcon(Icon('tango/16x16/actions/go-up.png').getQPixmap()), 
+                    -1:QtGui.QIcon(Icon('tango/16x16/actions/go-down-red.png').getQPixmap()),
+                    0:QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap())
+                }    
+            else:            
+                self.icons = {
+                    1:QtGui.QIcon(Icon('tango/16x16/actions/go-up-blue.png').getQPixmap()), 
+                    -1:QtGui.QIcon(Icon('tango/16x16/actions/go-down-blue.png').getQPixmap()),
+                    0:QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap())
+                }
         else:
             self.icons = {
                 -1:QtGui.QIcon(Icon('tango/16x16/actions/go-up.png').getQPixmap()), 
