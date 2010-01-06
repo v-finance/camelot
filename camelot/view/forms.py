@@ -285,7 +285,7 @@ class TabForm( Form ):
         widget = QtGui.QTabWidget( parent )
         widget.setTabPosition(getattr(QtGui.QTabWidget, self.position))
         for tab_label, tab_form in self.tabs:
-            widget.addTab( tab_form.render( widgets, widget ), unicode(tab_label).capitalize() )
+            widget.addTab( tab_form.render( widgets, widget ), unicode(tab_label) )
         return widget
 
 
