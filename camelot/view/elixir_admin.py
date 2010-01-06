@@ -581,17 +581,30 @@ class EntityAdmin(ObjectAdmin):
     def delete(self, entity_instance):
         """Delete an entity instance"""
         from sqlalchemy.orm.session import Session
-        if hasattr(entity_instance, 'id') and entity_instance.id:
+        session = Session.object_session( entity_instance )
+        #
+        # new and deleted instances cannot be deleted
+        #
+        if session and \
+           (entity_instance not in session.new) and \
+           (entity_instance not in session.deleted) and \
+           (entity_instance in session): # if the object is not in the session, it might allready be deleted
+            history = None
+            #
+            # only if we know the primary key, we can keep track of its history
+            #
+            if hasattr(entity_instance, 'id') and entity_instance.id:
                 pk = entity_instance.id
                 # save the state before the update
                 from camelot.model.memento import BeforeDelete
                 from camelot.model.authentication import getCurrentAuthentication
                 history = BeforeDelete( model = unicode( self.entity.__name__ ),
-                                       primary_key = pk,
-                                       previous_attributes = {},
-                                       authentication = getCurrentAuthentication() )
-                entity_instance.delete()
-                Session.object_session( entity_instance ).flush( [entity_instance] )
+                                        primary_key = pk,
+                                        previous_attributes = {},
+                                        authentication = getCurrentAuthentication() )
+            entity_instance.delete()
+            session.flush( [entity_instance] )
+            if history:
                 Session.object_session( history ).flush( [history] )
 
     @model_function

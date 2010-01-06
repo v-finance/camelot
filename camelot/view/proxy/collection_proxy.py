@@ -648,14 +648,20 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     
     @model_function
     def _get_object( self, row ):
-        """Get the object corresponding to row"""
+        """Get the object corresponding to row
+        :return: the object at row row or None if the row index is invalid
+        """
         try:
             # first try to get the primary key out of the cache, if it's not
             # there, query the collection_getter
             return self.cache[Qt.EditRole].get_entity_at_row( row )
         except KeyError:
             pass
-        return self.collection_getter()[row]
+        try:
+            return self.collection_getter()[row]
+        except IndexError:
+            pass
+        return None
     
     def _cache_extended( self, interval ):
         offset, limit = interval
@@ -723,7 +729,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     
             def delete_function():
                 o = self._get_object( row )
-                self.removeEntityInstance( o, delete )
+                if o:
+                    self.removeEntityInstance( o, delete )
+                else:
+                    # The object is not in this collection, maybe
+                    # it was allready deleted, issue a refresh anyway
+                    post( self.getRowCount, self._refresh_content )
         
             return delete_function
       

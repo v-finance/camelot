@@ -237,11 +237,11 @@ class Party( Entity ):
     organisations in building authentication systems, contact management or CRM"""
     using_options( tablename = 'party' )
     is_synchronized( 'synchronized', lazy = True )
-    addresses = OneToMany( 'PartyAddress', lazy = True )
-    contact_mechanisms = OneToMany( 'PartyContactMechanism', lazy = True )
-    shares = OneToMany( 'SharedShareholder', inverse = 'established_to' )
-    directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to' )
-    status = OneToMany( type_3_status( 'Party', metadata, entities ) )
+    addresses = OneToMany( 'PartyAddress', lazy = True, cascade="all, delete, delete-orphan" )
+    contact_mechanisms = OneToMany( 'PartyContactMechanism', lazy = True, cascade='all, delete, delete-orphan' )
+    shares = OneToMany( 'SharedShareholder', inverse = 'established_to', cascade='all, delete, delete-orphan' )
+    directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to', cascade='all, delete, delete-orphan' )
+    status = OneToMany( type_3_status( 'Party', metadata, entities ), cascade='all, delete, delete-orphan' )
 
     @property
     def name( self ):
@@ -310,11 +310,11 @@ class Organization( Party ):
     name = Field( Unicode( 50 ), required = True, index = True )
     logo = Field( camelot.types.Image( upload_to = 'organization-logo' ), deferred = True )
     tax_id = Field( Unicode( 20 ) )
-    directors = OneToMany( 'DirectedDirector', inverse = 'established_from' )
-    employees = OneToMany( 'EmployerEmployee', inverse = 'established_from' )
-    suppliers = OneToMany( 'SupplierCustomer', inverse = 'established_to' )
-    customers = OneToMany( 'SupplierCustomer', inverse = 'established_from' )
-    shareholders = OneToMany( 'SharedShareholder', inverse = 'established_from' )
+    directors = OneToMany( 'DirectedDirector', inverse = 'established_from', cascade='all, delete, delete-orphan' )
+    employees = OneToMany( 'EmployerEmployee', inverse = 'established_from', cascade='all, delete, delete-orphan' )
+    suppliers = OneToMany( 'SupplierCustomer', inverse = 'established_to', cascade='all, delete, delete-orphan' )
+    customers = OneToMany( 'SupplierCustomer', inverse = 'established_from', cascade='all, delete, delete-orphan' )
+    shareholders = OneToMany( 'SharedShareholder', inverse = 'established_from', cascade='all, delete, delete-orphan' )
 
     def __unicode__( self ):
         return self.name
@@ -387,7 +387,7 @@ class Person( Party ):
     is_superuser = Field( Boolean, default = False, index = True )
     picture = Field( camelot.types.Image( upload_to = 'person-pictures' ), deferred = True )
     comment = Field( camelot.types.RichText() )
-    employers = OneToMany( 'EmployerEmployee', inverse = 'established_to' )
+    employers = OneToMany( 'EmployerEmployee', inverse = 'established_to', cascade='all, delete, delete-orphan' )
 
     @property
     def name( self ):
