@@ -56,10 +56,15 @@ class ModelThreadTestCase(unittest.TestCase):
 
     def setUp(self):
         self.app = get_application()
+        from camelot.view import model_thread
+        from camelot.view.model_thread.no_thread_model_thread import NoThreadModelThread
         from camelot.view.model_thread import get_model_thread, construct_model_thread, has_model_thread
         from camelot.view.remote_signals import construct_signal_handler, has_signal_handler
         if not has_model_thread():
-            construct_model_thread()
+            #
+            # Run the tests without real threading, to avoid timing problems with screenshots etc.
+            #
+            model_thread._model_thread_.insert( 0, NoThreadModelThread() )
         if not has_signal_handler():
             construct_signal_handler()
         self.mt = get_model_thread()
