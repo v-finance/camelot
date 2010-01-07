@@ -223,8 +223,11 @@ class TableView( AbstractView  ):
         self.connect( shortcut, QtCore.SIGNAL( 'activated()' ), self.activate_search )
         # give the table widget focus to prevent the header and its search control to
         # receive default focus, as this would prevent the displaying of 'Search...' in the
-        # search control
-        table_widget.setFocus( QtCore.Qt.OtherFocusReason )
+        # search control, but this conflicts with the MDI, resulting in the window not
+        # being active and the menus not to work properly
+        #table_widget.setFocus( QtCore.Qt.OtherFocusReason )
+        #self.setFocusProxy(table_widget)
+        #self.setFocus( QtCore.Qt.OtherFocusReason )
         post( self.admin.get_subclass_tree, self.setSubclassTree )
     
     def activate_search(self):
