@@ -7,11 +7,13 @@ Created on Sep 12, 2009
 import logging
 logger = logging.getLogger('camelot.view.model_thread.no_thread_model_thread')
 
+from PyQt4 import QtCore
 from signal_slot_model_thread import AbstractModelThread, setup_model
 
-class NoThreadModelThread(AbstractModelThread):
+class NoThreadModelThread(QtCore.QObject, AbstractModelThread):
 
     def __init__(self, setup_thread = setup_model ):
+        QtCore.QObject.__init__(self)
         self.responses = []
         AbstractModelThread.__init__(self, setup_thread = setup_model )
         self._setup_thread()
@@ -35,7 +37,6 @@ class NoThreadModelThread(AbstractModelThread):
                 exception(exception_info)
 
     def wait_on_work(self):
-        from PyQt4 import QtCore
         app = QtCore.QCoreApplication.instance()
         while app.hasPendingEvents():
             app.processEvents()

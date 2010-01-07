@@ -117,12 +117,6 @@ class AbstractModelThread(object):
     all work is done"""
         pass
 
-    def process_responses(self):
-        pass
-
-    def post_response( self, response, arg ):
-        raise NotImplemented
-
     def post( self, request, response = None, exception = None ):
         """Post a request to the model thread, request should be
     a function that takes no arguments.  The request function
@@ -137,6 +131,11 @@ class AbstractModelThread(object):
     an exception
         """
         raise NotImplemented
+    
+    def busy( self ):
+        """Return True or False indicating wether either the model or the
+        gui thread is doing something"""
+        return False    
 
 def construct_model_thread( *args, **kwargs ):
     from signal_slot_model_thread import SignalSlotModelThread

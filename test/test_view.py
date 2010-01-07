@@ -241,9 +241,9 @@ Test the basic functionality of the editors :
   def test_SmileyEditor(self):
     editor = self.editors.SmileyEditor(parent=None)
     self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 'face-devil-grin' )
+    editor.set_value( 'face-devilish' )
     self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), 'face-devil-grin' )
+    self.assertEqual( editor.get_value(), 'face-devilish' )
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor = self.editors.SmileyEditor(parent=None, editable=False)
