@@ -12,7 +12,6 @@ from signal_slot_model_thread import AbstractModelThread, setup_model
 class NoThreadModelThread(AbstractModelThread):
 
     def __init__(self, setup_thread = setup_model ):
-        print 'NO THREAD'
         self.responses = []
         AbstractModelThread.__init__(self, setup_thread = setup_model )
         self._setup_thread()
@@ -35,5 +34,11 @@ class NoThreadModelThread(AbstractModelThread):
                 exception_info = (e, traceback_print)
                 exception(exception_info)
 
+    def wait_on_work(self):
+        from PyQt4 import QtCore
+        app = QtCore.QCoreApplication.instance()
+        while app.hasPendingEvents():
+            app.processEvents()
+            
     def isRunning(self):
         return True

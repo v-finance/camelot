@@ -45,8 +45,7 @@ class ModelThreadTestCase(unittest.TestCase):
             image_name = '%s_%s.png'%(test_case_name, suffix)
         widget.adjustSize()
         self.process()
-        app = QtGui.QApplication.flush()
-        pixmap = QPixmap.grabWidget(widget)
+        QtGui.QApplication.flush()
         pixmap = QPixmap.grabWidget(widget)
         pixmap.save(os.path.join(images_path, image_name), 'PNG')
 
@@ -110,19 +109,34 @@ class EntityViewsTest(ModelThreadTestCase):
 
     def setUp(self):
         super(EntityViewsTest, self).setUp()
+        from PyQt4 import QtCore
+        translator = self.get_application_admin().get_translator()
+        QtCore.QCoreApplication.installTranslator(translator)
 
-    def get_admins(self):
-        from elixir import entities
+    def get_application_admin(self):
+        """Overwrite this method to make use of a custom application admin"""
         from camelot.admin.application_admin import ApplicationAdmin
-        self.app_admin = ApplicationAdmin()
-        return [self.app_admin.get_entity_admin(e) for e in entities if self.app_admin.get_entity_admin(e)]
+        return ApplicationAdmin()
+            
+    def get_admins(self):
+        """Should return all admin for which a table and a form view should be displayed,
+        by default, returns for all entities their default admin"""
+        from elixir import entities
+        app_admin = self.get_application_admin()
+        return [app_admin.get_entity_admin(e) for e in entities if app_admin.get_entity_admin(e)]
 
     def test_table_view(self):
+        from PyQt4 import QtCore
+        translator = self.get_application_admin().get_translator()
+        QtCore.QCoreApplication.installTranslator(translator)        
         for admin in self.get_admins():
             widget = admin.create_table_view()
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
 
     def test_new_view(self):
+        from PyQt4 import QtCore
+        translator = self.get_application_admin().get_translator()
+        QtCore.QCoreApplication.installTranslator(translator)        
         for admin in self.get_admins():
             widget = admin.create_new_view()
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')

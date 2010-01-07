@@ -138,20 +138,21 @@ class DirectedDirector( PartyRelationship ):
     represented_by = OneToMany( 'RepresentedRepresentor', inverse = 'established_to' )
 
     class Admin( EntityAdmin ):
-        verbose_name = 'Directed - Director'
-        list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
+        verbose_name = _('Direction structure')
+        list_display = ['established_from', 'established_to', 'title', 'represented_by']
+        list_search = ['established_from.full_name', 'established_to.full_name']
+        field_attributes = {'established_from':{'name':_('Organization')},
+                            'established_to':{'name':_('Director')}}
 
-    class DirectorAdmin( EntityAdmin ):
+    class DirectorAdmin( Admin ):
         verbose_name = _('Director')
         list_display = ['established_to', 'title', 'from_date', 'thru_date']
         form_display = ['established_to', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
-        field_attributes = {'established_to':{'name':_( 'Name' )}}
 
-    class DirectedAdmin( EntityAdmin ):
+    class DirectedAdmin( Admin ):
         verbose_name = _('Directed organization')
         list_display = ['established_from', 'title', 'from_date', 'thru_date']
         form_display = ['established_from', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
-        field_attributes = {'established_from':{'name':_( 'Name' )}}
 
 class RepresentedRepresentor( Entity ):
     """Relation from a representing party to the person representing the party"""
@@ -198,21 +199,22 @@ class SharedShareholder( PartyRelationship ):
     shares = Field( Integer() )
 
     class Admin( EntityAdmin ):
-        verbose_name = 'Shared - Shareholder'
-        list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
+        verbose_name = _('Shareholder structure')
+        list_display = ['established_from', 'established_to', 'shares',]
+        list_search = ['established_from.full_name', 'established_to.full_name']
+        field_attributes = {'established_from':{'name':_('Organization')},
+                            'established_to':{'name':_('Shareholder')}}
 
-    class ShareholderAdmin( EntityAdmin ):
+    class ShareholderAdmin( Admin ):
         verbose_name = _('Shareholder')
         list_display = ['established_to', 'shares', 'from_date', 'thru_date']
         form_display = ['established_to', 'shares', 'from_date', 'thru_date', 'comment']
-        field_attributes = {'established_to':{'name':_('Shareholder name')}}
 
-    class SharedAdmin( EntityAdmin ):
+    class SharedAdmin( Admin ):
         verbose_name = _('Shares')
         verbose_name_plural = _('Shares')
         list_display = ['established_from', 'shares', 'from_date', 'thru_date']
         form_display = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
-        field_attributes = {'established_from':{'name':_( 'name' )}}
 
 class AddressAdmin( EntityAdmin ):
     """Admin with only the Address information and not the Party information"""
@@ -405,9 +407,9 @@ class Person( Party ):
         form_display = TabForm( [( 'Basic', Form( [HBoxForm( [Form( ['first_name', 'last_name', 'sex'] ),
                                                           Form( ['picture', ] ),
                                                          ] ),
-                                                         'contact_mechanisms', 'comment', ], scrollbars = True ) ),
-                                ( 'Official', Form( ['birthdate', 'social_security_number', 'passport_number', 'passport_expiry_date', 'addresses', ], scrollbars = True ) ),
-                                ( 'Work', Form( ['employers', 'directed_organizations', 'shares'], scrollbars = True ) ),
+                                                         'contact_mechanisms', 'comment', ], scrollbars = False ) ),
+                                ( 'Official', Form( ['birthdate', 'social_security_number', 'passport_number', 'passport_expiry_date', 'addresses', ], scrollbars = False ) ),
+                                ( 'Work', Form( ['employers', 'directed_organizations', 'shares'], scrollbars = False ) ),
                                 ( 'Status', Form( ['status'] ) ),
                                 ] )
 

@@ -92,7 +92,6 @@ class FormView( AbstractView ):
         self.columns, self.form = columns_and_form
         self.setColumnsFormAndDelegate()
 
-
     def item_delegate_changed(self):
         from camelot.view.controls.delegates.delegatemanager import DelegateManager
         self.delegate = self.model.getItemDelegate()
@@ -104,6 +103,16 @@ class FormView( AbstractView ):
         """Create value and label widgets"""
         from camelot.view.controls.user_translatable_label import UserTranslatableLabel
         from camelot.view.controls.editors.wideeditor import WideEditor
+        #
+        # Dirty trick to make form views work during unit tests, since unit tests
+        # have no event loop running, so the delegate will never be set, so we get
+        # it and are sure it will be there if we are running without threads
+        #
+        if not self.delegate:
+            self.delegate = self.model.getItemDelegate()
+        #
+        # end of dirty trick
+        #
         # only if all information is available, we can start building the form
         if not (self.form and self.columns and self.delegate):
             return
