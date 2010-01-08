@@ -230,6 +230,11 @@ class NavigationPane( QtGui.QDockWidget ):
         self.setMinimumWidth(QtGui.QFontMetrics(QtGui.QApplication.font()).averageCharWidth()*40)
         self.content.setLayout( layout )
         self.setWidget( self.content )
+        #
+        # set minimum with to 0 as long as we are using the navigation pane as a
+        # dockwidget, because this dockwidget is not collapsible
+        #
+        self.setMinimumWidth(0)
         post(app_admin.get_sections, self.set_sections)
         # Tried selecting QDockWidget but it's not working
         # so we must undo this margin in children stylesheets :)

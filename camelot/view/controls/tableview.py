@@ -541,7 +541,17 @@ class TableView( AbstractView  ):
             self.filters_layout.addWidget( self.filters )
             self.connect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
         if actions:
-            self.actions = ActionsBox( self, self._table_model.get_collection_getter(), lambda:[] )
+            
+            def selection_getter():
+                selection = []
+                for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
+                    selection.append( self._table_model._get_object(row) )
+                return selection
+            
+            self.actions = ActionsBox( self, 
+                                       self._table_model.get_collection_getter(), 
+                                       selection_getter )
+            
             self.actions.setActions( actions )
             self.filters_layout.addWidget( self.actions )
       

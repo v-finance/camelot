@@ -32,6 +32,7 @@ These structures can be transformed to QT forms.
 
 from camelot.view.model_thread import gui_function
 from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext
 
 def structure_to_filter(structure):
     """Convert a python data structure to a filter, using the following rules :
@@ -190,6 +191,79 @@ class ComboBoxFilter(Filter):
               
         return FilterWidget(name, options, parent)
     
+class EditorFilter(Filter):
+    """Filter that presents the user with an editor, allowing the user to enter
+    a value on which to filter, and at the same time to show 'All' or 'None'
+    """
+    
+    def __init__(self, field_name, verbose_name=None):
+        """:param field: the name of the field on which to filter"""
+        super(EditorFilter, self).__init__(field_name)
+        self._field_name = field_name
+        self._verbose_name = verbose_name
+        
+    def render(self, parent, name, options):
+        
+        from PyQt4 import QtCore, QtGui
+        from camelot.view.controls.filterlist import filter_changed_signal
+        from camelot.view.controls import editors
+                
+        class FilterWidget(QtGui.QGroupBox):
+            
+            def __init__(self, name, parent):
+                QtGui.QGroupBox.__init__(self, unicode(name), parent)
+                self._entity, self._field_name, self._field_attributes = options
+                layout = QtGui.QVBoxLayout()
+                group = QtGui.QButtonGroup(self)
+                self.all_button = QtGui.QRadioButton(ugettext('All'), self)
+                self.all_button.setChecked(True)
+                group.addButton(self.all_button)
+                layout.addWidget(self.all_button)
+                self.none_button = QtGui.QRadioButton(ugettext('None'), self)
+                group.addButton(self.none_button)
+                layout.addWidget(self.none_button)
+                self.connect(self.all_button, QtCore.SIGNAL('toggled(bool)'), self.all_toggled)
+                self.connect(self.none_button, QtCore.SIGNAL('toggled(bool)'), self.none_toggled)
+                self.setLayout(layout)
+                delegate = self._field_attributes['delegate'](**self._field_attributes)
+                option = QtGui.QStyleOptionViewItem()
+                option.version = 5
+                self.editor = delegate.createEditor( self, option, None )
+                self.connect(self.editor, editors.editingFinished, self.editor_editing_finished)
+                layout.addWidget(self.editor)
+                self._filter = False
+                self._value = None
+                
+            def all_toggled(self, bool):
+                self.editor.set_value(None)
+                self._filter = False
+                self.emit(filter_changed_signal)
+            
+            def none_toggled(self, bool):
+                self.editor.set_value(None)
+                self._filter = True
+                self._value = None
+                self.emit(filter_changed_signal)
+                
+            def editor_editing_finished(self):
+                self.all_button.setChecked(False)
+                self.none_button.setChecked(False)
+                self._filter = True
+                self._value = self.editor.get_value()
+                self.emit(filter_changed_signal)
+            
+            def decorate_query(self, query):
+                if not self._filter:
+                    return query
+                return query.filter(getattr(self._entity, self._field_name)==self._value)
+                
+        return FilterWidget(name, parent)       
+    
+    def get_name_and_options(self, admin):
+        field_attributes = admin.get_field_attributes(self._field_name)
+        name = self._verbose_name or field_attributes['name']
+        return name, (admin.entity, self._field_name, field_attributes)
+        
 class ValidDateFilter(Filter):
     """Filters entities that are valid a certain date.  This filter will present
     a date to the user and filter the entities that have their from date before this
