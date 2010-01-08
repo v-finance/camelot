@@ -44,7 +44,9 @@ class BoolEditor(CustomEditor):
         CustomEditor.__init__(self, parent)
         self.checkBox = QtGui.QCheckBox()
         self.checkBox.setEnabled(editable)
-    
+        self.connect(self.checkBox,
+                     QtCore.SIGNAL('stateChanged(int)'),
+                     self.editingFinished)
         layout = QtGui.QHBoxLayout()
         layout.setMargin(0)
         layout.setSpacing(0)
@@ -67,9 +69,7 @@ class BoolEditor(CustomEditor):
 
 
     def editingFinished(self, value=None):
-        if value == None:
-            value = self.checkBox.isChecked()
-        self.emit(QtCore.SIGNAL('editingFinished()'), value)
+        self.emit(QtCore.SIGNAL('editingFinished()'))
 
       
     def set_enabled(self, editable=True):
