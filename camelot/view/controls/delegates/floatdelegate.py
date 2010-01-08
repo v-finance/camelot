@@ -71,7 +71,7 @@ class FloatDelegate( CustomDelegate ):
             #
             value_str = QtCore.QString("%L1").arg(float(value),0,'f',self.precision)
 
-        value_str = unicode( self.prefix ) + ' ' + unicode( value_str ) + ' ' + unicode( self.suffix )
+        value_str = unicode( self.prefix ) + u' ' + unicode( value_str ) + u' ' + unicode( self.suffix )
         value_str = value_str.strip()
         if self.unicode_format != None:
             value_str = self.unicode_format( value )
@@ -82,5 +82,5 @@ class FloatDelegate( CustomDelegate ):
                          option.rect.width() - 6,
                          option.rect.height(),
                          Qt.AlignVCenter | Qt.AlignRight,
-                         str( value_str ) )
+                         value_str )
         painter.restore()
