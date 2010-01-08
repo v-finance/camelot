@@ -10,3 +10,4 @@ This is documentation for advanced usage of the Camelot library.
 
    i18n.rst
    deployment.rst
+   permissions.rst
