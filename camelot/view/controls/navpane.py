@@ -247,6 +247,11 @@ class NavigationPane( QtGui.QDockWidget ):
         
     def set_sections(self, sections):
         from PyQt4.QtTest import QTest
+        #
+        # current button might no longer exisst once we set
+        # the new sections
+        #
+        self.currentbutton = -1
         for b in self.buttons:
             b.deleteLater()
         self.sections = sections
@@ -323,7 +328,6 @@ class NavigationPane( QtGui.QDockWidget ):
 
     def change_current( self, ( index, text ) ):
         logger.debug( 'set current to %s' % text )
-
         if self.currentbutton != -1:
             button = self.buttons[self.currentbutton]
             button.setStyleSheet( button.stylenormal )
