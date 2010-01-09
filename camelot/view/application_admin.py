@@ -25,21 +25,19 @@
 #
 #  ============================================================================
 
+from PyQt4 import QtCore
 
 from camelot.view.model_thread import model_function
 from camelot.core.utils import ugettext as _
 
-
 _application_admin_ = []
-
 
 def get_application_admin():
     if not len(_application_admin_):
         raise Exception('No application admin class has been constructed yet')
     return _application_admin_[0]
 
-
-class ApplicationAdmin(object):
+class ApplicationAdmin(QtCore.QObject):
     """The Application Admin class defines how the application should look
     like, it also ties python classes to their associated admin classes.  It's
     behaviour can be steered by overwriting its static attributes or it's
@@ -63,7 +61,12 @@ class ApplicationAdmin(object):
     sections = ['Relations', 'Configuration']
     admins = {}
 
+    sections_changed_signal = QtCore.SIGNAL('sections_changed()')
+    """This signal is emitted whenever the sections are changed, and the views
+    should be updated"""
+    
     def __init__(self):
+        QtCore.QObject.__init__(self)
         _application_admin_.append(self)
 
     def register(self, entity, admin_class):
