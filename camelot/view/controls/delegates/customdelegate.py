@@ -108,8 +108,6 @@ will be put onto a form"""
             editor.setToolTip('')
         background_color = variant_to_pyobject(index.model().data(index, Qt.BackgroundRole))
         if background_color not in (None, ValueLoading):
-# FIXME: shitload of calls = suspicious
-#            print background_color
             editor.set_background_color(background_color)
             
     def setModelData(self, editor, model, index):
