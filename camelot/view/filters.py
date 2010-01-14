@@ -229,6 +229,8 @@ class EditorFilter(Filter):
                 option = QtGui.QStyleOptionViewItem()
                 option.version = 5
                 self.editor = delegate.createEditor( self, option, None )
+                # explicitely set a value, otherways the current value remains ValueLoading
+                self.editor.set_value(None)
                 self.connect(self.editor, editors.editingFinished, self.editor_editing_finished)
                 layout.addWidget(self.editor)
                 self._filter = False

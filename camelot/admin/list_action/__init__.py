@@ -47,9 +47,8 @@ class ListActionFromModelFunction( ListAction ):
         self._model_function = model_function
 
     def run( self, collection_getter, selection_getter ):
-        progress = QtGui.QProgressDialog( 'Please wait', QtCore.QString(), 0, 0 )
-        progress.setWindowTitle( unicode(self._name) )
-        progress.show()
+        from camelot.admin.form_action import FormActionProgressDialog
+        progress = FormActionProgressDialog( unicode(self._name) )
 
         def create_request( collection_getter ):
 
@@ -60,7 +59,8 @@ class ListActionFromModelFunction( ListAction ):
 
             return request
 
-        post( create_request( collection_getter ), progress.close, exception = progress.close )
+        post( create_request( collection_getter ), progress.finished, exception = progress.finished )
+        progress.exec_()
 
 class PrintHtmlListAction( ListActionFromModelFunction ):
 
@@ -79,6 +79,43 @@ class PrintHtmlListAction( ListActionFromModelFunction ):
     :arg selection: the collection of selected objects in the list
         """
         return '<br/>'.join( list( unicode( o ) for o in collection ) )
+    
+class OpenFileListAction( ListActionFromModelFunction ):
+    """List action used to open a file in the prefered application of the user.
+    To be used for example to generate pdfs with reportlab and open them in
+    the default pdf viewer.
+    
+    Set the suffix class attribute to the suffix the file should have
+    eg: .txt or .pdf
+    """
+
+    suffix = '.txt'
+    
+    def __init__( self, name, icon = Icon( 'tango/22x22/actions/document-print.png' ) ):
+        """
+        """
+
+        def model_function( collection, selection ):
+            from PyQt4 import QtGui, QtCore
+            import os
+            import tempfile
+            file_descriptor, file_name = tempfile.mkstemp(suffix=self.suffix)
+            os.close(file_descriptor)
+            self.write_file(file_name, collection, selection )
+            QtGui.QDesktopServices.openUrl(QtCore.QUrl('file://%s' % file_name)) 
+
+        ListActionFromModelFunction.__init__( self, name, model_function, icon )
+
+    def write_file( self, file_name, collection, selection ):
+        """Overwrite this function to generate the file to be opened
+    :arg file_name: the name of the file to which should be written
+    :arg collection: the collection of objects displayed in the list
+    :arg selection: the collection of selected objects in the list
+        """
+        file = open(file_name, 'w')
+        for o in collection:
+            file.write(unicode(o))
+            file.write('\n')
 
 def structure_to_list_actions( structure ):
     """Convert a list of python objects to a list of list actions.  If the python
