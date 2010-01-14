@@ -76,7 +76,7 @@ class IntegerEditor(CustomEditor):
       
     def get_value(self):
         self.spinBox.interpretText()
-        value = self.spinBox.value()
+        value = int(self.spinBox.value())
         return CustomEditor.get_value(self) or value
       
     def set_enabled(self, editable=True):
