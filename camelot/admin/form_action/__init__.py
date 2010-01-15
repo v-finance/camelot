@@ -26,6 +26,7 @@ overwritten.
 from PyQt4 import QtGui, QtCore
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, post
+from camelot.view.controls.progress_dialog import ProgressDialog
 
 class FormAction( object ):
     """Abstract base class to implement form actions"""
@@ -67,14 +68,7 @@ class FormActionFromGuiFunction( FormAction ):
     def run( self, entity_getter ):
         self._gui_function( entity_getter )
 
-class FormActionProgressDialog(QtGui.QProgressDialog):
-
-    def __init__(self, name):
-        QtGui.QProgressDialog.__init__( self, 'Please wait', QtCore.QString(), 0, 0 )
-        self.setWindowTitle( unicode(name) )
-
-    def finished(self, success):
-        self.close()
+class FormActionProgressDialog(ProgressDialog):
 
     def print_result(self, html):
         from camelot.view.export.printer import open_html_in_print_preview_from_gui_thread
@@ -101,7 +95,7 @@ class FormActionFromModelFunction( FormAction ):
 
             return request
 
-        post( create_request( entity_getter ), progress.finished, exception = progress.finished )
+        post( create_request( entity_getter ), progress.finished, exception = progress.exception )
         progress.exec_()
 
 class PrintHtmlFormAction( FormActionFromModelFunction ):
@@ -149,7 +143,7 @@ class PrintHtmlFormAction( FormActionFromModelFunction ):
 
             return request
 
-        post( create_request( entity_getter ), progress.print_result, exception = progress.finished )
+        post( create_request( entity_getter ), progress.print_result, exception = progress.exception )
         progress.exec_()
 
 def structure_to_form_actions( structure ):

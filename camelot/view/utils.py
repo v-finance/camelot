@@ -65,9 +65,8 @@ def date_from_string(s):
     s = s.strip()
     if not s:
         return None
-    try:
-        dt = QDate.fromString(s, local_date_format())
-    except ValueError:
+    dt = QDate.fromString(s, local_date_format())
+    if not dt.isValid():
         raise ParsingError()
     return date(dt.year(), dt.month(), dt.day())
 

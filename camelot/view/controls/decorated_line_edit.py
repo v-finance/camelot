@@ -84,7 +84,7 @@ class DecoratedLineEdit(QtGui.QLineEdit):
     def user_input(self):
         if self._showing_background_text:
             return u''
-        return self.text()
+        return unicode(self.text())
     
     def set_user_input(self, text):
         if text!=None:
