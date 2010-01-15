@@ -42,9 +42,17 @@ class ListActionFromGuiFunction( ListAction ):
 class ListActionFromModelFunction( ListAction ):
     """Convert a function that is supposed to run in the model thread to a FormAction"""
 
-    def __init__( self, name, model_function, icon = None ):
+    def __init__( self, name, model_function, icon = None, collection_flush=False, selection_flush=False ):
+        """
+        :param model_function: a function that has 2 arguments : the collection in the list view and the selection
+        in the list view.
+        :param collection_flush: flush all objects in the collection to the db and refresh them in the views
+        :param selection_flush: flush all objects in the selection to the db and refresh them in the views
+        """
         ListAction.__init__( self, name, icon )
         self._model_function = model_function
+        self._collection_flush = collection_flush
+        self._selection_flush = selection_flush
 
     def run( self, collection_getter, selection_getter ):
         from camelot.admin.form_action import FormActionProgressDialog
@@ -53,9 +61,20 @@ class ListActionFromModelFunction( ListAction ):
         def create_request( collection_getter ):
 
             def request():
-                c = collection_getter()
-                s = selection_getter()
+                from sqlalchemy.orm.session import Session
+                from camelot.view.remote_signals import get_signal_handler
+                sh = get_signal_handler()
+                c = list(collection_getter())
+                s = list(selection_getter())
                 self._model_function( c, s )
+                to_flush = []
+                if self._selection_flush:
+                    to_flush = s
+                if self._collection_flush:
+                    to_flush = c
+                for o in to_flush:
+                    Session.object_session( o ).flush( [o] )
+                    sh.sendEntityUpdate( self, o )
 
             return request
 
