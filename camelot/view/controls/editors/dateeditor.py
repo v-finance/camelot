@@ -28,7 +28,7 @@ class DateEditor(CustomEditor):
     
         special_date_menu = QtGui.QMenu(self)
         special_date_menu.addAction('Today')
-        special_date_menu.addAction('Last date')
+        special_date_menu.addAction('Far future')
         special_date = QtGui.QToolButton(self)
         special_date.setIcon(
             Icon('tango/16x16/apps/office-calendar.png').getQIcon())
@@ -40,8 +40,7 @@ class DateEditor(CustomEditor):
     
         if not editable:
             special_date.setEnabled(False)
-            self.qdateedit.setEnabled(False)
-            self.qdateedit.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+            self.line_edit.setEnabled(False)
       
         if nullable:
             special_date_menu.addAction('Clear')
@@ -129,10 +128,9 @@ class DateEditor(CustomEditor):
     
     def setSpecialDate(self, action):
         if action.text().compare('Today') == 0:
-            self.qdateedit.setDate(QtCore.QDate.currentDate())
-        elif action.text().compare('Last date') == 0:
-            self.qdateedit.setDate(QtCore.QDate(2400, 12, 31))
-        # minimum date is our special value text
+            self.set_value(datetime.date.today())
+        elif action.text().compare('Far future') == 0:
+            self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
         elif action.text().compare('Clear') == 0:
-            self.qdateedit.setDate(self.qdateedit.minimumDate())
+            self.set_value(None)
         self.emit(QtCore.SIGNAL('editingFinished()'))
