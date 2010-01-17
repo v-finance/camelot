@@ -27,13 +27,15 @@
 
 import sys
 from PyQt4.QtGui import (
-    QApplication, QWidget,
-    QColor, QPixmap, QPushButton,
-    QGraphicsView, QGraphicsScene,
+    QApplication,
+    QGraphicsView,
+    QGraphicsScene,     
+    QColor, QPixmap,
+    QWidget, QPainter,
 )
-from PyQt4.QtCore import (
-    Qt, QPoint, QEvent
-)
+from PyQt4.QtCore import Qt, QEvent
+
+from camelot.view.controls.node import Node
 
 
 def get_desktop():
@@ -55,6 +57,16 @@ def fit_to_screen(pixmap):
     return pixmap
 
 
+class CloseNode(Node):
+
+    def __init__(self, parent=None):
+        super(CloseNode, self).__init__('Close', parent)
+
+    def mousePressEvent(self, event):
+        view = self.scene().views()[0]
+        view.close()
+
+
 class LiteBoxView(QGraphicsView):
 
     ALPHABLACK = QColor(0, 0, 0, 192)
@@ -63,11 +75,13 @@ class LiteBoxView(QGraphicsView):
         super(LiteBoxView, self).__init__(parent)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        
+        # will propagate to children
+        self.setRenderHint(QPainter.Antialiasing)
+        self.setRenderHint(QPainter.TextAntialiasing)
+
         self.scene = QGraphicsScene()
         self.setScene(self.scene)
-
-    def mousePressEvent(self, event):
-        self.close()
 
     def drawBackground(self, painter, rect):
         painter.drawPixmap(self.mapToScene(0, 0), get_desktop_pixmap())
@@ -93,6 +107,7 @@ class LiteBoxView(QGraphicsView):
         if event.buttons() == Qt.LeftButton:
             pixmap = QPixmap.grabWidget(object)
             self.scene.addPixmap(fit_to_screen(pixmap))
+            self.scene.addItem(CloseNode())
             self.showFullScreen()
             return True
 
