@@ -4,7 +4,7 @@ import datetime
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor
+from customeditor import CustomEditor, editingFinished
 from camelot.core import constants
 from camelot.view.art import Icon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
@@ -13,6 +13,8 @@ from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 class DateEditor(CustomEditor):
     """Widget for editing date values"""
   
+    calendar_action_trigger = QtCore.SIGNAL('trigger()')
+    
     def __init__(self,
                  parent=None,
                  editable=True,
@@ -26,7 +28,16 @@ class DateEditor(CustomEditor):
         self.line_edit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.line_edit.set_background_text( QtCore.QDate().toString(self.date_format) )
     
+        self.calendar_widget = QtGui.QCalendarWidget(self)
+        self.connect( self.calendar_widget, QtCore.SIGNAL('activated(const QDate&)'), self.calendar_widget_activated)
+        self.connect( self.calendar_widget, QtCore.SIGNAL('clicked(const QDate&)'), self.calendar_widget_activated)
+        
+        calendar_widget_action = QtGui.QWidgetAction(self)
+        calendar_widget_action.setDefaultWidget(self.calendar_widget)
+        
         special_date_menu = QtGui.QMenu(self)
+        self.connect( self, self.calendar_action_trigger, special_date_menu.hide )
+        special_date_menu.addAction(calendar_widget_action)
         special_date_menu.addAction('Today')
         special_date_menu.addAction('Far future')
         special_date = QtGui.QToolButton(self)
@@ -46,10 +57,8 @@ class DateEditor(CustomEditor):
             special_date_menu.addAction('Clear')
       
         self.hlayout = QtGui.QHBoxLayout()
-        
-        self.hlayout.addWidget(special_date)
-        self.special_date = special_date
         self.hlayout.addWidget(self.line_edit)
+        self.hlayout.addWidget(special_date)
     
         self.hlayout.setContentsMargins(0, 0, 0, 0)
         self.hlayout.setMargin(0)
@@ -72,15 +81,10 @@ class DateEditor(CustomEditor):
                      QtCore.SIGNAL('triggered(QAction*)'),
                      self.setSpecialDate)
     
-    # TODO: consider using QDate.toPyDate(), PyQt4.1
-    @staticmethod
-    def _python_to_qt(value):
-        return QtCore.QDate(value.year, value.month, value.day)
-    
-    # TODO: consider using QDate.toPyDate(), PyQt4.1
-    @staticmethod
-    def _qt_to_python(value):
-        return datetime.date(value.year(), value.month(), value.day())
+    def calendar_widget_activated(self, date):
+        self.emit(self.calendar_action_trigger)
+        self.set_value(date)
+        self.emit(editingFinished)
     
     def editingFinished(self):
         self.emit(QtCore.SIGNAL('editingFinished()'))
@@ -88,17 +92,13 @@ class DateEditor(CustomEditor):
     def focusOutEvent(self, event):
         self.emit(QtCore.SIGNAL('editingFinished()'))
     
-    # TODO: consider using QDate.toPyDate(), PyQt4.1
-    def set_date_range(self):
-        qdate_min = DateEditor._python_to_qt(self.minimum)
-        qdate_max = DateEditor._python_to_qt(self.maximum)
-        self.qdateedit.setDateRange(qdate_min, qdate_max)
-    
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:
-            formatted_date = QtCore.QDate(value).toString(self.date_format)
+            qdate = QtCore.QDate(value)
+            formatted_date = qdate.toString(self.date_format)
             self.line_edit.set_user_input(formatted_date)
+            self.calendar_widget.setSelectedDate(qdate)
         else:
             self.line_edit.set_user_input(None)
       
