@@ -276,7 +276,7 @@ class Party( Entity ):
         aliased_organisation = Organization.table.alias( 'organisation_alias' )
         aliased_person = Person.table.alias( 'person_alias' )
         aliased_party = Party.table.alias( 'party_alias' )
-        return sql.functions.coalesce( sql.select( [aliased_person.c.first_name + ' ' + aliased_person.c.last_name],
+        return sql.functions.coalesce( sql.select( [sql.functions.coalesce(aliased_person.c.first_name,'') + ' ' + sql.functions.coalesce(aliased_person.c.last_name, '')],
                                                   whereclause = and_( aliased_party.c.id == self.id ),
                                                   from_obj = [aliased_party.join( aliased_person, aliased_person.c.party_id == aliased_party.c.id )] ).limit( 1 ).as_scalar(),
                                       sql.select( [aliased_organisation.c.name],
