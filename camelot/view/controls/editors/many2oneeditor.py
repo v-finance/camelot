@@ -37,14 +37,14 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         def columnCount( self, index = None ):
             return 1
       
-    def __init__( self, entity_admin = None, parent = None, editable=True, **kwargs ):
+    def __init__( self, admin = None, parent = None, editable=True, **kwargs ):
         """
     :param entity_admin : The Admin interface for the object on the one side of
     the relation
     """
     
         CustomEditor.__init__( self, parent )
-        self.admin = entity_admin
+        self.admin = admin
         self._editable = editable
         self.entity_instance_getter = None
         self._entity_representation = ''
@@ -249,10 +249,18 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.search_input.set_user_input( self._entity_representation )
     
     def set_value( self, value ):
+        """:param value: either ValueLoading, or a function that returns None or the entity to be shown in the editor"""
         self._last_highlighted_entity_getter = None
         value = CustomEditor.set_value( self, value )
         if value:
             self.setEntity( value, propagate = False )
+            
+    def get_value(self):
+        """:return: a function that returns the selected entity or ValueLoading or None """
+        value = CustomEditor.get_value( self )
+        if not value:
+            value = self.entity_instance_getter
+        return value
       
     def set_instance_represenation( self, representation_and_propagate ):
         """Update the gui"""
