@@ -116,11 +116,13 @@ class OpenFileListAction( ListActionFromModelFunction ):
 
         def model_function( collection, selection ):
             from PyQt4 import QtGui, QtCore
-            import os
+            import os, sys
             import tempfile
             file_descriptor, file_name = tempfile.mkstemp(suffix=self.suffix)
             os.close(file_descriptor)
             self.write_file(file_name, collection, selection )
+            if 'win' in sys.platform:
+                os.startfile(os.path.normpath(os.path(file_name)))
             QtGui.QDesktopServices.openUrl(QtCore.QUrl('file://%s' % file_name)) 
 
         ListActionFromModelFunction.__init__( self, name, model_function, icon )
