@@ -488,13 +488,11 @@ class EntityAdmin(ObjectAdmin):
         from PyQt4.QtCore import SIGNAL
 
         class SelectQueryTableProxy(QueryTableProxy):
-            header_icon = Icon(
-                'tango/16x16/emblems/emblem-symbolic-link.png'
-            ).getQIcon()
+            header_icon = Icon('tango/16x16/emblems/emblem-symbolic-link.png')
 
         class SelectView(TableView):
 
-            query_table_proxy = SelectQueryTableProxy
+            table_model = SelectQueryTableProxy
             title_format = 'Select %s'
 
             def __init__(self, admin, parent):
