@@ -46,8 +46,23 @@ class ModelThreadTestCase(unittest.TestCase):
         widget.adjustSize()
         self.process()
         QtGui.QApplication.flush()
-        pixmap = QPixmap.grabWidget(widget)
-        pixmap.save(os.path.join(images_path, image_name), 'PNG')
+        inner_pixmap = QPixmap.grabWidget(widget)        
+        #
+        # we'll create a label that contains a screenshot of our widget and
+        # take a screenshot of that label, for the sole purpose of adding a border
+        #
+        parent_widget = QtGui.QLabel()
+        parent_widget.setPixmap(inner_pixmap)
+        parent_widget.setFrameStyle(QtGui.QFrame.Panel | QtGui.QFrame.Plain)
+        parent_widget.setObjectName('grab_widget_parent')
+        parent_widget.setLineWidth(2)
+        parent_widget.setStyleSheet("""
+        #grab_widget_parent {
+        border: 2px solid gray;
+        }""")
+        parent_widget.adjustSize()
+        outer_pixmap = QPixmap.grabWidget(parent_widget)
+        outer_pixmap.save(os.path.join(images_path, image_name), 'PNG')
 
     def process(self):
         """Wait until all events are processed and the queues of the model thread are empty"""
