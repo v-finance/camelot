@@ -634,12 +634,19 @@ class MainWindow(QtGui.QMainWindow):
 
     # Toolbars
 
+    def get_tool_bar(self):
+        return self.tool_bar
+    
     def createToolBars(self):
-        self.viewToolBar = self.addToolBar(_('View'))
-        self.viewToolBar.setObjectName('ViewToolBar')
-        self.viewToolBar.setMovable(False)
-        self.viewToolBar.setFloatable(False)
-        addActions(self.viewToolBar, (
+        #
+        # All actions are put in one toolbar, to ease unit testing and
+        # generation of screenshots
+        #
+        self.tool_bar = self.addToolBar(_('Toolbar'))
+        self.tool_bar.setObjectName('ToolBar')
+        self.tool_bar.setMovable(False)
+        self.tool_bar.setFloatable(False)
+        addActions(self.tool_bar, (
             self.newAct,
             self.deleteAct,
             self.viewFirstAct,
@@ -648,44 +655,24 @@ class MainWindow(QtGui.QMainWindow):
             self.viewLastAct
         ))
 
-        self.editToolBar = self.addToolBar(_('Edit'))
-        self.editToolBar.setObjectName('EditToolBar')
-        self.editToolBar.setMovable(False)
-        self.editToolBar.setFloatable(False)
-        addActions(self.editToolBar, (
+        addActions(self.tool_bar, (
             self.cutAct,
             self.copyAct,
             self.pasteAct
         ))
 
-        self.exportToolBar = self.addToolBar(_('Export'))
-        self.exportToolBar.setObjectName('ExportToolBar')
-        self.exportToolBar.setMovable(False)
-        self.exportToolBar.setFloatable(False)
-        addActions(self.exportToolBar, (
+        addActions(self.tool_bar, (
             self.exportToExcelAct,
             self.exportToWordAct,
             self.exportToMailAct,
         ))
 
-        self.printToolBar = self.addToolBar(_('Print'))
-        self.printToolBar.setObjectName('PrintToolBar')
-        self.printToolBar.setMovable(False)
-        self.printToolBar.setFloatable(False)
-        addActions(self.printToolBar, (self.printAct, self.previewAct))
+        addActions(self.tool_bar, (self.printAct, self.previewAct))
 
-        self.helpToolBar = self.addToolBar(_('Help'))
-        self.helpToolBar.setObjectName('HelpToolBar')
-        self.helpToolBar.setMovable(False)
-        self.helpToolBar.setFloatable(False)
-        addActions(self.helpToolBar, (self.helpAct,))
+        addActions(self.tool_bar, (self.helpAct,))
 
         if self.app_actions:
-            self.applicationToolBar = self.addToolBar(_('Application'))
-            self.applicationToolBar.setObjectName('ApplicationToolBar')
-            self.applicationToolBar.setMovable(False)
-            self.applicationToolBar.setFloatable(False )
-            addActions(self.applicationToolBar, self.app_actions)
+            addActions(self.tool_bar, self.app_actions)
 
     # Navigation Pane
 

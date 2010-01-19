@@ -472,7 +472,7 @@ class EntityAdmin(ObjectAdmin):
         return form
 
     @gui_function
-    def create_select_view(admin, query, search_text=None, parent=None):
+    def create_select_view(admin, query=None, search_text=None, parent=None):
         """Returns a Qt widget that can be used to select an element from a
         query
 

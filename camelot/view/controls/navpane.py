@@ -245,6 +245,9 @@ class NavigationPane( QtGui.QDockWidget ):
     def update_sections(self):
         post(self.app_admin.get_sections, self.set_sections)
         
+    def get_sections(self):
+        return self.sections
+    
     def set_sections(self, sections):
         from PyQt4.QtTest import QTest
         #

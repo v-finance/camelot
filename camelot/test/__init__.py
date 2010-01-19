@@ -91,6 +91,45 @@ class SchemaTest(ModelThreadTestCase):
         post( schema_display_task )
         get_model_thread().wait_on_work()
 
+class ApplicationViewsTest(ModelThreadTestCase):
+    """Test various application level views, like the main window, the
+    sidepanel"""
+        
+    def get_application_admin(self):
+        """Overwrite this method to make use of a custom application admin"""
+        from camelot.admin.application_admin import ApplicationAdmin
+        return ApplicationAdmin()
+        
+    def test_navigation_pane(self):
+        from camelot.view.controls import navpane
+        from PyQt4 import QtCore
+        translator = self.get_application_admin().get_translator()
+        QtCore.QCoreApplication.installTranslator(translator)         
+        app_admin = self.get_application_admin()
+        nav_pane = navpane.NavigationPane(app_admin)
+        self.grab_widget(nav_pane, subdir='applicationviews')
+        for i, section in enumerate(nav_pane.get_sections()):
+            nav_pane.change_current((i, unicode(section.get_verbose_name())))
+            self.grab_widget(nav_pane, suffix=section.get_name(), subdir='applicationviews')
+      
+    def test_main_window(self):
+        from camelot.view.mainwindow import MainWindow
+        from PyQt4 import QtCore
+        translator = self.get_application_admin().get_translator()
+        QtCore.QCoreApplication.installTranslator(translator)          
+        app_admin = self.get_application_admin()        
+        widget = MainWindow(app_admin)
+        self.grab_widget(widget, subdir='applicationviews')
+        
+    def test_tool_bar(self):
+        from camelot.view.mainwindow import MainWindow
+        from PyQt4 import QtCore
+        translator = self.get_application_admin().get_translator()
+        QtCore.QCoreApplication.installTranslator(translator)        
+        app_admin = self.get_application_admin()        
+        main_window = MainWindow(app_admin)
+        self.grab_widget(main_window.get_tool_bar(), subdir='applicationviews')
+    
 class EntityViewsTest(ModelThreadTestCase):
     """Test the views of all the Entity subclasses, subclass this class to test all views
     in your application.  This is done by calling the create_table_view and create_new_view
@@ -125,6 +164,14 @@ class EntityViewsTest(ModelThreadTestCase):
         app_admin = self.get_application_admin()
         return [app_admin.get_entity_admin(e) for e in entities if app_admin.get_entity_admin(e)]
 
+    def test_select_view(self):
+        from PyQt4 import QtCore
+        translator = self.get_application_admin().get_translator()
+        QtCore.QCoreApplication.installTranslator(translator)        
+        for admin in self.get_admins():
+            widget = admin.create_select_view()
+            self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
+            
     def test_table_view(self):
         from PyQt4 import QtCore
         translator = self.get_application_admin().get_translator()
