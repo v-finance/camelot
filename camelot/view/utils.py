@@ -59,22 +59,25 @@ def bool_from_string(s):
     if s.lower() not in ['false', 'true']: raise ParsingError()
     return eval(s.lower().capitalize())
 
-
 def date_from_string(s):
     from PyQt4.QtCore import QDate
+    import string
     s = s.strip()
     if not s:
         return None
     dt = QDate.fromString(s, local_date_format())
     if not dt.isValid():
-        raise ParsingError()
+        # try parsing without separators
+        only_letters_format = ''.join([c for c in local_date_format() if c in string.letters])
+        only_letters_string = ''.join([c for c in unicode(s) if c in (string.letters+string.digits)])
+        dt = QDate.fromString(only_letters_string, only_letters_format)
+        if not dt.isValid():
+            raise ParsingError()
     return date(dt.year(), dt.month(), dt.day())
-
 
 def time_from_string(s, format=constants.strftime_time_format):
     if s is None: raise ParsingError()
     s = s.strip()
-
     try:
         dt = datetime.strptime(s, format)
     except ValueError:

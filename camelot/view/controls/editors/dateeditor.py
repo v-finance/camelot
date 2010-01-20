@@ -26,7 +26,7 @@ class DateEditor(CustomEditor):
         self.date_format = local_date_format()
         self.line_edit = DecoratedLineEdit()
         self.line_edit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
-        self.line_edit.set_background_text( QtCore.QDate().toString(self.date_format) )
+        self.line_edit.set_background_text( QtCore.QDate(2000,1,1).toString(self.date_format) )
     
         self.calendar_widget = QtGui.QCalendarWidget(self)
         self.connect( self.calendar_widget, QtCore.SIGNAL('activated(const QDate&)'), self.calendar_widget_activated)
@@ -44,7 +44,7 @@ class DateEditor(CustomEditor):
         special_date.setIcon(
             Icon('tango/16x16/apps/office-calendar.png').getQIcon())
         special_date.setAutoRaise(True)
-        special_date.setToolTip('Special dates')
+        special_date.setToolTip('Calendar and special dates')
         special_date.setMenu(special_date_menu)
         special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
         special_date.setFixedHeight(self.get_height())
@@ -105,8 +105,9 @@ class DateEditor(CustomEditor):
     def text_edited(self, text ):
         try:
             date_from_string( self.line_edit.user_input() )
+            self.line_edit.set_valid(True)
         except ParsingError:
-            pass
+            self.line_edit.set_valid(False)
                     
     def get_value(self):
         try:

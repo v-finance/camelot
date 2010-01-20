@@ -31,7 +31,8 @@ class DecoratedLineEdit(QtGui.QLineEdit):
     """
     A QLineEdit with additional decorations :
     
-     * a background text, visible when there the line edit doesn't contain any text
+     * a background text, visible when the line edit doesn't contain any text
+     * a validity, which will trigger the background color
     
     Use the user_input method to get the text that was entered by the user. 
     """
@@ -39,9 +40,19 @@ class DecoratedLineEdit(QtGui.QLineEdit):
     def __init__(self, parent = None):
         QtGui.QLineEdit.__init__(self, parent)
         self._foreground_color = self.palette().color(self.foregroundRole())
+        self._background_color = self.palette().color(self.backgroundRole())
         self._showing_background_text = False
         self._background_text = None
+        self._valid = True
 
+    def set_valid(self, valid):
+        """Set the validity of the current content of the line edit
+        :param valid: True or False
+        """
+        if valid!=self._valid:
+            self._valid = valid
+            self._update_background_color()
+            
     def set_background_text(self, background_text):
         """Set the text to be displayed in the background when the line
         input does not contain any text
@@ -63,7 +74,16 @@ class DecoratedLineEdit(QtGui.QLineEdit):
             self._showing_background_text = False
             self._update_foreground_color()
             self.setText('')
-            
+
+    def _update_background_color(self):
+        from camelot.view.art import ColorScheme
+        palette = self.palette()
+        if self._valid:
+            palette.setColor(self.backgroundRole(), self._background_color)
+        else:
+            palette.setColor(self.backgroundRole(), ColorScheme.orange_2)
+        self.setPalette(palette)
+        
     def _update_foreground_color(self):
         from camelot.view.art import ColorScheme
         palette = self.palette()
@@ -79,6 +99,7 @@ class DecoratedLineEdit(QtGui.QLineEdit):
 
     def focusOutEvent(self, e):
         self._show_background_text()
+        self._update_foreground_color()
         QtGui.QLineEdit.focusOutEvent(self, e)
         
     def user_input(self):
