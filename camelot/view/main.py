@@ -91,69 +91,89 @@ class Application(object):
         import sys
         sys.exit(application.exec_())
         
+    def initialization_exception(self, exception_info):
+        """This method is called whenever an exception occurs before the event
+        loop has been started, by default, this method pops up a message box to
+        inform the user
+        :param exception_info: a tuple (exception, traceback_print) where traceback_print
+        is a string representation of the traceback
+        """
+        from camelot.view.controls import exception
+        exception.model_thread_exception_message_box(exception_info)
+        
     def main(self):
         """the main function of the application, this will call all other
         functions before starting the event loop"""
-        #
-        # before anything else happens or is imported, the splash screen should be there
-        #
-        import sys
-        from PyQt4 import QtGui, QtCore
-        app = QtGui.QApplication([a for a in sys.argv if a])
-        splash_window = self.show_splashscreen()
-        
-        self.show_splash_message(splash_window, 'Initialize application...')
-        # regularly call processEvents to keep the splash alive
-        app.processEvents()
-        #  font = app.font()
-        #  font.setStyleStrategy(QtGui.QFont.PreferAntialias)
-        #  font.setPointSize(font.pointSize()+1)
-        #  app.setFont(font)   
-        import logging
-        logger = logging.getLogger('camelot.view.main')
-      
-        QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
-        logger.debug('qt version %s, pyqt version %s' % 
-                     (QtCore.QT_VERSION_STR, QtCore.PYQT_VERSION_STR))
-        logger.debug('qt major version %f' % QT_MAJOR_VERSION)
-        app.processEvents()
-        import sqlalchemy, elixir
-        logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)
-        logger.debug('elixir version %s'%elixir.__version__)
-        app.processEvents()
-        self.set_application_attributes(app)
-        self.pre_initialization()
-        app.processEvents()
-        # regularly call processEvents to keep the splash alive
-        self.show_splash_message(splash_window, 'Setup database...')
-        app.processEvents()        
-        self.start_model_thread()
-        app.processEvents()
-        
-        #
-        # WEIRD, if we put this code in a method, the translations
-        # don't work
-        #
-        from camelot.core.utils import load_translations
-        from camelot.view.model_thread import get_model_thread
-        get_model_thread().post(load_translations)
-        self.show_splash_message(splash_window, 'Load translations...')
-        translator = self.application_admin.get_translator()
-        app.installTranslator(translator)
-        
-        #self.load_translations(app)
-        app.processEvents()
-        # Set the style sheet
-        self.show_splash_message(splash_window, 'Create main window...')
-        stylesheet = self.application_admin.get_stylesheet()
-        if stylesheet:
-            app.setStyleSheet(stylesheet)
-        app.processEvents()
-        self.initialization()
-        app.processEvents()
-        main_window = self.create_main_window()
-        self.close_splashscreen(splash_window, main_window)
-        self.start_event_loop(app)
+        try:
+            #
+            # before anything else happens or is imported, the splash screen should be there
+            #
+            import sys
+            from PyQt4 import QtGui, QtCore
+            app = QtGui.QApplication([a for a in sys.argv if a])
+            splash_window = self.show_splashscreen()
+            
+            self.show_splash_message(splash_window, 'Initialize application...')
+            # regularly call processEvents to keep the splash alive
+            app.processEvents()
+            #  font = app.font()
+            #  font.setStyleStrategy(QtGui.QFont.PreferAntialias)
+            #  font.setPointSize(font.pointSize()+1)
+            #  app.setFont(font)   
+            import logging
+            logger = logging.getLogger('camelot.view.main')
+          
+            QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
+            logger.debug('qt version %s, pyqt version %s' % 
+                         (QtCore.QT_VERSION_STR, QtCore.PYQT_VERSION_STR))
+            logger.debug('qt major version %f' % QT_MAJOR_VERSION)
+            app.processEvents()
+            import sqlalchemy, elixir
+            logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)
+            logger.debug('elixir version %s'%elixir.__version__)
+            app.processEvents()
+            self.set_application_attributes(app)
+            self.pre_initialization()
+            app.processEvents()
+            # regularly call processEvents to keep the splash alive
+            self.show_splash_message(splash_window, 'Setup database...')
+            app.processEvents()        
+            self.start_model_thread()
+            app.processEvents()
+            
+            #
+            # WEIRD, if we put this code in a method, the translations
+            # don't work
+            #
+            from camelot.core.utils import load_translations
+            from camelot.view.model_thread import get_model_thread
+            get_model_thread().post(load_translations)
+            self.show_splash_message(splash_window, 'Load translations...')
+            translator = self.application_admin.get_translator()
+            app.installTranslator(translator)
+            
+            #self.load_translations(app)
+            app.processEvents()
+            # Set the style sheet
+            self.show_splash_message(splash_window, 'Create main window...')
+            stylesheet = self.application_admin.get_stylesheet()
+            if stylesheet:
+                app.setStyleSheet(stylesheet)
+            app.processEvents()
+            self.initialization()
+            app.processEvents()
+            main_window = self.create_main_window()
+            self.close_splashscreen(splash_window, main_window)
+            self.start_event_loop(app)
+        except Exception, e:
+            logger.error( 'exception in initialization', exc_info = e )
+            import traceback, cStringIO
+            sio = cStringIO.StringIO()
+            traceback.print_exc(file=sio)
+            traceback_print = sio.getvalue()
+            sio.close()
+            exception_info = (e, traceback_print)
+            self.initialization_exception(exception_info)
         
 def main(application_admin, 
          initialization=lambda:None,
