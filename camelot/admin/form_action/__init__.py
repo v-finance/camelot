@@ -78,9 +78,15 @@ class FormActionProgressDialog(ProgressDialog):
 class FormActionFromModelFunction( FormAction ):
     """Convert a function that is supposed to run in the model thread to a FormAction"""
 
-    def __init__( self, name, model_function, icon = None ):
+    def __init__( self, name, model_function, icon = None, flush=False ):
+        """
+        :param name: the name of the action
+        :param model_function: a function that has 1 arguments : the object on which to apply the action
+        :param flush: flush the object to the db and refresh it in the views
+        """        
         FormAction.__init__( self, name, icon )
         self._model_function = model_function
+        self._flush = flush
 
     @gui_function
     def run( self, entity_getter ):
@@ -89,8 +95,14 @@ class FormActionFromModelFunction( FormAction ):
         def create_request( entity_getter ):
 
             def request():
+                from sqlalchemy.orm.session import Session
+                from camelot.view.remote_signals import get_signal_handler                
                 o = entity_getter()
                 self._model_function( o )
+                if self._flush:
+                    sh = get_signal_handler()
+                    Session.object_session( o ).flush( [o] )
+                    sh.sendEntityUpdate( self, o )                    
                 return True
 
             return request

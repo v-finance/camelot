@@ -209,12 +209,14 @@ class SharedShareholder( PartyRelationship ):
         verbose_name = _('Shareholder')
         list_display = ['established_to', 'shares', 'from_date', 'thru_date']
         form_display = ['established_to', 'shares', 'from_date', 'thru_date', 'comment']
+        form_size = (500, 300)
 
     class SharedAdmin( Admin ):
         verbose_name = _('Shares')
         verbose_name_plural = _('Shares')
         list_display = ['established_from', 'shares', 'from_date', 'thru_date']
         form_display = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
+        form_size = (500, 300)
 
 class AddressAdmin( EntityAdmin ):
     """Admin with only the Address information and not the Party information"""

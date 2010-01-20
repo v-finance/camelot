@@ -38,6 +38,7 @@ from PyQt4.QtCore import Qt
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
 from camelot.view.model_thread import model_function, gui_function, post
+from camelot.core.utils import ugettext as _
 
 from search import SimpleSearchControl
 
@@ -96,7 +97,7 @@ class RowsWidget( QtGui.QLabel ):
         self.setFont( self._number_of_rows_font )
     
     def setNumberOfRows( self, rows ):
-        self.setText( u'(%i rows)' % rows )
+        self.setText( _('(%i rows)')%rows )
     
 class HeaderWidget( QtGui.QWidget ):
     """HeaderWidget for a tableview, containing the title, the search widget,

@@ -32,7 +32,7 @@ logger = logging.getLogger('controls.actionsbox')
 
 from PyQt4 import QtGui
 
-_ = lambda x:x
+from camelot.core.utils import ugettext as _
 
 class ActionsBox(QtGui.QGroupBox):
     """A box containing actions to be applied to a view"""
@@ -44,7 +44,7 @@ class ActionsBox(QtGui.QGroupBox):
         self.kwargs = kwargs
 
     def setActions(self, actions):
-        logger.debug('setting actions to %s'%str(actions))
+        logger.debug('setting actions')
         # keep action object alive to allow them to receive signals
         self.actions = actions
         layout = QtGui.QVBoxLayout()

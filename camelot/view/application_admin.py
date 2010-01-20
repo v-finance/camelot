@@ -153,7 +153,6 @@ class ApplicationAdmin(QtCore.QObject):
         
         :return: a QTranslator that should be used to translate the application
         """
-        from PyQt4 import QtCore
         return QtCore.QTranslator()
 
     def get_about(self):
