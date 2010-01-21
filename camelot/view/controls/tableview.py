@@ -250,6 +250,13 @@ class TableView( AbstractView  ):
         """emits a row_selected signal"""
         self.emit( SIGNAL( 'row_selected' ), section )
     
+    def copy_selected_rows( self ):
+        """Copy the selected rows in this tableview"""
+        logger.debug( 'delete selected rows called' )
+        if self.table and self._table_model:
+            for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
+                self._table_model.copy_row( row )
+            
     def create_table_model( self, admin ):
         """Create a table model for the given admin interface"""
         return self.table_model( admin,

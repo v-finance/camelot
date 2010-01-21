@@ -31,11 +31,11 @@ class DateEditor(CustomEditor):
         class CalendarWidgetAction(QtGui.QWidgetAction):
             pass
             
-        calendar_widget_action = CalendarWidgetAction(None)
-#        self.calendar_widget = QtGui.QCalendarWidget(None)
-#        self.connect( self.calendar_widget, QtCore.SIGNAL('activated(const QDate&)'), self.calendar_widget_activated)
-#        self.connect( self.calendar_widget, QtCore.SIGNAL('clicked(const QDate&)'), self.calendar_widget_activated)        
-        #calendar_widget_action.setDefaultWidget(self.calendar_widget)
+        calendar_widget_action = CalendarWidgetAction(self)
+        self.calendar_widget = QtGui.QCalendarWidget()
+        self.connect( self.calendar_widget, QtCore.SIGNAL('activated(const QDate&)'), self.calendar_widget_activated)
+        self.connect( self.calendar_widget, QtCore.SIGNAL('clicked(const QDate&)'), self.calendar_widget_activated)        
+        calendar_widget_action.setDefaultWidget(self.calendar_widget)
         
         special_date_menu = QtGui.QMenu(self)
         self.connect( self, self.calendar_action_trigger, special_date_menu.hide )
@@ -101,7 +101,7 @@ class DateEditor(CustomEditor):
             formatted_date = qdate.toString(self.date_format)
             self.line_edit.set_user_input(formatted_date)
         else:
-            self.line_edit.set_user_input(None)
+            self.line_edit.set_user_input('')
       
     def text_edited(self, text ):
         try:

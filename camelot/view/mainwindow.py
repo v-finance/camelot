@@ -149,10 +149,7 @@ class MainWindow(QtGui.QMainWindow):
         icon_pgsetup = Icon('tango/16x16/actions/document-properties.png').fullpath()
         icon_print = Icon('tango/16x16/actions/document-print.png').fullpath()
         icon_preview = Icon('tango/16x16/actions/document-print-preview.png').fullpath()
-
-        icon_cut = Icon('tango/16x16/actions/edit-cut.png').fullpath()
         icon_copy = Icon('tango/16x16/actions/edit-copy.png').fullpath()
-        icon_paste = Icon('tango/16x16/actions/edit-paste.png').fullpath()
 
         icon_new = Icon('tango/16x16/actions/document-new.png').fullpath()
         icon_delete = Icon('tango/16x16/places/user-trash.png').fullpath()
@@ -212,31 +209,13 @@ class MainWindow(QtGui.QMainWindow):
             tip=_('Exit the application')
         )
 
-        self.cutAct = createAction(
-            parent=self,
-            text=_('Cu&t'),
-            slot=self.cut,
-            shortcut=QtGui.QKeySequence.Cut,
-            actionicon=icon_cut,
-            tip=_("Cut the current selection's contents to the clipboard")
-        )
-
         self.copyAct = createAction(
             parent=self,
             text=_('&Copy'),
             slot=self.copy,
             shortcut=QtGui.QKeySequence.Copy,
             actionicon=icon_copy,
-            tip=_("Copy the current selection's contents to the clipboard")
-        )
-
-        self.pasteAct = createAction(
-            parent=self,
-            text=_('&Paste'),
-            slot=self.paste,
-            shortcut=QtGui.QKeySequence.Paste,
-            actionicon=icon_paste,
-            tip=_("Paste the clipboard's contents into the current selection")
+            tip=_("Duplicate the selected rows")
         )
 
         # BUG: there is a problem with setting a key sequence for closing
@@ -421,14 +400,8 @@ class MainWindow(QtGui.QMainWindow):
     def saveAs(self):
         pass
 
-    def cut(self):
-        pass
-
     def copy(self):
-        pass
-
-    def paste(self):
-        pass
+        self.activeMdiChild().widget().copy_selected_rows()
 
     def printDoc(self):
         self.previewDoc()
@@ -539,7 +512,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.editMenu = self.menuBar().addMenu(_('&Edit'))
 
-        addActions(self.editMenu, (self.cutAct, self.copyAct, self.pasteAct))
+        addActions(self.editMenu, (self.copyAct,))
         
         self.viewMenu = self.menuBar().addMenu(_('View'))
         addActions(self.viewMenu, (self.sessionRefreshAct,))
@@ -566,7 +539,6 @@ class MainWindow(QtGui.QMainWindow):
     def updateMenus(self):
         hasMdiChild = (self.activeMdiChild() is not None)
         self.saveAct.setEnabled(hasMdiChild)
-        self.pasteAct.setEnabled(hasMdiChild)
         self.closeAct.setEnabled(hasMdiChild)
 
         self.closeAllAct.setEnabled(hasMdiChild)
@@ -578,6 +550,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.newAct.setEnabled(hasMdiChild)
         self.deleteAct.setEnabled(hasMdiChild)
+        self.copyAct.setEnabled(hasMdiChild)
         self.viewFirstAct.setEnabled(hasMdiChild)
         self.viewPreviousAct.setEnabled(hasMdiChild)
         self.viewNextAct.setEnabled(hasMdiChild)
@@ -590,13 +563,6 @@ class MainWindow(QtGui.QMainWindow):
         self.importFromFileAct.setEnabled(hasMdiChild)
 
         self.separatorAct.setVisible(hasMdiChild)
-
-        # TODO: selecting text in views for copy/cut/paste
-        #hasSelection = (self.activeMdiChild() is not None and
-        #                self.activeMdiChild().textCursor().hasSelection())
-        hasSelection = False
-        self.cutAct.setEnabled(hasSelection)
-        self.copyAct.setEnabled(hasSelection)
 
     #def updateWindowMenu(self):
     #    self.windowMenu.clear()
@@ -648,17 +614,12 @@ class MainWindow(QtGui.QMainWindow):
         self.tool_bar.setFloatable(False)
         addActions(self.tool_bar, (
             self.newAct,
+            self.copyAct,
             self.deleteAct,
             self.viewFirstAct,
             self.viewPreviousAct,
             self.viewNextAct,
             self.viewLastAct
-        ))
-
-        addActions(self.tool_bar, (
-            self.cutAct,
-            self.copyAct,
-            self.pasteAct
         ))
 
         addActions(self.tool_bar, (
@@ -693,16 +654,6 @@ class MainWindow(QtGui.QMainWindow):
         section_item = self.navpane.items[index.row()]
         child = section_item.get_action().run(self.workspace)
         assert child != None
-        self.connect(
-            child,
-            QtCore.SIGNAL('copyAvailable(bool)'),
-            self.cutAct.setEnabled
-        )
-        self.connect(
-            child,
-            QtCore.SIGNAL('copyAvailable(bool)'),
-            self.copyAct.setEnabled
-        )
         subwindow = self.workspace.addSubWindow(child)
         subwindow.showMaximized()
 
