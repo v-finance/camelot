@@ -534,7 +534,7 @@ class PartyAddress( Entity ):
         verbose_name_plural = _('Addresses')
         list_search = ['party_name', 'address_name']
         list_display = ['party_name', 'address_name', 'comment']
-        form_display = ['party', 'address', 'comment', 'from_date', 'thru_date']
+        form_display = ['party', 'address', 'comment',]# 'from_date', 'thru_date']
         form_size = ( 700, 200 )
         form_actions = [FormActionFromModelFunction( 'Show on map', lambda address:address.showMap() )]
         field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30),
