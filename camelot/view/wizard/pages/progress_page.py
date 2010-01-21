@@ -48,6 +48,7 @@ class ProgressPage(QtGui.QWizardPage):
         layout.addWidget(self.label)
         layout.addStretch(1)
         self.setLayout(layout)
+        self._wizard = parent
     
     def isComplete(self):
         return self._complete
