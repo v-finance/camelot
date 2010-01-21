@@ -58,3 +58,12 @@ class CodeEditor(CustomEditor):
         for part in self.part_editors:
             value.append(unicode(part.text()))
         return CustomEditor.get_value(self) or value
+    
+    def set_background_color(self, background_color):        
+        if background_color:
+            for editor in self.part_editors:
+                palette = editor.palette()
+                palette.setColor(self.backgroundRole(), background_color)
+                editor.setPalette(palette)
+        else:
+            return False

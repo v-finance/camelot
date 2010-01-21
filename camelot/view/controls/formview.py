@@ -116,7 +116,6 @@ class FormView( AbstractView ):
         # only if all information is available, we can start building the form
         if not (self.form and self.columns and self.delegate):
             return
-        self.hide()
         widgets = {}
         self.widget_mapper.setItemDelegate( self.delegate )
         option = QtGui.QStyleOptionViewItem()
@@ -152,7 +151,6 @@ class FormView( AbstractView ):
         self.widget_mapper.setCurrentIndex( self.index )
         self.widget_layout.insertWidget( 0, self.form.render( widgets, self ) )
         self.widget_layout.setContentsMargins( 7, 7, 7, 7 )
-        self.show()
     
     def getEntity( self ):
         return self.model._get_object( self.widget_mapper.currentIndex() )

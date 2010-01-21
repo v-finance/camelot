@@ -71,3 +71,6 @@ class StarEditor(CustomEditor):
                 self.buttons[i].setIcon(self.starIcon)
             else:
                 self.buttons[i].setIcon(self.noStarIcon)
+                
+    def set_background_color(self, background_color):     
+        return False                

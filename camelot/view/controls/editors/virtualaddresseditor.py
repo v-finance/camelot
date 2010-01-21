@@ -66,23 +66,22 @@ class VirtualAddressEditor(CustomEditor):
 #            if str(self.combo.currentText()) == 'im':
 #                icon = Icon('tango/16x16/places/instant-messaging.png').getQIcon()
 #            if str(self.combo.currentText()) == 'pager':
-                icon = Icon('tango/16x16/devices/pager.png').getQIcon()
+#                icon = Icon('tango/16x16/devices/pager.png').getQIcon()
             if str(self.combo.currentText()) == 'email':
                 icon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
-                self.label.setFocusPolicy(Qt.StrongFocus)
+                #self.label.setFocusPolicy(Qt.StrongFocus)
                 self.label.setAutoRaise(True)
-                self.label.setAutoFillBackground(True)
+                #self.label.setAutoFillBackground(True)
                 self.label.setIcon(icon)
                 self.label.setEnabled(self.editable)
-                self.label.setDisabled(not self.editable)
                 self.connect(self.label,
                              QtCore.SIGNAL('clicked()'),
                              lambda:self.mailClick(self.editor.text()))
             else:
                 self.label.setIcon(icon)
-                self.label.setAutoFillBackground(False)
+                #self.label.setAutoFillBackground(False)
                 self.label.setAutoRaise(True)
-                self.label.setEnabled(False)
+                self.label.setEnabled(self.editable)
                 self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
               
 #      self.update()
@@ -177,3 +176,11 @@ class VirtualAddressEditor(CustomEditor):
         # integrity errors
         if self.value[1]:
             self.emit(editingFinished)
+            
+    def set_background_color(self, background_color):        
+        if background_color:
+            palette = self.editor.palette()
+            palette.setColor(self.backgroundRole(), background_color)
+            self.editor.setPalette(palette)
+        else:
+            return False
