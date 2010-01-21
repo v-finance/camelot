@@ -45,9 +45,28 @@ def notEditableAdmin(original_admin):
 
     class NewAdmin(original_admin):
 
-#    def get_related_entity_admin(self, entity):
-#      admin = original_admin.get_related_entity_admin(self, entity)
-#      return notEditableAdmin(admin)
+        def get_related_entity_admin(self, entity):
+            admin = original_admin.get_related_entity_admin(self, entity)
+            
+            class AdminReadOnlyDecorator(object):
+                
+                def __init__(self, original_admin):
+                    self._original_admin = original_admin
+                    
+                def __getattribute__(self, name):
+                    if name in ('_original_admin', 'get_field_attributes', 'get_related_entity_admin'):
+                        return object.__getattribute__(self, name)
+                    return self._original_admin.__getattribute__(name)
+                
+                def get_field_attributes(self, field_name):
+                    attribs = self._original_admin.get_field_attributes(self, field_name)
+                    attribs['editable'] = False
+                    return attribs
+                
+                def get_related_entity_admin(self, entity):
+                    return AdminReadOnlyDecorator(self._original_admin.get_related_entity_admin(self, entity))                  
+                     
+            return AdminReadOnlyDecorator(admin)
 
         def get_field_attributes(self, field_name):
             attribs = original_admin.get_field_attributes(self, field_name)

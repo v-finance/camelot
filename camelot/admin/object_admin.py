@@ -246,6 +246,11 @@ class ObjectAdmin(object):
                 subclass_admin,
                 subclass_admin.get_subclass_tree()
             ))
+            
+        def sort_admins(a1, a2):
+            return cmp(a1[0].get_verbose_name_plural(), a2[0].get_verbose_name_plural())
+        
+        subclasses.sort(cmp=sort_admins)
         return subclasses
 
     def get_related_entity_admin(self, entity):

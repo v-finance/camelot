@@ -27,11 +27,8 @@ class DateEditor(CustomEditor):
         self.line_edit = DecoratedLineEdit()
         self.line_edit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.line_edit.set_background_text( QtCore.QDate(2000,1,1).toString(self.date_format) )
-    
-        class CalendarWidgetAction(QtGui.QWidgetAction):
-            pass
             
-        calendar_widget_action = CalendarWidgetAction(self)
+        calendar_widget_action = QtGui.QWidgetAction(self)
         self.calendar_widget = QtGui.QCalendarWidget()
         self.connect( self.calendar_widget, QtCore.SIGNAL('activated(const QDate&)'), self.calendar_widget_activated)
         self.connect( self.calendar_widget, QtCore.SIGNAL('clicked(const QDate&)'), self.calendar_widget_activated)        
@@ -42,17 +39,17 @@ class DateEditor(CustomEditor):
         special_date_menu.addAction(calendar_widget_action)
         special_date_menu.addAction('Today')
         special_date_menu.addAction('Far future')
-        special_date = QtGui.QToolButton(None)
-        special_date.setIcon(
+        self.special_date = QtGui.QToolButton(None)
+        self.special_date.setIcon(
             Icon('tango/16x16/apps/office-calendar.png').getQIcon())
-        special_date.setAutoRaise(True)
-        special_date.setToolTip('Calendar and special dates')
-        special_date.setMenu(special_date_menu)
-        special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
-        special_date.setFixedHeight(self.get_height())
+        self.special_date.setAutoRaise(True)
+        self.special_date.setToolTip('Calendar and special dates')
+        self.special_date.setMenu(special_date_menu)
+        self.special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
+        self.special_date.setFixedHeight(self.get_height())
     
         if not editable:
-            special_date.setEnabled(False)
+            self.special_date.setEnabled(False)
             self.line_edit.setEnabled(False)
       
         if nullable:
@@ -60,7 +57,7 @@ class DateEditor(CustomEditor):
       
         self.hlayout = QtGui.QHBoxLayout()
         self.hlayout.addWidget(self.line_edit)
-        self.hlayout.addWidget(special_date)
+        self.hlayout.addWidget(self.special_date)
     
         self.hlayout.setContentsMargins(0, 0, 0, 0)
         self.hlayout.setMargin(0)
