@@ -322,19 +322,26 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.logger.debug( '%s %s received entity update signal' % \
                      ( self.__class__.__name__, self.admin.get_verbose_name() ) )
         if sender != self:
-            row = self.cache[Qt.DisplayRole].delete_by_entity( entity )
-            row = self.cache[Qt.EditRole].delete_by_entity( entity )
-            row = self.cache[Qt.ToolTipRole].delete_by_entity( entity )
-            row = self.cache[Qt.BackgroundColorRole].delete_by_entity( entity )
-            if row != None:
-                self.logger.debug( 'updated row %i' % row )
-                sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
-                if not sip.isdeleted( self ):
-                    self.emit( QtCore.SIGNAL( sig ),
-                          self.index( row, 0 ),
-                          self.index( row, self.column_count ) )
-            else:
+            try:
+                row = self.cache[Qt.DisplayRole].get_row_by_entity(entity)
+            except KeyError:
                 self.logger.debug( 'entity not in cache' )
+                return
+            #
+            # Because the entity is updated, it might no longer be in our
+            # collection, therefore, make sure we don't access the collection
+            # to strip data of the entity
+            #   
+            def create_entity_update(row, entity):
+                
+                def entity_update():
+                    columns = self.getColumns()
+                    self._add_data(columns, row, entity)
+                    return ((row,0), (row,self.column_count))
+                
+                return entity_update
+                
+            post(create_entity_update(row, entity), self._emit_changes)
         else:
             self.logger.debug( 'duplicate update' )
       
@@ -631,6 +638,18 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             flags = flags | Qt.ItemIsEditable
         return flags
     
+    def _add_data(self, columns, row, o):
+        """Add data from object o at a row in the cache
+        :param columns: the columns of which to strip data
+        :param row: the row in the cache into which to add data
+        :param o: the object from which to strip the data
+        """
+        row_data = strip_data_from_object( o, columns )
+        self.cache[Qt.EditRole].add_data( row, o, row_data )
+        self.cache[Qt.ToolTipRole].add_data( row, o, tool_tips_from_object( o, self.getColumns()) )
+        self.cache[Qt.BackgroundColorRole].add_data( row, o, background_colors_from_object( o, self.getColumns()) )
+        self.cache[Qt.DisplayRole].add_data( row, o, stripped_data_to_unicode( row_data, o, columns ) )
+                    
     @model_function
     def _extend_cache( self, offset, limit ):
         """Extend the cache around row"""
@@ -639,11 +658,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         offset = min( offset, self.rows )
         limit = min( limit, self.rows - offset )
         for i, o in enumerate( self.collection_getter()[offset:offset + limit + 1] ):
-            row_data = strip_data_from_object( o, columns )
-            self.cache[Qt.EditRole].add_data( i + offset, o, row_data )
-            self.cache[Qt.ToolTipRole].add_data( i + offset, o, tool_tips_from_object( o, self.getColumns()) )
-            self.cache[Qt.BackgroundColorRole].add_data( i + offset, o, background_colors_from_object( o, self.getColumns()) )
-            self.cache[Qt.DisplayRole].add_data( i + offset, o, stripped_data_to_unicode( row_data, o, columns ) )
+            self._add_data(columns, i+offset, o)
         return ( offset, limit )
     
     @model_function

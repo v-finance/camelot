@@ -107,21 +107,13 @@ class QueryTableProxy(CollectionProxy):
         q = self._query_getter().offset(offset).limit(limit)
         columns = self.getColumns()
         for i, o in enumerate(q.all()):
-            row_data = strip_data_from_object(o, columns)
-            self.cache[Qt.EditRole].add_data(i+offset, o, row_data)
-            self.cache[Qt.ToolTipRole].add_data(i+offset, o, tool_tips_from_object(o, columns))
-            self.cache[Qt.BackgroundColorRole].add_data(i+offset, o, background_colors_from_object(o, columns))
-            self.cache[Qt.DisplayRole].add_data(i+offset, o, stripped_data_to_unicode(row_data, o, columns))
+            self._add_data(columns, i+offset, o)
         rows_in_query = (self.rows - len(self._appended_rows))
         # Verify if rows that have not yet been flushed have been requested
         if offset+limit>=rows_in_query:
             for row in range(max(rows_in_query,offset), min(offset+limit, self.rows)):
                 o = self._get_object(row)
-                row_data = strip_data_from_object(o, columns)
-                self.cache[Qt.EditRole].add_data(row, o, row_data)
-                self.cache[Qt.ToolTipRole].add_data(row, o, tool_tips_from_object(o, columns))
-                self.cache[Qt.BackgroundColorRole].add_data(row, o, background_colors_from_object(o, columns))
-                self.cache[Qt.DisplayRole].add_data(row, o, stripped_data_to_unicode(row_data, o, columns))
+                self._add_data(columns, row, o)
         return (offset, limit)
 
     @model_function
