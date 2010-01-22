@@ -50,7 +50,8 @@ class AbstractCustomEditor(object):
     def set_background_color(self, background_color):        
         if background_color:
             palette = self.palette()
-            palette.setColor(self.backgroundRole(), background_color)
+            for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
+                palette.setColor(x, QtGui.QPalette.Window, background_color)
             self.setPalette(palette)
         else:
             return False
