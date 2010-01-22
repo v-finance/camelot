@@ -28,15 +28,15 @@ class DateEditor(CustomEditor):
         self.line_edit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.line_edit.set_background_text( QtCore.QDate(2000,1,1).toString(self.date_format) )
             
-        calendar_widget_action = QtGui.QWidgetAction(self)
+        #calendar_widget_action = QtGui.QWidgetAction(self)
         self.calendar_widget = QtGui.QCalendarWidget()
         self.connect( self.calendar_widget, QtCore.SIGNAL('activated(const QDate&)'), self.calendar_widget_activated)
         self.connect( self.calendar_widget, QtCore.SIGNAL('clicked(const QDate&)'), self.calendar_widget_activated)        
-        calendar_widget_action.setDefaultWidget(self.calendar_widget)
+        #calendar_widget_action.setDefaultWidget(self.calendar_widget)
         
         special_date_menu = QtGui.QMenu(self)
         self.connect( self, self.calendar_action_trigger, special_date_menu.hide )
-        special_date_menu.addAction(calendar_widget_action)
+        #special_date_menu.addAction(calendar_widget_action)
         special_date_menu.addAction('Today')
         special_date_menu.addAction('Far future')
         self.special_date = QtGui.QToolButton(None)
