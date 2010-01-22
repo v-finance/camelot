@@ -25,7 +25,6 @@
 #
 #  ============================================================================
 
-import sys
 from PyQt4.QtGui import (
     QApplication,
     QGraphicsView,
@@ -91,25 +90,9 @@ class LiteBoxView(QGraphicsView):
         painter.setBrush(LiteBoxView.ALPHABLACK)
         painter.drawRect(rect)
 
-    def activateOn(self, widget):
-        self._widget = widget
-        widget.installEventFilter(self)
-
-    def deactivateFrom(self, widget):
-        widget.removeEventFilter(self)
-
     def show_fullscreen_svg(self, filename):
         from PyQt4 import QtSvg
         item = QtSvg.QGraphicsSvgItem(filename)
         self.scene.addItem(item)
         self.scene.addItem(CloseNode())
         self.showFullScreen()
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    w = QWidget()
-    v = LiteBoxView()
-    v.activateOn(w)
-    w.show()
-    sys.exit(app.exec_())
