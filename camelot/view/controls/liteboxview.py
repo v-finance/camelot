@@ -68,7 +68,6 @@ class CloseNode(Node):
 
 class LiteBoxView(QGraphicsView):
 
-    SOLID = Qt.white
     ALPHA = QColor(0, 0, 0, 192)
 
     def __init__(self, parent=None):
@@ -76,7 +75,8 @@ class LiteBoxView(QGraphicsView):
         super(LiteBoxView, self).__init__(parent)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        
+        self.setViewportUpdateMode(QGraphicsView.NoViewportUpdate)
+
         # will propagate to children
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.TextAntialiasing)
@@ -87,8 +87,6 @@ class LiteBoxView(QGraphicsView):
         print 'scene set'
 
     def drawBackground(self, painter, rect):
-        painter.setBrush(LiteBoxView.SOLID)
-        painter.drawRect(rect)
         painter.drawPixmap(self.mapToScene(0, 0), get_desktop_pixmap())
         painter.setBrush(LiteBoxView.ALPHA)
         painter.drawRect(rect)
