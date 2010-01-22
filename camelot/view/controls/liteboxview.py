@@ -68,7 +68,8 @@ class CloseNode(Node):
 
 class LiteBoxView(QGraphicsView):
 
-    ALPHABLACK = QColor(0, 0, 0, 192)
+    SOLID = Qt.white
+    ALPHA = QColor(0, 0, 0, 192)
 
     def __init__(self, parent=None):
         print 'litebox init'
@@ -86,8 +87,10 @@ class LiteBoxView(QGraphicsView):
         print 'scene set'
 
     def drawBackground(self, painter, rect):
+        painter.setBrush(LiteBoxView.SOLID)
+        painter.drawRect(rect)
         painter.drawPixmap(self.mapToScene(0, 0), get_desktop_pixmap())
-        painter.setBrush(LiteBoxView.ALPHABLACK)
+        painter.setBrush(LiteBoxView.ALPHA)
         painter.drawRect(rect)
 
     def show_fullscreen_svg(self, filename):
