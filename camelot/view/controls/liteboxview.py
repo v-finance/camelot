@@ -72,6 +72,7 @@ class LiteBoxView(QGraphicsView):
     ALPHABLACK = QColor(0, 0, 0, 192)
 
     def __init__(self, parent=None):
+        print 'litebox init'
         super(LiteBoxView, self).__init__(parent)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -82,6 +83,8 @@ class LiteBoxView(QGraphicsView):
 
         self.scene = QGraphicsScene()
         self.setScene(self.scene)
+        self._widget= None
+        print 'scene set'
 
     def drawBackground(self, painter, rect):
         painter.drawPixmap(self.mapToScene(0, 0), get_desktop_pixmap())
@@ -89,27 +92,18 @@ class LiteBoxView(QGraphicsView):
         painter.drawRect(rect)
 
     def activateOn(self, widget):
+        self._widget = widget
         widget.installEventFilter(self)
 
     def deactivateFrom(self, widget):
         widget.removeEventFilter(self)
 
-    def eventFilter(self, object, event):
-        if not object.isWidgetType():
-            return False
-
-        if event.type() != QEvent.MouseButtonDblClick:
-            return False
-
-        if event.modifiers() != Qt.NoModifier:
-            return False
-
-        if event.buttons() == Qt.LeftButton:
-            pixmap = QPixmap.grabWidget(object)
-            self.scene.addPixmap(fit_to_screen(pixmap))
-            self.scene.addItem(CloseNode())
-            self.showFullScreen()
-            return True
+    def show_fullscreen_svg(self, filename):
+        from PyQt4 import QtSvg
+        item = QtSvg.QGraphicsSvgItem(filename)
+        self.scene.addItem(item)
+        self.scene.addItem(CloseNode())
+        self.showFullScreen()
 
 
 if __name__ == '__main__':
