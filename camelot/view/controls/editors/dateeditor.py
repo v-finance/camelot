@@ -48,9 +48,7 @@ class DateEditor(CustomEditor):
         self.special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.special_date.setFixedHeight(self.get_height())
     
-        if not editable:
-            self.special_date.setEnabled(False)
-            self.line_edit.setEnabled(False)
+        self.set_enabled(editable)
       
         if nullable:
             special_date_menu.addAction('Clear')
@@ -116,7 +114,10 @@ class DateEditor(CustomEditor):
       
     def set_enabled(self, editable=True):
         self.line_edit.setEnabled(editable)
-        self.special_date.setEnabled(editable)
+        if editable:
+            self.special_date.show()
+        else:
+            self.special_date.hide()
     
     def setSpecialDate(self, action):
         if action.text().compare('Today') == 0:
