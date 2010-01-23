@@ -71,7 +71,7 @@ class LiteBoxView(QGraphicsView):
         super(LiteBoxView, self).__init__(parent)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setViewportUpdateMode(QGraphicsView.NoViewportUpdate)
+        #self.setViewportUpdateMode(QGraphicsView.NoViewportUpdate)
 
         # will propagate to children
         self.setRenderHint(QPainter.Antialiasing)

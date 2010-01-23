@@ -68,6 +68,10 @@ class ApplicationAdmin(QtCore.QObject):
     def __init__(self):
         QtCore.QObject.__init__(self)
         _application_admin_.append(self)
+        #
+        # Cache created ObjectAdmin objects
+        #
+        self._object_admin_cache = {}
 
     def register(self, entity, admin_class):
         self.admins[entity] = admin_class
@@ -80,12 +84,20 @@ class ApplicationAdmin(QtCore.QObject):
     def get_entity_admin(self, entity):
         """Get the default entity admin for this entity, return None, if not
         existant"""
+        admin_class = None
         try:
-            return self.admins[entity](self, entity)
+            admin_class = self.admins[entity]
         except KeyError:
             pass
         if hasattr(entity, 'Admin'):
-            return entity.Admin(self, entity)
+            admin_class = entity.Admin
+        if admin_class:
+            try:
+                return self._object_admin_cache[admin_class]
+            except KeyError:
+                admin = admin_class(self, entity)
+                self._object_admin_cache[admin_class] = admin
+                return admin
 
     def get_entity_query(self, entity):
         """Get the root query for an entity"""

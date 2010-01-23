@@ -50,6 +50,7 @@ class FormView( AbstractView ):
         self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
         self.connect( self.model, QtCore.SIGNAL( sig ), self.dataChanged )
+        self.connect( self.model, QtCore.SIGNAL( 'layoutChanged()' ), self.layout_changed )
         self.connect( self.model, self.model.item_delegate_changed_signal, self.item_delegate_changed )
     
         self.widget_mapper.setModel( model )
@@ -87,6 +88,10 @@ class FormView( AbstractView ):
         #@TODO: only revert if this form is in the changed range
         self.widget_mapper.revert()
         self.update_title()
+        
+    def layout_changed(self):
+        self.widget_mapper.revert()
+        self.update_title()        
     
     def handleGetColumnsAndForm( self, columns_and_form ):
         self.columns, self.form = columns_and_form

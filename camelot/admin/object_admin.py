@@ -33,6 +33,7 @@ logger = logging.getLogger('camelot.view.object_admin')
 from camelot.view.model_thread import gui_function, model_function
 from camelot.core.utils import ugettext as _
 from camelot.core.utils import ugettext_lazy
+from camelot.view.proxy.collection_proxy import CollectionProxy
 from validator.object_validator import ObjectValidator
 
 
@@ -152,12 +153,17 @@ class ObjectAdmin(object):
     In case of relation fields, specifies the admin class that is to be used
     to visualize the other end of the relation.  Defaults to the default admin
     class of the target class.
+    
+    .. attribute:: model
+    The QAbstractItemModel class to be used to display collections of this object,
+    defaults to a CollectionProxy
     """
     name = None #DEPRECATED
     verbose_name = None
     verbose_name_plural = None
     list_display = []
     validator = ObjectValidator
+    model = CollectionProxy
     fields = []
     form = [] #DEPRECATED
     form_display = []
@@ -172,13 +178,19 @@ class ObjectAdmin(object):
     field_attributes = {}
 
     def __init__(self, app_admin, entity):
-        """:param app_admin: the application admin object for this application
+        """
         
+        :param app_admin: the application admin object for this application, if None,
+        then the default application_admin is taken
         :param entity: the entity class for which this admin instance is to be
         used
         """
         from camelot.view.remote_signals import get_signal_handler
-        self.app_admin = app_admin
+        if not app_admin:
+            from camelot.view.application_admin import get_application_admin
+            self.app_admin = get_application_admin()
+        else:
+            self.app_admin = app_admin
         self.rsh = get_signal_handler()
         if entity:
             from camelot.view.model_thread import get_model_thread
@@ -397,13 +409,38 @@ class ObjectAdmin(object):
         return Form([])
 
     @gui_function
-    def create_form_view(self, title, model, index, parent):
+    def create_form_view(self, title, model, index, parent=None):
         """Creates a Qt widget containing a form view, for a specific index in
-        a model; uses the Admin class"""
+        a model.  Use this method to create a form view for a collection of objects,
+        the user will be able to use PgUp/PgDown to move to the next object.
+        
+        :param title: the title of the form view
+        :param model: the data model to be used to fill the form view
+        :param index: which row in the data model to display
+        :param parent: the parent widget for the form
+        """
         logger.debug('creating form view for index %s' % index)
         from camelot.view.controls.formview import FormView
         form = FormView(title, self, model, index)
         return form
+    
+    @gui_function
+    def create_object_form_view(self, title, object_getter, parent=None):
+        """Create a form view for a single object, PgUp/PgDown will do
+        nothing.
+        
+        :param title: the title of the form view
+        :param object_getter: a function taking no arguments, and returning the object
+        :param parent: the parent widget for the form
+        """
+        
+        def create_collection_getter( object_getter ):
+            return lambda:[object_getter()]
+                    
+        model = self.model( self,
+                            create_collection_getter( object_getter ),
+                            self.get_fields )
+        return self.create_form_view( title, model, 0, parent )        
     
     @model_function
     def delete(self, entity_instance):
