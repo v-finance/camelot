@@ -32,6 +32,10 @@ class FormAction( object ):
     """Abstract base class to implement form actions"""
 
     def __init__( self, name, icon = None ):
+        """
+        :param name: the name used in the button to trigger the action
+        :param icon: Icon to be used in the button to trigger the action
+        """
         self._name = name
         self._icon = icon
 

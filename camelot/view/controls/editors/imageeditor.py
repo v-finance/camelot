@@ -6,6 +6,8 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 from camelot.core.utils import ugettext_lazy as _
 
+from camelot.view.controls.liteboxview import LiteBoxView
+
 class ImageEditor(FileEditor, WideEditor):
     """Editor to view and edit image files, this is a customized implementation
     of a FileEditor"""
@@ -31,6 +33,7 @@ All files (*)"""
         # Setup label
         #
         self.label = QtGui.QLabel(self)
+        self.label.installEventFilter(self)
         self.label.setEnabled(self.editable)
         self.layout.addWidget(self.label)
         self.label.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
@@ -63,6 +66,7 @@ All files (*)"""
         self.layout.addStretch()                
         self.setLayout(self.layout)
         self.clear_image()
+        self.lite_box = LiteBoxView()
       
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)
@@ -99,3 +103,20 @@ All files (*)"""
         self.label.setFrameShadow(QtGui.QFrame.Plain)
         self.label.setLineWidth(1)
         self.label.setFixedSize(self.preview_width, self.preview_height)
+
+    def show_fullscreen(self, image):                        
+        self.lite_box.show_fullscreen_image(image)
+        
+    def eventFilter(self, object, event):
+        from camelot.view.model_thread import post
+        if not object.isWidgetType():
+            return False
+        if event.type() != QtCore.QEvent.MouseButtonPress:
+            return False
+        if event.modifiers() != QtCore.Qt.NoModifier:
+            return False
+        if event.buttons() == QtCore.Qt.LeftButton:
+            if self.value:
+                post(self.value.checkout_image, self.show_fullscreen)
+            return True        
+        return False

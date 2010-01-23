@@ -33,6 +33,7 @@ from PyQt4.QtGui import (
     QWidget, QPainter,
 )
 from PyQt4.QtCore import Qt, QEvent
+from PyQt4 import QtGui
 
 from camelot.view.controls.node import Node
 
@@ -41,10 +42,8 @@ def get_desktop():
     from PyQt4.QtCore import QCoreApplication
     return QCoreApplication.instance().desktop()
 
-
 def get_desktop_pixmap():
     return QPixmap.grabWindow(get_desktop().winId())
-
 
 def fit_to_screen(pixmap):
     d = get_desktop()
@@ -55,7 +54,6 @@ def fit_to_screen(pixmap):
         return pixmap.scaled(dw * fit, dh * fit, Qt.KeepAspectRatio)
     return pixmap
 
-
 class CloseNode(Node):
 
     def __init__(self, parent=None):
@@ -65,13 +63,11 @@ class CloseNode(Node):
         view = self.scene().views()[0]
         view.close()
 
-
 class LiteBoxView(QGraphicsView):
 
     ALPHA = QColor(0, 0, 0, 192)
 
     def __init__(self, parent=None):
-        print 'litebox init'
         super(LiteBoxView, self).__init__(parent)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -83,8 +79,6 @@ class LiteBoxView(QGraphicsView):
 
         self.scene = QGraphicsScene()
         self.setScene(self.scene)
-        self._widget= None
-        print 'scene set'
 
     def drawBackground(self, painter, rect):
         painter.drawPixmap(self.mapToScene(0, 0), get_desktop_pixmap())
@@ -94,6 +88,16 @@ class LiteBoxView(QGraphicsView):
     def show_fullscreen_svg(self, filename):
         from PyQt4 import QtSvg
         item = QtSvg.QGraphicsSvgItem(filename)
+        self.show_fullscreen_item(item)
+    
+    def show_fullscreen_image(self, image):
+        """:param image: a QImage"""
+        pixmap = QtGui.QPixmap.fromImage(image)
+        item = QtGui.QGraphicsPixmapItem(pixmap)
+        self.show_fullscreen_item(item)
+        
+    def show_fullscreen_item(self, item):
+        """:param item: a QGraphicsItem to be shown fullscreen"""
         self.scene.addItem(item)
         self.scene.addItem(CloseNode())
         self.showFullScreen()
