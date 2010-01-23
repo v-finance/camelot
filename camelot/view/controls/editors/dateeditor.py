@@ -28,18 +28,21 @@ class DateEditor(CustomEditor):
         self.line_edit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.line_edit.set_background_text( QtCore.QDate(2000,1,1).toString(self.date_format) )
             
-        #calendar_widget_action = QtGui.QWidgetAction(self)
-        self.calendar_widget = QtGui.QCalendarWidget()
+        # The order of creation of this widgets and their parenting
+        # seems very sensitive under windows and creates system crashes
+        # so don't change this without extensive testing on windows
+        special_date_menu = QtGui.QMenu(self)
+        calendar_widget_action = QtGui.QWidgetAction(special_date_menu)
+        self.calendar_widget = QtGui.QCalendarWidget(special_date_menu)
         self.connect( self.calendar_widget, QtCore.SIGNAL('activated(const QDate&)'), self.calendar_widget_activated)
         self.connect( self.calendar_widget, QtCore.SIGNAL('clicked(const QDate&)'), self.calendar_widget_activated)        
-        #calendar_widget_action.setDefaultWidget(self.calendar_widget)
+        calendar_widget_action.setDefaultWidget(self.calendar_widget)
         
-        special_date_menu = QtGui.QMenu(self)
         self.connect( self, self.calendar_action_trigger, special_date_menu.hide )
-        #special_date_menu.addAction(calendar_widget_action)
+        special_date_menu.addAction(calendar_widget_action)
         special_date_menu.addAction('Today')
         special_date_menu.addAction('Far future')
-        self.special_date = QtGui.QToolButton(None)
+        self.special_date = QtGui.QToolButton(self)
         self.special_date.setIcon(
             Icon('tango/16x16/apps/office-calendar.png').getQIcon())
         self.special_date.setAutoRaise(True)
@@ -47,6 +50,7 @@ class DateEditor(CustomEditor):
         self.special_date.setMenu(special_date_menu)
         self.special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.special_date.setFixedHeight(self.get_height())
+        # end of sensitive part
     
         self.set_enabled(editable)
       
@@ -95,6 +99,7 @@ class DateEditor(CustomEditor):
             qdate = QtCore.QDate(value)
             formatted_date = qdate.toString(self.date_format)
             self.line_edit.set_user_input(formatted_date)
+            self.calendar_widget.setSelectedDate(qdate)
         else:
             self.line_edit.set_user_input('')
       
