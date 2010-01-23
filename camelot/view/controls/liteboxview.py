@@ -54,6 +54,7 @@ def fit_to_screen(pixmap):
         return pixmap.scaled(dw * fit, dh * fit, Qt.KeepAspectRatio)
     return pixmap
 
+
 class CloseNode(Node):
 
     def __init__(self, parent=None):
@@ -63,6 +64,7 @@ class CloseNode(Node):
         view = self.scene().views()[0]
         view.close()
 
+
 class LiteBoxView(QGraphicsView):
 
     ALPHA = QColor(0, 0, 0, 192)
@@ -71,7 +73,8 @@ class LiteBoxView(QGraphicsView):
         super(LiteBoxView, self).__init__(parent)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        #self.setViewportUpdateMode(QGraphicsView.NoViewportUpdate)
+
+        self.desktopshot = None
 
         # will propagate to children
         self.setRenderHint(QPainter.Antialiasing)
@@ -81,13 +84,16 @@ class LiteBoxView(QGraphicsView):
         self.setScene(self.scene)
 
     def drawBackground(self, painter, rect):
-        painter.drawPixmap(self.mapToScene(0, 0), get_desktop_pixmap())
+        if self.desktopshot is None:
+            self.desktopshot = get_desktop_pixmap()
+        painter.drawPixmap(self.mapToScene(0, 0), self.desktopshot)
         painter.setBrush(LiteBoxView.ALPHA)
         painter.drawRect(rect)
 
-    def show_fullscreen_svg(self, filename):
+    def show_fullscreen_svg(self, path):
+        """:param path: path to an svg file"""
         from PyQt4 import QtSvg
-        item = QtSvg.QGraphicsSvgItem(filename)
+        item = QtSvg.QGraphicsSvgItem(path)
         self.show_fullscreen_item(item)
     
     def show_fullscreen_image(self, image):
