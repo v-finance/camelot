@@ -105,3 +105,17 @@ class FloatEditor(CustomEditor):
     
     def editingFinished(self, value):
         self.emit(QtCore.SIGNAL('editingFinished()'))
+
+    def set_background_color(self, background_color):
+        if background_color:
+            sbpalette = self.spinBox.palette()
+            lepalette = self.spinBox.lineEdit().palette()
+            for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
+                sbpalette.setColor(x, QtGui.QPalette.Window, background_color)
+                lepalette.setColor(x, QtGui.QPalette.Window, background_color)
+            self.spinBox.setPalette(sbpalette)
+            self.spinBox.lineEdit().setPalette(lepalette)
+            return True
+        else:
+            return False
+
