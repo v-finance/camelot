@@ -111,8 +111,9 @@ class FloatEditor(CustomEditor):
             sbpalette = self.spinBox.palette()
             lepalette = self.spinBox.lineEdit().palette()
             for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
-                sbpalette.setColor(x, QtGui.QPalette.Window, background_color)
-                lepalette.setColor(x, QtGui.QPalette.Window, background_color)
+                for y in [self.backgroundRole(), QtGui.QPalette.Window]:
+                    sbpalette.setColor(x, y, background_color)
+                    lepalette.setColor(x, y, background_color)
             self.spinBox.setPalette(sbpalette)
             self.spinBox.lineEdit().setPalette(lepalette)
             return True
