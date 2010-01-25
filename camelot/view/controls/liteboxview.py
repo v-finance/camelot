@@ -26,16 +26,15 @@
 #  ============================================================================
 
 from PyQt4.QtGui import (
-    QApplication,
+    QPainter,
     QGraphicsView,
     QGraphicsScene,     
     QColor, QPixmap,
-    QWidget, QPainter,
+    QGraphicsPixmapItem,
 )
-from PyQt4.QtCore import Qt, QEvent
-from PyQt4 import QtGui
+from PyQt4.QtCore import Qt
 
-from camelot.view.controls.node import Node
+from camelot.view.art import Pixmap
 
 
 def get_desktop():
@@ -55,10 +54,31 @@ def fit_to_screen(pixmap):
     return pixmap
 
 
-class CloseNode(Node):
+class CloseMark(QGraphicsPixmapItem):
 
-    def __init__(self, parent=None):
-        super(CloseNode, self).__init__('Close', parent)
+    def __init__(self, pixmap=None, hover_pixmap=None, parent=None):
+        super(CloseMark, self).__init__(parent)
+        
+        DEFAULT_PIXMAP = Pixmap('close_mark.png').getQPixmap()
+        DEFAULT_HOVER_PIXMAP = Pixmap('close_mark_hover.png').getQPixmap()
+
+        self._pixmap = pixmap or DEFAULT_PIXMAP
+        self._hover_pixmap = hover_pixmap or DEFAULT_HOVER_PIXMAP
+        
+        self.setPixmap(self._pixmap)
+        width = self.pixmap().width()
+        height = self.pixmap().height()
+        self.setPos(-width/2, -height/2)
+
+        self.setAcceptsHoverEvents(True)
+
+    def hoverEnterEvent(self, event):
+        self.setPixmap(self._hover_pixmap)
+        self.update()
+
+    def hoverLeaveEvent(self, event):
+        self.setPixmap(self._pixmap)
+        self.update()
 
     def mousePressEvent(self, event):
         view = self.scene().views()[0]
@@ -98,12 +118,12 @@ class LiteBoxView(QGraphicsView):
     
     def show_fullscreen_image(self, image):
         """:param image: a QImage"""
-        pixmap = QtGui.QPixmap.fromImage(image)
-        item = QtGui.QGraphicsPixmapItem(pixmap)
+        pixmap = QPixmap.fromImage(image)
+        item = QGraphicsPixmapItem(pixmap)
         self.show_fullscreen_item(item)
         
     def show_fullscreen_item(self, item):
         """:param item: a QGraphicsItem to be shown fullscreen"""
         self.scene.addItem(item)
-        self.scene.addItem(CloseNode())
+        self.scene.addItem(CloseMark())
         self.showFullScreen()
