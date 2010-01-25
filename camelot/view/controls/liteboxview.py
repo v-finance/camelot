@@ -71,6 +71,7 @@ class CloseMark(QGraphicsPixmapItem):
         self.setPos(-width/2, -height/2)
 
         self.setAcceptsHoverEvents(True)
+        self.setZValue(10)
 
     def hoverEnterEvent(self, event):
         self.setPixmap(self._hover_pixmap)
@@ -124,6 +125,7 @@ class LiteBoxView(QGraphicsView):
         
     def show_fullscreen_item(self, item):
         """:param item: a QGraphicsItem to be shown fullscreen"""
+        self.scene.clear()
         self.scene.addItem(item)
         self.scene.addItem(CloseMark())
         self.showFullScreen()
