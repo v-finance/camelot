@@ -66,11 +66,15 @@ class CloseMark(QGraphicsPixmapItem):
         self._hover_pixmap = hover_pixmap or DEFAULT_HOVER_PIXMAP
         
         self.setPixmap(self._pixmap)
+        
+        # move to top right corner
         width = self.pixmap().width()
         height = self.pixmap().height()
-        self.setPos(-width/2, -height/2)
+        parent_width = self.parentItem().boundingRect().width()
+        self.setPos(-width/2 + parent_width, -height/2)
 
         self.setAcceptsHoverEvents(True)
+        # stays on top of other items
         self.setZValue(10)
 
     def hoverEnterEvent(self, event):
@@ -94,6 +98,7 @@ class LiteBoxView(QGraphicsView):
         super(LiteBoxView, self).__init__(parent)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
 
         self.desktopshot = None
 
@@ -107,6 +112,7 @@ class LiteBoxView(QGraphicsView):
     def drawBackground(self, painter, rect):
         if self.desktopshot is None:
             self.desktopshot = get_desktop_pixmap()
+
         painter.drawPixmap(self.mapToScene(0, 0), self.desktopshot)
         painter.setBrush(LiteBoxView.ALPHA)
         painter.drawRect(rect)
@@ -127,5 +133,5 @@ class LiteBoxView(QGraphicsView):
         """:param item: a QGraphicsItem to be shown fullscreen"""
         self.scene.clear()
         self.scene.addItem(item)
-        self.scene.addItem(CloseMark())
+        close = CloseMark(parent=item)
         self.showFullScreen()
