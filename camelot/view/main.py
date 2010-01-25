@@ -202,9 +202,3 @@ def main(application_admin,
             
     app = ShortcutApplication(application_admin)
     app.main()
-    
-    
-    
-      
-
-    
