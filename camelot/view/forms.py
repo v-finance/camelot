@@ -382,11 +382,12 @@ class GridForm( Form ):
   .. image:: ../_static/form/grid_form.png
   """
 
-    def __init__( self, grid ):
+    def __init__( self, grid, nomargins = False ):
         """:param grid: A list for each row in the grid, containing a list with all fields that should be put in that row
         """
         assert isinstance( grid, list )
         self._grid = grid
+        self._nomargins = nomargins
         fields = []
         for row in grid:
             assert isinstance( row, list )
@@ -421,6 +422,9 @@ class GridForm( Form ):
                     _label, editor = widgets[field]
                     grid_layout.addWidget( editor, i, j )
         widget.setLayout( grid_layout )
+        if nomargins:
+            grid_layout.setContentsMargins( 0, 0, 0, 0 )
+            
         return widget
 
 class WidgetOnlyForm( Form ):
