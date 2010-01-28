@@ -84,12 +84,13 @@ class ApplicationAdmin(QtCore.QObject):
     def get_entity_admin(self, entity):
         """Get the default entity admin for this entity, return None, if not
         existant"""
+        
         admin_class = None
         try:
             admin_class = self.admins[entity]
         except KeyError:
             pass
-        if hasattr(entity, 'Admin'):
+        if not admin_class and hasattr(entity, 'Admin'):
             admin_class = entity.Admin
         if admin_class:
             try:

@@ -150,6 +150,8 @@ class Form( object ):
                     #form_layout.addWidget(editor, row, col + 1, row_span, col_span, Qt.AlignRight)
                     form_layout.addWidget( editor, row, col + 1, row_span, col_span )
                     row += 1
+            else:
+                logger.warning('ProgrammingError : widgets should contain a widget for field %s'%unicode(field))
 
         if self._content and form_layout.count():
             # get last item in the layout
@@ -279,6 +281,11 @@ class TabForm( Form ):
                 return True
         return False
 
+    def _get_fields_from_form( self ):
+        for _label, form in self.tabs:
+            for field in form._get_fields_from_form():
+                yield field
+    
     @gui_function
     def render( self, widgets, parent = None, nomargins = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
@@ -316,6 +323,11 @@ class HBoxForm( Form ):
             if form.replaceField( original_field, new_field ):
                 return True
         return False
+    
+    def _get_fields_from_form( self ):
+        for form in self.columns:
+            for field in form._get_fields_from_form():
+                yield field
 
     @gui_function
     def render( self, widgets, parent = None, nomargins = False ):
@@ -355,6 +367,11 @@ class VBoxForm( Form ):
                 return True
         return False
 
+    def _get_fields_from_form( self ):
+        for form in self.rows:
+            for field in form._get_fields_from_form():
+                yield field
+                
     def __unicode__( self ):
         return 'VBoxForm [ %s\n         ]' % ( '         \n'.join( [unicode( form ) for form in self.rows] ) )
 

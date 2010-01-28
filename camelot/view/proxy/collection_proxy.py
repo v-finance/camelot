@@ -583,7 +583,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                         if self.flush_changes and self.validator.isValid( row ):
                             # save the state before the update
                             try:
-                                elixir.session.flush( [o] )
+                                self.admin.flush( o )
                             except DatabaseError, e:
                                 #@todo: when flushing fails, the object should not be removed from the unflushed rows ??
                                 self.logger.error( 'Programming Error, could not flush object', exc_info = e )
