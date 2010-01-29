@@ -137,6 +137,7 @@ class ColorScheme(object):
     aluminium_2 = QtGui.QColor('#babdb6')
     aluminium   = aluminium_0
     
+    VALIDATION_ERROR = red_1
     """
     for consistency with QT:
     Qt::white	3	 White (#ffffff)
