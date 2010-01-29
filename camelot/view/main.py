@@ -104,6 +104,8 @@ class Application(object):
     def main(self):
         """the main function of the application, this will call all other
         functions before starting the event loop"""
+        import logging
+        logger = logging.getLogger('camelot.view.main')
         try:
             #
             # before anything else happens or is imported, the splash screen should be there
@@ -120,8 +122,6 @@ class Application(object):
             #  font.setStyleStrategy(QtGui.QFont.PreferAntialias)
             #  font.setPointSize(font.pointSize()+1)
             #  app.setFont(font)   
-            import logging
-            logger = logging.getLogger('camelot.view.main')
           
             QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
             logger.debug('qt version %s, pyqt version %s' % 
