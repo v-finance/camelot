@@ -1,6 +1,11 @@
+import logging
+
 from PyQt4 import QtGui, QtCore
+
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
+
+logger = logging.getLogger('camelot.admin.list_action')
 
 class ListAction( object ):
     """Abstract base class to implement list actions"""
@@ -121,9 +126,9 @@ class OpenFileListAction( ListActionFromModelFunction ):
             file_descriptor, file_name = tempfile.mkstemp(suffix=self.suffix)
             os.close(file_descriptor)
             self.write_file(file_name, collection, selection )
-            if 'win' in sys.platform:
-                os.startfile(os.path.normpath(os.path(file_name)))
-            QtGui.QDesktopServices.openUrl(QtCore.QUrl('file://%s' % file_name)) 
+            url = QtCore.QUrl.fromLocalFile(file_name)
+            logger.info(unicode(url))
+            QtGui.QDesktopServices.openUrl(url)
 
         ListActionFromModelFunction.__init__( self, name, model_function, icon )
 
