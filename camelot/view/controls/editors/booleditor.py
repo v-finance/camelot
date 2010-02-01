@@ -28,11 +28,10 @@
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor
+from customeditor import AbstractCustomEditor
 from camelot.core import constants
 
-
-class BoolEditor(CustomEditor):
+class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
     """Widget for editing a boolean field"""
   
     def __init__(self,
@@ -41,42 +40,31 @@ class BoolEditor(CustomEditor):
                  maximum=constants.camelot_maxint,
                  editable=True,
                  **kwargs):
-        CustomEditor.__init__(self, parent)
-        self.checkBox = QtGui.QCheckBox()
-        self.checkBox.setEnabled(editable)
-        self.connect(self.checkBox,
+        QtGui.QCheckBox.__init__(self, parent)
+        AbstractCustomEditor.__init__(self)
+        self.setEnabled(editable)
+        self.connect(self,
                      QtCore.SIGNAL('stateChanged(int)'),
                      self.editingFinished)
-        layout = QtGui.QHBoxLayout()
-        layout.setMargin(0)
-        layout.setSpacing(0)
-        layout.addWidget(self.checkBox)
-        self.setFocusProxy(self.checkBox)
-        self.setLayout(layout)
-
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
+        value = AbstractCustomEditor.set_value(self, value)
         if value:
-            self.checkBox.setCheckState(Qt.Checked)
+            self.setCheckState(Qt.Checked)
         else:
-            self.checkBox.setCheckState(Qt.Unchecked)
-
+            self.setCheckState(Qt.Unchecked)
 
     def get_value(self):
-        value = self.checkBox.isChecked()
-        return CustomEditor.get_value(self) or value
-
+        value = self.isChecked()
+        return AbstractCustomEditor.get_value(self) or value
 
     def editingFinished(self, value=None):
         self.emit(QtCore.SIGNAL('editingFinished()'))
 
-      
     def set_enabled(self, editable=True):
         value = self.get_value()
-        self.checkBox.setDisabled(not editable)
+        self.setDisabled(not editable)
         self.set_value(value)
-
 
     def sizeHint(self):
         size = QtGui.QComboBox().sizeHint()

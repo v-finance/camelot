@@ -96,6 +96,8 @@ def construct_signal_handler(*args, **kwargs):
     _signal_handler_.append(SignalHandler(*args, **kwargs))
 
 def get_signal_handler():
+    if not len(_signal_handler_):
+        construct_signal_handler()
     return _signal_handler_[-1]
 
 def has_signal_handler():
