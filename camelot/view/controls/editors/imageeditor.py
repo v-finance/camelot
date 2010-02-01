@@ -117,6 +117,7 @@ All files (*)"""
             return False
         if event.buttons() == QtCore.Qt.LeftButton:
             if self.value:
-                post(self.value.checkout_image, self.show_fullscreen)
+                post(lambda:self.value.checkout_thumbnail(640,480), 
+                     self.show_fullscreen)
             return True        
         return False
