@@ -127,7 +127,7 @@ class OpenFileListAction( ListActionFromModelFunction ):
             os.close(file_descriptor)
             self.write_file(file_name, collection, selection )
             url = QtCore.QUrl.fromLocalFile(file_name)
-            logger.info(unicode(url))
+            logger.debug(u'open url : %s'%unicode(url))
             QtGui.QDesktopServices.openUrl(url)
 
         ListActionFromModelFunction.__init__( self, name, model_function, icon )
