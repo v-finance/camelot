@@ -105,7 +105,7 @@ class ColorScheme(object):
     """
     yellow      = QtGui.QColor('#ffff00')
     yellow_0    = yellow
-    yellow_1    = QtGui.QColor('#fce947')
+    yellow_1    = QtGui.QColor('#fce94f')
     yellow_2    = QtGui.QColor('#edd400')
     yellow_3    = QtGui.QColor('#c4a000')
     orange_1    = QtGui.QColor('#fcaf3e')

@@ -34,4 +34,4 @@ from texteditdelegate import TextEditDelegate
 from timedelegate import TimeDelegate
 from virtualaddressdelegate import VirtualAddressDelegate
 from smileydelegate import SmileyDelegate
-
+from notedelegate import NoteDelegate
