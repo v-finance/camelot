@@ -8,18 +8,18 @@ from camelot.admin.application_admin import ApplicationAdmin
 class FormWithHiddenWidget(forms.Form):
     
     def render(self, widgets, *args, **kwargs):
+
         form_widget = super(FormWithHiddenWidget, self).render(widgets, *args, **kwargs)
         
         _show_more_label, show_more_editor = widgets['show_more']
         hidden_label, hidden_editor        = widgets['details']
         
-        def state_change(i):
-            hidden_label.setVisible(i)
-            hidden_editor.setVisible(i)
-            
-        form_widget.connect(show_more_editor, QtCore.SIGNAL('stateChanged(int)'), state_change)
-        hidden_label.hide()
+        form_widget.connect(show_more_editor, QtCore.SIGNAL('stateChanged(int)'), hidden_label.setVisible)
+        form_widget.connect(show_more_editor, QtCore.SIGNAL('stateChanged(int)'), hidden_editor.setVisible)
+        
+	hidden_label.hide()
         hidden_editor.hide()
+
         return form_widget
         
 class ExampleObject(object):
