@@ -139,6 +139,7 @@ class DirectedDirector( PartyRelationship ):
 
     class Admin( EntityAdmin ):
         verbose_name = _('Direction structure')
+        verbose_name_plural = _('Direction structures')
         list_display = ['established_from', 'established_to', 'title', 'represented_by']
         list_search = ['established_from.full_name', 'established_to.full_name']
         field_attributes = {'established_from':{'name':_('Organization')},
@@ -200,6 +201,7 @@ class SharedShareholder( PartyRelationship ):
 
     class Admin( EntityAdmin ):
         verbose_name = _('Shareholder structure')
+        verbose_name_plural = _('Shareholder structures')
         list_display = ['established_from', 'established_to', 'shares',]
         list_search = ['established_from.full_name', 'established_to.full_name']
         field_attributes = {'established_from':{'name':_('Organization')},
@@ -225,7 +227,8 @@ class AddressAdmin( EntityAdmin ):
     
 class PartyContactMechanismAdmin( EntityAdmin ):
     form_size = ( 700, 200 )
-    verbose_name = 'Contact mechanism'
+    verbose_name = _('Contact mechanism')
+    verbose_name_plural = _('Contact mechanisms')
     list_search = ['party_name', 'mechanism']
     list_display = ['party_name', 'mechanism', 'comment', 'from_date', ]
     form_display = Form( ['contact_mechanism', 'comment', 'from_date', 'thru_date', ] )
