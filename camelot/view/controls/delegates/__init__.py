@@ -35,3 +35,4 @@ from timedelegate import TimeDelegate
 from virtualaddressdelegate import VirtualAddressDelegate
 from smileydelegate import SmileyDelegate
 from notedelegate import NoteDelegate
+from labeldelegate import LabelDelegate

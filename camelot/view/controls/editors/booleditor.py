@@ -77,7 +77,7 @@ class TextBoolEditor(QtGui.QLabel, AbstractCustomEditor):
                  yes=ugettext("Yes"),
                  no=ugettext("No"),
                  **kwargs):
-        QtGui.QTextEdit.__init__(self, parent)
+        QtGui.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setEnabled(False)
         self.yes = yes

@@ -38,3 +38,4 @@ from smileyeditor import SmileyEditor
 from textediteditor import TextEditEditor
 from wideeditor import WideEditor
 from noteeditor import NoteEditor
+from labeleditor import LabelEditor
