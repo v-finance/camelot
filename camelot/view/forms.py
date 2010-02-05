@@ -390,6 +390,12 @@ class VBoxForm( Form ):
         widget.setLayout( form_layout )
         return widget
 
+class ColumnSpan( Form ):
+    def __init__(self, field=None, num=2):
+        self.num = num
+        self.field = field
+        super( ColumnSpan, self ).__init__( [field] )
+
 class GridForm( Form ):
     """Put different fields into a grid, without a label.  Row or column labels can be added
   using the Label form::
@@ -432,12 +438,21 @@ class GridForm( Form ):
         widget = QtGui.QWidget( parent )
         grid_layout = QtGui.QGridLayout()
         for i, row in enumerate( self._grid ):
+            skip = 0
             for j, field in enumerate( row ):
+                num = 1
+                if isinstance( field, ColumnSpan ):
+                    num = field.num
+                    field = field.field
+                    
                 if isinstance( field, Form ):
-                    grid_layout.addWidget( field.render( [], grid_layout ), i, j )
+                    grid_layout.addWidget( field.render( [], grid_layout ), i, j + skip, 1, num )
+                    skip += num - 1
                 else:
                     _label, editor = widgets[field]
-                    grid_layout.addWidget( editor, i, j )
+                    grid_layout.addWidget( editor, i, j + skip, 1, num )
+                    skip += num - 1
+
         widget.setLayout( grid_layout )
         if nomargins:
             grid_layout.setContentsMargins( 0, 0, 0, 0 )
