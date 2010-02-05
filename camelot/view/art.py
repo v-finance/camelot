@@ -136,6 +136,12 @@ class ColorScheme(object):
     aluminium_1 = QtGui.QColor('#d3d7cf')
     aluminium_2 = QtGui.QColor('#babdb6')
     aluminium   = aluminium_0
+    grey_0      = QtGui.QColor('#eeeeee')
+    grey_1      = QtGui.QColor('#cccccc')
+    grey_2      = QtGui.QColor('#333333')
+    grey_3      = QtGui.QColor('#666666')
+    grey_4      = QtGui.QColor('#999999')
+    grey        = grey_0
     
     VALIDATION_ERROR = red_1
     """
