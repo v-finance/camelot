@@ -12,7 +12,7 @@ not yet available in the GUI thread, but is still on it's way from the model to 
 
 from customeditor import editingFinished
 
-from booleditor import BoolEditor
+from booleditor import BoolEditor, TextBoolEditor
 from choiceseditor import ChoicesEditor
 from codeeditor import CodeEditor
 from coloredfloateditor import ColoredFloatEditor

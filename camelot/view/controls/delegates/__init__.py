@@ -8,7 +8,7 @@ towards the constructor of the delegate.
 """
 
 from delegatemanager import DelegateManager
-from booldelegate import BoolDelegate
+from booldelegate import BoolDelegate, TextBoolDelegate
 from codedelegate import CodeDelegate
 from colordelegate import ColorDelegate
 from coloredfloatdelegate import ColoredFloatDelegate

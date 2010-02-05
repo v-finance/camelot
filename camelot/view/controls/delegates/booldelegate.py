@@ -49,4 +49,7 @@ class BoolDelegate(CustomDelegate):
         
         painter.restore()
     
+class TextBoolDelegate(BoolDelegate):
+
+    editor = editors.TextBoolEditor
     
