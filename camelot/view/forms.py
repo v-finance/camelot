@@ -446,7 +446,7 @@ class GridForm( Form ):
                     field = field.field
                     
                 if isinstance( field, Form ):
-                    grid_layout.addWidget( field.render( [], grid_layout ), i, j + skip, 1, num )
+                    grid_layout.addWidget( field.render( [], parent ), i, j + skip, 1, num )
                     skip += num - 1
                 else:
                     _label, editor = widgets[field]

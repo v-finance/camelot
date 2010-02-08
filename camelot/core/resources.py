@@ -34,6 +34,9 @@ resources as opposed to the folder containing the module itself.
 
 this mechanism will probably be rewritten to support the loading of resources
 from zip files instead of falling back to settings.
+
+when running from a bootstrapper, we'll try to use pgk_resources, even when
+runnin from within a zip file.
 """
 
 import pkg_resources
@@ -49,7 +52,7 @@ def resource_filename(module_name, filename, settings_attribute=None):
     fall back to the settings attribute 
     """
     import settings
-    if sys.path[0].endswith('.zip'):
+    if sys.path[0].endswith('.zip') and not hasattr(settings, 'BOOTSTRAPPER'):
         # we're running from a zip file, pkg_resources won't work
         if not settings_attribute:
             logger.error('resources of module %s cannot be loaded because no settings_attribute is specified and the module is inside a zip file')
@@ -63,7 +66,8 @@ def resource_filename(module_name, filename, settings_attribute=None):
         return pkg_resources.resource_filename(module_name, filename)
     
 def resource_string(module_name, filename, settings_attribute):
-    if sys.path[0].endswith('.zip'):
+    import settings
+    if sys.path[0].endswith('.zip') and not hasattr(settings, 'BOOTSTRAPPER'):
         return open(resource_filename(module_name, filename, settings_attribute), 'rb').read()
     else:
         return pkg_resources.resource_string(module_name, filename)
