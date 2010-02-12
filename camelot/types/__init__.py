@@ -169,11 +169,17 @@ class Language(types.TypeDecorator):
     """The languages are stored as ISO codes in the database
     """
     
-    import babel
-    
     impl = types.Unicode
     choices = []
-    for code in babel.localedata.list():
+    
+    _localedata_list = []
+    
+    try:
+        import babel
+        _localedata_list = babel.localedata.list()
+    except Exception, e:
+        logger.warn(u'Could not load list with languages from babel, list will be empty', exc_info=e)
+    for code in _localedata_list:
         locale = babel.Locale(code)
         display_name = locale.get_display_name()
         if display_name:

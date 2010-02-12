@@ -4,6 +4,7 @@ from PyQt4.QtCore import Qt
 from customeditor import CustomEditor
 from camelot.view.art import Icon
 from camelot.core import constants
+from camelot.view.proxy import ValueLoading
 
 class FloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator"""
@@ -107,7 +108,7 @@ class FloatEditor(CustomEditor):
         self.emit(QtCore.SIGNAL('editingFinished()'))
 
     def set_background_color(self, background_color):
-        if background_color:
+        if background_color not in (None, ValueLoading):
             selfpalette = self.spinBox.palette()
             sbpalette = self.spinBox.palette()
             lepalette = self.spinBox.lineEdit().palette()

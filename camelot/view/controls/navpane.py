@@ -249,6 +249,7 @@ class NavigationPane( QtGui.QDockWidget ):
         return self.sections
     
     def set_sections(self, sections):
+        logger.debug('set sections')
         from PyQt4.QtTest import QTest
         #
         # current button might no longer exisst once we set

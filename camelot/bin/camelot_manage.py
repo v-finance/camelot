@@ -194,18 +194,24 @@ def main():
                 print repository.latest
             elif args[0]=='upgrade':
                 migrate_connection = migrate_engine.connect()
-                transaction = migrate_connection.begin()
                 if len(args)>=2:
                     version = args[1]
                 else:
                     version = repository.latest
+                #
+                # perform each upgrade step in a separate transaction, since
+                # one upgrade might depend on an other being fully executed
+                #
                 try:
-                    schema.upgrade(version)
-                    transaction.commit()
-                    print schema.version
-                except:
-                    transaction.rollback()
-                    raise
+                    for i in range(schema.version, version+1):
+                        transaction = migrate_connection.begin()
+                        try:
+                            schema.upgrade(i)
+                            transaction.commit()
+                            print 'upgrade %s'%i
+                        except:
+                            transaction.rollback()
+                            raise
                 finally:
                     migrate_connection.close()
     else:
