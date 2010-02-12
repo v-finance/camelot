@@ -446,7 +446,7 @@ class GridForm( Form ):
                     field = field.field
                     
                 if isinstance( field, Form ):
-                    grid_layout.addWidget( field.render( [], parent ), i, j + skip, 1, num )
+                    grid_layout.addWidget( field.render( widgets, parent ), i, j + skip, 1, num )
                     skip += num - 1
                 else:
                     _label, editor = widgets[field]
@@ -482,9 +482,9 @@ class GroupBoxForm( Form ):
   .. image:: ../_static/form/group_box_form.png
   """
 
-    def __init__( self, title, content ):
+    def __init__( self, title, content, scrollbars=None ):
         self.title = title
-        Form.__init__( self, content )
+        Form.__init__( self, content, scrollbars )
 
     @gui_function
     def render( self, widgets, parent = None, nomargins = False ):
@@ -493,7 +493,7 @@ class GroupBoxForm( Form ):
         layout = QtGui.QVBoxLayout()
         widget.setLayout( layout )
         form = Form.render( self, widgets, widget, nomargins )
-        layout.addWidget( form )
+        layout.addWidget( form )      
         return widget
 
 def structure_to_form( structure ):
