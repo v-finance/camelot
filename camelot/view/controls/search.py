@@ -89,7 +89,7 @@ class SimpleSearchControl(QtGui.QWidget):
         self.emit_search()
 
     def emit_search(self):
-        text = str(self.search_input.user_input())
+        text = unicode(self.search_input.user_input())
         self.emit(QtCore.SIGNAL('search'), text)
 
     def emit_cancel(self):
