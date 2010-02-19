@@ -482,8 +482,10 @@ class GroupBoxForm( Form ):
   .. image:: ../_static/form/group_box_form.png
   """
 
-    def __init__( self, title, content, scrollbars=None ):
+    def __init__( self, title, content, scrollbars=None, min_width=None, min_height=None ):
         self.title = title
+        self.min_width = min_width
+        self.min_height = min_height
         Form.__init__( self, content, scrollbars )
 
     @gui_function
@@ -491,6 +493,10 @@ class GroupBoxForm( Form ):
         from PyQt4 import QtGui
         widget = QtGui.QGroupBox( unicode(self.title), parent )
         layout = QtGui.QVBoxLayout()
+        if self.min_width and self.min_height:
+            widget.setMinimumSize ( self.min_width, self.min_height )
+        
+        
         widget.setLayout( layout )
         form = Form.render( self, widgets, widget, nomargins )
         layout.addWidget( form )      
