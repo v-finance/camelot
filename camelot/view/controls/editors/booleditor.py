@@ -74,14 +74,14 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
 class TextBoolEditor(QtGui.QLabel, AbstractCustomEditor):
     def __init__(self,
                  parent=None,
-                 yes=ugettext("Yes"),
-                 no=ugettext("No"),
+                 yes="Yes",
+                 no="No",
                  **kwargs):
         QtGui.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setEnabled(False)
-        self.yes = yes
-        self.no = no
+        self.yes = ugettext(yes)
+        self.no = ugettext(no)
 
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
