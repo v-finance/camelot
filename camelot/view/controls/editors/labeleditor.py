@@ -38,7 +38,8 @@ class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
                  **kwargs):
         QtGui.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-        self.setEnabled(False)
+        # do not set disabled, it is quite pointless for LabelEditor
+        #self.setEnabled(False)
         self.text = text
 
     def set_value(self, value):
