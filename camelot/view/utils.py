@@ -33,6 +33,7 @@ from datetime import datetime, time, date
 import re
 
 from camelot.core import constants
+from camelot.core.utils import ugettext
 
 _local_date_format = None
  
@@ -137,3 +138,6 @@ def pyvalue_from_string(pytype, s):
         return float_from_string(s)
     elif pytype is int:
         return int_from_string(s)
+
+def enumeration_to_string(value):
+    return ugettext(unicode(value).replace('_', ' ').capitalize())

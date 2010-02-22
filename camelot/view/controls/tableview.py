@@ -37,6 +37,7 @@ from PyQt4.QtCore import Qt
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
+from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import model_function, gui_function, post
 from camelot.core.utils import ugettext as _
 
@@ -113,7 +114,7 @@ class HeaderWidget( QtGui.QWidget ):
         QtGui.QWidget.__init__( self, parent )
         widget_layout = QtGui.QHBoxLayout()
         self.search = self.search_widget( self )
-        title = QtGui.QLabel( admin.get_verbose_name_plural().capitalize(), self )
+        title = UserTranslatableLabel( admin.get_verbose_name_plural(), self )
         title.setFont( self._title_font )
         widget_layout.addWidget( title )
         widget_layout.addWidget( self.search )
