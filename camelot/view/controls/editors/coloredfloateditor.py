@@ -30,6 +30,7 @@ class ColoredFloatEditor(CustomEditor):
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.spinBox.setSingleStep(1.0)
         self.spinBox.addAction(action)
+        self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         self.arrow = QtGui.QLabel()
         self.arrow.setPixmap(Icon('tango/16x16/actions/go-up.png').getQPixmap())
         self.arrow.setFixedHeight(self.get_height())

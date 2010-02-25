@@ -41,6 +41,7 @@ class FloatEditor(CustomEditor):
         self.spinBox.setPrefix(prefix)
         self.spinBox.setSuffix(suffix)
         self.spinBox.addAction(action)
+        self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         self.calculatorButton = QtGui.QToolButton()
         icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
         self.calculatorButton.setIcon(icon)
@@ -67,7 +68,6 @@ class FloatEditor(CustomEditor):
             layout.addWidget(self.calculatorButton)
         if not editable:
             self.spinBox.setEnabled(False)
-            self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         self.setFocusProxy(self.spinBox)
         self.setLayout(layout)
     
