@@ -121,13 +121,13 @@ class EmployerEmployee( PartyRelationship ):
         verbose_name = _('Employee')
         list_display = ['established_to', 'from_date', 'thru_date']
         form_display = ['established_to', 'comment', 'from_date', 'thru_date']
-        field_attributes = {'established_to':{'name':_( 'name' )}}
+        field_attributes = {'established_to':{'name':_( 'Name' )}}
 
     class EmployerAdmin( EntityAdmin ):
         verbose_name = _('Employer')
         list_display = ['established_from', 'from_date', 'thru_date']
         form_display = ['established_from', 'comment', 'from_date', 'thru_date']
-        field_attributes = {'established_from':{'name':_( 'name' )}}
+        field_attributes = {'established_from':{'name':_( 'Name' )}}
 
 class DirectedDirector( PartyRelationship ):
     """Relation from a directed organization to a director"""
@@ -168,7 +168,7 @@ class RepresentedRepresentor( Entity ):
         verbose_name = _('Represented by')
         list_display = ['established_from', 'from_date', 'thru_date']
         form_display = ['established_from', 'from_date', 'thru_date', 'comment']
-        field_attributes = {'established_from':{'name':_( 'name' )}}
+        field_attributes = {'established_from':{'name':_( 'Name' )}}
 
 class SupplierCustomer( PartyRelationship ):
     """Relation from supplier to customer"""
