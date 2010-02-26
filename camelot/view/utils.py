@@ -31,9 +31,12 @@ from PyQt4 import QtCore
 
 from datetime import datetime, time, date
 import re
+import logging
 
 from camelot.core import constants
 from camelot.core.utils import ugettext
+
+logger = logging.getLogger('camelot.view.utils')
 
 _local_date_format = None
  
@@ -42,10 +45,10 @@ def local_date_format():
     global _local_date_format
     if not _local_date_format:
         locale = QtCore.QLocale()
-        format_sequence = re.split('y*', str(locale.dateFormat(locale.ShortFormat)))
+        format_sequence = re.split('y*', unicode(locale.dateFormat(locale.ShortFormat)))
         # make sure a year always has 4 numbers
         format_sequence.insert(-1, 'yyyy')
-        _local_date_format = ''.join(format_sequence)
+        _local_date_format = unicode(u''.join(format_sequence))
     return _local_date_format
 
 class ParsingError(Exception): pass
@@ -64,14 +67,19 @@ def date_from_string(s):
     from PyQt4.QtCore import QDate
     import string
     s = s.strip()
+    f = local_date_format()
     if not s:
         return None
-    dt = QDate.fromString(s, local_date_format())
+    dt = QDate.fromString(s, f)
     if not dt.isValid():
         # try parsing without separators
-        only_letters_format = ''.join([c for c in local_date_format() if c in string.letters])
-        only_letters_string = ''.join([c for c in unicode(s) if c in (string.letters+string.digits)])
+        # attention : using non ascii letters will fail on windows
+        # string.letters then contains non ascii letters of which we don't know the
+        # encoding, so we cannot convert them to unicode to compare them
+        only_letters_format = u''.join([c for c in f if c in string.ascii_letters])
+        only_letters_string = u''.join([c for c in s if c in (string.ascii_letters+string.digits)])
         dt = QDate.fromString(only_letters_string, only_letters_format)
+        logger.warn(dt)
         if not dt.isValid():
             raise ParsingError()
     return date(dt.year(), dt.month(), dt.day())
