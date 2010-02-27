@@ -79,7 +79,6 @@ def date_from_string(s):
         only_letters_format = u''.join([c for c in f if c in string.ascii_letters])
         only_letters_string = u''.join([c for c in s if c in (string.ascii_letters+string.digits)])
         dt = QDate.fromString(only_letters_string, only_letters_format)
-        logger.warn(dt)
         if not dt.isValid():
             raise ParsingError()
     return date(dt.year(), dt.month(), dt.day())
@@ -125,7 +124,7 @@ def float_from_string(s):
     locale = QtCore.QLocale()
     f, ok = locale.toFloat(s)
     if not ok:
-        raise ParsingError
+        raise ParsingError()
     return f
 
 

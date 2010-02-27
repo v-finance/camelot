@@ -32,6 +32,7 @@ import logging
 
 logger = logging.getLogger('camelot.view.search')
 
+import sqlalchemy.types
 import camelot.types
 
 def create_entity_search_query_decorator(admin, text):
@@ -44,6 +45,7 @@ def create_entity_search_query_decorator(admin, text):
     """
     from elixir import entities
     from sqlalchemy import orm
+    from camelot.view import utils
 
     if len(text.strip()):
         from sqlalchemy import Unicode, or_
@@ -70,6 +72,21 @@ def create_entity_search_query_decorator(admin, text):
                 args.append(c.like(('%','%'+text+'%')))
             elif issubclass(c.type.__class__, camelot.types.Image):
                 pass
+            elif issubclass(c.type.__class__, sqlalchemy.types.Integer):
+                try:
+                    args.append(c==utils.int_from_string(text))
+                except Exception, utils.ParsingError:
+                    pass
+            elif issubclass(c.type.__class__, sqlalchemy.types.Date):
+                try:
+                    args.append(c==utils.date_from_string(text))
+                except Exception, utils.ParsingError:
+                    pass
+            elif issubclass(c.type.__class__, sqlalchemy.types.Float):
+                try:
+                    args.append(c==utils.float_from_string(text))
+                except Exception, utils.ParsingError:
+                    pass
             elif issubclass(c.type.__class__, (Unicode, )) or \
                             (hasattr(c.type, 'impl') and \
                              issubclass(c.type.impl.__class__, (Unicode, ))):
