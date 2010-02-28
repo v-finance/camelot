@@ -171,6 +171,13 @@ class EmptyRowData( object ):
     
 empty_row_data = EmptyRowData()
 
+class UnsortedRowMapper( object ):
+    """Class mapping rows of a collection 1:1 without sorting
+    and filtering"""
+    
+    def __getitem__(self, row):
+        return row
+    
 class CollectionProxy( QtCore.QAbstractTableModel ):
     """The CollectionProxy contains a limited copy of the data in the actual
     collection, usable for fast visualisation in a QTableView 
@@ -223,6 +230,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.rows_under_request = set()
         # The rows that have unflushed changes
         self.unflushed_rows = set()
+        self._sort_and_filter = UnsortedRowMapper() 
         # Set edits
         self.edits = edits or []
         self.rsh = get_signal_handler()
@@ -246,8 +254,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 #    # in that way the number of rows is requested as well
         post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
-        
-    
+            
     @model_function
     def updateUnflushedRows( self ):
         """Verify all rows to see if some of them should be added to the
@@ -657,8 +664,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         columns = self.getColumns()
         offset = min( offset, self.rows )
         limit = min( limit, self.rows - offset )
-        for i, o in enumerate( self.collection_getter()[offset:offset + limit + 1] ):
-            self._add_data(columns, i+offset, o)
+        collection = self.collection_getter()
+        for i in range(offset, offset + limit + 1):
+            unsorted_row = self._sort_and_filter[i]
+            obj = collection[unsorted_row]
+            self._add_data(columns, i+offset, obj)
         return ( offset, limit )
     
     @model_function

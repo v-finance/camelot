@@ -53,7 +53,7 @@ class TableWidget( QtGui.QTableView):
         self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | QtGui.QAbstractItemView.DoubleClicked )
         self.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
         # set to false while sorting is not implemented in CollectionProxy
-        self.horizontalHeader().setClickable( False )
+        self.horizontalHeader().setClickable( True )
         self._header_font_required = QtGui.QApplication.font()
         self._header_font_required.setBold( True )
         self._minimal_row_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing() + 10
