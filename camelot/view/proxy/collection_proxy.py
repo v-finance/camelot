@@ -665,10 +665,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         offset = min( offset, self.rows )
         limit = min( limit, self.rows - offset )
         collection = self.collection_getter()
-        for i in range(offset, offset + limit + 1):
-            unsorted_row = self._sort_and_filter[i]
-            obj = collection[unsorted_row]
-            self._add_data(columns, i+offset, obj)
+        for i, o in enumerate( collection[offset:offset + limit + 1] ): 
+            self._add_data(columns, i+offset, o) 
+#        for i in range(offset, offset + limit + 1):
+#            unsorted_row = self._sort_and_filter[i]
+#            obj = collection[i]
+#            self._add_data(columns, i+offset, obj)
         return ( offset, limit )
     
     @model_function
