@@ -89,7 +89,8 @@ class PartyRelationship( Entity ):
     is_synchronized( 'synchronized', lazy = True )
 
     class Admin( EntityAdmin ):
-        name = 'Relationship'
+        verbose_name = _('Relationship')
+        verbose_name_plural = _('Relationships')
         list_display = ['from_date', 'thru_date']
 
 class EmployerEmployee( PartyRelationship ):
@@ -177,7 +178,7 @@ class SupplierCustomer( PartyRelationship ):
     established_to = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
 
     class Admin( EntityAdmin ):
-        verbose_name = 'Supplier - Customer'
+        verbose_name = _('Supplier - Customer')
         list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
 
     class CustomerAdmin( EntityAdmin ):
@@ -334,13 +335,13 @@ class Organization( Party ):
         verbose_name = _( 'Organization' )
         verbose_name_plural = _( 'Organizations' )
         list_display = ['name', 'tax_id', 'email', 'phone']
-        form_display = TabForm( [( 'Basic', Form( ['name', 'tax_id', 'addresses', 'contact_mechanisms'] ) ),
-                                ( 'Employment', Form( ['employees'] ) ),
-                                ( 'Customers', Form( ['customers'] ) ),
-                                ( 'Suppliers', Form( ['suppliers'] ) ),
-                                ( 'Corporate', Form( ['directors', 'shareholders', 'shares'] ) ),
-                                ( 'Branding', Form( ['logo'] ) ),
-                                ( 'Status', Form( ['status'] ) ),
+        form_display = TabForm( [( _('Basic'), Form( ['name', 'tax_id', 'addresses', 'contact_mechanisms'] ) ),
+                                ( _('Employment'), Form( ['employees'] ) ),
+                                ( _('Customers'), Form( ['customers'] ) ),
+                                ( _('Suppliers'), Form( ['suppliers'] ) ),
+                                ( _('Corporate'), Form( ['directors', 'shareholders', 'shares'] ) ),
+                                ( _('Branding'), Form( ['logo'] ) ),
+                                ( _('Status'), Form( ['status'] ) ),
                                 ] )
 
 Organization = documented_entity()( Organization )
@@ -409,13 +410,13 @@ class Person( Party ):
         verbose_name = _( 'Person' )
         verbose_name_plural = _( 'Persons' )
         list_display = ['first_name', 'last_name', 'email', 'phone']
-        form_display = TabForm( [( 'Basic', Form( [HBoxForm( [Form( ['first_name', 'last_name', 'sex'] ),
+        form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [Form( ['first_name', 'last_name', 'sex'] ),
                                                           Form( ['picture', ] ),
                                                          ] ),
                                                          'contact_mechanisms', 'comment', ], scrollbars = False ) ),
-                                ( 'Official', Form( ['birthdate', 'social_security_number', 'passport_number', 'passport_expiry_date', 'addresses', ], scrollbars = False ) ),
-                                ( 'Work', Form( ['employers', 'directed_organizations', 'shares'], scrollbars = False ) ),
-                                ( 'Status', Form( ['status'] ) ),
+                                ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number', 'passport_expiry_date', 'addresses', ], scrollbars = False ) ),
+                                ( _('Work'), Form( ['employers', 'directed_organizations', 'shares'], scrollbars = False ) ),
+                                ( _('Status'), Form( ['status'] ) ),
                                 ] )
 
 Person = documented_entity()( Person )
