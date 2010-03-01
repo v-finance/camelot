@@ -213,6 +213,7 @@ class EditorFilter(Filter):
             def __init__(self, name, parent):
                 QtGui.QGroupBox.__init__(self, unicode(name), parent)
                 self._entity, self._field_name, self._field_attributes = options
+                self._field_attributes['editable'] = True
                 layout = QtGui.QVBoxLayout()
                 group = QtGui.QButtonGroup(self)
                 self.all_button = QtGui.QRadioButton(ugettext('All'), self)

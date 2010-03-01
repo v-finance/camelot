@@ -51,5 +51,4 @@ class ActionsBox(QtGui.QGroupBox):
         for action in actions:
             action_widget = action.render(self, *self.args)
             layout.addWidget(action_widget)
-        layout.addStretch()
         self.setLayout(layout)

@@ -55,7 +55,6 @@ class FilterList(QtGui.QScrollArea):
                          filter_changed_signal,
                          self.emit_filters_changed)
 
-        layout.addStretch()
         widget.setLayout(layout)
         self.setWidget(widget)
         #self.setMaximumWidth(self.fontMetrics().width( ' ' )*70)
