@@ -1,5 +1,5 @@
 from PyQt4.QtGui import QApplication, QFrame, QPalette, QLabel, QPixmap
-from PyQt4.QtCore import Qt, QRect, SIGNAL
+from PyQt4.QtCore import Qt, QRect, SIGNAL, QCoreApplication
 
 
 class BareFrame(QFrame):
@@ -43,12 +43,13 @@ class CloseMark(QLabel):
 
 class Dashboard(BareFrame):
     
-    WIDTH  = 830
-    HEIGHT = 560
+    SCALE  = .85
 
     def __init__(self, parent=None):
         super(Dashboard, self).__init__(parent)
-        self.resize(Dashboard.WIDTH, Dashboard.HEIGHT)
+        desktop = QCoreApplication.instance().desktop()
+        
+        self.resize(desktop.width() * Dashboard.SCALE, desktop.height() * Dashboard.SCALE)
         self.closemark = CloseMark(QPixmap('close-mark.png'), self)
         self.setBGColor(Qt.white)
 
