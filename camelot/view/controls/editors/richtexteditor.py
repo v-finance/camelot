@@ -10,6 +10,8 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.layout.setSpacing(0)
         self.layout.setMargin(0)
         self.editable = editable
+        self.setSizePolicy( QtGui.QSizePolicy.Expanding,
+                            QtGui.QSizePolicy.Expanding )
     
         class CustomTextEdit(QtGui.QTextEdit):
             """A TextEdit editor that sends editingFinished events when the text was changed
