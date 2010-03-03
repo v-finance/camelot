@@ -13,41 +13,46 @@ from elixir.options import using_options
 from elixir.relationships import ManyToOne, OneToMany
 from camelot.model.authentication import end_of_times
 from camelot.view.elixir_admin import EntityAdmin
-from camelot.types import Code
+from camelot.types import Code, Enumeration
 import datetime
 
-def type_3_status( statusable_entity, metadata, collection, verbose_entity_name = None ):
+def type_3_status( statusable_entity, metadata, collection, verbose_entity_name = None, enumeration=None ):
     '''
     Creates a new type 3 status related to the given entity
-    .. statusable_entity:: A string referring to an entity.
+    :statusable_entity: A string referring to an entity.
+    :enumeration: if this parameter is used, no status type Entity is created, but the status type is
+    described by the enumeration.
     '''
     t3_status_name = statusable_entity + '_status'
     t3_status_type_name = statusable_entity + '_status_type'
 
-    class Type3StatusTypeMeta( EntityMeta ):
-        def __new__( cls, classname, bases, dictionary ):
-            return EntityMeta.__new__( cls, t3_status_type_name,
-                                 bases, dictionary )
-        def __init__( self, classname, bases, dictionary ):
-            EntityMeta.__init__( self, t3_status_type_name,
-                                  bases, dictionary )
 
-    class Type3StatusType( Entity, ):
-        using_options( tablename = t3_status_type_name.lower(), metadata=metadata, collection=collection )
-        __metaclass__ = Type3StatusTypeMeta
-
-        code = Field( Code( parts = ['>AAAA'] ), index = True,
-                           required = True, unique = True )
-        description = Field( Unicode( 40 ), index = True )
-
-        def __unicode__( self ):
-            return 'Status type: %s : %s' % ( '.'.join( self.code ), self.description )
-
-        class Admin( EntityAdmin ):
-            list_display = ['code', 'description']
-            verbose_name = statusable_entity + ' Status Type'
-            if verbose_entity_name is not None:
-                verbose_name = verbose_entity_name + ' Status Type'
+    if not enumeration:
+        
+        class Type3StatusTypeMeta( EntityMeta ):
+            def __new__( cls, classname, bases, dictionary ):
+                return EntityMeta.__new__( cls, t3_status_type_name,
+                                     bases, dictionary )
+            def __init__( self, classname, bases, dictionary ):
+                EntityMeta.__init__( self, t3_status_type_name,
+                                      bases, dictionary )
+            
+        class Type3StatusType( Entity, ):
+            using_options( tablename = t3_status_type_name.lower(), metadata=metadata, collection=collection )
+            __metaclass__ = Type3StatusTypeMeta
+    
+            code = Field( Code( parts = ['>AAAA'] ), index = True,
+                               required = True, unique = True )
+            description = Field( Unicode( 40 ), index = True )
+    
+            def __unicode__( self ):
+                return 'Status type: %s : %s' % ( '.'.join( self.code ), self.description )
+    
+            class Admin( EntityAdmin ):
+                list_display = ['code', 'description']
+                verbose_name = statusable_entity + ' Status Type'
+                if verbose_entity_name is not None:
+                    verbose_name = verbose_entity_name + ' Status Type'
 
     class Type3StatusMeta( EntityMeta ):
         def __new__( cls, classname, bases, dictionary ):
@@ -75,8 +80,12 @@ def type_3_status( statusable_entity, metadata, collection, verbose_entity_name 
 
         status_for = ManyToOne( statusable_entity, #required = True,
                                  ondelete = 'cascade', onupdate = 'cascade' )
-        classified_by = ManyToOne( t3_status_type_name, required = True,
-                                   ondelete = 'cascade', onupdate = 'cascade' )
+        
+        if not enumeration:
+            classified_by = ManyToOne( t3_status_type_name, required = True,
+                                       ondelete = 'cascade', onupdate = 'cascade' )
+        else:
+            classified_by = Field(Enumeration(enumeration), required=True, index=True)
 
         class Admin( EntityAdmin ):
             verbose_name = statusable_entity + ' Status'
