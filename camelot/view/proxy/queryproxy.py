@@ -81,7 +81,11 @@ class QueryTableProxy(CollectionProxy):
         def collection_getter():
             return self._query_getter().all()
         
-        return collection_getter        
+        return collection_getter
+    
+    @gui_function
+    def sort( self, column, order ):
+        pass   
 
     def append(self, o):
         """Add an object to this collection, used when inserting a new

@@ -171,12 +171,15 @@ class EmptyRowData( object ):
     
 empty_row_data = EmptyRowData()
 
-class UnsortedRowMapper( object ):
+class SortingRowMapper( dict ):
     """Class mapping rows of a collection 1:1 without sorting
     and filtering"""
     
     def __getitem__(self, row):
-        return row
+        try:
+            return super(SortingRowMapper, self).__getitem__(row)
+        except KeyError, _e:
+            return row
     
 class CollectionProxy( QtCore.QAbstractTableModel ):
     """The CollectionProxy contains a limited copy of the data in the actual
@@ -230,7 +233,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.rows_under_request = set()
         # The rows that have unflushed changes
         self.unflushed_rows = set()
-        self._sort_and_filter = UnsortedRowMapper() 
+        self._sort_and_filter = SortingRowMapper() 
         # Set edits
         self.edits = edits or []
         self.rsh = get_signal_handler()
@@ -481,7 +484,20 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     @gui_function
     def sort( self, column, order ):
         """reimplementation of the QAbstractItemModel its sort function"""
-        pass
+        
+        def create_sort(column, order):
+            
+            def sort():
+                unsorted_collection = [(i,o) for i,o in enumerate(self.collection_getter())]
+                key = lambda item:getattr(item[1], self._columns[column][0])
+                unsorted_collection.sort(key=key, reverse=order)
+                for j,(i,_o) in enumerate(unsorted_collection):
+                    self._sort_and_filter[j] = i
+                return len(unsorted_collection)
+                    
+            return sort
+            
+        post(create_sort(column, order), self._refresh_content)
     
     @gui_function
     def data( self, index, role ):
@@ -660,17 +676,16 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     @model_function
     def _extend_cache( self, offset, limit ):
         """Extend the cache around row"""
-        #@TODO : also store the primary key, here we just saved the id
         columns = self.getColumns()
         offset = min( offset, self.rows )
         limit = min( limit, self.rows - offset )
         collection = self.collection_getter()
-        for i, o in enumerate( collection[offset:offset + limit + 1] ): 
-            self._add_data(columns, i+offset, o) 
-#        for i in range(offset, offset + limit + 1):
-#            unsorted_row = self._sort_and_filter[i]
-#            obj = collection[i]
-#            self._add_data(columns, i+offset, obj)
+#        for i, o in enumerate( collection[offset:offset + limit + 1] ): 
+#            self._add_data(columns, i+offset, o) 
+        for i in range(offset, min(offset + limit + 1, len(collection))):
+            unsorted_row = self._sort_and_filter[i]
+            obj = collection[unsorted_row]
+            self._add_data(columns, i, obj)
         return ( offset, limit )
     
     @model_function
