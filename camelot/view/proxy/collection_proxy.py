@@ -173,7 +173,7 @@ empty_row_data = EmptyRowData()
 
 class SortingRowMapper( dict ):
     """Class mapping rows of a collection 1:1 without sorting
-    and filtering"""
+    and filtering, unless a mapping has been defined explicitly"""
     
     def __getitem__(self, row):
         try:
@@ -257,7 +257,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 #    # in that way the number of rows is requested as well
         post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
-            
+
+    def map_to_source(self, sorted_row_number):
+        """Converts a sorted row number to a row number of the source
+        collection"""
+        return self._sort_and_filter[sorted_row_number]
+                
     @model_function
     def updateUnflushedRows( self ):
         """Verify all rows to see if some of them should be added to the
@@ -690,18 +695,18 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         return ( offset, limit )
     
     @model_function
-    def _get_object( self, row ):
+    def _get_object( self, sorted_row_number ):
         """Get the object corresponding to row
         :return: the object at row row or None if the row index is invalid
         """
         try:
             # first try to get the primary key out of the cache, if it's not
             # there, query the collection_getter
-            return self.cache[Qt.EditRole].get_entity_at_row( row )
+            return self.cache[Qt.EditRole].get_entity_at_row( sorted_row_number )
         except KeyError:
             pass
         try:
-            return self.collection_getter()[row]
+            return self.collection_getter()[self.map_to_source(sorted_row_number)]
         except IndexError:
             pass
         return None

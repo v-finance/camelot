@@ -183,10 +183,10 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.view.workspace import get_workspace
         model = CollectionProxy( self.admin,
-                                self.model.collection_getter,
-                                self.admin.get_fields,
-                                max_number_of_rows = 1,
-                                edits = None )
-        form = self.admin.create_form_view( u'', model, index, get_workspace() )
+                                 self.model.collection_getter,
+                                 self.admin.get_fields,
+                                 max_number_of_rows = 1,
+                                 edits = None )
+        form = self.admin.create_form_view( u'', model, self.model.map_to_source(index), get_workspace() )
         get_workspace().addSubWindow( form )
         form.show()
