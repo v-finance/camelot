@@ -226,6 +226,8 @@ class EditorFilter(Filter):
                 self.connect(self.all_button, QtCore.SIGNAL('toggled(bool)'), self.all_toggled)
                 self.connect(self.none_button, QtCore.SIGNAL('toggled(bool)'), self.none_toggled)
                 self.setLayout(layout)
+#                if self._field_attributes.get('nullable', True)==False:
+#                    self.none_button.hide()
                 delegate = self._field_attributes['delegate'](**self._field_attributes)
                 option = QtGui.QStyleOptionViewItem()
                 option.version = 5

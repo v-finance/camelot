@@ -395,8 +395,36 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.column_count = len( columns )
         self._columns = columns
 
-        # Only set the delegate manager when it is fully set up
-        self.delegate_manager = self.admin.get_delegate_manager(columns)
+        delegate_manager = delegates.DelegateManager() 
+        delegate_manager.set_columns_desc( columns ) 
+        
+        # set a delegate for the vertical header 
+        delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate(parent = delegate_manager) ) 
+         
+        for i, c in enumerate( columns ): 
+            field_name = c[0] 
+            self.logger.debug( 'creating delegate for %s' % field_name ) 
+            if 'delegate' in c[1]: 
+                try: 
+                    delegate = c[1]['delegate']( parent = delegate_manager, **c[1] ) 
+                except Exception, e: 
+                    logger.error('ProgrammingError : could not create delegate for field %s'%field_name, exc_info=e) 
+                    delegate = delegates.PlainTextDelegate( parent = delegate_manager, **c[1] ) 
+                delegate_manager.insertColumnDelegate( i, delegate ) 
+                continue 
+            elif c[1]['python_type'] == str: 
+                if c[1]['length']: 
+                    delegate = delegates.PlainTextDelegate( parent = delegate_manager, maxlength = c[1]['length'] ) 
+                    delegate_manager.insertColumnDelegate( i, delegate ) 
+                else: 
+                    delegate = delegates.TextEditDelegate( parent = delegate_manager, **c[1] ) 
+                    delegate_manager.insertColumnDelegate( i, delegate ) 
+            else: 
+                delegate = delegates.PlainTextDelegate(parent = delegate_manager) 
+                delegate_manager.insertColumnDelegate( i, delegate ) 
+                     
+        # Only set the delegate manager when it is fully set up 
+        self.delegate_manager = delegate_manager 
         if not sip.isdeleted( self ):
             self.emit( self.item_delegate_changed_signal )
             self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
