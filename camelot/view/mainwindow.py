@@ -113,7 +113,12 @@ class MainWindow(QtGui.QMainWindow):
         abtmsg = self.app_admin.get_about()
         QtGui.QMessageBox.about(self, _('About'), _(abtmsg))
         logger.debug('about message closed')
-
+    
+    def whats_new(self):
+        widget = self.app_admin.get_whats_new()
+        if widget:
+            widget.exec_()
+    
     def readSettings(self):
         # TODO: improve settings reading
         settings = QtCore.QSettings()
@@ -253,6 +258,13 @@ class MainWindow(QtGui.QMainWindow):
             text=_('&About'),
             slot=self.about,
             tip=_("Show the application's About box")
+        )
+        
+        self.whats_new_action = createAction(
+            parent=self,
+            text=_('&What\'s new'),
+            slot=self.whats_new,
+            tip=_("Show the What's New box")
         )
 
         self.helpAct = createAction(
@@ -534,7 +546,10 @@ class MainWindow(QtGui.QMainWindow):
         self.menuBar().addSeparator()
 
         self.helpMenu = self.menuBar().addMenu(_('&Help'))
-        addActions(self.helpMenu, (self.helpAct, self.aboutAct))
+        if self.app_admin.get_whats_new():
+            addActions(self.helpMenu, (self.helpAct, self.aboutAct, self.whats_new_action))
+        else:
+            addActions(self.helpMenu, (self.helpAct, self.aboutAct))
 
     def updateMenus(self):
         hasMdiChild = (self.activeMdiChild() is not None)

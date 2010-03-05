@@ -131,7 +131,11 @@ class ApplicationAdmin(QtCore.QObject):
     def get_name(self):
         """:return: the name of the application"""
         return self.name
-
+    
+    def get_version(self):
+        """:return: string representing version of the application"""
+        return '1.0'
+        
     def get_icon(self):
         """:return: the QIcon that should be used for the application"""
         from camelot.view.art import Icon
@@ -152,7 +156,11 @@ class ApplicationAdmin(QtCore.QObject):
         """:return: a QUrl pointing to the index page for help"""
         from PyQt4.QtCore import QUrl
         return QUrl('http://www.conceptive.be/projects/camelot/')
-
+    
+    def get_whats_new(self):
+        """:return: a widget that has a show() method """
+        return None
+    
     def get_stylesheet(self):
         """
         :return: the qt stylesheet to be used for this application as a string
