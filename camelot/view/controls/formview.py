@@ -46,6 +46,8 @@ class FormView( AbstractView ):
         self.change_title(title)
         self.widget_mapper = QtGui.QDataWidgetMapper()
         self.widget_layout = QtGui.QHBoxLayout()
+        self.widget_layout.setSpacing( 0 )
+        self.widget_layout.setMargin( 0 )
     
         self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
@@ -162,11 +164,14 @@ class FormView( AbstractView ):
     
     def setActions( self, actions ):
         if actions:
+            side_panel_layout = QtGui.QVBoxLayout()
             from camelot.view.controls.actionsbox import ActionsBox
             logger.debug( 'setting Actions for formview' )
             self.actions_widget = ActionsBox( self, self.getEntity )
             self.actions_widget.setActions( actions )
-            self.widget_layout.insertWidget( 1, self.actions_widget )
+            side_panel_layout.insertWidget( 1, self.actions_widget )
+            side_panel_layout.addStretch()
+            self.widget_layout.addLayout(side_panel_layout)
       
     def viewFirst( self ):
         """select model's first row"""
