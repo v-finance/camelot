@@ -112,6 +112,12 @@ class ObjectAdmin(object):
     the search box in the table view.  By default only character fields are
     searched.  For use with one2many, many2one or many2many fields, the same
     rules as for the list_filter attribute apply
+    
+    .. attribute:: confirm_delete
+    
+    Indicates if the deletion of an object should be confirmed by the user, defaults
+    to False.  Can be set to either True, False, or the message to display when asking
+    confirmation of the deletion.
 
     .. attribute:: form_size
 
@@ -171,6 +177,7 @@ class ObjectAdmin(object):
     list_charts = []
     list_actions = []
     list_search = []
+    confirm_delete = False
     list_size = (600, 400)
     form_size = (700, 500)
     form_actions = []
@@ -233,6 +240,13 @@ class ObjectAdmin(object):
 
     def get_entity_admin(self, entity):
         return self.app_admin.get_entity_admin(entity)
+    
+    def get_confirm_delete(self):
+        if self.confirm_delete:
+            if self.confirm_delete==True:
+                return _('Are you sure you want to delete this')
+            return self.confirm_delete
+        return False
 
     @model_function
     def get_form_actions(self, entity):

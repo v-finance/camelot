@@ -37,6 +37,7 @@ from camelot.view.model_thread import model_function, post
 from camelot.view.controls.view import AbstractView
 
 class FormView( AbstractView ):
+
     def __init__( self, title, admin, model, index ):
         AbstractView.__init__( self )
         self.title_prefix = title

@@ -371,8 +371,18 @@ class TableView( AbstractView  ):
     def deleteSelectedRows( self ):
         """delete the selected rows in this tableview"""
         logger.debug( 'delete selected rows called' )
-        for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-            self._table_model.removeRow( row )
+        confirmation_message = self.admin.get_confirm_delete()
+        confirmed = True
+        if confirmation_message:
+            if QtGui.QMessageBox.question(self, 
+                                          _('Please confirm'), 
+                                          unicode(confirmation_message), 
+                                          QtGui.QMessageBox.Yes, 
+                                          QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
+                confirmed = False
+        if confirmed:
+            for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
+                self._table_model.removeRow( row )
       
     @gui_function
     def newRow( self ):

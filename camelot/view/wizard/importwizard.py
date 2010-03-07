@@ -341,7 +341,18 @@ class ImportWizard(QtGui.QWizard):
             lambda:[],
             row_data_admin.get_columns
         )
+        self.setWindowTitle(_(self.window_title))
+        self.add_pages(model, row_data_admin)
+        self.setOption(QtGui.QWizard.NoCancelButton)
 
+    def add_pages(self, model, row_data_admin):
+        """
+        Add all pages to the import wizard, reimplement this method to add
+        custom pages to the wizard
+        :param model: the CollectionProxy that will be used to display the to be imported data
+        :param row_dat_admin: the admin interface to be used to display the model, this admin
+        is automatically derived from the admin of the data once it is imported
+        """
         self.addPage(SelectFilePage(parent=self))
         self.addPage(
             DataPreviewPage(
@@ -350,7 +361,4 @@ class ImportWizard(QtGui.QWizard):
                 collection_getter=self.collection_getter
             )
         )
-        self.addPage(FinalPage(parent=self, model=model))
-        self.setWindowTitle(_(self.window_title))
-
-        self.setOption(QtGui.QWizard.NoCancelButton)
+        self.addPage(FinalPage(parent=self, model=model))        
