@@ -214,10 +214,10 @@ this method contains::
     from camelot.model.authentication import Person, Organization
     from camelot.model.i18n import Translation
     return [Section('relation',
-                    Icon('tango/24x24/apps/system-users.png'),
+                    Icon('tango/22x22/apps/system-users.png'),
                     items = [Person, Organization]),
             Section('configuration',
-                    Icon('tango/24x24/categories/preferences-system.png'),
+                    Icon('tango/22x22/categories/preferences-system.png'),
                     items = [Memento, Translation])
             ]
             
@@ -230,7 +230,7 @@ extending the list of sections returned by the ``get_sections`` method with a
 Movie section::
 
 	Section('movies',
-            Icon('tango/24x24/mimetypes/x-office-presentation.png'),
+            Icon('tango/22x22/mimetypes/x-office-presentation.png'),
             items = [Movie])
 
 The constructor of a section object takes the name of the section, the icon to
@@ -248,13 +248,13 @@ The resulting method now becomes::
     from camelot.model.i18n import Translation    
     from example.model import Movie
     return [Section('movies', 
-                    Icon('tango/24x24/mimetypes/x-office-presentation.png'),
+                    Icon('tango/22x22/mimetypes/x-office-presentation.png'),
                     items = [Movie]),
             Section('relation',
-                    Icon('tango/24x24/apps/system-users.png'),
+                    Icon('tango/22x22/apps/system-users.png'),
                     items = [Person, Organization]),
             Section('configuration',
-                    Icon('tango/24x24/categories/preferences-system.png'),
+                    Icon('tango/22x22/categories/preferences-system.png'),
                     items = [Memento, Translation])
             ]
     
@@ -372,7 +372,7 @@ The last step is to fix :file:`application_admin.py` by adding the following
 lines to the Director entity to the Movie section::
 
 	Section('movies', 
-            Icon('tango/24x24/mimetypes/x-office-presentation.png'),
+            Icon('tango/22x22/mimetypes/x-office-presentation.png'),
             items = [Movie, Director])
 
 This takes care of the relationship between our two entities. Below is the new

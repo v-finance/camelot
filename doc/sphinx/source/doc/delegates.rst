@@ -7,7 +7,7 @@
 :Release: |version|
 :Date: |today|
 
-`Delegates` are a cornerstone of the Qt model/view framework.  A delegate is
+`Delegates` are a cornerstone of the Qt model/delegate/view framework.  A delegate is
 used to display and edit data from a `model`.
 
 In the Camelot framework, every field of an `Entity` has an associated delegate
@@ -18,6 +18,10 @@ When the data has been edited in the form, the delegates will take care of
 updating the model with the new data.
 
 All Camelot delegates are subclasses of :class:`QAbstractItemDelegate`.
+
+The `PyQT website <http://www.riverbankcomputing.com/static/Docs/PyQt4/html/classes.html>`_
+provides detailed information the differenct classes involved in the 
+model/delegate/view framework.
 
 .. _specifying-delgates:
 
@@ -40,64 +44,17 @@ be forced to be visualized as stars::
 	
 The above code will result in:
 
-.. image:: ../_static/rating.png
+.. image:: ../_static/editors/StarEditor_editable.png
 
 If no `delegate` field attribute is given, a default one will be taken
 depending on the sqlalchemy field type.
 
+All available delegates can be found in :mod:`camelot.view.controls.delegates`
+
 Available delegates
 ===================
 
-All available delegates can be found in :mod:`camelot.view.controls.delegates`
-
-.. automodule:: camelot.view.controls.delegates.booldelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.codedelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.colordelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.coloredfloatdelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.comboboxdelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.currencydelegate
-   :members:   
-.. automodule:: camelot.view.controls.delegates.datedelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.datetimedelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.filedelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.floatdelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.imagedelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.integerdelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.intervalsdelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.manytomanydelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.many2onedelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.one2manydelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.onetomanychoicesdelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.plaintextdelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.richtextdelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.stardelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.smileydelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.texteditdelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.timedelegate
-   :members:
-.. automodule:: camelot.view.controls.delegates.virtualaddressdelegate
-   :members:
+.. automodule:: camelot.view.controls.delegates
 
 Attributes common to most delegates
 ===================================

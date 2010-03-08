@@ -18,8 +18,8 @@ models. Fields from SQLAlchemy and Camelot are described.
 SQLAlchemy field types
 ======================
 
-.. automodule:: sqlalchemy.types
-   :members:
+SQLAlchemy provides a number of field types that map to available data types in SQL, more information on those
+can be found on the `SQLAlchemy website <http://www.sqlalchemy.org/docs/reference/sqlalchemy/types.html>`_ .
    
 Camelot field types
 ===================
