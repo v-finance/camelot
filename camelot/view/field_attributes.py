@@ -33,7 +33,6 @@ import datetime
 
 from controls import delegates
 from camelot.core import constants
-from camelot.core.utils import ugettext as _
 from camelot.view.utils import (
     bool_from_string,
     date_from_string,
@@ -278,8 +277,8 @@ for field_type in field_types:
     delegate = field_attributes['delegate']
     row = row_format%(field_type.__name__, delegate.__name__, '.. image:: ../_static/editors/%s_editable.png'%(delegate.editor.__name__))
     doc += row + """
-  """ + row_separator + """
-  """
+""" + row_separator + """
+"""
 
 doc += """
 """

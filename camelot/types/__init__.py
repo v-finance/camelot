@@ -98,6 +98,8 @@ class Code(types.TypeDecorator):
     string joined with points.
   
     eg: ``['08', 'AB']`` is stored as ``08.AB``
+    
+    .. image:: ../_static/editors/CodeEditor_editable.png
     """
     
     impl = types.Unicode
@@ -153,7 +155,8 @@ class Rating(types.TypeDecorator):
       title = Field(Unicode(60), required=True)
       rating = Field(camelot.types.Rating())
       
-  .. image:: ../_static/rating.png"""
+  .. image:: ../_static/editors/StarEditor_editable.png
+"""
     
     impl = types.Integer
        
@@ -161,7 +164,8 @@ class RichText(types.TypeDecorator):
     """RichText fields are unlimited text fields which contain html.  The html will be
   rendered in a rich text editor.  
   
-  .. image:: ../_static/richtext.png"""
+    .. image:: ../_static/editors/RichTextEditor_editable.png
+"""
     
     impl = types.UnicodeText
      
@@ -198,9 +202,8 @@ class Color(types.TypeDecorator):
   
     class MovieType(Entity):
       color = Field(camelot.types.Color())
-  
-  .. image:: ../_static/color.png
-  
+
+  .. image:: ../_static/editors/ColorEditor_editable.png  
   
   The colors are stored in the database as strings 
     """
@@ -254,7 +257,7 @@ class Enumeration(types.TypeDecorator):
       state = Field(camelot.types.Enumeration([(1,'planned'), (2,'recording'), (3,'finished'), (4,'canceled')]), 
                                               index=True, required=True, default='planning')
   
-  .. image:: ../_static/enumeration.png  
+  .. image:: ../_static/editors/ChoicesEditor_editable.png  
   """
     
     impl = types.Integer
@@ -311,7 +314,7 @@ class File(types.TypeDecorator):
     class Movie(Entity):
       script = Field(camelot.types.File(upload_to='script'))
       
-  .. image:: ../_static/file_delegate.png
+  .. image:: ../_static/editors/FileEditor_editable.png
     """
     
     impl = types.Unicode
@@ -360,7 +363,7 @@ class Image(File):
   The Image field type provides the same functionallity as the File field type, but
   the files stored should be images.
   
-  .. image:: ../_static/image.png  
+  .. image:: ../_static/editors/ImageEditor_editable.png
     """
   
     stored_file_implementation = StoredImage

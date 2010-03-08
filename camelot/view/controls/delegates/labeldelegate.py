@@ -31,6 +31,6 @@ class LabelDelegate(CustomDelegate):
             
             
         QtGui.QApplication.style().drawControl(QtGui.QStyle.CE_CheckBox,
-                                               check_option,
+                                               checked,
                                                painter)
         painter.restore()

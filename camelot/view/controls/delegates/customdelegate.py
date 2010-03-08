@@ -45,9 +45,22 @@ def DocumentationMetaclass(name, bases, dct):
 
 .. image:: ../_static/delegates/%s_unselected_disabled.png
 .. image:: ../_static/delegates/%s_unselected_editable.png
+
 .. image:: ../_static/delegates/%s_selected_disabled.png
 .. image:: ../_static/delegates/%s_selected_editable.png
-"""%(name, name, name, name)
+
+"""%(name, name, name, name,)
+
+    if 'editor' in dct:
+        dct['__doc__'] = dct['__doc__'] + '.. image:: ../_static/editors/%s_editable.png'%dct['editor'].__name__ + '\n'
+        
+    if '__init__' in dct:
+        dct['__doc__'] = dct['__doc__'] + 'Field attributes supported by this delegate : \n'
+        import inspect
+        args, _varargs, _varkw,  _defaults = inspect.getargspec(dct['__init__'])
+        for arg in args:
+            if arg not in ['self', 'parent']:
+                dct['__doc__'] = dct['__doc__'] + '\n * %s'%arg
     return type(name, bases, dct)
 
   

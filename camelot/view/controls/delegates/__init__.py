@@ -1,11 +1,4 @@
 
-"""Camelot includes a number of Qt delegates, most of them are used as default
-delegates for the various sqlalchemy and camelot field types.
-
-Some delegates take specific arguments into account for their construction.
-All :attr:`field_attributes` specified for a certain field will be propagated
-towards the constructor of the delegate.
-"""
 
 from delegatemanager import DelegateManager
 from booldelegate import BoolDelegate, TextBoolDelegate
@@ -36,3 +29,24 @@ from virtualaddressdelegate import VirtualAddressDelegate
 from smileydelegate import SmileyDelegate
 from notedelegate import NoteDelegate
 from labeldelegate import LabelDelegate
+
+doc = """Camelot includes a number of Qt delegates, most of them are used as default
+delegates for the various sqlalchemy and camelot field types.
+
+Some delegates take specific arguments into account for their construction.
+All :attr:`field_attributes` specified for a certain field will be propagated
+towards the constructor of the delegate.  Some of them will be used by the delegate
+itself, others will be used by the editor, created by the delegate.
+
+"""
+
+custom_delegates = list(CustomDelegate.__subclasses__())
+custom_delegates.sort(key=lambda d:d.__name__)
+for custom_delegate in custom_delegates:
+    doc = doc + custom_delegate.__name__ + '\n' + '-'*len(custom_delegate.__name__) + '\n'
+    if hasattr(custom_delegate, '__doc__'):
+        doc = doc + custom_delegate.__doc__ + '\n'
+    
+print doc
+
+__doc__ = doc
