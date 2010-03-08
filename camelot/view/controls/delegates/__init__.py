@@ -46,7 +46,5 @@ for custom_delegate in custom_delegates:
     doc = doc + custom_delegate.__name__ + '\n' + '-'*len(custom_delegate.__name__) + '\n'
     if hasattr(custom_delegate, '__doc__'):
         doc = doc + custom_delegate.__doc__ + '\n'
-    
-print doc
 
 __doc__ = doc
