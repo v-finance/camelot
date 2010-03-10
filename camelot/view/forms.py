@@ -486,7 +486,8 @@ class GroupBoxForm( Form ):
         self.title = title
         self.min_width = min_width
         self.min_height = min_height
-        Form.__init__( self, content, scrollbars )
+        self._form = structure_to_form(content)
+        Form.__init__( self, self._form.get_fields(), scrollbars )
 
     @gui_function
     def render( self, widgets, parent = None, nomargins = False ):
@@ -495,10 +496,8 @@ class GroupBoxForm( Form ):
         layout = QtGui.QVBoxLayout()
         if self.min_width and self.min_height:
             widget.setMinimumSize ( self.min_width, self.min_height )
-        
-        
         widget.setLayout( layout )
-        form = Form.render( self, widgets, widget, nomargins )
+        form = self._form.render( widgets, widget, nomargins )
         layout.addWidget( form )      
         return widget
 
