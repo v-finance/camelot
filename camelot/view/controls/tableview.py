@@ -112,8 +112,10 @@ class HeaderWidget( QtGui.QWidget ):
   
     def __init__( self, parent, admin ):
         QtGui.QWidget.__init__( self, parent )
+        layout = QtGui.QVBoxLayout()
         widget_layout = QtGui.QHBoxLayout()
         self.search = self.search_widget( self )
+        self.connect(self.search, SimpleSearchControl.expand_search_options_signal, self.expand_search_options)
         title = UserTranslatableLabel( admin.get_verbose_name_plural(), self )
         title.setFont( self._title_font )
         widget_layout.addWidget( title )
@@ -121,13 +123,22 @@ class HeaderWidget( QtGui.QWidget ):
         if self.rows_widget:
             self.number_of_rows = self.rows_widget( self )
             widget_layout.addWidget( self.number_of_rows )
-      
         else:
             self.number_of_rows = None
-        self.setLayout( widget_layout )
+        layout.addLayout( widget_layout )
+        self._expanded_search = QtGui.QLabel('Expanded')
+        self._expanded_search.hide()
+        layout.addWidget(self._expanded_search)
+        self.setLayout( layout )
         self.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
         self.setNumberOfRows( 0 )
     
+    def expand_search_options(self):
+        if self._expanded_search.isHidden():
+            self._expanded_search.show()
+        else:
+            self._expanded_search.hide()
+        
     @gui_function
     def setNumberOfRows( self, rows ):
         if self.number_of_rows:

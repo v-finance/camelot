@@ -57,7 +57,6 @@ class FilterList(QtGui.QScrollArea):
 
         widget.setLayout(layout)
         self.setWidget(widget)
-        #self.setMaximumWidth(self.fontMetrics().width( ' ' )*70)
         if len(items) == 0:
             self.setMaximumWidth(0)
         else:

@@ -37,6 +37,8 @@ class SimpleSearchControl(QtGui.QWidget):
   emits a search and a cancel signal if the user starts or cancels the search
   """
 
+    expand_search_options_signal = QtCore.SIGNAL('expand_search_options()')
+    
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
         layout = QtGui.QHBoxLayout()
@@ -51,7 +53,7 @@ class SimpleSearchControl(QtGui.QWidget):
         self.search_button.setAutoRaise(True)
         self.connect(self.search_button,
                      QtCore.SIGNAL('clicked()'),
-                     self.emit_search)
+                     self.expand_search_options_signal)
 
         # Search input
         from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
@@ -88,6 +90,9 @@ class SimpleSearchControl(QtGui.QWidget):
         self.search_input.setText(search_text)
         self.emit_search()
 
+    def emit_expand_search_options(self):
+        self.emit(self.expand_search_options_signal)
+        
     def emit_search(self):
         text = unicode(self.search_input.user_input())
         self.emit(QtCore.SIGNAL('search'), text)

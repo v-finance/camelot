@@ -215,51 +215,42 @@ class EditorFilter(Filter):
                 self._entity, self._field_name, self._field_attributes = options
                 self._field_attributes['editable'] = True
                 layout = QtGui.QVBoxLayout()
-                group = QtGui.QButtonGroup(self)
-                self.all_button = QtGui.QRadioButton(ugettext('All'), self)
-                self.all_button.setChecked(True)
-                group.addButton(self.all_button)
-                layout.addWidget(self.all_button)
-                self.none_button = QtGui.QRadioButton(ugettext('None'), self)
-                group.addButton(self.none_button)
-                layout.addWidget(self.none_button)
-                self.connect(self.all_button, QtCore.SIGNAL('toggled(bool)'), self.all_toggled)
-                self.connect(self.none_button, QtCore.SIGNAL('toggled(bool)'), self.none_toggled)
-                self.setLayout(layout)
-#                if self._field_attributes.get('nullable', True)==False:
-#                    self.none_button.hide()
+                self._choices = [(0, ugettext('All')), (1, ugettext('None')), (2, ugettext('='))]
+                combobox = QtGui.QComboBox(self)
+                layout.addWidget(combobox)
+                for i,name in self._choices:
+                    combobox.insertItem(i, unicode(name))
+                self.connect(combobox, QtCore.SIGNAL('currentIndexChanged(int)'), self.combobox_changed)
                 delegate = self._field_attributes['delegate'](**self._field_attributes)
                 option = QtGui.QStyleOptionViewItem()
                 option.version = 5
-                self.editor = delegate.createEditor( self, option, None )
+                self._editor = delegate.createEditor( self, option, None )
                 # explicitely set a value, otherways the current value remains ValueLoading
-                self.editor.set_value(None)
-                self.connect(self.editor, editors.editingFinished, self.editor_editing_finished)
-                layout.addWidget(self.editor)
-                self._filter = False
+                self._editor.set_value(None)
+                self.connect(self._editor, editors.editingFinished, self.editor_editing_finished)
+                layout.addWidget(self._editor)
+                self.setLayout(layout)
+                self._editor.setEnabled(False)
+                self._index = 0
                 self._value = None
                 
-            def all_toggled(self, bool):
-                self.editor.set_value(None)
-                self._filter = False
-                self.emit(filter_changed_signal)
-            
-            def none_toggled(self, bool):
-                self.editor.set_value(None)
-                self._filter = True
-                self._value = None
+            def combobox_changed(self, index):
+                self._index = index
+                if index==2:
+                    self._editor.setEnabled(True)
+                else:
+                    self._editor.setEnabled(False)
                 self.emit(filter_changed_signal)
                 
             def editor_editing_finished(self):
-                self.all_button.setChecked(False)
-                self.none_button.setChecked(False)
-                self._filter = True
-                self._value = self.editor.get_value()
+                self._value = self._editor.get_value()
                 self.emit(filter_changed_signal)
             
             def decorate_query(self, query):
-                if not self._filter:
+                if self._index==0:
                     return query
+                if self._index==1:
+                    return query.filter(getattr(self._entity, self._field_name)==None)
                 return query.filter(getattr(self._entity, self._field_name)==self._value)
                 
         return FilterWidget(name, parent)       
