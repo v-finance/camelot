@@ -86,6 +86,7 @@ class FormActionFromModelFunction( FormAction ):
         """
         :param name: the name of the action
         :param model_function: a function that has 1 arguments : the object on which to apply the action
+        :param icon: an Icon
         :param flush: flush the object to the db and refresh it in the views
         """        
         FormAction.__init__( self, name, icon )

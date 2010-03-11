@@ -44,7 +44,7 @@ def create_entity_search_query_decorator(admin, text):
     could be build
     """
     from elixir import entities
-    from sqlalchemy import orm
+    from sqlalchemy import orm, sql
     from camelot.view import utils
 
     if len(text.strip()):
@@ -84,7 +84,12 @@ def create_entity_search_query_decorator(admin, text):
                     pass
             elif issubclass(c.type.__class__, sqlalchemy.types.Float):
                 try:
-                    args.append(c==utils.float_from_string(text))
+                    float_value = utils.float_from_string(text)
+                    precision = c.type.precision
+                    if isinstance(precision, (tuple)):
+                        precision = precision[1]
+                    delta = 0.1**precision
+                    args.append(sql.and_(c>=float_value-delta, c<=float_value+delta))
                 except Exception, utils.ParsingError:
                     pass
             elif issubclass(c.type.__class__, (Unicode, )) or \
@@ -109,9 +114,6 @@ def create_entity_search_query_decorator(admin, text):
                 else:
                     append_column(property.columns[0])
                     #args.append(property.columns[0].like('%'+text+'%'))
-
-        logger.debug('query joins : %s'%str(joins))
-        logger.debug('query args : %s'%str(args))
 
         def create_query_decorator(joins, args):
 

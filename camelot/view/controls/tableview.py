@@ -559,6 +559,10 @@ class TableView( AbstractView  ):
             self.filters = FilterList( filters, parent=self.splitter )
             self.filters_layout.addWidget( self.filters )
             self.connect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
+            #
+            # filters might have default values, so we need to rebuild the queries
+            #
+            self.rebuildQuery()
         if actions:
             
             def selection_getter():
