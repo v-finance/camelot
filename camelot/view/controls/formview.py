@@ -36,78 +36,83 @@ from PyQt4 import QtGui
 from camelot.view.model_thread import model_function, post
 from camelot.view.controls.view import AbstractView
 
-class FormView( AbstractView ):
-
-    def __init__( self, title, admin, model, index ):
-        AbstractView.__init__( self )
-        self.title_prefix = title
-        self.admin = admin
-        self.model = model
-        self.index = index
-        self.change_title(title)
-        self.widget_mapper = QtGui.QDataWidgetMapper()
-        self.widget_layout = QtGui.QHBoxLayout()
-        self.widget_layout.setSpacing( 0 )
-        self.widget_layout.setMargin( 0 )
+class FormWidget( QtGui.QWidget ):
     
-        self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
+    changed_signal = QtCore.SIGNAL( 'changed()' )
+    
+    def __init__(self, admin):
+        QtGui.QWidget.__init__(self)
+        self._admin = admin
+        self._widget_mapper = QtGui.QDataWidgetMapper()
+        self._widget_layout = QtGui.QHBoxLayout()
+        self._widget_layout.setSpacing( 0 )
+        self._widget_layout.setMargin( 0 )
+        self._index = 0
+        self._model = None
+        self._form = None
+        self._columns = None
+        self._delegate = None
+        self.setLayout( self._widget_layout )
+                
+    def set_model(self, model):
+        self._model = model
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
-        self.connect( self.model, QtCore.SIGNAL( sig ), self.dataChanged )
-        self.connect( self.model, QtCore.SIGNAL( 'layoutChanged()' ), self.layout_changed )
-        self.connect( self.model, self.model.item_delegate_changed_signal, self.item_delegate_changed )
-    
-        self.widget_mapper.setModel( model )
-        self.setLayout( self.widget_layout )
-    
-        if hasattr( admin, 'form_size' ) and admin.form_size:
-            self.setMinimumSize( admin.form_size[0], admin.form_size[1] )
-      
-        self.validator = admin.create_validator( model )
-        self.validate_before_close = True
-        self.form = None
-        self.columns = None
-        self.delegate = None
-    
-        def getColumnsAndForm():
-            return ( self.model.getColumns(), self.admin.get_form_display() )
-      
-        post( getColumnsAndForm, self.handleGetColumnsAndForm )
-    
-        def getActions():
-            return admin.get_form_actions( None )
-      
-        post( getActions, self.setActions )
-        self.update_title()
-    
-    def update_title( self ):
-  
-        def get_title():
-            obj = self.getEntity()
-            return u'%s %s' % ( self.title_prefix, self.admin.get_verbose_identifier( obj ) )
-      
-        post( get_title, self.change_title )
-    
-    def dataChanged( self, index_from, index_to ):
-        #@TODO: only revert if this form is in the changed range
-        self.widget_mapper.revert()
-        self.update_title()
+        self.connect( self._model, QtCore.SIGNAL( sig ), self._data_changed )
+        self.connect( self._model, QtCore.SIGNAL( 'layoutChanged()' ), self._layout_changed )
+        self.connect( self._model, self._model.item_delegate_changed_signal, self._item_delegate_changed )
+        self._widget_mapper.setModel( model )
         
-    def layout_changed(self):
-        self.widget_mapper.revert()
-        self.update_title()        
-    
-    def handleGetColumnsAndForm( self, columns_and_form ):
-        self.columns, self.form = columns_and_form
-        self.setColumnsFormAndDelegate()
-
-    def item_delegate_changed(self):
+        def get_columns_and_form():
+            return ( self._model.getColumns(), self._admin.get_form_display() )
+      
+        post( get_columns_and_form, self._set_columns_and_form )
+        
+    def clear_mapping(self):
+        self._widget_mapper.clearMapping()
+         
+    def _data_changed( self, index_from, index_to ):
+        #@TODO: only revert if this form is in the changed range
+        self._widget_mapper.revert()
+        self.emit(self.changed_signal)
+        
+    def _layout_changed(self):
+        self._widget_mapper.revert()
+        self.emit(self.changed_signal)
+        
+    def _item_delegate_changed(self):
         from camelot.view.controls.delegates.delegatemanager import DelegateManager
-        self.delegate = self.model.getItemDelegate()
-        assert self.delegate
-        assert isinstance(self.delegate, DelegateManager)
-        self.setColumnsFormAndDelegate()
-    
-    def setColumnsFormAndDelegate( self ):
+        self._delegate = self._model.getItemDelegate()
+        assert self._delegate
+        assert isinstance(self._delegate, DelegateManager)
+        self._create_widgets()
+                     
+    def set_index(self, index):
+        self._index = index
+        self._widget_mapper.setCurrentIndex( self._index )
+        
+    def get_index(self):
+        return self._widget_mapper.currentIndex()
+        
+    def submit(self):
+        self._widget_mapper.submit()
+                
+    def to_first(self):
+        self._widget_mapper.toFirst()
+        
+    def to_last(self):
+        self._widget_mapper.toLast()
+        
+    def to_next(self):
+        self._widget_mapper.toNext()
+        
+    def to_previous(self):
+        self._widget_mapper.toPrevious()
+        
+    def _set_columns_and_form(self, columns_and_form ):
+        self._columns, self._form = columns_and_form
+        self._create_widgets()
+        
+    def _create_widgets( self ):
         """Create value and label widgets"""
         from camelot.view.controls.user_translatable_label import UserTranslatableLabel
         from camelot.view.controls.editors.wideeditor import WideEditor
@@ -116,28 +121,28 @@ class FormView( AbstractView ):
         # have no event loop running, so the delegate will never be set, so we get
         # it and are sure it will be there if we are running without threads
         #
-        if not self.delegate:
-            self.delegate = self.model.getItemDelegate()
+        if not self._delegate:
+            self._delegate = self._model.getItemDelegate()
         #
         # end of dirty trick
         #
         # only if all information is available, we can start building the form
-        if not (self.form and self.columns and self.delegate):
+        if not (self._form and self._columns and self._delegate):
             return
         widgets = {}
-        self.widget_mapper.setItemDelegate( self.delegate )
+        self._widget_mapper.setItemDelegate( self._delegate )
         option = QtGui.QStyleOptionViewItem()
         # set version to 5 to indicate the widget will appear on a
         # a form view and not on a table view
         option.version = 5
     
-        for i, ( field_name, field_attributes ) in enumerate( self.columns ):
-            model_index = self.model.index( self.index, i )
+        for i, ( field_name, field_attributes ) in enumerate( self._columns ):
+            model_index = self._model.index( self._index, i )
             hide_title = False
             if 'hide_title' in field_attributes:
                 hide_title = field_attributes['hide_title']
             widget_label = None
-            widget_editor = self.delegate.createEditor( self, option, model_index )
+            widget_editor = self._delegate.createEditor( self, option, model_index )
             if not hide_title:
                 widget_label = UserTranslatableLabel( field_attributes['name'] )
                 if not isinstance(widget_editor, WideEditor):
@@ -153,15 +158,59 @@ class FormView( AbstractView ):
             assert widget_editor
             assert isinstance(widget_editor, QtGui.QWidget)
             
-            self.widget_mapper.addMapping( widget_editor, i )
+            self._widget_mapper.addMapping( widget_editor, i )
             widgets[field_name] = ( widget_label, widget_editor )
     
-        self.widget_mapper.setCurrentIndex( self.index )
-        self.widget_layout.insertWidget( 0, self.form.render( widgets, self ) )
-        self.widget_layout.setContentsMargins( 7, 7, 7, 7 )
+        self._widget_mapper.setCurrentIndex( self._index )
+        self._widget_layout.insertWidget( 0, self._form.render( widgets, self ) )
+        self._widget_layout.setContentsMargins( 7, 7, 7, 7 )
+        
+class FormView( AbstractView ):
+    """A FormView is the combination of a FormWidget, possible actions and menu items
+    
+.. form_widget: The class to be used as a the form widget inside the form view
+
+    """
+
+    form_widget = FormWidget
+    
+    def __init__( self, title, admin, model, index ):
+        AbstractView.__init__( self )
+        layout = QtGui.QVBoxLayout()
+        self._form = FormWidget(admin)
+        self.model = model
+        self.title_prefix = title
+        self.admin = admin
+        self.connect(self._form, FormWidget.changed_signal, self.update_title)
+        self._form.set_model(model)
+        self._form.set_index(index)
+        layout.addWidget(self._form)
+        self.change_title(title)
+        self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
+        self.setLayout( layout )
+    
+        if hasattr( admin, 'form_size' ) and admin.form_size:
+            self.setMinimumSize( admin.form_size[0], admin.form_size[1] )
+      
+        self.validator = admin.create_validator( model )
+        self.validate_before_close = True
+
+        def getActions():
+            return admin.get_form_actions( None )
+      
+        post( getActions, self.setActions )
+        self.update_title()
+    
+    def update_title( self ):
+  
+        def get_title():
+            obj = self.getEntity()
+            return u'%s %s' % ( self.title_prefix, self.admin.get_verbose_identifier( obj ) )
+      
+        post( get_title, self.change_title )
     
     def getEntity( self ):
-        return self.model._get_object( self.widget_mapper.currentIndex() )
+        return self.model._get_object( self._form.get_index() )
     
     def setActions( self, actions ):
         if actions:
@@ -176,45 +225,43 @@ class FormView( AbstractView ):
       
     def viewFirst( self ):
         """select model's first row"""
-        # submit should not happen a second time, since then we don't want
-        # the widgets data to be written to the model
-        self.widget_mapper.submit()
-        self.widget_mapper.toFirst()
+        self._form.submit()
+        self._form.to_first()
         self.update_title()
     
     def viewLast( self ):
         """select model's last row"""
         # submit should not happen a second time, since then we don't want
         # the widgets data to be written to the model
-        self.widget_mapper.submit()
-        self.widget_mapper.toLast()
+        self._form.submit()
+        self._form.to_last()
         self.update_title()
     
     def viewNext( self ):
         """select model's next row"""
         # submit should not happen a second time, since then we don't want
         # the widgets data to be written to the model
-        self.widget_mapper.submit()
-        self.widget_mapper.toNext()
+        self._form.submit()
+        self._form.to_next()
         self.update_title()
     
     def viewPrevious( self ):
         """select model's previous row"""
         # submit should not happen a second time, since then we don't want
         # the widgets data to be written to the model
-        self.widget_mapper.submit()
-        self.widget_mapper.toPrevious()
+        self._form.submit()
+        self._form.to_previous()
         self.update_title()
     
     def showMessage( self, valid ):
         import sip
         if not valid:
-            reply = self.validator.validityDialog( self.widget_mapper.currentIndex(), self ).exec_()
+            reply = self.validator.validityDialog( self._form.get_index(), self ).exec_()
             if reply == QtGui.QMessageBox.Discard:
             # clear mapping to prevent data being written again to the model,
             # then we reverted the row
-                self.widget_mapper.clearMapping()
-                self.model.revertRow( self.widget_mapper.currentIndex() )
+                self._form.clear_mapping()
+                self.model.revertRow( self._form.get_index() )
                 self.validate_before_close = False
                 self.emit( self.closeAfterValidation )
         else:
@@ -227,10 +274,10 @@ class FormView( AbstractView ):
         if self.validate_before_close:
             # submit should not happen a second time, since then we don't
             # want the widgets data to be written to the model
-            self.widget_mapper.submit()
+            self._form.submit()
       
             def validate():
-                return self.validator.isValid( self.widget_mapper.currentIndex() )
+                return self.validator.isValid( self._form.get_index() )
         
             post( validate, self.showMessage )
             return False
