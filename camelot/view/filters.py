@@ -203,57 +203,9 @@ class EditorFilter(Filter):
         self._verbose_name = verbose_name
         
     def render(self, parent, name, options):
-        
-        from PyQt4 import QtCore, QtGui
-        from camelot.view.controls.filterlist import filter_changed_signal
-        from camelot.view.controls import editors
-                
-        class FilterWidget(QtGui.QGroupBox):
-            
-            def __init__(self, name, parent):
-                QtGui.QGroupBox.__init__(self, unicode(name), parent)
-                self._entity, self._field_name, self._field_attributes = options
-                self._field_attributes['editable'] = True
-                layout = QtGui.QVBoxLayout()
-                self._choices = [(0, ugettext('All')), (1, ugettext('None')), (2, ugettext('='))]
-                combobox = QtGui.QComboBox(self)
-                layout.addWidget(combobox)
-                for i,name in self._choices:
-                    combobox.insertItem(i, unicode(name))
-                self.connect(combobox, QtCore.SIGNAL('currentIndexChanged(int)'), self.combobox_changed)
-                delegate = self._field_attributes['delegate'](**self._field_attributes)
-                option = QtGui.QStyleOptionViewItem()
-                option.version = 5
-                self._editor = delegate.createEditor( self, option, None )
-                # explicitely set a value, otherways the current value remains ValueLoading
-                self._editor.set_value(None)
-                self.connect(self._editor, editors.editingFinished, self.editor_editing_finished)
-                layout.addWidget(self._editor)
-                self.setLayout(layout)
-                self._editor.setEnabled(False)
-                self._index = 0
-                self._value = None
-                
-            def combobox_changed(self, index):
-                self._index = index
-                if index==2:
-                    self._editor.setEnabled(True)
-                else:
-                    self._editor.setEnabled(False)
-                self.emit(filter_changed_signal)
-                
-            def editor_editing_finished(self):
-                self._value = self._editor.get_value()
-                self.emit(filter_changed_signal)
-            
-            def decorate_query(self, query):
-                if self._index==0:
-                    return query
-                if self._index==1:
-                    return query.filter(getattr(self._entity, self._field_name)==None)
-                return query.filter(getattr(self._entity, self._field_name)==self._value)
-                
-        return FilterWidget(name, parent)       
+        from camelot.view.controls.filter_operator import FilterOperator
+        entity, field_name, field_attributes = options
+        return FilterOperator(entity, field_name, field_attributes, parent)       
     
     def get_name_and_options(self, admin):
         field_attributes = admin.get_field_attributes(self._field_name)

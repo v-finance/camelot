@@ -45,7 +45,8 @@ from camelot.view.utils import (
     enumeration_to_string,
 )
 
-_numerical_operators = (operator.eq, operator.lt, operator.le, operator.gt, operator.ge)
+_numerical_operators = (operator.eq, operator.ne, operator.lt, operator.le, operator.gt, operator.ge)
+_text_operators = (operator.eq, operator.ne)
 
 _sqlalchemy_to_python_type_ = {
 
@@ -148,6 +149,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'widget': 'str',
         'from_string': string_from_string,
+        'operators' : _text_operators,
     },
 
     sqlalchemy.types.TEXT: lambda f: {
@@ -158,6 +160,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'widget': 'str',
         'from_string': string_from_string,
+        'operators' : _text_operators,
     },
 
     sqlalchemy.types.Unicode: lambda f: {
@@ -168,6 +171,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'widget': 'str',
         'from_string': string_from_string,
+        'operators' : _text_operators,
     },
 
     camelot.types.Image: lambda f: {
@@ -177,7 +181,8 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.ImageDelegate,
         'storage': f.storage,
         'preview_width': 100,
-        'preview_height': 100
+        'preview_height': 100,
+        'operators' : _text_operators,
     },
 
     camelot.types.Code: lambda f: {
@@ -185,7 +190,8 @@ _sqlalchemy_to_python_type_ = {
         'editable': True,
         'delegate': delegates.CodeDelegate,
         'nullable': True,
-        'parts': f.parts
+        'parts': f.parts,
+        'operators' : _text_operators,
     },
 
     camelot.types.IPAddress: lambda f: {
@@ -194,14 +200,16 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'parts': f.parts,
         'delegate': delegates.CodeDelegate,
-        'widget': 'code'
+        'widget': 'code',
+        'operators' : _text_operators,
     },
 
     camelot.types.VirtualAddress: lambda f: {
         'python_type': str,
         'editable': True,
         'nullable': True,
-        'delegate': delegates.VirtualAddressDelegate
+        'delegate': delegates.VirtualAddressDelegate,
+        'operators' : _text_operators,
     },
 
     camelot.types.RichText: lambda f: {
@@ -210,6 +218,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'delegate': delegates.RichTextDelegate,
         'from_string': string_from_string,
+        'operators' : _text_operators,
     },
 
     camelot.types.Color: lambda f: {
@@ -217,7 +226,8 @@ _sqlalchemy_to_python_type_ = {
         'python_type': str,
         'editable': True,
         'nullable': True,
-        'widget': 'color'
+        'widget': 'color',
+        'operators' : _text_operators,
     },
 
     camelot.types.Rating: lambda f: {
@@ -226,7 +236,8 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'python_type': int,
         'widget': 'star',
-        'from_string': int_from_string
+        'from_string': int_from_string,
+        'operators' : _numerical_operators,
     },
 
     camelot.types.Enumeration: lambda f: {
@@ -237,6 +248,7 @@ _sqlalchemy_to_python_type_ = {
         'editable': True,
         'nullable': False,
         'widget': 'combobox',
+        'operators' : _numerical_operators,
     },
     
     camelot.types.Language: lambda f: {
@@ -253,7 +265,8 @@ _sqlalchemy_to_python_type_ = {
         'python_type': str,
         'editable': True,
         'delegate': delegates.FileDelegate,
-        'storage': f.storage
+        'storage': f.storage,
+        'operators' : _text_operators,
     },
 }
 

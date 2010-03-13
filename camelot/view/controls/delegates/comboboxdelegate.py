@@ -40,7 +40,7 @@ class ComboBoxDelegate(CustomDelegate):
     __metaclass__ = DocumentationMetaclass
     editor = editors.ChoicesEditor
 
-    def __init__(self, parent, choices, editable=True, **kwargs):
+    def __init__(self, parent=None, choices=[], editable=True, **kwargs):
         CustomDelegate.__init__(self, parent, editable=editable, **kwargs)
         self.choices = choices
 

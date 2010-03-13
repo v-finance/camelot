@@ -36,6 +36,7 @@ from PyQt4.QtCore import SIGNAL
 from PyQt4.QtCore import Qt
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
+from camelot.view.controls.filterlist import filter_changed_signal
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import model_function, gui_function, post
@@ -112,6 +113,7 @@ class HeaderWidget( QtGui.QWidget ):
   
     def __init__( self, parent, admin ):
         QtGui.QWidget.__init__( self, parent )
+        self._admin = admin
         layout = QtGui.QVBoxLayout()
         widget_layout = QtGui.QHBoxLayout()
         self.search = self.search_widget( self )
@@ -135,14 +137,26 @@ class HeaderWidget( QtGui.QWidget ):
         post( admin.get_columns, self._fill_expanded_search_options )
     
     def _fill_expanded_search_options(self, columns):
+        from camelot.view.controls.filter_operator import FilterOperator
         layout = QtGui.QHBoxLayout()
         for field, attributes in columns:
             if 'operators' in attributes:
-                widget = QtGui.QLabel(field)
+                widget = FilterOperator( self._admin.entity, field, attributes, self)
+                self.connect( widget, filter_changed_signal,  self._filter_changed )
                 layout.addWidget( widget )
+        layout.addStretch()
         self._expanded_search.setLayout( layout )
         
+    def _filter_changed(self):
+        self.emit(QtCore.SIGNAL('filters_changed'))
         
+    def decorate_query(self, query):
+        """Apply expanded filters on the query"""
+        for i in range(self._expanded_search.layout().count()):
+            if self._expanded_search.layout().itemAt(i).widget():
+                query = self._expanded_search.layout().itemAt(i).widget().decorate_query(query)
+        return query
+            
     def expand_search_options(self):
         if self._expanded_search.isHidden():
             self._expanded_search.show()
@@ -244,6 +258,7 @@ class TableView( AbstractView  ):
         self.search_filter = lambda q: q
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find), self)
         self.connect( shortcut, QtCore.SIGNAL( 'activated()' ), self.activate_search )
+        self.connect( self.header, QtCore.SIGNAL('filters_changed'),  self.rebuildQuery )
         # give the table widget focus to prevent the header and its search control to
         # receive default focus, as this would prevent the displaying of 'Search...' in the
         # search control, but this conflicts with the MDI, resulting in the window not
@@ -415,31 +430,6 @@ class TableView( AbstractView  ):
                                            onexpunge = lambda o:self._table_model.removeEntityInstance( o ) )
         workspace.addSubWindow( form )
         form.show()
-    
-
-    
-#    @gui_function
-#    def set_filters_and_actions( self, filters_and_actions ):
-#        """sets filters for the tableview"""
-#        filters, actions = filters_and_actions
-#        from filterlist import FilterList
-#        from actionsbox import ActionsBox
-#        logger.debug( 'setting filters for tableview' )
-#        if self.filters:
-#          self.disconnect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
-#          self.filters.deleteLater()
-#          self.filters = None
-#        if self.actions:
-#          self.actions.deleteLater()
-#          self.actions = None          
-#        if filters:
-#          self.filters = FilterList( filters, parent=self )
-#          self.splitter.insertWidget( 2, self.filters )
-#          self.connect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
-#        if actions:
-#          self.actions = ActionsBox( self, self._table_model.collection_getter, lambda:[] )
-#          self.actions.setActions( actions )
-#          self.splitter.insertWidget( 2, self.filters )
 
     def toHtml( self ):
         """generates html of the table"""
@@ -537,6 +527,7 @@ class TableView( AbstractView  ):
     
         def rebuild_query():
             query = self.admin.entity.query
+            query = self.header.decorate_query(query)
             if self.filters:
                 query = self.filters.decorate_query( query )
             if self.search_filter:
