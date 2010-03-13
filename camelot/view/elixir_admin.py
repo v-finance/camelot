@@ -168,7 +168,7 @@ class EntityAdmin(ObjectAdmin):
             except UnmappedClassError, exception:
                 from elixir import entities
                 mapped_entities = [str(e) for e in entities]
-                logger.error(u'%s is not a mapped class, mapped classes include %s'%(self.entity, u','.join(mapped_entities)),
+                logger.error(u'%s is not a mapped class, mapped classes include %s'%(self.entity, u','.join([unicode(me) for me in mapped_entities])),
                              exc_info=exception)
                 raise exception
             try:
@@ -400,7 +400,7 @@ class EntityAdmin(ObjectAdmin):
                 from workspace import get_workspace
                 model = QueryTableProxy(
                     tableview.admin,
-                    tableview._table_model._query_getter,
+                    tableview._table_model.get_query_getter(),
                     tableview.admin.get_fields,
                     max_number_of_rows=1
                 )

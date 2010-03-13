@@ -32,10 +32,8 @@ from PyQt4.QtCore import Qt
 import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
-from collection_proxy import CollectionProxy, stripped_data_to_unicode, \
-                             strip_data_from_object, tool_tips_from_object, \
-                             background_colors_from_object
-from camelot.view.model_thread import model_function, gui_function
+from collection_proxy import CollectionProxy, strip_data_from_object
+from camelot.view.model_thread import model_function, gui_function, post
 
 
 class QueryTableProxy(CollectionProxy):
@@ -49,12 +47,23 @@ class QueryTableProxy(CollectionProxy):
         """@param query_getter: a model_thread function that returns a query"""
         logger.debug('initialize query table')
         self._query_getter = query_getter
+        self._sort_decorator = None
         #rows appended to the table which have not yet been flushed to the
         #database, and as such cannot be a result of the query
         self._appended_rows = []
         CollectionProxy.__init__(self, admin, lambda: [],
                                  columns_getter, max_number_of_rows=10, edits=None)
 
+    def get_query_getter(self):
+        if not self._sort_decorator:
+            return self._query_getter
+        else:
+            
+            def sorted_query_getter():
+                return self._sort_decorator(self._query_getter())
+            
+            return sorted_query_getter
+    
     @model_function
     def _clean_appended_rows(self):
         """Remove those rows from appended rows that have been flushed"""
@@ -68,7 +77,7 @@ class QueryTableProxy(CollectionProxy):
     @model_function
     def getRowCount(self):
         self._clean_appended_rows()
-        return self._query_getter().count() + len(self._appended_rows)
+        return self.get_query_getter()().count() + len(self._appended_rows)
 
     @gui_function
     def setQuery(self, query_getter):
@@ -79,13 +88,50 @@ class QueryTableProxy(CollectionProxy):
     def get_collection_getter(self):
         
         def collection_getter():
-            return self._query_getter().all()
+            return self.get_query_getter()().all()
         
         return collection_getter
     
     @gui_function
     def sort( self, column, order ):
-        pass   
+        
+        def create_set_sort_decorator(column, order):
+
+            def set_sort_decorator():
+                from sqlalchemy import orm
+                from sqlalchemy.exceptions import InvalidRequestError
+                field_name = self._columns[column][0]
+                class_attribute = getattr(self.admin.entity, field_name)
+                mapper = orm.class_mapper(self.admin.entity)
+                try:
+                    property = mapper.get_property(
+                        field_name,
+                        resolve_synonyms=True
+                    )
+                except InvalidRequestError:
+                    #
+                    # If the field name is not a property of the mapper, we cannot
+                    # sort it using sql
+                    #
+                    return self.rows
+                
+                def create_sort_decorator(class_attribute, order):
+                    
+                    def sort_decorator(query):
+                        if order:
+                            return query.order_by(class_attribute.desc())
+                        else:
+                            return query.order_by(class_attribute)
+                    
+                    return sort_decorator
+                
+                
+                self._sort_decorator = create_sort_decorator(class_attribute, order)
+                return self.rows
+                    
+            return set_sort_decorator
+            
+        post( create_set_sort_decorator(column, order), self._refresh_content )
 
     def append(self, o):
         """Add an object to this collection, used when inserting a new
@@ -102,13 +148,13 @@ class QueryTableProxy(CollectionProxy):
     @model_function
     def getData(self):
         """Generator for all the data queried by this proxy"""
-        for _i,o in enumerate(self._query_getter().all()):
+        for _i,o in enumerate(self.get_query_getter()().all()):
             yield strip_data_from_object(o, self.getColumns())
 
     @model_function
     def _extend_cache(self, offset, limit):
         """Extend the cache around row"""
-        q = self._query_getter().offset(offset).limit(limit)
+        q = self.get_query_getter()().offset(offset).limit(limit)
         columns = self.getColumns()
         for i, o in enumerate(q.all()):
             self._add_data(columns, i+offset, o)
@@ -135,7 +181,7 @@ class QueryTableProxy(CollectionProxy):
             except KeyError:
                 pass
             # momentary hack for list error that prevents forms to be closed
-            res = self._query_getter().offset(row)
+            res = self.get_query_getter()().offset(row)
             if isinstance(res, list):
                 res = res[0]
             # @todo: remove this try catch and find out why it sometimes fails

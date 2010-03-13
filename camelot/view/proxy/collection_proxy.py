@@ -258,6 +258,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
 
+    def get_validator(self):
+        return self.validator
+    
     def map_to_source(self, sorted_row_number):
         """Converts a sorted row number to a row number of the source
         collection"""

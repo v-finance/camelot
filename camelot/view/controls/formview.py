@@ -54,6 +54,9 @@ class FormWidget( QtGui.QWidget ):
         self._delegate = None
         self.setLayout( self._widget_layout )
                 
+    def get_model(self):
+        return self._model
+    
     def set_model(self, model):
         self._model = model
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'

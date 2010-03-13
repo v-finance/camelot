@@ -126,13 +126,23 @@ class HeaderWidget( QtGui.QWidget ):
         else:
             self.number_of_rows = None
         layout.addLayout( widget_layout )
-        self._expanded_search = QtGui.QLabel('Expanded')
+        self._expanded_search = QtGui.QWidget()
         self._expanded_search.hide()
         layout.addWidget(self._expanded_search)
         self.setLayout( layout )
         self.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
         self.setNumberOfRows( 0 )
+        post( admin.get_columns, self._fill_expanded_search_options )
     
+    def _fill_expanded_search_options(self, columns):
+        layout = QtGui.QHBoxLayout()
+        for field, attributes in columns:
+            if 'operators' in attributes:
+                widget = QtGui.QLabel(field)
+                layout.addWidget( widget )
+        self._expanded_search.setLayout( layout )
+        
+        
     def expand_search_options(self):
         if self._expanded_search.isHidden():
             self._expanded_search.show()

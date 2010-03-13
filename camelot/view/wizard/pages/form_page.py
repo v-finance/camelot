@@ -25,10 +25,11 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
+from camelot.view.model_thread import post
 
 class FormPage(QtGui.QWizardPage):
     """FormPage is a generic wizard page that displays a form for an object
@@ -36,7 +37,9 @@ class FormPage(QtGui.QWizardPage):
     should be the class of the object to be used to store the form information.
     
     To access the data stored by the wizard form into a data object, use its
-    get_data method .
+    get_data method.
+    
+    The 'Next' button will only be activated when the form is complete.
     """
 
     icon = Icon('tango/32x32/mimetypes/x-office-spreadsheet.png')
@@ -56,16 +59,32 @@ class FormPage(QtGui.QWizardPage):
         self.setSubTitle(unicode(self.get_sub_title()))
         self.setPixmap(QtGui.QWizard.LogoPixmap, self.get_icon().getQPixmap())
         self._data = self.Data()
+        self._complete = False
         
         admin = self.get_admin()
-        collection_proxy = CollectionProxy(admin, lambda:[self._data], admin.get_fields)
+        self._model = CollectionProxy(admin, lambda:[self._data], admin.get_fields)
         
         layout = QtGui.QVBoxLayout()
         form = FormWidget(admin)
-        form.set_model(collection_proxy)
+        self.connect(form, FormWidget.changed_signal, self._form_changed)
+        form.set_model(self._model)
         layout.addWidget(form)
         self.setLayout(layout)
+    
+    def _form_changed(self):
+        
+        def is_valid():
+            return self._model.get_validator().isValid(0)
+        
+        post(is_valid, self._change_complete)
+        
+    def _change_complete(self, complete):
+        self._complete = complete
+        self.emit(QtCore.SIGNAL('completeChanged ()'))
             
+    def isComplete(self):
+        return self._complete
+    
     def get_admin(self):
         from camelot.view.application_admin import get_application_admin
         app_admin = get_application_admin()

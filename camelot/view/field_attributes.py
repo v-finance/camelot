@@ -30,6 +30,7 @@
 import sqlalchemy.types
 import camelot.types
 import datetime
+import operator
 
 from controls import delegates
 from camelot.core import constants
@@ -44,6 +45,7 @@ from camelot.view.utils import (
     enumeration_to_string,
 )
 
+_numerical_operators = (operator.eq, operator.lt, operator.le, operator.gt, operator.ge)
 
 _sqlalchemy_to_python_type_ = {
 
@@ -52,7 +54,8 @@ _sqlalchemy_to_python_type_ = {
         'editable': True,
         'nullable': True,
         'delegate': delegates.BoolDelegate,
-        'from_string': bool_from_string
+        'from_string': bool_from_string,
+        'operators' : (operator.eq,),
     },
 
     sqlalchemy.types.BOOLEAN: lambda f: {
@@ -60,7 +63,8 @@ _sqlalchemy_to_python_type_ = {
         'editable': True,
         'nullable': True,
         'delegate': delegates.BoolDelegate,
-        'from_string': bool_from_string
+        'from_string': bool_from_string,
+        'operators' : (operator.eq,),
     },
 
     sqlalchemy.types.Date: lambda f: {
@@ -71,7 +75,8 @@ _sqlalchemy_to_python_type_ = {
         'max': None,
         'nullable': True,
         'delegate': delegates.DateDelegate,
-        'from_string': date_from_string
+        'from_string': date_from_string,
+        'operators' : _numerical_operators,
     },
 
     sqlalchemy.types.Time : lambda f: {
@@ -82,7 +87,8 @@ _sqlalchemy_to_python_type_ = {
             'delegate': delegates.TimeDelegate,
             'format': constants.camelot_time_format,
             'nullable': True,
-            'from_string': time_from_string
+            'from_string': time_from_string,
+            'operators': _numerical_operators,
     },
 
     sqlalchemy.types.DateTime : lambda f: {
@@ -93,7 +99,8 @@ _sqlalchemy_to_python_type_ = {
         'format': constants.camelot_datetime_format,
         'nullable': True,
         'delegate': delegates.DateTimeDelegate,
-        'from_string': datetime_from_string
+        'from_string': datetime_from_string,
+        'operators': _numerical_operators,
     },
 
     sqlalchemy.types.Float: lambda f: {
@@ -104,7 +111,8 @@ _sqlalchemy_to_python_type_ = {
         'maximum': constants.camelot_maxfloat,
         'nullable': True,
         'delegate': delegates.FloatDelegate,
-        'from_string': float_from_string
+        'from_string': float_from_string,
+        'operators': _numerical_operators,
     },
 
     sqlalchemy.types.Integer: lambda f: {
@@ -116,7 +124,8 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.IntegerDelegate,
         'from_string': int_from_string,
         'to_string': unicode,
-        'widget': 'int'
+        'widget': 'int',
+        'operators': _numerical_operators,
     },
 
     sqlalchemy.types.INT: lambda f: {
@@ -127,7 +136,8 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'delegate': delegates.IntegerDelegate,
         'from_string': int_from_string,
-        'widget': 'int'
+        'widget': 'int',
+        'operators': _numerical_operators,
     },
 
     sqlalchemy.types.String: lambda f: {
