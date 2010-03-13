@@ -128,13 +128,14 @@ class HeaderWidget( QtGui.QWidget ):
         else:
             self.number_of_rows = None
         layout.addLayout( widget_layout )
+        self._expanded_filters_created = False
         self._expanded_search = QtGui.QWidget()
         self._expanded_search.hide()
         layout.addWidget(self._expanded_search)
         self.setLayout( layout )
         self.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
         self.setNumberOfRows( 0 )
-        post( admin.get_columns, self._fill_expanded_search_options )
+        
     
     def _fill_expanded_search_options(self, columns):
         from camelot.view.controls.filter_operator import FilterOperator
@@ -146,6 +147,7 @@ class HeaderWidget( QtGui.QWidget ):
                 layout.addWidget( widget )
         layout.addStretch()
         self._expanded_search.setLayout( layout )
+        self._expanded_filters_created = True
         
     def _filter_changed(self):
         self.emit(QtCore.SIGNAL('filters_changed'))
@@ -159,6 +161,8 @@ class HeaderWidget( QtGui.QWidget ):
             
     def expand_search_options(self):
         if self._expanded_search.isHidden():
+            if not self._expanded_filters_created:
+                post( self._admin.get_columns, self._fill_expanded_search_options )
             self._expanded_search.show()
         else:
             self._expanded_search.hide()
@@ -258,7 +262,8 @@ class TableView( AbstractView  ):
         self.search_filter = lambda q: q
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find), self)
         self.connect( shortcut, QtCore.SIGNAL( 'activated()' ), self.activate_search )
-        self.connect( self.header, QtCore.SIGNAL('filters_changed'),  self.rebuildQuery )
+        if self.header_widget:
+            self.connect( self.header, QtCore.SIGNAL('filters_changed'),  self.rebuildQuery )
         # give the table widget focus to prevent the header and its search control to
         # receive default focus, as this would prevent the displaying of 'Search...' in the
         # search control, but this conflicts with the MDI, resulting in the window not
