@@ -179,7 +179,7 @@ class FormView( AbstractView ):
     
     def __init__( self, title, admin, model, index ):
         AbstractView.__init__( self )
-        layout = QtGui.QVBoxLayout()
+        layout = QtGui.QHBoxLayout()
         self._form = FormWidget(admin)
         self.model = model
         self.title_prefix = title
@@ -224,7 +224,7 @@ class FormView( AbstractView ):
             self.actions_widget.setActions( actions )
             side_panel_layout.insertWidget( 1, self.actions_widget )
             side_panel_layout.addStretch()
-            self.widget_layout.addLayout(side_panel_layout)
+            self.layout().addLayout(side_panel_layout)
       
     def viewFirst( self ):
         """select model's first row"""

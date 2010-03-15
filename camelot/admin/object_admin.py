@@ -552,7 +552,7 @@ class ObjectAdmin(object):
                     if reply == QtGui.QMessageBox.Discard:
                         # clear mapping to prevent data being written again to
                         # the model, after we reverted the row
-                        self.form_view.widget_mapper.clearMapping()
+                        self.form_view._form.clear_mapping()
 
                         def onexpunge_on_all():
                             if onexpunge:
@@ -590,7 +590,7 @@ class ObjectAdmin(object):
                     self.validate_before_close
                 )
                 if self.validate_before_close:
-                    self.form_view.widget_mapper.submit()
+                    self.form_view._form.submit()
                     logger.debug(
                         'unflushed rows : %s' %
                         str(model.hasUnflushedRows())
