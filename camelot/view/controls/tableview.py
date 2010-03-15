@@ -154,9 +154,10 @@ class HeaderWidget( QtGui.QWidget ):
         
     def decorate_query(self, query):
         """Apply expanded filters on the query"""
-        for i in range(self._expanded_search.layout().count()):
-            if self._expanded_search.layout().itemAt(i).widget():
-                query = self._expanded_search.layout().itemAt(i).widget().decorate_query(query)
+        if self._expanded_filters_created:
+            for i in range(self._expanded_search.layout().count()):
+                if self._expanded_search.layout().itemAt(i).widget():
+                    query = self._expanded_search.layout().itemAt(i).widget().decorate_query(query)
         return query
             
     def expand_search_options(self):
