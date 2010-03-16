@@ -164,7 +164,7 @@ class Application(object):
             app.processEvents()
             main_window = self.create_main_window()
             self.close_splashscreen(splash_window, main_window)
-            self.start_event_loop(app)
+            return self.start_event_loop(app)
         except Exception, e:
             logger.error( 'exception in initialization', exc_info = e )
             import traceback, cStringIO
