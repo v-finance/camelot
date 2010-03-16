@@ -28,6 +28,7 @@
 from PyQt4 import QtGui, QtCore
 
 from camelot.core.utils import ugettext
+from camelot.view.utils import operator_names
 from camelot.view.controls import editors
 from camelot.view.controls.filterlist import filter_changed_signal
 
@@ -39,7 +40,8 @@ class FilterOperator(QtGui.QGroupBox):
         self._entity, self._field_name, self._field_attributes = entity, field_name, field_attributes
         self._field_attributes['editable'] = True
         layout = QtGui.QVBoxLayout()
-        self._choices = [(0, ugettext('All')), (1, ugettext('None')), (2, ugettext('='))]
+        self._operators = field_attributes.get('operators', [])
+        self._choices = [(0, ugettext('All')), (1, ugettext('None')),] + [(i+2, ugettext(operator_names[operator])) for i,operator in enumerate(self._operators)]
         combobox = QtGui.QComboBox(self)
         layout.addWidget(combobox)
         for i,name in self._choices:
@@ -60,7 +62,7 @@ class FilterOperator(QtGui.QGroupBox):
         
     def combobox_changed(self, index):
         self._index = index
-        if index==2:
+        if index>=2:
             self._editor.setEnabled(True)
         else:
             self._editor.setEnabled(False)
@@ -75,4 +77,4 @@ class FilterOperator(QtGui.QGroupBox):
             return query
         if self._index==1:
             return query.filter(getattr(self._entity, self._field_name)==None)
-        return query.filter(getattr(self._entity, self._field_name)==self._value)
+        return query.filter(self._operators[self._index-2](getattr(self._entity, self._field_name), self._value))

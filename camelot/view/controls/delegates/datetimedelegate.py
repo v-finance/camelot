@@ -12,7 +12,7 @@ class DateTimeDelegate(CustomDelegate):
     
     editor = editors.DateTimeEditor
     
-    def __init__(self, parent, editable, **kwargs):
+    def __init__(self, parent=None, editable=True, **kwargs):
         CustomDelegate.__init__(self, parent, editable=editable, **kwargs)
         locale = QtCore.QLocale()
         self.dateTime_format = locale.dateTimeFormat(locale.ShortFormat)

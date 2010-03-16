@@ -32,6 +32,7 @@ from PyQt4 import QtCore
 from datetime import datetime, time, date
 import re
 import logging
+import operator
 
 from camelot.core import constants
 from camelot.core.utils import ugettext
@@ -148,3 +149,12 @@ def pyvalue_from_string(pytype, s):
 
 def enumeration_to_string(value):
     return ugettext(unicode(value).replace('_', ' ').capitalize())
+
+operator_names = {
+    operator.eq:'=',
+    operator.ne:'!=',
+    operator.lt:'<',
+    operator.le:'<=',
+    operator.gt:'>',
+    operator.ge:'>=',
+}
