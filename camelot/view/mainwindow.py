@@ -336,6 +336,13 @@ class MainWindow(QtGui.QMainWindow):
             self.viewNextAct.setIconVisibleInMenu(False)
             self.viewPreviousAct.setIconVisibleInMenu(False)
 
+        self.updateValueAct = createAction(
+            parent = self,
+            text = _('Replace field contents'),
+            slot = self.updateValue,
+            tip = _('Replace the content of a field for all rows in a selection')
+        )
+        
         self.exportToExcelAct = createAction(
             parent=self,
             text=_('Export to MS Excel'),
@@ -459,6 +466,12 @@ class MainWindow(QtGui.QMainWindow):
         active = self.activeMdiChild()
         active.widget().viewPrevious()
 
+    def updateValue(self):
+        from camelot.view.wizard.update_value import UpdateValueWizard
+        
+        wizard = UpdateValueWizard(admin=True)
+        wizard.exec_()
+    
     def exportToExcel(self):
         """creates an excel file from the view"""
 
@@ -524,7 +537,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.editMenu = self.menuBar().addMenu(_('&Edit'))
 
-        addActions(self.editMenu, (self.copyAct,))
+        addActions(self.editMenu, (self.copyAct, self.updateValueAct))
         
         self.viewMenu = self.menuBar().addMenu(_('View'))
         addActions(self.viewMenu, (self.sessionRefreshAct,))

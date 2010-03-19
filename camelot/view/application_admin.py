@@ -94,11 +94,11 @@ class ApplicationAdmin(QtCore.QObject):
             admin_class = entity.Admin
         if admin_class:
             try:
-                #
-                # raised KeyError to prevent caching
-                # caused a problem with admins used in different parent admins where one is notEditableAdmin
-                #
-                raise KeyError
+#                #
+#                # raised KeyError to prevent caching
+#                # caused a problem with admins used in different parent admins where one is notEditableAdmin
+#                #
+#                raise KeyError
                 return self._object_admin_cache[admin_class]
             except KeyError:
                 admin = admin_class(self, entity)

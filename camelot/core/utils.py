@@ -117,7 +117,7 @@ def ugettext(string_to_translate):
     assert isinstance(string_to_translate, basestring)
     result = _translations_.get(string_to_translate, None)
     if not result:
-        result = unicode(QtCore.QCoreApplication.translate('', string_to_translate))
+        result = unicode(QtCore.QCoreApplication.translate('', QtCore.QString(string_to_translate)))
     return result
   
 class ugettext_lazy(object):

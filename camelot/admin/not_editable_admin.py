@@ -28,6 +28,8 @@
 """Class decorator to make all fields visualized with the Admin into read-only
 fields"""
 
+from copy import copy
+
 def notEditableAdmin(original_admin, actions=False):
     """Turn all fields visualized with original_admin into read only fields
   :param original_admin: an implementation of ObjectAdmin
@@ -53,6 +55,7 @@ def notEditableAdmin(original_admin, actions=False):
                 
                 def __init__(self, original_admin):
                     self._original_admin = original_admin
+                    self._field_attributes = dict()
                     
                 def __getattr__(self, name):
                     return self._original_admin.__getattribute__(name)
@@ -62,9 +65,12 @@ def notEditableAdmin(original_admin, actions=False):
                     return [(field_name,self.get_field_attributes(field_name)) for field_name,_attrs in fields]
                 
                 def get_field_attributes(self, field_name):
-                    attribs = self._original_admin.get_field_attributes(field_name)
-                    attribs['editable'] = False
-                    return attribs
+                    try:
+                        return self._field_attributes[field_name]
+                    except KeyError:
+                        attribs = copy( self._original_admin.get_field_attributes(field_name) )
+                        attribs['editable'] = False
+                        return attribs
                 
                 def get_related_entity_admin(self, entity):
                     return AdminReadOnlyDecorator(self._original_admin.get_related_entity_admin(entity))

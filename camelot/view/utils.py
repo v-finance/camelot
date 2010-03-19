@@ -151,10 +151,10 @@ def enumeration_to_string(value):
     return ugettext(unicode(value).replace('_', ' ').capitalize())
 
 operator_names = {
-    operator.eq:'=',
-    operator.ne:'!=',
-    operator.lt:'<',
-    operator.le:'<=',
-    operator.gt:'>',
-    operator.ge:'>=',
+    operator.eq : u'=',
+    operator.ne : u'!=',
+    operator.lt : u'<',
+    operator.le : u'<=',
+    operator.gt : u'>',
+    operator.ge : u'>=',
 }
