@@ -164,16 +164,45 @@ class RowDataAdminDecorator(object):
     """Decorator that transforms the Admin of the class to be imported to an
     Admin of the RowData objects to be used when previewing and validating the
     data to be imported"""
+    
+    invalid_color = QColor('Pink')
 
     def __init__(self, object_admin):
         """:param object_admin: the object_admin object that will be
         decorated"""
         self._object_admin = object_admin
+        self._columns = None
 
     def __getattr__(self, attr):
         return getattr(self._object_admin, attr)
 
+    def create_validator(self, model):
+        """Creates a validator that validates the data to be imported, the validator will
+        check if the background of the cell is pink, and if it is it will mark that object
+        as invalid.
+        """
+        from camelot.admin.validator.object_validator import ObjectValidator
+        
+        class NewObjectValidator(ObjectValidator):
+            
+            def objectValidity(self, entity_instance):
+                for _field_name, attributes in self.admin.get_columns():
+                    background_color_getter = attributes.get('background_color', None)
+                    if background_color_getter:
+                        background_color = background_color_getter(entity_instance)
+                        if background_color==self.admin.invalid_color:
+                            return ['invalid field']
+                return []
+            
+        return NewObjectValidator(self, model)
+    
+    def get_fields(self):
+        return self.get_columns()
+    
     def get_columns(self):
+        if self._columns:
+            return self._columns
+        
         original_columns = self._object_admin.get_columns()
 
         def new_field_attributes(i, original_field_attributes, original_field):
@@ -191,12 +220,12 @@ class RowDataAdminDecorator(object):
                     background to pink"""
                     value = getattr(o, 'column_%i'%i)
                     if not value and (attributes['nullable']==False):
-                        return QColor('Pink')
+                        return self.invalid_color
                     try:
                         value = attributes['from_string'](value)
                         return None
                     except:
-                        return QColor('Pink')
+                        return self.invalid_color
 
                 attributes['background_color'] = get_background_color
 
@@ -211,6 +240,8 @@ class RowDataAdminDecorator(object):
             if attributes['editable']
         ]
 
+        self._columns = new_columns
+        
         return new_columns
 
 
@@ -218,13 +249,16 @@ class DataPreviewPage(QtGui.QWizardPage):
     """DataPreviewPage is the previewing page for the import wizard"""
 
     def __init__(self, parent=None, model=None, collection_getter=None):
+        from camelot.view.controls.editors import NoteEditor
         super(DataPreviewPage, self).__init__(parent)
         assert model
         assert collection_getter
         self.setTitle(_('Data Preview'))
         self.setSubTitle(_('Please review the data below.'))
+        self._complete = False
         self.model = model
         self.collection_getter = collection_getter
+        self.connect( self.model, QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), self.update_complete )
 
         icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
@@ -234,23 +268,59 @@ class DataPreviewPage(QtGui.QWizardPage):
             parent=self,
             create_inline=True
         )
-
+        self._note = NoteEditor()
+        self._note.set_value(None)
+        
         ly = QtGui.QVBoxLayout()
         ly.addWidget(self.previewtable)
+        ly.addWidget(self._note)
         self.setLayout(ly)
 
         self.setCommitPage(True)
         self.setButtonText(QtGui.QWizard.CommitButton, _('Import'))
 
+    def update_complete(self):
+        """Check if the model has invalid rows and change the complete status acccordingly
+        """
+        
+        from camelot.view.model_thread import post
+    
+        def verify_validity():
+            complete = not self.model.get_validator().has_invalid_rows()
+            return complete
+        
+        post( verify_validity, self.set_complete )
+        
+    def set_complete(self, complete):
+        self._complete = complete
+        self.emit(QtCore.SIGNAL('completeChanged()'))
+        if complete:
+            self._note.set_value(None)
+        else:
+            self._note.set_value(_('Please correct the data above before proceeding with the import.<br/>Incorrect cells have a pink background.'))
+        
     def initializePage(self):
         """Gets all info needed from SelectFilePage and feeds table"""
         filename = self.field('datasource').toString()
+        self._complete = False
+        self.emit(QtCore.SIGNAL('completeChanged()'))
         self.model.set_collection_getter(self.collection_getter(filename))
         self.previewtable.set_value(self.model)
-        self.emit(QtCore.SIGNAL('completeChanged()'))
+        self.update_complete()
+        
+    def validatePage(self):
+        answer = QtGui.QMessageBox.question(self, 
+                                           _('Proceed with import'), 
+                                           _('Importing data cannot be undone,\nare you sure you want to continue'),
+                                           QtGui.QMessageBox.Cancel,
+                                           QtGui.QMessageBox.Ok,
+                                           )
+        if answer==QtGui.QMessageBox.Ok:
+            return True
+        return False
 
     def isComplete(self):
-        return True
+        return self._complete
 
 
 class FinalPage(QtGui.QWizardPage):
@@ -312,7 +382,6 @@ class FinalPage(QtGui.QWizardPage):
         self.progressbar.setValue(0)
         self.emit(QtCore.SIGNAL('completeChanged()'))
         post(self.run_import, self.import_finished, self.import_finished)
-
 
 class ImportWizard(QtGui.QWizard):
     """ImportWizard provides a two-step wizard for importing data as objects

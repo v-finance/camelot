@@ -6,7 +6,7 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
     """An editor that behaves like a note, the editor hides itself when
     there is no text to display"""
     
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent=None, **kwargs):
         QtGui.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setTextFormat(QtCore.Qt.RichText)
