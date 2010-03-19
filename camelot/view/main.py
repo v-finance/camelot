@@ -202,3 +202,7 @@ def main(application_admin,
             
     app = ShortcutApplication(application_admin)
     app.main()
+    
+if __name__ == '__main__':
+    from application_admin import ApplicationAdmin
+    main(ApplicationAdmin())

@@ -29,21 +29,23 @@
 fields"""
 
 from copy import copy
+def notEditableAdmin(original_admin, actions=False, editable_fields=None):
 
-def notEditableAdmin(original_admin, actions=False):
     """Turn all fields visualized with original_admin into read only fields
   :param original_admin: an implementation of ObjectAdmin
   :param actions: True if the notEditableAdmin should have its actions enabled, default to False
+  :param editable_fields: list of fields that should remain editable
 
   usage ::
 
     class Movie(Entity):
       name = Field(Unicode(50))
+      contributions = Field(Unicode(255))
 
       class Admin(EntityAdmin):
-        list_display = ['name']
+        list_display = ['name', 'contributions]
 
-      Admin = notEditableAdmin(Admin)
+      Admin = notEditableAdmin(Admin, editable_fields=['contributions'])
     """
     
     class NewAdmin(original_admin):
@@ -53,8 +55,9 @@ def notEditableAdmin(original_admin, actions=False):
             
             class AdminReadOnlyDecorator(object):
                 
-                def __init__(self, original_admin):
+                def __init__(self, original_admin, editable_fields):
                     self._original_admin = original_admin
+                    self._editable_fields = editable_fields
                     self._field_attributes = dict()
                     
                 def __getattr__(self, name):
@@ -69,7 +72,10 @@ def notEditableAdmin(original_admin, actions=False):
                         return self._field_attributes[field_name]
                     except KeyError:
                         attribs = copy( self._original_admin.get_field_attributes(field_name) )
-                        attribs['editable'] = False
+                        if self._editable_fields and field_name in self._editable_fields:
+                            attribs['editable'] = True
+                        else: 
+                            attribs['editable'] = False
                         return attribs
                 
                 def get_related_entity_admin(self, entity):
@@ -85,11 +91,14 @@ def notEditableAdmin(original_admin, actions=False):
                     return [(field, self.get_field_attributes(field))
                             for field, _attrs in self._original_admin.get_columns()]           
                      
-            return AdminReadOnlyDecorator(admin)
+            return AdminReadOnlyDecorator(admin, editable_fields)
 
         def get_field_attributes(self, field_name):
             attribs = original_admin.get_field_attributes(self, field_name)
-            attribs['editable'] = False
+            if editable_fields and field_name in editable_fields:
+                attribs['editable'] = True
+            else:
+                attribs['editable'] = False
             return attribs
         
         def get_form_actions(self, *a, **kwa):
