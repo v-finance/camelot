@@ -113,7 +113,7 @@ class QueryTableProxy(CollectionProxy):
                     # If the field name is not a property of the mapper, we cannot
                     # sort it using sql
                     #
-                    return self.rows
+                    return self._rows
                 
                 def create_sort_decorator(class_attribute, order):
                     
@@ -127,7 +127,7 @@ class QueryTableProxy(CollectionProxy):
                 
                 
                 self._sort_decorator = create_sort_decorator(class_attribute, order)
-                return self.rows
+                return self._rows
                     
             return set_sort_decorator
             
@@ -138,12 +138,12 @@ class QueryTableProxy(CollectionProxy):
         row, overwrite this method for specific behaviour in subclasses"""
         if not o.id:
             self._appended_rows.append(o)
-        self.rows = self.rows + 1
+        self._rows = self._rows + 1
 
     def remove(self, o):
         if o in self._appended_rows:
             self._appended_rows.remove(o)
-        self.rows = self.rows - 1
+        self._rows = self._rows - 1
 
     @model_function
     def getData(self):
@@ -158,10 +158,10 @@ class QueryTableProxy(CollectionProxy):
         columns = self.getColumns()
         for i, o in enumerate(q.all()):
             self._add_data(columns, i+offset, o)
-        rows_in_query = (self.rows - len(self._appended_rows))
+        rows_in_query = (self._rows - len(self._appended_rows))
         # Verify if rows that have not yet been flushed have been requested
         if offset+limit>=rows_in_query:
-            for row in range(max(rows_in_query,offset), min(offset+limit, self.rows)):
+            for row in range(max(rows_in_query,offset), min(offset+limit, self._rows)):
                 o = self._get_object(row)
                 self._add_data(columns, row, o)
         return (offset, limit)
@@ -169,9 +169,9 @@ class QueryTableProxy(CollectionProxy):
     @model_function
     def _get_object(self, row):
         """Get the object corresponding to row"""
-        if self.rows > 0:
+        if self._rows > 0:
             self._clean_appended_rows()
-            rows_in_query = (self.rows - len(self._appended_rows))
+            rows_in_query = (self._rows - len(self._appended_rows))
             if row >= rows_in_query:
                 return self._appended_rows[row - rows_in_query]
             # first try to get the primary key out of the cache, if it's not

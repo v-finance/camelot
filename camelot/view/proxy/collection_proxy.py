@@ -202,7 +202,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         @param collection_getter: a function that takes no arguments and returns
         the collection that will be visualized. This function will be called inside
         the model thread, to prevent delays when this function causes the database
-        to be hit.
+        to be hit.  If the collection is a list, it should not contain any duplicate
+        elements.
     
         @param columns_getter: a function that takes no arguments and returns the
         columns that will be cached in the proxy. This function will be called
@@ -222,7 +223,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.delegate_manager = None
         self.mt = get_model_thread()
         # Set database connection and load data
-        self.rows = 0
+        self._rows = 0
         self._columns = []
         self.max_number_of_rows = max_number_of_rows
         self.cache = {Qt.DisplayRole         : fifo( 10 * self.max_number_of_rows ),
@@ -284,7 +285,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     
     @model_function
     def getRowCount( self ):
-        return len( self.collection_getter() )
+        # make sure we don't count an object twice if it is twice
+        # in the list, since this will drive the cache nuts
+        rows = len( set( self.collection_getter() ) )
+        return rows
     
     @gui_function
     def revertRow( self, row ):
@@ -379,7 +383,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         """Callback method to set the number of rows
         @param rows the new number of rows
         """
-        self.rows = rows
+        self._rows = rows
         self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
     
     def getItemDelegate( self ):
@@ -438,7 +442,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
       
     def rowCount( self, index = None ):
-        return self.rows
+        return self._rows
     
     def columnCount( self, index = None ):
         return self.column_count
@@ -681,20 +685,37 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.cache[Qt.ToolTipRole].add_data( row, o, tool_tips_from_object( o, self.getColumns()) )
         self.cache[Qt.BackgroundColorRole].add_data( row, o, background_colors_from_object( o, self.getColumns()) )
         self.cache[Qt.DisplayRole].add_data( row, o, stripped_data_to_unicode( row_data, o, columns ) )
-                    
+            
+    
+    def _skip_row(self, row, o):
+        """:return: True if the object o is allready in the cache, but at a different row
+        then row.  If this is the case, this object should not be put in the cache at row,
+        and this row should be skipped alltogether.
+        """    
+        try:
+            return self.cache[Qt.EditRole].get_row_by_entity(o)!=row
+        except KeyError:
+            pass
+        return False
+                
     @model_function
     def _extend_cache( self, offset, limit ):
         """Extend the cache around row"""
         columns = self.getColumns()
-        offset = min( offset, self.rows )
-        limit = min( limit, self.rows - offset )
+        offset = min( offset, self._rows )
+        limit = min( limit, self._rows - offset )
         collection = self.collection_getter()
-#        for i, o in enumerate( collection[offset:offset + limit + 1] ): 
-#            self._add_data(columns, i+offset, o) 
-        for i in range(offset, min(offset + limit + 1, len(collection))):
-            unsorted_row = self._sort_and_filter[i]
-            obj = collection[unsorted_row]
-            self._add_data(columns, i, obj)
+        skipped_rows = 0
+        for i in range(offset, min(offset + limit + 1, self._rows)):
+            object_found = False
+            while not object_found:
+                unsorted_row = self._sort_and_filter[i]
+                obj = collection[unsorted_row+skipped_rows]
+                if self._skip_row(i, obj):
+                    skipped_rows = skipped_rows + 1
+                else: 
+                    self._add_data(columns, i, obj)
+                    object_found = True
         return ( offset, limit )
     
     @model_function
@@ -740,12 +761,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     @model_function
     def remove( self, o ):
         self.collection_getter().remove( o )
-        self.rows -= 1
+        self._rows -= 1
     
     @model_function
     def append( self, o ):
         self.collection_getter().append( o )
-        self.rows += 1
+        self._rows += 1
     
     @model_function
     def removeEntityInstance( self, o, delete = True ):
