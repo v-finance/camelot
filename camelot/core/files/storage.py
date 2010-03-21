@@ -66,16 +66,29 @@ class Storage( object ):
         import os
         self.upload_to = os.path.join( settings.CAMELOT_MEDIA_ROOT, upload_to )
         self.stored_file_implementation = stored_file_implementation
+        #
+        # don't do anything here that might reduce the startup time, like verifying the
+        # availability of the storage, sinde the path might be on a slow network share
+        #
+
+    def available(self):
+        """Verify if the storage is available 
+        """
+        import os
         try:
             if not os.path.exists( self.upload_to ):
                 os.makedirs( self.upload_to )
+            return True
         except Exception, e:
             logger.warn( 'Could not access or create path %s, files will be unreachable' % self.upload_to, exc_info = e )
-
+        return False
+    
     def exists( self, name ):
         """True if a file exists given some name"""
-        import os
-        os.path.exists( self.path( name ) )
+        if self.available():
+            import os
+            os.path.exists( self.path( name ) )
+        return False
 
     def path( self, name ):
         """The local filesystem path where the file can be opened using Python’s standard open"""
@@ -85,6 +98,7 @@ class Storage( object ):
     def checkin( self, local_path ):
         """Check the file pointed to by local_path into the storage, and
         return a StoredFile"""
+        self.available()
         import tempfile
         import shutil
         import os
@@ -100,6 +114,7 @@ class Storage( object ):
         :param prefix: the prefix to use for generating a file name
         :param suffix: the suffix to use for generating a filen name, eg '.png'
         :return: a StoredFile"""
+        self.available()
         import tempfile
         import os
         ( handle, to_path ) = tempfile.mkstemp( suffix = suffix, prefix = prefix, dir = self.upload_to, text = 'b' )
@@ -112,6 +127,7 @@ class Storage( object ):
     def checkout( self, stored_file ):
         """Check the file pointed to by the local_path out of the storage and return
     a local filesystem path where the file can be opened"""
+        self.available()
         import os
         return os.path.join( self.upload_to, stored_file.name )
 
@@ -119,6 +135,7 @@ class Storage( object ):
         """Check the file stored_file out of the storage as a datastream
         :return: a file object
         """
+        self.available()
         import os
         return open( os.path.join( self.upload_to, stored_file.name ), 'rb' )
 
