@@ -29,6 +29,7 @@
 
 import sqlalchemy.types
 import camelot.types
+from camelot.core.sql import  like_op
 import datetime
 import operator
 
@@ -46,7 +47,7 @@ from camelot.view.utils import (
 )
 
 _numerical_operators = (operator.eq, operator.ne, operator.lt, operator.le, operator.gt, operator.ge)
-_text_operators = (operator.eq, operator.ne)
+_text_operators = (operator.eq, operator.ne, like_op)
 
 _sqlalchemy_to_python_type_ = {
 
@@ -218,7 +219,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'delegate': delegates.RichTextDelegate,
         'from_string': string_from_string,
-        'operators' : _text_operators,
+        'operators' : [],
     },
 
     camelot.types.Color: lambda f: {

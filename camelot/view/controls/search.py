@@ -51,6 +51,7 @@ class SimpleSearchControl(QtGui.QWidget):
         self.search_button.setIcon(icon)
         self.search_button.setIconSize(QtCore.QSize(14, 14))
         self.search_button.setAutoRaise(True)
+        self.search_button.setToolTip(_('Expand or collapse search options'))
         self.connect(self.search_button,
                      QtCore.SIGNAL('clicked()'),
                      self.expand_search_options_signal)

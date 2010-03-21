@@ -35,6 +35,7 @@ import logging
 import operator
 
 from camelot.core import constants
+from camelot.core.sql import like_op
 from camelot.core.utils import ugettext
 
 logger = logging.getLogger('camelot.view.utils')
@@ -157,4 +158,5 @@ operator_names = {
     operator.le : u'<=',
     operator.gt : u'>',
     operator.ge : u'>=',
+    like_op : u'like',
 }
