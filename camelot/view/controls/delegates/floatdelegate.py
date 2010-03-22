@@ -73,7 +73,7 @@ class FloatDelegate( CustomDelegate ):
 
         value_str = unicode( self.prefix ) + u' ' + unicode( value_str ) + u' ' + unicode( self.suffix )
         value_str = value_str.strip()
-        if self.unicode_format != None:
+        if self.unicode_format != None and value != ValueLoading:
             value_str = self.unicode_format( value )
 
         painter.setPen( fontColor.toRgb() )
