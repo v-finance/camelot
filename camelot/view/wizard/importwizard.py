@@ -211,6 +211,10 @@ class RowDataAdminDecorator(object):
             attributes['delegate'] = delegates.PlainTextDelegate
             attributes['python_type'] = str
             attributes['original_field'] = original_field
+            
+            # remove some attributes that might disturb the import wizard
+            for attribute in ['background_color', 'tooltip']:
+                attributes[attribute] = None
 
             if 'from_string' in attributes:
 
