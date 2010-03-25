@@ -306,6 +306,12 @@ class TableView( AbstractView  ):
                                  admin.get_query,
                                  admin.get_columns )
     
+    def get_admin(self):
+        return self.admin
+    
+    def get_model(self):
+        return self._table_model
+    
     @gui_function
     def set_admin( self, admin ):
         """Switch to a different subclass, where admin is the admin object of the

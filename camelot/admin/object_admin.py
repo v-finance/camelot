@@ -407,11 +407,13 @@ class ObjectAdmin(object):
 
     @model_function
     def get_all_fields_and_attributes(self):
-        """A list of (field_name, field_attributes) for all fields that can
+        """A dictionary of (field_name:field_attributes) for all fields that can
         possibly appear in a list or a form or for which field attributes have
         been defined
         """
-        pass
+        fields = dict(self.get_columns())
+        fields.update(dict(self.get_fields()))
+        return fields
 
     @model_function
     def get_form_display(self):

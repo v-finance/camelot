@@ -469,7 +469,8 @@ class MainWindow(QtGui.QMainWindow):
     def updateValue(self):
         from camelot.view.wizard.update_value import UpdateValueWizard
         
-        wizard = UpdateValueWizard(admin=True)
+        model = self.activeMdiChild().widget().get_model()
+        wizard = UpdateValueWizard(model=model)
         wizard.exec_()
     
     def exportToExcel(self):
