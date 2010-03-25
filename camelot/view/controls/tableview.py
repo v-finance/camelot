@@ -141,7 +141,7 @@ class HeaderWidget( QtGui.QWidget ):
         from camelot.view.controls.filter_operator import FilterOperator
         layout = QtGui.QHBoxLayout()
         for field, attributes in columns:
-            if 'operators' in attributes:
+            if 'operators' in attributes and attributes['operators']:
                 widget = FilterOperator( self._admin.entity, field, attributes, self)
                 self.connect( widget, filter_changed_signal,  self._filter_changed )
                 layout.addWidget( widget )

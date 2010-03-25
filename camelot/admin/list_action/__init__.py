@@ -4,15 +4,24 @@ from PyQt4 import QtGui, QtCore
 
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
+from camelot.core.utils import ugettext as _
 
 logger = logging.getLogger('camelot.admin.list_action')
 
 class ListAction( object ):
-    """Abstract base class to implement list actions"""
+    """Abstract base class to implement list actions
+    
+    Use the class attribute Options, to let the user enter some options for the action.  Where
+    options is a class with and admin definition.  The admin definition will be used to pop up
+    an interface screen for an object of type Options.
+    """
 
+    Options = None
+    
     def __init__( self, name, icon = None ):
         self._name = name
         self._icon = icon
+        self.options = None
 
     def render( self, parent, collection_getter, selection_getter ):
         """Returns a QWidget the user can use to trigger the action"""
@@ -31,8 +40,36 @@ class ListAction( object ):
         return button
 
     def run( self, collection_getter, selection_getter ):
-        """Overwrite this method to create an action that does something"""
-        raise NotImplementedError
+        """Overwrite this method to create an action that does something
+        
+        :return: None if there was no Options class attribute or if Cancel was pressed, otherwise
+        an object of of type Options
+        """
+
+        if self.Options:
+            from camelot.view.wizard.pages.form_page import FormPage
+            
+            class OptionsPage(FormPage):
+                Data = self.Options
+                icon = self._icon
+                title = self._name
+                sub_title = _('Please complete the options and continue')
+                
+            class ActionWizard(QtGui.QWizard):
+            
+                def __init__(self, parent=None):
+                    super(ActionWizard, self).__init__(parent)
+                    self.setWindowTitle(_('Options'))
+                    self.options_page = OptionsPage(parent=self)
+                    self.addPage(self.options_page)
+                    
+            wizard = ActionWizard()
+            i = wizard.exec_()
+            if not i:
+                return None
+            self.options = wizard.options_page.get_data()
+            return self.options
+        raise None
 
 class ListActionFromGuiFunction( ListAction ):
     """Convert a function that is supposed to run in the GUI thread to a ListAction"""
@@ -58,10 +95,15 @@ class ListActionFromModelFunction( ListAction ):
         self._model_function = model_function
         self._collection_flush = collection_flush
         self._selection_flush = selection_flush
+        self.options = None
 
     def run( self, collection_getter, selection_getter ):
+        self.options = super(ListActionFromModelFunction, self).run( collection_getter, selection_getter )
         from camelot.admin.form_action import FormActionProgressDialog
         progress = FormActionProgressDialog( unicode(self._name) )
+        
+        if not self.options and self.Options:
+            return self.options
 
         def create_request( collection_getter ):
 
