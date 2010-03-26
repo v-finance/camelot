@@ -29,7 +29,7 @@
 
 from PyQt4 import QtGui, QtCore
 
-from camelot.view.controls.editors import ChoicesEditor, editingFinished
+from camelot.view.controls.editors import ChoicesEditor
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.model_thread import post
 

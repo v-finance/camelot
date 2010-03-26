@@ -25,22 +25,63 @@
 #
 #  ============================================================================
 
+from copy import copy
 import logging
 logger = logging.getLogger('camelot.admin.validator.object_validator')
 
-from camelot.view.fifo import fifo
+from PyQt4 import QtCore
 
-class ObjectValidator(object):
+from camelot.view.fifo import fifo
+from camelot.view.model_thread import post
+
+class ObjectValidator(QtCore.QObject):
     """A validator class for normal python objects.  By default this validator
     declares all objects valid.  Subclass this class and overwrite it's
     objectValidity method to change it's behaviour.
     """
 
-    def __init__(self, admin, model):
+    validity_changed_signal = QtCore.SIGNAL('validityChanged')
+    
+    def __init__(self, admin, model, initial_validation=False):
+        """
+        :param verifiy_initial_validity: do an inital check to see if all rows in a model are valid, defaults to False,
+        since this might take a lot of time on large collections.
+        """
+        super(ObjectValidator, self).__init__()
         self.admin = admin
         self.model = model
         self.message_cache = fifo(10)
+        self.connect( model, QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), self.data_changed )
+        self.connect( model, QtCore.SIGNAL('layoutChanged()'), self.layout_changed )
+        self._invalid_rows = set()
+        
+        if initial_validation:
+            post(self.validate_all_rows)
 
+    def validate_all_rows(self):
+        """Force validation of all rows in the model"""
+        for row in range(self.model.getRowCount()):
+            self.isValid(row)
+        
+    def validate_invalid_rows(self):
+        for row in copy(self._invalid_rows):
+            self.isValid(row)
+            
+    def layout_changed(self):
+        post(self.validate_invalid_rows)
+        
+    def data_changed(self, from_index, thru_index):
+        
+        def create_validity_updater(from_row, thru_row):
+            
+            def validity_updater():
+                for i in range(from_row, thru_row+1):
+                    self.isValid(i)
+                    
+            return validity_updater
+        
+        post(create_validity_updater(from_index.row(), thru_index.row()))
+       
     def objectValidity(self, entity_instance):
         """:return: list of messages explaining invalid data
         empty list if object is valid
@@ -52,10 +93,11 @@ class ObjectValidator(object):
         for field, attributes in fields_and_attributes.items():
             # if the field was not editable, don't waste any time
             if attributes['editable']:
-                value = getattr(entity_instance, field)
-                #@todo: check if field is a primary key instead of checking 
+                # if the field, is nullable, don't waste time getting its value
+                #@todo: check if field is a primary key instead of checking
                 # whether the name is id, but this should only happen in the entity validator
                 if attributes['nullable']!=True and field!='id':
+                    value = getattr(entity_instance, field)
                     logger.debug('column %s is required'%(field))
                     if 'delegate' not in attributes:
                         raise Exception('no delegate specified for %s'%(field))
@@ -76,14 +118,11 @@ class ObjectValidator(object):
         logger.debug(u'messages : %s'%(u','.join(messages)))
         return messages
 
-    def has_invalid_rows(self):
-        """Verify all rows in the model
-        :return: True if the model has invalid rows
+    def number_of_invalid_rows(self):
         """
-        for row in range(self.model.getRowCount()):
-            if not self.isValid(row):
-                return True
-        return False
+        :return: the number of invalid rows in a model, as they have been verified
+        """
+        return len(self._invalid_rows)
         
     def isValid(self, row):
         """Verify if a row in a model is 'valid' meaning it could be flushed to
@@ -102,6 +141,13 @@ class ObjectValidator(object):
                 exc_info=e
             )
         valid = (len(messages) == 0)
+        if not valid:
+            if row not in self._invalid_rows:
+                self._invalid_rows.add(row)
+                self.emit(self.validity_changed_signal, row)
+        elif row in self._invalid_rows:
+            self._invalid_rows.remove(row)
+            self.emit(self.validity_changed_signal, row)
         logger.debug('valid : %s' % valid)
         return valid
 

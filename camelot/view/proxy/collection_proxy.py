@@ -74,7 +74,11 @@ def tool_tips_from_object(obj, columns):
     for col in columns:
         tooltip_getter = col[1]['tooltip']
         if tooltip_getter:
-            data.append( tooltip_getter(obj) )
+            try:
+                data.append( tooltip_getter(obj) )
+            except Exception, e:
+                logger.error('Programming Error : error in tooltip function', exc_info=e)
+                data.append(None)
         else:
             data.append( None )
             
@@ -88,8 +92,11 @@ def background_colors_from_object(obj, columns):
     for col in columns:
         background_color_getter = col[1]['background_color']
         if background_color_getter:
-            background_color = background_color_getter(obj)
-            data.append( background_color )
+            try:
+                data.append( background_color_getter(obj) )
+            except Exception, e:
+                logger.error('Programming Error : error in background_color function', exc_info=e)
+                data.append(None)
         else:
             data.append( None )
             
@@ -139,10 +146,13 @@ def stripped_data_to_unicode( stripped_data, obj, columns ):
         elif 'choices' in field_attributes:
             choices = field_attributes['choices']
             if callable(choices):
-                for key, value in choices( obj ):
-                    if key == field_data:
-                        unicode_data = value
-                        continue
+                try:
+                    for key, value in choices( obj ):
+                        if key == field_data:
+                            unicode_data = value
+                            continue
+                except Exception, e:
+                    logger.error('Programming Error : could not evaluate choices function', exc_info=e)
             else:
                 unicode_data = field_data
         elif isinstance( field_data, DelayedProxy ):

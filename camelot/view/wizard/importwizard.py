@@ -41,6 +41,7 @@ from PyQt4.QtGui import QColor
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Pixmap
+from camelot.view.model_thread import post
 
 
 class SelectFilePage(QtGui.QWizardPage):
@@ -261,8 +262,10 @@ class DataPreviewPage(QtGui.QWizardPage):
         self.setSubTitle(_('Please review the data below.'))
         self._complete = False
         self.model = model
+        validator = self.model.get_validator()
+        self.connect( validator, validator.validity_changed_signal, self.update_complete)
+        post(validator.validate_all_rows)
         self.collection_getter = collection_getter
-        self.connect( self.model, QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), self.update_complete )
 
         icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
@@ -282,23 +285,12 @@ class DataPreviewPage(QtGui.QWizardPage):
 
         self.setCommitPage(True)
         self.setButtonText(QtGui.QWizard.CommitButton, _('Import'))
-
+        self.update_complete()
+        
     def update_complete(self):
-        """Check if the model has invalid rows and change the complete status acccordingly
-        """
-        
-        from camelot.view.model_thread import post
-    
-        def verify_validity():
-            complete = not self.model.get_validator().has_invalid_rows()
-            return complete
-        
-        post( verify_validity, self.set_complete )
-        
-    def set_complete(self, complete):
-        self._complete = complete
+        self._complete = (self.model.get_validator().number_of_invalid_rows()==0)
         self.emit(QtCore.SIGNAL('completeChanged()'))
-        if complete:
+        if self._complete:
             self._note.set_value(None)
         else:
             self._note.set_value(_('Please correct the data above before proceeding with the import.<br/>Incorrect cells have a pink background.'))

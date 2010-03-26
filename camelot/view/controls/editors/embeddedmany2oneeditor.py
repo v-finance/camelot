@@ -1,3 +1,5 @@
+import logging
+logger = logging.getLogger('camelot.view.controls.editors.embeddedmany2oneeditor')
 
 from customeditor import CustomEditor, QtCore, QtGui
 from wideeditor import WideEditor
@@ -46,7 +48,11 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
                 else:
                     return False, False, current_entity_admin
             else:
-                self.entity_instance_getter = create_instance_getter( self.admin.entity() )
+                try:
+                    new_entity = self.admin.entity()
+                except Exception, e:
+                    logger.error('ProgrammingError : could not create a new entity of type %s'%(self.admin.entity.__name__), exc_info=e)
+                self.entity_instance_getter = create_instance_getter( new_entity )
                 current_entity_admin = self.admin
             return True, propagate, current_entity_admin
       

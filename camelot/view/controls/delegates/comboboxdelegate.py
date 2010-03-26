@@ -25,6 +25,9 @@
 #
 #  ============================================================================
 
+import logging
+logger = logging.getLogger('camelot.view.controls.delegates.comboboxdelegate')
+
 from customdelegate import CustomDelegate, DocumentationMetaclass
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QComboBox, QItemDelegate
@@ -51,7 +54,11 @@ class ComboBoxDelegate(CustomDelegate):
         if callable(self.choices):
             def create_choices_getter(model, row):
                 def choices_getter():
-                    return list(self.choices(model._get_object(row)))
+                    try:
+                        return list(self.choices(model._get_object(row)))
+                    except Exception, e:
+                        logger.error('Programming error in choices getter for combo box', exc_info=e)
+                    return []
                 return choices_getter
             post(create_choices_getter(index.model(), index.row()),
                  editor.set_choices)
