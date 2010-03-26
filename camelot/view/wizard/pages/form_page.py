@@ -63,15 +63,22 @@ class FormPage(QtGui.QWizardPage):
         
         admin = self.get_admin()
         self._model = CollectionProxy(admin, lambda:[self._data], admin.get_fields)
+        validator = self._model.get_validator()
         
         layout = QtGui.QVBoxLayout()
         form = FormWidget(admin)
-        self.connect(form, FormWidget.changed_signal, self._form_changed)
+        self.connect(validator, validator.validity_changed_signal, self._validity_changed)
         form.set_model(self._model)
         layout.addWidget(form)
         self.setLayout(layout)
     
-    def _form_changed(self):
+    def initializePage(self):
+        # do inital validation, so the validity changed signal is valid
+        self._complete = False
+        self.emit(QtCore.SIGNAL('completeChanged()'))
+        self._validity_changed()
+        
+    def _validity_changed(self):
         
         def is_valid():
             return self._model.get_validator().isValid(0)
