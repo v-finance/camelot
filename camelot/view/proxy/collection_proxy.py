@@ -203,6 +203,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     header_icon = Icon( 'tango/16x16/places/folder.png' )
 
     item_delegate_changed_signal = QtCore.SIGNAL('itemDelegateChanged')
+    rows_removed_signal = QtCore.SIGNAL('rowsRemoved(const QModelIndex&,int,int)')
   
     @gui_function
     def __init__( self, admin, collection_getter, columns_getter,
