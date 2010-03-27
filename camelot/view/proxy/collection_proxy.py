@@ -333,6 +333,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.setRowCount( rows )
     
     def set_collection_getter( self, collection_getter ):
+        self.logger.debug('set collection getter')
         self.collection_getter = collection_getter
         self.refresh()
         

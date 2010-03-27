@@ -456,7 +456,10 @@ class EntityAdmin(ObjectAdmin):
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
         from sqlalchemy.orm.session import Session
-        Session.object_session( entity_instance ).flush( [entity_instance] )
+        session = Session.object_session( entity_instance )
+        if not session:
+            logger.error('Programming Error : entity %s cannot be flushed because it has no session'%(unicode(entity_instance)))
+        session.flush( [entity_instance] )
         
     @model_function
     def copy(self, entity_instance):
