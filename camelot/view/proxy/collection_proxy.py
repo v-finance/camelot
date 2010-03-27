@@ -425,7 +425,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         # set a delegate for the vertical header 
         delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate(parent = delegate_manager) ) 
          
-        for i, c in enumerate( columns ): 
+        #
+        # this loop can take a while to complete, so processEvents is called regulary
+        #
+        for i, c in enumerate( columns ):
+            if i%10==0:
+                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ExcludeSocketNotifiers, 100) 
             field_name = c[0] 
             self.logger.debug( 'creating delegate for %s' % field_name ) 
             if 'delegate' in c[1]: 
@@ -484,11 +489,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 if self.delegate_manager:
                     editor_size = self.delegate_manager.sizeHint( option, self.index( 0, section ) )
                 else:
-                    editor_size = 0
+                    editor_size = QtCore.QSize(0, 0)
                 if 'minimal_column_width' in c[1]:
                     minimal_column_width = QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, 'A' ).width()*c[1]['minimal_column_width']
                 else:
-                    minimal_column_width = 0
+                    minimal_column_width = QtCore.QSize(0,0)
                 editable = True
                 if 'editable' in c[1]:
                     editable = c[1]['editable']
