@@ -562,6 +562,18 @@ class TableView( AbstractView  ):
         self.search_filter = lambda q: q
         self.rebuildQuery()
         
+    def get_selection_getter(self):
+        """:return: a function that returns all the objects corresponging to the selected rows in the
+        table """
+
+        def selection_getter():
+            selection = []
+            for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
+                selection.append( self._table_model._get_object(row) )
+            return selection
+        
+        return selection_getter
+    
     @gui_function
     def set_filters_and_actions( self, filters_and_actions ):
         """sets filters for the tableview"""
@@ -588,13 +600,7 @@ class TableView( AbstractView  ):
             #
             self.rebuildQuery()
         if actions:
-            
-            def selection_getter():
-                selection = []
-                for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-                    selection.append( self._table_model._get_object(row) )
-                return selection
-            
+            selection_getter = self.get_selection_getter()            
             self.actions = ActionsBox( self, 
                                        self._table_model.get_collection_getter(), 
                                        selection_getter )

@@ -69,7 +69,8 @@ class ListAction( object ):
                 return None
             self.options = wizard.options_page.get_data()
             return self.options
-        raise None
+        
+        return None
 
 class ListActionFromGuiFunction( ListAction ):
     """Convert a function that is supposed to run in the GUI thread to a ListAction"""

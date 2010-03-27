@@ -30,16 +30,26 @@
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.controls.editors import ChoicesEditor
+from camelot.view.controls import delegates
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.model_thread import post
+from camelot.view.proxy import ValueLoading
+from camelot.view.wizard.pages.update_entities_page import UpdateEntitiesPage
+from camelot.view.controls.editors.customeditor import editingFinished
 
+class ReplaceContentsData(object):
+    
+    def __init__(self):
+        self.field = None
+        self.value = None
+        
 class SelectValuePage(QtGui.QWizardPage):
     """Page to select a value to update"""
 
     title = _('Replace field contents')
     sub_title = _('Select the field to update and enter its new value')
     
-    def __init__(self, parent, model):
+    def __init__(self, parent, admin, data):
         super(SelectValuePage, self).__init__(parent)
         self.setTitle( unicode(self.title) )
         self.setSubTitle( unicode(self.sub_title) )
@@ -49,31 +59,63 @@ class SelectValuePage(QtGui.QWizardPage):
         layout.addWidget(self.editor)
         self.setLayout(layout)
         self._fields = {}
+        self._data = data
         self.connect(self.editor, QtCore.SIGNAL('currentIndexChanged(int)'), self.field_changed)
         self._value_editor = None
         
-        post(model.get_admin().get_all_fields_and_attributes, self.set_fields)
+        post(admin.get_all_fields_and_attributes, self.set_fields)
         
     def set_fields(self, fields):
         self._fields = fields
-        choices = [(field, attributes['name']) for field, attributes in fields.items() if attributes['editable']]
+        
+        def filter(attributes):
+            if not attributes['editable']:
+                return False
+            if attributes['delegate'] in (delegates.One2ManyDelegate, delegates.ManyToManyDelegate):
+                return False
+            return True
+        
+        choices = [(field, attributes['name']) for field, attributes in fields.items() if filter(attributes)]
         self.editor.set_choices(choices)
         self.editor.set_value((choices+[(None,None)])[1][0])
         self.field_changed(0)
         
+    def value_changed(self):
+        if self._value_editor:
+            self._data.value = self._value_editor.get_value()
+            
     def field_changed(self, index):
         if self._value_editor:
             self.layout().removeWidget(self._value_editor)
             self._value_editor.deleteLater()
             self._value_editor = None
-        field_attributes = self._fields[self.editor.get_value()]
-        delegate = field_attributes['delegate'](**field_attributes)
-        option = QtGui.QStyleOptionViewItem()
-        option.version = 5
-        self._value_editor = delegate.createEditor( self, option, None )
-        self.layout().addWidget(self._value_editor)
-        self._value_editor.set_value(None)
+        selected_field = self.editor.get_value()
+        if selected_field!=ValueLoading:
+            self._data.field = selected_field
+            self._data.value = None
+            field_attributes = self._fields[selected_field]
+            delegate = field_attributes['delegate'](**field_attributes)
+            option = QtGui.QStyleOptionViewItem()
+            option.version = 5
+            self._value_editor = delegate.createEditor( self, option, None )
+            self.connect(self._value_editor, editingFinished, self.value_changed)
+            self.layout().addWidget(self._value_editor)
+            if isinstance(delegate, delegates.Many2OneDelegate):
+                self._value_editor.set_value(lambda:None)
+            else:
+                self._value_editor.set_value(None)
 
+class ReplaceContentsPage(UpdateEntitiesPage):
+    
+    title = _('Replace field contents')
+    
+    def __init__(self, parent, collection_getter, data):
+        super(ReplaceContentsPage, self).__init__(parent=parent, collection_getter=collection_getter)
+        self._data = data
+        
+    def update_entity(self, obj):
+        setattr(obj, self._data.field, self._data.value)
+    
 class UpdateValueWizard(QtGui.QWizard):
     """This wizard presents the user with a selection of the possible fields to
     update and a new value.  Then this field is changed for all objects in a given
@@ -83,9 +125,12 @@ class UpdateValueWizard(QtGui.QWizard):
     
     window_title = _('Replace')
 
-    def __init__(self, parent=None, model=None):
+    def __init__(self, parent=None, selection_getter=None, admin=None):
         """:param model: a collection proxy on which to replace the field contents"""
         super(UpdateValueWizard, self).__init__(parent)
         self.setWindowTitle( unicode(self.window_title) )
-        assert model
-        self.addPage(SelectValuePage(parent=self, model=model))
+        data = ReplaceContentsData()
+        assert selection_getter
+        assert admin
+        self.addPage(SelectValuePage(parent=self, admin=admin, data=data))
+        self.addPage(ReplaceContentsPage(parent=self, collection_getter=selection_getter, data=data))
