@@ -272,7 +272,7 @@ _sqlalchemy_to_python_type_ = {
 }
 
 #
-# Generate a restructured text table out of the prevous data structure
+# Generate a restructured text table out of the previous data structure
 #
 
 class DummyField(object):
@@ -283,8 +283,8 @@ class DummyField(object):
         self.precision = 2
         self.storage = None
 
-row_separator = '+' + '-'*20 + '+' + '-'*30 + '+' + '-'*70 + '+'
-row_format = """| %-18s | %-28s | %-68s |"""
+row_separator = '+' + '-'*20 + '+' + '-'*70 + '+' + '-'*70 + '+'
+row_format = """| %-18s | %-68s | %-68s |"""
 
 doc = """Field types handled through introspection :
 
@@ -299,7 +299,9 @@ field_types.sort(lambda x, y: cmp(x.__name__, y.__name__))
 for field_type in field_types:
     field_attributes = _sqlalchemy_to_python_type_[field_type](DummyField())
     delegate = field_attributes['delegate']
-    row = row_format%(field_type.__name__, delegate.__name__, '.. image:: ../_static/editors/%s_editable.png'%(delegate.editor.__name__))
+    row = row_format%(field_type.__name__, 
+                      ':ref:`%s <delegate-%s>`'%(delegate.__name__, delegate.__name__), 
+                      '.. image:: ../_static/editors/%s_editable.png'%(delegate.editor.__name__))
     doc += row + """
 """ + row_separator + """
 """

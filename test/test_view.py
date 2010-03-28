@@ -740,6 +740,13 @@ class DelegateTest(unittest.TestCase):
     editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
     self.grab_delegate(delegate, DateTime, 'disabled')
+    
+  def testEnumerationDelegate(self):
+    choices = [('a','A'), ('b','B')]
+    delegate = self.delegates.EnumerationDelegate(parent=None, choices=choices)
+    self.grab_delegate(delegate, 'a')
+    delegate = self.delegates.EnumerationDelegate(parent=None, choices=choices, editable=False)
+    self.grab_delegate(delegate, 'a', 'disabled')
 
   def testTimeDelegate(self):
     from datetime import time
@@ -820,9 +827,14 @@ class DelegateTest(unittest.TestCase):
     self.grab_delegate(delegate, 'face-glasses', 'disabled')
 
   def testFileDelegate(self):
-    delegate = self.delegates.FileDelegate(parent=None, **self.kwargs)
+    from camelot.core.files.storage import StoredFile
+    delegate = self.delegates.FileDelegate(parent=None)
+    file = StoredFile(None, 'agreement.pdf')
     editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.FileEditor))
+    self.grab_delegate(delegate, file)
+    delegate = self.delegates.FileDelegate(parent=None, editable=False)
+    self.grab_delegate(delegate, file, 'disabled')
 
   def testColorDelegate(self):
     delegate = self.delegates.ColorDelegate(parent=None, **self.kwargs)

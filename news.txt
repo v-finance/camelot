@@ -1,6 +1,15 @@
 Trunk
 -----
 
+ * Search works for integer, date and float fields
+ 
+ * User translatable labels on forms
+ 
+ * Litebox image preview for image fields
+
+Release
+-------
+
  * Sqlalchemy 5.6 compatible
  
  * Dynamic background colors and tooltips

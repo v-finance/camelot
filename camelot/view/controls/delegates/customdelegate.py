@@ -43,24 +43,36 @@ not_editable_foreground = QtGui.QColor(Qt.darkGray)
 def DocumentationMetaclass(name, bases, dct):
     dct['__doc__'] = dct.get('__doc__','') + """
 
+.. _delegate-%s:
+
 .. image:: ../_static/delegates/%s_unselected_disabled.png
 .. image:: ../_static/delegates/%s_unselected_editable.png
 
 .. image:: ../_static/delegates/%s_selected_disabled.png
 .. image:: ../_static/delegates/%s_selected_editable.png
 
-"""%(name, name, name, name,)
-
-    if 'editor' in dct:
-        dct['__doc__'] = dct['__doc__'] + '.. image:: ../_static/editors/%s_editable.png'%dct['editor'].__name__ + '\n'
+"""%(name, name, name, name, name,)
+    import inspect
+    
+    def add_field_attribute_item(name):
+        dct['__doc__'] = dct['__doc__'] + "\n * :ref:`%s <field-attribute-%s>`"%(arg, arg)
         
     if '__init__' in dct:
-        dct['__doc__'] = dct['__doc__'] + 'Field attributes supported by this delegate : \n'
-        import inspect
+        dct['__doc__'] = dct['__doc__'] + 'Field attributes supported by the delegate : \n'
         args, _varargs, _varkw,  _defaults = inspect.getargspec(dct['__init__'])
         for arg in args:
             if arg not in ['self', 'parent']:
-                dct['__doc__'] = dct['__doc__'] + '\n * %s'%arg
+                add_field_attribute_item(arg)
+
+    if 'editor' in dct:
+        dct['__doc__'] = dct['__doc__'] + '\nBy default, creates a %s as its editor.\n'%dct['editor'].__name__
+        dct['__doc__'] = dct['__doc__'] + '\n.. image:: ../_static/editors/%s_editable.png'%dct['editor'].__name__ + '\n'
+        dct['__doc__'] = dct['__doc__'] + 'Field attributes supported by this editor : \n'
+        args, _varargs, _varkw,  _defaults = inspect.getargspec(dct['editor'].__init__)
+        for arg in args:
+            if arg not in ['self', 'parent']:
+                add_field_attribute_item(arg)
+
     return type(name, bases, dct)
 
   

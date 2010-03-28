@@ -59,6 +59,8 @@ Available delegates
 Attributes common to most delegates
 ===================================
 
+.. _field-attribute-editable:
+
 editable 
 --------
 
@@ -66,11 +68,15 @@ editable
   
 Indicates whether the user can edit the field.
 
+.. _field-attribute-minimum:
+
 minimum, maximum
 ----------------
 
 The minimum and maximum allowed values for :ctype:`Integer` and
 :ctype:`Float` delegates or their related delegates like the Star delegate.
+
+.. _field=attribute-choices:
 
 choices
 -------
@@ -84,7 +90,9 @@ The use of :attr:`choices` forces the use of the ComboBox delegate::
 
   field_attributes = {'state':{'choices':lambda o:[(1, 'Active'), 
                                                    (2, 'Passive')]}}
-	                                                 
+	   
+.. _field-attribute-minmal_column_width:
+                                              
 minimal_column_width
 --------------------
 
@@ -98,6 +106,8 @@ will make the column wide enough to display at least 50 characters.
   
 .. _tooltips:
 
+.. _field-attribute-tooltip:
+
 tooltip
 -------
 
@@ -108,6 +118,8 @@ tooltip.  The string may contain html markup.
 .. literalinclude:: ../../../../test/snippet/fields_with_tooltips.py
   
 .. image:: ../_static/snippets/fields_with_tooltips.png
+
+.. _field-attribute-background_color:
 
 background_color
 ----------------
