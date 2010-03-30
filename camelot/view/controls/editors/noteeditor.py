@@ -21,13 +21,9 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
         }
         """%(ColorScheme.yellow_1.name())
         self.setStyleSheet( style );
-    
         
     def set_value(self, value):
         value = super(NoteEditor, self).set_value(value)
         self.setVisible(value!=None)
         if value:
             self.setText(unicode(value))
-    
-
-

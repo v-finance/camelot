@@ -3,9 +3,21 @@ Trunk
 
  * Search works for integer, date and float fields
  
+ * Sorting in table views and OneToMany widgets
+ 
+ * Expanded filter options in table views
+ 
  * User translatable labels on forms
  
  * Litebox image preview for image fields
+ 
+ * New editors and delegates :
+ 
+   * NoteDelegate
+   
+     .. image:: _static/editors/NoteEditor.png
+     
+ * More documentation
 
 Release
 -------

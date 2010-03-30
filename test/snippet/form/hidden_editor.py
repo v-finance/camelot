@@ -17,7 +17,7 @@ class FormWithHiddenWidget(forms.Form):
         form_widget.connect(show_more_editor, QtCore.SIGNAL('stateChanged(int)'), hidden_label.setVisible)
         form_widget.connect(show_more_editor, QtCore.SIGNAL('stateChanged(int)'), hidden_editor.setVisible)
         
-	hidden_label.hide()
+        hidden_label.hide()
         hidden_editor.hide()
 
         return form_widget

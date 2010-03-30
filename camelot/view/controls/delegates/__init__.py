@@ -40,11 +40,21 @@ itself, others will be used by the editor, created by the delegate.
 
 """
 
-custom_delegates = list(CustomDelegate.__subclasses__())
+custom_delegates = list()
+
+def _add_subclasses(delegate):
+    global custom_delegates
+    subclasses = list(delegate.__subclasses__())
+    for subclass in subclasses:
+        _add_subclasses(subclass)
+    custom_delegates += subclasses
+
+_add_subclasses(CustomDelegate)
+
 custom_delegates.sort(key=lambda d:d.__name__)
 for custom_delegate in custom_delegates:
     doc = doc + custom_delegate.__name__ + '\n' + '-'*len(custom_delegate.__name__) + '\n'
-    if hasattr(custom_delegate, '__doc__'):
+    if hasattr(custom_delegate, '__doc__') and custom_delegate.__doc__:
         doc = doc + custom_delegate.__doc__ + '\n'
 
 __doc__ = doc

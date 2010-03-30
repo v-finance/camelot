@@ -24,8 +24,11 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
+
 from camelot.model import metadata
 from camelot.model import entities
+from camelot.view.controls import delegates
+
 from elixir.entity import Entity
 from elixir.options import using_options
 from elixir.fields import Field
@@ -53,7 +56,7 @@ from camelot.core.document import documented_entity
 from camelot.core.utils import ugettext_lazy as _
 
 from camelot.view.elixir_admin import EntityAdmin
-from camelot.view.forms import Form, TabForm, HBoxForm
+from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm
 from camelot.admin.form_action import FormActionFromModelFunction
 import datetime
 import threading
@@ -398,6 +401,12 @@ class Person( Party ):
     employers = OneToMany( 'EmployerEmployee', inverse = 'established_to', cascade='all, delete, delete-orphan' )
 
     @property
+    def note(self):
+        for person in self.__class__.query.filter_by(first_name=self.first_name, last_name=self.last_name):
+            if person!=self:
+                return _('A person with the same name allready exists')
+    
+    @property
     def name( self ):
         # we don't use full name in here, because for new objects, full name will be None, since
         # it needs to be fetched from the db first
@@ -410,14 +419,17 @@ class Person( Party ):
         verbose_name = _( 'Person' )
         verbose_name_plural = _( 'Persons' )
         list_display = ['first_name', 'last_name', 'email', 'phone']
-        form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [Form( ['first_name', 'last_name', 'sex'] ),
+        form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [Form( [WidgetOnlyForm('note'), 'first_name', 'last_name', 'sex'] ),
                                                           Form( ['picture', ] ),
                                                          ] ),
                                                          'contact_mechanisms', 'comment', ], scrollbars = False ) ),
-                                ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number', 'passport_expiry_date', 'addresses', ], scrollbars = False ) ),
+                                ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number', 
+                                                        'passport_expiry_date', 'addresses', ], scrollbars = False ) ),
                                 ( _('Work'), Form( ['employers', 'directed_organizations', 'shares'], scrollbars = False ) ),
                                 ( _('Status'), Form( ['status'] ) ),
                                 ] )
+        field_attributes = dict( Party.Admin.field_attributes )
+        field_attributes['note'] = {'delegate':delegates.NoteDelegate}
 
 Person = documented_entity()( Person )
 

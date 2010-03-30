@@ -461,7 +461,12 @@ Test the basic functionality of the editors :
     editor.set_value( 134 )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
- 
+    
+  def test_NoteEditor(self):
+    editor = self.editors.NoteEditor(parent=None)
+    editor.set_value('A person with this name allready exists')
+    self.grab_widget( editor, 'editable' )
+    
   def test_RichTextEditor(self):
     editor = self.editors.RichTextEditor(parent=None)
     self.assertEqual( editor.get_value(), self.ValueLoading )
