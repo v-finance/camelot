@@ -48,6 +48,17 @@ a new tab is added to the form defined in the previous section.
 
 .. image:: ../_static/form/inherited_form.png
 
+Putting notes on forms
+======================
+
+.. image:: ../_static/editors/NoteEditor.png 
+
+A note on a form is nothing more than a property with the NoteDelegate as its
+delegate where the widget is inside a WidgetOnlyForm.
+
+.. literalinclude:: ../../../../camelot/model/authentication.py
+   :pyobject: Person
+
 Available Form Subclasses
 =========================
 

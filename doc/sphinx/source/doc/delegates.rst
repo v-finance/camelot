@@ -56,8 +56,17 @@ Available delegates
 
 .. automodule:: camelot.view.controls.delegates
 
-Attributes common to most delegates
-===================================
+Field attributes
+================
+
+.. _field-attribute-calculator:
+
+calculator 
+----------
+
+:const:`True` or :const:`False`
+  
+Indicates whether a calculator should be available when editing this field.
 
 .. _field-attribute-editable:
 
@@ -103,7 +112,21 @@ characters that should fit in the column::
   field_attributes = {'name':{'minimal_column_width':50}}
   
 will make the column wide enough to display at least 50 characters.
+
+.. _field-attribute-prefix:
+
+prefix
+------
+
+String to display before a number
   
+.. _field-attribute-suffix:
+
+suffix
+------
+
+String to display after a number
+
 .. _tooltips:
 
 .. _field-attribute-tooltip:
