@@ -6,7 +6,7 @@ sys.argv += ['-style', 'cleanlooks']
 sys.path.append( os.path.join(os.path.dirname(__file__), 'test') )
 sys.path.append( os.path.dirname(__file__) )
 from nose.core import main
-main(argv=['build.py', '-v', '-s', '-P', '--debug', 'test'], exit=False)
+main(argv=['build.py', '-v', '-s', '-P', 'test'], exit=False)
 del sys.argv[-2:]
 
 import sphinx
