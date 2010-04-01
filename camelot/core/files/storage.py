@@ -89,6 +89,14 @@ class Storage( object ):
             import os
             os.path.exists( self.path( name ) )
         return False
+        
+    def list(self, prefix='*', suffix='*'):
+        """Lists all files with a given prefix and or suffix available in this storage
+        :return: a iterator of StoredFile objects
+        """
+        import glob
+        import os
+        return (StoredFile(self, name) for name in glob.glob( os.path.join( self.upload_to, u'%s*%s'%(prefix, suffix) ) ) )
 
     def path( self, name ):
         """The local filesystem path where the file can be opened using Python’s standard open"""
