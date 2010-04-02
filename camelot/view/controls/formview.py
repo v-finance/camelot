@@ -143,8 +143,8 @@ class FormWidget( QtGui.QWidget ):
         # this loop can take a while to complete, so processEvents is called regulary
         #    
         for i, ( field_name, field_attributes ) in enumerate( self._columns ):
-            if i%10==0:
-                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ExcludeSocketNotifiers, 100)
+#            if i%10==0:
+#                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ExcludeSocketNotifiers, 100)
             model_index = self._model.index( self._index, i )
             hide_title = False
             if 'hide_title' in field_attributes:

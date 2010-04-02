@@ -429,8 +429,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         # this loop can take a while to complete, so processEvents is called regulary
         #
         for i, c in enumerate( columns ):
-            if i%10==0:
-                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ExcludeSocketNotifiers, 100) 
+#            if i%10==0:
+#                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ExcludeSocketNotifiers, 100) 
             field_name = c[0] 
             self.logger.debug( 'creating delegate for %s' % field_name ) 
             if 'delegate' in c[1]: 
