@@ -66,6 +66,8 @@ def bool_from_string(s):
     return eval(s.lower().capitalize())
 
 def date_from_string(s):
+    if not s:
+        return None
     from PyQt4.QtCore import QDate
     import string
     s = s.strip()

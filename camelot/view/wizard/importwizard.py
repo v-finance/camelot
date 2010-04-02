@@ -91,7 +91,11 @@ class SelectFilePage(QtGui.QWizardPage):
 class RowData(object):
     """Class representing the data in a single row of the imported file as an
     object with attributes column_1, column_2, ..., each representing the data
-    in a single column of that row"""
+    in a single column of that row.
+    
+    since the imported file might contain less columns than expected, the RowData
+    object returns None for not existing attributes
+    """
 
     def __init__(self, row_number, row_data):
         """:param row_data: a list containing the data
@@ -101,6 +105,8 @@ class RowData(object):
         for i, data in enumerate(row_data):
             self.__setattr__('column_%i' % i, data)
 
+    def __getattr__(self, attr_name):
+        return None
 
 # see http://docs.python.org/library/csv.html
 class UTF8Recoder:
@@ -199,6 +205,9 @@ class RowDataAdminDecorator(object):
     
     def get_fields(self):
         return self.get_columns()
+    
+    def flush(self, obj):
+        pass
     
     def get_columns(self):
         if self._columns:
