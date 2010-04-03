@@ -461,6 +461,7 @@ class EntityAdmin(ObjectAdmin):
             logger.error('Programming Error : entity %s cannot be flushed because it has no session'%(unicode(entity_instance)))
         session.flush( [entity_instance] )
         
+        
     @model_function
     def copy(self, entity_instance):
         """Duplicate this entity instance"""

@@ -339,11 +339,15 @@ class FinalPage(QtGui.QWizardPage):
     change_maximum_signal = QtCore.SIGNAL('change_maximum')
     change_value_signal = QtCore.SIGNAL('change_value')
     
-    def __init__(self, parent=None, model=None):
+    def __init__(self, parent=None, model=None, admin=None):
+        """
+        :model: the source model from which to import data
+        :admin: the admin class of the target data
+        """
         super(FinalPage, self).__init__(parent)
         self.setTitle(_('Import Progress'))
         self.model = model
-        self.admin = model.get_admin()
+        self.admin = admin
         self.setSubTitle(_('Please wait while data is being imported.'))
 
         icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
@@ -368,7 +372,7 @@ class FinalPage(QtGui.QWizardPage):
         self.emit(self.change_maximum_signal, len(collection))
         for i,row in enumerate(collection):
             new_entity_instance = self.admin.entity()
-            for field_name, attributes in self.admin.get_columns():
+            for field_name, attributes in self.model.get_admin().get_columns():
                 setattr(
                     new_entity_instance,
                     attributes['original_field'],
@@ -409,7 +413,7 @@ class ImportWizard(QtGui.QWizard):
     window_title = _('Import CSV data')
 
     def __init__(self, parent=None, admin=None):
-        """:param admin: camelot model admin"""
+        """:param admin: camelot model admin of the destination data"""
         from camelot.view.proxy.collection_proxy import CollectionProxy
         super(ImportWizard, self).__init__(parent)
         assert admin
@@ -421,16 +425,15 @@ class ImportWizard(QtGui.QWizard):
             row_data_admin.get_columns
         )
         self.setWindowTitle(_(self.window_title))
-        self.add_pages(model, row_data_admin)
+        self.add_pages(model, admin)
         self.setOption(QtGui.QWizard.NoCancelButton)
 
-    def add_pages(self, model, row_data_admin):
+    def add_pages(self, model, admin):
         """
         Add all pages to the import wizard, reimplement this method to add
         custom pages to the wizard
         :param model: the CollectionProxy that will be used to display the to be imported data
-        :param row_dat_admin: the admin interface to be used to display the model, this admin
-        is automatically derived from the admin of the data once it is imported
+        :param admin: the admin of the destination data
         """
         self.addPage(SelectFilePage(parent=self))
         self.addPage(
@@ -440,4 +443,4 @@ class ImportWizard(QtGui.QWizard):
                 collection_getter=self.collection_getter
             )
         )
-        self.addPage(FinalPage(parent=self, model=model))        
+        self.addPage(FinalPage(parent=self, model=model, admin=admin))        
