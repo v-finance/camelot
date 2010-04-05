@@ -31,6 +31,7 @@ from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
 
+
 class FormPage(QtGui.QWizardPage):
     """FormPage is a generic wizard page that displays a form for an object
     in a wizard page, subclass this class to use it.  The class attribute 'Data'

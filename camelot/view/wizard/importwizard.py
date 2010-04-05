@@ -28,64 +28,24 @@
 """Module for managing imports"""
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('camelot.view.wizard.importwizard')
 
 import csv
 import codecs
 
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
-from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QColor
 
-from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.core.utils import ugettext as _
+
 from camelot.view.art import Pixmap
 from camelot.view.model_thread import post
+from camelot.view.wizard.pages.select import SelectFilePage
+from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 
-
-class SelectFilePage(QtGui.QWizardPage):
-    """SelectFilePage is the file selection page of the import wizard"""
-
-    def __init__(self, parent=None):
-        super(SelectFilePage, self).__init__(parent)
-        self.setTitle(_('Import data from a file'))
-        self.setSubTitle(_(
-            "To import data, click 'Browse' to "
-            "select a file then click 'Import'."
-        ))
-
-        icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
-        self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
-
-        label = QtGui.QLabel(_('Select file:'))
-        self.filelineedit = QtGui.QLineEdit()
-        label.setBuddy(self.filelineedit)
-        browsebutton = QtGui.QPushButton(_('Browse...'))
-
-        # file path is a mandatory field
-        self.registerField('datasource*', self.filelineedit)
-
-        layout = QtGui.QVBoxLayout()
-        layout.addWidget(label)
-        hlayout = QtGui.QHBoxLayout()
-        hlayout.addWidget(self.filelineedit)
-        hlayout.addWidget(browsebutton)
-        layout.addLayout(hlayout)
-        self.setLayout(layout)
-
-        self.connect(
-            browsebutton,
-            QtCore.SIGNAL('clicked()'),
-            lambda: self.setpath()
-        )
-
-    def setpath(self):
-        caption = _('Import Wizard - Set File Path')
-        dir = self.field('datasource').toString()
-        path = QtGui.QFileDialog.getOpenFileName(self, caption, dir)
-        if path:
-            self.filelineedit.setText(QtCore.QDir.toNativeSeparators(path))
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger('camelot.view.wizard.importwizard')
 
 
 class RowData(object):
