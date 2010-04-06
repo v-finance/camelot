@@ -130,7 +130,11 @@ class CsvCollectionGetter(object):
 class RowDataAdminDecorator(object):
     """Decorator that transforms the Admin of the class to be imported to an
     Admin of the RowData objects to be used when previewing and validating the
-    data to be imported"""
+    data to be imported.
+    
+    based on the field attributes of the original mode, it will turn the background color pink
+    if the data is invalid for being imported.
+    """
     
     invalid_color = QColor('Pink')
 
@@ -391,7 +395,9 @@ class ImportWizard(QtGui.QWizard):
     def add_pages(self, model, admin):
         """
         Add all pages to the import wizard, reimplement this method to add
-        custom pages to the wizard
+        custom pages to the wizard.  This method is called in the __init__method, to add
+        all pages to the wizard.
+        
         :param model: the CollectionProxy that will be used to display the to be imported data
         :param admin: the admin of the destination data
         """

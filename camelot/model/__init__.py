@@ -21,3 +21,4 @@ from i18n import *
 from memento import *
 from synchronization import *
 from type_and_status import *
+from batch_job import *
