@@ -279,7 +279,7 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
             self.open_button.setToolTip( unicode(_('new')) )
             self.open_button.setEnabled(self._editable)
             self.search_button.setIcon( Icon( 'tango/16x16/actions/system-search.png' ).getQIcon() )
-            self.search_button.setToolTip(_('search'))
+            self.search_button.setToolTip(_('Search'))
             self.entity_set = False
         if propagate:
             self.emit( QtCore.SIGNAL( 'editingFinished()' ) )
