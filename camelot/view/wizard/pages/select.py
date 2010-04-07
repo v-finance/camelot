@@ -26,8 +26,11 @@
 #  ============================================================================
 
 
+import os.path
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+from PyQt4.QtGui import QDesktopServices
 
 from camelot.view.art import Pixmap
 from camelot.core.utils import ugettext as _
@@ -71,10 +74,11 @@ class SelectFilePage(QtGui.QWizardPage):
 
     def setpath(self):
         caption = _('Import Wizard - Set File Path')
-        #dir = self.field('datasource').toString()
         settings = QtCore.QSettings()
-        dir = settings.value('select_file_page_path').toString()
+        dir = settings.value('datasource').toString()
+        #if not os.path.exists(dir)
+        #    dir = QDesktopServices.displayName(QDesktopServices.DocumentsLocation)
         path = QtGui.QFileDialog.getOpenFileName(self, caption, dir)
         if path:
             self.filelineedit.setText(QtCore.QDir.toNativeSeparators(path))
-            settings.setValue('select_file_page_path', QtCore.QVariant(path))
+            settings.setValue('datasource', QtCore.QVariant(path))
