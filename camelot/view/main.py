@@ -1,6 +1,7 @@
 """Main function, to be called to start the GUI interface"""
+from PyQt4.QtCore import QObject
 
-class Application(object):
+class Application(QObject):
     """The camelot application.  This class will take care of the order of
     initialization of various stuff needed to get the application up and 
     running, each of its methods will be called in subsequent order,
