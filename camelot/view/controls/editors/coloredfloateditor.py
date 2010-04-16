@@ -13,6 +13,8 @@ class ColoredFloatEditor(CustomEditor):
                  precision=2,
                  minimum=constants.camelot_minfloat,
                  maximum=constants.camelot_maxfloat, 
+                 prefix='',
+                 suffix='',
                  editable=True,
                  reverse=False,
                  neutral=False,
@@ -25,6 +27,8 @@ class ColoredFloatEditor(CustomEditor):
         self.spinBox.setReadOnly(not editable)
         self.spinBox.setDisabled(not editable)
         self.spinBox.setEnabled(editable)
+        self.spinBox.setPrefix(prefix)
+        self.spinBox.setSuffix(suffix)
         self.spinBox.setRange(minimum, maximum)
         self.spinBox.setDecimals(precision)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
