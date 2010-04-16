@@ -1,9 +1,13 @@
 Trunk
 -----
 
+ * Expanded search and filter options
+ 
  * Search works for integer, date and float fields
  
  * Sorting in table views and OneToMany widgets
+ 
+ * Importer forces validation before importing
  
  * Expanded filter options in table views
  
@@ -17,10 +21,19 @@ Trunk
    
      .. image:: _static/editors/NoteEditor.png
      
+   * LabelDelegate
+   * TextBoolDelegate
+   
+ * i18n improvements
+ 
+ * Fix date editor on windows
+ 
+ * Add a default model to store batch job information
+     
  * More documentation
 
-Release
--------
+Release 09.12.07
+----------------
 
  * Sqlalchemy 5.6 compatible
  
