@@ -118,6 +118,12 @@ class MainWindow(QtGui.QMainWindow):
         widget = self.app_admin.get_whats_new()
         if widget:
             widget.exec_()
+            
+    def remote_support(self):
+        from PyQt4.QtGui import QDesktopServices
+        url = self.app_admin.get_remote_support_url()
+        if url:
+            QDesktopServices.openUrl(url)
     
     def readSettings(self):
         # TODO: improve settings reading
@@ -265,6 +271,14 @@ class MainWindow(QtGui.QMainWindow):
             text=_('&What\'s new'),
             slot=self.whats_new,
             tip=_("Show the What's New box")
+        )
+        
+        self.remote_support_action = createAction(
+            parent=self,
+            text=_('Remote support'),
+            slot=self.remote_support,
+            actionicon=Icon('tango/16x16/devices/video-display.png').fullpath(),
+            tip=_('Let the support agent take over your desktop')
         )
 
         self.helpAct = createAction(
@@ -561,10 +575,13 @@ class MainWindow(QtGui.QMainWindow):
         self.menuBar().addSeparator()
 
         self.helpMenu = self.menuBar().addMenu(_('&Help'))
+        
+        help_menu_actions = [self.helpAct, self.aboutAct]
         if self.app_admin.get_whats_new():
-            addActions(self.helpMenu, (self.helpAct, self.aboutAct, self.whats_new_action))
-        else:
-            addActions(self.helpMenu, (self.helpAct, self.aboutAct))
+            help_menu_actions.append(self.whats_new_action)
+        if self.app_admin.get_remote_support_url():
+            help_menu_actions.append(self.remote_support_action)
+        addActions(self.helpMenu, help_menu_actions )
 
     def updateMenus(self):
         hasMdiChild = (self.activeMdiChild() is not None)

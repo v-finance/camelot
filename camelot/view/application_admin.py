@@ -161,6 +161,18 @@ class ApplicationAdmin(QtCore.QObject):
         """:return: a widget that has a show() method """
         return None
     
+    def get_remote_support_url(self):
+        """:return: a QUrl pointing to a page to get remote support
+        
+        When this method returns a QUrl, an additional item will be available
+        in the 'Help' menu, when clicked the system browser will be opened
+        an pointing to this url.
+        
+        This can be used to connect the user to services like logmein.com, an
+        online ticketing system or others.
+        """
+        return None
+    
     def get_stylesheet(self):
         """
         :return: the qt stylesheet to be used for this application as a string
