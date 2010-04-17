@@ -54,7 +54,10 @@ Putting notes on forms
 .. image:: ../_static/editors/NoteEditor.png 
 
 A note on a form is nothing more than a property with the NoteDelegate as its
-delegate where the widget is inside a WidgetOnlyForm.
+delegate and where the widget is inside a WidgetOnlyForm.
+
+In the case of a Person, we display a note if another person with the same name
+allready exists :
 
 .. literalinclude:: ../../../../camelot/model/authentication.py
    :pyobject: Person
