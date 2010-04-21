@@ -123,6 +123,8 @@ will be put onto a form"""
         self.emit(sig, editor, QtGui.QAbstractItemDelegate.NoHint)
 
     def setEditorData(self, editor, index):
+        if not index.model():
+            return
         value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
         editor.set_value(value)
         index.model().data(index, Qt.ToolTipRole)

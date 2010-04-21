@@ -46,12 +46,25 @@ class Form( object ):
     .. image:: ../_static/form/form.png
     """
 
-    def __init__( self, content, scrollbars = False ):
-        """:param content: a list with the field names and forms to render
+    def __init__( self, content, scrollbars = False, columns = 1  ):
+        """
+        :param content: a list with the field names and forms to render
+        :param columns: the number of columns in which to order the fields.
+        
+        eg : with 2 columns, the fields ['street', 'city', 'country'] will
+        be ordered as :
+        
+        +-------------+--------------+
+        | street      | city         |
+        +-------------+--------------+
+        | country     |              |
+        +-------------+--------------+
+        
         """
         assert isinstance( content, list )
         self._content = content
         self._scrollbars = scrollbars
+        self._columns = columns
 
     def get_fields( self ):
         """:return: the fields, visible in this form"""
@@ -108,7 +121,7 @@ class Form( object ):
         return 'Form(%s)' % ( u','.join( unicode( c ) for c in self._content ) )
 
     @gui_function
-    def render( self, widgets, parent = None, nomargins = False ):
+    def render( self, widgets, parent = None, nomargins = False):
         """:param widgets: a dictionary mapping each field in this form to a tuple
         of (label, widget editor)
 
@@ -118,38 +131,66 @@ class Form( object ):
         from camelot.view.controls.editors.wideeditor import WideEditor
 
         from PyQt4 import QtGui
-
         form_layout = QtGui.QGridLayout()
-        row = 0
+
+        # where 1 column in the form is a label and a field, so two columns in the grid
+        columns = min(self._columns, len(self._content))
+        # make sure all columns have the same width
+        if columns > 1:
+            for i in range(columns*2):
+                form_layout.setColumnStretch(i, 1)
+            
+        row_span = 1
+        
+        class cursor(object):
+            
+            def __init__(self):
+                self.row = 0
+                self.col = 0
+                
+            def next_row(self):
+                self.row = self.row + 1
+                self.col = 0
+    
+            def next_col(self):
+                self.col = self.col + 2
+                if self.col >= columns * 2:
+                    self.next_row()
+                    
+            def next_empty_row(self):
+                if self.col!=0:
+                    self.next_row()
+                    
+            def __str__(self):
+                return '%s,%s'%(self.row, self.col)
+          
+        c = cursor()                  
         for field in self._content:
             if isinstance( field, Form ):
-                col = 0
-                row_span = 1
-                col_span = 2
+                c.next_empty_row()
+                col_span = 2 * columns
                 f = field.render( widgets, parent, True )
                 if isinstance( f, QtGui.QLayout ):
-                    form_layout.addLayout( f, row, col, row_span, col_span )
+                    form_layout.addLayout( f, c.row, c.col, row_span, col_span )
                 else:
-                    form_layout.addWidget( f, row, col, row_span, col_span )
-                row += 1
+                    form_layout.addWidget( f, c.row, c.col, row_span, col_span )
+                c.next_row()
             elif field in widgets:
-                col = 0
-                row_span = 1
                 label, editor = widgets[field]
                 if isinstance( editor, ( WideEditor, ) ):
-                    col_span = 2
+                    c.next_empty_row()
+                    col_span = 2 * columns
                     if label:
-                        form_layout.addWidget( label, row, col, row_span, col_span )
-                        row += 1
-                    form_layout.addWidget( editor, row, col, row_span, col_span )
-                    row += 1
+                        form_layout.addWidget( label, c.row, c.col, row_span, col_span )
+                        c.next_row()
+                    form_layout.addWidget( editor, c.row, c.col, row_span, col_span )
+                    c.next_row()
                 else:
                     col_span = 1
                     if label:
-                        form_layout.addWidget( label, row, col, row_span, col_span )
-                    #form_layout.addWidget(editor, row, col + 1, row_span, col_span, Qt.AlignRight)
-                    form_layout.addWidget( editor, row, col + 1, row_span, col_span )
-                    row += 1
+                        form_layout.addWidget( label, c.row, c.col, row_span, col_span )
+                    form_layout.addWidget( editor, c.row, c.col + 1, row_span, col_span )
+                    c.next_col()
             else:
                 logger.warning('ProgrammingError : widgets should contain a widget for field %s'%unicode(field))
 
@@ -482,12 +523,13 @@ class GroupBoxForm( Form ):
   .. image:: ../_static/form/group_box_form.png
   """
 
-    def __init__( self, title, content, scrollbars=None, min_width=None, min_height=None ):
+    def __init__( self, title, content, scrollbars=None, min_width=None, min_height=None, columns=1 ):
         self.title = title
         self.min_width = min_width
         self.min_height = min_height
-        self._form = structure_to_form(content)
-        Form.__init__( self, self._form.get_fields(), scrollbars )
+        if isinstance(content, Form):
+            content = [content]
+        Form.__init__( self, content, scrollbars, columns=columns )
 
     @gui_function
     def render( self, widgets, parent = None, nomargins = False ):
@@ -497,8 +539,8 @@ class GroupBoxForm( Form ):
         if self.min_width and self.min_height:
             widget.setMinimumSize ( self.min_width, self.min_height )
         widget.setLayout( layout )
-        form = self._form.render( widgets, widget, nomargins )
-        layout.addWidget( form )      
+        form = Form.render( self, widgets, widget, nomargins )
+        layout.addWidget( form )
         return widget
 
 def structure_to_form( structure ):

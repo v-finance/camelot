@@ -138,8 +138,14 @@ class AbstractModelThread(object):
         return False    
 
 def construct_model_thread( *args, **kwargs ):
-    from signal_slot_model_thread import SignalSlotModelThread
-    _model_thread_.insert( 0, SignalSlotModelThread( *args, **kwargs ) )
+    import settings
+    if hasattr(settings, 'THREADING') and settings.THREADING==False:
+        logger.info('running without threads')
+        from no_thread_model_thread import NoThreadModelThread
+        _model_thread_.insert( 0, NoThreadModelThread( *args, **kwargs ) )
+    else:
+        from signal_slot_model_thread import SignalSlotModelThread
+        _model_thread_.insert( 0, SignalSlotModelThread( *args, **kwargs ) )
 
 def has_model_thread():
     return len( _model_thread_ ) > 0
