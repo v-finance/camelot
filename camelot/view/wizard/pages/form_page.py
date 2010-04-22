@@ -61,7 +61,6 @@ class FormPage(QtGui.QWizardPage):
         self.setPixmap(QtGui.QWizard.LogoPixmap, self.get_icon().getQPixmap())
         self._data = self.Data()
         self._complete = False
-        self.parent = parent
         
         admin = self.get_admin()
         self._model = CollectionProxy(admin, lambda:[self._data], admin.get_fields)
