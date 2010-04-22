@@ -109,16 +109,20 @@ class EntityAdmin(ObjectAdmin):
          * widget : which widget to be used to render the field
          * ...
         """
-
         try:
             return self._field_attributes[field_name]
         except KeyError:
+            
+            def create_default_getter(field_name):
+                return lambda o:getattr(o, field_name)
+        
             from camelot.view.controls import delegates
             #
             # Default attributes for all fields
             #
             attributes = dict(
                 python_type = str,
+                getter = create_default_getter(field_name),
                 length = None,
                 tooltip = None,
                 background_color = None,

@@ -308,11 +308,16 @@ class ObjectAdmin(object):
         try:
             return self._field_attributes[field_name]
         except KeyError:
+            
+            def create_default_getter(field_name):
+                return lambda o:getattr(o, field_name)
+            
             from camelot.view.controls import delegates
             #
             # Default attributes for all fields
             #
             attributes = dict(
+                getter=create_default_getter(field_name),
                 python_type=str,
                 length=None,
                 tooltip=None,

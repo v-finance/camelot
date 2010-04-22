@@ -62,7 +62,8 @@ class FormAction( object ):
         raise NotImplementedError
 
 class FormActionFromGuiFunction( FormAction ):
-    """Convert a function that is supposed to run in the GUI thread to a FormAction"""
+    """Convert a function that is supposed to run in the GUI thread to a FormAction,
+    or"""
 
     def __init__( self, name, gui_function, icon = None ):
         FormAction.__init__( self, name, icon )

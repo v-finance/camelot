@@ -117,13 +117,14 @@ def strip_data_from_object( obj, columns ):
     
     for _i, col in enumerate( columns ):
         field_attributes = col[1]
+        getter = field_attributes['getter']
         if field_attributes['python_type'] == list:
             row_data.append( DelayedProxy( field_attributes['admin'],
                             create_collection_getter( obj, col[0] ),
                             field_attributes['admin'].get_columns ) )
         else:
             try:
-                row_data.append( getattr( obj, col[0] ) )
+                row_data.append( getter( obj ) )
             except Exception, e:
                 logger.error('ProgrammingError : could not get attribute %s of object of type %s'%(col[0], obj.__class__.__name__), 
                              exc_info=e)
