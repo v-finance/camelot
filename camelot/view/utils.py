@@ -84,7 +84,21 @@ def date_from_string(s):
         only_letters_string = u''.join([c for c in s if c in (string.ascii_letters+string.digits)])
         dt = QDate.fromString(only_letters_string, only_letters_format)
         if not dt.isValid():
-            raise ParsingError()
+            # try parsing without the year, and take the current year by default
+            only_letters_format = u''.join([c for c in only_letters_format if c not in ['y']])
+            dt = QDate.fromString(only_letters_string, only_letters_format)
+            if not dt.isValid():
+                raise ParsingError()
+#                # try parsing without year and month, and take the current year and month by default
+#                only_letters_format = u''.join([c for c in only_letters_format if c not in ['M']])
+#                dt = QDate.fromString(only_letters_string, only_letters_format)
+#                if not dt.isValid():   
+#                    raise ParsingError()
+#                else:
+#                    today = date.today()
+#                    return date(today.year, today.month, dt.day())
+            else:
+                return date(date.today().year, dt.month(), dt.day())
     return date(dt.year(), dt.month(), dt.day())
 
 def time_from_string(s, format=constants.strftime_time_format):

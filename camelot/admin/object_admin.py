@@ -163,6 +163,10 @@ class ObjectAdmin(object):
     .. attribute:: model
     The QAbstractItemModel class to be used to display collections of this object,
     defaults to a CollectionProxy
+    
+    .. attribute:: confirm_delete
+    set to True if the user should get a confirmation dialog before deleting data,
+    defaults to False
     """
     name = None #DEPRECATED
     verbose_name = None
