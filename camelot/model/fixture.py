@@ -99,3 +99,40 @@ class Fixture( Entity ):
                 reference.primary_key = obj.id
             Session.object_session( reference ).flush( [reference] )
         return obj
+
+class FixtureVersion( Entity ):
+    """Keep track of the version the fixtures have in the current database, the subversion
+    revision number is a good candidate to be used as a fixture version.
+    
+    :return: an integer representing the current version, 0 if no version found
+    """
+    using_options( tablename = 'fixture_version' )
+    fixture_version = Field( INT(), index = True, required = True, default=0 )
+    fixture_class = Field( Unicode( 256 ), index = True, required = False, unique=True )    
+    
+    @classmethod
+    def get_current_version( cls, fixture_class = None ):
+        """Get the current version of the fixtures in the database for a certain 
+        fixture class.
+        
+        :param fixture_class: the fixture class for which to get the version
+        """
+        obj = cls.query.filter_by( fixture_class = fixture_class ).first()
+        if obj:
+            return obj.fixture_version
+        return 0
+        
+    @classmethod
+    def set_current_version( cls, fixture_class = None, fixture_version = 0 ):
+        """Set the current version of the fixtures in the database for a certain 
+        fixture class.
+        
+        :param fixture_class: the fixture class for which to get the version
+        :param fixture_version: the version number to which to set the fixture version
+        """
+        from sqlalchemy.orm.session import Session
+        obj = cls.query.filter_by( fixture_class = fixture_class ).first()
+        if not obj:
+            obj = FixtureVersion( fixture_class = fixture_class )
+        obj.fixture_version = fixture_version
+        Session.object_session( obj ).flush( [obj] ) 
