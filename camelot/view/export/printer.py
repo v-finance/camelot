@@ -19,4 +19,5 @@ def open_html_in_print_preview_from_gui_thread( html ):
         doc.print_( printer )
     
     dialog.connect( dialog, QtCore.SIGNAL( 'paintRequested(QPrinter*)' ), render )
+    dialog.showMaximized()
     dialog.exec_()
