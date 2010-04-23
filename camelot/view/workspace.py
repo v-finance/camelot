@@ -71,3 +71,7 @@ def construct_no_desktop_workspace(*args, **kwargs):
 @gui_function
 def get_workspace():
     return _workspace_[0]
+
+@gui_function
+def has_workspace():
+    return len(_workspace_) > 0
