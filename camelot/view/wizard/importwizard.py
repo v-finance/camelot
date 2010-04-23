@@ -99,7 +99,6 @@ class UnicodeReader:
     def __iter__(self):
         return self
 
-
 class CsvCollectionGetter(object):
     """class that when called returns the data in filename as a list of RowData
     objects"""
@@ -125,7 +124,6 @@ class CsvCollectionGetter(object):
             ]
 
         return self._data
-
 
 class RowDataAdminDecorator(object):
     """Decorator that transforms the Admin of the class to be imported to an
@@ -179,12 +177,16 @@ class RowDataAdminDecorator(object):
         
         original_columns = self._object_admin.get_columns()
 
+        def create_getter(i):
+            return lambda o:getattr(o, 'column_%i'%i)
+            
         def new_field_attributes(i, original_field_attributes, original_field):
             from camelot.view.controls import delegates
             attributes = dict(original_field_attributes)
             attributes['delegate'] = delegates.PlainTextDelegate
             attributes['python_type'] = str
             attributes['original_field'] = original_field
+            attributes['getter'] = create_getter(i)
             
             # remove some attributes that might disturb the import wizard
             for attribute in ['background_color', 'tooltip']:
