@@ -194,7 +194,13 @@ class SortingRowMapper( dict ):
     
 class CollectionProxy( QtCore.QAbstractTableModel ):
     """The CollectionProxy contains a limited copy of the data in the actual
-    collection, usable for fast visualisation in a QTableView 
+    collection, usable for fast visualisation in a QTableView
+    
+    the CollectionProxy has some class attributes that can be overwritten when
+    subclassing it :
+    
+    * header_icon : the icon to be used in the vertical header
+    
     """
   
     _header_font = QtGui.QApplication.font()
@@ -227,7 +233,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         QtCore.QAbstractTableModel.__init__(self)
         self.admin = admin
         self.iconSize = QtCore.QSize( QtGui.QFontMetrics( self._header_font_required ).height() - 4, QtGui.QFontMetrics( self._header_font_required ).height() - 4 )
-        self.form_icon = QtCore.QVariant( self.header_icon.getQIcon().pixmap( self.iconSize ) )
+        if self.header_icon:
+            self.form_icon = QtCore.QVariant( self.header_icon.getQIcon().pixmap( self.iconSize ) )
+        else:
+            self.form_icon = QtCore.QVariant()
         self.validator = admin.create_validator( self )
         self.collection_getter = collection_getter
         self.column_count = 0
@@ -505,7 +514,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 return QtCore.QVariant( QtCore.QSize( size, label_size.height() + 10 ) )
         else:
             if role == Qt.SizeHintRole:
-                return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 8, self.iconSize.height() + 5 ) )
+                height = self.iconSize.height() + 5
+                if self.header_icon:
+                    return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 10, height ) )
+                else:
+                    # if there is no icon, the line numbers will be displayed, so create some space for those
+                    return QtCore.QVariant( QtCore.QSize( QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, str(self._rows) ).width() + 10, height) )
             if role == Qt.DecorationRole:
                 return self.form_icon
 #      elif role == Qt.DisplayRole:

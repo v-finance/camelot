@@ -15,6 +15,7 @@ class One2ManyEditor( CustomEditor, WideEditor ):
                  parent = None,
                  create_inline = False,
                  editable = True,
+                 vertical_header_clickable = True,
                  **kw ):
         """
     :param admin: the Admin interface for the objects on the one side of the
@@ -23,7 +24,9 @@ class One2ManyEditor( CustomEditor, WideEditor ):
     :param create_inline: if False, then a new entity will be created within a
     new window, if True, it will be created inline
     
-    after creating the editor, setEntityInstance needs to be called to set the
+    :param vertical_header_clickable: True if the vertical header is clickable by the user, False if not.
+    
+    after creating the editor, set_value needs to be called to set the
     actual data to the editor
     """
     
@@ -41,9 +44,10 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         layout.setSizeConstraint( QtGui.QLayout.SetNoConstraint )
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
                            QtGui.QSizePolicy.Expanding )
-        self.connect( self.table.verticalHeader(),
-                     QtCore.SIGNAL( 'sectionClicked(int)' ),
-                     self.createFormForIndex )
+        if vertical_header_clickable:
+            self.connect( self.table.verticalHeader(),
+                         QtCore.SIGNAL( 'sectionClicked(int)' ),
+                         self.createFormForIndex )
         self.admin = admin
         self.editable = editable
         self.create_inline = create_inline

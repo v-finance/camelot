@@ -43,6 +43,7 @@ from camelot.view.art import Pixmap
 from camelot.view.model_thread import post
 from camelot.view.wizard.pages.select import SelectFilePage
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
+from camelot.view.proxy.collection_proxy import CollectionProxy
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('camelot.view.wizard.importwizard')
@@ -248,8 +249,9 @@ class DataPreviewPage(QtGui.QWizardPage):
 
         self.previewtable = One2ManyEditor(
             admin = model.get_admin(),
-            parent=self,
-            create_inline=True
+            parent = self,
+            create_inline = True,
+            vertical_header_clickable = False,
         )
         self._note = NoteEditor()
         self._note.set_value(None)
@@ -363,6 +365,9 @@ class FinalPage(QtGui.QWizardPage):
         self.emit(QtCore.SIGNAL('completeChanged()'))
         post(self.run_import, self.import_finished, self.import_finished)
 
+class DataPreviewCollectionProxy(CollectionProxy):
+    header_icon = None
+    
 class ImportWizard(QtGui.QWizard):
     """ImportWizard provides a two-step wizard for importing data as objects
     into Camelot.  To create a custom wizard, subclass this ImportWizard and
@@ -380,12 +385,17 @@ class ImportWizard(QtGui.QWizard):
 
     def __init__(self, parent=None, admin=None):
         """:param admin: camelot model admin of the destination data"""
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         super(ImportWizard, self).__init__(parent)
         assert admin
-
+        #
+        # Set the size of the wizard to 2/3rd of the screen, since we want to get some work done
+        # here, the user needs to verify and possibly correct its data
+        #
+        desktop = QtCore.QCoreApplication.instance().desktop()
+        self.setMinimumSize(desktop.width()*2/3, desktop.height()*2/3)
+        
         row_data_admin = RowDataAdminDecorator(admin)
-        model = CollectionProxy(
+        model = DataPreviewCollectionProxy(
             row_data_admin,
             lambda:[],
             row_data_admin.get_columns
