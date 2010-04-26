@@ -286,8 +286,20 @@ class EntityAdmin(ObjectAdmin):
         """Set the defaults of an object"""
         from sqlalchemy.schema import ColumnDefault
         for field, attributes in self.get_fields():
+            has_default = False
             try:
                 default = attributes['default']
+                has_default = True
+            except KeyError, _e:
+                pass
+            if has_default:
+                #
+                # prevent the setting of a default value when one has been
+                # set allready
+                #
+                value = attributes['getter'](entity_instance)
+                if value:
+                    continue
                 if isinstance(default, ColumnDefault):
                     default_value = default.execute()
                 elif callable(default):
@@ -318,8 +330,7 @@ class EntityAdmin(ObjectAdmin):
                         ),
                         exc_info=e
                     )
-            except KeyError, _e:
-                pass
+
 
     @gui_function
     def create_select_view(admin, query=None, search_text=None, parent=None):
