@@ -503,7 +503,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 if 'minimal_column_width' in c[1]:
                     minimal_column_width = QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, 'A' ).width()*c[1]['minimal_column_width']
                 else:
-                    minimal_column_width = QtCore.QSize(0,0)
+                    minimal_column_width = 100
                 editable = True
                 if 'editable' in c[1]:
                     editable = c[1]['editable']

@@ -348,8 +348,7 @@ class TableView( AbstractView  ):
         if item_delegate:
             self.table.setItemDelegate( item_delegate )
         for i in range( self._table_model.columnCount() ):
-            self.table.setColumnWidth( i, max( self._table_model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width(), 
-                                               self.table.columnWidth( i ) ) )
+            self.table.setColumnWidth( i, self._table_model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
       
     @gui_function
     def setCharts( self, charts ):

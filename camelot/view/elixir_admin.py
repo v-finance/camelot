@@ -126,7 +126,7 @@ class EntityAdmin(ObjectAdmin):
                 length = None,
                 tooltip = None,
                 background_color = None,
-                minimal_column_width = 0,
+                minimal_column_width = 12,
                 editable = False,
                 nullable = True,
                 widget = 'str',
