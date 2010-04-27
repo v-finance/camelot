@@ -33,6 +33,8 @@ import logging
 logger = logging.getLogger('camelot.view.search')
 
 import sqlalchemy.types
+from sqlalchemy.sql import operators
+
 import camelot.types
 
 def create_entity_search_query_decorator(admin, text):
@@ -96,7 +98,7 @@ def create_entity_search_query_decorator(admin, text):
                             (hasattr(c.type, 'impl') and \
                              issubclass(c.type.impl.__class__, (Unicode, ))):
                 logger.debug('look in column : %s'%c.name)
-                args.append(c.like('%'+text+'%'))
+                args.append(operators.ilike_op(c, '%'+text+'%'))
 
         for table in search_tables:
             for c in table._columns:
