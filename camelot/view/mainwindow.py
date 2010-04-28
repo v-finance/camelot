@@ -217,6 +217,7 @@ class MainWindow(QtGui.QMainWindow):
             parent=self,
             text=_('E&xit'),
             slot=self.close,
+            actionicon=Icon('tango/16x16/actions/system-shutdown.png').fullpath(),
             tip=_('Exit the application')
         )
 
@@ -263,6 +264,7 @@ class MainWindow(QtGui.QMainWindow):
             parent=self,
             text=_('&About'),
             slot=self.about,
+            actionicon=Icon('tango/16x16/mimetypes/application-certificate.png').fullpath(),
             tip=_("Show the application's About box")
         )
         
@@ -270,6 +272,7 @@ class MainWindow(QtGui.QMainWindow):
             parent=self,
             text=_('&What\'s new'),
             slot=self.whats_new,
+            actionicon=Icon('tango/16x16/status/software-update-available.png').fullpath(),            
             tip=_("Show the What's New box")
         )
         
