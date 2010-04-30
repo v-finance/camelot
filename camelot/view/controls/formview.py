@@ -117,7 +117,7 @@ class FormWidget( QtGui.QWidget ):
         
     def _create_widgets( self ):
         """Create value and label widgets"""
-        from camelot.view.controls.user_translatable_label import UserTranslatableLabel
+        from camelot.view.controls.field_label import FieldLabel
         from camelot.view.controls.editors.wideeditor import WideEditor
         #
         # Dirty trick to make form views work during unit tests, since unit tests
@@ -152,7 +152,7 @@ class FormWidget( QtGui.QWidget ):
             widget_label = None
             widget_editor = self._delegate.createEditor( self, option, model_index )
             if not hide_title:
-                widget_label = UserTranslatableLabel( field_attributes['name'] )
+                widget_label = FieldLabel( field_name, field_attributes['name'], field_attributes, self._admin )
                 if not isinstance(widget_editor, WideEditor):
                     widget_label.setAlignment( Qt.AlignVCenter | Qt.AlignRight )
       
