@@ -299,6 +299,9 @@ class TableView( AbstractView  ):
         if self.table and self._table_model:
             for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
                 self._table_model.copy_row( row )
+                
+    def select_all_rows( self ):
+        self.table.selectAll()
             
     def create_table_model( self, admin ):
         """Create a table model for the given admin interface"""

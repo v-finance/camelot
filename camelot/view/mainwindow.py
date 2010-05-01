@@ -229,6 +229,14 @@ class MainWindow(QtGui.QMainWindow):
             actionicon=icon_copy,
             tip=_("Duplicate the selected rows")
         )
+        
+        self.selectAllAct = createAction(
+            parent=self,
+            text=_('Select &All'),
+            slot=self.select_all,
+            shortcut=QtGui.QKeySequence.SelectAll,
+            tip=_('Select all rows in the table'),
+        )
 
         # BUG: there is a problem with setting a key sequence for closing
         #      a subwindow.  PyQt adopts defaults from specific platforms
@@ -438,6 +446,9 @@ class MainWindow(QtGui.QMainWindow):
 
     def copy(self):
         self.activeMdiChild().widget().copy_selected_rows()
+        
+    def select_all(self):
+        self.activeMdiChild().widget().select_all_rows()
 
     def printDoc(self):
         self.previewDoc()
@@ -556,7 +567,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.editMenu = self.menuBar().addMenu(_('&Edit'))
 
-        addActions(self.editMenu, (self.copyAct, self.updateValueAct))
+        addActions(self.editMenu, (self.copyAct, self.updateValueAct, self.selectAllAct))
         
         self.viewMenu = self.menuBar().addMenu(_('View'))
         addActions(self.viewMenu, (self.sessionRefreshAct,))
