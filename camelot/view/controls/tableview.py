@@ -536,6 +536,10 @@ class TableView( AbstractView  ):
         prev = ( first.row() - 1 ) % self._table_model.rowCount()
         self.selectTableRow( prev )
     
+    def _set_query(self, query_getter):
+        self._table_model.setQuery(query_getter)
+        self.table.clearSelection()
+        
     def rebuildQuery( self ):
         """resets the table model query"""
     
@@ -549,7 +553,7 @@ class TableView( AbstractView  ):
             query_getter = lambda:query
             return query_getter
       
-        post( rebuild_query, self._table_model.setQuery )
+        post( rebuild_query, self._set_query )
     
     def startSearch( self, text ):
         """rebuilds query based on filtering text"""
