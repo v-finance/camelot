@@ -104,7 +104,7 @@ class Code(types.TypeDecorator):
     
     impl = types.Unicode
           
-    def __init__(self, parts, **kwargs):
+    def __init__(self, parts, separator=u'.', **kwargs):
         """
         :param parts: a list of input masks specifying the mask for each part,
         eg ``['99', 'AA']``. For valid input masks, see
@@ -113,7 +113,8 @@ class Code(types.TypeDecorator):
         import string
         translator = string.maketrans('', '')
         self.parts = parts
-        max_length = sum(len(part.translate(translator, '<>!')) for part in parts) + len(parts)
+        self._separator = separator
+        max_length = sum(len(part.translate(translator, '<>!')) for part in parts) + len(parts)*len(self._separator)
         types.TypeDecorator.__init__(self, length=max_length, **kwargs)
         
     def bind_processor(self, dialect):
@@ -124,7 +125,7 @@ class Code(types.TypeDecorator):
           
         def processor(value):
             if value is not None:
-                value = u'.'.join(value)
+                value = self._separator.join(value)
             return impl_processor(value)
           
         return processor
@@ -138,7 +139,7 @@ class Code(types.TypeDecorator):
         def processor(value):
     
             if value:
-                return value.split('.')
+                return value.split(self._separator)
             return ['' for _p in self.parts]
             
         return processor
@@ -242,7 +243,7 @@ class Color(types.TypeDecorator):
                 return (int(value[2:4],16), int(value[4:6],16), int(value[6:8],16), int(value[0:2],16))
               
         return processor
-      
+        
 class Enumeration(types.TypeDecorator):
     """The enumeration field stores integers in the database, but represents them as
   strings.  This allows efficient storage and querying while preserving readable code.

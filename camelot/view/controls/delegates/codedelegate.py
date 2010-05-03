@@ -41,10 +41,8 @@ class CodeDelegate(CustomDelegate):
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(130,130,130)
                 
-          
         rect = option.rect
         rect = QtCore.QRect(rect.left()+3, rect.top()+6, rect.width(), rect.height()-3)
-        
         
         if numParts != 0:
             value = variant_to_pyobject(index.model().data(index, Qt.EditRole)) or []
@@ -52,22 +50,13 @@ class CodeDelegate(CustomDelegate):
                 value = []
             value = '.'.join([unicode(i) for i in value])
             
-            
             painter.setPen(fontColor.toRgb())
-            
             painter.drawText(rect.x(),
                            rect.y()-4,
                            rect.width()-6,
                            rect.height(),
                            Qt.AlignVCenter | Qt.AlignRight,
                            value)  
-            
-      
-              
-            
         
         painter.restore()
-      
-    
-#  def sizeHint(self, option, index):
-#    return self._dummy_editor.sizeHint() 
+

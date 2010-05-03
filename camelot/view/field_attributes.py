@@ -116,6 +116,18 @@ _sqlalchemy_to_python_type_ = {
         'from_string': float_from_string,
         'operators': _numerical_operators,
     },
+    
+    sqlalchemy.types.Numeric: lambda f: {
+        'python_type': float,
+        'precision': f.scale,
+        'editable': True,
+        'minimum': constants.camelot_minfloat,
+        'maximum': constants.camelot_maxfloat,
+        'nullable': True,
+        'delegate': delegates.FloatDelegate,
+        'from_string': float_from_string,
+        'operators': _numerical_operators,
+    },
 
     sqlalchemy.types.Integer: lambda f: {
         'python_type': int,
@@ -281,6 +293,7 @@ class DummyField(object):
         self.parts = ['AAA', '99']
         self.choices = ['planned', 'canceled']
         self.precision = 2
+        self.scale = 2
         self.storage = None
 
 row_separator = '+' + '-'*20 + '+' + '-'*70 + '+' + '-'*70 + '+'

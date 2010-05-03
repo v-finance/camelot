@@ -4,6 +4,13 @@ from PyQt4.QtCore import Qt
 from customeditor import CustomEditor
 import re
 
+class PartEditor(QtGui.QLineEdit):
+    
+    def __init__(self, mask):
+        super(PartEditor, self).__init__()
+        self.setInputMask(mask)
+        self.setCursorPosition(0)
+        
 class CodeEditor(CustomEditor):
   
     def __init__(self, parent=None, parts=['99','AA'], editable=True, **kwargs):
@@ -18,26 +25,24 @@ class CodeEditor(CustomEditor):
         for part in parts:
             part = re.sub('\W*', '', part)
             part_length = len(part)
-            editor = QtGui.QLineEdit()
-            editor.setInputMask(part)
+            editor = PartEditor(part)
             if not editable:
                 editor.setEnabled(False)
             space_width = editor.fontMetrics().size(Qt.TextSingleLine, 'A').width()
             editor.setMaximumWidth(space_width*(part_length+1))
-            editor.installEventFilter(self)
             self.part_editors.append(editor)
             layout.addWidget(editor)
             self.connect(editor,
                          QtCore.SIGNAL('editingFinished()'),
                          self.editingFinished)
-      
         self.setLayout(layout)
-        self.setAutoFillBackground(True)
     
     def editingFinished(self):
         self.emit(QtCore.SIGNAL('editingFinished()'))
         
-      
+    def focusOutEvent(self, event):
+        self.emit(QtCore.SIGNAL('editingFinished()'))
+        
     def set_enabled(self, editable=True):
         for editor in self.part_editors:
             value = editor.text()
@@ -59,11 +64,11 @@ class CodeEditor(CustomEditor):
             value.append(unicode(part.text()))
         return CustomEditor.get_value(self) or value
     
-    def set_background_color(self, background_color):        
+    def set_background_color(self, background_color):
         if background_color:
             for editor in self.part_editors:
                 palette = editor.palette()
-                palette.setColor(self.backgroundRole(), background_color)
+                palette.setColor(editor.backgroundRole(), background_color)
                 editor.setPalette(palette)
         else:
             return False
