@@ -118,12 +118,18 @@ class MainWindow(QtGui.QMainWindow):
         widget = self.app_admin.get_whats_new()
         if widget:
             widget.exec_()
+
+    def affiliated_website(self):
+        from PyQt4.QtGui import QDesktopServices
+        url = self.app_admin.get_affiliated_url()
+        if url:
+            QDesktopServices.openUrl(url)
             
     def remote_support(self):
         from PyQt4.QtGui import QDesktopServices
         url = self.app_admin.get_remote_support_url()
         if url:
-            QDesktopServices.openUrl(url)
+            QDesktopServices.openUrl(url)   
     
     def readSettings(self):
         # TODO: improve settings reading
@@ -282,6 +288,14 @@ class MainWindow(QtGui.QMainWindow):
             slot=self.whats_new,
             actionicon=Icon('tango/16x16/status/software-update-available.png').fullpath(),            
             tip=_("Show the What's New box")
+        )
+        
+        self.affiliated_website_action = createAction(
+            parent=self,
+            text=_('Affiliated website'),
+            slot=self.affiliated_website,
+            actionicon=Icon('tango/16x16/apps/internet-web-browser.png').fullpath(),
+            tip=_('Go to the affiliated website')
         )
         
         self.remote_support_action = createAction(
@@ -593,6 +607,8 @@ class MainWindow(QtGui.QMainWindow):
         help_menu_actions = [self.helpAct, self.aboutAct]
         if self.app_admin.get_whats_new():
             help_menu_actions.append(self.whats_new_action)
+        if self.app_admin.get_affiliated_url():
+            help_menu_actions.append(self.affiliated_website_action)
         if self.app_admin.get_remote_support_url():
             help_menu_actions.append(self.remote_support_action)
         addActions(self.helpMenu, help_menu_actions )
