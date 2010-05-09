@@ -165,68 +165,44 @@ class PrintHtmlFormAction( FormActionFromModelFunction ):
         progress.exec_()
         
 class DocxFormAction( FormActionFromModelFunction ):
-    """Action that generates a .docx file and opens it.  It does so by taking an empty docx file and then
-    replace the content of the document.xml with custom generated xml.  The generated xml is by default generated
-    with jinja templates.
+    """Action that generates a .docx file and opens it.  It does so by generating an xml document
+    with jinja templates that is a valid word document.
     """
     
     def __init__( self, name, icon = Icon( 'tango/16x16/mimetypes/x-office-document.png' ) ):
-        FormActionFromModelFunction.__init__( self, name, self.open_docx, icon )
-     
-    def get_empty_docx(self, obj):
-        """:return: the filename of the empty docx document to use as a starting point"""
-        raise NotImplemented
+        FormActionFromModelFunction.__init__( self, name, self.open_xml, icon )
           
     def get_context(self, obj):
-        """:return: a dictionary with objects to be used as context when jinja fills up the document.xml"""
+        """:return: a dictionary with objects to be used as context when jinja fills up the xml document"""
         return {}
     
     def get_environment(self, obj):
-        """Return the jinja environment to be used to render the document.xml template"""
+        """Return the jinja environment to be used to render the xml document"""
         from jinja import Environment
         e = Environment()
         return e
     
     def get_template(self, obj):
-        """:return: the name of the jinja template for the document.xml inside the templates folder"""
+        """:return: the name of the jinja template for xml document"""
         raise NotImplemented
     
-    def document_xml(self, obj):
-        """:return: the new content of the document.xml inside the docx file"""
+    def document(self, obj):
+        """:return: the xml content of the document"""
         e = self.get_environment(obj)
         context = self.get_context(obj)
         t = e.get_template(self.get_template(obj))
         document_xml = t.render(context)
         return document_xml
     
-    def open_docx(self, obj):
+    def open_xml(self, obj):
         from camelot.view.export.word import open_document_in_word
         import tempfile
         import os
-        fd, fn = tempfile.mkstemp(suffix='.docx')
+        fd, fn = tempfile.mkstemp(suffix='.xml')
         docx_file = os.fdopen(fd, 'wb')
-        docx_file.write(self.docx(obj))
+        docx_file.write(self.document(obj).encode('utf-8'))
         docx_file.close()
         open_document_in_word(fn)
-        
-    def docx(self, obj):
-        """Generate a docx file and return its content
-        :param obj: the object to be used to fill the document
-        """
-        import cStringIO
-        import zipfile
-        output = cStringIO.StringIO()
-        document_xml = self.document_xml(obj)
-        input_zip = zipfile.ZipFile(open(self.get_empty_docx(obj), 'rb'), 'r', zipfile.ZIP_DEFLATED)
-        output_zip = zipfile.ZipFile(output, 'w')
-        for path in input_zip.namelist():
-            if path=='word/document.xml':
-                output_zip.writestr(path, document_xml)
-            else:
-                output_zip.writestr(path, input_zip.read(path))
-        output_zip.close()
-        input_zip.close()
-        return output.getvalue()  
         
 def structure_to_form_actions( structure ):
     """Convert a list of python objects to a list of form actions.  If the python
