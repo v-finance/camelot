@@ -52,8 +52,10 @@ class CodeEditor(CustomEditor):
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:
-            for part_editor, part in zip(self.part_editors, value):
-                part_editor.setText(unicode(part))
+            old_value = self.get_value()
+            if value!=old_value:
+                for part_editor, part in zip(self.part_editors, value):
+                    part_editor.setText(unicode(part))
         else:
             for part_editor in self.part_editors:
                 part_editor.setText(u'')
