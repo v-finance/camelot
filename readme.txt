@@ -21,6 +21,6 @@ desktop GUI.
 
 For more information, refer to :
 
- - `Home page <http://www.conceptive.be/projects/camelot/>`_.
- - `Screenshots <http://www.conceptive.be/projects/camelot/index.php?option=com_phocagallery&view=category&id=1&Itemid=56>`_.
- - `Documentation <http://www.conceptive.be/projects/camelot/index.php?option=com_content&view=article&id=53&Itemid=27>`_.
+ - `Home page <http://www.python-camelot.com>`_.
+ - `Screenshots <http://www.python-camelot.com>`_.
+ - `Documentation <http://www.python-camelot.com/docs.html>`_.

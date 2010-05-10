@@ -16,7 +16,7 @@ setup(
     author_email = 'project-camelot@conceptive.be',
     maintainer = 'Conceptive Engineering',
     maintainer_email = 'project-camelot@conceptive.be',  
-    url = 'http://www.conceptive.be/projects/camelot/',
+    url = 'http://www.python-camelot.com',
     include_package_data = True,
     package_data = {
         # If any package contains *.txt files, include them:
