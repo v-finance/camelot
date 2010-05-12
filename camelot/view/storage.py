@@ -1,23 +1,35 @@
 from camelot.view.controls.exception import model_thread_exception_message_box
 from camelot.view.model_thread import post
+from camelot.core.utils import ugettext as _
 
 from PyQt4 import QtGui, QtCore
 
 class OpenFileProgressDialog(QtGui.QProgressDialog):
 
     def __init__(self):
-        QtGui.QProgressDialog.__init__(self, 'Open file', QtCore.QString(), 0, 0)
+        QtGui.QProgressDialog.__init__(self, _('Please wait'), QtCore.QString(), 0, 0)
+        self.setWindowTitle(_('Open file'))
         self.setRange(0, 0)
 
     def open_path(self, path):
-        url = QtCore.QUrl.fromLocalFile(path)
+        import os
+        if not os.path.exists(path):
+            QtGui.QMessageBox.critical (self, _('Could not open file'), _('%s does not exist')%path)
+        #
+        # support for windows shares
+        #
+        if not path.startswith(r'\\'):
+            url = QtCore.QUrl.fromLocalFile(path)
+        else:
+            url = QtCore.QUrl(path, QtCore.QUrl.TolerantMode)
         QtGui.QDesktopServices.openUrl(url)
         self.close()
 
 class SaveFileProgressDialog(QtGui.QProgressDialog):
 
     def __init__(self):
-        QtGui.QProgressDialog.__init__(self, 'Save file', QtCore.QString(), 0, 0)
+        QtGui.QProgressDialog.__init__(self, _('Please wait'), QtCore.QString(), 0, 0)
+        self.setWindowTitle(_('Save file'))
         self.setRange(0, 0)
 
     def finish(self, on_finish):
