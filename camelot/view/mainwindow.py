@@ -162,6 +162,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def createActions(self):
         icon_backup = Icon('tango/16x16/actions/document-save.png').fullpath()
+        icon_restore = Icon('tango/16x16/devices/drive-harddisk.png').fullpath()
         icon_pgsetup = Icon('tango/16x16/actions/document-properties.png').fullpath()
         icon_print = Icon('tango/16x16/actions/document-print.png').fullpath()
         icon_preview = Icon('tango/16x16/actions/document-print-preview.png').fullpath()
@@ -184,15 +185,22 @@ class MainWindow(QtGui.QMainWindow):
         icon_help = Icon('tango/16x16/apps/help-browser.png').fullpath()
 
         # TODO: change some of the status tips
-        self.saveAct = createAction(
+        self.backupAct = createAction(
             parent=self,
             text=_('&Backup'),
             slot=self.backup,
-            shortcut=QtGui.QKeySequence.Save,
             actionicon=icon_backup,
-            tip=_('Backup the database to a file')
+            tip=_('Backup the database')
         )
 
+        self.restoreAct = createAction(
+            parent=self,
+            text=_('&Restore'),
+            slot=self.restore,
+            actionicon=icon_restore,
+            tip=_('Restore the database from a backup')
+        )
+        
         self.pageSetupAct = createAction(
             parent=self,
             text=_('Page Setup...'),
@@ -455,6 +463,11 @@ class MainWindow(QtGui.QMainWindow):
         from camelot.view.wizard.backup import BackupWizard
         wizard = BackupWizard(self.app_admin.backup_mechanism, self)
         wizard.exec_()
+        
+    def restore(self):
+        from camelot.view.wizard.backup import RestoreWizard
+        wizard = RestoreWizard(self.app_admin.backup_mechanism, self)
+        wizard.exec_()
 
     def saveAs(self):
         pass
@@ -558,7 +571,8 @@ class MainWindow(QtGui.QMainWindow):
         addActions(self.fileMenu, (
             self.closeAct,
             None,
-            self.saveAct,
+            self.backupAct,
+            self.restoreAct,
             None,
             self.pageSetupAct,
             self.previewAct,
@@ -616,7 +630,8 @@ class MainWindow(QtGui.QMainWindow):
 
     def updateMenus(self):
         hasMdiChild = (self.activeMdiChild() is not None)
-        self.saveAct.setEnabled(True)
+        self.backupAct.setEnabled(True)
+        self.restoreAct.setEnabled(True)
         self.closeAct.setEnabled(hasMdiChild)
 
         self.closeAllAct.setEnabled(hasMdiChild)
