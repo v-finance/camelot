@@ -55,6 +55,7 @@ def model_thread_exception_message_box(exception_info, title=None, text=None):
     exc, traceback = exception_info
     msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
                                unicode(title), unicode(text))
-    msgBox.setInformativeText(unicode(exc))
+    # chop the size of the text to prevent error dialogs larger than the screen
+    msgBox.setInformativeText(unicode(exc)[:1000])
     msgBox.setDetailedText(traceback)
     msgBox.exec_()
