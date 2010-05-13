@@ -25,35 +25,37 @@
 #
 #  ============================================================================
 
-
-import os.path
-
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtGui import QDesktopServices
 
-from camelot.view.art import Pixmap
-from camelot.core.utils import ugettext as _
+from camelot.view.art import Icon
+from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext
 
 
 class SelectFilePage(QtGui.QWizardPage):
     """SelectFilePage is the file selection page of an import wizard"""
 
-    def __init__(self, parent=None):
-        super(SelectFilePage, self).__init__(parent)
-        self.setTitle(_('Import data from a file'))
-        self.setSubTitle(_(
+    title = _('Import data from a file')
+    sub_title = _(
             "To import data, click 'Browse' to "
             "select a file then click 'Import'."
-        ))
+        )
+    icon = Icon('tango/32x32/mimetypes/x-office-spreadsheet.png')
+    caption = _('Select file')
+    save = False
+    
+    def __init__(self, parent=None):
+        super(SelectFilePage, self).__init__(parent)
+        self.setTitle( unicode(self.title) )
+        self.setSubTitle( unicode(self.sub_title) )
+        self.setPixmap(QtGui.QWizard.LogoPixmap, self.icon.getQPixmap())
 
-        icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
-        self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
-
-        label = QtGui.QLabel(_('Select file:'))
+        label = QtGui.QLabel(ugettext('Select file:'))
         self.filelineedit = QtGui.QLineEdit()
         label.setBuddy(self.filelineedit)
-        browsebutton = QtGui.QPushButton(_('Browse...'))
+        browsebutton = QtGui.QPushButton(ugettext('Browse...'))
 
         # file path is a mandatory field
         self.registerField('datasource*', self.filelineedit)
@@ -69,16 +71,18 @@ class SelectFilePage(QtGui.QWizardPage):
         self.connect(
             browsebutton,
             QtCore.SIGNAL('clicked()'),
-            lambda: self.setpath()
+            self.setpath
         )
 
     def setpath(self):
-        caption = _('Import Wizard - Set File Path')
         settings = QtCore.QSettings()
         dir = settings.value('datasource').toString()
         #if not os.path.exists(dir)
         #    dir = QDesktopServices.displayName(QDesktopServices.DocumentsLocation)
-        path = QtGui.QFileDialog.getOpenFileName(self, caption, dir)
+        if self.save:
+            path = QtGui.QFileDialog.getSaveFileName(self, unicode(self.caption), dir)
+        else:
+            path = QtGui.QFileDialog.getOpenFileName(self, unicode(self.caption), dir)
         if path:
             self.filelineedit.setText(QtCore.QDir.toNativeSeparators(path))
             settings.setValue('datasource', QtCore.QVariant(path))

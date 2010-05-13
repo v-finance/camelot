@@ -29,6 +29,7 @@ from PyQt4 import QtCore
 
 from camelot.view.model_thread import model_function
 from camelot.core.utils import ugettext as _
+from camelot.core.backup import BackupMechanism
 
 _application_admin_ = []
 
@@ -54,9 +55,14 @@ class ApplicationAdmin(QtCore.QObject):
     of the mainwindow.
 
     .. image:: ../_static/picture2.png
-
+    
+    .. attribute:: backup_mechanism
+    
+    A subclass of camelot.core.backup.BackupMechanism that enables the application
+    to perform backups an restores.
     """
 
+    backup_mechanism = BackupMechanism
     name = 'Camelot'
     sections = ['Relations', 'Configuration']
     admins = {}

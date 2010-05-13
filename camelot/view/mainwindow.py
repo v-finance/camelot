@@ -51,10 +51,9 @@ QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
 from camelot.core.utils import ugettext as _
 
-
 class MainWindow(QtGui.QMainWindow):
     """Main window GUI"""
-
+    
     def __init__(self, app_admin, parent=None):
         from workspace import construct_workspace
         logger.debug('initializing main window')
@@ -162,7 +161,7 @@ class MainWindow(QtGui.QMainWindow):
         )
 
     def createActions(self):
-        icon_save = Icon('tango/16x16/actions/document-save.png').fullpath()
+        icon_backup = Icon('tango/16x16/actions/document-save.png').fullpath()
         icon_pgsetup = Icon('tango/16x16/actions/document-properties.png').fullpath()
         icon_print = Icon('tango/16x16/actions/document-print.png').fullpath()
         icon_preview = Icon('tango/16x16/actions/document-print-preview.png').fullpath()
@@ -187,11 +186,11 @@ class MainWindow(QtGui.QMainWindow):
         # TODO: change some of the status tips
         self.saveAct = createAction(
             parent=self,
-            text=_('&Save'),
-            slot=self.save,
+            text=_('&Backup'),
+            slot=self.backup,
             shortcut=QtGui.QKeySequence.Save,
-            actionicon=icon_save,
-            tip=_('Save')
+            actionicon=icon_backup,
+            tip=_('Backup the database to a file')
         )
 
         self.pageSetupAct = createAction(
@@ -452,8 +451,10 @@ class MainWindow(QtGui.QMainWindow):
         self.view.setWindowIcon(self.helpAct.icon())
         self.view.show()
 
-    def save(self):
-        pass
+    def backup(self):
+        from camelot.view.wizard.backup import BackupWizard
+        wizard = BackupWizard(self.app_admin.backup_mechanism, self)
+        wizard.exec_()
 
     def saveAs(self):
         pass
@@ -615,7 +616,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def updateMenus(self):
         hasMdiChild = (self.activeMdiChild() is not None)
-        self.saveAct.setEnabled(hasMdiChild)
+        self.saveAct.setEnabled(True)
         self.closeAct.setEnabled(hasMdiChild)
 
         self.closeAllAct.setEnabled(hasMdiChild)
