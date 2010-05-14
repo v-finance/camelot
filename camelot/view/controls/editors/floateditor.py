@@ -6,6 +6,12 @@ from camelot.view.art import Icon
 from camelot.core import constants
 from camelot.view.proxy import ValueLoading
 
+class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
+    """Spinbox that doesn't accept mouse scrolling as input"""
+    
+    def wheelEvent(self, wheel_event):
+        wheel_event.ignore()
+        
 class FloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator"""
       
@@ -23,7 +29,7 @@ class FloatEditor(CustomEditor):
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
-        self.spinBox = QtGui.QDoubleSpinBox(parent)
+        self.spinBox = CustomDoubleSpinBox(parent)
         self.spinBox.setReadOnly(not editable)
         self.spinBox.setEnabled(editable)
         self.spinBox.setDisabled(not editable)
@@ -41,7 +47,6 @@ class FloatEditor(CustomEditor):
         self.spinBox.setPrefix(prefix)
         self.spinBox.setSuffix(suffix)
         self.spinBox.addAction(action)
-        self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         self.calculatorButton = QtGui.QToolButton()
         icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
         self.calculatorButton.setIcon(icon)
@@ -67,6 +72,7 @@ class FloatEditor(CustomEditor):
         if editable and calculator:
             layout.addWidget(self.calculatorButton)
         if not editable:
+            self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
             self.spinBox.setEnabled(False)
         self.setFocusProxy(self.spinBox)
         self.setLayout(layout)

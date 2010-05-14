@@ -6,6 +6,12 @@ from camelot.view.art import Icon
 from camelot.core import constants
 from math import floor
 
+class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
+    """Spinbox that doesn't accept mouse scrolling as input"""
+    
+    def wheelEvent(self, wheel_event):
+        wheel_event.ignore()
+        
 class IntegerEditor(CustomEditor):
     """Widget for editing an integer field, with a calculator"""
   
@@ -29,7 +35,7 @@ class IntegerEditor(CustomEditor):
         suffix = ' ' + str(suffix)
         suffix = suffix.rstrip()
             
-        self.spinBox = QtGui.QDoubleSpinBox(parent)
+        self.spinBox = CustomDoubleSpinBox(parent)
         self.spinBox.setPrefix(prefix)
         self.spinBox.setSuffix(suffix)
         self.spinBox.setReadOnly(not editable)
