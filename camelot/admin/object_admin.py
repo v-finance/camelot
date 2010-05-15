@@ -167,6 +167,9 @@ class ObjectAdmin(object):
     .. attribute:: confirm_delete
     set to True if the user should get a confirmation dialog before deleting data,
     defaults to False
+    
+    .. attribute:: TableView
+    The QWidget class to be used when a table view is needed
     """
     name = None #DEPRECATED
     verbose_name = None
@@ -187,6 +190,8 @@ class ObjectAdmin(object):
     form_actions = []
     form_title_column = None #DEPRECATED
     field_attributes = {}
+    
+    from camelot.view.controls.tableview import TableView
 
     def __init__(self, app_admin, entity):
         """

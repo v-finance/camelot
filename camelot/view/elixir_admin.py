@@ -32,7 +32,6 @@ import sqlalchemy.sql.expression
 
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function, gui_function
-from camelot.core.utils import ugettext as _
 from camelot.core.utils import ugettext_lazy
 from camelot.admin.validator.entity_validator import EntityValidator
 
@@ -405,9 +404,9 @@ class EntityAdmin(ObjectAdmin):
 
         from PyQt4 import QtCore
         from PyQt4.QtCore import SIGNAL
-        from controls.tableview import TableView
+        
         from proxy.queryproxy import QueryTableProxy
-        tableview = TableView(self)
+        tableview = self.TableView(self)
 
         def createOpenForm(self, tableview):
 
