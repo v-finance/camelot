@@ -75,13 +75,18 @@ class FormActionFromGuiFunction( FormAction ):
 
 class FormActionProgressDialog(ProgressDialog):
 
+    def __init__(self, name, icon=Icon('tango/32x32/actions/appointment-new.png')):
+        super(FormActionProgressDialog, self).__init__(name=name, icon=icon)
+        self.html_document = None
+        
     def print_result(self, html):
         from camelot.view.export.printer import open_html_in_print_preview_from_gui_thread
         self.close()
-        open_html_in_print_preview_from_gui_thread(html)
+        open_html_in_print_preview_from_gui_thread(html, self.html_document)
 
 class FormActionFromModelFunction( FormAction ):
-    """Convert a function that is supposed to run in the model thread to a FormAction"""
+    """Convert a function that is supposed to run in the model thread to a FormAction.
+    """
 
     def __init__( self, name, model_function, icon = None, flush=False ):
         """
@@ -138,9 +143,15 @@ class PrintHtmlFormAction( FormActionFromModelFunction ):
   will put a print button on the form :
 
   .. image:: ../_static/formaction/print_html_form_action.png
+  
+    
+  .. attribute:: HtmlDocument the class used to render the html, by default this is
+  a QTextDocument, but a QtWebKit.QWebView can be used as well.
 
     """
 
+    HtmlDocument = QtGui.QTextDocument
+    
     def __init__( self, name, icon = Icon( 'tango/16x16/actions/document-print.png' ) ):
         FormActionFromModelFunction.__init__( self, name, self.html, icon )
 
@@ -152,6 +163,7 @@ class PrintHtmlFormAction( FormActionFromModelFunction ):
     @gui_function
     def run( self, entity_getter ):
         progress = FormActionProgressDialog(self._name)
+        progress.html_document = self.HtmlDocument
 
         def create_request( entity_getter ):
 
