@@ -13,35 +13,20 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
     def set_choices(self, choices):
         """
     :param choices: a list of (value,name) tuples.  name will be displayed in the combobox,
-    while value will be used within get_value and set_value
+    while value will be used within get_value and set_value.  This method changes the items
+    in the combo box while preserving the current value, even if this value is not in the
+    new list of choices.
         """
         if not sip.isdeleted(self):
-            allready_in_combobox = dict(self.get_choices())
-            items_to_remove = []
-            for i,(value,name) in enumerate(choices):
-                if value not in allready_in_combobox:
-                    self.insertItem(i, unicode(name), QtCore.QVariant(value))
-                else:
-                    # the editor data might allready have been set, but its name is
-                    # still ..., therefore we set the name now correct
-                    self.setItemText(i, unicode(name))
             current_value = self.get_value()
-            new_choices = dict(choices)
-            for i,(value,name) in enumerate(self.get_choices()):
-                if (value not in new_choices) and (value!=current_value):
-                    items_to_remove.append(i)
-            removed_items = 0
-            for i in items_to_remove:
-                self.removeItem(i-removed_items)
-                removed_items += 1
-        
-        
+            for i in range(self.count(), 0, -1):
+                self.removeItem(i-1)
+            for i, (value, name) in enumerate(choices):
+                self.insertItem(i, unicode(name), QtCore.QVariant(value))
+            self.set_value(current_value)
         
     def set_enabled(self, editable=True):
         self.setEnabled(editable)
-    
-    
-    
               
     def get_choices(self):
         """
