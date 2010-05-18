@@ -496,8 +496,8 @@ class TableView( AbstractView  ):
 #            o.genre = ""
 #            from sqlalchemy.orm.session import Session
 #            Session.object_session(o).flush([o])
-    
-    post( makeImport )
+#    
+#    post( makeImport )
     
     def selectedTableIndexes( self ):
         """returns a list of selected rows indexes"""
