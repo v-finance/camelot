@@ -191,7 +191,7 @@ class ObjectAdmin(object):
     form_title_column = None #DEPRECATED
     field_attributes = {}
     
-    from camelot.view.controls.tableview import TableView
+    TableView = None
 
     def __init__(self, app_admin, entity):
         """
@@ -202,6 +202,9 @@ class ObjectAdmin(object):
         used
         """
         from camelot.view.remote_signals import get_signal_handler
+        from camelot.view.controls.tableview import TableView
+        if not self.TableView:
+            self.TableView = TableView
         if not app_admin:
             from camelot.view.application_admin import get_application_admin
             self.app_admin = get_application_admin()
