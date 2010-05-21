@@ -457,7 +457,7 @@ class ObjectAdmin(object):
         form = FormView(title, self, model, index)
         return form
     
-    def set_defaults(self, object_instance):
+    def set_defaults(self, object_instance, include_nullable_fields=True):
         pass
     
     @gui_function

@@ -281,8 +281,12 @@ class EntityAdmin(ObjectAdmin):
         return list(filter_generator())
 
     @model_function
-    def set_defaults(self, entity_instance):
-        """Set the defaults of an object"""
+    def set_defaults(self, entity_instance, include_nullable_fields=True):
+        """Set the defaults of an object
+        :param include_nullable_fields: also set defaults for nullable fields, depending
+        on the context, this should be set to False to allow the user to set the field
+        to None
+        """
         from sqlalchemy.schema import ColumnDefault
         for field, attributes in self.get_fields():
             has_default = False

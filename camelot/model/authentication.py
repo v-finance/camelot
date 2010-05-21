@@ -94,7 +94,7 @@ class PartyRelationship( Entity ):
     class Admin( EntityAdmin ):
         verbose_name = _('Relationship')
         verbose_name_plural = _('Relationships')
-        list_display = ['from_date', 'thru_date']
+        list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
 
 class EmployerEmployee( PartyRelationship ):
     """Relation from employer to employee"""
@@ -117,10 +117,12 @@ class EmployerEmployee( PartyRelationship ):
     def __unicode__( self ):
         return u'%s %s %s' % ( unicode( self.established_to ), _('Employed by'),unicode( self.established_from ) )
 
-    class Admin( EntityAdmin ):
-        name = 'Employer - Employee'
-        list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
-
+    class Admin( PartyRelationship.Admin ):
+        verbose_name = _('Employment relation')
+        verbose_name_plural = _('Employment relations')
+        list_filter = ['established_from.name']
+        list_search = ['established_from.name', 'established_to.first_name', 'established_to.last_name']
+        
     class EmployeeAdmin( EntityAdmin ):
         verbose_name = _('Employee')
         list_display = ['established_to', 'from_date', 'thru_date']
@@ -141,7 +143,7 @@ class DirectedDirector( PartyRelationship ):
     title = Field( Unicode( 256 ) )
     represented_by = OneToMany( 'RepresentedRepresentor', inverse = 'established_to' )
 
-    class Admin( EntityAdmin ):
+    class Admin( PartyRelationship.Admin ):
         verbose_name = _('Direction structure')
         verbose_name_plural = _('Direction structures')
         list_display = ['established_from', 'established_to', 'title', 'represented_by']
@@ -180,7 +182,7 @@ class SupplierCustomer( PartyRelationship ):
     established_from = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     established_to = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
 
-    class Admin( EntityAdmin ):
+    class Admin( PartyRelationship.Admin ):
         verbose_name = _('Supplier - Customer')
         list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
 
@@ -203,7 +205,7 @@ class SharedShareholder( PartyRelationship ):
     established_to = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     shares = Field( Integer() )
 
-    class Admin( EntityAdmin ):
+    class Admin( PartyRelationship.Admin ):
         verbose_name = _('Shareholder structure')
         verbose_name_plural = _('Shareholder structures')
         list_display = ['established_from', 'established_to', 'shares',]

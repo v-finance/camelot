@@ -406,7 +406,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         @param rows the new number of rows
         """
         self._rows = rows
-        self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
+        if not sip.isdeleted(self):
+            self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
     
     def getItemDelegate( self ):
         """:return: a DelegateManager for this model, or None if no DelegateManager yet available
@@ -636,6 +637,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                         model_updated = False
                         try:
                             setattr( o, attribute, new_value )
+                            #
+                            # setting this attribute, might trigger a default function to return a value,
+                            # that was not returned before
+                            #
+                            self.admin.set_defaults( o, include_nullable_fields=False )
                             model_updated = True
                         except AttributeError, e:
                             self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
