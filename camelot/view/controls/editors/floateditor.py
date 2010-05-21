@@ -11,7 +11,14 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     
     def wheelEvent(self, wheel_event):
         wheel_event.ignore()
-        
+
+    def textFromValue(self, value):
+        return str( QtCore.QString("%L1").arg(float(value), 0, 'f', self.decimals()) )
+
+    # def valueFromText(self, text):
+    # maybe construct some cases to make other input formats possible
+    #   return text
+                
 class FloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator"""
       
@@ -29,6 +36,7 @@ class FloatEditor(CustomEditor):
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
+        self.precision = precision
         self.spinBox = CustomDoubleSpinBox(parent)
         self.spinBox.setReadOnly(not editable)
         self.spinBox.setEnabled(editable)
@@ -96,7 +104,7 @@ class FloatEditor(CustomEditor):
         self.spinBox.interpretText()
         value = self.spinBox.value()
         return CustomEditor.get_value(self) or value
-    
+        
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator
         calculator = Calculator(self)
