@@ -44,6 +44,7 @@ class ActionsBox(QtGui.QGroupBox):
         self.kwargs = kwargs
 
     def setActions(self, actions):
+        action_widgets = []
         logger.debug('setting actions')
         # keep action object alive to allow them to receive signals
         self.actions = actions
@@ -51,4 +52,6 @@ class ActionsBox(QtGui.QGroupBox):
         for action in actions:
             action_widget = action.render(self, *self.args)
             layout.addWidget(action_widget)
+            action_widgets.append(action_widget)
         self.setLayout(layout)
+        return action_widgets

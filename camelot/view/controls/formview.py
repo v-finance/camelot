@@ -101,15 +101,19 @@ class FormWidget( QtGui.QWidget ):
                 
     def to_first(self):
         self._widget_mapper.toFirst()
+        self.emit(self.changed_signal)
         
     def to_last(self):
         self._widget_mapper.toLast()
+        self.emit(self.changed_signal)
         
     def to_next(self):
         self._widget_mapper.toNext()
+        self.emit(self.changed_signal)
         
     def to_previous(self):
         self._widget_mapper.toPrevious()
+        self.emit(self.changed_signal)
         
     def _set_columns_and_form(self, columns_and_form ):
         self._columns, self._form = columns_and_form
@@ -226,7 +230,10 @@ class FormView( AbstractView ):
             from camelot.view.controls.actionsbox import ActionsBox
             logger.debug( 'setting Actions for formview' )
             self.actions_widget = ActionsBox( self, self.getEntity )
-            self.actions_widget.setActions( actions )
+            action_widgets = self.actions_widget.setActions( actions )
+            for action_widget in action_widgets:
+                self.connect( self._form, FormWidget.changed_signal, action_widget.changed )
+                action_widget.changed()
             side_panel_layout.insertWidget( 1, self.actions_widget )
             side_panel_layout.addStretch()
             self.layout().addLayout(side_panel_layout)
@@ -235,7 +242,6 @@ class FormView( AbstractView ):
         """select model's first row"""
         self._form.submit()
         self._form.to_first()
-        self.update_title()
     
     def viewLast( self ):
         """select model's last row"""
@@ -243,7 +249,6 @@ class FormView( AbstractView ):
         # the widgets data to be written to the model
         self._form.submit()
         self._form.to_last()
-        self.update_title()
     
     def viewNext( self ):
         """select model's next row"""
@@ -251,7 +256,6 @@ class FormView( AbstractView ):
         # the widgets data to be written to the model
         self._form.submit()
         self._form.to_next()
-        self.update_title()
     
     def viewPrevious( self ):
         """select model's previous row"""
@@ -259,7 +263,6 @@ class FormView( AbstractView ):
         # the widgets data to be written to the model
         self._form.submit()
         self._form.to_previous()
-        self.update_title()
     
     def showMessage( self, valid ):
         import sip

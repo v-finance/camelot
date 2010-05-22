@@ -10,15 +10,15 @@ class ApplicationAction(object):
 :param parent: a QWidget that can be used as a parent for widgets during the 
 execution of the action
     """
-        raise NotImplemented()
+        raise NotImplemented
     
     def get_verbose_name(self):
         """:return: the name of the action, as it can be shown to the user"""
-        raise NotImplemented()
+        raise NotImplemented
     
     def get_icon(self):
         """:return: a camelot.view.art.Icon object"""
-        raise NotImplemented()
+        raise NotImplemented
         
 class ApplicationActionFromGuiFunction( ApplicationAction ):
     """Create an application action object from a function that is supposed to run

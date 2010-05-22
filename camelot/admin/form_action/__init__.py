@@ -25,7 +25,7 @@ overwritten.
 
 from PyQt4 import QtGui, QtCore
 from camelot.view.art import Icon
-from camelot.view.model_thread import gui_function, post
+from camelot.view.model_thread import gui_function, model_function, post
 from camelot.view.controls.progress_dialog import ProgressDialog
 
 class FormAction( object ):
@@ -39,28 +39,32 @@ class FormAction( object ):
         self._name = name
         self._icon = icon
 
+    def get_name(self):
+        return self._name
+    
+    def get_icon(self):
+        return self._icon
+    
     @gui_function
     def render( self, parent, entity_getter ):
         """Returns a QWidget the user can use to trigger the action"""
-
-        def create_clicked_function( self, entity_getter ):
-
-            def clicked( *args ):
-                self.run( entity_getter )
-
-            return clicked
-
-        button = QtGui.QPushButton( unicode(self._name) )
-        if self._icon:
-            button.setIcon( self._icon.getQIcon() )
-        button.connect( button, QtCore.SIGNAL( 'clicked()' ), create_clicked_function( self, entity_getter ) )
-        return button
+        from camelot.view.controls.action_widget import ActionWidget
+        return ActionWidget( self, entity_getter, parent=parent )
 
     @gui_function
     def run( self, entity_getter ):
         """Overwrite this method to create an action that does something"""
         raise NotImplementedError
-
+    
+    @model_function
+    def enabled(self, entity):
+        """Overwrite this method to have the action only enabled for certain states of the
+        entity displayed
+        :param entity: the entity currently in the form view
+        :return: True or False, returns True by default
+        """
+        return True
+        
 class FormActionFromGuiFunction( FormAction ):
     """Convert a function that is supposed to run in the GUI thread to a FormAction,
     or"""
@@ -88,17 +92,23 @@ class FormActionFromModelFunction( FormAction ):
     """Convert a function that is supposed to run in the model thread to a FormAction.
     """
 
-    def __init__( self, name, model_function, icon = None, flush=False ):
+    def __init__( self, name, model_function, icon = None, flush=False, enabled=lambda obj:True ):
         """
         :param name: the name of the action
         :param model_function: a function that has 1 arguments : the object on which to apply the action
         :param icon: an Icon
         :param flush: flush the object to the db and refresh it in the views
+        :param enabled: a function that has 1 argument : the object on which the action would be applied
         """        
         FormAction.__init__( self, name, icon )
         self._model_function = model_function
         self._flush = flush
+        self._enabled = enabled
 
+    @model_function
+    def enabled(self, entity):
+        return self._enabled( entity )
+    
     @gui_function
     def run( self, entity_getter ):
         progress = FormActionProgressDialog(self._name)

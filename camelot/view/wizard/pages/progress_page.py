@@ -32,7 +32,7 @@ class ProgressPage(QtGui.QWizardPage):
     title = _('Action in progress')
     sub_title = _('Please wait for completion')
     
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         super(ProgressPage, self).__init__( parent )
         self.connect(self, self.update_progress_signal, self.update_progress)
         self.connect(self, self.update_maximum_signal, self.update_maximum)
