@@ -16,6 +16,39 @@ from camelot.view.elixir_admin import EntityAdmin
 from camelot.types import Code, Enumeration
 import datetime
 
+def create_type_3_status_mixin(status_attribute):
+    """Create a class that can be subclassed to provide a class that
+    has a type 3 status with methods to manipulate and review its status
+    :param status_attribute: the name of the type 3 status attribute
+    """
+    
+    class Type3StatusMixin(object):
+
+        def change_status(self, new_status, status_from_date=None, status_thru_date=end_of_times()):
+            from sqlalchemy import orm
+            if not status_from_date:
+                status_from_date = datetime.date.today()
+            mapper = orm.class_mapper(self.__class__)
+            status_property = mapper.get_property('status')
+            status_type = status_property._get_target().class_
+            old_status = status_type.query.filter( and_( status_type.status_for == self,
+                                                         status_type.status_from_date <= status_from_date,
+                                                         status_type.status_thru_date >= status_from_date ) ).first()
+            if old_status != None:
+                old_status.thru_date = datetime.date.today() - datetime.timedelta( days = 1 )
+                old_status.status_thru_date = status_from_date - datetime.timedelta( days = 1 )
+            new_status = status_type(    status_for = self,
+                                         classified_by = new_status,
+                                         status_from_date = status_from_date,
+                                         status_thru_date = status_thru_date,
+                                         from_date = datetime.date.today(),
+                                         thru_date = end_of_times() )
+            if old_status:
+                self.query.session.flush( [old_status] )
+            self.query.session.flush( [new_status] )        
+        
+    return Type3StatusMixin
+    
 def type_3_status( statusable_entity, metadata, collection, verbose_entity_name = None, enumeration=None ):
     '''
     Creates a new type 3 status related to the given entity

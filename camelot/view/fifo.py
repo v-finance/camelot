@@ -51,9 +51,7 @@ class fifo(object):
         self.entities.append(entity)
         if len(self.entities)>self.max_entries:
             entity = self.entities.pop(0)
-            row = self.rows_by_entity[entity]
-            del self.data_by_rows[row]
-            del self.rows_by_entity[entity]
+            self.delete_by_entity(entity)
       
     def delete_by_row(self, row):
         (entity, value_) = self.data_by_rows[row]
