@@ -39,7 +39,14 @@ class FieldLabel(UserTranslatableLabel):
         self._field_attributes = field_attributes
         
     def get_attributes(self):
-        return [Attribute(key,value) for key,value in self._field_attributes.items()]
+        import inspect
+        
+        def attribute_value_to_string(key, value):
+            if inspect.isclass(value):
+                return value.__name__
+            return unicode(value)
+        
+        return [Attribute(key,attribute_value_to_string(key, value)) for key,value in self._field_attributes.items()]
     
     def show_field_attributes(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
