@@ -5,6 +5,7 @@ from customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
+from camelot.core.utils import ugettext
 
 class PlainTextDelegate(CustomDelegate):
     """Custom delegate for simple string values"""
@@ -13,10 +14,11 @@ class PlainTextDelegate(CustomDelegate):
   
     editor = editors.TextLineEditor
       
-    def __init__(self, parent=None, length=20, editable=True, **kwargs):
+    def __init__(self, parent=None, length=20, editable=True, translate_content=False, **kwargs):
         CustomDelegate.__init__(self, parent, editable, length=length, **kwargs)
         self.editable = editable
         self.length = length
+        self._translate_content = translate_content
     
     def paint(self, painter, option, index):
         painter.save()
@@ -47,9 +49,11 @@ class PlainTextDelegate(CustomDelegate):
                 fontColor.setRgb(130,130,130)
       
         if text!=ValueLoading:
-            text = text or ''
+            text = text or u''
+            if self._translate_content:
+                text = ugettext(text)
         else:
-            text = ''
+            text = u''
             
         painter.setPen(fontColor.toRgb())
         rect = QtCore.QRect(option.rect.left(),
