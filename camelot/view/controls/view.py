@@ -30,7 +30,7 @@
 
 from PyQt4 import QtCore, QtGui
 
-from camelot.view.model_thread import post, gui_function
+from camelot.view.model_thread import post, gui_function, model_function
 
 class AbstractView(QtGui.QWidget):
     """A string used to format the title of the view ::
@@ -55,7 +55,31 @@ class AbstractView(QtGui.QWidget):
         import sip
         if not sip.isdeleted(self):
             self.emit(self.title_changed_signal, unicode(new_title))
-
+      
+    @model_function
+    def to_html(self):
+        pass
+          
+    @model_function
+    def export_to_word(self):
+        from camelot.view.export.word import open_html_in_word
+        html = self.to_html()
+        open_html_in_word(html)
+    
+    @model_function
+    def export_to_excel(self):
+        from camelot.view.export.excel import open_data_with_excel
+        title = self.getTitle()
+        columns = self.getColumns()
+        data = [d for d in self.getData()]
+        open_data_with_excel(title, columns, data)           
+            
+    @model_function
+    def export_to_mail(self):
+        from camelot.view.export.outlook import open_html_in_outlook
+        html = self.to_html()
+        open_html_in_outlook(html)
+    
 class TabView(AbstractView):
     """Class to combine multiple views in Tabs and let them behave as one view.  This class can be
   used when defining custom create_table_view methods on an ObjectAdmin class to group multiple
@@ -86,3 +110,15 @@ class TabView(AbstractView):
     def set_views_and_titles(self, views_and_titles):
         for view, title in views_and_titles:
             self.tab_widget.addTab(view, title)
+
+    def export_to_excel(self):
+        return self.tab_widget.currentWidget().export_to_excel()
+
+    def export_to_word(self):
+        return self.tab_widget.currentWidget().export_to_word()
+    
+    def export_to_mail(self):
+        return self.tab_widget.currentWidget().export_to_mail()
+                
+    def to_html(self):
+        return self.tab_widget.currentWidget().to_html()

@@ -45,7 +45,7 @@ from camelot.view.wizard.pages.select import SelectFilePage
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.proxy.collection_proxy import CollectionProxy
 
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('camelot.view.wizard.importwizard')
 
 

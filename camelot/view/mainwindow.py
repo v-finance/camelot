@@ -488,7 +488,7 @@ class MainWindow(QtGui.QMainWindow):
         class PrintPreview(PrintHtmlFormAction):
 
             def html(self, entity_getter):
-                return active.widget().toHtml()
+                return active.widget().to_html()
 
         action = PrintPreview('Print Preview')
         action.run(lambda:None)
@@ -532,35 +532,18 @@ class MainWindow(QtGui.QMainWindow):
     
     def exportToExcel(self):
         """creates an excel file from the view"""
-
-        def export():
-            from export.excel import open_data_with_excel
-            title = self.activeMdiChild().widget().getTitle()
-            columns = self.activeMdiChild().widget().getColumns()
-            data = [d for d in self.activeMdiChild().widget().getData()]
-            open_data_with_excel(title, columns, data)
-
-        post(export)
+        widget = self.activeMdiChild().widget()
+        post(widget.export_to_excel)
 
     def exportToWord(self):
         """Use windows COM to export the active child window to MS word,
-        by using its toHtml function"""
-
-        def export():
-            from export.word import open_html_in_word
-            html = self.activeMdiChild().widget().toHtml()
-            open_html_in_word(html)
-
-        post(export)
+        by using its to_html function"""
+        widget = self.activeMdiChild().widget()
+        post(widget.export_to_word)
 
     def exportToMail(self):
-
-        def export():
-            from export.outlook import open_html_in_outlook
-            html = self.activeMdiChild().widget().toHtml()
-            open_html_in_outlook(html)
-
-        post(export)
+        widget = self.activeMdiChild().widget()
+        post(widget.export_to_mail)
 
     def importFromFile(self):
         self.activeMdiChild().widget().importFromFile()

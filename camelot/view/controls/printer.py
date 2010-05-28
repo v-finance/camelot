@@ -57,7 +57,7 @@ class Printer:
         ts = datetime.datetime.today()
         datestring = 'Date: %s/%s/%s' % ( ts.month, ts.day, ts.year )
 
-        view_content = view.toHtml()
+        view_content = view.to_html()
         context = {
           'logo' : icon,
           'company_name' : 'Conceptive Engineering',
@@ -93,7 +93,7 @@ class Printer:
             ts = datetime.datetime.today()
             datestring = 'Date: %s/%s/%s' % ( ts.month, ts.day, ts.year )
 
-            view_content = view.toHtml()
+            view_content = view.to_html()
             context = {
               'logo' : icon,
               'company_name' : 'Conceptive Engineering',

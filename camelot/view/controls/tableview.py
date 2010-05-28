@@ -116,12 +116,12 @@ class HeaderWidget( QtGui.QWidget ):
         self._admin = admin
         layout = QtGui.QVBoxLayout()
         widget_layout = QtGui.QHBoxLayout()
-        self.search = self.search_widget( self )
-        self.connect(self.search, SimpleSearchControl.expand_search_options_signal, self.expand_search_options)
+        search = self.search_widget( self )
+        self.connect(search, SimpleSearchControl.expand_search_options_signal, self.expand_search_options)
         title = UserTranslatableLabel( admin.get_verbose_name_plural(), self )
         title.setFont( self._title_font )
         widget_layout.addWidget( title )
-        widget_layout.addWidget( self.search )
+        widget_layout.addWidget( search )
         if self.rows_widget:
             self.number_of_rows = self.rows_widget( self )
             widget_layout.addWidget( self.number_of_rows )
@@ -135,8 +135,8 @@ class HeaderWidget( QtGui.QWidget ):
         self.setLayout( layout )
         self.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
         self.setNumberOfRows( 0 )
+        self.search = search
         
-    
     def _fill_expanded_search_options(self, columns):
         from camelot.view.controls.filter_operator import FilterOperator
         layout = QtGui.QHBoxLayout()
@@ -445,7 +445,7 @@ class TableView( AbstractView  ):
         workspace.addSubWindow( form )
         form.show()
 
-    def toHtml( self ):
+    def to_html( self ):
         """generates html of the table"""
         table = [[getattr( row, col[0] ) for col in self.admin.getColumns()]
                  for row in self.admin.entity.query.all()]
@@ -614,7 +614,7 @@ class TableView( AbstractView  ):
             self.actions.setActions( actions )
             self.filters_layout.addWidget( self.actions )
       
-    def toHtml( self ):
+    def to_html( self ):
         """generates html of the table"""
         table = [[getattr( row, col[0] ) for col in self.admin.get_columns()]
                  for row in self.admin.entity.query.all()]
