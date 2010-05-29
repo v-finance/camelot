@@ -5,16 +5,20 @@ Created on Sep 25, 2009
 @author: Erik De Rijcke
 
 '''
+import datetime
+
 from elixir.entity import Entity, EntityMeta
 
 from sqlalchemy.types import Date, Unicode
+from sqlalchemy.sql import and_
+
 from elixir.fields import Field
 from elixir.options import using_options
 from elixir.relationships import ManyToOne, OneToMany
+
 from camelot.model.authentication import end_of_times
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.types import Code, Enumeration
-import datetime
 
 def create_type_3_status_mixin(status_attribute):
     """Create a class that can be subclassed to provide a class that

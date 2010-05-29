@@ -6,5 +6,3 @@ class NoteDelegate(TextEditDelegate):
     __metaclass__ = DocumentationMetaclass
     
     editor = NoteEditor
-    
-    

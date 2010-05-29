@@ -12,7 +12,6 @@ class BareFrame(QFrame):
         self.setLineWidth(1)
 
     def setBGColor(self, color):
-        from PyQt4.QtCore import QCoreApplication
         pal = QCoreApplication.instance().palette()
         pal.setColor(QPalette.Window, color)
         self.setPalette(pal)

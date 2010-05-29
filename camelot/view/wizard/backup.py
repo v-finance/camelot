@@ -96,4 +96,3 @@ class RestoreWizard(QtGui.QWizard):
         self.setWindowTitle( unicode(self.window_title) )
         self.addPage(SelectRestoreFile())
         self.addPage(RestorePage(backup_mechanism))
-            
