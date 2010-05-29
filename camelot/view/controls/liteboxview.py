@@ -133,5 +133,5 @@ class LiteBoxView(QGraphicsView):
         """:param item: a QGraphicsItem to be shown fullscreen"""
         self.scene.clear()
         self.scene.addItem(item)
-        close = CloseMark(parent=item)
+        CloseMark(parent=item)
         self.showFullScreen()

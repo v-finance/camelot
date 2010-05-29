@@ -113,8 +113,8 @@ class Code(types.TypeDecorator):
         import string
         translator = string.maketrans('', '')
         self.parts = parts
-        self._separator = separator
-        max_length = sum(len(part.translate(translator, '<>!')) for part in parts) + len(parts)*len(self._separator)
+        self.separator = separator
+        max_length = sum(len(part.translate(translator, '<>!')) for part in parts) + len(parts)*len(self.separator)
         types.TypeDecorator.__init__(self, length=max_length, **kwargs)
         
     def bind_processor(self, dialect):
@@ -125,7 +125,7 @@ class Code(types.TypeDecorator):
           
         def processor(value):
             if value is not None:
-                value = self._separator.join(value)
+                value = self.separator.join(value)
             return impl_processor(value)
           
         return processor
@@ -139,7 +139,7 @@ class Code(types.TypeDecorator):
         def processor(value):
     
             if value:
-                return value.split(self._separator)
+                return value.split(self.separator)
             return ['' for _p in self.parts]
             
         return processor

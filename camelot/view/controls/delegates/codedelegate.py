@@ -12,9 +12,10 @@ class CodeDelegate(CustomDelegate):
       
     editor = editors.CodeEditor
     
-    def __init__(self, parent=None, parts=[], **kwargs):
+    def __init__(self, parent=None, parts=[], separator=u'.', **kwargs):
         CustomDelegate.__init__(self, parent=parent, parts=parts, **kwargs)
         self.parts = parts
+        self.separator = separator
     
     def paint(self, painter, option, index):
         painter.save()
@@ -48,7 +49,7 @@ class CodeDelegate(CustomDelegate):
             value = variant_to_pyobject(index.model().data(index, Qt.EditRole)) or []
             if value == ValueLoading:
                 value = []
-            value = '.'.join([unicode(i) for i in value])
+            value = self.separator.join([unicode(i) for i in value])
             
             painter.setPen(fontColor.toRgb())
             painter.drawText(rect.x(),

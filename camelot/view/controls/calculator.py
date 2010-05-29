@@ -155,9 +155,9 @@ class Calculator(QtGui.QDialog):
         
         try:
             self.output.setText(str(eval(input)))
-        except SyntaxError, _e:
+        except SyntaxError:
             pass
-        except NameError, _e:
+        except NameError:
             self.output.setText('Please input numeric characters')
             pass
         
@@ -178,10 +178,10 @@ class Calculator(QtGui.QDialog):
           
         try:
             self.input.setText(str(eval(input)))
-        except SyntaxError, _e:
+        except SyntaxError:
             self.output.setText('Invalid input')
             pass
-        except NameError, _e:
+        except NameError:
             self.output.setText('Please input numeric characters')
             pass
       

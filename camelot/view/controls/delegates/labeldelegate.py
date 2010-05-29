@@ -17,11 +17,6 @@ class LabelDelegate(CustomDelegate):
         
         background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
         
-        rect = QtCore.QRect(option.rect.left(),
-                            option.rect.top(),
-                            option.rect.width(),
-                            option.rect.height())
-        
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
         elif not self.editable:

@@ -293,7 +293,7 @@ class EntityAdmin(ObjectAdmin):
             try:
                 default = attributes['default']
                 has_default = True
-            except KeyError, _e:
+            except KeyError:
                 pass
             if has_default:
                 #

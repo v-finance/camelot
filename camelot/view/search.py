@@ -66,7 +66,7 @@ def create_entity_search_query_decorator(admin, text):
             elif issubclass(c.type.__class__, camelot.types.File):
                 pass
             elif issubclass(c.type.__class__, camelot.types.Code):
-                codes = text.split('.')
+                codes = text.split(c.type.separator)
                 args.append(c.like(['%'] + codes + ['%']))
                 args.append(c.like(['%'] + codes))
                 args.append(c.like(codes + ['%']))

@@ -185,7 +185,7 @@ def main():
             print 'database was put under version control'
         try:
             schema = ControlledSchema(migrate_engine, repository)
-        except NoSuchTableError, _e:
+        except NoSuchTableError:
             print 'database not yet under version control, use the version_control command first.'
         if schema:
             if args[0]=='db_version':

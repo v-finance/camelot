@@ -204,6 +204,7 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.CodeDelegate,
         'nullable': True,
         'parts': f.parts,
+        'separator': f.separator,
         'operators' : _text_operators,
     },
 
@@ -295,6 +296,7 @@ class DummyField(object):
         self.precision = 2
         self.scale = 2
         self.storage = None
+        self.separator = u'.'
 
 row_separator = '+' + '-'*20 + '+' + '-'*70 + '+' + '-'*70 + '+'
 row_format = """| %-18s | %-68s | %-68s |"""

@@ -174,7 +174,7 @@ class S3Storage( object ):
         import S3
         self.upload_to = upload_to
         conn = S3.AWSAuthConnection( settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY )
-        _generator = S3.QueryStringAuthGenerator( settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY )
+#        _generator = S3.QueryStringAuthGenerator( settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY )
         if ( conn.check_bucket_exists( settings.AWS_BUCKET_NAME ).status == 200 ):
             pass
         else:
