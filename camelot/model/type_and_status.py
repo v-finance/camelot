@@ -20,6 +20,18 @@ from camelot.model.authentication import end_of_times
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.types import Code, Enumeration
 
+#
+# Global dict keeping track of which status class is used for which class
+#
+__status_classes__ = {}
+
+def get_status_class(cls_name):
+    """
+    :param cls_name: an Entity class name
+    :return: the status class used for this entity
+    """
+    return __status_classes__[cls_name]
+    
 def create_type_3_status_mixin(status_attribute):
     """Create a class that can be subclassed to provide a class that
     has a type 3 status with methods to manipulate and review its status
@@ -135,6 +147,8 @@ def type_3_status( statusable_entity, metadata, collection, verbose_entity_name 
         def __unicode__( self ):
             return u'Status'
 
+    __status_classes__[statusable_entity] = Type3Status
+    
     return t3_status_name
 
 def entity_type( typable_entity, metadata, collection, verbose_entity_name = None ):
