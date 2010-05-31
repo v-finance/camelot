@@ -67,7 +67,7 @@ class ApplicationAdmin(QtCore.QObject):
     sections = ['Relations', 'Configuration']
     admins = {}
 
-    sections_changed_signal = QtCore.SIGNAL('sections_changed()')
+    auth_changed_signal = QtCore.SIGNAL('sections_changed()')
     """This signal is emitted whenever the sections are changed, and the views
     should be updated"""
     
