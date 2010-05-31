@@ -189,7 +189,7 @@ class SortingRowMapper( dict ):
     def __getitem__(self, row):
         try:
             return super(SortingRowMapper, self).__getitem__(row)
-        except KeyError, _e:
+        except KeyError:
             return row
     
 class CollectionProxy( QtCore.QAbstractTableModel ):
@@ -918,7 +918,4 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     def get_admin( self ):
         """Get the admin object associated with this model"""
         return self.admin
-    
-    def get_collection_getter(self):
-        return self.collection_getter
       

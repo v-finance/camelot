@@ -104,7 +104,7 @@ class QueryTableProxy(CollectionProxy):
                 class_attribute = getattr(self.admin.entity, field_name)
                 mapper = orm.class_mapper(self.admin.entity)
                 try:
-                    property = mapper.get_property(
+                    mapper.get_property(
                         field_name,
                         resolve_synonyms=True
                     )
