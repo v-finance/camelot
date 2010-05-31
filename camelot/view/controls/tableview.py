@@ -445,21 +445,6 @@ class TableView( AbstractView  ):
         workspace.addSubWindow( form )
         form.show()
 
-    def to_html( self ):
-        """generates html of the table"""
-        table = [[getattr( row, col[0] ) for col in self.admin.getColumns()]
-                 for row in self.admin.entity.query.all()]
-        context = {
-          'title': self.admin.get_verbose_name_plural(),
-          'table': table,
-          'columns': [c[0] for c in self.admin.getColumns()],
-        }
-        from camelot.view.templates import loader
-        from jinja import Environment, FileSystemLoader
-        env = Environment( loader = loader )
-        tp = env.get_template( 'table_view.html' )
-        return tp.render( context )
-
     def closeEvent( self, event ):
         """reimplements close event"""
         logger.debug( 'tableview closed' )
@@ -638,38 +623,6 @@ class TableView( AbstractView  ):
         del self.filters
         del self._table_model
         event.accept()
-    
-    def importWizard(self, attributes):
-        from camelot.view.wizard.import_data import ImportWizard
-        object_attributes = ['title', 'releasedate', 'name', 'description' ]
-        importWizard = ImportWizard( self, object_attributes )
-        importWizard.start()
-        data = importWizard.getImportedData()    
-        def makeImport():
-            for row in data:
-                # get all possible fields (=attributes) from this object
-                #attributes = o.Admin.form_display.get_fields() 
-                #object_attributes = ['title', 'releasedate', 'name', 'description' ]           
-                #print attributes
-                # set title
-                o = self.admin.entity()
-                #For example, setattr(x, 'foobar', 123) is equivalent to x.foobar = 123
-                setattr(o, object_attributes[0], row[0])
-                #movie.title = row[0]
-                name = row[2].split( ' ' ) #director
-                #director = Person()
-                #director.first_name = name[0]  
-                #director.last_name = name[1]
-                #movie.director = director
-                o.short_description = "korte beschrijving"
-                #date = row[1].split('/') # date 12/03/2009
-                #o.releasedate = datetime.date(year=int(date[2]), month=int(date[1]), day=int(date[0]))
-                o.genre = ""
-                #print o[attributes[0]]
-                from sqlalchemy.orm.session import Session
-                Session.object_session(o).flush([o])
-    
-        post( makeImport )
             
     def importFromFile( self ):
         """"import data : the data will be imported in the activeMdiChild """
