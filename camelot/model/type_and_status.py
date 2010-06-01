@@ -40,6 +40,15 @@ def create_type_3_status_mixin(status_attribute):
     
     class Type3StatusMixin(object):
 
+        @property
+        def current_status(self):
+            classified_by = None
+            today = datetime.date.today()
+            for status_history in self.status:
+                if status_history.status_from_date<=today and status_history.status_thru_date>=today:
+                    classified_by = status_history.classified_by
+            return classified_by
+    
         def change_status(self, new_status, status_from_date=None, status_thru_date=end_of_times()):
             from sqlalchemy import orm
             if not status_from_date:

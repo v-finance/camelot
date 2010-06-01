@@ -43,7 +43,6 @@ These structures are modeled like described in 'The Data Model Resource Book'
 by Len Silverston, Chapter 2
 """
 from sqlalchemy import sql
-from sqlalchemy.orm import aliased
 
 import camelot.types
 

@@ -41,7 +41,6 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 import sip
 
-from sqlalchemy.orm.session import Session
 from camelot.view.art import Icon
 from camelot.view.fifo import fifo
 from camelot.view.controls import delegates
