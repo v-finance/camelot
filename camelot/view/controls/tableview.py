@@ -453,21 +453,13 @@ class TableView( AbstractView  ):
         del self.table
         del self.filters
         del self._table_model
-        event.accept()
-    
-    def importWizard(self, attributes):
-        from camelot.view.wizard.import_data import ImportWizard
-        #object_attributes = ['title', 'releasedate', 'name', 'description' ]
-        object_attributes = self.admin.entity().Admin.form_display.get_fields()
-        importWizard = ImportWizard( self, object_attributes )
-        importWizard.start()
-        data = importWizard.getImportedData()    
+        event.accept()  
     
     def selectTableRow( self, row ):
         """selects the specified row"""
         self.table.selectRow( row )
     
-    def makeImport():
+    def makeImport(self):
         pass
 #        for row in data:
 #            o = self.admin.entity()
@@ -613,16 +605,6 @@ class TableView( AbstractView  ):
         env = Environment( loader = loader )
         tp = env.get_template( 'table_view.html' )
         return tp.render( context )
-    
-    def closeEvent( self, event ):
-        """reimplements close event"""
-        logger.debug( 'tableview closed' )
-        # remove all references we hold, to enable proper garbage collection
-        del self.table_layout
-        del self.table
-        del self.filters
-        del self._table_model
-        event.accept()
             
     def importFromFile( self ):
         """"import data : the data will be imported in the activeMdiChild """
