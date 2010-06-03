@@ -32,7 +32,6 @@ These structures can be transformed to QT forms.
 
 from camelot.view.model_thread import gui_function
 from camelot.core.utils import ugettext_lazy as _
-from camelot.core.utils import ugettext
 
 def structure_to_filter(structure):
     """Convert a python data structure to a filter, using the following rules :
@@ -205,7 +204,7 @@ class EditorFilter(Filter):
     def render(self, parent, name, options):
         from camelot.view.controls.filter_operator import FilterOperator
         entity, field_name, field_attributes = options
-        return FilterOperator(entity, field_name, field_attributes, parent)       
+        return FilterOperator(entity, field_name, field_attributes, parent)
     
     def get_name_and_options(self, admin):
         field_attributes = admin.get_field_attributes(self._field_name)

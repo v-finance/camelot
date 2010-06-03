@@ -174,6 +174,8 @@ def write_data_to_excel(filename, title, headerList, dataList):
             myPrecisionDict [ n ] = lst["precision"]    #Populating precision dictionary
         elif lst["python_type"] == datetime.date:
             myFormatDict [ n ] = lst["format"]          #Populating date Format dictionary
+        elif lst["python_type"] == datetime.datetime:
+            myFormatDict [ n ] = lst["format"]          #Populating date Format dictionary
         elif lst["python_type"] == str:
             if 'length' in lst:
                 myLengthDict [ n ] = lst["length"]          #Populating Column Length dictionary
@@ -208,6 +210,8 @@ def write_data_to_excel(filename, title, headerList, dataList):
                     elif myDataTypeDict[ column ] == datetime.date:
                         formatStr = myFormatDict[column]
                         val = datetime.datetime( day = val.day, year = val.year, month = val.month)
+                    elif myDataTypeDict[ column ] == datetime.datetime:
+                        formatStr = myFormatDict[column]
                     elif myDataTypeDict[ column ] == bool:
                         formatStr = '0'
                     else:
