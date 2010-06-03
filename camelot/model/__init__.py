@@ -23,11 +23,11 @@ import synchronization
 import type_and_status
 import batch_job
 
-__all__ = [authentication.__name__,
-           fixture.__name__,
-           i18n.__name__,
-           memento.__name__,
-           synchronization.__name__,
-           type_and_status.__name__,
-           batch_job.__name__,
-           ]
+# dummy variable to prevent pycheckers warnings on unused imports
+__model__ = [authentication, 
+             fixture, 
+             i18n, 
+             memento, 
+             synchronization, 
+             type_and_status,
+             batch_job]
