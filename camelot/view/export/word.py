@@ -18,7 +18,7 @@ def open_document_in_word(filename):
             word_app = win32com.client.Dispatch("Word.Application")
         except Exception, e:
             logger.info('Unable to open word', exc_info=e)
-            raise Exception('Unable to open word')
+            return (None, None)
         word_app.Visible = True
         doc = word_app.Documents.Open(filename)
         doc.Activate()
@@ -50,19 +50,30 @@ def open_html_in_word(html, template=art.file_('empty_document.doc'),
     html_file.write(html.encode('utf-8'))
     html_file.close()
     
+    word_app = None
     if 'win' in sys.platform:
         word_app, doc = open_document_in_word(template)
-        if word_app:
-            doc_fd, doc_fn = tempfile.mkstemp(suffix='.doc')
-            os.close(doc_fd)
-            word_app.ActiveDocument.SaveAs(doc_fn)
-            section = doc.Sections(1)
-            pre_processor(doc)
-            section.Range.InsertFile(FileName=html_fn)
-            post_processor(doc)
+
+    if word_app:
+        doc_fd, doc_fn = tempfile.mkstemp(suffix='.doc')
+        os.close(doc_fd)
+        word_app.ActiveDocument.SaveAs(doc_fn)
+        section = doc.Sections(1)
+        pre_processor(doc)
+        section.Range.InsertFile(FileName=html_fn)
+        post_processor(doc)
     else:
+#        self.view = QtWebKit.QWebView(TOP_LEVEL)
+#        self.view.load(self.app_admin.get_help_url())
+#        self.view.setWindowTitle(_('Help Browser'))
+#        self.view.setWindowIcon(self.helpAct.icon())
+#        self.view.show()
         """We're probably not running windows, so let OS handle it (used to be abiword)"""
         from PyQt4 import QtGui, QtCore
-        QtGui.QDesktopServices.openUrl(QtCore.QUrl('file://%s' % html_fn)) 
+        if not html_fn.startswith(r'\\'):
+            url = QtCore.QUrl.fromLocalFile(html_fn)
+        else:
+            url = QtCore.QUrl(html_fn, QtCore.QUrl.TolerantMode)
+        QtGui.QDesktopServices.openUrl(url) 
         return
     
