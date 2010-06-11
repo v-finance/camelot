@@ -51,25 +51,42 @@ class FilterOperator(QtGui.QGroupBox):
         option = QtGui.QStyleOptionViewItem()
         option.version = 5
         self._editor = delegate.createEditor( self, option, None )
+        self._editor2 = delegate.createEditor( self, option, None )
         # explicitely set a value, otherways the current value remains ValueLoading
         self._editor.set_value(None)
+        self._editor2.set_value(None)
         self.connect(self._editor, editors.editingFinished, self.editor_editing_finished)
+        self.connect(self._editor2, editors.editingFinished, self.editor_editing_finished)
         layout.addWidget(self._editor)
+        layout.addWidget(self._editor2)
         self.setLayout(layout)
         self._editor.setEnabled(False)
+        self._editor2.setEnabled(False)
+        self._editor2.hide()
         self._index = 0
         self._value = None
+        self._value2 = None
         
     def combobox_changed(self, index):
         self._index = index
         if index>=2:
+            _, arity = self.get_operator_and_arity()
             self._editor.setEnabled(True)
+            if arity > 1:
+                self._editor2.setEnabled(True)
+                self._editor2.show()
+            else:
+                self._editor2.setEnabled(False)
+                self._editor2.hide()
         else:
             self._editor.setEnabled(False)
+            self._editor2.setEnabled(False)
+            self._editor2.hide()
         self.emit(filter_changed_signal)
         
     def editor_editing_finished(self):
         self._value = self._editor.get_value()
+        self._value2 = self._editor2.get_value()
         self.emit(filter_changed_signal)
     
     def decorate_query(self, query):
@@ -77,4 +94,22 @@ class FilterOperator(QtGui.QGroupBox):
             return query
         if self._index==1:
             return query.filter(getattr(self._entity, self._field_name)==None)
-        return query.filter(self._operators[self._index-2](getattr(self._entity, self._field_name), self._value))
+        field = getattr(self._entity, self._field_name)
+        op, arity = self.get_operator_and_arity()
+        if arity == 1:
+            args = field, self._value
+        elif arity == 2:
+            args = field, self._value, self._value2
+        else:
+            assert False, 'Unsupported operator arity: %d' % arity
+        return query.filter(op(*args))
+
+    def get_operator_and_arity(self):
+        op = self._operators[self._index-2]
+        try:
+            func_code = op.func_code
+        except AttributeError:
+            arity = 1 # probably a builtin function, assume arity == 1
+        else:
+            arity = func_code.co_argcount - 1
+        return op, arity
