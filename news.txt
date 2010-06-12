@@ -17,7 +17,7 @@ Release 10.06.12
  
    * NoteDelegate
    
-     .. image:: _static/editors/NoteEditor.png
+     .. image:: _static/editors/NoteEditor_editable.png
      
    * LabelDelegate
    * TextBoolDelegate

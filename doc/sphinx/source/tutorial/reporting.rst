@@ -59,10 +59,10 @@ The html method will return ..., have a guess.... Exactly, html. This will be di
 
 You can already test this. You should see a button in the "Actions" section, on the right of the Movie detail page. Click this and a print preview should open with the text you let the html method return.
 
-.. image:: /_static/action_button.png
+.. image:: ../_static/action_button.png
 
 
-.. image:: /_static/simple_report.png
+.. image:: ../_static/simple_report.png
 
 Now let's make it a bit fancier.
 
@@ -205,4 +205,4 @@ So our finished method eventually looks like this::
 What are you waiting for? Go try it out!
 You should see something like this:
 
-.. image:: /_static/final_report.png
+.. image:: ../_static/final_report.png
