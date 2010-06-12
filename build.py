@@ -12,11 +12,6 @@ del sys.argv[-2:]
 import sphinx
 sphinx.main(['sphinx-build', '-a', '-E', 'doc/sphinx/source', 'doc/sphinx/build',])
 
-sys.argv += ['--config', 'epydoc.conf']
-import epydoc.cli
-epydoc.cli()
-del sys.argv[-2:]
-
 import sys
 sys.argv += ['sdist', 'bdist_egg']
 runpy.run_module('setup', run_name='__main__')
