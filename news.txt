@@ -1,5 +1,5 @@
-Trunk
------
+Release 10.06.12
+----------------
 
  * Expanded search and filter options
  
@@ -8,8 +8,6 @@ Trunk
  * Sorting in table views and OneToMany widgets
  
  * Importer forces validation before importing
- 
- * Expanded filter options in table views
  
  * User translatable labels on forms
  
@@ -29,6 +27,8 @@ Trunk
  * Fix date editor on windows
  
  * Add a default model to store batch job information
+ 
+ * Backup and restore available from the File menu
      
  * More documentation
 
