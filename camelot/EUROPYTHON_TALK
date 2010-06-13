@@ -1,0 +1,30 @@
+Python RAD with Camelot - EuroPython2010 talk
+
+EuroPython2010 summary:
+-----------------------
+Leverage SQLAlchemy and PyQT to build desktop applications the Django way.
+
+Erik Janssens, Jeroen Dierckx
+
+Talk, 45 minutes (intermediate)
+
+Camelot uses SQLAlchemy, Elixir and PyQT to build attractive desktop applications the way Django Admin interfaces are defined. This talk will introduce Camelot, the motivations behind it and its design philosophy :
+- How large datasets are handled
+- How everything remains extensible
+- Threading and responsiveness
+
+Next we will walk through the application development cycle including :
+- Setting up a Camelot project
+- Defining models with SQLAlchemy and Elixir
+- Defining table and form views
+- How to extend Camelot and fall back to raw SQLAlchemy or PyQT
+- Unit testing of the GUI with PyQT
+- Deployment options in real life
+
+Suggestions:
+------------
+- 
+
+Remarks:
+--------
+- 
