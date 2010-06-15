@@ -606,7 +606,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                     from sqlalchemy import orm
                     new_value = value()
                     self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
-                    print 'NEW VALUE', new_value
           
                     if new_value == ValueLoading:
                         return None
@@ -636,16 +635,13 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                         # update the model
                         model_updated = False
                         try:
-                            print 1, getattr(o, attribute)
                             setattr( o, attribute, new_value )
-                            print 2, getattr(o, attribute)
                             #
                             # setting this attribute, might trigger a default function to return a value,
                             # that was not returned before
                             #
                             self.admin.set_defaults( o, include_nullable_fields=False )
                             model_updated = True
-                            print 3, getattr(o, attribute)
                         except AttributeError, e:
                             self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
                         except TypeError:
@@ -660,7 +656,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                         if self.flush_changes and self.validator.isValid( row ):
                             # save the state before the update
                             try:
-                                print 'FLUSH'
                                 self.admin.flush( o )
                             except DatabaseError, e:
                                 #@todo: when flushing fails, the object should not be removed from the unflushed rows ??
