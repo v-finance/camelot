@@ -301,7 +301,7 @@ class EntityAdmin(ObjectAdmin):
                 # set allready
                 #
                 value = attributes['getter'](entity_instance)
-                if value:
+                if value!=None: # False is a legitimate value for Booleans
                     continue
                 if isinstance(default, ColumnDefault):
                     default_value = default.execute()

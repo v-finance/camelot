@@ -87,8 +87,8 @@ class ListActionFromModelFunction( ListAction ):
 
     def __init__( self, name, model_function, icon = None, collection_flush=False, selection_flush=False ):
         """
-        :param model_function: a function that has 2 arguments : the collection in the list view and the selection
-        in the list view.
+        :param model_function: a function that has 3 arguments : the collection in the list view and the selection
+        in the list view and the options.
         :param collection_flush: flush all objects in the collection to the db and refresh them in the views
         :param selection_flush: flush all objects in the selection to the db and refresh them in the views
         """
@@ -106,7 +106,7 @@ class ListActionFromModelFunction( ListAction ):
         if not self.options and self.Options:
             return self.options
 
-        def create_request( collection_getter ):
+        def create_request( collection_getter, selection_getter, options ):
 
             def request():
                 from sqlalchemy.orm.session import Session
@@ -114,7 +114,7 @@ class ListActionFromModelFunction( ListAction ):
                 sh = get_signal_handler()
                 c = list(collection_getter())
                 s = list(selection_getter())
-                self._model_function( c, s )
+                self._model_function( c, s, options )
                 to_flush = []
                 if self._selection_flush:
                     to_flush = s
@@ -126,7 +126,7 @@ class ListActionFromModelFunction( ListAction ):
 
             return request
 
-        post( create_request( collection_getter ), progress.finished, exception = progress.finished )
+        post( create_request( collection_getter, selection_getter, self.options ), progress.finished, exception = progress.finished )
         progress.exec_()
 
 class PrintHtmlListAction( ListActionFromModelFunction ):
@@ -154,6 +154,8 @@ class OpenFileListAction( ListActionFromModelFunction ):
     
     Set the suffix class attribute to the suffix the file should have
     eg: .txt or .pdf
+    
+    Overwrite the write file method to write the file wanted.
     """
 
     suffix = '.txt'
@@ -162,24 +164,25 @@ class OpenFileListAction( ListActionFromModelFunction ):
         """
         """
 
-        def model_function( collection, selection ):
+        def model_function( collection, selection, options ):
             from PyQt4 import QtGui, QtCore
             import os, sys
             import tempfile
             file_descriptor, file_name = tempfile.mkstemp(suffix=self.suffix)
             os.close(file_descriptor)
-            self.write_file(file_name, collection, selection )
+            self.write_file(file_name, collection, selection, options )
             url = QtCore.QUrl.fromLocalFile(file_name)
             logger.debug(u'open url : %s'%unicode(url))
             QtGui.QDesktopServices.openUrl(url)
 
         ListActionFromModelFunction.__init__( self, name, model_function, icon )
 
-    def write_file( self, file_name, collection, selection ):
+    def write_file( self, file_name, collection, selection, options ):
         """Overwrite this function to generate the file to be opened
-    :arg file_name: the name of the file to which should be written
-    :arg collection: the collection of objects displayed in the list
-    :arg selection: the collection of selected objects in the list
+    :param file_name: the name of the file to which should be written
+    :param collection: the collection of objects displayed in the list
+    :param selection: the collection of selected objects in the list
+    :param options: the options, if an Options class attribute was specified
         """
         file = open(file_name, 'w')
         for o in collection:
