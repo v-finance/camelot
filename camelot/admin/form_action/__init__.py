@@ -22,11 +22,14 @@ a function in the model thread or printing a report.
 To customize the look of the action button on the form, the render method should be
 overwritten.
 """
+import logging
 
 from PyQt4 import QtGui, QtCore
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post
 from camelot.view.controls.progress_dialog import ProgressDialog
+
+logger = logging.getLogger('camelot.admin.form_action')
 
 class FormAction( object ):
     """Abstract base class to implement form actions"""
@@ -186,6 +189,41 @@ class PrintHtmlFormAction( FormActionFromModelFunction ):
         post( create_request( entity_getter ), progress.print_result, exception = progress.exception )
         progress.exec_()
         
+class OpenFileFormAction( FormActionFromModelFunction ):
+    """Form action used to open a file in the prefered application of the user.
+    To be used for example to generate pdfs with reportlab and open them in
+    the default pdf viewer.
+    
+    Set the suffix class attribute to the suffix the file should have
+    eg: .txt or .pdf
+    """
+
+    suffix = '.txt'
+    
+    def __init__( self, name, icon = Icon( 'tango/22x22/actions/document-print.png' ) ):
+        """
+        """
+
+        def model_function( obj ):
+            from PyQt4 import QtGui, QtCore
+            import os, sys
+            import tempfile
+            file_descriptor, file_name = tempfile.mkstemp(suffix=self.suffix)
+            os.close(file_descriptor)
+            self.write_file(file_name, obj )
+            url = QtCore.QUrl.fromLocalFile(file_name)
+            logger.debug(u'open url : %s'%unicode(url))
+            QtGui.QDesktopServices.openUrl(url)
+
+        FormActionFromModelFunction.__init__( self, name, model_function, icon )
+
+    def write_file( self, file_name, obj ):
+        """Overwrite this function to generate the file to be opened
+    :arg file_name: the name of the file to which should be written
+    :arg obj: the object displayed in the form
+        """
+        file = open(file_name, 'w')
+            
 class DocxFormAction( FormActionFromModelFunction ):
     """Action that generates a .docx file and opens it.  It does so by generating an xml document
     with jinja templates that is a valid word document.
