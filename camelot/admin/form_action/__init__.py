@@ -205,7 +205,6 @@ class OpenFileFormAction( FormActionFromModelFunction ):
         """
 
         def model_function( obj ):
-            from PyQt4 import QtGui, QtCore
             import os, sys
             import tempfile
             file_descriptor, file_name = tempfile.mkstemp(suffix=self.suffix)
@@ -222,7 +221,7 @@ class OpenFileFormAction( FormActionFromModelFunction ):
     :arg file_name: the name of the file to which should be written
     :arg obj: the object displayed in the form
         """
-        file = open(file_name, 'w')
+        pass
             
 class DocxFormAction( FormActionFromModelFunction ):
     """Action that generates a .docx file and opens it.  It does so by generating an xml document
