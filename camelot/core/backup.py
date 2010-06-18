@@ -118,18 +118,25 @@ class BackupMechanism(object):
         to_meta_data.reflect()
         to_tables = list(table for table in to_meta_data.sorted_tables if self.restore_table_filter(table))
         number_of_tables = len(to_tables)
+        steps = number_of_tables * 2 + 2
         
         for i,to_table in enumerate(reversed(to_tables)):
-            yield (i, number_of_tables*2, _('Delete data from table %s')%to_table.name)
+            yield (i, steps, _('Delete data from table %s')%to_table.name)
             self.delete_table_data(to_table)
         
         for i,to_table in enumerate(to_tables):
             if to_table.name in from_meta_data.tables:
-                yield (number_of_tables+i, number_of_tables*2, _('Copy data from table %s')%to_table.name)
+                yield (number_of_tables+i, steps, _('Copy data from table %s')%to_table.name)
                 self.copy_table_data(from_meta_data.tables[to_table.name], to_table)
                 
-        yield (1, 1, _('Update schema after restore'))
+        yield (number_of_tables * 2 + 1, steps, _('Update schema after restore'))
         self.update_schema_after_restore(from_engine, to_engine)
+        
+        yield (number_of_tables * 2 + 2, steps, _('Expire current session'))
+        from sqlalchemy.orm.session import _sessions
+        for session in _sessions.values():
+            session.expire_all()
+        
         yield (1, 1, _('Restore completed'))
                           
     def delete_table_data(self, to_table):
