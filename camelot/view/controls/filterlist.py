@@ -41,14 +41,14 @@ class FilterList(QtGui.QScrollArea):
 
     def __init__(self, items, parent):
         """
-    :param items: list of tubles (name, choices) for constructing the different filterboxes
+    :param items: list of tuples (filter, (name, choices)) for constructing the different filterboxes
     """
-        QtGui.QScrollArea.__init__(self, parent)
+        super(FilterList, self).__init__(parent)
         widget = QtGui.QWidget(self)
         self.setFrameStyle(QtGui.QFrame.NoFrame)
         layout = QtGui.QVBoxLayout()
 
-        for filter,(name,options) in items:
+        for filter, (name, options) in items:
             filter_widget = filter.render(widget, name, options)
             layout.addWidget(filter_widget)
             self.connect(filter_widget,

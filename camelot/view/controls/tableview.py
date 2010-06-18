@@ -238,8 +238,9 @@ class TableView( AbstractView  ):
             self.header = None
         widget_layout.setSpacing( 0 )
         widget_layout.setMargin( 0 )
-        self.splitter = QtGui.QSplitter( self )
-        widget_layout.addWidget( self.splitter )
+        splitter = QtGui.QSplitter( self )
+        splitter.setObjectName('splitter')
+        widget_layout.addWidget( splitter )
         table_widget = QtGui.QWidget( self )
         filters_widget = QtGui.QWidget( self )
         self.table_layout = QtGui.QVBoxLayout()
@@ -249,15 +250,14 @@ class TableView( AbstractView  ):
         self.filters_layout = QtGui.QVBoxLayout()
         self.filters_layout.setSpacing( 0 )
         self.filters_layout.setMargin( 0 )     
-        self.filters = None
         self.actions = None
         self._table_model = None
         table_widget.setLayout( self.table_layout )
         filters_widget.setLayout( self.filters_layout )
         #filters_widget.hide()
         self.set_admin( admin )
-        self.splitter.addWidget( table_widget )
-        self.splitter.addWidget( filters_widget )
+        splitter.addWidget( table_widget )
+        splitter.addWidget( filters_widget )
         self.setLayout( widget_layout )
         self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
         self.search_filter = lambda q: q
@@ -285,8 +285,9 @@ class TableView( AbstractView  ):
     def setSubclassTree( self, subclasses ):
         if len( subclasses ) > 0:
             from inheritance import SubclassTree
-            class_tree = SubclassTree( self.admin, self.splitter )
-            self.splitter.insertWidget( 0, class_tree )
+            splitter = self.findChild(QtGui.QWidget, 'splitter' )
+            class_tree = SubclassTree( self.admin, splitter )
+            splitter.insertWidget( 0, class_tree )
             self.connect( class_tree, SIGNAL( 'subclassClicked' ), self.set_admin )
       
     def sectionClicked( self, section ):
@@ -326,7 +327,8 @@ class TableView( AbstractView  ):
             self.table_layout.removeWidget(self.table)
             self.table.deleteLater()
             self._table_model.deleteLater()
-        self.table = self.table_widget( self.splitter )
+        splitter = self.findChild( QtGui.QWidget, 'splitter' )
+        self.table = self.table_widget( splitter )
         self._table_model = self.create_table_model( admin )
         self.table.setModel( self._table_model )
         self.connect( self.table.verticalHeader(),
@@ -451,7 +453,6 @@ class TableView( AbstractView  ):
         # remove all references we hold, to enable proper garbage collection
         del self.table_layout
         del self.table
-        del self.filters
         del self._table_model
         event.accept()  
     
@@ -519,12 +520,14 @@ class TableView( AbstractView  ):
         
     def rebuildQuery( self ):
         """resets the table model query"""
-    
+        from filterlist import FilterList
+        
         def rebuild_query():
             query = self.admin.entity.query
             query = self.header.decorate_query(query)
-            if self.filters:
-                query = self.filters.decorate_query( query )
+            filters = self.findChild(FilterList, 'filters')
+            if filters:
+                query = filters.decorate_query( query )
             if self.search_filter:
                 query = self.search_filter( query )
             query_getter = lambda:query
@@ -564,20 +567,21 @@ class TableView( AbstractView  ):
         from filterlist import FilterList
         from actionsbox import ActionsBox
         logger.debug( 'setting filters for tableview' )
-        
-        if self.filters:
-            self.disconnect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
-            self.filters_layout.removeWidget(self.filters)
-            self.filters.deleteLater()
-            self.filters = None
+        filters_widget = self.findChild(FilterList, 'filters')
+        if filters_widget:
+            self.disconnect( filters_widget, SIGNAL( 'filters_changed' ), self.rebuildQuery )
+            self.filters_layout.removeWidget(filters_widget)
+            filters_widget.deleteLater()
         if self.actions:
             self.filters_layout.removeWidget(self.actions)
             self.actions.deleteLater()
-            self.actions = None            
+            self.actions = None
         if filters:
-            self.filters = FilterList( filters, parent=self.splitter )
-            self.filters_layout.addWidget( self.filters )
-            self.connect( self.filters, SIGNAL( 'filters_changed' ), self.rebuildQuery )
+            splitter = self.findChild( QtGui.QWidget, 'splitter' )
+            filters_widget = FilterList( filters, parent=splitter )
+            filters_widget.setObjectName('filters')
+            self.filters_layout.addWidget( filters_widget )
+            self.connect( filters_widget, SIGNAL( 'filters_changed' ), self.rebuildQuery )
             #
             # filters might have default values, so we need to rebuild the queries
             #

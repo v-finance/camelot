@@ -128,11 +128,11 @@ class ApplicationViewsTest(ModelThreadTestCase):
             self.grab_widget(nav_pane, suffix=section.get_name(), subdir='applicationviews')
       
     def test_main_window(self):
-        from camelot.view.mainwindow import MainWindow
+        #from camelot.view.mainwindow import MainWindow
         from PyQt4 import QtCore
         translator = self.get_application_admin().get_translator()
         QtCore.QCoreApplication.installTranslator(translator)          
-        app_admin = self.get_application_admin()        
+        #app_admin = self.get_application_admin()        
         #widget = MainWindow(app_admin)
         #self.grab_widget(widget, subdir='applicationviews')
         
@@ -179,21 +179,21 @@ class EntityViewsTest(ModelThreadTestCase):
         app_admin = self.get_application_admin()
         return [app_admin.get_entity_admin(e) for e in entities if app_admin.get_entity_admin(e)]
 
-    def test_select_view(self):
-        from PyQt4 import QtCore
-        translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)        
-        #for admin in self.get_admins():
-        #    widget = admin.create_select_view()
-        #    self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
-            
-    def test_table_view(self):
-        from PyQt4 import QtCore
-        translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)        
-        #for admin in self.get_admins():
-        #    widget = admin.create_table_view()
-        #    self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
+#    def test_select_view(self):
+#        from PyQt4 import QtCore
+#        translator = self.get_application_admin().get_translator()
+#        QtCore.QCoreApplication.installTranslator(translator)        
+#        for admin in self.get_admins():
+#            widget = admin.create_select_view()
+#            self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
+#            
+#    def test_table_view(self):
+#        from PyQt4 import QtCore
+#        translator = self.get_application_admin().get_translator()
+#        QtCore.QCoreApplication.installTranslator(translator)        
+#        for admin in self.get_admins():
+#            widget = admin.create_table_view()
+#            self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
 
     def test_new_view(self):
         from PyQt4 import QtCore

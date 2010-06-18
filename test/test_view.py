@@ -898,20 +898,39 @@ class DelegateTest(unittest.TestCase):
     self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'), 'disabled')
 
 class FilterTest(ModelThreadTestCase):
-  """Test the filters in the table view"""
-  
-  images_path = static_images_path
-  
-  def test_group_box_filter(self):
-    from camelot.view import filters
-    filter = filters.GroupBoxFilter('state')
-    self.grab_widget(filter.render(None, 'Organization', [('Nokia',None), ('Apple',None)]))
-
-  def test_combo_box_filter(self):
-    from camelot.view import filters
-    filter = filters.ComboBoxFilter('state')
-    self.grab_widget(filter.render(None, 'Organization', [('Nokia',None), ('Apple',None)]))
+    """Test the filters in the table view"""
     
+    images_path = static_images_path
+    from camelot.view import filters
+    
+    group_box_filter = filters.GroupBoxFilter('state')
+    combo_box_filter = filters.ComboBoxFilter('state')
+    name_and_options = ('Organization', [('Nokia',None), ('Apple',None)])
+    
+    def test_group_box_filter(self): 
+        self.grab_widget(self.group_box_filter.render(None, *self.name_and_options))
+    
+    def test_combo_box_filter(self):
+        self.grab_widget(self.combo_box_filter.render(None, *self.name_and_options))
+
+    def test_filter_list(self):
+        from camelot.view.controls.filterlist import FilterList
+        items = [(self.group_box_filter, self.name_and_options),
+                 (self.combo_box_filter, self.name_and_options)]
+        filter_list = FilterList(items, parent=None)
+        self.grab_widget(filter_list)
+        
+    def test_filter_list_in_table_view(self):
+        from camelot.view.controls.tableview import TableView
+        from camelot.model.authentication import Person
+        from camelot.admin.application_admin import ApplicationAdmin
+        app_admin = ApplicationAdmin()
+        person_admin = Person.Admin(app_admin, Person)
+        table_view = TableView(person_admin)
+        items = [(self.group_box_filter, self.name_and_options),
+                 (self.combo_box_filter, self.name_and_options)]
+        table_view.set_filters_and_actions((items, None))
+        
 class ControlsTest(ModelThreadTestCase):
     """Test some basic controls"""
     
