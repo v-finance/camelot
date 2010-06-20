@@ -19,6 +19,7 @@ All other sections can be read on an as needed base.
    models.rst
    admin.rst
    forms.rst
+   actions.rst
    delegates.rst
    data_model.rst
    fixtures.rst

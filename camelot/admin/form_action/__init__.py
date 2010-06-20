@@ -43,30 +43,33 @@ class FormAction( object ):
         self._icon = icon
 
     def get_name(self):
+        """:return: the name to be used in the button to trigger the action"""
         return self._name
     
     def get_icon(self):
+        """:return: the Icon to be used in the button to trigger the
+action"""
         return self._icon
     
-    @gui_function
     def render( self, parent, entity_getter ):
-        """Returns a QWidget the user can use to trigger the action"""
+        """:return: a QWidget the user can use to trigger the action, by default
+returns a Button that will trigger the run method when clicked"""
         from camelot.view.controls.action_widget import ActionWidget
         return ActionWidget( self, entity_getter, parent=parent )
 
-    @gui_function
     def run( self, entity_getter ):
         """Overwrite this method to create an action that does something"""
         raise NotImplementedError
     
-    @model_function
     def enabled(self, entity):
-        """Overwrite this method to have the action only enabled for certain states of the
-        entity displayed
-        :param entity: the entity currently in the form view
-        :return: True or False, returns True by default
+        """Overwrite this method to have the action only enabled for 
+certain states of the entity displayed
+        
+:param entity: the entity currently in the form view
+:return: True or False, returns True by default
         """
-        return True
+        if entity:
+            return True
         
 class FormActionFromGuiFunction( FormAction ):
     """Convert a function that is supposed to run in the GUI thread to a FormAction,
@@ -136,31 +139,35 @@ class FormActionFromModelFunction( FormAction ):
 
 class PrintHtmlFormAction( FormActionFromModelFunction ):
     """Create an action for a form that pops up a print preview for generated html.
-  Overwrite the html function to customize the html that should be shown::
+Overwrite the html function to customize the html that should be shown::
 
-    class PrintMovieAction(PrintHtmlFormAction):
+  class PrintMovieAction(PrintHtmlFormAction):
 
-      def html(self, movie):
-        html = '<h1>' + movie.title + '</h1>'
-        html += movie.description
-      return html
+    def html(self, movie):
+      html = '<h1>' + movie.title + '</h1>'
+      html += movie.description
+    return html
 
-    class Movie(Entity):
-      title = Field(Unicode(60), required=True)
-      description = Field(camelot.types.RichText)
+  class Movie(Entity):
+    title = Field(Unicode(60), required=True)
+    description = Field(camelot.types.RichText)
 
-      class Admin(EntityAdmin):
-        list_display = ['title', 'description']
-        form_actions = [PrintMovieAction('summary')]
+    class Admin(EntityAdmin):
+      list_display = ['title', 'description']
+      form_actions = [PrintMovieAction('summary')]
 
-  will put a print button on the form :
+will put a print button on the form :
 
-  .. image:: ../_static/formaction/print_html_form_action.png
-  
-    
-  .. attribute:: HtmlDocument the class used to render the html, by default this is
-  a QTextDocument, but a QtWebKit.QWebView can be used as well.
+.. image:: ../_static/formaction/print_html_form_action.png
 
+the rendering of the html can be customised using the HtmlDocument attribute :
+
+.. attribute:: HtmlDocument 
+
+the class used to render the html, by default this is
+a QTextDocument, but a QtWebKit.QWebView can be used as well.
+
+.. image:: ../_static/simple_report.png
     """
 
     HtmlDocument = QtGui.QTextDocument
@@ -168,10 +175,11 @@ class PrintHtmlFormAction( FormActionFromModelFunction ):
     def __init__( self, name, icon = Icon( 'tango/16x16/actions/document-print.png' ) ):
         FormActionFromModelFunction.__init__( self, name, self.html, icon )
 
-    def html( self, o ):
+    def html( self, obj ):
         """Overwrite this function to generate custom html to be printed
-        :arg o: the object that is displayed in the form"""
-        return '<h1>' + unicode( o ) + '<h1>'
+:param obj: the object that is displayed in the form
+:return: a string with the html that should be displayed in a print preview window"""
+        return '<h1>' + unicode( obj ) + '<h1>'
 
     @gui_function
     def run( self, entity_getter ):
@@ -191,21 +199,21 @@ class PrintHtmlFormAction( FormActionFromModelFunction ):
         
 class OpenFileFormAction( FormActionFromModelFunction ):
     """Form action used to open a file in the prefered application of the user.
-    To be used for example to generate pdfs with reportlab and open them in
-    the default pdf viewer.
+To be used for example to generate pdfs with reportlab and open them in
+the default pdf viewer.
     
-    Set the suffix class attribute to the suffix the file should have
-    eg: .txt or .pdf
+.. attribute:: suffix
+
+Set the suffix class attribute to the suffix the file should have
+eg: .txt or .pdf, defaults to .txt
     """
 
     suffix = '.txt'
     
     def __init__( self, name, icon = Icon( 'tango/22x22/actions/document-print.png' ) ):
-        """
-        """
-
+        
         def model_function( obj ):
-            import os, sys
+            import os
             import tempfile
             file_descriptor, file_name = tempfile.mkstemp(suffix=self.suffix)
             os.close(file_descriptor)
@@ -217,36 +225,55 @@ class OpenFileFormAction( FormActionFromModelFunction ):
         FormActionFromModelFunction.__init__( self, name, model_function, icon )
 
     def write_file( self, file_name, obj ):
-        """Overwrite this function to generate the file to be opened
-    :arg file_name: the name of the file to which should be written
-    :arg obj: the object displayed in the form
         """
+:param file_name: the name of the file to which should be written
+:param obj: the object displayed in the form
+:return: None
+
+Overwrite this function to generate the file to be opened, this function will be
+called when the user triggers the action.  It should write the requested file to the file_name.
+This file will then be opened with the system default application for this type of file.
+"""
         pass
             
 class DocxFormAction( FormActionFromModelFunction ):
-    """Action that generates a .docx file and opens it.  It does so by generating an xml document
-    with jinja templates that is a valid word document.
+    """Action that generates a .docx file and opens it using Word.  It does so by generating an xml document
+with jinja templates that is a valid word document.  Implement at least its get_template method in a subclass
+to make this action functional.
     """
     
     def __init__( self, name, icon = Icon( 'tango/16x16/mimetypes/x-office-document.png' ) ):
         FormActionFromModelFunction.__init__( self, name, self.open_xml, icon )
           
     def get_context(self, obj):
-        """:return: a dictionary with objects to be used as context when jinja fills up the xml document"""
-        return {}
+        """
+:param obj: the object displayed in the form
+:return: a dictionary with objects to be used as context when jinja fills up the xml document,
+by default returns a context that contains obj"""
+        return {'obj':obj}
     
     def get_environment(self, obj):
-        """Return the jinja environment to be used to render the xml document"""
+        """
+:param obj: the object displayed in the form
+:return: the jinja environment to be used to render the xml document, by default returns an
+empty environment"""
         from jinja import Environment
         e = Environment()
         return e
     
     def get_template(self, obj):
-        """:return: the name of the jinja template for xml document"""
+        """
+:param obj: the object displayed in the form
+:return: the name of the jinja template for xml document.  A template can be constructed by
+creating a document in MS Word and saving it as an xml file.  This file can then be manipulated by hand
+to include jinja constructs."""
         raise NotImplemented
     
     def document(self, obj):
-        """:return: the xml content of the document"""
+        """
+:param obj: the object displayed in the form
+:return: the xml content of the generated document. This method calls get_environment,
+get_template and get_context to create the final document."""
         e = self.get_environment(obj)
         context = self.get_context(obj)
         t = e.get_template(self.get_template(obj))
