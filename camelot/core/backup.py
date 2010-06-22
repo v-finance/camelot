@@ -16,7 +16,7 @@ class BackupMechanism(object):
     def __init__(self, filename):
         """Backup and restore to a local file using it as an sqlite database
         """
-        self._filename = filename
+        self._filename = str(filename)
         
     def backup_table_filter(self, from_table):
         """
