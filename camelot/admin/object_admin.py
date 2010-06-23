@@ -280,11 +280,12 @@ class ObjectAdmin(object):
         subclasses = []
         for subclass in self.entity.__subclasses__():
             subclass_admin = self.get_related_entity_admin(subclass)
-            subclasses.append((
-                subclass_admin,
-                subclass_admin.get_subclass_tree()
-            ))
-            
+            if subclass_admin!=self:
+                subclasses.append((
+                    subclass_admin,
+                    subclass_admin.get_subclass_tree()
+                ))
+        
         def sort_admins(a1, a2):
             return cmp(a1[0].get_verbose_name_plural(), a2[0].get_verbose_name_plural())
         

@@ -153,7 +153,6 @@ class One2ManyEditor( CustomEditor, WideEditor ):
             def create():
                 o = self.admin.entity()
                 row = self.model.insertEntityInstance( 0, o )
-                self.admin.set_defaults( o )
                 return row
         
             post( create, self.activate_editor )

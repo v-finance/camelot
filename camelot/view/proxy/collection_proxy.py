@@ -870,15 +870,18 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     
     @model_function
     def insertEntityInstance( self, row, o ):
-        """Insert object o into this collection
+        """Insert object o into this collection, set the possible defaults and flush
+        the object if possible/needed
         :param o: the object to be added to the collection
         :return: the row at which the object was inserted
         """
         self.append( o )
+        # defaults might depend on object being part of a collection
+        self.admin.set_defaults( o )
         row = self.getRowCount() - 1
         self.unflushed_rows.add( row )
         if self.flush_changes and not len( self.validator.objectValidity( o ) ):
-            elixir.session.flush( [o] )
+            self.admin.flush( o )
             try:
                 self.unflushed_rows.remove( row )
             except KeyError:
