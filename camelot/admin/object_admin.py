@@ -491,7 +491,6 @@ class ObjectAdmin(object):
         from PyQt4.QtCore import SIGNAL
         from camelot.view.controls.view import AbstractView
         from camelot.view.model_thread import post
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         new_object = []
 
         @model_function
@@ -511,6 +510,7 @@ class ObjectAdmin(object):
             admin.get_fields,
             max_number_of_rows=1
         )
+        post( model.updateUnflushedRows )
         validator = admin.create_validator(model)
 
         class NewForm(AbstractView):
@@ -565,6 +565,7 @@ class ObjectAdmin(object):
 
             def showMessage(self, valid):
                 from camelot.view.workspace import get_workspace
+                self.emit_if_valid(valid)
                 if not valid:
                     row = 0
                     reply = validator.validityDialog(row, self).exec_()
@@ -615,8 +616,14 @@ class ObjectAdmin(object):
                         str(model.hasUnflushedRows())
                     )
                     if model.hasUnflushedRows():
-                        def validate(): return validator.isValid(0)
-                        post(validate, self.showMessage)
+                        
+                        def validate_and_flush():
+                            valid = validator.isValid(0)
+                            if valid:
+                                admin.flush(new_object[0])
+                            return valid
+                        
+                        post(validate_and_flush, self.showMessage)
                         return False
                     else:
                         return True
