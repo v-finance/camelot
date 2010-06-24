@@ -26,9 +26,7 @@
 #  ============================================================================
 
 from customdelegate import CustomDelegate, DocumentationMetaclass
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QComboBox, QItemDelegate
-from PyQt4.QtCore import QVariant, QString, Qt
+from PyQt4.QtCore import Qt
 
 from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject

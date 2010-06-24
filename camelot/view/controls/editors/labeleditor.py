@@ -25,11 +25,9 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
+from PyQt4 import QtGui
 
 from customeditor import AbstractCustomEditor
-from camelot.core import constants
 
 class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
     def __init__(self,
