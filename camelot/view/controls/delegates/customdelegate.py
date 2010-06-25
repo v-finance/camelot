@@ -180,7 +180,7 @@ will be put onto a form"""
                          Qt.AlignVCenter | Qt.AlignLeft,
                          text)
         
-    def render_ooxml( self, value ):      
+    def render_ooxml( self, value ):
         yield '<w:r>'
-        yield '  <w:t>Wooha : %s</w:t>'%unicode(value)
+        yield '  <w:t>%s</w:t>' % unicode(value)
         yield '</w:r>'

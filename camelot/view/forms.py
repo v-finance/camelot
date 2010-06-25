@@ -126,10 +126,16 @@ class Form( object ):
         :param delegates: a dictionary mapping field names to their delegate
         """
         yield '<w:p>'
-        for field, delegate in delegates.items():
-            value = getattr(obj, field)
-            for line in delegate.render_ooxml(value):
-                yield line
+        for field in self._content:
+            label = None
+            if isinstance(field, Form):
+                for line in field.render_ooxml():
+                    yield line
+            else:
+                delegate = delegates[field]
+                value = getattr(obj, field)
+                for line in delegate.render_ooxml(value):
+                    yield line
         yield '</w:p>'
         
     @gui_function
@@ -254,7 +260,13 @@ class Label( Form ):
         self.label = label
         self.alignment = alignment
         self.style = style
-
+    
+    def render_ooxml( self ):
+        """Generator for label text in Office Open XML representing this form"""
+        yield '<w:r>'
+        yield self.label
+        yield '</w:r>' 
+    
     @gui_function
     def render( self, widgets, parent = None, nomargins = False ):
         from PyQt4 import QtGui
