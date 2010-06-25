@@ -178,4 +178,9 @@ will be put onto a form"""
                          rect.width() - 4 - (margin_left + margin_right),
                          rect.height(),
                          Qt.AlignVCenter | Qt.AlignLeft,
-                         text)        
+                         text)
+        
+    def render_ooxml( self, value ):      
+        yield '<w:r>'
+        yield '  <w:t>Wooha : %s</w:t>'%unicode(value)
+        yield '</w:r>'

@@ -1,5 +1,10 @@
+import logging
+
 import sqlalchemy
+
 from camelot.core.utils import ugettext as _
+
+logger = logging.getLogger('camelot.core.backup')
 
 class BackupMechanism(object):
     """Create a backup of the current database to an sqlite database stored in 
@@ -16,7 +21,7 @@ class BackupMechanism(object):
     def __init__(self, filename):
         """Backup and restore to a local file using it as an sqlite database
         """
-        self._filename = str(filename)
+        self._filename = unicode(filename)
         
     def backup_table_filter(self, from_table):
         """
@@ -68,9 +73,10 @@ class BackupMechanism(object):
         from_meta_data.reflect()
                 
         yield (0, 0, _('Preparing backup file'))
+        logger.info("preparing backup to '%s'"%self._filename)
         if os.path.exists(self._filename):
             os.remove(self._filename)
-        to_engine   = create_engine('sqlite:///%s'%self._filename)       
+        to_engine   = create_engine(u'sqlite:///%s'%self._filename)       
         to_meta_data = MetaData()
         to_meta_data.bind = to_engine
         #

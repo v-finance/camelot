@@ -120,6 +120,18 @@ class Form( object ):
     def __unicode__( self ):
         return 'Form(%s)' % ( u','.join( unicode( c ) for c in self._content ) )
 
+    def render_ooxml( self, obj, delegates ):
+        """Generator for lines of text in Office Open XML representing this form
+        :param obj: the object or entity that will be rendered
+        :param delegates: a dictionary mapping field names to their delegate
+        """
+        yield '<w:p>'
+        for field, delegate in delegates.items():
+            value = getattr(obj, field)
+            for line in delegate.render_ooxml(value):
+                yield line
+        yield '</w:p>'
+        
     @gui_function
     def render( self, widgets, parent = None, nomargins = False):
         """:param widgets: a dictionary mapping each field in this form to a tuple

@@ -47,7 +47,7 @@ def model_thread_exception_message_box(exception_info, title=None, text=None):
   to represent the exception to the user
     
   :param exception_info: a tuple containing the exception that was thrown and the
-  model thread in which the exception was thrown  
+  traceback
   """
     from PyQt4 import QtGui
     title = title or _('Exception')
