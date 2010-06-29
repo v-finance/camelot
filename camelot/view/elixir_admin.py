@@ -81,7 +81,7 @@ class EntityAdmin(ObjectAdmin):
 
     @model_function
     def get_verbose_identifier(self, obj):
-        if hasattr(obj, 'id') and obj.id:
+        if obj and hasattr(obj, 'id') and obj.id:
             if hasattr(obj, '__unicode__'):
                 return u'%s %s : %s' % (
                     unicode(self.get_verbose_name()),

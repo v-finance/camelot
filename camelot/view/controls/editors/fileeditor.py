@@ -127,7 +127,7 @@ class FileEditor(CustomEditor):
                 progress = SaveFileProgressDialog()
                 
                 def checkin():
-                    stored_file = self.storage.checkin(str(filename))
+                    stored_file = self.storage.checkin(unicode(filename))
                     return lambda:self.stored_file_ready(stored_file)
 
                 post(checkin, progress.finish)

@@ -113,7 +113,7 @@ class Storage( object ):
         root, extension = os.path.splitext( os.path.basename( local_path ) )
         ( handle, to_path ) = tempfile.mkstemp( suffix = extension, prefix = root, dir = self.upload_to, text = 'b' )
         os.close( handle )
-        logger.debug( 'copy file from %s to %s', local_path, to_path )
+        logger.debug( u'copy file from %s to %s', local_path, to_path )
         shutil.copy( local_path, to_path )
         return self.stored_file_implementation( self, os.path.basename( to_path ) )
 
