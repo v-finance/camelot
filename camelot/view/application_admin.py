@@ -209,15 +209,17 @@ class ApplicationAdmin(QtCore.QObject):
     def get_about(self):
         """:return: the content of the About dialog, a string with html
         syntax"""
+        import datetime
+        today = datetime.date.today()
         return """<b>Camelot Project</b>
                   <p>
-                  Copyright &copy; 2008-2009 Conceptive Engineering.
+                  Copyright &copy; 2008-%s Conceptive Engineering.
                   All rights reserved.
                   </p>
                   <p>
                   http://www.conceptive.be/projects/camelot
                   </p>
-                  """
+                  """%today.year
 
     def get_default_field_attributes(self, type_, field):
         """Returns the default field attributes"""

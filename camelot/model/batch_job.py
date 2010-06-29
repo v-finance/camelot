@@ -1,6 +1,8 @@
-"""
-Classes to store the result of batch jobs to enable the user to
-review or plan them
+"""Most applications need to perform some scheduled jobs to process information.
+Users need to be able to monitor the functioning of those scheduled jobs.
+
+These classes provide the means to store the result of batch jobs to enable the user to
+review or plan them.
 """
 
 from elixir.entity import Entity
@@ -13,6 +15,7 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.model import metadata
 from camelot.view import filters
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.document import documented_entity
 import camelot.types
 
 import datetime
@@ -20,6 +23,8 @@ import datetime
 __metadata__ = metadata
 
 class BatchJobType(Entity):
+    """The type of batch job, the user will be able to filter his
+    jobs based on their type.  A type might be 'Create management reports' """
     using_options( tablename = 'batch_job_type' )
     name   = Field(sqlalchemy.types.Unicode(256), required=True)
     parent = ManyToOne('BatchJobType')
@@ -39,11 +44,14 @@ class BatchJobType(Entity):
         verbose_name = _('Batch job type')
         list_display = ['name', 'parent']
         
+BatchJobType = documented_entity()( BatchJobType )
+
 def hostname():
     import socket
     return socket.gethostname()
     
 class BatchJob(Entity):
+    """Information the batch job that is planned, running or has run"""
     using_options( tablename = 'batch_job', order_by=['-date'] )
     date    = Field(sqlalchemy.types.DateTime, required=True, default=datetime.datetime.now)
     host    = Field(sqlalchemy.types.Unicode(256), required=True, default=hostname)
@@ -52,6 +60,8 @@ class BatchJob(Entity):
     message = Field(camelot.types.RichText())
     
     def add_exception_to_message(self, exception):
+        """If an exception occurs in a batch job, this method can be used to add
+        the stack trace of the exception to the message"""
         import traceback, cStringIO
         sio = cStringIO.StringIO()
         traceback.print_exc(file=sio)
@@ -68,3 +78,5 @@ class BatchJob(Entity):
         list_display = ['date', 'host', 'type', 'status']
         list_filter = ['status', filters.ComboBoxFilter('host')]
         form_display = list_display + ['message']
+        
+BatchJob = documented_entity()( BatchJob )

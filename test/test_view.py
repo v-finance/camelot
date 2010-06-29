@@ -963,6 +963,19 @@ class ControlsTest(ModelThreadTestCase):
         status_bar.busy_widget.set_busy(True)
         self.grab_widget(status_bar)
     
+    def test_search_control(self):
+        from camelot.view.controls.search import SimpleSearchControl
+        search = SimpleSearchControl(None)
+        self.grab_widget(search)
+        
+    def test_header_widget(self):
+        from camelot.model.authentication import City
+        from camelot.view.controls.tableview import HeaderWidget
+        person_admin = self.app_admin.get_entity_admin(City)
+        header = HeaderWidget(parent=None, admin=person_admin)
+        header.expand_search_options()
+        self.grab_widget(header)
+        
 class CamelotEntityViewsTest(EntityViewsTest):
   """Test the views of all the Entity subclasses"""
   

@@ -11,9 +11,11 @@ logger = logging.getLogger('camelot.admin.list_action')
 class ListAction( object ):
     """Abstract base class to implement list actions
     
-    Use the class attribute Options, to let the user enter some options for the action.  Where
-    options is a class with and admin definition.  The admin definition will be used to pop up
-    an interface screen for an object of type Options.
+.. attribute:: Options
+
+Use the class attribute Options, to let the user enter some options for the action.  Where
+options is a class with and admin definition.  The admin definition will be used to pop up
+an interface screen for an object of type Options.  Defaults to None.
     """
 
     Options = None
@@ -40,8 +42,12 @@ class ListAction( object ):
         return button
 
     def run( self, collection_getter, selection_getter ):
-        """Overwrite this method to create an action that does something
+        """Overwrite this method to create an action that does something.  If the Options attribute
+        is specified, the default implementation of run will pop up a dialog requesting the user to
+        complete the options before executing the action.
         
+        :param collection_getter: a method that returns an iterator over all objects in the list
+        :param selection_getter: a method that returns an iterator over all selected objects in a list
         :return: None if there was no Options class attribute or if Cancel was pressed, otherwise
         an object of of type Options
         """

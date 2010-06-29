@@ -18,14 +18,15 @@ Persons and Organizations
 .. automodule:: camelot.model.authentication
    :members:
    
+Batch Jobs
+==========
+
+.. automodule:: camelot.model.batch_job
+   :members:
+
+
 Auditing
 ========
 
 .. automodule:: camelot.model.memento
-   :members:
-   
-Synchronization with other applications
-=======================================
-
-.. automodule:: camelot.model.synchronization
    :members:
