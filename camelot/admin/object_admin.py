@@ -271,6 +271,17 @@ class ObjectAdmin(object):
         return structure_to_list_actions(self.list_actions)
 
     @model_function
+    def get_depending_objects(self, obj):
+        """Overwrite this function to generate a list of objects that depend on a given
+        object.  When obj is modified by the user, this function will be called to determine
+        which other objects need their views updated.
+        
+        :param obj: an object of the type that is managed by this admin class
+        :return: an iterator over objects that depend on obj
+        """
+        return []
+        
+    @model_function
     def get_subclass_tree( self ):
         """Get a tree of admin classes representing the subclasses of the class
         represented by this admin class

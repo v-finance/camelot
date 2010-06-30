@@ -686,6 +686,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                                         self.logger.error( 'Programming Error, could not flush history', exc_info = e )
                         #@todo: update should only be sent remotely when flush was done 
                         self.rsh.sendEntityUpdate( self, o )
+                        for depending_obj in self.admin.get_depending_objects( o ):
+                            self.rsh.sendEntityUpdate( self, depending_obj )
                         return ( ( row, 0 ), ( row, len( self.getColumns() ) ) )
                     elif flushed:
                         self.logger.debug( 'old value equals new value, no need to flush this object' )
@@ -812,6 +814,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         @param delete: delete the object after removing it from the collection 
         """
         self.logger.debug( 'remove entity instance')
+        #
+        # it might be impossible to determine the depending objects once
+        # the object has been removed from the collection
+        #
+        depending_objects = list( self.admin.get_depending_objects( o ) )
         self.remove( o )
         # remove the entity from the cache
         self.cache[Qt.DisplayRole].delete_by_entity( o )
@@ -825,6 +832,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             # even if the object is not deleted, it needs to be flushed to make
             # sure it's out of the collection
             self.admin.flush( o )
+        for depending_obj in depending_objects:
+            self.rsh.sendEntityUpdate( self, depending_obj )
         post( self.getRowCount, self._refresh_content )
     
     @gui_function
@@ -880,6 +889,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.admin.set_defaults( o )
         row = self.getRowCount() - 1
         self.unflushed_rows.add( row )
+        for depending_obj in self.admin.get_depending_objects( o ):
+            self.rsh.sendEntityUpdate( self, depending_obj )
         if self.flush_changes and not len( self.validator.objectValidity( o ) ):
             self.admin.flush( o )
             try:

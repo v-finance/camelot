@@ -105,7 +105,7 @@ class One2ManyEditor( CustomEditor, WideEditor ):
                 open_data_with_excel( title, columns, data )
         
         post( export )
-    
+        
     def getModel( self ):
         return self.model
     
@@ -121,12 +121,10 @@ class One2ManyEditor( CustomEditor, WideEditor ):
           
     def set_value( self, model ):
         model = CustomEditor.set_value( self, model )
-        if model:
+        if model and model!=self.model:
             self.model = model
-#            sorted_model = QtGui.QSortFilterProxyModel( self )
-#            sorted_model.setSourceModel( model )
             self.table.setModel( model )
-      
+       
             def create_fill_model_cache( model ):
               
                 def fill_model_cache():
