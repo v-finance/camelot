@@ -482,11 +482,26 @@ class ObjectAdmin(object):
         :param parent: the parent widget for the form
         """
         
-        def create_collection_getter( object_getter ):
-            return lambda:[object_getter()]
+        def create_collection_getter( object_getter, object_cache ):
+            """Transform an object_getter into a collection_getter which
+            returns a collection with only the object returned by object
+            getter.
+            
+            :param object_getter: a function that returns the object that should be in
+            the collection
+            :param object_cache: a list that will be used to store the result
+            of object_getter, to prevent multiple calls of object_getter
+            """
+            
+            def collection_getter():
+                if not object_cache:
+                    object_cache.append( object_getter() )
+                return object_cache
+            
+            return collection_getter
                     
         model = self.model( self,
-                            create_collection_getter( object_getter ),
+                            create_collection_getter( object_getter, [] ),
                             self.get_fields )
         return self.create_form_view( title, model, 0, parent ) 
     
