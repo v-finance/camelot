@@ -1,9 +1,13 @@
-Release 10.06.12
+Release 10.07.02
 ----------------
 
  * Expanded search and filter options
- 
+
+   .. image:: _static/controls/header_widget.png
+    
  * Search works for integer, date and float fields
+ 
+   .. image:: _static/controls/search_control.png
  
  * Sorting in table views and OneToMany widgets
  
