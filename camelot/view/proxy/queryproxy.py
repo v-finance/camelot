@@ -52,7 +52,7 @@ class QueryTableProxy(CollectionProxy):
         #database, and as such cannot be a result of the query
         self._appended_rows = []
         CollectionProxy.__init__(self, admin, lambda: [],
-                                 columns_getter, max_number_of_rows=10, edits=None)
+                                 columns_getter, max_number_of_rows=max_number_of_rows, edits=None)
 
     def get_query_getter(self):
         if not self._sort_decorator:

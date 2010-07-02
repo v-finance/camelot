@@ -791,7 +791,20 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             return role_cache.get_data_at_row( row )
         except KeyError:
             if row not in self.rows_under_request:
-                offset = max( row - self.max_number_of_rows / 2, 0 )
+                # Example : max_number_of_rows = 6, row=4
+                #
+                # row 0
+                #     1 --> offset --> first row read
+                #     2
+                #     3
+                #     4 --> row
+                #     5
+                #     6 --> last row read
+                #     7 --> offset + limit
+                #     8
+                #     
+                delta = int( self.max_number_of_rows / 2 )
+                offset = max( row - delta, 0 )
                 limit = self.max_number_of_rows
                 self.rows_under_request.update( set( range( offset, offset + limit ) ) )
                 post( lambda :self._extend_cache( offset, limit ), self._cache_extended )

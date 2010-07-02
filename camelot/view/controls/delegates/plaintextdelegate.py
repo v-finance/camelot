@@ -48,8 +48,7 @@ class PlainTextDelegate(CustomDelegate):
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(130,130,130)
       
-        if text!=ValueLoading:
-            text = text or u''
+        if text and text!=ValueLoading:
             if self._translate_content:
                 text = ugettext(text)
         else:
