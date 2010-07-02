@@ -64,7 +64,7 @@ class BusyWidget(QtGui.QWidget):
         painter.setPen(QtGui.QPen(Qt.NoPen))
         width = self.width()
         height = self.height()
-        radius = (min(width, height)/4)
+        radius = min(width/(3*self.orbs+1), height/4)
         for i in range(self.orbs):
             if i!=self.highlighted_orb:
                 painter.setBrush(QtGui.QBrush(QtGui.QColor(180, 180, 180)))

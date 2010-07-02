@@ -45,12 +45,20 @@ class Dashboard(BareFrame):
     SCALE  = .85
 
     def __init__(self, parent=None):
+        from camelot.view.controls.busy_widget import BusyWidget
+        from camelot.view.model_thread import get_model_thread
         super(Dashboard, self).__init__(parent)
         desktop = QCoreApplication.instance().desktop()
-        
         self.resize(desktop.width() * Dashboard.SCALE, desktop.height() * Dashboard.SCALE)
         self.closemark = CloseMark(QPixmap('close-mark.png'), self)
         self.setBGColor(Qt.white)
+        busy_widget = BusyWidget(self)
+        busy_widget.setMinimumSize( desktop.width() * Dashboard.SCALE, desktop.height() * Dashboard.SCALE )
+        #self.addPermanentWidget(busy_widget, 0)
+        mt = get_model_thread()
+        self.connect(mt, mt.thread_busy_signal, busy_widget.set_busy)
+        busy_widget.set_busy(mt.busy())
+        
 
 
 if __name__ == '__main__':
