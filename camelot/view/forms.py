@@ -125,18 +125,37 @@ class Form( object ):
         :param obj: the object or entity that will be rendered
         :param delegates: a dictionary mapping field names to their delegate
         """
-        yield '<w:p>'
+        yield '<w:tbl>'
+        yield '    <w:tblPr>'
+        yield '      <w:tblW w:w="0" w:type="auto"/>'
+        yield '      <w:tblLook w:val="04A0"/>'
+        yield '    </w:tblPr>'
+        yield '    <w:tblGrid>'
+        yield '      <w:gridCol w:w="4811"/>'
+        yield '      <w:gridCol w:w="4811"/>'
+        yield '    </w:tblGrid>'
+        yield '    <w:tr wsp:rsidR="00E51592" wsp:rsidTr="00E51592">'
         for field in self._content:
-            label = None
+            yield '<w:tc>'
+            yield '  <w:tcPr>'
+            yield '    <w:tcW w:w="4811" w:type="dxa"/>'
+            yield '    <w:shd w:val="clear" w:color="auto" w:fill="auto"/>'
+            yield '  </w:tcPr>'
+            yield '<w:p wsp:rsidR="00E51592" wsp:rsidRDefault="00E51592">'            
             if isinstance(field, Form):
-                for line in field.render_ooxml():
-                    yield line
+                lines = field.render_ooxml()
+                # print '>>>> form - lines', lines
             else:
                 delegate = delegates[field]
                 value = getattr(obj, field)
-                for line in delegate.render_ooxml(value):
-                    yield line
-        yield '</w:p>'
+                lines = delegate.render_ooxml(value)
+                # print '>>>> delegate - lines', lines
+            for line in lines:
+                yield line
+            yield '</w:p>'
+            yield '</w:tc>'
+        yield '</w:tr>'
+        yield '</w:tbl>'
         
     @gui_function
     def render( self, widgets, parent = None, nomargins = False):
@@ -264,8 +283,9 @@ class Label( Form ):
     def render_ooxml( self ):
         """Generator for label text in Office Open XML representing this form"""
         yield '<w:r>'
-        yield self.label
-        yield '</w:r>' 
+        yield '  <w:t>%s</w:t>' % self.label
+        yield '</w:r>'
+        
     
     @gui_function
     def render( self, widgets, parent = None, nomargins = False ):

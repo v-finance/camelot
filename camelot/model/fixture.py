@@ -69,7 +69,7 @@ class Fixture( Entity ):
             return ( None, None )
         
     @classmethod
-    def findFixtureKeysAnClasses( cls, entity ):
+    def findFixtureKeysAndClasses( cls, entity ):
         """Load all fixture keys of a certain entity in batch
         :param entity: the model class for which the fixtures should be found
         :return: a dictionary mapping the primary key of a on object of type entity to its (fixture key, fixture class)

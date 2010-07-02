@@ -181,6 +181,4 @@ will be put onto a form"""
                          text)
         
     def render_ooxml( self, value ):
-        yield '<w:r>'
-        yield '  <w:t>%s</w:t>' % unicode(value)
-        yield '</w:r>'
+        yield unicode(value)
