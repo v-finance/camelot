@@ -392,13 +392,13 @@ class HBoxForm( Form ):
 
   """
 
-    def __init__( self, columns ):
+    def __init__( self, columns, scrollbars=False ):
         """:param columns: a list of forms to display in the different columns
         of the horizontal box"""
         assert isinstance( columns, list )
         self.columns = [structure_to_form( col ) for col in columns]
         super( HBoxForm, self ).__init__( sum( ( column_form.get_fields()
-                                      for column_form in self.columns ), [] ) )
+                                      for column_form in self.columns ), [] ), scrollbars=scrollbars )
 
     def __unicode__( self ):
         return 'HBoxForm [ %s\n         ]' % ( '         \n'.join( [unicode( form ) for form in self.columns] ) )

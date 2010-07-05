@@ -3,6 +3,7 @@
 import logging
 
 logger = logging.getLogger( 'camelot.core.files.storage' )
+logger.setLevel(logging.DEBUG)
 
 from camelot.view.model_thread import model_function
 
@@ -126,6 +127,7 @@ class Storage( object ):
         import tempfile
         import os
         ( handle, to_path ) = tempfile.mkstemp( suffix = suffix, prefix = prefix, dir = self.upload_to, text = 'b' )
+        logger.debug(u'checkin stream to %s'%to_path)
         file = os.fdopen( handle, 'wb' )
         file.write( stream.read() )
         file.flush()
