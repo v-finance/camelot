@@ -406,7 +406,6 @@ class EntityAdmin(ObjectAdmin):
         :param parent: the workspace widget that will contain the table view
         """
 
-        from PyQt4 import QtCore
         from PyQt4.QtCore import SIGNAL
         
         from proxy.queryproxy import QueryTableProxy

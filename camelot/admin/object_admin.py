@@ -513,7 +513,6 @@ class ObjectAdmin(object):
         The returned class has an 'entity_created_signal' that will be fired
         when a valid new entity was created by the form
         """
-        from PyQt4 import QtCore
         from PyQt4 import QtGui
         from PyQt4.QtCore import SIGNAL
         from camelot.view.controls.view import AbstractView

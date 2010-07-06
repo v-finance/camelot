@@ -72,7 +72,7 @@ class ModelThreadTestCase(unittest.TestCase):
         self.app = get_application()
         from camelot.view import model_thread
         from camelot.view.model_thread.no_thread_model_thread import NoThreadModelThread
-        from camelot.view.model_thread import get_model_thread, construct_model_thread, has_model_thread
+        from camelot.view.model_thread import get_model_thread, has_model_thread
         from camelot.view.remote_signals import construct_signal_handler, has_signal_handler
         if not has_model_thread():
             #
