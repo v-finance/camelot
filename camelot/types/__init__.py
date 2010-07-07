@@ -286,6 +286,8 @@ class Enumeration(types.TypeDecorator):
                     return impl_processor(value)
                 except KeyError, e:
                     logger.error('could not process enumeration value %s, possible values are %s'%(value, u', '.join(list(self._string_to_int.keys()))), exc_info=e)
+            else:
+                impl_processor(value)
                         
         return processor
     
