@@ -24,7 +24,7 @@ class DateTimeEditor(CustomEditor):
         self.dateedit.setEnabled(editable)
         self.dateedit.setDisplayFormat(dateformat)
         self.dateedit.setCalendarPopup(True)
-        layout.addWidget(self.dateedit)
+        layout.addWidget(self.dateedit, 1)
             
         class TimeValidator(QtGui.QValidator):
             def __init__(self, parent):
@@ -74,7 +74,7 @@ class DateTimeEditor(CustomEditor):
 #    time_completer.setCompletionMode(QtGui.QCompleter.UnfilteredPopupCompletion)
 #    time_lineedit.setCompleter(time_completer)
 
-        layout.addWidget(self.timeedit)
+        layout.addWidget(self.timeedit, 1)
         self.setFocusProxy(self.dateedit)
         self.setLayout(layout)
         layout.setMargin(0)
