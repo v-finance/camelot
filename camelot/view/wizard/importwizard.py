@@ -34,7 +34,6 @@ import codecs
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QColor
 
 from camelot.core.utils import ugettext as _
@@ -158,9 +157,10 @@ class RowDataAdminDecorator(object):
             def objectValidity(self, entity_instance):
                 for _field_name, attributes in self.admin.get_columns():
                     background_color_getter = attributes.get('background_color', None)
-                    if background_color_getter:
+                    if background_color_getter is not None:
                         background_color = background_color_getter(entity_instance)
-                        if background_color==self.admin.invalid_color:
+                        if background_color == self.admin.invalid_color:
+                            logger.debug('we have an invalid field')
                             return ['invalid field']
                 return []
             
@@ -194,20 +194,28 @@ class RowDataAdminDecorator(object):
                 attributes[attribute] = None
 
             if 'from_string' in attributes:
-
+                
                 def get_background_color(o):
                     """If the string is not convertible with from_string, or
                     the result is None when a value is required, set the
                     background to pink"""
+                    ret = None
                     value = getattr(o, 'column_%i'%i)
                     if not value and (attributes['nullable']==False):
-                        return self.invalid_color
+                        ret = self.invalid_color
                     try:
-                        value = attributes['from_string'](value)
-                        return None
+                        # haven't found better without breaking the code...
+                        if 'special_background_color' in attributes:
+                            func = attributes['special_background_color']
+                            ret = func(value)
+                        else:
+                            value = attributes['from_string'](value)
+                            ret = None
                     except:
-                        return self.invalid_color
-
+                        ret = self.invalid_color
+                    
+                    return ret
+                
                 attributes['background_color'] = get_background_color
 
             return attributes
