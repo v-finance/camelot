@@ -2,7 +2,10 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from customdelegate import CustomDelegate, DocumentationMetaclass
+from camelot.view.proxy import ValueLoading
+
 from camelot.view.controls import editors
+from camelot.core.utils import variant_to_pyobject
 from camelot.view.art import Icon
 
 class ColoredFloatDelegate(CustomDelegate):
@@ -64,7 +67,7 @@ class ColoredFloatDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = index.model().data(index, Qt.EditRole).toDouble()[0]
+        value = variant_to_pyobject( index.model().data(index, Qt.EditRole) )
         color = index.model().data(index, Qt.BackgroundRole)
         background_color = QtGui.QColor(color)
         fontColor = QtGui.QColor()
@@ -78,8 +81,11 @@ class ColoredFloatDelegate(CustomDelegate):
                 painter.fillRect(option.rect, background_color)
 
         self.icons[cmp(value,0)].paint(painter, option.rect.left(), option.rect.top()+1, option.rect.height(), option.rect.height(), Qt.AlignVCenter)
-      
-        value_str = '%.*f'%(self.precision, value)
+
+        value_str = u''
+        if value != None and value != ValueLoading:
+            value_str = QtCore.QString("%L1").arg(float(value),0,'f',self.precision)
+        
         if self.unicode_format != None:
             value_str = self.unicode_format(value)
        
