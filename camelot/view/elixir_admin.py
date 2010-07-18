@@ -43,6 +43,19 @@ class EntityAdmin(ObjectAdmin):
 
     validator = EntityValidator
 
+    def __init__(self, app_admin, entity):
+        super(EntityAdmin, self).__init__(app_admin, entity)
+        from sqlalchemy import orm
+        from sqlalchemy.orm.exc import UnmappedClassError
+        from sqlalchemy.orm.mapper import _mapper_registry
+        try:
+            self.mapper = orm.class_mapper(self.entity)
+        except UnmappedClassError, exception:
+            mapped_entities = [unicode(m) for m in _mapper_registry.keys()]
+            logger.error(u'%s is not a mapped class, configured mappers include %s'%(self.entity, u','.join(mapped_entities)),
+                         exc_info=exception)
+            raise exception
+        
     @model_function
     def get_query(self):
         """:return: an sqlalchemy query for all the objects that should be
@@ -81,20 +94,22 @@ class EntityAdmin(ObjectAdmin):
 
     @model_function
     def get_verbose_identifier(self, obj):
-        if obj and hasattr(obj, 'id') and obj.id:
-            if hasattr(obj, '__unicode__'):
-                return u'%s %s : %s' % (
-                    unicode(self.get_verbose_name()),
-                    unicode(obj.id),
-                    unicode(obj)
-                )
-            else:
-                return u'%s %s' % (
-                    self.get_verbose_name(),
-                    unicode(obj.id)
-                )
-        else:
-            return self.get_verbose_name()
+        if obj:
+            primary_key = self.mapper.primary_key_from_instance(obj)
+            if not None in primary_key:
+                primary_key_representation = u','.join([unicode(v) for v in primary_key])
+                if hasattr(obj, '__unicode__'):
+                    return u'%s %s : %s' % (
+                        unicode(self.get_verbose_name()),
+                        primary_key_representation,
+                        unicode(obj)
+                    )
+                else:
+                    return u'%s %s' % (
+                        self.get_verbose_name(),
+                        primary_key_representation
+                    )
+        return self.get_verbose_name()
 
     @model_function
     def get_field_attributes(self, field_name):
@@ -164,18 +179,10 @@ class EntityAdmin(ObjectAdmin):
             #
             from sqlalchemy import orm
             from sqlalchemy.exceptions import InvalidRequestError
-            from sqlalchemy.orm.exc import UnmappedClassError
             from field_attributes import _sqlalchemy_to_python_type_
+
             try:
-                mapper = orm.class_mapper(self.entity)
-            except UnmappedClassError, exception:
-                from elixir import entities
-                mapped_entities = [str(e) for e in entities]
-                logger.error(u'%s is not a mapped class, mapped classes include %s'%(self.entity, u','.join([unicode(me) for me in mapped_entities])),
-                             exc_info=exception)
-                raise exception
-            try:
-                property = mapper.get_property(
+                property = self.mapper.get_property(
                     field_name,
                     resolve_synonyms=True
                 )
@@ -215,7 +222,7 @@ class EntityAdmin(ObjectAdmin):
                             delegate = delegates.Many2OneDelegate,
                             target = target,
                             #
-                            #@todo: take into account all foreign keys instead
+                            # @todo: take into account all foreign keys instead
                             # of only the first one
                             #
                             nullable = foreign_keys[0].nullable,
@@ -455,8 +462,14 @@ class EntityAdmin(ObjectAdmin):
                 #
                 # only if we know the primary key, we can keep track of its history
                 #
-                if hasattr(entity_instance, 'id') and entity_instance.id:
-                    pk = entity_instance.id
+                primary_key = self.mapper.primary_key_from_instance(entity_instance)
+                #
+                # we can only store history of objects where the primary key has only
+                # 1 element
+                # @todo: store history for compound primary keys
+                #
+                if not None in primary_key and len(primary_key)==1:
+                    pk = primary_key[0]
                     # save the state before the update
                     from camelot.model.memento import BeforeDelete
                     from camelot.model.authentication import getCurrentAuthentication
@@ -483,5 +496,5 @@ class EntityAdmin(ObjectAdmin):
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()
-        new_entity_instance.from_dict( entity_instance.to_dict(exclude=['id']) )
+        new_entity_instance.from_dict( entity_instance.to_dict(exclude=[c.name for c in self.mapper.primary_key]) )
         return new_entity_instance        

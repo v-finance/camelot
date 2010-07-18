@@ -94,7 +94,7 @@ class ObjectValidator(QtCore.QObject):
             # if the field was not editable, don't waste any time
             if attributes['editable']:
                 # if the field, is nullable, don't waste time getting its value
-                #@todo: check if field is a primary key instead of checking
+                # @todo: check if field is a primary key instead of checking
                 # whether the name is id, but this should only happen in the entity validator
                 if attributes['nullable']!=True and field!='id':
                     value = getattr(entity_instance, field)

@@ -307,7 +307,7 @@ class TableView( AbstractView  ):
     def create_table_model( self, admin ):
         """Create a table model for the given admin interface"""
         return self.table_model( admin,
-                                 admin.get_query,
+                                 None,
                                  admin.get_columns )
     
     def get_admin(self):
@@ -523,7 +523,7 @@ class TableView( AbstractView  ):
         from filterlist import FilterList
         
         def rebuild_query():
-            query = self.admin.entity.query
+            query = self.admin.get_query()
             query = self.header.decorate_query(query)
             filters = self.findChild(FilterList, 'filters')
             if filters:
@@ -582,10 +582,10 @@ class TableView( AbstractView  ):
             filters_widget.setObjectName('filters')
             self.filters_layout.addWidget( filters_widget )
             self.connect( filters_widget, SIGNAL( 'filters_changed' ), self.rebuildQuery )
-            #
-            # filters might have default values, so we need to rebuild the queries
-            #
-            self.rebuildQuery()
+        #
+        # filters might have default values, so we can only build the queries now
+        #
+        self.rebuildQuery()
         if actions:
             selection_getter = self.get_selection_getter()            
             self.actions = ActionsBox( self, 

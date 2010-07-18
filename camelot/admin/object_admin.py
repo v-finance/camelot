@@ -245,7 +245,7 @@ class ObjectAdmin(object):
     @model_function
     def get_verbose_identifier(self, obj):
         """Create an identifier for an object that is interpretable
-        for the user, eg : the 'id' of an object.  This verbose identifier can
+        for the user, eg : the primary key of an object.  This verbose identifier can
         be used to generate a title for a form view of an object.
         """
         return u'%s : %s' % (self.get_verbose_name(), unicode(obj))

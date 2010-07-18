@@ -45,6 +45,13 @@ class fifo(object):
         return u','.join(unicode(e) for e in self.entities)
     
     def add_data(self, row, entity, value):
+        """The entity might allready be on another row, and this row
+        might allready contain an entity"""
+#        try:
+#            previous_entity = self.get_entity_at_row(row)
+#            self.delete_by_entity(previous_entity)
+#        except KeyError:
+#            pass
         self.delete_by_entity(entity)
         self.data_by_rows[row] = (entity, value)
         self.rows_by_entity[entity] = row
@@ -54,7 +61,7 @@ class fifo(object):
             self.delete_by_entity(entity)
       
     def delete_by_row(self, row):
-        (entity, value_) = self.data_by_rows[row]
+        (entity, _value_) = self.data_by_rows[row]
         del self.data_by_rows[row]
         del self.rows_by_entity[entity] 
         return row

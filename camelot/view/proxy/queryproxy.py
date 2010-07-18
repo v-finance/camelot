@@ -44,7 +44,7 @@ class QueryTableProxy(CollectionProxy):
 
     def __init__(self, admin, query_getter, columns_getter,
                  max_number_of_rows=10, edits=None):
-        """@param query_getter: a model_thread function that returns a query"""
+        """@param query_getter: a model_thread function that returns a query, can be None at construction time and set later"""
         logger.debug('initialize query table')
         self._query_getter = query_getter
         self._sort_decorator = None
@@ -55,7 +55,7 @@ class QueryTableProxy(CollectionProxy):
                                  columns_getter, max_number_of_rows=max_number_of_rows, edits=None)
 
     def get_query_getter(self):
-        if not self._sort_decorator:
+        if not self._sort_decorator or self._query_getter==None:
             return self._query_getter
         else:
             
@@ -77,6 +77,8 @@ class QueryTableProxy(CollectionProxy):
     @model_function
     def getRowCount(self):
         self._clean_appended_rows()
+        if not self._query_getter:
+            return 0
         return self.get_query_getter()().count() + len(self._appended_rows)
 
     @gui_function
@@ -86,6 +88,9 @@ class QueryTableProxy(CollectionProxy):
         self.refresh()
         
     def get_collection_getter(self):
+        
+        if not self._query_getter:
+            return lambda:[]
         
         def collection_getter():
             return self.get_query_getter()().all()
@@ -148,22 +153,34 @@ class QueryTableProxy(CollectionProxy):
     @model_function
     def getData(self):
         """Generator for all the data queried by this proxy"""
-        for _i,o in enumerate(self.get_query_getter()().all()):
-            yield strip_data_from_object(o, self.getColumns())
+        if self._query_getter:
+            for _i,o in enumerate(self.get_query_getter()().all()):
+                yield strip_data_from_object(o, self.getColumns())
 
     @model_function
     def _extend_cache(self, offset, limit):
         """Extend the cache around row"""
-        q = self.get_query_getter()().offset(offset).limit(limit)
-        columns = self.getColumns()
-        for i, o in enumerate(q.all()):
-            self._add_data(columns, i+offset, o)
-        rows_in_query = (self._rows - len(self._appended_rows))
-        # Verify if rows that have not yet been flushed have been requested
-        if offset+limit>=rows_in_query:
-            for row in range(max(rows_in_query,offset), min(offset+limit, self._rows)):
-                o = self._get_object(row)
-                self._add_data(columns, row, o)
+        if self._query_getter:
+            q = self.get_query_getter()().offset(offset).limit(limit)
+            columns = self.getColumns()
+            for i, o in enumerate(q.all()):
+                row = i + offset
+                try:
+                    previous_obj = self.cache[Qt.EditRole].get_entity_at_row(row)
+                    if previous_obj!=o:
+                        continue
+#                        print 'at row %s replace %s with %s'%(row, previous_obj.id, o.id)
+                except KeyError:
+                    pass
+                self._add_data(columns, i+offset, o)
+#                print '  new obj : %s'%(self.cache[Qt.EditRole].get_entity_at_row(row).id)
+            rows_in_query = (self._rows - len(self._appended_rows))
+            # Verify if rows that have not yet been flushed have been requested
+            if offset+limit>=rows_in_query:
+                for row in range(max(rows_in_query,offset), min(offset+limit, self._rows)):
+                    o = self._get_object(row)
+                    self._add_data(columns, row, o)
+                    
         return (offset, limit)
 
     @model_function
@@ -181,11 +198,12 @@ class QueryTableProxy(CollectionProxy):
             except KeyError:
                 pass
             # momentary hack for list error that prevents forms to be closed
-            res = self.get_query_getter()().offset(row)
-            if isinstance(res, list):
-                res = res[0]
-            # @todo: remove this try catch and find out why it sometimes fails
-            try:
-                return res.limit(1).first()
-            except:
-                pass
+            if self._query_getter:
+                res = self.get_query_getter()().offset(row)
+                if isinstance(res, list):
+                    res = res[0]
+                # @todo: remove this try catch and find out why it sometimes fails
+                try:
+                    return res.limit(1).first()
+                except:
+                    pass
