@@ -6,3 +6,14 @@ this is indeed a known bug in a recent release of PyQt, it's supposed
 to be fixed in the PyQt trunk, but I'm not sure it's in a release yet.
 you can use an older release of PyQt to get around it, pyqt 4.7, qt 4.6.1
 seems to work fine.
+
+
+How to get rid of sqlalchemy warnings
+-------------------------------------
+
+add a filter to ignore them::
+
+    def ignore_sa_warnings(): 
+        import warnings 
+        from sqlalchemy.exc import SADeprecationWarning 
+        warnings.simplefilter("ignore", SADeprecationWarning) 
