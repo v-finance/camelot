@@ -3,6 +3,12 @@
 # to get started quickly
 #
 
+import datetime
+
+from sqlalchemy import sql
+
+from elixir import ColumnProperty
+
 import camelot.types
 from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, ManyToMany, \
                           Unicode, Date, Integer, Boolean, using_options
@@ -10,6 +16,7 @@ from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
 from camelot.view.controls import delegates
 from camelot.view.filters import ComboBoxFilter
+from camelot.core.utils import ugettext_lazy as _
 
 __metadata__ = metadata
 
@@ -44,7 +51,7 @@ class Movie(Entity):
   rating = Field(camelot.types.Rating())
   #
   # Camelot includes custom sqlalchemy types, like Image, which stores an
-  # PIL image on disk and keeps the reference to it in the database.
+  # image on disk and keeps the reference to it in the database.
   #
   cover = Field(camelot.types.Image(upload_to='covers'))
   #
@@ -53,6 +60,15 @@ class Movie(Entity):
   #
   script = Field(camelot.types.File(upload_to='script'))
   description = Field(camelot.types.RichText)
+
+  #
+  # Using a ColumnProperty, an sql query can be assigned to a field
+  #
+  @ColumnProperty
+  def total_visitors(self):
+    return sql.select([sql.func.sum(VisitorReport.visitors)],
+                           VisitorReport.movie_id==self.id)
+     
   #
   # Each Entity subclass can have a subclass of EntityAdmin as
   # its inner class.  The EntityAdmin class defines how the Entity
@@ -62,10 +78,11 @@ class Movie(Entity):
   # To fully customize the way the entity is visualized, the EntityAdmin
   # subclass should overrule some of the EntityAdmin's methods
   #
+     
   class Admin(EntityAdmin):
     # the list_display attribute specifies which entity attributes should
     # be visible in the table view        
-    list_display = ['title', 'releasedate', 'director', 'description']
+    list_display = ['title', 'releasedate', 'director', 'description', 'total_visitors']
     # define filters to be available in the table view
     list_filter = ['genre', ComboBoxFilter('director.full_name')]
     # if the search function needs to look in related object attributes,
@@ -135,3 +152,14 @@ class Tag(Entity):
     form_size = (400,200)
     list_display = ['name']
     form_display = ['name', 'movies']
+    
+class VisitorReport(Entity):
+  using_options(tablename='visitors')
+  movie = ManyToOne('Movie', required=True)
+  city = ManyToOne('City', required=True)
+  date = Field(Date, required=True, default=datetime.date.today)
+  visitors = Field(Integer, required=True, default=0)
+
+  class Admin(EntityAdmin):
+      verbose_name = _('Visitor Report')
+      list_display = ['movie', 'city', 'date', 'visitors']
