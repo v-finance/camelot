@@ -68,6 +68,7 @@ class RowData(object):
     def __getattr__(self, attr_name):
         return None
 
+
 # see http://docs.python.org/library/csv.html
 class UTF8Recoder:
     """Iterator that reads an encoded stream and reencodes the input to
@@ -99,6 +100,7 @@ class UnicodeReader:
     def __iter__(self):
         return self
 
+
 class CsvCollectionGetter(object):
     """class that when called returns the data in filename as a list of RowData
     objects"""
@@ -124,6 +126,7 @@ class CsvCollectionGetter(object):
             ]
 
         return self._data
+
 
 class RowDataAdminDecorator(object):
     """Decorator that transforms the Admin of the class to be imported to an
@@ -373,9 +376,11 @@ class FinalPage(QtGui.QWizardPage):
         self.emit(QtCore.SIGNAL('completeChanged()'))
         post(self.run_import, self.import_finished, self.import_finished)
 
+
 class DataPreviewCollectionProxy(CollectionProxy):
     header_icon = None
-    
+
+
 class ImportWizard(QtGui.QWizard):
     """ImportWizard provides a two-step wizard for importing data as objects
     into Camelot.  To create a custom wizard, subclass this ImportWizard and

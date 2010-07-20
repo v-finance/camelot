@@ -1,29 +1,71 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, editingFinished
+from customeditor import CustomEditor
+from customeditor import editingFinished
+
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
+
 
 class FileEditor(CustomEditor):
     """Widget for editing File fields"""
   
-    filter = """All files (*)"""
+    filter = 'All files (*)'
     
     def __init__(self, parent=None, storage=None, editable=True, **kwargs):
         CustomEditor.__init__(self, parent)
         self.storage = storage
         self.editable = editable
-        self.document_pixmap = Icon('tango/16x16/mimetypes/x-office-document.png').getQPixmap()
-        self.clear_icon = Icon('tango/16x16/actions/edit-delete.png').getQIcon()
-        self.new_icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
-        self.open_icon = Icon('tango/16x16/actions/document-open.png').getQIcon()
-        self.saveas_icon = Icon('tango/16x16/actions/document-save-as.png').getQIcon()
+        
+        # i'm a < 80 characters fanatic, i know :)
+        self.new_icon = Icon(
+            'tango/16x16/actions/list-add.png'
+        ).getQIcon()
+        self.open_icon = Icon(
+            'tango/16x16/actions/document-open.png'
+        ).getQIcon()
+        self.clear_icon = Icon(
+            'tango/16x16/actions/edit-delete.png'
+        ).getQIcon()
+        self.saveas_icon = Icon(
+            'tango/16x16/actions/document-save-as.png'
+        ).getQIcon()
+        self.document_pixmap = Icon(
+            'tango/16x16/mimetypes/x-office-document.png'
+        ).getQPixmap()
+        
         self.value = None
         self.setup_widget()
-        if self.editable:
-            self.setAcceptDrops(True)
+        if self.editable: self.setAcceptDrops(True)
     
     def setup_widget(self):
         """Called inside init, overwrite this method for custom
@@ -39,9 +81,11 @@ class FileEditor(CustomEditor):
         self.clear_button.setToolTip(_('delete file'))
         self.clear_button.setAutoRaise(True)
         self.clear_button.setEnabled(self.editable)
-        self.connect(self.clear_button,
-                     QtCore.SIGNAL('clicked()'),
-                     self.clear_button_clicked)
+        self.connect(
+            self.clear_button,
+            QtCore.SIGNAL('clicked()'),
+            self.clear_button_clicked
+        )
         
         # Open button
         self.open_button = QtGui.QToolButton()
@@ -49,14 +93,16 @@ class FileEditor(CustomEditor):
         self.open_button.setIcon(self.new_icon)
         self.open_button.setToolTip(_('add file'))
         self.open_button.setEnabled(self.editable)
-        self.connect(self.open_button,
-                     QtCore.SIGNAL('clicked()'),
-                     self.open_button_clicked)
+        self.connect(
+            self.open_button,
+            QtCore.SIGNAL('clicked()'),
+            self.open_button_clicked
+        )
         self.open_button.setAutoRaise(True)
         
         # Filename
         self.filename = QtGui.QLineEdit(self)
-        self.filename.setEnabled(self.editable  )
+        self.filename.setEnabled(self.editable)
         self.filename.setReadOnly(not self.editable)
         
         # Setup layout
@@ -95,12 +141,18 @@ class FileEditor(CustomEditor):
         """Slot to be called when a new stored_file has been created by
         the storeage"""
         self.set_value(stored_file)
-        self.emit(editingFinished)        
+        self.emit(editingFinished)
         
     def open_button_clicked(self):
-        from camelot.view.storage import open_stored_file, create_stored_file
+        from camelot.view.storage import open_stored_file
+        from camelot.view.storage import create_stored_file
         if not self.value:
-            create_stored_file(self, self.storage, self.stored_file_ready, filter=self.filter)
+            create_stored_file(
+                self,
+                self.storage,
+                self.stored_file_ready,
+                filter=self.filter
+            )
         else:
             open_stored_file(self, self.value)
     

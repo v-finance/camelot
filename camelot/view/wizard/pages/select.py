@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -78,11 +78,17 @@ class SelectFilePage(QtGui.QWizardPage):
         settings = QtCore.QSettings()
         dir = settings.value('datasource').toString()
         #if not os.path.exists(dir)
-        #    dir = QDesktopServices.displayName(QDesktopServices.DocumentsLocation)
+        #    dir = QDesktopServices.displayName(
+        #    QDesktopServices.DocumentsLocation
+        #)
         if self.save:
-            path = QtGui.QFileDialog.getSaveFileName(self, unicode(self.caption), dir)
+            path = QtGui.QFileDialog.getSaveFileName(
+                self, unicode(self.caption), dir
+            )
         else:
-            path = QtGui.QFileDialog.getOpenFileName(self, unicode(self.caption), dir)
+            path = QtGui.QFileDialog.getOpenFileName(
+                self, unicode(self.caption), dir
+            )
         if path:
             self.filelineedit.setText(QtCore.QDir.toNativeSeparators(path))
             settings.setValue('datasource', QtCore.QVariant(path))
