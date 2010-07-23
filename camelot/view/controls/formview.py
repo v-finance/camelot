@@ -35,6 +35,25 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui
 from camelot.view.model_thread import model_function, post
 from camelot.view.controls.view import AbstractView
+from camelot.view.art import Icon
+from camelot.core.utils import ugettext as _
+
+class ContextMenuAction(QtGui.QAction):
+
+    default_icon = Icon( 'tango/16x16/categories/applications-system.png' )
+    
+    def __init__(self, parent, title, icon = None):
+        """
+        :param parent: the widget on which the context menu will be placed
+        :param title: text displayed in the context menu
+        :param icon: camelot.view.art.Icon object
+        """
+        super(ContextMenuAction, self).__init__(title, parent)
+        self.icon = icon
+        if self.icon:
+            self.setIcon(self.icon.getQIcon())
+        else:
+            self.setIcon(self.default_icon.getQIcon())
 
 class FormWidget( QtGui.QWidget ):
     
@@ -53,7 +72,34 @@ class FormWidget( QtGui.QWidget ):
         self._columns = None
         self._delegate = None
         self.setLayout( self._widget_layout )
+        # define context menu and resp. action
+        self.setContextMenuPolicy(Qt.ActionsContextMenu)
+        export_action = ContextMenuAction(self, _('Export form'))
+        self.connect(export_action, QtCore.SIGNAL('triggered()'), self.export_form)
+        self.addAction(export_action)
+
+    def export_form(self):
+        from camelot.view.export.word import open_stream_in_word
+        
+        def create_ooxml_export(row):
+            print self._columns
+            def ooxml_export():
+                # TODO insert delegates
+                delegates = {}
+                for c in self._columns:
+                    # FIXME incorrect
+                    delegates[c[0]] = c[1]['delegate']
                 
+                
+                obj = self._model._get_object(row)
+                print ' - '.join(self._form.render_ooxml( obj, delegates ))
+                # open_document_in_word(self._form.render_ooxml( obj, delegates ))
+                
+            return ooxml_export
+                
+        post( create_ooxml_export(self.get_index()) )
+
+                        
     def get_model(self):
         return self._model
     
