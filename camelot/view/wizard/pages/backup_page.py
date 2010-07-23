@@ -295,8 +295,6 @@ class OpenFileDialog(QtGui.QFileDialog):
 #
 #  ==================================================================================
 
-#  TODO logging
-
 import datetime
 import os
 import os.path
@@ -316,13 +314,19 @@ def getBackupRootAndFilenameTemplate():
         root = settings.CAMELOT_BACKUP_ROOT
     else:
         root = '.'
-    if not os.path.exists(root):
-        os.makedirs(root)
     if hasattr(settings, 'CAMELOT_BACKUP_FILENAME_TEMPLATE'):
         template = settings.CAMELOT_BACKUP_FILENAME_TEMPLATE
     else:
         template = 'default-backup-%(text)s.sqlite'
     return (root, template)
+
+def getExtension():
+    import settings
+    if hasattr(settings, 'CAMELOT_BACKUP_EXTENSION'):
+        extension = settings.CAMELOT_BACKUP_EXTENSION
+    else:
+        extension = 'sqlite'
+    return extension
 
 class LabelLineEdit(QtGui.QLineEdit):
     _file_name = ''
@@ -380,6 +384,7 @@ class Page(QtGui.QWizardPage):
 
     def __init__(self, parent=None):
         super(Page,  self).__init__(parent)
+        self._extension = getExtension()
         
         self.setTitle( unicode(self.title) )
         self.setSubTitle( unicode(self.sub_title) )
@@ -471,7 +476,12 @@ class SelectRestoreFilePage(Page):
             return self._custom_edit.text() != ''
 
     def _setPath(self, dir):
-        return QtGui.QFileDialog.getOpenFileName(self, unicode(self.caption), dir)
+        dlg = SaveFileDialog(self, unicode(self.caption), dir, 
+            ugettext('Database files (*%s);;All files (*.*)' % self._extension),
+            self._extension)
+        if dlg.exec_():
+            return dlg.selectedFiles()[0]
+        return None
 
 class SelectBackupFilePage(Page):
     def _setupUi(self):
@@ -510,4 +520,21 @@ class SelectBackupFilePage(Page):
             return self._custom_edit.text() != ''
 
     def _setPath(self, dir):
-        return QtGui.QFileDialog.getSaveFileName(self, unicode(self.caption), dir)
+        dlg = OpenFileDialog(self, unicode(self.caption), dir,
+            ugettext('Database files (*.%s);;All files (*.*)' % self._extension))
+        if dlg.exec_():
+            return dlg.selectedFiles()[0]
+        return None
+
+class SaveFileDialog(QtGui.QFileDialog):
+    def __init__(self, parent, caption, dir, filter, extension):
+        super(SaveFileDialog, self).__init__(parent, caption, dir)
+        self.setNameFilter(filter)
+        self.setAcceptMode(self.AcceptSave)
+        self.setDefaultSuffix(extension)
+
+class OpenFileDialog(QtGui.QFileDialog):
+    def __init__(self, parent, caption, dir, filter):
+        super(OpenFileDialog, self).__init__(parent, caption, dir)
+        self.setFileMode(self.ExistingFile)
+        self.setNameFilter(filter)
