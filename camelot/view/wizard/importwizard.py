@@ -37,10 +37,12 @@ from PyQt4 import QtCore
 from PyQt4.QtGui import QColor
 
 from camelot.core.utils import ugettext as _
+from camelot.core.utils import ugettext_lazy
 
 from camelot.view.art import Pixmap
 from camelot.view.model_thread import post
 from camelot.view.wizard.pages.select import SelectFilePage
+from camelot.view.wizard.pages.progress_page import ProgressPage
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.proxy.collection_proxy import CollectionProxy
 
@@ -173,8 +175,37 @@ class RowDataAdminDecorator(object):
         return self.get_columns()
     
     def flush(self, obj):
+        """When flush is called, don't do anything, since we'll only save the object
+        when importing them for real"""
         pass
     
+    def create_background_color(self, attributes):
+        """
+        :param attributes: the attributes for the field
+        :return: a function that can be used as the background_color field attribute
+        """
+    
+        def background_color(o):
+            """If the string is not convertible with from_string, or
+            the result is None when a value is required, set the
+            background to pink"""
+            string_value = attributes['getter'](o)
+            try:
+                # haven't found better without breaking the code...
+                if 'special_background_color' in attributes:
+                    func = attributes['special_background_color']
+                    return func(string_value)
+                else:
+                    if 'from_string' in attributes:
+                        value = attributes['from_string'](string_value)
+                        if value==None and attributes['nullable']==False:
+                            return self.invalid_color
+                        return None
+            except:
+                return self.invalid_color
+        
+        return background_color
+                    
     def get_columns(self):
         if self._columns:
             return self._columns
@@ -196,30 +227,7 @@ class RowDataAdminDecorator(object):
             for attribute in ['background_color', 'tooltip']:
                 attributes[attribute] = None
 
-            if 'from_string' in attributes:
-                
-                def get_background_color(o):
-                    """If the string is not convertible with from_string, or
-                    the result is None when a value is required, set the
-                    background to pink"""
-                    ret = None
-                    value = getattr(o, 'column_%i'%i)
-                    if not value and (attributes['nullable']==False):
-                        ret = self.invalid_color
-                    try:
-                        # haven't found better without breaking the code...
-                        if 'special_background_color' in attributes:
-                            func = attributes['special_background_color']
-                            ret = func(value)
-                        else:
-                            value = attributes['from_string'](value)
-                            ret = None
-                    except:
-                        ret = self.invalid_color
-                    
-                    return ret
-                
-                attributes['background_color'] = get_background_color
+            attributes['background_color'] = self.create_background_color(attributes)
 
             return attributes
 
@@ -311,12 +319,11 @@ class DataPreviewPage(QtGui.QWizardPage):
     def isComplete(self):
         return self._complete
 
-
-class FinalPage(QtGui.QWizardPage):
+class FinalPage(ProgressPage):
     """FinalPage is the final page in the import process"""
-
-    change_maximum_signal = QtCore.SIGNAL('change_maximum')
-    change_value_signal = QtCore.SIGNAL('change_value')
+    
+    title = ugettext_lazy('Import Progress')
+    sub_title = ugettext_lazy('Please wait while data is being imported.')
     
     def __init__(self, parent=None, model=None, admin=None):
         """
@@ -324,31 +331,16 @@ class FinalPage(QtGui.QWizardPage):
         :admin: the admin class of the target data
         """
         super(FinalPage, self).__init__(parent)
-        self.setTitle(_('Import Progress'))
         self.model = model
         self.admin = admin
-        self.setSubTitle(_('Please wait while data is being imported.'))
-
         icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
         self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
         self.setButtonText(QtGui.QWizard.FinishButton, _('Close'))
         self.progressbar = QtGui.QProgressBar()
 
-        label = QtGui.QLabel(_(
-            'The data will be ready when the progress reaches 100%.'
-        ))
-        label.setWordWrap(True)
-
-        ly = QtGui.QVBoxLayout()
-        ly.addWidget(label)
-        ly.addWidget(self.progressbar)
-        self.setLayout(ly)
-        self.connect(self, self.change_maximum_signal, self.progressbar.setMaximum)
-        self.connect(self, self.change_value_signal, self.progressbar.setValue)
-
-    def run_import(self):
+    def run(self):
         collection = self.model.get_collection_getter()()
-        self.emit(self.change_maximum_signal, len(collection))
+        self.emit(self.update_maximum_signal, len(collection))
         for i,row in enumerate(collection):
             new_entity_instance = self.admin.entity()
             for field_name, attributes in self.model.get_admin().get_columns():
@@ -359,23 +351,7 @@ class FinalPage(QtGui.QWizardPage):
                 )
             self.admin.add(new_entity_instance)
             self.admin.flush(new_entity_instance)
-            self.emit(self.change_value_signal, i)
-
-    def import_finished(self):
-        self.progressbar.setMaximum(1)
-        self.progressbar.setValue(1)
-        self.emit(QtCore.SIGNAL('completeChanged()'))
-
-    def isComplete(self):
-        return self.progressbar.value() == self.progressbar.maximum()
-
-    def initializePage(self):
-        from camelot.view.model_thread import post
-        self.progressbar.setMaximum(1)
-        self.progressbar.setValue(0)
-        self.emit(QtCore.SIGNAL('completeChanged()'))
-        post(self.run_import, self.import_finished, self.import_finished)
-
+            self.emit(self.update_progress_signal, i, _('Row %i of %i imported')%(i+1, len(collection)))
 
 class DataPreviewCollectionProxy(CollectionProxy):
     header_icon = None

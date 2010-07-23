@@ -44,10 +44,11 @@ class ProgressPage(QtGui.QWizardPage):
         self.progress.setMinimum(0)
         self.progress.setMaximum(1)
         self.label = QtGui.QTextEdit(self)
+        self.label.setSizePolicy( QtGui.QSizePolicy.Expanding,
+                                  QtGui.QSizePolicy.Expanding )
         self.label.setReadOnly(True)
         layout.addWidget(self.progress)
         layout.addWidget(self.label)
-        layout.addStretch(1)
         self.setLayout(layout)
         self._wizard = parent
     

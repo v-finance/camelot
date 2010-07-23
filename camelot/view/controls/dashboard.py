@@ -1,5 +1,5 @@
 from PyQt4.QtGui import QApplication, QFrame, QPalette, QLabel, QPixmap
-from PyQt4.QtCore import Qt, QRect, SIGNAL, QCoreApplication
+from PyQt4.QtCore import Qt, QRect, QCoreApplication
 
 
 class BareFrame(QFrame):
