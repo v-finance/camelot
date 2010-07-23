@@ -25,18 +25,21 @@
 #
 #  ==================================================================================
 
-import datetime
-
 from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtGui import QDesktopServices
-
 from camelot.core.utils import ugettext_lazy as _
-from camelot.core.utils import ugettext
-from camelot.view.wizard.pages.backup_page import SelectBackupFilePage, SelectRestoreFilePage
+from camelot.view.wizard.pages.select import SelectFilePage
 from camelot.view.wizard.pages.progress_page import ProgressPage
 from camelot.view.art import Icon
 
+class SelectBackupFile(SelectFilePage):
+    title = _('Select backup file')
+    sub_title = _(
+            "Please select a backup file.  "
+            "All data in this file will be overwritten."
+        )
+    icon = Icon('tango/32x32/actions/document-save.png')
+    save = True
+    
 class BackupPage(ProgressPage):
     title = _('Backup in progress')
     
@@ -45,7 +48,8 @@ class BackupPage(ProgressPage):
         self._backup_mechanism = backup_mechanism
         
     def run(self):
-        backup_mechanism = self._backup_mechanism(self.wizard().filename)
+        filename = self.field('datasource').toString()
+        backup_mechanism = self._backup_mechanism(filename)
         for completed, total, description in backup_mechanism.backup():
             self.emit( self.update_maximum_signal, total )
             self.emit( self.update_progress_signal, completed, description )
@@ -58,7 +62,7 @@ class BackupWizard(QtGui.QWizard):
     def __init__(self, backup_mechanism, parent=None):
         super(BackupWizard, self).__init__(parent)
         self.setWindowTitle( unicode(self.window_title) )
-        self.addPage(SelectBackupFilePage())
+        self.addPage(SelectBackupFile())
         self.addPage(BackupPage(backup_mechanism))
         
 class RestorePage(ProgressPage):
@@ -69,11 +73,19 @@ class RestorePage(ProgressPage):
         self._backup_mechanism = backup_mechanism
         
     def run(self):
-        backup_mechanism = self._backup_mechanism(self.wizard().filename)
+        filename = self.field('datasource').toString()
+        backup_mechanism = self._backup_mechanism(filename)
         for completed, total, description in backup_mechanism.restore():
             self.emit( self.update_maximum_signal, total )
             self.emit( self.update_progress_signal, completed, description )
             
+class SelectRestoreFile(SelectFilePage):
+    title = _('Select restore file')
+    sub_title = _( "Please select a backup file from which to restore the database."
+                   "All data in the database will be overwritten with data from this file" )
+    icon = Icon('tango/32x32/devices/drive-harddisk.png')
+    save = False
+        
 class RestoreWizard(QtGui.QWizard):
     """Wizard to perform a restore using a BackupMechanism"""
     
@@ -82,5 +94,5 @@ class RestoreWizard(QtGui.QWizard):
     def __init__(self, backup_mechanism, parent=None):
         super(RestoreWizard, self).__init__(parent)
         self.setWindowTitle( unicode(self.window_title) )
-        self.addPage(SelectRestoreFilePage())
+        self.addPage(SelectRestoreFile())
         self.addPage(RestorePage(backup_mechanism))
