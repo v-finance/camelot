@@ -3,6 +3,9 @@ from camelot.view import art
 
 logger = logging.getLogger('camelot.view.export.word')
 
+def open_stream_in_word():
+    raise NotImplementedError
+
 def open_document_in_word(filename):
     """Try to open a document using word and return the word application com object
     if succeeded
