@@ -139,6 +139,8 @@ Actions
 Proxy classes
 -------------
 
+  .. image:: ../_static/collection_proxy.png
+  
 Application speedup
 -------------------
 

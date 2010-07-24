@@ -59,6 +59,9 @@ Available delegates
 Field attributes
 ================
 
+
+  .. image:: ../_static/field_attributes.png
+  
 .. _field-attribute-calculator:
 
 calculator 

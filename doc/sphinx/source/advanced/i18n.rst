@@ -35,9 +35,13 @@ Create a message catalog template ::
   
 Create a message catalog
 
-Edit the message catalog with linguist ::
+Open message catalog with linguist ::
 
   linquist camelot.po
+  
+And edit it :  
+  
+  .. image:: ../_static/camelot_qt_linguist.png
   
 Where to put Translations
 =========================

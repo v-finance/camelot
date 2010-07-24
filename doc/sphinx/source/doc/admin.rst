@@ -12,6 +12,9 @@ they define the look, feel and behaviour of the Application.  Most of the behavi
 of the Admin classes can be tuned by changing their static attributes.  This makes
 it easy to subclass a default Admin class and tune it to your needs.
 
+
+  .. image:: ../_static/admin_classes.png
+  
 Each elixir Entity that is visualized within Camelot has an associated Admin
 class which specifies how the entity or a list of entities should be visualized.
 
