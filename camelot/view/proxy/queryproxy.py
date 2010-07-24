@@ -158,30 +158,38 @@ class QueryTableProxy(CollectionProxy):
                 yield strip_data_from_object(o, self.getColumns())
 
     @model_function
-    def _extend_cache(self, offset, limit):
-        """Extend the cache around row"""
-        if self._query_getter:
-            q = self.get_query_getter()().offset(offset).limit(limit)
-            columns = self.getColumns()
-            for i, o in enumerate(q.all()):
-                row = i + offset
-                try:
-                    previous_obj = self.cache[Qt.EditRole].get_entity_at_row(row)
-                    if previous_obj!=o:
-                        continue
-#                        print 'at row %s replace %s with %s'%(row, previous_obj.id, o.id)
-                except KeyError:
-                    pass
-                self._add_data(columns, i+offset, o)
-#                print '  new obj : %s'%(self.cache[Qt.EditRole].get_entity_at_row(row).id)
-            rows_in_query = (self._rows - len(self._appended_rows))
-            # Verify if rows that have not yet been flushed have been requested
-            if offset+limit>=rows_in_query:
-                for row in range(max(rows_in_query,offset), min(offset+limit, self._rows)):
-                    o = self._get_object(row)
-                    self._add_data(columns, row, o)
+    def _get_collection_range( self, offset, limit ):
+        """Get the objects in a certain range of the collection
+        :return: an iterator over the objects in the collection, starting at 
+        offset, until limit
+        """
+        query = self.get_query_getter()().offset(offset).limit(limit)
+        return query.all()
                     
-        return (offset, limit)
+    @model_function
+    def _extend_cache(self):
+        """Extend the cache around the rows under request"""
+        if self._query_getter:
+            offset, limit = self._offset_and_limit_rows_to_get()
+            if limit:
+                columns = self.getColumns()
+                for i, obj in enumerate( self._get_collection_range(offset, limit) ):
+                    row = i + offset
+                    try:
+                        previous_obj = self.cache[Qt.EditRole].get_entity_at_row(row)
+                        if previous_obj != obj:
+                            continue
+                    except KeyError:
+                        pass
+                    self._add_data(columns, i+offset, obj)
+                rows_in_query = (self._rows - len(self._appended_rows))
+                # Verify if rows that have not yet been flushed have been 
+                # requested
+                if offset+limit >= rows_in_query:
+                    for row in range(max(rows_in_query, offset), min(offset+limit, self._rows)):
+                        obj = self._get_object(row)
+                        self._add_data(columns, row, obj)                
+            return (offset, limit)
 
     @model_function
     def _get_object(self, row):

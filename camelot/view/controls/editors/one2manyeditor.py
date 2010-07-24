@@ -121,18 +121,10 @@ class One2ManyEditor( CustomEditor, WideEditor ):
           
     def set_value( self, model ):
         model = CustomEditor.set_value( self, model )
-        if model and model!=self.model:
+        if model and model != self.model:
             self.model = model
-            self.table.setModel( model )
-       
-            def create_fill_model_cache( model ):
-              
-                def fill_model_cache():
-                    model._extend_cache( 0, 10 )
-          
-                return fill_model_cache
-        
-            post( create_fill_model_cache( model ), self.update_delegates )
+            self.table.setModel( model )        
+            post( model._extend_cache, self.update_delegates )
       
     @gui_function
     def activate_editor( self, row ):

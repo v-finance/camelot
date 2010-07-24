@@ -37,12 +37,12 @@ logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 
 import elixir
 import datetime
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
 import sip
 
 from camelot.view.art import Icon
-from camelot.view.fifo import fifo
+from camelot.view.fifo import Fifo
 from camelot.view.controls import delegates
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import gui_function, \
@@ -246,10 +246,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self._rows = 0
         self._columns = []
         self.max_number_of_rows = max_number_of_rows
-        self.cache = {Qt.DisplayRole         : fifo( 10 * self.max_number_of_rows ),
-                      Qt.EditRole            : fifo( 10 * self.max_number_of_rows ),
-                      Qt.ToolTipRole         : fifo( 10 * self.max_number_of_rows ),
-                      Qt.BackgroundColorRole : fifo( 10 * self.max_number_of_rows ), }
+        self.cache = {Qt.DisplayRole         : Fifo( 10 * self.max_number_of_rows ),
+                      Qt.EditRole            : Fifo( 10 * self.max_number_of_rows ),
+                      Qt.ToolTipRole         : Fifo( 10 * self.max_number_of_rows ),
+                      Qt.BackgroundColorRole : Fifo( 10 * self.max_number_of_rows ), }
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         # The rows that have unflushed changes
@@ -335,10 +335,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     
     @gui_function
     def _refresh_content(self, rows ):
-        self.cache = {Qt.DisplayRole         : fifo( 10 * self.max_number_of_rows ),
-                      Qt.EditRole            : fifo( 10 * self.max_number_of_rows ),
-                      Qt.ToolTipRole         : fifo( 10 * self.max_number_of_rows ),
-                      Qt.BackgroundColorRole : fifo( 10 * self.max_number_of_rows ),}
+        self.cache = {Qt.DisplayRole         : Fifo( 10 * self.max_number_of_rows ),
+                      Qt.EditRole            : Fifo( 10 * self.max_number_of_rows ),
+                      Qt.ToolTipRole         : Fifo( 10 * self.max_number_of_rows ),
+                      Qt.BackgroundColorRole : Fifo( 10 * self.max_number_of_rows ),}
         self.setRowCount( rows )
     
     def set_collection_getter( self, collection_getter ):
@@ -546,6 +546,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     
     @gui_function
     def data( self, index, role ):
+        """:return: the data at index for the specified role
+        This function will return ValueLoading when the data has not
+        yet been fetched from the underlying model.  It will then send
+        a request to the model thread to fetch this data.  Once the data
+        is readily available, the dataChanged signal will be emitted"""
         if not index.isValid() or \
            not ( 0 <= index.row() <= self.rowCount( index ) ) or \
            not ( 0 <= index.column() <= self.columnCount( index ) ):
@@ -558,8 +563,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                     value = value()
                     data[index.column()] = value
                 if isinstance( value, datetime.datetime ):
-                    # Putting a python datetime into a QVariant and returning it to a PyObject seems
-                    # to be buggy, therefor we chop the microseconds
+                    # Putting a python datetime into a QVariant and returning 
+                    # it to a PyObject seems to be buggy, therefor we chop the
+                    # microseconds
                     if value:
                         value = QtCore.QDateTime(value.year, value.month, value.day, value.hour, value.minute, value.second)
                 self.logger.debug( 'get data for row %s;col %s; role %s : %s' % ( index.row(), index.column(), role, unicode( value ) ) )
@@ -573,8 +579,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             data = self._get_row_data( index.row(), role )
             try:
                 value = data[index.column()]
-            except:
-                self.logger.error( 'Programming error, could not find data of column %s in %s' % ( index.column(), str( data ) ) )
+            except Exception, exc:
+                self.logger.error( u'Programming error, could not find data of column %s in %s' % ( index.column(), unicode( data ) ),
+                                   exc_info = exc )
                 value = None
             if value in (None, ValueLoading):
                 return QtCore.QVariant(QtGui.QColor('white'))
@@ -724,7 +731,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.cache[Qt.ToolTipRole].add_data( row, o, tool_tips_from_object( o, self.getColumns()) )
         self.cache[Qt.BackgroundColorRole].add_data( row, o, background_colors_from_object( o, self.getColumns()) )
         self.cache[Qt.DisplayRole].add_data( row, o, stripped_data_to_unicode( row_data, o, columns ) )
-            
+        self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
+                  self.index( row, 0 ), self.index( row, self.column_count ) )
     
     def _skip_row(self, row, o):
         """:return: True if the object o is allready in the cache, but at a different row
@@ -736,25 +744,64 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         except KeyError:
             pass
         return False
+ 
+    def _offset_and_limit_rows_to_get( self ):
+        """From the current set of rows to get, find the first 
+        continuous range of rows that should be fetched.
+        :return: (offset, limit)
+        """
+        offset, limit, previous_length, i = 0, 0, 0, 0
+        #
+        # wait for a while until the rows under request don't change any
+        # more
+        #
+        while previous_length != len(self.rows_under_request):
+            previous_length = len(self.rows_under_request)
+            QThread.msleep(5)
+        #
+        # now filter out all rows that have been put in the cache
+        # the gui thread didn't know about
+        #
+        rows_to_get = self.rows_under_request
+        rows_allready_there = set()
+        for row in rows_to_get:
+            if self.cache[Qt.EditRole].has_data_at_row(row):
+                rows_allready_there.add(row)
+        rows_to_get.difference_update( rows_allready_there )
+        #
+        # see if there is anything left to do
+        #
+        if rows_to_get:
+            rows_to_get = list(rows_to_get)
+            rows_to_get.sort()
+            offset = rows_to_get[0]
+            #
+            # find first discontinuity
+            #
+            for i in range(offset, rows_to_get[-1]+1):
+                if rows_to_get[i-offset] != i:
+                    break
+            limit = i - offset + 1
+        return (offset, limit)
                 
     @model_function
-    def _extend_cache( self, offset, limit ):
-        """Extend the cache around row"""
-        columns = self.getColumns()
-        offset = min( offset, self._rows )
-        limit = min( limit, self._rows - offset )
-        collection = self.collection_getter()
-        skipped_rows = 0
-        for i in range(offset, min(offset + limit + 1, self._rows)):
-            object_found = False
-            while not object_found:
-                unsorted_row = self._sort_and_filter[i]
-                obj = collection[unsorted_row+skipped_rows]
-                if self._skip_row(i, obj):
-                    skipped_rows = skipped_rows + 1
-                else: 
-                    self._add_data(columns, i, obj)
-                    object_found = True
+    def _extend_cache( self ):
+        """Extend the cache around the rows under request"""
+        offset, limit = self._offset_and_limit_rows_to_get()
+        if limit:
+            columns = self.getColumns()
+            collection = self.collection_getter()
+            skipped_rows = 0
+            for i in range(offset, min(offset + limit + 1, self._rows)):
+                object_found = False
+                while not object_found:
+                    unsorted_row = self._sort_and_filter[i]
+                    obj = collection[unsorted_row+skipped_rows]
+                    if self._skip_row(i, obj):
+                        skipped_rows = skipped_rows + 1
+                    else: 
+                        self._add_data(columns, i, obj)
+                        object_found = True
         return ( offset, limit )
     
     @model_function
@@ -776,9 +823,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     
     def _cache_extended( self, interval ):
         offset, limit = interval
-        self.rows_under_request.difference_update( set( range( offset, offset + limit ) ) )
-        self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
-                  self.index( offset, 0 ), self.index( offset + limit, self.column_count ) )
+        self.rows_under_request.difference_update( set( range( offset, offset + limit + 1) ) )
     
     def _get_row_data( self, row, role ):
         """Get the data which is to be visualized at a certain row of the
@@ -791,23 +836,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             return role_cache.get_data_at_row( row )
         except KeyError:
             if row not in self.rows_under_request:
-                # Example : max_number_of_rows = 6, row=4
-                #
-                # row 0
-                #     1 --> offset --> first row read
-                #     2
-                #     3
-                #     4 --> row
-                #     5
-                #     6 --> last row read
-                #     7 --> offset + limit
-                #     8
-                #     
-                delta = int( self.max_number_of_rows / 2 )
-                offset = max( row - delta, 0 )
-                limit = self.max_number_of_rows
-                self.rows_under_request.update( set( range( offset, offset + limit ) ) )
-                post( lambda :self._extend_cache( offset, limit ), self._cache_extended )
+                self.rows_under_request.add( row )
+                post( self._extend_cache, self._cache_extended )
             return empty_row_data
       
     @model_function

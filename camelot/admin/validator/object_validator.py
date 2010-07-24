@@ -31,7 +31,7 @@ logger = logging.getLogger('camelot.admin.validator.object_validator')
 
 from PyQt4 import QtCore
 
-from camelot.view.fifo import fifo
+from camelot.view.fifo import Fifo
 from camelot.view.model_thread import post
 
 class ObjectValidator(QtCore.QObject):
@@ -50,7 +50,7 @@ class ObjectValidator(QtCore.QObject):
         super(ObjectValidator, self).__init__()
         self.admin = admin
         self.model = model
-        self.message_cache = fifo(10)
+        self.message_cache = Fifo(10)
         self.connect( model, QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), self.data_changed )
         self.connect( model, QtCore.SIGNAL('layoutChanged()'), self.layout_changed )
         self._invalid_rows = set()

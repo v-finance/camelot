@@ -25,17 +25,21 @@
 #
 #  ============================================================================
 
+"""Module containing the FIFO cache used in the collection proxy to store
+the data that is passed between the model and the gui thread"""
 
-class fifo(object):
-    """fifo, is the actual cache containing a limited set of copies of row data
-    so the data in fifo, is always immediately accessible to the gui thread,
-    with zero delay as you scroll down the table view, fifo is filled and
+class Fifo(object):
+    """Fifo, is the actual cache containing a limited set of copies of row data
+    so the data in Fifo, is always immediately accessible to the gui thread,
+    with zero delay as you scroll down the table view, Fifo is filled and
     refilled with data queried from the database
     
     the cache can be queried either by the row number or by object represented 
     by the row data.
     """
     def __init__(self, max_entries):
+        """:param max_entries: the maximum entries that will be stored in the
+        cache, if more data is added, the oldest data gets removed"""
         self.max_entries = max_entries
         self.entities = []
         self.data_by_rows = dict()
@@ -61,6 +65,7 @@ class fifo(object):
             self.delete_by_entity(entity)
       
     def delete_by_row(self, row):
+        """Remove the data and the reference to the object at row"""
         (entity, _value_) = self.data_by_rows[row]
         del self.data_by_rows[row]
         del self.rows_by_entity[entity] 
@@ -83,11 +88,19 @@ class fifo(object):
             pass
         return row    
     
+    def has_data_at_row(self, row):
+        """:return: True if there is data in the cache for the row, False if 
+        there isn't"""
+        return row in self.data_by_rows
+    
     def get_data_at_row(self, row):
+        """:return: the data at row"""
         return self.data_by_rows[row][1]
     
     def get_row_by_entity(self, entity):
+        """:return: the row at which an entity is stored"""
         return self.rows_by_entity[entity]
     
     def get_entity_at_row(self, row):
+        """:return: the entity that is stored at a row"""
         return self.data_by_rows[row][0]
