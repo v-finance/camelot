@@ -31,8 +31,10 @@ class FloatEditor(CustomEditor):
                  prefix='',
                  suffix='',
                  calculator=True,
+                 decimal=False,
                  **kwargs):
         CustomEditor.__init__(self, parent)
+        self._decimal = decimal
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
@@ -103,6 +105,9 @@ class FloatEditor(CustomEditor):
     def get_value(self):
         self.spinBox.interpretText()
         value = self.spinBox.value()
+        if self._decimal:
+            import decimal
+            value = decimal.Decimal( '%.*f'%(self.precision, value) )
         return CustomEditor.get_value(self) or value
         
     def popupCalculator(self, value):

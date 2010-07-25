@@ -128,6 +128,7 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.FloatDelegate,
         'from_string': float_from_string,
         'operators': _numerical_operators,
+        'decimal':True,
     },
 
     sqlalchemy.types.Integer: lambda f: {
