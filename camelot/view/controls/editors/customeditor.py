@@ -30,7 +30,10 @@ class AbstractCustomEditor(object):
             return ValueLoading
         return None
       
-      
+    def set_field_attributes(self, editable=True, background_color=None, **kwargs):
+        self.setEnabled(editable)
+        self.set_background_color(background_color)
+              
     """
     Get the 'standard' height for a cell
     """

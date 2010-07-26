@@ -86,7 +86,9 @@ class Many2OneDelegate(CustomDelegate):
     def setEditorData(self, editor, index):
         value = variant_to_pyobject(index.data(Qt.EditRole))
         if value!=ValueLoading:
+            field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
             editor.set_value(create_constant_function(value))
+            editor.set_field_attributes(**field_attributes)
         else:
             editor.set_value(ValueLoading)
       

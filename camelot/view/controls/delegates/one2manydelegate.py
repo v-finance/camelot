@@ -29,6 +29,8 @@ class One2ManyDelegate( QtGui.QItemDelegate ):
         logger.debug( 'set one2many editor data' )
         model = variant_to_pyobject( index.data( Qt.EditRole ) )
         editor.set_value( model )
+        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+        editor.set_field_attributes(**field_attributes)
 
     def setModelData( self, editor, model, index ):
         pass

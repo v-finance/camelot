@@ -126,6 +126,8 @@ will be put onto a form"""
         if not index.model():
             return
         value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
+        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+        editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
         index.model().data(index, Qt.ToolTipRole)
         tip = variant_to_pyobject(index.model().data(index, Qt.ToolTipRole))

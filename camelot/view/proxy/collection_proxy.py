@@ -577,6 +577,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         """
         if role == Qt.EditRole:
     
+            # if the field is not editable, don't waste any time and get out of here
+            if not self._get_field_attribute_value(index, 'editable'):
+                return
+                    
             flushed = ( index.row() not in self.unflushed_rows )
             self.unflushed_rows.add( index.row() )
       
@@ -585,9 +589,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 @model_function
                 def update_model_and_cache():
                     attribute, field_attributes = self.getColumns()[column]
-                    # if the field is not editable, don't waste any time and get out of here
-                    if not field_attributes['editable']:
-                        return False
                       
                     from sqlalchemy.exceptions import DatabaseError
                     from sqlalchemy import orm
