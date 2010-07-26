@@ -33,7 +33,6 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QComboBox, QItemDelegate
 from PyQt4.QtCore import QVariant, QString, Qt
 
-from camelot.view.model_thread import post
 from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
@@ -43,34 +42,22 @@ class ComboBoxDelegate(CustomDelegate):
     __metaclass__ = DocumentationMetaclass
     editor = editors.ChoicesEditor
 
-    def __init__(self, parent=None, choices=[], editable=True, **kwargs):
-        CustomDelegate.__init__(self, parent, editable=editable, **kwargs)
-        self.choices = choices
-
     def setEditorData(self, editor, index):
         value = variant_to_pyobject(index.data(Qt.EditRole))
+        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+        editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
-
-        if callable(self.choices):
-            def create_choices_getter(model, row):
-                def choices_getter():
-                    try:
-                        return list(self.choices(model._get_object(row)))
-                    except Exception, e:
-                        logger.error('Programming error in choices getter for combo box', exc_info=e)
-                    return []
-                return choices_getter
-            post(create_choices_getter(index.model(), index.row()),
-                 editor.set_choices)
-        else:
-            editor.set_choices(self.choices)
 
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject(index.data(Qt.DisplayRole))
+        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
         if value in (None, ValueLoading):
             value = ''
+            editable = False
+        else:
+            editable = field_attributes['editable']
         c = index.model().data(index, Qt.BackgroundRole)
 
         # let us be safe Qt.BackgroundRole valid only if set
@@ -88,13 +75,13 @@ class ComboBoxDelegate(CustomDelegate):
         if (option.state & QtGui.QStyle.State_Selected):
             painter.fillRect(option.rect, option.palette.highlight())
             fontColor = QtGui.QColor()
-            if self.editable:
+            if editable:
                 Color = option.palette.highlightedText().color()
                 fontColor.setRgb(Color.red(), Color.green(), Color.blue())
             else:
                 fontColor.setRgb(130, 130, 130)
         else:
-            if self.editable:
+            if editable:
                 painter.fillRect(option.rect, background_color)
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(0, 0, 0)

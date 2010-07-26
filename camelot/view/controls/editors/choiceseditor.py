@@ -7,10 +7,9 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
     """A ComboBox aka Drop Down box that can be assigned a list of 
     keys and values"""
 
-    def __init__(self, parent=None, editable=True, **kwargs):
+    def __init__(self, parent=None, **kwargs):
         QtGui.QComboBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-        self.setEnabled(editable)
         
     def set_choices(self, choices):
         """
@@ -35,8 +34,9 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
                 self.insertItem(i+1, current_name, QtCore.QVariant(current_value))
             self.set_value(current_value)
         
-    def set_enabled(self, editable=True):
+    def set_field_attributes(self, editable=True, choices=[], **kwargs):
         self.setEnabled(editable)
+        self.set_choices(choices)
               
     def get_choices(self):
         """

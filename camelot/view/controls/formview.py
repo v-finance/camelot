@@ -33,6 +33,8 @@ logger = logging.getLogger( 'camelot.view.controls.formview' )
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui
+import sip
+
 from camelot.view.model_thread import model_function, post
 from camelot.view.controls.view import AbstractView
 from camelot.view.art import Icon
@@ -122,7 +124,8 @@ class FormWidget( QtGui.QWidget ):
     def _data_changed( self, index_from, index_to ):
         #@TODO: only revert if this form is in the changed range
         self._widget_mapper.revert()
-        self.emit(self.changed_signal)
+        if not sip.isdeleted(self):
+            self.emit(self.changed_signal)
         
     def _layout_changed(self):
         self._widget_mapper.revert()

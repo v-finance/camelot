@@ -36,6 +36,8 @@ from camelot.core.utils import ugettext_lazy
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from validator.object_validator import ObjectValidator
 
+_DYNAMIC_FIELD_ATTRIBUTES = ['tooltip', 'background_color', 'editable', 
+                             'choices']
 
 class ObjectAdmin(object):
     """The ObjectAdmin class describes the interface that will be used
@@ -310,13 +312,61 @@ class ObjectAdmin(object):
 
         :param entity: the entity class for which an admin object is requested
         """
-        if entity==self.entity:
+        if entity == self.entity:
             return self
         related_admin = self.app_admin.get_entity_admin(entity)
         if not related_admin:
             logger.warn('no related admin found for %s' % (entity.__name__))
         return related_admin
 
+    def get_static_field_attributes(self, field_names):
+        """
+        Convenience function to get all the field attributes
+        that are static (don't depend on the row in the table)
+        
+        :param field_names: a list of field names
+        :return: [{field_attribute_name:field_attribute_value, ...}]
+        
+        The returned list has the same order than the requested
+        field_names.
+        """
+        for field_name in field_names:
+            field_attributes = self.get_field_attributes(field_name)
+            static_field_attributes = {}
+            for name, value in field_attributes.items():
+                if name not in _DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
+                    static_field_attributes[name] = value
+            yield static_field_attributes
+            
+    @model_function
+    def get_dynamic_field_attributes(self, obj, field_names):
+        """
+        Convenience function to get all the field attributes
+        that are dynamic (don't depend on the row in the table)
+        
+        :param field_names: a list of field names
+        :param obj: the object at the row for which to get the values
+        of the dynamic field attributes
+        :return: [{field_attribute_name:field_attribute_value, ...}, {}]
+        
+        The returned list has the same order than the requested
+        field_names
+        """
+        for field_name in field_names:
+            field_attributes = self.get_field_attributes(field_name)
+            dynamic_field_attributes = {}
+            for name, value in field_attributes.items():
+                if name not in _DYNAMIC_FIELD_ATTRIBUTES:
+                    continue
+                if callable(value):
+                    try:
+                        value = value(obj)
+                    except Exception, exc:
+                        logger.error(u'error in field_attribute function of %s'%name, exc_info=exc)
+                        value = None
+                    dynamic_field_attributes[name] = value
+            yield dynamic_field_attributes
+    
     def get_field_attributes(self, field_name):
         """Get the attributes needed to visualize the field field_name
         

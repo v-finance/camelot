@@ -49,6 +49,12 @@ from camelot.view.model_thread import gui_function, \
                                       model_function, post
 
 
+class ProxyDict(dict):
+    """Subclass of dictionary to fool the QVariant object and prevent
+    it from converting dictionary keys to whatever Qt object, but keep
+    everything python"""
+    pass
+
 class DelayedProxy( object ):
     """A proxy object needs to be constructed within the GUI thread. Construct
     a delayed proxy when the construction of a proxy is needed within the Model
@@ -64,42 +70,6 @@ class DelayedProxy( object ):
     @gui_function
     def __call__( self ):
         return CollectionProxy( *self.args, **self.kwargs )
-    
-@model_function
-def tool_tips_from_object(obj, columns):
-  
-    data = []
-    
-    for col in columns:
-        tooltip_getter = col[1]['tooltip']
-        if tooltip_getter:
-            try:
-                data.append( tooltip_getter(obj) )
-            except Exception, e:
-                logger.error('Programming Error : error in tooltip function', exc_info=e)
-                data.append(None)
-        else:
-            data.append( None )
-            
-    return data
-
-@model_function
-def background_colors_from_object(obj, columns):
-  
-    data = []
-    
-    for col in columns:
-        background_color_getter = col[1]['background_color']
-        if background_color_getter:
-            try:
-                data.append( background_color_getter(obj) )
-            except Exception, e:
-                logger.error('Programming Error : error in background_color function', exc_info=e)
-                data.append(None)
-        else:
-            data.append( None )
-            
-    return data
   
 @model_function
 def strip_data_from_object( obj, columns ):
@@ -177,7 +147,6 @@ from camelot.view.proxy import ValueLoading
 class EmptyRowData( object ):
     def __getitem__( self, column ):
         return ValueLoading
-        return None
     
 empty_row_data = EmptyRowData()
 
@@ -245,11 +214,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         # Set database connection and load data
         self._rows = 0
         self._columns = []
+        self._static_field_attributes = []
         self.max_number_of_rows = max_number_of_rows
-        self.cache = {Qt.DisplayRole         : Fifo( 10 * self.max_number_of_rows ),
-                      Qt.EditRole            : Fifo( 10 * self.max_number_of_rows ),
-                      Qt.ToolTipRole         : Fifo( 10 * self.max_number_of_rows ),
-                      Qt.BackgroundColorRole : Fifo( 10 * self.max_number_of_rows ), }
+        self.display_cache = Fifo( 10 * self.max_number_of_rows )
+        self.edit_cache = Fifo( 10 * self.max_number_of_rows )
+        self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         # The rows that have unflushed changes
@@ -270,6 +239,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     
         def get_columns():
             self._columns = columns_getter()
+            self._static_field_attributes = list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
             return self._columns
       
         post( get_columns, self.setColumns )
@@ -335,10 +305,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     
     @gui_function
     def _refresh_content(self, rows ):
-        self.cache = {Qt.DisplayRole         : Fifo( 10 * self.max_number_of_rows ),
-                      Qt.EditRole            : Fifo( 10 * self.max_number_of_rows ),
-                      Qt.ToolTipRole         : Fifo( 10 * self.max_number_of_rows ),
-                      Qt.BackgroundColorRole : Fifo( 10 * self.max_number_of_rows ),}
+        self.display_cache = Fifo( 10 * self.max_number_of_rows )
+        self.edit_cache = Fifo( 10 * self.max_number_of_rows )
+        self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
         self.setRowCount( rows )
     
     def set_collection_getter( self, collection_getter ):
@@ -351,10 +320,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     
     def handleRowUpdate( self, row ):
         """Handles the update of a row when this row might be out of date"""
-        self.cache[Qt.DisplayRole].delete_by_row( row )
-        self.cache[Qt.EditRole].delete_by_row( row )
-        self.cache[Qt.ToolTipRole].delete_by_row( row )
-        self.cache[Qt.BackgroundColorRole].delete_by_row( row )
+        self.display_cache.delete_by_row( row )
+        self.edit_cache.delete_by_row( row )
+        self.attributes_cache.delete_by_row( row )
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
         self.emit( QtCore.SIGNAL( sig ),
                   self.index( row, 0 ),
@@ -366,7 +334,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                      ( self.__class__.__name__, self.admin.get_verbose_name() ) )
         if sender != self:
             try:
-                row = self.cache[Qt.DisplayRole].get_row_by_entity(entity)
+                row = self.display_cache.get_row_by_entity(entity)
             except KeyError:
                 self.logger.debug( 'entity not in cache' )
                 return
@@ -415,14 +383,14 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         return self.delegate_manager
     
     def getColumns( self ):
-        """@return: the columns as set by the setColumns method"""
+        """:return: the columns as set by the setColumns method"""
         return self._columns
     
     @gui_function
     def setColumns( self, columns ):
         """Callback method to set the columns
     
-        @param columns a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
+        :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
         returned by the getColumns method of the ElixirAdmin class
         """
         self.logger.debug( 'setColumns' )
@@ -550,45 +518,57 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         This function will return ValueLoading when the data has not
         yet been fetched from the underlying model.  It will then send
         a request to the model thread to fetch this data.  Once the data
-        is readily available, the dataChanged signal will be emitted"""
+        is readily available, the dataChanged signal will be emitted
+        
+        Using Qt.UserRole as a role will return all the field attributes
+        of the index.
+        """
         if not index.isValid() or \
            not ( 0 <= index.row() <= self.rowCount( index ) ) or \
            not ( 0 <= index.column() <= self.columnCount( index ) ):
             return QtCore.QVariant()
-        if role in ( Qt.DisplayRole, Qt.EditRole, Qt.ToolTipRole,):
-            data = self._get_row_data( index.row(), role )
-            try:
-                value = data[index.column()]
-                if isinstance( value, DelayedProxy ):
-                    value = value()
-                    data[index.column()] = value
-                if isinstance( value, datetime.datetime ):
-                    # Putting a python datetime into a QVariant and returning 
-                    # it to a PyObject seems to be buggy, therefor we chop the
-                    # microseconds
-                    if value:
-                        value = QtCore.QDateTime(value.year, value.month, value.day, value.hour, value.minute, value.second)
-                self.logger.debug( 'get data for row %s;col %s; role %s : %s' % ( index.row(), index.column(), role, unicode( value ) ) )
-            except KeyError:
-                self.logger.error( 'Programming error, could not find data of column %s in %s' % ( index.column(), str( data ) ) )
-                value = None
-            return QtCore.QVariant( value )
-        elif role == Qt.ForegroundRole:
-            pass
-        elif role == Qt.BackgroundRole:
-            data = self._get_row_data( index.row(), role )
-            try:
-                value = data[index.column()]
-            except Exception, exc:
-                self.logger.error( u'Programming error, could not find data of column %s in %s' % ( index.column(), unicode( data ) ),
-                                   exc_info = exc )
-                value = None
-            if value in (None, ValueLoading):
-                return QtCore.QVariant(QtGui.QColor('white'))
+        if role in (Qt.EditRole, Qt.DisplayRole):
+            if role == Qt.EditRole:
+                cache = self.edit_cache
             else:
-                return QtCore.QVariant(value)
+                cache = self.display_cache
+            data = self._get_row_data( index.row(), cache )
+            value = data[index.column()]
+            if isinstance( value, DelayedProxy ):
+                value = value()
+                data[index.column()] = value
+            if isinstance( value, datetime.datetime ):
+                # Putting a python datetime into a QVariant and returning 
+                # it to a PyObject seems to be buggy, therefor we chop the
+                # microseconds
+                if value:
+                    value = QtCore.QDateTime(value.year, value.month, 
+                                             value.day, value.hour, 
+                                             value.minute, value.second)
+            return QtCore.QVariant( value )
+        elif role == Qt.ToolTipRole:
+            return QtCore.QVariant(self._get_field_attribute_value(index, 'tooltip'))
+        elif role == Qt.BackgroundRole:
+            return QtCore.QVariant(self._get_field_attribute_value(index, 'background_color') or QtGui.QColor('white'))
+        elif role == Qt.UserRole:
+            field_attributes = ProxyDict(self._static_field_attributes[index.column()])
+            dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
+            if dynamic_field_attributes != ValueLoading:
+                field_attributes.update( dynamic_field_attributes )
+            return QtCore.QVariant(field_attributes)
         return QtCore.QVariant()
     
+    def _get_field_attribute_value(self, index, field_attribute):
+        """Get the values for the static and the dynamic field attributes at once
+        :return: the value of the field attribute"""
+        try:
+            return self._static_field_attributes[index.column()][field_attribute]
+        except KeyError:
+            value = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
+            if value == ValueLoading:
+                return None
+            return value.get(field_attribute, None)
+        
     def setData( self, index, value, role = Qt.EditRole ):
         """Value should be a function taking no arguments that returns the data to
         be set
@@ -654,12 +634,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                         except TypeError:
                             # type error can be raised in case we try to set to a collection
                             pass
-                        # update the cache
-                        row_data = strip_data_from_object( o, self.getColumns() )
-                        self.cache[Qt.EditRole].add_data( row, o, row_data )
-                        self.cache[Qt.ToolTipRole].add_data( row, o, tool_tips_from_object( o, self.getColumns()) )
-                        self.cache[Qt.BackgroundColorRole].add_data( row, o, background_colors_from_object( o, self.getColumns()) )
-                        self.cache[Qt.DisplayRole].add_data( row, o, stripped_data_to_unicode( row_data, o, self.getColumns() ) )
                         if self.flush_changes and self.validator.isValid( row ):
                             # save the state before the update
                             try:
@@ -691,6 +665,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                                         elixir.session.flush( [history] )
                                     except DatabaseError, e:
                                         self.logger.error( 'Programming Error, could not flush history', exc_info = e )
+                        # update the cache
+                        self._add_data(self.getColumns(), row, o)
                         #@todo: update should only be sent remotely when flush was done 
                         self.rsh.sendEntityUpdate( self, o )
                         for depending_obj in self.admin.get_depending_objects( o ):
@@ -705,7 +681,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
               
                 return update_model_and_cache
         
-            post( make_update_function( index.row(), index.column(), value ), self._emit_changes )
+            post( make_update_function( index.row(), index.column(), value ) )
       
         return True
     
@@ -715,32 +691,32 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                        self.index( region[0][0], region[0][1] ), self.index( region[1][0], region[1][1] ) )
       
     def flags( self, index ):
+        """Returns the item flags for the given index"""
         flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
-        if self.getColumns()[index.column()][1]['editable']:
+        if self._get_field_attribute_value(index, 'editable'):
             flags = flags | Qt.ItemIsEditable
         return flags
     
-    def _add_data(self, columns, row, o):
+    def _add_data(self, columns, row, obj):
         """Add data from object o at a row in the cache
         :param columns: the columns of which to strip data
         :param row: the row in the cache into which to add data
-        :param o: the object from which to strip the data
+        :param obj: the object from which to strip the data
         """
-        row_data = strip_data_from_object( o, columns )
-        self.cache[Qt.EditRole].add_data( row, o, row_data )
-        self.cache[Qt.ToolTipRole].add_data( row, o, tool_tips_from_object( o, self.getColumns()) )
-        self.cache[Qt.BackgroundColorRole].add_data( row, o, background_colors_from_object( o, self.getColumns()) )
-        self.cache[Qt.DisplayRole].add_data( row, o, stripped_data_to_unicode( row_data, o, columns ) )
+        row_data = strip_data_from_object( obj, columns )
+        self.edit_cache.add_data( row, obj, row_data )
+        self.display_cache.add_data( row, obj, stripped_data_to_unicode( row_data, obj, columns ) )
+        self.attributes_cache.add_data(row, obj, list( self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)) ))
         self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
                   self.index( row, 0 ), self.index( row, self.column_count ) )
     
-    def _skip_row(self, row, o):
-        """:return: True if the object o is allready in the cache, but at a different row
-        then row.  If this is the case, this object should not be put in the cache at row,
-        and this row should be skipped alltogether.
+    def _skip_row(self, row, obj):
+        """:return: True if the object obj is allready in the cache, but at a 
+        different row then row.  If this is the case, this object should not 
+        be put in the cache at row, and this row should be skipped alltogether.
         """    
         try:
-            return self.cache[Qt.EditRole].get_row_by_entity(o)!=row
+            return self.edit_cache.get_row_by_entity(obj)!=row
         except KeyError:
             pass
         return False
@@ -765,7 +741,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         rows_to_get = self.rows_under_request
         rows_allready_there = set()
         for row in rows_to_get:
-            if self.cache[Qt.EditRole].has_data_at_row(row):
+            if self.edit_cache.has_data_at_row(row):
                 rows_allready_there.add(row)
         rows_to_get.difference_update( rows_allready_there )
         #
@@ -812,7 +788,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         try:
             # first try to get the primary key out of the cache, if it's not
             # there, query the collection_getter
-            return self.cache[Qt.EditRole].get_entity_at_row( sorted_row_number )
+            return self.edit_cache.get_entity_at_row( sorted_row_number )
         except KeyError:
             pass
         try:
@@ -825,15 +801,16 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         offset, limit = interval
         self.rows_under_request.difference_update( set( range( offset, offset + limit + 1) ) )
     
-    def _get_row_data( self, row, role ):
+    def _get_row_data( self, row, cache ):
         """Get the data which is to be visualized at a certain row of the
         table, if needed, post a refill request the cache to get the object
         and its neighbours in the cache, meanwhile, return an empty object
-        @param role: Qt.EditRole or Qt.DisplayRole 
+        :param row: the row of the table for which to get the data
+        :param cache: the cache out of which to get row data
+        :return: row_data
         """
-        role_cache = self.cache[role]
         try:
-            return role_cache.get_data_at_row( row )
+            return cache.get_data_at_row( row )
         except KeyError:
             if row not in self.rows_under_request:
                 self.rows_under_request.add( row )
@@ -864,10 +841,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         depending_objects = list( self.admin.get_depending_objects( o ) )
         self.remove( o )
         # remove the entity from the cache
-        self.cache[Qt.DisplayRole].delete_by_entity( o )
-        self.cache[Qt.ToolTipRole].delete_by_entity( o )
-        self.cache[Qt.BackgroundColorRole].delete_by_entity( o )
-        self.cache[Qt.EditRole].delete_by_entity( o )
+        self.display_cache.delete_by_entity( o )
+        self.attributes_cache.delete_by_entity( o )
+        self.edit_cache.delete_by_entity( o )
         if delete:
             self.rsh.sendEntityDelete( self, o )
             self.admin.delete( o )

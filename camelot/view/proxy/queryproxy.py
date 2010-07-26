@@ -176,7 +176,7 @@ class QueryTableProxy(CollectionProxy):
                 for i, obj in enumerate( self._get_collection_range(offset, limit) ):
                     row = i + offset
                     try:
-                        previous_obj = self.cache[Qt.EditRole].get_entity_at_row(row)
+                        previous_obj = self.edit_cache.get_entity_at_row(row)
                         if previous_obj != obj:
                             continue
                     except KeyError:
@@ -202,7 +202,7 @@ class QueryTableProxy(CollectionProxy):
             # first try to get the primary key out of the cache, if it's not
             # there, query the collection_getter
             try:
-                return self.cache[Qt.EditRole].get_entity_at_row(row)
+                return self.edit_cache.get_entity_at_row(row)
             except KeyError:
                 pass
             # momentary hack for list error that prevents forms to be closed
@@ -210,7 +210,8 @@ class QueryTableProxy(CollectionProxy):
                 res = self.get_query_getter()().offset(row)
                 if isinstance(res, list):
                     res = res[0]
-                # @todo: remove this try catch and find out why it sometimes fails
+                # @todo: remove this try catch and find out why it 
+                # sometimes fails
                 try:
                     return res.limit(1).first()
                 except:
