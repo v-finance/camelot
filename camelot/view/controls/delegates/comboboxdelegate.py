@@ -53,10 +53,10 @@ class ComboBoxDelegate(CustomDelegate):
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject(index.data(Qt.DisplayRole))
         field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+        editable = False
         if value in (None, ValueLoading):
             value = ''
-            editable = False
-        else:
+        if field_attributes not in (None, ValueLoading):
             editable = field_attributes['editable']
         c = index.model().data(index, Qt.BackgroundRole)
 

@@ -365,7 +365,7 @@ Test the basic functionality of the editors :
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( 1 )
-    editor.set_enabled( True )
+    editor.set_field_attributes( editable=False )
     self.grab_widget( editor, 'set_enabled()_editable' )
     
   def test_FileEditor(self):
