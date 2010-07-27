@@ -112,6 +112,10 @@ class Many2OneEditor( CustomEditor, AbstractManyToOneEditor ):
         self.setLayout( self.layout )
         self.set_editable(editable)
     
+    def set_field_attributes(self, editable=True, background_color=None, **kwargs):
+        self.set_editable(editable)
+        self.set_background_color(background_color)
+        
     def set_editable(self, editable):
         self._editable = editable
         self.search_input.setEnabled(editable)

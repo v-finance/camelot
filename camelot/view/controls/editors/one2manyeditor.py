@@ -14,7 +14,6 @@ class One2ManyEditor( CustomEditor, WideEditor ):
                  admin = None,
                  parent = None,
                  create_inline = False,
-                 editable = True,
                  vertical_header_clickable = True,
                  **kw ):
         """
@@ -49,36 +48,43 @@ class One2ManyEditor( CustomEditor, WideEditor ):
                          QtCore.SIGNAL( 'sectionClicked(int)' ),
                          self.createFormForIndex )
         self.admin = admin
-        self.editable = editable
         self.create_inline = create_inline
+        self.add_button = None
+        self.copy_button = None
+        self.delete_button = None
         layout.addWidget( self.table )
         self.setupButtons( layout )
         self.setLayout( layout )
         self.model = None
     
+    def set_field_attributes(self, editable=True, **kwargs):
+        self.add_button.setEnabled(editable)
+        self.copy_button.setEnabled(editable)
+        self.delete_button.setEnabled(editable)
+        
     def setupButtons( self, layout ):
         button_layout = QtGui.QVBoxLayout()
         button_layout.setSpacing( 0 )
-        delete_button = QtGui.QToolButton()
+        self.delete_button = QtGui.QToolButton()
         icon = Icon( 'tango/16x16/places/user-trash.png' ).getQIcon()
-        delete_button.setIcon( icon )
-        delete_button.setAutoRaise( True )
-        delete_button.setToolTip(_('delete'))
-        self.connect( delete_button,
-                     QtCore.SIGNAL( 'clicked()' ),
-                     self.deleteSelectedRows )
-        add_button = QtGui.QToolButton()
+        self.delete_button.setIcon( icon )
+        self.delete_button.setAutoRaise( True )
+        self.delete_button.setToolTip(_('delete'))
+        self.connect( self.delete_button,
+                      QtCore.SIGNAL( 'clicked()' ),
+                      self.deleteSelectedRows )
+        self.add_button = QtGui.QToolButton()
         icon = Icon( 'tango/16x16/actions/document-new.png' ).getQIcon()
-        add_button.setIcon( icon )
-        add_button.setAutoRaise( True )
-        add_button.setToolTip(_('new'))
-        self.connect( add_button, QtCore.SIGNAL( 'clicked()' ), self.newRow )
-        copy_button = QtGui.QToolButton()
+        self.add_button.setIcon( icon )
+        self.add_button.setAutoRaise( True )
+        self.add_button.setToolTip(_('new'))
+        self.connect( self.add_button, QtCore.SIGNAL( 'clicked()' ), self.newRow )
+        self.copy_button = QtGui.QToolButton()
         icon = Icon( 'tango/16x16/actions/edit-copy.png' ).getQIcon()
-        copy_button.setIcon( icon )
-        copy_button.setAutoRaise( True )
-        copy_button.setToolTip(_('copy'))
-        self.connect( copy_button, QtCore.SIGNAL( 'clicked()' ), self.copy_selected_rows )        
+        self.copy_button.setIcon( icon )
+        self.copy_button.setAutoRaise( True )
+        self.copy_button.setToolTip(_('copy'))
+        self.connect( self.copy_button, QtCore.SIGNAL( 'clicked()' ), self.copy_selected_rows )        
         export_button = QtGui.QToolButton()
         export_button.setIcon( Icon( 'tango/16x16/mimetypes/x-office-spreadsheet.png' ).getQIcon() )
         export_button.setAutoRaise( True )
@@ -87,10 +93,9 @@ class One2ManyEditor( CustomEditor, WideEditor ):
                      QtCore.SIGNAL( 'clicked()' ),
                      self.exportToExcel )
         button_layout.addStretch()
-        if self.editable:
-            button_layout.addWidget( add_button )
-            button_layout.addWidget( copy_button )
-            button_layout.addWidget( delete_button )
+        button_layout.addWidget( self.add_button )
+        button_layout.addWidget( self.copy_button )
+        button_layout.addWidget( self.delete_button )
         button_layout.addWidget( export_button )
         layout.addLayout( button_layout )
     
