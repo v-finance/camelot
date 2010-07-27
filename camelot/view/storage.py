@@ -32,7 +32,6 @@ from camelot.view.controls.exception import model_thread_exception_message_box
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-
 class OpenFileProgressDialog(QtGui.QProgressDialog):
 
     def __init__(self):
@@ -103,7 +102,7 @@ def create_stored_file(parent, storage, on_finish, filter='All files (*)'):
         progress = SaveFileProgressDialog()
 
         def checkin():
-            new_path = storage.checkin(str(filename))
+            new_path = storage.checkin(unicode(filename))
             return lambda:on_finish(new_path)
 
         post(checkin, progress.finish, model_thread_exception_message_box)
