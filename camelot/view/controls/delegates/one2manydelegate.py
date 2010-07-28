@@ -2,6 +2,7 @@ from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
 from camelot.view.controls import editors
+from customdelegate import DocumentationMetaclass
 from camelot.core.utils import variant_to_pyobject
 
 import logging
@@ -12,6 +13,8 @@ class One2ManyDelegate( QtGui.QItemDelegate ):
   
   .. image:: ../_static/onetomany.png  
   """
+
+    __metaclass__ = DocumentationMetaclass
 
     def __init__( self, parent = None, **kwargs ):
         logger.debug( 'create one2manycolumn delegate' )

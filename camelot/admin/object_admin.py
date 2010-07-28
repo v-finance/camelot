@@ -148,19 +148,8 @@ class ObjectAdmin(object):
         list_display = ['title']
         field_attributes = dict(title=dict(editable=False))
 
-    Other field attributes process by the admin interface are:
-
-    .. attribute:: name
-    The name of the field used, this defaults to the name of the attribute
-
-    .. attribute:: target
-    In case of relation fields, specifies the class that is at the other
-    end of the relation.  Defaults to the one found by introspection.
-
-    .. attribute:: admin
-    In case of relation fields, specifies the admin class that is to be used
-    to visualize the other end of the relation.  Defaults to the default admin
-    class of the target class.
+    The :ref:`doc-admin-field_attributes` documentation describes the various keys
+    that can be used in the field attributes class attribute of an ObjectAdmin or EntityAdmin.
     
     .. attribute:: model
     The QAbstractItemModel class to be used to display collections of this object,
