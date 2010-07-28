@@ -570,7 +570,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         This function will then be called in the model_thread
         """
         if role == Qt.EditRole:
-    
+
             # if the field is not editable, don't waste any time and get out of here
             if not self._get_field_attribute_value(index, 'editable'):
                 return
@@ -613,7 +613,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                     direction = field_attributes.get( 'direction', None )
                     if direction in ( orm.interfaces.MANYTOMANY, orm.interfaces.ONETOMANY ):
                         changed = True
-                    if changed and field_attributes['editable'] == True:
+                    if changed:
                         # update the model
                         model_updated = False
                         try:
