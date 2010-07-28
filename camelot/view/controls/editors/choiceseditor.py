@@ -1,6 +1,6 @@
 from PyQt4 import QtGui, QtCore
 
-from customeditor import AbstractCustomEditor
+from customeditor import AbstractCustomEditor, editingFinished
 import sip
 
 class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
@@ -10,7 +10,11 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
     def __init__(self, parent=None, **kwargs):
         QtGui.QComboBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
+        self.connect(self, QtCore.SIGNAL('activated(int)'), self.editing_finished)
         
+    def editing_finished(self, _index):
+        self.emit(editingFinished)
+           
     def set_choices(self, choices):
         """
     :param choices: a list of (value,name) tuples.  name will be displayed in the combobox,
@@ -35,8 +39,8 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
             self.set_value(current_value)
         
     def set_field_attributes(self, editable=True, choices=[], **kwargs):
-        self.setEnabled(editable)
-        self.set_choices(choices)
+        self.set_choices(choices or [])
+        self.setEnabled(editable!=False)
               
     def get_choices(self):
         """
