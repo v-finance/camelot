@@ -32,7 +32,8 @@ from camelot.view.controls.progress_dialog import ProgressDialog
 logger = logging.getLogger('camelot.admin.form_action')
 
 class FormAction( object ):
-    """Abstract base class to implement form actions"""
+    """Abstract base class to implement form actions
+    """
 
     def __init__( self, name, icon = None ):
         """
@@ -58,12 +59,20 @@ returns a Button that will trigger the run method when clicked"""
         return ActionWidget( self, entity_getter, parent=parent )
 
     def run( self, entity_getter ):
-        """Overwrite this method to create an action that does something"""
+        """Overwrite this method to create an action that does something, the
+        run method will be called within the gui thread.
+        
+        :param entity_getter: a function that returns the object displayed
+        
+        The entity_getter function should not be called within the gui
+        thread, it exists for being able to pass it to the model thread.
+        """
         raise NotImplementedError
     
     def enabled(self, entity):
         """Overwrite this method to have the action only enabled for 
-certain states of the entity displayed
+certain states of the entity displayed.  This method will be called
+within the model thread.
         
 :param entity: the entity currently in the form view
 :return: True or False, returns True by default
@@ -103,7 +112,8 @@ class FormActionFromModelFunction( FormAction ):
         :param name: the name of the action
         :param model_function: a function that has 1 arguments : the object on which to apply the action
         :param icon: an Icon
-        :param flush: flush the object to the db and refresh it in the views
+        :param flush: flush the object to the db and refresh it in the views, set this to true when the
+        model function changes the object.
         :param enabled: a function that has 1 argument : the object on which the action would be applied
         """        
         FormAction.__init__( self, name, icon )

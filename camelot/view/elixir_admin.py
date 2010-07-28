@@ -136,6 +136,7 @@ class EntityAdmin(ObjectAdmin):
             #
             attributes = dict(
                 python_type = str,
+                field_name = field_name,
                 getter = create_default_getter(field_name),
                 length = None,
                 tooltip = None,

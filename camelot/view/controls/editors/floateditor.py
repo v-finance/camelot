@@ -27,9 +27,6 @@ class FloatEditor(CustomEditor):
                  precision=2,
                  minimum=constants.camelot_minfloat,
                  maximum=constants.camelot_maxfloat,
-                 editable=True,
-                 prefix='',
-                 suffix='',
                  calculator=True,
                  decimal=False,
                  **kwargs):
@@ -40,22 +37,12 @@ class FloatEditor(CustomEditor):
         self.setFocusPolicy(Qt.StrongFocus)
         self.precision = precision
         self.spinBox = CustomDoubleSpinBox(parent)
-        self.spinBox.setReadOnly(not editable)
-        self.spinBox.setEnabled(editable)
-        self.spinBox.setDisabled(not editable)
+
         self.spinBox.setRange(minimum, maximum)
         self.spinBox.setDecimals(precision)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.spinBox.setSingleStep(1.0)
-        
-        prefix = str(prefix) + ' '
-        prefix = prefix.lstrip()
-        
-        suffix = ' ' + str(suffix)
-        suffix = suffix.rstrip()
-        
-        self.spinBox.setPrefix(prefix)
-        self.spinBox.setSuffix(suffix)
+
         self.spinBox.addAction(action)
         self.calculatorButton = QtGui.QToolButton()
         icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
@@ -79,14 +66,16 @@ class FloatEditor(CustomEditor):
         layout.setMargin(0)
         layout.setSpacing(0)
         layout.addWidget(self.spinBox)
-        if editable and calculator:
-            layout.addWidget(self.calculatorButton)
-        if not editable:
-            self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
-            self.spinBox.setEnabled(False)
+        layout.addWidget(self.calculatorButton)
         self.setFocusProxy(self.spinBox)
         self.setLayout(layout)
     
+    def set_field_attributes(self, editable=True, background_color=None, prefix='', suffix='', **kwargs):
+        self.set_enabled(editable)
+        self.set_background_color(background_color)
+        self.spinBox.setPrefix(u'%s '%(prefix.lstrip()))
+        self.spinBox.setSuffix(u' %s'%(suffix.rstrip()))
+        
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:
@@ -95,12 +84,13 @@ class FloatEditor(CustomEditor):
             self.spinBox.setValue(0.0)
         
     def set_enabled(self, editable=True):
-        if self.spinBox.isEnabled() != editable:
-            if not editable:
-                self.layout().removeWidget(self.calculatorButton)
-            else:
-                self.layout().addWidget(self.calculatorButton)
-            self.spinBox.setEnabled(editable)
+        self.spinBox.setReadOnly(not editable)
+        self.spinBox.setEnabled(editable)
+        self.calculatorButton.setShown(editable)
+        if editable:
+            self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
+        else:
+            self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         
     def get_value(self):
         self.spinBox.interpretText()

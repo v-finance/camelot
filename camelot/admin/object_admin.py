@@ -37,7 +37,7 @@ from camelot.view.proxy.collection_proxy import CollectionProxy
 from validator.object_validator import ObjectValidator
 
 _DYNAMIC_FIELD_ATTRIBUTES = ['tooltip', 'background_color', 'editable', 
-                             'choices']
+                             'choices', 'prefix', 'suffix']
 
 class ObjectAdmin(object):
     """The ObjectAdmin class describes the interface that will be used
@@ -381,6 +381,7 @@ class ObjectAdmin(object):
             #
             attributes = dict(
                 getter=create_default_getter(field_name),
+                field_name=field_name,
                 python_type=str,
                 length=None,
                 tooltip=None,

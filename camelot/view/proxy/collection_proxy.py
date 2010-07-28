@@ -101,30 +101,24 @@ def strip_data_from_object( obj, columns ):
     return row_data
   
 @model_function
-def stripped_data_to_unicode( stripped_data, obj, columns ):
+def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynamic_field_attributes ):
     """Extract for each field in the row data a 'visible' form of 
     data"""
   
     row_data = []
   
-    for field_data, ( _field_name, field_attributes ) in zip( stripped_data, columns ):
+    for field_data, static_attributes, dynamic_attributes in zip( stripped_data, static_field_attributes, dynamic_field_attributes ):
         unicode_data = u''
-        if 'unicode_format' in field_attributes:
-            unicode_format = field_attributes['unicode_format']
+        choices = dynamic_attributes.get( 'choices', static_attributes.get('choices', None))
+        if 'unicode_format' in static_attributes:
+            unicode_format = static_attributes['unicode_format']
             if field_data != None:
                 unicode_data = unicode_format( field_data )
-        elif 'choices' in field_attributes:
-            choices = field_attributes['choices']
-            if callable(choices):
-                try:
-                    for key, value in choices( obj ):
-                        if key == field_data:
-                            unicode_data = value
-                            continue
-                except Exception, e:
-                    logger.error('Programming Error : could not evaluate choices function', exc_info=e)
-            else:
-                unicode_data = field_data
+        elif choices:
+            unicode_data = field_data
+            for key, value in choices:
+                if key == field_data:
+                    unicode_data = value
         elif isinstance( field_data, DelayedProxy ):
             unicode_data = u'...'
         elif isinstance( field_data, list ):
@@ -705,9 +699,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         :param obj: the object from which to strip the data
         """
         row_data = strip_data_from_object( obj, columns )
+        
+        dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
+        static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
         self.edit_cache.add_data( row, obj, row_data )
-        self.display_cache.add_data( row, obj, stripped_data_to_unicode( row_data, obj, columns ) )
-        self.attributes_cache.add_data(row, obj, list( self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)) ))
+        self.display_cache.add_data( row, obj, stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes ) )
+        self.attributes_cache.add_data(row, obj, dynamic_field_attributes )
         self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
                   self.index( row, 0 ), self.index( row, self.column_count ) )
     

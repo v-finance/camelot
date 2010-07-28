@@ -28,33 +28,35 @@ class FloatDelegate( CustomDelegate ):
     :param precision:  The number of digits after the decimal point displayed.  This defaults
     to the precision specified in the definition of the Field.     
     """
-        CustomDelegate.__init__( self, parent = parent, editable = editable,
-                                suffix = suffix, prefix = prefix,
+        CustomDelegate.__init__( self, parent = parent,
                                 precision = precision, **kwargs )
         self.precision = precision
-        self.editable = editable
         self.unicode_format = unicode_format
-        self.prefix = prefix
-        self.suffix = suffix
 
     def paint( self, painter, option, index ):
         painter.save()
         self.drawBackground( painter, option, index )
         value = variant_to_pyobject( index.model().data( index, Qt.EditRole ) )
+        field_attributes = variant_to_pyobject( index.model().data( index, Qt.UserRole ) )
+        editable, prefix, suffix, background_color = True, '', '', None
 
-        background_color = QtGui.QColor( index.model().data( index, Qt.BackgroundRole ) )
+        if field_attributes != ValueLoading:
+            editable = field_attributes.get( 'editable', True )
+            prefix = field_attributes.get( 'prefix', '' )
+            suffix = field_attributes.get( 'suffix', '' )
+            background_color = field_attributes.get( 'background_color', None )
 
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect( option.rect, option.palette.highlight() )
             fontColor = QtGui.QColor()
-            if self.editable:
+            if editable:
                 Color = option.palette.highlightedText().color()
                 fontColor.setRgb( Color.red(), Color.green(), Color.blue() )
             else:
                 fontColor.setRgb( 130, 130, 130 )
         else:
-            if self.editable:
-                painter.fillRect( option.rect, background_color )
+            if editable:
+                painter.fillRect( option.rect, background_color or option.palette.base() )
                 fontColor = QtGui.QColor()
                 fontColor.setRgb( 0, 0, 0 )
             else:
@@ -71,7 +73,7 @@ class FloatDelegate( CustomDelegate ):
             #
             value_str = QtCore.QString("%L1").arg(float(value),0,'f',self.precision)
 
-        value_str = unicode( self.prefix ) + u' ' + unicode( value_str ) + u' ' + unicode( self.suffix )
+        value_str = unicode( prefix ) + u' ' + unicode( value_str ) + u' ' + unicode( suffix )
         value_str = value_str.strip()
         if self.unicode_format != None and value != ValueLoading:
             value_str = self.unicode_format( value )
