@@ -40,6 +40,7 @@ from camelot.view.proxy import ValueLoading
 class ComboBoxDelegate(CustomDelegate):
 
     __metaclass__ = DocumentationMetaclass
+    
     editor = editors.ChoicesEditor
 
     def setEditorData(self, editor, index):

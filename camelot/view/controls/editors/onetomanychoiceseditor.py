@@ -4,8 +4,8 @@ from choiceseditor import ChoicesEditor
 
 class OneToManyChoicesEditor(ChoicesEditor):
   
-    def __init__(self, parent, editable=True, target=None, **kwargs):
-        ChoicesEditor.__init__(self, parent, editable, **kwargs)
+    def __init__(self, parent, target=None, **kwargs):
+        ChoicesEditor.__init__(self, parent, **kwargs)
         assert target!=None
         
         def get_choices():
