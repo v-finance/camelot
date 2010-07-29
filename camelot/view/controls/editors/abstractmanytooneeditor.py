@@ -1,39 +1,78 @@
-from PyQt4 import QtGui, QtCore
+#  ============================================================================
+#
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
+
+from PyQt4 import QtGui
+from PyQt4 import QtCore
+
 
 class AbstractManyToOneEditor(object):
     """Helper functions for implementing a `ManyToOneEditor`, to be used in the
-  `ManyToOneEditor` and in the `ManyToManyEditor`
-  """
-    
+    `ManyToOneEditor` and in the `ManyToManyEditor`"""
+
     def createSelectView(self):
         #search_text = unicode(self.search_input.text())
         search_text = ''
         admin = self.admin
         query = self.admin.entity.query
-        
+
         class SelectDialog(QtGui.QDialog):
             def __init__(self, parent):
-                super(SelectDialog, self).__init__(parent)
-                self.entity_selected_signal = QtCore.SIGNAL("entity_selected")
+                super(SelectDialog, self).__init__(None)
+                self.entity_selected_signal = QtCore.SIGNAL('entity_selected')
                 layout = QtGui.QVBoxLayout()
                 layout.setMargin(0)
                 layout.setSpacing(0)
-                self.setWindowTitle('Select %s'%admin.get_verbose_name())
-                self.select = admin.create_select_view(query,
-                                                       parent=parent,
-                                                       search_text=search_text)
+                self.setWindowTitle('Select %s' % admin.get_verbose_name())
+                self.select = admin.create_select_view(
+                    query,
+                    parent=parent,
+                    search_text=search_text
+                )
                 layout.addWidget(self.select)
                 self.setLayout(layout)
-                self.connect(self.select, self.select.entity_selected_signal, self.selectEntity)
-        
+                self.connect(
+                    self.select,
+                    self.select.entity_selected_signal,
+                    self.selectEntity
+                )
+
             def selectEntity(self, entity_instance_getter):
                 self.emit(self.entity_selected_signal, entity_instance_getter)
                 self.close()
-        
-        selectDialog = SelectDialog(self)
-        self.connect(selectDialog, selectDialog.entity_selected_signal, self.selectEntity)
-        selectDialog.exec_()
-        
+
+        self.selectDialog = SelectDialog(self)
+        self.connect(
+            self.selectDialog,
+            self.selectDialog.entity_selected_signal,
+            self.selectEntity
+        )
+        #selectDialog.exec_()
+        self.selectDialog.show()
+
     def selectEntity(self, entity_instance_getter):
         #raise Exception('Not implemented')
         raise NotImplementedError

@@ -43,6 +43,9 @@ from camelot.core.utils import create_constant_function
 from customeditor import CustomEditor
 from abstractmanytooneeditor import AbstractManyToOneEditor
 
+import logging
+logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
+
 
 class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
     """Widget for editing many 2 one relations"""
