@@ -265,10 +265,12 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             workspace = get_workspace()
             form = admin.create_new_view(workspace)
             self.connect(form, form.entity_created_signal, self.selectEntity)
-            sub_window = workspace.addSubWindow(form)
-            sub_window.setParent(None)
-            self.new_form = sub_window
-            sub_window.show()
+            #sub_window = workspace.addSubWindow(form)
+            #sub_window.show()
+            self.new_form = form
+            form.setWindowTitle(admin.get_verbose_name())
+            form.setParent(None)
+            form.show()
 
     def createFormView(self):
         if self.entity_instance_getter:

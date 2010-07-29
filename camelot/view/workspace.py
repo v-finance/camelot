@@ -51,7 +51,12 @@ class DesktopWorkspace(QtGui.QMdiArea):
         from camelot.view.controls.view import AbstractView
         subwindow = QtGui.QMdiArea.addSubWindow(self, widget, *args)
         if hasattr(widget, 'closeAfterValidation'):
-            subwindow.connect(widget, widget.closeAfterValidation, subwindow, QtCore.SLOT("close()"))
+            subwindow.connect(
+                widget,
+                widget.closeAfterValidation,
+                subwindow,
+                QtCore.SLOT('close()')
+            )
 
         def create_set_window_title(subwindow):
 
@@ -60,8 +65,13 @@ class DesktopWorkspace(QtGui.QMdiArea):
 
             return set_window_title
 
-        self.connect(widget, AbstractView.title_changed_signal, create_set_window_title(subwindow))
+        self.connect(
+            widget,
+            AbstractView.title_changed_signal,
+            create_set_window_title(subwindow)
+        )
         return subwindow
+
 
 class NoDesktopWorkspace(QtCore.QObject):
     def __init__(self):
@@ -84,21 +94,26 @@ class NoDesktopWorkspace(QtCore.QObject):
     def removeWidgetFromWorkspace(self):
         self._windowlist.remove(self.widget)
 
+
 _workspace_ = []
+
 
 @gui_function
 def construct_workspace(*args, **kwargs):
     _workspace_.append(DesktopWorkspace())
     return _workspace_[0]
 
+
 @gui_function
 def construct_no_desktop_workspace(*args, **kwargs):
     _workspace_.append(NoDesktopWorkspace())
     return _workspace_[0]
 
+
 @gui_function
 def get_workspace():
     return _workspace_[0]
+
 
 @gui_function
 def has_workspace():
