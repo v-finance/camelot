@@ -19,16 +19,16 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         """
     :param admin: the Admin interface for the objects on the one side of the
     relation
-    
+
     :param create_inline: if False, then a new entity will be created within a
     new window, if True, it will be created inline
-    
+
     :param vertical_header_clickable: True if the vertical header is clickable by the user, False if not.
-    
+
     after creating the editor, set_value needs to be called to set the
     actual data to the editor
     """
-    
+
         CustomEditor.__init__( self, parent )
         layout = QtGui.QHBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
@@ -56,12 +56,12 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         self.setupButtons( layout )
         self.setLayout( layout )
         self.model = None
-    
+
     def set_field_attributes(self, editable=True, **kwargs):
         self.add_button.setEnabled(editable)
         self.copy_button.setEnabled(editable)
         self.delete_button.setEnabled(editable)
-        
+
     def setupButtons( self, layout ):
         button_layout = QtGui.QVBoxLayout()
         button_layout.setSpacing( 0 )
@@ -84,7 +84,7 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         self.copy_button.setIcon( icon )
         self.copy_button.setAutoRaise( True )
         self.copy_button.setToolTip(_('copy'))
-        self.connect( self.copy_button, QtCore.SIGNAL( 'clicked()' ), self.copy_selected_rows )        
+        self.connect( self.copy_button, QtCore.SIGNAL( 'clicked()' ), self.copy_selected_rows )
         export_button = QtGui.QToolButton()
         export_button.setIcon( Icon( 'tango/16x16/mimetypes/x-office-spreadsheet.png' ).getQIcon() )
         export_button.setAutoRaise( True )
@@ -98,22 +98,22 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         button_layout.addWidget( self.delete_button )
         button_layout.addWidget( export_button )
         layout.addLayout( button_layout )
-    
+
     def exportToExcel( self ):
         from camelot.view.export.excel import open_data_with_excel
-    
+
         def export():
             title = self.admin.get_verbose_name_plural()
             columns = self.admin.get_columns()
             if self.model:
                 data = list( self.model.getData() )
                 open_data_with_excel( title, columns, data )
-        
+
         post( export )
-        
+
     def getModel( self ):
         return self.model
-    
+
     def update_delegates( self, *args ):
         if self.model:
             delegate = self.model.getItemDelegate()
@@ -123,40 +123,40 @@ class One2ManyEditor( CustomEditor, WideEditor ):
                     txtwidth = self.model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
                     colwidth = self.table.columnWidth( i )
                     self.table.setColumnWidth( i, max( txtwidth, colwidth ) )
-          
+
     def set_value( self, model ):
         model = CustomEditor.set_value( self, model )
         if model and model != self.model:
             self.model = model
-            self.table.setModel( model )        
+            self.table.setModel( model )
             post( model._extend_cache, self.update_delegates )
-      
+
     @gui_function
     def activate_editor( self, row ):
         index = self.model.index( row, 0 )
         self.table.scrollToBottom()
         self.table.setCurrentIndex( index )
         self.table.edit( index )
-            
+
     def newRow( self ):
         from camelot.view.workspace import get_workspace
         workspace = get_workspace()
-    
+
         if self.create_inline:
-    
+
             @model_function
             def create():
                 o = self.admin.entity()
                 row = self.model.insertEntityInstance( 0, o )
                 return row
-        
+
             post( create, self.activate_editor )
-      
+
         else:
             prependentity = lambda o: self.model.insertEntityInstance( 0, o )
             removeentity = lambda o: self.model.removeEntityInstance( o )
             #
-            # We cannot use the workspace as a parent, in case of working with 
+            # We cannot use the workspace as a parent, in case of working with
             # the NoDesktopWorkspaces
             #
             form = self.admin.create_new_view( parent = None,
@@ -164,19 +164,19 @@ class One2ManyEditor( CustomEditor, WideEditor ):
                                                onexpunge = removeentity )
             workspace.addSubWindow( form )
             form.show()
-            
+
     def copy_selected_rows( self ):
         """Copy the selected rows in this tableview"""
         logger.debug( 'delete selected rows called' )
         for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
             self.model.copy_row( row )
-      
+
     def deleteSelectedRows( self ):
         """Delete the selected rows in this tableview"""
         logger.debug( 'delete selected rows called' )
         for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
             self.model.removeRow( row )
-      
+
     def createFormForIndex( self, index ):
         from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.view.workspace import get_workspace

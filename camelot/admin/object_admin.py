@@ -39,6 +39,7 @@ from validator.object_validator import ObjectValidator
 _DYNAMIC_FIELD_ATTRIBUTES = ['tooltip', 'background_color', 'editable', 
                              'choices', 'prefix', 'suffix']
 
+
 class ObjectAdmin(object):
     """The ObjectAdmin class describes the interface that will be used
     to interact with objects of a certain class.  The behaviour of this class
@@ -114,9 +115,9 @@ class ObjectAdmin(object):
     the search box in the table view.  By default only character fields are
     searched.  For use with one2many, many2one or many2many fields, the same
     rules as for the list_filter attribute apply
-    
+
     .. attribute:: confirm_delete
-    
+
     Indicates if the deletion of an object should be confirmed by the user, defaults
     to False.  Can be set to either True, False, or the message to display when asking
     confirmation of the deletion.
@@ -150,15 +151,15 @@ class ObjectAdmin(object):
 
     The :ref:`doc-admin-field_attributes` documentation describes the various keys
     that can be used in the field attributes class attribute of an ObjectAdmin or EntityAdmin.
-    
+
     .. attribute:: model
     The QAbstractItemModel class to be used to display collections of this object,
     defaults to a CollectionProxy
-    
+
     .. attribute:: confirm_delete
     set to True if the user should get a confirmation dialog before deleting data,
     defaults to False
-    
+
     .. attribute:: TableView
     The QWidget class to be used when a table view is needed
     """
@@ -181,12 +182,12 @@ class ObjectAdmin(object):
     form_actions = []
     form_title_column = None #DEPRECATED
     field_attributes = {}
-    
+
     TableView = None
 
     def __init__(self, app_admin, entity):
         """
-        
+
         :param app_admin: the application admin object for this application, if None,
         then the default application_admin is taken
         :param entity: the entity class for which this admin instance is to be
@@ -229,7 +230,7 @@ class ObjectAdmin(object):
     def get_verbose_name_plural(self):
         return unicode(
             self.verbose_name_plural
-            or self.name 
+            or self.name
             or (self.get_verbose_name() + 's')
         )
 
@@ -243,7 +244,7 @@ class ObjectAdmin(object):
 
     def get_entity_admin(self, entity):
         return self.app_admin.get_entity_admin(entity)
-    
+
     def get_confirm_delete(self):
         if self.confirm_delete:
             if self.confirm_delete==True:
@@ -266,17 +267,17 @@ class ObjectAdmin(object):
         """Overwrite this function to generate a list of objects that depend on a given
         object.  When obj is modified by the user, this function will be called to determine
         which other objects need their views updated.
-        
+
         :param obj: an object of the type that is managed by this admin class
         :return: an iterator over objects that depend on obj
         """
         return []
-        
+
     @model_function
     def get_subclass_tree( self ):
         """Get a tree of admin classes representing the subclasses of the class
         represented by this admin class
-        
+
         :return: [(subclass_admin, [(subsubclass_admin, [...]),...]),...]
         """
         subclasses = []
@@ -287,10 +288,10 @@ class ObjectAdmin(object):
                     subclass_admin,
                     subclass_admin.get_subclass_tree()
                 ))
-        
+
         def sort_admins(a1, a2):
             return cmp(a1[0].get_verbose_name_plural(), a2[0].get_verbose_name_plural())
-        
+
         subclasses.sort(cmp=sort_admins)
         return subclasses
 
@@ -312,10 +313,10 @@ class ObjectAdmin(object):
         """
         Convenience function to get all the field attributes
         that are static (don't depend on the row in the table)
-        
+
         :param field_names: a list of field names
         :return: [{field_attribute_name:field_attribute_value, ...}]
-        
+
         The returned list has the same order than the requested
         field_names.
         """
@@ -326,18 +327,18 @@ class ObjectAdmin(object):
                 if name not in _DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
                     static_field_attributes[name] = value
             yield static_field_attributes
-            
+
     @model_function
     def get_dynamic_field_attributes(self, obj, field_names):
         """
         Convenience function to get all the field attributes
         that are dynamic (don't depend on the row in the table)
-        
+
         :param field_names: a list of field names
         :param obj: the object at the row for which to get the values
         of the dynamic field attributes
         :return: [{field_attribute_name:field_attribute_value, ...}, {}]
-        
+
         The returned list has the same order than the requested
         field_names
         """
@@ -355,12 +356,12 @@ class ObjectAdmin(object):
                         value = None
                     dynamic_field_attributes[name] = value
             yield dynamic_field_attributes
-    
+
     def get_field_attributes(self, field_name):
         """Get the attributes needed to visualize the field field_name
-        
+
         :param field_name : the name of the field
-        
+
         :return: a dictionary of attributes needed to visualize the field,
         those attributes can be:
          * python_type : the corresponding python type of the object
@@ -371,10 +372,10 @@ class ObjectAdmin(object):
         try:
             return self._field_attributes[field_name]
         except KeyError:
-            
+
             def create_default_getter(field_name):
                 return lambda o:getattr(o, field_name)
-            
+
             from camelot.view.controls import delegates
             #
             # Default attributes for all fields
@@ -498,7 +499,7 @@ class ObjectAdmin(object):
         """Creates a Qt widget containing a form view, for a specific index in
         a model.  Use this method to create a form view for a collection of objects,
         the user will be able to use PgUp/PgDown to move to the next object.
-        
+
         :param title: the title of the form view
         :param model: the data model to be used to fill the form view
         :param index: which row in the data model to display
@@ -508,43 +509,43 @@ class ObjectAdmin(object):
         from camelot.view.controls.formview import FormView
         form = FormView(title, self, model, index)
         return form
-    
+
     def set_defaults(self, object_instance, include_nullable_fields=True):
         pass
-    
+
     @gui_function
     def create_object_form_view(self, title, object_getter, parent=None):
         """Create a form view for a single object, PgUp/PgDown will do
         nothing.
-        
+
         :param title: the title of the form view
         :param object_getter: a function taking no arguments, and returning the object
         :param parent: the parent widget for the form
         """
-        
+
         def create_collection_getter( object_getter, object_cache ):
             """Transform an object_getter into a collection_getter which
             returns a collection with only the object returned by object
             getter.
-            
+
             :param object_getter: a function that returns the object that should be in
             the collection
             :param object_cache: a list that will be used to store the result
             of object_getter, to prevent multiple calls of object_getter
             """
-            
+
             def collection_getter():
                 if not object_cache:
                     object_cache.append( object_getter() )
                 return object_cache
-            
+
             return collection_getter
-                    
+
         model = self.model( self,
                             create_collection_getter( object_getter, [] ),
                             self.get_fields )
         return self.create_form_view( title, model, 0, parent ) 
-    
+
     @gui_function
     def create_new_view(admin, parent=None, oncreate=None, onexpunge=None):
         """Create a Qt widget containing a form to create a new instance of the
@@ -585,7 +586,7 @@ class ObjectAdmin(object):
                 AbstractView.__init__(self, parent)
                 self.widget_layout = QtGui.QVBoxLayout()
                 self.widget_layout.setMargin(0)
-                title = _('new')
+                title = _('New')
                 index = 0
                 self.form_view = admin.create_form_view(
                     title, model, index, parent
@@ -682,13 +683,13 @@ class ObjectAdmin(object):
                         str(model.hasUnflushedRows())
                     )
                     if model.hasUnflushedRows():
-                        
+
                         def validate_and_flush():
                             valid = validator.isValid(0)
                             if valid:
                                 admin.flush(new_object[0])
                             return valid
-                        
+
                         post(validate_and_flush, self.showMessage)
                         return False
                     else:
@@ -705,22 +706,22 @@ class ObjectAdmin(object):
         if hasattr(admin, 'form_size'):
             form.setMinimumSize(admin.form_size[0], admin.form_size[1])
         return form
-    
+
     @model_function
     def delete(self, entity_instance):
         """Delete an entity instance"""
         del entity_instance
-        
+
     @model_function
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
         pass
-    
+
     @model_function
     def add(self, entity_instance):
         """Add an entity instance as a managed entity instance"""
         pass
-    
+
     @model_function
     def copy(self, entity_instance):
         """Duplicate this entity instance"""

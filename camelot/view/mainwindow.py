@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -51,9 +51,10 @@ QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
 from camelot.core.utils import ugettext as _
 
+
 class MainWindow(QtGui.QMainWindow):
     """Main window GUI"""
-    
+
     def __init__(self, app_admin, parent=None):
         from workspace import construct_workspace
         logger.debug('initializing main window')
@@ -101,10 +102,10 @@ class MainWindow(QtGui.QMainWindow):
 
         logger.debug('setting up window title')
         self.setWindowTitle(self.app_admin.get_name())
-        
+
         #QtCore.QTimer.singleShot(0, self.doInitialization)
         logger.debug('initialization complete')
-        
+
     # Application settings
 
     def about(self):
@@ -112,7 +113,7 @@ class MainWindow(QtGui.QMainWindow):
         abtmsg = self.app_admin.get_about()
         QtGui.QMessageBox.about(self, _('About'), _(abtmsg))
         logger.debug('about message closed')
-    
+
     def whats_new(self):
         widget = self.app_admin.get_whats_new()
         if widget:
@@ -123,13 +124,13 @@ class MainWindow(QtGui.QMainWindow):
         url = self.app_admin.get_affiliated_url()
         if url:
             QDesktopServices.openUrl(url)
-            
+
     def remote_support(self):
         from PyQt4.QtGui import QDesktopServices
         url = self.app_admin.get_remote_support_url()
         if url:
-            QDesktopServices.openUrl(url)   
-    
+            QDesktopServices.openUrl(url)
+
     def readSettings(self):
         # TODO: improve settings reading
         settings = QtCore.QSettings()
@@ -149,7 +150,7 @@ class MainWindow(QtGui.QMainWindow):
     def display_exception_message_box(self, exc_info):
         from controls.exception import model_thread_exception_message_box
         model_thread_exception_message_box(exc_info)
-        
+
     def runAction(self, name, callable):
         progress = QtGui.QProgressDialog('Please wait', QtCore.QString(), 0, 0)
         progress.setWindowTitle(name)
@@ -200,7 +201,7 @@ class MainWindow(QtGui.QMainWindow):
             actionicon=icon_restore,
             tip=_('Restore the database from a backup')
         )
-        
+
         self.pageSetupAct = createAction(
             parent=self,
             text=_('Page Setup...'),
@@ -242,7 +243,7 @@ class MainWindow(QtGui.QMainWindow):
             actionicon=icon_copy,
             tip=_("Duplicate the selected rows")
         )
-        
+
         self.selectAllAct = createAction(
             parent=self,
             text=_('Select &All'),
@@ -288,15 +289,15 @@ class MainWindow(QtGui.QMainWindow):
             actionicon=Icon('tango/16x16/mimetypes/application-certificate.png').fullpath(),
             tip=_("Show the application's About box")
         )
-        
+
         self.whats_new_action = createAction(
             parent=self,
             text=_('&What\'s new'),
             slot=self.whats_new,
-            actionicon=Icon('tango/16x16/status/software-update-available.png').fullpath(),            
+            actionicon=Icon('tango/16x16/status/software-update-available.png').fullpath(),
             tip=_("Show the What's New box")
         )
-        
+
         self.affiliated_website_action = createAction(
             parent=self,
             text=_('Affiliated website'),
@@ -304,7 +305,7 @@ class MainWindow(QtGui.QMainWindow):
             actionicon=Icon('tango/16x16/apps/internet-web-browser.png').fullpath(),
             tip=_('Go to the affiliated website')
         )
-        
+
         self.remote_support_action = createAction(
             parent=self,
             text=_('Remote support'),
@@ -388,7 +389,7 @@ class MainWindow(QtGui.QMainWindow):
             slot = self.updateValue,
             tip = _('Replace the content of a field for all rows in a selection')
         )
-        
+
         self.exportToExcelAct = createAction(
             parent=self,
             text=_('Export to MS Excel'),
@@ -429,12 +430,12 @@ class MainWindow(QtGui.QMainWindow):
         for action in self.app_admin.get_actions():
 
             def bind_action(parent, action):
-                
+
                 def slot(*args):
                     action.run(parent)
-                    
+
                 return slot
-                    
+
             self.app_actions.append(
                 createAction(
                     parent=self,
@@ -463,7 +464,7 @@ class MainWindow(QtGui.QMainWindow):
         from camelot.view.wizard.backup import BackupWizard
         wizard = BackupWizard(self.app_admin.backup_mechanism, self)
         wizard.exec_()
-        
+
     def restore(self):
         from camelot.view.wizard.backup import RestoreWizard
         wizard = RestoreWizard(self.app_admin.backup_mechanism, self)
@@ -474,7 +475,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def copy(self):
         self.activeMdiChild().widget().copy_selected_rows()
-        
+
     def select_all(self):
         self.activeMdiChild().widget().select_all_rows()
 
@@ -524,12 +525,12 @@ class MainWindow(QtGui.QMainWindow):
 
     def updateValue(self):
         from camelot.view.wizard.update_value import UpdateValueWizard
-        
+
         admin = self.activeMdiChild().widget().get_admin()
         selection_getter = self.activeMdiChild().widget().get_selection_getter()
         wizard = UpdateValueWizard(admin=admin, selection_getter=selection_getter)
         wizard.exec_()
-    
+
     def exportToExcel(self):
         """creates an excel file from the view"""
         widget = self.activeMdiChild().widget()
@@ -549,7 +550,7 @@ class MainWindow(QtGui.QMainWindow):
         self.activeMdiChild().widget().importFromFile()
 
     def createMenus(self):
-        
+
         self.fileMenu = self.menuBar().addMenu(_('&File'))
         addActions(self.fileMenu, (
             self.closeAct,
@@ -580,7 +581,7 @@ class MainWindow(QtGui.QMainWindow):
         self.editMenu = self.menuBar().addMenu(_('&Edit'))
 
         addActions(self.editMenu, (self.copyAct, self.updateValueAct, self.selectAllAct))
-        
+
         self.viewMenu = self.menuBar().addMenu(_('View'))
         addActions(self.viewMenu, (self.sessionRefreshAct,))
         gotoMenu = self.viewMenu.addMenu(_('Go To'))
@@ -601,7 +602,7 @@ class MainWindow(QtGui.QMainWindow):
         self.menuBar().addSeparator()
 
         self.helpMenu = self.menuBar().addMenu(_('&Help'))
-        
+
         help_menu_actions = [self.helpAct, self.aboutAct]
         if self.app_admin.get_whats_new():
             help_menu_actions.append(self.whats_new_action)
@@ -678,7 +679,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def get_tool_bar(self):
         return self.tool_bar
-    
+
     def createToolBars(self):
         #
         # All actions are put in one toolbar, to ease unit testing and
