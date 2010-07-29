@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -38,7 +38,7 @@ class SimpleSearchControl(QtGui.QWidget):
   """
 
     expand_search_options_signal = QtCore.SIGNAL('expand_search_options()')
-    
+
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
         layout = QtGui.QHBoxLayout()
@@ -78,7 +78,7 @@ class SimpleSearchControl(QtGui.QWidget):
         self.cancel_button.setAutoRaise(True)
         self.connect(self.cancel_button,
                      QtCore.SIGNAL('clicked()'),
-                     self.emit_cancel)        
+                     self.emit_cancel)
 
         # Setup layout
         layout.addWidget(self.search_button)
@@ -93,7 +93,7 @@ class SimpleSearchControl(QtGui.QWidget):
 
     def emit_expand_search_options(self):
         self.emit(self.expand_search_options_signal)
-        
+
     def emit_search(self):
         text = unicode(self.search_input.user_input())
         self.emit(QtCore.SIGNAL('search'), text)

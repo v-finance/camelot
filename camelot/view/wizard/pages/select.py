@@ -27,7 +27,6 @@
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4.QtGui import QDesktopServices
 
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext_lazy as _
@@ -45,7 +44,7 @@ class SelectFilePage(QtGui.QWizardPage):
     icon = Icon('tango/32x32/mimetypes/x-office-spreadsheet.png')
     caption = _('Select file')
     save = False
-    
+
     def __init__(self, parent=None):
         super(SelectFilePage, self).__init__(parent)
         self.setTitle( unicode(self.title) )
