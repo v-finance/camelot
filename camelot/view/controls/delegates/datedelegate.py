@@ -15,18 +15,20 @@ class DateDelegate(CustomDelegate):
     
     editor = editors.DateEditor
     
-    def __init__(self, parent=None, editable=True, **kwargs):
-        CustomDelegate.__init__(self, parent, editable, **kwargs)
+    def __init__(self, parent=None, **kwargs):
+        CustomDelegate.__init__(self, parent, **kwargs)
         self.date_format = local_date_format()
         self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 4)  + (camelot_small_icon_width*2) * 2
     
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        
         dateObj = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-        
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
+        field_attributes = variant_to_pyobject(index.model().data(index, Qt.UserRole))
+        editable, background_color = True, None
+        if field_attributes != ValueLoading:
+            editable = field_attributes.get( 'editable', True )
+            background_color = field_attributes.get( 'background_color', None )
         
         if dateObj not in (None, ValueLoading):
             formattedDate = QtCore.QDate(dateObj).toString(self.date_format)
@@ -39,14 +41,14 @@ class DateDelegate(CustomDelegate):
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
             fontColor = QtGui.QColor()
-            if self.editable:
+            if editable:
                 Color = option.palette.highlightedText().color()
                 fontColor.setRgb(Color.red(), Color.green(), Color.blue())
             else:
                 fontColor.setRgb(130,130,130)
         else:
-            if self.editable:
-                painter.fillRect(option.rect, background_color)
+            if editable:
+                painter.fillRect(option.rect, background_color or option.palette.base())
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(0,0,0)
             else:
