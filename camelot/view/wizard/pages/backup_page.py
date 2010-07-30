@@ -25,8 +25,6 @@
 #
 #  ==================================================================================
 
-import datetime
-import os
 import os.path
 import re
 
@@ -49,14 +47,6 @@ def getBackupRootAndFilenameTemplate():
     else:
         template = 'default-backup-%(text)s.sqlite'
     return (root, template)
-
-def getExtension():
-    import settings
-    if hasattr(settings, 'CAMELOT_BACKUP_EXTENSION'):
-        extension = settings.CAMELOT_BACKUP_EXTENSION
-    else:
-        extension = 'sqlite'
-    return extension
 
 class LabelLineEdit(QtGui.QLineEdit):
     _file_name = ''
@@ -111,10 +101,10 @@ class Page(QtGui.QWizardPage):
         )
     icon = Icon('tango/32x32/actions/document-save.png')
     caption = _('Select file')
+    extension = '.sqlite'
 
     def __init__(self, parent=None):
         super(Page,  self).__init__(parent)
-        self._extension = getExtension()
         
         self.setTitle( unicode(self.title) )
         self.setSubTitle( unicode(self.sub_title) )
@@ -166,8 +156,6 @@ class Page(QtGui.QWizardPage):
     def _customButtonClicked(self):
         settings = QtCore.QSettings()
         dir = settings.value('custom_filename').toString()
-        #if not os.path.exists(dir)
-        #    dir = QDesktopServices.displayName(QDesktopServices.DocumentsLocation)
         path = self._setPath(dir)
         if path:
             self._custom_edit.setText(QtCore.QDir.toNativeSeparators(path))
@@ -206,15 +194,10 @@ class SelectRestoreFilePage(Page):
             return self._custom_edit.text() != ''
 
     def _setPath(self, dir):
-        dlg = OpenFileDialog(
-            self,
-            unicode(self.caption),
-            dir,
-            ugettext('Database files (*%s);;All files (*.*)' % self._extension)
-        )
-        if dlg.exec_():
-            return dlg.selectedFiles()[0]
-        return None
+        path = QtGui.QFileDialog.getOpenFileName(
+                self, unicode(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
+            )
+        return path
 
 class SelectBackupFilePage(Page):
     def _setupUi(self):
@@ -235,7 +218,10 @@ class SelectBackupFilePage(Page):
             self.wizard().filename = self._default_edit.filename()
 
     def _makeDefaultLabel(self):
-        return datetime.date.today().strftime("%d-%m-%Y")
+        locale = QtCore.QLocale()
+        format = locale.dateTimeFormat(locale.ShortFormat)
+        formatted_date_time = QtCore.QDateTime.currentDateTime().toString(format)
+        return unicode(formatted_date_time).replace('/', '-').replace('\\', '')
 
     def _showWidgets(self, selection):
         default_selected = self._isDefaultSelected(selection)
@@ -253,26 +239,7 @@ class SelectBackupFilePage(Page):
             return self._custom_edit.text() != ''
 
     def _setPath(self, dir):
-        dlg = SaveFileDialog(
-            self, 
-            unicode(self.caption), 
-            dir,
-            ugettext('Database files (*.%s);;All files (*.*)' % self._extension),
-            self._extension
-        )
-        if dlg.exec_():
-            return dlg.selectedFiles()[0]
-        return None
-
-class SaveFileDialog(QtGui.QFileDialog):
-    def __init__(self, parent, caption, dir, filter, extension):
-        super(SaveFileDialog, self).__init__(parent, caption, dir)
-        self.setNameFilter(filter)
-        self.setAcceptMode(self.AcceptSave)
-        self.setDefaultSuffix(extension)
-
-class OpenFileDialog(QtGui.QFileDialog):
-    def __init__(self, parent, caption, dir, filter):
-        super(OpenFileDialog, self).__init__(parent, caption, dir)
-        self.setFileMode(self.ExistingFile)
-        self.setNameFilter(filter)
+        path = QtGui.QFileDialog.getSaveFileName(
+                self, unicode(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
+            )
+        return path
