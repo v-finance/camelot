@@ -28,10 +28,12 @@
 """Utility functions"""
 
 import xlrd
-import codecs
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+
+import logging
+logger = logging.getLogger('camelot.core.utils')
 
 
 def create_constant_function(constant):
@@ -177,6 +179,7 @@ def xls2list(xf):
                 value = xlrd.xldate_as_tuple(cell.value, datemode=0)
             else:
                 value = cell.value
-        vector.append((type, value))
-    matrix.append(vector)
+            #vector.append((type, value))
+            vector.append(value)
+        matrix.append(vector)
     return matrix

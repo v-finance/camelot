@@ -27,12 +27,8 @@
 
 """Module for managing imports"""
 
-import logging
-
 import csv
 import codecs
-
-from xlrd.xldate import xldate_as_tuple
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -49,7 +45,7 @@ from camelot.view.wizard.pages.progress_page import ProgressPage
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.proxy.collection_proxy import CollectionProxy
 
-#logging.basicConfig(level=logging.DEBUG)
+import logging
 logger = logging.getLogger('camelot.view.wizard.importwizard')
 
 
