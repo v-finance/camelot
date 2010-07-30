@@ -33,6 +33,9 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
         if value:
             self.setEntity( value, propagate = False )
       
+    def set_field_attributes(self, **kwargs):
+        pass
+        
     def setEntity( self, entity_instance_getter, propagate = True ):
   
         def create_instance_getter( entity_instance ):

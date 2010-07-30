@@ -73,8 +73,8 @@ class FloatEditor(CustomEditor):
     def set_field_attributes(self, editable=True, background_color=None, prefix='', suffix='', **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.spinBox.setPrefix(u'%s '%(prefix.lstrip()))
-        self.spinBox.setSuffix(u' %s'%(suffix.rstrip()))
+        self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
+        self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
         
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
