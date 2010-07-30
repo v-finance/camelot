@@ -524,7 +524,9 @@ class TableView( AbstractView  ):
         
         def rebuild_query():
             query = self.admin.get_query()
-            query = self.header.decorate_query(query)
+            # a table view is not required to have a header
+            if self.header:
+                query = self.header.decorate_query(query)
             filters = self.findChild(FilterList, 'filters')
             if filters:
                 query = filters.decorate_query( query )
