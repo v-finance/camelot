@@ -81,7 +81,11 @@ class FormWidget(QtGui.QWidget):
         # define context menu and resp. action
         self.setContextMenuPolicy(Qt.ActionsContextMenu)
         export_action = ContextMenuAction(self, _('Export form'))
-        self.connect(export_action, QtCore.SIGNAL('triggered()'), self.export_form)
+        self.connect(
+            export_action,
+            QtCore.SIGNAL('triggered()'),
+            self.export_form
+        )
         self.addAction(export_action)
 
     def export_form(self):
@@ -99,7 +103,7 @@ class FormWidget(QtGui.QWidget):
 
                 obj = self._model._get_object(row)
                 print ' - '.join(self._form.render_ooxml(obj, delegates))
-                # open_document_in_word(self._form.render_ooxml(obj, delegates))
+                #open_document_in_word(self._form.render_ooxml(obj, delegates))
 
             return ooxml_export
 
@@ -113,8 +117,16 @@ class FormWidget(QtGui.QWidget):
         self._model = model
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
         self.connect(self._model, QtCore.SIGNAL(sig), self._data_changed)
-        self.connect(self._model, QtCore.SIGNAL('layoutChanged()' ), self._layout_changed)
-        self.connect(self._model, self._model.item_delegate_changed_signal, self._item_delegate_changed)
+        self.connect(
+            self._model,
+            QtCore.SIGNAL('layoutChanged()' ),
+            self._layout_changed
+        )
+        self.connect(
+            self._model,
+            self._model.item_delegate_changed_signal,
+            self._item_delegate_changed
+        )
         self._widget_mapper.setModel(model)
 
         def get_columns_and_form():
@@ -136,7 +148,8 @@ class FormWidget(QtGui.QWidget):
         self.emit(self.changed_signal)
 
     def _item_delegate_changed(self):
-        from camelot.view.controls.delegates.delegatemanager import DelegateManager
+        from camelot.view.controls.delegates.delegatemanager import \
+            DelegateManager
         self._delegate = self._model.getItemDelegate()
         assert self._delegate
         assert isinstance(self._delegate, DelegateManager)
@@ -177,9 +190,10 @@ class FormWidget(QtGui.QWidget):
         from camelot.view.controls.field_label import FieldLabel
         from camelot.view.controls.editors.wideeditor import WideEditor
         #
-        # Dirty trick to make form views work during unit tests, since unit tests
-        # have no event loop running, so the delegate will never be set, so we get
-        # it and are sure it will be there if we are running without threads
+        # Dirty trick to make form views work during unit tests, since unit
+        # tests have no event loop running, so the delegate will never be set,
+        # so we get it and are sure it will be there if we are running without
+        # threads
         #
         if not self._delegate:
             self._delegate = self._model.getItemDelegate()
@@ -197,19 +211,32 @@ class FormWidget(QtGui.QWidget):
         option.version = 5
 
         #
-        # this loop can take a while to complete, so processEvents is called regulary
+        # this loop can take a while to complete, so processEvents is called
+        # regulary
         #
         for i, (field_name, field_attributes ) in enumerate( self._columns):
 #            if i%10==0:
-#                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ExcludeSocketNotifiers, 100)
+#                QtCore.QCoreApplication.processEvents(
+#                    QtCore.QEventLoop.ExcludeSocketNotifiers,
+#                    100
+#                )
             model_index = self._model.index(self._index, i)
             hide_title = False
             if 'hide_title' in field_attributes:
                 hide_title = field_attributes['hide_title']
             widget_label = None
-            widget_editor = self._delegate.createEditor(self, option, model_index)
+            widget_editor = self._delegate.createEditor(
+                self,
+                option,
+                model_index
+            )
             if not hide_title:
-                widget_label = FieldLabel(field_name, field_attributes['name'], field_attributes, self._admin)
+                widget_label = FieldLabel(
+                    field_name,
+                    field_attributes['name'],
+                    field_attributes,
+                    self._admin
+                )
                 if not isinstance(widget_editor, WideEditor):
                     widget_label.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
 
@@ -232,11 +259,11 @@ class FormWidget(QtGui.QWidget):
 
 
 class FormView(AbstractView):
-    """A FormView is the combination of a FormWidget, possible actions and menu items
+    """A FormView is the combination of a FormWidget, possible actions and menu
+    items
 
-.. form_widget: The class to be used as a the form widget inside the form view
-
-    """
+    .. form_widget: The class to be used as a the form widget inside the form
+    view"""
 
     form_widget = FormWidget
 
@@ -271,7 +298,10 @@ class FormView(AbstractView):
 
         def get_title():
             obj = self.getEntity()
-            return u'%s %s' % (self.title_prefix, self.admin.get_verbose_identifier(obj))
+            return u'%s %s' % (
+                self.title_prefix,
+                self.admin.get_verbose_identifier(obj)
+            )
 
         post(get_title, self.change_title)
 
@@ -286,7 +316,11 @@ class FormView(AbstractView):
             self.actions_widget = ActionsBox(self, self.getEntity)
             action_widgets = self.actions_widget.setActions(actions)
             for action_widget in action_widgets:
-                self.connect(self._form, FormWidget.changed_signal, action_widget.changed)
+                self.connect(
+                    self._form,
+                    FormWidget.changed_signal,
+                    action_widget.changed
+                )
                 action_widget.changed()
             side_panel_layout.insertWidget(1, self.actions_widget)
             side_panel_layout.addStretch()
@@ -321,7 +355,9 @@ class FormView(AbstractView):
     def showMessage(self, valid):
         import sip
         if not valid:
-            reply = self.validator.validityDialog(self._form.get_index(), self).exec_()
+            reply = self.validator.validityDialog(
+                self._form.get_index(), self
+            ).exec_()
             if reply == QtGui.QMessageBox.Discard:
             # clear mapping to prevent data being written again to the model,
             # then we reverted the row
@@ -372,8 +408,9 @@ class FormView(AbstractView):
             def wrapped_in_table(env, context, value):
                 if isinstance(value, list):
                     return u'<table><tr><td>' + \
-                           u'</td></tr><tr><td>'.join([unicode(e) for e in value]) + \
-                           u'</td></tr></table>'
+                           u'</td></tr><tr><td>'.join(
+                                [unicode(e) for e in value]
+                           ) + u'</td></tr></table>'
                 return unicode(value)
 
             return wrapped_in_table
