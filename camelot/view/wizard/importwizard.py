@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -32,10 +32,13 @@ import logging
 import csv
 import codecs
 
+from xlrd.xldate import xldate_as_tuple
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtGui import QColor
 
+from camelot.core.utils import xls2list
 from camelot.core.utils import ugettext as _
 from camelot.core.utils import ugettext_lazy
 
@@ -54,10 +57,9 @@ class RowData(object):
     """Class representing the data in a single row of the imported file as an
     object with attributes column_1, column_2, ..., each representing the data
     in a single column of that row.
-    
-    since the imported file might contain less columns than expected, the RowData
-    object returns None for not existing attributes
-    """
+
+    since the imported file might contain less columns than expected, the
+    RowData object returns None for not existing attributes"""
 
     def __init__(self, row_number, row_data):
         """:param row_data: a list containing the data
@@ -104,8 +106,7 @@ class UnicodeReader:
 
 
 class CsvCollectionGetter(object):
-    """class that when called returns the data in filename as a list of RowData
-    objects"""
+    """Returns data from csv file as a list of RowData objects"""
 
     def __init__(self, filename):
         self.filename = filename
@@ -115,7 +116,7 @@ class CsvCollectionGetter(object):
         if self._data==None:
             self._data = []
             import chardet
-            
+
             enc = (
                 chardet.detect(open(self.filename).read())['encoding']
                 or 'utf-8'
@@ -130,15 +131,35 @@ class CsvCollectionGetter(object):
         return self._data
 
 
+class XlsCollectionGetter(object):
+    """Returns the data from excel file as a list of RowData objects"""
+
+    def __init__(self, filename, encoding='utf-8'):
+        self.filename = filename
+        self.encoding = encoding
+        self._data = None
+
+    def __call__(self):
+        if self._data == None:
+            rows = xls2list(self.filename)[1:] # we skip the first row :)
+
+            self._data = [
+                RowData(i, row_data)
+                for i, row_data in enumerate(rows)
+            ]
+
+        return self._data
+
+
 class RowDataAdminDecorator(object):
     """Decorator that transforms the Admin of the class to be imported to an
     Admin of the RowData objects to be used when previewing and validating the
     data to be imported.
-    
+
     based on the field attributes of the original mode, it will turn the background color pink
     if the data is invalid for being imported.
     """
-    
+
     invalid_color = QColor('Pink')
 
     def __init__(self, object_admin):
@@ -156,9 +177,9 @@ class RowDataAdminDecorator(object):
         as invalid.
         """
         from camelot.admin.validator.object_validator import ObjectValidator
-        
+
         class NewObjectValidator(ObjectValidator):
-            
+
             def objectValidity(self, entity_instance):
                 for _field_name, attributes in self.admin.get_columns():
                     background_color_getter = attributes.get('background_color', None)
@@ -168,23 +189,23 @@ class RowDataAdminDecorator(object):
                             logger.debug('we have an invalid field')
                             return ['invalid field']
                 return []
-            
+
         return NewObjectValidator(self, model)
-    
+
     def get_fields(self):
         return self.get_columns()
-    
+
     def flush(self, obj):
         """When flush is called, don't do anything, since we'll only save the object
         when importing them for real"""
         pass
-    
+
     def create_background_color(self, attributes):
         """
         :param attributes: the attributes for the field
         :return: a function that can be used as the background_color field attribute
         """
-    
+
         def background_color(o):
             """If the string is not convertible with from_string, or
             the result is None when a value is required, set the
@@ -203,18 +224,18 @@ class RowDataAdminDecorator(object):
                         return None
             except:
                 return self.invalid_color
-        
+
         return background_color
-                    
+
     def get_columns(self):
         if self._columns:
             return self._columns
-        
+
         original_columns = self._object_admin.get_columns()
 
         def create_getter(i):
             return lambda o:getattr(o, 'column_%i'%i)
-            
+
         def new_field_attributes(i, original_field_attributes, original_field):
             from camelot.view.controls import delegates
             attributes = dict(original_field_attributes)
@@ -222,7 +243,7 @@ class RowDataAdminDecorator(object):
             attributes['python_type'] = str
             attributes['original_field'] = original_field
             attributes['getter'] = create_getter(i)
-            
+
             # remove some attributes that might disturb the import wizard
             for attribute in ['background_color', 'tooltip']:
                 attributes[attribute] = None
@@ -241,7 +262,7 @@ class RowDataAdminDecorator(object):
         ]
 
         self._columns = new_columns
-        
+
         return new_columns
 
 
@@ -274,7 +295,7 @@ class DataPreviewPage(QtGui.QWizardPage):
         )
         self._note = NoteEditor()
         self._note.set_value(None)
-        
+
         ly = QtGui.QVBoxLayout()
         ly.addWidget(self.previewtable)
         ly.addWidget(self._note)
@@ -283,11 +304,11 @@ class DataPreviewPage(QtGui.QWizardPage):
         self.setCommitPage(True)
         self.setButtonText(QtGui.QWizard.CommitButton, _('Import'))
         self.update_complete()
-        
+
     def validate_all_rows(self):
         validator = self.model.get_validator()
         post(validator.validate_all_rows, self.update_complete)
-        
+
     def update_complete(self, *args):
         self._complete = (self.model.get_validator().number_of_invalid_rows()==0)
         self.emit(QtCore.SIGNAL('completeChanged()'))
@@ -295,7 +316,7 @@ class DataPreviewPage(QtGui.QWizardPage):
             self._note.set_value(None)
         else:
             self._note.set_value(_('Please correct the data above before proceeding with the import.<br/>Incorrect cells have a pink background.'))
-        
+
     def initializePage(self):
         """Gets all info needed from SelectFilePage and feeds table"""
         filename = self.field('datasource').toString()
@@ -304,10 +325,10 @@ class DataPreviewPage(QtGui.QWizardPage):
         self.model.set_collection_getter(self.collection_getter(filename))
         self.previewtable.set_value(self.model)
         self.validate_all_rows()
-        
+
     def validatePage(self):
-        answer = QtGui.QMessageBox.question(self, 
-                                           _('Proceed with import'), 
+        answer = QtGui.QMessageBox.question(self,
+                                           _('Proceed with import'),
                                            _('Importing data cannot be undone,\nare you sure you want to continue'),
                                            QtGui.QMessageBox.Cancel,
                                            QtGui.QMessageBox.Ok,
@@ -319,12 +340,13 @@ class DataPreviewPage(QtGui.QWizardPage):
     def isComplete(self):
         return self._complete
 
+
 class FinalPage(ProgressPage):
     """FinalPage is the final page in the import process"""
-    
+
     title = ugettext_lazy('Import Progress')
     sub_title = ugettext_lazy('Please wait while data is being imported.')
-    
+
     def __init__(self, parent=None, model=None, admin=None):
         """
         :model: the source model from which to import data
@@ -352,6 +374,7 @@ class FinalPage(ProgressPage):
             self.admin.add(new_entity_instance)
             self.admin.flush(new_entity_instance)
             self.emit(self.update_progress_signal, i, _('Row %i of %i imported')%(i+1, len(collection)))
+
 
 class DataPreviewCollectionProxy(CollectionProxy):
     header_icon = None
@@ -382,7 +405,7 @@ class ImportWizard(QtGui.QWizard):
         #
         desktop = QtCore.QCoreApplication.instance().desktop()
         self.setMinimumSize(desktop.width()*2/3, desktop.height()*2/3)
-        
+
         row_data_admin = RowDataAdminDecorator(admin)
         model = DataPreviewCollectionProxy(
             row_data_admin,
@@ -398,7 +421,7 @@ class ImportWizard(QtGui.QWizard):
         Add all pages to the import wizard, reimplement this method to add
         custom pages to the wizard.  This method is called in the __init__method, to add
         all pages to the wizard.
-        
+
         :param model: the CollectionProxy that will be used to display the to be imported data
         :param admin: the admin of the destination data
         """
@@ -410,4 +433,4 @@ class ImportWizard(QtGui.QWizard):
                 collection_getter=self.collection_getter
             )
         )
-        self.addPage(FinalPage(parent=self, model=model, admin=admin))        
+        self.addPage(FinalPage(parent=self, model=model, admin=admin))

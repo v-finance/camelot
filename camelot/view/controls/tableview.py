@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -30,23 +30,27 @@
 import logging
 logger = logging.getLogger( 'camelot.view.controls.tableview' )
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtGui import QSizePolicy
-from PyQt4.QtCore import SIGNAL
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
+from PyQt4.QtCore import SIGNAL
+from PyQt4.QtGui import QSizePolicy
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.filterlist import filter_changed_signal
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
-from camelot.view.model_thread import model_function, gui_function, post
+from camelot.view.model_thread import post
+from camelot.view.model_thread import gui_function
+from camelot.view.model_thread import model_function
 from camelot.core.utils import ugettext as _
 
 from search import SimpleSearchControl
 
+
 class TableWidget( QtGui.QTableView):
     """A widget displaying a table, to be used within a TableView"""
-  
+
     def __init__( self, parent = None ):
         QtGui.QTableView.__init__( self, parent )
         logger.debug( 'create TableWidget' )
@@ -60,7 +64,7 @@ class TableWidget( QtGui.QTableView):
         self._minimal_row_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing() + 10
         self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
         self.connect( self.horizontalHeader(), QtCore.SIGNAL('sectionClicked(int)'), self.horizontal_section_clicked )
-    
+
     def horizontal_section_clicked( self, logical_index ):
         """Update the sorting of the model and the header"""
         header = self.horizontalHeader()
@@ -73,11 +77,11 @@ class TableWidget( QtGui.QTableView):
             order = header.sortIndicatorOrder()
         header.setSortIndicator( logical_index, order )
         self.model().sort( logical_index, order )
-        
+
     def setModel( self, model ):
         QtGui.QTableView.setModel( self, model )
         self.connect( self.selectionModel(), SIGNAL( 'currentChanged(const QModelIndex&,const QModelIndex&)' ), self.activated )
-    
+
     def activated( self, selectedIndex, previousSelectedIndex ):
         option = QtGui.QStyleOptionViewItem()
         newSize = self.itemDelegate( selectedIndex ).sizeHint( option, selectedIndex )
@@ -87,30 +91,30 @@ class TableWidget( QtGui.QTableView):
             previousRow = previousSelectedIndex.row()
             self.setRowHeight( previousRow, oldSize.height() )
         self.setRowHeight( row, newSize.height() )
-    
+
 class RowsWidget( QtGui.QLabel ):
     """Widget that is part of the header widget, displaying the number of rows
     in the table view"""
-  
+
     _number_of_rows_font = QtGui.QApplication.font()
-  
+
     def __init__( self, parent ):
         QtGui.QLabel.__init__( self, parent )
         self.setFont( self._number_of_rows_font )
-    
+
     def setNumberOfRows( self, rows ):
         self.setText( _('(%i rows)')%rows )
-    
+
 class HeaderWidget( QtGui.QWidget ):
     """HeaderWidget for a tableview, containing the title, the search widget,
     and the number of rows in the table"""
-  
+
     search_widget = SimpleSearchControl
     rows_widget = RowsWidget
-  
+
     _title_font = QtGui.QApplication.font()
     _title_font.setBold( True )
-  
+
     def __init__( self, parent, admin ):
         QtGui.QWidget.__init__( self, parent )
         self._admin = admin
@@ -136,7 +140,7 @@ class HeaderWidget( QtGui.QWidget ):
         self.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
         self.setNumberOfRows( 0 )
         self.search = search
-        
+
     def _fill_expanded_search_options(self, columns):
         from camelot.view.controls.filter_operator import FilterOperator
         layout = QtGui.QHBoxLayout()
@@ -148,10 +152,10 @@ class HeaderWidget( QtGui.QWidget ):
         layout.addStretch()
         self._expanded_search.setLayout( layout )
         self._expanded_filters_created = True
-        
+
     def _filter_changed(self):
         self.emit(QtCore.SIGNAL('filters_changed'))
-        
+
     def decorate_query(self, query):
         """Apply expanded filters on the query"""
         if self._expanded_filters_created:
@@ -159,7 +163,7 @@ class HeaderWidget( QtGui.QWidget ):
                 if self._expanded_search.layout().itemAt(i).widget():
                     query = self._expanded_search.layout().itemAt(i).widget().decorate_query(query)
         return query
-            
+
     def expand_search_options(self):
         if self._expanded_search.isHidden():
             if not self._expanded_filters_created:
@@ -167,61 +171,61 @@ class HeaderWidget( QtGui.QWidget ):
             self._expanded_search.show()
         else:
             self._expanded_search.hide()
-        
+
     @gui_function
     def setNumberOfRows( self, rows ):
         if self.number_of_rows:
             self.number_of_rows.setNumberOfRows( rows )
-      
+
 class TableView( AbstractView  ):
     """A generic tableview widget that puts together some other widgets.  The behaviour of this class and
   the resulting interface can be tuned by specifying specific class attributes which define the underlying
   widgets used ::
-  
+
     class MovieRentalTableView(TableView):
       title_format = 'Grand overview of recent movie rentals'
-  
+
   The attributes that can be specified are :
-  
+
   .. attribute:: header_widget
-  
+
   The widget class to be used as a header in the table view::
-   
+
     header_widget = HeaderWidget
-    
+
   .. attribute:: table_widget
-  
+
   The widget class used to display a table within the table view ::
-  
+
   table_widget = TableWidget
-  
+
   .. attribute:: title_format
-  
+
   A string used to format the title of the view ::
-  
+
   title_format = '%(verbose_name_plural)s'
-  
+
   .. attribute:: table_model
-  
+
   A class implementing QAbstractTableModel that will be used as a model for the table view ::
-  
+
     table_model = QueryTableProxy
-  
+
   - emits the row_selected signal when a row has been selected
   """
-  
+
     header_widget = HeaderWidget
     table_widget = TableWidget
-  
+
     #
-    # The proxy class to use 
+    # The proxy class to use
     #
     table_model = QueryTableProxy
     #
     # Format to use as the window title
     #
     title_format = '%(verbose_name_plural)s'
-  
+
     def __init__( self, admin, search_text = None, parent = None ):
         AbstractView.__init__( self, parent )
         self.admin = admin
@@ -249,7 +253,7 @@ class TableView( AbstractView  ):
         self.table = None
         self.filters_layout = QtGui.QVBoxLayout()
         self.filters_layout.setSpacing( 0 )
-        self.filters_layout.setMargin( 0 )     
+        self.filters_layout.setMargin( 0 )
         self.actions = None
         self._table_model = None
         table_widget.setLayout( self.table_layout )
@@ -273,14 +277,14 @@ class TableView( AbstractView  ):
         #self.setFocusProxy(table_widget)
         #self.setFocus( QtCore.Qt.OtherFocusReason )
         post( self.admin.get_subclass_tree, self.setSubclassTree )
-    
+
     def activate_search(self):
         self.header.search.setFocus(QtCore.Qt.ShortcutFocusReason)
-        
+
     @model_function
     def get_title( self ):
         return self.title_format % {'verbose_name_plural':self.admin.get_verbose_name_plural()}
-    
+
     @gui_function
     def setSubclassTree( self, subclasses ):
         if len( subclasses ) > 0:
@@ -289,33 +293,33 @@ class TableView( AbstractView  ):
             class_tree = SubclassTree( self.admin, splitter )
             splitter.insertWidget( 0, class_tree )
             self.connect( class_tree, SIGNAL( 'subclassClicked' ), self.set_admin )
-      
+
     def sectionClicked( self, section ):
         """emits a row_selected signal"""
         self.emit( SIGNAL( 'row_selected' ), section )
-    
+
     def copy_selected_rows( self ):
         """Copy the selected rows in this tableview"""
         logger.debug( 'delete selected rows called' )
         if self.table and self._table_model:
             for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
                 self._table_model.copy_row( row )
-                
+
     def select_all_rows( self ):
         self.table.selectAll()
-            
+
     def create_table_model( self, admin ):
         """Create a table model for the given admin interface"""
         return self.table_model( admin,
                                  None,
                                  admin.get_columns )
-    
+
     def get_admin(self):
         return self.admin
-    
+
     def get_model(self):
         return self._table_model
-    
+
     @gui_function
     def set_admin( self, admin ):
         """Switch to a different subclass, where admin is the admin object of the
@@ -337,13 +341,13 @@ class TableView( AbstractView  ):
         self.connect( self._table_model, QtCore.SIGNAL( 'layoutChanged()' ), self.tableLayoutChanged )
         self.tableLayoutChanged()
         self.table_layout.insertWidget( 1, self.table )
-    
+
         def get_filters_and_actions():
             return ( admin.get_filters(), admin.get_list_actions() )
-      
+
         post( get_filters_and_actions,  self.set_filters_and_actions )
         post( admin.get_list_charts, self.setCharts )
-    
+
     @gui_function
     def tableLayoutChanged( self ):
         logger.debug('tableLayoutChanged')
@@ -354,7 +358,7 @@ class TableView( AbstractView  ):
             self.table.setItemDelegate( item_delegate )
         for i in range( self._table_model.columnCount() ):
             self.table.setColumnWidth( i, self._table_model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
-      
+
     @gui_function
     def setCharts( self, charts ):
         """creates and display charts"""
@@ -426,16 +430,16 @@ class TableView( AbstractView  ):
         confirmation_message = self.admin.get_confirm_delete()
         confirmed = True
         if confirmation_message:
-            if QtGui.QMessageBox.question(self, 
-                                          _('Please confirm'), 
-                                          unicode(confirmation_message), 
-                                          QtGui.QMessageBox.Yes, 
+            if QtGui.QMessageBox.question(self,
+                                          _('Please confirm'),
+                                          unicode(confirmation_message),
+                                          QtGui.QMessageBox.Yes,
                                           QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
                 confirmed = False
         if confirmed:
             for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
                 self._table_model.removeRow( row )
-      
+
     @gui_function
     def newRow( self ):
         """Create a new row in the tableview"""
@@ -454,12 +458,12 @@ class TableView( AbstractView  ):
         del self.table_layout
         del self.table
         del self._table_model
-        event.accept()  
-    
+        event.accept()
+
     def selectTableRow( self, row ):
         """selects the specified row"""
         self.table.selectRow( row )
-    
+
     def makeImport(self):
         pass
 #        for row in data:
@@ -474,56 +478,56 @@ class TableView( AbstractView  ):
 #            o.genre = ""
 #            from sqlalchemy.orm.session import Session
 #            Session.object_session(o).flush([o])
-#    
+#
 #    post( makeImport )
-    
+
     def selectedTableIndexes( self ):
         """returns a list of selected rows indexes"""
         return self.table.selectedIndexes()
-    
+
     def getColumns( self ):
         """return the columns to be displayed in the table view"""
         return self.admin.get_columns()
-    
+
     def getData( self ):
         """generator for data queried by table model"""
         for d in self._table_model.getData():
             yield d
-      
+
     def getTitle( self ):
         """return the name of the entity managed by the admin attribute"""
         return self.admin.get_verbose_name()
-    
+
     def viewFirst( self ):
         """selects first row"""
         self.selectTableRow( 0 )
-    
+
     def viewLast( self ):
         """selects last row"""
         self.selectTableRow( self._table_model.rowCount() - 1 )
-    
+
     def viewNext( self ):
         """selects next row"""
         first = self.selectedTableIndexes()[0]
         next = ( first.row() + 1 ) % self._table_model.rowCount()
         self.selectTableRow( next )
-    
+
     def viewPrevious( self ):
         """selects previous row"""
         first = self.selectedTableIndexes()[0]
         prev = ( first.row() - 1 ) % self._table_model.rowCount()
         self.selectTableRow( prev )
-    
+
     def _set_query(self, query_getter):
         from camelot.view.proxy.queryproxy import QueryTableProxy
         if isinstance(self._table_model, QueryTableProxy):
             self._table_model.setQuery(query_getter)
         self.table.clearSelection()
-        
+
     def rebuild_query( self ):
         """resets the table model query"""
         from filterlist import FilterList
-        
+
         def rebuild_query():
             query = self.admin.get_query()
             # a table view is not required to have a header
@@ -536,22 +540,22 @@ class TableView( AbstractView  ):
                 query = self.search_filter( query )
             query_getter = lambda:query
             return query_getter
-      
+
         post( rebuild_query, self._set_query )
-    
+
     def startSearch( self, text ):
         """rebuilds query based on filtering text"""
         from camelot.view.search import create_entity_search_query_decorator
         logger.debug( 'search %s' % text )
         self.search_filter = create_entity_search_query_decorator( self.admin, text )
         self.rebuild_query()
-    
+
     def cancelSearch( self ):
         """resets search filtering to default"""
         logger.debug( 'cancel search' )
         self.search_filter = lambda q: q
         self.rebuild_query()
-        
+
     def get_selection_getter(self):
         """:return: a function that returns all the objects corresponging to the selected rows in the
         table """
@@ -561,9 +565,9 @@ class TableView( AbstractView  ):
             for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
                 selection.append( self._table_model._get_object(row) )
             return selection
-        
+
         return selection_getter
-    
+
     @gui_function
     def set_filters_and_actions( self, filters_and_actions ):
         """sets filters for the tableview"""
@@ -591,14 +595,14 @@ class TableView( AbstractView  ):
         #
         self.rebuild_query()
         if actions:
-            selection_getter = self.get_selection_getter()            
-            self.actions = ActionsBox( self, 
-                                       self._table_model.get_collection_getter(), 
+            selection_getter = self.get_selection_getter()
+            self.actions = ActionsBox( self,
+                                       self._table_model.get_collection_getter(),
                                        selection_getter )
-            
+
             self.actions.setActions( actions )
             self.filters_layout.addWidget( self.actions )
-      
+
     def to_html( self ):
         """generates html of the table"""
         table = [[getattr( row, col[0] ) for col in self.admin.get_columns()]
@@ -613,7 +617,7 @@ class TableView( AbstractView  ):
         env = Environment( loader = loader )
         tp = env.get_template( 'table_view.html' )
         return tp.render( context )
-            
+
     def importFromFile( self ):
         """"import data : the data will be imported in the activeMdiChild """
         logger.info( 'call import method' )

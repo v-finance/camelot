@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -27,7 +27,12 @@
 
 """Utility functions"""
 
-from PyQt4 import QtCore, QtGui
+import xlrd
+import codecs
+
+from PyQt4 import QtGui
+from PyQt4 import QtCore
+
 
 def create_constant_function(constant):
     return lambda:constant
@@ -38,39 +43,40 @@ class CollectionGetterFromObjectGetter(object):
     class is callable and will make sure object_getter is only called
     once, even if collection getter is called multiple times.
     """
-    
+
     def __init__(self, object_getter):
         """:param object_getter: a function that returns the object to
         be put in the collection.
         """
         self._object_getter = object_getter
         self._collection = None
-        
+
     def __call__(self):
         if not self._collection:
             self._collection = [self._object_getter()]
         return self._collection
-        
+
+
 """
 A Note on GUI Types
 
-Because QVariant is part of the QtCore library, it cannot provide conversion functions to data types defined in QtGui, such as 
-QColor, QImage, and QPixmap. In other words, there is no toColor() function. 
-Instead, you can use the QVariant.value() or the qVariantValue() template function. For example:
+Because QVariant is part of the QtCore library, it cannot provide conversion
+functions to data types defined in QtGui, such as QColor, QImage, and QPixmap.
+In other words, there is no toColor() function. Instead, you can use the
+QVariant.value() or the qVariantValue() template function. For example:
 
  QVariant variant;
  ...
  QColor color = variant.value<QColor>();
 
-The inverse conversion (e.g., from QColor to QVariant) is automatic for all data types supported by QVariant, including GUI-related 
-types:
+The inverse conversion (e.g., from QColor to QVariant) is automatic for all
+data types supported by QVariant, including GUI-related types:
 
  QColor color = palette().background().color();
  QVariant variant = color;
 """
 def variant_to_pyobject(qvariant=None):
-    """Try to convert a QVariant to a python object as good
-    as possible"""
+    """Try to convert a QVariant to a python object as good as possible"""
     import datetime
     if not qvariant:
         return None
@@ -87,7 +93,7 @@ def variant_to_pyobject(qvariant=None):
     elif type == QtCore.QVariant.Int:
         value = int(qvariant.toInt()[0])
     elif type == QtCore.QVariant.LongLong:
-        value = int(qvariant.toLongLong()[0])      
+        value = int(qvariant.toLongLong()[0])
     elif type == QtCore.QVariant.Double:
         value = float(qvariant.toDouble()[0])
     elif type == QtCore.QVariant.Bool:
@@ -110,13 +116,14 @@ def variant_to_pyobject(qvariant=None):
 #
 # Global dictionary containing all user defined translations in the
 # current locale
-#  
+#
 _translations_ = {}
 
 def set_translation(source, value):
     """Store a tranlation in the global translation dictionary"""
     _translations_[source] = value
-    
+
+
 def load_translations():
     """Fill the global dictionary of translations with all data from the
     database, to be able to do fast gui thread lookups of translations"""
@@ -127,27 +134,49 @@ def load_translations():
     for t in tls:
         if t.value:
             _translations_[t.source] = t.value
-  
+
+
 def ugettext(string_to_translate):
     """Translate the string_to_translate to the language of the current locale.
     This is a two step process.  First the function will try to get the
     translation out of the Translation entity, if this is not successfull, the
-    function will ask QCoreApplication to translate string_to_translate 
-    (which tries to get the translation from the .po files)"""
+    function will ask QCoreApplication to translate string_to_translate (which
+    tries to get the translation from the .po files)"""
     assert isinstance(string_to_translate, basestring)
     result = _translations_.get(string_to_translate, None)
     if not result:
-        result = unicode(QtCore.QCoreApplication.translate('', QtCore.QString(string_to_translate)))
+        result = unicode(QtCore.QCoreApplication.translate(
+            '',
+            QtCore.QString(string_to_translate)
+        ))
     return result
-  
+
+
 class ugettext_lazy(object):
-  
+
     def __init__(self, string_to_translate):
         assert isinstance(string_to_translate, basestring)
         self._string_to_translate = string_to_translate
-      
+
     def __str__(self):
         return ugettext(self._string_to_translate)
-    
+
     def __unicode__(self):
         return ugettext(self._string_to_translate)
+
+
+def xls2list(xf):
+    matrix = []
+    s = xlrd.open_workbook(xf).sheets()[0] # assume a single sheet xls doc
+    for r in range(s.nrows):
+        vector = []
+        for c in range(s.ncols):
+            cell = s.cell(r, c)
+            type = xlrd.sheet.ctype_text[cell.ctype]
+            if type == 'xldate':
+                value = xlrd.xldate_as_tuple(cell.value, datemode=0)
+            else:
+                value = cell.value
+        vector.append((type, value))
+    matrix.append(vector)
+    return matrix

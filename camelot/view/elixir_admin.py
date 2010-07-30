@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -55,7 +55,7 @@ class EntityAdmin(ObjectAdmin):
             logger.error(u'%s is not a mapped class, configured mappers include %s'%(self.entity, u','.join(mapped_entities)),
                          exc_info=exception)
             raise exception
-        
+
     @model_function
     def get_query(self):
         """:return: an sqlalchemy query for all the objects that should be
@@ -98,10 +98,10 @@ class EntityAdmin(ObjectAdmin):
         try:
             return self._field_attributes[field_name]
         except KeyError:
-            
+
             def create_default_getter(field_name):
                 return lambda o:getattr(o, field_name)
-        
+
             from camelot.view.controls import delegates
             #
             # Default attributes for all fields
@@ -387,7 +387,7 @@ class EntityAdmin(ObjectAdmin):
         """
 
         from PyQt4.QtCore import SIGNAL
-        
+
         from proxy.queryproxy import QueryTableProxy
         tableview = self.TableView(self)
 
@@ -405,7 +405,7 @@ class EntityAdmin(ObjectAdmin):
                 formview = tableview.admin.create_form_view(
                     title, model, index, parent
                 )
-                get_workspace().addSubWindow(formview)
+                #get_workspace().addSubWindow(formview)
                 formview.show()
 
             return openForm
@@ -417,7 +417,7 @@ class EntityAdmin(ObjectAdmin):
         )
 
         return tableview
-    
+
     @model_function
     def delete(self, entity_instance):
         """Delete an entity instance"""
@@ -463,11 +463,11 @@ class EntityAdmin(ObjectAdmin):
         if not session:
             logger.error('Programming Error : entity %s cannot be flushed because it has no session'%(unicode(entity_instance)))
         session.flush( [entity_instance] )
-        
-        
+
+
     @model_function
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()
         new_entity_instance.from_dict( entity_instance.to_dict(exclude=[c.name for c in self.mapper.primary_key]) )
-        return new_entity_instance        
+        return new_entity_instance
