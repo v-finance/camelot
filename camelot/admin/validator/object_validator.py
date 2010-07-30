@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -34,6 +34,7 @@ from PyQt4 import QtCore
 from camelot.view.fifo import Fifo
 from camelot.view.model_thread import post
 
+
 class ObjectValidator(QtCore.QObject):
     """A validator class for normal python objects.  By default this validator
     declares all objects valid.  Subclass this class and overwrite it's
@@ -41,7 +42,7 @@ class ObjectValidator(QtCore.QObject):
     """
 
     validity_changed_signal = QtCore.SIGNAL('validityChanged')
-    
+
     def __init__(self, admin, model, initial_validation=False):
         """
         :param verifiy_initial_validity: do an inital check to see if all rows in a model are valid, defaults to False,
@@ -54,7 +55,7 @@ class ObjectValidator(QtCore.QObject):
         self.connect( model, QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), self.data_changed )
         self.connect( model, QtCore.SIGNAL('layoutChanged()'), self.layout_changed )
         self._invalid_rows = set()
-        
+
         if initial_validation:
             post(self.validate_all_rows)
 
@@ -62,26 +63,26 @@ class ObjectValidator(QtCore.QObject):
         """Force validation of all rows in the model"""
         for row in range(self.model.getRowCount()):
             self.isValid(row)
-        
+
     def validate_invalid_rows(self):
         for row in copy(self._invalid_rows):
             self.isValid(row)
-            
+
     def layout_changed(self):
         post(self.validate_invalid_rows)
-        
+
     def data_changed(self, from_index, thru_index):
-        
+
         def create_validity_updater(from_row, thru_row):
-            
+
             def validity_updater():
                 for i in range(from_row, thru_row+1):
                     self.isValid(i)
-                    
+
             return validity_updater
-        
+
         post(create_validity_updater(from_index.row(), thru_index.row()))
-       
+
     def objectValidity(self, entity_instance):
         """:return: list of messages explaining invalid data
         empty list if object is valid
@@ -112,7 +113,7 @@ class ObjectValidator(QtCore.QObject):
                     elif (attributes['delegate'] == delegates.Many2OneDelegate) and (not value.id):
                         is_null = True
                     elif (attributes['delegate'] == delegates.VirtualAddressDelegate) and (not value[1]):
-                        is_null = True                    
+                        is_null = True
                     if is_null:
                         messages.append(u'%s is a required field' % (attributes['name']))
         logger.debug(u'messages : %s'%(u','.join(messages)))
@@ -123,7 +124,7 @@ class ObjectValidator(QtCore.QObject):
         :return: the number of invalid rows in a model, as they have been verified
         """
         return len(self._invalid_rows)
-        
+
     def isValid(self, row):
         """Verify if a row in a model is 'valid' meaning it could be flushed to
         the database

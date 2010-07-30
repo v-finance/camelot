@@ -268,7 +268,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             #sub_window = workspace.addSubWindow(form)
             #sub_window.show()
             self.new_form = form
-            form.setWindowTitle(admin.get_verbose_name())
+            form.setWindowTitle('New ' + admin.get_verbose_name())
             form.setParent(None)
             form.show()
 

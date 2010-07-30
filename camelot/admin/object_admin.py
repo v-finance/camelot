@@ -544,7 +544,7 @@ class ObjectAdmin(object):
         model = self.model( self,
                             create_collection_getter( object_getter, [] ),
                             self.get_fields )
-        return self.create_form_view( title, model, 0, parent ) 
+        return self.create_form_view(title, model, 0, parent)
 
     @gui_function
     def create_new_view(admin, parent=None, oncreate=None, onexpunge=None):
@@ -577,7 +577,7 @@ class ObjectAdmin(object):
             admin.get_fields,
             max_number_of_rows=1
         )
-        post( model.updateUnflushedRows )
+        post(model.updateUnflushedRows)
         validator = admin.create_validator(model)
 
         class NewForm(AbstractView):
@@ -649,9 +649,10 @@ class ObjectAdmin(object):
                         post(onexpunge_on_all)
                         self.validate_before_close = False
 
-                        for window in get_workspace().subWindowList():
-                            if window.widget() == self:
-                                window.close()
+                        #for window in get_workspace().subWindowList():
+                        #    if window.widget() == self:
+                        #        window.close()
+                        self.close()
                 else:
                     def create_instance_getter(new_object):
                         return lambda:new_object[0]

@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -50,16 +50,16 @@ class Form( object ):
         """
         :param content: a list with the field names and forms to render
         :param columns: the number of columns in which to order the fields.
-        
+
         eg : with 2 columns, the fields ['street', 'city', 'country'] will
         be ordered as :
-        
+
         +-------------+--------------+
         | street      | city         |
         +-------------+--------------+
         | country     |              |
         +-------------+--------------+
-        
+
         """
         assert isinstance( content, list )
         self._content = content
@@ -141,7 +141,7 @@ class Form( object ):
             yield '    <w:tcW w:w="4811" w:type="dxa"/>'
             yield '    <w:shd w:val="clear" w:color="auto" w:fill="auto"/>'
             yield '  </w:tcPr>'
-            yield '<w:p wsp:rsidR="00E51592" wsp:rsidRDefault="00E51592">'            
+            yield '<w:p wsp:rsidR="00E51592" wsp:rsidRDefault="00E51592">'
             if isinstance(field, Form):
                 lines = field.render_ooxml()
                 # print '>>>> form - lines', lines
@@ -156,7 +156,7 @@ class Form( object ):
             yield '</w:tc>'
         yield '</w:tr>'
         yield '</w:tbl>'
-        
+
     @gui_function
     def render( self, widgets, parent = None, nomargins = False):
         """:param widgets: a dictionary mapping each field in this form to a tuple
@@ -176,32 +176,32 @@ class Form( object ):
         if columns > 1:
             for i in range(columns*2):
                 form_layout.setColumnStretch(i, 1)
-            
+
         row_span = 1
-        
+
         class cursor(object):
-            
+
             def __init__(self):
                 self.row = 0
                 self.col = 0
-                
+
             def next_row(self):
                 self.row = self.row + 1
                 self.col = 0
-    
+
             def next_col(self):
                 self.col = self.col + 2
                 if self.col >= columns * 2:
                     self.next_row()
-                    
+
             def next_empty_row(self):
                 if self.col!=0:
                     self.next_row()
-                    
+
             def __str__(self):
                 return '%s,%s'%(self.row, self.col)
-          
-        c = cursor()                  
+
+        c = cursor()
         for field in self._content:
             if isinstance( field, Form ):
                 c.next_empty_row()
@@ -279,14 +279,14 @@ class Label( Form ):
         self.label = label
         self.alignment = alignment
         self.style = style
-    
+
     def render_ooxml( self ):
         """Generator for label text in Office Open XML representing this form"""
         yield '<w:r>'
         yield '  <w:t>%s</w:t>' % self.label
         yield '</w:r>'
-        
-    
+
+
     @gui_function
     def render( self, widgets, parent = None, nomargins = False ):
         from PyQt4 import QtGui
@@ -306,11 +306,11 @@ class TabForm( Form ):
   .. image:: ../_static/form/tab_form.png
     """
 
-    NORTH = 'North' 
+    NORTH = 'North'
     SOUTH = 'South'
     WEST = 'West'
     EAST = 'East'
-    
+
     def __init__( self, tabs, position=NORTH ):
         """
         :param tabs: a list of tuples of (tab_label, tab_form)
@@ -370,7 +370,7 @@ class TabForm( Form ):
         for _label, form in self.tabs:
             for field in form._get_fields_from_form():
                 yield field
-    
+
     @gui_function
     def render( self, widgets, parent = None, nomargins = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
@@ -408,7 +408,7 @@ class HBoxForm( Form ):
             if form.replaceField( original_field, new_field ):
                 return True
         return False
-    
+
     def _get_fields_from_form( self ):
         for form in self.columns:
             for field in form._get_fields_from_form():
@@ -456,7 +456,7 @@ class VBoxForm( Form ):
         for form in self.rows:
             for field in form._get_fields_from_form():
                 yield field
-                
+
     def __unicode__( self ):
         return 'VBoxForm [ %s\n         ]' % ( '         \n'.join( [unicode( form ) for form in self.rows] ) )
 
@@ -529,7 +529,7 @@ class GridForm( Form ):
                 if isinstance( field, ColumnSpan ):
                     num = field.num
                     field = field.field
-                    
+
                 if isinstance( field, Form ):
                     grid_layout.addWidget( field.render( widgets, parent ), i, j + skip, 1, num )
                     skip += num - 1
@@ -541,7 +541,7 @@ class GridForm( Form ):
         widget.setLayout( grid_layout )
         if nomargins:
             grid_layout.setContentsMargins( 0, 0, 0, 0 )
-            
+
         return widget
 
 class WidgetOnlyForm( Form ):
