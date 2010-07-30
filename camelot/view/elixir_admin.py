@@ -65,34 +65,6 @@ class EntityAdmin(ObjectAdmin):
         return self.entity.query
 
     @model_function
-    def get_subclass_entity_admin(self, entity):
-        """Get the admin class for an entity that is a subclass of this admin's
-        entity or this admin's entity itself.
-        """
-        for subclass_admin in self.get_subclasses():
-            if subclass_admin.entity == entity:
-                return subclass_admin
-        return self
-
-    @model_function
-    def get_subclasses(self):
-        """Returns admin objects for the subclasses of the Entity represented
-        by this admin object.
-        """
-        if not self._subclasses:
-            from elixir import entities
-            self._subclasses = [
-                e.Admin(self.app_admin, e)
-                for e in entities
-                    if (
-                        issubclass(e, (self.entity,))
-                        and hasattr(e, 'Admin')
-                        and e != self.entity
-                    )
-            ]
-        return self._subclasses
-
-    @model_function
     def get_verbose_identifier(self, obj):
         if obj:
             primary_key = self.mapper.primary_key_from_instance(obj)

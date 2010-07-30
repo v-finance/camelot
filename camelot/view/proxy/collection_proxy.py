@@ -48,7 +48,6 @@ from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import gui_function, \
                                       model_function, post
 
-
 class ProxyDict(dict):
     """Subclass of dictionary to fool the QVariant object and prevent
     it from converting dictionary keys to whatever Qt object, but keep
@@ -302,6 +301,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.display_cache = Fifo( 10 * self.max_number_of_rows )
         self.edit_cache = Fifo( 10 * self.max_number_of_rows )
         self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
+        self.rows_under_request = set()
+        self.unflushed_rows = set()
         self.setRowCount( rows )
     
     def set_collection_getter( self, collection_getter ):

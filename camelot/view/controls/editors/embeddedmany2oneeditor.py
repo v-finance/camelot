@@ -5,6 +5,7 @@ from customeditor import CustomEditor, QtCore, QtGui
 from wideeditor import WideEditor
 from camelot.view.model_thread import post
 from camelot.view.proxy import ValueLoading
+from camelot.core.utils import CollectionGetterFromObjectGetter
 
 class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
     """Widget for editing a many 2 one relation a a form embedded in another
@@ -67,9 +68,6 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
         update_form, propagate, current_entity_admin = update_form_and_propagate
 
         if update_form:
-            
-            def create_collection_getter( instance_getter ):
-                return lambda:[instance_getter()]
                         
             if self.model==None or self.model.get_admin()!=current_entity_admin:
                 # We cannot reuse the current model and form
@@ -78,13 +76,13 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
                     self.layout.removeWidget( self.form )
 
                 self.model = CollectionProxy( current_entity_admin,
-                                              create_collection_getter( self.entity_instance_getter ),
+                                              CollectionGetterFromObjectGetter( self.entity_instance_getter ),
                                               current_entity_admin.get_fields )
                 self.form = current_entity_admin.create_form_view( '', self.model, 0, self )
                 self.layout.addWidget( self.form )
             else:
                 # We can reuse the form, just update the content of the collection
-                self.model.set_collection_getter(create_collection_getter( self.entity_instance_getter ))
+                self.model.set_collection_getter(CollectionGetterFromObjectGetter( self.entity_instance_getter ))
             
         if propagate:
             self.emit( QtCore.SIGNAL( 'editingFinished()' ) )

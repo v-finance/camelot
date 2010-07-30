@@ -127,8 +127,7 @@ will be put onto a form"""
         assert editor
         assert isinstance(editor, (QtGui.QWidget,))
         self.emit(SIGNAL('commitData(QWidget*)'), editor)
-        sig = SIGNAL('closeEditor(QWidget*, \
-                                  QAbstractItemDelegate::EndEditHint)')
+        sig = SIGNAL('closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)')
         self.emit(sig, editor, QtGui.QAbstractItemDelegate.NoHint)
 
     def setEditorData(self, editor, index):

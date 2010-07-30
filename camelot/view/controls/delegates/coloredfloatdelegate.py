@@ -84,10 +84,10 @@ class ColoredFloatDelegate(CustomDelegate):
 
         value_str = u''
         if value != None and value != ValueLoading:
-            value_str = QtCore.QString("%L1").arg(float(value),0,'f',self.precision)
-        
-        if self.unicode_format != None:
-            value_str = self.unicode_format(value)
+            if self.unicode_format != None:
+                value_str = self.unicode_format(value)
+            else:
+                value_str = QtCore.QString("%L1").arg(float(value),0,'f',self.precision)
        
         fontColor = fontColor.darker()
         painter.setPen(fontColor.toRgb())
