@@ -20,7 +20,6 @@ class IntervalsDelegate(QtGui.QItemDelegate):
         painter.save()
         self.drawBackground(painter, option, index)
         intervals = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-        
         background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
         
         if( option.state & QtGui.QStyle.State_Selected ):
@@ -30,8 +29,6 @@ class IntervalsDelegate(QtGui.QItemDelegate):
                 painter.fillRect(option.rect, option.palette.window())
             else:
                 painter.fillRect(option.rect, background_color)
-          
-          
           
         if intervals and intervals!=ValueLoading:
             rect = option.rect
