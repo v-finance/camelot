@@ -221,7 +221,13 @@ class SelectBackupFilePage(Page):
         locale = QtCore.QLocale()
         format = locale.dateTimeFormat(locale.ShortFormat)
         formatted_date_time = QtCore.QDateTime.currentDateTime().toString(format)
-        return unicode(formatted_date_time).replace('/', '-').replace('\\', '')
+        # replace all non-ascii chars with underscores
+        import string
+        self.formatted_date_time_str = unicode(formatted_date_time)
+        for c in self.formatted_date_time_str:
+            if c not in string.ascii_letters and c not in string.digits:
+                self.formatted_date_time_str = self.formatted_date_time_str.replace(c, '_')
+        return self.formatted_date_time_str
 
     def _showWidgets(self, selection):
         default_selected = self._isDefaultSelected(selection)

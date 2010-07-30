@@ -192,4 +192,7 @@ will be put onto a form"""
                          text)
         
     def render_ooxml( self, value ):
-        yield unicode(value)
+        """Generator for label text in Office Open XML representing this form"""
+        yield '<w:r>'
+        yield '  <w:t>%s</w:t>' % unicode(value)
+        yield '</w:r>'
