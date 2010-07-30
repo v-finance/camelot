@@ -92,7 +92,7 @@ class FormWidget(QtGui.QWidget):
         from camelot.view.export.word import open_stream_in_word
 
         def create_ooxml_export(row):
-            print self._columns
+            # print self._columns
             def ooxml_export():
                 # TODO insert delegates
                 delegates = {}
@@ -102,7 +102,7 @@ class FormWidget(QtGui.QWidget):
 
 
                 obj = self._model._get_object(row)
-                print ' - '.join(self._form.render_ooxml(obj, delegates))
+                # print ' - '.join(self._form.render_ooxml(obj, delegates))
                 #open_document_in_word(self._form.render_ooxml(obj, delegates))
 
             return ooxml_export
