@@ -264,7 +264,7 @@ class TableView( AbstractView  ):
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find), self)
         self.connect( shortcut, QtCore.SIGNAL( 'activated()' ), self.activate_search )
         if self.header_widget:
-            self.connect( self.header, QtCore.SIGNAL('filters_changed'),  self.rebuildQuery )
+            self.connect( self.header, QtCore.SIGNAL('filters_changed'),  self.rebuild_query )
         # give the table widget focus to prevent the header and its search control to
         # receive default focus, as this would prevent the displaying of 'Search...' in the
         # search control, but this conflicts with the MDI, resulting in the window not
@@ -515,10 +515,12 @@ class TableView( AbstractView  ):
         self.selectTableRow( prev )
     
     def _set_query(self, query_getter):
-        self._table_model.setQuery(query_getter)
+        from camelot.view.proxy.queryproxy import QueryTableProxy
+        if isinstance(self._table_model, QueryTableProxy):
+            self._table_model.setQuery(query_getter)
         self.table.clearSelection()
         
-    def rebuildQuery( self ):
+    def rebuild_query( self ):
         """resets the table model query"""
         from filterlist import FilterList
         
@@ -542,13 +544,13 @@ class TableView( AbstractView  ):
         from camelot.view.search import create_entity_search_query_decorator
         logger.debug( 'search %s' % text )
         self.search_filter = create_entity_search_query_decorator( self.admin, text )
-        self.rebuildQuery()
+        self.rebuild_query()
     
     def cancelSearch( self ):
         """resets search filtering to default"""
         logger.debug( 'cancel search' )
         self.search_filter = lambda q: q
-        self.rebuildQuery()
+        self.rebuild_query()
         
     def get_selection_getter(self):
         """:return: a function that returns all the objects corresponging to the selected rows in the
@@ -571,7 +573,7 @@ class TableView( AbstractView  ):
         logger.debug( 'setting filters for tableview' )
         filters_widget = self.findChild(FilterList, 'filters')
         if filters_widget:
-            self.disconnect( filters_widget, SIGNAL( 'filters_changed' ), self.rebuildQuery )
+            self.disconnect( filters_widget, SIGNAL( 'filters_changed' ), self.rebuild_query )
             self.filters_layout.removeWidget(filters_widget)
             filters_widget.deleteLater()
         if self.actions:
@@ -583,11 +585,11 @@ class TableView( AbstractView  ):
             filters_widget = FilterList( filters, parent=splitter )
             filters_widget.setObjectName('filters')
             self.filters_layout.addWidget( filters_widget )
-            self.connect( filters_widget, SIGNAL( 'filters_changed' ), self.rebuildQuery )
+            self.connect( filters_widget, SIGNAL( 'filters_changed' ), self.rebuild_query )
         #
         # filters might have default values, so we can only build the queries now
         #
-        self.rebuildQuery()
+        self.rebuild_query()
         if actions:
             selection_getter = self.get_selection_getter()            
             self.actions = ActionsBox( self, 
