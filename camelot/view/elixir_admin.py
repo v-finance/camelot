@@ -405,7 +405,7 @@ class EntityAdmin(ObjectAdmin):
                 formview = tableview.admin.create_form_view(
                     title, model, index, parent
                 )
-                #get_workspace().addSubWindow(formview)
+                get_workspace().addSubWindow(formview)
                 formview.show()
 
             return openForm
