@@ -176,7 +176,8 @@ def xls2list(xf):
             cell = s.cell(r, c)
             type = xlrd.sheet.ctype_text[cell.ctype]
             if type == 'xldate':
-                value = xlrd.xldate_as_tuple(cell.value, datemode=0)
+                t = xlrd.xldate_as_tuple(cell.value, datemode=0)
+                value = '%02d/%02d/%d' % (t[2], t[1], t[0])
             else:
                 value = cell.value
             #vector.append((type, value))
