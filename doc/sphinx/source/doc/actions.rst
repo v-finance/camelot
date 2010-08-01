@@ -18,7 +18,11 @@ action button, a predefined function is called.
   an action is available to show the address on a map
 
 Camelot comes with a set of standard actions that are easily 
-extended to manipulate data or create reports.
+extended to manipulate data or create reports.  When defining actions,
+a clear distinction should be made between things happening in the
+model thread (the manipulation or querying of data, and things happening
+in the gui thread (pop up windows or reports).  The :ref:`doc-threads`
+section gives more detail on this.
 
 This section describes how to put any of the predefined action
 buttons next to a form or a table.
@@ -38,8 +42,14 @@ action is triggered.
 .. autoclass:: camelot.admin.form_action.FormAction
    :members:
 
-Actions to generate documents
------------------------------
+Manipulate the model
+--------------------
+
+.. autoclass:: camelot.admin.form_action.FormActionFromModelFunction
+   :members:
+
+Generate documents
+------------------
 
 Generating reports and documents is an important part of any application.
 Python and Qt provide various ways to generate documents.  Each of them

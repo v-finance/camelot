@@ -42,12 +42,7 @@ Overview of the field attributes
 calculator 
 ----------
 
-:const:`True` or :const:`False`.. _field-attribute-admin:
-
-admin
------
-  
-Indicates whether a calculator should be available when editing this field.
+:const:`True` or :const:`False` Indicates whether a calculator should be available when editing this field.
 
 .. _field-attribute-editable:
 
@@ -60,13 +55,21 @@ Indicates whether the user can edit the field.
 
 .. _field-attribute-minimum:
 
-minimum, maximum
-----------------
+minimum
+-------
 
-The minimum and maximum allowed values for :ctype:`Integer` and
+The minimum allowed value for :ctype:`Integer` and
 :ctype:`Float` delegates or their related delegates like the Star delegate.
 
-.. _field=attribute-choices:
+.. _field-attribute-maximum:
+
+maximum
+-------
+
+The maximum allowed value for :ctype:`Integer` and
+:ctype:`Float` delegates or their related delegates like the Star delegate.
+
+.. _field-attribute-choices:
 
 choices
 -------
