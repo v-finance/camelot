@@ -1,6 +1,6 @@
 #  ==================================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -35,6 +35,9 @@ from PyQt4.QtGui import QDesktopServices
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
 from camelot.view.art import Icon
+import logging
+
+logger = logging.getLogger('camelot.view.wizard.pages.backup_page')
 
 def getBackupRootAndFilenameTemplate():
     import settings
@@ -103,9 +106,10 @@ class Page(QtGui.QWizardPage):
     caption = _('Select file')
     extension = '.sqlite'
 
-    def __init__(self, parent=None):
+    def __init__(self, backup_mechanism=None, parent=None):
         super(Page,  self).__init__(parent)
         
+        self.backup_mechanism = backup_mechanism
         self.setTitle( unicode(self.title) )
         self.setSubTitle( unicode(self.sub_title) )
         self.setPixmap(QtGui.QWizard.LogoPixmap, self.icon.getQPixmap())
@@ -216,18 +220,41 @@ class SelectBackupFilePage(Page):
     def _onDefaultEditChanged(self, text):
         if self._default_radio.isChecked():
             self.wizard().filename = self._default_edit.filename()
-
+    
+    def _get_filename_prefix(self):
+        try:
+            self.filename_prefix = unicode(self.bm.get_filename_prefix())
+        except Exception, e:
+            logger.warn('No get_filename_prefix defined in backup_mechanism: %s' % e)
+    
     def _makeDefaultLabel(self):
+        from camelot.view.model_thread.signal_slot_model_thread import SignalSlotModelThread
+        from camelot.view.controls.progress_dialog import ProgressDialog
+                
         locale = QtCore.QLocale()
         format = locale.dateTimeFormat(locale.ShortFormat)
         formatted_date_time = QtCore.QDateTime.currentDateTime().toString(format)
         # replace all non-ascii chars with underscores
         import string
-        self.formatted_date_time_str = unicode(formatted_date_time)
-        for c in self.formatted_date_time_str:
+        formatted_date_time_str = unicode(formatted_date_time)
+        for c in formatted_date_time_str:
             if c not in string.ascii_letters and c not in string.digits:
-                self.formatted_date_time_str = self.formatted_date_time_str.replace(c, '_')
-        return self.formatted_date_time_str
+                formatted_date_time_str = formatted_date_time_str.replace(c, '_')                
+        self.filename_prefix = None
+        try:
+            # get filename prefix from model to use for the backup file name label
+            progress = ProgressDialog(_('Getting filename prefix'))
+            logger.info('Getting filename prefix')
+            mt = SignalSlotModelThread(lambda:None)
+            mt.start()
+            self.bm = self.backup_mechanism(None)
+            mt.post(lambda:self._get_filename_prefix(), progress.finished, progress.exception)
+            progress.exec_()
+            if self.filename_prefix:
+                formatted_date_time_str = '-'.join([self.filename_prefix, formatted_date_time_str])
+        except Exception, e:
+            logger.warn('No backup filename prefix defined: %s' % e)
+        return formatted_date_time_str
 
     def _showWidgets(self, selection):
         default_selected = self._isDefaultSelected(selection)

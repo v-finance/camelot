@@ -54,7 +54,7 @@ class BackupWizard(QtGui.QWizard):
     def __init__(self, backup_mechanism, parent=None):
         super(BackupWizard, self).__init__(parent)
         self.setWindowTitle( unicode(self.window_title) )
-        self.addPage(SelectBackupFilePage())
+        self.addPage(SelectBackupFilePage(backup_mechanism))
         self.addPage(BackupPage(backup_mechanism))
         
 class RestorePage(ProgressPage):
