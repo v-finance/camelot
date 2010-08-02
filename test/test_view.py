@@ -483,7 +483,7 @@ Test the basic functionality of the editors :
     editor.set_value( self.ValueLoading )
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( u'<h2>Rich Text Editor, set_enabled() test</h2>' )
-    editor.set_enabled( True )
+    editor.set_editable( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
     
   def test_TimeEditor(self):
@@ -635,6 +635,7 @@ class DelegateTest(unittest.TestCase):
     index = model.index(0, 0, QModelIndex())
     model.setData(index, QVariant(data))
     model.setData(index, QVariant(QtGui.QColor('white')), Qt.BackgroundRole)
+    model.setData(index, QVariant(dict(editable=True)), Qt.UserRole)
     
     option = QtGui.QStyleOptionViewItem()
     
