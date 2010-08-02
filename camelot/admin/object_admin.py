@@ -36,8 +36,21 @@ from camelot.core.utils import ugettext_lazy
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from validator.object_validator import ObjectValidator
 
-_DYNAMIC_FIELD_ATTRIBUTES = ['tooltip', 'background_color', 'editable', 
-                             'choices', 'prefix', 'suffix']
+class FieldAttributesList(list):
+    """A list with field attributes that documents them for
+    sphinx"""
+    
+    def __init__(self, original_list):
+        """:param original_list: the list with field attributes
+        to document"""
+        super(FieldAttributesList, self).__init__(original_list)
+        template = "\n * :ref:`%s <field-attribute-%s>`"
+        doc = '\n'.join([template%(name, name) for name in original_list])
+        self.__doc__ = doc
+        
+DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip', 'background_color', 
+                                                'editable', 'choices', 
+                                                'prefix', 'suffix'])
 
 
 class ObjectAdmin(object):
@@ -312,10 +325,12 @@ class ObjectAdmin(object):
     def get_static_field_attributes(self, field_names):
         """
         Convenience function to get all the field attributes
-        that are static (don't depend on the row in the table)
+        that are static (don't depend on the object being visualized).  This
+        method is only called once for a table or form view, independent of
+        the number of objects/records being visualized.
 
         :param field_names: a list of field names
-        :return: [{field_attribute_name:field_attribute_value, ...}]
+        :return: [{field_attribute_name:field_attribute_value, ...}, {}, ...]
 
         The returned list has the same order than the requested
         field_names.
@@ -324,29 +339,29 @@ class ObjectAdmin(object):
             field_attributes = self.get_field_attributes(field_name)
             static_field_attributes = {}
             for name, value in field_attributes.items():
-                if name not in _DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
+                if name not in DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
                     static_field_attributes[name] = value
             yield static_field_attributes
 
-    @model_function
     def get_dynamic_field_attributes(self, obj, field_names):
         """
         Convenience function to get all the field attributes
-        that are dynamic (don't depend on the row in the table)
+        that are dynamic (depend on the object being visualized). This method
+        is called once for each object/row in a table view and once for
+        each object being visualized in a form view.
 
         :param field_names: a list of field names
-        :param obj: the object at the row for which to get the values
-        of the dynamic field attributes
-        :return: [{field_attribute_name:field_attribute_value, ...}, {}]
+        :param obj: the object at the row for which to get the values of the dynamic field attributes
+        :return: [{field_attribute_name:field_attribute_value, ...}, {}, ...]
 
         The returned list has the same order than the requested
-        field_names
+        field_names.
         """
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             dynamic_field_attributes = {}
             for name, value in field_attributes.items():
-                if name not in _DYNAMIC_FIELD_ATTRIBUTES:
+                if name not in DYNAMIC_FIELD_ATTRIBUTES:
                     continue
                 if callable(value):
                     try:
@@ -358,16 +373,22 @@ class ObjectAdmin(object):
             yield dynamic_field_attributes
 
     def get_field_attributes(self, field_name):
-        """Get the attributes needed to visualize the field field_name
+        """
+        Get the attributes needed to visualize the field field_name.  This
+        function is called by get_static_field_attributes and
+        get_dynamic_field_attributes.
 
-        :param field_name : the name of the field
+        This function first tries to fill the dictionary with field
+        attributes for a field with those gathered through introspection,
+        and then updates them with those found in the field_attributes
+        class attribute.
 
-        :return: a dictionary of attributes needed to visualize the field,
-        those attributes can be:
-         * python_type : the corresponding python type of the object
-         * editable : bool specifying wether the user can edit this field
-         * widget : which widget to be used to render the field
-         * ...
+        :param field_name: the name of the field
+        :return: a dictionary of attributes needed to visualize the field
+        
+        The values of the returned dictionary either contain the value
+        of the field attribute, or in the case of dynamic field attributes,
+        a function that returns the value of the field attribute.
         """
         try:
             return self._field_attributes[field_name]

@@ -7,11 +7,15 @@
 :Release: |version|
 :Date: |today|
 
-Field attributes are the most convenient way to customize
-an application.
-
   .. image:: ../_static/field_attributes.png
-  
+
+Field attributes are the most convenient way to customize
+an application, they can be specified through the
+`field_attributes` dictionary of an `Admin` class :
+
+.. literalinclude:: ../../../../example/model.py
+   :pyobject: VisitorReport
+   
 Each combination of a delegate and an editor used to handle
 a field supports a different set of field attributes.  To know
 which field attribute is supported by which editor or delegate,
@@ -29,11 +33,16 @@ Dynamic Field Attributes
 
 Some field attributes, like background_color, can be dynamic.
 This means they can be specified as a function in the field
-attributes dictionary,
+attributes dictionary.
 
 This function should take as its single argument the object on
-which the field attribute applies.
+which the field attribute applies, as can be seen in the
+:ref:`background color example <field-attribute-background_color>`
 
+These are the field attributes that can be dynamic:
+
+.. autodata:: camelot.admin.object_admin.DYNAMIC_FIELD_ATTRIBUTES
+   
 Overview of the field attributes
 ================================
 
@@ -174,3 +183,28 @@ embedded
 
 Should be True or False, if True, the related object will be
 displayed with its own form inside the form of the parent object.
+
+Customizing multiple field attributes
+=====================================
+
+When multiple field attributes need to be customized, specifying the
+`field_attributes` dictionary can become inefficient.
+
+Several methods of the `Admin` class can be overwritten to take care of
+this.
+
+Instead of filling the `field_attributes` dictionary manually, the
+`get_field_attributes` method can be overwritten :
+
+.. automethod:: camelot.admin.object_admin.ObjectAdmin.get_field_attributes
+
+When multiple dynamic field attributes need to execute the same logic
+to determine their value, it can be more efficient to overwrite the
+method `get_dynamic_field_attributes` and execute the logic once there
+and set the value for all dynamic field attributes at once.
+
+.. automethod:: camelot.admin.object_admin.ObjectAdmin.get_dynamic_field_attributes
+
+The complement of `get_dynamic_field_attributes` is `get_static_field_attributes` :
+
+.. automethod:: camelot.admin.object_admin.ObjectAdmin.get_static_field_attributes

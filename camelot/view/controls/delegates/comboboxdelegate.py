@@ -58,7 +58,7 @@ class ComboBoxDelegate(CustomDelegate):
         if value in (None, ValueLoading):
             value = ''
         if field_attributes not in (None, ValueLoading):
-            editable = field_attributes['editable']
+            editable = field_attributes.get('editable', True)
         c = index.model().data(index, Qt.BackgroundRole)
 
         # let us be safe Qt.BackgroundRole valid only if set

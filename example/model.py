@@ -10,13 +10,14 @@ from sqlalchemy import sql
 from elixir import ColumnProperty
 
 import camelot.types
-from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, ManyToMany, \
-                          Unicode, Date, Integer, Boolean, using_options
+from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, \
+                          ManyToMany, Unicode, Date, Integer, using_options
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
 from camelot.view.controls import delegates
 from camelot.view.filters import ComboBoxFilter
 from camelot.core.utils import ugettext_lazy as _
+from camelot.view.art import ColorScheme
 
 __metadata__ = metadata
 
@@ -111,14 +112,15 @@ class Movie(Entity):
     # field_attributes dictionary
     #
     field_attributes = dict(cast=dict(create_inline=True),
-                            genre=dict(choices=genre_choices),
-                            rating=dict(tooltip=lambda o:'''<table>
-                                                              <tr><td>1 star</td><td>Not that good</td></tr>
-                                                              <tr><td>2 stars</td><td>Almost good</td></tr>
-                                                              <tr><td>3 stars</td><td>Good</td></tr>
-                                                              <tr><td>4 stars</td><td>Very good</td></tr>
-                                                              <tr><td>5 stars</td><td>Awesome !</td></tr>
-                                                            </table>'''),
+                            genre=dict(choices=genre_choices, editable=lambda o:bool(o.title and len(o.title))),
+                            releasedate=dict(background_color=lambda o:ColorScheme.orange_1 if o.releasedate and o.releasedate < datetime.date(1920,1,1) else None),
+                            rating=dict(tooltip='''<table>
+                                                      <tr><td>1 star</td><td>Not that good</td></tr>
+                                                      <tr><td>2 stars</td><td>Almost good</td></tr>
+                                                      <tr><td>3 stars</td><td>Good</td></tr>
+                                                      <tr><td>4 stars</td><td>Very good</td></tr>
+                                                      <tr><td>5 stars</td><td>Awesome !</td></tr>
+                                                   </table>'''),
                             smiley=dict(delegate=delegates.SmileyDelegate))
 
   def __unicode__(self):
@@ -154,12 +156,13 @@ class Tag(Entity):
     form_display = ['name', 'movies']
     
 class VisitorReport(Entity):
-  using_options(tablename='visitors')
-  movie = ManyToOne('Movie', required=True)
-  city = ManyToOne('City', required=True)
-  date = Field(Date, required=True, default=datetime.date.today)
-  visitors = Field(Integer, required=True, default=0)
-
-  class Admin(EntityAdmin):
-      verbose_name = _('Visitor Report')
-      list_display = ['movie', 'city', 'date', 'visitors']
+    using_options(tablename='visitor_report')
+    movie = ManyToOne('Movie', required=True)
+    city = ManyToOne('City', required=True)
+    date = Field(Date, required=True, default=datetime.date.today)
+    visitors = Field(Integer, required=True, default=0)
+    
+    class Admin(EntityAdmin):
+        verbose_name = _('Visitor Report')
+        list_display = ['movie', 'city', 'date', 'visitors']
+        field_attributes = {'visitors':{'minimum':0}}
