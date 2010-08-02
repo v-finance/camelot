@@ -184,7 +184,6 @@ class EntityAdmin(ObjectAdmin):
                             delegate = delegates.One2ManyDelegate,
                             target = target,
                             create_inline = False,
-                            backref = property.backref.key,
                             direction = property.direction,
                             admin = get_entity_admin(target)
                         )

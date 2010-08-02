@@ -36,7 +36,10 @@ Those fields are stored in the :mod:`camelot.types` module.
 import logging
 logger = logging.getLogger('camelot.types')
 
+import sqlalchemy
 from sqlalchemy import types
+
+SQLALCHEMY_MAJOR_VERSION = int(sqlalchemy.__version__.split('.')[1])
 
 from camelot.core.files.storage import StoredFile, StoredImage, Storage
 
@@ -73,9 +76,12 @@ class VirtualAddress(types.TypeDecorator):
           
         return processor
     
-    def result_processor(self, dialect):
+    def result_processor(self, dialect, coltype=None):
       
-        impl_processor = self.impl.result_processor(dialect)
+        if SQLALCHEMY_MAJOR_VERSION >= 6:
+            impl_processor = self.impl.result_processor(dialect, coltype)
+        else:
+            impl_processor = self.impl.result_processor(dialect)
         if not impl_processor:
             impl_processor = lambda x:x
       
@@ -130,9 +136,12 @@ class Code(types.TypeDecorator):
           
         return processor
     
-    def result_processor(self, dialect):
+    def result_processor(self, dialect, coltype=None):
       
-        impl_processor = self.impl.result_processor(dialect)
+        if SQLALCHEMY_MAJOR_VERSION >= 6:
+            impl_processor = self.impl.result_processor(dialect, coltype)
+        else:
+            impl_processor = self.impl.result_processor(dialect)
         if not impl_processor:
             impl_processor = lambda x:x
       
@@ -231,9 +240,12 @@ class Color(types.TypeDecorator):
           
         return processor
       
-    def result_processor(self, dialect):
+    def result_processor(self, dialect, coltype=None):
       
-        impl_processor = self.impl.result_processor(dialect)
+        if SQLALCHEMY_MAJOR_VERSION >= 6:
+            impl_processor = self.impl.result_processor(dialect, coltype)
+        else:
+            impl_processor = self.impl.result_processor(dialect)
         if not impl_processor:
             impl_processor = lambda x:x
             
@@ -291,9 +303,12 @@ class Enumeration(types.TypeDecorator):
                         
         return processor
     
-    def result_processor(self, dialect):
+    def result_processor(self, dialect, coltype=None):
       
-        impl_processor = self.impl.result_processor(dialect)
+        if SQLALCHEMY_MAJOR_VERSION >= 6:
+            impl_processor = self.impl.result_processor(dialect, coltype)
+        else:
+            impl_processor = self.impl.result_processor(dialect)
         if not impl_processor:
             impl_processor = lambda x:x
             
@@ -342,9 +357,12 @@ class File(types.TypeDecorator):
           
         return processor
     
-    def result_processor(self, dialect):
+    def result_processor(self, dialect, coltype=None):
       
-        impl_processor = self.impl.result_processor(dialect)
+        if SQLALCHEMY_MAJOR_VERSION >= 6:
+            impl_processor = self.impl.result_processor(dialect, coltype)
+        else:
+            impl_processor = self.impl.result_processor(dialect)
         if not impl_processor:
             impl_processor = lambda x:x
             
