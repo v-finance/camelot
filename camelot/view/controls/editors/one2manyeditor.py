@@ -8,6 +8,7 @@ from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post
 from camelot.core.utils import ugettext as _
 
+
 class One2ManyEditor( CustomEditor, WideEditor ):
 
     def __init__( self,

@@ -9,34 +9,34 @@ from camelot.core.utils import ugettext
 
 class PlainTextDelegate(CustomDelegate):
     """Custom delegate for simple string values"""
-  
+
     __metaclass__ = DocumentationMetaclass
-  
+
     editor = editors.TextLineEditor
-      
+
     def __init__(self, parent=None, length=20, editable=True, translate_content=False, **kwargs):
         CustomDelegate.__init__(self, parent, editable, length=length, **kwargs)
         self.editable = editable
         self.length = length
         self._translate_content = translate_content
-    
+
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        text = variant_to_pyobject(index.model().data(index, Qt.EditRole)) 
-        
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))  
-    
+        text = variant_to_pyobject(index.model().data(index, Qt.EditRole))
+
+        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
+
         rect = option.rect
-        rect = QtCore.QRect(rect.left(), rect.top(), rect.width(), rect.height())  
-    
+        rect = QtCore.QRect(rect.left(), rect.top(), rect.width(), rect.height())
+
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
             fontColor = QtGui.QColor()
-            if self.editable:         
+            if self.editable:
                 Color = option.palette.highlightedText().color()
                 fontColor.setRgb(Color.red(), Color.green(), Color.blue())
-            else:          
+            else:
                 fontColor.setRgb(130,130,130)
         else:
             if self.editable:
@@ -47,13 +47,17 @@ class PlainTextDelegate(CustomDelegate):
                 painter.fillRect(option.rect, option.palette.window())
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(130,130,130)
-      
-        if text and text!=ValueLoading:
+
+        #if text and text!=ValueLoading:
+        #    if self._translate_content:
+        #        text = ugettext(text)
+        #else:
+        #    text = u''
+
+        if text!=ValueLoading:
             if self._translate_content:
                 text = ugettext(text)
-        else:
-            text = u''
-            
+
         painter.setPen(fontColor.toRgb())
         rect = QtCore.QRect(option.rect.left(),
                             option.rect.top(),

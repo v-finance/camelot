@@ -8,15 +8,15 @@ from camelot.view.proxy import ValueLoading
 from camelot.core.utils import create_constant_function
 
 editingFinished = QtCore.SIGNAL('editingFinished()')
- 
+
 class AbstractCustomEditor(object):
     """Helper class to be used to build custom editors.  This class provides
   functionallity to store and retrieve `ValueLoading` as an editor's value.
   """
-    
+
     def __init__(self):
         self._value_loading = True
-        
+
     def set_value(self, value):
         if value==ValueLoading:
             self._value_loading = True
@@ -24,33 +24,33 @@ class AbstractCustomEditor(object):
         else:
             self._value_loading = False
             return value
-            
+
     def get_value(self):
         if self._value_loading:
             return ValueLoading
         return None
-      
+
     def set_field_attributes(self, editable=True, background_color=None, **kwargs):
         self.setEnabled(editable)
         self.set_background_color(background_color)
-              
+
     """
     Get the 'standard' height for a cell
     """
     def get_height(self):
-      
+
         height = [QtGui.QLineEdit().sizeHint().height(),
                QtGui.QDateEdit().sizeHint().height(),
                QtGui.QDateTimeEdit().sizeHint().height(),
                QtGui.QSpinBox().sizeHint().height(),
                QtGui.QDateEdit().sizeHint().height(),
                QtGui.QComboBox().sizeHint().height()]
-        
+
         finalHeight = max(height)
-        
+
         return finalHeight
-    
-    def set_background_color(self, background_color):        
+
+    def set_background_color(self, background_color):
         if background_color not in (None, ValueLoading):
             palette = self.palette()
             for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
@@ -59,7 +59,7 @@ class AbstractCustomEditor(object):
             self.setPalette(palette)
         else:
             return False
-          
+
 class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     """Base class for implementing custom editor widgets.  This class provides
   dual state functionality.  Each editor should have the posibility to have as

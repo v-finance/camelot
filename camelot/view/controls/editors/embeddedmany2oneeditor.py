@@ -11,7 +11,7 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
     """Widget for editing a many 2 one relation a a form embedded in another
   form.
   """
-  
+
     def __init__( self, admin = None, parent = None, **kwargs ):
         assert admin != None
         CustomEditor.__init__( self, parent )

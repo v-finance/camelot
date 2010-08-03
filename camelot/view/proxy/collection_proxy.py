@@ -60,16 +60,16 @@ class DelayedProxy( object ):
     thread.  On first occasion the delayed proxy will be converted to a real
     proxy within the GUI thread
     """
-  
+
     @model_function
     def __init__( self, *args, **kwargs ):
         self.args = args
         self.kwargs = kwargs
-    
+
     @gui_function
     def __call__( self ):
         return CollectionProxy( *self.args, **self.kwargs )
-  
+
 @model_function
 def strip_data_from_object( obj, columns ):
     """For every column in columns, get the corresponding value from the
@@ -79,10 +79,10 @@ def strip_data_from_object( obj, columns ):
     :param columns: a list of columns for which to get data
     """
     row_data = []
-  
+
     def create_collection_getter( o, attr ):
         return lambda: getattr( o, attr )
-    
+
     for _i, col in enumerate( columns ):
         field_attributes = col[1]
         try:
@@ -94,18 +94,18 @@ def strip_data_from_object( obj, columns ):
             else:
                 row_data.append( getter( obj ) )
         except Exception, e:
-            logger.error('ProgrammingError : could not get attribute %s of object of type %s'%(col[0], obj.__class__.__name__), 
+            logger.error('ProgrammingError : could not get attribute %s of object of type %s'%(col[0], obj.__class__.__name__),
                          exc_info=e)
             row_data.append( None )
     return row_data
-  
+
 @model_function
 def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynamic_field_attributes ):
-    """Extract for each field in the row data a 'visible' form of 
+    """Extract for each field in the row data a 'visible' form of
     data"""
-  
+
     row_data = []
-  
+
     for field_data, static_attributes, dynamic_attributes in zip( stripped_data, static_field_attributes, dynamic_field_attributes ):
         unicode_data = u''
         choices = dynamic_attributes.get( 'choices', static_attributes.get('choices', None))
@@ -132,58 +132,58 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
         elif field_data != None:
             unicode_data = unicode( field_data )
         row_data.append( unicode_data )
-    
+
     return row_data
-  
+
 from camelot.view.proxy import ValueLoading
 
 class EmptyRowData( object ):
     def __getitem__( self, column ):
         return ValueLoading
-    
+
 empty_row_data = EmptyRowData()
 
 class SortingRowMapper( dict ):
     """Class mapping rows of a collection 1:1 without sorting
     and filtering, unless a mapping has been defined explicitly"""
-    
+
     def __getitem__(self, row):
         try:
             return super(SortingRowMapper, self).__getitem__(row)
         except KeyError:
             return row
-    
+
 class CollectionProxy( QtCore.QAbstractTableModel ):
     """The CollectionProxy contains a limited copy of the data in the actual
     collection, usable for fast visualisation in a QTableView
-    
+
     the CollectionProxy has some class attributes that can be overwritten when
     subclassing it :
-    
+
     * header_icon : the icon to be used in the vertical header
-    
+
     """
-  
+
     _header_font = QtGui.QApplication.font()
     _header_font_required = QtGui.QApplication.font()
     _header_font_required.setBold( True )
-    
+
     header_icon = Icon( 'tango/16x16/places/folder.png' )
 
     item_delegate_changed_signal = QtCore.SIGNAL('itemDelegateChanged')
     rows_removed_signal = QtCore.SIGNAL('rowsRemoved(const QModelIndex&,int,int)')
-  
+
     @gui_function
     def __init__( self, admin, collection_getter, columns_getter,
                  max_number_of_rows = 10, edits = None, flush_changes = True ):
         """@param admin: the admin interface for the items in the collection
-    
+
         @param collection_getter: a function that takes no arguments and returns
         the collection that will be visualized. This function will be called inside
         the model thread, to prevent delays when this function causes the database
         to be hit.  If the collection is a list, it should not contain any duplicate
         elements.
-    
+
         @param columns_getter: a function that takes no arguments and returns the
         columns that will be cached in the proxy. This function will be called
         inside the model thread.
@@ -216,7 +216,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.rows_under_request = set()
         # The rows that have unflushed changes
         self.unflushed_rows = set()
-        self._sort_and_filter = SortingRowMapper() 
+        self._sort_and_filter = SortingRowMapper()
         # Set edits
         self.edits = edits or []
         self.rsh = get_signal_handler()
@@ -229,12 +229,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.rsh.connect( self.rsh,
                          self.rsh.entity_create_signal,
                          self.handleEntityCreate )
-    
+
         def get_columns():
             self._columns = columns_getter()
             self._static_field_attributes = list(self.admin.get_static_field_attributes([c[0] for c in self._columns]))
             return self._columns
-      
+
         post( get_columns, self.setColumns )
 #    # the initial collection might contain unflushed rows
         post( self.updateUnflushedRows )
@@ -244,12 +244,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
     def get_validator(self):
         return self.validator
-    
+
     def map_to_source(self, sorted_row_number):
         """Converts a sorted row number to a row number of the source
         collection"""
         return self._sort_and_filter[sorted_row_number]
-                
+
     @model_function
     def updateUnflushedRows( self ):
         """Verify all rows to see if some of them should be added to the
@@ -257,7 +257,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         for i, e in enumerate( self.collection_getter() ):
             if hasattr(e, 'id') and not e.id:
                 self.unflushed_rows.add( i )
-        
+
     def hasUnflushedRows( self ):
         """The model has rows that have not been flushed to the database yet,
         because the row is invalid
@@ -265,37 +265,37 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         has_unflushed_rows = ( len( self.unflushed_rows ) > 0 )
         self.logger.debug( 'hasUnflushed rows : %s' % has_unflushed_rows )
         return has_unflushed_rows
-    
+
     @model_function
     def getRowCount( self ):
         # make sure we don't count an object twice if it is twice
         # in the list, since this will drive the cache nuts
         rows = len( set( self.collection_getter() ) )
         return rows
-    
+
     @gui_function
     def revertRow( self, row ):
         def create_refresh_entity( row ):
-    
+
             @model_function
             def refresh_entity():
                 o = self._get_object( row )
                 elixir.session.refresh( o )
                 return row, o
-        
+
             return refresh_entity
-          
+
         post( create_refresh_entity( row ), self._revert_row )
-    
+
     def _revert_row(self, row_and_entity ):
         row, entity = row_and_entity
         self.handleRowUpdate( row )
         self.rsh.sendEntityUpdate( self, entity )
-    
+
     @gui_function
     def refresh( self ):
         post( self.getRowCount, self._refresh_content )
-    
+
     @gui_function
     def _refresh_content(self, rows ):
         self.display_cache = Fifo( 10 * self.max_number_of_rows )
@@ -304,15 +304,15 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.rows_under_request = set()
         self.unflushed_rows = set()
         self.setRowCount( rows )
-    
+
     def set_collection_getter( self, collection_getter ):
         self.logger.debug('set collection getter')
         self.collection_getter = collection_getter
         self.refresh()
-        
+
     def get_collection_getter( self ):
         return self.collection_getter
-    
+
     def handleRowUpdate( self, row ):
         """Handles the update of a row when this row might be out of date"""
         self.display_cache.delete_by_row( row )
@@ -322,7 +322,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.emit( QtCore.SIGNAL( sig ),
                   self.index( row, 0 ),
                   self.index( row, self.column_count ) )
-    
+
     def handleEntityUpdate( self, sender, entity ):
         """Handles the entity signal, indicating that the model is out of date"""
         self.logger.debug( '%s %s received entity update signal' % \
@@ -337,32 +337,32 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             # Because the entity is updated, it might no longer be in our
             # collection, therefore, make sure we don't access the collection
             # to strip data of the entity
-            #   
+            #
             def create_entity_update(row, entity):
-                
+
                 def entity_update():
                     columns = self.getColumns()
                     self._add_data(columns, row, entity)
                     return ((row,0), (row,self.column_count))
-                
+
                 return entity_update
-                
+
             post(create_entity_update(row, entity), self._emit_changes)
         else:
             self.logger.debug( 'duplicate update' )
-      
+
     def handleEntityDelete( self, sender, entity ):
         """Handles the entity signal, indicating that the model is out of date"""
         self.logger.debug( 'received entity delete signal' )
         if sender != self:
             self.refresh()
-      
+
     def handleEntityCreate( self, sender, entity ):
         """Handles the entity signal, indicating that the model is out of date"""
         self.logger.debug( 'received entity create signal' )
         if sender != self:
             self.refresh()
-      
+
     def setRowCount( self, rows ):
         """Callback method to set the number of rows
         @param rows the new number of rows
@@ -370,21 +370,21 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self._rows = rows
         if not sip.isdeleted(self):
             self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
-    
+
     def getItemDelegate( self ):
         """:return: a DelegateManager for this model, or None if no DelegateManager yet available
         a DelegateManager will be available once the item_delegate_changed signal has been emitted"""
         self.logger.debug( 'getItemDelegate' )
         return self.delegate_manager
-    
+
     def getColumns( self ):
         """:return: the columns as set by the setColumns method"""
         return self._columns
-    
+
     @gui_function
     def setColumns( self, columns ):
         """Callback method to set the columns
-    
+
         :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
         returned by the getColumns method of the ElixirAdmin class
         """
@@ -392,51 +392,51 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.column_count = len( columns )
         self._columns = columns
 
-        delegate_manager = delegates.DelegateManager() 
-        delegate_manager.set_columns_desc( columns ) 
-        
-        # set a delegate for the vertical header 
-        delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate(parent = delegate_manager) ) 
-         
+        delegate_manager = delegates.DelegateManager()
+        delegate_manager.set_columns_desc( columns )
+
+        # set a delegate for the vertical header
+        delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate(parent = delegate_manager) )
+
         #
         # this loop can take a while to complete, so processEvents is called regulary
         #
         for i, c in enumerate( columns ):
 #            if i%10==0:
-#                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ExcludeSocketNotifiers, 100) 
-            field_name = c[0] 
-            self.logger.debug( 'creating delegate for %s' % field_name ) 
-            if 'delegate' in c[1]: 
-                try: 
-                    delegate = c[1]['delegate']( parent = delegate_manager, **c[1] ) 
-                except Exception, e: 
-                    logger.error('ProgrammingError : could not create delegate for field %s'%field_name, exc_info=e) 
-                    delegate = delegates.PlainTextDelegate( parent = delegate_manager, **c[1] ) 
-                delegate_manager.insertColumnDelegate( i, delegate ) 
-                continue 
-            elif c[1]['python_type'] == str: 
-                if c[1]['length']: 
-                    delegate = delegates.PlainTextDelegate( parent = delegate_manager, maxlength = c[1]['length'] ) 
-                    delegate_manager.insertColumnDelegate( i, delegate ) 
-                else: 
-                    delegate = delegates.TextEditDelegate( parent = delegate_manager, **c[1] ) 
-                    delegate_manager.insertColumnDelegate( i, delegate ) 
-            else: 
-                delegate = delegates.PlainTextDelegate(parent = delegate_manager) 
-                delegate_manager.insertColumnDelegate( i, delegate ) 
-                     
-        # Only set the delegate manager when it is fully set up 
-        self.delegate_manager = delegate_manager 
+#                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ExcludeSocketNotifiers, 100)
+            field_name = c[0]
+            self.logger.debug( 'creating delegate for %s' % field_name )
+            if 'delegate' in c[1]:
+                try:
+                    delegate = c[1]['delegate']( parent = delegate_manager, **c[1] )
+                except Exception, e:
+                    logger.error('ProgrammingError : could not create delegate for field %s'%field_name, exc_info=e)
+                    delegate = delegates.PlainTextDelegate( parent = delegate_manager, **c[1] )
+                delegate_manager.insertColumnDelegate( i, delegate )
+                continue
+            elif c[1]['python_type'] == str:
+                if c[1]['length']:
+                    delegate = delegates.PlainTextDelegate( parent = delegate_manager, maxlength = c[1]['length'] )
+                    delegate_manager.insertColumnDelegate( i, delegate )
+                else:
+                    delegate = delegates.TextEditDelegate( parent = delegate_manager, **c[1] )
+                    delegate_manager.insertColumnDelegate( i, delegate )
+            else:
+                delegate = delegates.PlainTextDelegate(parent = delegate_manager)
+                delegate_manager.insertColumnDelegate( i, delegate )
+
+        # Only set the delegate manager when it is fully set up
+        self.delegate_manager = delegate_manager
         if not sip.isdeleted( self ):
             self.emit( self.item_delegate_changed_signal )
             self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
-      
+
     def rowCount( self, index = None ):
         return self._rows
-    
+
     def columnCount( self, index = None ):
         return self.column_count
-    
+
     @gui_function
     def headerData( self, section, orientation, role ):
         """In case the columns have not been set yet, don't even try to get
@@ -446,17 +446,17 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             if section >= self.column_count:
                 return QtCore.QAbstractTableModel.headerData( self, section, orientation, role )
             c = self.getColumns()[section]
-            
+
             if role == Qt.DisplayRole:
                 return QtCore.QVariant( unicode(c[1]['name']) )
-              
+
             elif role == Qt.FontRole:
                 if ( 'nullable' in c[1] ) and \
                    ( c[1]['nullable'] == False ):
                     return QtCore.QVariant( self._header_font_required )
                 else:
                     return QtCore.QVariant( self._header_font )
-                  
+
             elif role == Qt.SizeHintRole:
                 option = QtGui.QStyleOptionViewItem()
                 if self.delegate_manager:
@@ -488,13 +488,13 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 #      elif role == Qt.DisplayRole:
 #        return QtCore.QVariant()
         return QtCore.QAbstractTableModel.headerData( self, section, orientation, role )
-    
+
     @gui_function
     def sort( self, column, order ):
         """reimplementation of the QAbstractItemModel its sort function"""
-        
+
         def create_sort(column, order):
-            
+
             def sort():
                 unsorted_collection = [(i,o) for i,o in enumerate(self.collection_getter())]
                 key = lambda item:getattr(item[1], self._columns[column][0])
@@ -502,11 +502,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 for j,(i,_o) in enumerate(unsorted_collection):
                     self._sort_and_filter[j] = i
                 return len(unsorted_collection)
-                    
+
             return sort
-            
+
         post(create_sort(column, order), self._refresh_content)
-    
+
     @gui_function
     def data( self, index, role ):
         """:return: the data at index for the specified role
@@ -514,7 +514,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         yet been fetched from the underlying model.  It will then send
         a request to the model thread to fetch this data.  Once the data
         is readily available, the dataChanged signal will be emitted
-        
+
         Using Qt.UserRole as a role will return all the field attributes
         of the index.
         """
@@ -533,12 +533,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 value = value()
                 data[index.column()] = value
             if isinstance( value, datetime.datetime ):
-                # Putting a python datetime into a QVariant and returning 
+                # Putting a python datetime into a QVariant and returning
                 # it to a PyObject seems to be buggy, therefor we chop the
                 # microseconds
                 if value:
-                    value = QtCore.QDateTime(value.year, value.month, 
-                                             value.day, value.hour, 
+                    value = QtCore.QDateTime(value.year, value.month,
+                                             value.day, value.hour,
                                              value.minute, value.second)
             return QtCore.QVariant( value )
         elif role == Qt.ToolTipRole:
@@ -552,7 +552,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 field_attributes.update( dynamic_field_attributes )
             return QtCore.QVariant(field_attributes)
         return QtCore.QVariant()
-    
+
     def _get_field_attribute_value(self, index, field_attribute):
         """Get the values for the static and the dynamic field attributes at once
         :return: the value of the field attribute"""
@@ -563,11 +563,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             if value == ValueLoading:
                 return None
             return value.get(field_attribute, None)
-        
+
     def setData( self, index, value, role = Qt.EditRole ):
         """Value should be a function taking no arguments that returns the data to
         be set
-        
+
         This function will then be called in the model_thread
         """
         if role == Qt.EditRole:
@@ -575,24 +575,24 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             # if the field is not editable, don't waste any time and get out of here
             if not self._get_field_attribute_value(index, 'editable'):
                 return
-                    
+
             flushed = ( index.row() not in self.unflushed_rows )
             self.unflushed_rows.add( index.row() )
-      
+
             def make_update_function( row, column, value ):
-      
+
                 @model_function
                 def update_model_and_cache():
                     attribute, field_attributes = self.getColumns()[column]
-                      
+
                     from sqlalchemy.exceptions import DatabaseError
                     from sqlalchemy import orm
                     new_value = value()
                     self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
-          
+
                     if new_value == ValueLoading:
                         return None
-                      
+
                     o = self._get_object( row )
                     if not o:
                         # the object might have been deleted from the collection while the editor
@@ -603,7 +603,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                         except KeyError:
                             pass
                         return
-                    
+
                     old_value = getattr( o, attribute )
                     changed = ( new_value != old_value )
                     #
@@ -656,14 +656,14 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                                                            primary_key = o.id,
                                                            previous_attributes = {attribute:old_value},
                                                            authentication = getCurrentAuthentication() )
-                  
+
                                     try:
                                         elixir.session.flush( [history] )
                                     except DatabaseError, e:
                                         self.logger.error( 'Programming Error, could not flush history', exc_info = e )
                         # update the cache
                         self._add_data(self.getColumns(), row, o)
-                        #@todo: update should only be sent remotely when flush was done 
+                        #@todo: update should only be sent remotely when flush was done
                         self.rsh.sendEntityUpdate( self, o )
                         for depending_obj in self.admin.get_depending_objects( o ):
                             self.rsh.sendEntityUpdate( self, depending_obj )
@@ -674,25 +674,25 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                             self.unflushed_rows.remove( row )
                         except KeyError:
                             pass
-              
+
                 return update_model_and_cache
-        
+
             post( make_update_function( index.row(), index.column(), value ) )
-      
+
         return True
-    
+
     def _emit_changes( self, region ):
         if region:
             self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
                        self.index( region[0][0], region[0][1] ), self.index( region[1][0], region[1][1] ) )
-      
+
     def flags( self, index ):
         """Returns the item flags for the given index"""
         flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
         if self._get_field_attribute_value(index, 'editable'):
             flags = flags | Qt.ItemIsEditable
         return flags
-    
+
     def _add_data(self, columns, row, obj):
         """Add data from object o at a row in the cache
         :param columns: the columns of which to strip data
@@ -700,7 +700,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         :param obj: the object from which to strip the data
         """
         row_data = strip_data_from_object( obj, columns )
-        
+
         dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
         static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
         self.edit_cache.add_data( row, obj, row_data )
@@ -708,20 +708,20 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.attributes_cache.add_data(row, obj, dynamic_field_attributes )
         self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
                   self.index( row, 0 ), self.index( row, self.column_count ) )
-    
+
     def _skip_row(self, row, obj):
-        """:return: True if the object obj is allready in the cache, but at a 
-        different row then row.  If this is the case, this object should not 
+        """:return: True if the object obj is allready in the cache, but at a
+        different row then row.  If this is the case, this object should not
         be put in the cache at row, and this row should be skipped alltogether.
-        """    
+        """
         try:
             return self.edit_cache.get_row_by_entity(obj)!=row
         except KeyError:
             pass
         return False
- 
+
     def _offset_and_limit_rows_to_get( self ):
-        """From the current set of rows to get, find the first 
+        """From the current set of rows to get, find the first
         continuous range of rows that should be fetched.
         :return: (offset, limit)
         """
@@ -758,7 +758,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                     break
             limit = i - offset + 1
         return (offset, limit)
-                
+
     @model_function
     def _extend_cache( self ):
         """Extend the cache around the rows under request"""
@@ -774,11 +774,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                     obj = collection[unsorted_row+skipped_rows]
                     if self._skip_row(i, obj):
                         skipped_rows = skipped_rows + 1
-                    else: 
+                    else:
                         self._add_data(columns, i, obj)
                         object_found = True
         return ( offset, limit )
-    
+
     @model_function
     def _get_object( self, sorted_row_number ):
         """Get the object corresponding to row
@@ -795,11 +795,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         except IndexError:
             pass
         return None
-    
+
     def _cache_extended( self, interval ):
         offset, limit = interval
         self.rows_under_request.difference_update( set( range( offset, offset + limit + 1) ) )
-    
+
     def _get_row_data( self, row, cache ):
         """Get the data which is to be visualized at a certain row of the
         table, if needed, post a refill request the cache to get the object
@@ -815,22 +815,22 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 self.rows_under_request.add( row )
                 post( self._extend_cache, self._cache_extended )
             return empty_row_data
-      
+
     @model_function
     def remove( self, o ):
         self.collection_getter().remove( o )
         self._rows -= 1
-    
+
     @model_function
     def append( self, o ):
         self.collection_getter().append( o )
         self._rows += 1
-    
+
     @model_function
     def removeEntityInstance( self, o, delete = True ):
         """Remove the entity instance o from this collection
         @param o: the object to be removed from this collection
-        @param delete: delete the object after removing it from the collection 
+        @param delete: delete the object after removing it from the collection
         """
         self.logger.debug( 'remove entity instance')
         #
@@ -853,16 +853,16 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         for depending_obj in depending_objects:
             self.rsh.sendEntityUpdate( self, depending_obj )
         post( self.getRowCount, self._refresh_content )
-    
+
     @gui_function
     def removeRow( self, row, delete = True ):
         """Remove the entity associated with this row from this collection
         @param delete: delete the entity as well
         """
         self.logger.debug( 'remove row %s' % row )
-    
+
         def create_delete_function( row ):
-    
+
             def delete_function():
                 o = self._get_object( row )
                 if o:
@@ -871,30 +871,30 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                     # The object is not in this collection, maybe
                     # it was allready deleted, issue a refresh anyway
                     post( self.getRowCount, self._refresh_content )
-        
+
             return delete_function
-      
+
         post( create_delete_function( row ) )
         return True
-     
-    @gui_function 
+
+    @gui_function
     def copy_row( self, row ):
         """Copy the entity associated with this row to the end of the collection
         :param row: the row number
         """
-        
+
         def create_copy_function( row ):
-            
+
             def copy_function():
                 o = self._get_object(row)
                 new_object = self.admin.copy( o )
                 self.insertEntityInstance(self.getRowCount(), new_object)
-                
+
             return copy_function
-                
+
         post( create_copy_function( row ) )
         return True
-    
+
     @model_function
     def insertEntityInstance( self, row, o ):
         """Insert object o into this collection, set the possible defaults and flush
@@ -926,27 +926,27 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 #      self.rsh.sendEntityCreate(self, o)
         post( self.getRowCount, self._refresh_content )
         return row
-    
+
     @gui_function
     def insertRow( self, row, entity_instance_getter ):
-  
+
         def create_insert_function( getter ):
-    
+
             @model_function
             def insert_function():
                 self.insertEntityInstance( row, getter() )
-        
+
             return insert_function
-      
+
         post( create_insert_function( entity_instance_getter ) )
-    
+
     @model_function
     def getData( self ):
         """Generator for all the data queried by this proxy"""
         for _i, o in enumerate( self.collection_getter() ):
             yield strip_data_from_object( o, self.getColumns() )
-            
+
     def get_admin( self ):
         """Get the admin object associated with this model"""
         return self.admin
-      
+

@@ -113,10 +113,9 @@ class CsvCollectionGetter(object):
             self._data = []
             import chardet
 
-            enc = (
-                chardet.detect(open(self.filename).read())['encoding']
-                or 'utf-8'
-            )
+            detected = chardet.detect(open(self.filename).read())['encoding']
+            enc = detected or 'utf-8'
+
             items = UnicodeReader(open(self.filename), encoding=enc)
 
             self._data = [
