@@ -364,15 +364,11 @@ class FormView(AbstractView):
                 self._form.clear_mapping()
                 self.model.revertRow(self._form.get_index())
                 self.validate_before_close = False
-                if hasattr(self, 'closeAfterValidation'):
-                    self.emit(self.closeAfterValidation)
-                else:
-                    self.close()
+                self.close()
         else:
             self.validate_before_close = False
-            if not sip.isdeleted(self):
-                self.emit(self.closeAfterValidation)
-
+            self.close()
+            
     def validateClose(self):
         logger.debug('validate before close : %s' % self.validate_before_close)
         if self.validate_before_close:

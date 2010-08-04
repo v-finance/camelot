@@ -443,13 +443,12 @@ class TableView( AbstractView  ):
     @gui_function
     def newRow( self ):
         """Create a new row in the tableview"""
-        from camelot.view.workspace import get_workspace
-        workspace = get_workspace()
-        form = self.admin.create_new_view( workspace,
+        form = self.admin.create_new_view( parent = None,
                                            oncreate = lambda o:self._table_model.insertEntityInstance( 0, o ),
                                            onexpunge = lambda o:self._table_model.removeEntityInstance( o ) )
-        workspace.addSubWindow( form )
         form.show()
+        # @todo: dirty trick to keep reference
+        self.__form = form
 
     def closeEvent( self, event ):
         """reimplements close event"""

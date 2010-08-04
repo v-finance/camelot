@@ -652,7 +652,6 @@ class ObjectAdmin(object):
                 post(validate, self.emit_if_valid)
 
             def showMessage(self, valid):
-                from camelot.view.workspace import get_workspace
                 self.emit_if_valid(valid)
                 if not valid:
                     row = 0
@@ -669,10 +668,6 @@ class ObjectAdmin(object):
 
                         post(onexpunge_on_all)
                         self.validate_before_close = False
-
-                        #for window in get_workspace().subWindowList():
-                        #    if window.widget() == self:
-                        #        window.close()
                         self.close()
                 else:
                     def create_instance_getter(new_object):
@@ -684,14 +679,7 @@ class ObjectAdmin(object):
                             create_instance_getter(new_object)
                         )
                     self.validate_before_close = False
-                    from camelot.view.workspace import NoDesktopWorkspace
-                    workspace = get_workspace()
-                    if isinstance(workspace, (NoDesktopWorkspace,)):
-                        self.close()
-                    else:
-                        for window in get_workspace().subWindowList():
-                            if window.widget() == self:
-                                window.close()
+                    self.close()
 
             def validateClose(self):
                 logger.debug(

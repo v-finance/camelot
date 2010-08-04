@@ -349,10 +349,7 @@ class EntityAdmin(ObjectAdmin):
 
             def emit_and_close(self, instance_getter):
                 self.emit(self.entity_selected_signal, instance_getter)
-                from camelot.view.workspace import get_workspace
-                for window in get_workspace().subWindowList():
-                    if hasattr(window, 'widget') and window.widget() == self:
-                        window.close()
+                self.close()
 
             def sectionClicked(self, index):
                 # table model will be set by the model thread, we can't
@@ -382,7 +379,7 @@ class EntityAdmin(ObjectAdmin):
 
         :param query_getter: sqlalchemy query object
 
-        :param parent: the workspace widget that will contain the table view
+        :param parent: the widget that will contain the table view
         """
 
         from PyQt4.QtCore import SIGNAL
@@ -393,7 +390,6 @@ class EntityAdmin(ObjectAdmin):
         def createOpenForm(self, tableview):
 
             def openForm(index):
-                from workspace import get_workspace
                 model = QueryTableProxy(
                     tableview.admin,
                     tableview._table_model.get_query_getter(),
@@ -402,10 +398,11 @@ class EntityAdmin(ObjectAdmin):
                 )
                 title = ''
                 formview = tableview.admin.create_form_view(
-                    title, model, index, parent
+                    title, model, index, parent=None
                 )
-                get_workspace().addSubWindow(formview)
                 formview.show()
+                # @todo: dirty trick to keep reference
+                self.__form = formview
 
             return openForm
 

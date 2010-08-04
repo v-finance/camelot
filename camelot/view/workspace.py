@@ -50,13 +50,6 @@ class DesktopWorkspace(QtGui.QMdiArea):
     def addSubWindow(self, widget, *args):
         from camelot.view.controls.view import AbstractView
         subwindow = QtGui.QMdiArea.addSubWindow(self, widget, *args)
-        if hasattr(widget, 'closeAfterValidation'):
-            subwindow.connect(
-                widget,
-                widget.closeAfterValidation,
-                subwindow,
-                QtCore.SLOT('close()')
-            )
 
         def create_set_window_title(subwindow):
 

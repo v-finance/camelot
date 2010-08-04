@@ -261,13 +261,10 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             selected = select_subclass.exec_()
             admin = select_subclass.selected_subclass
         if selected:
-            from camelot.view.workspace import get_workspace
-            workspace = get_workspace()
-            form = admin.create_new_view(workspace)
+            form = admin.create_new_view()
             self.connect(form, form.entity_created_signal, self.selectEntity)
-            #sub_window = workspace.addSubWindow(form)
-            #sub_window.show()
-            self.new_form = form
+            # @todo: dirty trick to keep reference
+            self.__new_form = form
             form.setWindowTitle('New ' + admin.get_verbose_name())
             form.setParent(None)
             form.show()
@@ -289,9 +286,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             return lambda:[instance_getter()]
 
         from camelot.view.proxy.collection_proxy import CollectionProxy
-        from camelot.view.workspace import get_workspace
 
-        workspace = get_workspace()
         model = CollectionProxy(
             admin,
             create_collection_getter(self.entity_instance_getter),
@@ -299,8 +294,9 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         )
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
         self.connect(model, QtCore.SIGNAL(sig), self.dataChanged)
-        form = admin.create_form_view(title, model, 0, workspace)
-        workspace.addSubWindow(form)
+        form = admin.create_form_view(title, model, 0)
+        self.form = form
+        #form.setParent(None)
         form.show()
 
     def dataChanged(self, index1, index2):

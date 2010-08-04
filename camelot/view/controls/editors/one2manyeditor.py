@@ -140,9 +140,6 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         self.table.edit( index )
 
     def newRow( self ):
-        from camelot.view.workspace import get_workspace
-        workspace = get_workspace()
-
         if self.create_inline:
 
             @model_function
@@ -156,15 +153,12 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         else:
             prependentity = lambda o: self.model.insertEntityInstance( 0, o )
             removeentity = lambda o: self.model.removeEntityInstance( o )
-            #
-            # We cannot use the workspace as a parent, in case of working with
-            # the NoDesktopWorkspaces
-            #
             form = self.admin.create_new_view( parent = None,
                                                oncreate = prependentity,
                                                onexpunge = removeentity )
-            workspace.addSubWindow( form )
             form.show()
+            # @todo : dirty trick to keep reference
+            self.__form = form
 
     def copy_selected_rows( self ):
         """Copy the selected rows in this tableview"""
@@ -180,12 +174,12 @@ class One2ManyEditor( CustomEditor, WideEditor ):
 
     def createFormForIndex( self, index ):
         from camelot.view.proxy.collection_proxy import CollectionProxy
-        from camelot.view.workspace import get_workspace
         model = CollectionProxy( self.admin,
                                  self.model.collection_getter,
                                  self.admin.get_fields,
                                  max_number_of_rows = 1,
                                  edits = None )
-        form = self.admin.create_form_view( u'', model, self.model.map_to_source(index), get_workspace() )
-        get_workspace().addSubWindow( form )
+        form = self.admin.create_form_view( u'', model, self.model.map_to_source(index) )
         form.show()
+        # @todo : dirty trick to keep reference
+        self.__form = form
