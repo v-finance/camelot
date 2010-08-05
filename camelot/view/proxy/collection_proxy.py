@@ -534,7 +534,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 data[index.column()] = value
             if isinstance( value, datetime.datetime ):
                 # Putting a python datetime into a QVariant and returning
-                # it to a PyObject seems to be buggy, therefor we chop the
+                # it to a PyObject seems to be buggy, therefore we chop the
                 # microseconds
                 if value:
                     value = QtCore.QDateTime(value.year, value.month,
@@ -544,7 +544,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         elif role == Qt.ToolTipRole:
             return QtCore.QVariant(self._get_field_attribute_value(index, 'tooltip'))
         elif role == Qt.BackgroundRole:
-            return QtCore.QVariant(self._get_field_attribute_value(index, 'background_color') or QtGui.QColor('white'))
+            return QtCore.QVariant(self._get_field_attribute_value(index, 'background_color') or QtGui.QColor('White'))
         elif role == Qt.UserRole:
             field_attributes = ProxyDict(self._static_field_attributes[index.column()])
             dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]

@@ -7,6 +7,7 @@ from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 from camelot.core.utils import ugettext
 
+
 class PlainTextDelegate(CustomDelegate):
     """Custom delegate for simple string values"""
 
@@ -25,7 +26,9 @@ class PlainTextDelegate(CustomDelegate):
         self.drawBackground(painter, option, index)
         text = variant_to_pyobject(index.model().data(index, Qt.EditRole))
 
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
+        background_color = QtGui.QColor(
+            index.model().data(index, Qt.BackgroundRole).toString()
+        )
 
         rect = option.rect
         rect = QtCore.QRect(rect.left(), rect.top(), rect.width(), rect.height())

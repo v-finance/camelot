@@ -1,6 +1,7 @@
 from wideeditor import WideEditor
 from customeditor import AbstractCustomEditor, QtGui
 
+
 class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
 
     def __init__(self, parent, length=20, editable=True, **kwargs):
@@ -18,7 +19,10 @@ class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
         return value
 
     def get_value(self):
-        return AbstractCustomEditor.get_value(self) or unicode(self.toPlainText())
+        val = AbstractCustomEditor.get_value(self)
+        if val is not None: # we need to distinguish between None
+            return val      # and other falsy values
+        return unicode(self.toPlainText())
 
 
     def set_enabled(self, editable=True):

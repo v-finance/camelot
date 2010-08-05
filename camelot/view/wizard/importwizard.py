@@ -206,19 +206,12 @@ class RowDataAdminDecorator(object):
             the result is None when a value is required, set the
             background to pink"""
             string_value = attributes['getter'](o)
-            try:
-                # haven't found better without breaking the code...
-                if 'special_background_color' in attributes:
-                    func = attributes['special_background_color']
-                    return func(string_value)
-                else:
-                    if 'from_string' in attributes:
-                        value = attributes['from_string'](string_value)
-                        if value==None and attributes['nullable']==False:
-                            return self.invalid_color
-                        return None
-            except:
-                return self.invalid_color
+            if 'from_string' in attributes:
+                value = attributes['from_string'](string_value)
+                if value==None and attributes['nullable']==False:
+                    return self.invalid_color
+                return None
+            return self.invalid_color
 
         return background_color
 
