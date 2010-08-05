@@ -140,6 +140,7 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         self.table.edit( index )
 
     def newRow( self ):
+        from camelot.view.workspace import show_top_level
         if self.create_inline:
 
             @model_function
@@ -156,7 +157,7 @@ class One2ManyEditor( CustomEditor, WideEditor ):
             form = self.admin.create_new_view( parent = None,
                                                oncreate = prependentity,
                                                onexpunge = removeentity )
-            form.show()
+            show_top_level( form )
             # @todo : dirty trick to keep reference
             self.__form = form
 
@@ -173,6 +174,7 @@ class One2ManyEditor( CustomEditor, WideEditor ):
             self.model.removeRow( row )
 
     def createFormForIndex( self, index ):
+        from camelot.view.workspace import show_top_level
         from camelot.view.proxy.collection_proxy import CollectionProxy
         model = CollectionProxy( self.admin,
                                  self.model.collection_getter,
@@ -180,6 +182,6 @@ class One2ManyEditor( CustomEditor, WideEditor ):
                                  max_number_of_rows = 1,
                                  edits = None )
         form = self.admin.create_form_view( u'', model, self.model.map_to_source(index) )
-        form.show()
+        show_top_level( form )
         # @todo : dirty trick to keep reference
         self.__form = form

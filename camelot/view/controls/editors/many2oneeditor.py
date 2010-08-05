@@ -252,6 +252,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
 
     @gui_function
     def show_new_view(self, has_subclasses):
+        from camelot.view.workspace import show_top_level
         selected = QtGui.QDialog.Accepted
         admin = self.admin
         if has_subclasses:
@@ -265,9 +266,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             self.connect(form, form.entity_created_signal, self.selectEntity)
             # @todo: dirty trick to keep reference
             self.__new_form = form
-            form.setWindowTitle('New ' + admin.get_verbose_name())
-            form.setParent(None)
-            form.show()
+            show_top_level( form )
 
     def createFormView(self):
         if self.entity_instance_getter:
@@ -280,6 +279,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             post(get_admin_and_title, self.show_form_view)
 
     def show_form_view(self, admin_and_title):
+        from camelot.view.workspace import show_top_level
         admin, title = admin_and_title
 
         def create_collection_getter(instance_getter):
@@ -295,9 +295,9 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
         self.connect(model, QtCore.SIGNAL(sig), self.dataChanged)
         form = admin.create_form_view(title, model, 0)
-        self.form = form
-        #form.setParent(None)
-        form.show()
+        # @todo : dirty trick to keep reference
+        self.__form = form
+        show_top_level( form )
 
     def dataChanged(self, index1, index2):
         self.setEntity(self.entity_instance_getter, False)

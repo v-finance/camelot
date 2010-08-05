@@ -381,6 +381,7 @@ class EntityAdmin(ObjectAdmin):
 
         :param parent: the widget that will contain the table view
         """
+        from camelot.view.workspace import show_top_level
 
         from PyQt4.QtCore import SIGNAL
 
@@ -400,7 +401,7 @@ class EntityAdmin(ObjectAdmin):
                 formview = tableview.admin.create_form_view(
                     title, model, index, parent=None
                 )
-                formview.show()
+                show_top_level( formview )
                 # @todo: dirty trick to keep reference
                 self.__form = formview
 

@@ -443,10 +443,11 @@ class TableView( AbstractView  ):
     @gui_function
     def newRow( self ):
         """Create a new row in the tableview"""
+        from camelot.view.workspace import show_top_level
         form = self.admin.create_new_view( parent = None,
                                            oncreate = lambda o:self._table_model.insertEntityInstance( 0, o ),
                                            onexpunge = lambda o:self._table_model.removeEntityInstance( o ) )
-        form.show()
+        show_top_level( form )
         # @todo: dirty trick to keep reference
         self.__form = form
 

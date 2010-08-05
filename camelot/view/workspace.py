@@ -111,3 +111,19 @@ def get_workspace():
 @gui_function
 def has_workspace():
     return len(_workspace_) > 0
+
+def show_top_level(view, parent=None):
+    """Show a widget as a top level window
+    :param view: the widget extend AbstractView
+    :param parent: the widget with regard to which the top level
+    window will be placed.
+     """
+    from camelot.view.controls.view import AbstractView
+    view.connect(
+        view,
+        AbstractView.title_changed_signal,
+        view.setWindowTitle
+    )
+    view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+    view.setWindowModality(QtCore.Qt.ApplicationModal)
+    view.show()     
