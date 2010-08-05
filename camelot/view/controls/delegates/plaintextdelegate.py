@@ -48,15 +48,11 @@ class PlainTextDelegate(CustomDelegate):
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(130,130,130)
 
-        #if text and text!=ValueLoading:
-        #    if self._translate_content:
-        #        text = ugettext(text)
-        #else:
-        #    text = u''
-
-        if text!=ValueLoading:
+        if text not in (None, ValueLoading):
             if self._translate_content:
                 text = ugettext(text)
+        else:
+            text = u''
 
         painter.setPen(fontColor.toRgb())
         rect = QtCore.QRect(option.rect.left(),

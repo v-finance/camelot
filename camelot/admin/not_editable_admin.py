@@ -29,6 +29,7 @@
 fields"""
 
 from copy import copy
+
 def notEditableAdmin(original_admin, actions=False, editable_fields=None):
 
     """Turn all fields visualized with original_admin into read only fields
@@ -48,36 +49,50 @@ def notEditableAdmin(original_admin, actions=False, editable_fields=None):
       Admin = notEditableAdmin(Admin, editable_fields=['contributions'])
     """
     
+
+    
     class NewAdmin(original_admin):
 
         def get_related_entity_admin(self, entity):
             admin = original_admin.get_related_entity_admin(self, entity)
             
             class AdminReadOnlyDecorator(object):
-                
+
                 def __init__(self, original_admin, editable_fields):
                     self._original_admin = original_admin
                     self._editable_fields = editable_fields
                     self._field_attributes = dict()
                     
+                def _process_field_attributes(self, field, attributes):
+                    if not 'editable' in attributes:
+                        return attributes
+                    if attributes['editable']==False:
+                        return attributes
+                    if self._editable_fields and field in self._editable_fields:
+                        return attributes
+                    new_attributes = copy( attributes )
+                    new_attributes['editable'] = False
+                    return new_attributes
+                
                 def __getattr__(self, name):
                     return self._original_admin.__getattribute__(name)
                 
                 def get_fields(self):
                     fields = self._original_admin.get_fields()
-                    return [(field_name,self.get_field_attributes(field_name)) for field_name,_attrs in fields]
+                    return [(field_name, self._process_field_attributes(field_name, _attrs)) for field_name,_attrs in fields]
                 
                 def get_field_attributes(self, field_name):
-                    try:
-                        return self._field_attributes[field_name]
-                    except KeyError:
-                        attribs = copy( self._original_admin.get_field_attributes(field_name) )
-                        if self._editable_fields and field_name in self._editable_fields:
-                            attribs['editable'] = True
-                        else: 
-                            attribs['editable'] = False
-                        return attribs
+                    attributes = self._original_admin.get_field_attributes(field_name)
+                    return self._process_field_attributes(field_name, attributes)
                 
+                def get_dynamic_field_attributes(self, obj, field_names):
+                    dynamic_fa = self._original_admin.get_dynamic_field_attributes(obj, field_names)
+                    return [self._process_field_attributes(name, attributes) for name,attributes in zip(field_names, dynamic_fa)]
+                    
+                def get_static_field_attributes(self, field_names):
+                    static_fa = self._original_admin.get_static_field_attributes(field_names)
+                    return [self._process_field_attributes(name, attributes) for name,attributes in zip(field_names, static_fa)]
+                    
                 def get_related_entity_admin(self, entity):
                     return AdminReadOnlyDecorator(self._original_admin.get_related_entity_admin(entity))
                 
@@ -88,8 +103,8 @@ def notEditableAdmin(original_admin, actions=False, editable_fields=None):
                     return []
                 
                 def get_columns(self): 
-                    return [(field, self.get_field_attributes(field))
-                            for field, _attrs in self._original_admin.get_columns()]           
+                    return [(field, self._process_field_attributes(field, attrs))
+                            for field, attrs in self._original_admin.get_columns()]       
                      
             return AdminReadOnlyDecorator(admin, editable_fields)
 
