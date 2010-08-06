@@ -157,9 +157,9 @@ class One2ManyEditor( CustomEditor, WideEditor ):
             form = self.admin.create_new_view( parent = None,
                                                oncreate = prependentity,
                                                onexpunge = removeentity )
-            show_top_level( form )
+            show_top_level( form, self )
             # @todo : dirty trick to keep reference
-            self.__form = form
+            #self.__form = form
 
     def copy_selected_rows( self ):
         """Copy the selected rows in this tableview"""
@@ -182,6 +182,6 @@ class One2ManyEditor( CustomEditor, WideEditor ):
                                  max_number_of_rows = 1,
                                  edits = None )
         form = self.admin.create_form_view( u'', model, self.model.map_to_source(index) )
-        show_top_level( form )
+        show_top_level( form, self )
         # @todo : dirty trick to keep reference
-        self.__form = form
+        #self.__form = form

@@ -447,9 +447,9 @@ class TableView( AbstractView  ):
         form = self.admin.create_new_view( parent = None,
                                            oncreate = lambda o:self._table_model.insertEntityInstance( 0, o ),
                                            onexpunge = lambda o:self._table_model.removeEntityInstance( o ) )
-        show_top_level( form )
+        show_top_level( form, self )
         # @todo: dirty trick to keep reference
-        self.__form = form
+        #self.__form = form
 
     def closeEvent( self, event ):
         """reimplements close event"""

@@ -104,7 +104,6 @@ class ImageEditor(FileEditor, WideEditor):
         self.layout.addStretch()                
         self.setLayout(self.layout)
         self.clear_image()
-        self.lite_box = LiteBoxView()
       
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)
@@ -149,8 +148,9 @@ class ImageEditor(FileEditor, WideEditor):
         self.label.setLineWidth(1)
         self.label.setFixedSize(self.preview_width, self.preview_height)
 
-    def show_fullscreen(self, image):                        
-        self.lite_box.show_fullscreen_image(image)
+    def show_fullscreen(self, image):
+        lite_box = LiteBoxView(self)
+        lite_box.show_fullscreen_image(image)
         
     def eventFilter(self, object, event):
         from camelot.view.model_thread import post

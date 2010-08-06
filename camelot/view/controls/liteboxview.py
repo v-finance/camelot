@@ -96,6 +96,8 @@ class LiteBoxView(QGraphicsView):
 
     def __init__(self, parent=None):
         super(LiteBoxView, self).__init__(parent)
+        self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
+        #self.setAttribute(Qt.WA_DeleteOnClose)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)

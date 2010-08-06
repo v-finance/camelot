@@ -15,11 +15,10 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
 
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
-        #if value:
-        #    self.setText(unicode(value))
-        #else:
-        #    self.setText('')
-        self.setText(unicode(value))
+        if value != None:
+            self.setText(unicode(value))
+        else:
+            self.setText('')
         return value
 
     def get_value(self):

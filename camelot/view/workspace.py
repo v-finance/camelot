@@ -112,18 +112,33 @@ def get_workspace():
 def has_workspace():
     return len(_workspace_) > 0
 
-def show_top_level(view, parent=None):
+def show_top_level(view, parent):
     """Show a widget as a top level window
     :param view: the widget extend AbstractView
     :param parent: the widget with regard to which the top level
     window will be placed.
      """
     from camelot.view.controls.view import AbstractView
+    view.setParent( parent )
+    view.setWindowFlags(QtCore.Qt.Window)
     view.connect(
         view,
         AbstractView.title_changed_signal,
         view.setWindowTitle
     )
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-    view.setWindowModality(QtCore.Qt.ApplicationModal)
-    view.show()     
+    
+    #
+    # position the new window in the center of the same screen
+    # as the parent
+    #
+    screen = QtGui.QApplication.desktop().screenNumber(parent)
+    available = QtGui.QApplication.desktop().availableGeometry(screen)
+    
+    p = QtCore.QPoint(available.x() + available.width()/2, available.y() + available.height()/2)
+    p = QtCore.QPoint(p.x()-view.width()/2,
+                      p.y()-view.height()/2);
+    view.move( p )
+    
+    #view.setWindowModality(QtCore.Qt.WindowModal)    
+    view.show()

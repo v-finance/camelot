@@ -401,9 +401,9 @@ class EntityAdmin(ObjectAdmin):
                 formview = tableview.admin.create_form_view(
                     title, model, index, parent=None
                 )
-                show_top_level( formview )
+                show_top_level( formview, tableview )
                 # @todo: dirty trick to keep reference
-                self.__form = formview
+                #self.__form = formview
 
             return openForm
 

@@ -265,8 +265,8 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             form = admin.create_new_view()
             self.connect(form, form.entity_created_signal, self.selectEntity)
             # @todo: dirty trick to keep reference
-            self.__new_form = form
-            show_top_level( form )
+            #self.__new_form = form
+            show_top_level( form, self )
 
     def createFormView(self):
         if self.entity_instance_getter:
@@ -296,8 +296,8 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.connect(model, QtCore.SIGNAL(sig), self.dataChanged)
         form = admin.create_form_view(title, model, 0)
         # @todo : dirty trick to keep reference
-        self.__form = form
-        show_top_level( form )
+        #self.__form = form
+        show_top_level( form, self )
 
     def dataChanged(self, index1, index2):
         self.setEntity(self.entity_instance_getter, False)
