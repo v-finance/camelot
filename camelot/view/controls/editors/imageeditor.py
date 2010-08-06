@@ -48,7 +48,6 @@ class ImageEditor(FileEditor, WideEditor):
     def __init__(
             self, 
             parent=None,
-            editable=True,
             storage=None,
             preview_width=100,
             preview_height=100,
@@ -57,7 +56,7 @@ class ImageEditor(FileEditor, WideEditor):
         self.preview_width = preview_width
         self.preview_height = preview_height
         FileEditor.__init__(
-            self, parent=parent, storage=storage, editable=editable, **kwargs
+            self, parent=parent, storage=storage, **kwargs
         )
       
     def setup_widget(self):
@@ -68,7 +67,6 @@ class ImageEditor(FileEditor, WideEditor):
         #
         self.label = QtGui.QLabel(self)
         self.label.installEventFilter(self)
-        self.label.setEnabled(self.editable)
         self.layout.addWidget(self.label)
         self.label.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
         #
@@ -80,7 +78,6 @@ class ImageEditor(FileEditor, WideEditor):
         
         self.open_button = QtGui.QToolButton()
         self.open_button.setIcon(self.open_icon)
-        self.open_button.setEnabled(self.editable)
         self.open_button.setAutoRaise(True)
         self.open_button.setToolTip(unicode(_('open image')))
         self.connect(
@@ -91,7 +88,6 @@ class ImageEditor(FileEditor, WideEditor):
         
         self.clear_button = QtGui.QToolButton()
         self.clear_button.setIcon(self.clear_icon)
-        self.clear_button.setEnabled(self.editable)
         self.clear_button.setToolTip(unicode(_('delete image')))
         self.clear_button.setAutoRaise(True)
         self.connect(
@@ -113,6 +109,7 @@ class ImageEditor(FileEditor, WideEditor):
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)
         self.open_button.setEnabled(editable)
+        self.label.setEnabled(editable)
               
     def set_pixmap(self, pixmap):
         self.label.setPixmap(pixmap)      
