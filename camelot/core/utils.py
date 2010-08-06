@@ -184,3 +184,6 @@ def xls2list(xf):
             vector.append(value)
         matrix.append(vector)
     return matrix
+
+def format_float(value, precision=3):
+    return QtCore.QString("%L1").arg(float(value), 0, 'f', precision)
