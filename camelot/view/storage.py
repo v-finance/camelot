@@ -58,6 +58,10 @@ class OpenFileProgressDialog(QtGui.QProgressDialog):
             url = QtCore.QUrl(path, QtCore.QUrl.TolerantMode)
         QtGui.QDesktopServices.openUrl(url)
         self.close()
+        
+    def file_stored(self):
+        """Called when the file has been stored at path"""
+        self.close()
 
 
 class SaveFileProgressDialog(QtGui.QProgressDialog):
@@ -86,7 +90,28 @@ def open_stored_file(parent, stored_file):
     post(get_path, progress.open_path, model_thread_exception_message_box)
     progress.exec_()
 
+def save_stored_file(parent, stored_file):
+    """Save a stored file as another file"""
+    import os
+    
+    settings = QtCore.QSettings()
+    dir = settings.value('datasource').toString()
+    proposal = os.path.join(unicode(dir), unicode(stored_file.verbose_name) )
+    
+    path = QtGui.QFileDialog.getSaveFileName(
+        parent, _('Save as'), proposal
+    )
 
+    if path:
+        progress = OpenFileProgressDialog()
+        
+        def save_as():
+            destination = open(path, 'wb')
+            destination.write( stored_file.storage.checkout_stream(stored_file).read() )
+     
+        post(save_as, progress.file_stored, model_thread_exception_message_box)
+        progress.exec_()
+       
 def create_stored_file(parent, storage, on_finish, filter='All files (*)'):
     """Popup a QFileDialog, put the selected file in the storage and
     return the call on_finish with the StoredFile when done"""
