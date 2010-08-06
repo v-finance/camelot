@@ -47,6 +47,8 @@ from camelot.view.controls import delegates
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import gui_function, \
                                       model_function, post
+                                      
+from camelot.core.files.storage import StoredImage
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the QVariant object and prevent
@@ -131,6 +133,8 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
         elif isinstance( field_data, datetime.date ):
             if field_data.year >= 1900:
                 unicode_data = field_data.strftime( '%d/%m/%Y' )
+        elif isinstance( field_data, StoredImage):
+            unicode_data = field_data.checkout_thumbnail(100, 100)
         elif field_data != None:
             unicode_data = unicode( field_data )
         row_data.append( unicode_data )
