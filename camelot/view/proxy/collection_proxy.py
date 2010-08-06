@@ -548,16 +548,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         elif role == Qt.BackgroundRole:
             return QtCore.QVariant(self._get_field_attribute_value(index, 'background_color') or QtGui.QColor('White'))
         elif role == Qt.UserRole:
-            try:
-                field_attributes = ProxyDict(self._static_field_attributes[index.column()])
-                dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
-                if dynamic_field_attributes != ValueLoading:
-                    field_attributes.update( dynamic_field_attributes )
-                return QtCore.QVariant(field_attributes)
-            except:
-                print index.row(), index.column()
-                print self._static_field_attributes[index.column()]
-                print self._get_row_data( index.row(), self.attributes_cache )
+            field_attributes = ProxyDict(self._static_field_attributes[index.column()])
+            dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
+            if dynamic_field_attributes != ValueLoading:
+                field_attributes.update( dynamic_field_attributes )
+            return QtCore.QVariant(field_attributes)
         return QtCore.QVariant()
 
     def _get_field_attribute_value(self, index, field_attribute):
