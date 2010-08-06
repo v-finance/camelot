@@ -85,18 +85,20 @@ def strip_data_from_object( obj, columns ):
 
     for _i, col in enumerate( columns ):
         field_attributes = col[1]
+        field_value = None
         try:
             getter = field_attributes['getter']
             if field_attributes['python_type'] == list:
-                row_data.append( DelayedProxy( field_attributes['admin'],
-                                create_collection_getter( obj, col[0] ),
-                                field_attributes['admin'].get_columns ) )
+                field_value = DelayedProxy( field_attributes['admin'],
+                                            create_collection_getter( obj, col[0] ),
+                                            field_attributes['admin'].get_columns )
             else:
-                row_data.append( getter( obj ) )
-        except Exception, e:
-            logger.error('ProgrammingError : could not get attribute %s of object of type %s'%(col[0], obj.__class__.__name__),
+                field_value = getter( obj )
+        except (Exception, RuntimeError, TypeError, NameError), e:
+            logger.error('ProgrammingError : could not get field %s of object of type %s'%(col[0], obj.__class__.__name__),
                          exc_info=e)
-            row_data.append( None )
+        finally:
+            row_data.append( field_value )
     return row_data
 
 @model_function
@@ -546,11 +548,16 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         elif role == Qt.BackgroundRole:
             return QtCore.QVariant(self._get_field_attribute_value(index, 'background_color') or QtGui.QColor('White'))
         elif role == Qt.UserRole:
-            field_attributes = ProxyDict(self._static_field_attributes[index.column()])
-            dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
-            if dynamic_field_attributes != ValueLoading:
-                field_attributes.update( dynamic_field_attributes )
-            return QtCore.QVariant(field_attributes)
+            try:
+                field_attributes = ProxyDict(self._static_field_attributes[index.column()])
+                dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]
+                if dynamic_field_attributes != ValueLoading:
+                    field_attributes.update( dynamic_field_attributes )
+                return QtCore.QVariant(field_attributes)
+            except:
+                print index.row(), index.column()
+                print self._static_field_attributes[index.column()]
+                print self._get_row_data( index.row(), self.attributes_cache )
         return QtCore.QVariant()
 
     def _get_field_attribute_value(self, index, field_attribute):

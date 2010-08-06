@@ -29,6 +29,7 @@
 fields"""
 
 from copy import copy
+from itertools import tee
 
 def notEditableAdmin(original_admin, actions=False, editable_fields=None):
 
@@ -48,8 +49,6 @@ def notEditableAdmin(original_admin, actions=False, editable_fields=None):
 
       Admin = notEditableAdmin(Admin, editable_fields=['contributions'])
     """
-    
-
     
     class NewAdmin(original_admin):
 
@@ -86,12 +85,14 @@ def notEditableAdmin(original_admin, actions=False, editable_fields=None):
                     return self._process_field_attributes(field_name, attributes)
                 
                 def get_dynamic_field_attributes(self, obj, field_names):
-                    dynamic_fa = self._original_admin.get_dynamic_field_attributes(obj, field_names)
-                    return [self._process_field_attributes(name, attributes) for name,attributes in zip(field_names, dynamic_fa)]
+                    fn1, fn2 = tee(field_names, 2)
+                    dynamic_fa = self._original_admin.get_dynamic_field_attributes(obj, fn1)
+                    return [self._process_field_attributes(name, attributes) for name,attributes in zip(fn2, dynamic_fa)]
                     
                 def get_static_field_attributes(self, field_names):
-                    static_fa = self._original_admin.get_static_field_attributes(field_names)
-                    return [self._process_field_attributes(name, attributes) for name,attributes in zip(field_names, static_fa)]
+                    fn1, fn2 = tee(field_names, 2)
+                    static_fa = self._original_admin.get_static_field_attributes(fn1)
+                    return [self._process_field_attributes(name, attributes) for name,attributes in zip(fn2, static_fa)]
                     
                 def get_related_entity_admin(self, entity):
                     return AdminReadOnlyDecorator(self._original_admin.get_related_entity_admin(entity))

@@ -364,12 +364,13 @@ class ObjectAdmin(object):
                 if name not in DYNAMIC_FIELD_ATTRIBUTES:
                     continue
                 if callable(value):
+                    return_value = None
                     try:
-                        value = value(obj)
-                    except Exception, exc:
+                        return_value = value(obj)
+                    except (Exception, RuntimeError, TypeError, NameError), exc:
                         logger.error(u'error in field_attribute function of %s'%name, exc_info=exc)
-                        value = None
-                    dynamic_field_attributes[name] = value
+                    finally:
+                        dynamic_field_attributes[name] = return_value
             yield dynamic_field_attributes
 
     def get_field_attributes(self, field_name):

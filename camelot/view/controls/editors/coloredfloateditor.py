@@ -11,11 +11,6 @@ class ColoredFloatEditor(CustomEditor):
     def __init__(self,
                  parent,
                  precision=2,
-                 minimum=constants.camelot_minfloat,
-                 maximum=constants.camelot_maxfloat, 
-                 prefix='',
-                 suffix='',
-                 editable=True,
                  reverse=False,
                  neutral=False,
                  **kwargs):
@@ -24,12 +19,7 @@ class ColoredFloatEditor(CustomEditor):
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
         self.spinBox = QtGui.QDoubleSpinBox(parent)
-        self.spinBox.setReadOnly(not editable)
-        self.spinBox.setDisabled(not editable)
-        self.spinBox.setEnabled(editable)
-        self.spinBox.setPrefix(prefix)
-        self.spinBox.setSuffix(suffix)
-        self.spinBox.setRange(minimum, maximum)
+
         self.spinBox.setDecimals(precision)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.spinBox.setSingleStep(1.0)
@@ -66,8 +56,7 @@ class ColoredFloatEditor(CustomEditor):
         layout.addSpacing(3.5)
         layout.addWidget(self.arrow)
         layout.addWidget(self.spinBox)
-        if editable:
-            layout.addWidget(self.calculatorButton)
+        layout.addWidget(self.calculatorButton)
         self.reverse = reverse
         self.neutral = neutral
         self.setFocusProxy(self.spinBox)
@@ -92,6 +81,29 @@ class ColoredFloatEditor(CustomEditor):
                 0:Icon('tango/16x16/actions/zero.png').getQPixmap()
             }
             
+    def set_field_attributes(self, 
+                             editable=True, 
+                             background_color=None, 
+                             prefix='', 
+                             suffix='',
+                             minimum=constants.camelot_minfloat,
+                             maximum=constants.camelot_maxfloat,  
+                             **kwargs):
+        self.set_enabled(editable)
+        self.set_background_color(background_color)
+        self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
+        self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
+        self.spinBox.setRange(minimum, maximum)
+        
+    def set_enabled(self, editable=True):
+        self.spinBox.setReadOnly(not editable)
+        self.spinBox.setEnabled(editable)
+        self.calculatorButton.setShown(editable)
+        if editable:
+            self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
+        else:
+            self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+            
     def set_value(self, value):
         value = CustomEditor.set_value(self, value) or 0.0
         self.spinBox.setValue(value)
@@ -101,14 +113,6 @@ class ColoredFloatEditor(CustomEditor):
         self.spinBox.interpretText()
         value = self.spinBox.value()
         return CustomEditor.get_value(self) or value
-      
-    def set_enabled(self, editable=True):
-        if self.spinBox.isEnabled() != editable:
-            if not editable:
-                self.layout().removeWidget(self.calculatorButton)
-            else:
-                self.layout().addWidget(self.calculatorButton)
-            self.spinBox.setEnabled(editable)
       
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator
