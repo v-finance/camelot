@@ -28,4 +28,68 @@
 """The action module contains various QAction classes, representing commands
 that can be invoked via menus, toolbar buttons, and keyboard shortcuts."""
 
+from PyQt4 import QtGui
+
+from camelot.view.art import Icon
 from utils import createAction, addActions
+from camelot.core.utils import ugettext as _
+
+class ActionFactory(object):
+    """Utility class to generate some default actions we need
+    in several places.
+    
+    Each method of this class, returns a certain action with
+    a default text, icon and shortcut.
+    """
+
+    @classmethod
+    def view_first(cls, parent, slot, **kwargs):
+        default = dict(
+            text=_('First'),
+            slot=slot,
+            parent=parent,
+            shortcut=QtGui.QKeySequence.MoveToStartOfDocument,
+            actionicon=Icon('tango/16x16/actions/go-first.png').fullpath(),
+            tip=_('First')
+        )
+        default.update(kwargs)
+        return createAction(**default)
+
+    @classmethod
+    def view_last(cls, parent, slot, **kwargs):
+        default = dict(
+            text=_('Last'),
+            slot=slot,
+            parent=parent,
+            shortcut=QtGui.QKeySequence.MoveToEndOfDocument,
+            actionicon=Icon('tango/16x16/actions/go-last.png').fullpath(),
+            tip=_('Last')
+        )
+        default.update(kwargs)
+        return createAction(**default)
+
+    @classmethod
+    def view_next(cls, parent, slot, **kwargs):
+        default = dict(
+            text=_('Next'),
+            slot=slot,
+            parent=parent,
+            shortcut=QtGui.QKeySequence.MoveToNextPage,
+            actionicon=Icon('tango/16x16/actions/go-next.png').fullpath(),
+            tip=_('Next')
+        )
+        default.update(kwargs)
+        return createAction(**default)
+
+    @classmethod
+    def view_previous(cls, parent, slot, **kwargs):
+        default = dict(
+            text=_('Previous'),
+            slot=slot,
+            parent=parent,
+            shortcut=QtGui.QKeySequence.MoveToPreviousPage,
+            actionicon=Icon('tango/16x16/actions/go-previous.png').fullpath(),
+            tip=_('Previous')
+        )
+        default.update(kwargs)
+        return createAction(**default)

@@ -41,7 +41,7 @@ from camelot.view.model_thread import post
 from camelot.view.model_thread import model_function
 from camelot.view.controls.view import AbstractView
 from camelot.core.utils import ugettext as _
-
+from camelot.action import ActionFactory
 
 class ContextMenuAction(QtGui.QAction):
 
@@ -288,11 +288,19 @@ class FormView(AbstractView):
         self.validator = admin.create_validator(model)
         self.validate_before_close = True
 
-        def getActions():
+        def get_actions():
             return admin.get_form_actions(None)
 
-        post(getActions, self.setActions)
+        post(get_actions, self.setActions)
         self.update_title()
+        #
+        # Define actions
+        #
+        self.setContextMenuPolicy(Qt.ActionsContextMenu)
+        self.addAction( ActionFactory.view_first(self, self.viewFirst) )
+        self.addAction( ActionFactory.view_last(self, self.viewLast) )
+        self.addAction( ActionFactory.view_next(self, self.viewNext) )
+        self.addAction( ActionFactory.view_previous(self, self.viewPrevious) )
 
     def update_title(self):
 

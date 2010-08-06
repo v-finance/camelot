@@ -13,6 +13,10 @@ class Many2OneDelegate(CustomDelegate):
     """Custom delegate for many 2 one relations
 
   .. image:: ../_static/manytoone.png
+  
+  Once an item has been selected, it is represented by its unicode representation
+  in the editor or the table.  So the related classes need an implementation of
+  their __unicode__ method.
   """
 
     __metaclass__ = DocumentationMetaclass
@@ -75,9 +79,11 @@ class Many2OneDelegate(CustomDelegate):
 
     def createEditor(self, parent, option, index):
         if self._embedded:
-            editor = editors.EmbeddedMany2OneEditor(self.admin, parent, editable=self.editable)
+            editor = editors.EmbeddedMany2OneEditor(self.admin, parent, 
+                                                    editable=self.editable)
         else:
-            editor = editors.Many2OneEditor(self.admin, parent, editable=self.editable)
+            editor = editors.Many2OneEditor(self.admin, parent, 
+                                            editable=self.editable)
         if option.version != 5:
             editor.setAutoFillBackground(True)
         self.connect(editor,
@@ -87,7 +93,7 @@ class Many2OneDelegate(CustomDelegate):
 
     def setEditorData(self, editor, index):
         value = variant_to_pyobject(index.data(Qt.EditRole))
-        if value!=ValueLoading:
+        if value != ValueLoading:
             field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
             editor.set_value(create_constant_function(value))
             editor.set_field_attributes(**field_attributes)

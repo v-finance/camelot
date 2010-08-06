@@ -42,7 +42,7 @@ from PyQt4 import QtGui, QtCore
 from PyQt4 import QtWebKit
 
 from camelot.view.art import Icon
-from camelot.action import createAction, addActions
+from camelot.action import createAction, addActions, ActionFactory
 from camelot.view.controls.navpane import NavigationPane
 from camelot.view.controls.printer import Printer
 from camelot.view.model_thread import post
@@ -171,11 +171,6 @@ class MainWindow(QtGui.QMainWindow):
 
         icon_new = Icon('tango/16x16/actions/document-new.png').fullpath()
         icon_delete = Icon('tango/16x16/places/user-trash.png').fullpath()
-
-        icon_gofirst = Icon('tango/16x16/actions/go-first.png').fullpath()
-        icon_golast = Icon('tango/16x16/actions/go-last.png').fullpath()
-        icon_gonext = Icon('tango/16x16/actions/go-next.png').fullpath()
-        icon_goprevious = Icon('tango/16x16/actions/go-previous.png').fullpath()
 
         icon_excel = Icon('tango/16x16/mimetypes/x-office-spreadsheet.png').fullpath()
         icon_word = Icon('tango/16x16/mimetypes/x-office-document.png').fullpath()
@@ -341,41 +336,10 @@ class MainWindow(QtGui.QMainWindow):
             tip=_('Delete')
         )
 
-        self.viewFirstAct = createAction(
-            parent=self,
-            text=_('First'),
-            slot=self.viewFirst,
-            shortcut=QtGui.QKeySequence.MoveToStartOfDocument,
-            actionicon=icon_gofirst,
-            tip=_('First')
-        )
-
-        self.viewLastAct = createAction(
-            parent=self,
-            text=_('Last'),
-            slot=self.viewLast,
-            shortcut=QtGui.QKeySequence.MoveToEndOfDocument,
-            actionicon=icon_golast,
-            tip=_('Last')
-        )
-
-        self.viewNextAct = createAction(
-            parent=self,
-            text=_('Next'),
-            slot=self.viewNext,
-            shortcut=QtGui.QKeySequence.MoveToNextPage,
-            actionicon=icon_gonext,
-            tip=_('Next')
-        )
-
-        self.viewPreviousAct = createAction(
-            parent=self,
-            text=_('Previous'),
-            slot=self.viewPrevious,
-            shortcut=QtGui.QKeySequence.MoveToPreviousPage,
-            actionicon=icon_goprevious,
-            tip=_('Previous')
-        )
+        self.viewFirstAct = ActionFactory.view_first(self, self.viewFirst)
+        self.viewLastAct = ActionFactory.view_last(self, self.viewLast)
+        self.viewNextAct = ActionFactory.view_next(self, self.viewNext)
+        self.viewPreviousAct = ActionFactory.view_previous(self, self.viewPrevious)
 
         if QT_MAJOR_VERSION > 4.3:
             self.viewFirstAct.setIconVisibleInMenu(False)
