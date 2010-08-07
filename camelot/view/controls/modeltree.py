@@ -87,31 +87,26 @@ class ModelTree(QtGui.QTreeWidget):
     def mousePressEvent(self, event):
         """Custom context menu"""
         if event.button() == Qt.RightButton:
-            self.emit(QtCore.SIGNAL('customContextMenuRequested(const QPoint &)'),
-                      event.pos())
+            self.emit(
+                QtCore.SIGNAL('customContextMenuRequested(const QPoint &)'),
+                event.pos()
+            )
             event.accept()
         else:
             QtGui.QTreeWidget.mousePressEvent(self, event)
 
     def leaveEvent(self, event):
-        if not self.modelitems:
-            return
-
-        for item in self.modelitems:
-            item._underline(False)
+        if not self.modelitems: return
+        for item in self.modelitems: item._underline(False)
 
     def mouseMoveEvent(self, event):
-        if not self.modelitems:
-            return
-
-        for item in self.modelitems:
-            item._underline(False)
+        if not self.modelitems: return
+        for item in self.modelitems: item._underline(False)
 
         item = self.itemAt(self.mapFromGlobal(self.cursor().pos()))
         if item:
             item._underline(True)
 
-    def focusInEvent(self, event):
-        item = self.itemAt(self.mapFromGlobal(self.cursor().pos()))
-        if item:
-            self.setCurrentItem(item)
+    #def focusInEvent(self, event):
+    #    item = self.itemAt(self.mapFromGlobal(self.cursor().pos()))
+    #    if item: self.setCurrentItem(item)

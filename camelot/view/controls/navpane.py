@@ -206,14 +206,11 @@ class PaneButton( QtGui.QWidget ):
                       ( self.index, self.label.text() ) )
 
 
-class NavigationPane( QtGui.QDockWidget ):
+class NavigationPane(QtGui.QDockWidget):
     """ms office-like navigation pane in Qt"""
 
-    def __init__( self, 
-                  app_admin,
-                  workspace,
-                  parent ):
-        QtGui.QDockWidget.__init__( self, parent )
+    def __init__(self, app_admin, workspace, parent):
+        QtGui.QDockWidget.__init__(self, parent)
         self._workspace = workspace
         self.app_admin = app_admin
         self.setFeatures( QtGui.QDockWidget.NoDockWidgetFeatures )
@@ -248,10 +245,10 @@ class NavigationPane( QtGui.QDockWidget ):
 
     def auth_update(self):
         post(self.app_admin.get_sections, self.set_sections)
-        
+
     def get_sections(self):
         return self.sections
-    
+
     def set_sections(self, sections):
         logger.debug('set sections')
         from PyQt4.QtTest import QTest
@@ -300,22 +297,30 @@ class NavigationPane( QtGui.QDockWidget ):
         self.treewidget.setStyleSheet( style )
 
         # context menu
-        self.treewidget.contextmenu = QtGui.QMenu( self )
-        newWindowAct = createAction( parent = self,
-                                    text = _( 'Open in New Tab' ),
-                                    slot = self.popWindow,
-                                    shortcut = 'Ctrl+Enter' )
+        self.treewidget.contextmenu = QtGui.QMenu(self)
+        newWindowAct = createAction(
+            parent = self,
+            text = _('Open in New Tab'),
+            slot = self.pop_window,
+            shortcut = 'Ctrl+Enter'
+        )
 
-        addActions( self.treewidget.contextmenu, ( newWindowAct, ) )
-        self.treewidget.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self.treewidget,
-                     QtCore.SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
-                     self.createContextMenu )
+        addActions(self.treewidget.contextmenu, ( newWindowAct,))
+        self.treewidget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.connect(
+            self.treewidget,
+            QtCore.SIGNAL('customContextMenuRequested(const QPoint &)'),
+            self.createContextMenu
+        )
 
         if buttons:
             for b in buttons:
-                self.content.layout().addWidget( b )
-                self.connect( b, QtCore.SIGNAL( 'indexselected' ), self.change_current )
+                self.content.layout().addWidget(b)
+                self.connect(
+                    b,
+                    QtCore.SIGNAL('indexselected'),
+                    self.change_current
+                )
             self.buttons = buttons
         else:
             self.buttons = []
@@ -350,21 +355,22 @@ class NavigationPane( QtGui.QDockWidget ):
                 return section.get_items()
             return []
 
-        post( get_models_for_tree, self.set_items_in_tree )
+        post(get_models_for_tree, self.set_items_in_tree)
 
-    def createContextMenu( self, point ):
-        logger.debug( 'creating context menu' )
-        item = self.treewidget.itemAt( point )
+    def createContextMenu(self, point):
+        logger.debug('creating context menu')
+        item = self.treewidget.itemAt(point)
         if item:
-            self.treewidget.setCurrentItem( item )
-            self.treewidget.contextmenu.popup( self.cursor().pos() )
+            self.treewidget.setCurrentItem(item)
+            #self.treewidget.contextmenu.popup(self.cursor().pos())
+            self.treewidget.contextmenu.popup(self.treewidget.mapToGlobal(point))
 
-    def popWindow( self ):
+    def pop_window(self):
         """pops a model window in parent's workspace"""
-        logger.debug( 'poping a window in parent' )
+        logger.debug('poping a window in parent')
         item = self.treewidget.currentItem()
         index = self.treewidget.indexFromItem(item)
         section_item = self.items[index.row()]
         new_view = section_item.get_action().run(self._workspace)
         if new_view:
-            self._workspace.add_view( new_view )
+            self._workspace.add_view(new_view)

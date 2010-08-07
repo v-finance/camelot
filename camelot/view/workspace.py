@@ -44,18 +44,18 @@ class DesktopWorkspace(QtGui.QTabWidget):
     to the tabs in a decent way"""
 
     view_activated_signal = QtCore.SIGNAL('view_activated')
-    
+
     @gui_function
     def __init__(self, parent):
         super(DesktopWorkspace, self).__init__(parent)
-        self.setDocumentMode( True )
+        self.setDocumentMode(True)
         self.setMovable( True )
         self.setTabsClosable( True )
-        self.connect( self, 
-                      QtCore.SIGNAL('tabCloseRequested(int)'), 
+        self.connect( self,
+                      QtCore.SIGNAL('tabCloseRequested(int)'),
                       self._tab_close_request)
-        self.connect( self, 
-                      QtCore.SIGNAL('currentChanged(int)'), 
+        self.connect( self,
+                      QtCore.SIGNAL('currentChanged(int)'),
                       self._tab_changed)
 
 
@@ -66,13 +66,13 @@ class DesktopWorkspace(QtGui.QTabWidget):
     def _tab_changed(self, index):
         """the active tab has changed, emit the view_activated signal"""
         self.emit( self.view_activated_signal, self.active_view() )
-        
+
     def active_view(self):
         """:return: the currently active view or None"""
         i = self.currentIndex()
         if i < 0:
             return None
-        return self.widget( i ) 
+        return self.widget( i )
 
     def change_title(self, new_title):
         """slot to be called when the tile of a view needs to
@@ -82,7 +82,7 @@ class DesktopWorkspace(QtGui.QTabWidget):
             index = self.indexOf( sender )
             if index >= 0:
                 self.setTabText( index, new_title )
-        
+
     def set_view(self, view, title='...'):
         """Remove the currently active view and replace it with a new
         view"""
@@ -94,10 +94,10 @@ class DesktopWorkspace(QtGui.QTabWidget):
                 view,
                 AbstractView.title_changed_signal,
                 self.change_title,
-            ) 
+            )
             self.removeTab( index )
             self.insertTab( index, view, title )
-            
+
     @gui_function
     def add_view(self, view, title='...'):
         """add a Widget implementing AbstractView to the workspace"""
@@ -105,7 +105,7 @@ class DesktopWorkspace(QtGui.QTabWidget):
             view,
             AbstractView.title_changed_signal,
             self.change_title,
-        )        
+        )
         index = self.addTab( view, title )
         self.setCurrentIndex( index )
 
@@ -124,19 +124,19 @@ def show_top_level(view, parent):
         view.setWindowTitle
     )
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-    
+
     #
     # position the new window in the center of the same screen
     # as the parent
     #
     screen = QtGui.QApplication.desktop().screenNumber(parent)
     available = QtGui.QApplication.desktop().availableGeometry(screen)
-    
-    point = QtCore.QPoint(available.x() + available.width()/2, 
+
+    point = QtCore.QPoint(available.x() + available.width()/2,
                           available.y() + available.height()/2)
     point = QtCore.QPoint(point.x()-view.width()/2,
                           point.y()-view.height()/2)
     view.move( point )
-    
-    #view.setWindowModality(QtCore.Qt.WindowModal)    
+
+    #view.setWindowModality(QtCore.Qt.WindowModal)
     view.show()

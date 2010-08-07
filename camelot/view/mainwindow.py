@@ -612,9 +612,11 @@ class MainWindow(QtGui.QMainWindow):
     # Navigation Pane
 
     def createNavigationPane(self):
-        self.navpane = NavigationPane(self.app_admin, 
-                                      workspace=self.workspace,
-                                      parent=self)
+        self.navpane = NavigationPane(
+            self.app_admin,
+            workspace=self.workspace,
+            parent=self
+        )
         self.addDockWidget(Qt.LeftDockWidgetArea, self.navpane)
 
         self.connect(
@@ -630,7 +632,7 @@ class MainWindow(QtGui.QMainWindow):
         section_item = self.navpane.items[index.row()]
         new_view = section_item.get_action().run(self.workspace)
         if new_view:
-            self.workspace.set_view( new_view )
+            self.workspace.set_view(new_view)
 
     def activeMdiChild(self):
         return self.workspace.active_view()
