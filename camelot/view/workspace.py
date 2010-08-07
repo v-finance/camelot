@@ -25,92 +25,89 @@
 #
 #  ============================================================================
 
-"""This module provides a singleton workspace that can be used by views
-and widget to create new windows or raise existing ones"""
+"""Convenience functions and classes to present views to the user"""
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 import logging
-logger = logging.getLogger('camelot.view.workspace')
+LOGGER = logging.getLogger('camelot.view.workspace')
 
 from camelot.view.model_thread import gui_function
+from camelot.view.controls.view import AbstractView
 
+class DesktopWorkspace(QtGui.QTabWidget):
+    """A tab based workspace that can be used by views
+    to display themselves. In essence this is A wrapper around the QTabWidget to
+    do some initial setup.  This was implemented first using the QMdiArea, but
+    the QMdiArea has too many drawbacks, like not being able to add close buttons
+    to the tabs in a decent way"""
 
-class DesktopWorkspace(QtGui.QMdiArea):
-
+    view_activated_signal = QtCore.SIGNAL('view_activated')
+    
     @gui_function
-    def __init__(self, *args):
-        QtGui.QMdiArea.__init__(self, *args)
-        self.setOption(QtGui.QMdiArea.DontMaximizeSubWindowOnActivation)
-        self.setBackground(QtGui.QBrush(QtGui.QColor('white')))
-        self.setActivationOrder(QtGui.QMdiArea.ActivationHistoryOrder)
+    def __init__(self, parent):
+        super(DesktopWorkspace, self).__init__(parent)
+        self.setDocumentMode( True )
+        self.setMovable( True )
+        self.setTabsClosable( True )
+        self.connect( self, 
+                      QtCore.SIGNAL('tabCloseRequested(int)'), 
+                      self._tab_close_request)
+        self.connect( self, 
+                      QtCore.SIGNAL('currentChanged(int)'), 
+                      self._tab_changed)
 
+
+    def _tab_close_request(self, index):
+        """request the removal of the tab at index"""
+        self.removeTab( index )
+
+    def _tab_changed(self, index):
+        """the active tab has changed, emit the view_activated signal"""
+        self.emit( self.view_activated_signal, self.active_view() )
+        
+    def active_view(self):
+        """:return: the currently active view or None"""
+        i = self.currentIndex()
+        if i < 0:
+            return None
+        return self.widget( i ) 
+
+    def change_title(self, new_title):
+        """slot to be called when the tile of a view needs to
+        change"""
+        sender = self.sender()
+        if sender:
+            index = self.indexOf( sender )
+            if index >= 0:
+                self.setTabText( index, new_title )
+        
+    def set_view(self, view, title='...'):
+        """Remove the currently active view and replace it with a new
+        view"""
+        index = self.currentIndex()
+        if index < 0:
+            self.add_view( view, title )
+        else:
+            self.connect(
+                view,
+                AbstractView.title_changed_signal,
+                self.change_title,
+            ) 
+            self.removeTab( index )
+            self.insertTab( index, view, title )
+            
     @gui_function
-    def addSubWindow(self, widget, *args):
-        from camelot.view.controls.view import AbstractView
-        subwindow = QtGui.QMdiArea.addSubWindow(self, widget, *args)
-
-        def create_set_window_title(subwindow):
-
-            def set_window_title(new_title):
-                subwindow.setWindowTitle(new_title)
-
-            return set_window_title
-
+    def add_view(self, view, title='...'):
+        """add a Widget implementing AbstractView to the workspace"""
         self.connect(
-            widget,
+            view,
             AbstractView.title_changed_signal,
-            create_set_window_title(subwindow)
-        )
-        return subwindow
-
-
-class NoDesktopWorkspace(QtCore.QObject):
-    def __init__(self):
-        QtCore.QObject.__init__(self)
-        self._windowlist = []
-
-    @gui_function
-    def addSubWindow(self, widget, *args):
-        self.widget = widget
-        self.widget.setParent(None)
-        self.widget.show()
-        self._windowlist.append(self.widget)
-        self.connect(widget, QtCore.SIGNAL('WidgetClosed()'), self.removeWidgetFromWorkspace)
-
-    @gui_function
-    def subWindowList(self):
-        return self._windowlist
-
-    @gui_function
-    def removeWidgetFromWorkspace(self):
-        self._windowlist.remove(self.widget)
-
-
-_workspace_ = []
-
-
-@gui_function
-def construct_workspace(*args, **kwargs):
-    _workspace_.append(DesktopWorkspace())
-    return _workspace_[0]
-
-
-@gui_function
-def construct_no_desktop_workspace(*args, **kwargs):
-    _workspace_.append(NoDesktopWorkspace())
-    return _workspace_[0]
-
-
-@gui_function
-def get_workspace():
-    return _workspace_[0]
-
-
-@gui_function
-def has_workspace():
-    return len(_workspace_) > 0
+            self.change_title,
+        )        
+        index = self.addTab( view, title )
+        self.setCurrentIndex( index )
 
 def show_top_level(view, parent):
     """Show a widget as a top level window
@@ -135,10 +132,11 @@ def show_top_level(view, parent):
     screen = QtGui.QApplication.desktop().screenNumber(parent)
     available = QtGui.QApplication.desktop().availableGeometry(screen)
     
-    p = QtCore.QPoint(available.x() + available.width()/2, available.y() + available.height()/2)
-    p = QtCore.QPoint(p.x()-view.width()/2,
-                      p.y()-view.height()/2);
-    view.move( p )
+    point = QtCore.QPoint(available.x() + available.width()/2, 
+                          available.y() + available.height()/2)
+    point = QtCore.QPoint(point.x()-view.width()/2,
+                          point.y()-view.height()/2)
+    view.move( point )
     
     #view.setWindowModality(QtCore.Qt.WindowModal)    
     view.show()

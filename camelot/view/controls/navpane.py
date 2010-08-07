@@ -209,15 +209,19 @@ class PaneButton( QtGui.QWidget ):
 class NavigationPane( QtGui.QDockWidget ):
     """ms office-like navigation pane in Qt"""
 
-    def __init__( self, app_admin, objectname = 'NavigationPane', parent = None ):
+    def __init__( self, 
+                  app_admin,
+                  workspace,
+                  parent ):
         QtGui.QDockWidget.__init__( self, parent )
+        self._workspace = workspace
         self.app_admin = app_admin
         self.setFeatures( QtGui.QDockWidget.NoDockWidgetFeatures )
         self.parent = parent
         self.currentbutton = -1
         self.caption = PaneCaption( '' )
         self.setTitleBarWidget( self.caption )
-        self.setObjectName( objectname )
+        #self.setObjectName( objectname )
         self.buttons = []
         self.content = QtGui.QWidget()
         self.content.setObjectName( 'NavPaneContent' )
@@ -298,7 +302,7 @@ class NavigationPane( QtGui.QDockWidget ):
         # context menu
         self.treewidget.contextmenu = QtGui.QMenu( self )
         newWindowAct = createAction( parent = self,
-                                    text = _( 'Open in New Window' ),
+                                    text = _( 'Open in New Tab' ),
                                     slot = self.popWindow,
                                     shortcut = 'Ctrl+Enter' )
 
@@ -359,4 +363,8 @@ class NavigationPane( QtGui.QDockWidget ):
         """pops a model window in parent's workspace"""
         logger.debug( 'poping a window in parent' )
         item = self.treewidget.currentItem()
-        self.parent.createMdiChild( item )
+        index = self.treewidget.indexFromItem(item)
+        section_item = self.items[index.row()]
+        new_view = section_item.get_action().run(self._workspace)
+        if new_view:
+            self._workspace.add_view( new_view )

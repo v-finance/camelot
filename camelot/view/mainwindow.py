@@ -27,8 +27,8 @@
 
 import logging
 
-logger = logging.getLogger('mainwindow')
-logger.setLevel(logging.INFO)
+LOGGER = logging.getLogger('mainwindow')
+LOGGER.setLevel(logging.INFO)
 
 #
 # Dummy imports to fool the windows installer and force
@@ -56,63 +56,63 @@ class MainWindow(QtGui.QMainWindow):
     """Main window GUI"""
 
     def __init__(self, app_admin, parent=None):
-        from workspace import construct_workspace
-        logger.debug('initializing main window')
+        from workspace import DesktopWorkspace
+        LOGGER.debug('initializing main window')
         QtGui.QMainWindow.__init__(self, parent)
 
         self.app_admin = app_admin
 
-        logger.debug('setting up workspace')
-        self.workspace = construct_workspace(self)
+        LOGGER.debug('setting up workspace')
+        self.workspace = DesktopWorkspace(self)
 
-        logger.debug('setting child windows dictionary')
+        LOGGER.debug('setting child windows dictionary')
 
-        logger.debug('setting central widget to our workspace')
+        LOGGER.debug('setting central widget to our workspace')
         self.setCentralWidget(self.workspace)
 
         self.connect(
             self.workspace,
-            QtCore.SIGNAL('subWindowActivated(QMdiSubWindow *)'),
+            DesktopWorkspace.view_activated_signal,
             self.updateMenus
         )
 
-        logger.debug('creating navigation pane')
+        LOGGER.debug('creating navigation pane')
         self.createNavigationPane()
 
-        logger.debug('creating all the required actions')
+        LOGGER.debug('creating all the required actions')
         self.createActions()
 
-        logger.debug('creating the menus')
+        LOGGER.debug('creating the menus')
         self.createMenus()
 
-        logger.debug('creating the toolbars')
+        LOGGER.debug('creating the toolbars')
         self.createToolBars()
 
-        logger.debug('creating status bar')
+        LOGGER.debug('creating status bar')
         self.createStatusBar()
 
-        logger.debug('updating menus')
+        LOGGER.debug('updating menus')
         self.updateMenus()
 
-        logger.debug('reading saved settings' )
+        LOGGER.debug('reading saved settings' )
         self.readSettings()
 
-        logger.debug('setting up printer object')
+        LOGGER.debug('setting up printer object')
         self.printer = Printer()
 
-        logger.debug('setting up window title')
+        LOGGER.debug('setting up window title')
         self.setWindowTitle(self.app_admin.get_name())
 
         #QtCore.QTimer.singleShot(0, self.doInitialization)
-        logger.debug('initialization complete')
+        LOGGER.debug('initialization complete')
 
     # Application settings
 
     def about(self):
-        logger.debug('showing about message box')
+        LOGGER.debug('showing about message box')
         abtmsg = self.app_admin.get_about()
         QtGui.QMessageBox.about(self, _('About'), _(abtmsg))
-        logger.debug('about message closed')
+        LOGGER.debug('about message closed')
 
     def whats_new(self):
         widget = self.app_admin.get_whats_new()
@@ -141,11 +141,11 @@ class MainWindow(QtGui.QMainWindow):
 
     def writeSettings(self):
         # TODO: improve settings saving
-        logger.debug('writing application settings')
+        LOGGER.debug('writing application settings')
         settings = QtCore.QSettings()
         settings.setValue('geometry', QtCore.QVariant(self.saveGeometry()))
         settings.setValue('state', QtCore.QVariant(self.saveState()))
-        logger.debug('settings written')
+        LOGGER.debug('settings written')
 
     def display_exception_message_box(self, exc_info):
         from controls.exception import model_thread_exception_message_box
@@ -252,27 +252,6 @@ class MainWindow(QtGui.QMainWindow):
         #      but we want the sequence Ctrl+W on every platform.  there-
         #      fore we set the string 'Ctrl+W', but PyQt defaults will
         #      still work.
-        self.closeAct = createAction(
-            parent=self,
-            text=_('Cl&ose'),
-            slot=self.workspace.closeActiveSubWindow,
-            shortcut='Ctrl+W',
-            tip=_('Close the active window')
-        )
-
-        self.closeAllAct = createAction(
-            parent=self,
-            text=_('Close &All'),
-            slot=self.workspace.closeAllSubWindows,
-            tip=_('Close all the windows')
-        )
-
-        self.cascadeAct = createAction(
-            parent=self,
-            text=_('&Cascade windows'),
-            slot=self.workspace.cascadeSubWindows,
-            tip=_('Arranges all the child windows in a cascade pattern.')
-        )
 
         self.separatorAct = QtGui.QAction(self)
         self.separatorAct.setSeparator(True)
@@ -438,10 +417,10 @@ class MainWindow(QtGui.QMainWindow):
         pass
 
     def copy(self):
-        self.activeMdiChild().widget().copy_selected_rows()
+        self.activeMdiChild().copy_selected_rows()
 
     def select_all(self):
-        self.activeMdiChild().widget().select_all_rows()
+        self.activeMdiChild().select_all_rows()
 
     def printDoc(self):
         self.previewDoc()
@@ -453,16 +432,16 @@ class MainWindow(QtGui.QMainWindow):
         class PrintPreview(PrintHtmlFormAction):
 
             def html(self, entity_getter):
-                return active.widget().to_html()
+                return active.to_html()
 
         action = PrintPreview('Print Preview')
         action.run(lambda:None)
 
     def new(self):
-        self.activeMdiChild().widget().newRow()
+        self.activeMdiChild().newRow()
 
     def delete(self):
-        self.activeMdiChild().widget().deleteSelectedRows()
+        self.activeMdiChild().deleteSelectedRows()
 
     def pageSetup(self):
         pass
@@ -470,54 +449,54 @@ class MainWindow(QtGui.QMainWindow):
     def viewFirst(self):
         """selects view's first row"""
         active = self.activeMdiChild()
-        active.widget().viewFirst()
+        active.viewFirst()
 
     def viewLast(self):
         """selects view's last row"""
         active = self.activeMdiChild()
-        active.widget().viewLast()
+        active.viewLast()
 
     def viewNext(self):
         """selects view's next row"""
         active = self.activeMdiChild()
-        active.widget().viewNext()
+        active.viewNext()
 
     def viewPrevious(self):
         """selects view's previous row"""
         active = self.activeMdiChild()
-        active.widget().viewPrevious()
+        active.viewPrevious()
 
     def updateValue(self):
         from camelot.view.wizard.update_value import UpdateValueWizard
 
-        admin = self.activeMdiChild().widget().get_admin()
-        selection_getter = self.activeMdiChild().widget().get_selection_getter()
+        admin = self.activeMdiChild().get_admin()
+        selection_getter = self.activeMdiChild().get_selection_getter()
         wizard = UpdateValueWizard(admin=admin, selection_getter=selection_getter)
         wizard.exec_()
 
     def exportToExcel(self):
         """creates an excel file from the view"""
-        widget = self.activeMdiChild().widget()
+        widget = self.activeMdiChild()
         post(widget.export_to_excel)
 
     def exportToWord(self):
         """Use windows COM to export the active child window to MS word,
         by using its to_html function"""
-        widget = self.activeMdiChild().widget()
+        widget = self.activeMdiChild()
         post(widget.export_to_word)
 
     def exportToMail(self):
-        widget = self.activeMdiChild().widget()
+        widget = self.activeMdiChild()
         post(widget.export_to_mail)
 
     def importFromFile(self):
-        self.activeMdiChild().widget().importFromFile()
+        self.activeMdiChild().importFromFile()
 
     def createMenus(self):
 
         self.fileMenu = self.menuBar().addMenu(_('&File'))
         addActions(self.fileMenu, (
-            self.closeAct,
+            #self.closeAct,
             None,
             self.backupAct,
             self.restoreAct,
@@ -555,13 +534,6 @@ class MainWindow(QtGui.QMainWindow):
             self.viewNextAct,
             self.viewLastAct
         ))
-        self.windowMenu = self.menuBar().addMenu(_('&Window'))
-        self.connect(
-            self.windowMenu,
-            QtCore.SIGNAL('aboutToShow()'),
-            #self.updateWindowMenu
-            self.app_admin.update_window_menu(self)
-        )
 
         self.menuBar().addSeparator()
 
@@ -577,69 +549,30 @@ class MainWindow(QtGui.QMainWindow):
         addActions(self.helpMenu, help_menu_actions )
 
     def updateMenus(self):
-        hasMdiChild = (self.activeMdiChild() is not None)
+        """Toggle the status of the menus, depending on the active view"""
+        active_view = (self.workspace.active_view() is not None)
         self.backupAct.setEnabled(True)
         self.restoreAct.setEnabled(True)
-        self.closeAct.setEnabled(hasMdiChild)
 
-        self.closeAllAct.setEnabled(hasMdiChild)
-        self.cascadeAct.setEnabled(hasMdiChild)
+        self.pageSetupAct.setEnabled(active_view)
+        self.previewAct.setEnabled(active_view)
+        self.printAct.setEnabled(active_view)
 
-        self.pageSetupAct.setEnabled(hasMdiChild)
-        self.previewAct.setEnabled(hasMdiChild)
-        self.printAct.setEnabled(hasMdiChild)
+        self.newAct.setEnabled(active_view)
+        self.deleteAct.setEnabled(active_view)
+        self.copyAct.setEnabled(active_view)
+        self.viewFirstAct.setEnabled(active_view)
+        self.viewPreviousAct.setEnabled(active_view)
+        self.viewNextAct.setEnabled(active_view)
+        self.viewLastAct.setEnabled(active_view)
 
-        self.newAct.setEnabled(hasMdiChild)
-        self.deleteAct.setEnabled(hasMdiChild)
-        self.copyAct.setEnabled(hasMdiChild)
-        self.viewFirstAct.setEnabled(hasMdiChild)
-        self.viewPreviousAct.setEnabled(hasMdiChild)
-        self.viewNextAct.setEnabled(hasMdiChild)
-        self.viewLastAct.setEnabled(hasMdiChild)
+        self.exportToWordAct.setEnabled(active_view)
+        self.exportToExcelAct.setEnabled(active_view)
+        self.exportToMailAct.setEnabled(active_view)
 
-        self.exportToWordAct.setEnabled(hasMdiChild)
-        self.exportToExcelAct.setEnabled(hasMdiChild)
-        self.exportToMailAct.setEnabled(hasMdiChild)
+        self.importFromFileAct.setEnabled(active_view)
 
-        self.importFromFileAct.setEnabled(hasMdiChild)
-
-        self.separatorAct.setVisible(hasMdiChild)
-
-    #def updateWindowMenu(self):
-    #    self.windowMenu.clear()
-    #    self.windowMenu.addAction(self.closeAllAct)
-    #    self.windowMenu.addAction(self.cascadeAct)
-    #    self.windowMenu.addAction(self.separatorAct)
-
-    #    windows = self.workspace.subWindowList()
-
-    #    self.separatorAct.setVisible(len(windows) != 0)
-
-    #    for i, child in enumerate(windows):
-    #        title = child.windowTitle()
-    #        if i < 9:
-    #            text = _('&%s %s' % (i+1, title))
-    #        else:
-    #            text = _('%s %s' % (i+1, title))
-
-    #        action = self.windowMenu.addAction(text)
-    #        action.setCheckable(True)
-    #        action.setChecked(child == self.activeMdiChild())
-
-    #        def create_window_activator(window):
-
-    #            def activate_window():
-    #                self.workspace.setActiveSubWindow(window)
-
-    #            return activate_window
-
-    #        self.connect(
-    #            action,
-    #            QtCore.SIGNAL('triggered()'),
-    #            create_window_activator(child)
-    #        )
-
-    # Toolbars
+        self.separatorAct.setVisible(active_view)
 
     def get_tool_bar(self):
         return self.tool_bar
@@ -679,7 +612,9 @@ class MainWindow(QtGui.QMainWindow):
     # Navigation Pane
 
     def createNavigationPane(self):
-        self.navpane = NavigationPane(self.app_admin, parent=self)
+        self.navpane = NavigationPane(self.app_admin, 
+                                      workspace=self.workspace,
+                                      parent=self)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.navpane)
 
         self.connect(
@@ -693,13 +628,12 @@ class MainWindow(QtGui.QMainWindow):
     def createMdiChild(self, item):
         index = self.navpane.treewidget.indexFromItem(item)
         section_item = self.navpane.items[index.row()]
-        child = section_item.get_action().run(self.workspace)
-        assert child != None
-        subwindow = self.workspace.addSubWindow(child)
-        subwindow.showMaximized()
+        new_view = section_item.get_action().run(self.workspace)
+        if new_view:
+            self.workspace.set_view( new_view )
 
     def activeMdiChild(self):
-        return self.workspace.activeSubWindow()
+        return self.workspace.active_view()
 
     # Statusbar
 
@@ -709,12 +643,12 @@ class MainWindow(QtGui.QMainWindow):
         self.setStatusBar(statusbar)
         statusbar.showMessage(_('Ready'), 5000)
 
-    # Events
-
-    def closeEvent(self, event):
-        self.workspace.closeAllSubWindows()
-        if self.activeMdiChild():
-            event.ignore()
-        else:
-            self.writeSettings()
-            event.accept()
+#    # Events
+#
+#    def closeEvent(self, event):
+#        self.workspace.closeAllSubWindows()
+#        if self.activeMdiChild():
+#            event.ignore()
+#        else:
+#            self.writeSettings()
+#            event.accept()

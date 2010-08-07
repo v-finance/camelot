@@ -64,9 +64,9 @@ class TableViewAction(ApplicationAction):
         return unicode(self.verbose_name or self.admin.get_verbose_name_plural())
 
     def run(self, parent):
-        tableview = self.admin.create_table_view(parent)
-        return tableview
-
+        """:return: a table view that can be added to the workspace"""
+        return self.admin.create_table_view(parent)
+        
 def structure_to_application_action(structure):
     """Convert a python structure to an ApplicationAction"""
     if isinstance(structure, (ApplicationAction,)):
