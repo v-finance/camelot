@@ -211,13 +211,15 @@ class ApplicationAdmin(QtCore.QObject):
         syntax"""
         import datetime
         today = datetime.date.today()
-        return """<b>Camelot Project</b>
+        return """<b>Camelot</b><br/>
+                  Building desktop applications at warp speed
                   <p>
                   Copyright &copy; 2008-%s Conceptive Engineering.
                   All rights reserved.
                   </p>
                   <p>
-                  http://www.conceptive.be/projects/camelot
+                  http://www.python-camelot.com<br/>
+                  http://www.conceptive.be
                   </p>
                   """%today.year
 

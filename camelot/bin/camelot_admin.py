@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -39,9 +39,14 @@ projects.
 usage = "usage: %prog [options] command"
 
 command_description = [
-    ('startproject', """Starts a new project, use startproject project_name."""),
-    ('makemessages', """Outputs a message file with all field names of all entities.  This command
-    requires settings.py of the project to be in the PYTHONPATH"""),
+    ('startproject', """Starts a new project, use startproject project_name.
+"""),
+    ('makemessages', """Outputs a message file with all field names of all 
+entities.  This command requires settings.py of the project to be in the 
+PYTHONPATH"""),
+    ('to_pyside', """Takes a folder with PyQt4 source code and translates it to
+PySide source code.  A directory to_pyside will be created containing the
+output of the translation"""),
 ]
 
 #
@@ -51,9 +56,9 @@ command_description = [
 __doc__ = description
 
 for command, desc in command_description:
-    __doc__ += "\n.. cmdoption:: %s\n\n"%command
+    __doc__ += "\n.. cmdoption:: %s\n\n" % command
     for line in desc.split('\n'):
-        __doc__ += "    %s\n"%line
+        __doc__ += "    %s\n" % line
         
 #
 # A custom OptionParser that generates help information on the commands
@@ -73,12 +78,38 @@ For the management of deployed Camelot applications, see camelot_manage
 """
         return OptionParser.format_help(self) + ''.join(command_help)
     
+def to_pyside(project):
+    print 'EXPERIMENTAL !'
+    
+    import os.path
+    import shutil
+    output = os.path.join('to_pyside', os.path.basename(project))
+    # first take a copy
+    shutil.copytree(project, output)
+    
+    def translate_file(dirname, name):
+        """translate a single file"""
+        filename = os.path.join(dirname, name)
+        print 'converting', filename
+        source = open(filename).read()
+        output = open(filename, 'w')
+        output.write('PySide'.join((t for t in source.split('PyQt4'))))
+        
+    def translate_directory(_arg, dirname, names):
+        """recursively translate a directory"""
+        for name in names:
+            if name.endswith('.py'):
+                translate_file(dirname, name)
+            
+    os.path.walk(output, translate_directory, None)
+    
+    
 def startproject(project):
     import shutil, os, sys
     if os.path.exists(project):
         raise Exception('Directory %s allready exists, cannot start a project in it'%project)
     
-    def ignore(directory, content):
+    def ignore(_directory, content):
         """ignore .svn files"""
         for c in content:
             if c.startswith('.'):

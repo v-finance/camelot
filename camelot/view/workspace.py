@@ -36,57 +36,78 @@ LOGGER = logging.getLogger('camelot.view.workspace')
 from camelot.view.model_thread import gui_function
 from camelot.view.controls.view import AbstractView
 
-class DesktopWorkspace(QtGui.QTabWidget):
+class DesktopWorkspace(QtGui.QWidget):
     """A tab based workspace that can be used by views
     to display themselves. In essence this is A wrapper around the QTabWidget to
-    do some initial setup.  This was implemented first using the QMdiArea, but
-    the QMdiArea has too many drawbacks, like not being able to add close buttons
-    to the tabs in a decent way"""
+    do some initial setup and provide it with a background widget.  This was 
+    implemented first using the QMdiArea, but the QMdiArea has too many 
+    drawbacks, like not being able to add close buttons to the tabs in 
+    a decent way"""
 
     view_activated_signal = QtCore.SIGNAL('view_activated')
 
     @gui_function
     def __init__(self, parent):
         super(DesktopWorkspace, self).__init__(parent)
-        self.setDocumentMode(True)
-        self.setMovable( True )
-        self.setTabsClosable( True )
-        self.connect( self,
+        layout = QtGui.QHBoxLayout()
+        layout.setMargin( 0 )
+        layout.setSpacing( 0 )
+        # setup the tab widget
+        self._tab_widget = QtGui.QTabWidget( self )
+        self._tab_widget.setDocumentMode(True)
+        self._tab_widget.setMovable( True )
+        self._tab_widget.setTabsClosable( True )
+        self._tab_widget.hide()
+        self.connect( self._tab_widget,
                       QtCore.SIGNAL('tabCloseRequested(int)'),
                       self._tab_close_request)
-        self.connect( self,
+        self.connect( self._tab_widget,
                       QtCore.SIGNAL('currentChanged(int)'),
                       self._tab_changed)
+        layout.addWidget( self._tab_widget )
+        # setup the background widget
+        
+        class DesktopBackground(QtGui.QGraphicsView):
+            """A custom background widget for the desktop"""
+            pass
+        
+        self._background_widget = DesktopBackground( self )
+        self._background_widget.show()
+        layout.addWidget( self._background_widget )
+        self.setLayout( layout )
 
 
     def _tab_close_request(self, index):
         """request the removal of the tab at index"""
-        self.removeTab( index )
+        self._tab_widget.removeTab( index )
+        if self._tab_widget.currentIndex() < 0:
+            self._tab_widget.hide()
+            self._background_widget.show()
 
-    def _tab_changed(self, index):
+    def _tab_changed(self, _index):
         """the active tab has changed, emit the view_activated signal"""
         self.emit( self.view_activated_signal, self.active_view() )
 
     def active_view(self):
         """:return: the currently active view or None"""
-        i = self.currentIndex()
+        i = self._tab_widget.currentIndex()
         if i < 0:
             return None
-        return self.widget( i )
+        return self._tab_widget.widget( i )
 
     def change_title(self, new_title):
         """slot to be called when the tile of a view needs to
         change"""
         sender = self.sender()
         if sender:
-            index = self.indexOf( sender )
+            index = self._tab_widget.indexOf( sender )
             if index >= 0:
-                self.setTabText( index, new_title )
+                self._tab_widget.setTabText( index, new_title )
 
     def set_view(self, view, title='...'):
         """Remove the currently active view and replace it with a new
         view"""
-        index = self.currentIndex()
+        index = self._tab_widget.currentIndex()
         if index < 0:
             self.add_view( view, title )
         else:
@@ -95,8 +116,9 @@ class DesktopWorkspace(QtGui.QTabWidget):
                 AbstractView.title_changed_signal,
                 self.change_title,
             )
-            self.removeTab( index )
-            self.insertTab( index, view, title )
+            self._tab_widget.removeTab( index )
+            index = self._tab_widget.insertTab( index, view, title )
+            self._tab_widget.setCurrentIndex( index )
 
     @gui_function
     def add_view(self, view, title='...'):
@@ -106,8 +128,10 @@ class DesktopWorkspace(QtGui.QTabWidget):
             AbstractView.title_changed_signal,
             self.change_title,
         )
-        index = self.addTab( view, title )
-        self.setCurrentIndex( index )
+        index = self._tab_widget.addTab( view, title )
+        self._tab_widget.setCurrentIndex( index )
+        self._tab_widget.show()
+        self._background_widget.hide()
 
 def show_top_level(view, parent):
     """Show a widget as a top level window
@@ -115,7 +139,6 @@ def show_top_level(view, parent):
     :param parent: the widget with regard to which the top level
     window will be placed.
      """
-    from camelot.view.controls.view import AbstractView
     view.setParent( parent )
     view.setWindowFlags(QtCore.Qt.Window)
     view.connect(
