@@ -116,7 +116,7 @@ class Application(QObject):
             app = QtGui.QApplication([a for a in sys.argv if a])
             splash_window = self.show_splashscreen()
             
-            self.show_splash_message(splash_window, 'Initialize application...')
+            self.show_splash_message(splash_window, 'Initialize application')
             # regularly call processEvents to keep the splash alive
             app.processEvents()
             #  font = app.font()
@@ -137,7 +137,7 @@ class Application(QObject):
             self.pre_initialization()
             app.processEvents()
             # regularly call processEvents to keep the splash alive
-            self.show_splash_message(splash_window, 'Setup database...')
+            self.show_splash_message(splash_window, 'Setup database')
             app.processEvents()        
             self.start_model_thread()
             app.processEvents()
@@ -148,15 +148,20 @@ class Application(QObject):
             #
             from camelot.core.utils import load_translations
             from camelot.view.model_thread import get_model_thread
+            self.show_splash_message(splash_window, 'Load translations')
+            app.processEvents()
             get_model_thread().post(load_translations)
-            self.show_splash_message(splash_window, 'Load translations...')
+            self.show_splash_message(splash_window, 'Create translator')
+            app.processEvents()
             translator = self.application_admin.get_translator()
+            self.show_splash_message(splash_window, 'Install translator')
+            app.processEvents()
             app.installTranslator(translator)
             
             #self.load_translations(app)
-            app.processEvents()
             # Set the style sheet
-            self.show_splash_message(splash_window, 'Create main window...')
+            self.show_splash_message(splash_window, 'Create main window')
+            app.processEvents()
             stylesheet = self.application_admin.get_stylesheet()
             if stylesheet:
                 app.setStyleSheet(stylesheet)

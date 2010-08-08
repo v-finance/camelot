@@ -27,8 +27,6 @@
 
 """Utility functions"""
 
-import xlrd
-
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
@@ -130,12 +128,14 @@ def load_translations():
     """Fill the global dictionary of translations with all data from the
     database, to be able to do fast gui thread lookups of translations"""
     language = unicode(QtCore.QLocale().name())
+    from sqlalchemy import sql
     from camelot.model.i18n import Translation
-    tls = Translation.query.filter(Translation.language==language)
-    tls = tls.filter(Translation.value!=None).all()
-    for t in tls:
-        if t.value:
-            _translations_[t.source] = t.value
+    query = sql.select( [Translation.source, Translation.value],
+                        whereclause = sql.and_(Translation.language==language,
+                                               Translation.value!=None,
+                                               Translation.value!=u'') )
+    for source, value in Translation.query.session.execute(query):
+        _translations_[source] = value
 
 
 def ugettext(string_to_translate):
@@ -168,6 +168,7 @@ class ugettext_lazy(object):
 
 
 def xls2list(xf):
+    import xlrd
     matrix = []
     s = xlrd.open_workbook(xf).sheets()[0] # assume a single sheet xls doc
     for r in range(s.nrows):
