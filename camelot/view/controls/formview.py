@@ -255,7 +255,7 @@ class FormWidget(QtGui.QWidget):
 
         self._widget_mapper.setCurrentIndex(self._index)
         self._widget_layout.insertWidget(0, self._form.render(widgets, self))
-        self._widget_layout.setContentsMargins(7, 7, 7, 7)
+        #self._widget_layout.setContentsMargins(7, 7, 7, 7)
 
 
 class FormView(AbstractView):

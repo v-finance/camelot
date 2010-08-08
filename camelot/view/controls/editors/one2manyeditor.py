@@ -44,6 +44,7 @@ class One2ManyEditor( CustomEditor, WideEditor ):
         layout.setSizeConstraint( QtGui.QLayout.SetNoConstraint )
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
                            QtGui.QSizePolicy.Expanding )
+        self.setMinimumHeight( rowHeight*5 )
         if vertical_header_clickable:
             self.connect( self.table.verticalHeader(),
                          QtCore.SIGNAL( 'sectionClicked(int)' ),
