@@ -161,6 +161,7 @@ class RowDataAdminDecorator(object):
         """:param object_admin: the object_admin object that will be
         decorated"""
         self._object_admin = object_admin
+        self._new_field_attributes = {}
         self._columns = None
 
     def __getattr__(self, attr):
@@ -172,17 +173,16 @@ class RowDataAdminDecorator(object):
         as invalid.
         """
         from camelot.admin.validator.object_validator import ObjectValidator
-
+        
         class NewObjectValidator(ObjectValidator):
 
-            def objectValidity(self, entity_instance):
-                for _field_name, attributes in self.admin.get_columns():
-                    background_color_getter = attributes.get('background_color', None)
-                    if background_color_getter is not None:
-                        background_color = background_color_getter(entity_instance)
-                        if background_color == self.admin.invalid_color:
-                            logger.debug('we have an invalid field')
-                            return ['invalid field']
+            def objectValidity(self, obj):
+                columns = self.admin.get_columns()
+                dynamic_attributes = self.admin.get_dynamic_field_attributes( obj, [c[0] for c in columns] )
+                for attributes in dynamic_attributes:
+                    if attributes['background_color'] == self.admin.invalid_color:
+                        logger.debug('we have an invalid field')
+                        return ['invalid field']
                 return []
 
         return NewObjectValidator(self, model)
@@ -195,55 +195,59 @@ class RowDataAdminDecorator(object):
         when importing them for real"""
         pass
 
-    def create_background_color(self, attributes):
-        """
-        :param attributes: the attributes for the field
-        :return: a function that can be used as the background_color field attribute
-        """
-
-        def background_color(o):
-            """If the string is not convertible with from_string, or
-            the result is None when a value is required, set the
-            background to pink"""
-            string_value = attributes['getter'](o)
+    def get_field_attributes(self, field_name):
+        return self._new_field_attributes[field_name]
+    
+    def get_static_field_attributes(self, field_names):
+        for _field_name in field_names:
+            yield {'editable':True}
+            
+    def get_dynamic_field_attributes(self, obj, field_names):
+        for field_name in field_names:
+            attributes = self.get_field_attributes(field_name)
+            string_value = attributes['getter'](obj)
             if 'from_string' in attributes:
-                value = attributes['from_string'](string_value)
+                valid = True
+                try:
+                    value = attributes['from_string'](string_value)
+                except Exception:
+                    valid = False
                 if value==None and attributes['nullable']==False:
-                    return self.invalid_color
-                return None
-            return self.invalid_color
+                    valid = False
+                if valid:
+                    yield {'background_color':None}
+                else:
+                    yield {'background_color':self.invalid_color}       
+        
+    def new_field_attributes(self, i, original_field_attributes, original_field):
+        from camelot.view.controls import delegates
+        
+        def create_getter(i):
+            return lambda o:getattr(o, 'column_%i'%i)
+        
+        attributes = dict(original_field_attributes)
+        attributes['delegate'] = delegates.PlainTextDelegate
+        attributes['python_type'] = str
+        attributes['original_field'] = original_field
+        attributes['getter'] = create_getter(i)
 
-        return background_color
+        # remove some attributes that might disturb the import wizard
+        for attribute in ['background_color', 'tooltip']:
+            attributes[attribute] = None
 
+        self._new_field_attributes['column_%i' %i] = attributes
+        
+        return attributes
+            
     def get_columns(self):
         if self._columns:
             return self._columns
 
         original_columns = self._object_admin.get_columns()
-
-        def create_getter(i):
-            return lambda o:getattr(o, 'column_%i'%i)
-
-        def new_field_attributes(i, original_field_attributes, original_field):
-            from camelot.view.controls import delegates
-            attributes = dict(original_field_attributes)
-            attributes['delegate'] = delegates.PlainTextDelegate
-            attributes['python_type'] = str
-            attributes['original_field'] = original_field
-            attributes['getter'] = create_getter(i)
-
-            # remove some attributes that might disturb the import wizard
-            for attribute in ['background_color', 'tooltip']:
-                attributes[attribute] = None
-
-            attributes['background_color'] = self.create_background_color(attributes)
-
-            return attributes
-
         new_columns = [
             (
                 'column_%i' %i,
-                new_field_attributes(i, attributes, original_field)
+                self.new_field_attributes(i, attributes, original_field)
             )
             for i, (original_field, attributes) in enumerate(original_columns)
             if attributes['editable']
