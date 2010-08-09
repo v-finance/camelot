@@ -95,7 +95,7 @@ def notEditableAdmin(original_admin, actions=False, editable_fields=None):
                     return [self._process_field_attributes(name, attributes) for name,attributes in zip(fn2, static_fa)]
                     
                 def get_related_entity_admin(self, entity):
-                    return AdminReadOnlyDecorator(self._original_admin.get_related_entity_admin(entity))
+                    return AdminReadOnlyDecorator(self._original_admin.get_related_entity_admin(entity), self._editable_fields)
                 
                 def get_form_actions(self, *a, **kwa):
                     return []
