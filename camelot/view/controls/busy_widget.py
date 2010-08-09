@@ -28,9 +28,11 @@
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
+
 class BusyWidget(QtGui.QWidget):
-    """A widget indicating the application is performing some background task.  The widget acts
-    as an overlay of its parent widget and displays animating orbs"""
+    """A widget indicating the application is performing some background task.
+    The widget acts as an overlay of its parent widget and displays animating
+    orbs"""
 
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
@@ -41,7 +43,7 @@ class BusyWidget(QtGui.QWidget):
         self.orbs = 5
         self.highlighted_orb = self.orbs
         self.timer = None
-        
+
     def set_busy(self, busy_state):
         """start/stop the animation
         :arg busy_state: True or False
@@ -72,9 +74,9 @@ class BusyWidget(QtGui.QWidget):
                 painter.setBrush(QtGui.QBrush(QtGui.QColor(127, 127, 127)))
             center_x = width  - (3*i+2)*radius
             center_y = height / 2
-            painter.drawEllipse(center_x - radius, 
+            painter.drawEllipse(center_x - radius,
                                 center_y - radius,
-                                2*radius, 
+                                2*radius,
                                 2*radius)
         painter.end()
 

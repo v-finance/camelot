@@ -290,6 +290,7 @@ class FormView(AbstractView):
         self.closeAfterValidation = QtCore.SIGNAL('closeAfterValidation()')
 
         self.statusbar = StatusBar(self)
+        self.statusbar.setSizeGripEnabled(False)
         self._layout.addWidget(self.statusbar)
         self._layout.setAlignment(self.statusbar, Qt.AlignBottom)
         self.setLayout(self._layout)
