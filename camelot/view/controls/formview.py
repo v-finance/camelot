@@ -40,8 +40,11 @@ from camelot.view.art import Icon
 from camelot.view.model_thread import post
 from camelot.view.model_thread import model_function
 from camelot.view.controls.view import AbstractView
+from camelot.view.controls.statusbar import StatusBar
+
 from camelot.core.utils import ugettext as _
 from camelot.action import ActionFactory
+
 
 class ContextMenuAction(QtGui.QAction):
 
@@ -269,18 +272,29 @@ class FormView(AbstractView):
 
     def __init__(self, title, admin, model, index):
         AbstractView.__init__(self)
-        layout = QtGui.QHBoxLayout()
-        self._form = FormWidget(admin)
+
+        self._layout = QtGui.QVBoxLayout()
+        self._form_and_actions_layout = QtGui.QHBoxLayout()
+        self._layout.addLayout(self._form_and_actions_layout)
+
         self.model = model
-        self.title_prefix = title
         self.admin = admin
+        self.title_prefix = title
+
+        self._form = FormWidget(admin)
         self.connect(self._form, FormWidget.changed_signal, self.update_title)
         self._form.set_model(model)
         self._form.set_index(index)
-        layout.addWidget(self._form)
-        self.change_title(title)
+        self._form_and_actions_layout.addWidget(self._form)
+
         self.closeAfterValidation = QtCore.SIGNAL('closeAfterValidation()')
-        self.setLayout(layout)
+
+        self.statusbar = StatusBar(self)
+        self._layout.addWidget(self.statusbar)
+        self._layout.setAlignment(self.statusbar, Qt.AlignBottom)
+        self.setLayout(self._layout)
+
+        self.change_title(title)
 
         if hasattr(admin, 'form_size') and admin.form_size:
             self.setMinimumSize(admin.form_size[0], admin.form_size[1])
@@ -332,7 +346,8 @@ class FormView(AbstractView):
                 action_widget.changed()
             side_panel_layout.insertWidget(1, self.actions_widget)
             side_panel_layout.addStretch()
-            self.layout().addLayout(side_panel_layout)
+            #self.layout().addLayout(side_panel_layout)
+            self._form_and_actions_layout.addLayout(side_panel_layout)
 
     def viewFirst(self):
         """select model's first row"""
@@ -376,7 +391,7 @@ class FormView(AbstractView):
         else:
             self.validate_before_close = False
             self.close()
-            
+
     def validateClose(self):
         logger.debug('validate before close : %s' % self.validate_before_close)
         if self.validate_before_close:
