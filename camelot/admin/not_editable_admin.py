@@ -74,7 +74,7 @@ def notEditableAdmin(original_admin, actions=False, editable_fields=None):
                     return new_attributes
                 
                 def __getattr__(self, name):
-                    return self._original_admin.__getattribute__(name)
+                    return getattr( self._original_admin, name)
                 
                 def get_fields(self):
                     fields = self._original_admin.get_fields()

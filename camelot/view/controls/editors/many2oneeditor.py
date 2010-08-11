@@ -165,7 +165,6 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.layout.addWidget(self.search_button)
         self.layout.addWidget(self.open_button)
         self.setLayout(self.layout)
-        self.set_editable(editable)
 
     def set_field_attributes(self, editable=True, background_color=None, **kw):
         self.set_editable(editable)

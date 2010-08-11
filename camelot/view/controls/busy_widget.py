@@ -28,7 +28,6 @@
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
-
 class BusyWidget(QtGui.QWidget):
     """A widget indicating the application is performing some background task.
     The widget acts as an overlay of its parent widget and displays animating
