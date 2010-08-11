@@ -151,8 +151,8 @@ class RowDataAdminDecorator(object):
     Admin of the RowData objects to be used when previewing and validating the
     data to be imported.
 
-    based on the field attributes of the original mode, it will turn the background color pink
-    if the data is invalid for being imported.
+    based on the field attributes of the original mode, it will turn the
+    background color pink if the data is invalid for being imported.
     """
 
     invalid_color = QColor('Pink')
@@ -168,19 +168,22 @@ class RowDataAdminDecorator(object):
         return getattr(self._object_admin, attr)
 
     def create_validator(self, model):
-        """Creates a validator that validates the data to be imported, the validator will
-        check if the background of the cell is pink, and if it is it will mark that object
-        as invalid.
+        """Creates a validator that validates the data to be imported, the
+        validator will check if the background of the cell is pink, and if it
+        is it will mark that object as invalid.
         """
         from camelot.admin.validator.object_validator import ObjectValidator
-        
+
         class NewObjectValidator(ObjectValidator):
 
             def objectValidity(self, obj):
                 columns = self.admin.get_columns()
-                dynamic_attributes = self.admin.get_dynamic_field_attributes( obj, [c[0] for c in columns] )
-                for attributes in dynamic_attributes:
-                    if attributes['background_color'] == self.admin.invalid_color:
+                dynamic_attributes = self.admin.get_dynamic_field_attributes(
+                    obj,
+                    [c[0] for c in columns]
+                )
+                for attrs in dynamic_attributes:
+                    if attrs['background_color'] == self.admin.invalid_color:
                         logger.debug('we have an invalid field')
                         return ['invalid field']
                 return []
@@ -191,17 +194,17 @@ class RowDataAdminDecorator(object):
         return self.get_columns()
 
     def flush(self, obj):
-        """When flush is called, don't do anything, since we'll only save the object
-        when importing them for real"""
+        """When flush is called, don't do anything, since we'll only save the
+        object when importing them for real"""
         pass
 
     def get_field_attributes(self, field_name):
         return self._new_field_attributes[field_name]
-    
+
     def get_static_field_attributes(self, field_names):
         for _field_name in field_names:
             yield {'editable':True}
-            
+
     def get_dynamic_field_attributes(self, obj, field_names):
         for field_name in field_names:
             attributes = self.get_field_attributes(field_name)
@@ -217,14 +220,14 @@ class RowDataAdminDecorator(object):
                 if valid:
                     yield {'background_color':None}
                 else:
-                    yield {'background_color':self.invalid_color}       
-        
+                    yield {'background_color':self.invalid_color}
+
     def new_field_attributes(self, i, original_field_attributes, original_field):
         from camelot.view.controls import delegates
-        
+
         def create_getter(i):
             return lambda o:getattr(o, 'column_%i'%i)
-        
+
         attributes = dict(original_field_attributes)
         attributes['delegate'] = delegates.PlainTextDelegate
         attributes['python_type'] = str
@@ -236,9 +239,9 @@ class RowDataAdminDecorator(object):
             attributes[attribute] = None
 
         self._new_field_attributes['column_%i' %i] = attributes
-        
+
         return attributes
-            
+
     def get_columns(self):
         if self._columns:
             return self._columns
@@ -271,8 +274,16 @@ class DataPreviewPage(QtGui.QWizardPage):
         self._complete = False
         self.model = model
         validator = self.model.get_validator()
-        self.connect( validator, validator.validity_changed_signal, self.update_complete)
-        self.connect( model, QtCore.SIGNAL('layoutChanged()'), self.validate_all_rows )
+        self.connect(
+            validator,
+            validator.validity_changed_signal,
+            self.update_complete
+        )
+        self.connect(
+            model,
+            QtCore.SIGNAL('layoutChanged()'),
+            self.validate_all_rows
+        )
         post(validator.validate_all_rows)
         self.collection_getter = collection_getter
 
@@ -307,7 +318,10 @@ class DataPreviewPage(QtGui.QWizardPage):
         if self._complete:
             self._note.set_value(None)
         else:
-            self._note.set_value(_('Please correct the data above before proceeding with the import.<br/>Incorrect cells have a pink background.'))
+            self._note.set_value(_(
+                'Please correct the data above before proceeding with the '
+                'import.<br/>Incorrect cells have a pink background.'
+            ))
 
     def initializePage(self):
         """Gets all info needed from SelectFilePage and feeds table"""
@@ -319,13 +333,15 @@ class DataPreviewPage(QtGui.QWizardPage):
         self.validate_all_rows()
 
     def validatePage(self):
-        answer = QtGui.QMessageBox.question(self,
-                                           _('Proceed with import'),
-                                           _('Importing data cannot be undone,\nare you sure you want to continue'),
-                                           QtGui.QMessageBox.Cancel,
-                                           QtGui.QMessageBox.Ok,
-                                           )
-        if answer==QtGui.QMessageBox.Ok:
+        answer = QtGui.QMessageBox.question(
+            self,
+            _('Proceed with import'),
+            _('Importing data cannot be undone,\n'
+              'are you sure you want to continue'),
+            QtGui.QMessageBox.Cancel,
+            QtGui.QMessageBox.Ok,
+        )
+        if answer == QtGui.QMessageBox.Ok:
             return True
         return False
 
@@ -365,7 +381,10 @@ class FinalPage(ProgressPage):
                 )
             self.admin.add(new_entity_instance)
             self.admin.flush(new_entity_instance)
-            self.emit(self.update_progress_signal, i, _('Row %i of %i imported')%(i+1, len(collection)))
+            self.emit(
+                self.update_progress_signal,
+                i, _('Row %i of %i imported') % (i+1, len(collection))
+            )
 
 
 class DataPreviewCollectionProxy(CollectionProxy):
@@ -392,8 +411,9 @@ class ImportWizard(QtGui.QWizard):
         super(ImportWizard, self).__init__(parent)
         assert admin
         #
-        # Set the size of the wizard to 2/3rd of the screen, since we want to get some work done
-        # here, the user needs to verify and possibly correct its data
+        # Set the size of the wizard to 2/3rd of the screen, since we want to
+        # get some work done here, the user needs to verify and possibly
+        # correct its data
         #
         desktop = QtCore.QCoreApplication.instance().desktop()
         self.setMinimumSize(desktop.width()*2/3, desktop.height()*2/3)
@@ -404,17 +424,18 @@ class ImportWizard(QtGui.QWizard):
             lambda:[],
             row_data_admin.get_columns
         )
-        self.setWindowTitle(_(self.window_title))
+        self.setWindowTitle(self.window_title)
         self.add_pages(model, admin)
         self.setOption(QtGui.QWizard.NoCancelButton)
 
     def add_pages(self, model, admin):
         """
         Add all pages to the import wizard, reimplement this method to add
-        custom pages to the wizard.  This method is called in the __init__method, to add
-        all pages to the wizard.
+        custom pages to the wizard.  This method is called in the __init__
+        method, to add all pages to the wizard.
 
-        :param model: the CollectionProxy that will be used to display the to be imported data
+        :param model: the CollectionProxy that will be used to display the to
+        be imported data
         :param admin: the admin of the destination data
         """
         self.addPage(SelectFilePage(parent=self))

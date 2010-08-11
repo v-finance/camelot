@@ -38,9 +38,8 @@ class SelectFilePage(QtGui.QWizardPage):
 
     title = _('Import data from a file')
     sub_title = _(
-            "To import data, click 'Browse' to "
-            "select a file then click 'Import'."
-        )
+        "To import data, click 'Browse' to select a file then click 'Next'."
+    )
     icon = Icon('tango/32x32/mimetypes/x-office-spreadsheet.png')
     caption = _('Select file')
     save = False
