@@ -49,6 +49,8 @@ class ModelItem(QtGui.QTreeWidgetItem):
         self.column = 0
         self.set_icon()
 
+        self.setToolTip(self.column, 'Right click to open in New Tab')
+
     def _underline(self, enable=False):
         font = self.font(self.column)
         font.setUnderline(enable)
