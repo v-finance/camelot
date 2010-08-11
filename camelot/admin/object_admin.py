@@ -55,43 +55,43 @@ DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip', 'background_color',
 
 class ObjectAdmin(object):
     """The ObjectAdmin class describes the interface that will be used
-    to interact with objects of a certain class.  The behaviour of this class
-    and the resulting interface can be tuned by specifying specific class
-    attributes:
+to interact with objects of a certain class.  The behaviour of this class
+and the resulting interface can be tuned by specifying specific class
+attributes:
 
-    .. attribute:: verbose_name
+.. attribute:: verbose_name
 
-    A human-readable name for the object, singular ::
+A human-readable name for the object, singular ::
 
-    verbose_name = 'movie'
+verbose_name = 'movie'
 
-    If this isn't given, the class name will be used
+If this isn't given, the class name will be used
 
-    .. attribute:: verbose_name_plural
+.. attribute:: verbose_name_plural
 
-    A human-readable name for the object, plural ::
+A human-readable name for the object, plural ::
 
-    verbose_name_plural = 'movies'
+verbose_name_plural = 'movies'
 
-    If this isn't given, Camelot will use verbose_name + "s"
+If this isn't given, Camelot will use verbose_name + "s"
 
-    .. attribute:: list_display
+.. attribute:: list_display
 
-    a list with the fields that should be displayed in a table view
+a list with the fields that should be displayed in a table view
 
-    .. attribute:: form_display
+.. attribute:: form_display
 
-    a list with the fields that should be displayed in a form view, defaults to
-    the same fields as those specified in list_display ::
+a list with the fields that should be displayed in a form view, defaults to
+the same fields as those specified in list_display ::
 
-    class Admin(EntityAdmin):
-      form_display = ['title', 'rating', 'cover']
+class Admin(EntityAdmin):
+  form_display = ['title', 'rating', 'cover']
 
-    instead of telling which forms to display. It is also possible to define
-    the form itself ::
+instead of telling which forms to display. It is also possible to define
+the form itself ::
 
     from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
-
+    
     class Admin(EntityAdmin):
       form_display = TabForm([
         ('Movie', Form([
@@ -105,76 +105,52 @@ class ObjectAdmin(object):
         ('Cast', WidgetOnlyForm('cast'))
       ])
 
+.. attribute:: confirm_delete
 
-    .. attribute:: list_filter
+Indicates if the deletion of an object should be confirmed by the user, defaults
+to False.  Can be set to either True, False, or the message to display when asking
+confirmation of the deletion.
 
-    A list of fields that should be used to generate filters for in the table
-    view.  If the field named is a one2many, many2one or many2many field, the
-    field name should be followed by a field name of the related entity ::
+.. attribute:: form_size
 
-    class Project(Entity):
-      oranization = OneToMany('Organization')
-      name = Field(Unicode(50))
+a tuple indicating the size of a form view, defaults to (700,500)
 
-      class Admin(EntityAdmin):
-        list_display = ['organization']
-        list_filter = ['organization.name']
+.. attribute:: form_actions
 
-    .. image:: ../_static/filter/group_box_filter.png
+Actions to be accessible by pushbuttons on the side of a form,
+a list of tuples (button_label, action_function) where action_function
+takes as its single argument, a method that returns the the object that
+was displayed by the form when the button was pressed::
 
-    .. attribute:: list_search
+class Admin(EntityAdmin):
+  form_actions = [('Foo', lamda o_getter:print 'foo')]
 
-    A list of fields that should be searched when the user enters something in
-    the search box in the table view.  By default only character fields are
-    searched.  For use with one2many, many2one or many2many fields, the same
-    rules as for the list_filter attribute apply
+.. attribute:: field_attributes
 
-    .. attribute:: confirm_delete
+A dictionary specifying for each field of the model some additional
+attributes on how they should be displayed.  All of these attributes
+are propagated to the constructor of the delegate of this field::
 
-    Indicates if the deletion of an object should be confirmed by the user, defaults
-    to False.  Can be set to either True, False, or the message to display when asking
-    confirmation of the deletion.
+class Movie(Entity):
+  title = Field(Unicode(50))
 
-    .. attribute:: form_size
+  class Admin(EntityAdmin):
+    list_display = ['title']
+    field_attributes = dict(title=dict(editable=False))
 
-    a tuple indicating the size of a form view, defaults to (700,500)
+The :ref:`doc-admin-field_attributes` documentation describes the various keys
+that can be used in the field attributes class attribute of an ObjectAdmin or EntityAdmin.
 
-    .. attribute:: form_actions
+.. attribute:: model
+The QAbstractItemModel class to be used to display collections of this object,
+defaults to a CollectionProxy
 
-    Actions to be accessible by pushbuttons on the side of a form,
-    a list of tuples (button_label, action_function) where action_function
-    takes as its single argument, a method that returns the the object that
-    was displayed by the form when the button was pressed::
+.. attribute:: confirm_delete
+set to True if the user should get a confirmation dialog before deleting data,
+defaults to False
 
-    class Admin(EntityAdmin):
-      form_actions = [('Foo', lamda o_getter:print 'foo')]
-
-    .. attribute:: field_attributes
-
-    A dictionary specifying for each field of the model some additional
-    attributes on how they should be displayed.  All of these attributes
-    are propagated to the constructor of the delegate of this field::
-
-    class Movie(Entity):
-      title = Field(Unicode(50))
-
-      class Admin(EntityAdmin):
-        list_display = ['title']
-        field_attributes = dict(title=dict(editable=False))
-
-    The :ref:`doc-admin-field_attributes` documentation describes the various keys
-    that can be used in the field attributes class attribute of an ObjectAdmin or EntityAdmin.
-
-    .. attribute:: model
-    The QAbstractItemModel class to be used to display collections of this object,
-    defaults to a CollectionProxy
-
-    .. attribute:: confirm_delete
-    set to True if the user should get a confirmation dialog before deleting data,
-    defaults to False
-
-    .. attribute:: TableView
-    The QWidget class to be used when a table view is needed
+.. attribute:: TableView
+The QWidget class to be used when a table view is needed
     """
     name = None #DEPRECATED
     verbose_name = None
@@ -188,7 +164,6 @@ class ObjectAdmin(object):
     list_filter = []
     list_charts = []
     list_actions = []
-    list_search = []
     confirm_delete = False
     list_size = (600, 400)
     form_size = (700, 500)

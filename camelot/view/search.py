@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -30,7 +30,7 @@ Helper functions to search through a collection of entities
 """
 import logging
 
-logger = logging.getLogger('camelot.view.search')
+LOGGER = logging.getLogger('camelot.view.search')
 
 import sqlalchemy.types
 from sqlalchemy.sql import operators
@@ -55,33 +55,32 @@ def create_entity_search_query_decorator(admin, text):
         args = []
         # join conditions : list of join entities
         joins = []
-        search_tables = [admin.entity.table]
-        for entity in entities:
-            if issubclass(admin.entity, entity):
-                search_tables.append(entity.table)
 
         def append_column(c):
+            """add column c to the where clause using a clause that
+            is relevant for that type of column"""
+            arg = None
             if issubclass(c.type.__class__, camelot.types.Color):
                 pass
             elif issubclass(c.type.__class__, camelot.types.File):
                 pass
             elif issubclass(c.type.__class__, camelot.types.Code):
                 codes = text.split(c.type.separator)
-                args.append(c.like(['%'] + codes + ['%']))
-                args.append(c.like(['%'] + codes))
-                args.append(c.like(codes + ['%']))
+                arg = c.like(['%'] + codes + ['%'])
+                arg = sql.or_(arg, c.like(['%'] + codes))
+                arg = sql.or_(arg, c.like(codes + ['%']))
             elif issubclass(c.type.__class__, camelot.types.VirtualAddress):
-                args.append(c.like(('%','%'+text+'%')))
+                arg = c.like(('%', '%'+text+'%'))
             elif issubclass(c.type.__class__, camelot.types.Image):
                 pass
             elif issubclass(c.type.__class__, sqlalchemy.types.Integer):
                 try:
-                    args.append(c==utils.int_from_string(text))
+                    arg = (c==utils.int_from_string(text))
                 except Exception, utils.ParsingError:
                     pass
             elif issubclass(c.type.__class__, sqlalchemy.types.Date):
                 try:
-                    args.append(c==utils.date_from_string(text))
+                    arg = (c==utils.date_from_string(text))
                 except Exception, utils.ParsingError:
                     pass
             elif issubclass(c.type.__class__, sqlalchemy.types.Float):
@@ -91,43 +90,56 @@ def create_entity_search_query_decorator(admin, text):
                     if isinstance(precision, (tuple)):
                         precision = precision[1]
                     delta = 0.1**precision
-                    args.append(sql.and_(c>=float_value-delta, c<=float_value+delta))
+                    arg = sql.and_(c>=float_value-delta, c<=float_value+delta)
                 except Exception, utils.ParsingError:
                     pass
             elif issubclass(c.type.__class__, (Unicode, )) or \
                             (hasattr(c.type, 'impl') and \
                              issubclass(c.type.impl.__class__, (Unicode, ))):
-                logger.debug('look in column : %s'%c.name)
-                args.append(operators.ilike_op(c, '%'+text+'%'))
+                LOGGER.debug('look in column : %s'%c.name)
+                arg = operators.ilike_op(c, '%'+text+'%')
 
-        for table in search_tables:
-            for c in table._columns:
-                append_column(c)
+            if arg is not None:
+                arg = sql.and_(c != None, arg)
+                args.append(arg)
+
+        if admin.search_all_fields:
+            search_tables = set([admin.entity.table])
+            for entity in entities:
+                if issubclass(admin.entity, entity):
+                    search_tables.add(entity.table)
+            for table in search_tables:
+                for column in table._columns:
+                    append_column(column)
 
         for column_name in admin.list_search:
             path = column_name.split('.')
             target = admin.entity
-            for p in path:
+            for path_segment in path:
                 mapper = orm.class_mapper(target)
-                property = mapper.get_property(p, resolve_synonyms=True)
+                property = mapper.get_property(path_segment, resolve_synonyms=True)
                 if isinstance(property, orm.properties.PropertyLoader):
-                    joins.append(getattr(target, p))
+                    joins.append(getattr(target, path_segment))
                     target = property._get_target().class_
                 else:
                     append_column(property.columns[0])
                     #args.append(property.columns[0].like('%'+text+'%'))
 
         def create_query_decorator(joins, args):
+            """Bind the join and args to a query decorator function"""
 
-            def query_decorator(q):
+            def query_decorator(query):
+                """The actual query decorator, call this function with a query
+                as its first argument and it will return a query with a where
+                clause for searching the resultset of the original query"""
                 for join in joins:
-                    q = q.join(join)
+                    query = query.outerjoin(join)
                 if len(args):
                     if len(args)>1:
-                        q = q.filter(or_(*args))
+                        query = query.filter(or_(*args))
                     else:
-                        q = q.filter(args[0])
-                return q
+                        query = query.filter(args[0])
+                return query
 
             return query_decorator
 

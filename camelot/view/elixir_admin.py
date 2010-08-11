@@ -38,9 +38,51 @@ from camelot.admin.validator.entity_validator import EntityValidator
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
-    This allows for much more introspection than the standard ObjectAdmin.
+This allows for much more introspection than the standard ObjectAdmin.
+    
+It has additional class attributes that customise its behaviour.
+
+**Filtering**
+
+.. attribute:: list_filter
+
+A list of fields that should be used to generate filters for in the table
+view.  If the field named is a one2many, many2one or many2many field, the
+field name should be followed by a field name of the related entity ::
+
+    class Project(Entity):
+      oranization = OneToMany('Organization')
+      name = Field(Unicode(50))
+    
+      class Admin(EntityAdmin):
+        list_display = ['organization']
+        list_filter = ['organization.name']
+
+.. image:: ../_static/filter/group_box_filter.png
+
+
+**Searching**
+
+.. attribute:: list_search
+
+A list of fields that should be searched when the user enters something in
+the search box in the table view.  By default all fields are
+searched for which Camelot can do a conversion of the entered string to the
+datatype of the underlying column.  
+
+For use with one2many, many2one or many2many fields, the same rules as for the 
+list_filter attribute apply
+
+.. attribute:: search_all_fields
+
+Defaults to True, meaning that by default all searchable fields should be
+searched.  If this is set to False, one should explicitely set the list_search
+attribute to enable search.
+ 
     """
 
+    list_search = []
+    search_all_fields = True
     validator = EntityValidator
 
     def __init__(self, app_admin, entity):
