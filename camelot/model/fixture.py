@@ -99,6 +99,26 @@ class Fixture( Entity ):
                 reference.primary_key = obj.id
             Session.object_session( reference ).flush( [reference] )
         return obj
+    
+    @classmethod
+    def removeAllFixtures( cls, entity ):
+        for fixture_key, fixture_class in cls.findFixtureKeysAndClasses( entity ).values():
+            cls.removeFixture(entity, fixture_key, fixture_class)
+            
+    @classmethod
+    def removeFixture( cls, entity, fixture_key, fixture_class ):
+        """Remove a fixture from the database"""
+        # remove the object itself
+        from sqlalchemy.orm.session import Session
+        obj = cls.findFixture( entity, fixture_key, fixture_class)
+        print 'remove', unicode(obj)
+        obj.delete()
+        Session.object_session( obj ).flush( [obj] )
+        # if this succeeeds, remove the reference
+        reference = cls.findFixtureReference(entity, fixture_key, fixture_class)
+        reference.delete()
+        Session.object_session( reference ).flush( [reference] )
+        
 
 class FixtureVersion( Entity ):
     """Keep track of the version the fixtures have in the current database, the subversion
