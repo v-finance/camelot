@@ -608,7 +608,7 @@ class FormActionTest(ModelThreadTestCase):
     widget = action.render(None, None)
     self.grab_widget(widget)
                             
-class DelegateTest(unittest.TestCase):
+class DelegateTest(ModelThreadTestCase):
   """Test the basic functionallity of the delegates :
 - createEditor
 - setEditorData
@@ -619,6 +619,7 @@ class DelegateTest(unittest.TestCase):
   from camelot.view.controls import editors
     
   def setUp(self):
+    super(DelegateTest, self).setUp()
     self.kwargs = dict(editable=True)
     self.option = QtGui.QStyleOptionViewItem()
     # set version to 5 to indicate the widget will appear on a
@@ -950,7 +951,9 @@ class ControlsTest(ModelThreadTestCase):
     
     def test_navigation_pane(self):
         from camelot.view.controls import navpane
-        widget = navpane.NavigationPane(self.app_admin)
+        widget = navpane.NavigationPane(self.app_admin,
+                                        workspace = None,
+                                        parent = None)
         self.grab_widget(widget)
       
     def test_main_window(self):
