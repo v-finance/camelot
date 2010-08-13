@@ -23,6 +23,18 @@ class BackupMechanism(object):
         """
         self._filename = unicode(filename)
         
+    @classmethod
+    def get_filename_prefix(cls):
+        """
+        :return: a string with the prefix for the default name of the backup file
+        
+        By default this method returns an empty string, overwrite this method to
+        return a custom string, like the name of the company or such.
+        
+        This method will be called inside the model thread.
+        """
+        return u''
+        
     def backup_table_filter(self, from_table):
         """
         Method used to filter which tables should be backed up, overwrite this method

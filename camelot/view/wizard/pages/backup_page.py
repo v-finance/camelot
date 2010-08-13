@@ -107,9 +107,8 @@ class Page(QtGui.QWizardPage):
     extension = '.sqlite'
 
     def __init__(self, backup_mechanism=None, parent=None):
-        super(Page,  self).__init__(parent)
-        
         self.backup_mechanism = backup_mechanism
+        super(Page,  self).__init__(parent)
         self.setTitle( unicode(self.title) )
         self.setSubTitle( unicode(self.sub_title) )
         self.setPixmap(QtGui.QWizard.LogoPixmap, self.icon.getQPixmap())
@@ -204,33 +203,27 @@ class SelectRestoreFilePage(Page):
         return path
 
 class SelectBackupFilePage(Page):
+    
     def _setupUi(self):
+        from camelot.view.model_thread import post
         self._default_label = QtGui.QLabel(ugettext('Label:'))
         self._default_edit = LabelLineEdit()
         self._default_label.setBuddy(self._default_edit)
-        self._default_edit.setText(self._makeDefaultLabel())
-
         super(SelectBackupFilePage, self)._setupUi()
-
         self._hlayout.addWidget(self._default_label)
         self._hlayout.addWidget(self._default_edit)
         self._default_edit.textChanged.connect(self._onDefaultEditChanged)
         self._default_edit.textChanged.connect(self.completeChanged)
+        post(self._get_default_label, self._set_default_label)
 
+    def _set_default_label(self, label):
+        self._default_edit.setText(label)
+        
     def _onDefaultEditChanged(self, text):
         if self._default_radio.isChecked():
             self.wizard().filename = self._default_edit.filename()
     
-    def _get_filename_prefix(self):
-        try:
-            self.filename_prefix = unicode(self.bm.get_filename_prefix())
-        except Exception, e:
-            logger.warn('No get_filename_prefix defined in backup_mechanism: %s' % e)
-    
-    def _makeDefaultLabel(self):
-        from camelot.view.model_thread.signal_slot_model_thread import SignalSlotModelThread
-        from camelot.view.controls.progress_dialog import ProgressDialog
-                
+    def _get_default_label(self):
         locale = QtCore.QLocale()
         format = locale.dateTimeFormat(locale.ShortFormat)
         formatted_date_time = QtCore.QDateTime.currentDateTime().toString(format)
@@ -240,20 +233,8 @@ class SelectBackupFilePage(Page):
         for c in formatted_date_time_str:
             if c not in string.ascii_letters and c not in string.digits:
                 formatted_date_time_str = formatted_date_time_str.replace(c, '_')                
-        self.filename_prefix = None
-        try:
-            # get filename prefix from model to use for the backup file name label
-            progress = ProgressDialog(_('Getting filename prefix'))
-            logger.info('Getting filename prefix')
-            mt = SignalSlotModelThread(lambda:None)
-            mt.start()
-            self.bm = self.backup_mechanism(None)
-            mt.post(lambda:self._get_filename_prefix(), progress.finished, progress.exception)
-            progress.exec_()
-            if self.filename_prefix:
-                formatted_date_time_str = '-'.join([self.filename_prefix, formatted_date_time_str])
-        except Exception, e:
-            logger.warn('No backup filename prefix defined: %s' % e)
+        filename_prefix = self.backup_mechanism.get_filename_prefix()
+        formatted_date_time_str = '-'.join([filename_prefix, formatted_date_time_str])
         return formatted_date_time_str
 
     def _showWidgets(self, selection):
