@@ -63,15 +63,18 @@ class ColoredFloatDelegate(CustomDelegate):
                 1:QtGui.QIcon(Icon('tango/16x16/actions/go-down-red.png').getQPixmap()),
                 0:QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap())
             }
-        
+
+
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject( index.model().data(index, Qt.EditRole) )
+        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
         color = index.model().data(index, Qt.BackgroundRole)
         background_color = QtGui.QColor(color)
         fontColor = QtGui.QColor()
-        
+        arrow = field_attributes.get('arrow', None)
+            
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
         else:
@@ -80,7 +83,11 @@ class ColoredFloatDelegate(CustomDelegate):
             else:
                 painter.fillRect(option.rect, background_color)
 
-        self.icons[cmp(value,0)].paint(painter, option.rect.left(), option.rect.top()+1, option.rect.height(), option.rect.height(), Qt.AlignVCenter)
+        if arrow:
+            comparator = arrow.y
+        else:
+            comparator = value
+        self.icons[cmp(comparator,0)].paint(painter, option.rect.left(), option.rect.top()+1, option.rect.height(), option.rect.height(), Qt.AlignVCenter)
 
         value_str = u''
         if value != None and value != ValueLoading:

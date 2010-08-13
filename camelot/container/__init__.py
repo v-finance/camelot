@@ -57,6 +57,18 @@ class Container(object):
     """Top level class for all container classes"""
     pass
 
+class Arrow(Container):
+    """
+    Container to describe arrows
+    """
+    def __init__(self, x, y, width):
+        self.x = x
+        self.y = y
+        self.width = width
+
+    def __unicode__(self):
+        return "{0!s}, {1!s}, {2!s}]".format(self.x, self.y, self.width)
+
 class Interval(object):
     """Helper class for IntervalsContainer, specifications for one interval"""
 
