@@ -36,14 +36,25 @@ LOGGER = logging.getLogger('camelot.view.workspace')
 from camelot.view.model_thread import gui_function
 from camelot.view.controls.view import AbstractView
 
+class DesktopBackground(QtGui.QGraphicsView):
+    """A custom background widget for the desktop"""
+    pass
+        
 class DesktopWorkspace(QtGui.QWidget):
     """A tab based workspace that can be used by views
-    to display themselves. In essence this is A wrapper around the QTabWidget to
-    do some initial setup and provide it with a background widget.  This was 
-    implemented first using the QMdiArea, but the QMdiArea has too many 
-    drawbacks, like not being able to add close buttons to the tabs in 
-    a decent way"""
+to display themselves. In essence this is A wrapper around the QTabWidget to
+do some initial setup and provide it with a background widget.  This was 
+implemented first using the QMdiArea, but the QMdiArea has too many 
+drawbacks, like not being able to add close buttons to the tabs in 
+a decent way.
 
+.. attribute:: background
+
+The widget class to be used as a background for when there are
+no open tabs on the desktop.
+"""
+
+    background = DesktopBackground
     view_activated_signal = QtCore.SIGNAL('view_activated')
 
     @gui_function
@@ -65,17 +76,11 @@ class DesktopWorkspace(QtGui.QWidget):
                       QtCore.SIGNAL('currentChanged(int)'),
                       self._tab_changed)
         layout.addWidget( self._tab_widget )
-        # setup the background widget
-        
-        class DesktopBackground(QtGui.QGraphicsView):
-            """A custom background widget for the desktop"""
-            pass
-        
-        self._background_widget = DesktopBackground( self )
+        # setup the background widget        
+        self._background_widget = self.background( self )
         self._background_widget.show()
         layout.addWidget( self._background_widget )
         self.setLayout( layout )
-
 
     def _tab_close_request(self, index):
         """request the removal of the tab at index"""
