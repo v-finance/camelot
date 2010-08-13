@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -30,6 +30,11 @@ Python structures to represent filters.
 These structures can be transformed to QT forms.
 """
 
+import datetime
+
+from PyQt4 import QtCore, QtGui
+from camelot.view.controls.filterlist import filter_changed_signal
+from camelot.view.controls.editors import DateEditor, editingFinished
 from camelot.view.model_thread import gui_function
 from camelot.core.utils import ugettext_lazy as _
 
@@ -46,7 +51,7 @@ def structure_to_filter(structure):
 class Filter(object):
     """Base class for filters"""
     
-    def __init__(self, attribute, value_to_string=lambda x:unicode(x)):
+    def __init__(self, attribute, value_to_string=unicode):
         """
         @param attribute: the attribute on which to filter, this attribute
         may contain dots to indicate relationships that need to be followed, 
@@ -110,85 +115,78 @@ class Filter(object):
                    for value in session.execute(query)]
     
         return (filter_names[0],[(_('all'), lambda q: q)] + options)
-        
+
+class FilterWidget(QtGui.QGroupBox):
+    """A box containing a filter that can be applied on a table view, this filter is
+    based on the distinct values in a certain column"""
+  
+    def __init__(self, name, choices, parent):
+        QtGui.QGroupBox.__init__(self, unicode(name), parent)
+        self.group = QtGui.QButtonGroup(self)
+        self.item = name
+        self.unique_values = []
+        self.choices = None
+        self.setChoices(choices)
+         
+    def emit_filter_changed(self, state):
+        self.emit(filter_changed_signal)
+    
+    def setChoices(self, choices):
+        self.choices = choices
+        layout = QtGui.QVBoxLayout()
+        for i,name in enumerate([unicode(c[0]) for c in choices]):
+            button = QtGui.QRadioButton(name, self)
+            layout.addWidget(button)
+            self.group.addButton(button, i)
+            if i==0:
+                button.setChecked(True)
+            self.connect(button, QtCore.SIGNAL('toggled(bool)'), self.emit_filter_changed)
+        layout.addStretch()
+        self.setLayout(layout)
+    
+    def decorate_query(self, query):
+        checked = self.group.checkedId()
+        if checked>=0:
+            return self.choices[checked][1](query)
+        return query
+                    
 class GroupBoxFilter(Filter):
     """Filter where the items are displayed in a QGroupBox"""
     
     @gui_function
     def render(self, parent, name, options):
-      
-        from PyQt4 import QtCore, QtGui
-        from camelot.view.controls.filterlist import filter_changed_signal
-        
-        class FilterWidget(QtGui.QGroupBox):
-            """A box containing a filter that can be applied on a table view, this filter is
-            based on the distinct values in a certain column"""
-          
-            def __init__(self, name, choices, parent):
-                QtGui.QGroupBox.__init__(self, unicode(name), parent)
-                self.group = QtGui.QButtonGroup(self)
-                self.item = name
-                self.unique_values = []
-                self.choices = None
-                self.setChoices(choices)
-                 
-            def emit_filter_changed(self, state):
-                self.emit(filter_changed_signal)
-            
-            def setChoices(self, choices):
-                self.choices = choices
-                layout = QtGui.QVBoxLayout()
-                for i,name in enumerate([unicode(c[0]) for c in choices]):
-                    button = QtGui.QRadioButton(name, self)
-                    layout.addWidget(button)
-                    self.group.addButton(button, i)
-                    if i==0:
-                        button.setChecked(True)
-                    self.connect(button, QtCore.SIGNAL('toggled(bool)'), self.emit_filter_changed)
-                layout.addStretch()
-                self.setLayout(layout)
-            
-            def decorate_query(self, query):
-                checked = self.group.checkedId()
-                if checked>=0:
-                    return self.choices[checked][1](query)
-                return query
-                
         return FilterWidget(name, options, parent)
       
+class GroupBoxFilterWidget(QtGui.QGroupBox):
+    """Flter widget based on a QGroupBox"""
+  
+    def __init__(self, name, choices, parent):
+        QtGui.QGroupBox.__init__(self, unicode(name), parent)
+        layout = QtGui.QVBoxLayout()
+        self.choices = choices
+        combobox = QtGui.QComboBox(self)
+        for i,(name,decorator) in enumerate(choices):
+            combobox.insertItem(i, unicode(name), QtCore.QVariant(decorator))
+        layout.addWidget(combobox)
+        self.setLayout(layout)
+        self.current_index = 0
+        self.connect(combobox, QtCore.SIGNAL('currentIndexChanged(int)'), self.emit_filter_changed)
+            
+    def emit_filter_changed(self, index):
+        self.current_index = index
+        self.emit(filter_changed_signal)
+        
+    def decorate_query(self, query):
+        if self.current_index>=0:
+            return self.choices[self.current_index][1](query)
+        return query
+
 class ComboBoxFilter(Filter):
     """Filter where the items are displayed in a QComboBox"""
     
     @gui_function
     def render(self, parent, name, options):
-      
-        from PyQt4 import QtCore, QtGui
-        from camelot.view.controls.filterlist import filter_changed_signal
-        
-        class FilterWidget(QtGui.QGroupBox):
-          
-            def __init__(self, name, choices, parent):
-                QtGui.QGroupBox.__init__(self, unicode(name), parent)
-                layout = QtGui.QVBoxLayout()
-                self.choices = choices
-                combobox = QtGui.QComboBox(self)
-                for i,(name,decorator) in enumerate(choices):
-                    combobox.insertItem(i, unicode(name), QtCore.QVariant(decorator))
-                layout.addWidget(combobox)
-                self.setLayout(layout)
-                self.current_index = 0
-                self.connect(combobox, QtCore.SIGNAL('currentIndexChanged(int)'), self.emit_filter_changed)
-                    
-            def emit_filter_changed(self, index):
-                self.current_index = index
-                self.emit(filter_changed_signal)
-                
-            def decorate_query(self, query):
-                if self.current_index>=0:
-                    return self.choices[self.current_index][1](query)
-                return query
-              
-        return FilterWidget(name, options, parent)
+        return GroupBoxFilterWidget(name, options, parent)
     
 class EditorFilter(Filter):
     """Filter that presents the user with an editor, allowing the user to enter
@@ -211,47 +209,45 @@ class EditorFilter(Filter):
         name = self._verbose_name or field_attributes['name']
         return name, (admin.entity, self._field_name, field_attributes)
         
+class DateFilterWidget(QtGui.QGroupBox):
+    """Filter widget based on a DateEditor"""
+  
+    def __init__(self, name, query_decorator, parent):
+        QtGui.QGroupBox.__init__(self, unicode(name), parent)
+        layout = QtGui.QVBoxLayout()
+        self.date_editor = DateEditor(parent=self, nullable=True)
+        self.date_editor.set_value(datetime.date.today())
+        self.query_decorator = query_decorator
+        layout.addWidget(self.date_editor)
+        self.setLayout(layout)
+        self.connect(self.date_editor, editingFinished, self.emit_filter_changed)
+            
+    def emit_filter_changed(self):
+        self.emit(filter_changed_signal)
+        
+    def decorate_query(self, query):
+        return self.query_decorator(query, self.date_editor.get_value())
+            
 class ValidDateFilter(Filter):
     """Filters entities that are valid a certain date.  This filter will present
     a date to the user and filter the entities that have their from date before this
     date and their end date after this date.  If no date is given, all entities will
     be shown"""
 
-    def __init__(self, from_attribute='from_date', thru_attribute='thru_date', verbose_name=_('Valid at')):
+    def __init__(self, from_attribute='from_date', 
+                 thru_attribute='thru_date', 
+                 verbose_name=_('Valid at')):
         """
         :param from_attribute: the name of the attribute representing the from date
         :param thru_attribute: the name of the attribute representing the thru date
         :param verbose_name: the displayed name of the filter"""
+        super(ValidDateFilter, self).__init__(None, None)
         self._from_attribute = from_attribute
         self._thru_attribute = thru_attribute
         self._verbose_name = verbose_name
         
     def render(self, parent, name, options):
-        
-        from datetime import date
-        from PyQt4 import QtGui, QtCore
-        from camelot.view.controls.filterlist import filter_changed_signal
-        from camelot.view.controls.editors import DateEditor, editingFinished
-        
-        class FilterWidget(QtGui.QGroupBox):
-          
-            def __init__(self, name, query_decorator, parent):
-                QtGui.QGroupBox.__init__(self, unicode(name), parent)
-                layout = QtGui.QVBoxLayout()
-                self.date_editor = DateEditor(parent=self, nullable=True)
-                self.date_editor.set_value(date.today())
-                self.query_decorator = query_decorator
-                layout.addWidget(self.date_editor)
-                self.setLayout(layout)
-                self.connect(self.date_editor, editingFinished, self.emit_filter_changed)
-                    
-            def emit_filter_changed(self):
-                self.emit(filter_changed_signal)
-                
-            def decorate_query(self, query):
-                return self.query_decorator(query, self.date_editor.get_value())
-              
-        return FilterWidget(name, options, parent)
+        return DateFilterWidget(name, options, parent)
         
     def get_name_and_options(self, admin):
         from sqlalchemy.sql import and_
