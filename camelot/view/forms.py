@@ -151,10 +151,13 @@ class Form( object ):
             yield '    <w:tcW w:w="4811" w:type="dxa"/>'
             yield '    <w:shd w:val="clear" w:color="auto" w:fill="auto"/>'
             yield '  </w:tcPr>'
-            yield '<w:p>'            
+            yield '<w:p>'
+            lines = []
             if isinstance(field, Label):
                 lines = field.render_ooxml()
-            else:
+            elif isinstance(field, Form):
+                lines = field.render_ooxml( obj, delegates )
+            elif isinstance(field, basestring):
                 delegate = delegates[field]
                 value = getattr(obj, field)
                 lines = delegate.render_ooxml(value)

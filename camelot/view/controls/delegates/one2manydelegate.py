@@ -37,3 +37,6 @@ class One2ManyDelegate( QtGui.QItemDelegate ):
 
     def setModelData( self, editor, model, index ):
         pass
+    
+    def render_ooxml( self, value ):
+        return []

@@ -42,7 +42,6 @@ from camelot.view.model_thread import model_function
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.statusbar import StatusBar
 
-from camelot.core.utils import ugettext as _
 from camelot.action import ActionFactory
 
 
@@ -81,37 +80,6 @@ class FormWidget(QtGui.QWidget):
         self._columns = None
         self._delegate = None
         self.setLayout(self._widget_layout)
-        # define context menu and resp. action
-        self.setContextMenuPolicy(Qt.ActionsContextMenu)
-        export_action = ContextMenuAction(self, _('Export form'))
-        self.connect(
-            export_action,
-            QtCore.SIGNAL('triggered()'),
-            self.export_form
-        )
-        self.addAction(export_action)
-
-    def export_form(self):
-        from camelot.view.export.word import open_stream_in_word
-
-        def create_ooxml_export(row):
-            # print self._columns
-            def ooxml_export():
-                # TODO insert delegates
-                delegates = {}
-                for c in self._columns:
-                    # FIXME incorrect
-                    delegates[c[0]] = c[1]['delegate']
-
-
-                obj = self._model._get_object(row)
-                # print ' - '.join(self._form.render_ooxml(obj, delegates))
-                #open_document_in_word(self._form.render_ooxml(obj, delegates))
-
-            return ooxml_export
-
-        post(create_ooxml_export(self.get_index()))
-
 
     def get_model(self):
         return self._model
@@ -184,6 +152,27 @@ class FormWidget(QtGui.QWidget):
         self._widget_mapper.toPrevious()
         self.emit(self.changed_signal)
 
+    def export_ooxml(self):
+        from camelot.view.export.word import open_stream_in_word
+
+        def create_ooxml_export(row):
+            # print self._columns
+            def ooxml_export():
+                # TODO insert delegates
+                fields = self._admin.get_all_fields_and_attributes()
+                delegates = {}
+                for field_name, attributes in fields.items():
+                    delegates[field_name] = attributes['delegate'](**attributes)
+                print delegates
+                obj = self._model._get_object(row)
+                document = self._form.render_ooxml(obj, delegates)
+                print ' - '.join(self._form.render_ooxml(obj, delegates))
+                open_stream_in_word(self._form.render_ooxml(obj, delegates))
+
+            return ooxml_export
+
+        post(create_ooxml_export(self.get_index()))
+        
     def _set_columns_and_form(self, columns_and_form ):
         self._columns, self._form = columns_and_form
         self._create_widgets()
@@ -316,6 +305,8 @@ class FormView(AbstractView):
         self.addAction( ActionFactory.view_last(self, self.viewLast) )
         self.addAction( ActionFactory.view_next(self, self.viewNext) )
         self.addAction( ActionFactory.view_previous(self, self.viewPrevious) )
+        self.addAction( ActionFactory.refresh(self) )
+        self.addAction( ActionFactory.export_ooxml(self, self._form.export_ooxml) )
 
     def update_title(self):
 
@@ -414,7 +405,7 @@ class FormView(AbstractView):
             event.accept()
         else:
             event.ignore()
-
+        
     @model_function
     def toHtml(self):
         """generates html of the form"""

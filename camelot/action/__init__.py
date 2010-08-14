@@ -93,3 +93,20 @@ class ActionFactory(object):
         )
         default.update(kwargs)
         return createAction(**default)
+    
+    @classmethod
+    def export_ooxml(cls, parent, slot, **kwargs):
+        default = dict(
+            text=_('To Word Processor'),
+            slot=slot,
+            parent=parent,
+            actionicon=Icon('tango/16x16/mimetypes/x-office-document.png').fullpath(),
+            tip=_('Open using MS Word or Open Office')
+        )
+        default.update(kwargs)
+        return createAction(**default)
+    
+    @classmethod
+    def refresh(cls, parent, slot=None, **kwargs):
+        from refresh import SessionRefresh
+        return SessionRefresh(parent)

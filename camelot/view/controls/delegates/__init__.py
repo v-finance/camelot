@@ -2,6 +2,7 @@
 
 from delegatemanager import DelegateManager
 from booldelegate import BoolDelegate, TextBoolDelegate
+from chartdelegate import ChartDelegate
 from codedelegate import CodeDelegate
 from colordelegate import ColorDelegate
 from coloredfloatdelegate import ColoredFloatDelegate
