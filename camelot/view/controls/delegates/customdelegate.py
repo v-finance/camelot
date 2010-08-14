@@ -67,20 +67,22 @@ def DocumentationMetaclass(name, bases, dct):
                 add_field_attribute_item(arg)
 
     if 'editor' in dct:
-        dct['__doc__'] = dct['__doc__'] + '\nBy default, creates a %s as its editor.\n'%dct['editor'].__name__
+        dct['__doc__'] = dct['__doc__'] + '\n\nBy default, creates a %s as its editor.\n'%dct['editor'].__name__
         dct['__doc__'] = dct['__doc__'] + '\n.. image:: ../_static/editors/%s_editable.png'%dct['editor'].__name__ + '\n'
-        dct['__doc__'] = dct['__doc__'] + 'Static attributes supported by this editor : \n'
+        dct['__doc__'] = dct['__doc__'] + '\nStatic attributes supported by this editor : \n'
         args, _varargs, _varkw,  _defaults = inspect.getargspec(dct['editor'].__init__)
         for arg in args:
             if arg not in ['self', 'parent']:
                 add_field_attribute_item(arg)
 
         if hasattr(dct['editor'], 'set_field_attributes'):
-            dct['__doc__'] = dct['__doc__'] + '\nDynamic field attributes supported by the editor : \n'
+            dct['__doc__'] = dct['__doc__'] + '\n\nDynamic field attributes supported by the editor : \n'
             args, _varargs, _varkw,  _defaults = inspect.getargspec(dct['editor'].set_field_attributes)
             for arg in args:
                 if arg not in ['self', 'parent']:
                     add_field_attribute_item(arg)
+                    
+        dct['__doc__'] = dct['__doc__'] + '\n\n'
 
     return type(name, bases, dct)
 

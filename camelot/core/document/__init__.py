@@ -23,7 +23,8 @@ def documented_entity():
     def document_entity(model):
         model.__doc__ = (model.__doc__ or '') + """
 
-    .. image:: ../_static/entityviews/new_view_%s.png
+.. image:: ../_static/entityviews/new_view_%s.png
+
         """%(model.__name__.lower())
         return model
 
@@ -37,7 +38,8 @@ def documented_type():
     def document_type(field_type):
         field_type.__doc__ = (field_type.__doc__ or '') + """
 
-    .. image:: ../_static/editors/%s_editable.png
+.. image:: ../_static/editors/%s_editable.png
+    
     """
         return field_type
 

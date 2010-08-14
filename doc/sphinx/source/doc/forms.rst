@@ -103,7 +103,7 @@ Editors
 -------
 
 The editor of a specific field can be changed, by specifying an alternative delegate
-for that field, using the field attributes, see :ref:`specifying-delgates`.
+for that field, using the field attributes, see :ref:`specifying-delegates`.
 
 Tooltips
 --------

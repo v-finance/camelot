@@ -7,22 +7,76 @@
 :Release: |version|
 :Date: |today|
 
-The `Elixir website <http://elixir.ematia.de/trac/wiki/TutorialDivingIn>`_ provides a complete overview of 
-the creation of models that should be read before reading this section. 
+*Camelot* makes it easy to create views for any type of *Python* objects.  An important part of Camelot
+is introspection on Python objects mapped to a database with *SQLAlchemy*.  This allows a developer to
+only define his SQLAlchemy model and the views will reflect all properties defined in the model, such
+as field types and relations.
 
-This section describes the various field types that can be used to construct
-models. Fields from SQLAlchemy and Camelot are described.
+.. index:: SQLALchemy
+
+SQLAlchemy is a very powerful Object Relational Mapper (ORM) with lots of possibilities for handling
+complex and large datastructures. The `SQLAlchemy website <http://www.sqlalchemy.org>`_ has extensive
+documentation on all these features.
+
+.. index:: Elixir
+
+To facilitate the use of SQLAlchemy in less advanced use cases, like the Active Record Pattern, layers
+exist on top SQLAlchemy to make those things easy and the complex things still possible.  One such
+layer is *Elixir*.  Most of the code samples in the documentation make use of Elixir, an Elixir model
+definition is very simple:
+
+.. literalinclude:: ../../../../camelot/model/authentication.py
+   :pyobject: GeographicBoundary
+   
+The code above defines the model for a `GeographicBoundary` class, a base class that will be used later
+on to subclass into `Countries` and `Cities`, and is part of the default :ref:`model-persons` data
+model of Camelot.  This code has some things to notice :
+
+ * `GeographicBoundary` is a subclass of `Entity`, `Entity` is the base class for all classes that are mapped
+   to the database
+   
+ * the `using_options` statement allows us to fine tune the ORM, in this case the `GeographicBoundary` class
+   will be mapped to the `geographic_boundary` table
+   
+ * The `Field` statement add fields of a certain type, in this case `Unicode`, to the `GeographicBoundary` class
+   as well as to the `geographic_boundary` table
+   
+ * The `ColumnProperty` `full_name` is a more advanced feature of the ORM, when an `GeographicBoundary` object
+   is read from the database, the ORM will ask the database to concatenate the fields code and name, and
+   map the result to the `full_name` attribute of the object
+   
+ * The `__unicode__` method is implemented, this method will be called within Camelot whenever a textual
+   representation of the object is needed, eg in a window title or a many to one widget
+
+The `Elixir website <http://elixir.ematia.de/trac/wiki/TutorialDivingIn>`_ provides a complete overview of 
+the creation of models with elixir.
+
+Where to define the model
+=========================
+
+When a new Camelot project is created, the :ref:`camelot-admin` tool creates an empty ``models.py`` file that
+can be used as a place to start the model definition.
+
+Which field types can be used
+=============================
+
+SQLAlchemy comes with a default set of field types that can be used. These field types will trigger the
+use of certain delegates and editors to visualize them in the views.  Camelot extends those SQLAlchemy
+field types with some of its own. 
+
+An overview of field types from SQLAlchemy and Camelot is given in the table below :
 
 .. automodule:: camelot.view.field_attributes
 
+
 SQLAlchemy field types
-======================
+----------------------
 
 SQLAlchemy provides a number of field types that map to available data types in SQL, more information on those
 can be found on the `SQLAlchemy website <http://www.sqlalchemy.org/docs/reference/sqlalchemy/types.html>`_ .
    
 Camelot field types
-===================
+-------------------
 
 .. automodule:: camelot.types
    :members:
@@ -32,7 +86,7 @@ Python properties as fields
 
 Normal python properties can be used as fields on forms as well.  In that case, there
 will be no introspection to find out how to display the property.  Therefore the delegate 
-attribute should be specified explicitely.
+(:ref:`specifying-delegates`) attribute should be specified explicitly.
 
   .. literalinclude:: ../../../../test/snippet/properties_as_fields.py
   
@@ -57,7 +111,7 @@ reduces the need to transfer additional data from the database to the server.
 
 To display fields in the table and the form view that are the result of a calculation 
 done by the database, a ColumnProperty needs to be defined in the Elixir model.  In this 
-ColumnProperty, the sql query can be defined using sqlalchemy statements.  Then use the 
+ColumnProperty, the sql query can be defined using SQLAlchemy statements.  Then use the 
 field attributes mechanism to specify which delegate needs to be used to render the field.
 
 .. image:: ../_static/budget.png

@@ -15,6 +15,8 @@ Once a project has been created and set up as described in the tutorial
 Two tools exist to assist in the management of Camelot projects:
 :program:`camelot_admin.py` and :program:`camelot_manage.py`.
 
+.. _camelot_admin:
+
 camelot_admin.py
 ================
 

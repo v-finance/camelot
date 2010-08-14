@@ -23,7 +23,7 @@ The `PyQT website <http://www.riverbankcomputing.com/static/Docs/PyQt4/html/clas
 provides detailed information the differenct classes involved in the 
 model/delegate/view framework.
 
-.. _specifying-delgates:
+.. _specifying-delegates:
 
 Specifying delegates
 ====================

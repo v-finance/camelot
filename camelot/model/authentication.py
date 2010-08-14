@@ -435,6 +435,7 @@ class Person( Party ):
 Person = documented_entity()( Person )
 
 class GeographicBoundary( Entity ):
+    """The base class for Country and City"""
     using_options( tablename = 'geographic_boundary' )
     code = Field( Unicode( 10 ) )
     name = Field( Unicode( 40 ), required = True )
@@ -447,6 +448,8 @@ class GeographicBoundary( Entity ):
         return u'%s %s' % ( self.code, self.name )
 
 class Country( GeographicBoundary ):
+    """A subclass of GeographicBoundary used to store the name and the
+    ISO code of a country"""
     using_options( tablename = 'geographic_boundary_country', inheritance = 'multi' )
 
     @classmethod
@@ -465,6 +468,8 @@ class Country( GeographicBoundary ):
         list_display = ['name', 'code']
 
 class City( GeographicBoundary ):
+    """A subclass of GeographicBoundary used to store the name, the postal code
+    and the Country of a city"""
     using_options( tablename = 'geographic_boundary_city', inheritance = 'multi' )
     country = ManyToOne( 'Country', required = True, ondelete = 'cascade', onupdate = 'cascade' )
 
@@ -484,6 +489,7 @@ class City( GeographicBoundary ):
         list_display = ['code', 'name', 'country']
 
 class Address( Entity ):
+    """The Address to be given to a Party (a Person or an Organization)"""
     using_options( tablename = 'address' )
     street1 = Field( Unicode( 128 ), required = True )
     street2 = Field( Unicode( 128 ) )

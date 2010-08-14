@@ -12,6 +12,8 @@ models needed in almost any application (like Persons, Addresses, etc.), the
 developer is encouraged to use these data models as a start for developing
 custom applications.
 
+.. _model-persons:
+
 Persons and Organizations
 =========================
 

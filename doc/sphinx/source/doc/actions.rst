@@ -13,9 +13,9 @@ framework this is done through actions.  Actions appear as buttons
 on the side of a form and a table.  When the user clicks on an
 action button, a predefined function is called.
 
-  .. image:: ../_static/entityviews/new_view_address.png
+.. image:: ../_static/entityviews/new_view_address.png
   
-  an action is available to show the address on a map
+An action is available to show the address on a map
 
 Camelot comes with a set of standard actions that are easily 
 extended to manipulate data or create reports.  When defining actions,
