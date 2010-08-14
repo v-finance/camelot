@@ -59,11 +59,16 @@ to interact with objects of a certain class.  The behaviour of this class
 and the resulting interface can be tuned by specifying specific class
 attributes:
 
+**The name used in the GUI**
+
+The name used in the GUI for things like window titles and such can
+be specified using the verbose_name attribute.
+
 .. attribute:: verbose_name
 
 A human-readable name for the object, singular ::
 
-verbose_name = 'movie'
+verbose_name = _('movie')
 
 If this isn't given, the class name will be used
 
@@ -71,9 +76,11 @@ If this isn't given, the class name will be used
 
 A human-readable name for the object, plural ::
 
-verbose_name_plural = 'movies'
+verbose_name_plural = _('movies')
 
 If this isn't given, Camelot will use verbose_name + "s"
+
+**Fields displayed**
 
 .. attribute:: list_display
 
@@ -105,6 +112,8 @@ the form itself ::
         ('Cast', WidgetOnlyForm('cast'))
       ])
 
+**Behaviour**
+
 .. attribute:: confirm_delete
 
 Indicates if the deletion of an object should be confirmed by the user, defaults
@@ -125,6 +134,8 @@ was displayed by the form when the button was pressed::
 class Admin(EntityAdmin):
   form_actions = [('Foo', lamda o_getter:print 'foo')]
 
+**Field attributes**
+
 .. attribute:: field_attributes
 
 A dictionary specifying for each field of the model some additional
@@ -141,13 +152,11 @@ class Movie(Entity):
 The :ref:`doc-admin-field_attributes` documentation describes the various keys
 that can be used in the field attributes class attribute of an ObjectAdmin or EntityAdmin.
 
+**Varia**
+
 .. attribute:: model
 The QAbstractItemModel class to be used to display collections of this object,
 defaults to a CollectionProxy
-
-.. attribute:: confirm_delete
-set to True if the user should get a confirmation dialog before deleting data,
-defaults to False
 
 .. attribute:: TableView
 The QWidget class to be used when a table view is needed
