@@ -8,7 +8,7 @@ logger = logging.getLogger('camelot.core.backup')
 
 class BackupMechanism(object):
     """Create a backup of the current database to an sqlite database stored in 
-    filename.
+    a file.
     
     The backupmechanism always considers the schema of the backed up database
     as the master, and never that of the backup.  This means that when a backup
@@ -18,10 +18,16 @@ class BackupMechanism(object):
     backup is copied into the existing schema.
     """
     
-    def __init__(self, filename):
-        """Backup and restore to a local file using it as an sqlite database
+    def __init__(self, filename, storage=None):
+        """Backup and restore to a file using it as an sqlite database.
+        :param filename: the name of the file in which to store the backup, this
+        can be either a local file or the name of a file in the storage.
+        :param storage: a storage in which to store the file, if None is given,
+        it is assumed that the file should be stored or retrieved from the local
+        filesystem.
         """
         self._filename = unicode(filename)
+        self._storage = storage
         
     @classmethod
     def get_filename_prefix(cls):
@@ -75,6 +81,8 @@ class BackupMechanism(object):
         while performing a backup.
         """
         import os
+        import tempfile
+        import shutil
         from sqlalchemy import create_engine, MetaData
         import settings
         
@@ -85,10 +93,16 @@ class BackupMechanism(object):
         from_meta_data.reflect()
                 
         yield (0, 0, _('Preparing backup file'))
-        logger.info("preparing backup to '%s'"%self._filename)
+        #
+        # We'll first store the backup in a temporary file, since
+        # the selected file might be on a server or in a storage
+        #
+        file_descriptor, temp_file_name = tempfile.mkstemp(suffix='db')
+        os.close(file_descriptor)
+        logger.info("preparing backup to '%s'"%temp_file_name)
         if os.path.exists(self._filename):
             os.remove(self._filename)
-        to_engine   = create_engine(u'sqlite:///%s'%self._filename)       
+        to_engine   = create_engine(u'sqlite:///%s'%temp_file_name)       
         to_meta_data = MetaData()
         to_meta_data.bind = to_engine
         #
@@ -103,9 +117,12 @@ class BackupMechanism(object):
         
         number_of_tables = len(from_and_to_tables)
         for i,(from_table, to_table) in enumerate(from_and_to_tables):
-            yield (i, number_of_tables, _('Copy data of table %s')%from_table.name)
+            yield (i, number_of_tables + 1, _('Copy data of table %s')%from_table.name)
             self.copy_table_data(from_table, to_table)
-        yield (number_of_tables, number_of_tables, _('Backup completed'))
+        yield (number_of_tables, number_of_tables + 1, _('Store backup at requested location') )
+        if not self._storage:
+            shutil.move(temp_file_name, self._filename)
+        yield (number_of_tables + 1, number_of_tables + 1, _('Backup completed'))
     
     def restore(self):
         """Generator function that yields tuples :
