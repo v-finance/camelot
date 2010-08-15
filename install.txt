@@ -9,8 +9,64 @@ If you are using a debian based distribution, you can type::
 Then use easy_install to install Camelot, under Linux this would be done by typing::
 
   sudo easy_install camelot
+  
+From source
+===========
 
+When installing Camelot from source, you need to make sure all dependencies
+like `PyQT <http://www.riverbankcomputing.co.uk/>`_, 
+`SQLAlchemy <http://www.sqlalchemy.org>`_ and `Elixir <http://elixir.ematia.de/>`_ are installed
+and available in your **PYTHONPATH**.
+
+Releases
+--------
+
+The source code of a release can be downloaded from the 
+`Python Package Index <http://pypi.python.org/pypi/Camelot/>`_ and then
+extracted::
+
+  tar xzvf Camelot-10.07.02.tar.gz
+
+Trunk
+-----
+
+The latest and greatest version of the source can be checked out
+from the subversion repository::
+
+  svn co http://guest:guest@repository.conceptive.be/camelot/svn/trunk/
+  
+Adapting PYTHONPATH
+-------------------
+
+You need to make sure Camelot and all its dependencies are in the **PYTHONPATH**
+before you start using it::
+
+  export PYTHONPATH=/home/username/Camelot-10.07.02
+  
+or::
+
+  export PYTHONPATH=/home/username/Camelot-10.07.02:path to sqlalchemy:path to elxir:...
+  
+Verifiy the installation
+========================
+
+To verify if you have Camelot installed and available in the **PYTHONPATH**, fire up a
+python interpreter::
+
+  python
+  
+and issue these commands::
+
+  >>> import camelot
+  >>> print camelot.__version__
+  >>> import sqlalchemy
+  >>> print sqlalchemy.__version__
+  >>> import elixir
+  >>> print elixir.__version__
+  >>> import PyQt4
+  
+None of them should raise an ImportError.
+  
 Microsoft Windows
 =================
 
- 

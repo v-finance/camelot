@@ -1,3 +1,14 @@
+Trunk
+-----
+
+ * Tab based desktop
+
+ * Faster table view
+ 
+ * Improved search queries
+ 
+ * Much more dynamic field attributes
+
 Release 10.07.02
 ----------------
 
