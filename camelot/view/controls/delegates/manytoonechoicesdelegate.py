@@ -9,7 +9,7 @@ class ManyToOneChoicesDelegate( CustomDelegate ):
   
   The items in the ComboBox are the unicode representation of the related objects.
   So these classes need an implementation of their __unicode__ method to show
-  up in a human readable way in the ComboBox.  
+  up in a human readable way in the ComboBox.
   """
   
     editor = editors.OneToManyChoicesEditor
