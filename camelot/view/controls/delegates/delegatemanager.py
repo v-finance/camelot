@@ -27,7 +27,7 @@ class DelegateManager(QtGui.QItemDelegate):
     def insertColumnDelegate(self, column, delegate):
         """Inserts a custom column delegate"""
         logger.debug('inserting delegate for column %s' % column)
-        assert delegate
+        assert delegate != None
         delegate.setParent(self)
         self.delegates[column] = delegate
         self.connect(delegate, QtCore.SIGNAL('commitData(QWidget*)'), self.commitData)
@@ -54,7 +54,7 @@ class DelegateManager(QtGui.QItemDelegate):
         """Use a custom delegate createEditor method if it exists"""
         delegate = self.get_column_delegate(index.column())
         editor = delegate.createEditor(parent, option, index)
-        assert editor
+        assert editor != None
         return editor
     
     def setEditorData(self, editor, index):

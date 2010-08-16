@@ -122,7 +122,7 @@ class FormWidget(QtGui.QWidget):
         from camelot.view.controls.delegates.delegatemanager import \
             DelegateManager
         self._delegate = self._model.getItemDelegate()
-        assert self._delegate
+        assert self._delegate != None
         assert isinstance(self._delegate, DelegateManager)
         self._create_widgets()
 
@@ -239,7 +239,7 @@ class FormWidget(QtGui.QWidget):
                 font.setBold(True)
                 widget_label.setFont(font)
 
-            assert widget_editor
+            assert widget_editor != None
             assert isinstance(widget_editor, QtGui.QWidget)
 
             self._widget_mapper.addMapping(widget_editor, i)

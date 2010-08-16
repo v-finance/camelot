@@ -112,8 +112,8 @@ is editable"""
         """:param option: use an option with version 5 to indicate the widget
 will be put onto a form"""
         editor = self.editor(parent, editable=self.editable, **self.kwargs)
-        assert editor
-        assert isinstance(editor, (QtGui.QWidget,))        
+        assert editor != None
+        assert isinstance(editor, (QtGui.QWidget,))
         if option.version != 5:
             editor.setAutoFillBackground(True)
         self.connect(editor,
@@ -126,7 +126,7 @@ will be put onto a form"""
 
     def commitAndCloseEditor(self):
         editor = self.sender()
-        assert editor
+        assert editor != None
         assert isinstance(editor, (QtGui.QWidget,))
         self.emit(SIGNAL('commitData(QWidget*)'), editor)
         sig = SIGNAL('closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)')
