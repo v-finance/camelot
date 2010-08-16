@@ -1,7 +1,7 @@
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
-from partnerplan.view.controls.editors.charteditor import ChartEditor
+from camelot.view.controls.editors.charteditor import ChartEditor
 from camelot.view.controls.delegates.customdelegate import CustomDelegate
 
 import logging

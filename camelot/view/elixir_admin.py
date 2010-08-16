@@ -389,9 +389,9 @@ attribute to enable search.
                 self.connect(self, SIGNAL('row_selected'), self.sectionClicked)
                 self.setUpdatesEnabled(True)
 
-            def emit_and_close(self, instance_getter):
+            def emit_entity_selected(self, instance_getter):
                 self.emit(self.entity_selected_signal, instance_getter)
-                self.close()
+                #self.close()
 
             def sectionClicked(self, index):
                 # table model will be set by the model thread, we can't
@@ -405,7 +405,7 @@ attribute to enable search.
                         entity = self._table_model._get_object(index)
                         return create_constant_getter(entity)
 
-                    post(create_instance_getter, self.emit_and_close)
+                    post(create_instance_getter, self.emit_entity_selected)
 
         widget = SelectView(admin, parent)
         widget.setUpdatesEnabled(True)
