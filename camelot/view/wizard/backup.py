@@ -39,7 +39,8 @@ class BackupPage(ProgressPage):
     def __init__(self, backup_mechanism, parent=None):
         super(BackupPage, self).__init__(parent)
         self._backup_mechanism = backup_mechanism
-        
+        self.setFinalPage ( True )
+
     def run(self):
         backup_mechanism = self._backup_mechanism(self.wizard().filename)
         for completed, total, description in backup_mechanism.backup():
@@ -63,6 +64,7 @@ class RestorePage(ProgressPage):
     def __init__(self, backup_mechanism, parent=None):
         super(RestorePage, self).__init__(parent)
         self._backup_mechanism = backup_mechanism
+        self.setFinalPage ( True )
         
     def run(self):
         backup_mechanism = self._backup_mechanism(self.wizard().filename)

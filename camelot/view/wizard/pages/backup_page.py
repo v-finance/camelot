@@ -171,6 +171,7 @@ class SelectRestoreFilePage(Page):
 
     def __init__(self, parent=None):
         super(SelectRestoreFilePage, self).__init__(parent)
+        self.setCommitPage(True)
         if self._default_combo.count() == 0:
             self._default_radio.setEnabled(False)
             self._custom_radio.setChecked(True)
@@ -203,7 +204,10 @@ class SelectRestoreFilePage(Page):
         return path
 
 class SelectBackupFilePage(Page):
-    
+    def __init__(self, backup_mechanism):
+        super(SelectBackupFilePage, self).__init__(backup_mechanism)
+        self.setCommitPage(True)
+
     def _setupUi(self):
         from camelot.view.model_thread import post
         self._default_label = QtGui.QLabel(ugettext('Label:'))

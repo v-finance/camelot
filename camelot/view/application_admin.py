@@ -267,3 +267,13 @@ class ApplicationAdmin(QtCore.QObject):
                 )
         
         return add_actions
+
+    def backup(self, main_window):
+        from camelot.view.wizard.backup import BackupWizard
+        wizard = BackupWizard(self.backup_mechanism, main_window)
+        wizard.exec_()
+
+    def restore(self, main_window):
+        from camelot.view.wizard.backup import RestoreWizard
+        wizard = RestoreWizard(self.backup_mechanism, main_window)
+        wizard.exec_()

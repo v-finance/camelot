@@ -404,14 +404,10 @@ class MainWindow(QtGui.QMainWindow):
         self.view.show()
 
     def backup(self):
-        from camelot.view.wizard.backup import BackupWizard
-        wizard = BackupWizard(self.app_admin.backup_mechanism, self)
-        wizard.exec_()
+        self.app_admin.backup(self)
 
     def restore(self):
-        from camelot.view.wizard.backup import RestoreWizard
-        wizard = RestoreWizard(self.app_admin.backup_mechanism, self)
-        wizard.exec_()
+        self.app_admin.restore(self)
 
     def saveAs(self):
         pass

@@ -83,8 +83,10 @@ class BackupMechanism(object):
         import os
         import tempfile
         import shutil
-        from sqlalchemy import create_engine, MetaData
         import settings
+        from sqlalchemy import create_engine
+        from sqlalchemy import MetaData
+        from sqlalchemy.pool import NullPool
         
         yield (0, 0, _('Analyzing database structure'))
         from_engine = settings.ENGINE()
@@ -102,7 +104,7 @@ class BackupMechanism(object):
         logger.info("preparing backup to '%s'"%temp_file_name)
         if os.path.exists(self._filename):
             os.remove(self._filename)
-        to_engine   = create_engine(u'sqlite:///%s'%temp_file_name)       
+        to_engine   = create_engine( u'sqlite:///%s'%temp_file_name, poolclass=NullPool )
         to_meta_data = MetaData()
         to_meta_data.bind = to_engine
         #
@@ -130,13 +132,15 @@ class BackupMechanism(object):
         while performing a restore.
         """
         import os
-        from sqlalchemy import create_engine, MetaData
         import settings
+        from sqlalchemy import create_engine
+        from sqlalchemy import MetaData
+        from sqlalchemy.pool import NullPool
 
         yield (0, 0, _('Open backup file'))
         if not os.path.exists(self._filename):
             raise Exception('Backup file does not exist')
-        from_engine   = create_engine('sqlite:///%s'%self._filename)       
+        from_engine   = create_engine('sqlite:///%s'%self._filename, poolclass=NullPool)       
 
         yield (0, 0, _('Prepare database for restore'))
         to_engine = settings.ENGINE()
