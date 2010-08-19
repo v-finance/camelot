@@ -1,28 +1,58 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
 
-from PyQt4.QtCore import Qt
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 
 import camelot.types
 from camelot.core.constants import *
 from camelot.view.proxy import ValueLoading
 from camelot.core.utils import create_constant_function
 
+
 editingFinished = QtCore.SIGNAL('editingFinished()')
 
 class AbstractCustomEditor(object):
     """Helper class to be used to build custom editors.  This class provides
-  functionallity to store and retrieve `ValueLoading` as an editor's value.
+  functionality to store and retrieve `ValueLoading` as an editor's value.
   """
 
     def __init__(self):
         self._value_loading = True
+        self.value_is_none = False
 
     def set_value(self, value):
-        if value==ValueLoading:
+        if value == ValueLoading:
             self._value_loading = True
             return None
         else:
             self._value_loading = False
+            if value is None:
+                self.value_is_none = True
             return value
 
     def get_value(self):

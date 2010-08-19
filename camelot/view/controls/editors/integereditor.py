@@ -1,3 +1,30 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
+
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
 
@@ -8,13 +35,13 @@ from math import floor
 
 class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
-    
+
     def wheelEvent(self, wheel_event):
         wheel_event.ignore()
-        
+
 class IntegerEditor(CustomEditor):
     """Widget for editing an integer field, with a calculator"""
-  
+
     def __init__(self,
                  parent=None,
                  minimum=constants.camelot_minint,
@@ -22,19 +49,19 @@ class IntegerEditor(CustomEditor):
                  editable=True,
                  prefix='',
                  suffix='',
-                 calculator=True,               
+                 calculator=True,
                  **kwargs):
         CustomEditor.__init__(self, parent)
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
-        
+
         prefix = str(prefix) + ' '
         prefix = prefix.lstrip()
-        
+
         suffix = ' ' + str(suffix)
         suffix = suffix.rstrip()
-            
+
         self.spinBox = CustomDoubleSpinBox(parent)
         self.spinBox.setPrefix(prefix)
         self.spinBox.setSuffix(suffix)
@@ -49,7 +76,7 @@ class IntegerEditor(CustomEditor):
         self.calculatorButton.setIcon(icon)
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFixedHeight(self.get_height())
-    
+
         self.connect(self.calculatorButton,
                      QtCore.SIGNAL('clicked()'),
                      lambda:self.popupCalculator(self.spinBox.value()))
@@ -59,7 +86,7 @@ class IntegerEditor(CustomEditor):
         self.connect(self.spinBox,
                      QtCore.SIGNAL('editingFinished()'),
                      lambda:self.editingFinished(self.spinBox.value()))
-    
+
         layout = QtGui.QHBoxLayout()
         layout.setMargin(0)
         layout.setSpacing(0)
@@ -71,20 +98,27 @@ class IntegerEditor(CustomEditor):
             self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         self.setFocusProxy(self.spinBox)
         self.setLayout(layout)
-    
+
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
-        if value!=None:
+        if value != None:
             value = str(value).replace(',', '.')
             self.spinBox.setValue(eval(value))
-        else:
-            self.spinBox.setValue(0)
-      
+        #else:
+        #    self.spinBox.setValue(0)
+
     def get_value(self):
+        val = CustomEditor.get_value(self)
+        # ValueLoading?
+        if val is not None:
+            return val
+        elif self.value_is_none:
+            return None
         self.spinBox.interpretText()
         value = int(self.spinBox.value())
-        return CustomEditor.get_value(self) or value
-      
+        #return CustomEditor.get_value(self) or value
+        return value
+
     def set_enabled(self, editable=True):
         if self.spinBox.isEnabled() != editable:
             if not editable:
@@ -92,7 +126,7 @@ class IntegerEditor(CustomEditor):
             else:
                 self.layout().addWidget(self.calculatorButton)
             self.spinBox.setEnabled(editable)
-      
+
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator
         calculator = Calculator(self)
@@ -101,10 +135,10 @@ class IntegerEditor(CustomEditor):
                      QtCore.SIGNAL('calculationFinished'),
                      self.calculationFinished)
         calculator.exec_()
-    
+
     def calculationFinished(self, value):
         self.spinBox.setValue(floor(float(value)))
         self.emit(editingFinished)
-    
+
     def editingFinished(self, value):
         self.emit(editingFinished)

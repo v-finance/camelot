@@ -27,7 +27,8 @@
 
 """Wizard and wizard pages to assist in the creation of new objects"""
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
+
 
 class SelectSubclassPage(QtGui.QWizardPage):
     """Page for a wizard that allows the selection of a subclass"""
@@ -41,6 +42,7 @@ class SelectSubclassPage(QtGui.QWizardPage):
         layout.addWidget(SubclassTree(admin, self))
         layout.addStretch(1)
         self.setLayout(layout)
+
 
 class NewObjectWizard(QtGui.QWizard):
 
