@@ -1,15 +1,19 @@
 import logging
 
 logger = logging.getLogger( 'camelot.view.controls.editors.onetomanyeditor' )
-from customeditor import CustomEditor, QtCore, QtGui, Qt
+
+from PyQt4 import QtGui
+from PyQt4 import QtCore
+from PyQt4.QtCore import Qt
 from wideeditor import WideEditor
+from customeditor import CustomEditor
 
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post
 from camelot.core.utils import ugettext as _
 
 
-class One2ManyEditor( CustomEditor, WideEditor ):
+class One2ManyEditor(CustomEditor, WideEditor):
 
     def __init__( self,
                  admin = None,

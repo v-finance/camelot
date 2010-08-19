@@ -14,12 +14,12 @@ logger = logging.getLogger('view.unittests')
 static_images_path = os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinx', 'source', '_static')
 
 def create_getter(getable):
-  
+
     def getter():
         return getable
-    
+
     return getter
-        
+
 #class ProxyEntityTest(ModelThreadTestCase):
 #  """Test the functionality of the proxies to perform CRUD operations on stand
 #  alone data"""
@@ -44,13 +44,13 @@ def create_getter(getable):
 #    self.block(lambda:None)
 #  def listPersons(self):
 #    from camelot.model.authentication import Person
-#    
+#
 #    def create_list():
 #      print '<persons>'
 #      for p in Person.query.all():
 #        print p.id, unicode(p)
 #      print '</persons>'
-#    
+#
 #    self.block(create_list)
 #  def numberOfPersons(self):
 #    return self.block(lambda:self.person_proxy.getRowCount())
@@ -72,12 +72,12 @@ def create_getter(getable):
 #    index = self.person_proxy.index(self.rows_before_insert, self.person_columns['first_name'])
 #    self.person_proxy.setData(index, lambda:u'test')
 #    index = self.person_proxy.index(self.rows_before_insert, self.person_columns['last_name'])
-#    self.person_proxy.setData(index, lambda:u'test')      
+#    self.person_proxy.setData(index, lambda:u'test')
 #  def updateNewPersonToInvalid(self):
 #    index = self.person_proxy.index(self.rows_before_insert, self.person_columns['first_name'])
 #    self.person_proxy.setData(index, lambda:None)
 #    index = self.person_proxy.index(self.rows_before_insert, self.person_columns['last_name'])
-#    self.person_proxy.setData(index, lambda:None)      
+#    self.person_proxy.setData(index, lambda:None)
 #  def deleteNewPerson(self):
 #    self.person_proxy.removeRow(self.rows_before_insert)
 #    self.rows_after_delete = self.numberOfPersons()
@@ -91,7 +91,7 @@ def create_getter(getable):
 #    self.party_address_role_type_proxy.insertRow(0, create_getter(new_party_address_role_type_proxy))
 #    self.assertNotEqual( self.block(lambda:new_party_address_role_type_proxy.id), None )
 #    rows_after_insert = self.block(lambda:self.party_address_role_type_proxy.getRowCount())
-#    self.assertTrue( rows_after_insert > rows_before_insert)      
+#    self.assertTrue( rows_after_insert > rows_before_insert)
 #  def testCreateUpdateDeleteValidData(self):
 #    self.insertNewPerson(valid=True)
 #    self.assertTrue( self.block(lambda:self.new_person.id) != None )
@@ -113,7 +113,7 @@ def create_getter(getable):
 #    self.updateNewPersonToInvalid()
 #    self.deleteNewPerson()
 
-                
+
 #class ProxyOneToManyTest(ProxyEntityTest):
 #  """Test the functionality of the proxies to perform CRUD operations on related
 #  data"""
@@ -161,7 +161,7 @@ def create_getter(getable):
 #    self.block(lambda:self.city.delete())
 #    self.block(lambda:self.country.delete())
 #    self.block(lambda:session.flush([self.country, self.city, self.address]))
-      
+
 class EditorsTest(ModelThreadTestCase):
   """
 Test the basic functionality of the editors :
@@ -170,9 +170,9 @@ Test the basic functionality of the editors :
 - set_value
 - support for ValueLoading
 """
-  
+
   images_path = static_images_path
-  
+
   from camelot.view.controls import editors
   from camelot.view.proxy import ValueLoading
 
@@ -199,10 +199,12 @@ Test the basic functionality of the editors :
     editor.set_value( datetime.date(2008, 3, 28) )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
-    
+
   def test_TextLineEditor(self):
     editor = self.editors.TextLineEditor(parent=None, length=10)
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( None )
+    self.assertEqual( editor.get_value(), None )
     editor.set_value( u'za coś tam' )
     self.grab_widget( editor, 'editable' )
     self.assertEqual( editor.get_value(), u'za coś tam' )
@@ -218,7 +220,7 @@ Test the basic functionality of the editors :
     editor.set_value( u'editor.set_enabled() Test' )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
- 
+
   def test_StarEditor(self):
     editor = self.editors.StarEditor(parent=None, maximum=5)
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -237,7 +239,7 @@ Test the basic functionality of the editors :
     editor.set_value( 5 )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
-    
+
   def test_SmileyEditor(self):
     editor = self.editors.SmileyEditor(parent=None)
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -256,7 +258,7 @@ Test the basic functionality of the editors :
     editor.set_value( 'face-monkey' )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
-      
+
   def test_BoolEditor(self):
     editor = self.editors.BoolEditor(parent=None, editable=False)
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -279,7 +281,7 @@ Test the basic functionality of the editors :
     editor.set_value( True )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
-    
+
   def test_CodeEditor(self):
     editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'])
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -287,7 +289,7 @@ Test the basic functionality of the editors :
     self.grab_widget( editor, 'editable' )
     self.assertEqual( editor.get_value(), ['XYZ', '123'] )
     editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading ) 
+    self.assertEqual( editor.get_value(), self.ValueLoading )
     editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'], editable=False)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( ['XYZ', '123'] )
@@ -297,7 +299,7 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( ['SAM', '321'] )
     editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )    
+    self.grab_widget( editor, 'set_enabled()_editable' )
 
   def test_ColorEditor(self):
     editor = self.editors.ColorEditor(parent=None, editable=True)
@@ -317,12 +319,12 @@ Test the basic functionality of the editors :
     editor.set_value( (150, 200, 100, 255) )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
-     
+
   def test_ColoredFloatEditor(self):
     editor = self.editors.ColoredFloatEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( 0.0 )
-    self.assertEqual( editor.get_value(), 0.0 )    
+    self.assertEqual( editor.get_value(), 0.0 )
     editor.set_value( 3.14 )
     self.grab_widget( editor, 'editable' )
     self.assertEqual( editor.get_value(), 3.14 )
@@ -331,7 +333,7 @@ Test the basic functionality of the editors :
     editor = self.editors.ColoredFloatEditor(parent=None, editable=False)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( 0.0 )
-    self.assertEqual( editor.get_value(), 0.0 )    
+    self.assertEqual( editor.get_value(), 0.0 )
     editor.set_value( 3.14 )
     self.grab_widget( editor,'disabled' )
     self.assertEqual( editor.get_value(), 3.14 )
@@ -340,7 +342,7 @@ Test the basic functionality of the editors :
     editor.set_value( -7.45 )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
-    
+
   def test_ChoicesEditor(self):
     editor = self.editors.ChoicesEditor(parent=None, editable=True)
     choices1 = [(1,u'A'), (2,u'B'), (3,u'C')]
@@ -367,7 +369,7 @@ Test the basic functionality of the editors :
     editor.set_value( 1 )
     editor.set_field_attributes( editable=False )
     self.grab_widget( editor, 'set_enabled()_editable' )
-    
+
   def test_FileEditor(self):
     editor = self.editors.FileEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -381,7 +383,7 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
-    
+
   def test_DateTimeEditor(self):
     import datetime
     editor = self.editors.DateTimeEditor(parent=None, editable=True)
@@ -390,23 +392,25 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
     self.grab_widget( editor, 'editable' )
     editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )    
+    self.assertEqual( editor.get_value(), self.ValueLoading )
     editor = self.editors.DateTimeEditor(parent=None, editable=False)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( datetime.datetime(2009, 7, 19, 21, 5, 10, 0) )
     self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
     self.grab_widget( editor, 'disabled' )
     editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading ) 
+    self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( datetime.datetime(2009, 5, 21, 16, 16, 5, 0) )
     editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )   
-       
+    self.grab_widget( editor, 'set_enabled()_editable' )
+
   def test_FloatEditor(self):
     editor = self.editors.FloatEditor(parent=None, editable=True, prefix='prefix')
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( None )
+    self.assertEqual( editor.get_value(), None )
     editor.set_value( 0.0 )
-    self.assertEqual( editor.get_value(), 0.0 )    
+    self.assertEqual( editor.get_value(), 0.0 )
     editor.set_value( 3.14 )
     self.grab_widget( editor, 'editable' )
     self.assertEqual( editor.get_value(), 3.14 )
@@ -424,7 +428,7 @@ Test the basic functionality of the editors :
     editor.set_value( 5.45 )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
-    
+
   def test_ImageEditor(self):
     editor = self.editors.ImageEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -438,12 +442,14 @@ Test the basic functionality of the editors :
     self.grab_widget( editor, 'disabled' )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
- 
+
   def test_IntegerEditor(self):
     editor = self.editors.IntegerEditor(parent=None, editable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
+    editor.set_value( None )
+    self.assertEqual( editor.get_value(), None )
     editor.set_value( 0 )
-    self.assertEqual( editor.get_value(), 0 )    
+    self.assertEqual( editor.get_value(), 0 )
     editor.set_value( 3 )
     self.grab_widget( editor, 'editable' )
     self.assertEqual( editor.get_value(), 3 )
@@ -452,7 +458,7 @@ Test the basic functionality of the editors :
     editor = self.editors.IntegerEditor(parent=None, editable=False)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( 0 )
-    self.assertEqual( editor.get_value(), 0 )    
+    self.assertEqual( editor.get_value(), 0 )
     editor.set_value( 3 )
     self.grab_widget( editor, 'disabled' )
     self.assertEqual( editor.get_value(), 3 )
@@ -461,12 +467,12 @@ Test the basic functionality of the editors :
     editor.set_value( 134 )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
-    
+
   def test_NoteEditor(self):
     editor = self.editors.NoteEditor(parent=None)
     editor.set_value('A person with this name allready exists')
     self.grab_widget( editor, 'editable' )
-    
+
   def test_RichTextEditor(self):
     editor = self.editors.RichTextEditor(parent=None)
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -485,7 +491,7 @@ Test the basic functionality of the editors :
     editor.set_value( u'<h2>Rich Text Editor, set_enabled() test</h2>' )
     editor.set_editable( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
-    
+
   def test_TimeEditor(self):
     import datetime
     editor = self.editors.TimeEditor(parent=None, editable=True)
@@ -505,7 +511,7 @@ Test the basic functionality of the editors :
     editor.set_value( datetime.time(15, 6, 3) )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
-    
+
   def test_VirtualAddressEditor(self):
     editor = self.editors.VirtualAddressEditor(parent=None)
     self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -513,7 +519,7 @@ Test the basic functionality of the editors :
     self.grab_widget( editor, 'editable' )
     self.assertEqual( editor.get_value(),  ('im','test') )
     editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )  
+    self.assertEqual( editor.get_value(), self.ValueLoading )
     editor = self.editors.VirtualAddressEditor(parent=None, editable=False)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( ('im','test') )
@@ -523,14 +529,14 @@ Test the basic functionality of the editors :
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( ('email', 'test@conceptive.be') )
     editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )  
-  
+    self.grab_widget( editor, 'set_enabled()_editable' )
+
 from camelot.view import forms
-  
+
 class FormTest(ModelThreadTestCase):
-    
+
   images_path = static_images_path
-  
+
   def setUp(self):
     ModelThreadTestCase.setUp(self)
     from camelot.view.controls.editors import TextLineEditor, DateEditor
@@ -546,8 +552,8 @@ class FormTest(ModelThreadTestCase):
     from camelot.model.authentication import Person
     self.app_admin = ApplicationAdmin()
     self.person_entity = Person
-    self.collection_getter = lambda:[Person()]   
-    
+    self.collection_getter = lambda:[Person()]
+
   def tearDown(self):
     #
     # The global list of entities should remain clean for subsequent tests
@@ -556,58 +562,58 @@ class FormTest(ModelThreadTestCase):
     for e in entities:
       if e not in self.entities:
         entities.remove(e)
-    
+
   def test_form(self):
     from snippet.form.simple_form import Movie
     self.grab_widget(Movie.Admin.form_display.render(self.widgets))
-    
+
   def test_tab_form(self):
     form = forms.TabForm([('First tab', ['title', 'short_description']),
                           ('Second tab', ['director', 'release_date'])])
     self.grab_widget(form.render(self.widgets))
-    
+
   def test_group_box_form(self):
     form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
     self.grab_widget(form.render(self.widgets))
-    
+
   def test_grid_form(self):
     form = forms.GridForm([['title', 'short_description'], ['director','release_date']])
     self.grab_widget(form.render(self.widgets))
-    
+
   def test_vbox_form(self):
     form = forms.VBoxForm([['title', 'short_description'], ['director', 'release_date']])
     self.grab_widget(form.render(self.widgets))
-    
+
   def test_hbox_form(self):
     form = forms.HBoxForm([['title', 'short_description'], ['director', 'release_date']])
     self.grab_widget(form.render(self.widgets))
-    
+
   def test_nested_form(self):
       from snippet.form.nested_form import Admin
       person_admin = Admin(self.app_admin, self.person_entity)
       self.grab_widget( person_admin.create_new_view() )
-      
+
   def test_inherited_form(self):
       from snippet.form.inherited_form import InheritedAdmin
       person_admin = InheritedAdmin(self.app_admin, self.person_entity)
       self.grab_widget( person_admin.create_new_view() )
-      
+
   def test_custom_layout(self):
       from snippet.form.custom_layout import Admin
       person_admin = Admin(self.app_admin, self.person_entity)
-      self.grab_widget( person_admin.create_new_view() )      
-                          
+      self.grab_widget( person_admin.create_new_view() )
+
 from camelot.admin import form_action
-  
+
 class FormActionTest(ModelThreadTestCase):
-    
+
   images_path = static_images_path
-  
+
   def test_print_html_form_action(self):
     action = form_action.PrintHtmlFormAction('Summary')
     widget = action.render(None, None)
     self.grab_widget(widget)
-                            
+
 class DelegateTest(ModelThreadTestCase):
   """Test the basic functionallity of the delegates :
 - createEditor
@@ -617,7 +623,7 @@ class DelegateTest(ModelThreadTestCase):
 
   from camelot.view.controls import delegates
   from camelot.view.controls import editors
-    
+
   def setUp(self):
     super(DelegateTest, self).setUp()
     self.kwargs = dict(editable=True)
@@ -631,38 +637,38 @@ class DelegateTest(ModelThreadTestCase):
     import sys
     from camelot.view.controls.tableview import TableWidget
     from PyQt4.QtCore import Qt
-    
+
     model = QStandardItemModel(1, 1)
     index = model.index(0, 0, QModelIndex())
     model.setData(index, QVariant(data))
     model.setData(index, QVariant(QtGui.QColor('white')), Qt.BackgroundRole)
     model.setData(index, QVariant(dict(editable=True)), Qt.UserRole)
-    
+
     option = QtGui.QStyleOptionViewItem()
-    
+
     if suffix == 'editable':
       self.assertTrue(delegate.sizeHint(option, index).height()>1)
-    
+
     tableview = TableWidget()
     tableview.setModel(model)
     tableview.setItemDelegate(delegate)
-    
+
     test_case_name = sys._getframe(1).f_code.co_name[4:]
-    
-    for state_name, state in zip(('selected', 'unselected'), 
+
+    for state_name, state in zip(('selected', 'unselected'),
                                  (QStyle.State_Selected, QStyle.State_None)):
       tableview.adjustSize()
-      
+
       if state == QStyle.State_Selected:
         tableview.selectionModel().select(index, QItemSelectionModel.Select)
       else:
         tableview.selectionModel().select(index, QItemSelectionModel.Clear)
-      
+
       cell_size = tableview.visualRect(index).size()
-      
+
       headers_size = QSize(tableview.verticalHeader().width(),
                            tableview.horizontalHeader().height())
-      
+
       extra_size = QSize(tableview.verticalScrollBar().width(),
                          tableview.horizontalScrollBar().height())
 
@@ -675,7 +681,7 @@ class DelegateTest(ModelThreadTestCase):
       pixmap = QPixmap.grabWidget(tableview)
       pixmap.save(os.path.join(delegate_images_path, '%s_%s_%s.png'%(test_case_name, state_name, suffix)),
                   'PNG')
-            
+
   def testPlainTextDelegate(self):
     delegate = self.delegates.PlainTextDelegate(parent=None,
                                                 length=30,
@@ -690,7 +696,7 @@ class DelegateTest(ModelThreadTestCase):
     editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
     self.grab_delegate(delegate, 'Plain Text', 'disabled')
-    
+
   def testTextEditDelegate(self):
     from PyQt4.QtGui import QTextEdit
     delegate = self.delegates.TextEditDelegate(parent=None, **self.kwargs)
@@ -711,7 +717,7 @@ class DelegateTest(ModelThreadTestCase):
     editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.RichTextEditor))
     self.grab_delegate(delegate, '<b>Rich Text</b>', 'disabled')
-    
+
   def testBoolDelegate(self):
     delegate = self.delegates.BoolDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, self.option, None)
@@ -721,7 +727,7 @@ class DelegateTest(ModelThreadTestCase):
     editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.BoolEditor))
     self.grab_delegate(delegate, True, 'disabled')
-  
+
   def testDateDelegate(self):
     from datetime import date
     delegate = self.delegates.DateDelegate(parent=None, **self.kwargs)
@@ -747,7 +753,7 @@ class DelegateTest(ModelThreadTestCase):
     editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
     self.grab_delegate(delegate, DateTime, 'disabled')
-    
+
   def testEnumerationDelegate(self):
     choices = [('a','A'), ('b','B')]
     delegate = self.delegates.EnumerationDelegate(parent=None, choices=choices)
@@ -767,7 +773,7 @@ class DelegateTest(ModelThreadTestCase):
     self.assertTrue(isinstance(editor, self.editors.TimeEditor))
     #time = time(10, 30, 15)
     self.grab_delegate(delegate, time, 'disabled')
-    
+
   def testIntegerDelegate(self):
     delegate = self.delegates.IntegerDelegate(parent=None, editable=True)
     editor = delegate.createEditor(None, self.option, None)
@@ -785,7 +791,7 @@ class DelegateTest(ModelThreadTestCase):
     self.grab_delegate(delegate, intervals)
     delegate = self.delegates.IntervalsDelegate(parent=None, editable=False)
     self.grab_delegate(delegate, intervals, 'disabled')
-    
+
   def testFloatDelegate(self):
     from camelot.core.constants import camelot_minfloat, camelot_maxfloat
     delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
@@ -810,7 +816,7 @@ class DelegateTest(ModelThreadTestCase):
     editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
     self.grab_delegate(delegate, 3.1, 'disabled')
-  
+
   def testStarDelegate(self):
     delegate = self.delegates.StarDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, self.option, None)
@@ -822,7 +828,7 @@ class DelegateTest(ModelThreadTestCase):
     self.assertTrue(delegate.maximum, 5)
     self.assertTrue(isinstance(editor, self.editors.StarEditor))
     self.grab_delegate(delegate, 5, 'disabled')
-    
+
   def testSmileyDelegate(self):
     delegate = self.delegates.SmileyDelegate(parent=None, **self.kwargs)
     editor = delegate.createEditor(None, self.option, None)
@@ -853,7 +859,7 @@ class DelegateTest(ModelThreadTestCase):
     editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.ColorEditor))
     self.grab_delegate(delegate, color, 'disabled')
-  
+
   def testCodeDelegate(self):
     delegate = self.delegates.CodeDelegate(parent=None, parts=['99','AA'], **self.kwargs)
     editor = delegate.createEditor(None, self.option, None)
@@ -863,15 +869,15 @@ class DelegateTest(ModelThreadTestCase):
     editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.CodeEditor))
     self.grab_delegate(delegate, ['76','AB', '12', '34'], 'disabled')
-    
+
   def testCurrencyDelegate(self):
     delegate = self.delegates.CurrencyDelegate(parent=None, suffix='euro', **self.kwargs)
     editor = delegate.createEditor(None, self.option, None)
     self.assertTrue(isinstance(editor, self.editors.FloatEditor))
     self.grab_delegate(delegate, 1000000.12)
     delegate = self.delegates.CurrencyDelegate(parent=None, prefix='prefix', editable=False)
-    self.grab_delegate(delegate, 1000000.12, 'disabled')    
-  
+    self.grab_delegate(delegate, 1000000.12, 'disabled')
+
   def testComboBoxDelegate(self):
     CHOICES = (('1','A'), ('2','B'), ('3','C'))
     delegate = self.delegates.ComboBoxDelegate(parent=None,
@@ -901,17 +907,17 @@ class DelegateTest(ModelThreadTestCase):
 
 class FilterTest(ModelThreadTestCase):
     """Test the filters in the table view"""
-    
+
     images_path = static_images_path
     from camelot.view import filters
-    
+
     group_box_filter = filters.GroupBoxFilter('state')
     combo_box_filter = filters.ComboBoxFilter('state')
     name_and_options = ('Organization', [('Nokia',None), ('Apple',None)])
-    
-    def test_group_box_filter(self): 
+
+    def test_group_box_filter(self):
         self.grab_widget(self.group_box_filter.render(None, *self.name_and_options))
-    
+
     def test_combo_box_filter(self):
         self.grab_widget(self.combo_box_filter.render(None, *self.name_and_options))
 
@@ -921,7 +927,7 @@ class FilterTest(ModelThreadTestCase):
                  (self.combo_box_filter, self.name_and_options)]
         filter_list = FilterList(items, parent=None)
         self.grab_widget(filter_list)
-        
+
     def test_filter_list_in_table_view(self):
         from camelot.view.controls.tableview import TableView
         from camelot.model.authentication import Person
@@ -932,46 +938,46 @@ class FilterTest(ModelThreadTestCase):
         items = [(self.group_box_filter, self.name_and_options),
                  (self.combo_box_filter, self.name_and_options)]
         table_view.set_filters_and_actions((items, None))
-        
+
 class ControlsTest(ModelThreadTestCase):
     """Test some basic controls"""
-    
+
     images_path = static_images_path
-    
+
     def setUp(self):
         super(ControlsTest, self).setUp()
         from camelot.admin.application_admin import ApplicationAdmin
         self.app_admin = ApplicationAdmin()
-          
+
     def test_table_view(self):
         from camelot.view.controls.tableview import TableView
         from camelot.model.authentication import Person
         widget = TableView(self.app_admin.get_entity_admin(Person))
         self.grab_widget(widget)
-    
+
     def test_navigation_pane(self):
         from camelot.view.controls import navpane
         widget = navpane.NavigationPane(self.app_admin,
                                         workspace = None,
                                         parent = None)
         self.grab_widget(widget)
-      
+
     def test_main_window(self):
         from camelot.view.mainwindow import MainWindow
         widget = MainWindow(self.app_admin)
         self.grab_widget(widget)
-        
+
     def test_status_bar(self):
         from camelot.view.controls.statusbar import StatusBar
         status_bar = StatusBar(None)
         status_bar.busy_widget.set_busy(True)
         self.grab_widget(status_bar)
-    
+
     def test_search_control(self):
         from camelot.view.controls.search import SimpleSearchControl
         search = SimpleSearchControl(None)
         self.grab_widget(search)
-        
+
     def test_header_widget(self):
         from camelot.model.authentication import City
         from camelot.view.controls.tableview import HeaderWidget
@@ -979,16 +985,16 @@ class ControlsTest(ModelThreadTestCase):
         header = HeaderWidget(parent=None, admin=person_admin)
         header.expand_search_options()
         self.grab_widget(header)
-        
+
 class CamelotEntityViewsTest(EntityViewsTest):
   """Test the views of all the Entity subclasses"""
-  
+
   images_path = static_images_path
-  
+
 class SnippetsTest(ModelThreadTestCase):
-    
+
     images_path = static_images_path
-    
+
     def test_fields_with_actions(self):
         from snippet.fields_with_actions import Coordinate
         from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -997,7 +1003,7 @@ class SnippetsTest(ModelThreadTestCase):
         proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
         form = admin.create_form_view('Coordinate', proxy, 0, None)
         self.grab_widget(form)
-      
+
     def test_fields_with_tooltips(self):
         from snippet.fields_with_tooltips import Coordinate
         from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -1006,7 +1012,7 @@ class SnippetsTest(ModelThreadTestCase):
         proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
         form = admin.create_form_view('Coordinate', proxy, 0, None)
         self.grab_widget(form)
-        
+
     def test_entity_validator(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.model.authentication import Person
@@ -1020,7 +1026,7 @@ class SnippetsTest(ModelThreadTestCase):
         self.process()
         self.assertEqual(len(validator.validityMessages(0)), 3)
         self.grab_widget(validator.validityDialog(0, parent=None))
-        
+
     def test_background_color(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.model.authentication import Person
@@ -1036,11 +1042,11 @@ class SnippetsTest(ModelThreadTestCase):
         editor.set_value(proxy)
         self.process()
         self.grab_widget(editor)
-  
+
 class CamelotSchemaTest(SchemaTest):
-  
+
     images_path = static_images_path
-  
+
 
 if __name__ == '__main__':
     logger.info('running unit tests')
@@ -1054,7 +1060,7 @@ if __name__ == '__main__':
 #  runner.run(proxy_one_to_many_test)
     schema_test =  unittest.makeSuite(CamelotSchemaTest, 'test')
     runner.run(schema_test)
-    
+
     form_action_test =  unittest.makeSuite(FormActionTest, 'test')
     runner.run(form_action_test)
     editors_test =  unittest.makeSuite(EditorsTest, 'test')
@@ -1067,7 +1073,7 @@ if __name__ == '__main__':
     form_test = unittest.makeSuite(FormTest, 'test')
     runner.run(form_test)
     filter_test = unittest.makeSuite(FilterTest, 'test')
-    runner.run(filter_test)    
+    runner.run(filter_test)
     entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
     runner.run(entity_views_test)
 
