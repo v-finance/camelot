@@ -188,11 +188,3 @@ def xls2list(xf):
 
 def format_float(value, precision=3):
     return QtCore.QString("%L1").arg(float(value), 0, 'f', precision)
-
-def is_underlying_object_deleted(o):
-    import sip
-    try:
-       sip.unwrapinstance(o)
-    except RuntimeError:
-       return True
-    return False

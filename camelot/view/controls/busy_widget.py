@@ -47,8 +47,8 @@ class BusyWidget(QtGui.QWidget):
         """start/stop the animation
         :arg busy_state: True or False
         """
-        from camelot.core.utils import is_underlying_object_deleted
-        if busy_state and not is_underlying_object_deleted(self):
+        import sip
+        if busy_state and not sip.isdeleted(self):
             self.timer = self.startTimer(200)
             self.counter = 0
             self.show()
