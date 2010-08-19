@@ -76,7 +76,9 @@ class Translation( Entity ):
     using_options( tablename = 'translation' )
     language = Field( camelot.types.Language, index = True )
     source = Field( Unicode( 500 ), index = True )
-    value = Field( Unicode( 500 ) )
+    # value needs to be indexed as well, because when starting up we
+    # want to load only the translations that have a value specified
+    value = Field( Unicode( 500 ), index = True )
     cid = Field( INT(), default = 0, index = True )
     uid = Field( INT(), default = 0, index = True )
 
