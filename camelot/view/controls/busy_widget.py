@@ -56,7 +56,8 @@ class BusyWidget(QtGui.QWidget):
             if self.timer:
                 self.killTimer(self.timer)
                 self.timer = None
-            self.hide()
+            if not sip.isdeleted(self):
+                self.hide()
 
     def paintEvent(self, event):
         """custom paint, painting the orbs"""

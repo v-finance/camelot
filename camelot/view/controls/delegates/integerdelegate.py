@@ -17,22 +17,28 @@ class IntegerDelegate(CustomDelegate):
     def __init__(self,
                  minimum=constants.camelot_minint,
                  maximum=constants.camelot_maxint,
-                 editable=True,
                  parent=None,
                  unicode_format = None,
                  **kwargs):
   
-        CustomDelegate.__init__(self, parent=parent, editable=editable, minimum=minimum, maximum=maximum, **kwargs)
+        CustomDelegate.__init__(self, parent=parent, minimum=minimum, maximum=maximum, **kwargs)
         self.minimum = minimum
         self.maximum = maximum
-        self.editable = editable
         self.unicode_format = unicode_format
         
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
+        field_attributes = variant_to_pyobject( index.model().data( index, Qt.UserRole ) )
         
+        editable, prefix, suffix, background_color = True, '', '', None
+        if field_attributes != ValueLoading:
+            editable = field_attributes.get( 'editable', True )
+            prefix = field_attributes.get( 'prefix', '' )
+            suffix = field_attributes.get( 'suffix', '' )
+            background_color = field_attributes.get( 'background_color', None )
+
         background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
         
         rect = option.rect
@@ -63,7 +69,9 @@ class IntegerDelegate(CustomDelegate):
             value_str = '%i'%value
         if self.unicode_format != None:
             value_str = self.unicode_format(value)
-    
+
+        value_str = unicode( prefix ) + u' ' + unicode( value_str ) + u' ' + unicode( suffix )
+        value_str = value_str.strip()
         #fontColor = fontColor.darker()
         
     
@@ -81,6 +89,6 @@ class IntegerDelegate(CustomDelegate):
                          value_str)
         painter.restore()
     
-    def setEditorData(self, editor, index):
-        value = index.model().data(index, Qt.EditRole).toInt()[0]
-        editor.set_value(value)
+#    def setEditorData(self, editor, index):
+#        value = index.model().data(index, Qt.EditRole).toInt()[0]
+#        editor.set_value(value)

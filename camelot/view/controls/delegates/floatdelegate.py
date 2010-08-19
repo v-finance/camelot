@@ -18,11 +18,8 @@ class FloatDelegate( CustomDelegate ):
                  minimum = constants.camelot_minfloat,
                  maximum = constants.camelot_maxfloat,
                  precision = 2,
-                 editable = True,
                  parent = None,
                  unicode_format = None,
-                 prefix = '',
-                 suffix = '',
                  **kwargs ):
         """
     :param precision:  The number of digits after the decimal point displayed.  This defaults
