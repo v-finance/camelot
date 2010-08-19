@@ -150,4 +150,43 @@ the SqlalchemyMappers_ documentation.
 
 .. _SqlalchemyMappers: http://www.sqlalchemy.org/docs/04/mappers.html#advdatamapping_mapper_expressions
 
+Under the hood
+==============
 
+A lot of things happen under the hood when a model is defined using Elixir, and
+picked up by Camelot :
+
+Metadata
+--------
+
+Each file that contains a part of the model definition should contain these lines :
+
+.. literalinclude:: ../../../../camelot/empty_project/model.py
+   :start-after: begin meta data setup
+   :end-before: end meta data setup
+   
+They associate the Entities defined in this file with the default metadata.  The
+metadata is a datastructure that contains information about the database in which
+the tables for the model will be created.
+
+Engine
+------
+
+The settings.py file should contain a function named ENGINE that returns a
+connection to the database.  This connection will be associated with the default
+metadata used in the model definition.
+
+.. literalinclude:: ../../../../camelot/empty_project/settings.py
+   :pyobject: ENGINE
+
+As such, all defined models are associated with this database.
+
+Setup model
+-----------
+
+When the application starts up, the setup_model function in the settings.py file
+is called.  In this function, all model files should be imported, to make sure the
+model has been completely setup.
+
+.. literalinclude:: ../../../../camelot/empty_project/settings.py
+   :pyobject: setup_model
