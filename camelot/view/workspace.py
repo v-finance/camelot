@@ -55,7 +55,7 @@ no open tabs on the desktop.
 """
 
     background = DesktopBackground
-    view_activated_signal = QtCore.SIGNAL('view_activated')
+    view_activated_signal = QtCore.pyqtSignal(QtGui.QWidget)
 
     @gui_function
     def __init__(self, parent):
@@ -69,12 +69,8 @@ no open tabs on the desktop.
         self._tab_widget.setMovable( True )
         self._tab_widget.setTabsClosable( True )
         self._tab_widget.hide()
-        self.connect( self._tab_widget,
-                      QtCore.SIGNAL('tabCloseRequested(int)'),
-                      self._tab_close_request)
-        self.connect( self._tab_widget,
-                      QtCore.SIGNAL('currentChanged(int)'),
-                      self._tab_changed)
+        self._tab_widget.tabCloseRequested.connect( self._tab_close_request )
+        self._tab_widget.currentChanged.connect( self._tab_changed )
         layout.addWidget( self._tab_widget )
         # setup the background widget        
         self._background_widget = self.background( self )
@@ -82,6 +78,7 @@ no open tabs on the desktop.
         layout.addWidget( self._background_widget )
         self.setLayout( layout )
 
+    @QtCore.pyqtSlot(int)
     def _tab_close_request(self, index):
         """request the removal of the tab at index"""
         self._tab_widget.removeTab( index )
@@ -89,9 +86,10 @@ no open tabs on the desktop.
             self._tab_widget.hide()
             self._background_widget.show()
 
+    @QtCore.pyqtSlot(int)
     def _tab_changed(self, _index):
         """the active tab has changed, emit the view_activated signal"""
-        self.emit( self.view_activated_signal, self.active_view() )
+        self.view_activated_signal.emit( self.active_view() )
 
     def active_view(self):
         """:return: the currently active view or None"""

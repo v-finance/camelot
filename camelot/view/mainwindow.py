@@ -70,11 +70,7 @@ class MainWindow(QtGui.QMainWindow):
         LOGGER.debug('setting central widget to our workspace')
         self.setCentralWidget(self.workspace)
 
-        self.connect(
-            self.workspace,
-            DesktopWorkspace.view_activated_signal,
-            self.updateMenus
-        )
+        self.workspace.view_activated_signal.connect( self.updateMenus )
 
         LOGGER.debug('creating navigation pane')
         self.createNavigationPane()

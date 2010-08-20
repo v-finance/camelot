@@ -176,8 +176,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
     header_icon = Icon( 'tango/16x16/places/folder.png' )
 
-    item_delegate_changed_signal = QtCore.SIGNAL('itemDelegateChanged')
-    rows_removed_signal = QtCore.SIGNAL('rowsRemoved(const QModelIndex&,int,int)')
+    item_delegate_changed_signal = QtCore.pyqtSignal()
 
     @gui_function
     def __init__( self, admin, collection_getter, columns_getter,
@@ -324,10 +323,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.display_cache.delete_by_row( row )
         self.edit_cache.delete_by_row( row )
         self.attributes_cache.delete_by_row( row )
-        sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
-        self.emit( QtCore.SIGNAL( sig ),
-                  self.index( row, 0 ),
-                  self.index( row, self.column_count ) )
+        self.dataChanged.emit( self.index( row, 0 ),
+                               self.index( row, self.column_count ) )
 
     def handleEntityUpdate( self, sender, entity ):
         """Handles the entity signal, indicating that the model is out of date"""
@@ -375,7 +372,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         """
         self._rows = rows
         if not sip.isdeleted(self):
-            self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
+            self.layoutChanged.emit()
 
     def getItemDelegate( self ):
         """:return: a DelegateManager for this model, or None if no DelegateManager yet available
@@ -434,8 +431,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         # Only set the delegate manager when it is fully set up
         self.delegate_manager = delegate_manager
         if not sip.isdeleted( self ):
-            self.emit( self.item_delegate_changed_signal )
-            self.emit( QtCore.SIGNAL( 'layoutChanged()' ) )
+            self.item_delegate_changed_signal.emit()
+            self.layoutChanged.emit()
 
     def rowCount( self, index = None ):
         return self._rows
@@ -689,8 +686,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
     def _emit_changes( self, region ):
         if region:
-            self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
-                       self.index( region[0][0], region[0][1] ), self.index( region[1][0], region[1][1] ) )
+            self.dataChanged.emit( self.index( region[0][0], region[0][1] ), 
+                                   self.index( region[1][0], region[1][1] ) )
 
     def flags( self, index ):
         """Returns the item flags for the given index"""
@@ -712,8 +709,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.edit_cache.add_data( row, obj, row_data )
         self.display_cache.add_data( row, obj, stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes ) )
         self.attributes_cache.add_data(row, obj, dynamic_field_attributes )
-        self.emit( QtCore.SIGNAL( 'dataChanged(const QModelIndex &, const QModelIndex &)' ),
-                  self.index( row, 0 ), self.index( row, self.column_count ) )
+        self.dataChanged.emit(self.index( row, 0 ), 
+                              self.index( row, self.column_count ) )
 
     def _skip_row(self, row, obj):
         """:return: True if the object obj is allready in the cache, but at a

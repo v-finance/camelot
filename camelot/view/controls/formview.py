@@ -93,11 +93,7 @@ class FormWidget(QtGui.QWidget):
             QtCore.SIGNAL('layoutChanged()' ),
             self._layout_changed
         )
-        self.connect(
-            self._model,
-            self._model.item_delegate_changed_signal,
-            self._item_delegate_changed
-        )
+        self._model.item_delegate_changed_signal.connect( self._item_delegate_changed )
         self._widget_mapper.setModel(model)
 
         def get_columns_and_form():
@@ -118,6 +114,7 @@ class FormWidget(QtGui.QWidget):
         self._widget_mapper.revert()
         self.emit(self.changed_signal)
 
+    @QtCore.pyqtSlot()
     def _item_delegate_changed(self):
         from camelot.view.controls.delegates.delegatemanager import \
             DelegateManager
