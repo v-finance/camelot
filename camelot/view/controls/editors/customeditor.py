@@ -83,7 +83,7 @@ class AbstractCustomEditor(object):
         return finalHeight
 
     def set_background_color(self, background_color):
-        if background_color not in (None, ValueLoading):
+        if background_color not in (None, ValueLoading):         
             palette = self.palette()
             for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
                 for y in [self.backgroundRole(), QtGui.QPalette.Window]:

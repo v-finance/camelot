@@ -70,18 +70,23 @@ class ColoredFloatDelegate(CustomDelegate):
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject( index.model().data(index, Qt.EditRole) )
         field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
-        color = index.model().data(index, Qt.BackgroundRole)
-        background_color = QtGui.QColor(color)
         fontColor = QtGui.QColor()
-        arrow = field_attributes.get('arrow', None)
-            
+        editable, background_color, arrow = True, None, None
+        if field_attributes != ValueLoading:
+            editable = field_attributes.get( 'editable', True )
+            background_color = field_attributes.get( 'background_color', None )
+            arrow = field_attributes.get('arrow', None)
+
+        fontColor = QtGui.QColor()
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
         else:
-            if not self.editable:
-                painter.fillRect(option.rect, option.palette.window())
+            if editable:
+                painter.fillRect(option.rect, background_color or option.palette.base())
+                fontColor.setRgb(0,0,0)
             else:
-                painter.fillRect(option.rect, background_color)
+                painter.fillRect(option.rect, background_color or option.palette.window())
+                fontColor.setRgb(130,130,130)
 
         if arrow:
             comparator = arrow.y

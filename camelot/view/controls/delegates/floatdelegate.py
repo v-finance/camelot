@@ -43,23 +43,16 @@ class FloatDelegate( CustomDelegate ):
             suffix = field_attributes.get( 'suffix', '' )
             background_color = field_attributes.get( 'background_color', None )
 
+        fontColor = QtGui.QColor()
         if( option.state & QtGui.QStyle.State_Selected ):
-            painter.fillRect( option.rect, option.palette.highlight() )
-            fontColor = QtGui.QColor()
-            if editable:
-                Color = option.palette.highlightedText().color()
-                fontColor.setRgb( Color.red(), Color.green(), Color.blue() )
-            else:
-                fontColor.setRgb( 130, 130, 130 )
+            painter.fillRect(option.rect, option.palette.highlight())
         else:
             if editable:
-                painter.fillRect( option.rect, background_color or option.palette.base() )
-                fontColor = QtGui.QColor()
-                fontColor.setRgb( 0, 0, 0 )
+                painter.fillRect(option.rect, background_color or option.palette.base())
+                fontColor.setRgb(0,0,0)
             else:
-                painter.fillRect( option.rect, option.palette.window() )
-                fontColor = QtGui.QColor()
-                fontColor.setRgb( 130, 130, 130 )
+                painter.fillRect(option.rect, background_color or option.palette.window())
+                fontColor.setRgb(130,130,130)
 
         value_str = u''
         if value != None and value != ValueLoading:
