@@ -4,7 +4,8 @@ from PyQt4.QtCore import Qt
 
 from customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.core.utils import ugettext as _
+from camelot.core.utils import ugettext as _, variant_to_pyobject
+from camelot.view.proxy import ValueLoading
 
 class BoolDelegate(CustomDelegate):
     """Custom delegate for boolean values"""
@@ -63,8 +64,12 @@ class TextBoolDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-    
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
+        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+        editable, background_color = True, None
+        if field_attributes != ValueLoading:
+            editable = field_attributes.get( 'editable', True )
+            background_color = field_attributes.get( 'background_color', None )
+
         rect = option.rect
         
         value = index.model().data(index, Qt.EditRole).toBool()
@@ -78,10 +83,14 @@ class TextBoolDelegate(CustomDelegate):
             if self.color_no:
                 color = self.color_no
         font_color.setRgb(color.red(), color.green(), color.blue()) 
-        if self.editable:
-            painter.fillRect(option.rect, background_color)
+
+        if( option.state & QtGui.QStyle.State_Selected ):
+            painter.fillRect(option.rect, option.palette.highlight())
         else:
-            painter.fillRect(option.rect, option.palette.window())
+            if editable:
+                painter.fillRect(option.rect, background_color or option.palette.base())
+            else:
+                painter.fillRect(option.rect, background_color or option.palette.window())
               
         painter.setPen(font_color.toRgb())
         painter.drawText(
