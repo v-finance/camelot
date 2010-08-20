@@ -37,7 +37,10 @@ class SimpleSearchControl(QtGui.QWidget):
   emits a search and a cancel signal if the user starts or cancels the search
   """
 
-    expand_search_options_signal = QtCore.SIGNAL('expand_search_options()')
+    expand_search_options_signal = QtCore.pyqtSignal()
+    cancel_signal = QtCore.pyqtSignal()
+    search_signal = QtCore.pyqtSignal(str)
+    
 
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
@@ -52,9 +55,7 @@ class SimpleSearchControl(QtGui.QWidget):
         self.search_button.setIconSize(QtCore.QSize(14, 14))
         self.search_button.setAutoRaise(True)
         self.search_button.setToolTip(_('Expand or collapse search options'))
-        self.connect(self.search_button,
-                     QtCore.SIGNAL('clicked()'),
-                     self.expand_search_options_signal)
+        self.search_button.clicked.connect( self.emit_expand_search_options )
 
         # Search input
         from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
@@ -62,12 +63,9 @@ class SimpleSearchControl(QtGui.QWidget):
         self.search_input.set_background_text(_('Search...'))
         self.search_input.setToolTip(_('type words to search for'))
         #self.search_input.setStyleSheet('QLineEdit{ border-radius: 0.25em;}')
-        self.connect(self.search_input,
-                     QtCore.SIGNAL('returnPressed()'),
-                     self.emit_search)
-        self.connect(self.search_input,
-                     QtCore.SIGNAL('textEdited(const QString&)'),
-                     self.emit_search)
+        self.search_input.returnPressed.connect( self.emit_search )
+        self.search_input.textEdited.connect( self.emit_search )
+
         self.setFocusProxy( self.search_input )
 
         # Cancel button
@@ -76,9 +74,7 @@ class SimpleSearchControl(QtGui.QWidget):
         self.cancel_button.setIcon(icon)
         self.cancel_button.setIconSize(QtCore.QSize(14, 14))
         self.cancel_button.setAutoRaise(True)
-        self.connect(self.cancel_button,
-                     QtCore.SIGNAL('clicked()'),
-                     self.emit_cancel)
+        self.cancel_button.clicked.connect( self.emit_cancel )
 
         # Setup layout
         layout.addWidget(self.search_button)
@@ -91,13 +87,17 @@ class SimpleSearchControl(QtGui.QWidget):
         self.search_input.setText(search_text)
         self.emit_search()
 
+    @QtCore.pyqtSlot()
     def emit_expand_search_options(self):
-        self.emit(self.expand_search_options_signal)
+        self.expand_search_options_signal.emit()
 
-    def emit_search(self):
+    @QtCore.pyqtSlot()
+    @QtCore.pyqtSlot(str)
+    def emit_search(self, str=''):
         text = unicode(self.search_input.user_input())
-        self.emit(QtCore.SIGNAL('search'), text)
+        self.search_signal.emit( text )
 
+    @QtCore.pyqtSlot()
     def emit_cancel(self):
         self.search_input.setText('')
-        self.emit(QtCore.SIGNAL('cancel'))
+        self.cancel_signal.emit()

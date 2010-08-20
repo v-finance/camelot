@@ -121,7 +121,7 @@ class HeaderWidget( QtGui.QWidget ):
         layout = QtGui.QVBoxLayout()
         widget_layout = QtGui.QHBoxLayout()
         search = self.search_widget( self )
-        self.connect(search, SimpleSearchControl.expand_search_options_signal, self.expand_search_options)
+        search.expand_search_options_signal.connect( self.expand_search_options )
         title = UserTranslatableLabel( admin.get_verbose_name_plural(), self )
         title.setFont( self._title_font )
         widget_layout.addWidget( title )
@@ -164,6 +164,7 @@ class HeaderWidget( QtGui.QWidget ):
                     query = self._expanded_search.layout().itemAt(i).widget().decorate_query(query)
         return query
 
+    @QtCore.pyqtSlot()
     def expand_search_options(self):
         if self._expanded_search.isHidden():
             if not self._expanded_filters_created:
@@ -227,15 +228,15 @@ class TableView( AbstractView  ):
     title_format = '%(verbose_name_plural)s'
 
     def __init__( self, admin, search_text = None, parent = None ):
-        AbstractView.__init__( self, parent )
+        super(TableView, self).__init__( parent )
         self.admin = admin
         post( self.get_title, self.change_title )
         widget_layout = QtGui.QVBoxLayout()
         if self.header_widget:
             self.header = self.header_widget( self, admin )
             widget_layout.addWidget( self.header )
-            self.connect( self.header.search, SIGNAL( 'search' ), self.startSearch )
-            self.connect( self.header.search, SIGNAL( 'cancel' ), self.cancelSearch )
+            self.header.search.search_signal.connect( self.startSearch )
+            self.header.search.cancel_signal.connect( self.cancelSearch )
             if search_text:
                 self.header.search.search( search_text )
         else:
@@ -543,13 +544,15 @@ class TableView( AbstractView  ):
 
         post( rebuild_query, self._set_query )
 
+    @QtCore.pyqtSlot(str)
     def startSearch( self, text ):
         """rebuilds query based on filtering text"""
         from camelot.view.search import create_entity_search_query_decorator
         logger.debug( 'search %s' % text )
-        self.search_filter = create_entity_search_query_decorator( self.admin, text )
+        self.search_filter = create_entity_search_query_decorator( self.admin, unicode(text) )
         self.rebuild_query()
 
+    @QtCore.pyqtSlot()
     def cancelSearch( self ):
         """resets search filtering to default"""
         logger.debug( 'cancel search' )

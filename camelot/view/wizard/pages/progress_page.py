@@ -8,7 +8,6 @@ from PyQt4 import QtCore, QtGui
 
 from camelot.core.utils import ugettext_lazy as _
 
-
 class ProgressPage(QtGui.QWizardPage):
     """Generic progress page for a wizard.
     
