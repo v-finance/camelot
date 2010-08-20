@@ -40,6 +40,22 @@ class BackupMechanism(object):
         This method will be called inside the model thread.
         """
         return u''
+    
+    @classmethod
+    def get_default_storage(cls):
+        """
+        :return: a camelot.core.files.storage.Storage object
+        
+        Returns the storage to be used to store default backups.
+        
+        By default, this will return a Storage that puts the backup files
+        in the DataLocation as specified by the QDesktopServices
+        """
+        from PyQt4.QtGui import QDesktopServices
+        apps_folder = unicode(QDesktopServices.storageLocation(QDesktopServices.DataLocation))
+        
+        from camelot.core.files.storage import Storage
+        return Storage(upload_to='backups', root=apps_folder)
         
     def backup_table_filter(self, from_table):
         """
@@ -99,7 +115,7 @@ class BackupMechanism(object):
         # We'll first store the backup in a temporary file, since
         # the selected file might be on a server or in a storage
         #
-        file_descriptor, temp_file_name = tempfile.mkstemp(suffix='db')
+        file_descriptor, temp_file_name = tempfile.mkstemp(suffix='.db')
         os.close(file_descriptor)
         logger.info("preparing backup to '%s'"%temp_file_name)
         if os.path.exists(self._filename):
@@ -124,6 +140,9 @@ class BackupMechanism(object):
         yield (number_of_tables, number_of_tables + 1, _('Store backup at requested location') )
         if not self._storage:
             shutil.move(temp_file_name, self._filename)
+        else:
+            self._storage.checkin( temp_file_name, self._filename )
+            os.remove( temp_file_name )
         yield (number_of_tables + 1, number_of_tables + 1, _('Backup completed'))
     
     def restore(self):
@@ -132,15 +151,23 @@ class BackupMechanism(object):
         while performing a restore.
         """
         import os
+        from camelot.core.files.storage import StoredFile
         import settings
         from sqlalchemy import create_engine
         from sqlalchemy import MetaData
         from sqlalchemy.pool import NullPool
 
         yield (0, 0, _('Open backup file'))
-        if not os.path.exists(self._filename):
-            raise Exception('Backup file does not exist')
-        from_engine   = create_engine('sqlite:///%s'%self._filename, poolclass=NullPool)       
+        if self._storage:
+            if not self._storage.exists(self._filename):
+                raise Exception('Backup file does not exist')
+            stored_file = StoredFile(self._storage, self._filename)
+            filename = self._storage.checkout( stored_file )
+        else:
+            if not os.path.exists(self._filename):
+                raise Exception('Backup file does not exist')
+            filename = self._filename
+        from_engine   = create_engine('sqlite:///%s'%filename, poolclass=NullPool )
 
         yield (0, 0, _('Prepare database for restore'))
         to_engine = settings.ENGINE()

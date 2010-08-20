@@ -34,9 +34,9 @@ class UpdateEntitiesPage(ProgressPage):
         from camelot.view.remote_signals import get_signal_handler
         signal_handler = get_signal_handler()
         collection = list(self._collection_getter())
-        self.emit(self.update_maximum_signal, len(collection))
+        self.update_maximum_signal.emit( len(collection) )
         for i, entity in enumerate(collection):
             message = self.update_entity(entity)
             Session.object_session( entity ).flush( [entity] )
             signal_handler.sendEntityUpdate( self, entity )
-            self.emit(self.update_progress_signal, i, message)
+            self.update_progress_signal.emit( i, message or '')

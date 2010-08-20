@@ -27,7 +27,6 @@
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4.QtGui import QDesktopServices
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.wizard.pages.backup_page import SelectBackupFilePage, SelectRestoreFilePage
@@ -42,23 +41,28 @@ class BackupPage(ProgressPage):
         self.setFinalPage ( True )
 
     def run(self):
-        backup_mechanism = self._backup_mechanism(self.wizard().filename)
+        backup_mechanism = self._backup_mechanism(self.wizard().filename, 
+                                                  self.wizard().storage)
         for completed, total, description in backup_mechanism.backup():
-            self.emit( self.update_maximum_signal, total )
-            self.emit( self.update_progress_signal, completed, description )
+            self.update_maximum_signal.emit( total )
+            self.update_progress_signal.emit( completed, description )
 
 class BackupWizard(QtGui.QWizard):
     """Wizard to perform a backup using a BackupMechanism"""
     
     window_title = _('Backup')
+    select_backup_file_page = SelectBackupFilePage
+    backup_page = BackupPage
 
     def __init__(self, backup_mechanism, parent=None):
         super(BackupWizard, self).__init__(parent)
+        self.storage = backup_mechanism.get_default_storage()
         self.setWindowTitle( unicode(self.window_title) )
-        self.addPage(SelectBackupFilePage(backup_mechanism))
-        self.addPage(BackupPage(backup_mechanism))
+        self.addPage(self.select_backup_file_page(backup_mechanism))
+        self.addPage(self.backup_page(backup_mechanism))
         
 class RestorePage(ProgressPage):
+    
     title = _('Restore in progress')
     
     def __init__(self, backup_mechanism, parent=None):
@@ -67,18 +71,22 @@ class RestorePage(ProgressPage):
         self.setFinalPage ( True )
         
     def run(self):
-        backup_mechanism = self._backup_mechanism(self.wizard().filename)
+        backup_mechanism = self._backup_mechanism(self.wizard().filename, 
+                                                  self.wizard().storage)
         for completed, total, description in backup_mechanism.restore():
-            self.emit( self.update_maximum_signal, total )
-            self.emit( self.update_progress_signal, completed, description )
+            self.update_maximum_signal.emit( total )
+            self.update_progress_signal.emit( completed, description )
             
 class RestoreWizard(QtGui.QWizard):
     """Wizard to perform a restore using a BackupMechanism"""
     
     window_title = _('Restore')
+    select_restore_file_page = SelectRestoreFilePage
+    restore_page = RestorePage
 
     def __init__(self, backup_mechanism, parent=None):
         super(RestoreWizard, self).__init__(parent)
+        self.storage = backup_mechanism.get_default_storage()
         self.setWindowTitle( unicode(self.window_title) )
-        self.addPage(SelectRestoreFilePage())
-        self.addPage(RestorePage(backup_mechanism))
+        self.addPage(self.select_restore_file_page(backup_mechanism))
+        self.addPage(self.restore_page(backup_mechanism))

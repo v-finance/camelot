@@ -26,41 +26,50 @@ class ProgressPage(QtGui.QWizardPage):
     text displayed to the user.
     """
     
-    update_progress_signal = QtCore.SIGNAL('update_progress')
-    update_maximum_signal = QtCore.SIGNAL('update_maximum')
+    update_progress_signal = QtCore.pyqtSignal(int, str)
+    update_maximum_signal = QtCore.pyqtSignal(int)
     
     title = _('Action in progress')
     sub_title = _('Please wait for completion')
     
     def __init__(self, parent=None):
         super(ProgressPage, self).__init__( parent )
-        self.connect(self, self.update_progress_signal, self.update_progress)
-        self.connect(self, self.update_maximum_signal, self.update_maximum)
+        self.update_progress_signal.connect( self.update_progress )
+        self.update_maximum_signal.connect( self.update_maximum )
         self._complete = False
         self.setTitle(unicode(self.title))
         self.setSubTitle(unicode(self.sub_title))
         layout = QtGui.QVBoxLayout()
-        self.progress = QtGui.QProgressBar(self)
-        self.progress.setMinimum(0)
-        self.progress.setMaximum(1)
-        self.label = QtGui.QTextEdit(self)
-        self.label.setSizePolicy( QtGui.QSizePolicy.Expanding,
-                                  QtGui.QSizePolicy.Expanding )
-        self.label.setReadOnly(True)
-        layout.addWidget(self.progress)
-        layout.addWidget(self.label)
+        progress = QtGui.QProgressBar(self)
+        progress.setObjectName('progress')
+        progress.setMinimum(0)
+        progress.setMaximum(1)
+        label = QtGui.QTextEdit(self)
+        label.setObjectName('label')
+        label.setSizePolicy( QtGui.QSizePolicy.Expanding,
+                             QtGui.QSizePolicy.Expanding )
+        label.setReadOnly(True)
+        layout.addWidget(progress)
+        layout.addWidget(label)
         self.setLayout(layout)
-        self._wizard = parent
     
     def isComplete(self):
         return self._complete
     
+    @QtCore.pyqtSlot(int)
     def update_maximum(self, maximum):
-        self.progress.setMaximum(maximum)
+        progress = self.findChild(QtGui.QWidget, 'progress' )
+        if progress:
+            progress.setMaximum(maximum)
     
+    @QtCore.pyqtSlot(int, str)
     def update_progress(self, value, label):
-        self.progress.setValue(value)
-        self.label.setHtml(unicode(label))
+        progress_widget = self.findChild(QtGui.QWidget, 'progress' )
+        if progress_widget:
+            progress_widget.setValue(value)
+        label_widget = self.findChild(QtGui.QWidget, 'label' )
+        if label_widget:            
+            label_widget.setHtml(unicode(label))
 
     def exception(self, args):
         self.finished()
@@ -69,9 +78,11 @@ class ProgressPage(QtGui.QWizardPage):
         
     def finished(self):
         self._complete = True
-        self.progress.setMaximum(1)
-        self.progress.setValue(1)
-        self.emit(QtCore.SIGNAL('completeChanged()'))        
+        progress_widget = self.findChild(QtGui.QWidget, 'progress' )
+        if progress_widget:
+            progress_widget.setMaximum(1)
+            progress_widget.setValue(1)
+        self.completeChanged.emit()     
         
     def run(self):
         """

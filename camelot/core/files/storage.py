@@ -57,15 +57,21 @@ class Storage( object ):
   thread, because these classes can be used on the server as well.
     """
 
-    def __init__( self, upload_to = '', stored_file_implementation = StoredFile ):
+    def __init__( self, upload_to = '', 
+                  stored_file_implementation = StoredFile,
+                  root = None ):
         """
     :param upload_to: the sub directory in which to put files
     :param stored_file_implementation: the subclass of StoredFile to be used when
     checking out files from the storage
+    :param root: the root directory in which to put files
+    
+    The actual files will be put in root + upload to.  If None is given as root,
+    the settings.CAMELOT_MEDIA_ROOT will be taken as the root directory.
     """
         import settings
         import os
-        self.upload_to = os.path.join( settings.CAMELOT_MEDIA_ROOT, upload_to )
+        self.upload_to = os.path.join( root or settings.CAMELOT_MEDIA_ROOT, upload_to )
         self.stored_file_implementation = stored_file_implementation
         #
         # don't do anything here that might reduce the startup time, like verifying the
@@ -88,7 +94,7 @@ class Storage( object ):
         """True if a file exists given some name"""
         if self.available():
             import os
-            os.path.exists( self.path( name ) )
+            return os.path.exists( self.path( name ) )
         return False
         
     def list(self, prefix='*', suffix='*'):
@@ -97,23 +103,34 @@ class Storage( object ):
         """
         import glob
         import os
-        return (StoredFile(self, name) for name in glob.glob( os.path.join( self.upload_to, u'%s*%s'%(prefix, suffix) ) ) )
+        return (StoredFile(self, os.path.basename(name) ) for name in glob.glob( os.path.join( self.upload_to, u'%s*%s'%(prefix, suffix) ) ) )
 
     def path( self, name ):
         """The local filesystem path where the file can be opened using Python’s standard open"""
         import os
         return os.path.join( self.upload_to, name )
 
-    def checkin( self, local_path ):
+    def checkin( self, local_path, filename=None ):
         """Check the file pointed to by local_path into the storage, and
-        return a StoredFile"""
+        return a StoredFile
+        :param local_path: the path to the local file that needs to be checked in
+        :param filename: the filename to be given to the checked in file, if None
+        is given, the filename from the local path will be taken.
+        
+        The stored file is not guaranteed to have the filename asked, since the
+        storage might not support this filename, or another file might be named
+        like that.  In each case the storage will choose the filename.
+        """
         self.available()
         import tempfile
         import shutil
         import os
-        root, extension = os.path.splitext( os.path.basename( local_path ) )
-        ( handle, to_path ) = tempfile.mkstemp( suffix = extension, prefix = root, dir = self.upload_to, text = 'b' )
-        os.close( handle )
+        to_path = os.path.join( self.upload_to, filename or os.path.basename( local_path ) )
+        if os.path.exists(to_path):
+            # only if the default to_path exists, we'll give it a new name
+            root, extension = os.path.splitext( filename or os.path.basename( local_path ) )
+            ( handle, to_path ) = tempfile.mkstemp( suffix = extension, prefix = root, dir = self.upload_to, text = 'b' )
+            os.close( handle )
         logger.debug( u'copy file from %s to %s', local_path, to_path )
         shutil.copy( local_path, to_path )
         return self.stored_file_implementation( self, os.path.basename( to_path ) )

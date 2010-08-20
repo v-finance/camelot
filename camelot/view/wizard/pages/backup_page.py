@@ -25,46 +25,31 @@
 #
 #  ==================================================================================
 
-import os.path
-import re
-
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtGui import QDesktopServices
 
 from camelot.core.utils import ugettext_lazy as _
-from camelot.core.utils import ugettext
+from camelot.core.utils import ugettext, variant_to_pyobject
 from camelot.view.art import Icon
 import logging
 
 logger = logging.getLogger('camelot.view.wizard.pages.backup_page')
 
-def getBackupRootAndFilenameTemplate():
-    import settings
-    if hasattr(settings, 'CAMELOT_BACKUP_ROOT'):
-        root = settings.CAMELOT_BACKUP_ROOT
-    else:
-        root = '.'
-    if hasattr(settings, 'CAMELOT_BACKUP_FILENAME_TEMPLATE'):
-        template = settings.CAMELOT_BACKUP_FILENAME_TEMPLATE
-    else:
-        template = 'default-backup-%(text)s.sqlite'
-    return (root, template)
-
 class LabelLineEdit(QtGui.QLineEdit):
     _file_name = ''
 
-    def __init__(self, parent=None):
+    def __init__(self, storage, parent=None):
         super(LabelLineEdit, self).__init__(parent)
         self.textChanged.connect(self._onTextChanged)
-        self._backup_root, self._file_name_template = getBackupRootAndFilenameTemplate()
+        self._storage = storage
 
     def _onTextChanged(self, text):
         if text == '':
             self._file_name = ''
         else:
-            file_name = os.path.join(self._backup_root, self._file_name_template % {'text' : text})
-            if os.path.exists(file_name):
+            file_name = '%s.db'%text
+            if self._storage.exists(file_name):
                 self._file_name = ''
             else:
                 self._file_name = file_name
@@ -75,23 +60,20 @@ class LabelLineEdit(QtGui.QLineEdit):
 class LabelComboBox(QtGui.QComboBox):
     _file_name = ''
 
-    def __init__(self, parent=None):
+    def __init__(self, storage, parent=None):
         super(LabelComboBox, self).__init__(parent)
+        self._storage = storage
         self._setDefaultLabels()
         self.currentIndexChanged[int].connect(self._onCurrentIndexChanged)
 
     def _setDefaultLabels(self):
-        root, template = getBackupRootAndFilenameTemplate()
-        regex = re.compile('^%s$' % (template % {'text' : '(.+)'}))
-        for name in os.listdir(root):
-            result = regex.match(name)
-            if result:
-                self.addItem(result.group(1), os.path.join(root, name))
-        if self.count():
-            self._file_name = self.itemData(0).toString()
+        for i, stored_file in enumerate(self._storage.list()):
+            if i == 0:
+                self._file_name = stored_file.name
+            self.addItem( unicode(stored_file.verbose_name), QtCore.QVariant(stored_file))            
 
     def _onCurrentIndexChanged(self, index):
-        self._file_name = self.itemData(index).toString()
+        self._file_name = variant_to_pyobject( self.itemData(index) ).name
 
     def filename(self):
         return self._file_name
@@ -113,6 +95,7 @@ class Page(QtGui.QWizardPage):
         self.setSubTitle( unicode(self.sub_title) )
         self.setPixmap(QtGui.QWizard.LogoPixmap, self.icon.getQPixmap())
         
+        self._storage = backup_mechanism.get_default_storage()
         self._setupUi()
 
         # final touches - select the default radio button
@@ -179,7 +162,7 @@ class SelectRestoreFilePage(Page):
 
     def _setupUi(self):
         super(SelectRestoreFilePage, self)._setupUi()
-        self._default_combo = LabelComboBox()
+        self._default_combo = LabelComboBox(self._storage)
         self._default_combo.currentIndexChanged[int].connect(self.completeChanged)
         self._hlayout.addWidget(self._default_combo)
 
@@ -192,9 +175,11 @@ class SelectRestoreFilePage(Page):
         default_selected = self._default_radio.isChecked()
         if default_selected:
             self.wizard().filename = self._default_combo.filename()
+            self.wizard().storage = self._storage
             return self._default_combo.filename() != ''
         else:
             self.wizard().filename = self._custom_edit.text()
+            self.wizard().storage = None
             return self._custom_edit.text() != ''
 
     def _setPath(self, dir):
@@ -204,6 +189,7 @@ class SelectRestoreFilePage(Page):
         return path
 
 class SelectBackupFilePage(Page):
+    
     def __init__(self, backup_mechanism):
         super(SelectBackupFilePage, self).__init__(backup_mechanism)
         self.setCommitPage(True)
@@ -211,7 +197,7 @@ class SelectBackupFilePage(Page):
     def _setupUi(self):
         from camelot.view.model_thread import post
         self._default_label = QtGui.QLabel(ugettext('Label:'))
-        self._default_edit = LabelLineEdit()
+        self._default_edit = LabelLineEdit(self._storage)
         self._default_label.setBuddy(self._default_edit)
         super(SelectBackupFilePage, self)._setupUi()
         self._hlayout.addWidget(self._default_label)
@@ -250,9 +236,11 @@ class SelectBackupFilePage(Page):
     def isComplete(self):
         default_selected = self._default_radio.isChecked()
         if default_selected:
+            self.wizard().storage = self._storage
             self.wizard().filename = self._default_edit.filename()
             return self._default_edit.filename() != ''
         else:
+            self.wizard().storage = None
             self.wizard().filename = self._custom_edit.text()
             return self._custom_edit.text() != ''
 

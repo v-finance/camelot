@@ -29,7 +29,6 @@ from PyQt4 import QtGui
 
 from customeditor import AbstractCustomEditor
 
-
 class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
 
     def __init__(self, parent, length=20, editable=True, **kwargs):
@@ -44,18 +43,18 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
         value = AbstractCustomEditor.set_value(self, value)
         if value is not None:
             self.setText(unicode(value))
-        #else:
-        #    self.setText('')
+        else:
+            self.setText('')
         return value
 
     def get_value(self):
         val = AbstractCustomEditor.get_value(self)
-        # ValueLoading?
         if val is not None:
             return val
-        elif self.value_is_none:
+        val = unicode(self.text())
+        if not val and self.value_is_none:
             return None
-        return unicode(self.text())
+        return val
 
     def set_enabled(self, editable=True):
         value = self.text()

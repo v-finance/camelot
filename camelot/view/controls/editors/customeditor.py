@@ -53,6 +53,8 @@ class AbstractCustomEditor(object):
             self._value_loading = False
             if value is None:
                 self.value_is_none = True
+            else:
+                self.value_is_none = False
             return value
 
     def get_value(self):
