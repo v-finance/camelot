@@ -107,22 +107,20 @@ class FloatEditor(CustomEditor):
         value = CustomEditor.set_value(self, value)
         if value:
             self.spinBox.setValue(value)
-        #else:
-        #    self.spinBox.setValue(0.0)
+        else:
+            self.spinBox.setValue(0.0)
 
     def get_value(self):
         val = CustomEditor.get_value(self)
-        # ValueLoading?
         if val is not None:
             return val
-        elif self.value_is_none:
-            return None
         self.spinBox.interpretText()
         value = self.spinBox.value()
+        if not value and self.value_is_none:
+            return None
         if self._decimal:
             import decimal
             value = decimal.Decimal('%.*f' % (self.precision, value))
-        #return CustomEditor.get_value(self) or value
         return value
 
     def set_enabled(self, editable=True):
