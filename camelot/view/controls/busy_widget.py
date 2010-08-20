@@ -48,7 +48,11 @@ class BusyWidget(QtGui.QWidget):
         :arg busy_state: True or False
         """
         import sip
-        if busy_state and not sip.isdeleted(self):
+        if sip.isdeleted(self):
+            """underlying object is deleted, no use trying anything"""
+            return
+
+        if busy_state:
             self.timer = self.startTimer(200)
             self.counter = 0
             self.show()
@@ -56,8 +60,7 @@ class BusyWidget(QtGui.QWidget):
             if self.timer:
                 self.killTimer(self.timer)
                 self.timer = None
-            if not sip.isdeleted(self):
-                self.hide()
+            self.hide()
 
     def paintEvent(self, event):
         """custom paint, painting the orbs"""
