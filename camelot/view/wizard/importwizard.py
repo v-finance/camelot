@@ -274,11 +274,7 @@ class DataPreviewPage(QtGui.QWizardPage):
         self._complete = False
         self.model = model
         validator = self.model.get_validator()
-        self.connect(
-            validator,
-            validator.validity_changed_signal,
-            self.update_complete
-        )
+        validator.validity_changed_signal.connect( self.update_complete )
         self.connect(
             model,
             QtCore.SIGNAL('layoutChanged()'),
@@ -310,9 +306,13 @@ class DataPreviewPage(QtGui.QWizardPage):
 
     def validate_all_rows(self):
         validator = self.model.get_validator()
-        post(validator.validate_all_rows, self.update_complete)
+        post(validator.validate_all_rows, self._all_rows_validated)
 
-    def update_complete(self, *args):
+    def _all_rows_validated(self, *args):
+        self.update_complete(0)
+        
+    @QtCore.pyqtSlot(int)
+    def update_complete(self, row=0):
         self._complete = (self.model.get_validator().number_of_invalid_rows()==0)
         self.emit(QtCore.SIGNAL('completeChanged()'))
         if self._complete:

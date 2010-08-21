@@ -38,7 +38,7 @@ an interface screen for an object of type Options.  Defaults to None.
         button = QtGui.QPushButton( unicode(self._name) )
         if self._icon:
             button.setIcon( self._icon.getQIcon() )
-        button.connect( button, QtCore.SIGNAL( 'clicked()' ), create_clicked_function( self, collection_getter, selection_getter ) )
+        button.clicked.connect( create_clicked_function( self, collection_getter, selection_getter ) )
         return button
 
     def run( self, collection_getter, selection_getter ):

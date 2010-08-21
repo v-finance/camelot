@@ -41,7 +41,7 @@ class ObjectValidator(QtCore.QObject):
     objectValidity method to change it's behaviour.
     """
 
-    validity_changed_signal = QtCore.SIGNAL('validityChanged')
+    validity_changed_signal = QtCore.pyqtSignal(int)
 
     def __init__(self, admin, model, initial_validation=False):
         """
@@ -52,8 +52,8 @@ class ObjectValidator(QtCore.QObject):
         self.admin = admin
         self.model = model
         self.message_cache = Fifo(10)
-        self.connect( model, QtCore.SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), self.data_changed )
-        self.connect( model, QtCore.SIGNAL('layoutChanged()'), self.layout_changed )
+        model.dataChanged.connect( self.data_changed )
+        model.layoutChanged.connect( self.layout_changed )
         self._invalid_rows = set()
 
         if initial_validation:
@@ -68,9 +68,11 @@ class ObjectValidator(QtCore.QObject):
         for row in copy(self._invalid_rows):
             self.isValid(row)
 
+    @QtCore.pyqtSlot()
     def layout_changed(self):
         post(self.validate_invalid_rows)
 
+    @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
     def data_changed(self, from_index, thru_index):
 
         def create_validity_updater(from_row, thru_row):
@@ -145,10 +147,10 @@ class ObjectValidator(QtCore.QObject):
         if not valid:
             if row not in self._invalid_rows:
                 self._invalid_rows.add(row)
-                self.emit(self.validity_changed_signal, row)
+                self.validity_changed_signal.emit( row )
         elif row in self._invalid_rows:
             self._invalid_rows.remove(row)
-            self.emit(self.validity_changed_signal, row)
+            self.validity_changed_signal.emit( row )
         logger.debug('valid : %s' % valid)
         return valid
 

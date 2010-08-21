@@ -45,7 +45,7 @@ class SessionRefresh( QtGui.QAction ):
         super( SessionRefresh, self ).__init__( 'Refresh', parent )
         self.setShortcut( Qt.Key_F9 )
         self.setIcon( Icon( 'tango/16x16/actions/view-refresh.png' ).getQIcon() )
-        self.connect( self, QtCore.SIGNAL( 'triggered(bool)' ), self.sessionRefresh )
+        self.triggered.connect( self.sessionRefresh )
         from camelot.view.remote_signals import get_signal_handler
         self.signal_handler = get_signal_handler()
 
@@ -53,6 +53,7 @@ class SessionRefresh( QtGui.QAction ):
         for o in refreshed_objects:
             self.signal_handler.sendEntityUpdate( self, o )
 
+    @QtCore.pyqtSlot(bool)
     def sessionRefresh( self, checked ):
         logger.debug( 'session refresh requested' )
 

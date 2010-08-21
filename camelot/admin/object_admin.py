@@ -560,8 +560,7 @@ The QWidget class to be used when a table view is needed
         The returned class has an 'entity_created_signal' that will be fired
         when a valid new entity was created by the form
         """
-        from PyQt4 import QtGui
-        from PyQt4.QtCore import SIGNAL
+        from PyQt4 import QtGui, QtCore
         from camelot.view.controls.view import AbstractView
         from camelot.view.model_thread import post
         new_object = []
@@ -588,6 +587,8 @@ The QWidget class to be used when a table view is needed
 
         class NewForm(AbstractView):
 
+            entity_created_signal = QtCore.pyqtSignal(object)
+            
             def __init__(self, parent):
                 AbstractView.__init__(self, parent)
                 self.widget_layout = QtGui.QVBoxLayout()
@@ -600,18 +601,11 @@ The QWidget class to be used when a table view is needed
                 self.widget_layout.insertWidget(0, self.form_view)
                 self.setLayout(self.widget_layout)
                 self.validate_before_close = True
-                self.entity_created_signal = SIGNAL('entity_created')
                 #
                 # every time data has been changed, it could become valid,
                 # when this is the case, it should be propagated
                 #
-                self.connect(
-                    model,
-                    SIGNAL(
-                        'dataChanged(const QModelIndex &, const QModelIndex &)'
-                    ),
-                    self.dataChanged
-                )
+                model.dataChanged.connect( self.dataChanged )
                 self.connect(
                     self.form_view,
                     AbstractView.title_changed_signal,
@@ -624,11 +618,11 @@ The QWidget class to be used when a table view is needed
                     def create_instance_getter(new_object):
                         return lambda:new_object[0]
 
-                    self.emit(
-                        self.entity_created_signal,
+                    self.entity_created_signal.emit(
                         create_instance_getter(new_object)
                     )
 
+            @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
             def dataChanged(self, index1, index2):
 
                 def validate():
@@ -659,10 +653,7 @@ The QWidget class to be used when a table view is needed
                         return lambda:new_object[0]
 
                     for _o in new_object:
-                        self.emit(
-                            self.entity_created_signal,
-                            create_instance_getter(new_object)
-                        )
+                        self.entity_created_signal.emit( create_instance_getter(new_object) )
                     self.validate_before_close = False
                     self.close()
 

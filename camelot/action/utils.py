@@ -46,7 +46,7 @@ def createAction(*a, **kw):
     actionicon = kw.get('actionicon', '')
     tip = kw.get('tip', '')
     checkable = kw.get('checkable', False)
-    signal = kw.get('signal', 'triggered()')
+    #signal = kw.get('signal', 'triggered()')
     widgetaction = kw.get('widgetaction', False)
 
     action = getAction(parent, widgetaction)
@@ -61,7 +61,7 @@ def createAction(*a, **kw):
         action.setToolTip(tip)
         action.setStatusTip(tip)
     if slot is not None:
-        parent.connect(action, QtCore.SIGNAL(signal), slot)
+        action.triggered.connect( slot )
     if checkable:
         action.setCheckable(True)
     return action
