@@ -47,7 +47,7 @@ from camelot.view.controls import delegates
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import gui_function, \
                                       model_function, post
-                                      
+
 from camelot.core.files.storage import StoredImage
 
 class ProxyDict(dict):
@@ -686,7 +686,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
     def _emit_changes( self, region ):
         if region:
-            self.dataChanged.emit( self.index( region[0][0], region[0][1] ), 
+            self.dataChanged.emit( self.index( region[0][0], region[0][1] ),
                                    self.index( region[1][0], region[1][1] ) )
 
     def flags( self, index ):
@@ -709,7 +709,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.edit_cache.add_data( row, obj, row_data )
         self.display_cache.add_data( row, obj, stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes ) )
         self.attributes_cache.add_data(row, obj, dynamic_field_attributes )
-        self.dataChanged.emit(self.index( row, 0 ), 
+        self.dataChanged.emit(self.index( row, 0 ),
                               self.index( row, self.column_count ) )
 
     def _skip_row(self, row, obj):
