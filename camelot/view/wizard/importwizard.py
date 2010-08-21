@@ -221,6 +221,9 @@ class RowDataAdminDecorator(object):
                     yield {'background_color':None}
                 else:
                     yield {'background_color':self.invalid_color}
+            # when 'from_string' is not present
+            else:
+                yield {'background_color':None}
 
     def new_field_attributes(self, i, original_field_attributes, original_field):
         from camelot.view.controls import delegates
@@ -310,7 +313,7 @@ class DataPreviewPage(QtGui.QWizardPage):
 
     def _all_rows_validated(self, *args):
         self.update_complete(0)
-        
+
     @QtCore.pyqtSlot(int)
     def update_complete(self, row=0):
         self._complete = (self.model.get_validator().number_of_invalid_rows()==0)
