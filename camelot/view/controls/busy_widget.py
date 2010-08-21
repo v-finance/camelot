@@ -25,7 +25,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 class BusyWidget(QtGui.QWidget):
@@ -43,6 +43,7 @@ class BusyWidget(QtGui.QWidget):
         self.highlighted_orb = self.orbs
         self.timer = None
 
+    @QtCore.pyqtSlot(bool)
     def set_busy(self, busy_state):
         """start/stop the animation
         :arg busy_state: True or False

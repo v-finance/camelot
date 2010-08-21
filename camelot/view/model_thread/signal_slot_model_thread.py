@@ -12,8 +12,8 @@ from camelot.view.model_thread import AbstractModelThread, gui_function, setup_m
 
 class Task(QtCore.QObject):
 
-    finished = QtCore.SIGNAL('finished')
-    exception = QtCore.SIGNAL('exception')
+    finished = QtCore.pyqtSignal(object)
+    exception = QtCore.pyqtSignal(object)
 
     def __init__(self, request, name=''):
         QtCore.QObject.__init__(self)
@@ -33,7 +33,7 @@ class Task(QtCore.QObject):
             #print '===', self._name, '==='
             #print self.receivers(QtCore.SIGNAL('finished'))
             #sip.dump(self)
-            self.emit(QtCore.SIGNAL('finished'), result )
+            self.finished.emit( result )
         except Exception, e:
             logger.error( 'exception caught in model thread while executing %s'%self._name, exc_info = e )
             import traceback, cStringIO
@@ -42,7 +42,7 @@ class Task(QtCore.QObject):
             traceback_print = sio.getvalue()
             sio.close()
             exception_info = (e, traceback_print)
-            self.emit(QtCore.SIGNAL('exception'), exception_info)
+            self.exception.emit( exception_info )
         except:
             logger.error( 'unhandled exception in model thread' )
 
@@ -65,6 +65,8 @@ class TaskHandler(QtCore.QObject):
     when its handle_task method is called, it will sequentially handle all tasks
     that are in the queue.
     """
+    
+    task_handler_busy_signal = QtCore.pyqtSignal(bool)
 
     def __init__(self, queue):
         """:param queue: the queue from which to pop a task when handle_task
@@ -80,12 +82,13 @@ class TaskHandler(QtCore.QObject):
     def busy(self):
         """:return True/False: indicating if this task handler is busy"""
         return self._busy
-
+    
+    @QtCore.pyqtSlot()
     @synchronized
     def handle_task(self):
         """Handle all tasks that are in the queue"""
         self._busy = True
-        self.emit( AbstractModelThread.thread_busy_signal, True  )
+        self.task_handler_busy_signal.emit( True )
         task = self._queue.pop()
         while task:
             task.execute()
@@ -97,10 +100,10 @@ class TaskHandler(QtCore.QObject):
             task.clear()
             self._tasks_done.append(task)
             task = self._queue.pop()
-        self.emit( AbstractModelThread.thread_busy_signal, False  )
+        self.task_handler_busy_signal.emit( False )
         self._busy = False
 
-class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
+class SignalSlotModelThread( AbstractModelThread ):
     """A model thread implementation that uses signals and slots
     to communicate between the model thread and the gui thread
     
@@ -108,7 +111,7 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
     since this model thread might not be THE model thread.
     """
 
-    task_available = QtCore.SIGNAL('task_available')
+    task_available = QtCore.pyqtSignal()
 
     def __init__( self, setup_thread = setup_model ):
         """
@@ -116,8 +119,7 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
         everything, by default this will setup the model.  set to None if nothing should
         be done.
         """
-        QtCore.QThread.__init__( self )
-        AbstractModelThread.__init__( self, setup_thread )
+        super(SignalSlotModelThread, self).__init__( setup_thread )
         self._task_handler = None
         self._mutex = QtCore.QMutex()
         self._request_queue = []
@@ -127,7 +129,7 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
     def run( self ):
         self.logger.debug( 'model thread started' )
         self._task_handler = TaskHandler(self)
-        self.connect(self._task_handler, self.thread_busy_signal, self._thread_busy, QtCore.Qt.QueuedConnection)
+        self._task_handler.task_handler_busy_signal.connect(self._thread_busy, QtCore.Qt.QueuedConnection)
         self._thread_busy(True)
         try:
             self._setup_thread()
@@ -142,14 +144,15 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
         self.exec_()
         self.logger.debug('model thread stopped')
 
+    @QtCore.pyqtSlot( bool )
     def _thread_busy(self, busy_state):
-        self.emit(self.thread_busy_signal, busy_state)
+        self.thread_busy_signal.emit( busy_state )
                 
     @synchronized
     def post( self, request, response = None, exception = None ):
         if not self._connected and self._task_handler:
             # creating this connection in the model thread throws QT exceptions
-            self.connect(self, self.task_available, self._task_handler.handle_task, QtCore.Qt.QueuedConnection)
+            self.task_available.connect( self._task_handler.handle_task, QtCore.Qt.QueuedConnection )
             self._connected = True
         # response should be a slot method of a QObject
         if response:
@@ -161,14 +164,14 @@ class SignalSlotModelThread( QtCore.QThread, AbstractModelThread ):
         if response:
             assert response.im_self != None
             assert isinstance(response.im_self, QtCore.QObject)
-            self.connect(task, QtCore.SIGNAL('finished'), response, QtCore.Qt.QueuedConnection)
+            task.finished.connect( response, QtCore.Qt.QueuedConnection )
         if exception:
-            self.connect(task, QtCore.SIGNAL('exception'), exception, QtCore.Qt.QueuedConnection)
+            task.exception.connect( exception, QtCore.Qt.QueuedConnection )
         task.moveToThread(self)
         # only put the task in the queue when it is completely set up 
         self._request_queue.append(task)
         #print 'task created --->', id(task)
-        self.emit(self.task_available)
+        self.task_available.emit()
 
     @synchronized
     def pop( self ):

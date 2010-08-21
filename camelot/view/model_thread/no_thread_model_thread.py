@@ -10,10 +10,10 @@ logger = logging.getLogger('camelot.view.model_thread.no_thread_model_thread')
 from PyQt4 import QtCore
 from signal_slot_model_thread import AbstractModelThread, setup_model
 
-class NoThreadModelThread(QtCore.QObject, AbstractModelThread):
+class NoThreadModelThread( AbstractModelThread ):
 
     def __init__(self, setup_thread = setup_model ):
-        QtCore.QObject.__init__(self)
+        super(NoThreadModelThread, self).__init__()
         self.responses = []
         AbstractModelThread.__init__(self, setup_thread = setup_model )
         self._setup_thread()

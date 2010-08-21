@@ -87,7 +87,7 @@ def setup_model():
     setup_model()
 
 
-class AbstractModelThread(object):
+class AbstractModelThread(QtCore.QThread):
     """Abstract implementation of a model thread class
     Thread in which the model runs, all requests to the model should be
     posted to the the model thread.
@@ -96,12 +96,13 @@ class AbstractModelThread(object):
     time to complete tasks by providing asynchronous communication between
     the model thread and the gui thread"""
 
-    thread_busy_signal = QtCore.SIGNAL('thread_busy')
+    thread_busy_signal = QtCore.pyqtSignal(bool)
 
     def __init__(self, setup_thread=setup_model):
         """:param setup_thread: function to be called at startup of the thread
         to initialize everything, by default this will setup the model. Set to
         None if nothing should be done."""
+        super(AbstractModelThread, self).__init__()
         self.logger = logging.getLogger(logger.name + '.%s' % id(self))
         self._setup_thread = setup_thread
         self._exit = False
