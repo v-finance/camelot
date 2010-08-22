@@ -220,6 +220,9 @@ Test the basic functionality of the editors :
     self.grab_widget( editor, 'set_enabled()_editable' )
     editor.set_value( None )
     self.assertEqual( editor.get_value(), None )
+    # pretend the user has entered some text
+    editor.setText( u'foo' )
+    self.assertTrue( editor.get_value() != None )
 
   def test_StarEditor(self):
     editor = self.editors.StarEditor(parent=None, maximum=5)
@@ -428,6 +431,9 @@ Test the basic functionality of the editors :
     self.grab_widget( editor, 'set_enabled()_editable' )
     editor.set_value( None )
     self.assertEqual( editor.get_value(), None )
+    # pretend the user has entered something
+    editor.spinBox.setValue( 2.72 )
+    self.assertTrue( editor.get_value() != None )
 
   def test_ImageEditor(self):
     editor = self.editors.ImageEditor(parent=None, editable=True)
