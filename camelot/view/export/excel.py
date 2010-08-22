@@ -1,6 +1,6 @@
 #  ==================================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -191,6 +191,9 @@ def write_data_to_excel(filename, title, headerList, dataList):
             valueAddedInSize = 0
             val = dictCounter[i]
             if val != None:
+                # this is to handle fields of type code
+                if isinstance(val, list):
+                    val = '.'.join(val)
                 if not isinstance(val,(str,unicode,int,float,datetime.datetime,datetime.time,datetime.date,
                                        ExcelFormula.Formula) ):
                     val = unicode(val)

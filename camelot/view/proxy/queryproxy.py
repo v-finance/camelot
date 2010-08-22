@@ -88,6 +88,21 @@ class QueryTableProxy(CollectionProxy):
         self.refresh()
         
     def get_collection_getter(self):
+        """In case the collection getter is requested of a QueryProxy, we will return
+        a collection getter for a collection that reuses the data allready queried by
+        the collection proxy, and available in the cache.
+         
+        We do this to :
+        
+        1. Prevent an unneeded query when the collection is used to fetch an object already
+           fetched by the query proxy (eg when a form is opened on a table view)
+           
+        2. To make sure the index of an object in the query proxy is the same as the index
+           in the returned collection.  Should we do the same query twice (once to fill the
+           query proxy, and once to fill the returned collection), the same object might appear
+           in a different row.  eg when a form is opened in a table view, the form contains 
+           another record than the selected row in the table.
+        """
         
         if not self._query_getter:
             return lambda:[]
