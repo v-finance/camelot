@@ -65,13 +65,9 @@ class SelectFilePage(QtGui.QWizardPage):
         hlayout.addWidget(browsebutton)
         layout.addLayout(hlayout)
         self.setLayout(layout)
+        browsebutton.clicked.connect( self.setpath )
 
-        self.connect(
-            browsebutton,
-            QtCore.SIGNAL('clicked()'),
-            self.setpath
-        )
-
+    @QtCore.pyqtSlot()
     def setpath(self):
         settings = QtCore.QSettings()
         dir = settings.value('datasource').toString()

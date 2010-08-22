@@ -60,7 +60,7 @@ class SelectValuePage(QtGui.QWizardPage):
         self.setLayout(layout)
         self._fields = {}
         self._data = data
-        self.connect(self.editor, QtCore.SIGNAL('currentIndexChanged(int)'), self.field_changed)
+        self.editor.currentIndexChanged.connect( self.field_changed )
         self._value_editor = None
         
         post(admin.get_all_fields_and_attributes, self.set_fields)
@@ -84,6 +84,7 @@ class SelectValuePage(QtGui.QWizardPage):
         if self._value_editor:
             self._data.value = self._value_editor.get_value()
             
+    @QtCore.pyqtSlot(int)
     def field_changed(self, index):
         if self._value_editor:
             self.layout().removeWidget(self._value_editor)

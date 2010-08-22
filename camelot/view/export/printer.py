@@ -15,12 +15,13 @@ def open_html_in_print_preview_from_gui_thread( html, html_document=QtGui.QTextD
     # TODO: maximize button
     dialog = QtGui.QPrintPreviewDialog( printer )
   
-    def render():
+    @QtCore.pyqtSlot( QtGui.QPrinter )
+    def render( printer ):
         doc = html_document()
         doc.setHtml( html )
         doc.print_( printer )
-    
-    dialog.connect( dialog, QtCore.SIGNAL( 'paintRequested(QPrinter*)' ), render )
+        
+    dialog.paintRequested.connect( render )
     # show maximized seems to trigger a bug in qt which scrolls the page down
     #dialog.showMaximized()
     dialog.exec_()

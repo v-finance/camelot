@@ -29,10 +29,6 @@ class Task(QtCore.QObject):
         logger.debug('executing %s' % (self._name))
         try:
             result = self._request()
-            #import sip
-            #print '===', self._name, '==='
-            #print self.receivers(QtCore.SIGNAL('finished'))
-            #sip.dump(self)
             self.finished.emit( result )
         except Exception, e:
             logger.error( 'exception caught in model thread while executing %s'%self._name, exc_info = e )

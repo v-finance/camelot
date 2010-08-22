@@ -76,7 +76,7 @@ class FormPage(QtGui.QWizardPage):
     def initializePage(self):
         # do inital validation, so the validity changed signal is valid
         self._complete = False
-        self.emit(QtCore.SIGNAL('completeChanged()'))
+        self.completeChanged.emit()
         self._validity_changed(0)
         
     @QtCore.pyqtSlot(int)
@@ -89,7 +89,7 @@ class FormPage(QtGui.QWizardPage):
         
     def _change_complete(self, complete):
         self._complete = complete
-        self.emit(QtCore.SIGNAL('completeChanged ()'))
+        self.completeChanged.emit()
             
     def isComplete(self):
         return self._complete
