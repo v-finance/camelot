@@ -543,12 +543,12 @@ class PartyAddress( Entity ):
 
     @ColumnProperty
     def party_name( self ):
-        return sql.select( [Party.full_name],
+        return sql.select( [sql.func.coalesce(Party.full_name, '')],
                            whereclause = (Party.id==self.party_id))
         
     @ColumnProperty
     def address_name( self ):
-        return sql.select( [Address.name],
+        return sql.select( [sql.func.coalesce(Address.name, '')],
                            whereclause = (Address.id==self.address_id))        
                           
     def __unicode__( self ):
