@@ -370,7 +370,7 @@ attribute to enable search.
         from controls.tableview import TableView
         from art import Icon
         from proxy.queryproxy import QueryTableProxy
-        from PyQt4.QtCore import SIGNAL
+        from PyQt4 import QtCore
 
         class SelectQueryTableProxy(QueryTableProxy):
             header_icon = Icon('tango/16x16/emblems/emblem-symbolic-link.png')
@@ -378,6 +378,7 @@ attribute to enable search.
         class SelectView(TableView):
 
             table_model = SelectQueryTableProxy
+            entity_selected_signal = QtCore.pyqtSignal(object)
             title_format = 'Select %s'
 
             def __init__(self, admin, parent):
@@ -385,14 +386,14 @@ attribute to enable search.
                     self, admin,
                     search_text=search_text, parent=parent
                 )
-                self.entity_selected_signal = SIGNAL('entity_selected')
-                self.connect(self, SIGNAL('row_selected'), self.sectionClicked)
+                self.row_selected_signal.connect( self.sectionClicked )
                 self.setUpdatesEnabled(True)
 
             def emit_entity_selected(self, instance_getter):
-                self.emit(self.entity_selected_signal, instance_getter)
+                self.entity_selected_signal.emit( instance_getter )
                 #self.close()
 
+            @QtCore.pyqtSlot(int)
             def sectionClicked(self, index):
                 # table model will be set by the model thread, we can't
                 # decently select if it has not been set yet
@@ -425,8 +426,6 @@ attribute to enable search.
         """
         from camelot.view.workspace import show_top_level
 
-        from PyQt4.QtCore import SIGNAL
-
         from proxy.queryproxy import QueryTableProxy
         tableview = self.TableView(self)
 
@@ -449,9 +448,7 @@ attribute to enable search.
 
             return openForm
 
-        tableview.connect(
-            tableview,
-            SIGNAL('row_selected'),
+        tableview.row_selected_signal.connect(
             createOpenForm(self, tableview)
         )
 

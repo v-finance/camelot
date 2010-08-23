@@ -61,7 +61,6 @@ class PlainTextDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        #text = variant_to_pyobject(index.model().data(index, Qt.EditRole))
         value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
         bgcolor = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
 
@@ -105,26 +104,10 @@ class PlainTextDelegate(CustomDelegate):
         #    text = u''
 
         if value in (None, ValueLoading):
-            text = unicode()
+            value = unicode()
 
         if self._translate_content:
-            text = ugettext(value)
-
-        #painter.setPen(fontColor.toRgb())
-        #rect = QtCore.QRect(
-        #    option.rect.left(),
-        #    option.rect.top(),
-        #    option.rect.width(),
-        #    option.rect.height()
-        #)
-        #painter.drawText(
-        #    rect.x() + 2,
-        #    rect.y(),
-        #    rect.width() - 4,
-        #    rect.height(),
-        #    Qt.AlignVCenter | Qt.AlignLeft,
-        #    unicode(text)
-        #)
+            value = ugettext(value)
 
         painter.setPen(fontcolor)
         rect = QtCore.QRect(option.rect)

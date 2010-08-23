@@ -239,6 +239,12 @@ class PartyContactMechanismAdmin( EntityAdmin ):
     form_display = Form( ['contact_mechanism', 'comment', 'from_date', 'thru_date', ] )
     field_attributes = {'party_name':{'minimal_column_width':25, 'editable':False},
                         'mechanism':{'minimal_column_width':25,'editable':False}}
+    
+    def get_depending_objects(self, contact_mechanism ):
+        party = contact_mechanism.party
+        if party:
+            party.expire(['email', 'phone'])
+            yield party
   
 class PartyPartyContactMechanismAdmin( PartyContactMechanismAdmin ):
     list_search = ['party_name', 'mechanism']
@@ -583,6 +589,7 @@ class ContactMechanism( Entity ):
     using_options( tablename = 'contact_mechanism' )
     mechanism = Field( camelot.types.VirtualAddress( 256 ), required = True )
     party_address = ManyToOne( 'PartyAddress', ondelete = 'set null', onupdate = 'cascade' )
+    party_contact_mechanisms = OneToMany( 'PartyContactMechanism' )
 
     def __unicode__( self ):
         if self.mechanism:
@@ -595,6 +602,15 @@ class ContactMechanism( Entity ):
         form_display = Form( ['mechanism', 'party_address'] )
         field_attributes = {'mechanism':{'minimal_column_width':25}}
 
+        def get_depending_objects(self, contact_mechanism ):
+            for party_contact_mechanism in contact_mechanism.party_contact_mechanisms:
+                party_contact_mechanism.expire( ['mechanism'] )
+                yield party_contact_mechanism
+                party = party_contact_mechanism.party
+                if party:
+                    party.expire(['email', 'phone'])
+                    yield party
+            
 ContactMechanism = documented_entity()( ContactMechanism )
 
 class PartyContactMechanism( Entity ):

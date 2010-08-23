@@ -54,12 +54,9 @@ class AbstractManyToOneEditor(object):
                 )
                 layout.addWidget(self.select)
                 self.setLayout(layout)
-                self.connect(
-                    self.select,
-                    self.select.entity_selected_signal,
-                    self.selectEntity
-                )
-
+                self.select.entity_selected_signal.connect( self.selectEntity )
+                
+            @QtCore.pyqtSlot(object)
             def selectEntity(self, entity_instance_getter):
                 self.emit(self.entity_selected_signal, entity_instance_getter)
                 self.close()

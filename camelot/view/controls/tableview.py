@@ -226,6 +226,8 @@ class TableView( AbstractView  ):
     # Format to use as the window title
     #
     title_format = '%(verbose_name_plural)s'
+    
+    row_selected_signal = QtCore.pyqtSignal(int)
 
     def __init__( self, admin, search_text = None, parent = None ):
         super(TableView, self).__init__( parent )
@@ -297,7 +299,7 @@ class TableView( AbstractView  ):
 
     def sectionClicked( self, section ):
         """emits a row_selected signal"""
-        self.emit( SIGNAL( 'row_selected' ), section )
+        self.row_selected_signal.emit( section )
 
     def copy_selected_rows( self ):
         """Copy the selected rows in this tableview"""
