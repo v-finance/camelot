@@ -472,7 +472,7 @@ Test the basic functionality of the editors :
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
     editor.set_value( None )
-    self.assertEqual( editor.get_value(), None )
+    self.assertEqual( editor.get_value(), 0 )
 
   def test_NoteEditor(self):
     editor = self.editors.NoteEditor(parent=None)
