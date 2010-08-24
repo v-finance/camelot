@@ -271,6 +271,9 @@ class Enumeration(types.TypeDecorator):
                                               index=True, required=True, default='planning')
   
   .. image:: ../_static/editors/ChoicesEditor_editable.png  
+  
+  If None should be a possible value of the enumeration, add (None, None) to the list of
+  possible enumerations.  None will be presented as empty in the GUI.
   """
     
     impl = types.Integer

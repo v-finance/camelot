@@ -166,7 +166,7 @@ def pyvalue_from_string(pytype, s):
         return int_from_string(s)
 
 def enumeration_to_string(value):
-    return ugettext(unicode(value).replace('_', ' ').capitalize())
+    return ugettext(unicode(value or u'').replace('_', ' ').capitalize())
 
 operator_names = {
     operator.eq : u'=',

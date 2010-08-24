@@ -202,13 +202,13 @@ attribute to enable search.
                     resolve_synonyms=True
                 )
                 if isinstance(property, orm.properties.ColumnProperty):
-                    type = property.columns[0].type
+                    column_type = property.columns[0].type
                     python_type = _sqlalchemy_to_python_type_.get(
-                        type.__class__,
+                        column_type.__class__,
                         None
                     )
                     if python_type:
-                        attributes.update(python_type(type))
+                        attributes.update(python_type(column_type))
                     if not isinstance(
                         property.columns[0],
                         sqlalchemy.sql.expression._Label
@@ -278,7 +278,7 @@ attribute to enable search.
             #
             if 'target' in attributes:
                 attributes['admin'] = get_entity_admin(attributes['target'])
-
+            
             self._field_attributes[field_name] = attributes
             return attributes
 
