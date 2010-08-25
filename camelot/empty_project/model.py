@@ -1,7 +1,11 @@
-
 import camelot.types
-from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, Unicode, Date, Integer, using_options
+from camelot.model import Entity, Field, ManyToOne, OneToMany, Unicode, Date, Integer, using_options
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.view.forms import *
+
+# begin meta data setup
+
+from camelot.model import metadata
 
 __metadata__ = metadata
+
+# end meta data setup

@@ -40,9 +40,11 @@ class AbstractManyToOneEditor(object):
         query = self.admin.entity.query
 
         class SelectDialog(QtGui.QDialog):
+            
+            entity_selected_signal = QtCore.pyqtSignal(object)
+            
             def __init__(self, parent):
                 super(SelectDialog, self).__init__(None)
-                self.entity_selected_signal = QtCore.SIGNAL('entity_selected')
                 layout = QtGui.QVBoxLayout()
                 layout.setMargin(0)
                 layout.setSpacing(0)
@@ -58,15 +60,11 @@ class AbstractManyToOneEditor(object):
                 
             @QtCore.pyqtSlot(object)
             def selectEntity(self, entity_instance_getter):
-                self.emit(self.entity_selected_signal, entity_instance_getter)
+                self.entity_selected_signal.emit( entity_instance_getter )
                 self.close()
 
         self.selectDialog = SelectDialog(self)
-        self.connect(
-            self.selectDialog,
-            self.selectDialog.entity_selected_signal,
-            self.selectEntity
-        )
+        self.selectDialog.entity_selected_signal.connect( self.selectEntity )
         #selectDialog.exec_()
         self.selectDialog.show()
 

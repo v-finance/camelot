@@ -33,9 +33,14 @@ CAMELOT_BACKUP_EXTENSION = 'sqlite'
 CAMELOT_BACKUP_FILENAME_TEMPLATE = 'default-backup-%(text)s.' + CAMELOT_BACKUP_EXTENSION
 
 REPOSITORY = 'repository'
-ENGINE = lambda:'sqlite:///model-data.sqlite'
+
+def ENGINE():
+    """This function should return a connection to the database"""
+    return 'sqlite:///model-data.sqlite'
 
 def setup_model():
+    """This function will be called at application startup, it is used to setup
+    the model"""
     import camelot.model
     from elixir import setup_all
     import model

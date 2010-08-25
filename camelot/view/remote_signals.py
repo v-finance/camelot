@@ -1,4 +1,4 @@
-#  ==================================================================================
+#  ============================================================================
 #
 #  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
@@ -23,7 +23,7 @@
 #  For use of this library in commercial applications, please contact
 #  project-camelot@conceptive.be
 #
-#  ==================================================================================
+#  ============================================================================
 
 """
 Classes to connect the QT event loop with a messaging
@@ -37,68 +37,108 @@ with the stomp library (http://docs.codehaus.org/display/STOMP/Python)
 import logging
 import re
 
-logger = logging.getLogger('remote_signals')
+LOGGER = logging.getLogger('remote_signals')
 
-from PyQt4.QtCore import *
+from PyQt4 import QtCore
 
-class SignalHandler(QObject):
+class SignalHandler(QtCore.QObject):
+    """The signal handler connects multiple collection proxy classes to
+    inform each other when they have changed an object.
+    
+    If the object is persistent (eg mapped by SQLAlchemy), the signal hanler
+    can inform other signal handlers on the network of the change.
+     """
+
+    entity_update_signal = QtCore.pyqtSignal(object, object)
+    entity_delete_signal = QtCore.pyqtSignal(object, object)
+    entity_create_signal = QtCore.pyqtSignal(object, object)
+    
+    entity_update_pattern = r'^/topic/Camelot.Entity.(?P<entity>.*).update$' 
+    
     def __init__(self):
-        QObject.__init__(self)
+        super(SignalHandler, self).__init__()
         import settings
-        self.entity_update_signal = SIGNAL("entity_update")
-        self.entity_delete_signal = SIGNAL("entity_delete")
-        self.entity_create_signal = SIGNAL("entity_create")
-        self.update_expression = re.compile(r'^/topic/Camelot.Entity.(?P<entity>.*).update$')
+        self.update_expression = re.compile(self.entity_update_pattern)
         if hasattr(settings, 'CAMELOT_SERVER') and settings.CAMELOT_SERVER:
             from stomp import stomp
             self.connection = stomp.Connection(host_and_ports = [ (settings.CAMELOT_SERVER, 61613) ])
-            self.connection.add_listener(self)
+            self.connection.add_listener( self )
             self.connection.start()
-            logger.debug('connection to servers started')
+            LOGGER.debug('connection to servers started')
         else:
             self.connection = None
-            logger.debug('not connected to a server')
+            LOGGER.debug('not connected to a server')
+            
     def on_error(self, headers, message):
-        logger.error('received an error %s'%message)
+        """Callback function for stomp to receive errors"""
+        LOGGER.error('received an error %s'%message)
+        
     def on_message(self, headers, message):
+        """Callback function for stomp to receive messages"""
         from elixir import entities
-        logger.debug('received a message %s : %s'%(str(headers),message))
+        LOGGER.debug('received a message %s : %s'%(str(headers), message))
         match = self.update_expression.match(headers['destination'])
         if match:
             entity = match.group('entity')
-            logger.debug(' decoded as update signal for entity %s'%entity)
-            self.emit(self.entity_update_signal, self, [e for e in entities if e.__name__==entity][0].get(eval(message)))
+            LOGGER.debug(' decoded as update signal for entity %s'%entity)
+            self.entity_update_signal.emit( self,
+                                            [e for e in entities if e.__name__==entity][0].get(eval(message)) )
+            
     def on_connecting(self, server):
-        logger.debug('try to connect to message service')
+        """Callback message for stomp to inform it is connecting to a 
+        messaging queue"""
+        LOGGER.debug('try to connect to message service')
         self.connection.connect()
+        
     def on_connected(self, *args, **kwargs):
-        logger.debug('connected to message service %s, %s'%((str(args), str(kwargs))))
+        """Callback message for stomp to inform it is connected to a 
+        messaging queue, this method will subscribe to the camelot topic"""
+        LOGGER.debug('connected to message service %s, %s'%((str(args), 
+                                                             str(kwargs))))
         self.connection.subscribe(destination='/topic/Camelot.Entity.>', ack='auto')
+        
     def on_disconnected(self):
-        logger.debug('stomp service disconnected')
+        """Callback message for stomp to inform it is disconnected from 
+        the messaging queue"""
+        LOGGER.debug('stomp service disconnected')
+        
     def send_entity_update(self, sender, entity, scope='local'):
-        self.sendEntityUpdate(sender, entity, scope)    
+        """Call this method to inform the whole application an entity has 
+        changed"""
+        self.sendEntityUpdate(sender, entity, scope)
+            
     def sendEntityUpdate(self, sender, entity, scope='local'):
+        """Call this method to inform the whole application an entity has 
+        changed"""
         # deprecated
-        self.emit(self.entity_update_signal, sender, entity)
-        if self.connection and scope=='remote':
+        self.entity_update_signal.emit( sender, entity )
+        if self.connection and scope == 'remote':
             self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.update'%entity.__class__.__name__)
+            
     def sendEntityDelete(self, sender, entity, scope='local'):
-        if self.connection and scope=='remote':
+        """Call this method to inform the whole application an entity is 
+        about to be deleted"""
+        if self.connection and scope == 'remote':
             self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.delete'%entity.__class__.__name__)
+            
     def sendEntityCreate(self, sender, entity, scope='local'):
-        if self.connection and scope=='remote':
+        """Call this method to inform the whole application an entity 
+        was created"""
+        if self.connection and scope == 'remote':
             self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.create'%entity.__class__.__name__)
 
 _signal_handler_ = []
 
 def construct_signal_handler(*args, **kwargs):
+    """Construct the singleton signal handler"""
     _signal_handler_.append(SignalHandler(*args, **kwargs))
 
 def get_signal_handler():
+    """Get the singleton signal handler"""
     if not len(_signal_handler_):
         construct_signal_handler()
     return _signal_handler_[-1]
 
 def has_signal_handler():
+    """Request if the singleton signal handler was constructed"""
     return len(_signal_handler_)

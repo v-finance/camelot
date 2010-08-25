@@ -225,15 +225,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         # Set edits
         self.edits = edits or []
         self.rsh = get_signal_handler()
-        self.rsh.connect( self.rsh,
-                         self.rsh.entity_update_signal,
-                         self.handleEntityUpdate )
-        self.rsh.connect( self.rsh,
-                         self.rsh.entity_delete_signal,
-                         self.handleEntityDelete )
-        self.rsh.connect( self.rsh,
-                         self.rsh.entity_create_signal,
-                         self.handleEntityCreate )
+        self.rsh.entity_update_signal.connect( self.handle_entity_update )
+        self.rsh.entity_delete_signal.connect( self.handle_entity_delete )
+        self.rsh.entity_create_signal.connect( self.handle_entity_create )
 
         def get_columns():
             self._columns = columns_getter()
@@ -326,8 +320,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.dataChanged.emit( self.index( row, 0 ),
                                self.index( row, self.column_count ) )
 
-    def handleEntityUpdate( self, sender, entity ):
-        """Handles the entity signal, indicating that the model is out of date"""
+    @QtCore.pyqtSlot( object, object )
+    def handle_entity_update( self, sender, entity ):
+        """Handles the entity signal, indicating that the model is out of 
+        date"""
         self.logger.debug( '%s %s received entity update signal' % \
                      ( self.__class__.__name__, self.admin.get_verbose_name() ) )
         if sender != self:
@@ -354,14 +350,18 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         else:
             self.logger.debug( 'duplicate update' )
 
-    def handleEntityDelete( self, sender, entity ):
-        """Handles the entity signal, indicating that the model is out of date"""
+    @QtCore.pyqtSlot( object, object )
+    def handle_entity_delete( self, sender, entity ):
+        """Handles the entity signal, indicating that the model is out of 
+        date"""
         self.logger.debug( 'received entity delete signal' )
         if sender != self:
             self.refresh()
 
-    def handleEntityCreate( self, sender, entity ):
-        """Handles the entity signal, indicating that the model is out of date"""
+    @QtCore.pyqtSlot( object, object )
+    def handle_entity_create( self, sender, entity ):
+        """Handles the entity signal, indicating that the model is out of 
+        date"""
         self.logger.debug( 'received entity create signal' )
         if sender != self:
             self.refresh()

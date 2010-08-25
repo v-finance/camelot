@@ -128,6 +128,7 @@ class FilterWidget(QtGui.QGroupBox):
         self.choices = None
         self.setChoices(choices)
          
+    @QtCore.pyqtSlot(bool)
     def emit_filter_changed(self, state):
         self.emit(filter_changed_signal)
     
@@ -140,7 +141,7 @@ class FilterWidget(QtGui.QGroupBox):
             self.group.addButton(button, i)
             if i==0:
                 button.setChecked(True)
-            self.connect(button, QtCore.SIGNAL('toggled(bool)'), self.emit_filter_changed)
+            button.toggled.connect( self.emit_filter_changed )
         layout.addStretch()
         self.setLayout(layout)
     
@@ -170,8 +171,9 @@ class GroupBoxFilterWidget(QtGui.QGroupBox):
         layout.addWidget(combobox)
         self.setLayout(layout)
         self.current_index = 0
-        self.connect(combobox, QtCore.SIGNAL('currentIndexChanged(int)'), self.emit_filter_changed)
+        combobox.currentIndexChanged.connect( self.emit_filter_changed )
             
+    @QtCore.pyqtSlot(int)
     def emit_filter_changed(self, index):
         self.current_index = index
         self.emit(filter_changed_signal)

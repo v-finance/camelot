@@ -240,9 +240,10 @@ class NavigationPane(QtGui.QDockWidget):
         # so we must undo this margin in children stylesheets :)
         #style = 'margin: 0 0 0 3px;'
         #self.setStyleSheet(style)
-        self.connect( self.app_admin, self.app_admin.auth_changed_signal, self.auth_update )
+        self.app_admin.sections_changed_signal.connect( self.auth_update )
         self.auth_update()
 
+    @QtCore.pyqtSlot()
     def auth_update(self):
         post(self.app_admin.get_sections, self.set_sections)
 

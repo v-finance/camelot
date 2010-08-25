@@ -610,16 +610,11 @@ class MainWindow(QtGui.QMainWindow):
             parent=self
         )
         self.addDockWidget(Qt.LeftDockWidgetArea, self.navpane)
-
-        self.connect(
-            self.navpane.treewidget,
-            QtCore.SIGNAL('itemClicked(QTreeWidgetItem *, int)'),
-            self.createMdiChild
-        )
+        self.navpane.treewidget.itemClicked.connect( self.createMdiChild )
 
     # Interface for child windows
-
-    def createMdiChild(self, item):
+    @QtCore.pyqtSlot( QtGui.QTreeWidgetItem, int )
+    def createMdiChild(self, item, index):
         index = self.navpane.treewidget.indexFromItem(item)
         section_item = self.navpane.items[index.row()]
         new_view = section_item.get_action().run(self.workspace)

@@ -58,7 +58,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
 
         def setCompletions(self, completions):
             self._completions = completions
-            self.emit(QtCore.SIGNAL('layoutChanged()'))
+            self.layoutChanged.emit()
 
         def data(self, index, role):
             if role == Qt.DisplayRole:
@@ -95,9 +95,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.search_button.setAutoRaise(True)
         self.search_button.setFocusPolicy(Qt.ClickFocus)
         self.search_button.setFixedHeight(self.get_height())
-        self.connect(
-            self.search_button,
-            QtCore.SIGNAL('clicked()'),
+        self.search_button.clicked.connect(
             self.searchButtonClicked
         )
         self.search_button.setIcon(
@@ -110,9 +108,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.open_button.setAutoRaise(True)
         self.open_button.setFocusPolicy(Qt.ClickFocus)
         self.open_button.setFixedHeight(self.get_height())
-        self.connect(
-            self.open_button,
-            QtCore.SIGNAL('clicked()'),
+        self.open_button.clicked.connect(
             self.openButtonClicked
         )
         self.open_button.setIcon(
@@ -127,15 +123,11 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         #self.connect(self.search_input,
         #             QtCore.SIGNAL('returnPressed()'),
         #             self.returnPressed)
-        self.connect(
-            self.search_input,
-            QtCore.SIGNAL('textEdited(const QString&)'),
+        self.search_input.textEdited.connect(
             self.textEdited
         )
         # suppose garbage was entered, we need to refresh the content
-        self.connect(
-            self.search_input,
-            QtCore.SIGNAL('editingFinished()'),
+        self.search_input.editingFinished.connect(
             self.editingFinished
         )
         self.setFocusProxy(self.search_input)
@@ -148,14 +140,10 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.completer.setCompletionMode(
             QtGui.QCompleter.UnfilteredPopupCompletion
         )
-        self.connect(
-            self.completer,
-            QtCore.SIGNAL('activated(const QModelIndex&)'),
+        self.completer.activated.connect(
             self.completionActivated
         )
-        self.connect(
-            self.completer,
-            QtCore.SIGNAL('highlighted(const QModelIndex&)'),
+        self.completer.highlighted.connect(
             self.completion_highlighted
         )
         self.search_input.setCompleter(self.completer)
@@ -291,8 +279,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             create_collection_getter(self.entity_instance_getter),
             admin.get_fields
         )
-        sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
-        self.connect(model, QtCore.SIGNAL(sig), self.dataChanged)
+        model.dataChanged.connect( self.dataChanged )
         form = admin.create_form_view(title, model, 0)
         # @todo : dirty trick to keep reference
         #self.__form = form

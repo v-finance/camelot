@@ -67,9 +67,9 @@ class ApplicationAdmin(QtCore.QObject):
     sections = ['Relations', 'Configuration']
     admins = {}
 
-    auth_changed_signal = QtCore.SIGNAL('sections_changed()')
-    """This signal is emitted whenever the sections are changed, and the views
-    should be updated"""
+    # This signal is emitted whenever the sections are changed, and the views
+    # should be updated   
+    sections_changed_signal = QtCore.pyqtSignal()
     
     def __init__(self):
         QtCore.QObject.__init__(self)
@@ -260,11 +260,7 @@ class ApplicationAdmin(QtCore.QObject):
 
                     return activate_window
 
-                mainwin.connect(
-                    action,
-                    QtCore.SIGNAL('triggered()'),
-                    create_window_activator(child)
-                )
+                action.triggered.conect( create_window_activator( child ) )
         
         return add_actions
 
