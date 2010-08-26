@@ -66,8 +66,9 @@ class IntegerDelegate(CustomDelegate):
         if value in (None, ValueLoading):
             value_str = ''
         else:
-            value_str = '%i'%value
-        if self.unicode_format != None:
+            value_str = QtCore.QString("%L1").arg( int(value) )
+
+        if self.unicode_format is not None:
             value_str = self.unicode_format(value)
 
         value_str = unicode( prefix ) + u' ' + unicode( value_str ) + u' ' + unicode( suffix )
