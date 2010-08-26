@@ -1,4 +1,32 @@
-from PyQt4 import QtGui, QtCore
+#  ============================================================================
+#
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
+
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor
@@ -6,9 +34,10 @@ from camelot.core import constants
 from camelot.view.art import Icon
 from camelot.view.proxy import ValueLoading
 
+
 class ColoredFloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator"""
-      
+
     def __init__(self,
                  parent,
                  precision=2,
@@ -29,28 +58,37 @@ class ColoredFloatEditor(CustomEditor):
         self.arrow = QtGui.QLabel()
         self.arrow.setPixmap(Icon('tango/16x16/actions/go-up.png').getQPixmap())
         self.arrow.setFixedHeight(self.get_height())
-    
+
         self.arrow.setAutoFillBackground(False)
         self.arrow.setMaximumWidth(19)
-    
+
         self.calculatorButton = QtGui.QToolButton()
         icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
         self.calculatorButton.setIcon(icon)
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFixedHeight(self.get_height())
-    
-        self.connect(self.calculatorButton,
-                     QtCore.SIGNAL('clicked()'),
-                     lambda:self.popupCalculator(self.spinBox.value()))
-        self.connect(action,
-                     QtCore.SIGNAL('triggered(bool)'),
-                     lambda:self.popupCalculator(self.spinBox.value()))
-        self.connect(self.spinBox,
-                     QtCore.SIGNAL('editingFinished()'),
-                     lambda:self.editingFinished(self.spinBox.value()))
-    
+
+        #self.connect(self.calculatorButton,
+        #             QtCore.SIGNAL('clicked()'),
+        #             lambda:self.popupCalculator(self.spinBox.value()))
+        #self.connect(action,
+        #             QtCore.SIGNAL('triggered(bool)'),
+        #             lambda:self.popupCalculator(self.spinBox.value()))
+        #self.connect(self.spinBox,
+        #             QtCore.SIGNAL('editingFinished()'),
+        #             lambda:self.editingFinished(self.spinBox.value()))
+        self.calculatorButton.clicked.connect(
+            lambda:self.popupCalculator(self.spinBox.value())
+        )
+        action.triggered.connect(
+            lambda:self.popupCalculator(self.spinBox.value())
+        )
+        self.spinBox.editingFinished.connect(
+            lambda:self.editingFinished(self.spinBox.value())
+        )
+
         self.releaseKeyboard()
-    
+
         layout = QtGui.QHBoxLayout()
         layout.setMargin(0)
         layout.setSpacing(0)
@@ -65,37 +103,37 @@ class ColoredFloatEditor(CustomEditor):
         if not self.reverse:
             if not self.neutral:
                 self.icons = {
-                    -1:Icon('tango/16x16/actions/go-down-red.png').getQPixmap(), 
+                    -1:Icon('tango/16x16/actions/go-down-red.png').getQPixmap(),
                     1:Icon('tango/16x16/actions/go-up.png').getQPixmap(),
                     0:Icon('tango/16x16/actions/zero.png').getQPixmap()
                 }
             else:
                 self.icons = {
-                    -1:Icon('tango/16x16/actions/go-down-blue.png').getQPixmap(), 
+                    -1:Icon('tango/16x16/actions/go-down-blue.png').getQPixmap(),
                     1:Icon('tango/16x16/actions/go-up-blue.png').getQPixmap(),
                     0:Icon('tango/16x16/actions/zero.png').getQPixmap()
                 }
         else:
             self.icons = {
-                1:Icon('tango/16x16/actions/go-down-red.png').getQPixmap(), 
+                1:Icon('tango/16x16/actions/go-down-red.png').getQPixmap(),
                 -1:Icon('tango/16x16/actions/go-up.png').getQPixmap(),
                 0:Icon('tango/16x16/actions/zero.png').getQPixmap()
             }
-            
-    def set_field_attributes(self, 
-                             editable=True, 
-                             background_color=None, 
-                             prefix='', 
+
+    def set_field_attributes(self,
+                             editable=True,
+                             background_color=None,
+                             prefix='',
                              suffix='',
                              minimum=constants.camelot_minfloat,
-                             maximum=constants.camelot_maxfloat,  
+                             maximum=constants.camelot_maxfloat,
                              **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
         self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
         self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
         self.spinBox.setRange(minimum, maximum)
-        
+
     def set_enabled(self, editable=True):
         self.spinBox.setReadOnly(not editable)
         self.spinBox.setEnabled(editable)
@@ -104,17 +142,17 @@ class ColoredFloatEditor(CustomEditor):
             self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
         else:
             self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
-            
+
     def set_value(self, value):
         value = CustomEditor.set_value(self, value) or 0.0
         self.spinBox.setValue(value)
         self.arrow.setPixmap(self.icons[cmp(value,0)])
-            
+
     def get_value(self):
         self.spinBox.interpretText()
         value = self.spinBox.value()
         return CustomEditor.get_value(self) or value
-      
+
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator
         calculator = Calculator(self)
@@ -123,11 +161,11 @@ class ColoredFloatEditor(CustomEditor):
                      QtCore.SIGNAL('calculationFinished'),
                      self.calculationFinished)
         calculator.exec_()
-    
+
     def calculationFinished(self, value):
         self.spinBox.setValue(float(value))
         self.emit(QtCore.SIGNAL('editingFinished()'))
-    
+
     def editingFinished(self, value):
         self.emit(QtCore.SIGNAL('editingFinished()'))
 

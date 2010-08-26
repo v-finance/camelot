@@ -1,4 +1,32 @@
-from PyQt4 import QtGui, QtCore
+#  ============================================================================
+#
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
+
+from PyQt4 import QtGui
+#from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from customdelegate import CustomDelegate, DocumentationMetaclass
@@ -9,11 +37,12 @@ from camelot.view.proxy import ValueLoading
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
 
+
 class Many2OneDelegate(CustomDelegate):
     """Custom delegate for many 2 one relations
 
   .. image:: ../_static/manytoone.png
-  
+
   Once an item has been selected, it is represented by its unicode representation
   in the editor or the table.  So the related classes need an implementation of
   their __unicode__ method.
@@ -40,8 +69,6 @@ class Many2OneDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-
-
 
         value = index.data(Qt.DisplayRole).toString()
 
@@ -74,21 +101,21 @@ class Many2OneDelegate(CustomDelegate):
                          Qt.AlignVCenter | Qt.AlignLeft,
                          unicode(value))
 
-
         painter.restore()
 
     def createEditor(self, parent, option, index):
         if self._embedded:
-            editor = editors.EmbeddedMany2OneEditor(self.admin, parent, 
+            editor = editors.EmbeddedMany2OneEditor(self.admin, parent,
                                                     editable=self.editable)
         else:
-            editor = editors.Many2OneEditor(self.admin, parent, 
+            editor = editors.Many2OneEditor(self.admin, parent,
                                             editable=self.editable)
         if option.version != 5:
             editor.setAutoFillBackground(True)
-        self.connect(editor,
-                     QtCore.SIGNAL('editingFinished()'),
-                     self.commitAndCloseEditor)
+        #self.connect(editor,
+        #             QtCore.SIGNAL('editingFinished()'),
+        #             self.commitAndCloseEditor)
+        editor.editingFinished.connect(self.commitAndCloseEditor)
         return editor
 
     def setEditorData(self, editor, index):

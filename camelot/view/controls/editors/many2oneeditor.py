@@ -95,9 +95,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.search_button.setAutoRaise(True)
         self.search_button.setFocusPolicy(Qt.ClickFocus)
         self.search_button.setFixedHeight(self.get_height())
-        self.search_button.clicked.connect(
-            self.searchButtonClicked
-        )
+        self.search_button.clicked.connect(self.searchButtonClicked)
         self.search_button.setIcon(
             Icon('tango/16x16/actions/edit-clear.png').getQIcon()
         )
@@ -108,9 +106,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.open_button.setAutoRaise(True)
         self.open_button.setFocusPolicy(Qt.ClickFocus)
         self.open_button.setFixedHeight(self.get_height())
-        self.open_button.clicked.connect(
-            self.openButtonClicked
-        )
+        self.open_button.clicked.connect(self.openButtonClicked)
         self.open_button.setIcon(
             Icon('tango/16x16/actions/document-new.png').getQIcon()
         )
@@ -123,13 +119,9 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         #self.connect(self.search_input,
         #             QtCore.SIGNAL('returnPressed()'),
         #             self.returnPressed)
-        self.search_input.textEdited.connect(
-            self.textEdited
-        )
+        self.search_input.textEdited.connect(self.textEdited)
         # suppose garbage was entered, we need to refresh the content
-        self.search_input.editingFinished.connect(
-            self.editingFinished
-        )
+        self.search_input.editingFinished.connect(self.editingFinished)
         self.setFocusProxy(self.search_input)
 
         # Search Completer
@@ -140,12 +132,8 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.completer.setCompletionMode(
             QtGui.QCompleter.UnfilteredPopupCompletion
         )
-        self.completer.activated.connect(
-            self.completionActivated
-        )
-        self.completer.highlighted.connect(
-            self.completion_highlighted
-        )
+        self.completer.activated.connect(self.completionActivated)
+        self.completer.highlighted.connect(self.completion_highlighted)
         self.search_input.setCompleter(self.completer)
 
         # Setup layout
@@ -250,7 +238,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             admin = select_subclass.selected_subclass
         if selected:
             form = admin.create_new_view()
-            form.entity_created_signal.connect( self.selectEntity )
+            form.entity_created_signal.connect(self.selectEntity)
             # @todo: dirty trick to keep reference
             #self.__new_form = form
             show_top_level( form, self )
@@ -279,7 +267,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             create_collection_getter(self.entity_instance_getter),
             admin.get_fields
         )
-        model.dataChanged.connect( self.dataChanged )
+        model.dataChanged.connect(self.dataChanged)
         form = admin.create_form_view(title, model, 0)
         # @todo : dirty trick to keep reference
         #self.__form = form

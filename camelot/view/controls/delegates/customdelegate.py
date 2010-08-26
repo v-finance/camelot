@@ -1,6 +1,6 @@
 #  ===========================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -25,8 +25,10 @@
 #
 #  ===========================================================================
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4 import QtGui
+from PyQt4 import QtCore
+from PyQt4.QtCore import Qt
+#from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QItemDelegate
 from camelot.core.utils import variant_to_pyobject
 
@@ -53,12 +55,12 @@ def DocumentationMetaclass(name, bases, dct):
 
 """%(name, name, name, name, name,)
     import inspect
-    
+
     def add_field_attribute_item(a):
         """Add the name of a field attribute and a reference to its documentation
         to the docstring"""
         dct['__doc__'] = dct['__doc__'] + "\n * :ref:`%s <field-attribute-%s>`"%(arg, arg)
-        
+
     if '__init__' in dct:
         dct['__doc__'] = dct['__doc__'] + 'Field attributes supported by the delegate : \n'
         args, _varargs, _varkw,  _defaults = inspect.getargspec(dct['__init__'])
@@ -81,22 +83,22 @@ def DocumentationMetaclass(name, bases, dct):
             for arg in args:
                 if arg not in ['self', 'parent']:
                     add_field_attribute_item(arg)
-                    
+
         dct['__doc__'] = dct['__doc__'] + '\n\n'
 
     return type(name, bases, dct)
 
-  
+
 class CustomDelegate(QItemDelegate):
     """Base class for implementing custom delegates.
 
-.. attribute:: editor 
+.. attribute:: editor
 
 class attribute specifies the editor class that should be used
 """
 
     editor = None
-  
+
     def __init__(self, parent=None, editable=True, **kwargs):
         """:param parent: the parent object for the delegate
 :param editable: a boolean indicating if the field associated to the delegate
@@ -107,7 +109,7 @@ is editable"""
         self._font_metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
         self._height = self._font_metrics.lineSpacing() + 10
         self._width = self._font_metrics.averageCharWidth() * 20
-    
+
     def createEditor(self, parent, option, index):
         """:param option: use an option with version 5 to indicate the widget
 will be put onto a form"""
@@ -120,7 +122,7 @@ will be put onto a form"""
                      editors.editingFinished,
                      self.commitAndCloseEditor)
         return editor
-  
+
     def sizeHint(self, option, index):
         return QtCore.QSize(self._width, self._height)
 
@@ -128,9 +130,11 @@ will be put onto a form"""
         editor = self.sender()
         assert editor != None
         assert isinstance(editor, (QtGui.QWidget,))
-        self.emit(SIGNAL('commitData(QWidget*)'), editor)
-        sig = SIGNAL('closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)')
-        self.emit(sig, editor, QtGui.QAbstractItemDelegate.NoHint)
+        #self.emit(SIGNAL('commitData(QWidget*)'), editor)
+        #sig = SIGNAL('closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)')
+        #self.emit(sig, editor, QtGui.QAbstractItemDelegate.NoHint)
+        self.commitData.emit(editor)
+        self.closeEditor.emit(editor, QtGui.QAbstractItemDelegate.NoHint)
 
     def setEditorData(self, editor, index):
         if not index.model():
@@ -148,30 +152,30 @@ will be put onto a form"""
         background_color = variant_to_pyobject(index.model().data(index, Qt.BackgroundRole))
         if background_color not in (None, ValueLoading):
             editor.set_background_color(background_color)
-            
+
     def setModelData(self, editor, model, index):
         if isinstance(model, QtGui.QStandardItemModel):
             val = QtCore.QVariant(editor.get_value())
         else:
             val = create_constant_function(editor.get_value())
         model.setData(index, val)
-        
+
     def paint_text(self, painter, option, index, text, margin_left=0, margin_right=0):
         """Paint unicode text into the given rect defined by option, and fill the rect with
         the background color
         :arg margin_left: additional margin to the left, to be used for icons or others
         :arg margin_right: additional margin to the right, to be used for icons or others"""
-        
+
         background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
         rect = option.rect
-        
+
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
             fontColor = QtGui.QColor()
-            if self.editable:         
+            if self.editable:
                 Color = option.palette.highlightedText().color()
                 fontColor.setRgb(Color.red(), Color.green(), Color.blue())
-            else:          
+            else:
                 fontColor.setRgb(130,130,130)
         else:
             if self.editable:
@@ -182,8 +186,8 @@ will be put onto a form"""
                 painter.fillRect(rect, option.palette.window())
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(130,130,130)
-              
-              
+
+
         painter.setPen(fontColor.toRgb())
         painter.drawText(rect.x() + 2 + margin_left,
                          rect.y(),
@@ -191,7 +195,7 @@ will be put onto a form"""
                          rect.height(),
                          Qt.AlignVCenter | Qt.AlignLeft,
                          text)
-        
+
     def render_ooxml( self, value ):
         """Generator for label text in Office Open XML representing this form"""
         yield '<w:r>'

@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -46,9 +46,10 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         QtGui.QCheckBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setEnabled(editable)
-        self.connect(self,
-                     QtCore.SIGNAL('stateChanged(int)'),
-                     self.editingFinished)
+        #self.connect(self,
+        #             QtCore.SIGNAL('stateChanged(int)'),
+        #             self.editingFinished)
+        self.stateChanged.connect(self.editingFinished)
 
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
@@ -66,7 +67,6 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
             return None
 
         return self.isChecked()
-
 
     def editingFinished(self, value=None):
         self.emit(QtCore.SIGNAL('editingFinished()'))

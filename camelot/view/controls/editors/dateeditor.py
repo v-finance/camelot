@@ -1,7 +1,34 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
 
 import datetime
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor, editingFinished
@@ -10,11 +37,12 @@ from camelot.view.art import Icon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
+
 class DateEditor(CustomEditor):
     """Widget for editing date values"""
-  
+
     calendar_action_trigger = QtCore.SIGNAL('trigger()')
-    
+
     def __init__(self,
                  parent=None,
                  editable=True,
@@ -22,22 +50,24 @@ class DateEditor(CustomEditor):
                  format=constants.camelot_date_format,
                  **kwargs):
         CustomEditor.__init__(self, parent)
-        
+
         self.date_format = local_date_format()
         self.line_edit = DecoratedLineEdit()
         self.line_edit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.line_edit.set_background_text( QtCore.QDate(2000,1,1).toString(self.date_format) )
-            
+
         # The order of creation of this widgets and their parenting
         # seems very sensitive under windows and creates system crashes
         # so don't change this without extensive testing on windows
         special_date_menu = QtGui.QMenu(self)
         calendar_widget_action = QtGui.QWidgetAction(special_date_menu)
         self.calendar_widget = QtGui.QCalendarWidget(special_date_menu)
-        self.connect( self.calendar_widget, QtCore.SIGNAL('activated(const QDate&)'), self.calendar_widget_activated)
-        self.connect( self.calendar_widget, QtCore.SIGNAL('clicked(const QDate&)'), self.calendar_widget_activated)        
+        #self.connect( self.calendar_widget, QtCore.SIGNAL('activated(const QDate&)'), self.calendar_widget_activated)
+        #self.connect( self.calendar_widget, QtCore.SIGNAL('clicked(const QDate&)'), self.calendar_widget_activated)
+        self.calendar_widget.activated.connect(self.calendar_widget_activated)
+        self.calendar_widget.clicked.connect(self.calendar_widget_activated)
         calendar_widget_action.setDefaultWidget(self.calendar_widget)
-        
+
         self.connect( self, self.calendar_action_trigger, special_date_menu.hide )
         special_date_menu.addAction(calendar_widget_action)
         special_date_menu.addAction('Today')
@@ -51,48 +81,50 @@ class DateEditor(CustomEditor):
         self.special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.special_date.setFixedHeight(self.get_height())
         # end of sensitive part
-    
+
         self.set_enabled(editable)
-      
+
         if nullable:
             special_date_menu.addAction('Clear')
-      
+
         self.hlayout = QtGui.QHBoxLayout()
         self.hlayout.addWidget(self.line_edit)
         self.hlayout.addWidget(self.special_date)
-    
+
         self.hlayout.setContentsMargins(0, 0, 0, 0)
         self.hlayout.setMargin(0)
         self.hlayout.setSpacing(0)
-    
+
         self.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.hlayout)
-    
+
         self.minimum = datetime.date.min
         self.maximum = datetime.date.max
         self.setFocusProxy(self.line_edit)
-    
+
         self.connect(self.line_edit,
                      QtCore.SIGNAL('editingFinished()'),
                      self.editingFinished)
-        self.connect(self.line_edit,
-                     QtCore.SIGNAL('textEdited(const QString&)'),
-                     self.text_edited)
-        self.connect(special_date_menu,
-                     QtCore.SIGNAL('triggered(QAction*)'),
-                     self.setSpecialDate)
-    
+        #self.connect(self.line_edit,
+        #             QtCore.SIGNAL('textEdited(const QString&)'),
+        #             self.text_edited)
+        #self.connect(special_date_menu,
+        #             QtCore.SIGNAL('triggered(QAction*)'),
+        #             self.setSpecialDate)
+        self.line_edit.textEdited.connect(self.text_edited)
+        special_date_menu.triggered.connect(self.setSpecialDate)
+
     def calendar_widget_activated(self, date):
         self.emit(self.calendar_action_trigger)
         self.set_value(date)
         self.emit(editingFinished)
-    
+
     def editingFinished(self):
         self.emit(QtCore.SIGNAL('editingFinished()'))
-        
+
     def focusOutEvent(self, event):
         self.emit(QtCore.SIGNAL('editingFinished()'))
-    
+
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:
@@ -102,28 +134,28 @@ class DateEditor(CustomEditor):
             self.calendar_widget.setSelectedDate(qdate)
         else:
             self.line_edit.set_user_input('')
-      
+
     def text_edited(self, text ):
         try:
             date_from_string( self.line_edit.user_input() )
             self.line_edit.set_valid(True)
         except ParsingError:
             self.line_edit.set_valid(False)
-                    
+
     def get_value(self):
         try:
             value = date_from_string( self.line_edit.user_input() )
         except ParsingError:
-            value = None    
-        return CustomEditor.get_value(self) or value 
-      
+            value = None
+        return CustomEditor.get_value(self) or value
+
     def set_enabled(self, editable=True):
         self.line_edit.setEnabled(editable)
         if editable:
             self.special_date.show()
         else:
             self.special_date.hide()
-    
+
     def setSpecialDate(self, action):
         if action.text().compare('Today') == 0:
             self.set_value(datetime.date.today())

@@ -1,3 +1,30 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
@@ -24,7 +51,8 @@ class RichTextEditor(CustomEditor, WideEditor):
             def __init__(self, parent):
                 super(CustomTextEdit, self).__init__(parent)
                 self._changed = False
-                self.connect(self, QtCore.SIGNAL('textChanged()'), self.setTextChanged)
+                #self.connect(self, QtCore.SIGNAL('textChanged()'), self.setTextChanged)
+                self.textChanged.connect(self.setTextChanged)
 
             def focusOutEvent(self, event):
                 if self._changed:
@@ -42,9 +70,11 @@ class RichTextEditor(CustomEditor, WideEditor):
 
         self.textedit = CustomTextEdit(self)
 
-        self.connect(self.textedit,
-                     QtCore.SIGNAL('editingFinished()'),
-                     self.editingFinished)
+        self.connect(
+            self.textedit,
+            QtCore.SIGNAL('editingFinished()'),
+            self.editingFinished
+        )
         self.textedit.setAcceptRichText(True)
         self.initButtons()
 #      #
@@ -64,12 +94,14 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.setFocus(Qt.OtherFocusReason)
         self.update_alignment()
 
-        self.connect(self.textedit,
-                     QtCore.SIGNAL('currentCharFormatChanged(const QTextCharFormat&)'),
-                     self.update_format)
-        self.connect(self.textedit,
-                     QtCore.SIGNAL('cursorPositionChanged()'),
-                     self.update_text)
+        #self.connect(self.textedit,
+        #             QtCore.SIGNAL('currentCharFormatChanged(const QTextCharFormat&)'),
+        #             self.update_format)
+        #self.connect(self.textedit,
+        #             QtCore.SIGNAL('cursorPositionChanged()'),
+        #             self.update_text)
+        self.textedit.currentCharFormatChanged.connect(self.update_format)
+        self.textedit.cursorPositionChanged.connect(self.update_text)
 
     def editingFinished(self):
         if self.textedit.textChanged():
@@ -94,7 +126,8 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.bold_button.setCheckable(True)
         self.bold_button.setMaximumSize(QtCore.QSize(20, 20))
         self.bold_button.setShortcut(QtGui.QKeySequence('Ctrl+B'))
-        self.connect(self.bold_button, QtCore.SIGNAL('clicked()'), self.set_bold)
+        #self.connect(self.bold_button, QtCore.SIGNAL('clicked()'), self.set_bold)
+        self.bold_button.clicked.connect(self.set_bold)
 
         self.italic_button = QtGui.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-text-italic.png').getQIcon()
@@ -103,9 +136,10 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.italic_button.setCheckable(True)
         self.italic_button.setMaximumSize(QtCore.QSize(20, 20))
         self.italic_button.setShortcut(QtGui.QKeySequence('Ctrl+I'))
-        self.connect(self.italic_button,
-                     QtCore.SIGNAL('clicked(bool)'),
-                     self.set_italic)
+        #self.connect(self.italic_button,
+        #             QtCore.SIGNAL('clicked(bool)'),
+        #             self.set_italic)
+        self.italic_button.clicked.connect(self.set_italic)
 
         self.underline_button = QtGui.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-text-underline.png').getQIcon()
@@ -114,36 +148,40 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.underline_button.setCheckable(True)
         self.underline_button.setMaximumSize(QtCore.QSize(20, 20))
         self.underline_button.setShortcut(QtGui.QKeySequence('Ctrl+U'))
-        self.connect(self.underline_button,
-                     QtCore.SIGNAL('clicked(bool)'),
-                     self.set_underline)
+        #self.connect(self.underline_button,
+        #             QtCore.SIGNAL('clicked(bool)'),
+        #             self.set_underline)
+        self.underline_button.clicked.connect(self.set_underline)
 
         self.copy_button = QtGui.QToolButton(self)
         icon = Icon('tango/16x16/actions/edit-copy.png').getQIcon()
         self.copy_button.setIcon(icon)
         self.copy_button.setAutoRaise(True)
         self.copy_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.connect(self.copy_button,
-                     QtCore.SIGNAL('clicked(bool)'),
-                     self.textedit.copy)
+        #self.connect(self.copy_button,
+        #             QtCore.SIGNAL('clicked(bool)'),
+        #             self.textedit.copy)
+        self.copy_button.clicked.connect(self.textedit.copy)
 
         self.cut_button = QtGui.QToolButton(self)
         icon = Icon('tango/16x16/actions/edit-cut.png').getQIcon()
         self.cut_button.setIcon(icon)
         self.cut_button.setAutoRaise(True)
         self.cut_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.connect(self.cut_button,
-                     QtCore.SIGNAL('clicked(bool)'),
-                     self.textedit.cut)
+        #self.connect(self.cut_button,
+        #             QtCore.SIGNAL('clicked(bool)'),
+        #             self.textedit.cut)
+        self.cut_button.clicked.connect(self.textedit.cut)
 
         self.paste_button = QtGui.QToolButton(self)
         icon = Icon('tango/16x16/actions/edit-paste.png').getQIcon()
         self.paste_button.setIcon(icon)
         self.paste_button.setAutoRaise(True)
         self.paste_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.connect(self.paste_button,
-                     QtCore.SIGNAL('clicked(bool)'),
-                     self.textedit.paste)
+        #self.connect(self.paste_button,
+        #             QtCore.SIGNAL('clicked(bool)'),
+        #             self.textedit.paste)
+        self.paste_button.clicked.connect(self.textedit.paste)
 
         self.alignleft_button = QtGui.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-justify-left.png').getQIcon()
@@ -151,9 +189,10 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.alignleft_button.setAutoRaise(True)
         self.alignleft_button.setCheckable(True)
         self.alignleft_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.connect(self.alignleft_button,
-                     QtCore.SIGNAL('clicked(bool)'),
-                     self.set_alignleft)
+        #self.connect(self.alignleft_button,
+        #             QtCore.SIGNAL('clicked(bool)'),
+        #             self.set_alignleft)
+        self.alignleft_button.clicked.connect(self.set_alignleft)
 
         self.aligncenter_button = QtGui.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-justify-center.png').getQIcon()
@@ -161,9 +200,10 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.aligncenter_button.setAutoRaise(True)
         self.aligncenter_button.setCheckable(True)
         self.aligncenter_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.connect(self.aligncenter_button,
-                     QtCore.SIGNAL('clicked(bool)'),
-                     self.set_aligncenter)
+        #self.connect(self.aligncenter_button,
+        #             QtCore.SIGNAL('clicked(bool)'),
+        #             self.set_aligncenter)
+        self.aligncenter_button.clicked.connect(self.set_aligncenter)
 
         self.alignright_button = QtGui.QToolButton(self)
         icon = Icon('tango/16x16/actions/format-justify-right.png').getQIcon()
@@ -171,16 +211,18 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.alignright_button.setAutoRaise(True)
         self.alignright_button.setCheckable(True)
         self.alignright_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.connect(self.alignright_button,
-                     QtCore.SIGNAL('clicked(bool)'),
-                     self.set_alignright)
+        #self.connect(self.alignright_button,
+        #             QtCore.SIGNAL('clicked(bool)'),
+        #             self.set_alignright)
+        self.alignright_button.clicked.connect(self.set_alignright)
 
         self.color_button = QtGui.QToolButton(self)
         self.color_button.setAutoRaise(True)
         self.color_button.setMaximumSize(QtCore.QSize(20, 20))
-        self.connect(self.color_button,
-                     QtCore.SIGNAL('clicked(bool)'),
-                     self.set_color)
+        #self.connect(self.color_button,
+        #             QtCore.SIGNAL('clicked(bool)'),
+        #             self.set_color)
+        self.color_button.clicked.connect(self.set_color)
 
         self.toolbar.addWidget(self.copy_button)
         self.toolbar.addWidget(self.cut_button)

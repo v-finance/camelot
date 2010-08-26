@@ -1,4 +1,32 @@
-from PyQt4 import QtCore, QtGui
+#  ============================================================================
+#
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
+
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor
@@ -12,7 +40,7 @@ class SmileyEditor(CustomEditor):
         self.box.setFrame(True)
         self.box.setEditable(False)
         self.allSmileys = []
-        
+
         self.allSmileys.append('face-angel')
         self.allSmileys.append('face-crying')
         self.allSmileys.append('face-devilish')
@@ -26,18 +54,18 @@ class SmileyEditor(CustomEditor):
         self.allSmileys.append('face-smile-big')
         self.allSmileys.append('face-surprise')
         self.allSmileys.append('face-wink')
-        
+
         for i, value in enumerate(self.allSmileys):
-            imgPath = 'tango/16x16/emotes/' + value + '.png'        
+            imgPath = 'tango/16x16/emotes/' + value + '.png'
             icon = Icon(imgPath).getQIcon()
-            
+
             self.box.addItem(icon, '')
             self.box.setFixedHeight(self.get_height())
-            
+
             if value == 'face-plain':
                 self.box.setCurrentIndex(i)
-        
-        
+
+
         self.setFocusPolicy(Qt.StrongFocus)
         layout = QtGui.QHBoxLayout(self)
         layout.setMargin(0)
@@ -51,48 +79,44 @@ class SmileyEditor(CustomEditor):
             self.box.setEnabled(False)
         else:
             self.box.setEnabled(True)
-      
-      
-        self.connect(self.box,
-                     QtCore.SIGNAL('currentIndexChanged()'),
-                     self.smileyChanged)
-    
-    
+
+        #self.connect(self.box,
+        #             QtCore.SIGNAL('currentIndexChanged()'),
+        #             self.smileyChanged)
+        self.box.currentIndexChanged.connect(self.smileyChanged)
+
         layout.addWidget(self.box)
         layout.addStretch()
         self.setLayout(layout)
-    
+
     def get_value(self):
-        imgIndex = self.box.currentIndex() 
-        
+        imgIndex = self.box.currentIndex()
+
         for i, emot in enumerate(self.allSmileys):
             if imgIndex == i:
                 imgName = emot
-                
+
         return CustomEditor.get_value(self) or imgName
-      
-      
+
+
     def set_enabled(self, editable=True):
         self.box.setEnabled(editable)
-    
+
     def smileyChanged(self):
-      
-        value = self.box.currentIndex()  
-        
+
+        value = self.box.currentIndex()
+
         for i, emot in enumerate(self.allSmileys):
             if value == i:
                 imgName = emot
-                
+
         self.emit(QtCore.SIGNAL('editingFinished()'), imgName)
-    
+
     def set_value(self, value):
         value = CustomEditor.set_value(self, value) or 'face-plain'
         self.img = value
         #self.imgPath = 'tango/16x16/emotes/' + self.img + '.png'
-        
+
         for i, smiley in enumerate(self.allSmileys):
             if smiley == self.img:
                 self.box.setCurrentIndex(i)
-                
-        
-        

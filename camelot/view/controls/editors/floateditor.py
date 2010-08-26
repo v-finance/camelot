@@ -80,15 +80,24 @@ class FloatEditor(CustomEditor):
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFixedHeight(self.get_height())
 
-        self.connect(self.calculatorButton,
-                     QtCore.SIGNAL('clicked()'),
-                     lambda:self.popupCalculator(self.spinBox.value()))
-        self.connect(action,
-                     QtCore.SIGNAL('triggered(bool)'),
-                     lambda:self.popupCalculator(self.spinBox.value()))
-        self.connect(self.spinBox,
-                     QtCore.SIGNAL('editingFinished()'),
-                     lambda:self.editingFinished(self.spinBox.value()))
+        #self.connect(self.calculatorButton,
+        #             QtCore.SIGNAL('clicked()'),
+        #             lambda:self.popupCalculator(self.spinBox.value()))
+        #self.connect(action,
+        #             QtCore.SIGNAL('triggered(bool)'),
+        #             lambda:self.popupCalculator(self.spinBox.value()))
+        #self.connect(self.spinBox,
+        #             QtCore.SIGNAL('editingFinished()'),
+        #             lambda:self.editingFinished(self.spinBox.value()))
+        self.calculatorButton.clicked.connect(
+            lambda:self.popupCalculator(self.spinBox.value())
+        )
+        action.triggered.connect(
+            lambda:self.popupCalculator(self.spinBox.value())
+        )
+        self.spinBox.editingFinished.connect(
+             lambda:self.editingFinished(self.spinBox.value())
+        )
 
         self.releaseKeyboard()
 

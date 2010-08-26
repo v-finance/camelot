@@ -38,13 +38,13 @@ from camelot.core.utils import ugettext as _
 
 class FileEditor(CustomEditor):
     """Widget for editing File fields"""
-  
+
     filter = 'All files (*)'
-    
+
     def __init__(self, parent=None, storage=None, **kwargs):
         CustomEditor.__init__(self, parent)
         self.storage = storage
-        
+
         # i'm a < 80 characters fanatic, i know :)
         self.new_icon = Icon(
             'tango/16x16/actions/list-add.png'
@@ -61,56 +61,59 @@ class FileEditor(CustomEditor):
         self.document_pixmap = Icon(
             'tango/16x16/mimetypes/x-office-document.png'
         ).getQPixmap()
-        
+
         self.value = None
         self.setup_widget()
-    
+
     def setup_widget(self):
         """Called inside init, overwrite this method for custom
         file edit widgets"""
         self.layout = QtGui.QHBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setMargin(0)
-        
+
         # Save As button
         self.save_as_button = QtGui.QToolButton()
         self.save_as_button.setFocusPolicy(Qt.ClickFocus)
         self.save_as_button.setIcon(self.save_as_icon)
         self.save_as_button.setToolTip(_('Save file as'))
         self.save_as_button.setAutoRaise(True)
-        self.connect(
-            self.save_as_button,
-            QtCore.SIGNAL('clicked()'),
-            self.save_as_button_clicked
-        )        
-        
+        #self.connect(
+        #    self.save_as_button,
+        #    QtCore.SIGNAL('clicked()'),
+        #    self.save_as_button_clicked
+        #)
+        self.save_as_button.clicked.connect(self.save_as_button_clicked)
+
         # Clear button
         self.clear_button = QtGui.QToolButton()
         self.clear_button.setFocusPolicy(Qt.ClickFocus)
         self.clear_button.setIcon(self.clear_icon)
         self.clear_button.setToolTip(_('delete file'))
         self.clear_button.setAutoRaise(True)
-        self.connect(
-            self.clear_button,
-            QtCore.SIGNAL('clicked()'),
-            self.clear_button_clicked
-        )
-        
+        #self.connect(
+        #    self.clear_button,
+        #    QtCore.SIGNAL('clicked()'),
+        #    self.clear_button_clicked
+        #)
+        self.clear_button.clicked.connect(self.clear_button_clicked)
+
         # Open button
         self.open_button = QtGui.QToolButton()
         self.open_button.setFocusPolicy(Qt.ClickFocus)
         self.open_button.setIcon(self.new_icon)
         self.open_button.setToolTip(_('add file'))
-        self.connect(
-            self.open_button,
-            QtCore.SIGNAL('clicked()'),
-            self.open_button_clicked
-        )
+        #self.connect(
+        #    self.open_button,
+        #    QtCore.SIGNAL('clicked()'),
+        #    self.open_button_clicked
+        #)
+        self.open_button.clicked.connect(self.open_button_clicked)
         self.open_button.setAutoRaise(True)
-        
+
         # Filename
         self.filename = QtGui.QLineEdit(self)
-         
+
         # Setup layout
         self.document_label = QtGui.QLabel(self)
         self.document_label.setPixmap(self.document_pixmap)
@@ -119,8 +122,8 @@ class FileEditor(CustomEditor):
         self.layout.addWidget(self.clear_button)
         self.layout.addWidget(self.open_button)
         self.layout.addWidget(self.save_as_button)
-        self.setLayout(self.layout)      
-    
+        self.setLayout(self.layout)
+
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         self.value = value
@@ -135,14 +138,14 @@ class FileEditor(CustomEditor):
             self.open_button.setIcon(self.new_icon)
             self.open_button.setToolTip(_('add file'))
         return value
-        
+
     def get_value(self):
         return CustomEditor.get_value(self) or self.value
-    
+
     def set_field_attributes(self, editable=True, background_color=None, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        
+
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)
         self.open_button.setEnabled(editable)
@@ -150,20 +153,20 @@ class FileEditor(CustomEditor):
         self.filename.setReadOnly(not editable)
         self.document_label.setEnabled(editable)
         self.setAcceptDrops(editable)
-    
+
     def stored_file_ready(self, stored_file):
         """Slot to be called when a new stored_file has been created by
         the storeage"""
         self.set_value(stored_file)
         self.emit(editingFinished)
-        
+
     def save_as_button_clicked(self):
         from camelot.view.storage import save_stored_file
         value = self.get_value()
         if value:
 
             save_stored_file(self, value)
-    
+
     def open_button_clicked(self):
         from camelot.view.storage import open_stored_file
         from camelot.view.storage import create_stored_file
@@ -176,7 +179,7 @@ class FileEditor(CustomEditor):
             )
         else:
             open_stored_file(self, self.value)
-    
+
     def clear_button_clicked(self):
         self.value = None
         self.emit(editingFinished)
@@ -186,10 +189,10 @@ class FileEditor(CustomEditor):
     #
     def dragEnterEvent(self, event):
         event.acceptProposedAction()
-    
+
     def dragMoveEvent(self, event):
         event.acceptProposedAction()
-    
+
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
             url = event.mimeData().urls()[0]
@@ -198,7 +201,7 @@ class FileEditor(CustomEditor):
                 from camelot.view.storage import SaveFileProgressDialog
                 from camelot.view.model_thread import post
                 progress = SaveFileProgressDialog()
-                
+
                 def checkin():
                     stored_file = self.storage.checkin(unicode(filename))
                     return lambda:self.stored_file_ready(stored_file)

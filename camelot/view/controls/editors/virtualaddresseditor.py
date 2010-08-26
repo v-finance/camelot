@@ -1,7 +1,34 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
 
 import re
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor, editingFinished
@@ -9,7 +36,7 @@ from camelot.view.art import Icon
 import camelot.types
 
 class VirtualAddressEditor(CustomEditor):
-  
+
     def __init__(self, parent=None, editable=True, **kwargs):
         CustomEditor.__init__(self, parent)
         self.layout = QtGui.QHBoxLayout()
@@ -30,25 +57,29 @@ class VirtualAddressEditor(CustomEditor):
         self.label.setAutoRaise(True)
         self.label.setEnabled(False)
         self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
-        
-        self.layout.addWidget(self.label)    
-        self.connect(self.editor,
-                     QtCore.SIGNAL('editingFinished()'),
-                     self.editingFinished)
-        self.connect(self.editor,
-                     QtCore.SIGNAL('textEdited(const QString&)'),
-                     self.editorValueChanged)
-        self.connect(self.combo,
-                     QtCore.SIGNAL('currentIndexChanged(int)'),
-                     lambda:self.comboIndexChanged())
+
+        self.layout.addWidget(self.label)
+        #self.connect(self.editor,
+        #             QtCore.SIGNAL('editingFinished()'),
+        #             self.editingFinished)
+        #self.connect(self.editor,
+        #             QtCore.SIGNAL('textEdited(const QString&)'),
+        #             self.editorValueChanged)
+        #self.connect(self.combo,
+        #             QtCore.SIGNAL('currentIndexChanged(int)'),
+        #             lambda:self.comboIndexChanged())
+        self.editor.editingFinished.connect(self.editingFinished)
+        self.editor.textEdited.connect(self.editorValueChanged)
+        self.combo.currentIndexChanged.connect(lambda:self.comboIndexChanged())
+
         self.setLayout(self.layout)
         self.setAutoFillBackground(True)
         self.checkValue(self.editor.text())
-    
+
     def comboIndexChanged(self):
         self.checkValue(self.editor.text())
         self.editingFinished()
-        
+
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:
@@ -74,27 +105,30 @@ class VirtualAddressEditor(CustomEditor):
                 #self.label.setAutoFillBackground(True)
                 self.label.setIcon(icon)
                 self.label.setEnabled(self.editable)
-                self.connect(self.label,
-                             QtCore.SIGNAL('clicked()'),
-                             lambda:self.mailClick(self.editor.text()))
+                #self.connect(self.label,
+                #             QtCore.SIGNAL('clicked()'),
+                #             lambda:self.mailClick(self.editor.text()))
+                self.label.clicked.connect(
+                    lambda:self.mailClick(self.editor.text())
+                )
             else:
                 self.label.setIcon(icon)
                 #self.label.setAutoFillBackground(False)
                 self.label.setAutoRaise(True)
                 self.label.setEnabled(self.editable)
                 self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
-              
+
 #      self.update()
 #      self.label.update()
 #      self.layout.update()
-      
-      
+
+
             self.checkValue(value[1])
-      
+
     def get_value(self):
         value = (unicode(self.combo.currentText()), unicode(self.editor.text()))
         return CustomEditor.get_value(self) or value
-      
+
     def set_enabled(self, editable=True):
         self.combo.setEnabled(editable)
         self.editor.setEnabled(editable)
@@ -103,8 +137,8 @@ class VirtualAddressEditor(CustomEditor):
         else:
             if self.combo.currentText() == 'email':
                 self.label.setEnabled(True)
-          
-        
+
+
     def checkValue(self, text):
         if self.combo.currentText() == 'email':
             email = unicode(text)
@@ -121,15 +155,15 @@ class VirtualAddressEditor(CustomEditor):
                                  QtGui.QPalette.Base,
                                  QtGui.QColor(255, 255, 255))
                 self.editor.setPalette(palette)
-                
+
         elif self.combo.currentText() == 'phone' \
          or self.combo.currentText() == 'pager' \
          or self.combo.currentText() == 'fax' \
          or self.combo.currentText() == 'mobile':
-    
+
             number = unicode(text)
             numberCheck = re.compile('^[0-9 ]+$')
-      
+
             if not numberCheck.match(number):
                 palette = self.editor.palette()
                 palette.setColor(QtGui.QPalette.Active,
@@ -142,7 +176,7 @@ class VirtualAddressEditor(CustomEditor):
                                  QtGui.QPalette.Base,
                                  QtGui.QColor(255, 255, 255))
                 self.editor.setPalette(palette)
-                
+
         else:
             Check = re.compile('^.+$')
             if not Check.match(unicode(text)):
@@ -157,15 +191,15 @@ class VirtualAddressEditor(CustomEditor):
                                   QtGui.QPalette.Base,
                                   QtGui.QColor(255, 255, 255))
                 self.editor.setPalette(palette)
-        
+
     def editorValueChanged(self, text):
         self.checkValue(text)
-    
+
     def mailClick(self, adress):
         url = QtCore.QUrl()
         url.setUrl('mailto:%s?subject=Subject'%str(adress))
         QtGui.QDesktopServices.openUrl(url)
-    
+
     def editingFinished(self):
         self.value = []
         self.value.append(str(self.combo.currentText()))
@@ -176,8 +210,8 @@ class VirtualAddressEditor(CustomEditor):
         # integrity errors
         if self.value[1]:
             self.emit(editingFinished)
-            
-    def set_background_color(self, background_color):        
+
+    def set_background_color(self, background_color):
         if background_color:
             palette = self.editor.palette()
             palette.setColor(self.backgroundRole(), background_color)

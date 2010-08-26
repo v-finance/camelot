@@ -1,6 +1,34 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
+
 import logging
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 
 from camelot.view.controls.editors.customeditor import CustomEditor
 from camelot.view.proxy import ValueLoading
@@ -9,23 +37,19 @@ from camelot.view.controls.liteboxview import LiteBoxView
 
 logger = logging.getLogger('camelot.view.controls.editors.charteditor')
 
+
 class ChartEditor(CustomEditor):
     """Editor to display and manipulate matplotlib charts.  The editor
     itself is generic for all kinds of plots,  it simply provides the
     data to be ploted with a set of axes.  The data itself should know
     how exactly to plot itself.
     """
-        
+
     show_fullscreen_signal = QtCore.SIGNAL('show_fullscreen')
-    
-    def __init__(self,
-          parent=None,
-          width=50, height=40,
-          dpi=50,
-          **kwargs
-    ):
+
+    def __init__(self, parent=None, width=50, height=40, dpi=50, **kwargs):
         from matplotlib.figure import Figure
-        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas        
+        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
         super(ChartEditor, self).__init__(parent)
 
         # find out background color, because using a transparent
@@ -60,11 +84,11 @@ class ChartEditor(CustomEditor):
         self.lite_box = LiteBoxView()
         self.connect(self, self.show_fullscreen_signal, self.show_fullscreen)
         self.canvas.updateGeometry()
-        
+
     def show_fullscreen(self):
         """Show the plot full screen, using the litebox"""
         from matplotlib.figure import Figure
-        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas         
+        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
         if self.value_:
             fig = Figure(
                 figsize=(200, 100),
@@ -76,7 +100,7 @@ class ChartEditor(CustomEditor):
             proxy = QtGui.QGraphicsProxyWidget()
             proxy.setWidget(canvas)
             self.lite_box.show_fullscreen_item(proxy)
-        
+
     def eventFilter(self, object, event):
         if not object.isWidgetType():
             return False
@@ -84,11 +108,11 @@ class ChartEditor(CustomEditor):
             return False
         if event.modifiers() != QtCore.Qt.NoModifier:
             return False
-        if event.buttons() == QtCore.Qt.LeftButton:         
+        if event.buttons() == QtCore.Qt.LeftButton:
             self.emit(self.show_fullscreen_signal)
-            return True        
+            return True
         return False
-            
+
     def set_value(self, value):
         self.value_ = super(ChartEditor, self).set_value(value)
         self.on_draw()

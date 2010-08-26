@@ -1,3 +1,30 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  www.conceptive.be / project-camelot@conceptive.be
+#
+#  This file is part of the Camelot Library.
+#
+#  This file may be used under the terms of the GNU General Public
+#  License version 2.0 as published by the Free Software Foundation
+#  and appearing in the file LICENSE.GPL included in the packaging of
+#  this file.  Please review the following information to ensure GNU
+#  General Public Licensing requirements will be met:
+#  http://www.trolltech.com/products/qt/opensource.html
+#
+#  If you are unsure which license is appropriate for your use, please
+#  review the following information:
+#  http://www.trolltech.com/products/qt/licensing.html or contact
+#  project-camelot@conceptive.be.
+#
+#  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+#  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  For use of this library in commercial applications, please contact
+#  project-camelot@conceptive.be
+#
+#  ============================================================================
+
 import logging
 
 logger = logging.getLogger( 'camelot.view.controls.editors.onetomanyeditor' )
@@ -50,9 +77,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
                            QtGui.QSizePolicy.Expanding )
         self.setMinimumHeight( rowHeight*5 )
         if vertical_header_clickable:
-            self.connect( self.table.verticalHeader(),
-                         QtCore.SIGNAL( 'sectionClicked(int)' ),
-                         self.createFormForIndex )
+            #self.connect( self.table.verticalHeader(),
+            #             QtCore.SIGNAL( 'sectionClicked(int)' ),
+            #             self.createFormForIndex )
+            self.table.verticalHeader().sectionClicked.connect(
+                self.createFormForIndex
+            )
         self.admin = admin
         self.create_inline = create_inline
         self.add_button = None
@@ -76,28 +106,32 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.delete_button.setIcon( icon )
         self.delete_button.setAutoRaise( True )
         self.delete_button.setToolTip(_('delete'))
-        self.connect( self.delete_button,
-                      QtCore.SIGNAL( 'clicked()' ),
-                      self.deleteSelectedRows )
+        #self.connect( self.delete_button,
+        #              QtCore.SIGNAL( 'clicked()' ),
+        #              self.deleteSelectedRows )
+        self.delete_button.clicked.connect(self.deleteSelectedRows)
         self.add_button = QtGui.QToolButton()
         icon = Icon( 'tango/16x16/actions/document-new.png' ).getQIcon()
         self.add_button.setIcon( icon )
         self.add_button.setAutoRaise( True )
         self.add_button.setToolTip(_('new'))
-        self.connect( self.add_button, QtCore.SIGNAL( 'clicked()' ), self.newRow )
+        #self.connect( self.add_button, QtCore.SIGNAL( 'clicked()' ), self.newRow )
+        self.add_button.clicked.connect(self.newRow)
         self.copy_button = QtGui.QToolButton()
         icon = Icon( 'tango/16x16/actions/edit-copy.png' ).getQIcon()
         self.copy_button.setIcon( icon )
         self.copy_button.setAutoRaise( True )
         self.copy_button.setToolTip(_('copy'))
-        self.connect( self.copy_button, QtCore.SIGNAL( 'clicked()' ), self.copy_selected_rows )
+        #self.connect( self.copy_button, QtCore.SIGNAL( 'clicked()' ), self.copy_selected_rows )
+        self.copy_button.clicked.connect(self.copy_selected_rows)
         export_button = QtGui.QToolButton()
         export_button.setIcon( Icon( 'tango/16x16/mimetypes/x-office-spreadsheet.png' ).getQIcon() )
         export_button.setAutoRaise( True )
         export_button.setToolTip(_('export as spreadsheet'))
-        self.connect( export_button,
-                     QtCore.SIGNAL( 'clicked()' ),
-                     self.exportToExcel )
+        #self.connect( export_button,
+        #             QtCore.SIGNAL( 'clicked()' ),
+        #             self.exportToExcel )
+        export_button.clicked.connect(self.exportToExcel)
         button_layout.addStretch()
         button_layout.addWidget( self.add_button )
         button_layout.addWidget( self.copy_button )

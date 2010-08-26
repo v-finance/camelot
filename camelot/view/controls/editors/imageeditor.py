@@ -41,12 +41,12 @@ from PyQt4.QtCore import Qt
 class ImageEditor(FileEditor, WideEditor):
     """Editor to view and edit image files, this is a customized
     implementation of a FileEditor"""
-    
+
     filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm
 *.tiff *.xbm *.xpm) All files (*)"""
-    
+
     def __init__(
-            self, 
+            self,
             parent=None,
             storage=None,
             preview_width=100,
@@ -58,7 +58,7 @@ class ImageEditor(FileEditor, WideEditor):
         FileEditor.__init__(
             self, parent=parent, storage=storage, **kwargs
         )
-      
+
     def setup_widget(self):
         self.layout = QtGui.QHBoxLayout()
         self.layout.setContentsMargins( 0, 0, 0, 0 )
@@ -75,52 +75,54 @@ class ImageEditor(FileEditor, WideEditor):
         button_layout = QtGui.QVBoxLayout()
         button_layout.setSpacing(0)
         button_layout.setMargin(0)
-        
+
         self.open_button = QtGui.QToolButton()
         self.open_button.setIcon(self.open_icon)
         self.open_button.setAutoRaise(True)
         self.open_button.setToolTip(unicode(_('open image')))
-        self.connect(
-            self.open_button,
-            QtCore.SIGNAL('clicked()'),
-            self.open_button_clicked
-        )
-        
+        #self.connect(
+        #    self.open_button,
+        #    QtCore.SIGNAL('clicked()'),
+        #    self.open_button_clicked
+        #)
+        self.open_button.clicked.connect(self.open_button_clicked)
+
         self.clear_button = QtGui.QToolButton()
         self.clear_button.setIcon(self.clear_icon)
         self.clear_button.setToolTip(unicode(_('delete image')))
         self.clear_button.setAutoRaise(True)
-        self.connect(
-            self.clear_button,
-            QtCore.SIGNAL('clicked()'),
-            self.clear_button_clicked
-        )
+        #self.connect(
+        #    self.clear_button,
+        #    QtCore.SIGNAL('clicked()'),
+        #    self.clear_button_clicked
+        #)
+        self.clear_button.clicked.connect(self.clear_button_clicked)
 
-        button_layout.addStretch() 
+        button_layout.addStretch()
         button_layout.addWidget(self.open_button)
-        button_layout.addWidget(self.clear_button)    
-        
+        button_layout.addWidget(self.clear_button)
+
         self.layout.addLayout(button_layout)
-        self.layout.addStretch()                
+        self.layout.addStretch()
         self.setLayout(self.layout)
         self.clear_image()
-      
+
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)
         self.open_button.setEnabled(editable)
         self.label.setEnabled(editable)
-              
+
     def set_pixmap(self, pixmap):
-        self.label.setPixmap(pixmap)      
+        self.label.setPixmap(pixmap)
         self.draw_border()
-        
+
     def set_image(self, image):
         self.set_pixmap(QtGui.QPixmap.fromImage(image))
-    
+
     def clear_image(self):
         dummy_image = Icon('tango/32x32/mimetypes/image-x-generic.png')
         self.set_pixmap(dummy_image.getQPixmap())
-              
+
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:
@@ -132,7 +134,7 @@ class ImageEditor(FileEditor, WideEditor):
                     lambda:value.checkout_thumbnail(
                         self.preview_width,
                         self.preview_height
-                    ), 
+                    ),
                     self.set_image
                 )
         else:
@@ -141,7 +143,7 @@ class ImageEditor(FileEditor, WideEditor):
             self.open_button.setToolTip(unicode(_('add file')))
         self.value = value
         return value
-    
+
     def draw_border(self):
         self.label.setFrameShape(QtGui.QFrame.Box)
         self.label.setFrameShadow(QtGui.QFrame.Plain)
@@ -151,7 +153,7 @@ class ImageEditor(FileEditor, WideEditor):
     def show_fullscreen(self, image):
         lite_box = LiteBoxView(self)
         lite_box.show_fullscreen_image(image)
-        
+
     def eventFilter(self, object, event):
         from camelot.view.model_thread import post
         if not object.isWidgetType():
@@ -163,8 +165,8 @@ class ImageEditor(FileEditor, WideEditor):
         if event.buttons() == QtCore.Qt.LeftButton:
             if self.value:
                 post(
-                    lambda:self.value.checkout_thumbnail(640,480), 
+                    lambda:self.value.checkout_thumbnail(640,480),
                     self.show_fullscreen
                 )
-            return True        
+            return True
         return False
