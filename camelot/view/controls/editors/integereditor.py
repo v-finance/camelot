@@ -25,7 +25,8 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor, editingFinished
@@ -33,11 +34,13 @@ from camelot.view.art import Icon
 from camelot.core import constants
 from math import floor
 
+
 class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
 
     def wheelEvent(self, wheel_event):
         wheel_event.ignore()
+
 
 class IntegerEditor(CustomEditor):
     """Widget for editing an integer field, with a calculator"""
@@ -98,9 +101,16 @@ class IntegerEditor(CustomEditor):
             self.spinBox.setValue(0)
 
     def get_value(self):
+        value_loading = CustomEditor.get_value(self)
+        if value_loading is not None:
+            return value_loading
+        
+        if self.value_is_none:
+            return None
+
         self.spinBox.interpretText()
         value = int(self.spinBox.value())
-        return CustomEditor.get_value(self) or value
+        return value
 
     def set_enabled(self, editable=True):
         self.spinBox.setReadOnly(not editable)

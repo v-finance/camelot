@@ -25,16 +25,18 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from customeditor import AbstractCustomEditor
 from camelot.core import constants
 from camelot.core.utils import ugettext
 
+
 class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
     """Widget for editing a boolean field"""
-  
+
     def __init__(self,
                  parent=None,
                  minimum=constants.camelot_minint,
@@ -56,8 +58,15 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
             self.setCheckState(Qt.Unchecked)
 
     def get_value(self):
-        value = self.isChecked()
-        return AbstractCustomEditor.get_value(self) or value
+        value_loading = AbstractCustomEditor.get_value(self)
+        if value_loading is not None:
+            return value_loading
+
+        if self.value_is_none:
+            return None
+
+        return self.isChecked()
+
 
     def editingFinished(self, value=None):
         self.emit(QtCore.SIGNAL('editingFinished()'))
@@ -70,6 +79,7 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
     def sizeHint(self):
         size = QtGui.QComboBox().sizeHint()
         return size
+
 
 class TextBoolEditor(QtGui.QLabel, AbstractCustomEditor):
     """

@@ -25,13 +25,15 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor
 from camelot.view.art import Icon
 from camelot.core import constants
 from camelot.view.proxy import ValueLoading
+
 
 class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
@@ -45,6 +47,7 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     # def valueFromText(self, text):
     # maybe construct some cases to make other input formats possible
     #   return text
+
 
 class FloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator"""
@@ -111,16 +114,19 @@ class FloatEditor(CustomEditor):
             self.spinBox.setValue(0.0)
 
     def get_value(self):
-        val = CustomEditor.get_value(self)
-        if val is not None:
-            return val
+        value_loading = CustomEditor.get_value(self)
+        if value_loading is not None:
+            return value_loading
+
+        if self.value_is_none:
+            return None
+
         self.spinBox.interpretText()
         value = self.spinBox.value()
-        if not value and self.value_is_none:
-            return None
         if self._decimal:
             import decimal
             value = decimal.Decimal('%.*f' % (self.precision, value))
+
         return value
 
     def set_enabled(self, editable=True):
@@ -166,4 +172,3 @@ class FloatEditor(CustomEditor):
             return True
         else:
             return False
-
