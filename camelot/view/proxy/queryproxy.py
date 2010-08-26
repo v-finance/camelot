@@ -104,10 +104,9 @@ class QueryTableProxy(CollectionProxy):
            another record than the selected row in the table.
         """
         
-        if not self._query_getter:
-            return lambda:[]
-        
         def collection_getter():
+            if not self._query_getter:
+                return []
             return self.get_query_getter()().all()
         
         return collection_getter
