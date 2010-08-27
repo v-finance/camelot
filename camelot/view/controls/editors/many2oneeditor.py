@@ -50,6 +50,9 @@ logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
 class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
     """Widget for editing many 2 one relations"""
 
+    new_icon = Icon('tango/16x16/actions/document-new.png')
+    search_icon = Icon('tango/16x16/actions/system-search.png')
+    
     class CompletionsModel(QtCore.QAbstractListModel):
 
         def __init__(self, parent=None):
@@ -107,9 +110,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.open_button.setFocusPolicy(Qt.ClickFocus)
         self.open_button.setFixedHeight(self.get_height())
         self.open_button.clicked.connect(self.openButtonClicked)
-        self.open_button.setIcon(
-            Icon('tango/16x16/actions/document-new.png').getQIcon()
-        )
+        self.open_button.setIcon( self.new_icon.getQIcon() )
         self.open_button.setToolTip(unicode(_('new')))
 
         # Search input
@@ -326,15 +327,11 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             self.search_button.setToolTip(unicode(_('clear')))
             self.entity_set = True
         else:
-            self.open_button.setIcon(
-                Icon('tango/16x16/actions/document-new.png').getQIcon()
-            )
+            self.open_button.setIcon( self.new_icon.getQIcon() )
             self.open_button.setToolTip(unicode(_('new')))
             self.open_button.setEnabled(self._editable)
 
-            self.search_button.setIcon(
-                Icon('tango/16x16/actions/system-search.png').getQIcon()
-            )
+            self.search_button.setIcon( self.search_icon.getQIcon() )
             self.search_button.setToolTip(_('Search'))
             self.entity_set = False
 

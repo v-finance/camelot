@@ -42,6 +42,8 @@ from camelot.core.utils import ugettext as _
 
 class One2ManyEditor(CustomEditor, WideEditor):
 
+    new_icon = Icon('tango/16x16/actions/document-new.png')
+    
     def __init__( self,
                  admin = None,
                  parent = None,
@@ -111,7 +113,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         #              self.deleteSelectedRows )
         self.delete_button.clicked.connect(self.deleteSelectedRows)
         self.add_button = QtGui.QToolButton()
-        icon = Icon( 'tango/16x16/actions/document-new.png' ).getQIcon()
+        icon = self.new_icon.getQIcon()
         self.add_button.setIcon( icon )
         self.add_button.setAutoRaise( True )
         self.add_button.setToolTip(_('new'))
