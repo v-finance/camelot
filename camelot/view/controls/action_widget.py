@@ -58,7 +58,7 @@ class ActionWidget(QtGui.QPushButton):
         post(self._is_enabled, self._set_enabled)
 
     def _set_enabled(self, enabled):
-        self.setEnabled(enabled)
+        self.setEnabled(enabled or False)
 
     def _is_enabled(self):
         obj = self._entity_getter()

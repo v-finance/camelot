@@ -26,7 +26,7 @@
 #  ============================================================================
 
 from PyQt4 import QtGui
-#from PyQt4 import QtCore
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from customdelegate import CustomDelegate, DocumentationMetaclass
@@ -112,10 +112,10 @@ class Many2OneDelegate(CustomDelegate):
                                             editable=self.editable)
         if option.version != 5:
             editor.setAutoFillBackground(True)
-        #self.connect(editor,
-        #             QtCore.SIGNAL('editingFinished()'),
-        #             self.commitAndCloseEditor)
-        editor.editingFinished.connect(self.commitAndCloseEditor)
+        self.connect(editor,
+                     QtCore.SIGNAL('editingFinished()'),
+                     self.commitAndCloseEditor)
+        #editor.editingFinished.connect(self.commitAndCloseEditor)
         return editor
 
     def setEditorData(self, editor, index):

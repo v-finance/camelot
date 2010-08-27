@@ -28,8 +28,7 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
-from PyQt4 import QtGui
-#from PyQt4 import QtCore
+from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 class DelegateManager(QtGui.QItemDelegate):
@@ -58,18 +57,15 @@ class DelegateManager(QtGui.QItemDelegate):
         assert delegate != None
         delegate.setParent(self)
         self.delegates[column] = delegate
-        #self.connect(delegate, QtCore.SIGNAL('commitData(QWidget*)'), self.commitData)
-        #self.connect(delegate, QtCore.SIGNAL('closeEditor(QWidget*)'), self.closeEditor)
-        delegate.commitData.connect(self.commitData)
-        delegate.closeEditor.connect(self.closeEditor)
+        delegate.commitData.connect(self._commit_data)
+        delegate.closeEditor.connect(self._close_editor)
 
-    def commitData(self, editor):
-        #self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
+    def _commit_data(self, editor):
         self.commitData.emit(editor)
 
-    def closeEditor(self, editor):
-        #self.emit(QtCore.SIGNAL('closeEditor(QWidget*)'), editor)
-        self.closeEditor.emit(editor)
+    @QtCore.pyqtSlot( QtGui.QWidget, QtGui.QAbstractItemDelegate.EndEditHint )
+    def _close_editor(self, editor, hint):
+        self.closeEditor.emit(editor, hint )
 
     def removeColumnDelegate(self, column):
         """Removes custom column delegate"""

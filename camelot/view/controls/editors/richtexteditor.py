@@ -51,14 +51,14 @@ class RichTextEditor(CustomEditor, WideEditor):
             def __init__(self, parent):
                 super(CustomTextEdit, self).__init__(parent)
                 self._changed = False
-                #self.connect(self, QtCore.SIGNAL('textChanged()'), self.setTextChanged)
-                self.textChanged.connect(self.setTextChanged)
+                #self.connect(self, QtCore.SIGNAL('textChanged()'), self._handle_text_changed)
+                self.textChanged.connect( self._handle_text_changed )
 
             def focusOutEvent(self, event):
                 if self._changed:
                     self.emit(QtCore.SIGNAL('editingFinished()'))
 
-            def textChanged(self):
+            def _handle_text_changed(self):
                 return self._changed
 
             def setTextChanged(self, state=True):
