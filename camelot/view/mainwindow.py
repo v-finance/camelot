@@ -641,3 +641,8 @@ class MainWindow(QtGui.QMainWindow):
 #        else:
 #            self.writeSettings()
 #            event.accept()
+
+    def closeEvent(self, event):
+        self.workspace.close_all_views()
+        self.writeSettings()
+        event.accept()

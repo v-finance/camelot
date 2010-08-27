@@ -39,13 +39,13 @@ from camelot.view.controls.view import AbstractView
 class DesktopBackground(QtGui.QGraphicsView):
     """A custom background widget for the desktop"""
     pass
-        
+
 class DesktopWorkspace(QtGui.QWidget):
     """A tab based workspace that can be used by views
 to display themselves. In essence this is A wrapper around the QTabWidget to
-do some initial setup and provide it with a background widget.  This was 
-implemented first using the QMdiArea, but the QMdiArea has too many 
-drawbacks, like not being able to add close buttons to the tabs in 
+do some initial setup and provide it with a background widget.  This was
+implemented first using the QMdiArea, but the QMdiArea has too many
+drawbacks, like not being able to add close buttons to the tabs in
 a decent way.
 
 .. attribute:: background
@@ -72,7 +72,7 @@ no open tabs on the desktop.
         self._tab_widget.tabCloseRequested.connect( self._tab_close_request )
         self._tab_widget.currentChanged.connect( self._tab_changed )
         layout.addWidget( self._tab_widget )
-        # setup the background widget        
+        # setup the background widget
         self._background_widget = self.background( self )
         self._background_widget.show()
         layout.addWidget( self._background_widget )
@@ -135,6 +135,16 @@ no open tabs on the desktop.
         self._tab_widget.setCurrentIndex( index )
         self._tab_widget.show()
         self._background_widget.hide()
+
+    def close_all_views(self):
+        """Remove all views from the workspace"""
+        # NOTE: will call removeTab until tab widget is cleared
+        # but removeTab does not really delete the page objects
+        #self._tab_widget.clear()
+        n = self._tab_widget.count()
+        while n:
+            self._tab_widget.tabCloseRequested.emit(n)
+            n -= 1
 
 def show_top_level(view, parent):
     """Show a widget as a top level window

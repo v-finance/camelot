@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -55,9 +55,9 @@ class ApplicationAdmin(QtCore.QObject):
     of the mainwindow.
 
     .. image:: ../_static/picture2.png
-    
+
     .. attribute:: backup_mechanism
-    
+
     A subclass of camelot.core.backup.BackupMechanism that enables the application
     to perform backups an restores.
     """
@@ -68,9 +68,9 @@ class ApplicationAdmin(QtCore.QObject):
     admins = {}
 
     # This signal is emitted whenever the sections are changed, and the views
-    # should be updated   
+    # should be updated
     sections_changed_signal = QtCore.pyqtSignal()
-    
+
     def __init__(self):
         QtCore.QObject.__init__(self)
         _application_admin_.append(self)
@@ -90,7 +90,7 @@ class ApplicationAdmin(QtCore.QObject):
     def get_entity_admin(self, entity):
         """Get the default entity admin for this entity, return None, if not
         existant"""
-        
+
         admin_class = None
         try:
             admin_class = self.admins[entity]
@@ -137,11 +137,11 @@ class ApplicationAdmin(QtCore.QObject):
     def get_name(self):
         """:return: the name of the application"""
         return self.name
-    
+
     def get_version(self):
         """:return: string representing version of the application"""
         return '1.0'
-        
+
     def get_icon(self):
         """:return: the QIcon that should be used for the application"""
         from camelot.view.art import Icon
@@ -162,11 +162,11 @@ class ApplicationAdmin(QtCore.QObject):
         """:return: a QUrl pointing to the index page for help"""
         from PyQt4.QtCore import QUrl
         return QUrl('http://www.conceptive.be/projects/camelot/')
-    
+
     def get_whats_new(self):
         """:return: a widget that has a show() method """
         return None
-    
+
     def get_affiliated_url(self):
         """:return: a QUrl pointing to an affiliated webpage
 
@@ -178,30 +178,30 @@ class ApplicationAdmin(QtCore.QObject):
         in the organization, but hard to remember.
         """
         return None
-    
+
     def get_remote_support_url(self):
         """:return: a QUrl pointing to a page to get remote support
-        
+
         When this method returns a QUrl, an additional item will be available
         in the 'Help' menu, when clicked the system browser will be opened
         an pointing to this url.
-        
+
         This can be used to connect the user to services like logmein.com, an
         online ticketing system or others.
         """
         return None
-        
+
     def get_stylesheet(self):
         """
         :return: the qt stylesheet to be used for this application as a string
         or None if no stylesheet needed
         """
         return None
-    
+
     def get_translator(self):
         """Reimplement this method to add application specific translations
         to your application.
-        
+
         :return: a QTranslator that should be used to translate the application
         """
         return QtCore.QTranslator()
@@ -261,7 +261,7 @@ class ApplicationAdmin(QtCore.QObject):
                     return activate_window
 
                 action.triggered.conect( create_window_activator( child ) )
-        
+
         return add_actions
 
     def backup(self, main_window):
