@@ -856,18 +856,19 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         post( self.getRowCount, self._refresh_content )
 
     @gui_function
-    def removeRow( self, row, delete = True ):
+    def remove_rows( self, rows, delete = True ):
         """Remove the entity associated with this row from this collection
+        @param rows: a list with the numbers of the rows to remove
         @param delete: delete the entity as well
         """
-        self.logger.debug( 'remove row %s' % row )
+        self.logger.debug( 'remove rows' )
 
-        def create_delete_function( row ):
+        def create_delete_function( rows ):
 
             def delete_function():
-                o = self._get_object( row )
-                if o:
-                    self.removeEntityInstance( o, delete )
+                objects_to_remove = [self._get_object( row ) for row in rows]
+                for obj in objects_to_remove:
+                    self.removeEntityInstance( obj, delete )
                 else:
                     # The object is not in this collection, maybe
                     # it was allready deleted, issue a refresh anyway
@@ -875,7 +876,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
             return delete_function
 
-        post( create_delete_function( row ) )
+        post( create_delete_function( rows ) )
         return True
 
     @gui_function

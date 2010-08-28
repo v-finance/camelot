@@ -43,7 +43,40 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
 
 
 class IntegerEditor(CustomEditor):
-    """Widget for editing an integer field, with a calculator"""
+    """Widget for editing an integer field, with a calculator
+
+Special use cases of the IntegerEditor :
+
+case 1
+------
+
+we have a required integer field without a default.
+
+so the model will do set_value( None )
+
+since this is a required field, the user should be able
+to enter a value, 0 is a legitimate value.
+
+when get_value is called, 0 should be returned if the
+user has set the editor to 0, and None if the user didn't
+touch the editor.
+
+so the editor should make a visual difference between
+None and 0, so the user can see he didn't enter something
+yet
+
+case 2
+------
+
+we have a non required integer field without a default
+
+the model will do set_value( None )
+
+the get_value() should return None and not 0.  because
+in case it returns 0, 0 will be written to the db, causing
+an unneeded update of the db.
+    
+"""
 
     def __init__(self,
                  parent=None,

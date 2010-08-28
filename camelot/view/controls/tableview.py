@@ -440,8 +440,7 @@ class TableView( AbstractView  ):
                                           QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
                 confirmed = False
         if confirmed:
-            for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-                self._table_model.removeRow( row )
+            self._table_model.remove_rows( set( map( lambda x: x.row(), self.table.selectedIndexes() ) ) )
 
     @gui_function
     def newRow( self ):

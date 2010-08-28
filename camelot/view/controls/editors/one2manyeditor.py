@@ -211,8 +211,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
     def deleteSelectedRows( self ):
         """Delete the selected rows in this tableview"""
         logger.debug( 'delete selected rows called' )
-        for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-            self.model.removeRow( row )
+        self.model.remove_rows( set( map( lambda x: x.row(), self.table.selectedIndexes() ) ) )
 
     def createFormForIndex( self, index ):
         from camelot.view.workspace import show_top_level

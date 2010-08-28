@@ -83,6 +83,5 @@ class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
 
     def removeSelectedRows( self ):
         """Remove the selected rows in this tableview, but don't delete them"""
-        for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-            self.model.removeRow( row, delete = False )
+        self.model.remove_rows( set( map( lambda x: x.row(), self.table.selectedIndexes() ) ), delete=False)
         self.emit( editingFinished )
