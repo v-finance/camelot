@@ -225,9 +225,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         # Set edits
         self.edits = edits or []
         self.rsh = get_signal_handler()
-        self.rsh.entity_update_signal.connect( self.handle_entity_update )
-        self.rsh.entity_delete_signal.connect( self.handle_entity_delete )
-        self.rsh.entity_create_signal.connect( self.handle_entity_create )
+        self.rsh.connect_signals( self )
 
         def get_columns():
             self._columns = columns_getter()

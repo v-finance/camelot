@@ -211,6 +211,8 @@ class NavigationPane(QtGui.QDockWidget):
 
     def __init__(self, app_admin, workspace, parent):
         QtGui.QDockWidget.__init__(self, parent)
+        # object name needs to be set for mainwindow save state
+        self.setObjectName( 'NavigationPane' )
         self._workspace = workspace
         self.app_admin = app_admin
         self.setFeatures( QtGui.QDockWidget.NoDockWidgetFeatures )

@@ -9,6 +9,7 @@ logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 from PyQt4 import QtCore
 
 from camelot.view.model_thread import AbstractModelThread, gui_function, setup_model
+from camelot.core.threading import synchronized
 
 class Task(QtCore.QObject):
 
@@ -42,20 +43,6 @@ class Task(QtCore.QObject):
         except:
             logger.error( 'unhandled exception in model thread' )
 
-def synchronized( original_function ):
-    """Decorator for synchronized access to an object, the object should
-    have an attribute _mutex which is of type QMutex
-    """
-
-    from functools import wraps
-
-    @wraps( original_function )
-    def wrapper(self, *args, **kwargs):
-        QtCore.QMutexLocker(self._mutex)
-        return original_function(self, *args, **kwargs)
-
-    return wrapper
-
 class TaskHandler(QtCore.QObject):
     """A task handler is an object that handles tasks that appear in a queue,
     when its handle_task method is called, it will sequentially handle all tasks
@@ -74,13 +61,11 @@ class TaskHandler(QtCore.QObject):
         self._busy = False
         logger.debug("TaskHandler created.")
 
-    @synchronized
     def busy(self):
         """:return True/False: indicating if this task handler is busy"""
         return self._busy
     
     @QtCore.pyqtSlot()
-    @synchronized
     def handle_task(self):
         """Handle all tasks that are in the queue"""
         self._busy = True

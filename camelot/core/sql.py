@@ -1,4 +1,5 @@
 import logging
+from functools import wraps
 
 import sqlalchemy.sql.operators
 
@@ -10,6 +11,7 @@ def transaction(original_function):
 
     logger = logging.getLogger('camelot.core.sql.transaction')
     
+    @wraps( original_function )
     def decorated_function(cls, *args, **kwargs):
         session = cls.query.session
         session.begin()
