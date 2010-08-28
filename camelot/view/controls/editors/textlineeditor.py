@@ -52,10 +52,10 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
         if value_loading is not None:
             return value_loading
 
-        if self.value_is_none:
+        value = unicode(self.text())
+        if self.value_is_none and not value:
             return None
 
-        value = unicode(self.text())
         return value
 
     def set_enabled(self, editable=True):
