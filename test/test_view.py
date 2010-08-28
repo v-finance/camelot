@@ -263,7 +263,7 @@ Test the basic functionality of the editors :
     self.grab_widget( editor, 'set_enabled()_editable' )
 
   def test_BoolEditor(self):
-    editor = self.editors.BoolEditor(parent=None, editable=False)
+    editor = self.editors.BoolEditor(parent=None, editable=False, nullable=True)
     self.assertEqual( editor.get_value(), self.ValueLoading )
     editor.set_value( True )
     self.grab_widget( editor, 'editable' )
@@ -284,8 +284,17 @@ Test the basic functionality of the editors :
     editor.set_value( True )
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
-    editor.set_value(None)
-    self.assertEqual(editor.get_value(), None)
+    editor.set_value( None )
+    # pretend the user has set the state to unchecked
+    editor.setCheckState(Qt.Unchecked)
+    self.assertEqual( editor.get_value(), False )
+    editor.set_value( None )
+    self.assertEqual( editor.get_value(), None )
+    editor = self.editors.BoolEditor(parent=None, editable=False, nullable=False)
+    editor.set_value( None )
+    self.assertEqual( editor.get_value(), False )
+    editor.setCheckState(Qt.Unchecked)
+    self.assertEqual( editor.get_value(), False )
 
   def test_CodeEditor(self):
     editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'])
@@ -434,7 +443,7 @@ Test the basic functionality of the editors :
     editor.set_value( None )
     self.assertEqual( editor.get_value(), None )
     # pretend the user has entered something
-    editor.spinBox.setValue( 2.72 )
+    editor.spinBox.setValue( 0.0 )
     self.assertTrue( editor.get_value() != None )
 
   def test_ImageEditor(self):
@@ -474,9 +483,11 @@ Test the basic functionality of the editors :
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
     editor.set_value( None )
+    # pretend the user changed the value
+    editor.spinBox.setValue( 0 )
+    self.assertEqual( editor.get_value(), 0 )
+    editor.set_value( None )
     self.assertEqual( editor.get_value(), None )
-    editor.spinBox.setValue( 272 )
-    self.assertTrue( editor.get_value() != None )
 
   def test_NoteEditor(self):
     editor = self.editors.NoteEditor(parent=None)

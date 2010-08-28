@@ -42,6 +42,7 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
                  minimum=constants.camelot_minint,
                  maximum=constants.camelot_maxint,
                  editable=True,
+		 nullable=True,
                  **kwargs):
         QtGui.QCheckBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
@@ -49,12 +50,17 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         #self.connect(self,
         #             QtCore.SIGNAL('stateChanged(int)'),
         #             self.editingFinished)
+        self._nullable = nullable
+        if self._nullable:
+            self.setTristate( True )
         self.stateChanged.connect(self.editingFinished)
 
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
         if value:
             self.setCheckState(Qt.Checked)
+        elif value==None and self._nullable:
+            self.setCheckState(Qt.PartiallyChecked)
         else:
             self.setCheckState(Qt.Unchecked)
 
@@ -62,11 +68,12 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         value_loading = AbstractCustomEditor.get_value(self)
         if value_loading is not None:
             return value_loading
-
-        if self.value_is_none:
+        state = self.checkState()
+        if state==Qt.PartiallyChecked:
             return None
-
-        return self.isChecked()
+        elif state==Qt.Unchecked:
+            return False
+        return True
 
     def editingFinished(self, value=None):
         self.emit(QtCore.SIGNAL('editingFinished()'))

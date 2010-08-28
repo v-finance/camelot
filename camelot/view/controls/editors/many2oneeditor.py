@@ -248,8 +248,8 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         if self.entity_instance_getter:
 
             def get_admin_and_title():
-                object = self.entity_instance_getter()
-                admin = self.admin.get_related_entity_admin(object.__class__)
+                obj = self.entity_instance_getter()
+                admin = self.admin.get_related_entity_admin(obj.__class__)
                 return admin, ''
 
             post(get_admin_and_title, self.show_form_view)
