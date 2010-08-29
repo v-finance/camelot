@@ -52,7 +52,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
 
     new_icon = Icon('tango/16x16/actions/document-new.png')
     search_icon = Icon('tango/16x16/actions/system-search.png')
-    
+
     class CompletionsModel(QtCore.QAbstractListModel):
 
         def __init__(self, parent=None):
@@ -133,8 +133,10 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.completer.setCompletionMode(
             QtGui.QCompleter.UnfilteredPopupCompletion
         )
-        self.completer.activated.connect(self.completionActivated)
-        self.completer.highlighted.connect(self.completion_highlighted)
+        #self.completer.activated.connect(self.completionActivated)
+        #self.completer.highlighted.connect(self.completion_highlighted)
+        self.completer.activated[QtCore.QModelIndex].connect(self.completionActivated)
+        self.completer.highlighted[QtCore.QModelIndex].connect(self.completion_highlighted)
         self.search_input.setCompleter(self.completer)
 
         # Setup layout
