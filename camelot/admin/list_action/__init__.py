@@ -171,7 +171,6 @@ class OpenFileListAction( ListActionFromModelFunction ):
         """
 
         def model_function( collection, selection, options ):
-            from PyQt4 import QtGui, QtCore
             import os
             import tempfile
             file_descriptor, file_name = tempfile.mkstemp(suffix=self.suffix)

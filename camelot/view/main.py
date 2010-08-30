@@ -157,6 +157,11 @@ class Application(QObject):
             app.processEvents()
             translator = self.application_admin.get_translator()
             self.show_splash_message(splash_window, 'Install translator')
+            if isinstance(translator, list):
+                for t in translator:
+                    app.installTranslator( t )
+            else:
+                app.installTranslator( translator )
             app.processEvents()
             app.installTranslator(translator)
 

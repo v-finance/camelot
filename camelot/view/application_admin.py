@@ -206,7 +206,8 @@ class ApplicationAdmin(QtCore.QObject):
         """Reimplement this method to add application specific translations
         to your application.
 
-        :return: a QTranslator that should be used to translate the application
+        :return: a QTranslator that should be used to translate the application or
+        a list of QTranslors if multiple translators should be used
         """
         return QtCore.QTranslator()
 
