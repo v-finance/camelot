@@ -5,6 +5,7 @@ Created on Sep 9, 2009
 '''
 import logging
 logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
+logger.setLevel(logging.DEBUG)
 
 from PyQt4 import QtCore
 
@@ -48,7 +49,7 @@ class TaskHandler(QtCore.QObject):
     when its handle_task method is called, it will sequentially handle all tasks
     that are in the queue.
     """
-    
+
     task_handler_busy_signal = QtCore.pyqtSignal(bool)
 
     def __init__(self, queue):
@@ -64,7 +65,7 @@ class TaskHandler(QtCore.QObject):
     def busy(self):
         """:return True/False: indicating if this task handler is busy"""
         return self._busy
-    
+
     @QtCore.pyqtSlot()
     def handle_task(self):
         """Handle all tasks that are in the queue"""
@@ -87,7 +88,7 @@ class TaskHandler(QtCore.QObject):
 class SignalSlotModelThread( AbstractModelThread ):
     """A model thread implementation that uses signals and slots
     to communicate between the model thread and the gui thread
-    
+
     there is no explicit model thread verification on these methods,
     since this model thread might not be THE model thread.
     """
@@ -128,7 +129,7 @@ class SignalSlotModelThread( AbstractModelThread ):
     @QtCore.pyqtSlot( bool )
     def _thread_busy(self, busy_state):
         self.thread_busy_signal.emit( busy_state )
-                
+
     @synchronized
     def post( self, request, response = None, exception = None ):
         if not self._connected and self._task_handler:
@@ -149,7 +150,7 @@ class SignalSlotModelThread( AbstractModelThread ):
         if exception:
             task.exception.connect( exception, QtCore.Qt.QueuedConnection )
         task.moveToThread(self)
-        # only put the task in the queue when it is completely set up 
+        # only put the task in the queue when it is completely set up
         self._request_queue.append(task)
         #print 'task created --->', id(task)
         self.task_available.emit()

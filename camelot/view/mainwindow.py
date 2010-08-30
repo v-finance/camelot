@@ -26,9 +26,8 @@
 #  ============================================================================
 
 import logging
-
-LOGGER = logging.getLogger('mainwindow')
-LOGGER.setLevel(logging.INFO)
+logger = logging.getLogger('camelot.view.mainwindow')
+logger.setLevel(logging.DEBUG)
 
 #
 # Dummy imports to fool the windows installer and force
@@ -57,58 +56,58 @@ class MainWindow(QtGui.QMainWindow):
 
     def __init__(self, app_admin, parent=None):
         from workspace import DesktopWorkspace
-        LOGGER.debug('initializing main window')
+        logger.debug('initializing main window')
         QtGui.QMainWindow.__init__(self, parent)
 
         self.app_admin = app_admin
 
-        LOGGER.debug('setting up workspace')
+        logger.debug('setting up workspace')
         self.workspace = DesktopWorkspace(self)
 
-        LOGGER.debug('setting child windows dictionary')
+        logger.debug('setting child windows dictionary')
 
-        LOGGER.debug('setting central widget to our workspace')
+        logger.debug('setting central widget to our workspace')
         self.setCentralWidget(self.workspace)
 
-        self.workspace.view_activated_signal.connect( self.updateMenus )
+        self.workspace.view_activated_signal.connect(self.updateMenus)
 
-        LOGGER.debug('creating navigation pane')
+        logger.debug('creating navigation pane')
         self.createNavigationPane()
 
-        LOGGER.debug('creating all the required actions')
+        logger.debug('creating all the required actions')
         self.createActions()
 
-        LOGGER.debug('creating the menus')
+        logger.debug('creating the menus')
         self.createMenus()
 
-        LOGGER.debug('creating the toolbars')
+        logger.debug('creating the toolbars')
         self.createToolBars()
 
-        LOGGER.debug('creating status bar')
+        logger.debug('creating status bar')
         self.createStatusBar()
 
-        LOGGER.debug('updating menus')
+        logger.debug('updating menus')
         self.updateMenus()
 
-        LOGGER.debug('reading saved settings' )
+        logger.debug('reading saved settings')
         self.readSettings()
 
-        LOGGER.debug('setting up printer object')
+        logger.debug('setting up printer object')
         self.printer = Printer()
 
-        LOGGER.debug('setting up window title')
+        logger.debug('setting up window title')
         self.setWindowTitle(self.app_admin.get_name())
 
         #QtCore.QTimer.singleShot(0, self.doInitialization)
-        LOGGER.debug('initialization complete')
+        logger.debug('initialization complete')
 
     # Application settings
 
     def about(self):
-        LOGGER.debug('showing about message box')
+        logger.debug('showing about message box')
         abtmsg = self.app_admin.get_about()
         QtGui.QMessageBox.about(self, _('About'), _(abtmsg))
-        LOGGER.debug('about message closed')
+        logger.debug('about message closed')
 
     def whats_new(self):
         widget = self.app_admin.get_whats_new()
@@ -128,7 +127,6 @@ class MainWindow(QtGui.QMainWindow):
             QDesktopServices.openUrl(url)
 
     def readSettings(self):
-        # TODO: improve settings reading
         settings = QtCore.QSettings()
         self.restoreGeometry(settings.value('geometry').toByteArray())
         # Don't restore state, since it messes up the toolbar if stuff was
@@ -136,12 +134,11 @@ class MainWindow(QtGui.QMainWindow):
         # self.restoreState(settings.value('state').toByteArray())
 
     def writeSettings(self):
-        # TODO: improve settings saving
-        LOGGER.debug('writing application settings')
+        logger.debug('writing application settings')
         settings = QtCore.QSettings()
         settings.setValue('geometry', QtCore.QVariant(self.saveGeometry()))
-        settings.setValue('state', QtCore.QVariant(self.saveState()))
-        LOGGER.debug('settings written')
+        #settings.setValue('state', QtCore.QVariant(self.saveState()))
+        logger.debug('settings written')
 
     def display_exception_message_box(self, exc_info):
         from controls.exception import model_thread_exception_message_box

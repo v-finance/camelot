@@ -32,6 +32,7 @@ from PyQt4 import QtCore
 
 import logging
 logger = logging.getLogger('camelot.view.model_thread')
+logger.setLevel(logging.DEBUG)
 
 _model_thread_ = []
 

@@ -1,7 +1,7 @@
 import logging
 import os
 
-FORMAT = '[%(levelname)-7s] [%(name)-35s] - %(message)s' 
+FORMAT = '[%(levelname)-7s] [%(name)-35s] - %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 
 CAMELOT_MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'media')

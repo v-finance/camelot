@@ -25,6 +25,10 @@
 #
 #  ============================================================================
 
+import logging
+logger = logging.getLogger('camelot.view.application_admin')
+logger.setLevel(logging.DEBUG)
+
 from PyQt4 import QtCore
 
 from camelot.view.model_thread import model_function
@@ -230,7 +234,6 @@ class ApplicationAdmin(QtCore.QObject):
         return _sqlalchemy_to_python_type_[type_](field)
 
     def update_window_menu(self, mainwin):
-        from PyQt4 import QtCore
 
         def add_actions():
             mainwin.windowMenu.clear()
