@@ -197,6 +197,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
         QtCore.QAbstractTableModel.__init__(self)
+        self._mutex = QtCore.QMutex()
         self.admin = admin
         self.iconSize = QtCore.QSize( QtGui.QFontMetrics( self._header_font_required ).height() - 4, QtGui.QFontMetrics( self._header_font_required ).height() - 4 )
         if self.header_icon:
@@ -298,8 +299,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.display_cache = Fifo( 10 * self.max_number_of_rows )
         self.edit_cache = Fifo( 10 * self.max_number_of_rows )
         self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
+        locker = QtCore.QMutexLocker(self._mutex)
         self.rows_under_request = set()
         self.unflushed_rows = set()
+        locker.unlock()
         self.setRowCount( rows )
 
     def set_collection_getter( self, collection_getter ):
@@ -731,9 +734,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         # wait for a while until the rows under request don't change any
         # more
         #
+        locker = QtCore.QMutexLocker(self._mutex)
         while previous_length != len(self.rows_under_request):
             previous_length = len(self.rows_under_request)
+            locker.unlock()
             QThread.msleep(5)
+            locker.relock()
         #
         # now filter out all rows that have been put in the cache
         # the gui thread didn't know about
@@ -749,6 +755,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         #
         if rows_to_get:
             rows_to_get = list(rows_to_get)
+            locker.unlock()
             rows_to_get.sort()
             offset = rows_to_get[0]
             #
@@ -799,7 +806,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
     def _cache_extended( self, interval ):
         offset, limit = interval
+        locker = QtCore.QMutexLocker(self._mutex)
         self.rows_under_request.difference_update( set( range( offset, offset + limit + 1) ) )
+        locker.unlock()
 
     def _get_row_data( self, row, cache ):
         """Get the data which is to be visualized at a certain row of the
@@ -813,7 +822,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             return cache.get_data_at_row( row )
         except KeyError:
             if row not in self.rows_under_request:
+                locker = QtCore.QMutexLocker(self._mutex)
                 self.rows_under_request.add( row )
+                locker.unlock()
                 post( self._extend_cache, self._cache_extended )
             return empty_row_data
 
