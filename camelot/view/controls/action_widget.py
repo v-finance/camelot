@@ -45,7 +45,6 @@ class ActionWidget(QtGui.QPushButton):
             self.setIcon(action.get_icon().getQIcon())
         self._action = action
         self._entity_getter = entity_getter
-        #self.connect(self, QtCore.SIGNAL('clicked()'), self.triggered)
         self.clicked.connect(self.triggered)
 
     def triggered(self):

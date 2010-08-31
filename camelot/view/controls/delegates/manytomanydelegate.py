@@ -44,7 +44,6 @@ class ManyToManyDelegate(One2ManyDelegate):
 
     def commitAndCloseEditor(self):
         editor = self.sender()
-        #self.emit(QtCore.SIGNAL('commitData(QWidget*)'), editor)
         self.commitData.emit(editor)
 
     def setModelData(self, editor, model, index):

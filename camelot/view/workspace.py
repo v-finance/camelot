@@ -32,7 +32,6 @@ from PyQt4 import QtCore
 
 import logging
 logger = logging.getLogger('camelot.view.workspace')
-logger.setLevel(logging.DEBUG)
 
 from camelot.view.model_thread import gui_function
 from camelot.view.controls.view import AbstractView

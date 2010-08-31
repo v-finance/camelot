@@ -28,7 +28,6 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
-#from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QItemDelegate
 from camelot.core.utils import variant_to_pyobject
 
@@ -130,9 +129,6 @@ will be put onto a form"""
         editor = self.sender()
         assert editor != None
         assert isinstance(editor, (QtGui.QWidget,))
-        #self.emit(SIGNAL('commitData(QWidget*)'), editor)
-        #sig = SIGNAL('closeEditor(QWidget*, QAbstractItemDelegate::EndEditHint)')
-        #self.emit(sig, editor, QtGui.QAbstractItemDelegate.NoHint)
         self.commitData.emit(editor)
         self.closeEditor.emit(editor, QtGui.QAbstractItemDelegate.NoHint)
 
