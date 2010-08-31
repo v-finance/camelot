@@ -39,10 +39,7 @@ class ManyToManyDelegate(One2ManyDelegate):
     def createEditor(self, parent, option, index):
         editor = editors.ManyToManyEditor(parent=parent, **self.kwargs)
         self.setEditorData(editor, index)
-        #self.connect(editor,
-        #             editors.editingFinished,
-        #             self.commitAndCloseEditor)
-        editor.editingFinished.connect(self.commitAndCloseEditor)
+        self.connect(editor, editors.editingFinished, self.commitAndCloseEditor)
         return editor
 
     def commitAndCloseEditor(self):
