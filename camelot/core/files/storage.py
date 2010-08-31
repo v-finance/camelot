@@ -3,7 +3,6 @@
 import logging
 
 logger = logging.getLogger( 'camelot.core.files.storage' )
-logger.setLevel(logging.DEBUG)
 
 from camelot.view.model_thread import model_function
 

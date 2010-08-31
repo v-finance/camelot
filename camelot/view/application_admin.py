@@ -27,7 +27,6 @@
 
 import logging
 logger = logging.getLogger('camelot.view.application_admin')
-logger.setLevel(logging.DEBUG)
 
 from PyQt4 import QtCore
 

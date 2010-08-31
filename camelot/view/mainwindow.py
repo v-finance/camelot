@@ -27,7 +27,6 @@
 
 import logging
 logger = logging.getLogger('camelot.view.mainwindow')
-logger.setLevel(logging.DEBUG)
 
 #
 # Dummy imports to fool the windows installer and force

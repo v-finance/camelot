@@ -107,7 +107,6 @@ class Application(QObject):
         functions before starting the event loop"""
         import logging
         logger = logging.getLogger('camelot.view.main')
-        logger.setLevel(logging.DEBUG)
 
         try:
             #
