@@ -5,7 +5,6 @@ Created on Sep 9, 2009
 '''
 import logging
 logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
-logger.setLevel(logging.DEBUG)
 
 from PyQt4 import QtCore
 
