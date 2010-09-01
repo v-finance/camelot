@@ -14,7 +14,7 @@ class StarDelegate(CustomDelegate):
   
     editor = editors.StarEditor
   
-    def __init__(self, parent, editable=True, maximum=5, **kwargs):
+    def __init__(self, parent=None, editable=True, maximum=5, **kwargs):
         CustomDelegate.__init__(self,
                                 parent=parent,
                                 editable=editable,

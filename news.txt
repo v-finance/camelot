@@ -7,8 +7,13 @@ Trunk
  
  * Improved search queries
  
- * Much more dynamic field attributes
+ * Much more dynamic field attributes : tooltip, background_color, editable,
+   choices, prefix, suffix, arrow
 
+ * Document merge import wizard
+ 
+   .. image:: _static/mergedocumentwizard/wizard_widget.png
+   
 Release 10.07.02
 ----------------
 

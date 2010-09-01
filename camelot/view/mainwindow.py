@@ -324,6 +324,13 @@ class MainWindow(QtGui.QMainWindow):
             slot = self.updateValue,
             tip = _('Replace the content of a field for all rows in a selection')
         )
+        
+        self.mergeDocumentAct = createAction(
+            parent = self,
+            text = _('Merge document'),
+            slot = self.merge_document,
+            tip = _('Merge a template document with all rows in a selection')
+        )
 
         self.exportToExcelAct = createAction(
             parent=self,
@@ -461,7 +468,16 @@ class MainWindow(QtGui.QMainWindow):
         selection_getter = self.activeMdiChild().get_selection_getter()
         wizard = UpdateValueWizard(admin=admin, selection_getter=selection_getter)
         wizard.exec_()
+        
+    def merge_document(self):
+        """Run the merge document wizard on the selection in the current
+        table view"""
+        from camelot.view.wizard.merge_document import MergeDocumentWizard
 
+        selection_getter = self.activeMdiChild().get_selection_getter()
+        wizard = MergeDocumentWizard(selection_getter=selection_getter)
+        wizard.exec_()
+        
     def exportToExcel(self):
         """creates an excel file from the view"""
         widget = self.activeMdiChild()
@@ -511,7 +527,10 @@ class MainWindow(QtGui.QMainWindow):
 
         self.editMenu = self.menuBar().addMenu(_('&Edit'))
 
-        addActions(self.editMenu, (self.copyAct, self.updateValueAct, self.selectAllAct))
+        addActions(self.editMenu, (self.copyAct, 
+                                   self.selectAllAct, 
+                                   self.updateValueAct,
+                                   self.mergeDocumentAct))
 
         self.viewMenu = self.menuBar().addMenu(_('View'))
         addActions(self.viewMenu, (self.sessionRefreshAct,))
