@@ -127,11 +127,12 @@ class FloatEditor(CustomEditor):
         if value_loading is not None:
             return value_loading
 
-        if self.value_is_none:
-            return None
-
         self.spinBox.interpretText()
         value = self.spinBox.value()
+        
+        if not value and self.value_is_none:
+            return None
+
         if self._decimal:
             import decimal
             value = decimal.Decimal('%.*f' % (self.precision, value))

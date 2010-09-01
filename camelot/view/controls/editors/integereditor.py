@@ -147,11 +147,12 @@ an unneeded update of the db.
         if value_loading is not None:
             return value_loading
 
-        if self.value_is_none:
-            return None
-
         self.spinBox.interpretText()
         value = int(self.spinBox.value())
+        
+        if not value and self.value_is_none:
+            return None
+
         return value
 
     def set_enabled(self, editable=True):
