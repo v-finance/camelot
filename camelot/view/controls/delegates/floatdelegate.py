@@ -46,6 +46,7 @@ class FloatDelegate( CustomDelegate ):
         fontColor = QtGui.QColor()
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
+            fontColor = option.palette.highlightedText().color()
         else:
             if editable:
                 painter.fillRect(option.rect, background_color or option.palette.base())
