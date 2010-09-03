@@ -4,9 +4,12 @@ Wizard to merge documents with a list of objects.
 This wizard is triggered thru an entry in the main menu.
 '''
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
+
+import os
 
 from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import variant_to_pyobject
 from camelot.view.art import Icon
 from camelot.view.wizard.pages.progress_page import ProgressPage
 from camelot.view.wizard.pages.select import SelectFilePage
@@ -26,6 +29,31 @@ class MergePage(ProgressPage):
     def __init__(self, parent, selection_getter):
         super(MergePage, self).__init__(parent)
         self._selection_getter = selection_getter
+        
+    def run(self):
+        from jinja import Environment, FileSystemLoader
+        import tempfile
+        import datetime
+        objects = list(self._selection_getter())
+        self.update_maximum_signal.emit( len(objects) + 1)
+        number_of_digits = len( str( len( objects ) + 1 ) )
+        destination_folder = tempfile.mkdtemp()
+        template_file_name = variant_to_pyobject( self.field('datasource') )
+        file_system_loader = FileSystemLoader( os.path.dirname( template_file_name ) )
+        environment = Environment( loader=file_system_loader )
+        template = environment.get_template( os.path.basename( template_file_name ) )
+        extension = os.path.splitext( template_file_name )[1]
+        self.update_progress_signal.emit( 1, 'Opened template' )
+        for i, obj in enumerate(objects):
+            context = {'obj':obj, 'now':datetime.datetime.now()}
+            document = template.render( context )
+            index = '%0*i'%(number_of_digits, i+1)
+            destination_file = os.path.join( destination_folder, 
+                                             'document %s'%index + extension )
+            open( destination_file, 'w').write( document.encode('utf-8') )
+            self.update_progress_signal.emit( i+1, unicode(obj) )
+        url = QtCore.QUrl.fromLocalFile( destination_folder )
+        QtGui.QDesktopServices.openUrl( url )
 
 class MergeDocumentWizard(QtGui.QWizard):
     """This wizard lets the user select a template file, it then
