@@ -365,7 +365,6 @@ class FormView(AbstractView):
         self._form.to_previous()
 
     def showMessage(self, valid):
-        import sip
         if not valid:
             reply = self.validator.validityDialog(
                 self._form.get_index(), self

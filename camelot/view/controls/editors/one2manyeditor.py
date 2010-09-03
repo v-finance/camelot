@@ -30,7 +30,6 @@ import logging
 logger = logging.getLogger( 'camelot.view.controls.editors.onetomanyeditor' )
 
 from PyQt4 import QtGui
-from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 from wideeditor import WideEditor
 from customeditor import CustomEditor

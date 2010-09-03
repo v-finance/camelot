@@ -27,8 +27,6 @@
 
 """Proxies representing the results of a query"""
 
-from PyQt4.QtCore import Qt
-
 import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 

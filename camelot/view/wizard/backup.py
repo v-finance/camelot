@@ -26,7 +26,6 @@
 #  ==================================================================================
 
 from PyQt4 import QtGui
-from PyQt4 import QtCore
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.wizard.pages.backup_page import SelectBackupFilePage, SelectRestoreFilePage

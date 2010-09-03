@@ -38,8 +38,6 @@ class IntegerDelegate(CustomDelegate):
             prefix = field_attributes.get( 'prefix', '' )
             suffix = field_attributes.get( 'suffix', '' )
             background_color = field_attributes.get( 'background_color', None )
-
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
         
         rect = option.rect
         rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
@@ -48,14 +46,14 @@ class IntegerDelegate(CustomDelegate):
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
             fontColor = QtGui.QColor()
-            if self.editable:
+            if editable:
                 Color = option.palette.highlightedText().color()
                 fontColor.setRgb(Color.red(), Color.green(), Color.blue())
             else:
                 fontColor.setRgb(130,130,130)
         else:
-            if self.editable:
-                painter.fillRect(option.rect, background_color)
+            if editable:
+                painter.fillRect(option.rect, background_color or option.palette.base())
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(0,0,0)
             else:

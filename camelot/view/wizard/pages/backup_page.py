@@ -27,7 +27,6 @@
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4.QtGui import QDesktopServices
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext, variant_to_pyobject

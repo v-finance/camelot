@@ -14,7 +14,9 @@ def synchronized( original_function ):
 
     @wraps( original_function )
     def wrapper(self, *args, **kwargs):
-        _locker = QtCore.QMutexLocker(self._mutex)
-        return original_function(self, *args, **kwargs)
+        locker = QtCore.QMutexLocker(self._mutex)
+        result = original_function(self, *args, **kwargs)
+        locker.unlock()
+        return result
 
     return wrapper
