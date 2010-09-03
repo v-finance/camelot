@@ -56,7 +56,7 @@ class Dashboard(BareFrame):
         busy_widget.setMinimumSize( desktop.width() * Dashboard.SCALE, desktop.height() * Dashboard.SCALE )
         #self.addPermanentWidget(busy_widget, 0)
         mt = get_model_thread()
-        self.connect(mt, mt.thread_busy_signal, busy_widget.set_busy)
+        mt.thread_busy_signal.connect( busy_widget.set_busy )
         busy_widget.set_busy(mt.busy())
         
 
