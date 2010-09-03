@@ -53,6 +53,8 @@ class MyEntity(Entity):
 
 """
 
+from PyQt4.QtCore import Qt
+
 class Container(object):
     """Top level class for all container classes"""
     pass
@@ -72,7 +74,13 @@ class Arrow(Container):
 class Interval(object):
     """Helper class for IntervalsContainer, specifications for one interval"""
 
-    def __init__(self, begin, end, name, color):
+    def __init__(self, begin, end, name='', color=Qt.black):
+        """
+        :param begin: integer of float specifiying the begin of the interval
+        :param end: integer of float specifiying the end of the interval
+        :param name: a string representing the name of the interval
+        :param color: a QColor to be used to display the interval
+        """
         self.begin = begin
         self.end = end
         self.name = name

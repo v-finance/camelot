@@ -162,27 +162,25 @@ will be put onto a form"""
         :arg margin_left: additional margin to the left, to be used for icons or others
         :arg margin_right: additional margin to the right, to be used for icons or others"""
 
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
+        field_attributes = variant_to_pyobject( index.model().data( index, Qt.UserRole ) )
+        if field_attributes != ValueLoading:
+            editable = field_attributes.get( 'editable', True )
+            background_color = field_attributes.get( 'background_color', None )
+            
         rect = option.rect
 
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
-            fontColor = QtGui.QColor()
-            if self.editable:
-                Color = option.palette.highlightedText().color()
-                fontColor.setRgb(Color.red(), Color.green(), Color.blue())
-            else:
-                fontColor.setRgb(130,130,130)
+            fontColor = option.palette.highlightedText().color()
         else:
-            if self.editable:
-                painter.fillRect(rect, background_color)
+            if editable:
+                painter.fillRect(rect, background_color or option.palette.base() )
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(0,0,0)
             else:
-                painter.fillRect(rect, option.palette.window())
+                painter.fillRect(rect, background_color or option.palette.window() )
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(130,130,130)
-
 
         painter.setPen(fontColor.toRgb())
         painter.drawText(rect.x() + 2 + margin_left,
