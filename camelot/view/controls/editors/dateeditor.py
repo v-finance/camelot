@@ -102,15 +102,7 @@ class DateEditor(CustomEditor):
         self.maximum = datetime.date.max
         self.setFocusProxy(self.line_edit)
 
-        self.connect(self.line_edit,
-                     QtCore.SIGNAL('editingFinished()'),
-                     self.editingFinished)
-        #self.connect(self.line_edit,
-        #             QtCore.SIGNAL('textEdited(const QString&)'),
-        #             self.text_edited)
-        #self.connect(special_date_menu,
-        #             QtCore.SIGNAL('triggered(QAction*)'),
-        #             self.setSpecialDate)
+        self.line_edit.editingFinished.connect( self.line_edit_finished )
         self.line_edit.textEdited.connect(self.text_edited)
         special_date_menu.triggered.connect(self.setSpecialDate)
 
@@ -119,11 +111,11 @@ class DateEditor(CustomEditor):
         self.set_value(date)
         self.emit(editingFinished)
 
-    def editingFinished(self):
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+    def line_edit_finished(self):
+        self.editingFinished.emit()
 
     def focusOutEvent(self, event):
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+        self.editingFinished.emit()
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
