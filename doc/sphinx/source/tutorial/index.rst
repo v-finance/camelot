@@ -14,3 +14,4 @@ The reader can read the following sub-sections in any order.
 
    videostore.rst
    reporting.rst
+   document_merge.rst
