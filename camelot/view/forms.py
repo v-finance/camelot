@@ -80,7 +80,7 @@ class Form( object ):
                 yield field;
 
 
-    def removeField( self, original_field ):
+    def remove_field( self, original_field ):
         """Remove a field from the form, This function can be used to modify
         inherited forms.
 
@@ -89,7 +89,7 @@ class Form( object ):
         """
         for c in self._content:
             if isinstance( c, Form ):
-                c.removeField( original_field )
+                c.remove_field( original_field )
             if original_field in self._content:
                 self._content.remove( original_field )
                 return True
@@ -98,7 +98,7 @@ class Form( object ):
                 return True
         return False
 
-    def replaceField( self, original_field, new_field ):
+    def replace_field( self, original_field, new_field ):
         """Replace a field on this form with another field.  This function can be used to
         modify inherited forms.
 
@@ -108,7 +108,7 @@ class Form( object ):
         """
         for i, c in enumerate( self._content ):
             if isinstance( c, Form ):
-                c.replaceField( original_field, new_field )
+                c.replace_field( original_field, new_field )
             elif c == original_field:
                 self._content[i] = new_field
                 return True
@@ -371,12 +371,18 @@ class TabForm( Form ):
             if label == tab_label:
                 return form
 
-    def replaceField( self, original_field, new_field ):
+    def replace_field( self, original_field, new_field ):
         for _label, form in self.tabs:
-            if form.replaceField( original_field, new_field ):
+            if form.replace_field( original_field, new_field ):
                 return True
         return False
-
+    
+    def remove_field( self, original_field ):
+        for _label, form in self.tabs:
+            if form.remove_field( original_field ):
+                return True
+        return False
+    
     def _get_fields_from_form( self ):
         for _label, form in self.tabs:
             for field in form._get_fields_from_form():
