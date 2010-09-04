@@ -655,16 +655,18 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                                 #
                                 if ( not 'Imag' in old_value.__class__.__name__ ) and not direction:
                                     from camelot.model.memento import BeforeUpdate
-                                    from camelot.model.authentication import getCurrentAuthentication
-                                    history = BeforeUpdate( model = unicode( self.admin.entity.__name__ ),
-                                                           primary_key = o.id,
-                                                           previous_attributes = {attribute:old_value},
-                                                           authentication = getCurrentAuthentication() )
-
-                                    try:
-                                        elixir.session.flush( [history] )
-                                    except DatabaseError, e:
-                                        self.logger.error( 'Programming Error, could not flush history', exc_info = e )
+                                    # only register the update when the camelot model is active
+                                    if hasattr(BeforeUpdate, 'query'):
+                                        from camelot.model.authentication import getCurrentAuthentication
+                                        history = BeforeUpdate( model = unicode( self.admin.entity.__name__ ),
+                                                               primary_key = o.id,
+                                                               previous_attributes = {attribute:old_value},
+                                                               authentication = getCurrentAuthentication() )
+    
+                                        try:
+                                            elixir.session.flush( [history] )
+                                        except DatabaseError, e:
+                                            self.logger.error( 'Programming Error, could not flush history', exc_info = e )
                         # update the cache
                         self._add_data(self.getColumns(), row, o)
                         #@todo: update should only be sent remotely when flush was done

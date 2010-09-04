@@ -478,11 +478,13 @@ attribute to enable search.
                     pk = primary_key[0]
                     # save the state before the update
                     from camelot.model.memento import BeforeDelete
-                    from camelot.model.authentication import getCurrentAuthentication
-                    history = BeforeDelete( model = unicode( self.entity.__name__ ),
-                                            primary_key = pk,
-                                            previous_attributes = {},
-                                            authentication = getCurrentAuthentication() )
+                    # only register the delete when the camelot model is active
+                    if hasattr(BeforeDelete, 'query'):
+                        from camelot.model.authentication import getCurrentAuthentication
+                        history = BeforeDelete( model = unicode( self.entity.__name__ ),
+                                                primary_key = pk,
+                                                previous_attributes = {},
+                                                authentication = getCurrentAuthentication() )
                 entity_instance.delete()
                 session.flush( [entity_instance] )
                 if history:
