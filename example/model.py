@@ -78,12 +78,11 @@ class Movie(Entity):
   #
   # To fully customize the way the entity is visualized, the EntityAdmin
   # subclass should overrule some of the EntityAdmin's methods
-  #
-     
+  #  
   class Admin(EntityAdmin):
     # the list_display attribute specifies which entity attributes should
     # be visible in the table view        
-    list_display = ['title', 'releasedate', 'director', 'description', 'total_visitors']
+    list_display = ['title', 'releasedate', 'rating', 'cover']
     # define filters to be available in the table view
     list_filter = ['genre', ComboBoxFilter('director.full_name')]
     # if the search function needs to look in related object attributes,
@@ -122,6 +121,15 @@ class Movie(Entity):
                                                       <tr><td>5 stars</td><td>Awesome !</td></tr>
                                                    </table>'''),
                             smiley=dict(delegate=delegates.SmileyDelegate))
+    #
+    # through subclassing, even more details of the look and feel can
+    # be customized, in this example, we change the number of lines of
+    # text visible in each row
+    #
+    class TableView( EntityAdmin.TableView):
+        
+        class TableWidget( EntityAdmin.TableView.TableWidget ):
+            lines_per_row = 5
 
   def __unicode__(self):
     return self.title or ''

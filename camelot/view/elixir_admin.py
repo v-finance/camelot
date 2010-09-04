@@ -344,7 +344,7 @@ attribute to enable search.
                 )
                 try:
                     setattr(entity_instance, field, default_value)
-                except AttributeError, e:
+                except AttributeError, exc:
                     logger.error(
                         'Programming Error : could not set'
                         ' attribute %s to %s on %s' % (
@@ -352,7 +352,7 @@ attribute to enable search.
                             default_value,
                             entity_instance.__class__.__name__
                         ),
-                        exc_info=e
+                        exc_info=exc
                     )
 
 
@@ -367,7 +367,6 @@ attribute to enable search.
         returned widget has an entity_selected_signal signal that will be fired
         when a entity has been selected.
         """
-        from controls.tableview import TableView
         from art import Icon
         from proxy.queryproxy import QueryTableProxy
         from PyQt4 import QtCore
@@ -375,15 +374,14 @@ attribute to enable search.
         class SelectQueryTableProxy(QueryTableProxy):
             header_icon = Icon('tango/16x16/emblems/emblem-symbolic-link.png')
 
-        class SelectView(TableView):
-
+        class SelectView(admin.TableView):
             table_model = SelectQueryTableProxy
             entity_selected_signal = QtCore.pyqtSignal(object)
             title_format = 'Select %s'
 
             def __init__(self, admin, parent):
-                TableView.__init__(
-                    self, admin,
+                super(SelectView, self).__init__(
+                    admin,
                     search_text=search_text, parent=parent
                 )
                 self.row_selected_signal.connect( self.sectionClicked )
@@ -391,7 +389,6 @@ attribute to enable search.
 
             def emit_entity_selected(self, instance_getter):
                 self.entity_selected_signal.emit( instance_getter )
-                #self.close()
 
             @QtCore.pyqtSlot(int)
             def sectionClicked(self, index):

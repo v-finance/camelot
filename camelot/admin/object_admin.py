@@ -31,6 +31,7 @@ import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
 from camelot.view.model_thread import gui_function, model_function
+from camelot.view.controls.tableview import TableView
 from camelot.core.utils import ugettext as _
 from camelot.core.utils import ugettext_lazy
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -179,8 +180,7 @@ The QWidget class to be used when a table view is needed
     form_actions = []
     form_title_column = None #DEPRECATED
     field_attributes = {}
-
-    TableView = None
+    TableView = TableView
 
     def __init__(self, app_admin, entity):
         """
@@ -191,9 +191,6 @@ The QWidget class to be used when a table view is needed
         used
         """
         from camelot.view.remote_signals import get_signal_handler
-        from camelot.view.controls.tableview import TableView
-        if not self.TableView:
-            self.TableView = TableView
         if not app_admin:
             from camelot.view.application_admin import get_application_admin
             self.app_admin = get_application_admin()

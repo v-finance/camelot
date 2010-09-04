@@ -49,19 +49,33 @@ from search import SimpleSearchControl
 
 
 class TableWidget( QtGui.QTableView):
-    """A widget displaying a table, to be used within a TableView"""
+    """A widget displaying a table, to be used within a TableView
 
+.. attribute:: margin
+
+margin, specified as a number of pixels, used to calculate the height of a row
+in the table, the minimum row height will allow for this number of pixels below
+and above the text.
+
+.. attribute:: lines_per_row
+
+the number of lines of text that should be viewable in a single row.
+"""
+
+    margin = 5
+    lines_per_row = 1
+    
     def __init__( self, parent = None ):
         QtGui.QTableView.__init__( self, parent )
         logger.debug( 'create TableWidget' )
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
         self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | QtGui.QAbstractItemView.DoubleClicked )
         self.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-        # set to false while sorting is not implemented in CollectionProxy
         self.horizontalHeader().setClickable( True )
         self._header_font_required = QtGui.QApplication.font()
         self._header_font_required.setBold( True )
-        self._minimal_row_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing() + 10
+        line_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing()
+        self._minimal_row_height = line_height * self.lines_per_row + 2*self.margin
         self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
         self.connect( self.horizontalHeader(), QtCore.SIGNAL('sectionClicked(int)'), self.horizontal_section_clicked )
 
@@ -72,25 +86,27 @@ class TableWidget( QtGui.QTableView):
         if not header.isSortIndicatorShown():
             header.setSortIndicatorShown( True )
         elif header.sortIndicatorSection()==logical_index:
-            # apparently, the sort order on the header is allready switched when the section
-            # was clicked, so there is no need to reverse it
+            # apparently, the sort order on the header is allready switched 
+            # when the section was clicked, so there is no need to reverse it
             order = header.sortIndicatorOrder()
         header.setSortIndicator( logical_index, order )
         self.model().sort( logical_index, order )
 
     def setModel( self, model ):
         QtGui.QTableView.setModel( self, model )
-        self.connect( self.selectionModel(), SIGNAL( 'currentChanged(const QModelIndex&,const QModelIndex&)' ), self.activated )
+        self.selectionModel().currentChanged.connect( self.activated )
 
+    @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)
     def activated( self, selectedIndex, previousSelectedIndex ):
         option = QtGui.QStyleOptionViewItem()
-        newSize = self.itemDelegate( selectedIndex ).sizeHint( option, selectedIndex )
+        new_size = self.itemDelegate( selectedIndex ).sizeHint( option, 
+                                                                selectedIndex )
         row = selectedIndex.row()
         if previousSelectedIndex.row() >= 0:
-            oldSize = self.itemDelegate( previousSelectedIndex ).sizeHint( option, selectedIndex )
-            previousRow = previousSelectedIndex.row()
-            self.setRowHeight( previousRow, oldSize.height() )
-        self.setRowHeight( row, newSize.height() )
+            previous_row = previousSelectedIndex.row()
+            self.setRowHeight( previous_row, self._minimal_row_height )
+        self.setRowHeight( row, max( new_size.height(), 
+                                     self._minimal_row_height ) )
 
 class RowsWidget( QtGui.QLabel ):
     """Widget that is part of the header widget, displaying the number of rows
@@ -121,8 +137,10 @@ class HeaderWidget( QtGui.QWidget ):
         layout = QtGui.QVBoxLayout()
         widget_layout = QtGui.QHBoxLayout()
         search = self.search_widget( self )
-        search.expand_search_options_signal.connect( self.expand_search_options )
-        title = UserTranslatableLabel( admin.get_verbose_name_plural(), self )
+        search.expand_search_options_signal.connect( 
+            self.expand_search_options )
+        title = UserTranslatableLabel( admin.get_verbose_name_plural(), 
+                                       self )
         title.setFont( self._title_font )
         widget_layout.addWidget( title )
         widget_layout.addWidget( search )
@@ -142,11 +160,17 @@ class HeaderWidget( QtGui.QWidget ):
         self.search = search
 
     def _fill_expanded_search_options(self, columns):
+        """Given the columns in the table view, present the user
+        with more options to filter rows in the table
+        :param columns: a list of tuples with field names and attributes
+        """
         from camelot.view.controls.filter_operator import FilterOperator
         layout = QtGui.QHBoxLayout()
         for field, attributes in columns:
             if 'operators' in attributes and attributes['operators']:
-                widget = FilterOperator( self._admin.entity, field, attributes, self)
+                widget = FilterOperator( self._admin.entity, 
+                                         field, attributes, 
+                                         self )
                 self.connect( widget, filter_changed_signal,  self._filter_changed )
                 layout.addWidget( widget )
         layout.addStretch()
@@ -216,7 +240,7 @@ class TableView( AbstractView  ):
   """
 
     header_widget = HeaderWidget
-    table_widget = TableWidget
+    TableWidget = TableWidget
 
     #
     # The proxy class to use
@@ -335,7 +359,7 @@ class TableView( AbstractView  ):
             self.table.deleteLater()
             self._table_model.deleteLater()
         splitter = self.findChild( QtGui.QWidget, 'splitter' )
-        self.table = self.table_widget( splitter )
+        self.table = self.TableWidget( splitter )
         self._table_model = self.create_table_model( admin )
         self.table.setModel( self._table_model )
         self.connect( self.table.verticalHeader(),
@@ -440,7 +464,8 @@ class TableView( AbstractView  ):
                                           QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
                 confirmed = False
         if confirmed:
-            self._table_model.remove_rows( set( map( lambda x: x.row(), self.table.selectedIndexes() ) ) )
+            rows = set( index.row() for index in self.table.selectedIndexes() )
+            self._table_model.remove_rows( set( rows ) )
 
     @gui_function
     def newRow( self ):
@@ -450,16 +475,10 @@ class TableView( AbstractView  ):
                                            oncreate = lambda o:self._table_model.insertEntityInstance( 0, o ),
                                            onexpunge = lambda o:self._table_model.removeEntityInstance( o ) )
         show_top_level( form, self )
-        # @todo: dirty trick to keep reference
-        #self.__form = form
 
     def closeEvent( self, event ):
         """reimplements close event"""
         logger.debug( 'tableview closed' )
-        # remove all references we hold, to enable proper garbage collection
-        del self.table_layout
-        del self.table
-        del self._table_model
         event.accept()
 
     def selectTableRow( self, row ):
@@ -576,8 +595,8 @@ class TableView( AbstractView  ):
     def set_filters_and_actions( self, filters_and_actions ):
         """sets filters for the tableview"""
         filters, actions = filters_and_actions
-        from filterlist import FilterList
-        from actionsbox import ActionsBox
+        from camelot.view.controls.filterlist import FilterList
+        from camelot.view.controls.actionsbox import ActionsBox
         logger.debug( 'setting filters for tableview' )
         filters_widget = self.findChild(FilterList, 'filters')
         if filters_widget:
