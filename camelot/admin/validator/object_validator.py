@@ -33,6 +33,7 @@ from PyQt4 import QtCore
 
 from camelot.view.fifo import Fifo
 from camelot.view.model_thread import post
+from camelot.core.utils import ugettext as _
 
 
 class ObjectValidator(QtCore.QObject):
@@ -117,7 +118,7 @@ class ObjectValidator(QtCore.QObject):
                     elif (attributes['delegate'] == delegates.VirtualAddressDelegate) and (not value[1]):
                         is_null = True
                     if is_null:
-                        messages.append(u'%s is a required field' % (attributes['name']))
+                        messages.append(_(u'%s is a required field') % (attributes['name']))
         logger.debug(u'messages : %s'%(u','.join(messages)))
         return messages
 

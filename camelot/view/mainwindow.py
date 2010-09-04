@@ -144,7 +144,7 @@ class MainWindow(QtGui.QMainWindow):
         model_thread_exception_message_box(exc_info)
 
     def runAction(self, name, callable):
-        progress = QtGui.QProgressDialog('Please wait', QtCore.QString(), 0, 0)
+        progress = QtGui.QProgressDialog(_('Please wait'), QtCore.QString(), 0, 0)
         progress.setWindowTitle(name)
         progress.show()
         post(
@@ -429,7 +429,7 @@ class MainWindow(QtGui.QMainWindow):
             def html(self, entity_getter):
                 return active.to_html()
 
-        action = PrintPreview('Print Preview')
+        action = PrintPreview(_('Print Preview'))
         action.run(lambda:None)
 
     def new(self):

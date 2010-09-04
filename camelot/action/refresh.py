@@ -34,6 +34,7 @@ from PyQt4.QtCore import Qt
 
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
+from camelot.core.utils import ugettext as _
 
 import logging
 logger = logging.getLogger('camelot.action.refresh')
@@ -44,7 +45,7 @@ class SessionRefresh(QtGui.QAction):
     a local entity update signal via the remote_signals mechanism"""
 
     def __init__(self, parent):
-        super(SessionRefresh, self).__init__('Refresh', parent)
+        super(SessionRefresh, self).__init__(_('Refresh'), parent)
         self.setShortcut(Qt.Key_F9)
         self.setIcon(Icon('tango/16x16/actions/view-refresh.png').getQIcon())
         self.triggered.connect(self.sessionRefresh)

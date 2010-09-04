@@ -1,5 +1,6 @@
 """Main function, to be called to start the GUI interface"""
 from PyQt4.QtCore import QObject
+from camelot.core.utils import ugettext as _
 
 class Application(QObject):
     """The camelot application.  This class will take care of the order of
@@ -117,7 +118,7 @@ class Application(QObject):
             app = QtGui.QApplication([a for a in sys.argv if a])
             splash_window = self.show_splashscreen()
 
-            self.show_splash_message(splash_window, 'Initialize application')
+            self.show_splash_message(splash_window, _('Initialize application'))
             # regularly call processEvents to keep the splash alive
             app.processEvents()
             #  font = app.font()
@@ -138,7 +139,7 @@ class Application(QObject):
             self.pre_initialization()
             app.processEvents()
             # regularly call processEvents to keep the splash alive
-            self.show_splash_message(splash_window, 'Setup database')
+            self.show_splash_message(splash_window, _('Setup database'))
             app.processEvents()
             self.start_model_thread()
             app.processEvents()
@@ -149,24 +150,23 @@ class Application(QObject):
             #
             from camelot.core.utils import load_translations
             from camelot.view.model_thread import get_model_thread
-            self.show_splash_message(splash_window, 'Load translations')
+            self.show_splash_message(splash_window, _('Load translations'))
             app.processEvents()
             get_model_thread().post(load_translations)
-            self.show_splash_message(splash_window, 'Create translator')
+            self.show_splash_message(splash_window, _('Create translator'))
             app.processEvents()
             translator = self.application_admin.get_translator()
-            self.show_splash_message(splash_window, 'Install translator')
+            self.show_splash_message(splash_window, _('Install translator'))
             if isinstance(translator, list):
                 for t in translator:
                     app.installTranslator( t )
             else:
                 app.installTranslator( translator )
             app.processEvents()
-            app.installTranslator(translator)
 
             #self.load_translations(app)
             # Set the style sheet
-            self.show_splash_message(splash_window, 'Create main window')
+            self.show_splash_message(splash_window, _('Create main window'))
             app.processEvents()
             stylesheet = self.application_admin.get_stylesheet()
             if stylesheet:
