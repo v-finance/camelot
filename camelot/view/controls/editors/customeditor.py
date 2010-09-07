@@ -83,7 +83,7 @@ class AbstractCustomEditor(object):
         return finalHeight
 
     def set_background_color(self, background_color):
-        if background_color not in (None, ValueLoading):         
+        if background_color not in (None, ValueLoading):
             palette = self.palette()
             for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
                 for y in [self.backgroundRole(), QtGui.QPalette.Window]:
@@ -97,9 +97,9 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
   dual state functionality.  Each editor should have the posibility to have as
   its value `ValueLoading` specifying that no value has been set yet.
   """
-  
+
     editingFinished = QtCore.pyqtSignal()
-    
+
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
