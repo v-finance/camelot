@@ -30,6 +30,7 @@ from virtualaddressdelegate import VirtualAddressDelegate
 from smileydelegate import SmileyDelegate
 from notedelegate import NoteDelegate
 from labeldelegate import LabelDelegate
+from monthsdelegate import MonthsDelegate
 
 doc = """Camelot includes a number of Qt delegates, most of them are used as default
 delegates for the various sqlalchemy and camelot field types.

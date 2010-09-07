@@ -552,6 +552,25 @@ Test the basic functionality of the editors :
     editor.set_enabled( True )
     self.grab_widget( editor, 'set_enabled()_editable' )
 
+  def test_MonthsEditor(self):
+    editor = self.editors.MonthsEditor(parent=None)
+    self.assertEqual(editor.get_value(), self.ValueLoading)
+    editor.set_value(12)
+    self.grab_widget(editor, 'editable')
+    self.assertEqual(editor.get_value(),  12)
+    editor.set_value(self.ValueLoading)
+    self.assertEqual(editor.get_value(), self.ValueLoading)
+    editor = self.editors.MonthsEditor(parent=None, editable=False)
+    self.assertEqual(editor.get_value(), self.ValueLoading)
+    editor.set_value(12)
+    self.grab_widget(editor, 'disabled')
+    self.assertEqual(editor.get_value(), 12)
+    editor.set_value(self.ValueLoading)
+    self.assertEqual(editor.get_value(), self.ValueLoading)
+    editor.set_enabled(True)
+    self.grab_widget(editor, 'set_enabled()_editable')
+
+
 from camelot.view import forms
 
 class FormTest(ModelThreadTestCase):
@@ -925,6 +944,15 @@ class DelegateTest(ModelThreadTestCase):
     self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'))
     delegate = self.delegates.VirtualAddressDelegate(parent=None, editable=False)
     self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'), 'disabled')
+
+  def testMonthsDelegate(self):
+    delegate = self.delegates.MonthsDelegate(parent=None, **self.kwargs)
+    editor = delegate.createEditor(None, self.option, None)
+    self.assertTrue(isinstance(editor, self.editors.MonthsEditor))
+    self.grab_delegate(delegate, 12)
+    delegate = self.delegates.MonthsDelegate(parent=None, editable=False)
+    self.grab_delegate(delegate, 12, 'disabled')
+
 
 class FilterTest(ModelThreadTestCase):
     """Test the filters in the table view"""

@@ -9,7 +9,7 @@ these features :
 
  * the ValueLoading state : an editor has as its value ValueLoading upon construction and
 the editor's value can be set to ValueLoading if the value that should be displayed is
-not yet available in the GUI thread, but is still on it's way from the model to the GUI. 
+not yet available in the GUI thread, but is still on it's way from the model to the GUI.
 This means that once set_value( ValueLoading ) is called, get_value() will always return
 ValueLoading until set_value is called with another argument.
 
@@ -45,3 +45,4 @@ from textediteditor import TextEditEditor
 from wideeditor import WideEditor
 from noteeditor import NoteEditor
 from labeleditor import LabelEditor
+from monthseditor import MonthsEditor
