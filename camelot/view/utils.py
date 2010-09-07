@@ -180,6 +180,7 @@ operator_names = {
 }
 
 def text_from_richtext(unstripped_text, newlines=True):
+    # TODO improve/expand
     from HTMLParser import HTMLParser
     string = []
     class HtmlToTextParser(HTMLParser):
