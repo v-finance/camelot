@@ -113,9 +113,6 @@ class Many2OneDelegate(CustomDelegate):
         if option.version != 5:
             editor.setAutoFillBackground(True)
         editor.editingFinished.connect( self.commitAndCloseEditor )
-#        self.connect(editor,
-#                     QtCore.SIGNAL('editingFinished()'),
-#                     self.commitAndCloseEditor)
         return editor
 
     def setEditorData(self, editor, index):

@@ -47,9 +47,6 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         QtGui.QCheckBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setEnabled(editable)
-        #self.connect(self,
-        #             QtCore.SIGNAL('stateChanged(int)'),
-        #             self.editingFinished)
         self._nullable = nullable
         if self._nullable:
             self.setTristate( True )

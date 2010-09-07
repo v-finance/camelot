@@ -181,6 +181,8 @@ operator_names = {
 
 def text_from_richtext(unstripped_text, newlines=True):
     # TODO improve/expand
+    if not unstripped_text:
+	return ''
     from HTMLParser import HTMLParser
     string = []
     class HtmlToTextParser(HTMLParser):
