@@ -122,7 +122,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         #             self.returnPressed)
         self.search_input.textEdited.connect(self.textEdited)
         # suppose garbage was entered, we need to refresh the content
-        self.search_input.editingFinished.connect(self.editingFinished)
+        self.search_input.editingFinished.connect( self.search_input_editing_finished )
         self.setFocusProxy(self.search_input)
 
         # Search Completer
@@ -279,7 +279,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
     def dataChanged(self, index1, index2):
         self.setEntity(self.entity_instance_getter, False)
 
-    def editingFinished(self):
+    def search_input_editing_finished(self):
         if not self.entity_set:
             # Only try to 'guess' what the user meant when no entity is set
             # to avoid inappropriate removal of data, (eg when the user presses
@@ -338,7 +338,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             self.entity_set = False
 
         if propagate:
-            self.emit(QtCore.SIGNAL('editingFinished()'))
+            self.editingFinished.emit()
 
     def setEntity(self, entity_instance_getter, propagate=True):
 

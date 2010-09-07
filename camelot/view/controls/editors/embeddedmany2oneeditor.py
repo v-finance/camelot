@@ -113,4 +113,5 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
                 self.model.set_collection_getter(CollectionGetterFromObjectGetter( self.entity_instance_getter ))
 
         if propagate:
-            self.emit( QtCore.SIGNAL( 'editingFinished()' ) )
+            self.editingFinished.emit()
+
