@@ -178,3 +178,17 @@ operator_names = {
     like_op : u'like',
     between_op: u'between',
 }
+
+def text_from_richtext(unstripped_text, newlines=True):
+    from HTMLParser import HTMLParser
+    string = []
+    class HtmlToTextParser(HTMLParser):
+        def handle_data(self, data):
+            if not newlines:
+                data = data.replace('\n','')
+            string.append(data)
+
+    parser = HtmlToTextParser()
+    parser.feed(unstripped_text)
+
+    return ' '.join(string)

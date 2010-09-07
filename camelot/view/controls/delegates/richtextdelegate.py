@@ -19,6 +19,7 @@ class RichTextDelegate(CustomDelegate):
         self._width = self._width * 3
     
     def paint(self, painter, option, index):
+        from camelot.view.utils import text_from_richtext
         painter.save()
         self.drawBackground(painter, option, index)
         unstrippedText = unicode(index.model().data(index, Qt.EditRole).toString())
@@ -28,19 +29,7 @@ class RichTextDelegate(CustomDelegate):
         if not unstrippedText:
             text = ''
         else:
-    
-            from HTMLParser import HTMLParser
-      
-            string = []
-      
-            class HtmlToTextParser(HTMLParser):
-                def handle_data(self, data):
-                    string.append(data.replace('\n',''))
-          
-            parser = HtmlToTextParser()
-            parser.feed(unstrippedText)
-      
-            text = (' '.join(string))[:256]  
+            text = text_from_richtext(unstrippedText, newlines=False)[:256]
           
         rect = option.rect
         rect = QtCore.QRect(rect.left(), rect.top(), rect.width(), rect.height())  
