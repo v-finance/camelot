@@ -29,10 +29,14 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, editingFinished
-from camelot.view.art import Icon
-from camelot.core import constants
 from math import floor
+from camelot.view.art import Icon
+
+from camelot.core.constants import camelot_minint
+from camelot.core.constants import camelot_maxint
+
+from customeditor import CustomEditor
+from customeditor import editingFinished
 
 
 class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
@@ -75,15 +79,17 @@ the model will do set_value( None )
 the get_value() should return None and not 0.  because
 in case it returns 0, 0 will be written to the db, causing
 an unneeded update of the db.
-    
+
 """
 
-    def __init__(self,
-                 parent=None,
-                 minimum=constants.camelot_minint,
-                 maximum=constants.camelot_maxint,
-                 calculator=True,
-                 **kwargs):
+    def __init__(
+        self,
+        parent=None,
+        minimum=camelot_minint,
+        maximum=camelot_maxint,
+        calculator=True,
+        **kwargs
+    ):
         CustomEditor.__init__(self, parent)
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
@@ -133,14 +139,23 @@ an unneeded update of the db.
         self.set_background_color(background_color)
         self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
         self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
+        self._nullable = kwargs.get('nullable')
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
-        if value!=None:
+        if value is None:
+            # we either have value_loading or a real None
+            # just in case we have None
+            if self.value_is_none:
+                # if the field is required display nothing
+                # so user enters at least 0
+                if not self._nullable:
+                    self.spinBox.setValue('')
+        else:
             value = str(value).replace(',', '.')
             self.spinBox.setValue(eval(value))
-        else:
-            self.spinBox.setValue(0)
+        #else:
+        #    self.spinBox.setValue(0)
 
     def get_value(self):
         value_loading = CustomEditor.get_value(self)
@@ -149,7 +164,7 @@ an unneeded update of the db.
 
         self.spinBox.interpretText()
         value = int(self.spinBox.value())
-        
+
         if not value and self.value_is_none:
             return None
 
@@ -166,9 +181,11 @@ an unneeded update of the db.
         from camelot.view.controls.calculator import Calculator
         calculator = Calculator(self)
         calculator.setValue(value)
-        self.connect(calculator,
-                     QtCore.SIGNAL('calculationFinished'),
-                     self.calculationFinished)
+        self.connect(
+            calculator,
+            QtCore.SIGNAL('calculationFinished'),
+            self.calculationFinished
+        )
         calculator.exec_()
 
     def calculationFinished(self, value):
