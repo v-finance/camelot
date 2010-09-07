@@ -43,8 +43,6 @@ class Calculator(QtGui.QDialog):
 
         self.setWindowTitle(_('Calculator'))
         self.input = QtGui.QLineEdit(self)
-        #self.connect(self.input, QtCore.SIGNAL('returnPressed()'), self.ShowCalculate)
-        #self.connect(self.input, QtCore.SIGNAL('textEdited(const QString&)'), self.Calculate)
         self.input.textEdited.connect(self.Calculate)
 
         #BUTTONS---
@@ -79,29 +77,6 @@ class Calculator(QtGui.QDialog):
         self.comma = QtGui.QPushButton(',', self)
 
         #Button-Connects---
-
-        #self.connect(self.equals, QtCore.SIGNAL('clicked()'), self.ShowCalculate)
-        #self.connect(self.zero, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick(0))
-        #self.connect(self.one, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick(1))
-        #self.connect(self.two, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick(2))
-        #self.connect(self.three, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick(3))
-        #self.connect(self.four, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick(4))
-        #self.connect(self.five, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick(5))
-        #self.connect(self.six, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick(6))
-        #self.connect(self.seven, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick(7))
-        #self.connect(self.eight, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick(8))
-        #self.connect(self.nine, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick(9))
-        #self.connect(self.plus, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick('+'))
-        #self.connect(self.min, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick('-'))
-        #self.connect(self.multiply, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick('*'))
-        #self.connect(self.devide, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick('/'))
-        #self.connect(self.clear, QtCore.SIGNAL('clicked()'), self.clearInput)
-        #self.connect(self.backspace, QtCore.SIGNAL('clicked()'), lambda:self.input.backspace())
-        #self.connect(self.comma, QtCore.SIGNAL('clicked()'), lambda:self.buttonClick('.'))
-        #self.connect(self.cancel, QtCore.SIGNAL('clicked()'), lambda:self.close())
-        #self.connect(self.save, QtCore.SIGNAL('clicked()'), self.SaveValue)
-        #self.connect(self.discount, QtCore.SIGNAL('clicked()'), self.discountClick)
-
         self.equals.clicked.connect(self.ShowCalculate)
         self.zero.clicked.connect(lambda:self.buttonClick(0))
         self.one.clicked.connect(lambda:self.buttonClick(1))

@@ -220,6 +220,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
+        self._update_requests = list()
         # The rows that have unflushed changes
         self.unflushed_rows = set()
         self._sort_and_filter = SortingRowMapper()
@@ -568,6 +569,118 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 return None
             return value.get(field_attribute, None)
 
+    @model_function
+    def _handle_update_requests(self):
+        #
+        # Copy the update requests and clear the list of requests
+        #
+        locker = QtCore.QMutexLocker(self._mutex)
+        update_requests = [u for u in self._update_requests]
+        self._update_requests = []
+        locker.unlock()
+        #
+        # Handle the requests
+        # 
+        for flushed, row, column, value in update_requests:
+            attribute, field_attributes = self.getColumns()[column]
+
+            from sqlalchemy.exceptions import DatabaseError
+            from sqlalchemy import orm
+            new_value = value()
+            self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
+
+            if new_value == ValueLoading:
+                return None
+
+            o = self._get_object( row )
+            if not o:
+                # the object might have been deleted from the collection while the editor
+                # was still open
+                self.logger.debug( 'this object is no longer in the collection' )
+                try:
+                    self.unflushed_rows.remove( row )
+                except KeyError:
+                    pass
+                return
+
+            old_value = getattr( o, attribute )
+            changed = ( new_value != old_value )
+            #
+            # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
+            # old and new value to know if the object was changed, so we'll
+            # consider it changed anyway
+            #
+            direction = field_attributes.get( 'direction', None )
+            if direction in ( orm.interfaces.MANYTOMANY, orm.interfaces.ONETOMANY ):
+                changed = True
+            if changed:
+                # update the model
+                model_updated = False
+                try:
+                    setattr( o, attribute, new_value )
+                    #
+                    # setting this attribute, might trigger a default function to return a value,
+                    # that was not returned before
+                    #
+                    self.admin.set_defaults( o, include_nullable_fields=False )
+                    model_updated = True
+                except AttributeError, e:
+                    self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
+                except TypeError:
+                    # type error can be raised in case we try to set to a collection
+                    pass
+                if self.flush_changes and self.validator.isValid( row ):
+                    # save the state before the update
+                    try:
+                        self.admin.flush( o )
+                    except DatabaseError, e:
+                        #@todo: when flushing fails, the object should not be removed from the unflushed rows ??
+                        self.logger.error( 'Programming Error, could not flush object', exc_info = e )
+                    locker.relock()
+                    try:
+                        self.unflushed_rows.remove( row )
+                    except KeyError:
+                        pass
+                    locker.unlock()
+                    #
+                    # we can only track history if the model was updated, and it was
+                    # flushed before, otherwise it has no primary key yet
+                    #
+                    if model_updated and hasattr(o, 'id') and o.id:
+                        #
+                        # in case of images or relations, we cannot pickle them
+                        #
+                        if ( not 'Imag' in old_value.__class__.__name__ ) and not direction:
+                            from camelot.model.memento import BeforeUpdate
+                            # only register the update when the camelot model is active
+                            if hasattr(BeforeUpdate, 'query'):
+                                from camelot.model.authentication import getCurrentAuthentication
+                                history = BeforeUpdate( model = unicode( self.admin.entity.__name__ ),
+                                                       primary_key = o.id,
+                                                       previous_attributes = {attribute:old_value},
+                                                       authentication = getCurrentAuthentication() )
+
+                                try:
+                                    elixir.session.flush( [history] )
+                                except DatabaseError, e:
+                                    self.logger.error( 'Programming Error, could not flush history', exc_info = e )
+                # update the cache
+                self._add_data(self.getColumns(), row, o)
+                #@todo: update should only be sent remotely when flush was done
+                self.rsh.sendEntityUpdate( self, o )
+                for depending_obj in self.admin.get_depending_objects( o ):
+                    self.rsh.sendEntityUpdate( self, depending_obj )
+                return ( ( row, 0 ), ( row, len( self.getColumns() ) ) )
+            elif flushed:
+                locker.relock()
+                self.logger.debug( 'old value equals new value, no need to flush this object' )
+                try:
+                    self.unflushed_rows.remove( row )
+                except KeyError:
+                    pass
+                locker.unlock()           
+        
+        
     def setData( self, index, value, role = Qt.EditRole ):
         """Value should be a function taking no arguments that returns the data to
         be set
@@ -580,110 +693,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             if not self._get_field_attribute_value(index, 'editable'):
                 return
 
+            locker = QtCore.QMutexLocker( self._mutex )
             flushed = ( index.row() not in self.unflushed_rows )
             self.unflushed_rows.add( index.row() )
-
-            def make_update_function( row, column, value ):
-
-                @model_function
-                def update_model_and_cache():
-                    attribute, field_attributes = self.getColumns()[column]
-
-                    from sqlalchemy.exceptions import DatabaseError
-                    from sqlalchemy import orm
-                    new_value = value()
-                    self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
-
-                    if new_value == ValueLoading:
-                        return None
-
-                    o = self._get_object( row )
-                    if not o:
-                        # the object might have been deleted from the collection while the editor
-                        # was still open
-                        self.logger.debug( 'this object is no longer in the collection' )
-                        try:
-                            self.unflushed_rows.remove( row )
-                        except KeyError:
-                            pass
-                        return
-
-                    old_value = getattr( o, attribute )
-                    changed = ( new_value != old_value )
-                    #
-                    # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
-                    # old and new value to know if the object was changed, so we'll
-                    # consider it changed anyway
-                    #
-                    direction = field_attributes.get( 'direction', None )
-                    if direction in ( orm.interfaces.MANYTOMANY, orm.interfaces.ONETOMANY ):
-                        changed = True
-                    if changed:
-                        # update the model
-                        model_updated = False
-                        try:
-                            setattr( o, attribute, new_value )
-                            #
-                            # setting this attribute, might trigger a default function to return a value,
-                            # that was not returned before
-                            #
-                            self.admin.set_defaults( o, include_nullable_fields=False )
-                            model_updated = True
-                        except AttributeError, e:
-                            self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
-                        except TypeError:
-                            # type error can be raised in case we try to set to a collection
-                            pass
-                        if self.flush_changes and self.validator.isValid( row ):
-                            # save the state before the update
-                            try:
-                                self.admin.flush( o )
-                            except DatabaseError, e:
-                                #@todo: when flushing fails, the object should not be removed from the unflushed rows ??
-                                self.logger.error( 'Programming Error, could not flush object', exc_info = e )
-                            try:
-                                self.unflushed_rows.remove( row )
-                            except KeyError:
-                                pass
-                            #
-                            # we can only track history if the model was updated, and it was
-                            # flushed before, otherwise it has no primary key yet
-                            #
-                            if model_updated and hasattr(o, 'id') and o.id:
-                                #
-                                # in case of images or relations, we cannot pickle them
-                                #
-                                if ( not 'Imag' in old_value.__class__.__name__ ) and not direction:
-                                    from camelot.model.memento import BeforeUpdate
-                                    # only register the update when the camelot model is active
-                                    if hasattr(BeforeUpdate, 'query'):
-                                        from camelot.model.authentication import getCurrentAuthentication
-                                        history = BeforeUpdate( model = unicode( self.admin.entity.__name__ ),
-                                                               primary_key = o.id,
-                                                               previous_attributes = {attribute:old_value},
-                                                               authentication = getCurrentAuthentication() )
-    
-                                        try:
-                                            elixir.session.flush( [history] )
-                                        except DatabaseError, e:
-                                            self.logger.error( 'Programming Error, could not flush history', exc_info = e )
-                        # update the cache
-                        self._add_data(self.getColumns(), row, o)
-                        #@todo: update should only be sent remotely when flush was done
-                        self.rsh.sendEntityUpdate( self, o )
-                        for depending_obj in self.admin.get_depending_objects( o ):
-                            self.rsh.sendEntityUpdate( self, depending_obj )
-                        return ( ( row, 0 ), ( row, len( self.getColumns() ) ) )
-                    elif flushed:
-                        self.logger.debug( 'old value equals new value, no need to flush this object' )
-                        try:
-                            self.unflushed_rows.remove( row )
-                        except KeyError:
-                            pass
-
-                return update_model_and_cache
-
-            post( make_update_function( index.row(), index.column(), value ) )
+            self._update_requests.append( (flushed, index.row(), index.column(), value) )
+            locker.unlock()
+            post( self._handle_update_requests )
 
         return True
 
@@ -709,9 +724,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
         dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
         static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
+        unicode_row_data = stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes )
+        locker = QtCore.QMutexLocker( self._mutex )
         self.edit_cache.add_data( row, obj, row_data )
-        self.display_cache.add_data( row, obj, stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes ) )
+        self.display_cache.add_data( row, obj, unicode_row_data )
         self.attributes_cache.add_data(row, obj, dynamic_field_attributes )
+        locker.unlock()
         self.dataChanged.emit(self.index( row, 0 ),
                               self.index( row, self.column_count ) )
 
