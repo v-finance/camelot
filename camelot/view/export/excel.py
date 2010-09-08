@@ -26,10 +26,14 @@
 #  ==================================================================================
 
 import logging
-logger = logging.getLogger('camelot.view.export.excel')
-
-from pyExcelerator import *
 import datetime
+LOGGER = logging.getLogger('camelot.view.export.excel')
+
+from camelot.view.controls import delegates
+from camelot.view.utils import local_date_format
+
+from pyExcelerator import Font, Borders, XFStyle, Pattern, Workbook, ExcelFormula
+
 
 titleFont = Font()              # initializing titleFont Object
 headerFont = Font()             # initializing headerFont Object
@@ -140,13 +144,14 @@ def open_data_with_excel(title, headerList, dataList):
         excel_app.Visible = True
         excel_app.Workbooks.Open(xls_fn)
 
-def write_data_to_excel(filename, title, headerList, dataList):
+def write_data_to_excel(filename, title, headerList, data_list):
     """
     @param filename: the file to which to save the exported excel
     @param title: title to put in the first row of the genarated excel file
     @param headerList: list of header definitions
-    @param dataList: list or generator with the row data
+    @param data_list: list or generator with the row data
     """
+    LOGGER.debug(u'write data to excel : %s'%title)
     w = Workbook()
     ws = w.add_sheet('Sheet1')
     ## Writing Title
@@ -157,8 +162,11 @@ def write_data_to_excel(filename, title, headerList, dataList):
     myPrecisionDict = {}        # dictionary of precision , {columnnumber, Precision}
     myLengthDict = {}           # dictionary of length , {columnnumber, length}
     myFormatDict = {}           # dictionary of dateformat , {columnnumber, format}
+    header_delegates = {}
+    number_of_columns = len(headerList)
     for n,desc in enumerate(headerList):
         lst =  desc[1]
+        header_delegates[n] = lst['delegate']
         if n==0:
             ws.write(2, n, unicode(lst['name']), topleftCellStyle)
         elif n==len(headerList)-1:
@@ -172,24 +180,23 @@ def write_data_to_excel(filename, title, headerList, dataList):
         myDataTypeDict[ n ] = lst["python_type"]
         if lst["python_type"] == float:
             myPrecisionDict [ n ] = lst["precision"]    #Populating precision dictionary
-        elif lst["python_type"] == datetime.date:
-            myFormatDict [ n ] = lst["format"]          #Populating date Format dictionary
-        elif lst["python_type"] == datetime.datetime:
+        elif lst["python_type"] == datetime.date or issubclass(lst['delegate'], delegates.DateDelegate):
+            myFormatDict [ n ] = lst.get('format', local_date_format())         #Populating date Format dictionary
+            myDataTypeDict[ n ] = datetime.date
+        elif lst["python_type"] == datetime.datetime or issubclass(lst['delegate'], delegates.DateTimeDelegate):
+            myDataTypeDict[ n ] = datetime.datetime
             myFormatDict [ n ] = lst["format"]          #Populating date Format dictionary
         elif lst["python_type"] == str:
             if 'length' in lst:
                 myLengthDict [ n ] = lst["length"]          #Populating Column Length dictionary
     ## Writing Data
     row = 3
-    column = 0
     valueAddedInSize = 0
     formatStr = '0'
-    for dictCounter in dataList:                       # iterating the dataList, having dictionary
-        column = 0
+    for data in data_list:                       # iterating the data_list, having dictionary
         cellStyle.num_format_str = '0'
-        for i in range( 0 , len(dictCounter)): #for i in dictCounter:
+        for column, val in enumerate( data ): #for i in dictCounter:
             valueAddedInSize = 0
-            val = dictCounter[i]
             if val != None:
                 # this is to handle fields of type code
                 if isinstance(val, list):
@@ -210,7 +217,7 @@ def write_data_to_excel(filename, title, headerList, dataList):
                         for _j in range( 0 , myPrecisionDict[ column ]):
                             formatStr += '0'
                         valueAddedInSize = len(formatStr) # To fit the cell width + 1 (of dot(.))
-                    elif myDataTypeDict[ column ] == datetime.date:
+                    elif myDataTypeDict[ column ] == datetime.date or isinstance(header_delegates[column], delegates.DateDelegate):
                         formatStr = myFormatDict[column]
                         val = datetime.datetime( day = val.day, year = val.year, month = val.month)
                     elif myDataTypeDict[ column ] == datetime.datetime:
@@ -227,18 +234,18 @@ def write_data_to_excel(filename, title, headerList, dataList):
                 bottomleftCellStyle.num_format_str = formatStr
             elif val == None:
                 val = ' '
-            if row - 2  == len(dataList):
+            if row - 2  == len(data_list):
                 #we re at the bottom row
-                if i==0:
+                if column == 0:
                     ws.write(row , column, val , bottomleftCellStyle)
-                elif i  == len(dictCounter)-1:
+                elif column  == number_of_columns - 1:
                     ws.write(row , column, val , bottomrightCellStyle)
                 else:
                     ws.write(row , column, val , bottomCellStyle)
             else:
-                if i==0:
+                if column == 0:
                     ws.write(row , column, val , leftCellStyle)
-                elif  i == len(dictCounter)-1:
+                elif column == number_of_columns - 1:
                     ws.write(row , column, val , rightCellStyle)
                 else:
                     ws.write(row , column, val , cellStyle)
