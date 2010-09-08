@@ -25,15 +25,16 @@
 #
 #  ============================================================================
 
+from PyQt4.QtCore import Qt
+from PyQt4 import QtCore
 from PyQt4.QtGui import QSpinBox
 from PyQt4.QtGui import QHBoxLayout
 from PyQt4.QtGui import QAbstractSpinBox
 
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.editors import CustomEditor
-from camelot.view.controls.editors import editingFinished
 from camelot.view.controls.editors.customeditor import ValueLoading
-
+from camelot.view.controls.editors.integereditor import CustomDoubleSpinBox
 
 class MonthsEditor(CustomEditor):
     """MonthsEditor
@@ -43,35 +44,39 @@ class MonthsEditor(CustomEditor):
 
     def __init__(self, parent=None, editable=True, **kw):
         CustomEditor.__init__(self, parent)
-        self.years = 0
-        self.months = 0
-
-        self.years_spinbox = QSpinBox()
-        self.months_spinbox = QSpinBox()
+        self.years_spinbox = CustomDoubleSpinBox()
+        self.months_spinbox = CustomDoubleSpinBox()
         self.years_spinbox.setMinimum(0)
+        self.years_spinbox.setMaximum(10000)
         self.months_spinbox.setMinimum(0)
+        self.months_spinbox.setMaximum(12)
         self.years_spinbox.setSuffix(_(' years'))
         self.months_spinbox.setSuffix(_(' months'))
+        
+        self.years_spinbox.setDecimals(0)
+        self.years_spinbox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+        self.years_spinbox.setSingleStep(1)
+        
+        self.months_spinbox.setDecimals(0)
+        self.months_spinbox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+        self.months_spinbox.setSingleStep(1)
 
+        self.years_spinbox.editingFinished.connect( self._spinbox_editing_finished )
+        self.months_spinbox.editingFinished.connect( self._spinbox_editing_finished )
+        
         layout = QHBoxLayout()
+        layout.addWidget(self.years_spinbox)
         layout.addWidget(self.months_spinbox)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.years_spinbox)
         self.setLayout(layout)
 
-        self.years_spinbox.valueChanged.connect(self.value_changed)
-        self.months_spinbox.valueChanged.connect(self.value_changed)
-
+    @QtCore.pyqtSlot()
+    def _spinbox_editing_finished(self):
+        self.editingFinished.emit()
+        
     def set_field_attributes(self, editable=True, bgcolor=None, **kw):
         self.set_enabled(editable)
         self.set_background_color(bgcolor)
-
-    def value_changed(self):
-        if self.years != self.years_spinbox.value():
-            self.years = self.years_spinbox.value()
-        if self.months != self.months_spinbox.value():
-            self.months = self.months_spinbox.value()
-        self.emit(editingFinished)
 
     def set_enabled(self, editable=True):
         self.years_spinbox.setReadOnly(not editable)
@@ -91,17 +96,20 @@ class MonthsEditor(CustomEditor):
             return
 
         if self.value_is_none:
-            return
+            value = 0
 
         # value comes as a months total
-        self.years = int(value / 12)
-        self.months = value - self.years
-        self.years_spinbox.setValue(self.years)
-        self.months_spinbox.setValue(self.months)
+        years, months = divmod( value, 12 )
+        self.years_spinbox.setValue(years)
+        self.months_spinbox.setValue(months)
 
     def get_value(self):
         if CustomEditor.get_value(self) is ValueLoading:
             return ValueLoading
 
-        value = (self.years * 12) + self.months
+        self.years_spinbox.interpretText()
+        years = int(self.years_spinbox.value())
+        self.months_spinbox.interpretText()
+        months = int(self.months_spinbox.value())
+        value = (years * 12) + months
         return value

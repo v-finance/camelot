@@ -25,17 +25,47 @@
 #
 #  ================================================================
 
+from PyQt4.QtCore import Qt
+
 from camelot.view.controls.editors import MonthsEditor
 from camelot.view.controls.delegates import CustomDelegate
+from camelot.core.utils import variant_to_pyobject, ugettext
+from camelot.view.proxy import ValueLoading
 
 class MonthsDelegate(CustomDelegate):
-  """MonthsDelegate
+    """MonthsDelegate
 
-  custom delegate for showing and editing quarters in a year
-  """
+    custom delegate for showing and editing quarters in a year
+    """
 
-  editor = MonthsEditor
+    editor = MonthsEditor
 
-  def sizeHint(self, option, index):
-    q = MonthsEditor(None)
-    return q.sizeHint()
+    def __init__(self, parent=None, forever=200*12, **kwargs):
+        """
+        :param forever: number of months that will be indicated as Forever, set
+        to None if not appliceable
+        """
+        super(MonthsDelegate, self).__init__(parent=parent, **kwargs)
+        self._forever = forever
+        
+    def sizeHint(self, option, index):
+        q = MonthsEditor(None)
+        return q.sizeHint()
+
+    def paint(self, painter, option, index):
+        painter.save()
+        self.drawBackground(painter, option, index)
+        value = variant_to_pyobject( index.model().data( index, Qt.EditRole ) )
+        
+        value_str = u''
+        if self._forever != None and value == self._forever:
+            value_str = ugettext('Forever')
+        elif value not in (None, ValueLoading):
+            years, months = divmod( value, 12 )
+            if years:
+                value_str = value_str + ugettext('%i years ')%(years)
+            if months:
+                value_str = value_str + ugettext('%i months')%(months)        
+
+        self.paint_text(painter, option, index, value_str)
+        painter.restore()
