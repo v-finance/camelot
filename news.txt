@@ -14,6 +14,8 @@ Trunk
  
    .. image:: _static/mergedocumentwizard/wizard_widget.png
    
+ * Support for SQLAlchemy 0.6.x
+   
 Release 10.07.02
 ----------------
 

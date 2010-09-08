@@ -133,24 +133,20 @@ an unneeded update of the db.
         layout.addWidget(self.calculatorButton)
         self.setFocusProxy(self.spinBox)
         self.setLayout(layout)
+        self._nullable = True
 
-    def set_field_attributes(self, editable=True, background_color=None, prefix='', suffix='', **kwargs):
+    def set_field_attributes(self, editable=True, background_color=None, 
+                             prefix='', suffix='', nullable=True, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
         self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
         self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
-        self._nullable = kwargs.get('nullable')
+        self._nullable = nullable
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value is None:
-            # we either have value_loading or a real None
-            # just in case we have None
-            if self.value_is_none:
-                # if the field is required display nothing
-                # so user enters at least 0
-                if not self._nullable:
-                    self.spinBox.setValue('')
+            self.spinBox.lineEdit().setText('')
         else:
             value = str(value).replace(',', '.')
             self.spinBox.setValue(eval(value))
@@ -162,12 +158,11 @@ an unneeded update of the db.
         if value_loading is not None:
             return value_loading
 
+        if self.spinBox.text()=='':
+            return None
+        
         self.spinBox.interpretText()
         value = int(self.spinBox.value())
-
-        if not value and self.value_is_none:
-            return None
-
         return value
 
     def set_enabled(self, editable=True):

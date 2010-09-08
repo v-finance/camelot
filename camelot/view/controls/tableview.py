@@ -69,7 +69,8 @@ the number of lines of text that should be viewable in a single row.
         QtGui.QTableView.__init__( self, parent )
         logger.debug( 'create TableWidget' )
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
-        self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | QtGui.QAbstractItemView.DoubleClicked )
+        self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | 
+                              QtGui.QAbstractItemView.DoubleClicked )
         self.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
         self.horizontalHeader().setClickable( True )
         self._header_font_required = QtGui.QApplication.font()
@@ -77,8 +78,10 @@ the number of lines of text that should be viewable in a single row.
         line_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing()
         self._minimal_row_height = line_height * self.lines_per_row + 2*self.margin
         self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
-        self.connect( self.horizontalHeader(), QtCore.SIGNAL('sectionClicked(int)'), self.horizontal_section_clicked )
+        self.horizontalHeader().sectionClicked.connect( 
+            self.horizontal_section_clicked )
 
+    @QtCore.pyqtSlot( int )
     def horizontal_section_clicked( self, logical_index ):
         """Update the sorting of the model and the header"""
         header = self.horizontalHeader()

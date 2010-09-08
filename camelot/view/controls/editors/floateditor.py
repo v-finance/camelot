@@ -118,7 +118,9 @@ class FloatEditor(CustomEditor):
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:
-            self.spinBox.setValue(value)
+            self.spinBox.setValue( float(value) )
+        elif value == None:
+            self.spinBox.lineEdit().setText('')
         else:
             self.spinBox.setValue(0.0)
 
@@ -127,11 +129,11 @@ class FloatEditor(CustomEditor):
         if value_loading is not None:
             return value_loading
 
+        if self.spinBox.text()=='':
+            return None
+        
         self.spinBox.interpretText()
         value = self.spinBox.value()
-        
-        if not value and self.value_is_none:
-            return None
 
         if self._decimal:
             import decimal

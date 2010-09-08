@@ -5,6 +5,9 @@ import logging
 import unittest
 import os
 
+import gc
+#gc.disable()
+
 from camelot.test import ModelThreadTestCase, EntityViewsTest, SchemaTest
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
