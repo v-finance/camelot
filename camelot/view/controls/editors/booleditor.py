@@ -37,6 +37,8 @@ from camelot.core.utils import ugettext
 class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
     """Widget for editing a boolean field"""
 
+    editingFinished = QtCore.pyqtSignal()
+    
     def __init__(self,
                  parent=None,
                  minimum=constants.camelot_minint,
@@ -50,7 +52,7 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         self._nullable = nullable
         if self._nullable:
             self.setTristate( True )
-        self.stateChanged.connect(self.editingFinished)
+        self.stateChanged.connect(self._state_changed)
 
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
@@ -72,8 +74,8 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
             return False
         return True
 
-    def editingFinished(self, value=None):
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+    def _state_changed(self, value=None):
+        self.editingFinished.emit()
 
     def set_enabled(self, editable=True):
         value = self.get_value()
