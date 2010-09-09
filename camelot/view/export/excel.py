@@ -32,8 +32,8 @@ LOGGER = logging.getLogger('camelot.view.export.excel')
 from camelot.view.controls import delegates
 from camelot.view.utils import local_date_format
 
-from pyExcelerator import Font, Borders, XFStyle, Pattern, Workbook, ExcelFormula
-
+# previously used pyExcelerator, but this gave errors opening the generated documents in Excel 2010
+from xlwt import Font, Borders, XFStyle, Pattern, Workbook, ExcelFormula
 
 titleFont = Font()              # initializing titleFont Object
 headerFont = Font()             # initializing headerFont Object
