@@ -4,6 +4,7 @@ in various circumstances.
 
 from camelot.test import ModelThreadTestCase
 
+import unittest
 import logging
 logger = logging.getLogger( 'camelot.view.controls.tableview' )
 
@@ -99,7 +100,7 @@ class TableView( QtGui.QWidget  ):
             self.actions.setActions( actions )
             self.filters_layout.addWidget( self.actions )
 
-class TableViewCases(ModelThreadTestCase):
+class TableViewCases(unittest.TestCase):
     """Tests related to table views"""
 
     def create_select_view(self, admin):
