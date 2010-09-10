@@ -23,45 +23,18 @@ class ActionsBox(QtGui.QGroupBox):
         # keep action object alive to allow them to receive signals
         self.actions = actions
         layout = QtGui.QVBoxLayout()
-        for action in actions:
-            action_widget = action.render(self, *self.args)
-            layout.addWidget(action_widget)
-            action_widgets.append(action_widget)
+        action_widget = QtGui.QPushButton('push') #action.render(self, *self.args)
+        layout.addWidget(action_widget)
+        action_widgets.append(action_widget)
         self.setLayout(layout)
         return action_widgets
-    
-class ListAction( object ):
-    
-    def __init__( self, name, icon = None ):
-        self._name = name
-        self._icon = icon
-        self.options = None
-
-    def render( self, parent, collection_getter, selection_getter ):
-        """Returns a QWidget the user can use to trigger the action"""
-
-        def create_clicked_function( self, collection_getter, selection_getter ):
-
-            def clicked( *args ):
-                self.run( collection_getter, selection_getter )
-
-            return clicked
-
-        button = QtGui.QPushButton( unicode(self._name) )
-        if self._icon:
-            button.setIcon( self._icon.getQIcon() )
-        button.clicked.connect( create_clicked_function( self, collection_getter, selection_getter ) )
-        return button
     
 class QueryTableProxy(QtGui.QStringListModel):
 
     def get_collection_getter(self): # !!!
         
         def collection_getter():
-            pass
-#            if not self._query_getter:
-#                return []
-#            return self.get_query_getter()().all()
+            return self.objectName()
         
         return collection_getter
                 
@@ -75,12 +48,12 @@ class TableView( QtGui.QWidget  ):
         self.table.setModel( self._table_model )
         widget_layout.addWidget( self.table )
         selection_getter = self.get_selection_getter()
-        actions = [ListAction('test')]
+        #actions = [ListAction('test')]
         self.actions = ActionsBox( self,
                                    self._table_model.get_collection_getter(),
                                    selection_getter )
 
-        self.actions.setActions( actions )
+        self.actions.setActions( None )
         widget_layout.addWidget( self.actions )
         self.setLayout( widget_layout )
 
