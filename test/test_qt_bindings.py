@@ -72,7 +72,7 @@ class TableView( QtGui.QWidget  ):
         self.table.setModel( self._table_model )
         self.table_layout.insertWidget( 1, self.table )
         
-        self.set_filters_and_actions( ( admin.get_filters(), admin.get_list_actions() ))
+        self.set_filters_and_actions( admin.get_list_actions() )
 
     def get_selection_getter(self): # !!!
         """:return: a function that returns all the objects corresponging to the selected rows in the
@@ -86,9 +86,8 @@ class TableView( QtGui.QWidget  ):
 
         return selection_getter
 
-    def set_filters_and_actions( self, filters_and_actions ):
+    def set_filters_and_actions( self, actions ):
         """sets filters for the tableview"""
-        filters, actions = filters_and_actions
         from camelot.view.controls.actionsbox import ActionsBox
         logger.debug( 'setting filters for tableview' )
         if actions:
