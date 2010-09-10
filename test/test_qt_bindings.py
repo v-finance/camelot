@@ -2,18 +2,58 @@
 in various circumstances.
 """
 
-from camelot.test import ModelThreadTestCase
-
 import unittest
 import logging
-logger = logging.getLogger( 'camelot.view.controls.tableview' )
+logger = logging.getLogger( 'test_qt_bindings' )
 
 from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-from PyQt4.QtCore import SIGNAL
-from PyQt4.QtGui import QSizePolicy
+#from PySide import QtGui
 
+class ActionsBox(QtGui.QGroupBox):
+    """A box containing actions to be applied to a view"""
+
+    def __init__(self, parent, *args, **kwargs):
+        QtGui.QGroupBox.__init__(self, 'Actions', parent)
+        logger.debug('create actions box')
+        self.args = args
+        self.kwargs = kwargs
+
+    def setActions(self, actions):
+        action_widgets = []
+        logger.debug('setting actions')
+        # keep action object alive to allow them to receive signals
+        self.actions = actions
+        layout = QtGui.QVBoxLayout()
+        for action in actions:
+            action_widget = action.render(self, *self.args)
+            layout.addWidget(action_widget)
+            action_widgets.append(action_widget)
+        self.setLayout(layout)
+        return action_widgets
+    
+class ListAction( object ):
+    
+    def __init__( self, name, icon = None ):
+        self._name = name
+        self._icon = icon
+        self.options = None
+
+    def render( self, parent, collection_getter, selection_getter ):
+        """Returns a QWidget the user can use to trigger the action"""
+
+        def create_clicked_function( self, collection_getter, selection_getter ):
+
+            def clicked( *args ):
+                self.run( collection_getter, selection_getter )
+
+            return clicked
+
+        button = QtGui.QPushButton( unicode(self._name) )
+        if self._icon:
+            button.setIcon( self._icon.getQIcon() )
+        button.clicked.connect( create_clicked_function( self, collection_getter, selection_getter ) )
+        return button
+    
 class QueryTableProxy(QtGui.QStringListModel):
 
     def get_collection_getter(self): # !!!
@@ -57,10 +97,6 @@ class TableView( QtGui.QWidget  ):
         self.setLayout( widget_layout )
         self.search_filter = lambda q: q
 
-    def create_table_model( self, admin ):
-        """Create a table model for the given admin interface"""
-        return self.table_model()
-
     def set_admin( self, admin ):
         """Switch to a different subclass, where admin is the admin object of the
         subclass"""
@@ -68,11 +104,11 @@ class TableView( QtGui.QWidget  ):
         self.admin = admin
         splitter = self.findChild( QtGui.QWidget, 'splitter' )
         self.table = self.TableWidget( splitter )
-        self._table_model = self.create_table_model( admin )
+        self._table_model = self.table_model()
         self.table.setModel( self._table_model )
         self.table_layout.insertWidget( 1, self.table )
         
-        self.set_filters_and_actions( admin.get_list_actions() )
+        self.set_filters_and_actions( [ListAction('test')] )
 
     def get_selection_getter(self): # !!!
         """:return: a function that returns all the objects corresponging to the selected rows in the
@@ -88,22 +124,21 @@ class TableView( QtGui.QWidget  ):
 
     def set_filters_and_actions( self, actions ):
         """sets filters for the tableview"""
-        from camelot.view.controls.actionsbox import ActionsBox
-        logger.debug( 'setting filters for tableview' )
-        if actions:
-            selection_getter = self.get_selection_getter()
-            self.actions = ActionsBox( self,
-                                       self._table_model.get_collection_getter(),
-                                       selection_getter )
+        selection_getter = self.get_selection_getter()
+        self.actions = ActionsBox( self,
+                                   self._table_model.get_collection_getter(),
+                                   selection_getter )
 
-            self.actions.setActions( actions )
-            self.filters_layout.addWidget( self.actions )
+        self.actions.setActions( actions )
+        self.filters_layout.addWidget( self.actions )
 
-class TableViewCases(ModelThreadTestCase):
+class TableViewCases(unittest.TestCase):
     """Tests related to table views"""
 
+    def setUp(self):
+        self.application = QtGui.QApplication([])
+        
     def create_select_view(self, admin):
-        from PyQt4 import QtCore
 
         class SelectQueryTableProxy(QueryTableProxy):
             pass
@@ -117,14 +152,7 @@ class TableViewCases(ModelThreadTestCase):
     def test_select_view_garbage_collection(self):
         """Create a select view and force its garbage collection"""
         import gc
-        
-        from camelot.admin.application_admin import ApplicationAdmin
-        from camelot.model.i18n import Translation
-        
-        app_admin = ApplicationAdmin()
-        admin = app_admin.get_entity_admin(Translation)
-
         for i in range(100):
             print i
-            self.create_select_view(admin)
+            self.create_select_view(None)
             gc.collect()
