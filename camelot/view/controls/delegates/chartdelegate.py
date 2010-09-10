@@ -5,7 +5,7 @@ from camelot.view.controls.editors.charteditor import ChartEditor
 from camelot.view.controls.delegates.customdelegate import CustomDelegate
 
 import logging
-logger = logging.getLogger('partnerplan.view.delegates')
+LOGGER = logging.getLogger('camelot.view.controls.delegates.chartdelegate')
 
 class ChartDelegate(CustomDelegate):
     """Custom editor for Matplotlib charts"""

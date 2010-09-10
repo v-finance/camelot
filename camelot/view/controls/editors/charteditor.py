@@ -31,21 +31,21 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 from camelot.view.controls.editors.customeditor import CustomEditor
+from camelot.view.controls.editors.wideeditor import WideEditor
 from camelot.view.proxy import ValueLoading
 
 from camelot.view.controls.liteboxview import LiteBoxView
 
-logger = logging.getLogger('camelot.view.controls.editors.charteditor')
+LOGGER = logging.getLogger('camelot.view.controls.editors.charteditor')
 
-
-class ChartEditor(CustomEditor):
+class ChartEditor(CustomEditor, WideEditor):
     """Editor to display and manipulate matplotlib charts.  The editor
     itself is generic for all kinds of plots,  it simply provides the
     data to be ploted with a set of axes.  The data itself should know
     how exactly to plot itself.
     """
 
-    show_fullscreen_signal = QtCore.SIGNAL('show_fullscreen')
+    show_fullscreen_signal = QtCore.pyqtSignal()
 
     def __init__(self, parent=None, width=50, height=40, dpi=50, **kwargs):
         from matplotlib.figure import Figure
@@ -82,21 +82,22 @@ class ChartEditor(CustomEditor):
         )
         self.canvas.installEventFilter(self)
         self.lite_box = LiteBoxView()
-        self.connect(self, self.show_fullscreen_signal, self.show_fullscreen)
+        self.show_fullscreen_signal.connect(self.show_fullscreen)
         self.canvas.updateGeometry()
 
+    @QtCore.pyqtSlot()
     def show_fullscreen(self):
         """Show the plot full screen, using the litebox"""
         from matplotlib.figure import Figure
         from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-        if self.value_:
+        if self._value:
             fig = Figure(
                 figsize=(200, 100),
                 dpi=100,
                 facecolor='#ffffff',
             )
             canvas = FigureCanvas(self.fig)
-            self.value_.draw(fig)
+            self._value.draw(fig)
             proxy = QtGui.QGraphicsProxyWidget()
             proxy.setWidget(canvas)
             self.lite_box.show_fullscreen_item(proxy)
@@ -109,15 +110,15 @@ class ChartEditor(CustomEditor):
         if event.modifiers() != QtCore.Qt.NoModifier:
             return False
         if event.buttons() == QtCore.Qt.LeftButton:
-            self.emit(self.show_fullscreen_signal)
+            self.show_fullscreen_signal.emit()
             return True
         return False
 
     def set_value(self, value):
-        self.value_ = super(ChartEditor, self).set_value(value)
+        self._value = super(ChartEditor, self).set_value(value)
         self.on_draw()
 
     def on_draw(self):
-        if self.value_ not in (None, ValueLoading):
-            self.value_.draw(self.fig)
+        if self._value not in (None, ValueLoading):
+            self._value.draw(self.fig)
             self.canvas.draw()
