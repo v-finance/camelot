@@ -71,10 +71,13 @@ from camelot.model.type_and_status import type_3_status
 def getCurrentAuthentication():
     """Get the currently logged in person"""
     global _current_authentication_
-    if not hasattr( _current_authentication_, 'mechanism' ):
+    if not hasattr( _current_authentication_, 'mechanism' ) or not _current_authentication_.mechanism:
         import getpass
         _current_authentication_.mechanism = UsernameAuthenticationMechanism.getOrCreateAuthentication( unicode( getpass.getuser() ) )
     return _current_authentication_.mechanism
+
+def clear_current_authentication():
+    _current_authentication_.mechanism = None
 
 def updateLastLogin():
     """Update the last login of the current person to now"""

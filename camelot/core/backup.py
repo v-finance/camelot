@@ -150,6 +150,14 @@ class BackupMechanism(object):
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
         while performing a restore.
         """
+        #
+        # The restored database may contain different AuthenticationMechanisms
+        #
+        from camelot.model.authentication import clear_current_authentication
+        clear_current_authentication()
+        #
+        # Proceed with the restore
+        #
         import os
         from camelot.core.files.storage import StoredFile
         import settings
