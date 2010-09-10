@@ -58,9 +58,10 @@ class QueryTableProxy(QtGui.QStringListModel):
     def get_collection_getter(self): # !!!
         
         def collection_getter():
-            if not self._query_getter:
-                return []
-            return self.get_query_getter()().all()
+            pass
+#            if not self._query_getter:
+#                return []
+#            return self.get_query_getter()().all()
         
         return collection_getter
                 
