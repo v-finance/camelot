@@ -100,7 +100,7 @@ class TableView( QtGui.QWidget  ):
             self.actions.setActions( actions )
             self.filters_layout.addWidget( self.actions )
 
-class TableViewCases(unittest.TestCase):
+class TableViewCases(ModelThreadTestCase):
     """Tests related to table views"""
 
     def create_select_view(self, admin):
