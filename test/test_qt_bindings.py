@@ -8,66 +8,29 @@ logger = logging.getLogger( 'test_qt_bindings' )
 from PyQt4 import QtGui
 #from PySide import QtGui
 
-class ActionsBox(QtGui.QGroupBox):
-    """A box containing actions to be applied to a view"""
+class ReferenceHoldingBox(QtGui.QGroupBox):
+    """A group box implicitely holding references to the table
+    view and the table model"""
 
-    def __init__(self, parent, *args, **kwargs):
-        QtGui.QGroupBox.__init__(self, 'Actions', parent)
-        logger.debug('create actions box')
-        self.args = args
-        self.kwargs = kwargs
-
-    def setActions(self, actions):
-        action_widgets = []
-        logger.debug('setting actions')
-        # keep action object alive to allow them to receive signals
-        self.actions = actions
-        layout = QtGui.QVBoxLayout()
-        action_widget = QtGui.QPushButton('push') #action.render(self, *self.args)
-        layout.addWidget(action_widget)
-        action_widgets.append(action_widget)
-        self.setLayout(layout)
-        return action_widgets
-    
-class QueryTableProxy(QtGui.QStringListModel):
-
-    def get_collection_getter(self): # !!!
-        
-        def collection_getter():
-            return self.objectName()
-        
-        return collection_getter
-                
+    def __init__(self, model_name_getter, table_name_getter):
+        QtGui.QGroupBox.__init__(self)
+        self.model_name_getter = model_name_getter
+        self.table_name_getter = table_name_getter
+                 
 class TableView( QtGui.QWidget  ):
+    """A widget containg both a table and a groupbox that
+    holds a reference to both the table and the model of the
+    table"""
 
     def __init__( self, parent = None ):
         super(TableView, self).__init__( parent )
         widget_layout = QtGui.QVBoxLayout()
         self.table = QtGui.QTableView( self )
-        self._table_model = self.table_model()
-        self.table.setModel( self._table_model )
-        widget_layout.addWidget( self.table )
-        selection_getter = self.get_selection_getter()
-        #actions = [ListAction('test')]
-        self.actions = ActionsBox( self,
-                                   self._table_model.get_collection_getter(),
-                                   selection_getter )
-
-        self.actions.setActions( None )
-        widget_layout.addWidget( self.actions )
+        table_model = self.table_model()
+        self.table.setModel( table_model )
+        widget_layout.addWidget( self.table )        
+        widget_layout.addWidget( ReferenceHoldingBox( table_model.objectName, self.objectName ) )
         self.setLayout( widget_layout )
-
-    def get_selection_getter(self): # !!!
-        """:return: a function that returns all the objects corresponging to the selected rows in the
-        table """
-
-        def selection_getter():
-            selection = []
-            for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-                selection.append( self._table_model._get_object(row) )
-            return selection
-
-        return selection_getter
 
 class TableViewCases(unittest.TestCase):
     """Tests related to table views"""
@@ -81,11 +44,11 @@ class TableViewCases(unittest.TestCase):
         for i in range(100):
             print i
             
-            class SelectQueryTableProxy(QueryTableProxy):
+            class TableModelSubclass(QtGui.QStringListModel):
                 pass
     
-            class SelectView(TableView):
-                table_model = SelectQueryTableProxy
+            class TableViewSubclass(TableView):
+                table_model = TableModelSubclass
     
-            widget = SelectView()
+            widget = TableViewSubclass()
             gc.collect()
