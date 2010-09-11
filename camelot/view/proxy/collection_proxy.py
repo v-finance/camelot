@@ -320,8 +320,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.display_cache.delete_by_row( row )
         self.edit_cache.delete_by_row( row )
         self.attributes_cache.delete_by_row( row )
-#        self.dataChanged.emit( self.index( row, 0 ),
-#                               self.index( row, self.column_count ) )
+        self.dataChanged.emit( self.index( row, 0 ),
+                               self.index( row, self.column_count ) )
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_update( self, sender, entity ):
@@ -732,8 +732,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.display_cache.add_data( row, obj, unicode_row_data )
         self.attributes_cache.add_data(row, obj, dynamic_field_attributes )
         locker.unlock()
-#        self.dataChanged.emit(self.index( row, 0 ),
-#                              self.index( row, self.column_count ) )
+        self.dataChanged.emit(self.index( row, 0 ),
+                              self.index( row, self.column_count ) )
 
     def _skip_row(self, row, obj):
         """:return: True if the object obj is allready in the cache, but at a
