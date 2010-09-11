@@ -372,7 +372,7 @@ class FinalPage(ProgressPage):
         self.progressbar = QtGui.QProgressBar()
 
     def run(self):
-        collection = self.model.get_collection_getter()()
+        collection = self.model.get_collection()
         self.update_maximum_signal.emit( len(collection) )
         for i,row in enumerate(collection):
             new_entity_instance = self.admin.entity()
@@ -387,7 +387,6 @@ class FinalPage(ProgressPage):
             self.update_progress_signal.emit(
                 i, _('Row %i of %i imported') % (i+1, len(collection))
             )
-
 
 class DataPreviewCollectionProxy(CollectionProxy):
     header_icon = None

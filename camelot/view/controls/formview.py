@@ -44,7 +44,6 @@ from camelot.view.controls.statusbar import StatusBar
 
 from camelot.action import ActionFactory
 
-
 class ContextMenuAction(QtGui.QAction):
 
     default_icon = Icon('tango/16x16/categories/applications-system.png')

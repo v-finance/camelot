@@ -465,7 +465,7 @@ class MainWindow(QtGui.QMainWindow):
         from camelot.view.wizard.update_value import UpdateValueWizard
 
         admin = self.activeMdiChild().get_admin()
-        selection_getter = self.activeMdiChild().get_selection_getter()
+        selection_getter = self.activeMdiChild().get_selection
         wizard = UpdateValueWizard(admin=admin, selection_getter=selection_getter)
         wizard.exec_()
         
@@ -474,7 +474,7 @@ class MainWindow(QtGui.QMainWindow):
         table view"""
         from camelot.view.wizard.merge_document import MergeDocumentWizard
 
-        selection_getter = self.activeMdiChild().get_selection_getter()
+        selection_getter = self.activeMdiChild().get_selection
         wizard = MergeDocumentWizard(selection_getter=selection_getter)
         wizard.exec_()
         

@@ -582,17 +582,20 @@ class TableView( AbstractView  ):
         self.search_filter = lambda q: q
         self.rebuild_query()
 
-    def get_selection_getter(self):
-        """:return: a function that returns all the objects corresponging to the selected rows in the
+    @model_function
+    def get_selection(self):
+        """:return: a list with all the objects corresponding to the selected rows in the
         table """
-
-        def selection_getter():
-            selection = []
-            for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-                selection.append( self._table_model._get_object(row) )
-            return selection
-
-        return selection_getter
+        selection = []
+        for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
+            selection.append( self._table_model._get_object(row) )
+        return selection
+    
+    @model_function
+    def get_collection(self):
+        """:return: a list with all the objects corresponding to the rows in the table
+        """
+        return self._table_model.get_collection()
 
     @gui_function
     def set_filters_and_actions( self, filters_and_actions ):
@@ -621,10 +624,15 @@ class TableView( AbstractView  ):
         #
         self.rebuild_query()
         if actions:
-            selection_getter = self.get_selection_getter()
+            #
+            # Attention, the ActionBox should only contain a reference to the
+            # table, and not to the table model, since this will cause the 
+            # garbage collector to collect them both in random order, causing
+            # segfaults (see the test_qt_bindings
+            #
             self.actions = ActionsBox( self,
-                                       self._table_model.get_collection_getter(),
-                                       selection_getter )
+                                       self.get_collection,
+                                       self.get_selection )
 
             self.actions.setActions( actions )
             self.filters_layout.addWidget( self.actions )

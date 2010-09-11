@@ -85,8 +85,8 @@ class QueryTableProxy(CollectionProxy):
         self._query_getter = query_getter
         self.refresh()
         
-    def get_collection_getter(self):
-        """In case the collection getter is requested of a QueryProxy, we will return
+    def get_collection(self):
+        """In case the collection is requested of a QueryProxy, we will return
         a collection getter for a collection that reuses the data allready queried by
         the collection proxy, and available in the cache.
          
@@ -102,12 +102,9 @@ class QueryTableProxy(CollectionProxy):
            another record than the selected row in the table.
         """
         
-        def collection_getter():
-            if not self._query_getter:
-                return []
-            return self.get_query_getter()().all()
-        
-        return collection_getter
+        if not self._query_getter:
+            return []
+        return self.get_query_getter()().all()
     
     @gui_function
     def sort( self, column, order ):
