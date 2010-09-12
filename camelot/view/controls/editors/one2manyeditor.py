@@ -37,7 +37,7 @@ from customeditor import CustomEditor
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post
 from camelot.core.utils import ugettext as _
-
+from camelot.view import register
 
 class One2ManyEditor(CustomEditor, WideEditor):
 
@@ -170,6 +170,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         if model and model != self.model:
             self.model = model
             self.table.setModel( model )
+            register.register( self.model, self.table )
             post( model._extend_cache, self.update_delegates )
 
     @gui_function

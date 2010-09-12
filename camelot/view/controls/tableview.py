@@ -43,6 +43,7 @@ from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import post
 from camelot.view.model_thread import gui_function
 from camelot.view.model_thread import model_function
+from camelot.view import register
 from camelot.core.utils import ugettext as _
 
 from search import SimpleSearchControl
@@ -97,6 +98,7 @@ the number of lines of text that should be viewable in a single row.
 
     def setModel( self, model ):
         QtGui.QTableView.setModel( self, model )
+        register.register( model, self )
         self.selectionModel().currentChanged.connect( self.activated )
 
     @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)

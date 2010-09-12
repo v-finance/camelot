@@ -41,7 +41,7 @@ from camelot.view.model_thread import post
 from camelot.view.model_thread import model_function
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.statusbar import StatusBar
-
+from camelot.view import register
 from camelot.action import ActionFactory
 
 class ContextMenuAction(QtGui.QAction):
@@ -93,7 +93,8 @@ class FormWidget(QtGui.QWidget):
             self._layout_changed
         )
         self._model.item_delegate_changed_signal.connect( self._item_delegate_changed )
-        self._widget_mapper.setModel(model)
+        self._widget_mapper.setModel( model )
+        register.register( model, self._widget_mapper )
 
         def get_columns_and_form():
             return (self._model.getColumns(), self._admin.get_form_display())
