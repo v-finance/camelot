@@ -28,9 +28,10 @@ setup(
     install_requires = ['SQLAlchemy>=0.5.6',
                         'Elixir>=0.6.1',
                         'sqlalchemy-migrate>=0.5.3',
-                        'pyExcelerator>=0.6.4a',
                         'Jinja>=1.2',
                         'chardet>=1.0.1', 
+                        'xlwt>=0.7.2', 
+                        'xlrd>=0.5.2', 
                         'Babel>=0.9.4' ],
     entry_points = {'console_scripts':[
                      'camelot_admin = camelot.bin.camelot_admin:main',
