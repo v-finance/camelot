@@ -497,7 +497,8 @@ attribute to enable search.
         session = Session.object_session( entity_instance )
         if not session:
             logger.error('Programming Error : entity %s cannot be flushed because it has no session'%(unicode(entity_instance)))
-        session.flush( [entity_instance] )
+        else:
+            session.flush( [entity_instance] )
 
 
     @model_function

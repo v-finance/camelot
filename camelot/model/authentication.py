@@ -245,7 +245,7 @@ class PartyContactMechanismAdmin( EntityAdmin ):
     
     def get_depending_objects(self, contact_mechanism ):
         party = contact_mechanism.party
-        if party:
+        if party and (party not in Party.query.session.new):
             party.expire(['email', 'phone'])
             yield party
   
@@ -607,12 +607,13 @@ class ContactMechanism( Entity ):
 
         def get_depending_objects(self, contact_mechanism ):
             for party_contact_mechanism in contact_mechanism.party_contact_mechanisms:
-                party_contact_mechanism.expire( ['mechanism'] )
-                yield party_contact_mechanism
-                party = party_contact_mechanism.party
-                if party:
-                    party.expire(['email', 'phone'])
-                    yield party
+                if party_contact_mechanism not in PartyContactMechanism.query.session.new:
+                    party_contact_mechanism.expire( ['mechanism'] )
+                    yield party_contact_mechanism
+                    party = party_contact_mechanism.party
+                    if party and party not in Party.query.session.new:
+                        party.expire(['email', 'phone'])
+                        yield party
             
 ContactMechanism = documented_entity()( ContactMechanism )
 

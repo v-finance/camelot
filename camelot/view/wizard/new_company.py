@@ -2,6 +2,9 @@
 #from PyQt4 import QtGui, QtCore
 #
 #class NewCompanyWizard( QtGui.QWizard ):
+#
+#    completeChanged = QtCore.pyqtSignal()
+#
 #    def __init__( wizard, organization_getter, parent = None ):
 #        super( NewCompanyWizard, wizard ).__init__( parent )
 #        wizard.value = ''
@@ -32,12 +35,12 @@
 #                layout.addWidget( self.comboBox )
 #                layout.addWidget( self.vat )
 #                #layout.maximumSize()
-#                self.connect( self.vat, QtCore.SIGNAL( 'textChanged(const QString&)' ), self.textChanged )
+#                self.vat.textChanged.connect( self.textChanged )
 #                layout.addStretch( 0 )
 #                self.setLayout( layout )
 #
 #            def textChanged( self, text ):
-#                self.emit( QtCore.SIGNAL( 'completeChanged()' ) )
+#                self.completeChanged.emit()
 #
 #            def isComplete( self ):
 #                wizard.value = str( self.comboBox.currentText() )[0:2] + str( self.vat.text() )
