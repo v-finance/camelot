@@ -79,10 +79,6 @@ class SmileyEditor(CustomEditor):
             self.box.setEnabled(False)
         else:
             self.box.setEnabled(True)
-
-        #self.connect(self.box,
-        #             QtCore.SIGNAL('currentIndexChanged()'),
-        #             self.smileyChanged)
         self.box.currentIndexChanged.connect(self.smileyChanged)
 
         layout.addWidget(self.box)
@@ -110,7 +106,7 @@ class SmileyEditor(CustomEditor):
             if value == i:
                 imgName = emot
 
-        self.emit(QtCore.SIGNAL('editingFinished()'), imgName)
+        self.editingFinished.emit()
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value) or 'face-plain'

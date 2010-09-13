@@ -22,7 +22,6 @@ class TableView( QtGui.QWidget  ):
     def __init__( self, table_model ):
         super(TableView, self).__init__()
         widget_layout = QtGui.QVBoxLayout()
-        table_model.setParent( self )
         table = QtGui.QTableView( self )
         table.setModel( table_model )
         widget_layout.addWidget( table )
@@ -63,7 +62,7 @@ class TableViewCases(unittest.TestCase):
         register = ModelViewRegister()
         
         import gc
-        for i in range(5):
+        for i in range(100):
             print i
             
             class TableModelSubclass(QtGui.QStringListModel):

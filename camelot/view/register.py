@@ -14,7 +14,6 @@ import logging
 from PyQt4 import QtCore
 
 LOGGER = logging.getLogger('camelot.view.register')
-LOGGER.setLevel(logging.DEBUG)
 
 class Register(QtCore.QObject):
     """The register that takes care of the dependencies.

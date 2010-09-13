@@ -712,10 +712,10 @@ class DelegateTest(ModelThreadTestCase):
       headers_size = QSize(tableview.verticalHeader().width(),
                            tableview.horizontalHeader().height())
 
-      extra_size = QSize(tableview.verticalScrollBar().width(),
-                         tableview.horizontalScrollBar().height())
+      tableview.setHorizontalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
+      tableview.setVerticalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
 
-      tableview.resize(cell_size + headers_size + extra_size)
+      tableview.resize(cell_size + headers_size)
 
       # TODO checks if path exists
       delegate_images_path = os.path.join(static_images_path, 'delegates')

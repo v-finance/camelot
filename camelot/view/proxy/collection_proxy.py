@@ -177,6 +177,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     header_icon = Icon( 'tango/16x16/places/folder.png' )
 
     item_delegate_changed_signal = QtCore.pyqtSignal()
+    row_changed_signal = QtCore.pyqtSignal(int)
 
     @gui_function
     def __init__( self, admin, collection_getter, columns_getter,
@@ -226,6 +227,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self._sort_and_filter = SortingRowMapper()
         # Set edits
         self.edits = edits or []
+        self.row_changed_signal.connect( self._emit_changes )
         self.rsh = get_signal_handler()
         self.rsh.connect_signals( self )
 
@@ -286,6 +288,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
         post( create_refresh_entity( row ), self._revert_row )
 
+    @gui_function
     def _revert_row(self, row_and_entity ):
         row, entity = row_and_entity
         self.handleRowUpdate( row )
@@ -315,6 +318,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     def get_collection( self ):
         return self.collection_getter()
 
+    @gui_function
     def handleRowUpdate( self, row ):
         """Handles the update of a row when this row might be out of date"""
         self.display_cache.delete_by_row( row )
@@ -345,7 +349,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 def entity_update():
                     columns = self.getColumns()
                     self._add_data(columns, row, entity)
-                    return ((row,0), (row,self.column_count))
+                    return row
 
                 return entity_update
 
@@ -703,11 +707,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
         return True
 
-    def _emit_changes( self, region ):
-        if region:
-            return
-            self.dataChanged.emit( self.index( region[0][0], region[0][1] ),
-                                   self.index( region[1][0], region[1][1] ) )
+    @gui_function
+    def _emit_changes( self, row ):
+        if row!=None:
+            self.dataChanged.emit( self.index( row, 0 ),
+                                   self.index( row, self.column_count ) )
 
     def flags( self, index ):
         """Returns the item flags for the given index"""
@@ -732,8 +736,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.display_cache.add_data( row, obj, unicode_row_data )
         self.attributes_cache.add_data(row, obj, dynamic_field_attributes )
         locker.unlock()
-        self.dataChanged.emit(self.index( row, 0 ),
-                              self.index( row, self.column_count ) )
+	self.row_changed_signal.emit( row )
 
     def _skip_row(self, row, obj):
         """:return: True if the object obj is allready in the cache, but at a
