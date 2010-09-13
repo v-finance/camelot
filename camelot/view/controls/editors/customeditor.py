@@ -99,6 +99,7 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
   """
 
     editingFinished = QtCore.pyqtSignal()
+    valueChanged = QtCore.pyqtSignal()
 
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)

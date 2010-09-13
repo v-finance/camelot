@@ -31,7 +31,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, editingFinished
+from customeditor import CustomEditor
 from camelot.core import constants
 from camelot.view.art import Icon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
@@ -41,7 +41,7 @@ from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 class DateEditor(CustomEditor):
     """Widget for editing date values"""
 
-    calendar_action_trigger = QtCore.SIGNAL('trigger()')
+    calendar_action_trigger = QtCore.pyqtSignal()
 
     def __init__(self,
                  parent=None,
@@ -62,13 +62,11 @@ class DateEditor(CustomEditor):
         special_date_menu = QtGui.QMenu(self)
         calendar_widget_action = QtGui.QWidgetAction(special_date_menu)
         self.calendar_widget = QtGui.QCalendarWidget(special_date_menu)
-        #self.connect( self.calendar_widget, QtCore.SIGNAL('activated(const QDate&)'), self.calendar_widget_activated)
-        #self.connect( self.calendar_widget, QtCore.SIGNAL('clicked(const QDate&)'), self.calendar_widget_activated)
         self.calendar_widget.activated.connect(self.calendar_widget_activated)
         self.calendar_widget.clicked.connect(self.calendar_widget_activated)
         calendar_widget_action.setDefaultWidget(self.calendar_widget)
 
-        self.connect( self, self.calendar_action_trigger, special_date_menu.hide )
+        self.calendar_action_trigger.connect( special_date_menu.hide )
         special_date_menu.addAction(calendar_widget_action)
         special_date_menu.addAction('Today')
         special_date_menu.addAction('Far future')
@@ -81,7 +79,6 @@ class DateEditor(CustomEditor):
         self.special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.special_date.setFixedHeight(self.get_height())
         # end of sensitive part
-
         self.set_enabled(editable)
 
         if nullable:
@@ -104,21 +101,26 @@ class DateEditor(CustomEditor):
 
         self.line_edit.editingFinished.connect( self.line_edit_finished )
         self.line_edit.textEdited.connect(self.text_edited)
-        special_date_menu.triggered.connect(self.setSpecialDate)
+        special_date_menu.triggered.connect(self.set_special_date)
 
     def calendar_widget_activated(self, date):
-        self.emit(self.calendar_action_trigger)
+        self.calendar_action_trigger.emit()
         self.set_value(date)
-        self.emit(editingFinished)
+        self.editingFinished.emit()
 
     def line_edit_finished(self):
+        self.setProperty( 'value', QtCore.QVariant( self.get_value() ) )
+        self.valueChanged.emit()
         self.editingFinished.emit()
 
     def focusOutEvent(self, event):
+        self.setProperty( 'value', QtCore.QVariant( self.get_value() ) )
+        self.valueChanged.emit()
         self.editingFinished.emit()
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
+        self.setProperty( 'value', QtCore.QVariant( value ) )
         if value:
             qdate = QtCore.QDate(value)
             formatted_date = qdate.toString(self.date_format)
@@ -126,11 +128,13 @@ class DateEditor(CustomEditor):
             self.calendar_widget.setSelectedDate(qdate)
         else:
             self.line_edit.set_user_input('')
+        self.valueChanged.emit()
 
     def text_edited(self, text ):
         try:
             date_from_string( self.line_edit.user_input() )
             self.line_edit.set_valid(True)
+            self.valueChanged.emit()
         except ParsingError:
             self.line_edit.set_valid(False)
 
@@ -148,11 +152,12 @@ class DateEditor(CustomEditor):
         else:
             self.special_date.hide()
 
-    def setSpecialDate(self, action):
+    def set_special_date(self, action):
         if action.text().compare('Today') == 0:
             self.set_value(datetime.date.today())
         elif action.text().compare('Far future') == 0:
             self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
         elif action.text().compare('Clear') == 0:
             self.set_value(None)
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+        self.editingFinished.emit()
+

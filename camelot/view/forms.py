@@ -372,12 +372,14 @@ class TabForm( Form ):
                 return form
 
     def replace_field( self, original_field, new_field ):
+        super(TabForm, self).replace_field( original_field, new_field )
         for _label, form in self.tabs:
             if form.replace_field( original_field, new_field ):
                 return True
         return False
     
     def remove_field( self, original_field ):
+        super(TabForm, self).remove_field( original_field )
         for _label, form in self.tabs:
             if form.remove_field( original_field ):
                 return True
@@ -420,9 +422,9 @@ class HBoxForm( Form ):
     def __unicode__( self ):
         return 'HBoxForm [ %s\n         ]' % ( '         \n'.join( [unicode( form ) for form in self.columns] ) )
 
-    def replaceField( self, original_field, new_field ):
+    def replace_field( self, original_field, new_field ):
         for form in self.columns:
-            if form.replaceField( original_field, new_field ):
+            if form.replace_field( original_field, new_field ):
                 return True
         return False
 
@@ -463,9 +465,9 @@ class VBoxForm( Form ):
         self.rows = [structure_to_form( row ) for row in rows]
         super( VBoxForm, self ).__init__( sum( ( row_form.get_fields() for row_form in self.rows ), [] ) )
 
-    def replaceField( self, original_field, new_field ):
+    def replace_field( self, original_field, new_field ):
         for form in self.rows:
-            if form.replaceField( original_field, new_field ):
+            if form.replace_field( original_field, new_field ):
                 return True
         return False
 

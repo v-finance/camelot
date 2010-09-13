@@ -28,21 +28,27 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from customeditor import AbstractCustomEditor, editingFinished
+from customeditor import AbstractCustomEditor
 import sip
 
 class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
     """A ComboBox aka Drop Down box that can be assigned a list of
     keys and values"""
 
-    def __init__(self, parent=None, **kwargs):
+    editingFinished = QtCore.pyqtSignal()
+    valueChanged = QtCore.pyqtSignal()
+    
+    def __init__(self, parent=None, nullable=True, **kwargs):
         QtGui.QComboBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-        #self.connect(self, QtCore.SIGNAL('activated(int)'), self.editing_finished)
-        self.activated.connect(self.editing_finished)
+        self.activated.connect( self._activated )
+        self._nullable = nullable 
 
-    def editing_finished(self, _index):
-        self.emit(editingFinished)
+    @QtCore.pyqtSlot(int)
+    def _activated(self, _index):
+        self.setProperty( 'value', QtCore.QVariant( self.get_value() ) )
+        self.valueChanged.emit()
+        self.editingFinished.emit()
 
     def set_choices(self, choices):
         """
@@ -85,6 +91,7 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
         if not sip.isdeleted(self):
             from camelot.core.utils import variant_to_pyobject
             value = AbstractCustomEditor.set_value(self, value)
+            self.setProperty( 'value', QtCore.QVariant(value) )
             if value not in (None, NotImplemented):
                 for i in range(self.count()):
                     if value == variant_to_pyobject(self.itemData(i)):
@@ -95,6 +102,7 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
                 # text while setting the correct data to the editor
                 self.insertItem(self.count(), '...', QtCore.QVariant(value))
                 self.setCurrentIndex(self.count()-1)
+            self.valueChanged.emit()
 
     def get_value(self):
         """Get the current value of the combobox"""
