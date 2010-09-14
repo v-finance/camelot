@@ -51,7 +51,8 @@ class FieldAttributesList(list):
         
 DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip', 'background_color', 
                                                 'editable', 'choices', 
-                                                'prefix', 'suffix', 'arrow'])
+                                                'prefix', 'suffix', 'arrow',
+                                                'new_message'])
 
 
 class ObjectAdmin(object):

@@ -93,11 +93,13 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.setupButtons( layout )
         self.setLayout( layout )
         self.model = None
+        self._new_message = None
 
-    def set_field_attributes(self, editable=True, **kwargs):
+    def set_field_attributes(self, editable=True, new_message=None, **kwargs):
         self.add_button.setEnabled(editable)
         self.copy_button.setEnabled(editable)
         self.delete_button.setEnabled(editable)
+        self._new_message = new_message
 
     def setupButtons( self, layout ):
         button_layout = QtGui.QVBoxLayout()
@@ -106,32 +108,24 @@ class One2ManyEditor(CustomEditor, WideEditor):
         icon = Icon( 'tango/16x16/places/user-trash.png' ).getQIcon()
         self.delete_button.setIcon( icon )
         self.delete_button.setAutoRaise( True )
-        self.delete_button.setToolTip(_('delete'))
-        #self.connect( self.delete_button,
-        #              QtCore.SIGNAL( 'clicked()' ),
-        #              self.deleteSelectedRows )
+        self.delete_button.setToolTip(_('Delete'))
         self.delete_button.clicked.connect(self.deleteSelectedRows)
         self.add_button = QtGui.QToolButton()
         icon = self.new_icon.getQIcon()
         self.add_button.setIcon( icon )
         self.add_button.setAutoRaise( True )
-        self.add_button.setToolTip(_('new'))
-        #self.connect( self.add_button, QtCore.SIGNAL( 'clicked()' ), self.newRow )
+        self.add_button.setToolTip(_('New'))
         self.add_button.clicked.connect(self.newRow)
         self.copy_button = QtGui.QToolButton()
         icon = Icon( 'tango/16x16/actions/edit-copy.png' ).getQIcon()
         self.copy_button.setIcon( icon )
         self.copy_button.setAutoRaise( True )
-        self.copy_button.setToolTip(_('copy'))
-        #self.connect( self.copy_button, QtCore.SIGNAL( 'clicked()' ), self.copy_selected_rows )
+        self.copy_button.setToolTip(_('Copy'))
         self.copy_button.clicked.connect(self.copy_selected_rows)
         export_button = QtGui.QToolButton()
         export_button.setIcon( Icon( 'tango/16x16/mimetypes/x-office-spreadsheet.png' ).getQIcon() )
         export_button.setAutoRaise( True )
-        export_button.setToolTip(_('export as spreadsheet'))
-        #self.connect( export_button,
-        #             QtCore.SIGNAL( 'clicked()' ),
-        #             self.exportToExcel )
+        export_button.setToolTip(_('Export as spreadsheet'))
         export_button.clicked.connect(self.exportToExcel)
         button_layout.addStretch()
         button_layout.addWidget( self.add_button )
@@ -182,6 +176,10 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     def newRow( self ):
         from camelot.view.workspace import show_top_level
+        if self._new_message:
+            QtGui.QMessageBox.information(self, _('New'), self._new_message)
+            return
+        
         if self.create_inline:
 
             @model_function
@@ -199,8 +197,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                                                oncreate = prependentity,
                                                onexpunge = removeentity )
             show_top_level( form, self )
-            # @todo : dirty trick to keep reference
-            #self.__form = form
 
     def copy_selected_rows( self ):
         """Copy the selected rows in this tableview"""
@@ -223,5 +219,4 @@ class One2ManyEditor(CustomEditor, WideEditor):
                                  edits = None )
         form = self.admin.create_form_view( u'', model, self.model.map_to_source(index) )
         show_top_level( form, self )
-        # @todo : dirty trick to keep reference
-        #self.__form = form
+

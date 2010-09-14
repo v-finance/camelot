@@ -32,7 +32,7 @@ import sqlalchemy.sql.expression
 
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function, gui_function
-from camelot.core.utils import ugettext_lazy
+from camelot.core.utils import ugettext_lazy, ugettext
 from camelot.admin.validator.entity_validator import EntityValidator
 
 
@@ -282,6 +282,21 @@ attribute to enable search.
             self._field_attributes[field_name] = attributes
             return attributes
 
+    def get_dynamic_field_attributes(self, obj, field_names):
+        """Takes the dynamic field attributes from through the ObjectAdmin its
+        get_dynamic_field_attributes and add the new_message attributes for
+        One2Many fields where the object was not flushed yet
+        """
+        from sqlalchemy.orm.session import Session
+        session = Session.object_session( obj )
+        if obj in session.new:
+            new_message = ugettext('Please complete the form first')
+        else:
+            new_message = None
+        for attributes in super(EntityAdmin, self).get_dynamic_field_attributes(obj, field_names):
+            attributes['new_message'] = new_message
+            yield attributes
+            
     @model_function
     def get_list_charts(self):
         return self.list_charts
