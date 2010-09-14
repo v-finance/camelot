@@ -92,7 +92,7 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
             from camelot.core.utils import variant_to_pyobject
             value = AbstractCustomEditor.set_value(self, value)
             self.setProperty( 'value', QtCore.QVariant(value) )
-            if value not in (None, NotImplemented):
+            if not self._value_loading and value != NotImplemented:
                 for i in range(self.count()):
                     if value == variant_to_pyobject(self.itemData(i)):
                         self.setCurrentIndex(i)

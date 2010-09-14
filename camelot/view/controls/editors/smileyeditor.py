@@ -26,7 +26,6 @@
 #  ============================================================================
 
 from PyQt4 import QtGui
-from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor
@@ -79,7 +78,7 @@ class SmileyEditor(CustomEditor):
             self.box.setEnabled(False)
         else:
             self.box.setEnabled(True)
-        self.box.currentIndexChanged.connect(self.smileyChanged)
+        self.box.currentIndexChanged.connect(self.smiley_changed)
 
         layout.addWidget(self.box)
         layout.addStretch()
@@ -98,14 +97,7 @@ class SmileyEditor(CustomEditor):
     def set_enabled(self, editable=True):
         self.box.setEnabled(editable)
 
-    def smileyChanged(self):
-
-        value = self.box.currentIndex()
-
-        for i, emot in enumerate(self.allSmileys):
-            if value == i:
-                imgName = emot
-
+    def smiley_changed(self):
         self.editingFinished.emit()
 
     def set_value(self, value):

@@ -27,7 +27,6 @@
 
 from PyQt4.QtCore import Qt
 from PyQt4 import QtCore
-from PyQt4.QtGui import QSpinBox
 from PyQt4.QtGui import QHBoxLayout
 from PyQt4.QtGui import QAbstractSpinBox
 

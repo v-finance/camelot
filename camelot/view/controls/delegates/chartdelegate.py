@@ -1,6 +1,3 @@
-from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
-
 from camelot.view.controls.editors.charteditor import ChartEditor
 from camelot.view.controls.delegates.customdelegate import CustomDelegate
 
@@ -8,7 +5,7 @@ import logging
 LOGGER = logging.getLogger('camelot.view.controls.delegates.chartdelegate')
 
 class ChartDelegate(CustomDelegate):
-    """Custom editor for Matplotlib charts"""
+    """Custom delegate for Matplotlib charts"""
 
     editor = ChartEditor
     

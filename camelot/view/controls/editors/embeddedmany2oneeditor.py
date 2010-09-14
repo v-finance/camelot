@@ -28,7 +28,7 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.editors.embeddedmany2oneeditor')
 
-from customeditor import CustomEditor, QtCore, QtGui
+from customeditor import CustomEditor, QtGui
 from wideeditor import WideEditor
 from camelot.view.model_thread import post
 from camelot.view.proxy import ValueLoading

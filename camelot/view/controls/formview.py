@@ -164,7 +164,7 @@ class FormWidget(QtGui.QWidget):
                 obj = self._model._get_object(row)
                 document = self._form.render_ooxml(obj, delegates)
                 print ' - '.join(self._form.render_ooxml(obj, delegates))
-                open_stream_in_word(self._form.render_ooxml(obj, delegates))
+                open_stream_in_word( document )
 
             return ooxml_export
 

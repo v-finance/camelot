@@ -51,8 +51,10 @@ class EnumerationDelegate(CustomDelegate):
 
     def paint(self, painter, option, index):
         value = variant_to_pyobject(index.data(Qt.EditRole))
-        if value in (None, ValueLoading):
-            value = ''        
+        if value==ValueLoading:
+            value = ''
+        else:
+            value = unicode(self._choices_dict.get(value, '...'))
         painter.save()
-        self.paint_text(painter, option, index, unicode(self._choices_dict.get(value, '...')))
+        self.paint_text(painter, option, index, value)
         painter.restore()
