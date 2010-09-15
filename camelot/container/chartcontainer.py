@@ -36,23 +36,42 @@ class FigureContainer( Container ):
 class AxesContainer( Container ):
     """A container that is able to generate a plot on a matplotlib axes"""
     
+    def __init__(self):
+        super(AxesContainer, self).__init__()
+        self._plot = None
+        self._bar = None
+        
+    def plot(self, *args, **kwargs):
+        self._plot = args, kwargs
+        
+    def bar(self, *args, **kwargs):
+        self._bar = args, kwargs
+        
     def plot_on_axes(self, ax):
-        pass
+        if self._plot:
+            args, kwargs = self._plot
+            ax.plot( *args, **kwargs )
+        if self._bar:
+            args, kwargs = self._bar
+            ax.bar( *args, **kwargs )
     
 class PlotContainer( AxesContainer ):
     """A container for a simple xy plot, equivalent to the matplotlib or
     matlab plot command.
     """
     
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         """:param *args: the arguments to be passed to the matplotlib plot command"""
         super(PlotContainer, self).__init__()
-        self._plot_args = args
+        self.plot( *args, **kwargs )
         
-    def plot_on_axes(self, ax):
-        ax.plot( *self._plot_args )
-        super(PlotContainer, self).plot_on_axes( ax )
+def BarContainer( AxesContainer ):
+    """A container for bar plots, equivalent to the matplotlib bar command"""
     
+    def __init__(self, *args, **kwargs):
+        """:param *args: the arguments to be passed to the matplotlib plot command"""
+        super(BarContainer, self).__init__()
+        self.bar( *args, **kwargs )
                     
 def structure_to_figure_container( structure ):
     """Convert a structure to a figure container, if the structure

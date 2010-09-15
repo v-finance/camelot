@@ -123,5 +123,4 @@ class ChartEditor(CustomEditor, WideEditor):
         if self._value not in (None, ValueLoading):
             self._value.plot_on_figure(self.fig)
             self.canvas.draw()
-#            self.canvas.updateGeometry()
 
