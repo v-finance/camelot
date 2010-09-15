@@ -179,19 +179,25 @@ operator_names = {
     between_op: u'between',
 }
 
-def text_from_richtext(unstripped_text, newlines=True):
+def text_from_richtext(unstripped_text, newlines=True, word_xml=False):
     # TODO improve/expand
+    from HTMLParser import HTMLParser    
+    global string 
+    string = ''
     if not unstripped_text:
-	return ''
-    from HTMLParser import HTMLParser
-    string = []
+	    return string
     class HtmlToTextParser(HTMLParser):
         def handle_data(self, data):
-            if not newlines:
-                data = data.replace('\n','')
-            string.append(data)
+            global string
+            if newlines:
+                newline = "\n"
+                if word_xml:
+                    newline = '<w:br />'
+                string = '%s%s%s' % (string.strip(), newline, data.strip())
+            else:
+                string = '%s %s' % (string.strip(), data.strip())
 
     parser = HtmlToTextParser()
-    parser.feed(unstripped_text)
-
-    return ' '.join(string)
+    parser.feed(unstripped_text.strip())
+    
+    return string
