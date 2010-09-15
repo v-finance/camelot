@@ -182,22 +182,21 @@ operator_names = {
 def text_from_richtext(unstripped_text, newlines=True, word_xml=False):
     # TODO improve/expand
     from HTMLParser import HTMLParser    
-    global string 
-    string = ''
+    strings = []
     if not unstripped_text:
-	    return string
+	    return ''
     class HtmlToTextParser(HTMLParser):
         def handle_data(self, data):
-            global string
-            if newlines:
-                newline = "\n"
-                if word_xml:
-                    newline = '<w:br />'
-                string = '%s%s%s' % (string.strip(), newline, data.strip())
-            else:
-                string = '%s %s' % (string.strip(), data.strip())
+            data = data.strip()
+            if data:
+                newline = ' '
+                if newlines:
+                    newline = "\n"
+                    if word_xml:
+                        newline = '<w:br />'
+                strings.append('%s%s' % (data, newline))
 
     parser = HtmlToTextParser()
     parser.feed(unstripped_text.strip())
     
-    return string
+    return ''.join(strings)
