@@ -97,7 +97,7 @@ class ChartEditor(CustomEditor, WideEditor):
                 facecolor='#ffffff',
             )
             canvas = FigureCanvas(self.fig)
-            self._value.draw(fig)
+            self._value.plot_on_figure(fig)
             proxy = QtGui.QGraphicsProxyWidget()
             proxy.setWidget(canvas)
             self.lite_box.show_fullscreen_item(proxy)
@@ -115,10 +115,13 @@ class ChartEditor(CustomEditor, WideEditor):
         return False
 
     def set_value(self, value):
-        self._value = super(ChartEditor, self).set_value(value)
+        from camelot.container.chartcontainer import structure_to_figure_container
+        self._value = structure_to_figure_container( super(ChartEditor, self).set_value(value) )
         self.on_draw()
 
     def on_draw(self):
         if self._value not in (None, ValueLoading):
-            self._value.draw(self.fig)
+            self._value.plot_on_figure(self.fig)
             self.canvas.draw()
+#            self.canvas.updateGeometry()
+
