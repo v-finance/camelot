@@ -44,8 +44,7 @@ class IntervalsDelegate(QtGui.QItemDelegate):
             xoffset = intervals.min * xscale + rect.x()
             yoffset = rect.y() + rect.height()/2
             for interval in intervals.intervals:
-                interval_color = color or interval.color
-                pen = QtGui.QPen(interval_color)
+                pen = QtGui.QPen(color or interval.color)
                 pen.setWidth(3)
                 painter.setPen(pen)
                 x1, x2 =  xoffset + interval.begin*xscale, xoffset + interval.end*xscale
