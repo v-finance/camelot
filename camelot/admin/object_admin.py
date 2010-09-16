@@ -49,7 +49,7 @@ class FieldAttributesList(list):
         doc = '\n'.join([template%(name, name) for name in original_list])
         self.__doc__ = doc
         
-DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip', 'background_color', 
+DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip', 'color', 'background_color', 
                                                 'editable', 'choices', 
                                                 'prefix', 'suffix', 'arrow',
                                                 'new_message'])

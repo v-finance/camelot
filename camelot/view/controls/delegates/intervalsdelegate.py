@@ -20,7 +20,15 @@ class IntervalsDelegate(QtGui.QItemDelegate):
         painter.save()
         self.drawBackground(painter, option, index)
         intervals = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
+        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
+        # background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
+        # editable is defaulted to False, because there is no editor, no need for one currently
+        editable, color, background_color = False, None, None
+        
+        if field_attributes != ValueLoading:
+            editable = field_attributes.get( 'editable', False )
+            background_color = field_attributes.get( 'background_color', QtGui.QColor(index.model().data(index, Qt.BackgroundRole)) )
+            color = field_attributes.get('color', None)
         
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
@@ -36,7 +44,8 @@ class IntervalsDelegate(QtGui.QItemDelegate):
             xoffset = intervals.min * xscale + rect.x()
             yoffset = rect.y() + rect.height()/2
             for interval in intervals.intervals:
-                pen = QtGui.QPen(interval.color)
+                interval_color = color or interval.color
+                pen = QtGui.QPen(interval_color)
                 pen.setWidth(3)
                 painter.setPen(pen)
                 x1, x2 =  xoffset + interval.begin*xscale, xoffset + interval.end*xscale
