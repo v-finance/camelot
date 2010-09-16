@@ -71,9 +71,12 @@ class ColoredFloatDelegate(CustomDelegate):
         value = variant_to_pyobject( index.model().data(index, Qt.EditRole) )
         field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
         fontColor = QtGui.QColor()
-        editable, background_color, arrow = True, None, None
+        editable, prefix, suffix, background_color, arrow = True, '', '', None, None
+        
         if field_attributes != ValueLoading:
             editable = field_attributes.get( 'editable', True )
+            prefix = field_attributes.get( 'prefix', '' )
+            suffix = field_attributes.get( 'suffix', '' )
             background_color = field_attributes.get( 'background_color', None )
             arrow = field_attributes.get('arrow', None)
 
@@ -100,6 +103,7 @@ class ColoredFloatDelegate(CustomDelegate):
                 value_str = self.unicode_format(value)
             else:
                 value_str = QtCore.QString("%L1").arg(float(value),0,'f',self.precision)
+        value_str = unicode( prefix ) + u' ' + unicode( value_str ) + u' ' + unicode( suffix )
        
         fontColor = fontColor.darker()
         painter.setPen(fontColor.toRgb())
