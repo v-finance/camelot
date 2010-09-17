@@ -64,20 +64,11 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
             dpi=dpi,
             facecolor='#ffffff',
         )
-        ovbox = QtGui.QVBoxLayout()
-        hbox = QtGui.QHBoxLayout()
+        layout = QtGui.QVBoxLayout()
         self.canvas = FigureCanvas(self.fig)
-        hbox.addWidget(self.canvas)
-        vbox = QtGui.QVBoxLayout()
-        vboxw = QtGui.QWidget()
-        vboxw.setLayout(vbox)
-        hbox.addWidget(vboxw)
-        vbox.addStretch()
-
-        hboxw = QtGui.QWidget()
-        hboxw.setLayout(hbox)
-        ovbox.addWidget(hboxw)
-        self.setLayout(ovbox)
+        layout.addWidget(self.canvas)
+        layout.setMargin(0)
+        self.setLayout(layout)
         self.canvas.setSizePolicy(
             QtGui.QSizePolicy.Expanding,
             QtGui.QSizePolicy.Expanding

@@ -34,7 +34,6 @@ import logging
 logger = logging.getLogger('camelot.view.workspace')
 
 from camelot.view.model_thread import gui_function
-from camelot.view.controls.view import AbstractView
 
 class DesktopBackground(QtGui.QGraphicsView):
     """A custom background widget for the desktop"""

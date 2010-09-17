@@ -22,6 +22,7 @@ class FigureContainer( Container ):
         
     def plot_on_figure(self, fig):
         """Draw all axes (sub plots) on a figure canvas"""
+        fig.clear()
         if self.axes:
             rows = len(self.axes)
             cols = len(self.axes[0])
@@ -32,28 +33,40 @@ class FigureContainer( Container ):
                     ax.clear()
                     subplot.plot_on_axes( ax )
                 
+class AxesMethod(object):
+    """Helper class to substitute a method on an Axes object and
+    record its calls"""
     
+    def __init__(self, method_name, commands):
+        """
+        :param method_name: the name of the method for which this object is a substitute
+        :param commands: a list in which to store invocations of the method
+        """
+        self._method_name = method_name
+        self._commands = commands
+        
+    def __call__(self, *args, **kwargs):
+        """record a call the the substitute method into the commands list"""
+        self._commands.append( (self._method_name, args, kwargs) )
+            
 class AxesContainer( Container ):
     """A container that is able to generate a plot on a matplotlib axes"""
-    
+
     def __init__(self):
         super(AxesContainer, self).__init__()
-        self._plot = None
-        self._bar = None
+        # store all the method calls that need to be called on a
+        # matplotlib axes object in a list
+        self._commands = list()
         
-    def plot(self, *args, **kwargs):
-        self._plot = args, kwargs
-        
-    def bar(self, *args, **kwargs):
-        self._bar = args, kwargs
+    def __getattr__(self, attribute_name):
+        """Suppose the caller wants to call a function on a matplotlib
+        axes object"""
+        return AxesMethod( attribute_name, self._commands )
         
     def plot_on_axes(self, ax):
-        if self._plot:
-            args, kwargs = self._plot
-            ax.plot( *args, **kwargs )
-        if self._bar:
-            args, kwargs = self._bar
-            ax.bar( *args, **kwargs )
+        """Replay the list of stored commands to the real Axes object"""
+        for name, args, kwargs in self._commands:
+            getattr(ax, name)(*args, **kwargs)
     
 class PlotContainer( AxesContainer ):
     """A container for a simple xy plot, equivalent to the matplotlib or
