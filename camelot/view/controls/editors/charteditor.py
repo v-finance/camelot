@@ -30,7 +30,7 @@ import logging
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from camelot.view.controls.editors.customeditor import CustomEditor
+from camelot.view.controls.editors.customeditor import AbstractCustomEditor
 from camelot.view.controls.editors.wideeditor import WideEditor
 from camelot.view.proxy import ValueLoading
 
@@ -38,7 +38,7 @@ from camelot.view.controls.liteboxview import LiteBoxView
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.charteditor')
 
-class ChartEditor(CustomEditor, WideEditor):
+class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
     """Editor to display and manipulate matplotlib charts.  The editor
     itself is generic for all kinds of plots,  it simply provides the
     data to be ploted with a set of axes.  The data itself should know
@@ -51,6 +51,8 @@ class ChartEditor(CustomEditor, WideEditor):
         from matplotlib.figure import Figure
         from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
         super(ChartEditor, self).__init__(parent)
+        self.setFrameShape( self.Box )
+        self.setContentsMargins( 1, 1, 1, 1 )
 
         # find out background color, because using a transparent
         # figure fails when the window is resized: the background

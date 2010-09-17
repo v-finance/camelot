@@ -49,14 +49,14 @@ class AbstractView(QtGui.QWidget):
     title_format = ''
     header_widget = None
 
-    title_changed_signal = QtCore.SIGNAL('titleChanged(const QString&)')
+    title_changed_signal = QtCore.pyqtSignal(QtCore.QString)
 
     @gui_function
     def change_title(self, new_title):
         """Will emit the title_changed_signal"""
         import sip
         if not sip.isdeleted(self):
-            self.emit(self.title_changed_signal, unicode(new_title))
+            self.title_changed_signal.emit( unicode(new_title) )
 
     @model_function
     def to_html(self):

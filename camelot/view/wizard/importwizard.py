@@ -278,11 +278,7 @@ class DataPreviewPage(QtGui.QWizardPage):
         self.model = model
         validator = self.model.get_validator()
         validator.validity_changed_signal.connect( self.update_complete )
-        self.connect(
-            model,
-            QtCore.SIGNAL('layoutChanged()'),
-            self.validate_all_rows
-        )
+        model.layoutChanged.connect( self.validate_all_rows )
         post(validator.validate_all_rows)
         self.collection_getter = collection_getter
 
@@ -307,6 +303,7 @@ class DataPreviewPage(QtGui.QWizardPage):
         self.setButtonText(QtGui.QWizard.CommitButton, _('Import'))
         self.update_complete()
 
+    @QtCore.pyqtSlot()
     def validate_all_rows(self):
         validator = self.model.get_validator()
         post(validator.validate_all_rows, self._all_rows_validated)
@@ -317,7 +314,7 @@ class DataPreviewPage(QtGui.QWizardPage):
     @QtCore.pyqtSlot(int)
     def update_complete(self, row=0):
         self._complete = (self.model.get_validator().number_of_invalid_rows()==0)
-        self.emit(QtCore.SIGNAL('completeChanged()'))
+        self.completeChanged.emit()
         if self._complete:
             self._note.set_value(None)
         else:
@@ -330,7 +327,7 @@ class DataPreviewPage(QtGui.QWizardPage):
         """Gets all info needed from SelectFilePage and feeds table"""
         filename = self.field('datasource').toString()
         self._complete = False
-        self.emit(QtCore.SIGNAL('completeChanged()'))
+        self.completeChanged.emit()
         self.model.set_collection_getter(self.collection_getter(filename))
         self.previewtable.set_value(self.model)
         self.validate_all_rows()

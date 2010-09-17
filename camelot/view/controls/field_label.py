@@ -32,7 +32,7 @@ class FieldLabel(UserTranslatableLabel):
         """
         super(FieldLabel, self).__init__(text, parent)
         show_field_attributes_action = QtGui.QAction(_('View attributes'), self)
-        self.connect(show_field_attributes_action, QtCore.SIGNAL('triggered()'), self.show_field_attributes)
+        show_field_attributes_action.triggered.connect( self.show_field_attributes )
         self.addAction(show_field_attributes_action)
         self._field_name = field_name
         self._admin = admin
@@ -48,6 +48,7 @@ class FieldLabel(UserTranslatableLabel):
         
         return [Attribute(key,attribute_value_to_string(key, value)) for key,value in self._field_attributes.items()]
     
+    @QtCore.pyqtSlot()
     def show_field_attributes(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
                     

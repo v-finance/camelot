@@ -98,10 +98,15 @@ no open tabs on the desktop.
             return None
         return self._tab_widget.widget( i )
 
+    @QtCore.pyqtSlot( QtCore.QString )
     def change_title(self, new_title):
         """slot to be called when the tile of a view needs to
         change"""
-        sender = self.sender()
+        # the request of the sender does not work in older pyqt versions
+        # therefore, take the current index, notice this is not correct !!
+        #
+        # sender = self.sender()
+        sender = self.active_view()
         if sender:
             index = self._tab_widget.indexOf( sender )
             if index >= 0:
@@ -114,11 +119,7 @@ no open tabs on the desktop.
         if index < 0:
             self.add_view( view, title )
         else:
-            self.connect(
-                view,
-                AbstractView.title_changed_signal,
-                self.change_title,
-            )
+            view.title_changed_signal.connect( self.change_title )
             self._tab_widget.removeTab( index )
             index = self._tab_widget.insertTab( index, view, title )
             self._tab_widget.setCurrentIndex( index )
@@ -126,11 +127,7 @@ no open tabs on the desktop.
     @gui_function
     def add_view(self, view, title='...'):
         """add a Widget implementing AbstractView to the workspace"""
-        self.connect(
-            view,
-            AbstractView.title_changed_signal,
-            self.change_title,
-        )
+        view.title_changed_signal.connect( self.change_title )
         index = self._tab_widget.addTab( view, title )
         self._tab_widget.setCurrentIndex( index )
         self._tab_widget.show()
@@ -159,11 +156,7 @@ def show_top_level(view, parent):
     # like main.py or pythonw being displayed
     #
     view.setWindowTitle( u'' )
-    view.connect(
-        view,
-        AbstractView.title_changed_signal,
-        view.setWindowTitle
-    )
+    view.title_changed_signal.connect( view.setWindowTitle ) 
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
     #

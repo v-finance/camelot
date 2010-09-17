@@ -64,12 +64,13 @@ class ContextMenuAction(QtGui.QAction):
 
 class FormWidget(QtGui.QWidget):
 
-    changed_signal = QtCore.SIGNAL('changed()')
+    changed_signal = QtCore.pyqtSignal()
 
     def __init__(self, admin):
         QtGui.QWidget.__init__(self)
         self._admin = admin
         self._widget_mapper = QtGui.QDataWidgetMapper()
+        self._widget_mapper.setObjectName('widget_mapper')
         self._widget_layout = QtGui.QHBoxLayout()
         self._widget_layout.setSpacing(0)
         self._widget_layout.setMargin(0)
@@ -85,14 +86,10 @@ class FormWidget(QtGui.QWidget):
 
     def set_model(self, model):
         self._model = model
-        sig = 'dataChanged(const QModelIndex &, const QModelIndex &)'
-        self.connect(self._model, QtCore.SIGNAL(sig), self._data_changed)
-        self.connect(
-            self._model,
-            QtCore.SIGNAL('layoutChanged()' ),
-            self._layout_changed
-        )
+        self._model.dataChanged.connect( self._data_changed )
+        self._model.layoutChanged.connect( self._layout_changed )
         self._model.item_delegate_changed_signal.connect( self._item_delegate_changed )
+        self._model.setObjectName( 'model' )
         self._widget_mapper.setModel( model )
         register.register( model, self._widget_mapper )
 
@@ -108,17 +105,18 @@ class FormWidget(QtGui.QWidget):
         #@TODO: only revert if this form is in the changed range
         self._widget_mapper.revert()
         if not sip.isdeleted(self):
-            self.emit(self.changed_signal)
+            self.changed_signal.emit()
 
     def _layout_changed(self):
         self._widget_mapper.revert()
-        self.emit(self.changed_signal)
+        self.changed_signal.emit()
 
     @QtCore.pyqtSlot()
     def _item_delegate_changed(self):
         from camelot.view.controls.delegates.delegatemanager import \
             DelegateManager
         self._delegate = self._model.getItemDelegate()
+        self._delegate.setObjectName('delegate')
         assert self._delegate != None
         assert isinstance(self._delegate, DelegateManager)
         self._create_widgets()
@@ -135,19 +133,19 @@ class FormWidget(QtGui.QWidget):
 
     def to_first(self):
         self._widget_mapper.toFirst()
-        self.emit(self.changed_signal)
+        self.changed_signal.emit()
 
     def to_last(self):
         self._widget_mapper.toLast()
-        self.emit(self.changed_signal)
+        self.changed_signal.emit()
 
     def to_next(self):
         self._widget_mapper.toNext()
-        self.emit(self.changed_signal)
+        self.changed_signal.emit()
 
     def to_previous(self):
         self._widget_mapper.toPrevious()
-        self.emit(self.changed_signal)
+        self.changed_signal.emit()
 
     def export_ooxml(self):
         from camelot.view.export.word import open_stream_in_word
@@ -219,6 +217,7 @@ class FormWidget(QtGui.QWidget):
                 option,
                 model_index
             )
+            widget_editor.setObjectName('%s_editor'%field_name)
             if not hide_title:
                 widget_label = FieldLabel(
                     field_name,
@@ -226,6 +225,7 @@ class FormWidget(QtGui.QWidget):
                     field_attributes,
                     self._admin
                 )
+                widget_label.setObjectName('%s_label'%field_name)
                 if not isinstance(widget_editor, WideEditor):
                     widget_label.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
 
@@ -268,14 +268,14 @@ class FormView(AbstractView):
         self.title_prefix = title
 
         self._form = FormWidget(admin)
-        self.connect(self._form, FormWidget.changed_signal, self.update_title)
+        self._form.setObjectName( 'form' )
+        self._form.changed_signal.connect( self.update_title )
         self._form.set_model(model)
         self._form.set_index(index)
         self._form_and_actions_layout.addWidget(self._form)
 
-        self.closeAfterValidation = QtCore.SIGNAL('closeAfterValidation()')
-
         self.statusbar = StatusBar(self)
+        self.statusbar.setObjectName('statusbar')
         self.statusbar.setSizeGripEnabled(False)
         self._layout.addWidget(self.statusbar)
         self._layout.setAlignment(self.statusbar, Qt.AlignBottom)
@@ -325,13 +325,10 @@ class FormView(AbstractView):
             from camelot.view.controls.actionsbox import ActionsBox
             logger.debug('setting Actions for formview')
             self.actions_widget = ActionsBox(self, self.getEntity)
+            self.actions_widget.setObjectName('actions')
             action_widgets = self.actions_widget.setActions(actions)
             for action_widget in action_widgets:
-                self.connect(
-                    self._form,
-                    FormWidget.changed_signal,
-                    action_widget.changed
-                )
+                self._form.changed_signal.connect( action_widget.changed )
                 action_widget.changed()
             side_panel_layout.insertWidget(1, self.actions_widget)
             side_panel_layout.addStretch()

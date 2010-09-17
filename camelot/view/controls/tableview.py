@@ -295,7 +295,6 @@ class TableView( AbstractView  ):
         splitter.addWidget( table_widget )
         splitter.addWidget( filters_widget )
         self.setLayout( widget_layout )
-        self.closeAfterValidation = QtCore.SIGNAL( 'closeAfterValidation()' )
         self.search_filter = lambda q: q
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find), self)
         self.connect( shortcut, QtCore.SIGNAL( 'activated()' ), self.activate_search )

@@ -55,11 +55,12 @@ within by right clicking on it and selecting the appropriate submenu.
         if isinstance(text, (ugettext_lazy)):
             self._text = text
             translate_action = TranslateLabelAction(self)
-            self.connect(translate_action, QtCore.SIGNAL('triggered()'), self.change_translation)
+            translate_action.triggered.connect( self.change_translation )
             self.addAction(translate_action)
         else:
             self._text = None
             
+    @QtCore.pyqtSlot()
     def change_translation(self):
         if self._text:
             new_translation, ok = QtGui.QInputDialog.getText(self, 
