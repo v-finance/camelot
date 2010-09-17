@@ -36,6 +36,8 @@ from camelot.view.proxy import ValueLoading
 
 from camelot.view.controls.liteboxview import LiteBoxView
 
+PAD_INCHES = 0.1
+
 LOGGER = logging.getLogger('camelot.view.controls.editors.charteditor')
 
 class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
@@ -84,11 +86,7 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
         from matplotlib.figure import Figure
         from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
         if self._value:
-            fig = Figure(
-                figsize=(200, 100),
-                dpi=100,
-                facecolor='#ffffff',
-            )
+            fig = Figure(facecolor='#ffffff')
             canvas = FigureCanvas(self.fig)
             self._value.plot_on_figure(fig)
             proxy = QtGui.QGraphicsProxyWidget()
@@ -112,8 +110,46 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
         self._value = structure_to_figure_container( super(ChartEditor, self).set_value(value) )
         self.on_draw()
 
+#    def _get_tightbbox(self, fig, pad_inches):
+#        renderer = fig.canvas.get_renderer()
+#        bbox_inches = fig.get_tightbbox(renderer)
+#        return bbox_inches.padded(pad_inches)
+#
+#    def tight_borders(self, fig, pad_inches=PAD_INCHES):
+#        """Stretch subplot boundaries to figure edges plus padding."""
+#        # call draw to update the renderer and get accurate bboxes.
+#        import numpy as np
+#        fig.canvas.draw()
+#        bbox_original = fig.bbox_inches
+#        bbox_tight = self._get_tightbbox(fig, pad_inches)
+#        
+#        print bbox_tight
+#        
+#        # figure dimensions ordered like bbox.extents: x0, y0, x1, y1
+#        lengths = np.array([bbox_original.width, bbox_original.height,
+#                            bbox_original.width, bbox_original.height])
+#        whitespace = (bbox_tight.extents - bbox_original.extents) / lengths
+#        
+#        # border padding ordered like bbox.extents: x0, y0, x1, y1
+#        current_borders = np.array([fig.subplotpars.left, fig.subplotpars.bottom,
+#                                    fig.subplotpars.right, fig.subplotpars.top])
+#        
+#        
+#        left, bottom, right, top = current_borders - whitespace
+#        print self.canvas.size()
+#        print left, bottom, right, top
+#        fig.subplots_adjust(bottom=bottom, top=top, left=left, right=right)
+    
     def on_draw(self):
         if self._value not in (None, ValueLoading):
             self._value.plot_on_figure(self.fig)
             self.canvas.draw()
+#        renderer = self.fig.canvas.get_renderer()
+#        print 'widget size', self.canvas.size()
+#        print 'renderer size', renderer.get_canvas_width_height()
+#        print 'points_to_pixels', renderer.points_to_pixels(1.0)
+#        print 'tightbbox', self.fig.get_tightbbox(renderer)
+#        #self.fig.subplots_adjust(bottom=0.3, right=0.9, top=0.9, left=0.1)
+#        self.tight_borders(self.fig)
+#        self.canvas.draw()
 

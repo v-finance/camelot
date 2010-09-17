@@ -604,11 +604,7 @@ The QWidget class to be used when a table view is needed
                 # when this is the case, it should be propagated
                 #
                 model.dataChanged.connect( self.dataChanged )
-                self.connect(
-                    self.form_view,
-                    AbstractView.title_changed_signal,
-                    self.change_title
-                )
+                self.form_view.title_changed_signal.connect( self.change_title )
 
             def emit_if_valid(self, valid):
                 if valid:
