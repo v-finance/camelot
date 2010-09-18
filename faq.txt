@@ -1,12 +1,20 @@
  
-Camelot segfaults at exit
--------------------------
+Camelot segfaults at exit or when closing a window
+--------------------------------------------------
 
-this is indeed a known bug in a recent release of PyQt, it's supposed
-to be fixed in the PyQt trunk, but I'm not sure it's in a release yet.
-you can use an older release of PyQt to get around it, pyqt 4.7, qt 4.6.1
-seems to work fine.
+There are 2 known bugs that cause Camelot to segfault :
 
+  * A bug in PyQt causing a segfault when the mainwindow
+    is distructed
+    
+  * A bug in Qt when table models are destructed (this
+    happens both when closing a table or a form view)
+    
+These bugs are fixed in PyQt 4.7.x and Qt 4.7 rc1.
+
+As long as Qt 4.7 is not yet available, the only way to
+get around this is by compiling it.  There are compilation
+instructions in the 'debug' part of the Camelot manual.
 
 How to get rid of sqlalchemy warnings
 -------------------------------------
@@ -17,3 +25,8 @@ add a filter to ignore them::
         import warnings 
         from sqlalchemy.exc import SADeprecationWarning 
         warnings.simplefilter("ignore", SADeprecationWarning) 
+        
+Use Camelot without its default model
+-------------------------------------
+
+

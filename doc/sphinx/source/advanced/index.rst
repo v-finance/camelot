@@ -12,3 +12,4 @@ This is documentation for advanced usage of the Camelot library.
    unittests.rst
    deployment.rst
    permissions.rst
+   debug.rst
