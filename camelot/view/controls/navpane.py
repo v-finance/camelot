@@ -310,11 +310,7 @@ class NavigationPane(QtGui.QDockWidget):
 
         addActions(self.treewidget.contextmenu, ( newWindowAct,))
         self.treewidget.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.connect(
-            self.treewidget,
-            QtCore.SIGNAL('customContextMenuRequested(const QPoint &)'),
-            self.createContextMenu
-        )
+        self.treewidget.customContextMenuRequested.connect( self.createContextMenu )
 
         if buttons:
             for b in buttons:

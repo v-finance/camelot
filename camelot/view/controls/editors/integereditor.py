@@ -36,8 +36,6 @@ from camelot.core.constants import camelot_minint
 from camelot.core.constants import camelot_maxint
 
 from customeditor import CustomEditor
-from customeditor import editingFinished
-
 
 class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
@@ -106,25 +104,13 @@ an unneeded update of the db.
         self.calculatorButton.setIcon(icon)
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFixedHeight(self.get_height())
-
-        #self.connect(self.calculatorButton,
-        #             QtCore.SIGNAL('clicked()'),
-        #             lambda:self.popupCalculator(self.spinBox.value()))
-        #self.connect(action,
-        #             QtCore.SIGNAL('triggered(bool)'),
-        #             lambda:self.popupCalculator(self.spinBox.value()))
-        #self.connect(self.spinBox,
-        #             QtCore.SIGNAL('editingFinished()'),
-        #             lambda:self.editingFinished(self.spinBox.value()))
         self.calculatorButton.clicked.connect(
             lambda:self.popupCalculator(self.spinBox.value())
         )
         action.triggered.connect(
             lambda:self.popupCalculator(self.spinBox.value())
         )
-        self.spinBox.editingFinished.connect(
-            lambda:self.editingFinished(self.spinBox.value())
-        )
+        self.spinBox.editingFinished.connect( self.spinbox_editing_finished )
 
         layout = QtGui.QHBoxLayout()
         layout.setMargin(0)
@@ -176,16 +162,14 @@ an unneeded update of the db.
         from camelot.view.controls.calculator import Calculator
         calculator = Calculator(self)
         calculator.setValue(value)
-        self.connect(
-            calculator,
-            QtCore.SIGNAL('calculationFinished'),
-            self.calculationFinished
-        )
+        calculator.calculation_finished_signal.connect( self.calculation_finished )
         calculator.exec_()
 
-    def calculationFinished(self, value):
-        self.spinBox.setValue(floor(float(value)))
-        self.emit(editingFinished)
+    @QtCore.pyqtSlot(QtCore.QString)
+    def calculation_finished(self, value):
+        self.spinBox.setValue(floor(float(unicode(value))))
+        self.editingFinished.emit()
 
-    def editingFinished(self, value):
-        self.emit(editingFinished)
+    @QtCore.pyqtSlot()
+    def spinbox_editing_finished(self):
+        self.editingFinished.emit()

@@ -68,24 +68,13 @@ class ColoredFloatEditor(CustomEditor):
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFixedHeight(self.get_height())
 
-        #self.connect(self.calculatorButton,
-        #             QtCore.SIGNAL('clicked()'),
-        #             lambda:self.popupCalculator(self.spinBox.value()))
-        #self.connect(action,
-        #             QtCore.SIGNAL('triggered(bool)'),
-        #             lambda:self.popupCalculator(self.spinBox.value()))
-        #self.connect(self.spinBox,
-        #             QtCore.SIGNAL('editingFinished()'),
-        #             lambda:self.editingFinished(self.spinBox.value()))
         self.calculatorButton.clicked.connect(
             lambda:self.popupCalculator(self.spinBox.value())
         )
         action.triggered.connect(
             lambda:self.popupCalculator(self.spinBox.value())
         )
-        self.spinBox.editingFinished.connect(
-            lambda:self.editingFinished(self.spinBox.value())
-        )
+        self.spinBox.editingFinished.connect( self.spinbox_editing_finished )
 
         self.releaseKeyboard()
 
@@ -157,17 +146,15 @@ class ColoredFloatEditor(CustomEditor):
         from camelot.view.controls.calculator import Calculator
         calculator = Calculator(self)
         calculator.setValue(value)
-        self.connect(calculator,
-                     QtCore.SIGNAL('calculationFinished'),
-                     self.calculationFinished)
+        calculator.calculation_finished_signal.connect( self.calculation_finished )
         calculator.exec_()
 
-    def calculationFinished(self, value):
-        self.spinBox.setValue(float(value))
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+    def calculation_finished(self, value):
+        self.spinBox.setValue(float(unicode(value)))
+        self.editingFinished.emit()
 
-    def editingFinished(self, value):
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+    def spinbox_editing_finished(self):
+        self.editingFinished.emit()
 
     def set_background_color(self, background_color):
         if background_color not in (None, ValueLoading):

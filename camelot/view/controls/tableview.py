@@ -33,7 +33,6 @@ logger = logging.getLogger( 'camelot.view.controls.tableview' )
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
-from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QSizePolicy
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
@@ -132,6 +131,8 @@ class HeaderWidget( QtGui.QWidget ):
 
     search_widget = SimpleSearchControl
     rows_widget = RowsWidget
+    
+    filters_changed_signal = QtCore.pyqtSignal()
 
     _title_font = QtGui.QApplication.font()
     _title_font.setBold( True )
@@ -183,7 +184,7 @@ class HeaderWidget( QtGui.QWidget ):
         self._expanded_filters_created = True
 
     def _filter_changed(self):
-        self.emit(QtCore.SIGNAL('filters_changed'))
+        self.filters_changed_signal.emit()
 
     def decorate_query(self, query):
         """Apply expanded filters on the query"""
@@ -297,9 +298,9 @@ class TableView( AbstractView  ):
         self.setLayout( widget_layout )
         self.search_filter = lambda q: q
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Find), self)
-        self.connect( shortcut, QtCore.SIGNAL( 'activated()' ), self.activate_search )
+        shortcut.activated.connect( self.activate_search )
         if self.header_widget:
-            self.connect( self.header, QtCore.SIGNAL('filters_changed'),  self.rebuild_query )
+            self.header.filters_changed_signal.connect( self.rebuild_query )
         # give the table widget focus to prevent the header and its search control to
         # receive default focus, as this would prevent the displaying of 'Search...' in the
         # search control, but this conflicts with the MDI, resulting in the window not
@@ -309,6 +310,7 @@ class TableView( AbstractView  ):
         #self.setFocus( QtCore.Qt.OtherFocusReason )
         post( self.admin.get_subclass_tree, self.setSubclassTree )
 
+    @QtCore.pyqtSlot()
     def activate_search(self):
         self.header.search.setFocus(QtCore.Qt.ShortcutFocusReason)
 
@@ -323,8 +325,9 @@ class TableView( AbstractView  ):
             splitter = self.findChild(QtGui.QWidget, 'splitter' )
             class_tree = SubclassTree( self.admin, splitter )
             splitter.insertWidget( 0, class_tree )
-            self.connect( class_tree, SIGNAL( 'subclassClicked' ), self.set_admin )
+            class_tree.subclass_clicked_signal.connect( self.set_admin )
 
+    @QtCore.pyqtSlot(int)
     def sectionClicked( self, section ):
         """emits a row_selected signal"""
         self.row_selected_signal.emit( section )
@@ -351,6 +354,7 @@ class TableView( AbstractView  ):
     def get_model(self):
         return self._table_model
 
+    @QtCore.pyqtSlot( object )
     @gui_function
     def set_admin( self, admin ):
         """Switch to a different subclass, where admin is the admin object of the
@@ -358,7 +362,7 @@ class TableView( AbstractView  ):
         logger.debug('set_admin called')
         self.admin = admin
         if self.table:
-            self.disconnect(self._table_model, QtCore.SIGNAL( 'layoutChanged()' ), self.tableLayoutChanged )
+            self._table_model.layoutChanged.disconnect( self.tableLayoutChanged )
             self.table_layout.removeWidget(self.table)
             self.table.deleteLater()
             self._table_model.deleteLater()
@@ -366,10 +370,8 @@ class TableView( AbstractView  ):
         self.table = self.TableWidget( splitter )
         self._table_model = self.create_table_model( admin )
         self.table.setModel( self._table_model )
-        self.connect( self.table.verticalHeader(),
-                      SIGNAL( 'sectionClicked(int)' ),
-                      self.sectionClicked )
-        self.connect( self._table_model, QtCore.SIGNAL( 'layoutChanged()' ), self.tableLayoutChanged )
+        self.table.verticalHeader().sectionClicked.connect( self.sectionClicked )
+        self._table_model.layoutChanged.connect( self.tableLayoutChanged )
         self.tableLayoutChanged()
         self.table_layout.insertWidget( 1, self.table )
 
@@ -379,6 +381,7 @@ class TableView( AbstractView  ):
         post( get_filters_and_actions,  self.set_filters_and_actions )
         post( admin.get_list_charts, self.setCharts )
 
+    @QtCore.pyqtSlot()
     @gui_function
     def tableLayoutChanged( self ):
         logger.debug('tableLayoutChanged')
@@ -544,11 +547,11 @@ class TableView( AbstractView  ):
         self.selectTableRow( prev )
 
     def _set_query(self, query_getter):
-        from camelot.view.proxy.queryproxy import QueryTableProxy
         if isinstance(self._table_model, QueryTableProxy):
             self._table_model.setQuery(query_getter)
         self.table.clearSelection()
 
+    @QtCore.pyqtSlot()
     def rebuild_query( self ):
         """resets the table model query"""
         from filterlist import FilterList
@@ -607,7 +610,7 @@ class TableView( AbstractView  ):
         logger.debug( 'setting filters for tableview' )
         filters_widget = self.findChild(FilterList, 'filters')
         if filters_widget:
-            self.disconnect( filters_widget, SIGNAL( 'filters_changed' ), self.rebuild_query )
+            filters_widget.filters_changed_signal.disconnect( self.rebuild_query )
             self.filters_layout.removeWidget(filters_widget)
             filters_widget.deleteLater()
         if self.actions:
@@ -619,7 +622,7 @@ class TableView( AbstractView  ):
             filters_widget = FilterList( filters, parent=splitter )
             filters_widget.setObjectName('filters')
             self.filters_layout.addWidget( filters_widget )
-            self.connect( filters_widget, SIGNAL( 'filters_changed' ), self.rebuild_query )
+            filters_widget.filters_changed_signal.connect( self.rebuild_query )
         #
         # filters might have default values, so we can only build the queries now
         #

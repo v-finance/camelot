@@ -154,17 +154,16 @@ class FloatEditor(CustomEditor):
         from camelot.view.controls.calculator import Calculator
         calculator = Calculator(self)
         calculator.setValue(value)
-        self.connect(calculator,
-                     QtCore.SIGNAL('calculationFinished'),
-                     self.calculationFinished)
+        calculator.calculation_finished_signal.connect( self.calculation_finished )
         calculator.exec_()
 
-    def calculationFinished(self, value):
-        self.spinBox.setValue(float(value))
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+    @QtCore.pyqtSlot(QtCore.QString)
+    def calculation_finished(self, value):
+        self.spinBox.setValue(float(unicode(value)))
+        self.editingFinished.emit()
 
-    def editingFinished(self, value):
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+    def spinbox_editing_finished(self):
+        self.editingFinished.emit()
 
     def set_background_color(self, background_color):
         if background_color not in (None, ValueLoading):

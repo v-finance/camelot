@@ -47,9 +47,7 @@ class FilterOperator(QtGui.QGroupBox):
         layout.addWidget(combobox)
         for i, name in self._choices:
             combobox.insertItem(i, unicode(name))
-        self.connect(combobox, 
-                     QtCore.SIGNAL('currentIndexChanged(int)'), 
-                     self.combobox_changed)
+        combobox.currentIndexChanged.connect( self.combobox_changed )
         delegate = self._field_attributes['delegate'](**self._field_attributes)
         option = QtGui.QStyleOptionViewItem()
         option.version = 5
@@ -74,6 +72,7 @@ class FilterOperator(QtGui.QGroupBox):
         self._value = None
         self._value2 = None
         
+    @QtCore.pyqtSlot(int)
     def combobox_changed(self, index):
         """Whenever the combobox changes, show or hide the
         appropriate editors and emit the filter_changed signal """

@@ -31,8 +31,10 @@ from camelot.core.utils import ugettext as _
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-
 class Calculator(QtGui.QDialog):
+    
+    calculation_finished_signal = QtCore.pyqtSignal(QtCore.QString)
+    
     def __init__(self, parent=None):
         QtGui.QDialog.__init__(self, parent)
         mainLayout = QtGui.QVBoxLayout()
@@ -142,8 +144,7 @@ class Calculator(QtGui.QDialog):
             QtGui.QDialog.keyPressEvent(self, event)
 
     def SaveValue(self):
-        self.emit(QtCore.SIGNAL('calculationFinished'), str(self.output.text()))
-
+        self.calculation_finished_signal.emit( self.output.text() )
         self.close()
         return
 

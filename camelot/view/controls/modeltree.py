@@ -88,10 +88,7 @@ class ModelTree(QtGui.QTreeWidget):
     def mousePressEvent(self, event):
         """Custom context menu"""
         if event.button() == Qt.RightButton:
-            self.emit(
-                QtCore.SIGNAL('customContextMenuRequested(const QPoint &)'),
-                event.pos()
-            )
+            self.customContextMenuRequested.emit( event.pos() )
             event.accept()
         else:
             QtGui.QTreeWidget.mousePressEvent(self, event)

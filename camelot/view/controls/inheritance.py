@@ -45,7 +45,6 @@ class SubclassItem(ModelItem):
         ModelItem.__init__(self, parent, [admin.get_verbose_name()])
         self.admin = admin
 
-
 class SubclassTree( ModelTree ):
     """Widget to select subclasses of a certain entity, where the subclasses
     are represented in a tree
@@ -53,6 +52,8 @@ class SubclassTree( ModelTree ):
     emits subclassClicked when a subclass has been selected
     """
 
+    subclass_clicked_signal = QtCore.pyqtSignal(object)
+    
     def __init__(self, admin, parent):
         header_labels = ['Types']
         ModelTree.__init__(self, header_labels, parent)
@@ -63,11 +64,7 @@ class SubclassTree( ModelTree ):
             QtGui.QSizePolicy.Minimum,
             QtGui.QSizePolicy.Expanding
         )
-        self.connect(
-            self,
-            QtCore.SIGNAL('clicked(const QModelIndex&)'),
-            self.emitSubclassClicked
-        )
+        self.clicked.connect( self.emit_subclass_clicked )
 
     def setSubclasses(self, subclasses):
         logger.debug('setting subclass tree')
@@ -89,15 +86,15 @@ class SubclassTree( ModelTree ):
         else:
             self.setMaximumWidth(0)
 
-    def emitSubclassClicked(self, index):
+    @QtCore.pyqtSlot(QtCore.QModelIndex)
+    def emit_subclass_clicked(self, index):
         logger.debug('subclass clicked at position %s' % index.row())
         item = self.itemFromIndex(index)
-        self.emit(QtCore.SIGNAL('subclassClicked'), item.admin)
-
+        self.subclass_clicked_signal.emit( item.admin )
 
 class SubclassDialog(QtGui.QDialog):
     """A dialog requesting the user to select a subclass"""
-
+    
     def __init__(self, parent, admin):
         QtGui.QDialog.__init__(self, parent)
         subclass_tree = SubclassTree(admin, self)
@@ -108,12 +105,9 @@ class SubclassDialog(QtGui.QDialog):
         self.setLayout(layout)
 
         self.selected_subclass = None
-        self.connect(
-            subclass_tree,
-            QtCore.SIGNAL('subclassClicked'),
-            self.subclassClicked
-        )
+        subclass_tree.subclass_clicked_signal.connect( self._subclass_clicked )
 
-    def subclassClicked(self, admin):
+    @QtCore.pyqtSlot(object)
+    def _subclass_clicked(self, admin):
         self.selected_subclass = admin
         self.accept()

@@ -39,6 +39,8 @@ filter_changed_signal = QtCore.SIGNAL('filter_changed')
 class FilterList(QtGui.QScrollArea):
     """A list with filters that can be applied on a query in the tableview"""
 
+    filters_changed_signal = QtCore.pyqtSignal()
+    
     def __init__(self, items, parent):
         """
     :param items: list of tuples (filter, (name, choices)) for constructing the different filterboxes
@@ -69,4 +71,4 @@ class FilterList(QtGui.QScrollArea):
 
     def emit_filters_changed(self):
         logger.debug('filters changed')
-        self.emit(QtCore.SIGNAL('filters_changed'))
+        self.filters_changed_signal.emit()
