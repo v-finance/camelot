@@ -153,6 +153,7 @@ class ColoredFloatEditor(CustomEditor):
         self.spinBox.setValue(float(unicode(value)))
         self.editingFinished.emit()
 
+    @QtCore.pyqtSlot()
     def spinbox_editing_finished(self):
         self.editingFinished.emit()
 

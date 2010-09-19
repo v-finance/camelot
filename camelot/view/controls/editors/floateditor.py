@@ -79,25 +79,15 @@ class FloatEditor(CustomEditor):
         self.calculatorButton.setIcon(icon)
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFixedHeight(self.get_height())
+        self.calculatorButton.setToolTip('Calculator F3')
 
-        #self.connect(self.calculatorButton,
-        #             QtCore.SIGNAL('clicked()'),
-        #             lambda:self.popupCalculator(self.spinBox.value()))
-        #self.connect(action,
-        #             QtCore.SIGNAL('triggered(bool)'),
-        #             lambda:self.popupCalculator(self.spinBox.value()))
-        #self.connect(self.spinBox,
-        #             QtCore.SIGNAL('editingFinished()'),
-        #             lambda:self.editingFinished(self.spinBox.value()))
         self.calculatorButton.clicked.connect(
             lambda:self.popupCalculator(self.spinBox.value())
         )
         action.triggered.connect(
             lambda:self.popupCalculator(self.spinBox.value())
         )
-        self.spinBox.editingFinished.connect(
-             lambda:self.editingFinished(self.spinBox.value())
-        )
+        self.spinBox.editingFinished.connect( self.spinbox_editing_finished )
 
         self.releaseKeyboard()
 
@@ -162,6 +152,7 @@ class FloatEditor(CustomEditor):
         self.spinBox.setValue(float(unicode(value)))
         self.editingFinished.emit()
 
+    @QtCore.pyqtSlot()
     def spinbox_editing_finished(self):
         self.editingFinished.emit()
 
