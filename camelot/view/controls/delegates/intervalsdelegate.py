@@ -12,9 +12,8 @@ class IntervalsDelegate(QtGui.QItemDelegate):
   
     __metaclass__ = DocumentationMetaclass
   
-    def __init__(self, parent=None, editable=False, **kwargs):
+    def __init__(self, parent=None, **kwargs):
         QtGui.QItemDelegate.__init__(self, parent)
-        self.editable = editable
     
     def paint(self, painter, option, index):
         painter.save()
@@ -33,7 +32,7 @@ class IntervalsDelegate(QtGui.QItemDelegate):
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
         else:
-            if not self.editable:
+            if not editable:
                 painter.fillRect(option.rect, option.palette.window())
             else:
                 painter.fillRect(option.rect, background_color)
