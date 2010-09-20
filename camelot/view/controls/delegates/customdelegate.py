@@ -130,7 +130,10 @@ will be put onto a form"""
         assert editor != None
         assert isinstance(editor, (QtGui.QWidget,))
         self.commitData.emit(editor)
-        self.closeEditor.emit(editor, QtGui.QAbstractItemDelegate.NoHint)
+        # if the editor emits editingFinished, this not necessarely means
+        # the editor schould be closed, eg the float editor might have created
+        # a calculator and that one would be destroyed if the editor is closed
+        #self.closeEditor.emit(editor, QtGui.QAbstractItemDelegate.NoHint)
 
     def setEditorData(self, editor, index):
         if not index.model():

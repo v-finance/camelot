@@ -51,6 +51,7 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
         #
         self.current_entity_admin = None
         self.layout = QtGui.QHBoxLayout()
+        self.layout.setMargin(0)
         self.entity_instance_getter = None
         self.form = None
         self.model = None
