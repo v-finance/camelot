@@ -29,8 +29,6 @@ from PyQt4 import QtGui, QtCore
 
 from camelot.core.utils import ugettext
 from camelot.view.utils import operator_names
-from camelot.view.controls import editors
-from camelot.view.controls.filterlist import filter_changed_signal
 
 class FilterOperator(QtGui.QGroupBox):
     """Widget that allows applying various filter operators on a field"""
@@ -60,8 +58,8 @@ class FilterOperator(QtGui.QGroupBox):
         self._editor.set_value(None)
         self._editor2.set_value(None)
         editing_finished_slot = self.editor_editing_finished
-        self.connect(self._editor, editors.editingFinished, editing_finished_slot)
-        self.connect(self._editor2, editors.editingFinished, editing_finished_slot)
+        self._editor.editingFinished.connect( editing_finished_slot )
+        self._editor2.editingFinished.connect( editing_finished_slot )
         layout.addWidget(self._editor)
         layout.addWidget(self._editor2)
         layout.addStretch()
@@ -99,14 +97,14 @@ class FilterOperator(QtGui.QGroupBox):
             self._editor.hide()
             self._editor2.setEnabled(False)
             self._editor2.hide()
-        self.emit(filter_changed_signal)
+        self.filter_changed_signal.emit()
         
     def editor_editing_finished(self):
         """Whenever one of the editors their value changes, emit
         the filters changed signal"""
         self._value = self._editor.get_value()
         self._value2 = self._editor2.get_value()
-        self.emit(filter_changed_signal)
+        self.filter_changed_signal.emit()
     
     def decorate_query(self, query):
         """
