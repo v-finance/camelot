@@ -1,9 +1,12 @@
+from PyQt4 import QtCore
+
 from wideeditor import WideEditor
 from customeditor import AbstractCustomEditor, QtGui
 
-
 class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
 
+    editingFinished = QtCore.pyqtSignal()
+ 
     def __init__(self, parent, length=20, editable=True, **kwargs):
         QtGui.QTextEdit.__init__(self, parent)
         AbstractCustomEditor.__init__(self)

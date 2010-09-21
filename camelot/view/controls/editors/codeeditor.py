@@ -32,14 +32,12 @@ from PyQt4.QtCore import Qt
 from customeditor import CustomEditor
 import re
 
-
 class PartEditor(QtGui.QLineEdit):
 
     def __init__(self, mask):
         super(PartEditor, self).__init__()
         self.setInputMask(mask)
         self.setCursorPosition(0)
-
 
 class CodeEditor(CustomEditor):
 
@@ -62,17 +60,15 @@ class CodeEditor(CustomEditor):
             editor.setMaximumWidth(space_width*(part_length+1))
             self.part_editors.append(editor)
             layout.addWidget(editor)
-            #self.connect(editor,
-            #             QtCore.SIGNAL('editingFinished()'),
-            #             self.editingFinished)
-            editor.editingFinished.connect(self.editingFinished)
+            editor.editingFinished.connect(self.emit_editing_finished)
         self.setLayout(layout)
 
-    def editingFinished(self):
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+    @QtCore.pyqtSlot()
+    def emit_editing_finished(self):
+        self.editingFinished.emit()
 
     def focusOutEvent(self, event):
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+        self.editingFinished.emit()
 
     def set_enabled(self, editable=True):
         for editor in self.part_editors:

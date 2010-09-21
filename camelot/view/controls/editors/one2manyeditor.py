@@ -78,9 +78,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                            QtGui.QSizePolicy.Expanding )
         self.setMinimumHeight( rowHeight*5 )
         if vertical_header_clickable:
-            #self.connect( self.table.verticalHeader(),
-            #             QtCore.SIGNAL( 'sectionClicked(int)' ),
-            #             self.createFormForIndex )
             self.table.verticalHeader().sectionClicked.connect(
                 self.createFormForIndex
             )

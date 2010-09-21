@@ -15,8 +15,6 @@ ValueLoading until set_value is called with another argument.
 
 """
 
-from customeditor import editingFinished
-
 from booleditor import BoolEditor, TextBoolEditor
 from charteditor import ChartEditor
 from choiceseditor import ChoicesEditor

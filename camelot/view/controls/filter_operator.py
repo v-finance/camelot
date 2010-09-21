@@ -35,6 +35,8 @@ from camelot.view.controls.filterlist import filter_changed_signal
 class FilterOperator(QtGui.QGroupBox):
     """Widget that allows applying various filter operators on a field"""
     
+    filter_changed_signal = QtCore.pyqtSignal()
+        
     def __init__(self, entity, field_name, field_attributes, parent):
         QtGui.QGroupBox.__init__(self, unicode(field_attributes['name']), parent)
         self._entity, self._field_name, self._field_attributes = entity, field_name, field_attributes

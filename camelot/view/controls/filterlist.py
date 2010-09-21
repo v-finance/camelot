@@ -32,10 +32,6 @@ logger = logging.getLogger('camelot.view.controls.filter')
 
 from PyQt4 import QtGui, QtCore
 
-_ = lambda x:x
-
-filter_changed_signal = QtCore.SIGNAL('filter_changed')
-
 class FilterList(QtGui.QScrollArea):
     """A list with filters that can be applied on a query in the tableview"""
 
@@ -52,10 +48,8 @@ class FilterList(QtGui.QScrollArea):
         for filter, (name, options) in items:
             filter_widget = filter.render(widget, name, options)
             layout.addWidget(filter_widget)
-            self.connect(filter_widget,
-                         filter_changed_signal,
-                         self.emit_filters_changed)
-
+            dir( filter_widget )
+            filter_widget.filter_changed_signal.connect( self.emit_filters_changed )
         widget.setLayout(layout)
         self.setWidget(widget)
         if len(items) == 0:
@@ -69,6 +63,7 @@ class FilterList(QtGui.QScrollArea):
                 query = self.widget().layout().itemAt(i).widget().decorate_query(query)
         return query
 
+    @QtCore.pyqtSlot()
     def emit_filters_changed(self):
         logger.debug('filters changed')
         self.filters_changed_signal.emit()

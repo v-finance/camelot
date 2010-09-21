@@ -29,7 +29,6 @@ from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor
-from customeditor import editingFinished
 
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
@@ -77,11 +76,6 @@ class FileEditor(CustomEditor):
         self.save_as_button.setIcon(self.save_as_icon)
         self.save_as_button.setToolTip(_('Save file as'))
         self.save_as_button.setAutoRaise(True)
-        #self.connect(
-        #    self.save_as_button,
-        #    QtCore.SIGNAL('clicked()'),
-        #    self.save_as_button_clicked
-        #)
         self.save_as_button.clicked.connect(self.save_as_button_clicked)
 
         # Clear button
@@ -90,11 +84,6 @@ class FileEditor(CustomEditor):
         self.clear_button.setIcon(self.clear_icon)
         self.clear_button.setToolTip(_('delete file'))
         self.clear_button.setAutoRaise(True)
-        #self.connect(
-        #    self.clear_button,
-        #    QtCore.SIGNAL('clicked()'),
-        #    self.clear_button_clicked
-        #)
         self.clear_button.clicked.connect(self.clear_button_clicked)
 
         # Open button
@@ -102,11 +91,6 @@ class FileEditor(CustomEditor):
         self.open_button.setFocusPolicy(Qt.ClickFocus)
         self.open_button.setIcon(self.new_icon)
         self.open_button.setToolTip(_('add file'))
-        #self.connect(
-        #    self.open_button,
-        #    QtCore.SIGNAL('clicked()'),
-        #    self.open_button_clicked
-        #)
         self.open_button.clicked.connect(self.open_button_clicked)
         self.open_button.setAutoRaise(True)
 
@@ -157,7 +141,7 @@ class FileEditor(CustomEditor):
         """Slot to be called when a new stored_file has been created by
         the storeage"""
         self.set_value(stored_file)
-        self.emit(editingFinished)
+        self.editingFinished.emit()
 
     def save_as_button_clicked(self):
         from camelot.view.storage import save_stored_file
@@ -181,7 +165,7 @@ class FileEditor(CustomEditor):
 
     def clear_button_clicked(self):
         self.value = None
-        self.emit(editingFinished)
+        self.editingFinished.emit()
 
     #
     # Drag & Drop

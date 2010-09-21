@@ -31,7 +31,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, editingFinished
+from customeditor import CustomEditor
 from camelot.view.art import Icon
 import camelot.types
 
@@ -59,16 +59,7 @@ class VirtualAddressEditor(CustomEditor):
         self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
 
         self.layout.addWidget(self.label)
-        #self.connect(self.editor,
-        #             QtCore.SIGNAL('editingFinished()'),
-        #             self.editingFinished)
-        #self.connect(self.editor,
-        #             QtCore.SIGNAL('textEdited(const QString&)'),
-        #             self.editorValueChanged)
-        #self.connect(self.combo,
-        #             QtCore.SIGNAL('currentIndexChanged(int)'),
-        #             lambda:self.comboIndexChanged())
-        self.editor.editingFinished.connect(self.editingFinished)
+        self.editor.editingFinished.connect(self.emit_editing_finished)
         self.editor.textEdited.connect(self.editorValueChanged)
         self.combo.currentIndexChanged.connect(lambda:self.comboIndexChanged())
 
@@ -78,7 +69,7 @@ class VirtualAddressEditor(CustomEditor):
 
     def comboIndexChanged(self):
         self.checkValue(self.editor.text())
-        self.editingFinished()
+        self.emit_editing_finished()
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
@@ -105,9 +96,6 @@ class VirtualAddressEditor(CustomEditor):
                 #self.label.setAutoFillBackground(True)
                 self.label.setIcon(icon)
                 self.label.setEnabled(self.editable)
-                #self.connect(self.label,
-                #             QtCore.SIGNAL('clicked()'),
-                #             lambda:self.mailClick(self.editor.text()))
                 self.label.clicked.connect(
                     lambda:self.mailClick(self.editor.text())
                 )
@@ -200,7 +188,7 @@ class VirtualAddressEditor(CustomEditor):
         url.setUrl('mailto:%s?subject=Subject'%str(adress))
         QtGui.QDesktopServices.openUrl(url)
 
-    def editingFinished(self):
+    def emit_editing_finished(self):
         self.value = []
         self.value.append(str(self.combo.currentText()))
         self.value.append(str(self.editor.text()))
@@ -209,7 +197,7 @@ class VirtualAddressEditor(CustomEditor):
         # emiting editingFinished without a value for the mechanism itself will lead to
         # integrity errors
         if self.value[1]:
-            self.emit(editingFinished)
+            self.editingFinished.emit()
 
     def set_background_color(self, background_color):
         if background_color:

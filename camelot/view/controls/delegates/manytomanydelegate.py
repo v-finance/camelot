@@ -25,7 +25,7 @@
 #
 #  ============================================================================
 
-#from PyQt4 import QtCore
+from PyQt4 import QtCore
 
 from camelot.view.controls import editors
 from one2manydelegate import One2ManyDelegate
@@ -39,9 +39,12 @@ class ManyToManyDelegate(One2ManyDelegate):
     def createEditor(self, parent, option, index):
         editor = editors.ManyToManyEditor(parent=parent, **self.kwargs)
         self.setEditorData(editor, index)
-        self.connect(editor, editors.editingFinished, self.commitAndCloseEditor)
+        editor.editingFinished.connect( self.commitAndCloseEditor )
         return editor
 
+    #@QtCore.pyqtSlot()
+    # not yet converted to new style sig slot because sender doesn't work
+    # in certain versions of pyqt
     def commitAndCloseEditor(self):
         editor = self.sender()
         self.commitData.emit(editor)

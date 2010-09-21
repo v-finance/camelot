@@ -21,6 +21,7 @@ All other sections can be read on an as needed base.
    forms.rst
    actions.rst
    delegates.rst
+   charts.rst
    data_model.rst
    fixtures.rst
    manage.rst

@@ -61,9 +61,6 @@ class StarEditor(CustomEditor):
             return lambda:self.starClick(i+1)
 
         for i in range(self.starCount):
-            #self.connect(self.buttons[i],
-            #             QtCore.SIGNAL('clicked()'),
-            #             createStarClick(i))
             self.buttons[i].clicked.connect(createStarClick(i))
 
         for i in range(self.starCount):
@@ -91,7 +88,7 @@ class StarEditor(CustomEditor):
                 self.buttons[i].setIcon(self.starIcon)
             else:
                 self.buttons[i].setIcon(self.noStarIcon)
-        self.emit(QtCore.SIGNAL('editingFinished()'))
+        self.editingFinished.emit()
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value) or 0

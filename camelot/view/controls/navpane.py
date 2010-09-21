@@ -93,6 +93,8 @@ class PaneCaption( UserTranslatableLabel ):
 class PaneButton( QtGui.QWidget ):
     """Custom made navigation pane pushbutton"""
 
+    section_selected_signal = QtCore.pyqtSignal(int, unicode)
+    
     def __init__( self,
                  text,
                  buttonicon = '',
@@ -201,10 +203,7 @@ class PaneButton( QtGui.QWidget ):
         else:
             self.selected = True
             self.setStyleSheet( self.styleselectedover )
-            # Python shortcut SIGNAL, any object can be passed
-            self.emit( QtCore.SIGNAL( 'indexselected' ),
-                      ( self.index, self.label.text() ) )
-
+            self.section_selected_signal.emit( self.index, self.label.text() )
 
 class NavigationPane(QtGui.QDockWidget):
     """ms office-like navigation pane in Qt"""
@@ -315,11 +314,7 @@ class NavigationPane(QtGui.QDockWidget):
         if buttons:
             for b in buttons:
                 self.content.layout().addWidget(b)
-                self.connect(
-                    b,
-                    QtCore.SIGNAL('indexselected'),
-                    self.change_current
-                )
+                b.section_selected_signal.connect( self.change_current )
             self.buttons = buttons
         else:
             self.buttons = []
@@ -338,7 +333,8 @@ class NavigationPane(QtGui.QDockWidget):
 
         self.treewidget.update()
 
-    def change_current( self, ( index, text ) ):
+    @QtCore.pyqtSlot( int, unicode )
+    def change_current( self, index, text ):
         logger.debug( 'set current to %s' % text )
         if self.currentbutton != -1:
             button = self.buttons[self.currentbutton]

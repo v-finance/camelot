@@ -36,7 +36,6 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QSizePolicy
 
 from camelot.view.proxy.queryproxy import QueryTableProxy
-from camelot.view.controls.filterlist import filter_changed_signal
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import post
@@ -177,7 +176,7 @@ class HeaderWidget( QtGui.QWidget ):
                 widget = FilterOperator( self._admin.entity, 
                                          field, attributes, 
                                          self )
-                self.connect( widget, filter_changed_signal,  self._filter_changed )
+                widget.filter_changed_signal.connect( self._filter_changed )
                 layout.addWidget( widget )
         layout.addStretch()
         self._expanded_search.setLayout( layout )

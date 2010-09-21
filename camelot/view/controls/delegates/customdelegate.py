@@ -117,14 +117,15 @@ will be put onto a form"""
         assert isinstance(editor, (QtGui.QWidget,))
         if option.version != 5:
             editor.setAutoFillBackground(True)
-        self.connect(editor,
-                     editors.editingFinished,
-                     self.commitAndCloseEditor)
+        editor.editingFinished.connect( self.commitAndCloseEditor )
         return editor
 
     def sizeHint(self, option, index):
         return QtCore.QSize(self._width, self._height)
 
+    #@QtCore.pyqtSlot()
+    # not yet converted to new style sig slot because sender doesn't work
+    # in certain versions of pyqt
     def commitAndCloseEditor(self):
         editor = self.sender()
         assert editor != None

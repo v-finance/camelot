@@ -33,8 +33,7 @@ These structures can be transformed to QT forms.
 import datetime
 
 from PyQt4 import QtCore, QtGui
-from camelot.view.controls.filterlist import filter_changed_signal
-from camelot.view.controls.editors import DateEditor, editingFinished
+from camelot.view.controls.editors import DateEditor
 from camelot.view.model_thread import gui_function
 from camelot.core.utils import ugettext_lazy as _
 
@@ -120,6 +119,8 @@ class FilterWidget(QtGui.QGroupBox):
     """A box containing a filter that can be applied on a table view, this filter is
     based on the distinct values in a certain column"""
   
+    filter_changed_signal = QtCore.pyqtSignal()
+    
     def __init__(self, name, choices, parent):
         QtGui.QGroupBox.__init__(self, unicode(name), parent)
         self.group = QtGui.QButtonGroup(self)
@@ -130,7 +131,7 @@ class FilterWidget(QtGui.QGroupBox):
          
     @QtCore.pyqtSlot(bool)
     def emit_filter_changed(self, state):
-        self.emit(filter_changed_signal)
+        self.filter_changed_signal.emit()
     
     def setChoices(self, choices):
         self.choices = choices
@@ -161,6 +162,8 @@ class GroupBoxFilter(Filter):
 class GroupBoxFilterWidget(QtGui.QGroupBox):
     """Flter widget based on a QGroupBox"""
   
+    filter_changed_signal = QtCore.pyqtSignal()
+    
     def __init__(self, name, choices, parent):
         QtGui.QGroupBox.__init__(self, unicode(name), parent)
         layout = QtGui.QVBoxLayout()
@@ -176,7 +179,7 @@ class GroupBoxFilterWidget(QtGui.QGroupBox):
     @QtCore.pyqtSlot(int)
     def emit_filter_changed(self, index):
         self.current_index = index
-        self.emit(filter_changed_signal)
+        self.filter_changed_signal.emit()
         
     def decorate_query(self, query):
         if self.current_index>=0:
@@ -214,6 +217,8 @@ class EditorFilter(Filter):
 class DateFilterWidget(QtGui.QGroupBox):
     """Filter widget based on a DateEditor"""
   
+    filter_changed_signal = QtCore.pyqtSignal()
+    
     def __init__(self, name, query_decorator, parent):
         QtGui.QGroupBox.__init__(self, unicode(name), parent)
         layout = QtGui.QVBoxLayout()
@@ -222,10 +227,11 @@ class DateFilterWidget(QtGui.QGroupBox):
         self.query_decorator = query_decorator
         layout.addWidget(self.date_editor)
         self.setLayout(layout)
-        self.connect(self.date_editor, editingFinished, self.emit_filter_changed)
+        self.date_editor.editingFinished.connect(self.emit_filter_changed)
             
+    @QtCore.pyqtSlot()
     def emit_filter_changed(self):
-        self.emit(filter_changed_signal)
+        self.filter_changed_signal.emit()
         
     def decorate_query(self, query):
         return self.query_decorator(query, self.date_editor.get_value())

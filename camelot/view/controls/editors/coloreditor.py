@@ -43,9 +43,6 @@ class ColorEditor(CustomEditor):
         self.color_button.setMaximumSize(QtCore.QSize(20, 20))
         layout.addWidget(self.color_button)
         if editable:
-            #self.connect(self.color_button,
-            #             QtCore.SIGNAL('clicked(bool)'),
-            #             self.buttonClicked)
             self.color_button.clicked.connect(self.buttonClicked)
         self.setLayout(layout)
         self._color = None
@@ -89,4 +86,4 @@ class ColorEditor(CustomEditor):
             color = QtGui.QColorDialog.getColor()
         if color.isValid() and color!=self._color:
             self.setColor(color)
-            self.emit(QtCore.SIGNAL('editingFinished()'))
+            self.editingFinished.emit()

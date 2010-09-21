@@ -29,7 +29,6 @@ from PyQt4 import QtGui
 #from PyQt4 import QtCore
 
 from one2manyeditor import One2ManyEditor
-from customeditor import editingFinished
 from abstractmanytooneeditor import AbstractManyToOneEditor
 
 from camelot.view.art import Icon
@@ -45,24 +44,15 @@ class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
         self.remove_button.setIcon( Icon( 'tango/16x16/actions/list-remove.png' ).getQIcon() )
         self.remove_button.setAutoRaise( True )
         self.remove_button.setFixedHeight( self.get_height() )
-        #self.connect( self.remove_button,
-        #             QtCore.SIGNAL( 'clicked()' ),
-        #             self.removeSelectedRows )
         self.remove_button.clicked.connect(self.removeSelectedRows)
         self.add_button = QtGui.QToolButton()
         self.add_button.setIcon( Icon( 'tango/16x16/actions/list-add.png' ).getQIcon() )
         self.add_button.setAutoRaise( True )
         self.add_button.setFixedHeight( self.get_height() )
-        #self.connect( self.add_button, QtCore.SIGNAL( 'clicked()' ), self.createSelectView )
         self.add_button.clicked.connect(self.createSelectView)
-#    new_button = QtGui.QToolButton()
-#    new_button.setIcon(Icon('tango/16x16/actions/document-new.png').getQIcon())
-#    new_button.setAutoRaise(True)
-#    self.connect(new_button, QtCore.SIGNAL('clicked()'), self.newRow)
         button_layout.addStretch()
         button_layout.addWidget( self.add_button )
         button_layout.addWidget( self.remove_button )
-#    button_layout.addWidget(new_button)
         layout.addLayout( button_layout )
 
     def set_field_attributes(self, editable=True, **kwargs):
@@ -76,12 +66,12 @@ class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
             o = entity_instance_getter()
             self.model.insertEntityInstance( 0, o )
 
-        post( insert, self.editingFinished )
+        post( insert, self.emit_editing_finished )
 
-    def editingFinished(self, *args):
-        self.emit( editingFinished )
+    def emit_editing_finished(self, *args):
+        self.editingFinished.emit()
 
     def removeSelectedRows( self ):
         """Remove the selected rows in this tableview, but don't delete them"""
         self.model.remove_rows( set( map( lambda x: x.row(), self.table.selectedIndexes() ) ), delete=False)
-        self.emit( editingFinished )
+        self.editingFinished.emit()

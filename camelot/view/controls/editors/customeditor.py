@@ -33,9 +33,6 @@ from camelot.core.constants import *
 from camelot.view.proxy import ValueLoading
 from camelot.core.utils import create_constant_function
 
-
-editingFinished = QtCore.SIGNAL('editingFinished()')
-
 class AbstractCustomEditor(object):
     """Helper class to be used to build custom editors.  This class provides
   functionality to store and retrieve `ValueLoading` as an editor's value.

@@ -166,795 +166,807 @@ def create_getter(getable):
 #    self.block(lambda:session.flush([self.country, self.city, self.address]))
 
 class EditorsTest(ModelThreadTestCase):
+    """
+  Test the basic functionality of the editors :
+
+  - get_value
+  - set_value
+  - support for ValueLoading
   """
-Test the basic functionality of the editors :
 
-- get_value
-- set_value
-- support for ValueLoading
-"""
+    images_path = static_images_path
 
-  images_path = static_images_path
+    from camelot.view.controls import editors
+    from camelot.view.proxy import ValueLoading
 
-  from camelot.view.controls import editors
-  from camelot.view.proxy import ValueLoading
+    def test_ChartEditor(self):
+        import math
+        from camelot.container import chartcontainer
+        editor = self.editors.ChartEditor()
+        x_data = [x/100.0 for x in range(1, 700, 1)]
+        y_data = [math.sin(x) for x in x_data]
+        plot = chartcontainer.PlotContainer( x_data, y_data )
+        editor.set_value( plot )
+        self.grab_widget( editor, 'editable' )
+        editor.set_field_attributes(editable=False)
+        self.grab_widget( editor, 'disabled' )
+        
+    def test_DateEditor(self):
+        import datetime
+        editor = self.editors.DateEditor()
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
+        editor.set_value( datetime.date(1980, 12, 31) )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.DateEditor(editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
+        editor.set_value( datetime.date(1980, 12, 31) )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( datetime.date(2008, 3, 28) )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_DateEditor(self):
-    import datetime
-    editor = self.editors.DateEditor()
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( None )
-    self.assertEqual( editor.get_value(), None )
-    editor.set_value( datetime.date(1980, 12, 31) )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.DateEditor(editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( None )
-    self.assertEqual( editor.get_value(), None )
-    editor.set_value( datetime.date(1980, 12, 31) )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( datetime.date(2008, 3, 28) )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
+    def test_TextLineEditor(self):
+        editor = self.editors.TextLineEditor(parent=None, length=10)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( u'za coś tam' )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), u'za coś tam' )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.TextLineEditor(parent=None, length=10, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( u'za coś tam' )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), u'za coś tam' )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( u'editor.set_enabled() Test' )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
+        # pretend the user has entered some text
+        editor.setText( u'foo' )
+        self.assertTrue( editor.get_value() != None )
 
-  def test_TextLineEditor(self):
-    editor = self.editors.TextLineEditor(parent=None, length=10)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( u'za coś tam' )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), u'za coś tam' )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.TextLineEditor(parent=None, length=10, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( u'za coś tam' )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(), u'za coś tam' )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( u'editor.set_enabled() Test' )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
-    editor.set_value( None )
-    self.assertEqual( editor.get_value(), None )
-    # pretend the user has entered some text
-    editor.setText( u'foo' )
-    self.assertTrue( editor.get_value() != None )
+    def test_StarEditor(self):
+        editor = self.editors.StarEditor(parent=None, maximum=5)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 4 )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), 4 )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.StarEditor(parent=None, maximum=5, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 4 )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), 4 )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 5 )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_StarEditor(self):
-    editor = self.editors.StarEditor(parent=None, maximum=5)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 4 )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), 4 )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.StarEditor(parent=None, maximum=5, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 4 )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(), 4 )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 5 )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
+    def test_SmileyEditor(self):
+        editor = self.editors.SmileyEditor(parent=None)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 'face-devilish' )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), 'face-devilish' )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.SmileyEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 'face-kiss' )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), 'face-kiss' )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 'face-monkey' )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_SmileyEditor(self):
-    editor = self.editors.SmileyEditor(parent=None)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 'face-devilish' )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), 'face-devilish' )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.SmileyEditor(parent=None, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 'face-kiss' )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(), 'face-kiss' )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 'face-monkey' )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
+    def test_BoolEditor(self):
+        editor = self.editors.BoolEditor(parent=None, editable=False, nullable=True)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( True )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), True )
+        editor.set_value( False )
+        self.assertEqual( editor.get_value(), False )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.BoolEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( True )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), True )
+        editor.set_value( False )
+        self.assertEqual( editor.get_value(), False )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( True )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
+        editor.set_value( None )
+        # pretend the user has set the state to unchecked
+        editor.setCheckState(Qt.Unchecked)
+        self.assertEqual( editor.get_value(), False )
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
+        editor = self.editors.BoolEditor(parent=None, editable=False, nullable=False)
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), False )
+        editor.setCheckState(Qt.Unchecked)
+        self.assertEqual( editor.get_value(), False )
 
-  def test_BoolEditor(self):
-    editor = self.editors.BoolEditor(parent=None, editable=False, nullable=True)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( True )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), True )
-    editor.set_value( False )
-    self.assertEqual( editor.get_value(), False )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.BoolEditor(parent=None, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( True )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(), True )
-    editor.set_value( False )
-    self.assertEqual( editor.get_value(), False )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( True )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
-    editor.set_value( None )
-    # pretend the user has set the state to unchecked
-    editor.setCheckState(Qt.Unchecked)
-    self.assertEqual( editor.get_value(), False )
-    editor.set_value( None )
-    self.assertEqual( editor.get_value(), None )
-    editor = self.editors.BoolEditor(parent=None, editable=False, nullable=False)
-    editor.set_value( None )
-    self.assertEqual( editor.get_value(), False )
-    editor.setCheckState(Qt.Unchecked)
-    self.assertEqual( editor.get_value(), False )
+    def test_CodeEditor(self):
+        editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'])
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( ['XYZ', '123'] )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), ['XYZ', '123'] )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'], editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( ['XYZ', '123'] )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), ['XYZ', '123'] )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( ['SAM', '321'] )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_CodeEditor(self):
-    editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'])
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( ['XYZ', '123'] )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), ['XYZ', '123'] )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'], editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( ['XYZ', '123'] )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(), ['XYZ', '123'] )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( ['SAM', '321'] )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
+    def test_ColorEditor(self):
+        editor = self.editors.ColorEditor(parent=None, editable=True)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( (255, 200, 255, 255) )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.ColorEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( (255, 200, 255, 255) )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( (150, 200, 100, 255) )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_ColorEditor(self):
-    editor = self.editors.ColorEditor(parent=None, editable=True)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( (255, 200, 255, 255) )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.ColorEditor(parent=None, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( (255, 200, 255, 255) )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( (150, 200, 100, 255) )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
+    def test_ColoredFloatEditor(self):
+        editor = self.editors.ColoredFloatEditor(parent=None, editable=True)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 0.0 )
+        self.assertEqual( editor.get_value(), 0.0 )
+        editor.set_value( 3.14 )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), 3.14 )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.ColoredFloatEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 0.0 )
+        self.assertEqual( editor.get_value(), 0.0 )
+        editor.set_value( 3.14 )
+        self.grab_widget( editor,'disabled' )
+        self.assertEqual( editor.get_value(), 3.14 )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( -7.45 )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_ColoredFloatEditor(self):
-    editor = self.editors.ColoredFloatEditor(parent=None, editable=True)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 0.0 )
-    self.assertEqual( editor.get_value(), 0.0 )
-    editor.set_value( 3.14 )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), 3.14 )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.ColoredFloatEditor(parent=None, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 0.0 )
-    self.assertEqual( editor.get_value(), 0.0 )
-    editor.set_value( 3.14 )
-    self.grab_widget( editor,'disabled' )
-    self.assertEqual( editor.get_value(), 3.14 )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( -7.45 )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
+    def test_ChoicesEditor(self):
+        editor = self.editors.ChoicesEditor(parent=None, editable=True)
+        choices1 = [(1,u'A'), (2,u'B'), (3,u'C')]
+        editor.set_choices( choices1 )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 2 )
+        self.assertEqual(editor.get_choices(), choices1 )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), 2 )
+        # now change the choices
+        choices2 = [(4,u'D'), (5,u'E'), (6,u'F')]
+        editor.set_choices( choices2 )
+        self.assertEqual(editor.get_choices(), choices2 + [(2,u'B')])
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.ChoicesEditor(parent=None, editable=False)
+        editor.set_choices(choices1)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 2 )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), 2 )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 1 )
+        editor.set_field_attributes( editable=False )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_ChoicesEditor(self):
-    editor = self.editors.ChoicesEditor(parent=None, editable=True)
-    choices1 = [(1,u'A'), (2,u'B'), (3,u'C')]
-    editor.set_choices( choices1 )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 2 )
-    self.assertEqual(editor.get_choices(), choices1 )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), 2 )
-    # now change the choices
-    choices2 = [(4,u'D'), (5,u'E'), (6,u'F')]
-    editor.set_choices( choices2 )
-    self.assertEqual(editor.get_choices(), choices2 + [(2,u'B')])
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.ChoicesEditor(parent=None, editable=False)
-    editor.set_choices(choices1)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 2 )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(), 2 )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 1 )
-    editor.set_field_attributes( editable=False )
-    self.grab_widget( editor, 'set_enabled()_editable' )
+    def test_FileEditor(self):
+        editor = self.editors.FileEditor(parent=None, editable=True)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( self.ValueLoading )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.FileEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( self.ValueLoading )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_FileEditor(self):
-    editor = self.editors.FileEditor(parent=None, editable=True)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( self.ValueLoading )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.FileEditor(parent=None, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( self.ValueLoading )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
+    def test_DateTimeEditor(self):
+        import datetime
+        editor = self.editors.DateTimeEditor(parent=None, editable=True)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( datetime.datetime(2009, 7, 19, 21, 5, 10, 0) )
+        self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
+        self.grab_widget( editor, 'editable' )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.DateTimeEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( datetime.datetime(2009, 7, 19, 21, 5, 10, 0) )
+        self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
+        self.grab_widget( editor, 'disabled' )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( datetime.datetime(2009, 5, 21, 16, 16, 5, 0) )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_DateTimeEditor(self):
-    import datetime
-    editor = self.editors.DateTimeEditor(parent=None, editable=True)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( datetime.datetime(2009, 7, 19, 21, 5, 10, 0) )
-    self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
-    self.grab_widget( editor, 'editable' )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.DateTimeEditor(parent=None, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( datetime.datetime(2009, 7, 19, 21, 5, 10, 0) )
-    self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
-    self.grab_widget( editor, 'disabled' )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( datetime.datetime(2009, 5, 21, 16, 16, 5, 0) )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
+    def test_FloatEditor(self):
+        editor = self.editors.FloatEditor(parent=None, editable=True, prefix='prefix')
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 0.0 )
+        self.assertEqual( editor.get_value(), 0.0 )
+        editor.set_value( 3.14 )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), 3.14 )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.FloatEditor(parent=None, editable=False, suffix='suffix')
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 0.0 )
+        self.assertEqual( editor.get_value(), 0.0 )
+        editor.set_value( 3.14 )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), 3.14 )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 5.45 )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
+        # pretend the user has entered something
+        editor.spinBox.setValue( 0.0 )
+        self.assertTrue( editor.get_value() != None )
 
-  def test_FloatEditor(self):
-    editor = self.editors.FloatEditor(parent=None, editable=True, prefix='prefix')
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 0.0 )
-    self.assertEqual( editor.get_value(), 0.0 )
-    editor.set_value( 3.14 )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), 3.14 )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.FloatEditor(parent=None, editable=False, suffix='suffix')
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 0.0 )
-    self.assertEqual( editor.get_value(), 0.0 )
-    editor.set_value( 3.14 )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(), 3.14 )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 5.45 )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
-    editor.set_value( None )
-    self.assertEqual( editor.get_value(), None )
-    # pretend the user has entered something
-    editor.spinBox.setValue( 0.0 )
-    self.assertTrue( editor.get_value() != None )
+    def test_ImageEditor(self):
+        editor = self.editors.ImageEditor(parent=None, editable=True)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.grab_widget( editor, 'editable' )
+        editor = self.editors.ImageEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.grab_widget( editor, 'disabled' )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_ImageEditor(self):
-    editor = self.editors.ImageEditor(parent=None, editable=True)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    self.grab_widget( editor, 'editable' )
-    editor = self.editors.ImageEditor(parent=None, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    self.grab_widget( editor, 'disabled' )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
+    def test_IntegerEditor(self):
+        editor = self.editors.IntegerEditor(parent=None, editable=True)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 0 )
+        self.assertEqual( editor.get_value(), 0 )
+        editor.set_value( 3 )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), 3 )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.IntegerEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 0 )
+        self.assertEqual( editor.get_value(), 0 )
+        editor.set_value( 3 )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), 3 )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 134 )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
+        editor.set_value( None )
+        # pretend the user changed the value
+        editor.spinBox.setValue( 0 )
+        self.assertEqual( editor.get_value(), 0 )
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
 
-  def test_IntegerEditor(self):
-    editor = self.editors.IntegerEditor(parent=None, editable=True)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 0 )
-    self.assertEqual( editor.get_value(), 0 )
-    editor.set_value( 3 )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), 3 )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.IntegerEditor(parent=None, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 0 )
-    self.assertEqual( editor.get_value(), 0 )
-    editor.set_value( 3 )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(), 3 )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( 134 )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
-    editor.set_value( None )
-    # pretend the user changed the value
-    editor.spinBox.setValue( 0 )
-    self.assertEqual( editor.get_value(), 0 )
-    editor.set_value( None )
-    self.assertEqual( editor.get_value(), None )
+    def test_NoteEditor(self):
+        editor = self.editors.NoteEditor(parent=None)
+        editor.set_value('A person with this name allready exists')
+        self.grab_widget( editor, 'editable' )
 
-  def test_NoteEditor(self):
-    editor = self.editors.NoteEditor(parent=None)
-    editor.set_value('A person with this name allready exists')
-    self.grab_widget( editor, 'editable' )
+    def test_RichTextEditor(self):
+        editor = self.editors.RichTextEditor(parent=None)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( u'<h1>Rich Text Editor</h1>' )
+        self.grab_widget( editor, 'editable' )
+        self.assertTrue( u'Rich Text Editor' in editor.get_value() )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.RichTextEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( u'<h1>Rich Text Editor</h1>' )
+        self.grab_widget( editor, 'disabled' )
+        self.assertTrue( u'Rich Text Editor' in editor.get_value() )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( u'<h2>Rich Text Editor, set_enabled() test</h2>' )
+        editor.set_editable( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_RichTextEditor(self):
-    editor = self.editors.RichTextEditor(parent=None)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( u'<h1>Rich Text Editor</h1>' )
-    self.grab_widget( editor, 'editable' )
-    self.assertTrue( u'Rich Text Editor' in editor.get_value() )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.RichTextEditor(parent=None, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( u'<h1>Rich Text Editor</h1>' )
-    self.grab_widget( editor, 'disabled' )
-    self.assertTrue( u'Rich Text Editor' in editor.get_value() )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( u'<h2>Rich Text Editor, set_enabled() test</h2>' )
-    editor.set_editable( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
+    def test_TimeEditor(self):
+        import datetime
+        editor = self.editors.TimeEditor(parent=None, editable=True)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( datetime.time(21, 5, 0) )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), datetime.time(21, 5, 0) )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.TimeEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( datetime.time(21, 5, 0) )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), datetime.time(21, 5, 0) )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( datetime.time(15, 6, 3) )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_TimeEditor(self):
-    import datetime
-    editor = self.editors.TimeEditor(parent=None, editable=True)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( datetime.time(21, 5, 0) )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(), datetime.time(21, 5, 0) )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.TimeEditor(parent=None, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( datetime.time(21, 5, 0) )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(), datetime.time(21, 5, 0) )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( datetime.time(15, 6, 3) )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
+    def test_VirtualAddressEditor(self):
+        editor = self.editors.VirtualAddressEditor(parent=None)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( ('im','test') )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(),  ('im','test') )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.VirtualAddressEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( ('im','test') )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(),  ('im','test') )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( ('email', 'test@conceptive.be') )
+        editor.set_enabled( True )
+        self.grab_widget( editor, 'set_enabled()_editable' )
 
-  def test_VirtualAddressEditor(self):
-    editor = self.editors.VirtualAddressEditor(parent=None)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( ('im','test') )
-    self.grab_widget( editor, 'editable' )
-    self.assertEqual( editor.get_value(),  ('im','test') )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor = self.editors.VirtualAddressEditor(parent=None, editable=False)
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( ('im','test') )
-    self.grab_widget( editor, 'disabled' )
-    self.assertEqual( editor.get_value(),  ('im','test') )
-    editor.set_value( self.ValueLoading )
-    self.assertEqual( editor.get_value(), self.ValueLoading )
-    editor.set_value( ('email', 'test@conceptive.be') )
-    editor.set_enabled( True )
-    self.grab_widget( editor, 'set_enabled()_editable' )
-
-  def test_MonthsEditor(self):
-    editor = self.editors.MonthsEditor(parent=None)
-    self.assertEqual(editor.get_value(), self.ValueLoading)
-    editor.set_value(12)
-    self.grab_widget(editor, 'editable')
-    self.assertEqual(editor.get_value(),  12)
-    editor.set_value(self.ValueLoading)
-    self.assertEqual(editor.get_value(), self.ValueLoading)
-    editor = self.editors.MonthsEditor(parent=None, editable=False)
-    self.assertEqual(editor.get_value(), self.ValueLoading)
-    editor.set_value(12)
-    self.grab_widget(editor, 'disabled')
-    self.assertEqual(editor.get_value(), 12)
-    editor.set_value(self.ValueLoading)
-    self.assertEqual(editor.get_value(), self.ValueLoading)
-    editor.set_enabled(True)
-    self.grab_widget(editor, 'set_enabled()_editable')
+    def test_MonthsEditor(self):
+        editor = self.editors.MonthsEditor(parent=None)
+        self.assertEqual(editor.get_value(), self.ValueLoading)
+        editor.set_value(12)
+        self.grab_widget(editor, 'editable')
+        self.assertEqual(editor.get_value(),  12)
+        editor.set_value(self.ValueLoading)
+        self.assertEqual(editor.get_value(), self.ValueLoading)
+        editor = self.editors.MonthsEditor(parent=None, editable=False)
+        self.assertEqual(editor.get_value(), self.ValueLoading)
+        editor.set_value(12)
+        self.grab_widget(editor, 'disabled')
+        self.assertEqual(editor.get_value(), 12)
+        editor.set_value(self.ValueLoading)
+        self.assertEqual(editor.get_value(), self.ValueLoading)
+        editor.set_enabled(True)
+        self.grab_widget(editor, 'set_enabled()_editable')
 
 
 from camelot.view import forms
 
 class FormTest(ModelThreadTestCase):
 
-  images_path = static_images_path
+    images_path = static_images_path
 
-  def setUp(self):
-    ModelThreadTestCase.setUp(self)
-    from camelot.view.controls.editors import TextLineEditor, DateEditor
-    self.widgets = {
-      'title':(QLabel('Title'), TextLineEditor(parent=None, editable=True)),
-      'short_description':(QLabel('Short description'), TextLineEditor(parent=None, editable=True)),
-      'director':(QLabel('Director'), TextLineEditor(parent=None, editable=True)),
-      'release_date':(QLabel('Release date'), DateEditor(parent=None, editable=True)),
-    }
-    from elixir import entities
-    self.entities = [e for e in entities]
-    from camelot.admin.application_admin import ApplicationAdmin
-    from camelot.model.authentication import Person
-    self.app_admin = ApplicationAdmin()
-    self.person_entity = Person
-    self.collection_getter = lambda:[Person()]
+    def setUp(self):
+        ModelThreadTestCase.setUp(self)
+        from camelot.view.controls.editors import TextLineEditor, DateEditor
+        self.widgets = {
+          'title':(QLabel('Title'), TextLineEditor(parent=None, editable=True)),
+          'short_description':(QLabel('Short description'), TextLineEditor(parent=None, editable=True)),
+          'director':(QLabel('Director'), TextLineEditor(parent=None, editable=True)),
+          'release_date':(QLabel('Release date'), DateEditor(parent=None, editable=True)),
+        }
+        from elixir import entities
+        self.entities = [e for e in entities]
+        from camelot.admin.application_admin import ApplicationAdmin
+        from camelot.model.authentication import Person
+        self.app_admin = ApplicationAdmin()
+        self.person_entity = Person
+        self.collection_getter = lambda:[Person()]
 
-  def tearDown(self):
-    #
-    # The global list of entities should remain clean for subsequent tests
-    #
-    from elixir import entities
-    for e in entities:
-      if e not in self.entities:
-        entities.remove(e)
+    def tearDown(self):
+        #
+        # The global list of entities should remain clean for subsequent tests
+        #
+        from elixir import entities
+        for e in entities:
+            if e not in self.entities:
+                entities.remove(e)
 
-  def test_form(self):
-    from snippet.form.simple_form import Movie
-    self.grab_widget(Movie.Admin.form_display.render(self.widgets))
+    def test_form(self):
+        from snippet.form.simple_form import Movie
+        self.grab_widget(Movie.Admin.form_display.render(self.widgets))
 
-  def test_tab_form(self):
-    form = forms.TabForm([('First tab', ['title', 'short_description']),
-                          ('Second tab', ['director', 'release_date'])])
-    self.grab_widget(form.render(self.widgets))
+    def test_tab_form(self):
+        form = forms.TabForm([('First tab', ['title', 'short_description']),
+                              ('Second tab', ['director', 'release_date'])])
+        self.grab_widget(form.render(self.widgets))
 
-  def test_group_box_form(self):
-    form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
-    self.grab_widget(form.render(self.widgets))
+    def test_group_box_form(self):
+        form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
+        self.grab_widget(form.render(self.widgets))
 
-  def test_grid_form(self):
-    form = forms.GridForm([['title', 'short_description'], ['director','release_date']])
-    self.grab_widget(form.render(self.widgets))
+    def test_grid_form(self):
+        form = forms.GridForm([['title', 'short_description'], ['director','release_date']])
+        self.grab_widget(form.render(self.widgets))
 
-  def test_vbox_form(self):
-    form = forms.VBoxForm([['title', 'short_description'], ['director', 'release_date']])
-    self.grab_widget(form.render(self.widgets))
+    def test_vbox_form(self):
+        form = forms.VBoxForm([['title', 'short_description'], ['director', 'release_date']])
+        self.grab_widget(form.render(self.widgets))
 
-  def test_hbox_form(self):
-    form = forms.HBoxForm([['title', 'short_description'], ['director', 'release_date']])
-    self.grab_widget(form.render(self.widgets))
+    def test_hbox_form(self):
+        form = forms.HBoxForm([['title', 'short_description'], ['director', 'release_date']])
+        self.grab_widget(form.render(self.widgets))
 
-  def test_nested_form(self):
-      from snippet.form.nested_form import Admin
-      person_admin = Admin(self.app_admin, self.person_entity)
-      self.grab_widget( person_admin.create_new_view() )
+    def test_nested_form(self):
+        from snippet.form.nested_form import Admin
+        person_admin = Admin(self.app_admin, self.person_entity)
+        self.grab_widget( person_admin.create_new_view() )
 
-  def test_inherited_form(self):
-      from snippet.form.inherited_form import InheritedAdmin
-      person_admin = InheritedAdmin(self.app_admin, self.person_entity)
-      self.grab_widget( person_admin.create_new_view() )
+    def test_inherited_form(self):
+        from snippet.form.inherited_form import InheritedAdmin
+        person_admin = InheritedAdmin(self.app_admin, self.person_entity)
+        self.grab_widget( person_admin.create_new_view() )
 
-  def test_custom_layout(self):
-      from snippet.form.custom_layout import Admin
-      person_admin = Admin(self.app_admin, self.person_entity)
-      self.grab_widget( person_admin.create_new_view() )
+    def test_custom_layout(self):
+        from snippet.form.custom_layout import Admin
+        person_admin = Admin(self.app_admin, self.person_entity)
+        self.grab_widget( person_admin.create_new_view() )
 
 from camelot.admin import form_action
 
 class FormActionTest(ModelThreadTestCase):
 
-  images_path = static_images_path
+    images_path = static_images_path
 
-  def test_print_html_form_action(self):
-    action = form_action.PrintHtmlFormAction('Summary')
-    widget = action.render(None, None)
-    self.grab_widget(widget)
+    def test_print_html_form_action(self):
+        action = form_action.PrintHtmlFormAction('Summary')
+        widget = action.render(None, None)
+        self.grab_widget(widget)
 
 class DelegateTest(ModelThreadTestCase):
-  """Test the basic functionallity of the delegates :
-- createEditor
-- setEditorData
-- setModelData
-"""
+    """Test the basic functionallity of the delegates :
+  - createEditor
+  - setEditorData
+  - setModelData
+  """
 
-  from camelot.view.controls import delegates
-  from camelot.view.controls import editors
+    from camelot.view.controls import delegates
+    from camelot.view.controls import editors
 
-  def setUp(self):
-    super(DelegateTest, self).setUp()
-    self.kwargs = dict(editable=True)
-    self.option = QtGui.QStyleOptionViewItem()
-    # set version to 5 to indicate the widget will appear on a
-    # a form view and not on a table view, so it should not
-    # set its background
-    self.option.version = 5
+    def setUp(self):
+        super(DelegateTest, self).setUp()
+        self.kwargs = dict(editable=True)
+        self.option = QtGui.QStyleOptionViewItem()
+        # set version to 5 to indicate the widget will appear on a
+        # a form view and not on a table view, so it should not
+        # set its background
+        self.option.version = 5
 
-  def grab_delegate(self, delegate, data, suffix='editable'):
-    import sys
-    from camelot.view.controls.tableview import TableWidget
-    from PyQt4.QtCore import Qt
+    def grab_delegate(self, delegate, data, suffix='editable'):
+        import sys
+        from camelot.view.controls.tableview import TableWidget
+        from PyQt4.QtCore import Qt
 
-    model = QStandardItemModel(1, 1)
-    index = model.index(0, 0, QModelIndex())
-    model.setData(index, QVariant(data))
-    model.setData(index, QVariant(QtGui.QColor('white')), Qt.BackgroundRole)
-    model.setData(index, QVariant(dict(editable=True)), Qt.UserRole)
+        model = QStandardItemModel(1, 1)
+        index = model.index(0, 0, QModelIndex())
+        model.setData(index, QVariant(data))
+        model.setData(index, QVariant(QtGui.QColor('white')), Qt.BackgroundRole)
+        model.setData(index, QVariant(dict(editable=True)), Qt.UserRole)
 
-    option = QtGui.QStyleOptionViewItem()
+        option = QtGui.QStyleOptionViewItem()
 
-    if suffix == 'editable':
-      self.assertTrue(delegate.sizeHint(option, index).height()>1)
+        if suffix == 'editable':
+            self.assertTrue(delegate.sizeHint(option, index).height()>1)
 
-    tableview = TableWidget()
-    tableview.setModel(model)
-    tableview.setItemDelegate(delegate)
+        tableview = TableWidget()
+        tableview.setModel(model)
+        tableview.setItemDelegate(delegate)
 
-    test_case_name = sys._getframe(1).f_code.co_name[4:]
+        test_case_name = sys._getframe(1).f_code.co_name[4:]
 
-    for state_name, state in zip(('selected', 'unselected'),
-                                 (QStyle.State_Selected, QStyle.State_None)):
-      tableview.adjustSize()
+        for state_name, state in zip(('selected', 'unselected'),
+                                     (QStyle.State_Selected, QStyle.State_None)):
+            tableview.adjustSize()
 
-      if state == QStyle.State_Selected:
-        tableview.selectionModel().select(index, QItemSelectionModel.Select)
-      else:
-        tableview.selectionModel().select(index, QItemSelectionModel.Clear)
+            if state == QStyle.State_Selected:
+                tableview.selectionModel().select(index, QItemSelectionModel.Select)
+            else:
+                tableview.selectionModel().select(index, QItemSelectionModel.Clear)
 
-      cell_size = tableview.visualRect(index).size()
+            cell_size = tableview.visualRect(index).size()
 
-      headers_size = QSize(tableview.verticalHeader().width(),
-                           tableview.horizontalHeader().height())
+            headers_size = QSize(tableview.verticalHeader().width(),
+                                 tableview.horizontalHeader().height())
 
-      tableview.setHorizontalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
-      tableview.setVerticalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
+            tableview.setHorizontalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
+            tableview.setVerticalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
 
-      tableview.resize(cell_size + headers_size)
+            tableview.resize(cell_size + headers_size)
 
-      # TODO checks if path exists
-      delegate_images_path = os.path.join(static_images_path, 'delegates')
-      if not os.path.exists(delegate_images_path):
-        os.makedirs(delegate_images_path)
-      pixmap = QPixmap.grabWidget(tableview)
-      pixmap.save(os.path.join(delegate_images_path, '%s_%s_%s.png'%(test_case_name, state_name, suffix)),
-                  'PNG')
+            # TODO checks if path exists
+            delegate_images_path = os.path.join(static_images_path, 'delegates')
+            if not os.path.exists(delegate_images_path):
+                os.makedirs(delegate_images_path)
+            pixmap = QPixmap.grabWidget(tableview)
+            pixmap.save(os.path.join(delegate_images_path, '%s_%s_%s.png'%(test_case_name, state_name, suffix)),
+                        'PNG')
 
-  def testPlainTextDelegate(self):
-    delegate = self.delegates.PlainTextDelegate(parent=None,
-                                                length=30,
-                                                editable=True)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertEqual(editor.maxLength(), 30)
-    self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
-    self.grab_delegate(delegate, 'Plain Text')
-    delegate = self.delegates.PlainTextDelegate(parent=None,
-                                                length=20,
-                                                editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
-    self.grab_delegate(delegate, 'Plain Text', 'disabled')
+    def testPlainTextDelegate(self):
+        delegate = self.delegates.PlainTextDelegate(parent=None,
+                                                    length=30,
+                                                    editable=True)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertEqual(editor.maxLength(), 30)
+        self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
+        self.grab_delegate(delegate, 'Plain Text')
+        delegate = self.delegates.PlainTextDelegate(parent=None,
+                                                    length=20,
+                                                    editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
+        self.grab_delegate(delegate, 'Plain Text', 'disabled')
 
-  def testTextEditDelegate(self):
-    from PyQt4.QtGui import QTextEdit
-    delegate = self.delegates.TextEditDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, QTextEdit))
-    self.grab_delegate(delegate, 'Plain Text')
-    delegate = self.delegates.TextEditDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, QTextEdit))
-    self.grab_delegate(delegate, 'Plain Text', 'disabled')
+    def testTextEditDelegate(self):
+        from PyQt4.QtGui import QTextEdit
+        delegate = self.delegates.TextEditDelegate(parent=None, **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, QTextEdit))
+        self.grab_delegate(delegate, 'Plain Text')
+        delegate = self.delegates.TextEditDelegate(parent=None, editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, QTextEdit))
+        self.grab_delegate(delegate, 'Plain Text', 'disabled')
 
-  def testRichTextDelegate(self):
-    delegate = self.delegates.RichTextDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.RichTextEditor))
-    self.grab_delegate(delegate, '<b>Rich Text</b>')
-    delegate = self.delegates.RichTextDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.RichTextEditor))
-    self.grab_delegate(delegate, '<b>Rich Text</b>', 'disabled')
+    def testRichTextDelegate(self):
+        delegate = self.delegates.RichTextDelegate(parent=None, **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.RichTextEditor))
+        self.grab_delegate(delegate, '<b>Rich Text</b>')
+        delegate = self.delegates.RichTextDelegate(parent=None, editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.RichTextEditor))
+        self.grab_delegate(delegate, '<b>Rich Text</b>', 'disabled')
 
-  def testBoolDelegate(self):
-    delegate = self.delegates.BoolDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.BoolEditor))
-    self.grab_delegate(delegate, True)
-    delegate = self.delegates.BoolDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.BoolEditor))
-    self.grab_delegate(delegate, True, 'disabled')
+    def testBoolDelegate(self):
+        delegate = self.delegates.BoolDelegate(parent=None, **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.BoolEditor))
+        self.grab_delegate(delegate, True)
+        delegate = self.delegates.BoolDelegate(parent=None, editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.BoolEditor))
+        self.grab_delegate(delegate, True, 'disabled')
 
-  def testDateDelegate(self):
-    from datetime import date
-    delegate = self.delegates.DateDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.DateEditor))
-    date = date.today()
-    self.grab_delegate(delegate, date)
-    delegate = self.delegates.DateDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.DateEditor))
-    date = date.today()
-    self.grab_delegate(delegate, date, 'disabled')
-    #TODO  !!
+    def testDateDelegate(self):
+        from datetime import date
+        delegate = self.delegates.DateDelegate(parent=None, **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.DateEditor))
+        date = date.today()
+        self.grab_delegate(delegate, date)
+        delegate = self.delegates.DateDelegate(parent=None, editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.DateEditor))
+        date = date.today()
+        self.grab_delegate(delegate, date, 'disabled')
+        #TODO  !!
 
-  def testDateTimeDelegate(self):
-    from datetime import datetime
-    delegate = self.delegates.DateTimeDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
-    DateTime = datetime.now()
-    self.grab_delegate(delegate, DateTime)
-    delegate = self.delegates.DateTimeDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
-    self.grab_delegate(delegate, DateTime, 'disabled')
+    def testDateTimeDelegate(self):
+        from datetime import datetime
+        delegate = self.delegates.DateTimeDelegate(parent=None, **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
+        DateTime = datetime.now()
+        self.grab_delegate(delegate, DateTime)
+        delegate = self.delegates.DateTimeDelegate(parent=None, editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
+        self.grab_delegate(delegate, DateTime, 'disabled')
 
-  def testEnumerationDelegate(self):
-    choices = [('a','A'), ('b','B')]
-    delegate = self.delegates.EnumerationDelegate(parent=None, choices=choices)
-    self.grab_delegate(delegate, 'a')
-    delegate = self.delegates.EnumerationDelegate(parent=None, choices=choices, editable=False)
-    self.grab_delegate(delegate, 'a', 'disabled')
+    def testEnumerationDelegate(self):
+        choices = [('a','A'), ('b','B')]
+        delegate = self.delegates.EnumerationDelegate(parent=None, choices=choices)
+        self.grab_delegate(delegate, 'a')
+        delegate = self.delegates.EnumerationDelegate(parent=None, choices=choices, editable=False)
+        self.grab_delegate(delegate, 'a', 'disabled')
 
-  def testTimeDelegate(self):
-    from datetime import time
-    delegate = self.delegates.TimeDelegate(parent=None, editable=True)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.TimeEditor))
-    time = time(10, 30, 15)
-    self.grab_delegate(delegate, time)
-    delegate = self.delegates.TimeDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.TimeEditor))
-    #time = time(10, 30, 15)
-    self.grab_delegate(delegate, time, 'disabled')
+    def testTimeDelegate(self):
+        from datetime import time
+        delegate = self.delegates.TimeDelegate(parent=None, editable=True)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.TimeEditor))
+        time = time(10, 30, 15)
+        self.grab_delegate(delegate, time)
+        delegate = self.delegates.TimeDelegate(parent=None, editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.TimeEditor))
+        #time = time(10, 30, 15)
+        self.grab_delegate(delegate, time, 'disabled')
 
-  def testIntegerDelegate(self):
-    delegate = self.delegates.IntegerDelegate(parent=None, editable=True)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
-    self.grab_delegate(delegate, 3)
-    delegate = self.delegates.IntegerDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
-    self.grab_delegate(delegate, 0, 'disabled')
+    def testIntegerDelegate(self):
+        delegate = self.delegates.IntegerDelegate(parent=None, editable=True)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
+        self.grab_delegate(delegate, 3)
+        delegate = self.delegates.IntegerDelegate(parent=None, editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.IntegerEditor))
+        self.grab_delegate(delegate, 0, 'disabled')
 
-  def testIntervalsDelegate(self):
-    from camelot.container import IntervalsContainer, Interval
-    intervals = IntervalsContainer(0, 24, [Interval(8, 18, 'work', (255,0,0,255)), Interval(19, 21, 'play', (0,255,0,255))])
-    delegate = self.delegates.IntervalsDelegate(parent=None, editable=True)
-    self.grab_delegate(delegate, intervals)
-    delegate = self.delegates.IntervalsDelegate(parent=None, editable=False)
-    self.grab_delegate(delegate, intervals, 'disabled')
+    def testIntervalsDelegate(self):
+        from camelot.container import IntervalsContainer, Interval
+        intervals = IntervalsContainer(0, 24, [Interval(8, 18, 'work', (255,0,0,255)), Interval(19, 21, 'play', (0,255,0,255))])
+        delegate = self.delegates.IntervalsDelegate(parent=None, editable=True)
+        self.grab_delegate(delegate, intervals)
+        delegate = self.delegates.IntervalsDelegate(parent=None, editable=False)
+        self.grab_delegate(delegate, intervals, 'disabled')
 
-  def testFloatDelegate(self):
-    from camelot.core.constants import camelot_minfloat, camelot_maxfloat
-    delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-    self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
-    self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
-    self.grab_delegate(delegate, 3.145)
-    delegate = self.delegates.FloatDelegate(parent=None, prefix='prefix', editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-    self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
-    self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
-    self.grab_delegate(delegate, 0, 'disabled')
+    def testFloatDelegate(self):
+        from camelot.core.constants import camelot_minfloat, camelot_maxfloat
+        delegate = self.delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.FloatEditor))
+        self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
+        self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
+        self.grab_delegate(delegate, 3.145)
+        delegate = self.delegates.FloatDelegate(parent=None, prefix='prefix', editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.FloatEditor))
+        self.assertEqual(editor.spinBox.minimum(), camelot_minfloat)
+        self.assertEqual(editor.spinBox.maximum(), camelot_maxfloat)
+        self.grab_delegate(delegate, 0, 'disabled')
 
-  def testColoredFloatDelegate(self):
-    delegate = self.delegates.ColoredFloatDelegate(parent=None, precision=3, editable=True)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
-    self.grab_delegate(delegate, 3.14456)
-    delegate = self.delegates.ColoredFloatDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
-    self.grab_delegate(delegate, 3.1, 'disabled')
+    def testColoredFloatDelegate(self):
+        delegate = self.delegates.ColoredFloatDelegate(parent=None, precision=3, editable=True)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
+        self.grab_delegate(delegate, 3.14456)
+        delegate = self.delegates.ColoredFloatDelegate(parent=None, editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.ColoredFloatEditor))
+        self.grab_delegate(delegate, 3.1, 'disabled')
 
-  def testStarDelegate(self):
-    delegate = self.delegates.StarDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(delegate.maximum, 5)
-    self.assertTrue(isinstance(editor, self.editors.StarEditor))
-    self.grab_delegate(delegate, 5)
-    delegate = self.delegates.StarDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(delegate.maximum, 5)
-    self.assertTrue(isinstance(editor, self.editors.StarEditor))
-    self.grab_delegate(delegate, 5, 'disabled')
+    def testStarDelegate(self):
+        delegate = self.delegates.StarDelegate(parent=None, **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(delegate.maximum, 5)
+        self.assertTrue(isinstance(editor, self.editors.StarEditor))
+        self.grab_delegate(delegate, 5)
+        delegate = self.delegates.StarDelegate(parent=None, editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(delegate.maximum, 5)
+        self.assertTrue(isinstance(editor, self.editors.StarEditor))
+        self.grab_delegate(delegate, 5, 'disabled')
 
-  def testSmileyDelegate(self):
-    delegate = self.delegates.SmileyDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.SmileyEditor))
-    self.grab_delegate(delegate, 'face-glasses')
-    delegate = self.delegates.SmileyDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.SmileyEditor))
-    self.grab_delegate(delegate, 'face-glasses', 'disabled')
+    def testSmileyDelegate(self):
+        delegate = self.delegates.SmileyDelegate(parent=None, **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.SmileyEditor))
+        self.grab_delegate(delegate, 'face-glasses')
+        delegate = self.delegates.SmileyDelegate(parent=None, editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.SmileyEditor))
+        self.grab_delegate(delegate, 'face-glasses', 'disabled')
 
-  def testFileDelegate(self):
-    from camelot.core.files.storage import StoredFile
-    delegate = self.delegates.FileDelegate(parent=None)
-    file = StoredFile(None, 'agreement.pdf')
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.FileEditor))
-    self.grab_delegate(delegate, file)
-    delegate = self.delegates.FileDelegate(parent=None, editable=False)
-    self.grab_delegate(delegate, file, 'disabled')
+    def testFileDelegate(self):
+        from camelot.core.files.storage import StoredFile
+        delegate = self.delegates.FileDelegate(parent=None)
+        file = StoredFile(None, 'agreement.pdf')
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.FileEditor))
+        self.grab_delegate(delegate, file)
+        delegate = self.delegates.FileDelegate(parent=None, editable=False)
+        self.grab_delegate(delegate, file, 'disabled')
 
-  def testColorDelegate(self):
-    delegate = self.delegates.ColorDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.ColorEditor))
-    color = [255, 255, 0]
-    self.grab_delegate(delegate, color)
-    delegate = self.delegates.ColorDelegate(parent=None, editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.ColorEditor))
-    self.grab_delegate(delegate, color, 'disabled')
+    def testColorDelegate(self):
+        delegate = self.delegates.ColorDelegate(parent=None, **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.ColorEditor))
+        color = [255, 255, 0]
+        self.grab_delegate(delegate, color)
+        delegate = self.delegates.ColorDelegate(parent=None, editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.ColorEditor))
+        self.grab_delegate(delegate, color, 'disabled')
 
-  def testCodeDelegate(self):
-    delegate = self.delegates.CodeDelegate(parent=None, parts=['99','AA'], **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.CodeEditor))
-    self.grab_delegate(delegate, ['76','AB'])
-    delegate = self.delegates.CodeDelegate(parent=None, parts=['99','AA', '99', 'AA'], editable=False)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.CodeEditor))
-    self.grab_delegate(delegate, ['76','AB', '12', '34'], 'disabled')
+    def testCodeDelegate(self):
+        delegate = self.delegates.CodeDelegate(parent=None, parts=['99','AA'], **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.CodeEditor))
+        self.grab_delegate(delegate, ['76','AB'])
+        delegate = self.delegates.CodeDelegate(parent=None, parts=['99','AA', '99', 'AA'], editable=False)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.CodeEditor))
+        self.grab_delegate(delegate, ['76','AB', '12', '34'], 'disabled')
 
-  def testCurrencyDelegate(self):
-    delegate = self.delegates.CurrencyDelegate(parent=None, suffix='euro', **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.FloatEditor))
-    self.grab_delegate(delegate, 1000000.12)
-    delegate = self.delegates.CurrencyDelegate(parent=None, prefix='prefix', editable=False)
-    self.grab_delegate(delegate, 1000000.12, 'disabled')
+    def testCurrencyDelegate(self):
+        delegate = self.delegates.CurrencyDelegate(parent=None, suffix='euro', **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.FloatEditor))
+        self.grab_delegate(delegate, 1000000.12)
+        delegate = self.delegates.CurrencyDelegate(parent=None, prefix='prefix', editable=False)
+        self.grab_delegate(delegate, 1000000.12, 'disabled')
 
-  def testComboBoxDelegate(self):
-    CHOICES = (('1','A'), ('2','B'), ('3','C'))
-    delegate = self.delegates.ComboBoxDelegate(parent=None,
-                                               choices=CHOICES,
-                                               **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.ChoicesEditor))
-    self.grab_delegate(delegate, 1)
-    delegate = self.delegates.ComboBoxDelegate(parent=None,
-                                               choices=CHOICES,
-                                               editable=False)
-    self.grab_delegate(delegate, 1, 'disabled')
+    def testComboBoxDelegate(self):
+        CHOICES = (('1','A'), ('2','B'), ('3','C'))
+        delegate = self.delegates.ComboBoxDelegate(parent=None,
+                                                   choices=CHOICES,
+                                                   **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.ChoicesEditor))
+        self.grab_delegate(delegate, 1)
+        delegate = self.delegates.ComboBoxDelegate(parent=None,
+                                                   choices=CHOICES,
+                                                   editable=False)
+        self.grab_delegate(delegate, 1, 'disabled')
 
-  def testImageDelegate(self):
-    delegate = self.delegates.ImageDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.ImageEditor))
+    def testImageDelegate(self):
+        delegate = self.delegates.ImageDelegate(parent=None, **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.ImageEditor))
 
-  def testVirtualAddressDelegate(self):
-    delegate = self.delegates.VirtualAddressDelegate(parent=None,
-                                                     **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.VirtualAddressEditor))
-    self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'))
-    delegate = self.delegates.VirtualAddressDelegate(parent=None, editable=False)
-    self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'), 'disabled')
+    def testVirtualAddressDelegate(self):
+        delegate = self.delegates.VirtualAddressDelegate(parent=None,
+                                                         **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.VirtualAddressEditor))
+        self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'))
+        delegate = self.delegates.VirtualAddressDelegate(parent=None, editable=False)
+        self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'), 'disabled')
 
-  def testMonthsDelegate(self):
-    delegate = self.delegates.MonthsDelegate(parent=None, **self.kwargs)
-    editor = delegate.createEditor(None, self.option, None)
-    self.assertTrue(isinstance(editor, self.editors.MonthsEditor))
-    self.grab_delegate(delegate, 12)
-    delegate = self.delegates.MonthsDelegate(parent=None, editable=False)
-    self.grab_delegate(delegate, 12, 'disabled')
+    def testMonthsDelegate(self):
+        delegate = self.delegates.MonthsDelegate(parent=None, **self.kwargs)
+        editor = delegate.createEditor(None, self.option, None)
+        self.assertTrue(isinstance(editor, self.editors.MonthsEditor))
+        self.grab_delegate(delegate, 12)
+        delegate = self.delegates.MonthsDelegate(parent=None, editable=False)
+        self.grab_delegate(delegate, 12, 'disabled')
 
 
 class FilterTest(ModelThreadTestCase):
@@ -1039,9 +1051,9 @@ class ControlsTest(ModelThreadTestCase):
         self.grab_widget(header)
 
 class CamelotEntityViewsTest(EntityViewsTest):
-  """Test the views of all the Entity subclasses"""
+    """Test the views of all the Entity subclasses"""
 
-  images_path = static_images_path
+    images_path = static_images_path
 
 class SnippetsTest(ModelThreadTestCase):
 
@@ -1128,4 +1140,3 @@ if __name__ == '__main__':
     runner.run(filter_test)
     entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
     runner.run(entity_views_test)
-

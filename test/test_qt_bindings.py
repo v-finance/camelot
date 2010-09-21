@@ -63,12 +63,11 @@ class TableViewCases(unittest.TestCase):
         
         import gc
         for i in range(100):
-            print i
             
             class TableModelSubclass(QtGui.QStringListModel):
                 pass
     
             model = TableModelSubclass()
             widget = TableView( model )
-            register.register_model_view(model, widget)
+            #register.register_model_view(model, widget)
             gc.collect()

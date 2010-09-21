@@ -116,10 +116,6 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         # Search input
         self.search_input = DecoratedLineEdit(self)
         self.search_input.set_background_text(_('Search...'))
-        #self.search_input.setReadOnly(True)
-        #self.connect(self.search_input,
-        #             QtCore.SIGNAL('returnPressed()'),
-        #             self.returnPressed)
         self.search_input.textEdited.connect(self.textEdited)
         # suppose garbage was entered, we need to refresh the content
         self.search_input.editingFinished.connect( self.search_input_editing_finished )
