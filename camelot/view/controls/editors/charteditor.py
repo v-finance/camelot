@@ -48,6 +48,7 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
     """
 
     show_fullscreen_signal = QtCore.pyqtSignal()
+    editingFinished = QtCore.pyqtSignal()
 
     def __init__(self, parent=None, width=50, height=40, dpi=50, **kwargs):
         from matplotlib.figure import Figure
