@@ -95,6 +95,8 @@ class TextBoolEditor(QtGui.QLabel, AbstractCustomEditor):
         color_no: string
             text-color of the False representation
     """
+    editingFinished = QtCore.pyqtSignal()
+    
     def __init__(self,
                  parent=None,
                  yes="Yes",
