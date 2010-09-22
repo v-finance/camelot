@@ -5,10 +5,11 @@ from PyQt4 import QtGui, QtCore
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
 from camelot.core.utils import ugettext as _
+from camelot.admin.abstract_action import AbstractAction, AbstractOpenFileAction
 
 logger = logging.getLogger('camelot.admin.list_action')
 
-class ListAction( object ):
+class ListAction( AbstractAction ):
     """Abstract base class to implement list actions
     
 .. attribute:: Options
@@ -51,32 +52,7 @@ an interface screen for an object of type Options.  Defaults to None.
         :return: None if there was no Options class attribute or if Cancel was pressed, otherwise
         an object of of type Options
         """
-
-        if self.Options:
-            from camelot.view.wizard.pages.form_page import FormPage
-            
-            class OptionsPage(FormPage):
-                Data = self.Options
-                icon = self._icon
-                title = self._name
-                sub_title = _('Please complete the options and continue')
-                
-            class ActionWizard(QtGui.QWizard):
-            
-                def __init__(self, parent=None):
-                    super(ActionWizard, self).__init__(parent)
-                    self.setWindowTitle(_('Options'))
-                    self.options_page = OptionsPage(parent=self)
-                    self.addPage(self.options_page)
-                    
-            wizard = ActionWizard()
-            i = wizard.exec_()
-            if not i:
-                return None
-            self.options = wizard.options_page.get_data()
-            return self.options
-        
-        return None
+        return self.get_options()
 
 class ListActionFromGuiFunction( ListAction ):
     """Convert a function that is supposed to run in the GUI thread to a ListAction"""
@@ -153,7 +129,7 @@ class PrintHtmlListAction( ListActionFromModelFunction ):
         """
         return '<br/>'.join( list( unicode( o ) for o in collection ) )
     
-class OpenFileListAction( ListActionFromModelFunction ):
+class OpenFileListAction( ListActionFromModelFunction, AbstractOpenFileAction ):
     """List action used to open a file in the prefered application of the user.
     To be used for example to generate pdfs with reportlab and open them in
     the default pdf viewer.
@@ -163,22 +139,15 @@ class OpenFileListAction( ListActionFromModelFunction ):
     
     Overwrite the write file method to write the file wanted.
     """
-
-    suffix = '.txt'
     
     def __init__( self, name, icon = Icon( 'tango/22x22/actions/document-print.png' ) ):
         """
         """
 
         def model_function( collection, selection, options ):
-            import os
-            import tempfile
-            file_descriptor, file_name = tempfile.mkstemp(suffix=self.suffix)
-            os.close(file_descriptor)
+            file_name = self.create_temp_file()
             self.write_file(file_name, collection, selection, options )
-            url = QtCore.QUrl.fromLocalFile(file_name)
-            logger.debug(u'open url : %s'%unicode(url))
-            QtGui.QDesktopServices.openUrl(url)
+            self.open_file(file_name)
 
         ListActionFromModelFunction.__init__( self, name, model_function, icon )
 

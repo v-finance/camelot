@@ -213,6 +213,7 @@ class Form( object ):
                 return '%s,%s'%(self.row, self.col)
 
         c = cursor()
+        has_vertical_expanding_row = False
         for field in self._content:
             if isinstance( field, Form ):
                 c.next_empty_row()
@@ -239,22 +240,26 @@ class Form( object ):
                         form_layout.addWidget( label, c.row, c.col, row_span, col_span )
                     form_layout.addWidget( editor, c.row, c.col + 1, row_span, col_span )
                     c.next_col()
+                size_policy = editor.sizePolicy()
+                if size_policy.verticalPolicy()==QtGui.QSizePolicy.Expanding:
+                    has_vertical_expanding_row = True
             else:
                 logger.warning('ProgrammingError : widgets should contain a widget for field %s'%unicode(field))
 
         if self._content and form_layout.count():
-            # get last item in the layout
-            last_item = form_layout.itemAt( form_layout.count() - 1 )
-
-            # if last item does not contain a widget, 0 is returned
-            # which is fine with the isinstance test
-            w = last_item.widget()
-
-            # add stretch only if last item is not expandable
-            last_size_policy = w.sizePolicy()
-            if last_size_policy.verticalPolicy()==QtGui.QSizePolicy.Expanding:
-                pass
-            else:
+#            # get last item in the layout
+#            last_item = form_layout.itemAt( form_layout.count() - 1 )
+#
+#            # if last item does not contain a widget, 0 is returned
+#            # which is fine with the isinstance test
+#            w = last_item.widget()
+#
+#            # add stretch only if last item is not expandable
+#            last_size_policy = w.sizePolicy()
+#            if last_size_policy.verticalPolicy()==QtGui.QSizePolicy.Expanding:
+#                pass
+#            else:
+            if not has_vertical_expanding_row:
                 form_layout.setRowStretch( form_layout.rowCount(), 1 )
 
         form_widget = QtGui.QWidget( parent )
