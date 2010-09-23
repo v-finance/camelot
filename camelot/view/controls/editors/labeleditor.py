@@ -30,6 +30,7 @@ from PyQt4 import QtGui
 from customeditor import AbstractCustomEditor
 
 class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
+    editingFinished = QtCore.pyqtSignal()
     def __init__(self,
                  parent=None,
                  text="<loading>",
