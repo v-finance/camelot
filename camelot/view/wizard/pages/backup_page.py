@@ -85,7 +85,7 @@ class Page(QtGui.QWizardPage):
         )
     icon = Icon('tango/32x32/actions/document-save.png')
     caption = _('Select file')
-    extension = '.sqlite'
+    extension = '.db'
 
     def __init__(self, backup_mechanism=None, parent=None):
         self.backup_mechanism = backup_mechanism
@@ -183,8 +183,8 @@ class SelectRestoreFilePage(Page):
 
     def _setPath(self, dir):
         path = QtGui.QFileDialog.getOpenFileName(
-                self, unicode(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
-            )
+            self, unicode(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
+        )
         return path
 
 class SelectBackupFilePage(Page):

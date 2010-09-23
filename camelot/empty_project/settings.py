@@ -11,23 +11,8 @@ CAMELOT_MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'media')
 # backup root is the directory where the default backups are stored
 CAMELOT_BACKUP_ROOT = os.path.join(os.path.dirname(__file__), 'backup')
 
-# template used to create and find default backups
-CAMELOT_BACKUP_FILENAME_TEMPLATE = 'default-backup-%(text)s.sqlite'
-
-# backup root is the directory where the default backups are stored
-CAMELOT_BACKUP_ROOT = os.path.join(os.path.dirname(__file__), 'backup')
-
 # default extension for backup files
-CAMELOT_BACKUP_EXTENSION = 'sqlite'
-
-# template used to create and find default backups
-CAMELOT_BACKUP_FILENAME_TEMPLATE = 'default-backup-%(text)s.' + CAMELOT_BACKUP_EXTENSION
-
-# backup root is the directory where the default backups are stored
-CAMELOT_BACKUP_ROOT = os.path.join(os.path.dirname(__file__), 'backup')
-
-# default extension for backup files
-CAMELOT_BACKUP_EXTENSION = 'sqlite'
+CAMELOT_BACKUP_EXTENSION = 'db'
 
 # template used to create and find default backups
 CAMELOT_BACKUP_FILENAME_TEMPLATE = 'default-backup-%(text)s.' + CAMELOT_BACKUP_EXTENSION
