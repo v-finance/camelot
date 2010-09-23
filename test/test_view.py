@@ -187,6 +187,7 @@ class EditorsTest(ModelThreadTestCase):
         y_data = [math.sin(x) for x in x_data]
         plot = chartcontainer.PlotContainer( x_data, y_data )
         editor.set_value( plot )
+        editor.setMaximumSize( 400, 200 )
         self.grab_widget( editor, 'editable' )
         editor.set_field_attributes(editable=False)
         self.grab_widget( editor, 'disabled' )

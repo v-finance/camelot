@@ -15,6 +15,14 @@ Trunk
    .. image:: _static/mergedocumentwizard/wizard_widget.png
    
  * Support for SQLAlchemy 0.6.x
+ 
+ * Charts and matplotlib integration
+ 
+     .. image:: _static/editors/ChartEditor_editable.png 
+     
+ * Move from PyExcelerator to xlwt and xlrd
+ 
+ * Move to new style signal/slot connections
    
 Release 10.07.02
 ----------------

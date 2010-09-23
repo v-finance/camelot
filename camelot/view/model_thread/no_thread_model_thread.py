@@ -38,8 +38,11 @@ class NoThreadModelThread( AbstractModelThread ):
 
     def wait_on_work(self):
         app = QtCore.QCoreApplication.instance()
-        while app.hasPendingEvents():
+        i = 0
+        # only process events 10 times to avoid dead locks
+        while app.hasPendingEvents() and i < 10:
             app.processEvents()
+            i += 1
             
     def isRunning(self):
         return True

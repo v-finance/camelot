@@ -50,7 +50,9 @@ class TableViewCases(unittest.TestCase):
     """Tests related to table views"""
 
     def setUp(self):
-        self.application = QtGui.QApplication([])
+        self.application = QtGui.QApplication.instance()
+        if not self.application:
+            self.application = QtGui.QApplication([])
 
     def test_table_view_garbage_collection(self):
         """Create a table view and force its garbage collection, while
@@ -62,12 +64,12 @@ class TableViewCases(unittest.TestCase):
         register = ModelViewRegister()
         
         import gc
-        for i in range(100):
+        for _i in range(100):
             
             class TableModelSubclass(QtGui.QStringListModel):
                 pass
     
             model = TableModelSubclass()
             widget = TableView( model )
-            #register.register_model_view(model, widget)
+            register.register_model_view(model, widget)
             gc.collect()
