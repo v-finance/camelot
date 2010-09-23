@@ -31,6 +31,10 @@ class StoredImage( StoredFile ):
     """Helper class for the Image field type Class linking an image and the
     location and filename where the image is stored"""
 
+    def __init__( self, storage, name ):
+        super(StoredImage, self).__init__( storage, name )
+        self._thumbnails = dict()
+        
     @model_function
     def checkout_image( self ):
         """Checkout the image from the storage, and return a QImage"""
@@ -40,11 +44,19 @@ class StoredImage( StoredFile ):
 
     @model_function
     def checkout_thumbnail( self, width, height ):
-        """Checkout a thumbnail for this image form the storage
+        """Checkout a thumbnail for this image from the storage
         :return: a QImage"""
+        key = (width, height)
+        try:
+            thumbnail_image = self._thumbnails[key]
+            return thumbnail_image
+        except KeyError:
+            pass
         from PyQt4.QtCore import Qt
         original_image = self.checkout_image()
-        return original_image.scaled( width, height, Qt.KeepAspectRatio )
+        thumbnail_image = original_image.scaled( width, height, Qt.KeepAspectRatio )
+        self._thumbnails[key] = thumbnail_image
+        return thumbnail_image
 
 class Storage( object ):
     """Helper class that opens and saves StoredFile objects
@@ -74,7 +86,7 @@ class Storage( object ):
         self.stored_file_implementation = stored_file_implementation
         #
         # don't do anything here that might reduce the startup time, like verifying the
-        # availability of the storage, sinde the path might be on a slow network share
+        # availability of the storage, since the path might be on a slow network share
         #
 
     def available(self):
@@ -113,7 +125,7 @@ class Storage( object ):
         """Check the file pointed to by local_path into the storage, and
         return a StoredFile
         :param local_path: the path to the local file that needs to be checked in
-        :param filename: the filename to be given to the checked in file, if None
+        :param filename: a hint for the filename to be given to the checked in file, if None
         is given, the filename from the local path will be taken.
         
         The stored file is not guaranteed to have the filename asked, since the

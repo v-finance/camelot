@@ -213,9 +213,11 @@ class Form( object ):
                 return '%s,%s'%(self.row, self.col)
 
         c = cursor()
+        
         has_vertical_expanding_row = False
         for field in self._content:
             if isinstance( field, Form ):
+                has_vertical_expanding_row = True
                 c.next_empty_row()
                 col_span = 2 * columns
                 f = field.render( widgets, parent, True )
