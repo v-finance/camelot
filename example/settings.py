@@ -17,3 +17,8 @@ def setup_model():
     setup_all(create_tables=True)
     from camelot.model.authentication import updateLastLogin
     updateLastLogin()
+    # 
+    # Load sample data with the fixure mechanism
+    #
+    from fixtures import load_movie_fixtures
+    load_movie_fixtures()

@@ -1,17 +1,19 @@
-from model import Movie
-from camelot.model.fixture import Fixture
-
 import datetime
 
-
 def load_movie_fixtures():
+
+    from example.model import Movie
+    from camelot.model.fixture import Fixture
+    from camelot.core.files.storage import StoredImage, Storage
+    
+    storage = Storage(upload_to='covers')
 
     movies = [
         [
             'The Shining',
             'The tide of terror that swept America is here.',
             datetime.date(1980, 5, 23),
-            'Stanley Kubrick'
+            'Stanley Kubrick',
             [
                 'Jack Nicholson',
                 'Shelley Duvall',
@@ -20,9 +22,9 @@ def load_movie_fixtures():
                 'Barry Nelson'
             ],
             ['Horror','Mystery','Thriller'],
-            'Thriller',
+            'thriller',
             4,
-            'media/covers/shining.jpg',
+            'shining.jpg',
             'A family heads to an isolated hotel for the winter where an evil'
             ' and spiritual presence influences the father into violence,'
             ' while his psychic son sees horrific forebodings from the past'
@@ -41,9 +43,9 @@ def load_movie_fixtures():
                 'Brian Cox'
             ],
             ['Action','Adventure'],
-            'Action',
+            'action',
             4,
-            'media/covers/bourne.jpg',
+            'bourne.jpg',
             'A man is picked up by a fishing boat, bullet-riddled and without'
             ' memory, then races to elude assassins and recover from amnesia.'
         ],
@@ -61,9 +63,9 @@ def load_movie_fixtures():
                 'Wright'
             ],
             ['Action','Adventure'],
-            'Action',
+            'action',
             5,
-            '/media/covers/casino.jpg',
+            'casino.jpg',
             "In his first mission, James Bond must stop Le Chiffre, a banker"
             " to the world's terrorist organizations, from winning a"
             " high-stakes poker tournament at Casino Royale in Montenegro."
@@ -71,7 +73,7 @@ def load_movie_fixtures():
         [
             'Toy Story',
             'Oooh...3-D.',
-            datetime(1995, 11, 22),
+            datetime.date(1995, 11, 22),
             'John Lasseter',
             [
                 'Tom Hanks',
@@ -79,11 +81,11 @@ def load_movie_fixtures():
                 'Don Rickles',
                 'Jim Varney',
                 'Wallace Shawn'
-            ]
+            ],
             ['Animation','Adventure'],
-            'Animation',
+            'animation',
             4,
-            'media/covers/toystory.jpg',
+            'toystory.jpg',
             "A cowboy toy is profoundly threatened and jealous when a fancy"
             " spaceman toy supplants him as top toy in a boy's room."
         ],
@@ -100,9 +102,9 @@ def load_movie_fixtures():
                 'Richard Griffiths'
             ],
             ['Family','Adventure'],
-            'Family',
+            'family',
             3,
-            '/media/covers/potter.jpg',
+            'potter.jpg',
             'Rescued from the outrageous neglect of his aunt and uncle, a'
             ' young boy with a great destiny proves his worth while attending'
             ' Hogwarts School of Witchcraft and Wizardry.'
@@ -120,9 +122,9 @@ def load_movie_fixtures():
                 'Mickey Rourke'
             ],
             ['Action','Adventure','Sci-fi'],
-            'Sci-fi',
+            'sci-fi',
             3,
-            '/media/covers/ironman.jpg',
+            'ironman.jpg',
             'Billionaire Tony Stark must contend with deadly issues involving'
             ' the government, his own friends, as well as new enemies due to'
             ' his superhero alter ego Iron Man.'
@@ -141,9 +143,9 @@ def load_movie_fixtures():
                 'Nathan Lane'
             ],
             ['Animation','Adventure'],
-            'Animation',
+            'animation',
             5,
-            'media/covers/lionking.jpg',
+            'lionking.jpg',
             'Tricked into thinking he killed his father, a guilt ridden lion'
             ' cub flees into exile and abandons his identity as the future'
             ' King.'
@@ -152,7 +154,7 @@ def load_movie_fixtures():
             'Avatar',
             'Enter the World.',
             datetime.date(2009, 12, 18),
-            'James Cameron'
+            'James Cameron',
             [
                 'Sam Worthington',
                 'Zoe Saldana',
@@ -161,7 +163,7 @@ def load_movie_fixtures():
                 'Sigourney Weaver'
             ],
             ['Action','Adventure','Sci-fi'],
-            'Sci-fi',
+            'sci-fi',
             5,
             'avatar.jpg',
             'A paraplegic marine dispatched to the moon Pandora on a unique'
@@ -181,9 +183,9 @@ def load_movie_fixtures():
                 'Jack Davenport'
             ],
             ['Action','Adventure'],
-            'Action',
+            'action',
             5,
-            'media/covers/pirates.jpg',
+            'pirates.jpg',
             "Blacksmith Will Turner teams up with eccentric pirate \"Captain\""
             " Jack Sparrow to save his love, the governor's daughter, from"
             " Jack's former pirate allies, who are now undead."
@@ -192,7 +194,7 @@ def load_movie_fixtures():
             'The Dark Knight',
             'Why so serious?',
             datetime.date(2008, 7, 18),
-            'Christopher Nolan'
+            'Christopher Nolan',
             [
                 'Christian Bale',
                 'Heath Ledger',
@@ -201,24 +203,26 @@ def load_movie_fixtures():
                 'Maggie Gyllenhaal'
             ],
             ['Action','Drama'],
-            'Action',
+            'action',
             5,
-            'media/covers/darkknight.jpg',
+            'darkknight.jpg',
             'Batman, Gordon and Harvey Dent are forced to deal with the chaos'
             ' unleashed by an anarchist mastermind known only as the Joker, as'
             ' it drives each of them to their limits.'
         ]
+    ]
 
-    #for title, sdesc, day, , uid in movies:
-    #    Fixture.insertOrUpdateFixture(
-    #        Movie,
-    #        fixture_key = u''%(language.lower(),source.lower()),
-    #        values = {
-    #            'language':unicode(language),
-    #            'source':unicode(source),
-    #            'value':unicode(value),
-    #            'cid':cid,
-    #            'uid':uid
-    #        },
-    #        fixture_class = fixture_class
-    #    )
+    for title, short_description, releasedate, director, cast, tags, genre, rating, cover, description in movies:
+        movie = Fixture.insertOrUpdateFixture(
+            Movie,
+            fixture_key = title,
+            values = {
+                'title':title,
+                'short_description':short_description,
+                'releasedate':releasedate,
+                'rating':rating,
+                'genre':genre,
+                'description':description,
+                'cover':StoredImage(storage, cover),
+            },
+        )

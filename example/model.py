@@ -26,13 +26,16 @@ __metadata__ = metadata
 #
 
 def genre_choices(entity_instance):
-  """Generate choices for the possible movie genres"""
-  yield (('action'),('Action'))
-  yield (('animation'),('Animation'))
-  yield (('comedy'),('Comedy'))
-  yield (('drama'),('Drama'))
-  yield (('sci-fi'),('Sci-Fi'))
-  yield (('war'),('War'))
+  """Choices for the possible movie genres"""
+  return [
+  (('action'),('Action')),
+  (('animation'),('Animation')),
+  (('comedy'),('Comedy')),
+  (('drama'),('Drama')),
+  (('sci-fi'),('Sci-Fi')),
+  (('war'),('War')),
+  (('thriller'),('Thriller')),
+  (('family'),('Family')) ]
 
 def burn_to_disk(o_getter):
   print 'burn burn burn'
@@ -82,7 +85,7 @@ class Movie(Entity):
   class Admin(EntityAdmin):
     # the list_display attribute specifies which entity attributes should
     # be visible in the table view        
-    list_display = ['title', 'releasedate', 'rating', 'cover']
+    list_display = ['cover', 'title', 'releasedate', 'rating',]
     # define filters to be available in the table view
     list_filter = ['genre', ComboBoxFilter('director.full_name')]
     # if the search function needs to look in related object attributes,
@@ -92,14 +95,15 @@ class Movie(Entity):
     # visible in the form view
     form_display = TabForm([
       ('Movie', Form([
-        HBoxForm([['title', 'rating'], WidgetOnlyForm('cover')]),
+        HBoxForm([WidgetOnlyForm('cover'), ['title', 'rating']]),
         'short_description',
         'releasedate', 
         'director',
         'script', 
         'genre', 
-        'description', 'tags'], scrollbars=True)),
-      ('Cast', WidgetOnlyForm('cast'))
+        'description',], columns = 2)),
+      ('Cast', WidgetOnlyForm('cast')),
+      ('Tags', WidgetOnlyForm('tags'))
     ])
     
     # create a list of actions available for the user on the form view
