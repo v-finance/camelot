@@ -34,7 +34,6 @@ from camelot.view.art import Icon
 from camelot.core import constants
 from camelot.view.proxy import ValueLoading
 
-
 class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
 
@@ -43,11 +42,6 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
 
     def textFromValue(self, value):
         return str( QtCore.QString("%L1").arg(float(value), 0, 'f', self.decimals()) )
-
-    # def valueFromText(self, text):
-    # maybe construct some cases to make other input formats possible
-    #   return text
-
 
 class FloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator"""

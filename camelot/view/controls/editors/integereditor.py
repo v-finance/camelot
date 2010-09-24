@@ -43,6 +43,8 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     def wheelEvent(self, wheel_event):
         wheel_event.ignore()
 
+    def textFromValue(self, value):
+        return str( QtCore.QString("%L1").arg( int(value) ) )
 
 class IntegerEditor(CustomEditor):
     """Widget for editing an integer field, with a calculator
