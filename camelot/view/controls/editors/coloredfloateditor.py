@@ -34,6 +34,7 @@ from camelot.core import constants
 from camelot.view.art import Icon
 from camelot.view.proxy import ValueLoading
 
+from camelot.view.controls.editors.floateditor import CustomDoubleSpinBox
 
 class ColoredFloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator"""
@@ -48,7 +49,7 @@ class ColoredFloatEditor(CustomEditor):
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
-        self.spinBox = QtGui.QDoubleSpinBox(parent)
+        self.spinBox = CustomDoubleSpinBox(parent)
 
         self.spinBox.setDecimals(precision)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)

@@ -36,15 +36,7 @@ from camelot.core.constants import camelot_minint
 from camelot.core.constants import camelot_maxint
 
 from customeditor import CustomEditor
-
-class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
-    """Spinbox that doesn't accept mouse scrolling as input"""
-
-    def wheelEvent(self, wheel_event):
-        wheel_event.ignore()
-
-    def textFromValue(self, value):
-        return str( QtCore.QString("%L1").arg( int(value) ) )
+from camelot.view.controls.editors.floateditor import CustomDoubleSpinBox
 
 class IntegerEditor(CustomEditor):
     """Widget for editing an integer field, with a calculator
