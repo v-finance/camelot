@@ -61,56 +61,11 @@ class PlainTextDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-        bgcolor = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
+        value = variant_to_pyobject( index.model().data( index, Qt.EditRole ) )
+        
+        value_str = u''
+        if value not in (None, ValueLoading):
+            value_str = ugettext(value)
 
-        #if (option.state & QtGui.QStyle.State_Selected):
-        #    painter.fillRect(option.rect, option.palette.highlight())
-        #    fontColor = QtGui.QColor()
-        #    if self.editable:
-        #        Color = option.palette.highlightedText().color()
-        #        fontColor.setRgb(Color.red(), Color.green(), Color.blue())
-        #    else:
-        #        fontColor.setRgb(130,130,130)
-        #else:
-        #    if self.editable:
-        #        painter.fillRect(option.rect, bgcolor)
-        #        fontColor = QtGui.QColor()
-        #        fontColor.setRgb(0,0,0)
-        #    else:
-        #        painter.fillRect(option.rect, option.palette.window())
-        #        fontColor = QtGui.QColor()
-        #        fontColor.setRgb(130,130,130)
-
-        fontcolor = QtGui.QColor(0, 0, 0)
-        selected = option.state & QtGui.QStyle.State_Selected
-
-        if selected:
-            bgcolor = option.palette.highlight()
-        elif not self.editable:
-            bgcolor = option.palette.window()
-
-        if not self.editable:
-            fontcolor = QtGui.QColor(130, 130, 130)
-        elif selected:
-            fontcolor = option.palette.highlightedText().color()
-
-        painter.fillRect(option.rect, bgcolor)
-
-        #if text not in (None, ValueLoading):
-        #    if self._translate_content:
-        #        text = ugettext(text)
-        #else:
-        #    text = u''
-
-        if value in (None, ValueLoading):
-            value = unicode()
-
-        if self._translate_content:
-            value = ugettext(value)
-
-        painter.setPen(fontcolor)
-        rect = QtCore.QRect(option.rect)
-        rect.adjust(2, 0, -4, 0)
-        painter.drawText(rect, Qt.AlignVCenter | Qt.AlignLeft, unicode(value))
+        self.paint_text(painter, option, index, value_str)
         painter.restore()
