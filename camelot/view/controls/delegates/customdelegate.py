@@ -170,6 +170,8 @@ will be put onto a form"""
         if field_attributes != ValueLoading:
             editable = field_attributes.get( 'editable', True )
             background_color = field_attributes.get( 'background_color', None )
+            prefix = field_attributes.get( 'prefix', None )
+            suffix = field_attributes.get( 'suffix', None )
             
         rect = option.rect
 
@@ -185,7 +187,12 @@ will be put onto a form"""
                 painter.fillRect(rect, background_color or option.palette.window() )
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(130,130,130)
-
+        
+        if prefix:
+            text = '%s %s' % (unicode( prefix.strip() ), unicode( text.strip() ))
+        if suffix:
+            text = '%s %s' % (unicode( text.strip() ), unicode( suffix.strip() ))
+            
         painter.setPen(fontColor.toRgb())
         painter.drawText(rect.x() + 2 + margin_left,
                          rect.y(),

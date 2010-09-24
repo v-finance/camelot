@@ -23,50 +23,11 @@ class DateDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        dateObj = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-        field_attributes = variant_to_pyobject(index.model().data(index, Qt.UserRole))
-        editable, background_color = True, None
-        if field_attributes != ValueLoading:
-            editable = field_attributes.get( 'editable', True )
-            background_color = field_attributes.get( 'background_color', None )
+        value = variant_to_pyobject( index.model().data( index, Qt.EditRole ) )
         
-        if dateObj not in (None, ValueLoading):
-            formattedDate = QtCore.QDate(dateObj).toString(self.date_format)
-        else:
-            formattedDate = "0/0/0"
-          
-        rect = option.rect
-        rect = QtCore.QRect(rect.left()+3, rect.top()+6, 16, 16)
-        fontColor = QtGui.QColor()
-
-        if( option.state & QtGui.QStyle.State_Selected ):
-            painter.fillRect(option.rect, option.palette.highlight())
-            if editable:
-                Color = option.palette.highlightedText().color()
-                fontColor.setRgb(Color.red(), Color.green(), Color.blue())
-            else:
-                fontColor.setRgb(130,130,130)
-        else:
-            if editable:
-                painter.fillRect(option.rect, background_color or option.palette.base())
-                fontColor.setRgb(0,0,0)
-            else:
-                painter.fillRect(option.rect, background_color or option.palette.window())
-                fontColor.setRgb(130,130,130)
-
-              
-              
-        painter.setPen(fontColor.toRgb())
-        rect = QtCore.QRect(option.rect.left()+23,
-                            option.rect.top(),
-                            option.rect.width()-23,
-                            option.rect.height())
-        
-        painter.drawText(rect.x()+2,
-                         rect.y(),
-                         rect.width()-4,
-                         rect.height(),
-                         Qt.AlignVCenter | Qt.AlignRight,
-                         str(formattedDate))
-        
+        value_str = u'0/0/0'
+        if value not in (None, ValueLoading):
+            value_str = QtCore.QDate(value).toString(self.date_format)
+            
+        self.paint_text(painter, option, index, value_str)
         painter.restore()

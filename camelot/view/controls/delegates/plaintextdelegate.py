@@ -65,7 +65,7 @@ class PlainTextDelegate(CustomDelegate):
         
         value_str = u''
         if value not in (None, ValueLoading):
-            value_str = ugettext(value)
+            value_str = ugettext(unicode(value))
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()

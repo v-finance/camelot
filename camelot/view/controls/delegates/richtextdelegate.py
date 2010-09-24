@@ -5,7 +5,7 @@ from customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
 class RichTextDelegate(CustomDelegate):
-    """
+    """Custom delegate for rich text (HTML) string values
   """
   
     __metaclass__ = DocumentationMetaclass
@@ -20,49 +20,15 @@ class RichTextDelegate(CustomDelegate):
     
     def paint(self, painter, option, index):
         from camelot.view.utils import text_from_richtext
+          
         painter.save()
         self.drawBackground(painter, option, index)
-        unstrippedText = unicode(index.model().data(index, Qt.EditRole).toString())
-        
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
-        
-        if not unstrippedText:
-            text = ''
-        else:
-            text = text_from_richtext(unstrippedText, newlines=False)[:256]
-          
-        rect = option.rect
-        rect = QtCore.QRect(rect.left(), rect.top(), rect.width(), rect.height())  
-          
-        if( option.state & QtGui.QStyle.State_Selected ):
-            painter.fillRect(option.rect, option.palette.highlight())
-            fontColor = QtGui.QColor()
-            if self.editable:
-                Color = option.palette.highlightedText().color()
-                fontColor.setRgb(Color.red(), Color.green(), Color.blue())
-            else:
-                fontColor.setRgb(130,130,130)
-        else:
-            if self.editable:
-                painter.fillRect(option.rect, background_color)
-                fontColor = QtGui.QColor()
-                fontColor.setRgb(0,0,0)
-            else:
-                painter.fillRect(option.rect, option.palette.window())
-                fontColor = QtGui.QColor()
-                fontColor.setRgb(130,130,130)
-              
-              
-        painter.setPen(fontColor.toRgb())
-        rect = QtCore.QRect(option.rect.left(),
-                            option.rect.top(),
-                            option.rect.width(),
-                            option.rect.height())
-        painter.drawText(rect.x() + 2,
-                         rect.y(),
-                         rect.width() - 4,
-                         rect.height(),
-                         Qt.AlignVCenter | Qt.AlignLeft,
-                         text)
-        painter.restore()
+        value = unicode(index.model().data(index, Qt.EditRole).toString())
+
+        value_str = u''
+        if value not in (None, ValueLoading):
+            value_str = text_from_richtext(unstrippedText, newlines=False)[:256]
+
+        self.paint_text(painter, option, index, value_str)
+        painter.restore()        
     
