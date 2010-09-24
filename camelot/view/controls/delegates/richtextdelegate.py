@@ -1,8 +1,8 @@
-from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
+from camelot.view.proxy import ValueLoading
 
 class RichTextDelegate(CustomDelegate):
     """Custom delegate for rich text (HTML) string values
@@ -27,7 +27,7 @@ class RichTextDelegate(CustomDelegate):
 
         value_str = u''
         if value not in (None, ValueLoading):
-            value_str = text_from_richtext(unstrippedText, newlines=False)[:256]
+            value_str = text_from_richtext(value, newlines=False)[:256]
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()        

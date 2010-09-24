@@ -26,7 +26,6 @@
 #  ============================================================================
 
 from PyQt4 import QtGui
-from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor
@@ -70,7 +69,6 @@ class StarEditor(CustomEditor):
 
     def get_value(self):
         return CustomEditor.get_value(self) or self.stars
-
 
     def set_enabled(self, editable=True):
         for button in self.buttons:

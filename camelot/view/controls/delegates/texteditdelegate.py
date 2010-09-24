@@ -1,8 +1,9 @@
-from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
+from camelot.view.proxy import ValueLoading
+from camelot.core.utils import ugettext, variant_to_pyobject
 
 class TextEditDelegate(CustomDelegate):
     """Custom delegate for simple string values"""
@@ -11,11 +12,8 @@ class TextEditDelegate(CustomDelegate):
   
     editor = editors.TextEditEditor
       
-    def __init__(self, parent=None, editable=True, **kwargs):
-        CustomDelegate.__init__(self, parent, editable)
-        
-        self.editable = editable
-    
+    def __init__(self, parent=None, **kwargs):
+        CustomDelegate.__init__(self, parent, **kwargs)
     
     def paint(self, painter, option, index):
         painter.save()
