@@ -29,5 +29,5 @@ class DateDelegate(CustomDelegate):
         if value not in (None, ValueLoading):
             value_str = QtCore.QDate(value).toString(self.date_format)
             
-        self.paint_text(painter, option, index, value_str)
+        self.paint_text(painter, option, index, value_str, horizontal_align=Qt.AlignRight )
         painter.restore()

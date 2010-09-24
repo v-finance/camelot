@@ -43,5 +43,5 @@ class FloatDelegate( CustomDelegate ):
         if self.unicode_format is not None:
             value_str = self.unicode_format(value)
         
-        self.paint_text( painter, option, index, value_str )
+        self.paint_text( painter, option, index, value_str, horizontal_align=Qt.AlignRight )
         painter.restore()

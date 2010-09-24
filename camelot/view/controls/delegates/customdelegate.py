@@ -160,7 +160,17 @@ will be put onto a form"""
             val = create_constant_function(editor.get_value())
         model.setData(index, val)
 
-    def paint_text(self, painter, option, index, text, margin_left=0, margin_right=0):
+    def paint_text(
+        self, 
+        painter, 
+        option, 
+        index, 
+        text, 
+        margin_left=0, 
+        margin_right=0, 
+        horizontal_align=Qt.AlignLeft,
+        vertical_align=Qt.AlignVCenter
+    ):
         """Paint unicode text into the given rect defined by option, and fill the rect with
         the background color
         :arg margin_left: additional margin to the left, to be used for icons or others
@@ -198,7 +208,7 @@ will be put onto a form"""
                          rect.y(),
                          rect.width() - 4 - (margin_left + margin_right),
                          rect.height(),
-                         Qt.AlignVCenter | Qt.AlignLeft,
+                         vertical_align | horizontal_align,
                          text)
 
     def render_ooxml( self, value ):
