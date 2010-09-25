@@ -50,9 +50,8 @@ class TableViewCases(unittest.TestCase):
     """Tests related to table views"""
 
     def setUp(self):
-        self.application = QtGui.QApplication.instance()
-        if not self.application:
-            self.application = QtGui.QApplication([])
+        from camelot.test import get_application
+        self.app = get_application()
 
     def test_table_view_garbage_collection(self):
         """Create a table view and force its garbage collection, while
