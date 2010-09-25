@@ -199,9 +199,9 @@ will be put onto a form"""
                 fontColor.setRgb(130,130,130)
         
         if prefix:
-            text = '%s %s' % (unicode( prefix.strip() ), unicode( text.strip() ))
+            text = '%s %s' % (unicode( prefix ).strip(), unicode( text ).strip() )
         if suffix:
-            text = '%s %s' % (unicode( text.strip() ), unicode( suffix.strip() ))
+            text = '%s %s' % (unicode( text ).strip(), unicode( suffix ).strip() )
             
         painter.setPen(fontColor.toRgb())
         painter.drawText(rect.x() + 2 + margin_left,
