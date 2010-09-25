@@ -95,6 +95,7 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
             self.lite_box.show_fullscreen_item(proxy)
 
     def eventFilter(self, object, event):
+        """intercept mouse clicks on a chart to show the chart fullscreen"""
         if not object.isWidgetType():
             return False
         if event.type() != QtCore.QEvent.MouseButtonPress:
@@ -107,6 +108,8 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
         return False
 
     def set_value(self, value):
+        """Accepts a camelot.container.chartcontainer.FigureContainer or a 
+        camelot.container.chartcontainer.AxesContainer """
         from camelot.container.chartcontainer import structure_to_figure_container
         self._value = structure_to_figure_container( super(ChartEditor, self).set_value(value) )
         self.on_draw()
@@ -142,6 +145,7 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
 #        fig.subplots_adjust(bottom=bottom, top=top, left=left, right=right)
     
     def on_draw(self):
+        """draw the matplotlib figure on the canvas"""
         if self._value not in (None, ValueLoading):
             self._value.plot_on_figure(self.fig)
             self.canvas.draw()

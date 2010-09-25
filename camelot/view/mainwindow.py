@@ -37,7 +37,6 @@ import sqlite3
 
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
-from PyQt4 import QtWebKit
 
 from camelot.view.art import Icon
 from camelot.action import createAction, addActions, ActionFactory
@@ -391,6 +390,11 @@ class MainWindow(QtGui.QMainWindow):
     # QAction slots and methods implementations
 
     def help(self):
+        #
+        # Import WebKit as late as possible, since it's the largest
+        # part of the QT Library (15 meg on Ubuntu linux)
+        #
+        from PyQt4 import QtWebKit
         TOP_LEVEL = None
         self.view = QtWebKit.QWebView(TOP_LEVEL)
         #print self.app_admin.get_help_url()
