@@ -33,6 +33,7 @@ from PyQt4.QtGui import (
     QGraphicsPixmapItem,
 )
 from PyQt4.QtCore import Qt
+from PyQt4 import QtGui
 
 from camelot.view.art import Pixmap
 
@@ -101,7 +102,7 @@ class LiteBoxView(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
-
+        QtGui.QShortcut( Qt.Key_Escape, self, self.close )
         self.desktopshot = None
 
         # will propagate to children
@@ -133,7 +134,9 @@ class LiteBoxView(QGraphicsView):
         
     def show_fullscreen_item(self, item):
         """:param item: a QGraphicsItem to be shown fullscreen"""
+        item.setFlag(QtGui.QGraphicsItem.ItemIsFocusable, True)
         self.scene.clear()
         self.scene.addItem(item)
         CloseMark(parent=item)
         self.showFullScreen()
+        self.setFocus()

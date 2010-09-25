@@ -34,8 +34,6 @@ from camelot.view.controls.editors.customeditor import AbstractCustomEditor
 from camelot.view.controls.editors.wideeditor import WideEditor
 from camelot.view.proxy import ValueLoading
 
-from camelot.view.controls.liteboxview import LiteBoxView
-
 PAD_INCHES = 0.1
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.charteditor')
@@ -77,22 +75,25 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
             QtGui.QSizePolicy.Expanding
         )
         self.canvas.installEventFilter(self)
-        self.lite_box = LiteBoxView()
         self.show_fullscreen_signal.connect(self.show_fullscreen)
         self.canvas.updateGeometry()
+        self._litebox = None
 
     @QtCore.pyqtSlot()
     def show_fullscreen(self):
         """Show the plot full screen, using the litebox"""
         from matplotlib.figure import Figure
         from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+        from camelot.view.controls.liteboxview import LiteBoxView
         if self._value:
+            # if we give the litebox a parent, the close button does not work ??
+            self._litebox = LiteBoxView()
             fig = Figure(facecolor='#ffffff')
             canvas = FigureCanvas(self.fig)
             self._value.plot_on_figure(fig)
             proxy = QtGui.QGraphicsProxyWidget()
             proxy.setWidget(canvas)
-            self.lite_box.show_fullscreen_item(proxy)
+            self._litebox.show_fullscreen_item(proxy)
 
     def eventFilter(self, object, event):
         """intercept mouse clicks on a chart to show the chart fullscreen"""
