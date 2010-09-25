@@ -1,5 +1,5 @@
 
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
 from camelot.admin.abstract_action import AbstractAction, AbstractOpenFileAction
 
@@ -69,13 +69,13 @@ class ApplicationActionFromModelFunction( ApplicationActionFromGuiFunction ):
         :param model_function: a function that has one argument, the options requested by the user
         :param session_flush: flush all objects in the session and refresh them in the views
         """
-        ApplicationActionFromGuiFunction.__init__( self, name, icon )
+        ApplicationActionFromGuiFunction.__init__( self, name, None, icon=icon )
         self._model_function = model_function
         self._session_flush = session_flush
 
-    def run( self ):
+    def run( self, parent = None ):
         from camelot.view.model_thread import post
-        options = super(ApplicationAction, self).run()
+        options = ApplicationAction.run( self, parent )
         from camelot.admin.form_action import FormActionProgressDialog
         progress = FormActionProgressDialog( unicode(self._name) )
         
@@ -127,7 +127,7 @@ class OpenFileApplicationAction( ApplicationActionFromModelFunction, AbstractOpe
         """
         """
 
-        def model_function( collection, selection, options ):
+        def model_function( options ):
             file_name = self.create_temp_file()
             self.write_file(file_name, options )
             self.open_file(file_name)
