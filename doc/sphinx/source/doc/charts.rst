@@ -16,6 +16,25 @@ is then shipped to the gui thread, where the chart is put on the screen.
 
 .. image:: ../_static/editors/ChartEditor_editable.png
 
+A simple plot
+=============
+
+As shown in the example below, creating a simple plot involves two things :
+
+  1. Create a property that returns one of the chart containers, in this case
+     the **PlotContainer** is used.
+     
+  2. Specifiy the delegate to be used to visualise the property, this should be
+     the **ChartDelegate**
+     
+.. literalinclude:: ../../../../test/snippet/chart/simple_plot.py
+  
+The **PlotContainer** object takes as its arguments, the same arguments that can be passed to the
+matplotlib plot command.  The container stores all those arguments, and later passes them to the
+plot command executed within the gui thread.
+
+.. image:: ../_static/snippets/simple_plot.png
+
 Chart containers
 ================
 
