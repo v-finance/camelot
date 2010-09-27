@@ -74,6 +74,8 @@ an unneeded update of the db.
 
 """
 
+    calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
+    
     def __init__(
         self,
         parent=None,
@@ -86,16 +88,16 @@ an unneeded update of the db.
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
-
         self.spinBox = CustomDoubleSpinBox(parent)
+        #self.spinBox = QtGui.QSpinBox(parent)
         self.spinBox.setRange(minimum, maximum)
         self.spinBox.setDecimals(0)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.spinBox.setSingleStep(1)
         self.spinBox.addAction(action)
+        self.spinBox.lineEdit().setText('')
         self.calculatorButton = QtGui.QToolButton()
-        icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
-        self.calculatorButton.setIcon(icon)
+        self.calculatorButton.setIcon(self.calculator_icon.getQIcon())
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFixedHeight(self.get_height())
         self.calculatorButton.clicked.connect(
@@ -130,10 +132,9 @@ an unneeded update of the db.
         else:
             value = str(value).replace(',', '.')
             self.spinBox.setValue(eval(value))
-        #else:
-        #    self.spinBox.setValue(0)
 
     def get_value(self):
+        #print 'get value', self.spinBox.text()
         value_loading = CustomEditor.get_value(self)
         if value_loading is not None:
             return value_loading

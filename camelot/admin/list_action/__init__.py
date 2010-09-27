@@ -67,7 +67,7 @@ class ListActionFromGuiFunction( ListAction ):
 class ListActionFromModelFunction( ListAction ):
     """Convert a function that is supposed to run in the model thread to a FormAction"""
 
-    def __init__( self, name, model_function, icon = None, collection_flush=False, selection_flush=False ):
+    def __init__( self, name, model_function, icon = Icon( 'tango/22x22/categories/applications-system.png' ), collection_flush=False, selection_flush=False ):
         """
         :param model_function: a function that has 3 arguments : the collection in the list view and the selection
         in the list view and the options.
