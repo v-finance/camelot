@@ -1069,6 +1069,17 @@ class SnippetsTest(ModelThreadTestCase):
         form = admin.create_form_view('Wave', proxy, 0, None)
         form.setMaximumSize( 400, 200 )
         self.grab_widget(form)
+
+    def test_advanced_plot(self):
+        from snippet.chart.advanced_plot import Wave
+        from camelot.view.proxy.collection_proxy import CollectionProxy
+        wave = Wave()
+        #wave.phase = '2.89'
+        admin = Wave.Admin(object(), Wave)
+        proxy = CollectionProxy(admin, lambda:[wave], admin.get_fields )
+        form = admin.create_form_view('Wave', proxy, 0, None)
+        form.setMaximumSize( 400, 200 )
+        self.grab_widget(form)
         
     def test_fields_with_actions(self):
         from snippet.fields_with_actions import Coordinate
