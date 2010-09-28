@@ -260,6 +260,41 @@ This file will then be opened with the system default application for this type 
 """
         pass
             
+class ChartProgressDialog(ProgressDialog):
+        
+    def display_chart(self, chart ):
+        from camelot.view.controls.editors import ChartEditor
+        litebox = ChartEditor.show_fullscreen_chart(chart, self)
+        litebox.closed_signal.connect( self.close )
+        
+class ChartFormAction( FormAction ):
+    """Action that displays a chart, overwrite its chart
+    method.
+    """
+    
+    def run( self, entity_getter ):
+        
+        def create_request( entity_getter ):
+
+            def request():
+                o = entity_getter()
+                return self.chart( o, None )
+
+            return request
+        
+        dialog = ChartProgressDialog('Rendering Chart')
+        post( create_request( entity_getter ), dialog.display_chart, dialog.exception )
+        dialog.exec_()
+        
+    def chart(self, obj, options=None):
+        """
+        :obj: the object in the form when the user triggered the action
+        :options: the options if applicable
+        :return: a camelot.container.chartcontainer FigureContainer or AxesContainer object
+        """
+        from camelot.container.chartcontainer import PlotContainer
+        return PlotContainer( [0,1,2,3] [0,2,4,9] )
+        
 class DocxFormAction( FormActionFromModelFunction ):
     """Action that generates a .docx file and opens it using Word.  It does so by generating an xml document
 with jinja templates that is a valid word document.  Implement at least its get_template method in a subclass

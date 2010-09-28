@@ -79,21 +79,34 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
         self.canvas.updateGeometry()
         self._litebox = None
 
-    @QtCore.pyqtSlot()
-    def show_fullscreen(self):
-        """Show the plot full screen, using the litebox"""
+    @staticmethod
+    def show_fullscreen_chart(chart, parent):
+        """
+        :param chart: a chart container
+        :return: the widget showing the chart, by default a LiteBoxView
+        """
         from matplotlib.figure import Figure
         from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
         from camelot.view.controls.liteboxview import LiteBoxView
+        from camelot.container.chartcontainer import structure_to_figure_container
+        figure_container = structure_to_figure_container( chart )
+        litebox = LiteBoxView(parent)
+        fig = Figure(facecolor='#ffffff')
+        canvas = FigureCanvas(fig)
+        canvas.updateGeometry()
+        figure_container.plot_on_figure(fig)
+        proxy = QtGui.QGraphicsProxyWidget()
+        proxy.setWidget(canvas)
+        litebox.show_fullscreen_item(proxy)
+        canvas.draw()
+        return litebox
+                    
+    @QtCore.pyqtSlot()
+    def show_fullscreen(self):
+        """Show the plot full screen, using the litebox"""
         if self._value:
             # if we give the litebox a parent, the close button does not work ??
-            self._litebox = LiteBoxView()
-            fig = Figure(facecolor='#ffffff')
-            canvas = FigureCanvas(self.fig)
-            self._value.plot_on_figure(fig)
-            proxy = QtGui.QGraphicsProxyWidget()
-            proxy.setWidget(canvas)
-            self._litebox.show_fullscreen_item(proxy)
+            self._litebox = self.show_fullscreen_chart(self._value, None)
 
     def eventFilter(self, object, event):
         """intercept mouse clicks on a chart to show the chart fullscreen"""

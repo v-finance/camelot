@@ -33,7 +33,7 @@ from PyQt4.QtGui import (
     QGraphicsPixmapItem,
 )
 from PyQt4.QtCore import Qt
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 
 from camelot.view.art import Pixmap
 
@@ -95,6 +95,8 @@ class LiteBoxView(QGraphicsView):
 
     ALPHA = QColor(0, 0, 0, 192)
 
+    closed_signal = QtCore.pyqtSignal()
+    
     def __init__(self, parent=None):
         super(LiteBoxView, self).__init__(parent)
         self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
@@ -112,6 +114,10 @@ class LiteBoxView(QGraphicsView):
         self.scene = QGraphicsScene()
         self.setScene(self.scene)
 
+    def close(self):
+        self.closed_signal.emit()
+        super(LiteBoxView, self).close()
+        
     def drawBackground(self, painter, rect):
         if self.desktopshot is None:
             self.desktopshot = get_desktop_pixmap()
