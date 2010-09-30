@@ -18,7 +18,7 @@ class IntervalsDelegate(QtGui.QItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        intervals = variant_to_pyobject(index.model().data(index, Qt.EditRole))
+        intervals_container = variant_to_pyobject(index.model().data(index, Qt.EditRole))
         field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
         # background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
         # editable is defaulted to False, because there is no editor, no need for one currently
@@ -37,16 +37,17 @@ class IntervalsDelegate(QtGui.QItemDelegate):
             else:
                 painter.fillRect(option.rect, background_color)
           
-        if intervals and intervals!=ValueLoading:
+        if intervals_container and intervals_container!=ValueLoading:
             rect = option.rect
-            xscale = float(rect.width()-4)/(intervals.max-intervals.min)
-            xoffset = intervals.min * xscale + rect.x()
+            xscale = float(rect.width()-4)/(intervals_container.max - intervals_container.min)
+            xoffset = intervals_container.min * xscale + rect.x()
             yoffset = rect.y() + rect.height()/2
-            for interval in intervals.intervals:
+            for interval in intervals_container.intervals:
                 pen = QtGui.QPen(color or interval.color)
                 pen.setWidth(3)
                 painter.setPen(pen)
-                x1, x2 =  xoffset + interval.begin*xscale, xoffset + interval.end*xscale
+                xscale_interval = xscale
+                x1, x2 =  xoffset + interval.begin *xscale_interval, xoffset + interval.end*xscale_interval
                 painter.drawLine(x1, yoffset, x2, yoffset)
                 painter.drawEllipse(x1-1, yoffset-1, 2, 2)
                 painter.drawEllipse(x2-1, yoffset-1, 2, 2)
