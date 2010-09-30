@@ -18,7 +18,7 @@ class DateDelegate(CustomDelegate):
     def __init__(self, parent=None, **kwargs):
         CustomDelegate.__init__(self, parent, **kwargs)
         self.date_format = local_date_format()
-        self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 4)  + (camelot_small_icon_width*2) * 2
+        self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 2)  + (camelot_small_icon_width*2)
     
     def paint(self, painter, option, index):
         painter.save()
