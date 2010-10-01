@@ -53,8 +53,6 @@ class DateEditor(CustomEditor):
 
         self.date_format = local_date_format()
         self.line_edit = DecoratedLineEdit()
-        self.line_edit.setMaximumWidth(65)
-        self.line_edit.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.line_edit.set_background_text( QtCore.QDate(2000,1,1).toString(self.date_format) )
 
         # The order of creation of this widgets and their parenting
