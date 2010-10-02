@@ -194,10 +194,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         columns that will be cached in the proxy. This function will be called
         inside the model thread.
         """
+        QtCore.QAbstractTableModel.__init__(self)
         from camelot.view.model_thread import get_model_thread
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
-        QtCore.QAbstractTableModel.__init__(self)
         self._mutex = QtCore.QMutex()
         self.admin = admin
         self.iconSize = QtCore.QSize( QtGui.QFontMetrics( self._header_font_required ).height() - 4, QtGui.QFontMetrics( self._header_font_required ).height() - 4 )
@@ -736,7 +736,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.display_cache.add_data( row, obj, unicode_row_data )
         self.attributes_cache.add_data(row, obj, dynamic_field_attributes )
         locker.unlock()
-	self.row_changed_signal.emit( row )
+        self.row_changed_signal.emit( row )
 
     def _skip_row(self, row, obj):
         """:return: True if the object obj is allready in the cache, but at a

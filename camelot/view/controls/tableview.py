@@ -396,66 +396,6 @@ class TableView( AbstractView  ):
     def setCharts( self, charts ):
         """creates and display charts"""
         pass
-#    if charts:
-#
-#      from matplotlib.figure import Figure
-#      from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as \
-#                                                     FigureCanvas
-#
-#      chart = charts[0]
-#
-#      def getData():
-#        """fetches data for chart"""
-#        from sqlalchemy.sql import select, func
-#        from elixir import session
-#        xcol = getattr( self.admin.entity, chart['x'] )
-#        ycol = getattr( self.admin.entity, chart['y'] )
-#        session.bind = self.admin.entity.table.metadata.bind
-#        result = session.execute( select( [xcol, func.sum( ycol )] ).group_by( xcol ) )
-#        summary = result.fetchall()
-#        return [s[0] for s in summary], [s[1] for s in summary]
-#
-#      class MyMplCanvas( FigureCanvas ):
-#        """Ultimately, this is a QWidget (as well as a FigureCanvasAgg)"""
-#
-#        def __init__( self, parent = None, width = 5, height = 4, dpi = 100 ):
-#          fig = Figure( figsize = ( width, height ), dpi = dpi, facecolor = 'w' )
-#          self.axes = fig.add_subplot( 111, axisbg = 'w' )
-#          # We want the axes cleared every time plot() is called
-#          self.axes.hold( False )
-#          self.compute_initial_figure()
-#          FigureCanvas.__init__( self, fig )
-#          self.setParent( parent )
-#          FigureCanvas.setSizePolicy( self,
-#                                     QSizePolicy.Expanding,
-#                                     QSizePolicy.Expanding )
-#          FigureCanvas.updateGeometry( self )
-#
-#
-#        def compute_initial_figure( self ):
-#          pass
-#
-#      def setData( data ):
-#        """set chart data"""
-#
-#        class MyStaticMplCanvas( MyMplCanvas ):
-#          """simple canvas with a sine plot"""
-#
-#          def compute_initial_figure( self ):
-#            """computes initial figure"""
-#            x, y = data
-#            bar_positions = [i - 0.25 for i in range( 1, len( x ) + 1 )]
-#            width = 0.5
-#            self.axes.bar( bar_positions, y, width, color = 'b' )
-#            self.axes.set_xlabel( 'Year' )
-#            self.axes.set_ylabel( 'Sales' )
-#            self.axes.set_xticks( range( len( x ) + 1 ) )
-#            self.axes.set_xticklabels( [''] + [str( d ) for d in x] )
-#
-#        sc = MyStaticMplCanvas( self, width = 5, height = 4, dpi = 100 )
-#        self.table_layout.addWidget( sc )
-#
-#      self.admin.mt.post( getData, setData )
 
     def deleteSelectedRows( self ):
         """delete the selected rows in this tableview"""
