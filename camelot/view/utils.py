@@ -54,6 +54,10 @@ def local_date_format():
         _local_date_format = unicode(u''.join(format_sequence))
     return _local_date_format
 
+def default_language():
+    locale = QtCore.QLocale()
+    return locale.name()
+
 class ParsingError(Exception): pass
 
 def string_from_string(s):

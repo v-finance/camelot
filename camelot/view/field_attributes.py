@@ -45,6 +45,7 @@ from camelot.view.utils import (
     float_from_string,
     string_from_string,
     enumeration_to_string,
+    default_language,
 )
 
 _numerical_operators = (operator.eq, operator.ne, operator.lt, operator.le, operator.gt, operator.ge, between_op)
@@ -269,9 +270,9 @@ _sqlalchemy_to_python_type_ = {
     },
     
     camelot.types.Language: lambda f: {
-        'delegate': delegates.EnumerationDelegate,
+        'delegate': delegates.LanguageDelegate,
         'python_type': str,
-        'choices': f.choices,
+        'default': default_language,
         'from_string': string_from_string,
         'editable': True,
         'nullable': False,

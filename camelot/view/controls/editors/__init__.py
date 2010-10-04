@@ -29,6 +29,7 @@ from fileeditor import FileEditor
 from floateditor import FloatEditor
 from imageeditor import ImageEditor
 from integereditor import IntegerEditor
+from languageeditor import LanguageEditor
 from many2oneeditor import Many2OneEditor
 from manytomanyeditor import ManyToManyEditor
 from one2manyeditor import One2ManyEditor

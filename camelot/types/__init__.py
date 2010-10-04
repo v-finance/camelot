@@ -180,26 +180,17 @@ class RichText(types.TypeDecorator):
     impl = types.UnicodeText
      
 class Language(types.TypeDecorator):
-    """The languages are stored as ISO codes in the database
+    """The languages are stored as a string in the database of 
+the form language[_country], where :
+
+ * language is a lowercase, two-letter, ISO 639 language code,
+ * territory is an uppercase, two-letter, ISO 3166 country code
+ 
+This used to be implemented using babel, but this was too slow and
+used too much memory, so now it's implemented using QT.
     """
     
     impl = types.Unicode
-    choices = []
-    
-    _localedata_list = []
-    
-    try:
-        import babel
-        _localedata_list = babel.localedata.list()
-    except Exception, e:
-        logger.warn(u'Could not load list with languages from babel, list will be empty', exc_info=e)
-    for code in _localedata_list:
-        locale = babel.Locale(code)
-        display_name = locale.get_display_name()
-        if display_name:
-            choices.append((code, u'%s (%s)'%(code, display_name)))
-        else:
-            choices.append((code, code))
     
     def __init__(self):
         types.TypeDecorator.__init__(self, length=20)

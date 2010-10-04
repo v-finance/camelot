@@ -39,6 +39,7 @@ __metadata__ = metadata
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext_lazy as _
+from camelot.view.utils import default_language
 
 import logging
 logger = logging.getLogger( 'camelot.model.i18n' )
@@ -92,6 +93,7 @@ class Translation( Entity ):
         list_display = ['source', 'language', 'value', 'uid']
         list_filter = ['language']
         list_actions = [ExportAsPO()]
+        field_attributes = {'language':{'default':default_language}}
 
     @classmethod
     def translate( cls, source, language ):

@@ -1,5 +1,3 @@
-
-
 from delegatemanager import DelegateManager
 from booldelegate import BoolDelegate, TextBoolDelegate
 from chartdelegate import ChartDelegate
@@ -17,6 +15,7 @@ from floatdelegate import FloatDelegate
 from imagedelegate import ImageDelegate
 from integerdelegate import IntegerDelegate
 from intervalsdelegate import IntervalsDelegate
+from languagedelegate import LanguageDelegate
 from manytomanydelegate import ManyToManyDelegate
 from many2onedelegate import Many2OneDelegate
 from one2manydelegate import One2ManyDelegate

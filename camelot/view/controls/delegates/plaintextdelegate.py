@@ -41,7 +41,6 @@ from camelot.core.utils import variant_to_pyobject
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 
-
 class PlainTextDelegate(CustomDelegate):
     """Custom delegate for simple string values"""
 
