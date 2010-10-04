@@ -21,11 +21,22 @@ def documented_entity():
   """
 
     def document_entity(model):
+        #
+        # Add documentation on its fields
+        #
+        documented_fields = []
+        from elixir import Field
+        for key, value in model.__dict__.items():
+            if isinstance(value, Field):
+                documented_fields.append( (key, unicode(value.type) ) )
         model.__doc__ = (model.__doc__ or '') + """
 
 .. image:: ../_static/entityviews/new_view_%s.png
 
-        """%(model.__name__.lower())
+
+**Fields** :
+
+        """%(model.__name__.lower()) + ''.join('\n * %s'%(field_name) for field_name, type in documented_fields)
         return model
 
     return document_entity
