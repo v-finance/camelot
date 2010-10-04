@@ -20,15 +20,25 @@ def documented_entity():
     '''
   """
 
+    def document_field( key, field ):
+        from elixir import Field
+        from elixir.relationships import Relationship
+        if isinstance(field, Field):
+            return '%s'%key
+        if isinstance(field, Relationship):
+            return '%s : refers to %s'%(key, unicode(field.of_kind))
+        
     def document_entity(model):
         #
         # Add documentation on its fields
         #
         documented_fields = []
-        from elixir import Field
+        
         for key, value in model.__dict__.items():
-            if isinstance(value, Field):
-                documented_fields.append( (key, unicode(value.type) ) )
+            doc = document_field( key, value )
+            if doc:
+                documented_fields.append( doc )
+                
         model.__doc__ = (model.__doc__ or '') + """
 
 .. image:: ../_static/entityviews/new_view_%s.png
@@ -36,7 +46,7 @@ def documented_entity():
 
 **Fields** :
 
-        """%(model.__name__.lower()) + ''.join('\n * %s'%(field_name) for field_name, type in documented_fields)
+        """%(model.__name__.lower()) + ''.join('\n * %s'%(doc) for doc in documented_fields)
         return model
 
     return document_entity
