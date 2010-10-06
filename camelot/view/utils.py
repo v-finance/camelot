@@ -191,6 +191,7 @@ def text_from_richtext(unstripped_text, newlines=True, word_xml=False):
 	    return ''
     class HtmlToTextParser(HTMLParser):
         def handle_data(self, data):
+            from xml.sax.saxutils import escape
             data = data.strip()
             if data:
                 newline = ' '
@@ -198,7 +199,7 @@ def text_from_richtext(unstripped_text, newlines=True, word_xml=False):
                     newline = "\n"
                     if word_xml:
                         newline = '<w:br />'
-                strings.append('%s%s' % (data, newline))
+                strings.append( '%s%s' % ( escape(data), newline ) )
 
     parser = HtmlToTextParser()
     parser.feed(unstripped_text.strip())
