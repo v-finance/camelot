@@ -289,7 +289,8 @@ attribute to enable search.
         """
         from sqlalchemy.orm.session import Session
         session = Session.object_session( obj )
-        if obj in session.new:
+        # when a previous flush failed, obj might have no session
+        if session and obj in session.new:
             new_message = ugettext('Please complete the form first')
         else:
             new_message = None
