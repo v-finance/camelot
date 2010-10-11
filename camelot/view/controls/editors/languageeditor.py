@@ -39,7 +39,7 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
         if current_index >= 0:
             language = variant_to_pyobject(self.itemData(self.currentIndex()))
             locale = QtCore.QLocale( language )
-            value = locale.name()
+            value = unicode( locale.name() )
         else:
             value = None
         return AbstractCustomEditor.get_value(self) or value
