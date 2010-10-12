@@ -155,7 +155,20 @@ def ugettext(string_to_translate):
         ))
     return result
 
-
+def dgettext(domain, message):
+    """Like ugettext but look the message up in the specified domain.
+    This uses the Translation table.
+    """
+    assert isinstance(message, basestring)
+    from camelot.model.i18n import Translation
+    from sqlalchemy import sql
+    query = sql.select( [Translation.value],
+                          whereclause = sql.and_(Translation.language.like('%s%%'%domain),
+                                                 Translation.source==message) ).limit(1)
+    for translation in Translation.query.session.execute(query):
+        return translation[0]
+    return message
+    
 class ugettext_lazy(object):
 
     def __init__(self, string_to_translate):

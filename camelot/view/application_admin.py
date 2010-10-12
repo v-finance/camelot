@@ -276,3 +276,13 @@ class ApplicationAdmin(QtCore.QObject):
         from camelot.view.wizard.backup import RestoreWizard
         wizard = RestoreWizard(self.backup_mechanism, main_window)
         wizard.exec_()
+        
+    def select_database(self):
+        """Present the user with a dialog to select the database to use.
+        This function will be called when the application starts up before
+        the actual connection to the database has been made.
+        
+        The default implementation does nothing and returns None.  Overwrite
+        this method for custom behaviour.
+        """
+        return None

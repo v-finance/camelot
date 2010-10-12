@@ -75,20 +75,34 @@ class Storage( object ):
     :param upload_to: the sub directory in which to put files
     :param stored_file_implementation: the subclass of StoredFile to be used when
     checking out files from the storage
-    :param root: the root directory in which to put files
+    :param root: the root directory in which to put files, this may be a callable that
+    takes no arguments.  if root is a callable, it will be called in the model thread
+    to get the actual root of the media store.
     
     The actual files will be put in root + upload to.  If None is given as root,
     the settings.CAMELOT_MEDIA_ROOT will be taken as the root directory.
     """
         import settings
-        import os
-        self.upload_to = os.path.join( root or settings.CAMELOT_MEDIA_ROOT, upload_to )
+        self._root = (root or settings.CAMELOT_MEDIA_ROOT)
+        self._subfolder = upload_to
+        self._upload_to = None
         self.stored_file_implementation = stored_file_implementation
         #
         # don't do anything here that might reduce the startup time, like verifying the
         # availability of the storage, since the path might be on a slow network share
         #
 
+    @property
+    def upload_to(self):
+        if self._upload_to == None:
+            import os
+            if callable( self._root ):
+                root = self._root()
+            else:
+                root = self._root
+            self._upload_to = os.path.join( root, self._subfolder )
+        return self._upload_to
+        
     def available(self):
         """Verify if the storage is available 
         """

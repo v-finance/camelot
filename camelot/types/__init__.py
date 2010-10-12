@@ -320,7 +320,7 @@ class File(types.TypeDecorator):
     """Sqlalchemy column type to store files.  Only the location of the file is stored
     
   This column type accepts and returns a StoredFile, and stores them in the directory
-  specified by settings.MEDIA_ROOT.  The name of the file is stored as a string in
+  specified by settings.CAMELOT_MEDIA_ROOT.  The name of the file is stored as a string in
   the database.  A subdirectory upload_to can be specified::
   
     class Movie(Entity):

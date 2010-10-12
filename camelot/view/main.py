@@ -47,7 +47,15 @@ class Application(QObject):
 
     def pre_initialization(self):
         """Method that is called before the model thread is started, while the app is still
-        running single threaded"""
+        running single threaded.
+        
+        The default implementation does nothing and returns None. Overwrite
+        this method for custom behaviour.
+        
+        An example use of this function would be to 
+        present the user with a dialog to select the database to use, and to store the
+        result in some global variable that is later used in the settings.ENGINE function.
+        """
         pass
 
     def start_model_thread(self):
