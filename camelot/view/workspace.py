@@ -29,15 +29,31 @@
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QGraphicsScene
+from camelot.view.art import Pixmap
 
 import logging
 logger = logging.getLogger('camelot.view.workspace')
 
 from camelot.view.model_thread import gui_function
 
+
 class DesktopBackground(QtGui.QGraphicsView):
     """A custom background widget for the desktop"""
-    pass
+    def __init__(self, parent=None):
+        super(DesktopBackground, self).__init__(parent)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        self.scene = QGraphicsScene()
+        self.pixitem = self.scene.addPixmap(
+            Pixmap('camelot-home.png').getQPixmap()
+        )
+        self.setAlignment(Qt.AlignBottom | Qt.AlignLeft)
+        self.setScene(self.scene)
+
+
 
 class DesktopWorkspace(QtGui.QWidget):
     """A tab based workspace that can be used by views
@@ -155,7 +171,7 @@ def show_top_level(view, parent):
     # like main.py or pythonw being displayed
     #
     view.setWindowTitle( u'' )
-    view.title_changed_signal.connect( view.setWindowTitle ) 
+    view.title_changed_signal.connect( view.setWindowTitle )
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
     #
