@@ -41,8 +41,6 @@ class StarEditor(CustomEditor):
         layout.setSpacing(0)
         self.starIcon = Icon('tango/16x16/status/weather-clear.png').getQIcon()
         self.noStarIcon = Icon('tango/16x16/status/weather-clear-noStar.png').getQIcon()
-        self.setAutoFillBackground(True)
-        #self.starCount = maximum
         self.starCount = 5
         self.buttons = []
         for i in range(self.starCount):

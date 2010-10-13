@@ -25,11 +25,8 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtCore
-
 from camelot.view.controls import editors
 from one2manydelegate import One2ManyDelegate
-
 
 class ManyToManyDelegate(One2ManyDelegate):
     """

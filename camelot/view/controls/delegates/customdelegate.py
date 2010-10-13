@@ -169,7 +169,7 @@ will be put onto a form"""
         margin_left=0, 
         margin_right=0, 
         horizontal_align=Qt.AlignLeft,
-        vertical_align=Qt.AlignVCenter
+        vertical_align=Qt.AlignTop
     ):
         """Paint unicode text into the given rect defined by option, and fill the rect with
         the background color
@@ -205,9 +205,9 @@ will be put onto a form"""
             
         painter.setPen(fontColor.toRgb())
         painter.drawText(rect.x() + 2 + margin_left,
-                         rect.y(),
+                         rect.y() + 5,
                          rect.width() - 4 - (margin_left + margin_right),
-                         rect.height(),
+                         rect.height() - 10,
                          vertical_align | horizontal_align,
                          text)
 

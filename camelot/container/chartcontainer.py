@@ -1,4 +1,5 @@
 from camelot.container import Container
+from matplotlib import axes
 
 class FigureContainer( Container ):
     """A container that is able to plot itself on a matplotlib figure canvas.
@@ -50,7 +51,9 @@ class AxesMethod(object):
         self._commands.append( (self._method_name, args, kwargs) )
             
 class AxesContainer( Container ):
-    """A container that is able to generate a plot on a matplotlib axes"""
+    """A container that is able to generate a plot on a matplotlib axes.  Methods
+    can be called on this class as if it were a matplotlib Axes class.  All method
+    calls will be recorded.  Of course the methods won't return matplotlib objects."""
 
     def __init__(self):
         super(AxesContainer, self).__init__()
@@ -67,11 +70,10 @@ class AxesContainer( Container ):
         """Replay the list of stored commands to the real Axes object"""
         for name, args, kwargs in self._commands:
             getattr(ax, name)(*args, **kwargs)
-    
+
 class PlotContainer( AxesContainer ):
-    """A container for a simple xy plot, equivalent to the matplotlib or
-    matlab plot command.
-    """
+
+    __doc__ = axes.Axes.plot.__doc__
     
     def __init__(self, *args, **kwargs):
         """:param *args: the arguments to be passed to the matplotlib plot command"""
@@ -79,10 +81,11 @@ class PlotContainer( AxesContainer ):
         self.plot( *args, **kwargs )
         
 def BarContainer( AxesContainer ):
-    """A container for bar plots, equivalent to the matplotlib bar command"""
+
+    __doc__ = axes.Axes.bar.__doc__
     
     def __init__(self, *args, **kwargs):
-        """:param *args: the arguments to be passed to the matplotlib plot command"""
+        """:param *args: the arguments to be passed to the matplotlib bar command"""
         super(BarContainer, self).__init__()
         self.bar( *args, **kwargs )
                     
