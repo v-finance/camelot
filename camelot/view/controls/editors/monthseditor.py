@@ -85,6 +85,9 @@ class MonthsEditor(CustomEditor):
         if not editable:
             self.years_spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
             self.months_spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        else:
+            self.years_spinbox.setButtonSymbols(QAbstractSpinBox.UpDownArrows)
+            self.months_spinbox.setButtonSymbols(QAbstractSpinBox.UpDownArrows)            
 
     def set_value(self, value):
         # will set privates value_is_none and _value_loading
