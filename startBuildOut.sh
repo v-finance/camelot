@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# start a virtual screen buffer to run unittests against
+#
 ELEXIR_LIB_PATH=""
 SQLALCHEMY_LIB_PATH=""
 XVFB_DISPLAY=":99"
@@ -10,7 +13,6 @@ else
         echo "This script must be run as a normal user (uid>=1000)";
         exit 1
 fi
-svn update http://www.conceptive.be/camelot/svn/trunk . --username guest --password guest --non-interactive
 echo "Checking if Xvfb is running..."
 if [ -n "`ps -e | grep Xvfb`" ]; then
         echo "Xvfb is running. Good."
@@ -28,4 +30,3 @@ else
 fi
 export DISPLAY="$XVFB_DISPLAY"
 export PYTHONPATH=".:../libraries"
-python build.py
