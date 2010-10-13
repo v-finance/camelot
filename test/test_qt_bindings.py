@@ -72,3 +72,47 @@ class TableViewCases(unittest.TestCase):
             widget = TableView( model )
             register.register_model_view(model, widget)
             gc.collect()
+
+class SignalSlotCase( unittest.TestCase ):
+    
+    def setUp(self):
+        from camelot.test import get_application
+        self.app = get_application()
+
+    def test_multiple_threads(self):
+        """Emit a signal containing a python object and at the
+        same time connect to it.
+        
+        this used to deadlock in pyqt.
+        """
+        
+        class SignalEmitter(QtCore.QObject):
+            
+            my_signal = QtCore.pyqtSignal(object)
+            
+            def start_emitting(self):
+                for _i in range(1000):
+                    o = object()
+                    self.my_signal.emit(o)
+        
+        class SignalReceiver(QtCore.QObject):
+            
+            @QtCore.pyqtSlot(object)
+            def my_slot(self, obj):
+                pass
+            
+        emitter = SignalEmitter()
+        
+        class ReceivingThread(QtCore.QThread):
+            
+            def run(self):
+                receivers = []
+                for _i in range(100):
+                    receiver = SignalReceiver()
+                    emitter.my_signal.connect( receiver.my_slot )
+                    receivers.append(receiver)
+                    
+        thread = ReceivingThread()
+        thread.start()
+        emitter.start_emitting()
+        thread.wait()
