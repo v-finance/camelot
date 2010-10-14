@@ -207,7 +207,7 @@ will be put onto a form"""
         painter.drawText(rect.x() + 2 + margin_left,
                          rect.y() + 5,
                          rect.width() - 4 - (margin_left + margin_right),
-                         rect.height() - 10,
+                         rect.height() - 5, # not -10, because the row might not be high enough for this
                          vertical_align | horizontal_align,
                          text)
 

@@ -32,8 +32,8 @@ logger = logging.getLogger('camelot.view.mainwindow')
 # Dummy imports to fool the windows installer and force
 # it to include the right packages
 #
-from sqlalchemy.databases import sqlite
-import sqlite3
+# from sqlalchemy.databases import sqlite
+# import sqlite3
 
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
@@ -47,7 +47,6 @@ from camelot.view.model_thread import post
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
 from camelot.core.utils import ugettext as _
-
 
 class MainWindow(QtGui.QMainWindow):
     """Main window GUI"""

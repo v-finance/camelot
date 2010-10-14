@@ -46,12 +46,12 @@ class DesktopBackground(QtGui.QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        self.scene = QGraphicsScene()
-        self.pixitem = self.scene.addPixmap(
-            Pixmap('camelot-home.png').getQPixmap()
-        )
-        self.setAlignment(Qt.AlignBottom | Qt.AlignLeft)
-        self.setScene(self.scene)
+#        self.scene = QGraphicsScene()
+#        self.pixitem = self.scene.addPixmap(
+#            Pixmap('camelot-home.png').getQPixmap()
+#        )
+#        self.setAlignment(Qt.AlignBottom | Qt.AlignLeft)
+#        self.setScene(self.scene)
 
 
 
