@@ -78,7 +78,6 @@ class DateEditor(CustomEditor):
         self.special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.special_date.setFixedHeight(self.get_height())
         # end of sensitive part
-        self.set_enabled(editable)
 
         if nullable:
             special_date_menu.addAction('Clear')
