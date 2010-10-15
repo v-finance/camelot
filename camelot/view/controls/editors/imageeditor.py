@@ -32,6 +32,7 @@ from wideeditor import WideEditor
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls.liteboxview import LiteBoxView
+from camelot.view.model_thread import post
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -87,10 +88,17 @@ class ImageEditor(FileEditor, WideEditor):
         self.clear_button.setToolTip(unicode(_('delete image')))
         self.clear_button.setAutoRaise(True)
         self.clear_button.clicked.connect(self.clear_button_clicked)
+        
+        copy_button = QtGui.QToolButton()
+        copy_button.setIcon(self.copy_icon.getQIcon())
+        copy_button.setToolTip(unicode(_('Copy to clipboard')))
+        copy_button.setAutoRaise(True)
+        copy_button.clicked.connect(self.copy_to_clipboard)
 
         button_layout.addStretch()
         button_layout.addWidget(self.open_button)
         button_layout.addWidget(self.clear_button)
+        button_layout.addWidget(copy_button)
 
         self.layout.addLayout(button_layout)
         self.layout.addStretch()
@@ -108,6 +116,16 @@ class ImageEditor(FileEditor, WideEditor):
 
     def set_image(self, image):
         self.set_pixmap(QtGui.QPixmap.fromImage(image))
+        
+    @QtCore.pyqtSlot()
+    def copy_to_clipboard(self):
+        """Copy the chart to the clipboard"""
+        if self.value:
+            post( self.value.checkout_image, self.set_image_to_clipboard )
+        
+    def set_image_to_clipboard(self, image):
+        clipboard = QtGui.QApplication.clipboard()
+        clipboard.setImage( image )
 
     def clear_image(self):
         dummy_image = Icon('tango/32x32/mimetypes/image-x-generic.png')
@@ -119,7 +137,6 @@ class ImageEditor(FileEditor, WideEditor):
             self.open_button.setIcon(self.open_icon)
             self.open_button.setToolTip(unicode(_('open file')))
             if value!=self.value:
-                from camelot.view.model_thread import post
                 post(
                     lambda:value.checkout_thumbnail(
                         self.preview_width,

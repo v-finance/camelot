@@ -30,15 +30,17 @@ import logging
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from camelot.view.controls.editors.customeditor import AbstractCustomEditor
+from camelot.view.controls.editors.customeditor import CustomEditor
 from camelot.view.controls.editors.wideeditor import WideEditor
 from camelot.view.proxy import ValueLoading
+from camelot.view.art import Icon
+from camelot.core.utils import ugettext as _
 
 PAD_INCHES = 0.1
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.charteditor')
 
-class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
+class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
     """Editor to display and manipulate matplotlib charts.  The editor
     itself is generic for all kinds of plots,  it simply provides the
     data to be ploted with a set of axes.  The data itself should know
@@ -52,8 +54,13 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
         from matplotlib.figure import Figure
         from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
         super(ChartEditor, self).__init__(parent)
-        self.setFrameShape( self.Box )
-        self.setContentsMargins( 1, 1, 1, 1 )
+        
+        chart_frame = QtGui.QFrame( self )
+        chart_frame.setFrameShape( self.Box )
+        chart_frame.setContentsMargins( 1, 1, 1, 1 )
+        chart_frame_layout = QtGui.QHBoxLayout()
+        chart_frame_layout.setMargin(0)
+        chart_frame.setLayout( chart_frame_layout )
 
         # find out background color, because using a transparent
         # figure fails when the window is resized: the background
@@ -65,9 +72,32 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
             dpi=dpi,
             facecolor='#ffffff',
         )
-        layout = QtGui.QVBoxLayout()
-        self.canvas = FigureCanvas(self.fig)
-        layout.addWidget(self.canvas)
+        layout = QtGui.QHBoxLayout()
+        self.canvas = FigureCanvas( self.fig )
+        chart_frame_layout.addWidget( self.canvas )
+        layout.addWidget(chart_frame)
+        button_layout = QtGui.QVBoxLayout()
+        button_layout.setSpacing( 0 )
+
+        icon = Icon( 'tango/16x16/actions/document-print-preview.png' ).getQIcon()
+        button_layout.addStretch()
+        
+        print_button = QtGui.QToolButton()
+        print_button.setIcon( icon )
+        print_button.setAutoRaise( True )
+        print_button.setToolTip( _('Print Preview') )
+        print_button.clicked.connect( self.print_preview )
+        button_layout.addWidget( print_button )
+
+        icon = Icon( 'tango/16x16/actions/edit-copy.png' ).getQIcon()
+        copy_button = QtGui.QToolButton()
+        copy_button.setIcon( icon )
+        copy_button.setAutoRaise( True )
+        copy_button.setToolTip( _('Copy to clipboard') )
+        copy_button.clicked.connect( self.copy_to_clipboard )
+        button_layout.addWidget( copy_button )
+                
+        layout.addLayout( button_layout )
         layout.setMargin(0)
         self.setLayout(layout)
         self.canvas.setSizePolicy(
@@ -79,6 +109,38 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
         self.canvas.updateGeometry()
         self._litebox = None
 
+    @QtCore.pyqtSlot()
+    def copy_to_clipboard(self):
+        """Copy the chart to the clipboard"""
+        clipboard = QtGui.QApplication.clipboard()
+        pixmap = QtGui.QPixmap.grabWidget( self.canvas )
+        clipboard.setPixmap( pixmap )
+        
+    @QtCore.pyqtSlot()
+    def print_preview(self):
+        """Popup a print preview dialog for the Chart"""
+        dialog = QtGui.QPrintPreviewDialog()            
+        dialog.paintRequested.connect( self.on_paint_request )
+        dialog.exec_()
+        
+    @QtCore.pyqtSlot( QtGui.QPrinter )
+    def on_paint_request(self, printer):
+        from matplotlib.figure import Figure
+        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+        rect = printer.pageRect( QtGui.QPrinter.Inch )
+        dpi = printer.resolution()
+        fig = Figure( facecolor='#ffffff')
+        fig.set_figsize_inches( (rect.width(),rect.height()) )
+        fig.set_dpi( dpi )
+        self._value.plot_on_figure( fig )
+        canvas = FigureCanvas(fig)
+        canvas.render( printer )
+    
+    def set_field_attributes(self, *args, **kwargs):
+        """Overwrite set_field attributes because a ChartEditor cannot be disabled
+        or have its background color changed"""
+        pass
+    
     @staticmethod
     def show_fullscreen_chart(chart, parent):
         """

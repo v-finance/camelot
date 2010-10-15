@@ -28,7 +28,6 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-import camelot.types
 from camelot.core.constants import *
 from camelot.view.proxy import ValueLoading
 from camelot.core.utils import create_constant_function

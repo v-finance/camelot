@@ -48,13 +48,11 @@ def createAction(*a, **kw):
     checkable = kw.get('checkable', False)
     #signal = kw.get('signal', 'triggered()')
     widgetaction = kw.get('widgetaction', False)
-
     action = getAction(parent, widgetaction)
-
     action.setText(text)
 
     if actionicon:
-        action.setIcon(QtGui.QIcon(actionicon))
+        action.setIcon(actionicon.getQIcon())
     if shortcut:
         action.setShortcut(shortcut)
     if tip:

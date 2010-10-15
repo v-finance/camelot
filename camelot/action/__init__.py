@@ -49,7 +49,7 @@ class ActionFactory(object):
             slot=slot,
             parent=parent,
             shortcut=QtGui.QKeySequence.MoveToStartOfDocument,
-            actionicon=Icon('tango/16x16/actions/go-first.png').fullpath(),
+            actionicon=Icon('tango/16x16/actions/go-first.png'),
             tip=_('First')
         )
         default.update(kwargs)
@@ -62,7 +62,7 @@ class ActionFactory(object):
             slot=slot,
             parent=parent,
             shortcut=QtGui.QKeySequence.MoveToEndOfDocument,
-            actionicon=Icon('tango/16x16/actions/go-last.png').fullpath(),
+            actionicon=Icon('tango/16x16/actions/go-last.png'),
             tip=_('Last')
         )
         default.update(kwargs)
@@ -75,7 +75,7 @@ class ActionFactory(object):
             slot=slot,
             parent=parent,
             shortcut=QtGui.QKeySequence.MoveToNextPage,
-            actionicon=Icon('tango/16x16/actions/go-next.png').fullpath(),
+            actionicon=Icon('tango/16x16/actions/go-next.png'),
             tip=_('Next')
         )
         default.update(kwargs)
@@ -88,7 +88,7 @@ class ActionFactory(object):
             slot=slot,
             parent=parent,
             shortcut=QtGui.QKeySequence.MoveToPreviousPage,
-            actionicon=Icon('tango/16x16/actions/go-previous.png').fullpath(),
+            actionicon=Icon('tango/16x16/actions/go-previous.png'),
             tip=_('Previous')
         )
         default.update(kwargs)
@@ -100,7 +100,7 @@ class ActionFactory(object):
             text=_('To Word Processor'),
             slot=slot,
             parent=parent,
-            actionicon=Icon('tango/16x16/mimetypes/x-office-document.png').fullpath(),
+            actionicon=Icon('tango/16x16/mimetypes/x-office-document.png'),
             tip=_('Open using MS Word or Open Office')
         )
         default.update(kwargs)

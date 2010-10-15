@@ -27,7 +27,7 @@
 
 import logging
 
-logger = logging.getLogger( 'camelot.view.controls.editors.onetomanyeditor' )
+LOGGER = logging.getLogger( 'camelot.view.controls.editors.onetomanyeditor' )
 
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
@@ -197,13 +197,13 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     def copy_selected_rows( self ):
         """Copy the selected rows in this tableview"""
-        logger.debug( 'delete selected rows called' )
+        LOGGER.debug( 'delete selected rows called' )
         for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
             self.model.copy_row( row )
 
     def deleteSelectedRows( self ):
         """Delete the selected rows in this tableview"""
-        logger.debug( 'delete selected rows called' )
+        LOGGER.debug( 'delete selected rows called' )
         self.model.remove_rows( set( map( lambda x: x.row(), self.table.selectedIndexes() ) ) )
 
     def createFormForIndex( self, index ):

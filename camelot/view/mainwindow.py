@@ -152,23 +152,23 @@ class MainWindow(QtGui.QMainWindow):
         )
 
     def createActions(self):
-        icon_backup = Icon('tango/16x16/actions/document-save.png').fullpath()
-        icon_restore = Icon('tango/16x16/devices/drive-harddisk.png').fullpath()
-        icon_pgsetup = Icon('tango/16x16/actions/document-properties.png').fullpath()
-        icon_print = Icon('tango/16x16/actions/document-print.png').fullpath()
-        icon_preview = Icon('tango/16x16/actions/document-print-preview.png').fullpath()
-        icon_copy = Icon('tango/16x16/actions/edit-copy.png').fullpath()
+        icon_backup = Icon('tango/16x16/actions/document-save.png')
+        icon_restore = Icon('tango/16x16/devices/drive-harddisk.png')
+        icon_pgsetup = Icon('tango/16x16/actions/document-properties.png')
+        icon_print = Icon('tango/16x16/actions/document-print.png')
+        icon_preview = Icon('tango/16x16/actions/document-print-preview.png')
+        icon_copy = Icon('tango/16x16/actions/edit-copy.png')
 
-        icon_new = Icon('tango/16x16/actions/document-new.png').fullpath()
-        icon_delete = Icon('tango/16x16/places/user-trash.png').fullpath()
+        icon_new = Icon('tango/16x16/actions/document-new.png')
+        icon_delete = Icon('tango/16x16/places/user-trash.png')
 
-        icon_excel = Icon('tango/16x16/mimetypes/x-office-spreadsheet.png').fullpath()
-        icon_word = Icon('tango/16x16/mimetypes/x-office-document.png').fullpath()
-        icon_mail = Icon('tango/16x16/actions/mail-message-new.png').fullpath()
+        icon_excel = Icon('tango/16x16/mimetypes/x-office-spreadsheet.png')
+        icon_word = Icon('tango/16x16/mimetypes/x-office-document.png')
+        icon_mail = Icon('tango/16x16/actions/mail-message-new.png')
 
-        icon_import = Icon('tango/16x16/mimetypes/text-x-generic.png').fullpath()
+        icon_import = Icon('tango/16x16/mimetypes/text-x-generic.png')
 
-        icon_help = Icon('tango/16x16/apps/help-browser.png').fullpath()
+        icon_help = Icon('tango/16x16/apps/help-browser.png')
 
         # TODO: change some of the status tips
         self.backupAct = createAction(
@@ -216,7 +216,7 @@ class MainWindow(QtGui.QMainWindow):
             parent=self,
             text=_('E&xit'),
             slot=self.close,
-            actionicon=Icon('tango/16x16/actions/system-shutdown.png').fullpath(),
+            actionicon=Icon('tango/16x16/actions/system-shutdown.png'),
             tip=_('Exit the application')
         )
 
@@ -250,7 +250,7 @@ class MainWindow(QtGui.QMainWindow):
             parent=self,
             text=_('&About'),
             slot=self.about,
-            actionicon=Icon('tango/16x16/mimetypes/application-certificate.png').fullpath(),
+            actionicon=Icon('tango/16x16/mimetypes/application-certificate.png'),
             tip=_("Show the application's About box")
         )
 
@@ -258,7 +258,7 @@ class MainWindow(QtGui.QMainWindow):
             parent=self,
             text=_('&What\'s new'),
             slot=self.whats_new,
-            actionicon=Icon('tango/16x16/status/software-update-available.png').fullpath(),
+            actionicon=Icon('tango/16x16/status/software-update-available.png'),
             tip=_("Show the What's New box")
         )
 
@@ -266,7 +266,7 @@ class MainWindow(QtGui.QMainWindow):
             parent=self,
             text=_('Affiliated website'),
             slot=self.affiliated_website,
-            actionicon=Icon('tango/16x16/apps/internet-web-browser.png').fullpath(),
+            actionicon=Icon('tango/16x16/apps/internet-web-browser.png'),
             tip=_('Go to the affiliated website')
         )
 
@@ -274,7 +274,7 @@ class MainWindow(QtGui.QMainWindow):
             parent=self,
             text=_('Remote support'),
             slot=self.remote_support,
-            actionicon=Icon('tango/16x16/devices/video-display.png').fullpath(),
+            actionicon=Icon('tango/16x16/devices/video-display.png'),
             tip=_('Let the support agent take over your desktop')
         )
 
