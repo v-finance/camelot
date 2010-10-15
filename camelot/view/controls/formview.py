@@ -305,6 +305,11 @@ class FormView(AbstractView):
         self.addAction( ActionFactory.refresh(self) )
         self.addAction( ActionFactory.export_ooxml(self, self._form.export_ooxml) )
 
+    @QtCore.pyqtSlot()
+    def refresh(self):
+        """Refresh the data in the current view"""
+        self.model.refresh()
+    
     def update_title(self):
 
         def get_title():

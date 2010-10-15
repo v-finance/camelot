@@ -378,7 +378,6 @@ class TableView( AbstractView  ):
             return ( admin.get_filters(), admin.get_list_actions() )
 
         post( get_filters_and_actions,  self.set_filters_and_actions )
-        post( admin.get_list_charts, self.setCharts )
 
     @QtCore.pyqtSlot()
     @gui_function
@@ -391,11 +390,6 @@ class TableView( AbstractView  ):
             self.table.setItemDelegate( item_delegate )
         for i in range( self._table_model.columnCount() ):
             self.table.setColumnWidth( i, self._table_model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
-
-    @gui_function
-    def setCharts( self, charts ):
-        """creates and display charts"""
-        pass
 
     def deleteSelectedRows( self ):
         """delete the selected rows in this tableview"""
@@ -490,6 +484,11 @@ class TableView( AbstractView  ):
             self._table_model.setQuery(query_getter)
         self.table.clearSelection()
 
+    @QtCore.pyqtSlot()
+    def refresh(self):
+        """Refresh the whole view"""
+        post( self.get_admin, self.set_admin )
+        
     @QtCore.pyqtSlot()
     def rebuild_query( self ):
         """resets the table model query"""

@@ -34,7 +34,6 @@ from camelot.view.model_thread import post
 from camelot.view.model_thread import gui_function
 from camelot.view.model_thread import model_function
 
-
 class AbstractView(QtGui.QWidget):
     """A string used to format the title of the view ::
     title_format = 'Movie rental overview'
@@ -51,6 +50,11 @@ class AbstractView(QtGui.QWidget):
 
     title_changed_signal = QtCore.pyqtSignal(QtCore.QString)
 
+    @QtCore.pyqtSlot()
+    def refresh(self):
+        """Refresh the data in the current view"""
+        pass
+    
     @gui_function
     def change_title(self, new_title):
         """Will emit the title_changed_signal"""
@@ -82,7 +86,6 @@ class AbstractView(QtGui.QWidget):
         html = self.to_html()
         open_html_in_outlook(html)
 
-
 class TabView(AbstractView):
     """Class to combine multiple views in Tabs and let them behave as one view.
     This class can be used when defining custom create_table_view methods on an
@@ -97,8 +100,8 @@ class TabView(AbstractView):
         else:
             self.header = None
         layout.addWidget(self.header)
-        self.tab_widget = QtGui.QTabWidget(self)
-        layout.addWidget(self.tab_widget)
+        self._tab_widget = QtGui.QTabWidget(self)
+        layout.addWidget(self._tab_widget)
         self.setLayout(layout)
 
         def get_views_and_titles():
@@ -107,18 +110,25 @@ class TabView(AbstractView):
         post(get_views_and_titles, self.set_views_and_titles)
         post(lambda:self.title_format, self.change_title)
 
+    @QtCore.pyqtSlot()
+    def refresh(self):
+        """Refresh the data in the current view"""
+        for i in range(self._tab_widget.count()):
+            view = self._tab_widget.widget(i)
+            view.refresh()
+    
     def set_views_and_titles(self, views_and_titles):
         for view, title in views_and_titles:
-            self.tab_widget.addTab(view, title)
+            self._tab_widget.addTab(view, title)
 
     def export_to_excel(self):
-        return self.tab_widget.currentWidget().export_to_excel()
+        return self._tab_widget.currentWidget().export_to_excel()
 
     def export_to_word(self):
-        return self.tab_widget.currentWidget().export_to_word()
+        return self._tab_widget.currentWidget().export_to_word()
 
     def export_to_mail(self):
-        return self.tab_widget.currentWidget().export_to_mail()
+        return self._tab_widget.currentWidget().export_to_mail()
 
     def to_html(self):
-        return self.tab_widget.currentWidget().to_html()
+        return self._tab_widget.currentWidget().to_html()
