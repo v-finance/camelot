@@ -161,7 +161,16 @@ that can be used in the field attributes class attribute of an ObjectAdmin or En
 Set this attribute to 'maximized' or 'minimized' for respective behaviour. These are the only two defined at the moment.
 Please use the constants defined in camelot.core.constants (MINIMIZE and MAXIMIZE).
 Note that this attr needs to be set at the form, highest in the form hierarchy to work. Setting this on embedded forms 
-will not influence the window state.
+will not influence the window state. Example::
+
+class Movie(Entity):
+  title = Field(Unicode(50))
+
+  class Admin(EntityAdmin):
+    from camelot.core import constants
+    list_display = ['title']
+    form_state = constants.MAXIMIZED
+    field_attributes = dict(title=dict(editable=False))
 
 **Varia**
 
