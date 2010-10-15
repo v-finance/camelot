@@ -132,13 +132,13 @@ class ApplicationViewsTest(ModelThreadTestCase):
             self.grab_widget(nav_pane, suffix=section.get_name(), subdir='applicationviews')
       
     def test_main_window(self):
-        #from camelot.view.mainwindow import MainWindow
+        from camelot.view.mainwindow import MainWindow
         from PyQt4 import QtCore
         translator = self.get_application_admin().get_translator()
         QtCore.QCoreApplication.installTranslator(translator)          
-        #app_admin = self.get_application_admin()        
-        #widget = MainWindow(app_admin)
-        #self.grab_widget(widget, subdir='applicationviews')
+        app_admin = self.get_application_admin()        
+        widget = MainWindow(app_admin)
+        self.grab_widget(widget, subdir='applicationviews')
         
     def test_tool_bar(self):
         from camelot.view.mainwindow import MainWindow
