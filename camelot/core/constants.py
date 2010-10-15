@@ -16,3 +16,6 @@ camelot_date_format = 'dd-MM-yyyy'
 strftime_date_format = '%d-%m-%Y'
 camelot_small_icon_width = 16
 camelot_small_icon_height = 16
+
+MAXIMIZED = 'maximized'
+MINIMIZED = 'minimized'

@@ -36,7 +36,7 @@ from camelot.core.utils import ugettext as _
 from camelot.core.utils import ugettext_lazy
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from validator.object_validator import ObjectValidator
-
+from PyQt4 import QtCore
 class FieldAttributesList(list):
     """A list with field attributes that documents them for
     sphinx"""
@@ -154,6 +154,15 @@ class Movie(Entity):
 The :ref:`doc-admin-field_attributes` documentation describes the various keys
 that can be used in the field attributes class attribute of an ObjectAdmin or EntityAdmin.
 
+**Window state**
+
+.. attribute:: form_state
+
+Set this attribute to 'maximized' or 'minimized' for respective behaviour. These are the only two defined at the moment.
+Please use the constants defined in camelot.core.constants (MINIMIZE and MAXIMIZE).
+Note that this attr needs to be set at the form, highest in the form hierarchy to work. Setting this on embedded forms 
+will not influence the window state.
+
 **Varia**
 
 .. attribute:: model
@@ -181,6 +190,7 @@ The QWidget class to be used when a table view is needed
     form_actions = []
     form_title_column = None #DEPRECATED
     field_attributes = {}
+    form_state = None
     TableView = TableView
 
     def __init__(self, app_admin, entity):
@@ -512,6 +522,14 @@ The QWidget class to be used when a table view is needed
         logger.debug('creating form view for index %s' % index)
         from camelot.view.controls.formview import FormView
         form = FormView(title, self, model, index)
+        
+        if hasattr(self, 'form_state'):
+            from camelot.core import constants
+            if self.form_state == constants.MAXIMIZED:
+                form.setWindowState(QtCore.Qt.WindowMaximized)
+            if self.form_state == constants.MINIMIZED:
+                form.setWindowState(QtCore.Qt.WindowMinimized)
+        
         return form
 
     def set_defaults(self, object_instance, include_nullable_fields=True):

@@ -79,10 +79,7 @@ class LabelComboBox(QtGui.QComboBox):
 
 class Page(QtGui.QWizardPage):
     title = _('Select backup file')
-    sub_title = _(
-            "Please select a backup file.  "
-            "All data in this file will be overwritten."
-        )
+    sub_title = _('Please select a backup file. All data in this file will be overwritten.')
     icon = Icon('tango/32x32/actions/document-save.png')
     caption = _('Select file')
     extension = '.db'
@@ -147,8 +144,7 @@ class Page(QtGui.QWizardPage):
         
 class SelectRestoreFilePage(Page):
     title = _('Select restore file')
-    sub_title = _( "Please select a backup file from which to restore the database."
-                   "All data in the database will be overwritten with data from this file" )
+    sub_title = _( "Please select a backup file from which to restore the database. All data in the database will be overwritten with data from this file" )
     icon = Icon('tango/32x32/devices/drive-harddisk.png')
 
     def __init__(self, parent=None):
