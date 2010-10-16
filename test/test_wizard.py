@@ -19,4 +19,14 @@ class ImportWizardTest(ModelThreadTestCase):
         wizard = importwizard.ImportWizard( admin=person_admin )
         # show appears to be needed to get a proper size of the widget
         wizard.show()
-        self.grab_widget( wizard )         
+        self.grab_widget( wizard )
+        
+class MergeDocumentWizardTest(ModelThreadTestCase):
+    
+    images_path = static_images_path
+    
+    def test_wizard_widget(self):
+        from camelot.view.wizard.merge_document import MergeDocumentWizard
+        wizard = MergeDocumentWizard(None, lambda:[])
+        wizard.show()
+        self.grab_widget( wizard )
