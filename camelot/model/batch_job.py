@@ -71,7 +71,7 @@ class BatchJob(Entity):
         
     def add_strings_to_message(self, strings):
         """:param strings: a list or generator of strings"""
-        self.message = (self.message or '') + '<br/>'.join(list(strings))
+        self.message = (self.message or '') + u'<br/>' + '<br/>'.join(list(strings))
         
     class Admin(EntityAdmin):
         verbose_name = _('Batch job')
