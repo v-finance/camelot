@@ -73,6 +73,9 @@ class ApplicationAdmin(QtCore.QObject):
     # This signal is emitted whenever the sections are changed, and the views
     # should be updated
     sections_changed_signal = QtCore.pyqtSignal()
+    # This signal is emitted whenever the tile of the main window needs to
+    # be changed.
+    title_changed_signal = QtCore.pyqtSignal(str)
 
     def __init__(self):
         QtCore.QObject.__init__(self)

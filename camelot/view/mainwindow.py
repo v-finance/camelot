@@ -94,6 +94,7 @@ class MainWindow(QtGui.QMainWindow):
 
         logger.debug('setting up window title')
         self.setWindowTitle(self.app_admin.get_name())
+        self.app_admin.title_changed_signal.connect( self.setWindowTitle )
 
         #QtCore.QTimer.singleShot(0, self.doInitialization)
         logger.debug('initialization complete')
