@@ -44,16 +44,17 @@ _ = lambda x:x
 
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 
-class PaneCaption( UserTranslatableLabel ):
+
+class PaneCaption(UserTranslatableLabel):
     """Navigation pane Caption"""
-    def __init__( self,
+    def __init__(self,
                  text,
                  textbold = True,
                  textindent = 3,
                  width = 160,
                  height = 32,
                  objectname = 'PaneCaption',
-                 parent = None ):
+                 parent = None):
 
         super(UserTranslatableLabel, self).__init__(text, parent)
 
@@ -94,7 +95,7 @@ class PaneButton( QtGui.QWidget ):
     """Custom made navigation pane pushbutton"""
 
     section_selected_signal = QtCore.pyqtSignal(int, unicode)
-    
+
     def __init__( self,
                  text,
                  buttonicon = '',
@@ -161,8 +162,8 @@ class PaneButton( QtGui.QWidget ):
           color : %s;
           background-color : %s;
         }
-        """ % ( scheme.selectedcolor(),
-               scheme.selectedbackground() )
+        """ % (scheme.selectedcolor(),
+               scheme.selectedbackground())
 
         self.styleselectedover = """
         QWidget#PaneButton * {
@@ -171,8 +172,8 @@ class PaneButton( QtGui.QWidget ):
           color : %s;
           background-color : %s;
         }
-        """ % ( scheme.selectedcolor(),
-               scheme.selectedbackground( inverted = True ) )
+        """ % (scheme.selectedcolor(),
+               scheme.selectedbackground(inverted=True))
 
         self.setStyleSheet( self.stylenormal )
         self.setFixedHeight( height )
@@ -211,7 +212,7 @@ class NavigationPane(QtGui.QDockWidget):
     def __init__(self, app_admin, workspace, parent):
         QtGui.QDockWidget.__init__(self, parent)
         # object name needs to be set for mainwindow save state
-        self.setObjectName( 'NavigationPane' )
+        self.setObjectName('NavigationPane')
         self._workspace = workspace
         self.app_admin = app_admin
         self.setFeatures( QtGui.QDockWidget.NoDockWidgetFeatures )
@@ -222,7 +223,7 @@ class NavigationPane(QtGui.QDockWidget):
         #self.setObjectName( objectname )
         self.buttons = []
         self.content = QtGui.QWidget()
-        self.content.setObjectName( 'NavPaneContent' )
+        self.content.setObjectName('NavPaneContent')
         header_labels = ['']
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 1 )
@@ -270,33 +271,33 @@ class NavigationPane(QtGui.QDockWidget):
             QTest.mousePress( firstbutton, Qt.LeftButton )
 
     def setcontent( self, buttons ):
-        logger.debug( 'setting up pane content' )
+        logger.debug('setting up pane content')
 
-        style = """
-        QWidget#NavPaneContent {
-          margin-left: 3px;
-          background-color: %s;
-        }
-        """ % scheme.bordercolor()
+        #style = """
+        #QWidget#NavPaneContent {
+        #  margin-left: 3px;
+        #  background-color: %s;
+        #}
+        #""" % scheme.bordercolor()
 
-        self.content.setStyleSheet( style )
+        #self.content.setStyleSheet(style)
 
         # TODO: Should a separator be added between the tree
         #       and the buttons?
         #self.treewidget = PaneTree(self)
 
 
-        self.treewidget.setObjectName( 'NavPaneTree' )
+        self.treewidget.setObjectName('NavPaneTree')
 
-        style = """
-        QWidget#NavPaneTree {
-          margin-left: 3px;
-          border: 1px solid %s;
-          background-color: rgb(255, 255, 255);
-        }
-        """ % scheme.bordercolor()
+        #style = """
+        #QWidget#NavPaneTree {
+        #  margin-left: 3px;
+        #  border: 1px solid %s;
+        #  background-color: rgb(255, 255, 255);
+        #}
+        #""" % scheme.bordercolor()
 
-        self.treewidget.setStyleSheet( style )
+        #self.treewidget.setStyleSheet(style)
 
         # context menu
         self.treewidget.contextmenu = QtGui.QMenu(self)

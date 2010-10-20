@@ -32,13 +32,18 @@ import logging
 logger = logging.getLogger('camelot.view.art')
 
 from camelot.view.model_thread import gui_function
-
 from PyQt4 import QtGui
+
 
 def file_(name):
     from camelot.core.resources import resource_filename
     import camelot
     return resource_filename(camelot.__name__, 'art/%s'%name, 'CAMELOT_MAIN_DIRECTORY')
+
+
+def read(fname):
+    return open(file_(fname)).read()
+
 
 class Pixmap(object):
     """Load pixmaps from the camelot art library"""
@@ -128,7 +133,7 @@ class ColorScheme(object):
     cyan_0      = cyan
     cyan_1      = QtGui.QColor('#008080')
     magenta     = QtGui.QColor('#ff00ff')
-    magenta_0   = magenta 
+    magenta_0   = magenta
     magenta_1   = QtGui.QColor('#800080')
     pink_1      = QtGui.QColor('#f16c6c')
     pink_2      = QtGui.QColor('#f13c3c')
@@ -142,7 +147,7 @@ class ColorScheme(object):
     grey_3      = QtGui.QColor('#666666')
     grey_4      = QtGui.QColor('#999999')
     grey        = grey_0
-    
+
     VALIDATION_ERROR = red_1
     """
     for consistency with QT:

@@ -33,13 +33,17 @@ from PyQt4 import QtCore
 from camelot.view.model_thread import model_function
 from camelot.core.utils import ugettext as _
 from camelot.core.backup import BackupMechanism
+from camelot.view import art
+
 
 _application_admin_ = []
+
 
 def get_application_admin():
     if not len(_application_admin_):
         raise Exception('No application admin class has been constructed yet')
     return _application_admin_[0]
+
 
 class ApplicationAdmin(QtCore.QObject):
     """The Application Admin class defines how the application should look
@@ -202,7 +206,7 @@ class ApplicationAdmin(QtCore.QObject):
         :return: the qt stylesheet to be used for this application as a string
         or None if no stylesheet needed
         """
-        return None
+        return art.read('stylesheet/navpane_office2007_blue.qss')
 
     def get_translator(self):
         """Reimplement this method to add application specific translations
@@ -279,12 +283,12 @@ class ApplicationAdmin(QtCore.QObject):
         from camelot.view.wizard.backup import RestoreWizard
         wizard = RestoreWizard(self.backup_mechanism, main_window)
         wizard.exec_()
-        
+
     def select_database(self):
         """Present the user with a dialog to select the database to use.
         This function will be called when the application starts up before
         the actual connection to the database has been made.
-        
+
         The default implementation does nothing and returns None.  Overwrite
         this method for custom behaviour.
         """
