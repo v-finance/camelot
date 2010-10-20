@@ -1,5 +1,12 @@
 /* stylesheet for navigation pane */
 
+QLabel#PaneCaption {
+    margin: 3px 0 0 3px;
+    border: 1px solid rgb(101, 147, 207);
+    color: rgb(21, 66, 139);
+    background-color: qlineargradient(spread:pad, x1:0.5, y1:0, x2:0.5, y2:1, stop:0 rgba(227, 239, 255, 255), stop:1 rgba(173, 209, 255, 255));
+}
+
 QWidget#NavPaneContent {
     margin-left: 3px;
     background-color: rgb(101, 147, 207);

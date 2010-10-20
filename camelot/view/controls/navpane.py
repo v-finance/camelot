@@ -69,18 +69,18 @@ class PaneCaption(UserTranslatableLabel):
 
         self.setObjectName( objectname )
 
-        style = """
-        QLabel#PaneCaption {
-          margin: 3px 0 0 3px;
-          border: 1px solid %s;
-          color: %s;
-          background-color: %s;
-        }
-        """ % ( scheme.bordercolor(),
-               scheme.captiontextcolor(),
-               scheme.captionbackground() )
+        #style = """
+        #QLabel#PaneCaption {
+        #  margin: 3px 0 0 3px;
+        #  border: 1px solid %s;
+        #  color: %s;
+        #  background-color: %s;
+        #}
+        #""" % ( scheme.bordercolor(),
+        #       scheme.captiontextcolor(),
+        #       scheme.captionbackground() )
 
-        self.setStyleSheet( style );
+        #self.setStyleSheet( style );
         self.setFixedHeight( height )
         self.resize( width, height )
 
