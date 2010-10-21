@@ -87,14 +87,14 @@ class PaneCaption(UserTranslatableLabel):
         self.setFont( font )
 
 
-class PaneButton( QtGui.QPushButton ):
+class PaneButton(QtGui.QPushButton):
     """Custom made navigation pane pushbutton"""
 
     section_selected_signal = QtCore.pyqtSignal(int, unicode)
 
     def __init__(
         self, text, buttonicon='', textbold=True, textleft=True,
-        width=158, height=30, objectname='PaneButton', parent=None,
+        width=160, height=32, objectname='PaneButton', parent=None,
         index=0
     ):
 
@@ -162,15 +162,15 @@ class PaneButton( QtGui.QPushButton ):
         #""" % (scheme.selectedcolor(),
         #       scheme.selectedbackground())
 
-        self.styleselectedover = """
-        QWidget#PaneButton * {
-          margin: 0;
-          padding-left: 3px;
-          color: %s;
-          background-color : %s;
-        }
-        """ % (scheme.selectedcolor(),
-               scheme.selectedbackground(inverted=True))
+        #self.styleselectedover = """
+        #QWidget#PaneButton * {
+        #  margin: 0;
+        #  padding-left: 3px;
+        #  color: %s;
+        #  background-color : %s;
+        #}
+        #""" % (scheme.selectedcolor(),
+        #       scheme.selectedbackground(inverted=True))
 
         #self.setStyleSheet( self.stylenormal )
         self.setFixedHeight(height)
@@ -225,12 +225,12 @@ class NavigationPane(QtGui.QDockWidget):
         header_labels = ['']
         layout = QtGui.QVBoxLayout()
         layout.setSpacing(1)
-        layout.setContentsMargins(1, 1, 1, 1)
-        self.treewidget = ModelTree( header_labels, self )
+        layout.setContentsMargins(4, 1, 1, 1)
+        self.treewidget = ModelTree(header_labels, self)
         layout.addWidget( self.treewidget )
         self.setMinimumWidth(QtGui.QFontMetrics(QtGui.QApplication.font()).averageCharWidth()*40)
-        self.content.setLayout( layout )
-        self.setWidget( self.content )
+        self.content.setLayout(layout)
+        self.setWidget(self.content)
         #
         # set minimum with to 0 as long as we are using the navigation pane as a
         # dockwidget, because this dockwidget is not collapsible
