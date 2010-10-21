@@ -38,7 +38,7 @@ from camelot.action import addActions, createAction
 from camelot.view.controls.modeltree import ModelItem, ModelTree
 from appscheme import scheme
 
-QT_MAJOR_VERSION = float( '.'.join( str( QtCore.QT_VERSION_STR ).split( '.' )[0:2] ) )
+QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
 _ = lambda x:x
 
@@ -47,14 +47,10 @@ from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 
 class PaneCaption(UserTranslatableLabel):
     """Navigation pane Caption"""
-    def __init__(self,
-                 text,
-                 textbold = True,
-                 textindent = 3,
-                 width = 160,
-                 height = 32,
-                 objectname = 'PaneCaption',
-                 parent = None):
+    def __init__(
+        self, text, textbold=True, textindent=3, width=160, height=32,
+        objectname='PaneCaption', parent=None
+    ):
 
         super(UserTranslatableLabel, self).__init__(text, parent)
 
@@ -96,16 +92,11 @@ class PaneButton( QtGui.QPushButton ):
 
     section_selected_signal = QtCore.pyqtSignal(int, unicode)
 
-    def __init__(self,
-                 text,
-                 buttonicon = '',
-                 textbold = True,
-                 textleft = True,
-                 width = 160,
-                 height = 32,
-                 objectname = 'PaneButton',
-                 parent = None,
-                 index = 0 ):
+    def __init__(
+        self, text, buttonicon='', textbold=True, textleft=True,
+        width=160, height=32, objectname='PaneButton', parent=None,
+        index=0
+    ):
 
         #QtGui.QWidget.__init__( self, parent )
         QtGui.QPushButton.__init__(self, parent)
@@ -137,7 +128,7 @@ class PaneButton( QtGui.QPushButton ):
 
         #if textbold: self.textbold()
 
-        self.setObjectName( objectname )
+        self.setObjectName(objectname)
 
         #self.stylenormal = """
         #QWidget#PaneButton * {
@@ -182,8 +173,8 @@ class PaneButton( QtGui.QPushButton ):
                scheme.selectedbackground(inverted=True))
 
         #self.setStyleSheet( self.stylenormal )
-        self.setFixedHeight( height )
-        self.resize( width, height )
+        self.setFixedHeight(height)
+        self.resize(width, height)
         self.selected = False
         self.index = index
 
@@ -209,8 +200,9 @@ class PaneButton( QtGui.QPushButton ):
             return
         else:
             self.selected = True
-    #        self.setStyleSheet( self.styleselectedover )
-            self.section_selected_signal.emit( self.index, self.label.text() )
+            self.setChecked(True)
+    #        self.setStyleSheet(self.styleselectedover)
+            self.section_selected_signal.emit(self.index, self.label.text())
 
 class NavigationPane(QtGui.QDockWidget):
     """ms office-like navigation pane in Qt"""
@@ -221,11 +213,11 @@ class NavigationPane(QtGui.QDockWidget):
         self.setObjectName('NavigationPane')
         self._workspace = workspace
         self.app_admin = app_admin
-        self.setFeatures( QtGui.QDockWidget.NoDockWidgetFeatures )
+        self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         self.parent = parent
         self.currentbutton = -1
-        self.caption = PaneCaption( '' )
-        self.setTitleBarWidget( self.caption )
+        self.caption = PaneCaption('')
+        self.setTitleBarWidget(self.caption)
         #self.setObjectName(objectname)
         self.buttons = []
         self.content = QtGui.QWidget()
@@ -269,14 +261,21 @@ class NavigationPane(QtGui.QDockWidget):
         for b in self.buttons:
             b.deleteLater()
         self.sections = sections
-        self.buttons = [PaneButton( section.get_verbose_name(), section.get_icon().getQPixmap(), index=i ) for i,section in enumerate(sections)]
-        self.setcontent( self.buttons )
+        self.buttons = [
+            PaneButton(
+                section.get_verbose_name(),
+                section.get_icon().getQPixmap(),
+                index=i
+            )
+            for i,section in enumerate(sections)
+        ]
+        self.setcontent(self.buttons)
         # use QTest to auto select first button :)
-        if len( self.buttons ):
+        if len(self.buttons):
             firstbutton = self.buttons[0]
-            QTest.mousePress( firstbutton, Qt.LeftButton )
+            QTest.mousePress(firstbutton, Qt.LeftButton)
 
-    def setcontent( self, buttons ):
+    def setcontent(self, buttons):
         logger.debug('setting up pane content')
 
         #style = """
@@ -321,38 +320,38 @@ class NavigationPane(QtGui.QDockWidget):
         if buttons:
             for b in buttons:
                 self.content.layout().addWidget(b)
-                b.section_selected_signal.connect( self.change_current )
+                b.section_selected_signal.connect(self.change_current)
             self.buttons = buttons
         else:
             self.buttons = []
 
-    def set_items_in_tree( self, items ):
+    def set_items_in_tree(self, items):
         self.treewidget.clear()
         self.treewidget.clear_model_items()
         self.items = items
 
-        if not items:
-            return
+        if not items: return
 
         for item in items:
-            model_item = ModelItem( self.treewidget, [item.get_verbose_name()] )
-            self.treewidget.modelitems.append( model_item )
+            model_item = ModelItem(self.treewidget, [item.get_verbose_name()])
+            self.treewidget.modelitems.append(model_item)
 
         self.treewidget.update()
 
-    @QtCore.pyqtSlot( int, unicode )
-    def change_current( self, index, text ):
-        logger.debug( 'set current to %s' % text )
+    @QtCore.pyqtSlot(int, unicode)
+    def change_current(self, index, text):
+        logger.debug('set current to %s' % text)
         if self.currentbutton != -1:
             button = self.buttons[self.currentbutton]
-            #button.setStyleSheet( button.stylenormal )
+            #button.setStyleSheet(button.stylenormal)
             button.selected = False
-        self.caption.setText( text )
+            button.setChecked(False)
+        self.caption.setText(text)
         self.currentbutton = index
 
         def get_models_for_tree():
             """Return pairs of (Admin, query) classes for items in the tree"""
-            if index<len(self.sections):
+            if index < len(self.sections):
                 section = self.sections[index]
                 return section.get_items()
             return []
