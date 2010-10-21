@@ -224,8 +224,8 @@ class NavigationPane(QtGui.QDockWidget):
         self.content.setObjectName('NavPaneContent')
         header_labels = ['']
         layout = QtGui.QVBoxLayout()
-        layout.setSpacing( 1 )
-        layout.setContentsMargins( 1, 1, 1, 1 )
+        #layout.setSpacing(1)
+        layout.setContentsMargins(1, 1, 1, 1)
         self.treewidget = ModelTree( header_labels, self )
         layout.addWidget( self.treewidget )
         self.setMinimumWidth(QtGui.QFontMetrics(QtGui.QApplication.font()).averageCharWidth()*40)
