@@ -91,12 +91,12 @@ class PaneCaption(UserTranslatableLabel):
         self.setFont( font )
 
 
-class PaneButton( QtGui.QWidget ):
+class PaneButton( QtGui.QPushButton ):
     """Custom made navigation pane pushbutton"""
 
     section_selected_signal = QtCore.pyqtSignal(int, unicode)
 
-    def __init__( self,
+    def __init__(self,
                  text,
                  buttonicon = '',
                  textbold = True,
@@ -107,103 +107,109 @@ class PaneButton( QtGui.QWidget ):
                  parent = None,
                  index = 0 ):
 
-        QtGui.QWidget.__init__( self, parent )
+        #QtGui.QWidget.__init__( self, parent )
+        QtGui.QPushButton.__init__(self, parent)
 
-        if textleft:
-            option = QtGui.QBoxLayout.LeftToRight
-        else:
-            option = QtGui.QBoxLayout.RightToLeft
-        self.layout = QtGui.QBoxLayout( option )
-        self.layout.setSpacing( 0 )
-        self.layout.setContentsMargins( 3, 0, 0, 0 )
+        #if textleft:
+        #    option = QtGui.QBoxLayout.LeftToRight
+        #else:
+        #    option = QtGui.QBoxLayout.RightToLeft
+        #self.layout = QtGui.QBoxLayout( option )
+        #self.layout.setSpacing( 0 )
+        #self.layout.setContentsMargins( 3, 0, 0, 0 )
+
+        self.setCheckable(True)
 
         if buttonicon:
-            self.icon = QtGui.QLabel()
-            self.icon.setPixmap( QtGui.QPixmap( buttonicon ) )
-            self.layout.addWidget( self.icon )
+            #self.icon = QtGui.QLabel()
+            #self.icon.setPixmap(QtGui.QPixmap(buttonicon))
+            #self.layout.addWidget(self.icon)
+            self.setIcon(QtGui.QIcon(buttonicon))
+            self.setIconSize(QtCore.QSize(24, 24))
 
         self.label = UserTranslatableLabel(text, parent)
 
-        self.layout.addWidget( self.label, 2 )
+        #self.layout.addWidget( self.label, 2 )
 
-        self.setLayout( self.layout )
+        #self.setLayout( self.layout )
 
-        if textbold:
-            self.textbold()
+        self.setText(str(text))
+
+        #if textbold: self.textbold()
 
         self.setObjectName( objectname )
 
-        self.stylenormal = """
-        QWidget#PaneButton * {
-          margin: 0;
-          padding-left: 3px;
-          color : %s;
-          border-color : %s;
-          background-color : %s;
-        }
-        """ % ( scheme.textcolor(),
-               scheme.bordercolor(),
-               scheme.normalbackground() )
+        #self.stylenormal = """
+        #QWidget#PaneButton * {
+        #  margin: 0;
+        #  padding-left: 3px;
+        #  color: %s;
+        #  border-color : %s;
+        #  background-color : %s;
+        #}
+        #""" % (scheme.textcolor(),
+        #       scheme.bordercolor(),
+        #       scheme.normalbackground() )
 
-        self.stylehovered = """
-        QWidget#PaneButton * {
-          margin: 0;
-          padding-left: 3px;
-          color : %s;
-          background-color : %s;
-        }
-        """ % ( scheme.textcolor(),
-               scheme.hoveredbackground() )
+        #self.stylehovered = """
+        #QWidget#PaneButton * {
+        #  margin: 0;
+        #  padding-left: 3px;
+        #  color: %s;
+        #  background-color : %s;
+        #}
+        #""" % (scheme.textcolor(),
+        #       scheme.hoveredbackground() )
 
-        self.styleselected = """
-        QWidget#PaneButton * {
-          margin: 0;
-          padding-left: 3px;
-          color : %s;
-          background-color : %s;
-        }
-        """ % (scheme.selectedcolor(),
-               scheme.selectedbackground())
+        #self.styleselected = """
+        #QWidget#PaneButton * {
+        #  margin: 0;
+        #  padding-left: 3px;
+        #  color: %s;
+        #  background-color : %s;
+        #}
+        #""" % (scheme.selectedcolor(),
+        #       scheme.selectedbackground())
 
         self.styleselectedover = """
         QWidget#PaneButton * {
           margin: 0;
           padding-left: 3px;
-          color : %s;
+          color: %s;
           background-color : %s;
         }
         """ % (scheme.selectedcolor(),
                scheme.selectedbackground(inverted=True))
 
-        self.setStyleSheet( self.stylenormal )
+        #self.setStyleSheet( self.stylenormal )
         self.setFixedHeight( height )
         self.resize( width, height )
         self.selected = False
         self.index = index
 
-    def textbold( self ):
-        font = self.label.font()
-        font.setBold( True )
-        self.label.setFont( font )
+    #def textbold( self ):
+    #    font = self.label.font()
+    #    font.setBold( True )
+    #    self.label.setFont( font )
 
-    def enterEvent( self, event ):
-        if self.selected:
-            self.setStyleSheet( self.styleselectedover )
-        else:
-            self.setStyleSheet( self.stylehovered )
+    #def enterEvent( self, event ):
+    #    if self.selected:
+    #        self.setStyleSheet( self.styleselectedover )
+    #    else:
+    #        self.setStyleSheet( self.stylehovered )
 
-    def leaveEvent( self, event ):
-        if self.selected:
-            self.setStyleSheet( self.styleselected )
-        else:
-            self.setStyleSheet( self.stylenormal )
+    #def leaveEvent( self, event ):
+    #    if self.selected:
+    #        self.setStyleSheet( self.styleselected )
+    #    else:
+    #        self.setStyleSheet( self.stylenormal )
 
-    def mousePressEvent( self, event ):
+    def mousePressEvent(self, event):
         if self.selected:
             return
         else:
             self.selected = True
-            self.setStyleSheet( self.styleselectedover )
+    #        self.setStyleSheet( self.styleselectedover )
             self.section_selected_signal.emit( self.index, self.label.text() )
 
 class NavigationPane(QtGui.QDockWidget):
@@ -220,7 +226,7 @@ class NavigationPane(QtGui.QDockWidget):
         self.currentbutton = -1
         self.caption = PaneCaption( '' )
         self.setTitleBarWidget( self.caption )
-        #self.setObjectName( objectname )
+        #self.setObjectName(objectname)
         self.buttons = []
         self.content = QtGui.QWidget()
         self.content.setObjectName('NavPaneContent')
@@ -242,7 +248,7 @@ class NavigationPane(QtGui.QDockWidget):
         # so we must undo this margin in children stylesheets :)
         #style = 'margin: 0 0 0 3px;'
         #self.setStyleSheet(style)
-        self.app_admin.sections_changed_signal.connect( self.auth_update )
+        self.app_admin.sections_changed_signal.connect(self.auth_update)
         self.auth_update()
 
     @QtCore.pyqtSlot()
@@ -308,9 +314,9 @@ class NavigationPane(QtGui.QDockWidget):
             shortcut = 'Ctrl+Enter'
         )
 
-        addActions(self.treewidget.contextmenu, ( newWindowAct,))
+        addActions(self.treewidget.contextmenu, (newWindowAct,))
         self.treewidget.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.treewidget.customContextMenuRequested.connect( self.createContextMenu )
+        self.treewidget.customContextMenuRequested.connect(self.createContextMenu)
 
         if buttons:
             for b in buttons:
@@ -339,7 +345,7 @@ class NavigationPane(QtGui.QDockWidget):
         logger.debug( 'set current to %s' % text )
         if self.currentbutton != -1:
             button = self.buttons[self.currentbutton]
-            button.setStyleSheet( button.stylenormal )
+            #button.setStyleSheet( button.stylenormal )
             button.selected = False
         self.caption.setText( text )
         self.currentbutton = index
