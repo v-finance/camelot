@@ -1,10 +1,9 @@
 import logging
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
-from camelot.core.utils import ugettext as _
 from camelot.admin.abstract_action import AbstractAction, AbstractOpenFileAction
 
 logger = logging.getLogger('camelot.admin.list_action')
