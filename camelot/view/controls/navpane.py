@@ -94,7 +94,7 @@ class PaneButton( QtGui.QPushButton ):
 
     def __init__(
         self, text, buttonicon='', textbold=True, textleft=True,
-        width=160, height=32, objectname='PaneButton', parent=None,
+        width=158, height=30, objectname='PaneButton', parent=None,
         index=0
     ):
 
@@ -224,7 +224,7 @@ class NavigationPane(QtGui.QDockWidget):
         self.content.setObjectName('NavPaneContent')
         header_labels = ['']
         layout = QtGui.QVBoxLayout()
-        #layout.setSpacing(1)
+        layout.setSpacing(1)
         layout.setContentsMargins(1, 1, 1, 1)
         self.treewidget = ModelTree( header_labels, self )
         layout.addWidget( self.treewidget )
