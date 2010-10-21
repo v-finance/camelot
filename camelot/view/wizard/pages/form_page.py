@@ -71,6 +71,9 @@ class FormPage(QtGui.QWizardPage):
         form.set_model(self._model)
         layout.addWidget(form)
         self.setLayout(layout)
+
+        if hasattr(admin, 'form_size'):
+            self.setMinimumSize(admin.form_size[0], admin.form_size[1])
     
     def initializePage(self):
         # do inital validation, so the validity changed signal is valid
