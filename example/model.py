@@ -39,13 +39,13 @@ def genre_choices(entity_instance):
 
 def burn_to_disk(o_getter):
   print 'burn burn burn'
-    
+
 class Movie(Entity):
   using_options(tablename='movies')
   title = Field(Unicode(60), required=True)
   short_description = Field(Unicode(512))
   releasedate = Field(Date)
-  # 
+  #
   # All relation types are covered with their own editor
   #
   director = ManyToOne('Person')
@@ -72,7 +72,7 @@ class Movie(Entity):
   def total_visitors(self):
     return sql.select([sql.func.sum(VisitorReport.visitors)],
                            VisitorReport.movie_id==self.id)
-     
+
   #
   # Each Entity subclass can have a subclass of EntityAdmin as
   # its inner class.  The EntityAdmin class defines how the Entity
@@ -81,10 +81,10 @@ class Movie(Entity):
   #
   # To fully customize the way the entity is visualized, the EntityAdmin
   # subclass should overrule some of the EntityAdmin's methods
-  #  
+  #
   class Admin(EntityAdmin):
     # the list_display attribute specifies which entity attributes should
-    # be visible in the table view        
+    # be visible in the table view
     list_display = ['cover', 'title', 'releasedate', 'rating',]
     # define filters to be available in the table view
     list_filter = ['genre', ComboBoxFilter('director.full_name')]
@@ -97,15 +97,15 @@ class Movie(Entity):
       ('Movie', Form([
         HBoxForm([WidgetOnlyForm('cover'), ['title', 'rating']]),
         'short_description',
-        'releasedate', 
+        'releasedate',
         'director',
-        'script', 
-        'genre', 
+        'script',
+        'genre',
         'description',], columns = 2)),
       ('Cast', WidgetOnlyForm('cast')),
       ('Tags', WidgetOnlyForm('tags'))
     ])
-    
+
     # create a list of actions available for the user on the form view
     # those actions will be executed within the model thread
     #
@@ -131,7 +131,7 @@ class Movie(Entity):
     # text visible in each row
     #
     class TableView( EntityAdmin.TableView):
-        
+
         class TableWidget( EntityAdmin.TableView.TableWidget ):
             lines_per_row = 5
 
@@ -143,7 +143,7 @@ class Cast(Entity):
   movie = ManyToOne('Movie')
   actor = ManyToOne('Person', required=True)
   role = Field(Unicode(60))
-  
+
   class Admin(EntityAdmin):
       verbose_name = 'Actor'
       list_display = ['actor', 'role']
@@ -158,23 +158,24 @@ class Tag(Entity):
   using_options(tablename='tags')
   name = Field(Unicode(60), required=True)
   movies = ManyToMany('Movie')
-  
+
   def __unicode__(self):
     return self.name
-  
+
   class Admin(EntityAdmin):
     form_size = (400,200)
     list_display = ['name']
     form_display = ['name', 'movies']
-    
+
 class VisitorReport(Entity):
     using_options(tablename='visitor_report')
     movie = ManyToOne('Movie', required=True)
-    city = ManyToOne('City', required=True)
+    #city = ManyToOne('City', required=True)
     date = Field(Date, required=True, default=datetime.date.today)
     visitors = Field(Integer, required=True, default=0)
-    
+
     class Admin(EntityAdmin):
         verbose_name = _('Visitor Report')
-        list_display = ['movie', 'city', 'date', 'visitors']
+        #list_display = ['movie', 'city', 'date', 'visitors']
+        list_display = ['movie', 'date', 'visitors']
         field_attributes = {'visitors':{'minimum':0}}

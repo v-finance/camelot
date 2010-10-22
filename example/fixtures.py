@@ -2,222 +2,240 @@ import datetime
 
 def load_movie_fixtures():
 
-    from example.model import Movie
     from camelot.model.fixture import Fixture
+    from example.model import Movie, VisitorReport
     from camelot.core.files.storage import StoredImage, Storage
-    
+
     storage = Storage(upload_to='covers')
 
     movies = [
         [
-            'The Shining',
-            'The tide of terror that swept America is here.',
+            u'The Shining',
+            u'The tide of terror that swept America is here.',
             datetime.date(1980, 5, 23),
-            'Stanley Kubrick',
+            u'Stanley Kubrick',
             [
-                'Jack Nicholson',
-                'Shelley Duvall',
-                'Danny Lloyd',
-                'Scatman Crothers',
-                'Barry Nelson'
+                u'Jack Nicholson',
+                u'Shelley Duvall',
+                u'Danny Lloyd',
+                u'Scatman Crothers',
+                u'Barry Nelson'
             ],
-            ['Horror','Mystery','Thriller'],
-            'thriller',
+            [u'Horror',u'Mystery',u'Thriller'],
+            u'thriller',
             4,
-            'shining.jpg',
-            'A family heads to an isolated hotel for the winter where an evil'
+            u'shining.jpg',
+            u'A family heads to an isolated hotel for the winter where an evil'
             ' and spiritual presence influences the father into violence,'
             ' while his psychic son sees horrific forebodings from the past'
             ' and of the future.'
         ],
         [
-            'The Bourne Identity',
-            'Matt Damon is Jason Bourne.',
+            u'The Bourne Identity',
+            u'Matt Damon is Jason Bourne.',
             datetime.date(2002, 6, 14),
-            'Doug Liman',
+            u'Doug Liman',
             [
-                'Matt Damon',
-                'Franka Potente',
-                'Chris Cooper',
-                'Clive Owen',
-                'Brian Cox'
+                u'Matt Damon',
+                u'Franka Potente',
+                u'Chris Cooper',
+                u'Clive Owen',
+                u'Brian Cox'
             ],
-            ['Action','Adventure'],
-            'action',
+            [u'Action',u'Adventure'],
+            u'action',
             4,
-            'bourne.jpg',
-            'A man is picked up by a fishing boat, bullet-riddled and without'
+            u'bourne.jpg',
+            u'A man is picked up by a fishing boat, bullet-riddled and without'
             ' memory, then races to elude assassins and recover from amnesia.'
         ],
         [
-            'Casino Royale',
-            'Discover how James became Bond.',
+            u'Casino Royale',
+            u'Discover how James became Bond.',
             datetime.date(2006, 11, 17),
-            'Martin Campbell',
+            u'Martin Campbell',
             [
-                'Daniel Craig',
-                'Eva Green',
-                'Mads Mikkelsen',
-                'Judi Dench',
-                'Jeffrey',
-                'Wright'
+                u'Daniel Craig',
+                u'Eva Green',
+                u'Mads Mikkelsen',
+                u'Judi Dench',
+                u'Jeffrey',
+                u'Wright'
             ],
-            ['Action','Adventure'],
-            'action',
+            [u'Action',u'Adventure'],
+            u'action',
             5,
-            'casino.jpg',
-            "In his first mission, James Bond must stop Le Chiffre, a banker"
+            u'casino.jpg',
+            u"In his first mission, James Bond must stop Le Chiffre, a banker"
             " to the world's terrorist organizations, from winning a"
             " high-stakes poker tournament at Casino Royale in Montenegro."
         ],
         [
-            'Toy Story',
-            'Oooh...3-D.',
+            u'Toy Story',
+            u'Oooh...3-D.',
             datetime.date(1995, 11, 22),
-            'John Lasseter',
+            u'John Lasseter',
             [
-                'Tom Hanks',
-                'Tim Allen',
-                'Don Rickles',
-                'Jim Varney',
-                'Wallace Shawn'
+                u'Tom Hanks',
+                u'Tim Allen',
+                u'Don Rickles',
+                u'Jim Varney',
+                u'Wallace Shawn'
             ],
-            ['Animation','Adventure'],
-            'animation',
+            [u'Animation',u'Adventure'],
+            u'animation',
             4,
-            'toystory.jpg',
-            "A cowboy toy is profoundly threatened and jealous when a fancy"
+            u'toystory.jpg',
+            u"a cowboy toy is profoundly threatened and jealous when a fancy"
             " spaceman toy supplants him as top toy in a boy's room."
         ],
         [
-            "Harry Potter and the Sorcerer's Stone",
-            'Let The Magic Begin.',
+            u"Harry Potter and the Sorcerer's Stone",
+            u'Let The Magic Begin.',
             datetime.date(2001, 11, 16),
-            'Chris Columbus',
+            u'Chris Columbus',
             [
-                'Richard Harris',
-                'Maggie Smith',
-                'Daniel Radcliffe',
-                'Fiona Shaw',
-                'Richard Griffiths'
+                u'Richard Harris',
+                u'Maggie Smith',
+                u'Daniel Radcliffe',
+                u'Fiona Shaw',
+                u'Richard Griffiths'
             ],
-            ['Family','Adventure'],
-            'family',
+            [u'Family',u'Adventure'],
+            u'family',
             3,
-            'potter.jpg',
-            'Rescued from the outrageous neglect of his aunt and uncle, a'
+            u'potter.jpg',
+            u'Rescued from the outrageous neglect of his aunt and uncle, a'
             ' young boy with a great destiny proves his worth while attending'
             ' Hogwarts School of Witchcraft and Wizardry.'
         ],
         [
-            'Iron Man 2',
-            'The world now becomes aware of the dual life of the Iron Man.',
+            u'Iron Man 2',
+            u'The world now becomes aware of the dual life of the Iron Man.',
             datetime.date(2010, 5, 17),
-            'Jon Favreau',
+            u'Jon Favreau',
             [
-                'Robert Downey Jr.',
-                'Gwyneth Paltrow',
-                'Don Cheadle',
-                'Scarlett Johansson',
-                'Mickey Rourke'
+                u'Robert Downey Jr.',
+                u'Gwyneth Paltrow',
+                u'Don Cheadle',
+                u'Scarlett Johansson',
+                u'Mickey Rourke'
             ],
-            ['Action','Adventure','Sci-fi'],
-            'sci-fi',
+            [u'Action',u'Adventure',u'Sci-fi'],
+            u'sci-fi',
             3,
-            'ironman.jpg',
-            'Billionaire Tony Stark must contend with deadly issues involving'
+            u'ironman.jpg',
+            u'billionaire Tony Stark must contend with deadly issues involving'
             ' the government, his own friends, as well as new enemies due to'
             ' his superhero alter ego Iron Man.'
         ],
         [
-            'The Lion King',
-            "Life's greatest adventure is finding your place in the Circle of"
+            u'The Lion King',
+            u"Life's greatest adventure is finding your place in the Circle of"
             " Life.",
             datetime.date(1994, 6, 24),
-            'Roger Allers',
+            u'Roger Allers',
             [
-                'Matthew Broderick',
-                'Jeremy Irons',
-                'James Earl Jones',
-                'Jonathan Taylor Thomas',
-                'Nathan Lane'
+                u'Matthew Broderick',
+                u'Jeremy Irons',
+                u'James Earl Jones',
+                u'Jonathan Taylor Thomas',
+                u'Nathan Lane'
             ],
-            ['Animation','Adventure'],
-            'animation',
+            [u'Animation',u'Adventure'],
+            u'animation',
             5,
-            'lionking.jpg',
-            'Tricked into thinking he killed his father, a guilt ridden lion'
+            u'lionking.jpg',
+            u'Tricked into thinking he killed his father, a guilt ridden lion'
             ' cub flees into exile and abandons his identity as the future'
             ' King.'
         ],
         [
-            'Avatar',
-            'Enter the World.',
+            u'Avatar',
+            u'Enter the World.',
             datetime.date(2009, 12, 18),
-            'James Cameron',
+            u'James Cameron',
             [
-                'Sam Worthington',
-                'Zoe Saldana',
-                'Stephen Lang',
-                'Michelle Rodriguez',
-                'Sigourney Weaver'
+                u'Sam Worthington',
+                u'Zoe Saldana',
+                u'Stephen Lang',
+                u'Michelle Rodriguez',
+                u'Sigourney Weaver'
             ],
-            ['Action','Adventure','Sci-fi'],
-            'sci-fi',
+            [u'Action',u'Adventure',u'Sci-fi'],
+            u'sci-fi',
             5,
-            'avatar.jpg',
-            'A paraplegic marine dispatched to the moon Pandora on a unique'
+            u'avatar.jpg',
+            u'A paraplegic marine dispatched to the moon Pandora on a unique'
             ' mission becomes torn between following his orders and'
             ' protecting the world he feels is his home.'
         ],
         [
-            'Pirates of the Caribbean: The Curse of the Black Pearl',
-            'Prepare to be blown out of the water.',
+            u'Pirates of the Caribbean: The Curse of the Black Pearl',
+            u'Prepare to be blown out of the water.',
             datetime.date(2003, 7, 9),
-            'Gore Verbinski',
+            u'Gore Verbinski',
             [
-                'Johnny Depp',
-                'Geoffrey Rush',
-                'Orlando Bloom',
-                'Keira Knightley',
-                'Jack Davenport'
+                u'Johnny Depp',
+                u'Geoffrey Rush',
+                u'Orlando Bloom',
+                u'Keira Knightley',
+                u'Jack Davenport'
             ],
-            ['Action','Adventure'],
-            'action',
+            [u'Action',u'Adventure'],
+            u'action',
             5,
-            'pirates.jpg',
-            "Blacksmith Will Turner teams up with eccentric pirate \"Captain\""
+            u'pirates.jpg',
+            u"Blacksmith Will Turner teams up with eccentric pirate \"Captain\""
             " Jack Sparrow to save his love, the governor's daughter, from"
             " Jack's former pirate allies, who are now undead."
         ],
         [
-            'The Dark Knight',
-            'Why so serious?',
+            u'The Dark Knight',
+            u'Why so serious?',
             datetime.date(2008, 7, 18),
-            'Christopher Nolan',
+            u'Christopher Nolan',
             [
-                'Christian Bale',
-                'Heath Ledger',
-                'Aaron Eckhart',
-                'Michael Caine',
-                'Maggie Gyllenhaal'
+                u'Christian Bale',
+                u'Heath Ledger',
+                u'Aaron Eckhart',
+                u'Michael Caine',
+                u'Maggie Gyllenhaal'
             ],
-            ['Action','Drama'],
-            'action',
+            [u'Action',u'Drama'],
+            u'action',
             5,
-            'darkknight.jpg',
-            'Batman, Gordon and Harvey Dent are forced to deal with the chaos'
+            u'darkknight.jpg',
+            u'Batman, Gordon and Harvey Dent are forced to deal with the chaos'
             ' unleashed by an anarchist mastermind known only as the Joker, as'
             ' it drives each of them to their limits.'
         ]
     ]
+
+    visits = {
+        u'The Shining': [
+            (u'Washington D.C.', 10000, datetime.date(1980, 5, 23)),
+            (u'Buesnos Aires', 4000,datetime.date(1980, 6, 12)),
+            (u'California', 13000,datetime.date(1980, 5, 23)),
+        ],
+        u'The Dark Knight': [
+            (u'New York', 20000, datetime.date(2008, 7, 18)),
+            (u'London', 15000, datetime.date(2008, 7, 20)),
+            (u'Tokyo', 3000, datetime.date(2008, 7, 24)),
+        ],
+        u'Avatar': [
+            (u'Shangai', 6000, datetime.date(2010, 1, 5)),
+            (u'Atlanta', 3000, datetime.date(2009, 12, 18)),
+            (u'Boston', 5000, datetime.date(2009, 12, 18)),
+        ],
+    }
 
     for title, short_description, releasedate, director, cast, tags, genre, rating, cover, description in movies:
         movie = Fixture.insertOrUpdateFixture(
             Movie,
             fixture_key = title,
             values = {
-                'title':title,
+                'title': title,
                 'short_description':short_description,
                 'releasedate':releasedate,
                 'rating':rating,
@@ -226,3 +244,15 @@ def load_movie_fixtures():
                 'cover':StoredImage(storage, cover),
             },
         )
+        rep = visits.get(title, None)
+        if rep:
+            for v in rep:
+                visit = Fixture.insertOrUpdateFixture(
+                    VisitorReport,
+                    fixture_key = '%s_visit_report' % title,
+                    values = {
+                        'movie': movie,
+                        'date': v[2],
+                        'visitors': v[1],
+                    }
+                )
