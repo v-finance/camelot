@@ -206,7 +206,7 @@ class ApplicationAdmin(QtCore.QObject):
         :return: the qt stylesheet to be used for this application as a string
         or None if no stylesheet needed
         """
-        return art.read('stylesheet/navpane_office2007_blue.qss')
+        return art.read('stylesheet/navpane_office2007_black.qss')
 
     def get_translator(self):
         """Reimplement this method to add application specific translations

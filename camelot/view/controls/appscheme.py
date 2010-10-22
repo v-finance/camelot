@@ -183,7 +183,7 @@ Office2007SilverStyle = {
   'CaptionEnd' : '(218, 223, 230)',
   'CaptionDescBegin' : '(246, 247, 248)',
   'CaptionDescEnd' : '(218, 223, 230)',
-  'CaptionTextColor' : '(21, 66, 139)',
+  'CaptionTextColor' : '(0, 0, 0)',
   'ContextMenuBackColor' : '(235, 238, 250)'
 }
 
