@@ -33,11 +33,11 @@ from camelot.view.art import Icon
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls.liteboxview import LiteBoxView
 from camelot.view.model_thread import post
+from camelot.action import ActionFactory
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
-
 
 class ImageEditor(FileEditor, WideEditor):
     """Editor to view and edit image files, this is a customized
@@ -90,21 +90,38 @@ class ImageEditor(FileEditor, WideEditor):
         self.clear_button.clicked.connect(self.clear_button_clicked)
         
         copy_button = QtGui.QToolButton()
-        copy_button.setIcon(self.copy_icon.getQIcon())
-        copy_button.setToolTip(unicode(_('Copy to clipboard')))
+        copy_button.setDefaultAction( ActionFactory.copy(self, self.copy_to_clipboard ) )
         copy_button.setAutoRaise(True)
-        copy_button.clicked.connect(self.copy_to_clipboard)
 
+        paste_button = QtGui.QToolButton()
+        paste_button.setDefaultAction( ActionFactory.paste(self, self.paste_from_clipboard ) )
+        paste_button.setAutoRaise(True)
+        paste_button.setObjectName('paste')
+        
         button_layout.addStretch()
         button_layout.addWidget(self.open_button)
         button_layout.addWidget(self.clear_button)
         button_layout.addWidget(copy_button)
+        button_layout.addWidget(paste_button)
 
         self.layout.addLayout(button_layout)
         self.layout.addStretch()
         self.setLayout(self.layout)
         self.clear_image()
-
+        QtGui.QApplication.clipboard().dataChanged.connect( self.clipboard_data_changed )
+        self.clipboard_data_changed()
+        
+    @QtCore.pyqtSlot()
+    def clipboard_data_changed(self):
+        paste_button = self.findChild(QtGui.QWidget, 'paste')
+        if paste_button:
+            mime_data = QtGui.QApplication.clipboard().mimeData()
+            paste_button.setVisible( mime_data.hasImage() )
+            
+    @QtCore.pyqtSlot()
+    def paste_from_clipboard(self):
+        pass
+        
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)
         self.open_button.setEnabled(editable)
@@ -162,7 +179,6 @@ class ImageEditor(FileEditor, WideEditor):
         lite_box.show_fullscreen_image(image)
 
     def eventFilter(self, object, event):
-        from camelot.view.model_thread import post
         if not object.isWidgetType():
             return False
         if event.type() != QtCore.QEvent.MouseButtonPress:

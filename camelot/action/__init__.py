@@ -43,6 +43,32 @@ class ActionFactory(object):
     """
 
     @classmethod
+    def copy(cls, parent, slot, **kwargs):
+        default = dict(
+            text=_('Copy'),
+            slot=slot,
+            parent=parent,
+            shortcut=QtGui.QKeySequence.Copy,
+            actionicon=Icon('tango/16x16/actions/edit-copy.png'),
+            tip=_('Copy to clipboard')
+        )
+        default.update(kwargs)
+        return createAction(**default)
+
+    @classmethod
+    def paste(cls, parent, slot, **kwargs):
+        default = dict(
+            text=_('Paste'),
+            slot=slot,
+            parent=parent,
+            shortcut=QtGui.QKeySequence.Paste,
+            actionicon=Icon('tango/16x16/actions/edit-paste.png'),
+            tip=_('Paste content from clipboard')
+        )
+        default.update(kwargs)
+        return createAction(**default)
+            
+    @classmethod
     def view_first(cls, parent, slot, **kwargs):
         default = dict(
             text=_('First'),

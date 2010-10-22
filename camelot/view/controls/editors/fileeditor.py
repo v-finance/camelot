@@ -38,7 +38,6 @@ class FileEditor(CustomEditor):
     """Widget for editing File fields"""
 
     filter = 'All files (*)'
-    copy_icon = Icon('tango/16x16/actions/edit-copy.png')
 
     def __init__(self, parent=None, storage=None, **kwargs):
         CustomEditor.__init__(self, parent)
