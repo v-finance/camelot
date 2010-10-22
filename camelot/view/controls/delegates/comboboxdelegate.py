@@ -52,53 +52,7 @@ class ComboBoxDelegate(CustomDelegate):
         painter.save()
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject(index.data(Qt.DisplayRole))
-        field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
-        editable = False
         if value in (None, ValueLoading):
             value = ''
-        if field_attributes not in (None, ValueLoading):
-            editable = field_attributes.get('editable', True)
-        c = index.model().data(index, Qt.BackgroundRole)
-
-        # let us be safe Qt.BackgroundRole valid only if set
-        if c.type() == QVariant.Invalid:
-            background_color = QtGui.QBrush()
-        else:
-            background_color = QtGui.QColor(c)
-
-        rect = option.rect
-        rect = QtCore.QRect(rect.left() + 3,
-                            rect.top() + 6,
-                            rect.width() - 5,
-                            rect.height())
-
-        if (option.state & QtGui.QStyle.State_Selected):
-            painter.fillRect(option.rect, option.palette.highlight())
-            fontColor = QtGui.QColor()
-            if editable:
-                Color = option.palette.highlightedText().color()
-                fontColor.setRgb(Color.red(), Color.green(), Color.blue())
-            else:
-                fontColor.setRgb(130, 130, 130)
-        else:
-            if editable:
-                painter.fillRect(option.rect, background_color)
-                fontColor = QtGui.QColor()
-                fontColor.setRgb(0, 0, 0)
-            else:
-                painter.fillRect(option.rect, option.palette.window())
-                fontColor = QtGui.QColor()
-                fontColor.setRgb(130, 130, 130)
-
-        painter.setPen(fontColor.toRgb())
-        rect = QtCore.QRect(option.rect.left()+2,
-                            option.rect.top(),
-                            option.rect.width()-4,
-                            option.rect.height())
-        painter.drawText(rect.x(),
-                         rect.y(),
-                         rect.width(),
-                         rect.height(),
-                         Qt.AlignVCenter | Qt.AlignLeft,
-                         unicode(value))
+        self.paint_text(painter, option, index, unicode(value) )
         painter.restore()

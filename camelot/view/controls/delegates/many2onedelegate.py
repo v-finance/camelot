@@ -68,38 +68,8 @@ class Many2OneDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-
         value = index.data(Qt.DisplayRole).toString()
-
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
-
-        if( option.state & QtGui.QStyle.State_Selected ):
-            painter.fillRect(option.rect, option.palette.highlight())
-            fontColor = QtGui.QColor()
-            if self.editable:
-                Color = option.palette.highlightedText().color()
-                fontColor.setRgb(Color.red(), Color.green(), Color.blue())
-            else:
-                fontColor.setRgb(130,130,130)
-        else:
-            if self.editable:
-                painter.fillRect(option.rect, background_color)
-                fontColor = QtGui.QColor()
-                fontColor.setRgb(0,0,0)
-            else:
-                painter.fillRect(option.rect, option.palette.window())
-                fontColor = QtGui.QColor()
-                fontColor.setRgb(130,130,130)
-
-        painter.setPen(fontColor.toRgb())
-
-        painter.drawText(option.rect.x()+2,
-                         option.rect.y(),
-                         option.rect.width()-4,
-                         option.rect.height(),
-                         Qt.AlignVCenter | Qt.AlignLeft,
-                         unicode(value))
-
+        self.paint_text(painter, option, index, unicode(value) )
         painter.restore()
 
     def createEditor(self, parent, option, index):
