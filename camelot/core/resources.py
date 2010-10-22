@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2008 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -46,10 +46,11 @@ import logging
 
 logger = logging.getLogger('camelot.core.resources')
 
+
 def resource_filename(module_name, filename, settings_attribute=None):
     """Return the absolute path to a file in a directory
     if the directory for the module cannot be accessed through pkg_resources,
-    fall back to the settings attribute 
+    fall back to the settings attribute
     """
     import settings
     if sys.path[0].endswith('.zip') and not hasattr(settings, 'BOOTSTRAPPER'):
@@ -64,7 +65,8 @@ def resource_filename(module_name, filename, settings_attribute=None):
         return os.path.join(absolute_path)
     else:
         return pkg_resources.resource_filename(module_name, filename)
-    
+
+
 def resource_string(module_name, filename, settings_attribute):
     import settings
     if sys.path[0].endswith('.zip') and not hasattr(settings, 'BOOTSTRAPPER'):

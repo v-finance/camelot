@@ -42,7 +42,13 @@ def file_(name):
 
 
 def read(fname):
-    return open(file_(fname)).read()
+    import camelot
+    from camelot.core.resources import resource_string
+    return resource_string(
+        camelot.__name__,
+        'art/%s' % fname,
+        'CAMELOT_MAIN_DIRECTORY'
+    )
 
 
 class Pixmap(object):
