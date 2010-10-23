@@ -31,7 +31,6 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QItemDelegate
 from camelot.core.utils import variant_to_pyobject
 
-from camelot.view.controls import editors
 from camelot.core.utils import create_constant_function
 from camelot.view.proxy import ValueLoading
 
@@ -169,7 +168,7 @@ will be put onto a form"""
         margin_left=0, 
         margin_right=0, 
         horizontal_align=Qt.AlignLeft,
-        vertical_align=Qt.AlignTop
+        vertical_align=Qt.AlignVCenter
     ):
         """Paint unicode text into the given rect defined by option, and fill the rect with
         the background color
@@ -205,9 +204,9 @@ will be put onto a form"""
             
         painter.setPen(fontColor.toRgb())
         painter.drawText(rect.x() + 2 + margin_left,
-                         rect.y() + 5,
+                         rect.y() + 2,
                          rect.width() - 4 - (margin_left + margin_right),
-                         rect.height() - 5, # not -10, because the row might not be high enough for this
+                         rect.height() - 4, # not -10, because the row might not be high enough for this
                          vertical_align | horizontal_align,
                          text)
 

@@ -217,7 +217,16 @@ attribute to enable search.
                         attributes['default'] = property.columns[0].default
                 elif isinstance(property, orm.properties.PropertyLoader):
                     target = property._get_target().class_
-                    foreign_keys = list(property._foreign_keys)
+                    
+                    #
+                    # _foreign_keys is for sqla pre 0.6.4
+                    # 
+                    if hasattr(property, '_foreign_keys'):
+                        foreign_keys = list(property._foreign_keys)
+                    else:
+                        foreign_keys = list( property._user_defined_foreign_keys )
+                        foreign_keys.extend( list(property._calculated_foreign_keys) )
+                        
                     if property.direction == orm.interfaces.ONETOMANY:
                         attributes.update(
                             python_type = list,
