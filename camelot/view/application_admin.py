@@ -35,9 +35,7 @@ from camelot.core.utils import ugettext as _
 from camelot.core.backup import BackupMechanism
 from camelot.view import art
 
-
 _application_admin_ = []
-
 
 def get_application_admin():
     if not len(_application_admin_):
@@ -171,7 +169,7 @@ class ApplicationAdmin(QtCore.QObject):
     def get_help_url(self):
         """:return: a QUrl pointing to the index page for help"""
         from PyQt4.QtCore import QUrl
-        return QUrl('http://www.conceptive.be/projects/camelot/')
+        return QUrl('http://www.python-camelot.com/docs.html')
 
     def get_whats_new(self):
         """:return: a widget that has a show() method """
@@ -203,8 +201,16 @@ class ApplicationAdmin(QtCore.QObject):
 
     def get_stylesheet(self):
         """
-        :return: the qt stylesheet to be used for this application as a string
-        or None if no stylesheet needed
+        :return: a string with the qt stylesheet to be used for this application as a string
+        or None if no stylesheet needed.
+        
+        Camelot comes with a couple of default stylesheets :
+        
+         * stylesheet/navpane_office2007_blue.qss
+         * stylesheet/navpane_office2007_black.qss
+         * stylesheet/navpane_office2007_silver.qss
+         
+        Have a look at the default implementation to use another stylesheet.
         """
         return art.read('stylesheet/navpane_office2007_blue.qss')
 
@@ -284,12 +290,3 @@ class ApplicationAdmin(QtCore.QObject):
         wizard = RestoreWizard(self.backup_mechanism, main_window)
         wizard.exec_()
 
-    def select_database(self):
-        """Present the user with a dialog to select the database to use.
-        This function will be called when the application starts up before
-        the actual connection to the database has been made.
-
-        The default implementation does nothing and returns None.  Overwrite
-        this method for custom behaviour.
-        """
-        return None
