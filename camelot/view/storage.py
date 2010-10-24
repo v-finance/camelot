@@ -95,8 +95,8 @@ def save_stored_file(parent, stored_file):
     import os
     
     settings = QtCore.QSettings()
-    dir = settings.value('datasource').toString()
-    proposal = os.path.join(unicode(dir), unicode(stored_file.verbose_name) )
+    default_dir = settings.value('datasource').toString()
+    proposal = os.path.join(unicode(default_dir), unicode(stored_file.verbose_name) )
     
     path = QtGui.QFileDialog.getSaveFileName(
         parent, _('Save as'), proposal

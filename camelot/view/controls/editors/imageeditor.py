@@ -120,7 +120,24 @@ class ImageEditor(FileEditor, WideEditor):
             
     @QtCore.pyqtSlot()
     def paste_from_clipboard(self):
-        pass
+        """Paste an image from the clipboard into the editor"""
+        mime_data = QtGui.QApplication.clipboard().mimeData()
+        if mime_data.hasImage():
+            byte_array = QtCore.QByteArray()
+            buffer = QtCore.QBuffer( byte_array )
+            image = QtGui.QImage( mime_data.imageData() )
+            image.save( buffer, 'PNG' )
+            
+            def create_checkin( byte_array ):
+                return lambda:self.checkin_byte_array(byte_array, '.png')
+            
+            post( create_checkin( byte_array ), self.stored_file_ready )
+        
+    def checkin_byte_array(self, byte_array, suffix):
+        """Check a byte_array into the storage"""
+        import cStringIO
+        stream = cStringIO.StringIO( byte_array.data() )
+        return self.storage.checkin_stream( 'clipboard', suffix, stream)
         
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)
@@ -136,7 +153,7 @@ class ImageEditor(FileEditor, WideEditor):
         
     @QtCore.pyqtSlot()
     def copy_to_clipboard(self):
-        """Copy the chart to the clipboard"""
+        """Copy the image to the clipboard"""
         if self.value:
             post( self.value.checkout_image, self.set_image_to_clipboard )
         

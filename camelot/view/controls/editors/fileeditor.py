@@ -147,7 +147,6 @@ class FileEditor(CustomEditor):
         from camelot.view.storage import save_stored_file
         value = self.get_value()
         if value:
-
             save_stored_file(self, value)
 
     def open_button_clicked(self):
