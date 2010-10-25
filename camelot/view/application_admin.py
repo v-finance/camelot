@@ -28,7 +28,7 @@
 import logging
 logger = logging.getLogger('camelot.view.application_admin')
 
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 
 from camelot.view.model_thread import model_function
 from camelot.core.utils import ugettext as _
@@ -121,8 +121,21 @@ class ApplicationAdmin(QtCore.QObject):
     def create_main_window(self):
         """create_main_window"""
         from camelot.view.mainwindow import MainWindow
+        from PyQt4.QtCore import Qt
         mainwindow = MainWindow(self)
+        shortcut_versions = QtGui.QShortcut(
+            QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_V,
+            mainwindow
+        )
+        shortcut_versions.activated.connect( self.show_versions )
         return mainwindow
+
+    @QtCore.pyqtSlot()
+    def show_versions(self):
+        logger.debug('showing about message box with versions')
+        abtmsg = self.get_versions()
+        QtGui.QMessageBox.about(None, 'Versions', abtmsg)
+        logger.debug('about message with versions closed')
 
     def get_entities_and_queries_in_section(self, section):
         """:return: a list of tuples of (admin, query) instances related to
@@ -239,7 +252,23 @@ class ApplicationAdmin(QtCore.QObject):
                   http://www.conceptive.be
                   </p>
                   """%today.year
-
+    
+    def get_versions(self):
+        """
+        :return: html which displays the versions of used libs for development
+        """
+        import sys
+        python_version = '.'.join([str(el) for el in sys.version_info])
+        qt_version = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
+        pyqt_version = QtCore.PYQT_VERSION_STR
+        return """<em>Python version:</em> <b>%s</b><br>
+            <em>Qt version:</em> <b>%s</b><br>
+            <em>PyQt version:</em> <b>%s</b>""" % (
+                python_version,
+                qt_version,
+                pyqt_version
+            )
+    
     def get_default_field_attributes(self, type_, field):
         """Returns the default field attributes"""
         from camelot.core.view.field_attributes import \
