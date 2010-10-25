@@ -24,6 +24,7 @@ class DateTimeEditor(CustomEditor):
         self.dateedit.setEnabled(editable)
         self.dateedit.setDisplayFormat(dateformat)
         self.dateedit.setCalendarPopup(True)
+        self.dateedit.dateChanged.connect( self.editing_finished )
         layout.addWidget(self.dateedit, 1)
             
         class TimeValidator(QtGui.QValidator):
@@ -56,6 +57,8 @@ class DateTimeEditor(CustomEditor):
                         for i in range(0,24)))]
         self.timeedit.addItems(time_entries)
         self.timeedit.setValidator(TimeValidator(self))
+        self.timeedit.currentIndexChanged.connect( self.editing_finished )
+        self.timeedit.editTextChanged.connect( self.editing_finished )
     
 #    self.timeedit = QtGui.QTimeEdit(self)
 #    self.timeedit.setDisplayFormat(timeformat)
@@ -80,7 +83,14 @@ class DateTimeEditor(CustomEditor):
         layout.setMargin(0)
         layout.setSpacing(0)
         layout.addStretch(1)
-            
+        
+    @QtCore.pyqtSlot(QtCore.QDate)
+    @QtCore.pyqtSlot(QtCore.QString)
+    @QtCore.pyqtSlot(int)
+    def editing_finished(self, _arg):
+        if self.time() and self.date():
+            self.editingFinished.emit()
+        
     def get_value(self):
         time_value = self.time()
         date_value = self.date()
