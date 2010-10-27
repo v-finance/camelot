@@ -121,7 +121,6 @@ class ApplicationAdmin(QtCore.QObject):
     def create_main_window(self):
         """create_main_window"""
         from camelot.view.mainwindow import MainWindow
-        from PyQt4.QtCore import Qt
         mainwindow = MainWindow(self)
         shortcut_versions = QtGui.QShortcut(
             QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_V,
