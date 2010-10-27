@@ -31,7 +31,7 @@ class MergePage(ProgressPage):
         self._selection_getter = selection_getter
         
     def run(self):
-        from jinja import Environment, FileSystemLoader
+        from jinja2 import Environment, FileSystemLoader
         import tempfile
         import datetime
         objects = list(self._selection_getter())

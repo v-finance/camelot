@@ -407,7 +407,7 @@ class FormView(AbstractView):
     @model_function
     def toHtml(self):
         """generates html of the form"""
-        from jinja import Environment
+        from jinja2 import Environment
 
         def to_html(d = u''):
             """Jinja 1 filter to convert field values to their default html

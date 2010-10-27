@@ -316,7 +316,7 @@ by default returns a context that contains obj"""
 :param obj: the object displayed in the form
 :return: the jinja environment to be used to render the xml document, by default returns an
 empty environment"""
-        from jinja import Environment
+        from jinja2 import Environment
         e = Environment()
         return e
     

@@ -28,7 +28,7 @@ setup(
     install_requires = ['SQLAlchemy>=0.6.4',
                         'Elixir>=0.7.1',
                         'sqlalchemy-migrate>=0.6.0',
-                        'Jinja>=1.2',
+                        'Jinja2>=2.5.5',
                         'chardet>=1.0.1', 
                         'xlwt>=0.7.2', 
                         'xlrd>=0.5.2', ],

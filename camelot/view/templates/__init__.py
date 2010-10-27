@@ -1,4 +1,4 @@
-from jinja import FileSystemLoader
+from jinja2 import FileSystemLoader
 from camelot.core.resources import resource_filename
 
 import camelot.view

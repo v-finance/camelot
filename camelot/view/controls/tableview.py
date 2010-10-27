@@ -589,7 +589,7 @@ class TableView( AbstractView  ):
           'columns': [field_attributes['name'] for _field, field_attributes in self.admin.get_columns()],
         }
         from camelot.view.templates import loader
-        from jinja import Environment
+        from jinja2 import Environment
         env = Environment( loader = loader )
         tp = env.get_template( 'table_view.html' )
         return tp.render( context )
