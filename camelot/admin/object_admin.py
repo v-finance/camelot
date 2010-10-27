@@ -52,7 +52,7 @@ class FieldAttributesList(list):
 DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip', 'color', 'background_color', 
                                                 'editable', 'choices', 
                                                 'prefix', 'suffix', 'arrow',
-                                                'new_message'])
+                                                'new_message', 'default'])
 
 
 class ObjectAdmin(object):
@@ -541,8 +541,59 @@ The QWidget class to be used when a table view is needed
         
         return form
 
+    # simply copied from EntityAdmin
     def set_defaults(self, object_instance, include_nullable_fields=True):
-        pass
+        """Set the defaults of an object
+        :param include_nullable_fields: also set defaults for nullable fields, depending
+        on the context, this should be set to False to allow the user to set the field
+        to None
+        """
+        from sqlalchemy.schema import ColumnDefault
+        for field, attributes in self.get_fields():
+            has_default = False
+            try:
+                default = attributes['default']
+                has_default = True
+            except KeyError:
+                pass
+            if has_default:
+                #
+                # prevent the setting of a default value when one has been
+                # set allready
+                #
+                value = attributes['getter'](object_instance)
+                if value!=None: # False is a legitimate value for Booleans
+                    continue
+                if isinstance(default, ColumnDefault):
+                    default_value = default.execute()
+                elif callable(default):
+                    import inspect
+                    args, _varargs, _kwargs, _defs = \
+                        inspect.getargspec(default)
+                    if len(args):
+                        default_value = default(object_instance)
+                    else:
+                        default_value = default()
+                else:
+                    default_value = default
+                logger.debug(
+                    'set default for %s to %s' % (
+                        field,
+                        unicode(default_value)
+                    )
+                )
+                try:
+                    setattr(object_instance, field, default_value)
+                except AttributeError, exc:
+                    logger.error(
+                        'Programming Error : could not set'
+                        ' attribute %s to %s on %s' % (
+                            field,
+                            default_value,
+                            object_instance.__class__.__name__
+                        ),
+                        exc_info=exc
+                    )
 
     @gui_function
     def create_object_form_view(self, title, object_getter, parent=None):
