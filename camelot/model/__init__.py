@@ -2,6 +2,8 @@
 import elixir
 from elixir import *
 from sqlalchemy import *
+
+# begin session setup
 from sqlalchemy.orm import scoped_session, create_session
 
 elixir.session = scoped_session( create_session )
@@ -15,6 +17,8 @@ __metadata__ = metadata
 __metadata__.bind = settings.ENGINE()
 __metadata__.autoflush = False
 __metadata__.transactional = False
+
+# end session setup
 
 import authentication
 import fixture

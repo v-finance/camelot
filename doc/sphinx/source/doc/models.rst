@@ -190,3 +190,26 @@ model has been completely setup.
 
 .. literalinclude:: ../../../../camelot/empty_project/settings.py
    :pyobject: setup_model
+   
+Working without the default model
+=================================
+
+Camelot comes with a default model for Persons, Organizations, History tracking, etc.
+
+You might want to turn this off, here's how to do so :
+
+1. In your settings.py, remove the line 'import camelot.model' and the line
+   'from camelot.model.authentication import updateLastLogin', this will make sure
+   no tables are created for the default Camelot model.  Tables are only created for
+   the models that have been imported before the call to 'setup_all()'
+  
+.. literalinclude:: ../../../../camelot/empty_project/settings.py
+   :pyobject: setup_model
+    
+2. Have a look in 'camelot/model/__init__.py' and copy the lines that do
+   the initialization of the elixir session and metadata to the top of your
+   own model file, imported first in the 'setup_model()' function.
+
+.. literalinclude:: ../../../../camelot/model/__init__.py
+   :start-after: begin session setup
+   :end-before: end session setup
