@@ -194,7 +194,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         columns that will be cached in the proxy. This function will be called
         inside the model thread.
         """
-        QtCore.QAbstractTableModel.__init__(self)
+        super(CollectionProxy, self).__init__()
         from camelot.view.model_thread import get_model_thread
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))

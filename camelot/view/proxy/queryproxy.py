@@ -49,8 +49,8 @@ class QueryTableProxy(CollectionProxy):
         #rows appended to the table which have not yet been flushed to the
         #database, and as such cannot be a result of the query
         self._appended_rows = []
-        CollectionProxy.__init__(self, admin, lambda: [],
-                                 columns_getter, max_number_of_rows=max_number_of_rows, edits=None)
+        super(QueryTableProxy, self).__init__(admin, lambda: [],
+                                              columns_getter, max_number_of_rows=max_number_of_rows, edits=None)
 
     def get_query_getter(self):
         if not self._sort_decorator or self._query_getter==None:

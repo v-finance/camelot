@@ -88,6 +88,12 @@ If this isn't given, Camelot will use verbose_name + "s"
 
 a list with the fields that should be displayed in a table view
 
+.. attribute:: list_columns_frozen
+
+the number of columns on the left of the tableview that should be frozen
+(don't dissapear when the user uses the horizontal scroll bar), defaults
+to zero
+
 .. attribute:: form_display
 
 a list with the fields that should be displayed in a form view, defaults to
@@ -185,6 +191,7 @@ The QWidget class to be used when a table view is needed
     verbose_name = None
     verbose_name_plural = None
     list_display = []
+    list_columns_frozen = 0
     validator = ObjectValidator
     model = CollectionProxy
     fields = []

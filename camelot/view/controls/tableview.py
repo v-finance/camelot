@@ -46,8 +46,25 @@ from camelot.core.utils import ugettext as _
 
 from search import SimpleSearchControl
 
-
-class TableWidget( QtGui.QTableView):
+class FrozenTableWidget( QtGui.QTableView ):
+    """A table widget to be used as the frozen table widget inside a table
+    widget."""
+    
+    def __init__(self, parent, columns_frozen):
+        super(FrozenTableWidget, self).__init__(parent)
+        self._columns_frozen = columns_frozen
+        
+    @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)
+    def currentChanged(self, current, previous):
+        """When the current index has changed, prevent it to jump to
+        a column that is not frozen"""
+        if current.column() >= self._columns_frozen:
+            current = self.model().index( current.row(), -1 )
+        if previous.column() >= self._columns_frozen:
+            previous = self.model().index( previous.row(), -1 )
+        super(FrozenTableWidget, self).currentChanged(current, previous)
+        
+class TableWidget( QtGui.QTableView ):
     """A widget displaying a table, to be used within a TableView
 
 .. attribute:: margin
@@ -64,7 +81,10 @@ the number of lines of text that should be viewable in a single row.
     margin = 5
     lines_per_row = 1
     
-    def __init__( self, parent = None ):
+    def __init__( self, parent = None, columns_frozen = 0 ):
+        """
+        :param columns_frozen: the number of columns on the left that don't scroll
+        """
         QtGui.QTableView.__init__( self, parent )
         logger.debug( 'create TableWidget' )
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
@@ -77,8 +97,88 @@ the number of lines of text that should be viewable in a single row.
         line_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing()
         self._minimal_row_height = line_height * self.lines_per_row + 2*self.margin
         self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
+        self.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
         self.horizontalHeader().sectionClicked.connect( 
             self.horizontal_section_clicked )
+        self._columns_frozen = columns_frozen
+        if columns_frozen:
+            frozen_table_view = FrozenTableWidget(self, columns_frozen)
+            frozen_table_view.setObjectName( 'frozen_table_view' )
+            frozen_table_view.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
+            frozen_table_view.verticalHeader().hide()
+            frozen_table_view.horizontalHeader().setResizeMode(QtGui.QHeaderView.Fixed)
+            frozen_table_view.horizontalHeader().sectionClicked.connect( 
+                self.horizontal_section_clicked )
+            self.horizontalHeader().sectionResized.connect( self._update_section_width )
+            self.verticalHeader().sectionResized.connect( self._update_section_height )
+            frozen_table_view.verticalScrollBar().valueChanged.connect( self.verticalScrollBar().setValue )
+            self.verticalScrollBar().valueChanged.connect( frozen_table_view.verticalScrollBar().setValue )
+            self.viewport().stackUnder(frozen_table_view)
+            frozen_table_view.setStyleSheet("QTableView { border: none;}")
+            frozen_table_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            frozen_table_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            frozen_table_view.show()
+            frozen_table_view.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+
+    @QtCore.pyqtSlot(int, int, int)
+    def _update_section_width(self, logical_index, _int, new_size):
+        frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
+        if logical_index<self._columns_frozen and frozen_table_view:
+            frozen_table_view.setColumnWidth( logical_index, new_size)
+            self._update_frozen_table()
+    
+    @QtCore.pyqtSlot(int, int, int)
+    def _update_section_height(self, logical_index, _int, new_size):
+        frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
+        if frozen_table_view:
+            frozen_table_view.setRowHeight(logical_index, new_size)
+
+    def setItemDelegate(self, item_delegate):
+        super(TableWidget, self).setItemDelegate(item_delegate)
+        frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
+        if frozen_table_view:
+            frozen_table_view.setItemDelegate(item_delegate)
+            
+    def resizeEvent(self, event):
+        super(TableWidget, self).resizeEvent(event)
+        self._update_frozen_table()
+        
+    def moveCursor(self, cursorAction, modifiers):
+        current = super(TableWidget, self).moveCursor(cursorAction, modifiers)
+        frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
+        if frozen_table_view:
+            frozen_width = 0
+            last_frozen =  min(self._columns_frozen, self.model().columnCount())
+            for column in range(0, last_frozen):
+                frozen_width += self.columnWidth(column)            
+            if cursorAction == QtGui.QAbstractItemView.MoveLeft and current.column() >= last_frozen and \
+               self.visualRect(current).topLeft().x() < frozen_width:
+                new_value = self.horizontalScrollBar().value() + self.visualRect(current).topLeft().x() - frozen_width
+                self.horizontalScrollBar().setValue(new_value)
+        return current
+
+    def scrollTo(self, index, hint):
+        if(index.column()>0):
+            super(TableWidget, self).scrollTo(index, hint)
+        
+    @QtCore.pyqtSlot()
+    def _update_frozen_table(self):
+        frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
+        if frozen_table_view:
+            frozen_table_view.setSelectionModel(self.selectionModel())
+            last_frozen =  min(self._columns_frozen, self.model().columnCount())
+            frozen_width = 0
+            for column in range(0, last_frozen):
+                frozen_width += self.columnWidth( column )
+                frozen_table_view.setColumnWidth( column, 
+                                                  self.columnWidth(column) )
+            for column in range(last_frozen, self.model().columnCount()):
+                frozen_table_view.setColumnHidden(column, True)
+            frozen_table_view.setGeometry( self.verticalHeader().width() + self.frameWidth(),
+                                           self.frameWidth(),
+                                           frozen_width,
+                                           self.viewport().height() + self.horizontalHeader().height() )
 
     @QtCore.pyqtSlot( int )
     def horizontal_section_clicked( self, logical_index ):
@@ -96,6 +196,11 @@ the number of lines of text that should be viewable in a single row.
 
     def setModel( self, model ):
         QtGui.QTableView.setModel( self, model )
+        frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
+        if frozen_table_view:
+            model.layoutChanged.connect( self._update_frozen_table )
+            frozen_table_view.setModel( model )
+            self._update_frozen_table()
         register.register( model, self )
         self.selectionModel().currentChanged.connect( self.activated )
 
@@ -366,7 +471,7 @@ class TableView( AbstractView  ):
             self.table.deleteLater()
             self._table_model.deleteLater()
         splitter = self.findChild( QtGui.QWidget, 'splitter' )
-        self.table = self.TableWidget( splitter )
+        self.table = self.TableWidget( splitter, self.admin.list_columns_frozen )
         self._table_model = self.create_table_model( admin )
         self.table.setModel( self._table_model )
         self.table.verticalHeader().sectionClicked.connect( self.sectionClicked )
