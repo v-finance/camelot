@@ -14,9 +14,9 @@ from camelot.view.controls.exception import register_exception
 class NoThreadModelThread( AbstractModelThread ):
 
     def __init__(self, setup_thread = setup_model ):
-        super(NoThreadModelThread, self).__init__()
+        super(NoThreadModelThread, self).__init__( setup_thread = setup_model )
         self.responses = []
-        AbstractModelThread.__init__(self, setup_thread = setup_model )
+        self.start()
 
     def start(self):
         try:
