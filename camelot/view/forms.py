@@ -403,8 +403,15 @@ class TabForm( Form ):
         from PyQt4 import QtGui
         widget = QtGui.QTabWidget( parent )
         widget.setTabPosition(getattr(QtGui.QTabWidget, self.position))
+        vertical_expanding = False
         for tab_label, tab_form in self.tabs:
-            widget.addTab( tab_form.render( widgets, widget ), unicode(tab_label) )
+            tab_form_widget = tab_form.render( widgets, widget )
+            size_policy = tab_form_widget.sizePolicy()
+            if size_policy.verticalPolicy()==QtGui.QSizePolicy.Expanding:
+                vertical_expanding = True
+            widget.addTab( tab_form_widget, unicode(tab_label) )
+        if vertical_expanding:
+            widget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         return widget
 
 

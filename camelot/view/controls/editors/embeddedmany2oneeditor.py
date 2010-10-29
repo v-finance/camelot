@@ -34,7 +34,6 @@ from camelot.view.model_thread import post
 from camelot.view.proxy import ValueLoading
 from camelot.core.utils import CollectionGetterFromObjectGetter
 
-
 class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
     """Widget for editing a many 2 one relation a a form embedded in another
   form.
@@ -93,6 +92,7 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
 
     def update_form(self, update_form_and_propagate ):
         from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.view.controls.formview import FormWidget
 
         update_form, propagate, current_entity_admin = update_form_and_propagate
 
@@ -107,7 +107,9 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
                 self.model = CollectionProxy( current_entity_admin,
                                               CollectionGetterFromObjectGetter( self.entity_instance_getter ),
                                               current_entity_admin.get_fields )
-                self.form = current_entity_admin.create_form_view( '', self.model, 0, self )
+                self.form = FormWidget( current_entity_admin )
+                self.form.set_model( self.model )
+                #self.form = current_entity_admin.create_form_view( '', self.model, 0, self )
                 self.layout.addWidget( self.form )
             else:
                 # We can reuse the form, just update the content of the collection

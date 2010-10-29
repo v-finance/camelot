@@ -30,16 +30,16 @@
 from camelot.core.utils import ugettext as _
 
 def register_exception(logger, text, exception):
-    """Log an exception
-    :exception_info: exception information in a user readable format, to be used when
-    displaying an exception message box"""
+    """Log an exception and return a tuple of strings with exception information in a 
+    user readable format, to be used when displaying an exception message box
+    :return: (exception_name, exception_traceback) """
     logger.error( text, exc_info = exception )
     import traceback, cStringIO
     sio = cStringIO.StringIO()
     traceback.print_exc(file=sio)
     traceback_print = sio.getvalue()
     sio.close()
-    return (exception, traceback_print)
+    return ( unicode(exception), traceback_print)
     
 def model_thread_exception_message_box(exception_info, title=None, text=None):
     """Display an exception that occurred in the model thread in a message box,

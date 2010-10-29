@@ -61,8 +61,8 @@ class ContextMenuAction(QtGui.QAction):
         else:
             self.setIcon(self.default_icon.getQIcon())
 
-
 class FormWidget(QtGui.QWidget):
+    """A form widget comes inside a form view or inside an embedded manytoone editor"""
 
     changed_signal = QtCore.pyqtSignal()
 
@@ -158,10 +158,8 @@ class FormWidget(QtGui.QWidget):
                 delegates = {}
                 for field_name, attributes in fields.items():
                     delegates[field_name] = attributes['delegate'](**attributes)
-                print delegates
                 obj = self._model._get_object(row)
                 document = self._form.render_ooxml(obj, delegates)
-                print ' - '.join(self._form.render_ooxml(obj, delegates))
                 open_stream_in_word( document )
 
             return ooxml_export

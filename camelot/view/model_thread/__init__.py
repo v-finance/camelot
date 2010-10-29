@@ -94,9 +94,23 @@ class AbstractModelThread(QtCore.QThread):
 
     This class ensures the gui thread doesn't block when the model needs
     time to complete tasks by providing asynchronous communication between
-    the model thread and the gui thread"""
+    the model thread and the gui thread
+    
+    The Model thread class provides a number of signals :
+    
+    *thread_busy_signal*
+    
+    indicates if the model thread is working in the background
+    
+    *setup_exception_signal*
+    
+    this signal is emitted when there was an exception setting up the model
+    thread, eg no connection to the database could be made.  this exception
+    is mostly fatal for the application.
+    """
 
     thread_busy_signal = QtCore.pyqtSignal(bool)
+    setup_exception_signal = QtCore.pyqtSignal(str, str)
 
     def __init__(self, setup_thread=setup_model):
         """:param setup_thread: function to be called at startup of the thread

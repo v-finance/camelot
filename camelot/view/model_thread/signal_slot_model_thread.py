@@ -4,12 +4,14 @@ Created on Sep 9, 2009
 @author: tw55413
 '''
 import logging
+import sys
 logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 from PyQt4 import QtCore
 
 from camelot.view.model_thread import AbstractModelThread, gui_function, setup_model
 from camelot.core.threading import synchronized
+from camelot.view.controls.exception import register_exception
 
 class Task(QtCore.QObject):
 
@@ -32,16 +34,13 @@ class Task(QtCore.QObject):
             result = self._request()
             self.finished.emit( result )
         except Exception, e:
-            logger.error( 'exception caught in model thread while executing %s'%self._name, exc_info = e )
-            import traceback, cStringIO
-            sio = cStringIO.StringIO()
-            traceback.print_exc(file=sio)
-            traceback_print = sio.getvalue()
-            sio.close()
-            exception_info = (e, traceback_print)
-            self.exception.emit( exception_info )
+            name, trace = register_exception(logger, 'exception caught in model thread while executing %s'%self._name, e)
+            self.exception.emit( (name, trace) )
+            # the stack might contain references to QT objects which could be kept alive this way
+            sys.exc_clear()
         except:
             logger.error( 'unhandled exception in model thread' )
+            sys.exc_clear()
 
 class TaskHandler(QtCore.QObject):
     """A task handler is an object that handles tasks that appear in a queue,
@@ -115,7 +114,8 @@ class SignalSlotModelThread( AbstractModelThread ):
         try:
             self._setup_thread()
         except Exception, e:
-            self.logger.error('thread setup incomplete', exc_info=e)
+            name, trace = register_exception(logger, 'Exception when setting up the SignalSlotModelThread', e)
+            self.setup_exception_signal.emit(name, trace)
         self._thread_busy(False)
         self.logger.debug('thread setup finished')
         # Some tasks might have been posted before the signals were connected to the task handler,

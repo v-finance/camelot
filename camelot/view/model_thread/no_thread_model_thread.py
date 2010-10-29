@@ -9,6 +9,7 @@ logger = logging.getLogger('camelot.view.model_thread.no_thread_model_thread')
 
 from PyQt4 import QtCore
 from signal_slot_model_thread import AbstractModelThread, setup_model
+from camelot.view.controls.exception import register_exception
 
 class NoThreadModelThread( AbstractModelThread ):
 
@@ -16,10 +17,13 @@ class NoThreadModelThread( AbstractModelThread ):
         super(NoThreadModelThread, self).__init__()
         self.responses = []
         AbstractModelThread.__init__(self, setup_thread = setup_model )
-        self._setup_thread()
 
     def start(self):
-        pass
+        try:
+            self._setup_thread()
+        except Exception, e:
+            name, trace = register_exception(logger, 'Exception when setting up the NoThreadModelThread', e)
+            self.setup_exception_signal.emit(name, trace)
 
     def post( self, request, response = None, exception = None ):
         try:

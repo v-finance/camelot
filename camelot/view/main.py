@@ -1,8 +1,8 @@
 """Main function, to be called to start the GUI interface"""
-from PyQt4.QtCore import QObject
+from PyQt4 import QtCore
 from camelot.core.utils import ugettext as _
 
-class Application(QObject):
+class Application(QtCore.QObject):
     """The camelot application.  This class will take care of the order of
     initialization of various stuff needed to get the application up and
     running, each of its methods will be called in subsequent order,
@@ -15,8 +15,16 @@ class Application(QObject):
     def __init__(self, application_admin):
         """:param application_admin: a subclass of camelot.admin.application_admin.ApplicationAdmin
         customized to your app"""
+        super(Application, self).__init__()
         self.application_admin = application_admin
 
+    @QtCore.pyqtSlot(str, str)
+    def setup_exception(self, exc_name, exc_trace):
+        """This slot will be called when the setup of the model thread fails, eg
+        in case of database connection failure"""
+        from camelot.view.controls.exception import model_thread_exception_message_box
+        model_thread_exception_message_box( (exc_name, exc_trace) )
+    
     def show_splashscreen(self):
         """:return: the splash window"""
         from PyQt4 import QtGui
@@ -64,7 +72,9 @@ class Application(QObject):
         from camelot.view.remote_signals import construct_signal_handler
         construct_model_thread()
         construct_signal_handler()
-        get_model_thread().start()
+        mt = get_model_thread()
+        mt.setup_exception_signal.connect( self.setup_exception )
+        mt.start()
 
     def load_translations(self, application):
         """Fill the QApplication with the needed translations
