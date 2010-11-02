@@ -142,15 +142,22 @@ will be put onto a form"""
         field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
-        index.model().data(index, Qt.ToolTipRole)
-        tip = variant_to_pyobject(index.model().data(index, Qt.ToolTipRole))
-        if tip not in (None, ValueLoading):
-            editor.setToolTip(unicode(tip))
-        else:
-            editor.setToolTip('')
         background_color = variant_to_pyobject(index.model().data(index, Qt.BackgroundRole))
         if background_color not in (None, ValueLoading):
             editor.set_background_color(background_color)
+        index.model().data(index, Qt.ToolTipRole)
+        tip = variant_to_pyobject(index.model().data(index, Qt.ToolTipRole))
+        if tip not in (None, ValueLoading):
+            # create indication that a tip is set
+            if editor.layout() and editor.toolTip():
+                from camelot.view.art import Icon
+                iconlabel = QtGui.QLabel()
+                iconlabel.setPixmap(Icon('tango/16x16/apps/help-browser.png').getQPixmap())
+                editor.layout().addWidget (iconlabel)
+                editor.setCursor(QtGui.QCursor(Qt.WhatsThisCursor))
+            editor.setToolTip(unicode(tip))
+        else:
+            editor.setToolTip('')
 
     def setModelData(self, editor, model, index):
         if isinstance(model, QtGui.QStandardItemModel):
