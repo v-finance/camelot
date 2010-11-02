@@ -27,6 +27,7 @@
 
 import logging
 import datetime
+import settings
 LOGGER = logging.getLogger('camelot.view.export.excel')
 
 from camelot.view.controls import delegates
@@ -39,17 +40,36 @@ titleFont = Font()              # initializing titleFont Object
 headerFont = Font()             # initializing headerFont Object
 cellFont = Font()               # initializing cellFont Object
 
-titleFont.name = 'Arial'        # Setting Fonts Name
-headerFont.name = 'Arial'
-cellFont.name = 'Arial'
+# when you need a specific font or size, declare this in your settings file
+fontname = 'Arial'
+if hasattr(settings, 'EXPORT_EXCEL_FONT'):
+    fontname = settings.EXPORT_EXCEL_FONT
+titleFont.name = fontname        # Setting Fonts Name
+headerFont.name = fontname
+cellFont.name = fontname
 
-titleFont.bold = True           # Setting title font to bold
-headerFont.bold = True          # Setting column header font to bold
-cellFont.bold = False           # Setting cell font to bold
+title_bold = True
+header_bold = True
+cell_bold = False
+if hasattr(settings, 'EXPORT_EXCEL_TITLE_BOLD'):
+    title_bold = settings.EXPORT_EXCEL_TITLE_BOLD
+if hasattr(settings, 'EXPORT_EXCEL_HEADER_BOLD'):
+    header_bold = settings.EXPORT_EXCEL_HEADER_BOLD
+if hasattr(settings, 'EXPORT_EXCEL_CELL_BOLD'):
+    cell_bold = settings.EXPORT_EXCEL_CELL_BOLD
+titleFont.bold = title_bold           # Setting title font to bold
+headerFont.bold = header_bold          # Setting column header font to bold
+cellFont.bold = cell_bold           # Setting cell font to bold
 
-titleFont.height = 240          # 12*20 = 240 Font Size
-headerFont.height = 200         # 10*20 = 200 Font Size
-cellFont.height = 200           # 10*20 = 200 Font Size
+titlesize = 240 # 12*20 = 240 Font Size
+fontsize = 200# 10*20 = 200 Font Size
+if hasattr(settings, 'EXPORT_EXCEL_TITLE_SIZE'):
+    titlesize = settings.EXPORT_EXCEL_TITLE_SIZE
+if hasattr(settings, 'EXPORT_EXCEL_FONT_SIZE'):
+    fontsize = settings.EXPORT_EXCEL_FONT_SIZE
+titleFont.height = titlesize          
+headerFont.height = fontsize         
+cellFont.height = fontsize
 
 brdLeft = Borders()                # Defining border which is around header
 brdLeft.left = 0x01
