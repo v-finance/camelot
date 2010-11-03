@@ -148,7 +148,6 @@ will be put onto a form"""
             editor.set_background_color(background_color)
         tip = variant_to_pyobject(index.model().data(index, Qt.ToolTipRole))
         if tip not in (None, ValueLoading):
-            editor.setCursor(QtGui.QCursor(Qt.WhatsThisCursor))
             editor.setToolTip(unicode(tip))
         else:
             editor.setToolTip('')
