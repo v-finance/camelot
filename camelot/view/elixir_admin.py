@@ -525,6 +525,14 @@ attribute to enable search.
         else:
             session.flush( [entity_instance] )
 
+    @model_function
+    def refresh(self, entity_instance):
+        """Undo the pending changes to the backend and restore the original
+        state"""
+        from sqlalchemy.orm.session import Session
+        session = Session.object_session( entity_instance )
+        if session:
+            session.refresh( entity_instance )
 
     @model_function
     def copy(self, entity_instance):

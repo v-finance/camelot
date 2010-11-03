@@ -35,7 +35,6 @@ returned and an update signal is emitted when the correct data is available.
 import logging
 logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 
-import elixir
 import datetime
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
@@ -281,7 +280,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             @model_function
             def refresh_entity():
                 o = self._get_object( row )
-                elixir.session.refresh( o )
+                self.admin.refresh( o )
                 return row, o
 
             return refresh_entity
@@ -609,7 +608,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 return
 
             old_value = getattr( o, attribute )
-            changed = ( new_value != old_value )
+            #
+            # When the value is a related object, the related object might have changed
+            #
+            changed = ( new_value != old_value ) or ( 
+              field_attributes.get('embedded', False) and \
+              field_attributes.get('target', False))
             #
             # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
             # old and new value to know if the object was changed, so we'll
@@ -666,7 +670,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                                                        authentication = getCurrentAuthentication() )
 
                                 try:
-                                    elixir.session.flush( [history] )
+                                    history.flush()
                                 except DatabaseError, e:
                                     self.logger.error( 'Programming Error, could not flush history', exc_info = e )
                 # update the cache

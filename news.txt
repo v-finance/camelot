@@ -23,6 +23,8 @@ Trunk
  * Move from PyExcelerator to xlwt and xlrd
  
  * Move to new style signal/slot connections
+ 
+ * Support for frozen columns in a table view
    
 Release 10.07.02
 ----------------

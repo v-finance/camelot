@@ -46,6 +46,8 @@ class ObjectValidator(QtCore.QObject):
 
     def __init__(self, admin, model, initial_validation=False):
         """
+        :param mode: a collection proxy the validator should inspect, or None if only the objectValidity method is going
+        to get used.
         :param verifiy_initial_validity: do an inital check to see if all rows in a model are valid, defaults to False,
         since this might take a lot of time on large collections.
         """
@@ -53,8 +55,9 @@ class ObjectValidator(QtCore.QObject):
         self.admin = admin
         self.model = model
         self.message_cache = Fifo(10)
-        model.dataChanged.connect( self.data_changed )
-        model.layoutChanged.connect( self.layout_changed )
+        if model:
+            model.dataChanged.connect( self.data_changed )
+            model.layoutChanged.connect( self.layout_changed )
         self._invalid_rows = set()
 
         if initial_validation:
@@ -97,6 +100,16 @@ class ObjectValidator(QtCore.QObject):
         for field, attributes in fields_and_attributes.items():
             # if the field was not editable, don't waste any time
             if attributes['editable']:
+                #
+                # If the field embeds another object, that object should be valid as well
+                #
+                if attributes.get('embedded', False) and attributes.get('target', False):
+                    value = getattr(entity_instance, field)
+                    if value:
+                        target_admin = self.admin.get_related_entity_admin(attributes['target'])
+                        target_validator = target_admin.create_validator(None)
+                        messages.extend( target_validator.objectValidity(value) )
+                        continue
                 # if the field, is nullable, don't waste time getting its value
                 # @todo: check if field is a primary key instead of checking
                 # whether the name is id, but this should only happen in the entity validator
@@ -169,7 +182,6 @@ class ObjectValidator(QtCore.QObject):
         continue to edit the row until it is valid.
         """
         from PyQt4 import QtGui
-        from camelot.core.utils import ugettext as _
         return QtGui.QMessageBox(
             QtGui.QMessageBox.Warning,
             _('Invalid form'),

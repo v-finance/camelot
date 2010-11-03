@@ -14,10 +14,24 @@ From source
 ===========
 
 When installing Camelot from source, you need to make sure all dependencies
-like `PyQT <http://www.riverbankcomputing.co.uk/>`_, 
-`SQLAlchemy <http://www.sqlalchemy.org>`_ and `Elixir <http://elixir.ematia.de/>`_ are installed
-and available in your **PYTHONPATH**.
+are installed and available in your **PYTHONPATH**.
+ 
+Dependencies
+------------
 
+Notice that bugs in QT 4.6 and PyQt 4.7 may cause a Camelot application
+to crash, so newer versions of those libraries are required.
+
+ * QT 4.7
+ * PyQt 4.8 `PyQt Website <http://www.riverbankcomputing.co.uk/>`_
+ * SQLAlchemy 0.6.5 `SQLAlchemy Website <http://www.sqlalchemy.org>`_
+ * Elixir 0.7.1 `Elixir Website<http://elixir.ematia.de/>`_
+ * sqlalchemy-migrate 0.6.0
+ * Jinja2 2.5.5
+ * chardet 1.0.1 
+ * xlwt 0.7.2 
+ * xlrd 0.5.2
+                        
 Releases
 --------
 

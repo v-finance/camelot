@@ -28,6 +28,8 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.editors.embeddedmany2oneeditor')
 
+from PyQt4 import QtCore
+
 from customeditor import CustomEditor, QtGui
 from wideeditor import WideEditor
 from camelot.view.model_thread import post
@@ -90,6 +92,12 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
 
         post( set_entity_instance, self.update_form )
 
+    @QtCore.pyqtSlot( int )
+    def _validity_changed(self, _row):
+        """If the data of the embedded model has changed, the validity
+        of the parent model might change as well"""
+        self.editingFinished.emit()
+        
     def update_form(self, update_form_and_propagate ):
         from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.view.controls.formview import FormWidget
@@ -107,6 +115,7 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
                 self.model = CollectionProxy( current_entity_admin,
                                               CollectionGetterFromObjectGetter( self.entity_instance_getter ),
                                               current_entity_admin.get_fields )
+                self.model.get_validator().validity_changed_signal.connect( self._validity_changed )
                 self.form = FormWidget( current_entity_admin )
                 self.form.set_model( self.model )
                 #self.form = current_entity_admin.create_form_view( '', self.model, 0, self )

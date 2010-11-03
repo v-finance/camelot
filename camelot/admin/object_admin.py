@@ -781,6 +781,12 @@ The QWidget class to be used when a table view is needed
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
         pass
+    
+    @model_function
+    def refresh(self, entity_instance):
+        """Undu the pending changes to the backend and restore the original
+        state"""
+        pass
 
     @model_function
     def add(self, entity_instance):

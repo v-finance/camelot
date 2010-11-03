@@ -60,7 +60,6 @@ from camelot.admin.form_action import FormActionFromModelFunction
 import datetime
 import threading
 
-
 _current_authentication_ = threading.local()
 
 def end_of_times():
@@ -86,6 +85,62 @@ def updateLastLogin():
     authentication.last_login = datetime.datetime.now()
     session.flush( [authentication] )
 
+class GeographicBoundary( Entity ):
+    """The base class for Country and City"""
+    using_options( tablename = 'geographic_boundary' )
+    code = Field( Unicode( 10 ) )
+    name = Field( Unicode( 40 ), required = True )
+
+    @ColumnProperty
+    def full_name( self ):
+        return self.code + ' ' + self.name
+        
+    def __unicode__( self ):
+        return u'%s %s' % ( self.code, self.name )
+
+@documented_entity()
+class Country( GeographicBoundary ):
+    """A subclass of GeographicBoundary used to store the name and the
+    ISO code of a country"""
+    using_options( tablename = 'geographic_boundary_country', inheritance = 'multi' )
+
+    @classmethod
+    def getOrCreate( cls, code, name ):
+        country = Country.query.filter_by( code = code ).first()
+        if not country:
+            from elixir import session
+            country = Country( code = code, name = name )
+            session.flush( [country] )
+        return country
+
+    class Admin( EntityAdmin ):
+        form_size = ( 700, 150 )
+        verbose_name = _('Country')
+        verbose_name_plural = _('Countries')
+        list_display = ['name', 'code']
+
+@documented_entity()
+class City( GeographicBoundary ):
+    """A subclass of GeographicBoundary used to store the name, the postal code
+    and the Country of a city"""
+    using_options( tablename = 'geographic_boundary_city', inheritance = 'multi' )
+    country = ManyToOne( 'Country', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+
+    @classmethod
+    def getOrCreate( cls, country, code, name ):
+        city = City.query.filter_by( code = code, country = country ).first()
+        if not city:
+            from elixir import session
+            city = City( code = code, name = name, country = country )
+            session.flush( [city] )
+        return city
+
+    class Admin( EntityAdmin ):
+        verbose_name = _('City')
+        verbose_name_plural = _('Cities')
+        form_size = ( 700, 150 )
+        list_display = ['code', 'name', 'country']
+        
 class PartyRelationship( Entity ):
     using_options( tablename = 'party_relationship' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
@@ -230,19 +285,57 @@ class SharedShareholder( PartyRelationship ):
 
 class AddressAdmin( EntityAdmin ):
     """Admin with only the Address information and not the Party information"""
-    list_display = ['address', 'comment']
-    form_display = ['address', 'comment', 'from_date', 'thru_date']
+    verbose_name = _('Address')
+    list_display = ['address_street1', 'address_city', 'comment']
+    form_display = ['address_street1', 'address_street2', 'address_city', 'comment', 'from_date', 'thru_date']
+    field_attributes = dict(address_street1 = dict(name=_('Street'), 
+                                                   editable=True, 
+                                                   nullable=False),
+                            address_street2 = dict(name=_('Street Extra'), 
+                                                   editable=True),
+                            address_city = dict(name=_('City'), 
+                                                editable=True,
+                                                nullable=False,
+                                                delegate=delegates.Many2OneDelegate,
+                                                target=City),
+                            )
+
+    def flush(self, party_address):
+        if party_address.address:
+            super( AddressAdmin, self ).flush( party_address.address )
+        super( AddressAdmin, self ).flush( party_address )    
+    
+    def refresh(self, party_address):
+        if party_address.address:
+            super( AddressAdmin, self ).refresh( party_address.address )
+        super( AddressAdmin, self ).refresh( party_address )    
     
 class PartyContactMechanismAdmin( EntityAdmin ):
     form_size = ( 700, 200 )
     verbose_name = _('Contact mechanism')
     verbose_name_plural = _('Contact mechanisms')
     list_search = ['party_name', 'mechanism']
-    list_display = ['party_name', 'mechanism', 'comment', 'from_date', ]
-    form_display = Form( ['contact_mechanism', 'comment', 'from_date', 'thru_date', ] )
+    list_display = ['party_name', 'contact_mechanism_mechanism', 'comment', 'from_date', ]
+    form_display = Form( ['contact_mechanism_mechanism', 'comment', 'from_date', 'thru_date', ] )
     field_attributes = {'party_name':{'minimal_column_width':25, 'editable':False},
-                        'mechanism':{'minimal_column_width':25,'editable':False}}
+                        'mechanism':{'minimal_column_width':25,'editable':False},
+                        'contact_mechanism_mechanism':{'minimal_column_width':25,
+                                                       'editable':True,
+                                                       'nullable':False,
+                                                       'name':_('Mechanism'),
+                                                       'delegate':delegates.VirtualAddressDelegate}}
     
+    def flush(self, party_contact_mechanism):
+        if party_contact_mechanism.contact_mechanism:
+            super(PartyContactMechanismAdmin, self).flush( party_contact_mechanism.contact_mechanism )
+        super(PartyContactMechanismAdmin, self).flush( party_contact_mechanism )
+
+    def refresh(self, party_contact_mechanism):
+        if party_contact_mechanism.contact_mechanism:
+            super(PartyContactMechanismAdmin, self).refresh( party_contact_mechanism.contact_mechanism )
+        super(PartyContactMechanismAdmin, self).refresh( party_contact_mechanism )
+        party_contact_mechanism._contact_mechanism_mechanism = party_contact_mechanism.mechanism
+                
     def get_depending_objects(self, contact_mechanism ):
         party = contact_mechanism.party
         if party and (party not in Party.query.session.new):
@@ -251,7 +344,7 @@ class PartyContactMechanismAdmin( EntityAdmin ):
   
 class PartyPartyContactMechanismAdmin( PartyContactMechanismAdmin ):
     list_search = ['party_name', 'mechanism']
-    list_display = ['contact_mechanism', 'comment', 'from_date', ]
+    list_display = ['contact_mechanism_mechanism', 'comment', 'from_date', ]
                 
 class Party( Entity ):
     """Base class for persons and organizations.  Use this base class to refer to either persons or
@@ -443,60 +536,6 @@ class Person( Party ):
 
 Person = documented_entity()( Person )
 
-class GeographicBoundary( Entity ):
-    """The base class for Country and City"""
-    using_options( tablename = 'geographic_boundary' )
-    code = Field( Unicode( 10 ) )
-    name = Field( Unicode( 40 ), required = True )
-
-    @ColumnProperty
-    def full_name( self ):
-        return self.code + ' ' + self.name
-        
-    def __unicode__( self ):
-        return u'%s %s' % ( self.code, self.name )
-
-class Country( GeographicBoundary ):
-    """A subclass of GeographicBoundary used to store the name and the
-    ISO code of a country"""
-    using_options( tablename = 'geographic_boundary_country', inheritance = 'multi' )
-
-    @classmethod
-    def getOrCreate( cls, code, name ):
-        country = Country.query.filter_by( code = code ).first()
-        if not country:
-            from elixir import session
-            country = Country( code = code, name = name )
-            session.flush( [country] )
-        return country
-
-    class Admin( EntityAdmin ):
-        form_size = ( 700, 150 )
-        verbose_name = _('Country')
-        verbose_name_plural = _('Countries')
-        list_display = ['name', 'code']
-
-class City( GeographicBoundary ):
-    """A subclass of GeographicBoundary used to store the name, the postal code
-    and the Country of a city"""
-    using_options( tablename = 'geographic_boundary_city', inheritance = 'multi' )
-    country = ManyToOne( 'Country', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-
-    @classmethod
-    def getOrCreate( cls, country, code, name ):
-        city = City.query.filter_by( code = code, country = country ).first()
-        if not city:
-            from elixir import session
-            city = City( code = code, name = name, country = country )
-            session.flush( [city] )
-        return city
-
-    class Admin( EntityAdmin ):
-        verbose_name = _('City')
-        verbose_name_plural = _('Cities')
-        form_size = ( 700, 150 )
-        list_display = ['code', 'name', 'country']
-
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
     using_options( tablename = 'address' )
@@ -538,12 +577,49 @@ Address = documented_entity()( Address )
 
 class PartyAddress( Entity ):
     using_options( tablename = 'party_address' )
+    
+    def __new__(cls, *args, **kwargs):
+        party_address = super(PartyAddress, cls).__new__(cls, *args, **kwargs)
+        setattr(party_address, '_address_street1', None)
+        setattr(party_address, '_address_street2', None)
+        setattr(party_address, '_address_city', None)
+        return party_address
+    
     party = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     address = ManyToOne( 'Address', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     thru_date = Field( Date(), default = end_of_times, required = True, index = True )
     comment = Field( Unicode( 256 ) )
 
+    #
+    # Create 3 'virtual attributes'
+    # * address_street1
+    # * address_street2
+    # * address_city
+    # These attributes refer to the corresponding attributes on the
+    # address relation, if the address relation exists, otherwise, they
+    # refer to a corresponding hidden attribute
+    #
+    def __getattr__(self, attr):
+        if attr.startswith('address_'):
+            if self.address:
+                return getattr(self.address, attr[len('address_'):])
+            else:
+                return getattr(self, '_address_' + attr[len('address_'):] )
+        else:
+            return super(PartyAddress, self).__getattr__(attr)
+            
+    def __setattr__(self, attr, value):
+        if attr.startswith('address_'):
+            setattr(self, '_address_' + attr[len('address_'):], value )
+            if self.address:
+                return setattr(self.address, attr[len('address_'):], value )
+            elif self._address_street1 != None and self._address_city != None:
+                self.address = Address( street1 = self._address_street1,
+                                        city = self._address_city )
+        else:
+            super(PartyAddress, self).__setattr__(attr, value)
+                    
     @ColumnProperty
     def party_name( self ):
         return sql.select( [sql.func.coalesce(Party.full_name, '')],
@@ -569,7 +645,8 @@ class PartyAddress( Entity ):
         form_display = ['party', 'address', 'comment', 'from_date', 'thru_date']
         form_size = ( 700, 200 )
         form_actions = [FormActionFromModelFunction( 'Show on map', lambda address:address.showMap() )]
-        field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30),
+        field_attributes = dict(address=dict(embedded=True),
+                                party_name=dict(editable=False, name='Party', minimal_column_width=30),
                                 address_name=dict(editable=False, name='Address', minimal_column_width=30))
         
 class PartyAddressRoleType( Entity ):
@@ -619,12 +696,38 @@ ContactMechanism = documented_entity()( ContactMechanism )
 
 class PartyContactMechanism( Entity ):
     using_options( tablename = 'party_contact_mechanism' )
+    
+    def __new__(cls, *args, **kwargs):
+        party_contact_mechanism = super(PartyContactMechanism, cls).__new__(cls, *args, **kwargs)
+        setattr(party_contact_mechanism, '_contact_mechanism_mechanism', None)
+        return party_contact_mechanism
+        
     party = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     contact_mechanism = ManyToOne( 'ContactMechanism', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     thru_date = Field( Date(), default = end_of_times, index = True )
     comment = Field( Unicode( 256 ) )
 
+    def _get_contact_mechanism_mechanism(self):
+        if self._contact_mechanism_mechanism != None:
+            return self._contact_mechanism_mechanism 
+        return self.mechanism
+        
+    def _set_contact_mechanism_mechanism(self, mechanism):
+        self._contact_mechanism_mechanism = mechanism
+        if mechanism != None:
+            if self.contact_mechanism:
+                self.contact_mechanism.mechanism = mechanism
+            else:
+                self.contact_mechanism = ContactMechanism( mechanism=mechanism )
+
+    #
+    # A property to get and set the mechanism attribute of the
+    # related contact mechanism object
+    #
+    contact_mechanism_mechanism = property( _get_contact_mechanism_mechanism,
+                                            _set_contact_mechanism_mechanism )
+        
     @ColumnProperty
     def mechanism( self ):
         return sql.select( [ContactMechanism.mechanism],
