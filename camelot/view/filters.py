@@ -110,7 +110,7 @@ class Filter(object):
               
             return decorator
       
-        options = [(self._value_to_string(value[0]), create_decorator(col, value[0], joins))
+        options = [(_(self._value_to_string(value[0])), create_decorator(col, value[0], joins))
                    for value in session.execute(query)]
     
         return (filter_names[0],[(_('all'), lambda q: q)] + options)
