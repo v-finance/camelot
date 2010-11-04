@@ -10,7 +10,7 @@ class OneToManyChoicesEditor(ChoicesEditor):
         post(self.get_choices, self.set_choices)
 
     def get_choices(self):
-            return [(o, unicode(o)) for o in self._target.query.all()]
+        return [(o, unicode(o)) for o in self._target.query.all()]
         
     def set_field_attributes(self, editable=True, **kwargs):
         """Makes sure choices are not reset when changing the
