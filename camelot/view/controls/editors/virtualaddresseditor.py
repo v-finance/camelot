@@ -37,13 +37,16 @@ import camelot.types
 
 class VirtualAddressEditor(CustomEditor):
 
-    def __init__(self, parent=None, editable=True, **kwargs):
+    def __init__(self, parent=None, editable=True, address_type=None, **kwargs):
         CustomEditor.__init__(self, parent)
+        self._address_type = address_type
         self.layout = QtGui.QHBoxLayout()
         self.layout.setMargin(0)
         self.combo = QtGui.QComboBox()
         self.combo.addItems(camelot.types.VirtualAddress.virtual_address_types)
         self.combo.setEnabled(editable)
+        if address_type:
+            self.combo.setVisible(False)
         self.layout.addWidget(self.combo)
         self.editor = QtGui.QLineEdit()
         self.editor.setEnabled(editable)
@@ -75,7 +78,7 @@ class VirtualAddressEditor(CustomEditor):
         value = CustomEditor.set_value(self, value)
         if value:
             self.editor.setText(value[1])
-            idx = camelot.types.VirtualAddress.virtual_address_types.index(value[0])
+            idx = camelot.types.VirtualAddress.virtual_address_types.index(self._address_type or value[0])
             self.combo.setCurrentIndex(idx)
             icon = Icon('tango/16x16/devices/printer.png').getQIcon()
 # These icons don't exist any more in the new tango icon set
@@ -125,7 +128,6 @@ class VirtualAddressEditor(CustomEditor):
         else:
             if self.combo.currentText() == 'email':
                 self.label.setEnabled(True)
-
 
     def checkValue(self, text):
         if self.combo.currentText() == 'email':

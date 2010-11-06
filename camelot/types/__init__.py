@@ -52,7 +52,7 @@ class VirtualAddress(types.TypeDecorator):
     the :attr:`virtual_address_type`, and the second the address itself.
   
     eg: ``('email','project-camelot@conceptive.be')`` is stored as
-    ``mail://project-camelot@conceptive.be``
+    ``email://project-camelot@conceptive.be``
   
     .. image:: ../_static/virtualaddress_editor.png
     """

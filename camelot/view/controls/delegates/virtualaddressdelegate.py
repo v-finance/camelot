@@ -15,13 +15,24 @@ class VirtualAddressDelegate(CustomDelegate):
   
     editor = editors.VirtualAddressEditor
   
+    def __init__(self, parent=None, editable=True, address_type=None, **kwargs):
+        super(VirtualAddressDelegate, self).__init__(parent=parent,
+                                                     editable = editable,
+                                                     address_type = address_type,
+                                                     **kwargs )
+        self._address_type = address_type
+        
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
         virtual_address = variant_to_pyobject(index.model().data(index, Qt.EditRole))  
   
         if virtual_address and virtual_address!=ValueLoading:
-            self.paint_text(painter, option, index, unicode(virtual_address[1] or ''), margin_left=0, margin_right=18)
+            if virtual_address[1]:
+                if not self._address_type:
+                    self.paint_text(painter, option, index, u'%s : %s'%virtual_address, margin_left=0, margin_right=18)
+                else:
+                    self.paint_text(painter, option, index, u'%s'%virtual_address[1], margin_left=0, margin_right=18)
             if virtual_address[1]:
                 x, y, w, h = option.rect.getRect()
                 icon_rect = QtCore.QRect(x + w - 18, y + (h-16)/2, 16, 16)
@@ -45,8 +56,8 @@ class VirtualAddressDelegate(CustomDelegate):
 #                    icon = Icon('tango/16x16/devices/pager.png').getQPixmap()
 #                    painter.drawPixmap(icon_rect, icon)  
 #                else:
-#                #if virtual_adress[0] == 'telephone':
-#                    icon = Icon('tango/16x16/apps/preferences-desktop-sound.png').getQPixmap()
-#                    painter.drawPixmap(icon_rect, icon)
+                elif virtual_address[0] == 'phone':
+                    icon = Icon('tango/16x16/devices/audio-input-microphone.png').getQPixmap()
+                    painter.drawPixmap(icon_rect, icon)
 
         painter.restore()

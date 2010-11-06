@@ -215,3 +215,8 @@ will be put onto a form"""
         yield '<w:r>'
         yield '  <w:t>%s</w:t>' % unicode(value)
         yield '</w:r>'
+        
+    def render_html( self, index ):
+        """Generator that renders a value to html"""
+        value = variant_to_pyobject(index.model().data(index, Qt.DisplayRole))
+        yield unicode( value )

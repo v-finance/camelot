@@ -184,6 +184,15 @@ embedded
 Should be True or False, if True, the related object will be
 displayed with its own form inside the form of the parent object.
 
+.. _field-attribute-address_type:
+
+address_type
+------------
+
+Should be None or one of the Virtual Address Types, like 'phone' or
+'email'.  When specified, it indicates that a VirtualAddressEditor should
+only accept addresses of the specified type.
+
 Customizing multiple field attributes
 =====================================
 

@@ -350,6 +350,13 @@ class Party( Entity ):
     """Base class for persons and organizations.  Use this base class to refer to either persons or
     organisations in building authentication systems, contact management or CRM"""
     using_options( tablename = 'party' )
+    
+    def __new__(cls, *args, **kwargs):
+        party = super(Party, cls).__new__(cls, *args, **kwargs)
+        setattr(party, '_contact_mechanisms_email', None)
+        setattr(party, '_contact_mechanisms_phone', None)
+        return party
+    
     is_synchronized( 'synchronized', lazy = True )
     addresses = OneToMany( 'PartyAddress', lazy = True, cascade="all, delete, delete-orphan" )
     contact_mechanisms = OneToMany( 'PartyContactMechanism', lazy = True, cascade='all, delete, delete-orphan' )
@@ -369,7 +376,7 @@ class Party( Entity ):
         
         return sql.select( [cm.mechanism],
                           whereclause = and_( pcm.table.c.party_id == self.id,
-                                           cm.table.c.mechanism.like( ( u'email', u'%' ) ) ),
+                                              cm.table.c.mechanism.like( ( u'email', u'%' ) ) ),
                           from_obj = [cm.table.join( pcm.table )] ).limit(1)
 
     @ColumnProperty
@@ -380,9 +387,45 @@ class Party( Entity ):
                 
         return sql.select( [cm.mechanism],
                           whereclause = and_( pcm.table.c.party_id == self.id,
-                                           cm.table.c.mechanism.like( ( u'phone', u'%' ) ) ),
+                                              cm.table.c.mechanism.like( ( u'phone', u'%' ) ) ),
                           from_obj = [cm.table.join( pcm.table )] ).limit(1)
 
+    #
+    # Create virtual properties for email and phone that can
+    # get and set a contact mechanism for the party
+    #
+    def _get_contact_mechanisms_email(self):
+        return self.email or self._contact_mechanisms_email
+    
+    def _set_contact_mechanism_email(self, value):
+        self._contact_mechanisms_email = value
+        for party_contact_mechanism in self.contact_mechanisms:
+            mechanism = party_contact_mechanism.contact_mechanism_mechanism
+            if mechanism[0] == 'email':
+                party_contact_mechanism.contact_mechanism_mechanism = value
+                return
+        contact_mechanism = ContactMechanism( mechanism = value )
+        self.contact_mechanisms.append( PartyContactMechanism(contact_mechanism=contact_mechanism) )
+        
+    def _get_contact_mechanisms_phone(self):
+        return self.phone or self._contact_mechanisms_phone
+    
+    def _set_contact_mechanism_phone(self, value):
+        self._contact_mechanisms_phone = value    
+        for party_contact_mechanism in self.contact_mechanisms:
+            mechanism = party_contact_mechanism.contact_mechanism_mechanism
+            if mechanism[0] == 'phone':
+                party_contact_mechanism.contact_mechanism_mechanism = value
+                return
+        contact_mechanism = ContactMechanism( mechanism = value )
+        self.contact_mechanisms.append( PartyContactMechanism(contact_mechanism=contact_mechanism) )
+                    
+    contact_mechanisms_email = property(_get_contact_mechanisms_email,
+                                        _set_contact_mechanism_email)
+    
+    contact_mechanisms_phone = property(_get_contact_mechanisms_phone,
+                                        _set_contact_mechanism_phone)
+    
     @ColumnProperty
     def full_name( self ):
         aliased_organisation = Organization.table.alias( 'organisation_alias' )
@@ -398,7 +441,7 @@ class Party( Entity ):
     class Admin( EntityAdmin ):
         verbose_name = _('Party')
         verbose_name_plural = _('Parties')
-        list_display = ['name', 'email', 'phone'] # don't use full name, since it might be None for new objects
+        list_display = ['name', 'contact_mechanisms_email', 'contact_mechanisms_phone'] # don't use full name, since it might be None for new objects
         list_search = ['full_name']
         form_display = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
         field_attributes = dict(addresses = {'admin':AddressAdmin},
@@ -414,8 +457,24 @@ class Party( Entity ):
                                 sex = dict( choices = lambda obj:[( u'M', _('male') ), ( u'F', _('female') )], ),
                                 name = dict( minimal_column_width = 50 ),
                                 email = dict( editable = False, minimal_column_width = 20 ),
-                                phone = dict( editable = False, minimal_column_width = 20 )
+                                phone = dict( editable = False, minimal_column_width = 20 ),
+                                contact_mechanisms_email = dict( editable = True,
+                                                                 name = _('Email'),
+                                                                 address_type = 'email',
+                                                                 minimal_column_width = 20,
+                                                                 delegate = delegates.VirtualAddressDelegate ),
+                                contact_mechanisms_phone = dict( editable = True,
+                                                                 name = _('Phone'),
+                                                                 address_type = 'phone',
+                                                                 minimal_column_width = 20,
+                                                                 delegate = delegates.VirtualAddressDelegate ),                                           
                                 )
+        
+        def flush(self, party):
+            for party_contact_mechanism in party.contact_mechanisms:
+                EntityAdmin.flush( self, party_contact_mechanism.contact_mechanism )
+            EntityAdmin.flush( self, party )
+            party.expire( ['phone', 'email'] )
 
 class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
@@ -440,7 +499,7 @@ class Organization( Party ):
     class Admin( Party.Admin ):
         verbose_name = _( 'Organization' )
         verbose_name_plural = _( 'Organizations' )
-        list_display = ['name', 'tax_id', 'email', 'phone']
+        list_display = ['name', 'tax_id', 'contact_mechanisms_email', 'contact_mechanisms_phone']
         form_display = TabForm( [( _('Basic'), Form( ['name', 'tax_id', 'addresses', 'contact_mechanisms'] ) ),
                                 ( _('Employment'), Form( ['employees'] ) ),
                                 ( _('Customers'), Form( ['customers'] ) ),
@@ -521,7 +580,7 @@ class Person( Party ):
     class Admin( Party.Admin ):
         verbose_name = _( 'Person' )
         verbose_name_plural = _( 'Persons' )
-        list_display = ['first_name', 'last_name', 'email', 'phone']
+        list_display = ['first_name', 'last_name', 'contact_mechanisms_email', 'contact_mechanisms_phone']
         form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [Form( [WidgetOnlyForm('note'), 'first_name', 'last_name', 'sex'] ),
                                                           Form( ['picture', ] ),
                                                          ] ),
