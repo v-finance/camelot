@@ -221,10 +221,10 @@ class BackupMechanism(object):
         
     def copy_table_data(self, from_table, to_table):
         from_connection = from_table.bind.connect()
-        to_connection = to_table.bind.connect()
         query = sqlalchemy.select([from_table])
-        for row in from_connection.execute(query).fetchall():
-            data = dict((key, getattr(row, key)) for key in row.keys())
-            to_connection.execute(to_table.insert(values=data))
+        table_data = [row for row in from_connection.execute(query).fetchall()]
         from_connection.close()
-        to_connection.close()
+        if len(table_data):
+            to_connection = to_table.bind.connect()
+            to_connection.execute(to_table.insert(), table_data)
+            to_connection.close()
