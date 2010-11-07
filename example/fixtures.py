@@ -246,13 +246,13 @@ def load_movie_fixtures():
         )
         rep = visits.get(title, None)
         if rep:
-            for v in rep:
+            for city, visitors, date in rep:
                 visit = Fixture.insertOrUpdateFixture(
                     VisitorReport,
-                    fixture_key = '%s_visit_report' % title,
+                    fixture_key = '%s_%s' % (title, city),
                     values = {
                         'movie': movie,
-                        'date': v[2],
-                        'visitors': v[1],
+                        'date': date,
+                        'visitors': visitors,
                     }
                 )

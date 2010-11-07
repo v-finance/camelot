@@ -398,10 +398,13 @@ class Party( Entity ):
         return self.email or self._contact_mechanisms_email
     
     def _set_contact_mechanism_email(self, value):
+        # todo : if no value, the existing value should be removed
+        if not value or not value[1]:
+            return
         self._contact_mechanisms_email = value
         for party_contact_mechanism in self.contact_mechanisms:
             mechanism = party_contact_mechanism.contact_mechanism_mechanism
-            if mechanism[0] == 'email':
+            if mechanism and mechanism[0] == 'email':
                 party_contact_mechanism.contact_mechanism_mechanism = value
                 return
         contact_mechanism = ContactMechanism( mechanism = value )
@@ -411,10 +414,13 @@ class Party( Entity ):
         return self.phone or self._contact_mechanisms_phone
     
     def _set_contact_mechanism_phone(self, value):
+        # todo : if no value, the existing value should be removed
+        if not value or not value[1]:
+            return
         self._contact_mechanisms_phone = value    
         for party_contact_mechanism in self.contact_mechanisms:
             mechanism = party_contact_mechanism.contact_mechanism_mechanism
-            if mechanism[0] == 'phone':
+            if mechanism and mechanism[0] == 'phone':
                 party_contact_mechanism.contact_mechanism_mechanism = value
                 return
         contact_mechanism = ContactMechanism( mechanism = value )
@@ -462,18 +468,23 @@ class Party( Entity ):
                                                                  name = _('Email'),
                                                                  address_type = 'email',
                                                                  minimal_column_width = 20,
+                                                                 from_string = lambda s:('email', s),
                                                                  delegate = delegates.VirtualAddressDelegate ),
                                 contact_mechanisms_phone = dict( editable = True,
                                                                  name = _('Phone'),
                                                                  address_type = 'phone',
                                                                  minimal_column_width = 20,
+                                                                 from_string = lambda s:('phone', s),
                                                                  delegate = delegates.VirtualAddressDelegate ),                                           
                                 )
         
         def flush(self, party):
+            from sqlalchemy.orm.session import Session
+            session = Session.object_session( party )
+            objects = [ party ] 
             for party_contact_mechanism in party.contact_mechanisms:
-                EntityAdmin.flush( self, party_contact_mechanism.contact_mechanism )
-            EntityAdmin.flush( self, party )
+                objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
+            session.flush( objects )
             party.expire( ['phone', 'email'] )
 
 class Organization( Party ):

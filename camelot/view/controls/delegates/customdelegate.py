@@ -175,6 +175,12 @@ will be put onto a form"""
         :arg margin_left: additional margin to the left, to be used for icons or others
         :arg margin_right: additional margin to the right, to be used for icons or others"""
 
+        rect = option.rect
+        # prevent text being centered if the height of the cell increases beyond multiple
+        # lines of text
+        if rect.height() > 2 * self._height:
+            vertical_align = Qt.AlignTop
+
         field_attributes = variant_to_pyobject( index.model().data( index, Qt.UserRole ) )
         if field_attributes != ValueLoading:
             editable = field_attributes.get( 'editable', True )
@@ -182,7 +188,6 @@ will be put onto a form"""
             prefix = field_attributes.get( 'prefix', None )
             suffix = field_attributes.get( 'suffix', None )
             
-        rect = option.rect
 
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())

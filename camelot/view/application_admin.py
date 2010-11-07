@@ -243,7 +243,7 @@ class ApplicationAdmin(QtCore.QObject):
         return """<b>Camelot</b><br/>
                   Building desktop applications at warp speed
                   <p>
-                  Copyright &copy; 2008-%s Conceptive Engineering.
+                  Copyright &copy; 2007-%s Conceptive Engineering.
                   All rights reserved.
                   </p>
                   <p>

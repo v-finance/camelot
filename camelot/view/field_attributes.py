@@ -227,6 +227,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'delegate': delegates.VirtualAddressDelegate,
         'operators' : _text_operators,
+        'from_string' : lambda str:None,
     },
 
     camelot.types.RichText: lambda f: {

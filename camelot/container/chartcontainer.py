@@ -80,7 +80,7 @@ class PlotContainer( AxesContainer ):
         super(PlotContainer, self).__init__()
         self.plot( *args, **kwargs )
         
-def BarContainer( AxesContainer ):
+class BarContainer( AxesContainer ):
 
     __doc__ = axes.Axes.bar.__doc__
     
