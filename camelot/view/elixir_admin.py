@@ -537,6 +537,16 @@ attribute to enable search.
     @model_function
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
+        from sqlalchemy import orm
         new_entity_instance = entity_instance.__class__()
         new_entity_instance.from_dict( entity_instance.to_dict(exclude=[c.name for c in self.mapper.primary_key]) )
+        #
+        # recreate the ManyToOne relations
+        #
+        for property in self.mapper.iterate_properties:
+            if isinstance(property, orm.properties.PropertyLoader):
+                if property.direction == orm.interfaces.MANYTOONE:
+                    setattr( new_entity_instance, 
+                             property.key,
+                             getattr( entity_instance, property.key ) )
         return new_entity_instance
