@@ -118,7 +118,7 @@ class QueryTableProxy(CollectionProxy):
                 class_attribute = getattr(self.admin.entity, field_name)
                 mapper = orm.class_mapper(self.admin.entity)
                 try:
-                    mapper.get_property(
+                    property = mapper.get_property(
                         field_name,
                         resolve_synonyms=True
                     )
@@ -129,9 +129,30 @@ class QueryTableProxy(CollectionProxy):
                     #
                     return self._rows
                 
-                def create_sort_decorator(class_attribute, order):
+                # If the field is a relation: 
+                #  If it specifies an order_by option we have to join the related table, 
+                #  else we use the foreing key as sort field, without joining
+                join = None
+                if isinstance(property, orm.properties.PropertyLoader):
+                    target = property._get_target()
+                    if target:
+                        if target.order_by:
+                            join = field_name
+                            class_attribute = target.order_by[0]
+                        else:
+                            #
+                            # _foreign_keys is for sqla pre 0.6.4
+                            # 
+                            if hasattr(property, '_foreign_keys'):
+                                class_attribute = list(property._foreign_keys)[0]
+                            else:                             
+                                class_attribute = list(property._calculated_foreign_keys)[0]                    
                     
+                def create_sort_decorator(class_attribute, order, join):
+                                        
                     def sort_decorator(query):
+                        if join:
+                            query = query.join(join)                            
                         if order:
                             return query.order_by(class_attribute.desc())
                         else:
@@ -140,7 +161,7 @@ class QueryTableProxy(CollectionProxy):
                     return sort_decorator
                 
                 
-                self._sort_decorator = create_sort_decorator(class_attribute, order)
+                self._sort_decorator = create_sort_decorator(class_attribute, order, join)
                 return self._rows
                     
             return set_sort_decorator
