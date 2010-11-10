@@ -36,6 +36,7 @@ from camelot.core import constants
 from camelot.view.art import Icon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
+from camelot.core.utils import ugettext as _
 
 
 class DateEditor(CustomEditor):
@@ -67,20 +68,20 @@ class DateEditor(CustomEditor):
 
         self.calendar_action_trigger.connect( special_date_menu.hide )
         special_date_menu.addAction(calendar_widget_action)
-        special_date_menu.addAction('Today')
-        special_date_menu.addAction('Far future')
+        special_date_menu.addAction(_('Today'))
+        special_date_menu.addAction(_('Far future'))
         self.special_date = QtGui.QToolButton(self)
         self.special_date.setIcon(
             Icon('tango/16x16/apps/office-calendar.png').getQIcon())
         self.special_date.setAutoRaise(True)
-        self.special_date.setToolTip('Calendar and special dates')
+        self.special_date.setToolTip(_('Calendar and special dates'))
         self.special_date.setMenu(special_date_menu)
         self.special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.special_date.setFixedHeight(self.get_height())
         # end of sensitive part
 
         if nullable:
-            special_date_menu.addAction('Clear')
+            special_date_menu.addAction(_('Clear'))
 
         self.hlayout = QtGui.QHBoxLayout()
         self.hlayout.addWidget(self.line_edit)
@@ -152,11 +153,11 @@ class DateEditor(CustomEditor):
             self.special_date.hide()
 
     def set_special_date(self, action):
-        if action.text().compare('Today') == 0:
+        if action.text().compare(_('Today')) == 0:
             self.set_value(datetime.date.today())
-        elif action.text().compare('Far future') == 0:
+        elif action.text().compare(_('Far future')) == 0:
             self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
-        elif action.text().compare('Clear') == 0:
+        elif action.text().compare(_('Clear')) == 0:
             self.set_value(None)
         self.editingFinished.emit()
 

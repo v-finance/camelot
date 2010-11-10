@@ -35,6 +35,7 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from camelot.view.art import Icon
+from camelot.core.utils import ugettext as _
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
@@ -48,7 +49,7 @@ class ModelItem(QtGui.QTreeWidgetItem):
         self.column = 0
         self.set_icon()
 
-        self.setToolTip(self.column, 'Right click to open in New Tab')
+        self.setToolTip(self.column, _('Right click to open in New Tab'))
 
     def _underline(self, enable=False):
         font = self.font(self.column)

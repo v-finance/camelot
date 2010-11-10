@@ -39,9 +39,8 @@ from camelot.view.controls.modeltree import ModelItem, ModelTree
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
-_ = lambda x:x
-
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
+from camelot.core.utils import ugettext as _
 
 
 class PaneCaption(UserTranslatableLabel):
