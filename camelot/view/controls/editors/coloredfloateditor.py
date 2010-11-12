@@ -145,7 +145,7 @@ class ColoredFloatEditor(CustomEditor):
 
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator
-        calculator = Calculator(self)
+        calculator = Calculator()
         calculator.setValue(value)
         calculator.calculation_finished_signal.connect( self.calculation_finished )
         calculator.exec_()

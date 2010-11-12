@@ -64,12 +64,13 @@ class VirtualAddressEditor(CustomEditor):
         self.layout.addWidget(self.label)
         self.editor.editingFinished.connect(self.emit_editing_finished)
         self.editor.textEdited.connect(self.editorValueChanged)
-        self.combo.currentIndexChanged.connect(lambda:self.comboIndexChanged())
+        self.combo.currentIndexChanged.connect(self.comboIndexChanged)
 
         self.setLayout(self.layout)
         self.setAutoFillBackground(True)
         self.checkValue(self.editor.text())
 
+    @QtCore.pyqtSlot()
     def comboIndexChanged(self):
         self.checkValue(self.editor.text())
         self.emit_editing_finished()

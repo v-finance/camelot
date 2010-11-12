@@ -100,8 +100,8 @@ the number of lines of text that should be viewable in a single row.
         line_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing()
         self._minimal_row_height = line_height * self.lines_per_row + 2*self.margin
         self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
-        self.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
-        self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        #self.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        #self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
         self.horizontalHeader().sectionClicked.connect( 
             self.horizontal_section_clicked )
         self._columns_frozen = columns_frozen
@@ -162,7 +162,7 @@ the number of lines of text that should be viewable in a single row.
         return current
 
     def scrollTo(self, index, hint):
-        if(index.column()>0):
+        if(index.column()>=self._columns_frozen):
             super(TableWidget, self).scrollTo(index, hint)
         
     @QtCore.pyqtSlot()
