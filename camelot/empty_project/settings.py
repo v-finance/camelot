@@ -21,7 +21,8 @@ REPOSITORY = 'repository'
 
 def ENGINE():
     """This function should return a connection to the database"""
-    return 'sqlite:///model-data.sqlite'
+    from sqlalchemy import create_engine
+    return create_engine('sqlite:///model-data.sqlite')
 
 def setup_model():
     """This function will be called at application startup, it is used to setup

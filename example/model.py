@@ -91,7 +91,7 @@ class Movie(Entity):
     #
     # Each Entity subclass can have a subclass of EntityAdmin as
     # its inner class.  The EntityAdmin class defines how the Entity
-    # class will be displayed in the GUI.  Its behaviour can be steered
+    # class will be displayed in the GUI.  Its behavior can be steered
     # by specifying some class attributes
     #
     # To fully customize the way the entity is visualized, the EntityAdmin

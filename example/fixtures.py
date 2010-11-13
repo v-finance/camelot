@@ -3,7 +3,7 @@ import datetime
 def load_movie_fixtures():
 
     from camelot.model.fixture import Fixture
-    from example.model import Movie, VisitorReport
+    from model import Movie, VisitorReport
     from camelot.core.files.storage import StoredImage, Storage
 
     storage = Storage(upload_to='covers')

@@ -10,7 +10,7 @@ class MyApplicationAdmin(ApplicationAdmin):
         from camelot.model.memento import Memento
         from camelot.model.authentication import Person, Organization
         from camelot.model.i18n import Translation
-        from example.model import Movie, Tag, VisitorReport
+        from model import Movie, Tag, VisitorReport
         return [Section('movies',
                         Icon('tango/22x22/mimetypes/x-office-presentation.png'),
                         items = [Movie, Tag, VisitorReport]),
