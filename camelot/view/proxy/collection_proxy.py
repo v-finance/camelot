@@ -859,8 +859,10 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
     @model_function
     def remove( self, o ):
-        self.collection_getter().remove( o )
-        self._rows -= 1
+        collection = self.collection_getter()
+        if o in collection:
+            collection.remove( o )
+            self._rows -= 1
 
     @model_function
     def append( self, o ):
