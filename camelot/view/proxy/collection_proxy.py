@@ -951,14 +951,14 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.admin.set_defaults( o )
         row = self.getRowCount() - 1
         self.unflushed_rows.add( row )
-        for depending_obj in self.admin.get_depending_objects( o ):
-            self.rsh.sendEntityUpdate( self, depending_obj )
         if self.flush_changes and not len( self.validator.objectValidity( o ) ):
             self.admin.flush( o )
             try:
                 self.unflushed_rows.remove( row )
             except KeyError:
                 pass
+        for depending_obj in self.admin.get_depending_objects( o ):
+            self.rsh.sendEntityUpdate( self, depending_obj )
 # TODO : it's not because an object is added to this list, that it was created
 # it might as well exist allready, eg. manytomany relation
 #      from camelot.model.memento import Create
