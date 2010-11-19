@@ -90,6 +90,7 @@ the number of lines of text that should be viewable in a single row.
         """
         QtGui.QTableView.__init__( self, parent )
         logger.debug( 'create TableWidget' )
+        self._columns_frozen = columns_frozen
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
         self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | 
                               QtGui.QAbstractItemView.DoubleClicked )
@@ -100,11 +101,10 @@ the number of lines of text that should be viewable in a single row.
         line_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing()
         self._minimal_row_height = line_height * self.lines_per_row + 2*self.margin
         self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
-        #self.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
-        #self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
         self.horizontalHeader().sectionClicked.connect( 
             self.horizontal_section_clicked )
-        self._columns_frozen = columns_frozen
         if columns_frozen:
             frozen_table_view = FrozenTableWidget(self, columns_frozen)
             frozen_table_view.setObjectName( 'frozen_table_view' )
