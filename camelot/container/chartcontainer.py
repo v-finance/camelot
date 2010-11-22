@@ -55,7 +55,10 @@ class AxesContainer( Container ):
     can be called on this class as if it were a matplotlib Axes class.  All method
     calls will be recorded.  Of course the methods won't return matplotlib objects."""
 
-    def __init__(self):
+    def __init__(self, legend=False):
+        """
+        :param legend: True or False, to put a legend on the chart
+        """
         super(AxesContainer, self).__init__()
         # store all the method calls that need to be called on a
         # matplotlib axes object in a list
@@ -70,6 +73,9 @@ class AxesContainer( Container ):
         """Replay the list of stored commands to the real Axes object"""
         for name, args, kwargs in self._commands:
             getattr(ax, name)(*args, **kwargs)
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(handles, labels)
+
 
 class PlotContainer( AxesContainer ):
 
