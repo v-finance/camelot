@@ -153,7 +153,7 @@ class Storage( object ):
         return (StoredFile(self, os.path.basename(name) ) for name in glob.glob( os.path.join( self.upload_to, u'%s*%s'%(prefix, suffix) ) ) )
 
     def path( self, name ):
-        """The local filesystem path where the file can be opened using Python’s standard open"""
+        """The local filesystem path where the file can be opened using Python standard open"""
         import os
         return os.path.join( self.upload_to, name )
 
