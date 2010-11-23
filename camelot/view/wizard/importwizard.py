@@ -274,8 +274,8 @@ class DataPreviewPage(QtGui.QWizardPage):
         self._complete = False
         self.model = model
         validator = self.model.get_validator()
-        validator.validity_changed_signal.connect( self.update_complete )
-        model.layoutChanged.connect( self.validate_all_rows )
+        validator.validity_changed_signal.connect(self.update_complete)
+        model.layoutChanged.connect(self.validate_all_rows)
         post(validator.validate_all_rows)
         self.collection_getter = collection_getter
 
@@ -382,6 +382,7 @@ class FinalPage(ProgressPage):
                 i, _('Row %i of %i imported') % (i+1, len(collection))
             )
 
+
 class DataPreviewCollectionProxy(CollectionProxy):
     header_icon = None
 
@@ -412,6 +413,12 @@ class ImportWizard(QtGui.QWizard):
         #
         desktop = QtCore.QCoreApplication.instance().desktop()
         self.setMinimumSize(desktop.width()*2/3, desktop.height()*2/3)
+
+        admin.list_display = [
+            'first_name', 'last_name', 'seniority', 'position_type',
+            'agreement_type', 'from_date', 'thru_date', 'worked_days',
+            'not_assimilated_days', 'worked_hours', 'nomenclatural_hours'
+        ]
 
         row_data_admin = RowDataAdminDecorator(admin)
         model = DataPreviewCollectionProxy(
