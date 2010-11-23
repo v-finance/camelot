@@ -26,6 +26,7 @@ setup(
     license = 'GPL, Commercial',
     platforms = 'Linux, Windows, OS X',
     install_requires = ['SQLAlchemy>=0.6.4',
+                        'SQLAlchemy<0.7.0',
                         'Elixir>=0.7.1',
                         'sqlalchemy-migrate>=0.6.0',
                         'Jinja2>=2.5.5',
@@ -35,6 +36,7 @@ setup(
     entry_points = {'console_scripts':[
                      'camelot_admin = camelot.bin.camelot_admin:main',
                      'camelot_manage = camelot.bin.camelot_manage:main',
+                     'camelot_example = example.main:main',
                     ]
                     },
     classifiers=[

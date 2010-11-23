@@ -21,8 +21,3 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-
-# for future compatibility, when entity admin will be moved from elixir admin
-# over here
-from camelot.view.elixir_admin import EntityAdmin
-

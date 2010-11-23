@@ -7,15 +7,12 @@
 #
 #  This file may be used under the terms of the GNU General Public
 #  License version 2.0 as published by the Free Software Foundation
-#  and appearing in the file LICENSE.GPL included in the packaging of
-#  this file.  Please review the following information to ensure GNU
-#  General Public Licensing requirements will be met:
-#  http://www.trolltech.com/products/qt/opensource.html
+#  and appearing in the file license.txt included in the packaging of
+#  this file.  Please review this information to ensure GNU
+#  General Public Licensing requirements will be met.
 #
 #  If you are unsure which license is appropriate for your use, please
-#  review the following information:
-#  http://www.trolltech.com/products/qt/licensing.html or contact
-#  project-camelot@conceptive.be.
+#  visit www.python-camelot.com or contact project-camelot@conceptive.be
 #
 #  This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 #  WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
@@ -73,3 +70,4 @@ def resource_string(module_name, filename, settings_attribute):
         return open(resource_filename(module_name, filename, settings_attribute), 'rb').read()
     else:
         return pkg_resources.resource_string(module_name, filename)
+
