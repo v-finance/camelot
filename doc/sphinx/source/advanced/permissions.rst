@@ -7,7 +7,7 @@
 :Release: |version|
 :Date: |today|
 
-ine grained authentication and authorization is not
+fine grained authentication and authorization is not
 yet included as part of the Camelot framework.
 
 what is included is the function :
@@ -26,6 +26,10 @@ your app, but rely on that of the OS).
 this function can then be used if you build the Admin classes
 for your application :
 
+ * set the *editable* field attribute to a function that only
+   returns Thrue when the current authentication requires
+   editing of fields
+   
  * in the ApplicationAdmin.get_sections method, to hide/show
    sections depending on the logged in user
 

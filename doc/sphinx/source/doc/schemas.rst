@@ -18,10 +18,20 @@ There are 2 approaches, depending on the needs of your project :
 
 Leave it all to sqlalchemy-migrate
 ==================================
-Let sqla-migrate do a diff between your model and your db and add tables / columns 
+Let sqlalchemy-migrate do a diff between your model and your db and add tables / columns 
 as needed.  This is easy to implement, but not very powerfull and will fail on complex
 migrations.
 
+Camelot comes with a function that uses sqlalchemy-migrate to perform such action :
+
+.. function:: camelot.core.sql.update_database_from_model
+
+Call this function in the setup_model function in settings.py, right after
+the setup_all function.
+
+.. literalinclude:: ../../../../camelot/empty_project/settings.py
+   :pyobject: setup_model
+   
 Use schema revisions
 ====================
 

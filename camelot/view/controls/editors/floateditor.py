@@ -61,8 +61,7 @@ class FloatEditor(CustomEditor):
 
         self.spinBox.setRange(minimum, maximum)
         self.spinBox.setDecimals(precision)
-        self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
-        self.spinBox.setSingleStep(1.0)
+        self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
 
         self.spinBox.addAction(action)
         self.calculatorButton = QtGui.QToolButton()
@@ -90,12 +89,13 @@ class FloatEditor(CustomEditor):
         self.setFocusProxy(self.spinBox)
         self.setLayout(layout)
 
-    def set_field_attributes(self, editable=True, background_color=None, prefix='', suffix='', **kwargs):
+    def set_field_attributes(self, editable=True, background_color=None, prefix='', suffix='', single_step=1.0, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
         self.spinBox.setPrefix(u'%s '%(unicode(prefix or '').lstrip()))
         self.spinBox.setSuffix(u' %s'%(unicode(suffix or '').rstrip()))
-
+        self.spinBox.setSingleStep(single_step)
+        
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:

@@ -32,7 +32,6 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.view.model_thread import post
 from camelot.view.proxy import ValueLoading
 from camelot.view.wizard.pages.update_entities_page import UpdateEntitiesPage
-from camelot.view.controls.editors.customeditor import editingFinished
 
 class ReplaceContentsData(object):
     
@@ -96,7 +95,7 @@ class SelectValuePage(QtGui.QWizardPage):
             option = QtGui.QStyleOptionViewItem()
             option.version = 5
             self._value_editor = delegate.createEditor( self, option, None )
-            self.connect(self._value_editor, editingFinished, self.value_changed)
+            self._value_editor.editingFinished.connect( self.value_changed )
             self.layout().addWidget(self._value_editor)
             if isinstance(delegate, delegates.Many2OneDelegate):
                 self._value_editor.set_value(lambda:None)

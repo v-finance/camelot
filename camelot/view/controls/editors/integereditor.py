@@ -90,7 +90,6 @@ an unneeded update of the db.
         self.spinBox.setRange(minimum, maximum)
         self.spinBox.setDecimals(0)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
-        self.spinBox.setSingleStep(1)
         self.spinBox.addAction(action)
         self.spinBox.lineEdit().setText('')
         self.calculatorButton = QtGui.QToolButton()
@@ -115,11 +114,13 @@ an unneeded update of the db.
         self._nullable = True
 
     def set_field_attributes(self, editable=True, background_color=None, 
-                             prefix='', suffix='', nullable=True, **kwargs):
+                             prefix='', suffix='', nullable=True, 
+                             single_step=1, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
         self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
         self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
+        self.spinBox.setSingleStep(single_step)
         self._nullable = nullable
 
     def set_value(self, value):

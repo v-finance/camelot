@@ -112,6 +112,14 @@ prefix
 ------
 
 String to display before a number
+
+.. _field-attribute-single_step:
+
+single_step
+-----------
+
+The size of a single step when the up and down arrows are used in 
+on a float or an integer field.
   
 .. _field-attribute-suffix:
 

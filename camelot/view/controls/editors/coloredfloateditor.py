@@ -50,7 +50,6 @@ class ColoredFloatEditor(CustomEditor):
 
         self.spinBox.setDecimals(precision)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
-        self.spinBox.setSingleStep(1.0)
         self.spinBox.addAction(action)
         self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         self.arrow = QtGui.QLabel()
@@ -114,12 +113,14 @@ class ColoredFloatEditor(CustomEditor):
                              suffix='',
                              minimum=constants.camelot_minfloat,
                              maximum=constants.camelot_maxfloat,
+                             single_step=1.0,
                              **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
         self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
         self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
         self.spinBox.setRange(minimum, maximum)
+        self.spinBox.setSingleStep(single_step)
 
     def set_enabled(self, editable=True):
         self.spinBox.setReadOnly(not editable)

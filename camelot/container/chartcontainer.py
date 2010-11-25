@@ -76,9 +76,12 @@ class AxesMethod(object):
 class AxesContainer( Container ):
     """A container that is able to generate a plot on a matplotlib axes.  Methods
     can be called on this class as if it were a matplotlib Axes class.  All method
-    calls will be recorded.  Of course the methods won't return matplotlib objects."""
+    calls will be recorded.  Of course the methods won't return matplotlib objects.
+    The set_auto_legend method can be used to turn legens on without the need for
+    matplotlib objects.
+    """
 
-    def __init__(self, legend=False):
+    def __init__(self):
         """
         :param legend: True or False, to put a legend on the chart
         """
@@ -86,16 +89,25 @@ class AxesContainer( Container ):
         # store all the method calls that need to be called on a
         # matplotlib axes object in a list
         self._commands = list()
+        self._auto_legend = False
         
     def __getattr__(self, attribute_name):
         """Suppose the caller wants to call a function on a matplotlib
         axes object"""
         return AxesMethod( attribute_name, self._commands )
-        
+       
+    def set_auto_legend(self, auto_legend):
+        """Specify if the container should try to put a legend on the 
+        plot.
+        :param auto_legend: True or False
+        """
+        self._auto_legend = auto_legend
+  
     def plot_on_axes(self, ax):
         """Replay the list of stored commands to the real Axes object"""
         for name, args, kwargs in self._commands:
             getattr(ax, name)(*args, **kwargs)
+        if self._auto_legend:
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(handles, labels)
 
