@@ -29,11 +29,9 @@ logger = logging.getLogger('camelot.view.controls.navpane2')
 
 from PyQt4 import QtCore
 from PyQt4.QtGui import QIcon
-from PyQt4.QtGui import QFrame
 from PyQt4.QtGui import QWidget
 from PyQt4.QtGui import QToolBox
 from PyQt4.QtGui import QDockWidget
-from PyQt4.QtGui import QTreeWidget
 
 from camelot.view import art
 from camelot.view.model_thread import post
@@ -70,12 +68,6 @@ class NavigationPane(QDockWidget):
         post(self.app_admin.get_sections, self.set_sections)
 
     def get_toolbox(self):
-        #tb_item_0_tree = QTreeWidget(tb_item_0)
-        #tb_item_0_tree.setFrameShape(QFrame.NoFrame)
-        #tb_item_0_tree.setFrameShadow(QFrame.Plain)
-        #tb_item_0_tree.setLineWidth(0)
-        #tb_item_0_tree.setHeaderHidden(True)
-
         tb = QToolBox()
         tb.layout().setSpacing(1)
         return tb
@@ -91,6 +83,7 @@ class NavigationPane(QDockWidget):
 
     def set_sections(self, sections):
         logger.debug('setting navpane sections')
+
         self._sections = sections
         self._buttons = [(
             index,
@@ -98,20 +91,22 @@ class NavigationPane(QDockWidget):
             section.get_icon().getQPixmap(),
         ) for index, section in enumerate(sections)]
 
-        for i, name, pixm in self._buttons:
+        for i, name, pixmap in self._buttons:
             # TODO: old navpane used translation here
             name = unicode(name)
-            self._toolbox.addItem(QWidget(), QIcon(pixm), name)
+            self._toolbox.addItem(QWidget(), QIcon(pixmap), name)
 
         self._toolbox.currentChanged.connect(self.change_current)
         self._toolbox.setCurrentIndex(0)
+        # setCurrentIndex does not emit currentChanged
+        self.change_current(0)
 
-    @QtCore.pyqtSlot(int, unicode)
+    @QtCore.pyqtSlot(int)
     def change_current(self, index):
-        logger.debug('set current to index %s' % index)
+        logger.debug('setting current navpane index to %s' % index)
 
         def get_models_for_tree():
-            """Return pairs of (Admin, query) classes for items in the tree"""
+            """returns pairs of (Admin, query) classes for items in the tree"""
             if index < len(self._sections):
                 section = self._sections[index]
                 return section.get_items()
@@ -120,18 +115,18 @@ class NavigationPane(QDockWidget):
         post(get_models_for_tree, self.set_items_in_tree)
 
     def set_items_in_tree(self, items):
+        logger.debug('setting items for current navpane section')
+
         self._shared_tree_widget.clear()
         self._shared_tree_widget.clear_model_items()
-        self._shared_tree_widget.setParent(self._toolbox.currentWidget())
+        #self._shared_tree_widget.setParent(self._toolbox.currentWidget())
         self._tree_items = items
 
         if not items: return
 
         for item in items:
-            model_item = ModelItem(
-                self._shared_tree_widget,
-                [item.get_verbose_name()]
-            )
+            label = item.get_verbose_name()
+            model_item = ModelItem(self._shared_tree_widget, [label])
             self._shared_tree_widget.modelitems.append(model_item)
 
         self._shared_tree_widget.update()
