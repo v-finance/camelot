@@ -253,7 +253,7 @@ class RowDataAdminDecorator(object):
                 self.new_field_attributes(i, attributes, original_field)
             )
             for i, (original_field, attributes) in enumerate(original_columns)
-            if attributes['editable']
+            if attributes.get('editable',  True)
         ]
 
         self._columns = new_columns
@@ -414,12 +414,6 @@ class ImportWizard(QtGui.QWizard):
         desktop = QtCore.QCoreApplication.instance().desktop()
         self.setMinimumSize(desktop.width()*2/3, desktop.height()*2/3)
 
-        admin.list_display = [
-            'first_name', 'last_name', 'seniority', 'position_type',
-            'agreement_type', 'from_date', 'thru_date', 'worked_days',
-            'not_assimilated_days', 'worked_hours', 'nomenclatural_hours'
-        ]
-
         row_data_admin = RowDataAdminDecorator(admin)
         model = DataPreviewCollectionProxy(
             row_data_admin,
@@ -449,4 +443,5 @@ class ImportWizard(QtGui.QWizard):
             )
         )
         self.addPage(FinalPage(parent=self, model=model, admin=admin))
+
 
