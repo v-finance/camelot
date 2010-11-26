@@ -8,7 +8,6 @@ QToolBox {
 QToolBox:tab {
     margin: 0;
     border: none;
-    width: 160px;
     height: 32px;
     padding-left: 3px;
     color: rgb(32, 77, 137);
@@ -18,7 +17,6 @@ QToolBox:tab {
 QToolBox:tab:hover {
     margin: 0;
     border: none;
-    width: 160px;
     height: 32px;
     padding-left: 3px;
     color: rgb(32, 77, 137);
@@ -28,7 +26,6 @@ QToolBox:tab:hover {
 QToolBox:tab:selected {
     margin: 0;
     border: none;
-    width: 160px;
     height: 32px;
     padding-left: 3px;
     color: rgb(0, 0, 0);
@@ -38,14 +35,8 @@ QToolBox:tab:selected {
 QToolBox:tab:selected:hover {
     margin: 0;
     border: none;
-    width: 160px;
     height: 32px;
     padding-left: 3px;
     color: rgb(0, 0, 0);
     background-color: qlineargradient(spread:pad, x1:0.5, y1:0, x2:0.5, y2:1, stop:0 rgba(255, 189, 105, 255), stop:0.4 rgba(255, 172, 66, 255), stop:0.401 rgba(251, 140, 60, 255), stop:1 rgba(254, 211, 100, 255));
-}
-
-QWidget#NavPaneTree {
-    margin-left: 3px;
-    background-color: rgb(255, 255, 255);
 }

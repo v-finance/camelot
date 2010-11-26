@@ -145,6 +145,13 @@ will be put onto a form"""
             editor.set_background_color(background_color)
         tip = variant_to_pyobject(index.model().data(index, Qt.ToolTipRole))
         if tip not in (None, ValueLoading):
+            # create indication that a tip is set
+            if editor.layout():
+                from camelot.view.art import Icon
+                iconlabel = QtGui.QLabel()
+                iconlabel.setPixmap(Icon('tango/16x16/apps/help-browser.png').getQPixmap())
+                editor.layout().addWidget(iconlabel)
+                editor.setCursor(QtGui.QCursor(Qt.WhatsThisCursor))
             editor.setToolTip(unicode(tip))
         else:
             editor.setToolTip('')
@@ -157,13 +164,13 @@ will be put onto a form"""
         model.setData(index, val)
 
     def paint_text(
-        self, 
-        painter, 
-        option, 
-        index, 
-        text, 
-        margin_left=0, 
-        margin_right=0, 
+        self,
+        painter,
+        option,
+        index,
+        text,
+        margin_left=0,
+        margin_right=0,
         horizontal_align=Qt.AlignLeft,
         vertical_align=Qt.AlignVCenter
     ):
@@ -184,7 +191,7 @@ will be put onto a form"""
             background_color = field_attributes.get( 'background_color', None )
             prefix = field_attributes.get( 'prefix', None )
             suffix = field_attributes.get( 'suffix', None )
-            
+
 
         if( option.state & QtGui.QStyle.State_Selected ):
             painter.fillRect(option.rect, option.palette.highlight())
@@ -198,12 +205,12 @@ will be put onto a form"""
                 painter.fillRect(rect, background_color or option.palette.window() )
                 fontColor = QtGui.QColor()
                 fontColor.setRgb(130,130,130)
-        
+
         if prefix:
             text = '%s %s' % (unicode( prefix ).strip(), unicode( text ).strip() )
         if suffix:
             text = '%s %s' % (unicode( text ).strip(), unicode( suffix ).strip() )
-            
+
         painter.setPen(fontColor.toRgb())
         painter.drawText(rect.x() + 2 + margin_left,
                          rect.y() + 2,

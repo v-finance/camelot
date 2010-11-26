@@ -64,12 +64,11 @@ class ModelTree(QtGui.QTreeWidget):
 
     def __init__(self, header_labels=[''], parent=None):
         logger.debug('creating new modeltree')
-        QtGui.QTreeWidget.__init__(self, parent)
+        super(ModelTree, self).__init__(parent)
         # we don't select entire rows
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectItems)
         # we track mouse movement when no button is pressed
         self.setMouseTracking(True)
-        self.parent = parent
         self.header_labels = header_labels
         self.clear_model_items()
         self.fix_header_labels()
@@ -102,8 +101,3 @@ class ModelTree(QtGui.QTreeWidget):
         item = self.itemAt(self.mapFromGlobal(self.cursor().pos()))
         if item:
             item._underline(True)
-
-    #def focusInEvent(self, event):
-    #    item = self.itemAt(self.mapFromGlobal(self.cursor().pos()))
-    #    if item: self.setCurrentItem(item)
-

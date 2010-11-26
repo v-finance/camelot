@@ -29,14 +29,24 @@ logger = logging.getLogger('camelot.view.controls.navpane2')
 
 from PyQt4 import QtCore
 from PyQt4.QtGui import QIcon
+from PyQt4.QtGui import QFrame
 from PyQt4.QtGui import QWidget
 from PyQt4.QtGui import QToolBox
 from PyQt4.QtGui import QDockWidget
+from PyQt4.QtGui import QVBoxLayout
 
 from camelot.view import art
 from camelot.view.model_thread import post
 from camelot.view.controls.modeltree import ModelItem
 from camelot.view.controls.modeltree import ModelTree
+
+
+class PlainWidgetWithNoMargins(QWidget):
+
+    def __init__(self, layout=None, parent=None):
+        super(PlainWidgetWithNoMargins, self).__init__(parent)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
 
 
 class NavigationPane(QDockWidget):
@@ -73,9 +83,10 @@ class NavigationPane(QDockWidget):
         return tb
 
     def get_tree_widget(self):
-        # constructor needs a list of header labels
-        # tree will be reparented
-        tw = ModelTree([''], self)
+        tw = ModelTree()
+        # i hate this frame style
+        tw.setFrameShape(QFrame.NoFrame)
+        tw.setFrameShadow(QFrame.Plain)
         return tw
 
     def get_sections(self):
@@ -91,15 +102,22 @@ class NavigationPane(QDockWidget):
             section.get_icon().getQPixmap(),
         ) for index, section in enumerate(sections)]
 
+        self._toolbox_widgets = []
+
         for i, name, pixmap in self._buttons:
             # TODO: old navpane used translation here
             name = unicode(name)
-            self._toolbox.addItem(QWidget(), QIcon(pixmap), name)
+            icon = QIcon(pixmap)
+            pwdg = PlainWidgetWithNoMargins(QVBoxLayout())
+            self._toolbox_widgets.append(pwdg)
+            self._toolbox.addItem(pwdg, icon, name)
 
         self._toolbox.currentChanged.connect(self.change_current)
         self._toolbox.setCurrentIndex(0)
         # setCurrentIndex does not emit currentChanged
         self.change_current(0)
+        # WARNING: hardcoded width
+        self._toolbox.setMinimumWidth(160)
 
     @QtCore.pyqtSlot(int)
     def change_current(self, index):
@@ -119,7 +137,7 @@ class NavigationPane(QDockWidget):
 
         self._shared_tree_widget.clear()
         self._shared_tree_widget.clear_model_items()
-        #self._shared_tree_widget.setParent(self._toolbox.currentWidget())
+        self._toolbox.currentWidget().layout().addWidget(self._shared_tree_widget)
         self._tree_items = items
 
         if not items: return
@@ -128,5 +146,3 @@ class NavigationPane(QDockWidget):
             label = item.get_verbose_name()
             model_item = ModelItem(self._shared_tree_widget, [label])
             self._shared_tree_widget.modelitems.append(model_item)
-
-        self._shared_tree_widget.update()
