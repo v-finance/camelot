@@ -379,7 +379,7 @@ class MainWindow(QtGui.QMainWindow):
                     parent=self,
                     text=unicode(action.get_verbose_name()),
                     slot=bind_action(self, action),
-                    actionicon=action.get_icon().getQIcon(),
+                    actionicon=action.get_icon(),
                     tip=unicode(action.get_verbose_name())
                 )
             )
