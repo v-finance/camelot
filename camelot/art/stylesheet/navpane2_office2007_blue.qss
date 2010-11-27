@@ -1,6 +1,7 @@
 /* ms-office 2007-like stylesheet for navigation pane */
 
 QToolBox {
+    icon-size: 24px;
     border: 1px solid rgb(101, 147, 207);
     background-color: rgb(101, 147, 207);
 }
