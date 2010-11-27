@@ -28,7 +28,9 @@ import logging
 logger = logging.getLogger('camelot.view.controls.navpane2')
 
 from PyQt4 import QtCore
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QIcon
+from PyQt4.QtGui import QMenu
 from PyQt4.QtGui import QFrame
 from PyQt4.QtGui import QWidget
 from PyQt4.QtGui import QToolBox
@@ -36,7 +38,10 @@ from PyQt4.QtGui import QDockWidget
 from PyQt4.QtGui import QVBoxLayout
 
 from camelot.view import art
+from camelot.action import addActions
+from camelot.action import createAction
 from camelot.view.model_thread import post
+from camelot.core.utils import ugettext as _
 from camelot.view.controls.modeltree import ModelItem
 from camelot.view.controls.modeltree import ModelTree
 
@@ -84,9 +89,22 @@ class NavigationPane(QDockWidget):
 
     def get_tree_widget(self):
         tw = ModelTree()
-        # i hate this frame style
+        # i hate the sunken frame style
         tw.setFrameShape(QFrame.NoFrame)
         tw.setFrameShadow(QFrame.Plain)
+
+        tw.contextmenu = QMenu(self)
+        act = createAction(
+            parent = self,
+            text = _('Open in New Tab'),
+            slot = self.pop_window,
+            shortcut = 'Ctrl+Enter'
+        )
+
+        addActions(tw.contextmenu, (act,))
+        tw.setContextMenuPolicy(Qt.CustomContextMenu)
+        tw.customContextMenuRequested.connect(self.create_context_menu)
+
         return tw
 
     def get_sections(self):
@@ -146,3 +164,29 @@ class NavigationPane(QDockWidget):
             label = item.get_verbose_name()
             model_item = ModelItem(self._shared_tree_widget, [label])
             self._shared_tree_widget.modelitems.append(model_item)
+
+    def connect_tree_items(self, func):
+        self._shared_tree_widget.itemClicked.connect(func)
+
+    def get_section_item(self, item):
+        index = self._shared_tree_widget.indexFromItem(item)
+        return self._tree_items[index.row()]
+
+    def create_context_menu(self, point):
+        logger.debug('creating context menu')
+        item = self._shared_tree_widget.itemAt(point)
+        if item:
+            self._shared_tree_widget.setCurrentItem(item)
+            self._shared_tree_widget.contextmenu.popup(
+                self._shared_tree_widget.mapToGlobal(point)
+            )
+
+    def pop_window(self):
+        """pops a model window in parent's workspace"""
+        logger.debug('poping a window in parent')
+        item = self._shared_tree_widget.currentItem()
+        index = self._shared_tree_widget.indexFromItem(item)
+        section_item = self._tree_items[index.row()]
+        new_view = section_item.get_action().run(self.workspace)
+        if new_view:
+            self.workspace.add_view(new_view)
