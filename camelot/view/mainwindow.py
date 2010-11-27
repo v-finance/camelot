@@ -37,13 +37,15 @@ from PyQt4 import QtGui, QtCore
 
 from camelot.view.art import Icon
 from camelot.action import createAction, addActions, ActionFactory
-from camelot.view.controls.navpane import NavigationPane
+#from camelot.view.controls.navpane import NavigationPane
+from camelot.view.controls.navpane2 import NavigationPane
 from camelot.view.controls.printer import Printer
 from camelot.view.model_thread import post
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
 from camelot.core.utils import ugettext as _
+
 
 class MainWindow(QtGui.QMainWindow):
     """Main window GUI"""
@@ -320,7 +322,7 @@ class MainWindow(QtGui.QMainWindow):
             slot = self.updateValue,
             tip = _('Replace the content of a field for all rows in a selection')
         )
-        
+
         self.mergeDocumentAct = createAction(
             parent = self,
             text = _('Merge document'),
@@ -469,7 +471,7 @@ class MainWindow(QtGui.QMainWindow):
         selection_getter = self.activeMdiChild().get_selection
         wizard = UpdateValueWizard(admin=admin, selection_getter=selection_getter)
         wizard.exec_()
-        
+
     def merge_document(self):
         """Run the merge document wizard on the selection in the current
         table view"""
@@ -478,7 +480,7 @@ class MainWindow(QtGui.QMainWindow):
         selection_getter = self.activeMdiChild().get_selection
         wizard = MergeDocumentWizard(selection_getter=selection_getter)
         wizard.exec_()
-        
+
     def exportToExcel(self):
         """creates an excel file from the view"""
         widget = self.activeMdiChild()
@@ -528,8 +530,8 @@ class MainWindow(QtGui.QMainWindow):
 
         self.editMenu = self.menuBar().addMenu(_('&Edit'))
 
-        addActions(self.editMenu, (self.copyAct, 
-                                   self.selectAllAct, 
+        addActions(self.editMenu, (self.copyAct,
+                                   self.selectAllAct,
                                    self.updateValueAct,
                                    self.mergeDocumentAct))
 
@@ -626,13 +628,15 @@ class MainWindow(QtGui.QMainWindow):
             parent=self
         )
         self.addDockWidget(Qt.LeftDockWidgetArea, self.navpane)
-        self.navpane.treewidget.itemClicked.connect( self.createMdiChild )
+        #self.navpane.treewidget.itemClicked.connect(self.createMdiChild)
+        self.navpane.connect_tree_items(self.createMdiChild)
 
     # Interface for child windows
-    @QtCore.pyqtSlot( QtGui.QTreeWidgetItem, int )
-    def createMdiChild(self, item, index):
-        index = self.navpane.treewidget.indexFromItem(item)
-        section_item = self.navpane.items[index.row()]
+    @QtCore.pyqtSlot(QtGui.QTreeWidgetItem, int)
+    def createMdiChild(self, item, column):
+        #index = self.navpane.treewidget.indexFromItem(item)
+        #section_item = self.navpane.items[index.row()]
+        section_item = self.navpane.get_section_item(item)
         new_view = section_item.get_action().run(self.workspace)
         if new_view:
             self.workspace.set_view(new_view)
@@ -662,4 +666,3 @@ class MainWindow(QtGui.QMainWindow):
         self.workspace.close_all_views()
         self.writeSettings()
         event.accept()
-
