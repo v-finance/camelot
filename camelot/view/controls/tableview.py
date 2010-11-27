@@ -686,18 +686,20 @@ class TableView( AbstractView  ):
 
     def to_html( self ):
         """generates html of the table"""
-        table = [[getattr( row, col[0] ) for col in self.admin.get_columns()]
-                 for row in self.admin.entity.query.all()]
-        context = {
-          'title': self.admin.get_verbose_name_plural(),
-          'table': table,
-          'columns': [field_attributes['name'] for _field, field_attributes in self.admin.get_columns()],
-        }
-        from camelot.view.templates import loader
-        from jinja2 import Environment
-        env = Environment( loader = loader )
-        tp = env.get_template( 'table_view.html' )
-        return tp.render( context )
+        if self._table_model:
+            query_getter = self._table_model.get_query_getter()
+            table = [[getattr( row, col[0] ) for col in self.admin.get_columns()]
+                     for row in query_getter().all()]
+            context = {
+              'title': self.admin.get_verbose_name_plural(),
+              'table': table,
+              'columns': [field_attributes['name'] for _field, field_attributes in self.admin.get_columns()],
+            }
+            from camelot.view.templates import loader
+            from jinja2 import Environment
+            env = Environment( loader = loader )
+            tp = env.get_template( 'table_view.html' )
+            return tp.render( context )
 
     def importFromFile( self ):
         """"import data : the data will be imported in the activeMdiChild """
@@ -705,4 +707,5 @@ class TableView( AbstractView  ):
         from camelot.view.wizard.importwizard import ImportWizard
         wizard = ImportWizard(self, self.admin)
         wizard.exec_()
+
 
