@@ -67,12 +67,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
         #
         from camelot.view.controls.tableview import TableWidget
         # parent set by layout manager
-        self.table = TableWidget()
+        self.table = TableWidget(lines_per_row=admin.lines_per_row, 
+                                 columns_frozen=admin.list_columns_frozen)
         rowHeight = QtGui.QFontMetrics( self.font() ).height() + 5
-        self.table.verticalHeader().setDefaultSectionSize( rowHeight )
         layout.setSizeConstraint( QtGui.QLayout.SetNoConstraint )
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
-                           QtGui.QSizePolicy.Expanding )
+                            QtGui.QSizePolicy.Expanding )
         self.setMinimumHeight( rowHeight*5 )
         if vertical_header_clickable:
             self.table.verticalHeader().sectionClicked.connect(
@@ -213,5 +213,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
                                  edits = None )
         form = self.admin.create_form_view( u'', model, self.model.map_to_source(index) )
         show_top_level( form, self )
+
 
 

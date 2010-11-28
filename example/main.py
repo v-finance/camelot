@@ -8,7 +8,10 @@ try:
 except:
     logger.error('Charts will not work because of missing matplotlib')
 
-if __name__ == '__main__':
+def main():
     from camelot.view.main import main
     from application_admin import MyApplicationAdmin
     main(MyApplicationAdmin())
+    
+if __name__ == '__main__':
+    main()

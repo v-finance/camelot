@@ -91,6 +91,11 @@ the number of columns on the left of the tableview that should be frozen
 (don't dissapear when the user uses the horizontal scroll bar), defaults
 to zero
 
+.. attribute:: lines_per_row
+
+An integer number specifying the height of a row in the table view, expressed
+as the number of lines of text it should be able to display.  Defaults to 1.
+
 .. attribute:: form_display
 
 a list with the fields that should be displayed in a form view, defaults to
@@ -189,6 +194,7 @@ The QWidget class to be used when a table view is needed
     verbose_name_plural = None
     list_display = []
     list_columns_frozen = 0
+    lines_per_row = 1
     validator = ObjectValidator
     model = CollectionProxy
     fields = []
@@ -795,4 +801,5 @@ The QWidget class to be used when a table view is needed
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()
         return new_entity_instance
+
 

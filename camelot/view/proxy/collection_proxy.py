@@ -196,7 +196,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
         self._mutex = QtCore.QMutex()
         self.admin = admin
-        self.iconSize = QtCore.QSize( QtGui.QFontMetrics( self._header_font_required ).height() - 4, QtGui.QFontMetrics( self._header_font_required ).height() - 4 )
+        self._horizontal_header_height = QtGui.QFontMetrics( self._header_font_required ).height() + 10
+        vertical_header_font_height = QtGui.QFontMetrics( self._header_font ).height()
+        self._vertical_header_height = vertical_header_font_height * self.admin.lines_per_row + 10
+        self.iconSize = QtCore.QSize( vertical_header_font_height, 
+                                      vertical_header_font_height )
         if self.header_icon:
             self.form_icon = QtCore.QVariant( self.header_icon.getQIcon().pixmap( self.iconSize ) )
         else:
@@ -480,15 +484,15 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 size = max( minimal_column_width, label_size.width() + 10 )
                 if editable:
                     size = max( size, editor_size.width() )
-                return QtCore.QVariant( QtCore.QSize( size, label_size.height() + 10 ) )
+                return QtCore.QVariant( QtCore.QSize( size, self._horizontal_header_height ) )
         else:
             if role == Qt.SizeHintRole:
-                height = self.iconSize.height() + 5
                 if self.header_icon:
-                    return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 10, height ) )
+                    return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 10, 
+                                                          self._vertical_header_height ) )
                 else:
                     # if there is no icon, the line numbers will be displayed, so create some space for those
-                    return QtCore.QVariant( QtCore.QSize( QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, str(self._rows) ).width() + 10, height) )
+                    return QtCore.QVariant( QtCore.QSize( QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, str(self._rows) ).width() + 10, self._vertical_header_height ) )
             if role == Qt.DecorationRole:
                 return self.form_icon
 #      elif role == Qt.DisplayRole:
@@ -990,5 +994,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     def get_admin( self ):
         """Get the admin object associated with this model"""
         return self.admin
+
 
 

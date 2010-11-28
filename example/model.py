@@ -101,6 +101,7 @@ class Movie(Entity):
         # the list_display attribute specifies which entity attributes should
         # be visible in the table view
         list_display = ['cover', 'title', 'releasedate', 'rating',]
+        lines_per_row = 5
         # define filters to be available in the table view
         list_filter = ['genre', ComboBoxFilter('director.full_name')]
         # if the search function needs to look in related object attributes,
@@ -142,15 +143,6 @@ class Movie(Entity):
                                                           <tr><td>5 stars</td><td>Awesome !</td></tr>
                                                        </table>'''),
                                 smiley=dict(delegate=delegates.SmileyDelegate))
-        #
-        # through subclassing, even more details of the look and feel can
-        # be customized, in this example, we change the number of lines of
-        # text visible in each row
-        #
-        class TableView( EntityAdmin.TableView):
-    
-            class TableWidget( EntityAdmin.TableView.TableWidget ):
-                lines_per_row = 5
     
     def __unicode__(self):
         return self.title or ''
@@ -183,6 +175,7 @@ class Tag(Entity):
         form_size = (400,200)
         list_display = ['name']
         form_display = ['name', 'movies']
+        lines_per_row = 2
     
 class VisitorReport(Entity):
     using_options(tablename='visitor_report')

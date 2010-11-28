@@ -73,17 +73,14 @@ margin, specified as a number of pixels, used to calculate the height of a row
 in the table, the minimum row height will allow for this number of pixels below
 and above the text.
 
-.. attribute:: lines_per_row
-
-the number of lines of text that should be viewable in a single row.
 """
 
     margin = 5
-    lines_per_row = 1
     
-    def __init__( self, parent = None, columns_frozen = 0 ):
+    def __init__( self, parent = None, columns_frozen = 0, lines_per_row = 1 ):
         """
-        :param columns_frozen: the number of columns on the left that don't scroll
+:param columns_frozen: the number of columns on the left that don't scroll
+:param lines_per_row: the number of lines of text that should be viewable in a single row.
         """
         QtGui.QTableView.__init__( self, parent )
         logger.debug( 'create TableWidget' )
@@ -96,7 +93,7 @@ the number of lines of text that should be viewable in a single row.
         self._header_font_required = QtGui.QApplication.font()
         self._header_font_required.setBold( True )
         line_height = QtGui.QFontMetrics(QtGui.QApplication.font()).lineSpacing()
-        self._minimal_row_height = line_height * self.lines_per_row + 2*self.margin
+        self._minimal_row_height = line_height * lines_per_row + 2*self.margin
         self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
         self.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
         self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
@@ -471,7 +468,9 @@ class TableView( AbstractView  ):
             self.table.deleteLater()
             self._table_model.deleteLater()
         splitter = self.findChild( QtGui.QWidget, 'splitter' )
-        self.table = self.TableWidget( splitter, self.admin.list_columns_frozen )
+        self.table = self.TableWidget( splitter, 
+                                       self.admin.list_columns_frozen, 
+                                       lines_per_row = self.admin.lines_per_row )
         self._table_model = self.create_table_model( admin )
         self.table.setModel( self._table_model )
         self.table.verticalHeader().sectionClicked.connect( self.sectionClicked )
