@@ -145,13 +145,6 @@ will be put onto a form"""
             editor.set_background_color(background_color)
         tip = variant_to_pyobject(index.model().data(index, Qt.ToolTipRole))
         if tip not in (None, ValueLoading):
-            # create indication that a tip is set
-            if editor.layout():
-                from camelot.view.art import Icon
-                iconlabel = QtGui.QLabel()
-                iconlabel.setPixmap(Icon('tango/16x16/apps/help-browser.png').getQPixmap())
-                editor.layout().addWidget(iconlabel)
-                editor.setCursor(QtGui.QCursor(Qt.WhatsThisCursor))
             editor.setToolTip(unicode(tip))
         else:
             editor.setToolTip('')
