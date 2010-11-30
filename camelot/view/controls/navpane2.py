@@ -73,6 +73,7 @@ class NavigationPane(QDockWidget):
 
         self.setFeatures(QDockWidget.NoDockWidgetFeatures)
 
+        # should happen at the top level
         self.setStyleSheet(art.read('stylesheet/navpane2_office2007_blue.qss'))
 
         self.app_admin.sections_changed_signal.connect(self.auth_update)
@@ -84,6 +85,7 @@ class NavigationPane(QDockWidget):
 
     def get_toolbox(self):
         tb = QToolBox()
+        tb.layout().setContentsMargins(0,0,0,0)
         tb.layout().setSpacing(1)
         return tb
 
