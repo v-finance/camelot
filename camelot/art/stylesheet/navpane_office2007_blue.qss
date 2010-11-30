@@ -1,4 +1,4 @@
-/* ms-office 2007-like stylesheet for navigation pane */
+/* ms-office 2007 blue stylesheet for navigation pane */
 
 QLabel#PaneCaption {
     margin: 3px 0 0 3px;

@@ -32,6 +32,7 @@ from camelot.core.utils import ugettext as _
 from camelot.core.backup import BackupMechanism
 from camelot.view import art
 
+
 _application_admin_ = []
 
 def get_application_admin():
@@ -212,13 +213,13 @@ class ApplicationAdmin(QtCore.QObject):
         """
         :return: a string with the qt stylesheet to be used for this application as a string
         or None if no stylesheet needed.
-        
+
         Camelot comes with a couple of default stylesheets :
-        
+
          * stylesheet/navpane_office2007_blue.qss
          * stylesheet/navpane_office2007_black.qss
          * stylesheet/navpane_office2007_silver.qss
-         
+
         Have a look at the default implementation to use another stylesheet.
         """
         return art.read('stylesheet/navpane_office2007_blue.qss')
@@ -252,7 +253,7 @@ class ApplicationAdmin(QtCore.QObject):
                   http://www.conceptive.be
                   </p>
                   """%(today.year, license.license_type)
-    
+
     def get_versions(self):
         """
         :return: html which displays the versions of used libs for development
@@ -268,7 +269,7 @@ class ApplicationAdmin(QtCore.QObject):
                 qt_version,
                 pyqt_version
             )
-    
+
     def get_default_field_attributes(self, type_, field):
         """Returns the default field attributes"""
         from camelot.core.view.field_attributes import \

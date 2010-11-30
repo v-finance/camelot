@@ -74,7 +74,7 @@ class NavigationPane(QDockWidget):
         self.setFeatures(QDockWidget.NoDockWidgetFeatures)
 
         # should happen at the top level
-        self.setStyleSheet(art.read('stylesheet/navpane2_office2007_blue.qss'))
+        #self.setStyleSheet(art.read('stylesheet/navpane2_office2007_blue.qss'))
 
         self.app_admin.sections_changed_signal.connect(self.auth_update)
         self.auth_update()
