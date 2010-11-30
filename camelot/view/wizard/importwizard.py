@@ -194,6 +194,9 @@ class RowDataAdminDecorator(object):
         """When flush is called, don't do anything, since we'll only save the
         object when importing them for real"""
         pass
+    
+    def delete(self, obj):
+        pass
 
     def get_field_attributes(self, field_name):
         return self._new_field_attributes[field_name]

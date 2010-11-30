@@ -21,7 +21,7 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtCore
+
 from PyQt4.QtCore import Qt
 
 from customdelegate import CustomDelegate, DocumentationMetaclass

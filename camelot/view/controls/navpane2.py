@@ -37,7 +37,6 @@ from PyQt4.QtGui import QToolBox
 from PyQt4.QtGui import QDockWidget
 from PyQt4.QtGui import QVBoxLayout
 
-from camelot.view import art
 from camelot.action import addActions
 from camelot.action import createAction
 from camelot.view.model_thread import post
@@ -45,14 +44,12 @@ from camelot.core.utils import ugettext as _
 from camelot.view.controls.modeltree import ModelItem
 from camelot.view.controls.modeltree import ModelTree
 
-
 class PlainWidgetWithNoMargins(QWidget):
 
     def __init__(self, layout=None, parent=None):
         super(PlainWidgetWithNoMargins, self).__init__(parent)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
-
 
 class NavigationPane(QDockWidget):
 
@@ -133,7 +130,7 @@ class NavigationPane(QDockWidget):
 
         self._toolbox_widgets = []
 
-        for i, name, pixmap in self._buttons:
+        for _i, name, pixmap in self._buttons:
             # TODO: old navpane used translation here
             name = unicode(name)
             icon = QIcon(pixmap)
@@ -146,7 +143,7 @@ class NavigationPane(QDockWidget):
         # setCurrentIndex does not emit currentChanged
         self.change_current(0)
         # WARNING: hardcoded width
-        self._toolbox.setMinimumWidth(160)
+        self._toolbox.setMinimumWidth(220)
 
     @QtCore.pyqtSlot(int)
     def change_current(self, index):
