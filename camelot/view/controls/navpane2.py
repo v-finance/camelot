@@ -60,12 +60,12 @@ class NavigationPane(QDockWidget):
         self.app_admin = app_admin
 
         self._tree_items = None
+        self._title_widget = QWidget()
         self._toolbox = self.get_toolbox()
         self._shared_tree_widget = self.get_tree_widget()
 
         # hack for removing the dock title bar
-        self.setTitleBarWidget(QWidget())
-        self.titleBarWidget().hide()
+        self.setTitleBarWidget(self._title_widget)
         self.setWidget(self._toolbox)
 
         self.setFeatures(QDockWidget.NoDockWidgetFeatures)
@@ -82,7 +82,8 @@ class NavigationPane(QDockWidget):
 
     def get_toolbox(self):
         tb = QToolBox()
-        tb.layout().setContentsMargins(1,1,0,0)
+        tb.setFrameShape(QFrame.NoFrame)
+        tb.layout().setContentsMargins(0,0,0,0)
         tb.layout().setSpacing(1)
         return tb
 

@@ -3,6 +3,7 @@
 QToolBox {
     icon-size: 24px;
     border: 1px solid rgb(111, 112, 116);
+    border-top-width: 2px;
     background-color: rgb(111, 112, 116);
 }
 
