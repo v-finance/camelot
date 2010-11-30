@@ -122,6 +122,15 @@ class NavigationPane(QDockWidget):
             section.get_icon().getQPixmap(),
         ) for index, section in enumerate(sections)]
 
+        # performs QToolBox clean up
+        # QToolbox won't delete items we have to do it explicitly
+        count = self._toolbox.count()
+        while count:
+            item = self._toolbox.widget(count-1)
+            self._toolbox.removeItem(count-1)
+            item.deleteLater()
+            count -= 1
+
         self._toolbox_widgets = []
 
         for i, name, pixmap in self._buttons:
