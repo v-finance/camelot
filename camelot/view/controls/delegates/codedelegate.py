@@ -21,7 +21,7 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtGui, QtCore
+
 from PyQt4.QtCore import Qt
 
 from customdelegate import CustomDelegate, DocumentationMetaclass
@@ -42,46 +42,10 @@ class CodeDelegate(CustomDelegate):
     
     def paint(self, painter, option, index):
         painter.save()
-        numParts = len(self.parts)
         self.drawBackground(painter, option, index)
-        
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
-        
-        if( option.state & QtGui.QStyle.State_Selected ):
-            painter.fillRect(option.rect, option.palette.highlight())
-            fontColor = QtGui.QColor()
-            if self.editable:
-                Color = option.palette.highlightedText().color()
-                fontColor.setRgb(Color.red(), Color.green(), Color.blue())
-            else:
-                fontColor.setRgb(130,130,130)
-        else:
-            if self.editable:
-                painter.fillRect(option.rect, background_color)
-                fontColor = QtGui.QColor()
-                fontColor.setRgb(0,0,0)
-            else:
-                painter.fillRect(option.rect, option.palette.window())
-                fontColor = QtGui.QColor()
-                fontColor.setRgb(130,130,130)
-                
-        rect = option.rect
-        rect = QtCore.QRect(rect.left()+3, rect.top()+6, rect.width(), rect.height()-3)
-        
-        if numParts != 0:
-            value = variant_to_pyobject(index.model().data(index, Qt.EditRole)) or []
-            if value == ValueLoading:
-                value = []
-            value = self.separator.join([unicode(i) for i in value])
-            
-            painter.setPen(fontColor.toRgb())
-            painter.drawText(rect.x(),
-                           rect.y()-4,
-                           rect.width()-6,
-                           rect.height(),
-                           Qt.AlignVCenter | Qt.AlignRight,
-                           value)  
-        
+        value = variant_to_pyobject( index.model().data( index, Qt.EditRole ) )
+        value_str = u''
+        if value not in (None, ValueLoading):
+            value_str = self.separator.join([unicode(i) for i in value])
+        self.paint_text(painter, option, index, value_str, horizontal_align=Qt.AlignRight )
         painter.restore()
-
-
