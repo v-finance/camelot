@@ -85,7 +85,7 @@ class NavigationPane(QDockWidget):
 
     def get_toolbox(self):
         tb = QToolBox()
-        tb.layout().setContentsMargins(0,0,0,0)
+        tb.layout().setContentsMargins(1,1,0,0)
         tb.layout().setSpacing(1)
         return tb
 

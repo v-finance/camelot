@@ -216,13 +216,13 @@ class ApplicationAdmin(QtCore.QObject):
 
         Camelot comes with a couple of default stylesheets :
 
-         * stylesheet/navpane_office2007_blue.qss
-         * stylesheet/navpane_office2007_black.qss
-         * stylesheet/navpane_office2007_silver.qss
+         * stylesheet/office2007_blue.qss
+         * stylesheet/office2007_black.qss
+         * stylesheet/office2007_silver.qss
 
         Have a look at the default implementation to use another stylesheet.
         """
-        return art.read('stylesheet/navpane_office2007_blue.qss')
+        return art.read('stylesheet/office2007_blue.qss')
 
     def get_translator(self):
         """Reimplement this method to add application specific translations
