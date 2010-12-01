@@ -23,8 +23,8 @@
 #  ============================================================================
 
 import elixir
-from elixir import *
-from sqlalchemy import *
+from elixir import metadata
+from sqlalchemy import MetaData
 
 # begin session setup
 from sqlalchemy.orm import scoped_session, create_session

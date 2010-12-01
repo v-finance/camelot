@@ -23,7 +23,7 @@
 #  ============================================================================
 
 from camelot.model import metadata
-from camelot.model import entities
+from elixir import entities
 from camelot.view.controls import delegates
 
 from elixir.entity import Entity
