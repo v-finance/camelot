@@ -49,6 +49,20 @@ class QueryTableProxy(CollectionProxy):
         super(QueryTableProxy, self).__init__(admin, lambda: [],
                                               columns_getter, max_number_of_rows=max_number_of_rows, edits=None)
 
+#    def default_sort_decorator(self):
+#        """Create a function that sorts a query, by default we sort a query by the
+#        primary keys because we always want a unique ordering of the results, eg,
+#        2 consecutive results should have the same order.  This is not necessary the
+#        case when the query is not sorted, which will result to flicker on the screen.
+#        """
+#        #
+#        # _foreign_keys is for sqla pre 0.6.4
+#        # 
+#        if hasattr(property, '_foreign_keys'):
+#            class_attribute = list(property._foreign_keys)[0]
+#        else:                             
+#            class_attribute = list(property._calculated_foreign_keys)[0]         
+        
     def get_query_getter(self):
         if not self._sort_decorator or self._query_getter==None:
             return self._query_getter
