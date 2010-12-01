@@ -10,14 +10,16 @@ from sqlalchemy import sql
 from elixir import ColumnProperty
 
 import camelot.types
-from camelot.model import metadata, Entity, Field, ManyToOne, OneToMany, \
-                          ManyToMany, Unicode, Date, Integer, using_options
+from camelot.model import metadata
+from elixir import Entity, Field, ManyToOne, OneToMany, \
+                   ManyToMany, using_options
 from camelot.view.elixir_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
 from camelot.view.controls import delegates
 from camelot.view.filters import ComboBoxFilter
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import ColorScheme
+from sqlalchemy.types import Unicode, Date, Integer
 
 __metadata__ = metadata
 
