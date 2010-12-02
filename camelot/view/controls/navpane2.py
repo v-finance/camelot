@@ -27,7 +27,7 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.navpane2')
 
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QIcon
 from PyQt4.QtGui import QMenu
@@ -62,8 +62,7 @@ class NavigationPane(QDockWidget):
         self._tree_items = None
         self._title_widget = QWidget()
         self._toolbox = self.get_toolbox()
-        self._shared_tree_widget = self.get_tree_widget()
-
+        self._shared_tree_widget = None
         # hack for removing the dock title bar
         self.setTitleBarWidget(self._title_widget)
         self.setWidget(self._toolbox)
@@ -73,11 +72,11 @@ class NavigationPane(QDockWidget):
         # should happen at the top level
         #self.setStyleSheet(art.read('stylesheet/navpane2_office2007_blue.qss'))
 
-        self.app_admin.sections_changed_signal.connect(self.auth_update)
-        self.auth_update()
+        self.app_admin.sections_changed_signal.connect(self.update_sections)
+        self.update_sections()
 
     @QtCore.pyqtSlot()
-    def auth_update(self):
+    def update_sections(self):
         post(self.app_admin.get_sections, self.set_sections)
 
     def get_toolbox(self):
@@ -88,7 +87,7 @@ class NavigationPane(QDockWidget):
         return tb
 
     def get_tree_widget(self):
-        tw = ModelTree()
+        tw = ModelTree(parent=self)
         # i hate the sunken frame style
         tw.setFrameShape(QFrame.NoFrame)
         tw.setFrameShadow(QFrame.Plain)
@@ -97,7 +96,7 @@ class NavigationPane(QDockWidget):
         act = createAction(
             parent = self,
             text = _('Open in New Tab'),
-            slot = self.pop_window,
+            slot = self.open_in_new_view,
             shortcut = 'Ctrl+Enter'
         )
 
@@ -128,7 +127,9 @@ class NavigationPane(QDockWidget):
             self._toolbox.removeItem(count-1)
             item.deleteLater()
             count -= 1
-
+            
+        self._shared_tree_widget = self.get_tree_widget()
+        self._shared_tree_widget.itemClicked.connect(self.open_in_current_view)
         self._toolbox_widgets = []
 
         for _i, name, pixmap in self._buttons:
@@ -161,7 +162,6 @@ class NavigationPane(QDockWidget):
 
     def set_items_in_tree(self, items):
         logger.debug('setting items for current navpane section')
-
         self._shared_tree_widget.clear()
         self._shared_tree_widget.clear_model_items()
         self._toolbox.currentWidget().layout().addWidget(self._shared_tree_widget)
@@ -173,9 +173,6 @@ class NavigationPane(QDockWidget):
             label = item.get_verbose_name()
             model_item = ModelItem(self._shared_tree_widget, [label])
             self._shared_tree_widget.modelitems.append(model_item)
-
-    def connect_tree_items(self, func):
-        self._shared_tree_widget.itemClicked.connect(func)
 
     def get_section_item(self, item):
         index = self._shared_tree_widget.indexFromItem(item)
@@ -190,7 +187,29 @@ class NavigationPane(QDockWidget):
                 self._shared_tree_widget.mapToGlobal(point)
             )
 
-    def pop_window(self):
+    # Interface for child windows
+    
+#    def createMdiChild(self, item, column):
+#        #index = self.navpane.treewidget.indexFromItem(item)
+#        #section_item = self.navpane.items[index.row()]
+#        section_item = self.navpane.get_section_item(item)
+#        new_view = section_item.get_action().run(self.workspace)
+#        if new_view:
+#            self.workspace.set_view(new_view)
+      
+    @QtCore.pyqtSlot(QtGui.QTreeWidgetItem, int)
+    def open_in_current_view(self, item, _column):
+        """pops a model window in parent's workspace"""
+        logger.debug('poping a window in parent')
+        item = self._shared_tree_widget.currentItem()
+        index = self._shared_tree_widget.indexFromItem(item)
+        section_item = self._tree_items[index.row()]
+        new_view = section_item.get_action().run(self.workspace)
+        if new_view:
+            self.workspace.set_view(new_view)
+                  
+    @QtCore.pyqtSlot()
+    def open_in_new_view(self):
         """pops a model window in parent's workspace"""
         logger.debug('poping a window in parent')
         item = self._shared_tree_widget.currentItem()

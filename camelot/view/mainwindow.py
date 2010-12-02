@@ -628,24 +628,11 @@ class MainWindow(QtGui.QMainWindow):
             parent=self
         )
         self.addDockWidget(Qt.LeftDockWidgetArea, self.navpane)
-        #self.navpane.treewidget.itemClicked.connect(self.createMdiChild)
-        self.navpane.connect_tree_items(self.createMdiChild)
-
-    # Interface for child windows
-    @QtCore.pyqtSlot(QtGui.QTreeWidgetItem, int)
-    def createMdiChild(self, item, column):
-        #index = self.navpane.treewidget.indexFromItem(item)
-        #section_item = self.navpane.items[index.row()]
-        section_item = self.navpane.get_section_item(item)
-        new_view = section_item.get_action().run(self.workspace)
-        if new_view:
-            self.workspace.set_view(new_view)
 
     def activeMdiChild(self):
         return self.workspace.active_view()
 
     # Statusbar
-
     def createStatusBar(self):
         from controls.statusbar import StatusBar
         statusbar = StatusBar(self)
