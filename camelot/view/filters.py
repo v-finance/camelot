@@ -30,6 +30,8 @@ These structures can be transformed to QT forms.
 import datetime
 
 from PyQt4 import QtCore, QtGui
+from sqlalchemy import sql
+
 from camelot.view.controls.editors import DateEditor
 from camelot.view.model_thread import gui_function
 from camelot.core.utils import ugettext_lazy as _
@@ -92,22 +94,22 @@ class Filter(object):
                 if attributes['direction'] == orm.interfaces.MANYTOONE:
                     table = admin.entity.table.join(table)
                 else:
-                    table = admin.entity.table
-                  
-          
-        col = getattr(admin.entity, field_name)
+                    table = admin.entity.table        col = getattr( admin.entity, field_name )
         query = select([col], distinct=True, order_by=col.asc()).select_from(table)
           
-        def create_decorator(col, value, joins):
+        def create_decorator(col, attributes, value, joins):
           
             def decorator(q):
                 if joins:
                     q = q.join(joins, aliased=True)
+                if 'precision' in attributes:
+                    delta = pow( 10,  -1*attributes['precision'])
+                    return q.filter( sql.and_(col < value+delta, col > value-delta) )
                 return q.filter(col==value)
               
             return decorator
       
-        options = [(_(self._value_to_string(value[0])), create_decorator(col, value[0], joins))
+        options = [(_(self._value_to_string(value[0])), create_decorator(col, attributes, value[0], joins))
                    for value in session.execute(query)]
     
         return (filter_names[0],[(_('all'), lambda q: q)] + options)
