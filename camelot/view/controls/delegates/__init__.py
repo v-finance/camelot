@@ -54,6 +54,42 @@ from notedelegate import NoteDelegate
 from labeldelegate import LabelDelegate
 from monthsdelegate import MonthsDelegate
 
+__all__ = [
+    DelegateManager.__name__,
+    BoolDelegate.__name__,
+    TextBoolDelegate.__name__,
+    ChartDelegate.__name__,
+    CodeDelegate.__name__,
+    ColorDelegate.__name__,
+    ColoredFloatDelegate.__name__,
+    ComboBoxDelegate.__name__,
+    CurrencyDelegate.__name__,
+    CustomDelegate.__name__,
+    DateDelegate.__name__,
+    DateTimeDelegate.__name__,
+    EnumerationDelegate.__name__,
+    FileDelegate.__name__,
+    FloatDelegate.__name__,
+    ImageDelegate.__name__,
+    IntegerDelegate.__name__,
+    IntervalsDelegate.__name__,
+    LanguageDelegate.__name__,
+    ManyToManyDelegate.__name__,
+    Many2OneDelegate.__name__,
+    One2ManyDelegate.__name__,
+    ManyToOneChoicesDelegate.__name__,
+    PlainTextDelegate.__name__,
+    RichTextDelegate.__name__,
+    StarDelegate.__name__,
+    TextEditDelegate.__name__,
+    TimeDelegate.__name__,
+    VirtualAddressDelegate.__name__,
+    SmileyDelegate.__name__,
+    NoteDelegate.__name__,
+    LabelDelegate.__name__,
+    MonthsDelegate.__name__,
+]
+
 doc = """Camelot includes a number of Qt delegates, most of them are used as default
 delegates for the various sqlalchemy and camelot field types.
 
