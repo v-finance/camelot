@@ -40,7 +40,7 @@ from elixir.options import using_options
 from elixir.relationships import ManyToOne, OneToMany
 
 from camelot.model.authentication import end_of_times
-from camelot.view.elixir_admin import EntityAdmin
+from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Code, Enumeration
 
 #

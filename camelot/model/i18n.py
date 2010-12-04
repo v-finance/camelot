@@ -33,7 +33,7 @@ from sqlalchemy.types import Unicode, INT
 
 __metadata__ = metadata
 
-from camelot.view.elixir_admin import EntityAdmin
+from camelot.admin.entity_admin import EntityAdmin
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.utils import default_language

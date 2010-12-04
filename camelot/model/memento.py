@@ -37,7 +37,7 @@ be able to restore their state
 __metadata__ = metadata
 
 from camelot.core.utils import ugettext_lazy as _
-from camelot.view.elixir_admin import EntityAdmin
+from camelot.admin.entity_admin import EntityAdmin
 import datetime
 
 

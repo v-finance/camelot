@@ -51,7 +51,7 @@ from camelot.model.synchronization import is_synchronized
 from camelot.core.document import documented_entity
 from camelot.core.utils import ugettext_lazy as _
 
-from camelot.view.elixir_admin import EntityAdmin
+from camelot.admin.entity_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm
 from camelot.admin.form_action import FormActionFromModelFunction
 import datetime
