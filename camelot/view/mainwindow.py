@@ -36,7 +36,8 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.art import Icon
-from camelot.action import createAction, addActions, ActionFactory
+from camelot.action import ActionFactory
+from camelot.action.utils import createAction, addActions
 #from camelot.view.controls.navpane import NavigationPane
 from camelot.view.controls.navpane2 import NavigationPane
 from camelot.view.controls.printer import Printer

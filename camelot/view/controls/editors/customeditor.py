@@ -25,8 +25,7 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from camelot.view.proxy import ValueLoading
-from camelot.core.utils import create_constant_function
+from camelot.view.proxy import ValueLoading
 
 class AbstractCustomEditor(object):
     """Helper class to be used to build custom editors.  This class provides
@@ -96,5 +95,3 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-
-

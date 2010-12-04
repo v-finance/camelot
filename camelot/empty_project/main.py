@@ -21,9 +21,9 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-import settings
-import logging
 
+import logging
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger('main')
 
 if __name__ == '__main__':

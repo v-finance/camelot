@@ -28,7 +28,7 @@ that can be invoked via menus, toolbar buttons, and keyboard shortcuts."""
 from PyQt4 import QtGui
 
 from camelot.view.art import Icon
-from utils import createAction, addActions
+from utils import createAction
 from camelot.core.utils import ugettext as _
 
 class ActionFactory(object):

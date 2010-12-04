@@ -37,7 +37,7 @@ from PyQt4.QtGui import QToolBox
 from PyQt4.QtGui import QDockWidget
 from PyQt4.QtGui import QVBoxLayout
 
-from camelot.action import addActions
+from camelot.action.utils import addActions
 from camelot.action import createAction
 from camelot.view.model_thread import post
 from camelot.core.utils import ugettext as _

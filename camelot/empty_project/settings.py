@@ -21,10 +21,11 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
+
 import logging
 import os
 
-logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger('settings')
 
 CAMELOT_ATTACHMENTS = ''
 # media root needs to be an absolute path for the file open functions
@@ -53,6 +54,12 @@ def setup_model():
     import camelot.model
     from elixir import setup_all
     import model
+    #
+    # dummy logging statement to prevent pyflakes warnings for
+    # unused imports
+    #
+    logger.debug('loaded model from %s'%(camelot.model.__name__))
+    logger.debug('loaded model from %s'%(model.__name__))
     setup_all(create_tables=True)
     from camelot.model.authentication import updateLastLogin
     updateLastLogin()

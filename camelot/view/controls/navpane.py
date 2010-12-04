@@ -31,7 +31,7 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.model_thread import post
-from camelot.action import addActions, createAction
+from camelot.action.utils import addActions, createAction
 from camelot.view.controls.modeltree import ModelItem, ModelTree
 
 QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))

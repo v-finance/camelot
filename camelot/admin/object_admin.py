@@ -34,6 +34,7 @@ from camelot.core.utils import ugettext_lazy
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from validator.object_validator import ObjectValidator
 from PyQt4 import QtCore
+
 class FieldAttributesList(list):
     """A list with field attributes that documents them for
     sphinx"""
@@ -222,7 +223,7 @@ The QWidget class to be used when a table view is needed
         """
         from camelot.view.remote_signals import get_signal_handler
         if not app_admin:
-            from camelot.view.application_admin import get_application_admin
+            from camelot.admin.application_admin import get_application_admin
             self.app_admin = get_application_admin()
         else:
             self.app_admin = app_admin
