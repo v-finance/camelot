@@ -41,7 +41,6 @@ CAMELOT_BACKUP_EXTENSION = 'db'
 # template used to create and find default backups
 CAMELOT_BACKUP_FILENAME_TEMPLATE = 'default-backup-%(text)s.' + CAMELOT_BACKUP_EXTENSION
 
-REPOSITORY = 'repository'
 
 def ENGINE():
     """This function should return a connection to the database"""
