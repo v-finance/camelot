@@ -22,7 +22,6 @@
 #
 #  ============================================================================
 from camelot.container import Container
-from matplotlib import axes
 
 class FigureContainer( Container ):
     """A container that is able to plot itself on a matplotlib figure canvas.
@@ -114,19 +113,21 @@ class AxesContainer( Container ):
 
 class PlotContainer( AxesContainer ):
 
-    __doc__ = axes.Axes.plot.__doc__
+    # this line drives pylint crazy because it need axes to be imported
+    #__doc__ = axes.Axes.plot.__doc__
     
     def __init__(self, *args, **kwargs):
-        """:param *args: the arguments to be passed to the matplotlib plot command"""
+        """:param *args, **kwargs: the arguments to be passed to the matplotlib plot command"""
         super(PlotContainer, self).__init__()
         self.plot( *args, **kwargs )
         
 class BarContainer( AxesContainer ):
 
-    __doc__ = axes.Axes.bar.__doc__
+    # this line drives pylint crazy because it need axes to be imported
+    #__doc__ = axes.Axes.bar.__doc__
     
     def __init__(self, *args, **kwargs):
-        """:param *args: the arguments to be passed to the matplotlib bar command"""
+        """:param *args, **kwargs: the arguments to be passed to the matplotlib bar command"""
         super(BarContainer, self).__init__()
         self.bar( *args, **kwargs )
                     

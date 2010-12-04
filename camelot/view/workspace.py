@@ -26,8 +26,7 @@
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QGraphicsScene 
+from PyQt4.QtCore import Qt
 #from camelot.view.art import Pixmap
 
 import logging
@@ -44,7 +43,7 @@ class DesktopBackground(QtGui.QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-#        self.scene = QGraphicsScene()
+#        self.scene = QtGui.QGraphicsScene()
 #        self.pixitem = self.scene.addPixmap(
 #            Pixmap('camelot-home.png').getQPixmap()
 #        )
