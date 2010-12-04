@@ -66,6 +66,7 @@ class MainWindow(QtGui.QMainWindow):
         self.setCentralWidget(self.workspace)
 
         self.workspace.view_activated_signal.connect(self.updateMenus)
+        self.workspace.change_view_mode_signal.connect( self.change_view_mode )
 
         logger.debug('creating navigation pane')
         self.createNavigationPane()
@@ -123,6 +124,15 @@ class MainWindow(QtGui.QMainWindow):
         if url:
             QDesktopServices.openUrl(url)
 
+    @QtCore.pyqtSlot()
+    def change_view_mode(self):
+        if self.navpane.isHidden():
+            self.navpane.show()
+            self.menuBar().show()
+        else:
+            self.navpane.hide()
+            self.menuBar().hide()
+        
     def readSettings(self):
         settings = QtCore.QSettings()
         self.restoreGeometry(settings.value('geometry').toByteArray())
@@ -501,8 +511,8 @@ class MainWindow(QtGui.QMainWindow):
 
     def createMenus(self):
 
-        self.fileMenu = self.menuBar().addMenu(_('&File'))
-        addActions(self.fileMenu, (
+        self.file_menu = self.menuBar().addMenu(_('&File'))
+        addActions(self.file_menu, (
             #self.closeAct,
             None,
             self.backupAct,
@@ -520,13 +530,13 @@ class MainWindow(QtGui.QMainWindow):
             self.exportToWordAct,
             self.exportToMailAct,
         ))
-        self.fileMenu.addMenu(self.exportMenu)
+        self.file_menu.addMenu(self.exportMenu)
 
         self.importMenu = QtGui.QMenu(_('Import From'))
         addActions(self.importMenu, (self.importFromFileAct,))
-        self.fileMenu.addMenu(self.importMenu)
+        self.file_menu.addMenu(self.importMenu)
 
-        addActions(self.fileMenu, (None, self.exitAct))
+        addActions(self.file_menu, (None, self.exitAct))
 
         self.editMenu = self.menuBar().addMenu(_('&Edit'))
 

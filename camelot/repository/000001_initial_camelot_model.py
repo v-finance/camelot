@@ -21,11 +21,11 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-from sqlalchemy import *
+from sqlalchemy import Unicode,  INT,  DateTime,  Date
 from migrate import *
 from migrate.changeset import *
-from elixir import *
-from elixir.ext.associable import *
+from elixir import Field, EntityCollection,  using_options,  ManyToOne,  OneToMany
+from elixir.ext.associable import associable
 
 import datetime
 

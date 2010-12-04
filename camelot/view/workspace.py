@@ -27,12 +27,13 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QGraphicsScene
-from camelot.view.art import Pixmap
+from PyQt4.QtGui import QGraphicsScene 
+#from camelot.view.art import Pixmap
 
 import logging
 logger = logging.getLogger('camelot.view.workspace')
 
+from camelot.core.utils import ugettext as _
 from camelot.view.model_thread import gui_function
 
 
@@ -50,7 +51,13 @@ class DesktopBackground(QtGui.QGraphicsView):
 #        self.setAlignment(Qt.AlignBottom | Qt.AlignLeft)
 #        self.setScene(self.scene)
 
-
+class DesktopTabbar(QtGui.QTabBar):
+    
+    change_view_mode_signal = QtCore.pyqtSignal()
+    
+    def mouseDoubleClickEvent(self, event):
+        self.change_view_mode_signal.emit()
+        event.accept()
 
 class DesktopWorkspace(QtGui.QWidget):
     """A tab based workspace that can be used by views
@@ -68,6 +75,7 @@ no open tabs on the desktop.
 
     background = DesktopBackground
     view_activated_signal = QtCore.pyqtSignal(QtGui.QWidget)
+    change_view_mode_signal = QtCore.pyqtSignal()
 
     @gui_function
     def __init__(self, parent):
@@ -77,6 +85,10 @@ no open tabs on the desktop.
         layout.setSpacing( 0 )
         # setup the tab widget
         self._tab_widget = QtGui.QTabWidget( self )
+        tab_bar = DesktopTabbar(self._tab_widget)
+        tab_bar.setToolTip( _('Double click to (un)maximize') )
+        tab_bar.change_view_mode_signal.connect( self._change_view_mode )
+        self._tab_widget.setTabBar( tab_bar )
         self._tab_widget.setDocumentMode(True)
         self._tab_widget.setMovable( True )
         self._tab_widget.setTabsClosable( True )
@@ -90,6 +102,10 @@ no open tabs on the desktop.
         layout.addWidget( self._background_widget )
         self.setLayout( layout )
 
+    @QtCore.pyqtSlot()
+    def _change_view_mode(self):
+        self.change_view_mode_signal.emit()
+        
     @QtCore.pyqtSlot(int)
     def _tab_close_request(self, index):
         """request the removal of the tab at index"""
