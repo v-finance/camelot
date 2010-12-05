@@ -5,9 +5,6 @@ import logging
 import unittest
 import os
 
-import gc
-#gc.disable()
-
 from camelot.test import ModelThreadTestCase, EntityViewsTest, SchemaTest
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -1021,10 +1018,10 @@ class ControlsTest(ModelThreadTestCase):
         self.grab_widget(widget)
 
     def test_navigation_pane(self):
-        from camelot.view.controls import navpane
-        widget = navpane.NavigationPane(self.app_admin,
-                                        workspace = None,
-                                        parent = None)
+        from camelot.view.controls import navpane2
+        widget = navpane2.NavigationPane(self.app_admin,
+                                         workspace = None,
+                                         parent = None)
         self.grab_widget(widget)
 
     def test_main_window(self):

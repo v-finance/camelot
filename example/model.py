@@ -13,7 +13,7 @@ import camelot.types
 from camelot.model import metadata
 from elixir import Entity, Field, ManyToOne, OneToMany, \
                    ManyToMany, using_options
-from camelot.view.elixir_admin import EntityAdmin
+from camelot.admin.entity_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
 from camelot.view.controls import delegates
 from camelot.view.filters import ComboBoxFilter

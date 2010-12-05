@@ -143,12 +143,12 @@ class ApplicationViewsTest(ModelThreadTestCase):
         return ApplicationAdmin()
         
     def test_navigation_pane(self):
-        from camelot.view.controls import navpane
+        from camelot.view.controls import navpane2
         from PyQt4 import QtCore
         translator = self.get_application_admin().get_translator()
         QtCore.QCoreApplication.installTranslator(translator)         
         app_admin = self.get_application_admin()
-        nav_pane = navpane.NavigationPane(app_admin)
+        nav_pane = navpane2.NavigationPane(app_admin, None, None)
         self.grab_widget(nav_pane, subdir='applicationviews')
         for i, section in enumerate(nav_pane.get_sections()):
             nav_pane.change_current((i, unicode(section.get_verbose_name())))
