@@ -30,19 +30,21 @@ from camelot.view.art import Icon
 
 class StarEditor(CustomEditor):
 
+    star_icon = Icon('tango/16x16/status/weather-clear.png')
+    no_star_icon = Icon('tango/16x16/status/weather-clear-noStar.png')
+        
     def __init__(self, parent, maximum=5, editable=True, **kwargs):
         CustomEditor.__init__(self, parent)
         self.setFocusPolicy(Qt.StrongFocus)
         layout = QtGui.QHBoxLayout(self)
         layout.setMargin(0)
-        layout.setSpacing(0)
-        self.starIcon = Icon('tango/16x16/status/weather-clear.png').getQIcon()
-        self.noStarIcon = Icon('tango/16x16/status/weather-clear-noStar.png').getQIcon()
+        layout.setSpacing(0)
         self.starCount = 5
         self.buttons = []
         for i in range(self.starCount):
             button = QtGui.QToolButton(self)
-            button.setIcon(self.noStarIcon)
+            button.setIcon(self.no_star_icon.getQIcon())
+            button.setFocusPolicy(Qt.ClickFocus)
             if editable:
                 button.setAutoRaise(True)
             else:
@@ -78,9 +80,9 @@ class StarEditor(CustomEditor):
             self.stars = int(value)
         for i in range(self.starCount):
             if i+1 <= self.stars:
-                self.buttons[i].setIcon(self.starIcon)
+                self.buttons[i].setIcon(self.star_icon.getQIcon())
             else:
-                self.buttons[i].setIcon(self.noStarIcon)
+                self.buttons[i].setIcon(self.no_star_icon.getQIcon())
         self.editingFinished.emit()
 
     def set_value(self, value):
@@ -88,9 +90,9 @@ class StarEditor(CustomEditor):
         self.stars = int(value)
         for i in range(self.starCount):
             if i+1 <= self.stars:
-                self.buttons[i].setIcon(self.starIcon)
+                self.buttons[i].setIcon(self.star_icon.getQIcon())
             else:
-                self.buttons[i].setIcon(self.noStarIcon)
+                self.buttons[i].setIcon(self.no_star_icon.getQIcon())
 
     def set_background_color(self, background_color):
         return False

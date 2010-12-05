@@ -50,14 +50,16 @@ class RichTextEditor(CustomEditor, WideEditor):
             def __init__(self, parent):
                 super(CustomTextEdit, self).__init__(parent)
                 self._changed = False
+                self.setTabChangesFocus( True )
                 self.textChanged.connect( self._handle_text_changed )
 
             def focusOutEvent(self, event):
                 if self._changed:
                     self.editingFinished.emit()
+                super(CustomTextEdit, self).focusOutEvent( event )
 
             def _handle_text_changed(self):
-                return self._changed
+                self._changed = True
 
             def setTextChanged(self, state=True):
                 self._changed = state
@@ -85,14 +87,14 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.setFontWeight(QtGui.QFont.Normal)
         self.textedit.setFontItalic(False)
         self.textedit.setFontUnderline(False)
-        self.textedit.setFocus(Qt.OtherFocusReason)
+        #self.textedit.setFocus(Qt.OtherFocusReason)
         self.update_alignment()
         self.textedit.currentCharFormatChanged.connect(self.update_format)
         self.textedit.cursorPositionChanged.connect(self.update_text)
 
     @QtCore.pyqtSlot()
     def emit_editing_finished(self):
-        if self.textedit.textChanged():
+        if self.textedit._changed:
             self.editingFinished.emit()
 
     def set_editable(self, editable):
@@ -112,6 +114,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.bold_button.setIcon(icon)
         self.bold_button.setAutoRaise(True)
         self.bold_button.setCheckable(True)
+        self.bold_button.setFocusPolicy( Qt.ClickFocus )
         self.bold_button.setMaximumSize(QtCore.QSize(20, 20))
         self.bold_button.setShortcut(QtGui.QKeySequence('Ctrl+B'))
         self.bold_button.clicked.connect(self.set_bold)
@@ -121,6 +124,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.italic_button.setIcon(icon)
         self.italic_button.setAutoRaise(True)
         self.italic_button.setCheckable(True)
+        self.italic_button.setFocusPolicy( Qt.ClickFocus )
         self.italic_button.setMaximumSize(QtCore.QSize(20, 20))
         self.italic_button.setShortcut(QtGui.QKeySequence('Ctrl+I'))
         self.italic_button.clicked.connect(self.set_italic)
@@ -130,6 +134,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.underline_button.setIcon(icon)
         self.underline_button.setAutoRaise(True)
         self.underline_button.setCheckable(True)
+        self.underline_button.setFocusPolicy( Qt.ClickFocus )
         self.underline_button.setMaximumSize(QtCore.QSize(20, 20))
         self.underline_button.setShortcut(QtGui.QKeySequence('Ctrl+U'))
         self.underline_button.clicked.connect(self.set_underline)
@@ -139,6 +144,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.copy_button.setIcon(icon)
         self.copy_button.setAutoRaise(True)
         self.copy_button.setMaximumSize(QtCore.QSize(20, 20))
+        self.copy_button.setFocusPolicy( Qt.ClickFocus )
         self.copy_button.clicked.connect(self.textedit.copy)
 
         self.cut_button = QtGui.QToolButton(self)
@@ -147,12 +153,14 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.cut_button.setAutoRaise(True)
         self.cut_button.setMaximumSize(QtCore.QSize(20, 20))
         self.cut_button.clicked.connect(self.textedit.cut)
+        self.cut_button.setFocusPolicy( Qt.ClickFocus )
 
         self.paste_button = QtGui.QToolButton(self)
         icon = Icon('tango/16x16/actions/edit-paste.png').getQIcon()
         self.paste_button.setIcon(icon)
         self.paste_button.setAutoRaise(True)
         self.paste_button.setMaximumSize(QtCore.QSize(20, 20))
+        self.paste_button.setFocusPolicy( Qt.ClickFocus )
         self.paste_button.clicked.connect(self.textedit.paste)
 
         self.alignleft_button = QtGui.QToolButton(self)
@@ -161,6 +169,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.alignleft_button.setAutoRaise(True)
         self.alignleft_button.setCheckable(True)
         self.alignleft_button.setMaximumSize(QtCore.QSize(20, 20))
+        self.alignleft_button.setFocusPolicy( Qt.ClickFocus )
         self.alignleft_button.clicked.connect(self.set_alignleft)
 
         self.aligncenter_button = QtGui.QToolButton(self)
@@ -169,6 +178,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.aligncenter_button.setAutoRaise(True)
         self.aligncenter_button.setCheckable(True)
         self.aligncenter_button.setMaximumSize(QtCore.QSize(20, 20))
+        self.aligncenter_button.setFocusPolicy( Qt.ClickFocus )
         self.aligncenter_button.clicked.connect(self.set_aligncenter)
 
         self.alignright_button = QtGui.QToolButton(self)
@@ -177,11 +187,13 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.alignright_button.setAutoRaise(True)
         self.alignright_button.setCheckable(True)
         self.alignright_button.setMaximumSize(QtCore.QSize(20, 20))
+        self.alignright_button.setFocusPolicy( Qt.ClickFocus )
         self.alignright_button.clicked.connect(self.set_alignright)
 
         self.color_button = QtGui.QToolButton(self)
         self.color_button.setAutoRaise(True)
         self.color_button.setMaximumSize(QtCore.QSize(20, 20))
+        self.color_button.setFocusPolicy( Qt.ClickFocus )
         self.color_button.clicked.connect(self.set_color)
 
         self.toolbar.addWidget(self.copy_button)
@@ -228,8 +240,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         else:
             self.textedit.setFocus(Qt.OtherFocusReason)
             self.textedit.setFontUnderline(False)
-
-
+
     def set_alignleft(self, bool):
         if bool:
             self.textedit.setFocus(Qt.OtherFocusReason)

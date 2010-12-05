@@ -40,7 +40,8 @@ class DateEditor(CustomEditor):
     """Widget for editing date values"""
 
     calendar_action_trigger = QtCore.pyqtSignal()
-
+    special_date_icon = Icon('tango/16x16/apps/office-calendar.png')
+    
     def __init__(self,
                  parent=None,
                  editable=True,
@@ -68,13 +69,13 @@ class DateEditor(CustomEditor):
         special_date_menu.addAction(_('Today'))
         special_date_menu.addAction(_('Far future'))
         self.special_date = QtGui.QToolButton(self)
-        self.special_date.setIcon(
-            Icon('tango/16x16/apps/office-calendar.png').getQIcon())
+        self.special_date.setIcon( self.special_date_icon.getQIcon() )
         self.special_date.setAutoRaise(True)
         self.special_date.setToolTip(_('Calendar and special dates'))
         self.special_date.setMenu(special_date_menu)
         self.special_date.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.special_date.setFixedHeight(self.get_height())
+        self.special_date.setFocusPolicy(Qt.ClickFocus)
         # end of sensitive part
 
         if nullable:
