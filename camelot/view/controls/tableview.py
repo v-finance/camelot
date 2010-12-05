@@ -87,7 +87,8 @@ and above the text.
         self._columns_frozen = columns_frozen
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
         self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | 
-                              QtGui.QAbstractItemView.DoubleClicked )
+                              QtGui.QAbstractItemView.DoubleClicked |
+                              QtGui.QAbstractItemView.CurrentChanged )
         self.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
         self.horizontalHeader().setClickable( True )
         self._header_font_required = QtGui.QApplication.font()
