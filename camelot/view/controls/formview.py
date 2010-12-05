@@ -39,7 +39,7 @@ from camelot.view.model_thread import model_function
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.statusbar import StatusBar
 from camelot.view import register
-from camelot.action import ActionFactory
+from camelot.view.action import ActionFactory
 
 class ContextMenuAction(QtGui.QAction):
 
@@ -297,9 +297,15 @@ class FormView(AbstractView):
         self.addAction( ActionFactory.view_last(self, self.viewLast) )
         self.addAction( ActionFactory.view_next(self, self.viewNext) )
         self.addAction( ActionFactory.view_previous(self, self.viewPrevious) )
-        self.addAction( ActionFactory.refresh(self) )
+        self.addAction( ActionFactory.refresh(self, self.refresh_session) )
         self.addAction( ActionFactory.export_ooxml(self, self._form.export_ooxml) )
 
+    @QtCore.pyqtSlot()
+    def refresh_session(self):
+        from elixir import session
+        from camelot.core.orm import refresh_session
+        refresh_session( session )
+                
     @QtCore.pyqtSlot()
     def refresh(self):
         """Refresh the data in the current view"""

@@ -30,7 +30,7 @@ from camelot.view.art import Icon
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls.liteboxview import LiteBoxView
 from camelot.view.model_thread import post
-from camelot.action import ActionFactory
+from camelot.view.action import ActionFactory
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore

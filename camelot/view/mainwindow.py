@@ -35,9 +35,7 @@ logger = logging.getLogger('camelot.view.mainwindow')
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
-from camelot.view.art import Icon
-from camelot.action import ActionFactory
-from camelot.action.utils import createAction, addActions
+from camelot.view.action import ActionFactory
 from camelot.view.controls.navpane2 import NavigationPane
 from camelot.view.controls.printer import Printer
 from camelot.view.model_thread import post
@@ -46,7 +44,16 @@ QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
 from camelot.core.utils import ugettext as _
 
-
+def addActions(target, actions):
+    """add action objects to menus, menubars, and toolbars
+    if action is None, add a separator.
+    """
+    for action in actions:
+        if action is None:
+            target.addSeparator()
+        else:
+            target.addAction(action)
+            
 class MainWindow(QtGui.QMainWindow):
     """Main window GUI"""
 
@@ -162,219 +169,38 @@ class MainWindow(QtGui.QMainWindow):
         )
 
     def createActions(self):
-        icon_backup = Icon('tango/16x16/actions/document-save.png')
-        icon_restore = Icon('tango/16x16/devices/drive-harddisk.png')
-        icon_pgsetup = Icon('tango/16x16/actions/document-properties.png')
-        icon_print = Icon('tango/16x16/actions/document-print.png')
-        icon_preview = Icon('tango/16x16/actions/document-print-preview.png')
-        icon_copy = Icon('tango/16x16/actions/edit-copy.png')
-
-        icon_new = Icon('tango/16x16/actions/document-new.png')
-        icon_delete = Icon('tango/16x16/places/user-trash.png')
-
-        icon_excel = Icon('tango/16x16/mimetypes/x-office-spreadsheet.png')
-        icon_word = Icon('tango/16x16/mimetypes/x-office-document.png')
-        icon_mail = Icon('tango/16x16/actions/mail-message-new.png')
-
-        icon_import = Icon('tango/16x16/mimetypes/text-x-generic.png')
-
-        icon_help = Icon('tango/16x16/apps/help-browser.png')
-
-        # TODO: change some of the status tips
-        self.backupAct = createAction(
-            parent=self,
-            text=_('&Backup'),
-            slot=self.backup,
-            actionicon=icon_backup,
-            tip=_('Backup the database')
-        )
-
-        self.restoreAct = createAction(
-            parent=self,
-            text=_('&Restore'),
-            slot=self.restore,
-            actionicon=icon_restore,
-            tip=_('Restore the database from a backup')
-        )
-
-        self.pageSetupAct = createAction(
-            parent=self,
-            text=_('Page Setup...'),
-            slot=self.pageSetup,
-            actionicon=icon_pgsetup,
-            tip=_('Page Setup...')
-        )
-
-        self.printAct = createAction(
-            parent=self,
-            text=_('Print...'),
-            slot=self.printDoc,
-            shortcut=QtGui.QKeySequence.Print,
-            actionicon=icon_print,
-            tip=_('Print...')
-        )
-
-        self.previewAct = createAction(
-            parent=self,
-            text=_('Print Preview'),
-            slot=self.previewDoc,
-            actionicon=icon_preview,
-            tip=_('Print Preview')
-        )
-
-        self.exitAct= createAction(
-            parent=self,
-            text=_('E&xit'),
-            slot=self.close,
-            actionicon=Icon('tango/16x16/actions/system-shutdown.png'),
-            tip=_('Exit the application')
-        )
-
-        self.copyAct = createAction(
-            parent=self,
-            text=_('&Copy'),
-            slot=self.copy,
-            shortcut=QtGui.QKeySequence.Copy,
-            actionicon=icon_copy,
-            tip=_("Duplicate the selected rows")
-        )
-
-        self.selectAllAct = createAction(
-            parent=self,
-            text=_('Select &All'),
-            slot=self.select_all,
-            shortcut=QtGui.QKeySequence.SelectAll,
-            tip=_('Select all rows in the table'),
-        )
-
-        # BUG: there is a problem with setting a key sequence for closing
-        #      a subwindow.  PyQt adopts defaults from specific platforms
-        #      but we want the sequence Ctrl+W on every platform.  there-
-        #      fore we set the string 'Ctrl+W', but PyQt defaults will
-        #      still work.
-
+        self.backupAct = ActionFactory.backup(self, self.backup)
+        self.restoreAct = ActionFactory.restore(self, self.restore)
+        self.pageSetupAct = ActionFactory.page_setup(self, self.pageSetup)
+        self.printAct = ActionFactory.print_(self, self.printDoc)
+        self.previewAct = ActionFactory.print_preview(self, self.previewDoc)
+        self.exitAct= ActionFactory.exit(self, slot=self.close)
+        self.copyAct = ActionFactory.copy(self, slot=self.copy)
+        self.selectAllAct = ActionFactory.select_all(self, slot=self.select_all)
         self.separatorAct = QtGui.QAction(self)
         self.separatorAct.setSeparator(True)
-
-        self.aboutAct = createAction(
-            parent=self,
-            text=_('&About'),
-            slot=self.about,
-            actionicon=Icon('tango/16x16/mimetypes/application-certificate.png'),
-            tip=_("Show the application's About box")
-        )
-
-        self.whats_new_action = createAction(
-            parent=self,
-            text=_('&What\'s new'),
-            slot=self.whats_new,
-            actionicon=Icon('tango/16x16/status/software-update-available.png'),
-            tip=_("Show the What's New box")
-        )
-
-        self.affiliated_website_action = createAction(
-            parent=self,
-            text=_('Affiliated website'),
-            slot=self.affiliated_website,
-            actionicon=Icon('tango/16x16/apps/internet-web-browser.png'),
-            tip=_('Go to the affiliated website')
-        )
-
-        self.remote_support_action = createAction(
-            parent=self,
-            text=_('Remote support'),
-            slot=self.remote_support,
-            actionicon=Icon('tango/16x16/devices/video-display.png'),
-            tip=_('Let the support agent take over your desktop')
-        )
-
-        self.helpAct = createAction(
-            parent=self,
-            text=_('Help'),
-            slot=self.help,
-            shortcut=QtGui.QKeySequence.HelpContents,
-            actionicon=icon_help,
-            tip=_('Help content')
-        )
-
-        self.newAct = createAction(
-            parent=self,
-            text=_('New'),
-            slot=self.new,
-            shortcut=QtGui.QKeySequence.New,
-            actionicon=icon_new,
-            tip=_('New')
-        )
-
-        self.deleteAct = createAction(
-            parent=self,
-            text=_('Delete'),
-            slot=self.delete,
-            shortcut=QtGui.QKeySequence.Delete,
-            actionicon=icon_delete,
-            tip=_('Delete')
-        )
-
+        self.aboutAct = ActionFactory.about(self, slot=self.about)
+        self.whats_new_action = ActionFactory.whats_new(self, slot=self.whats_new)
+        self.affiliated_website_action = ActionFactory.affiliated_website(self, slot=self.affiliated_website)
+        self.remote_support_action =ActionFactory.remote_support(self, slot=self.remote_support)
+        self.helpAct = ActionFactory.help(self, slot=self.help)
+        self.newAct = ActionFactory.new(self, slot=self.new)
+        self.deleteAct = ActionFactory.delete(self, slot=self.delete)
         self.viewFirstAct = ActionFactory.view_first(self, self.viewFirst)
         self.viewLastAct = ActionFactory.view_last(self, self.viewLast)
         self.viewNextAct = ActionFactory.view_next(self, self.viewNext)
         self.viewPreviousAct = ActionFactory.view_previous(self, self.viewPrevious)
-
-        if QT_MAJOR_VERSION > 4.3:
-            self.viewFirstAct.setIconVisibleInMenu(False)
-            self.viewLastAct.setIconVisibleInMenu(False)
-            self.viewNextAct.setIconVisibleInMenu(False)
-            self.viewPreviousAct.setIconVisibleInMenu(False)
-
-        self.updateValueAct = createAction(
-            parent = self,
-            text = _('Replace field contents'),
-            slot = self.updateValue,
-            tip = _('Replace the content of a field for all rows in a selection')
-        )
-
-        self.mergeDocumentAct = createAction(
-            parent = self,
-            text = _('Merge document'),
-            slot = self.merge_document,
-            tip = _('Merge a template document with all rows in a selection')
-        )
-
-        self.exportToExcelAct = createAction(
-            parent=self,
-            text=_('Export to MS Excel'),
-            slot=self.exportToExcel,
-            actionicon=icon_excel,
-            tip=_('Export to MS Excel')
-        )
-
-        self.exportToWordAct = createAction(
-            parent=self,
-            text=_('Export to MS Word'),
-            slot=self.exportToWord,
-            actionicon=icon_word,
-            tip=_('Export to MS Word')
-        )
-
-        self.exportToMailAct = createAction(
-            parent=self,
-            text=_('Send by e-mail'),
-            slot=self.exportToMail,
-            actionicon=icon_mail,
-            tip=_('Send by e-mail')
-        )
-
-        self.importFromFileAct = createAction(
-            parent=self,
-            text=_('Import from file'),
-            slot=self.importFromFile,
-            actionicon=icon_import,
-            tip=_('Import from file')
-        )
-
-        from camelot.action.refresh import SessionRefresh
-
-        self.sessionRefreshAct = SessionRefresh(self)
+        self.viewFirstAct.setIconVisibleInMenu(False)
+        self.viewLastAct.setIconVisibleInMenu(False)
+        self.viewNextAct.setIconVisibleInMenu(False)
+        self.viewPreviousAct.setIconVisibleInMenu(False)
+        self.updateValueAct = ActionFactory.update_values(self, slot = self.updateValue)
+        self.mergeDocumentAct = ActionFactory.merge_document(self, slot = self.merge_document)
+        self.exportToExcelAct = ActionFactory.export_excel(self, slot=self.exportToExcel)
+        self.exportToWordAct = ActionFactory.export_word(self, slot=self.exportToWord)
+        self.exportToMailAct = ActionFactory.export_mail(self, slot=self.exportToMail)
+        self.importFromFileAct = ActionFactory.import_file(self, slot=self.importFromFile)
+        self.sessionRefreshAct = ActionFactory.refresh(self, slot=self.refresh_session)
 
         self.app_actions = []
         for action in self.app_admin.get_actions():
@@ -387,7 +213,7 @@ class MainWindow(QtGui.QMainWindow):
                 return slot
 
             self.app_actions.append(
-                createAction(
+                ActionFactory.create_action(
                     parent=self,
                     text=unicode(action.get_verbose_name()),
                     slot=bind_action(self, action),
@@ -398,6 +224,11 @@ class MainWindow(QtGui.QMainWindow):
 
     # QAction slots and methods implementations
 
+    def refresh_session(self):
+        from elixir import session
+        from camelot.core.orm import refresh_session
+        refresh_session( session )
+        
     def help(self):
         #
         # Import WebKit as late as possible, since it's the largest

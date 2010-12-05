@@ -37,10 +37,8 @@ from PyQt4.QtGui import QToolBox
 from PyQt4.QtGui import QDockWidget
 from PyQt4.QtGui import QVBoxLayout
 
-from camelot.action.utils import addActions
-from camelot.action import createAction
+from camelot.view.action import ActionFactory
 from camelot.view.model_thread import post
-from camelot.core.utils import ugettext as _
 from camelot.view.controls.modeltree import ModelItem
 from camelot.view.controls.modeltree import ModelTree
 
@@ -91,16 +89,9 @@ class NavigationPane(QDockWidget):
         # i hate the sunken frame style
         tw.setFrameShape(QFrame.NoFrame)
         tw.setFrameShadow(QFrame.Plain)
-
         tw.contextmenu = QMenu(self)
-        act = createAction(
-            parent = self,
-            text = _('Open in New Tab'),
-            slot = self.open_in_new_view,
-            shortcut = 'Ctrl+Enter'
-        )
-
-        addActions(tw.contextmenu, (act,))
+        act = ActionFactory.new_tab(self, self.open_in_new_view)
+        tw.contextmenu.addAction( act )
         tw.setContextMenuPolicy(Qt.CustomContextMenu)
         tw.customContextMenuRequested.connect(self.create_context_menu)
 
@@ -186,16 +177,6 @@ class NavigationPane(QDockWidget):
             self._shared_tree_widget.contextmenu.popup(
                 self._shared_tree_widget.mapToGlobal(point)
             )
-
-    # Interface for child windows
-    
-#    def createMdiChild(self, item, column):
-#        #index = self.navpane.treewidget.indexFromItem(item)
-#        #section_item = self.navpane.items[index.row()]
-#        section_item = self.navpane.get_section_item(item)
-#        new_view = section_item.get_action().run(self.workspace)
-#        if new_view:
-#            self.workspace.set_view(new_view)
       
     @QtCore.pyqtSlot(QtGui.QTreeWidgetItem, int)
     def open_in_current_view(self, item, _column):

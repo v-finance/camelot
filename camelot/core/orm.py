@@ -22,50 +22,28 @@
 #
 #  ============================================================================
 
-"""The action module contains various QAction classes, representing commands
-that can be invoked via menus, toolbar buttons, and keyboard shortcuts."""
-
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
-
-from camelot.view.art import Icon
-from camelot.view.model_thread import post
-from camelot.core.utils import ugettext as _
+"""Helper functions related to the connection between the SQLAlchemy
+ORM and the Camelot Views.
+"""
 
 import logging
-logger = logging.getLogger('camelot.action.refresh')
+logger = logging.getLogger('camelot.core.orm')
 
-
-class SessionRefresh(QtGui.QAction):
+def refresh_session(session):
     """Session refresh expires all objects in the current session and sends
     a local entity update signal via the remote_signals mechanism"""
+    logger.debug('session refresh requested')
+    from camelot.view.model_thread import post
 
-    def __init__(self, parent):
-        super(SessionRefresh, self).__init__(_('Refresh'), parent)
-        self.setShortcut(Qt.Key_F9)
-        self.setIcon(Icon('tango/16x16/actions/view-refresh.png').getQIcon())
-        self.triggered.connect(self.sessionRefresh)
+    def refresh_objects():
         from camelot.view.remote_signals import get_signal_handler
-        self.signal_handler = get_signal_handler()
-
-    def refreshed(self, refreshed_objects):
+        signal_handler = get_signal_handler()
+        refreshed_objects = []
+        for _key, value in session.identity_map.items():
+            session.refresh(value)
+            refreshed_objects.append(value)
         for o in refreshed_objects:
-            self.signal_handler.sendEntityUpdate(self, o)
+            signal_handler.sendEntityUpdate(None, o)
+        return refreshed_objects
 
-    @QtCore.pyqtSlot(bool)
-    def sessionRefresh(self, checked):
-        logger.debug('session refresh requested')
-
-        def refresh_objects():
-            from elixir import session
-            refreshed_objects = []
-
-            for _key, value in session.identity_map.items():
-                session.refresh(value)
-                refreshed_objects.append(value)
-
-            return refreshed_objects
-
-        post( refresh_objects, self.refreshed)
-
+    post( refresh_objects )
