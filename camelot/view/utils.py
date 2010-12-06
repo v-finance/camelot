@@ -51,7 +51,9 @@ def local_date_format():
         _local_date_format = unicode(u''.join(format_sequence))
     return _local_date_format
 
-def default_language():
+def default_language(*args):
+    """takes arguments, to be able to use this function as a
+    default field attribute"""
     locale = QtCore.QLocale()
     return unicode(locale.name())
 
