@@ -102,13 +102,12 @@ class NavigationPane(QDockWidget):
 
     def set_sections(self, sections):
         logger.debug('setting navpane sections')
-
-        animation = QtCore.QPropertyAnimation(self._toolbox, "width")
+        animation = QtCore.QPropertyAnimation(self._toolbox, 'minimumWidth', self)
         animation.setDuration( 500 )
         animation.setStartValue( 0 )
         animation.setEndValue( 220 )
         animation.start()
-        
+
         self._sections = sections
         self._buttons = [(
             index,
@@ -142,7 +141,9 @@ class NavigationPane(QDockWidget):
         # setCurrentIndex does not emit currentChanged
         self.change_current(0)
         # WARNING: hardcoded width
-        self._toolbox.setMinimumWidth(220)
+        #self._toolbox.setMinimumWidth(220)
+        
+
 
     @QtCore.pyqtSlot(int)
     def change_current(self, index):
