@@ -103,6 +103,12 @@ class NavigationPane(QDockWidget):
     def set_sections(self, sections):
         logger.debug('setting navpane sections')
 
+        animation = QtCore.QPropertyAnimation(self._toolbox, "width")
+        animation.setDuration( 500 )
+        animation.setStartValue( 0 )
+        animation.setEndValue( 220 )
+        animation.start()
+        
         self._sections = sections
         self._buttons = [(
             index,
