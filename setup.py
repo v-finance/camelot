@@ -30,8 +30,8 @@ setup(
                         'sqlalchemy-migrate>=0.6.0',
                         'Jinja2>=2.5.5',
                         'chardet>=1.0.1', 
-                        'xlwt>=0.7.2', 
-                        'xlrd>=0.5.2', ],
+                        'xlwt==0.7.2', 
+                        'xlrd==0.7.1', ],
     entry_points = {'console_scripts':[
                      'camelot_admin = camelot.bin.camelot_admin:main',
                      'camelot_manage = camelot.bin.camelot_manage:main',
