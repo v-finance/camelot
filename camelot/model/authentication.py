@@ -116,8 +116,7 @@ class Country( GeographicBoundary ):
         list_display = ['name', 'code']
         
 Country = documented_entity()(Country)
-
-@documented_entity()
+
 class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
