@@ -48,7 +48,7 @@ class DateDelegate(CustomDelegate):
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject( index.model().data( index, Qt.EditRole ) )
         
-        value_str = u'0/0/0'
+        value_str = u''
         if value not in (None, ValueLoading):
             value_str = QtCore.QDate(value).toString(self.date_format)
             

@@ -60,6 +60,7 @@ class NavigationPane(QDockWidget):
         self._tree_items = None
         self._title_widget = QWidget()
         self._toolbox = self.get_toolbox()
+        self._toolbox.setMouseTracking(True)
         self._shared_tree_widget = None
         # hack for removing the dock title bar
         self.setTitleBarWidget(self._title_widget)

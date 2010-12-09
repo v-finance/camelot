@@ -94,8 +94,7 @@ class GeographicBoundary( Entity ):
         
     def __unicode__( self ):
         return u'%s %s' % ( self.code, self.name )
-
-@documented_entity()
+
 class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
     ISO code of a country"""
@@ -115,6 +114,8 @@ class Country( GeographicBoundary ):
         verbose_name = _('Country')
         verbose_name_plural = _('Countries')
         list_display = ['name', 'code']
+        
+Country = documented_entity()(Country)
 
 @documented_entity()
 class City( GeographicBoundary ):
@@ -138,6 +139,8 @@ class City( GeographicBoundary ):
         form_size = ( 700, 150 )
         list_display = ['code', 'name', 'country']
         
+City = documented_entity()(City)
+
 class PartyRelationship( Entity ):
     using_options( tablename = 'party_relationship' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
