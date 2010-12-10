@@ -94,7 +94,7 @@ class FormPage(QtGui.QWizardPage):
         return self._complete
     
     def get_admin(self):
-        from camelot.view.application_admin import get_application_admin
+        from camelot.admin.application_admin import get_application_admin
         app_admin = get_application_admin()
         if self.Admin:
             return self.Admin(app_admin, self.Data)
