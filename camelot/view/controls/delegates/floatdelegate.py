@@ -38,18 +38,22 @@ class FloatDelegate( CustomDelegate ):
     editor = editors.FloatEditor
 
     def __init__( self,
-                 minimum = constants.camelot_minfloat,
-                 maximum = constants.camelot_maxfloat,
-                 precision = 2,
-                 parent = None,
-                 unicode_format = None,
+                 minimum=constants.camelot_minfloat,
+                 maximum=constants.camelot_maxfloat,
+                 precision=2,
+                 parent=None,
+                 unicode_format=None,
                  **kwargs ):
         """
-    :param precision:  The number of digits after the decimal point displayed.  This defaults
-    to the precision specified in the definition of the Field.     
-    """
-        CustomDelegate.__init__( self, parent = parent,
-                                precision = precision, **kwargs )
+        :param precision:  The number of digits after the decimal point displayed.  This defaults
+        to the precision specified in the definition of the Field.     
+        
+        """
+        
+        CustomDelegate.__init__(self,
+                                parent=parent,
+                                precision=precision,
+                                **kwargs )                   
         self.precision = precision
         self.unicode_format = unicode_format
 
@@ -57,15 +61,13 @@ class FloatDelegate( CustomDelegate ):
         painter.save()
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
-          
+
         if value in (None, ValueLoading):
             value_str = ''
+        elif self.unicode_format:
+            value_str = self.unicode_format(value)
         else:
             value_str = QtCore.QString("%L1").arg(float(value),0,'f',self.precision)
 
-        if self.unicode_format is not None:
-            value_str = self.unicode_format(value)
-        
         self.paint_text( painter, option, index, value_str, horizontal_align=Qt.AlignRight )
         painter.restore()
-
