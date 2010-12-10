@@ -23,7 +23,7 @@
 #  ============================================================================
 
 import logging
-logger = logging.getLogger('camelot.view.elixir_admin')
+logger = logging.getLogger('camelot.admin.entity_admin')
 
 import sqlalchemy.sql.expression
 
