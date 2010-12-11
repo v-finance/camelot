@@ -374,10 +374,15 @@ class FinalPage(ProgressPage):
         for i,row in enumerate(collection):
             new_entity_instance = self.admin.entity()
             for field_name, attributes in self.model.get_admin().get_columns():
+                try:
+                    from_string = attributes['from_string']
+                except KeyError:
+                    logger.warn( 'field %s has no from_string field attribute, dont know how to import it properly'%attributes['original_field'] )
+                    from_string = lambda _a:None
                 setattr(
                     new_entity_instance,
                     attributes['original_field'],
-                    attributes['from_string'](getattr(row, field_name))
+                    from_string(getattr(row, field_name))
                 )
             self.admin.add(new_entity_instance)
             self.admin.flush(new_entity_instance)
