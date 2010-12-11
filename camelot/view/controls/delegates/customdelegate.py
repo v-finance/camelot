@@ -87,17 +87,20 @@ def DocumentationMetaclass(name, bases, dct):
 class CustomDelegate(QItemDelegate):
     """Base class for implementing custom delegates.
 
-.. attribute:: editor
+    .. attribute:: editor
 
-class attribute specifies the editor class that should be used
-"""
+    class attribute specifies the editor class that should be used
+    
+    """
 
     editor = None
 
     def __init__(self, parent=None, editable=True, **kwargs):
         """:param parent: the parent object for the delegate
-:param editable: a boolean indicating if the field associated to the delegate
-is editable"""
+        :param editable: a boolean indicating if the field associated to the delegate
+        is editable
+        
+        """
         QItemDelegate.__init__(self, parent)
         self.editable = editable
         self.kwargs = kwargs
@@ -107,7 +110,9 @@ is editable"""
 
     def createEditor(self, parent, option, index):
         """:param option: use an option with version 5 to indicate the widget
-will be put onto a form"""
+        will be put onto a form
+        
+        """
         editor = self.editor(parent, editable=self.editable, **self.kwargs)
         assert editor != None
         assert isinstance(editor, (QtGui.QWidget,))
