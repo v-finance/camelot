@@ -74,6 +74,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.workspace.view_activated_signal.connect(self.updateMenus)
         self.workspace.change_view_mode_signal.connect( self.change_view_mode )
+        self.workspace.last_view_closed_signal.connect( self.unmaximize_view )
 
         logger.debug('creating navigation pane')
         self.createNavigationPane()
@@ -132,8 +133,13 @@ class MainWindow(QtGui.QMainWindow):
             QDesktopServices.openUrl(url)
 
     @QtCore.pyqtSlot()
+    def unmaximize_view(self):
+        self.navpane.show()
+        self.menuBar().show()
+        
+    @QtCore.pyqtSlot()
     def change_view_mode(self):
-        if self.navpane.isHidden():
+        if self.menuBar().isHidden():
             self.navpane.show()
             self.menuBar().show()
         else:

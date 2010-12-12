@@ -75,6 +75,7 @@ no open tabs on the desktop.
     background = DesktopBackground
     view_activated_signal = QtCore.pyqtSignal(QtGui.QWidget)
     change_view_mode_signal = QtCore.pyqtSignal()
+    last_view_closed_signal = QtCore.pyqtSignal()
 
     @gui_function
     def __init__(self, parent):
@@ -112,6 +113,7 @@ no open tabs on the desktop.
         if self._tab_widget.currentIndex() < 0:
             self._tab_widget.hide()
             self._background_widget.show()
+            self.last_view_closed_signal.emit()
 
     @QtCore.pyqtSlot(int)
     def _tab_changed(self, _index):

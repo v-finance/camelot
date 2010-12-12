@@ -60,13 +60,20 @@ class DelayedProxy( object ):
     """
 
     @model_function
-    def __init__( self, *args, **kwargs ):
-        self.args = args
-        self.kwargs = kwargs
+    def __init__( self, admin, collection_getter, columns_getter ):
+        self._admin = admin
+        self._collection_getter = collection_getter
+        self._columns_getter = columns_getter
 
     @gui_function
     def __call__( self ):
-        return CollectionProxy( *self.args, **self.kwargs )
+        return CollectionProxy( self._admin, 
+                                self._collection_getter, 
+                                self._columns_getter )
+        
+    def __unicode__(self):
+        return ','.join(list(unicode(o) for o,_i in zip(self._collection_getter(),
+                                                        range(3))))
 
 @model_function
 def strip_data_from_object( obj, columns ):
@@ -117,9 +124,7 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
             unicode_data = field_data
             for key, value in choices:
                 if key == field_data:
-                    unicode_data = value
-        elif isinstance( field_data, DelayedProxy ):
-            unicode_data = u'...'
+                    unicode_data = value
         elif isinstance( field_data, list ):
             unicode_data = u'.'.join( [unicode( e ) for e in field_data] )
         elif isinstance( field_data, datetime.datetime ):

@@ -161,6 +161,19 @@ class CustomDelegate(QItemDelegate):
             val = create_constant_function(editor.get_value())
         model.setData(index, val)
 
+    def paint(self, painter, option, index):
+        painter.save()
+        self.drawBackground(painter, option, index)
+        value = variant_to_pyobject(index.model().data(index, Qt.DisplayRole))
+          
+        if value in (None, ValueLoading):
+            value_str = ''
+        else:
+            value_str = unicode( value )
+        
+        self.paint_text( painter, option, index, value_str )
+        painter.restore()
+        
     def paint_text(
         self,
         painter,

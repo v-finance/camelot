@@ -25,13 +25,13 @@ from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
 from camelot.view.controls import editors
-from customdelegate import DocumentationMetaclass
+from customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.core.utils import variant_to_pyobject
 
 import logging
 logger = logging.getLogger( 'camelot.view.controls.delegates.one2manydelegate' )
 
-class One2ManyDelegate( QtGui.QItemDelegate ):
+class One2ManyDelegate( CustomDelegate ):
     """Custom delegate for many 2 one relations
   
   .. image:: ../_static/onetomany.png  
@@ -40,9 +40,9 @@ class One2ManyDelegate( QtGui.QItemDelegate ):
     __metaclass__ = DocumentationMetaclass
 
     def __init__( self, parent = None, **kwargs ):
+        super( One2ManyDelegate, self ).__init__( parent=parent, **kwargs )
         logger.debug( 'create one2manycolumn delegate' )
-        assert 'delegate' in kwargs
-        QtGui.QItemDelegate.__init__( self, parent )
+        assert 'delegate' in kwargs
         self.kwargs = kwargs
 
     def createEditor( self, parent, option, index ):
