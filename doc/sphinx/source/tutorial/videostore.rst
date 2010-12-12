@@ -108,14 +108,22 @@ with a ``title``, a short ``description``, a ``release date``, and a
 The aforementioned specifications translate into the following Python code,
 that we add to our model.py module::
 
+  from sqlalchemy import Unicode, Date
+  from elixir import Entity, Field, using_options
+  from camelot.admin.entity_admin import EntityAdmin
+  
   class Movie(Entity):
     using_options(tablename='movie')
-
     title = Field(Unicode(60), required=True)
     short_description = Field(Unicode(512))
     release_date = Field(Date)
     genre = Field(Unicode(15))
 
+.. note::
+
+   The complete source code of this tutorial can be found in the
+   example folder of the Camelot source code.
+   
 ``Movie`` inherits ``Entity`` from the `Elixir <http://elixir.ematia.de/trac/wiki>`_
 library. We use ``using_options()`` to name the table ourselves. Elixir would
 have used the location of our module to generate a name in the form
