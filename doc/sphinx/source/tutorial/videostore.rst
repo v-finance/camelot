@@ -285,6 +285,8 @@ We will be using Elixir's special fields ``ManyToOne`` and ``OneToMany`` to
 specify relationships between entities. But first we need a ``Director``
 entity. We define it as follows::
 
+  from elixir import ManyToOne, OneToMany
+                   
   class Director(Entity):
     using_options(tablename='director')
 
