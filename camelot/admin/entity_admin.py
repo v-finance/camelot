@@ -111,13 +111,13 @@ attribute to enable search.
                 primary_key_representation = u','.join([unicode(v) for v in primary_key])
                 if hasattr(obj, '__unicode__'):
                     return u'%s %s : %s' % (
-                        unicode(self.get_verbose_name()),
+                        unicode(self.get_verbose_name() or ''),
                         primary_key_representation,
                         unicode(obj)
                     )
                 else:
                     return u'%s %s' % (
-                        self.get_verbose_name(),
+                        self.get_verbose_name() or '',
                         primary_key_representation
                     )
         return self.get_verbose_name()
