@@ -86,7 +86,6 @@ an unneeded update of the db.
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
         self.spinBox = CustomDoubleSpinBox(parent)
-        #self.spinBox = QtGui.QSpinBox(parent)
         self.spinBox.setRange(minimum, maximum)
         self.spinBox.setDecimals(0)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
@@ -132,7 +131,6 @@ an unneeded update of the db.
             self.spinBox.setValue(eval(value))
 
     def get_value(self):
-        #print 'get value', self.spinBox.text()
         value_loading = CustomEditor.get_value(self)
         if value_loading is not None:
             return value_loading

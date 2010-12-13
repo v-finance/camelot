@@ -160,6 +160,11 @@ and above the text.
         if(index.column()>=self._columns_frozen):
             super(TableWidget, self).scrollTo(index, hint)
         
+    def edit(self, index, trigger, event):
+        if index.column() >= self._columns_frozen:
+            return super( TableWidget, self ).edit( index, trigger, event )
+        return False
+    
     @QtCore.pyqtSlot()
     def _update_frozen_table(self):
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
