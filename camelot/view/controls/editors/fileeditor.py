@@ -24,7 +24,6 @@
 
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
-from PyQt4.QtCore import QFile
 
 from customeditor import CustomEditor
 
@@ -37,7 +36,8 @@ class FileEditor(CustomEditor):
 
     filter = 'All files (*)'
 
-    def __init__(self, parent=None, storage=None, **kwargs):
+    def __init__(self, parent=None, storage=None, remove_original=False, 
+                 **kwargs):
         CustomEditor.__init__(self, parent)
         self.storage = storage
 
@@ -59,9 +59,7 @@ class FileEditor(CustomEditor):
         ).getQPixmap()
 
         self.value = None
-        self.remove_ok = False
-        self.remove_original = False
-        self.original_path = None
+        self.remove_original = remove_original
         self.setup_widget()
 
     def setup_widget(self):
@@ -134,11 +132,11 @@ class FileEditor(CustomEditor):
     def get_value(self):
         return CustomEditor.get_value(self) or self.value
 
-    def set_field_attributes(self, editable=True, background_color=None, **kwargs):
+    def set_field_attributes(self, editable=True, background_color=None, 
+                             remove_original=False, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        if 'remove_original' in kwargs and kwargs['remove_original']:
-            self.remove_original = True
+        self.remove_original = remove_original
 
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)
@@ -151,19 +149,7 @@ class FileEditor(CustomEditor):
     def stored_file_ready(self, stored_file):
         """Slot to be called when a new stored_file has been created by
         the storeage"""
-        from camelot.view.model_thread import post
         self.set_value(stored_file)
-
-        def delete_original():
-            if QFile.exists(self.original_path):
-                QFile.remove(self.original_path)
-                self.original_path = None
-
-        if self.remove_ok and self.original_path:
-            # reset
-            self.remove_ok = False
-            post(delete_original)
-
         self.editingFinished.emit()
 
     def save_as_button_clicked(self):
@@ -172,29 +158,16 @@ class FileEditor(CustomEditor):
         if value:
             save_stored_file(self, value)
 
-    def set_remove_ok(self):
-        reply = QtGui.QMessageBox(
-            QtGui.QMessageBox.Warning,
-            _('The file will be uploaded.'),
-            _('Do you wantto remove the original file?'),
-            QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard,
-            self
-        ).exec_()
-        if reply == QtGui.QMessageBox.Ok:
-            self.remove_ok = True
-        return self.remove_ok
-
     def open_button_clicked(self):
         from camelot.view.storage import open_stored_file
         from camelot.view.storage import create_stored_file
         if not self.value:
-            if self.remove_original:
-                self.set_remove_ok()
             create_stored_file(
                 self,
                 self.storage,
                 self.stored_file_ready,
-                filter=self.filter
+                filter=self.filter,
+                remove_original=self.remove_original,
             )
         else:
             open_stored_file(self, self.value)

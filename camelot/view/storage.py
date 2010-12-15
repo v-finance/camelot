@@ -28,6 +28,7 @@ from camelot.view.controls.exception import model_thread_exception_message_box
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+from PyQt4.QtCore import QFile
 
 class OpenFileProgressDialog(QtGui.QProgressDialog):
 
@@ -109,7 +110,8 @@ def save_stored_file(parent, stored_file):
         post(save_as, progress.file_stored, model_thread_exception_message_box)
         progress.exec_()
 
-def create_stored_file(parent, storage, on_finish, filter='All files (*)'):
+def create_stored_file(parent, storage, on_finish, filter='All files (*)',
+                       remove_original=False):
     """Popup a QFileDialog, put the selected file in the storage and
     return the call on_finish with the StoredFile when done"""
     settings = QtCore.QSettings()
@@ -119,14 +121,24 @@ def create_stored_file(parent, storage, on_finish, filter='All files (*)'):
         parent, 'Open file', dir, filter
     )
     if filename:
+        remove = False
+        if remove_original:
+            reply = QtGui.QMessageBox(
+                QtGui.QMessageBox.Warning,
+                _('The file will be stored.'),
+                _('Do you wantto remove the original file?'),
+                QtGui.QMessageBox.No | QtGui.QMessageBox.Yes,
+            ).exec_()
+            if reply == QtGui.QMessageBox.Yes:
+                remove = True
         # save it back
         settings.setValue('lastpath', QtCore.QVariant(filename))
         progress = SaveFileProgressDialog()
-        # store the original path
-        parent.original_path = filename
 
         def checkin():
             new_path = storage.checkin(unicode(filename))
+            if remove and QFile.exists(filename):
+                QFile.remove(filename)               
             return lambda:on_finish(new_path)
 
         post(checkin, progress.finish, model_thread_exception_message_box)
