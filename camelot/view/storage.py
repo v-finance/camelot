@@ -126,9 +126,11 @@ def create_stored_file(parent, storage, on_finish, filter='All files (*)',
             reply = QtGui.QMessageBox(
                 QtGui.QMessageBox.Warning,
                 _('The file will be stored.'),
-                _('Do you wantto remove the original file?'),
+                _('Do you want to remove the original file?'),
                 QtGui.QMessageBox.No | QtGui.QMessageBox.Yes,
-            ).exec_()
+            )
+            reply.setDefaultButton(QtGui.QMessageBox.Yes)
+            reply.exec_()
             if reply == QtGui.QMessageBox.Yes:
                 remove = True
         # save it back
@@ -138,7 +140,7 @@ def create_stored_file(parent, storage, on_finish, filter='All files (*)',
         def checkin():
             new_path = storage.checkin(unicode(filename))
             if remove and QFile.exists(filename):
-                QFile.remove(filename)               
+                QFile.remove(filename)
             return lambda:on_finish(new_path)
 
         post(checkin, progress.finish, model_thread_exception_message_box)
