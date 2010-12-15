@@ -23,6 +23,7 @@
 #  ============================================================================
 
 """Helper functions for the view subpackage"""
+from HTMLParser import HTMLParser 
 
 from PyQt4 import QtCore
 
@@ -182,26 +183,23 @@ operator_names = {
     between_op: u'between',
 }
 
-def text_from_richtext(unstripped_text, newlines=True, word_xml=False):
-    # TODO improve/expand
-    from HTMLParser import HTMLParser    
+def text_from_richtext(unstripped_text):
+    """funciton that returns a list of lines with escaped data, to be used in templates for example
+    :arg unstripped_text: string
+    :return: list of strings
+    """
     strings = []
     if not unstripped_text:
-	    return ''
+	    return None
     class HtmlToTextParser(HTMLParser):
         def handle_data(self, data):
             from xml.sax.saxutils import escape
             data = data.strip()
             if data:
-                newline = ' '
-                if newlines:
-                    newline = "\n"
-                    if word_xml:
-                        newline = '<w:br />'
-                strings.append( '%s%s' % ( escape(data), newline ) )
+                strings.append(escape(data))
 
     parser = HtmlToTextParser()
     parser.feed(unstripped_text.strip())
     
-    return ''.join(strings)
+    return strings
 
