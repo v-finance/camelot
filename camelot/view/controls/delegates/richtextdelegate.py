@@ -50,7 +50,7 @@ class RichTextDelegate(CustomDelegate):
 
         value_str = u''
         if value not in (None, ValueLoading):
-            value_str = text_from_richtext(value, newlines=False)[0][:256]
+            value_str = text_from_richtext(value)[0][:256]
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()        
