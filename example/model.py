@@ -38,10 +38,10 @@ def genre_choices(entity_instance):
     (('war'),('War')),
     (('thriller'),('Thriller')),
     (('family'),('Family')) ]
-  
+
 def burn_to_disk(o_getter):
     print 'burn burn burn'
-  
+
 class Movie(Entity):
     using_options(tablename='movies')
     title = Field(Unicode(60), required=True)
@@ -67,7 +67,7 @@ class Movie(Entity):
     #
     script = Field(camelot.types.File(upload_to='script'))
     description = Field(camelot.types.RichText)
-  
+
     #
     # Using a ColumnProperty, an sql query can be assigned to a field
     #
@@ -75,9 +75,9 @@ class Movie(Entity):
     def total_visitors(self):
         return sql.select([sql.func.sum(VisitorReport.visitors)],
                                VisitorReport.movie_id==self.id)
-    
+
     #
-    # Normal python properties can be used as well, but then the 
+    # Normal python properties can be used as well, but then the
     # delegate needs be specified
     #
     @property
@@ -89,7 +89,7 @@ class Movie(Entity):
         from camelot.container.chartcontainer import BarContainer
         return BarContainer(range(len(self.visitor_reports)),
                             [vr.visitors for vr in self.visitor_reports])
-    
+
     #
     # Each Entity subclass can have a subclass of EntityAdmin as
     # its inner class.  The EntityAdmin class defines how the Entity
@@ -124,7 +124,7 @@ class Movie(Entity):
           ('Visitors', WidgetOnlyForm('visitors_chart')),
           ('Tags', WidgetOnlyForm('tags'))
         ])
-    
+
         # create a list of actions available for the user on the form view
         # those actions will be executed within the model thread
         #
@@ -144,41 +144,42 @@ class Movie(Entity):
                                                           <tr><td>4 stars</td><td>Very good</td></tr>
                                                           <tr><td>5 stars</td><td>Awesome !</td></tr>
                                                        </table>'''),
-                                smiley=dict(delegate=delegates.SmileyDelegate))
-    
+                                smiley=dict(delegate=delegates.SmileyDelegate),
+                                script=dict(remove_original=True))
+
     def __unicode__(self):
         return self.title or ''
-    
+
 class Cast(Entity):
     using_options(tablename='cast')
     movie = ManyToOne('Movie')
     actor = ManyToOne('Person', required=True)
     role = Field(Unicode(60))
-  
+
     class Admin(EntityAdmin):
         verbose_name = 'Actor'
         list_display = ['actor', 'role']
         form_display = ['actor', 'role']
-  
+
     def __unicode__(self):
         if self.actor:
             return self.actor.name
         return ''
-    
+
 class Tag(Entity):
     using_options(tablename='tags')
     name = Field(Unicode(60), required=True)
     movies = ManyToMany('Movie')
-  
+
     def __unicode__(self):
         return self.name
-    
+
     class Admin(EntityAdmin):
         form_size = (400,200)
         list_display = ['name']
         form_display = ['name', 'movies']
         lines_per_row = 2
-    
+
 class VisitorReport(Entity):
     using_options(tablename='visitor_report')
     movie = ManyToOne('Movie', required=True)

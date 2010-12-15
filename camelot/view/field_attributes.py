@@ -115,7 +115,7 @@ _sqlalchemy_to_python_type_ = {
         'from_string': float_from_string,
         'operators': _numerical_operators,
     },
-    
+
     sqlalchemy.types.Numeric: lambda f: {
         'python_type': float,
         'precision': f.scale,
@@ -266,7 +266,7 @@ _sqlalchemy_to_python_type_ = {
         'widget': 'combobox',
         'operators' : _numerical_operators,
     },
-    
+
     camelot.types.Language: lambda f: {
         'delegate': delegates.LanguageDelegate,
         'python_type': str,
@@ -275,7 +275,7 @@ _sqlalchemy_to_python_type_ = {
         'editable': True,
         'nullable': False,
         'widget': 'combobox',
-    },    
+    },
 
     camelot.types.File : lambda f: {
         'python_type': str,
@@ -283,6 +283,7 @@ _sqlalchemy_to_python_type_ = {
         'delegate': delegates.FileDelegate,
         'storage': f.storage,
         'operators' : _text_operators,
+        'remove_original': False,
     },
 }
 
@@ -316,8 +317,8 @@ field_types.sort(lambda x, y: cmp(x.__name__, y.__name__))
 for field_type in field_types:
     field_attributes = _sqlalchemy_to_python_type_[field_type](DummyField())
     delegate = field_attributes['delegate']
-    row = row_format%(field_type.__name__, 
-                      ':ref:`%s <delegate-%s>`'%(delegate.__name__, delegate.__name__), 
+    row = row_format%(field_type.__name__,
+                      ':ref:`%s <delegate-%s>`'%(delegate.__name__, delegate.__name__),
                       '.. image:: ../_static/editors/%s_editable.png'%(delegate.editor.__name__))
     doc += row + """
 """ + row_separator + """
