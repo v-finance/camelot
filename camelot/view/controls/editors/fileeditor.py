@@ -73,7 +73,7 @@ class FileEditor(CustomEditor):
 
         # Save As button
         self.save_as_button = QtGui.QToolButton()
-        self.save_as_button.setFocusPolicy(Qt.ClickFocus)
+        self.save_as_button.setFocusPolicy(Qt.StrongFocus)
         self.save_as_button.setIcon(self.save_as_icon)
         self.save_as_button.setToolTip(_('Save file as'))
         self.save_as_button.setAutoRaise(True)
@@ -81,7 +81,7 @@ class FileEditor(CustomEditor):
 
         # Clear button
         self.clear_button = QtGui.QToolButton()
-        self.clear_button.setFocusPolicy(Qt.ClickFocus)
+        self.clear_button.setFocusPolicy(Qt.StrongFocus)
         self.clear_button.setIcon(self.clear_icon)
         self.clear_button.setToolTip(_('delete file'))
         self.clear_button.setAutoRaise(True)
@@ -89,7 +89,7 @@ class FileEditor(CustomEditor):
 
         # Open button
         self.open_button = QtGui.QToolButton()
-        self.open_button.setFocusPolicy(Qt.ClickFocus)
+        self.open_button.setFocusPolicy(Qt.StrongFocus)
         self.open_button.setIcon(self.new_icon)
         self.open_button.setToolTip(_('add file'))
         self.open_button.clicked.connect(self.open_button_clicked)
@@ -108,6 +108,13 @@ class FileEditor(CustomEditor):
         self.layout.addWidget(self.save_as_button)
         self.setLayout(self.layout)
 
+    def set_tab_order(self):
+        if self.filename.text() != '':
+            self.setTabOrder(self.clear_button, self.filename)
+        else:
+            self.setTabOrder(self.clear_button, self.filename)
+            self.setTabOrder(self.open_button, self.clear_button)
+
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         self.value = value
@@ -121,6 +128,7 @@ class FileEditor(CustomEditor):
             self.filename.setText('')
             self.open_button.setIcon(self.new_icon)
             self.open_button.setToolTip(_('add file'))
+        self.set_tab_order()
         return value
 
     def get_value(self):
@@ -149,7 +157,7 @@ class FileEditor(CustomEditor):
         def delete_original():
             if QFile.exists(self.original_path):
                 QFile.remove(self.original_path)
-            self.original_path = None
+                self.original_path = None
 
         if self.remove_ok and self.original_path:
             # reset
