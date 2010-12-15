@@ -160,13 +160,15 @@ and above the text.
         if(index.column()>=self._columns_frozen):
             super(TableWidget, self).scrollTo(index, hint)
         
-    def edit(self, index, trigger, event):
+    def edit(self, index, trigger=None, event=None):
         #
         # columns in the frozen part should never be edited, because this might result
         # in an editor opening below the frozen column that contains the old value
         # which will be committed again when closed
         #
         if index.column() >= self._columns_frozen:
+            if trigger==None and event==None:
+                return super( TableWidget, self ).edit( index )
             return super( TableWidget, self ).edit( index, trigger, event )
         return False
     
