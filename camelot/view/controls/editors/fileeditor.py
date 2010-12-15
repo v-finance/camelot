@@ -149,6 +149,7 @@ class FileEditor(CustomEditor):
         def delete_original():
             if QFile.exists(self.original_path):
                 QFile.remove(self.original_path)
+            self.original_path = None
 
         if self.remove_ok and self.original_path:
             # reset
@@ -163,20 +164,24 @@ class FileEditor(CustomEditor):
         if value:
             save_stored_file(self, value)
 
+    def set_remove_ok(self):
+        reply = QtGui.QMessageBox(
+            QtGui.QMessageBox.Warning,
+            _('The file will be uploaded.'),
+            _('Do you wantto remove the original file?'),
+            QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard,
+            self
+        ).exec_()
+        if reply == QtGui.QMessageBox.Ok:
+            self.remove_ok = True
+        return self.remove_ok
+
     def open_button_clicked(self):
         from camelot.view.storage import open_stored_file
         from camelot.view.storage import create_stored_file
         if not self.value:
             if self.remove_original:
-                reply = QtGui.QMessageBox(
-                    QtGui.QMessageBox.Warning,
-                    _('The file will be uploaded.'),
-                    _('Do you wantto remove the original file?'),
-                    QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard,
-                    self
-                ).exec_()
-                if reply == QtGui.QMessageBox.Ok:
-                    self.remove_ok = True
+                self.set_remove_ok()
             create_stored_file(
                 self,
                 self.storage,
@@ -207,6 +212,9 @@ class FileEditor(CustomEditor):
                 from camelot.view.storage import SaveFileProgressDialog
                 from camelot.view.model_thread import post
                 progress = SaveFileProgressDialog()
+
+                if self.remove_original and self.set_remove_ok():
+                    self.original_path = filename
 
                 def checkin():
                     stored_file = self.storage.checkin(unicode(filename))
