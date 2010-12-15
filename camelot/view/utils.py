@@ -191,6 +191,7 @@ def text_from_richtext(unstripped_text):
     strings = []
     if not unstripped_text:
 	    return None
+
     class HtmlToTextParser(HTMLParser):
         def handle_data(self, data):
             from xml.sax.saxutils import escape
