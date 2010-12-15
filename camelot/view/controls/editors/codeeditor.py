@@ -34,23 +34,32 @@ class PartEditor(QtGui.QLineEdit):
     def __init__(self, mask):
         super(PartEditor, self).__init__()
         self.setInputMask(mask)
+                
+    def focusInEvent(self, event):
+        super(PartEditor, self).focusInEvent(event)
         self.setCursorPosition(0)
+        
+    def focusOutEvent(self, event):
+        self.editingFinished.emit()
+        super(PartEditor, self).focusOutEvent(event)
 
 class CodeEditor(CustomEditor):
 
     def __init__(self, parent=None, parts=['99','AA'], editable=True, **kwargs):
         CustomEditor.__init__(self, parent)
-        self.setFocusPolicy(Qt.StrongFocus)
         self.parts = parts
         self.part_editors = []
         layout = QtGui.QHBoxLayout()
         layout.setMargin(0)
         layout.setSpacing(0)
         layout.setAlignment(Qt.AlignLeft)
-        for part in parts:
+        for i,part in enumerate(parts):
             part = re.sub('\W*', '', part)
             part_length = len(part)
             editor = PartEditor(part)
+            editor.setFocusPolicy( Qt.StrongFocus )
+            if i==0:
+                self.setFocusProxy( editor )
             if not editable:
                 editor.setEnabled(False)
             space_width = editor.fontMetrics().size(Qt.TextSingleLine, 'A').width()
@@ -62,9 +71,6 @@ class CodeEditor(CustomEditor):
 
     @QtCore.pyqtSlot()
     def emit_editing_finished(self):
-        self.editingFinished.emit()
-
-    def focusOutEvent(self, event):
         self.editingFinished.emit()
 
     def set_enabled(self, editable=True):
