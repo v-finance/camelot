@@ -94,7 +94,8 @@ class GeographicBoundary( Entity ):
         
     def __unicode__( self ):
         return u'%s %s' % ( self.code, self.name )
-
+
+
 class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
     ISO code of a country"""
@@ -116,7 +117,8 @@ class Country( GeographicBoundary ):
         list_display = ['name', 'code']
         
 Country = documented_entity()(Country)
-
+
+
 class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
@@ -500,7 +502,7 @@ class Organization( Party ):
     shareholders = OneToMany( 'SharedShareholder', inverse = 'established_from', cascade='all, delete, delete-orphan' )
 
     def __unicode__( self ):
-        return self.name
+        return self.name or ''
 
     @property
     def number_of_shares_issued( self ):
@@ -585,7 +587,7 @@ class Person( Party ):
         return u'%s %s' % ( self.first_name, self.last_name )
 
     def __unicode__( self ):
-        return self.name
+        return self.name or ''
 
     class Admin( Party.Admin ):
         verbose_name = _( 'Person' )
