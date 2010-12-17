@@ -37,8 +37,11 @@ def get_application():
         # Uniform style for screenshot generation
         #
         QApplication.setStyle('cleanlooks')
-        import sys
-        _application_.append(QApplication(sys.argv))
+        application = QApplication.instance()
+        if not application:
+            import sys
+            application = QApplication(sys.argv)
+        _application_.append( application )
     return _application_[0]
 
 class ModelThreadTestCase(unittest.TestCase):

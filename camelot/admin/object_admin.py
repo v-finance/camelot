@@ -802,5 +802,3 @@ The QWidget class to be used when a table view is needed
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()
         return new_entity_instance
-
-

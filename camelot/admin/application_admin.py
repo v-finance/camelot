@@ -23,7 +23,7 @@
 #  ============================================================================
 
 import logging
-logger = logging.getLogger('camelot.view.application_admin')
+logger = logging.getLogger('camelot.admin.application_admin')
 
 from PyQt4 import QtCore, QtGui
 
