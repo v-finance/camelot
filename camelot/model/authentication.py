@@ -619,8 +619,8 @@ class Person( Party ):
                                 ] )
         field_attributes = dict( Party.Admin.field_attributes )
         field_attributes['same_name_note'] = {'delegate':delegates.NoteDelegate}
-        field_attributes['same_ssn_note'] = {'delegate':delegates.NoteDelegate, 'background_color': ColorScheme.orange_2}
-        field_attributes['same_ppn_note'] = {'delegate':delegates.NoteDelegate, 'background_color': ColorScheme.orange_2}
+        field_attributes['same_ssn_note'] = {'delegate':delegates.NoteDelegate}
+        field_attributes['same_ppn_note'] = {'delegate':delegates.NoteDelegate}
 
 Person = documented_entity()( Person )
 
