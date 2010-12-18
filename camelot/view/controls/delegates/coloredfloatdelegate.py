@@ -32,13 +32,19 @@ from camelot.core.utils import variant_to_pyobject
 from camelot.view.art import Icon
 
 class ColoredFloatDelegate(CustomDelegate):
-    """Custom delegate for float values, representing them in green when they are
-  positive and in red when they are negative.
+    """Custom delegate for float values.
+  
+  The class attribute icons is used to customed the displayed icons.
   """
   
     __metaclass__ = DocumentationMetaclass
     
     editor = editors.ColoredFloatEditor
+    icons = {
+        1:QtGui.QIcon(Icon('tango/16x16/actions/go-up.png').getQPixmap()),
+        -1:QtGui.QIcon(Icon('tango/16x16/actions/go-down-red.png').getQPixmap()),
+        0:QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap())
+    }
     
     def __init__(self,
                  parent=None,
@@ -67,26 +73,6 @@ class ColoredFloatDelegate(CustomDelegate):
         self.reverse = reverse
         self.neutral = neutral
         self.unicode_format = unicode_format
-        if not self.reverse:
-            if not self.neutral:
-                self.icons = {
-                    1:QtGui.QIcon(Icon('tango/16x16/actions/go-up.png').getQPixmap()), 
-                    -1:QtGui.QIcon(Icon('tango/16x16/actions/go-down-red.png').getQPixmap()),
-                    0:QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap())
-                }    
-            else:            
-                self.icons = {
-                    1:QtGui.QIcon(Icon('tango/16x16/actions/go-up-blue.png').getQPixmap()), 
-                    -1:QtGui.QIcon(Icon('tango/16x16/actions/go-down-blue.png').getQPixmap()),
-                    0:QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap())
-                }
-        else:
-            self.icons = {
-                -1:QtGui.QIcon(Icon('tango/16x16/actions/go-up.png').getQPixmap()), 
-                1:QtGui.QIcon(Icon('tango/16x16/actions/go-down-red.png').getQPixmap()),
-                0:QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap())
-            }
-
 
     def paint(self, painter, option, index):
         painter.save()
@@ -143,4 +129,3 @@ class ColoredFloatDelegate(CustomDelegate):
                          value_str)
         
         painter.restore()
-
