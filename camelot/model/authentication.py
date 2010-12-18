@@ -42,6 +42,7 @@ by Len Silverston, Chapter 2
 from sqlalchemy import sql
 
 import camelot.types
+from camelot.view.art import ColorScheme
 
 #from camelot.model import *
 
@@ -91,7 +92,7 @@ class GeographicBoundary( Entity ):
     @ColumnProperty
     def full_name( self ):
         return self.code + ' ' + self.name
-        
+
     def __unicode__( self ):
         return u'%s %s' % ( self.code, self.name )
 
@@ -115,7 +116,7 @@ class Country( GeographicBoundary ):
         verbose_name = _('Country')
         verbose_name_plural = _('Countries')
         list_display = ['name', 'code']
-        
+
 Country = documented_entity()(Country)
 
 
@@ -139,7 +140,7 @@ class City( GeographicBoundary ):
         verbose_name_plural = _('Cities')
         form_size = ( 700, 150 )
         list_display = ['code', 'name', 'country']
-        
+
 City = documented_entity()(City)
 
 class PartyRelationship( Entity ):
@@ -180,7 +181,7 @@ class EmployerEmployee( PartyRelationship ):
         verbose_name_plural = _('Employment relations')
         list_filter = ['established_from.name']
         list_search = ['established_from.name', 'established_to.first_name', 'established_to.last_name']
-        
+
     class EmployeeAdmin( EntityAdmin ):
         verbose_name = _('Employee')
         list_display = ['established_to', 'from_date', 'thru_date']
@@ -289,12 +290,12 @@ class AddressAdmin( EntityAdmin ):
     verbose_name = _('Address')
     list_display = ['address_street1', 'address_city', 'comment']
     form_display = ['address_street1', 'address_street2', 'address_city', 'comment', 'from_date', 'thru_date']
-    field_attributes = dict(address_street1 = dict(name=_('Street'), 
-                                                   editable=True, 
+    field_attributes = dict(address_street1 = dict(name=_('Street'),
+                                                   editable=True,
                                                    nullable=False),
-                            address_street2 = dict(name=_('Street Extra'), 
+                            address_street2 = dict(name=_('Street Extra'),
                                                    editable=True),
-                            address_city = dict(name=_('City'), 
+                            address_city = dict(name=_('City'),
                                                 editable=True,
                                                 nullable=False,
                                                 delegate=delegates.Many2OneDelegate,
@@ -304,13 +305,13 @@ class AddressAdmin( EntityAdmin ):
     def flush(self, party_address):
         if party_address.address:
             super( AddressAdmin, self ).flush( party_address.address )
-        super( AddressAdmin, self ).flush( party_address )    
-    
+        super( AddressAdmin, self ).flush( party_address )
+
     def refresh(self, party_address):
         if party_address.address:
             super( AddressAdmin, self ).refresh( party_address.address )
-        super( AddressAdmin, self ).refresh( party_address )    
-    
+        super( AddressAdmin, self ).refresh( party_address )
+
 class PartyContactMechanismAdmin( EntityAdmin ):
     form_size = ( 700, 200 )
     verbose_name = _('Contact mechanism')
@@ -325,7 +326,7 @@ class PartyContactMechanismAdmin( EntityAdmin ):
                                                        'nullable':False,
                                                        'name':_('Mechanism'),
                                                        'delegate':delegates.VirtualAddressDelegate}}
-    
+
     def flush(self, party_contact_mechanism):
         if party_contact_mechanism.contact_mechanism:
             super(PartyContactMechanismAdmin, self).flush( party_contact_mechanism.contact_mechanism )
@@ -336,28 +337,28 @@ class PartyContactMechanismAdmin( EntityAdmin ):
             super(PartyContactMechanismAdmin, self).refresh( party_contact_mechanism.contact_mechanism )
         super(PartyContactMechanismAdmin, self).refresh( party_contact_mechanism )
         party_contact_mechanism._contact_mechanism_mechanism = party_contact_mechanism.mechanism
-                
+
     def get_depending_objects(self, contact_mechanism ):
         party = contact_mechanism.party
         if party and (party not in Party.query.session.new):
             party.expire(['email', 'phone'])
             yield party
-  
+
 class PartyPartyContactMechanismAdmin( PartyContactMechanismAdmin ):
     list_search = ['party_name', 'mechanism']
     list_display = ['contact_mechanism_mechanism', 'comment', 'from_date', ]
-                
+
 class Party( Entity ):
     """Base class for persons and organizations.  Use this base class to refer to either persons or
     organisations in building authentication systems, contact management or CRM"""
     using_options( tablename = 'party' )
-    
+
     def __new__(cls, *args, **kwargs):
         party = super(Party, cls).__new__(cls, *args, **kwargs)
         setattr(party, '_contact_mechanisms_email', None)
         setattr(party, '_contact_mechanisms_phone', None)
         return party
-    
+
     is_synchronized( 'synchronized', lazy = True )
     addresses = OneToMany( 'PartyAddress', lazy = True, cascade="all, delete, delete-orphan" )
     contact_mechanisms = OneToMany( 'PartyContactMechanism', lazy = True, cascade='all, delete, delete-orphan' )
@@ -371,10 +372,10 @@ class Party( Entity ):
 
     @ColumnProperty
     def email( self ):
-        
+
         cm = ContactMechanism
         pcm = PartyContactMechanism
-        
+
         return sql.select( [cm.mechanism],
                           whereclause = and_( pcm.table.c.party_id == self.id,
                                               cm.table.c.mechanism.like( ( u'email', u'%' ) ) ),
@@ -382,10 +383,10 @@ class Party( Entity ):
 
     @ColumnProperty
     def phone( self ):
-        
+
         cm = ContactMechanism
         pcm = PartyContactMechanism
-                
+
         return sql.select( [cm.mechanism],
                           whereclause = and_( pcm.table.c.party_id == self.id,
                                               cm.table.c.mechanism.like( ( u'phone', u'%' ) ) ),
@@ -397,7 +398,7 @@ class Party( Entity ):
     #
     def _get_contact_mechanisms_email(self):
         return self.email or self._contact_mechanisms_email
-    
+
     def _set_contact_mechanism_email(self, value):
         # todo : if no value, the existing value should be removed
         if not value or not value[1]:
@@ -410,15 +411,15 @@ class Party( Entity ):
                 return
         contact_mechanism = ContactMechanism( mechanism = value )
         self.contact_mechanisms.append( PartyContactMechanism(contact_mechanism=contact_mechanism) )
-        
+
     def _get_contact_mechanisms_phone(self):
         return self.phone or self._contact_mechanisms_phone
-    
+
     def _set_contact_mechanism_phone(self, value):
         # todo : if no value, the existing value should be removed
         if not value or not value[1]:
             return
-        self._contact_mechanisms_phone = value    
+        self._contact_mechanisms_phone = value
         for party_contact_mechanism in self.contact_mechanisms:
             mechanism = party_contact_mechanism.contact_mechanism_mechanism
             if mechanism and mechanism[0] == 'phone':
@@ -426,13 +427,13 @@ class Party( Entity ):
                 return
         contact_mechanism = ContactMechanism( mechanism = value )
         self.contact_mechanisms.append( PartyContactMechanism(contact_mechanism=contact_mechanism) )
-                    
+
     contact_mechanisms_email = property(_get_contact_mechanisms_email,
                                         _set_contact_mechanism_email)
-    
+
     contact_mechanisms_phone = property(_get_contact_mechanisms_phone,
                                         _set_contact_mechanism_phone)
-    
+
     @ColumnProperty
     def full_name( self ):
         aliased_organisation = Organization.table.alias( 'organisation_alias' )
@@ -452,7 +453,7 @@ class Party( Entity ):
         list_search = ['full_name']
         form_display = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
         field_attributes = dict(addresses = {'admin':AddressAdmin},
-                                contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin}, 
+                                contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin},
                                 suppliers = {'admin':SupplierCustomer.SupplierAdmin},
                                 customers = {'admin':SupplierCustomer.CustomerAdmin},
                                 employers = {'admin':EmployerEmployee.EmployerAdmin},
@@ -476,13 +477,13 @@ class Party( Entity ):
                                                                  address_type = 'phone',
                                                                  minimal_column_width = 20,
                                                                  from_string = lambda s:('phone', s),
-                                                                 delegate = delegates.VirtualAddressDelegate ),                                           
+                                                                 delegate = delegates.VirtualAddressDelegate ),
                                 )
-        
+
         def flush(self, party):
             from sqlalchemy.orm.session import Session
             session = Session.object_session( party )
-            objects = [ party ] 
+            objects = [ party ]
             for party_contact_mechanism in party.contact_mechanisms:
                 objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
             session.flush( objects )
@@ -575,11 +576,23 @@ class Person( Party ):
     employers = OneToMany( 'EmployerEmployee', inverse = 'established_to', cascade='all, delete, delete-orphan' )
 
     @property
+    def duplicate_note(self):
+        # social security number must be unique
+        person = self.__class__.query.filter_by(social_security_number=self.social_security_number).one()
+        if person != self:
+            return _('A person with the same social security number has already been stored')
+
+        # guess passport numbers are unique too
+        person = self.__class__.query.filter_by(passport_number=self.passport_number).one()
+        if person != self:
+            return _('A person with the same passport number has already been stored')
+
+    @property
     def note(self):
         for person in self.__class__.query.filter_by(first_name=self.first_name, last_name=self.last_name):
-            if person!=self:
+            if person != self:
                 return _('A person with the same name allready exists')
-    
+
     @property
     def name( self ):
         # we don't use full name in here, because for new objects, full name will be None, since
@@ -597,13 +610,14 @@ class Person( Party ):
                                                           Form( ['picture', ] ),
                                                          ] ),
                                                          'contact_mechanisms', 'comment', ], scrollbars = False ) ),
-                                ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number', 
+                                ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
                                                         'passport_expiry_date', 'addresses', ], scrollbars = False ) ),
                                 ( _('Work'), Form( ['employers', 'directed_organizations', 'shares'], scrollbars = False ) ),
                                 ( _('Status'), Form( ['status'] ) ),
                                 ] )
         field_attributes = dict( Party.Admin.field_attributes )
         field_attributes['note'] = {'delegate':delegates.NoteDelegate}
+        field_attributes['duplicate_note'] = {'delegate':delegates.NoteDelegate, 'background_color': ColorScheme.orange_2}
 
 Person = documented_entity()( Person )
 
@@ -618,8 +632,8 @@ class Address( Entity ):
     @ColumnProperty
     def name( self ):
         return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
-                           whereclause = (GeographicBoundary.id==self.city_geographicboundary_id)) 
-    
+                           whereclause = (GeographicBoundary.id==self.city_geographicboundary_id))
+
     @classmethod
     def getOrCreate( cls, street1, street2, city ):
         address = cls.query.filter_by( street1 = street1, street2 = street2, city = city ).first()
@@ -648,14 +662,14 @@ Address = documented_entity()( Address )
 
 class PartyAddress( Entity ):
     using_options( tablename = 'party_address' )
-    
+
     def __new__(cls, *args, **kwargs):
         party_address = super(PartyAddress, cls).__new__(cls, *args, **kwargs)
         setattr(party_address, '_address_street1', None)
         setattr(party_address, '_address_street2', None)
         setattr(party_address, '_address_city', None)
         return party_address
-    
+
     party = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     address = ManyToOne( 'Address', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
@@ -679,7 +693,7 @@ class PartyAddress( Entity ):
                 return getattr(self, '_address_' + attr[len('address_'):] )
         else:
             return super(PartyAddress, self).__getattr__(attr)
-            
+
     def __setattr__(self, attr, value):
         if attr.startswith('address_'):
             setattr(self, '_address_' + attr[len('address_'):], value )
@@ -690,17 +704,17 @@ class PartyAddress( Entity ):
                                         city = self._address_city )
         else:
             super(PartyAddress, self).__setattr__(attr, value)
-                    
+
     @ColumnProperty
     def party_name( self ):
         return sql.select( [sql.func.coalesce(Party.full_name, '')],
                            whereclause = (Party.id==self.party_id))
-        
+
     @ColumnProperty
     def address_name( self ):
         return sql.select( [sql.func.coalesce(Address.name, '')],
-                           whereclause = (Address.id==self.address_id))        
-                          
+                           whereclause = (Address.id==self.address_id))
+
     def __unicode__( self ):
         return '%s : %s' % ( unicode( self.party ), unicode( self.address ) )
 
@@ -719,7 +733,7 @@ class PartyAddress( Entity ):
         field_attributes = dict(address=dict(embedded=True),
                                 party_name=dict(editable=False, name='Party', minimal_column_width=30),
                                 address_name=dict(editable=False, name='Address', minimal_column_width=30))
-        
+
 class PartyAddressRoleType( Entity ):
     using_options( tablename = 'party_address_role_type' )
     code = Field( Unicode( 10 ) )
@@ -762,17 +776,17 @@ class ContactMechanism( Entity ):
                     if party and party not in Party.query.session.new:
                         party.expire(['email', 'phone'])
                         yield party
-            
+
 ContactMechanism = documented_entity()( ContactMechanism )
 
 class PartyContactMechanism( Entity ):
     using_options( tablename = 'party_contact_mechanism' )
-    
+
     def __new__(cls, *args, **kwargs):
         party_contact_mechanism = super(PartyContactMechanism, cls).__new__(cls, *args, **kwargs)
         setattr(party_contact_mechanism, '_contact_mechanism_mechanism', None)
         return party_contact_mechanism
-        
+
     party = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     contact_mechanism = ManyToOne( 'ContactMechanism', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
@@ -781,9 +795,9 @@ class PartyContactMechanism( Entity ):
 
     def _get_contact_mechanism_mechanism(self):
         if self._contact_mechanism_mechanism != None:
-            return self._contact_mechanism_mechanism 
+            return self._contact_mechanism_mechanism
         return self.mechanism
-        
+
     def _set_contact_mechanism_mechanism(self, mechanism):
         self._contact_mechanism_mechanism = mechanism
         if mechanism != None:
@@ -798,17 +812,17 @@ class PartyContactMechanism( Entity ):
     #
     contact_mechanism_mechanism = property( _get_contact_mechanism_mechanism,
                                             _set_contact_mechanism_mechanism )
-        
+
     @ColumnProperty
     def mechanism( self ):
         return sql.select( [ContactMechanism.mechanism],
                            whereclause = (ContactMechanism.id==self.contact_mechanism_id))
-        
+
     @ColumnProperty
     def party_name( self ):
         return sql.select( [Party.full_name],
-                           whereclause = (Party.id==self.party_id))        
-        
+                           whereclause = (Party.id==self.party_id))
+
     def __unicode__( self ):
         return unicode( self.contact_mechanism )
 
