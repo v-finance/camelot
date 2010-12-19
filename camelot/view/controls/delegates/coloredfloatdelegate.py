@@ -21,8 +21,9 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-from PyQt4 import QtGui, QtCore
+
 from PyQt4.QtCore import Qt
+from PyQt4 import QtGui, QtCore
 
 from customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.proxy import ValueLoading
@@ -31,41 +32,30 @@ from camelot.view.controls import editors
 from camelot.core.utils import variant_to_pyobject
 from camelot.view.art import Icon
 
+
 class ColoredFloatDelegate(CustomDelegate):
     """Custom delegate for float values.
-  
+
   The class attribute icons is used to customize the icons displayed.
   """
-  
+
     __metaclass__ = DocumentationMetaclass
-    
+
     editor = editors.ColoredFloatEditor
     icons = {
         1:'tango/16x16/actions/go-up.png',
         -1:'tango/16x16/actions/go-down-red.png',
         0:'tango/16x16/actions/zero.png'
     }
-    
-    def __init__(self,
-                 parent=None,
-                 minimum=-1e15,
-                 maximum=1e15,
-                 precision=2,
-                 editable=True,
-                 reverse=False,
-                 neutral=False,
-                 unicode_format=None,
-                 **kwargs):
-        CustomDelegate.__init__(self,
-                                parent=parent,
-                                editable=editable,
-                                minimum=minimum,
-                                maximum=maximum,
-                                reverse=reverse,
-                                neutral=neutral,
-                                precision=precision,
-                                unicode_format=unicode_format,
-                                **kwargs)
+
+    def __init__(self, parent=None, minimum=-1e15, maximum=1e15,
+        precision=2, editable=True, reverse=False, neutral=False,
+        unicode_format=None, **kwargs
+    ):
+        CustomDelegate.__init__(self, parent=parent, editable=editable,
+            minimum=minimum, maximum=maximum, reverse=reverse, neutral=neutral,
+            precision=precision, unicode_format=unicode_format, **kwargs
+        )
         self.minimum = minimum
         self.maximum = maximum
         self.precision = precision
@@ -81,16 +71,16 @@ class ColoredFloatDelegate(CustomDelegate):
         field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
         fontColor = QtGui.QColor()
         editable, prefix, suffix, background_color, arrow = True, '', '', None, None
-        
+
         if field_attributes != ValueLoading:
-            editable = field_attributes.get( 'editable', True )
-            prefix = field_attributes.get( 'prefix', '' )
-            suffix = field_attributes.get( 'suffix', '' )
-            background_color = field_attributes.get( 'background_color', None )
+            editable = field_attributes.get('editable', True)
+            prefix = field_attributes.get('prefix', '')
+            suffix = field_attributes.get('suffix', '')
+            background_color = field_attributes.get('background_color', None)
             arrow = field_attributes.get('arrow', None)
 
         fontColor = QtGui.QColor()
-        if( option.state & QtGui.QStyle.State_Selected ):
+        if (option.state & QtGui.QStyle.State_Selected):
             painter.fillRect(option.rect, option.palette.highlight())
         else:
             if editable:
@@ -118,20 +108,20 @@ class ColoredFloatDelegate(CustomDelegate):
                 value_str = self.unicode_format(value)
             else:
                 value_str = QtCore.QString("%L1").arg(float(value),0,'f',self.precision)
-        value_str = unicode( prefix ) + u' ' + unicode( value_str ) + u' ' + unicode( suffix )
-       
+        value_str = unicode(prefix) + u' ' + unicode(value_str) + u' ' + unicode(suffix)
+
         fontColor = fontColor.darker()
         painter.setPen(fontColor.toRgb())
         rect = QtCore.QRect(option.rect.left()+23,
                             option.rect.top(),
                             option.rect.width()-23,
                             option.rect.height())
-        
+
         painter.drawText(rect.x()+2,
                          rect.y(),
                          rect.width()-4,
                          rect.height(),
                          Qt.AlignVCenter | Qt.AlignRight,
                          value_str)
-        
+
         painter.restore()
