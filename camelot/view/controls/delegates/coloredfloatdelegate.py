@@ -34,16 +34,16 @@ from camelot.view.art import Icon
 class ColoredFloatDelegate(CustomDelegate):
     """Custom delegate for float values.
   
-  The class attribute icons is used to customed the displayed icons.
+  The class attribute icons is used to customize the icons displayed.
   """
   
     __metaclass__ = DocumentationMetaclass
     
     editor = editors.ColoredFloatEditor
     icons = {
-        1:QtGui.QIcon(Icon('tango/16x16/actions/go-up.png').getQPixmap()),
-        -1:QtGui.QIcon(Icon('tango/16x16/actions/go-down-red.png').getQPixmap()),
-        0:QtGui.QIcon(Icon('tango/16x16/actions/zero.png').getQPixmap())
+        1:'tango/16x16/actions/go-up.png',
+        -1:'tango/16x16/actions/go-down-red.png',
+        0:'tango/16x16/actions/zero.png'
     }
     
     def __init__(self,
@@ -104,7 +104,13 @@ class ColoredFloatDelegate(CustomDelegate):
             comparator = arrow.y
         else:
             comparator = value
-        self.icons[cmp(comparator,0)].paint(painter, option.rect.left(), option.rect.top()+1, option.rect.height(), option.rect.height(), Qt.AlignVCenter)
+        #self.icons[cmp(comparator,0)].paint(painter, option.rect.left(), option.rect.top()+1, option.rect.height(), option.rect.height(), Qt.AlignVCenter)
+        iconpath = self.icons[cmp(comparator,0)]
+        icon = QtGui.QIcon(Icon(iconpath).getQPixmap())
+        icon.paint(
+            painter, option.rect.left(), option.rect.top()+1,
+            option.rect.height(), option.rect.height(), Qt.AlignVCenter
+        )
 
         value_str = u''
         if value != None and value != ValueLoading:
