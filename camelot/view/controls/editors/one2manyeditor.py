@@ -162,8 +162,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
             post( model._extend_cache, self.update_delegates )
 
     @gui_function
-    def activate_editor( self, row ):
-        index = self.model.index( row, 0 )
+    def activate_editor( self, _row ):
+        return
+# Activating this code can cause segfaults
+# see ticket 765 in web issues
+        index = self.model.index( _row, 0 )
         self.table.scrollToBottom()
         self.table.setCurrentIndex( index )
         self.table.edit( index )
