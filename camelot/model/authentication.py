@@ -42,7 +42,6 @@ by Len Silverston, Chapter 2
 from sqlalchemy import sql
 
 import camelot.types
-from camelot.view.art import ColorScheme
 
 #from camelot.model import *
 
