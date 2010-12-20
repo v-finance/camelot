@@ -38,7 +38,7 @@ from PyQt4 import QtCore
 class FieldAttributesList(list):
     """A list with field attributes that documents them for
     sphinx"""
-    
+
     def __init__(self, original_list):
         """:param original_list: the list with field attributes
         to document"""
@@ -46,9 +46,9 @@ class FieldAttributesList(list):
         template = "\n * :ref:`%s <field-attribute-%s>`"
         doc = '\n'.join([template%(name, name) for name in original_list])
         self.__doc__ = doc
-        
-DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip', 'color', 'background_color', 
-                                                'editable', 'choices', 
+
+DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip', 'color', 'background_color',
+                                                'editable', 'choices',
                                                 'prefix', 'suffix', 'arrow',
                                                 'new_message', 'default'])
 
@@ -109,7 +109,7 @@ instead of telling which forms to display. It is also possible to define
 the form itself ::
 
     from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
-    
+
     class Admin(EntityAdmin):
       form_display = TabForm([
         ('Movie', Form([
@@ -169,7 +169,7 @@ that can be used in the field attributes class attribute of an ObjectAdmin or En
 
 Set this attribute to 'maximized' or 'minimized' for respective behaviour. These are the only two defined at the moment.
 Please use the constants defined in camelot.core.constants (MINIMIZE and MAXIMIZE).
-Note that this attr needs to be set at the form, highest in the form hierarchy to work. Setting this on embedded forms 
+Note that this attr needs to be set at the form, highest in the form hierarchy to work. Setting this on embedded forms
 will not influence the window state. Example::
 
 class Movie(Entity):
@@ -398,7 +398,7 @@ The QWidget class to be used when a table view is needed
 
         :param field_name: the name of the field
         :return: a dictionary of attributes needed to visualize the field
-        
+
         The values of the returned dictionary either contain the value
         of the field attribute, or in the case of dynamic field attributes,
         a function that returns the value of the field attribute.
@@ -542,14 +542,14 @@ The QWidget class to be used when a table view is needed
         logger.debug('creating form view for index %s' % index)
         from camelot.view.controls.formview import FormView
         form = FormView(title, self, model, index)
-        
+
         if hasattr(self, 'form_state'):
             from camelot.core import constants
             if self.form_state == constants.MAXIMIZED:
                 form.setWindowState(QtCore.Qt.WindowMaximized)
             if self.form_state == constants.MINIMIZED:
                 form.setWindowState(QtCore.Qt.WindowMinimized)
-        
+
         return form
 
     # simply copied from EntityAdmin
@@ -675,7 +675,7 @@ The QWidget class to be used when a table view is needed
         class NewForm(AbstractView):
 
             entity_created_signal = QtCore.pyqtSignal(object)
-            
+
             def __init__(self, parent):
                 AbstractView.__init__(self, parent)
                 self.widget_layout = QtGui.QVBoxLayout()
@@ -785,7 +785,7 @@ The QWidget class to be used when a table view is needed
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
         pass
-    
+
     @model_function
     def refresh(self, entity_instance):
         """Undu the pending changes to the backend and restore the original
