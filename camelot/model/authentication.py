@@ -575,21 +575,7 @@ class Person( Party ):
     employers = OneToMany( 'EmployerEmployee', inverse = 'established_to', cascade='all, delete, delete-orphan' )
 
     @property
-    def same_ssn_note(self):
-        # social security number must be unique
-        person = self.__class__.query.filter_by(social_security_number=self.social_security_number).one()
-        if person != self:
-            return _('A person with the same social security number has already been stored')
-
-    @property
-    def same_ppn_note(self):
-        # guess passport numbers are unique too
-        person = self.__class__.query.filter_by(passport_number=self.passport_number).one()
-        if person != self:
-            return _('A person with the same passport number has already been stored')
-
-    @property
-    def same_name_note(self):
+    def note(self):
         for person in self.__class__.query.filter_by(first_name=self.first_name, last_name=self.last_name):
             if person != self:
                 return _('A person with the same name allready exists')
@@ -617,9 +603,7 @@ class Person( Party ):
                                 ( _('Status'), Form( ['status'] ) ),
                                 ] )
         field_attributes = dict( Party.Admin.field_attributes )
-        field_attributes['same_name_note'] = {'delegate':delegates.NoteDelegate}
-        field_attributes['same_ssn_note'] = {'delegate':delegates.NoteDelegate}
-        field_attributes['same_ppn_note'] = {'delegate':delegates.NoteDelegate}
+        field_attributes['note'] = {'delegate':delegates.NoteDelegate}
 
 Person = documented_entity()( Person )
 
