@@ -25,7 +25,7 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from camelot.view.proxy import ValueLoading
+from camelot.view.proxy import ValueLoading
 
 class AbstractCustomEditor(object):
     """Helper class to be used to build custom editors.  This class provides

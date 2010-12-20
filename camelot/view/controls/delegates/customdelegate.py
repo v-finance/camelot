@@ -90,7 +90,7 @@ class CustomDelegate(QItemDelegate):
     .. attribute:: editor
 
     class attribute specifies the editor class that should be used
-    
+
     """
 
     editor = None
@@ -99,7 +99,7 @@ class CustomDelegate(QItemDelegate):
         """:param parent: the parent object for the delegate
         :param editable: a boolean indicating if the field associated to the delegate
         is editable
-        
+
         """
         QItemDelegate.__init__(self, parent)
         self.editable = editable
@@ -111,7 +111,7 @@ class CustomDelegate(QItemDelegate):
     def createEditor(self, parent, option, index):
         """:param option: use an option with version 5 to indicate the widget
         will be put onto a form
-        
+
         """
         editor = self.editor(parent, editable=self.editable, **self.kwargs)
         assert editor != None
@@ -142,18 +142,22 @@ class CustomDelegate(QItemDelegate):
             return
         value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
         field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
-        index.model().data(index, Qt.ToolTipRole)
+
+        # not sure about this one but i think set_field_attributes takes care
+        # of the following
+        #
+        #background_color = variant_to_pyobject(index.model().data(index, Qt.BackgroundRole))
+        #if background_color not in (None, ValueLoading):
+        #    editor.set_background_color(background_color)
+        #tip = variant_to_pyobject(index.model().data(index, Qt.ToolTipRole))
+        #if tip not in (None, ValueLoading):
+        #    editor.setToolTip(unicode(tip))
+        #else:
+        #    editor.setToolTip('')
+
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
-        background_color = variant_to_pyobject(index.model().data(index, Qt.BackgroundRole))
-        if background_color not in (None, ValueLoading):
-            editor.set_background_color(background_color)
-        tip = variant_to_pyobject(index.model().data(index, Qt.ToolTipRole))
-        if tip not in (None, ValueLoading):
-            editor.setToolTip(unicode(tip))
-        else:
-            editor.setToolTip('')
-                
+
     def setModelData(self, editor, model, index):
         if isinstance(model, QtGui.QStandardItemModel):
             val = QtCore.QVariant(editor.get_value())
@@ -165,15 +169,15 @@ class CustomDelegate(QItemDelegate):
         painter.save()
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject(index.model().data(index, Qt.DisplayRole))
-          
+
         if value in (None, ValueLoading):
             value_str = ''
         else:
             value_str = unicode( value )
-        
+
         self.paint_text( painter, option, index, value_str )
         painter.restore()
-        
+
     def paint_text(
         self,
         painter,
@@ -235,7 +239,7 @@ class CustomDelegate(QItemDelegate):
         yield '<w:r>'
         yield '  <w:t>%s</w:t>' % unicode(value)
         yield '</w:r>'
-        
+
     def render_html( self, index ):
         """Generator that renders a value to html"""
         value = variant_to_pyobject(index.model().data(index, Qt.DisplayRole))
