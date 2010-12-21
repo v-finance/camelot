@@ -110,6 +110,7 @@ def variant_to_pyobject(qvariant=None):
 
     return value
 
+
 #
 # Global dictionary containing all user defined translations in the
 # current locale
@@ -152,6 +153,7 @@ def ugettext(string_to_translate):
         ))
     return result
 
+
 def dgettext(domain, message):
     """Like ugettext but look the message up in the specified domain.
     This uses the Translation table.
@@ -165,7 +167,8 @@ def dgettext(domain, message):
     for translation in Translation.query.session.execute(query):
         return translation[0]
     return message
-    
+
+
 class ugettext_lazy(object):
 
     def __init__(self, string_to_translate):
@@ -197,6 +200,7 @@ def xls2list(xf):
             vector.append(value)
         matrix.append(vector)
     return matrix
+
 
 def format_float(value, precision=3):
     return QtCore.QString("%L1").arg(float(value), 0, 'f', precision)
