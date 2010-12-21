@@ -27,6 +27,7 @@ from PyQt4 import QtCore
 
 from camelot.view.proxy import ValueLoading
 
+
 class AbstractCustomEditor(object):
     """Helper class to be used to build custom editors.  This class provides
   functionality to store and retrieve `ValueLoading` as an editor's value.
@@ -82,6 +83,7 @@ class AbstractCustomEditor(object):
             self.setPalette(palette)
         else:
             return False
+
 
 class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     """Base class for implementing custom editor widgets.  This class provides

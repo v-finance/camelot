@@ -143,9 +143,6 @@ class CustomDelegate(QItemDelegate):
         value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
         field_attributes = variant_to_pyobject(index.data(Qt.UserRole))
 
-        # not sure about this one but i think set_field_attributes takes care
-        # of the following
-        #
         #background_color = variant_to_pyobject(index.model().data(index, Qt.BackgroundRole))
         #if background_color not in (None, ValueLoading):
         #    editor.set_background_color(background_color)
@@ -154,6 +151,16 @@ class CustomDelegate(QItemDelegate):
         #    editor.setToolTip(unicode(tip))
         #else:
         #    editor.setToolTip('')
+
+        # ok i think i'm onto something, dynamically set tooltip doesn't change
+        # Qt model's data for Qt.ToolTipRole
+        # but i wonder if we should make the detour by Qt.ToolTipRole or just
+        # get our tooltip from field_attributes
+        tooltip = unicode(field_attributes['tooltip']) if 'tooltip' in field_attributes and field_attributes['tooltip'] else None
+        if tooltip is not None:
+            editor.setToolTip(tooltip)
+        else:
+            editor.setToolTip('')
 
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)

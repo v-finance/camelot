@@ -55,16 +55,15 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
 
         return value
 
-    def set_field_attributes(self, editable=True, background_color=None, **kwargs):
-        super(TextLineEditor, self).set_field_attributes(editable, background_color, **kwargs)
-        tooltip = unicode(kwargs['tooltip']) if 'tooltip' in kwargs and kwargs['tooltip'] else None
-        if tooltip is not None:
-            self.setToolTip(tooltip)
-        else:
-            self.setToolTip('')
+    #def set_field_attributes(self, editable=True, background_color=None, **kwargs):
+    #    super(TextLineEditor, self).set_field_attributes(editable, background_color, **kwargs)
+    #    tooltip = unicode(kwargs['tooltip']) if 'tooltip' in kwargs and kwargs['tooltip'] else None
+    #    if tooltip is not None:
+    #        self.setToolTip(tooltip)
+    #    else:
+    #        self.setToolTip('')
 
     def set_enabled(self, editable=True):
         value = self.text()
         self.setEnabled(editable)
         self.setText(value)
-

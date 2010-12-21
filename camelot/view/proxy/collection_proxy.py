@@ -67,10 +67,10 @@ class DelayedProxy( object ):
 
     @gui_function
     def __call__( self ):
-        return CollectionProxy( self._admin, 
-                                self._collection_getter, 
+        return CollectionProxy( self._admin,
+                                self._collection_getter,
                                 self._columns_getter )
-        
+
     def __unicode__(self):
         return ','.join(list(unicode(o) for o,_i in zip(self._collection_getter(),
                                                         range(3))))
@@ -124,7 +124,7 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
             unicode_data = field_data
             for key, value in choices:
                 if key == field_data:
-                    unicode_data = value
+                    unicode_data = value
         elif isinstance( field_data, list ):
             unicode_data = u'.'.join( [unicode( e ) for e in field_data] )
         elif isinstance( field_data, datetime.datetime ):
