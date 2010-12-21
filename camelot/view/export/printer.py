@@ -25,6 +25,8 @@ import logging
 logger = logging.getLogger( 'camelot.view.export.printer' )
 
 from PyQt4 import QtCore
+from PyQt4.QtCore import QCoreApplication
+
 from PyQt4.QtGui import QPrinter
 from PyQt4.QtGui import QTextDocument
 from PyQt4.QtGui import QPrintPreviewDialog
@@ -50,4 +52,7 @@ def open_html_in_print_preview_from_gui_thread(html,
     dialog.paintRequested.connect(render)
     # show maximized seems to trigger a bug in qt which scrolls the page down
     #dialog.showMaximized()
+    desktop = QCoreApplication.instance().desktop()
+    # use the size of the desktop instead to set the dialog size
+    dialog.resize(desktop.width() * 0.75, desktop.height() * 0.75)
     dialog.exec_()
