@@ -166,6 +166,10 @@ class One2ManyEditor(CustomEditor, WideEditor):
         return
 # Activating this code can cause segfaults
 # see ticket 765 in web issues
+# 
+# The segfault seems no longer there after disabling the
+# editor before setting a new model, but the code below
+# seems to have no effect.
         index = self.model.index( _row, 0 )
         self.table.scrollToBottom()
         self.table.setCurrentIndex( index )
