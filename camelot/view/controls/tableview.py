@@ -205,6 +205,16 @@ and above the text.
         self.model().sort( logical_index, order )
 
     def setModel( self, model ):
+        #
+        # An editor might be open that is no longer available for the new
+        # model.  Not closing this editor, results in assertion failures
+        # in qt, resulting in segfaults in the debug build.
+        #
+        current_index = self.currentIndex()
+        self.closePersistentEditor( current_index )
+        #
+        # Editor, closed. it should be safe to change the model
+        #
         QtGui.QTableView.setModel( self, model )
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
         if frozen_table_view:
