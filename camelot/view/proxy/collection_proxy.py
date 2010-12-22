@@ -33,6 +33,8 @@ import logging
 logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 
 import datetime
+import itertools
+
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
 import sip
@@ -875,34 +877,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.collection_getter().append( o )
         self._rows += 1
 
-    @model_function
-    def removeEntityInstance( self, o, delete = True ):
-        """Remove the entity instance o from this collection
-        @param o: the object to be removed from this collection
-        @param delete: delete the object after removing it from the collection
-        """
-        self.logger.debug( 'remove entity instance')
-        #
-        # it might be impossible to determine the depending objects once
-        # the object has been removed from the collection
-        #
-        depending_objects = list( self.admin.get_depending_objects( o ) )
-        self.remove( o )
-        # remove the entity from the cache
-        self.display_cache.delete_by_entity( o )
-        self.attributes_cache.delete_by_entity( o )
-        self.edit_cache.delete_by_entity( o )
-        if delete:
-            self.rsh.sendEntityDelete( self, o )
-            self.admin.delete( o )
-        else:
-            # even if the object is not deleted, it needs to be flushed to make
-            # sure it's out of the collection
-            self.admin.flush( o )
-        for depending_obj in depending_objects:
-            self.rsh.sendEntityUpdate( self, depending_obj )
-        post( self.getRowCount, self._refresh_content )
-
     @gui_function
     def remove_rows( self, rows, delete = True ):
         """Remove the entity associated with this row from this collection
@@ -914,17 +888,34 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         def create_delete_function( rows ):
 
             def delete_function():
+                """Remove all rows from the underlying collection
+                :return: the number of rows left in the collection"""
                 objects_to_remove = [self._get_object( row ) for row in rows]
+                #
+                # it might be impossible to determine the depending objects once
+                # the object has been removed from the collection
+                #
+                depending_objects = list( itertools.chain.from_iterable( self.admin.get_depending_objects( o ) for o in objects_to_remove ) )
                 for obj in objects_to_remove:
-                    self.removeEntityInstance( obj, delete )
-                else:
-                    # The object is not in this collection, maybe
-                    # it was allready deleted, issue a refresh anyway
-                    post( self.getRowCount, self._refresh_content )
+                    self.remove( obj )
+                    # remove the entity from the cache
+                    self.display_cache.delete_by_entity( obj )
+                    self.attributes_cache.delete_by_entity( obj )
+                    self.edit_cache.delete_by_entity( obj )
+                    if delete:
+                        self.rsh.sendEntityDelete( self, obj )
+                        self.admin.delete( obj )
+                    else:
+                        # even if the object is not deleted, it needs to be flushed to make
+                        # sure it's out of the collection
+                        self.admin.flush( obj )
+                for depending_obj in depending_objects:
+                    self.rsh.sendEntityUpdate( self, depending_obj )
+                return self.getRowCount()
 
             return delete_function
 
-        post( create_delete_function( rows ) )
+        post( create_delete_function( rows ), self._refresh_content )
         return True
 
     @gui_function
