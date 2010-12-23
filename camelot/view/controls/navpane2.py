@@ -62,6 +62,7 @@ class NavigationPane(QDockWidget):
         self._toolbox = self.get_toolbox()
         self._toolbox.setMouseTracking(True)
         self._shared_tree_widget = None
+        self._tree_widgets = []
         # hack for removing the dock title bar
         self.setTitleBarWidget(self._title_widget)
         self.setWidget(self._toolbox)
@@ -124,7 +125,7 @@ class NavigationPane(QDockWidget):
             self._toolbox.removeItem(count-1)
             item.deleteLater()
             count -= 1
-            
+
         self._shared_tree_widget = self.get_tree_widget()
         self._shared_tree_widget.itemClicked.connect(self.open_in_current_view)
         self._toolbox_widgets = []
@@ -143,8 +144,6 @@ class NavigationPane(QDockWidget):
         self.change_current(0)
         # WARNING: hardcoded width
         #self._toolbox.setMinimumWidth(220)
-        
-
 
     @QtCore.pyqtSlot(int)
     def change_current(self, index):
@@ -185,7 +184,7 @@ class NavigationPane(QDockWidget):
             self._shared_tree_widget.contextmenu.popup(
                 self._shared_tree_widget.mapToGlobal(point)
             )
-      
+
     @QtCore.pyqtSlot(QtGui.QTreeWidgetItem, int)
     def open_in_current_view(self, item, _column):
         """pops a model window in parent's workspace"""
@@ -196,7 +195,7 @@ class NavigationPane(QDockWidget):
         new_view = section_item.get_action().run(self.workspace)
         if new_view:
             self.workspace.set_view(new_view)
-                  
+
     @QtCore.pyqtSlot()
     def open_in_new_view(self):
         """pops a model window in parent's workspace"""
