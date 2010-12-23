@@ -42,7 +42,7 @@ class ModelItem(QtGui.QTreeWidgetItem):
 
     def __init__(self, parent, columns_names):
         logger.debug('creating new modelitem')
-        QtGui.QTreeWidgetItem.__init__(self, parent, columns_names)
+        super(ModelItem, self).__init__(parent, columns_names)
         self.column = 0
         self.set_icon()
 
@@ -67,10 +67,13 @@ class ModelTree(QtGui.QTreeWidget):
         super(ModelTree, self).__init__(parent)
         # we don't select entire rows
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectItems)
+        
         # we track mouse movement when no button is pressed
         self.setMouseTracking(True)
         self.header_labels = header_labels
+        
         self.clear_model_items()
+        self.clear_section_items()
         self.fix_header_labels()
 
     def fix_header_labels(self):
@@ -79,6 +82,9 @@ class ModelTree(QtGui.QTreeWidget):
         else:
             self.setHeaderLabels(self.header_labels)
 
+    def clear_section_items(self):
+        self.section_items = []
+        
     def clear_model_items(self):
         self.modelitems = []
 
