@@ -53,7 +53,10 @@ class FloatDelegate( CustomDelegate ):
         CustomDelegate.__init__(self,
                                 parent=parent,
                                 precision=precision,
+                                minimum=minimum, maximum=maximum,
                                 **kwargs )                   
+        self.minimum = minimum
+        self.maximum = maximum
         self.precision = precision
         self.unicode_format = unicode_format
 
