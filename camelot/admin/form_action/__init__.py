@@ -128,7 +128,7 @@ class FormActionProgressDialog(ProgressDialog):
         self.close()
         open_html_in_print_preview_from_gui_thread(
             html, self.html_document,
-        #    self.page_size, self.page_orientation
+            self.page_size, self.page_orientation
         )
 
 class FormActionFromModelFunction( FormAction ):
