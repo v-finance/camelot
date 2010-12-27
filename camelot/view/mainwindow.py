@@ -36,7 +36,8 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.action import ActionFactory
-from camelot.view.controls.navpane2 import NavigationPane
+#from camelot.view.controls.navpane2 import NavigationPane
+from camelot.view.controls.navpane3 import NavigationPane
 from camelot.view.controls.printer import Printer
 from camelot.view.model_thread import post
 
@@ -53,7 +54,7 @@ def addActions(target, actions):
             target.addSeparator()
         else:
             target.addAction(action)
-            
+
 class MainWindow(QtGui.QMainWindow):
     """Main window GUI"""
 
@@ -136,7 +137,7 @@ class MainWindow(QtGui.QMainWindow):
     def unmaximize_view(self):
         self.navpane.show()
         self.menuBar().show()
-        
+
     @QtCore.pyqtSlot()
     def change_view_mode(self):
         if self.menuBar().isHidden():
@@ -145,7 +146,7 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.navpane.hide()
             self.menuBar().hide()
-        
+
     def readSettings(self):
         settings = QtCore.QSettings()
         self.restoreGeometry(settings.value('geometry').toByteArray())
@@ -234,7 +235,7 @@ class MainWindow(QtGui.QMainWindow):
         from elixir import session
         from camelot.core.orm import refresh_session
         refresh_session( session )
-        
+
     def help(self):
         #
         # Import WebKit as late as possible, since it's the largest
@@ -467,7 +468,6 @@ class MainWindow(QtGui.QMainWindow):
             addActions(self.tool_bar, self.app_actions)
 
     # Navigation Pane
-
     def createNavigationPane(self):
         self.navpane = NavigationPane(
             self.app_admin,

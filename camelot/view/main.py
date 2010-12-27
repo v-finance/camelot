@@ -47,7 +47,7 @@ class Application(QtCore.QObject):
         in case of database connection failure"""
         from camelot.view.controls.exception import model_thread_exception_message_box
         model_thread_exception_message_box( (exc_name, exc_trace) )
-    
+
     def show_splashscreen(self):
         """:return: the splash window"""
         from PyQt4 import QtGui
@@ -79,11 +79,11 @@ class Application(QtCore.QObject):
     def pre_initialization(self):
         """Method that is called before the model thread is started, while the app is still
         running single threaded.
-        
+
         The default implementation does nothing and returns None. Overwrite
         this method for custom behaviour.
-        
-        An example use of this function would be to 
+
+        An example use of this function would be to
         present the user with a dialog to select the database to use, and to store the
         result in some global variable that is later used in the settings.ENGINE function.
         """
