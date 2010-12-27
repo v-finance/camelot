@@ -27,8 +27,12 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.navpane3')
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtGui
+from PyQt4 import QtCore
+
 from PyQt4.QtCore import Qt
+from PyQt4.QtCore import QCoreApplication
+
 from PyQt4.QtGui import QMenu
 from PyQt4.QtGui import QFrame
 from PyQt4.QtGui import QLabel
@@ -57,17 +61,18 @@ class PaneButton(QWidget):
 
         layout = QHBoxLayout()
         layout.setSpacing(0)
-        layout.setContentsMargins(3,0,0,0)
+        layout.setContentsMargins(0,0,0,0)
 
         self.icon = QLabel()
         self.icon.setSizePolicy(QSizePolicy(
-            QSizePolicy.Fixed, QSizePolicy.Fixed))
+            QSizePolicy.Fixed, QSizePolicy.Preferred))
         self.icon.setPixmap(icon_pixmap)
+        self.icon.setObjectName('PaneButtonIcon')
         layout.addWidget(self.icon)
 
         self.label = UserTranslatableLabel(text, parent)
-        self.label.setIndent(6)
         self.label.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+        self.label.setObjectName('PaneButtonLabel')
         layout.addWidget(self.label)
 
         self.setLayout(layout)
@@ -76,7 +81,7 @@ class PaneButton(QWidget):
         self.setMinimumWidth(self.width)
         self.resize(self.width, self.height)
 
-        self.related_model_tree = None
+        self.setObjectName('PaneButton')
 
     def toggle_bold(self):
         font = self.label.font()
@@ -88,6 +93,18 @@ class PaneButton(QWidget):
 
     def mousePressEvent(self, event):
         self.pressed.emit(self.layout_index())
+
+    def reapply_application_stylesheet(self):
+        app = QCoreApplication.instance()
+        app.setStyleSheet(app.styleSheet())
+
+    def enterEvent(self, event):
+        self.setObjectName('PaneButtonHovered')
+        self.reapply_application_stylesheet()
+
+    def leaveEvent(self, event):
+        self.setObjectName('PaneButton')
+        self.reapply_application_stylesheet()
 
 class NavigationPane(QDockWidget):
     """NavigationPane made of PaneButtons and ModelTrees"""
@@ -121,7 +138,7 @@ class NavigationPane(QDockWidget):
     def get_dock_widget(self):
         layout = QVBoxLayout()
         layout.setContentsMargins(0,0,0,0)
-        layout.setSpacing(1)
+        layout.setSpacing(0)
 
         dw = QWidget()
         dw.setLayout(layout)
@@ -129,9 +146,12 @@ class NavigationPane(QDockWidget):
 
     def get_tree_widget(self):
         tw = ModelTree(parent=self)
+        tw.setObjectName('PaneTree')
+
         # i hate the sunken frame style
         tw.setFrameShape(QFrame.NoFrame)
         tw.setFrameShadow(QFrame.Plain)
+
         tw.contextmenu = QMenu(self)
         act = ActionFactory.new_tab(self, self.open_in_new_view)
         tw.contextmenu.addAction(act)
