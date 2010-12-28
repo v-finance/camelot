@@ -94,17 +94,19 @@ class PaneButton(QWidget):
     def mousePressEvent(self, event):
         self.pressed.emit(self.layout_index())
 
-    def reapply_application_stylesheet(self):
-        app = QCoreApplication.instance()
-        app.setStyleSheet(app.styleSheet())
+    # disabled: causes too much headache
+    #
+    #def reapply_application_stylesheet(self):
+    #    app = QCoreApplication.instance()
+    #    app.setStyleSheet(app.styleSheet())
 
-    def enterEvent(self, event):
-        self.setObjectName('PaneButtonHovered')
-        self.reapply_application_stylesheet()
+    #def enterEvent(self, event):
+    #    self.setObjectName('PaneButtonHovered')
+    #    self.reapply_application_stylesheet()
 
-    def leaveEvent(self, event):
-        self.setObjectName('PaneButton')
-        self.reapply_application_stylesheet()
+    #def leaveEvent(self, event):
+    #    self.setObjectName('PaneButton')
+    #    self.reapply_application_stylesheet()
 
 class NavigationPane(QDockWidget):
     """NavigationPane made of PaneButtons and ModelTrees"""

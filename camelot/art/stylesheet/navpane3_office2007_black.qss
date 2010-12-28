@@ -1,0 +1,37 @@
+/* ms-office 2007 blue stylesheet for navigation pane (v3) */
+
+QTreeWidget#PaneTree {
+    background-color: rgb(255, 255, 255);
+    border-right: 1px solid rgb(76, 83, 92);
+    border-bottom: 1px solid rgb(76, 83, 92);
+}
+
+QWidget#PaneButton QLabel {
+    padding-left: 3px;
+    color: rgb(76, 83, 92);
+    background-color: qlineargradient(spread:pad, x1:0.5, y1:0, x2:0.5, y2:1, stop:0 rgba(248, 248, 249, 255), stop:0.4 rgba(223, 226, 228, 255), stop:0.401 rgba(199, 203, 209, 255), stop:1 rgba(219, 222, 226, 255));
+}
+
+QWidget#PaneButtonHovered QLabel {
+    padding-left: 3px;
+    color: rgb(76, 83, 92);
+    background-color: qlineargradient(spread:pad, x1:0.5, y1:0, x2:0.5, y2:1, stop:0 rgba(255, 254, 228, 255), stop:0.4 rgba(255, 232, 167, 255), stop:0.401 rgba(255, 215, 103, 255), stop:1 rgba(255, 230, 158, 255));
+}
+
+QWidget#PaneButton QLabel#PaneButtonIcon,
+QWidget#PaneButtonHovered QLabel#PaneButtonIcon {
+    /* this is so top borders are merged */
+    margin-top: -1px;
+    border-top: 1px solid rgb(76, 83, 92);
+    border-left: 1px solid rgb(76, 83, 92);
+    border-bottom: 1px solid rgb(76, 83, 92);
+}
+
+QWidget#PaneButton QLabel#PaneButtonLabel,
+QWidget#PaneButtonHovered QLabel#PaneButtonLabel {
+    /* this is so top borders are merged */
+    margin-top: -1px;
+    border-top: 1px solid rgb(76, 83, 92);
+    border-right: 1px solid rgb(76, 83, 92);
+    border-bottom: 1px solid rgb(76, 83, 92);
+}
