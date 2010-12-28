@@ -26,7 +26,8 @@
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt
+
 #from camelot.view.art import Pixmap
 
 import logging

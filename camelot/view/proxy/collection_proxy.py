@@ -368,6 +368,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     def handle_entity_delete( self, sender, entity ):
         """Handles the entity signal, indicating that the model is out of 
         date"""
+        print 'handle entity delete', entity
         self.logger.debug( 'received entity delete signal' )
         if sender != self:
             self.refresh()
@@ -877,6 +878,52 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self.collection_getter().append( o )
         self._rows += 1
 
+    @model_function
+    def remove_objects( self, objects_to_remove, delete = True ):
+        """
+        :param objects_to_remove: a list of objects that need to be removed
+        from the collection
+        :param delete: True if the objects need to be deleted
+        """
+        #
+        # it might be impossible to determine the depending objects once
+        # the object has been removed from the collection
+        #
+        depending_objects = set( itertools.chain.from_iterable( self.admin.get_depending_objects( o ) for o in objects_to_remove ) )
+        for obj in objects_to_remove:
+            #
+            # We should not update depending objects that have
+            # been deleted themselves
+            #
+            if delete:
+                try:
+                    depending_objects.remove( obj )
+                except KeyError:
+                    pass
+            # 
+            # remove the ojbect from the collection
+            #
+            self.remove( obj )
+            #
+            # remove the entity from the cache
+            #
+            self.display_cache.delete_by_entity( obj )
+            self.attributes_cache.delete_by_entity( obj )
+            self.edit_cache.delete_by_entity( obj )
+            #
+            # if needed, delete the objects
+            #
+            if delete:
+                self.rsh.sendEntityDelete( self, obj )
+                self.admin.delete( obj )
+            else:
+                # even if the object is not deleted, it needs to be flushed to make
+                # sure it's out of the collection
+                self.admin.flush( obj )
+        for depending_obj in depending_objects:
+            self.rsh.sendEntityUpdate( self, depending_obj )
+        post( self.getRowCount, self._refresh_content )
+    
     @gui_function
     def remove_rows( self, rows, delete = True ):
         """Remove the entity associated with this row from this collection
@@ -891,31 +938,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 """Remove all rows from the underlying collection
                 :return: the number of rows left in the collection"""
                 objects_to_remove = [self._get_object( row ) for row in rows]
-                #
-                # it might be impossible to determine the depending objects once
-                # the object has been removed from the collection
-                #
-                depending_objects = list( itertools.chain.from_iterable( self.admin.get_depending_objects( o ) for o in objects_to_remove ) )
-                for obj in objects_to_remove:
-                    self.remove( obj )
-                    # remove the entity from the cache
-                    self.display_cache.delete_by_entity( obj )
-                    self.attributes_cache.delete_by_entity( obj )
-                    self.edit_cache.delete_by_entity( obj )
-                    if delete:
-                        self.rsh.sendEntityDelete( self, obj )
-                        self.admin.delete( obj )
-                    else:
-                        # even if the object is not deleted, it needs to be flushed to make
-                        # sure it's out of the collection
-                        self.admin.flush( obj )
-                for depending_obj in depending_objects:
-                    self.rsh.sendEntityUpdate( self, depending_obj )
-                return self.getRowCount()
+                self.remove_objects( objects_to_remove, delete )
 
             return delete_function
 
-        post( create_delete_function( rows ), self._refresh_content )
+        post( create_delete_function(rows) )
         return True
 
     @gui_function

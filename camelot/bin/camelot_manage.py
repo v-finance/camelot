@@ -164,11 +164,16 @@ def main():
         import settings
         from migrate.versioning.repository import Repository
         from migrate.versioning.schema import ControlledSchema
+        from migrate.versioning.exceptions import DatabaseNotControlledError
         from sqlalchemy.exceptions import NoSuchTableError
         migrate_engine = settings.ENGINE()
         repository = Repository(settings.REPOSITORY)
         schema = None
-        if args[0]=='version_control':
+        try:
+            schema = ControlledSchema(migrate_engine, repository)
+        except (NoSuchTableError, DatabaseNotControlledError):
+            print 'database not yet under version control, putting it under version_control first.'
+        if args[0]=='version_control' or schema is None:
             migrate_connection = migrate_engine.connect()
             transaction = migrate_connection.begin()
             try:
@@ -180,10 +185,6 @@ def main():
             finally:
                 migrate_connection.close()
             print 'database was put under version control'
-        try:
-            schema = ControlledSchema(migrate_engine, repository)
-        except NoSuchTableError:
-            print 'database not yet under version control, use the version_control command first.'
         if schema:
             if args[0]=='db_version':
                 print schema.version

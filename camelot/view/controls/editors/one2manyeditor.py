@@ -192,11 +192,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
             post( create, self.activate_editor )
 
         else:
-            prependentity = lambda o: self.model.insertEntityInstance( 0, o )
-            removeentity = lambda o: self.model.removeEntityInstance( o )
             form = self.admin.create_new_view( parent = None,
-                                               oncreate = prependentity,
-                                               onexpunge = removeentity )
+                                               oncreate = lambda o: self.model.insertEntityInstance( 0, o ),
+                                               onexpunge = lambda o: self.model.remove_objects( o ) )
             show_top_level( form, self )
 
     def copy_selected_rows( self ):

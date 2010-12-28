@@ -540,7 +540,7 @@ class TableView( AbstractView  ):
         from camelot.view.workspace import show_top_level
         form = self.admin.create_new_view( parent = None,
                                            oncreate = lambda o:self._table_model.insertEntityInstance( 0, o ),
-                                           onexpunge = lambda o:self._table_model.removeEntityInstance( o ) )
+                                           onexpunge = self._table_model.remove_objects )
         show_top_level( form, self )
 
     def closeEvent( self, event ):

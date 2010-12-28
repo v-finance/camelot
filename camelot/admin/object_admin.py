@@ -725,8 +725,7 @@ The QWidget class to be used when a table view is needed
 
                         def onexpunge_on_all():
                             if onexpunge:
-                                for o in new_object:
-                                    onexpunge(o)
+                                onexpunge( new_object )
 
                         post(onexpunge_on_all)
                         self.validate_before_close = False
