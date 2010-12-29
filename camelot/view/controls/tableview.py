@@ -46,14 +46,14 @@ from search import SimpleSearchControl
 class FrozenTableWidget( QtGui.QTableView ):
     """A table widget to be used as the frozen table widget inside a table
     widget."""
-    
+
     def __init__(self, parent, columns_frozen):
         super(FrozenTableWidget, self).__init__(parent)
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
-        self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | 
+        self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked |
                               QtGui.QAbstractItemView.DoubleClicked )
         self._columns_frozen = columns_frozen
-        
+
     @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)
     def currentChanged(self, current, previous):
         """When the current index has changed, prevent it to jump to
@@ -63,7 +63,7 @@ class FrozenTableWidget( QtGui.QTableView ):
         if previous.column() >= self._columns_frozen:
             previous = self.model().index( previous.row(), -1 )
         super(FrozenTableWidget, self).currentChanged(current, previous)
-        
+
 class TableWidget( QtGui.QTableView ):
     """A widget displaying a table, to be used within a TableView
 
@@ -76,7 +76,7 @@ and above the text.
 """
 
     margin = 5
-    
+
     def __init__( self, parent = None, columns_frozen = 0, lines_per_row = 1 ):
         """
 :param columns_frozen: the number of columns on the left that don't scroll
@@ -86,7 +86,7 @@ and above the text.
         logger.debug( 'create TableWidget' )
         self._columns_frozen = columns_frozen
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
-        self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked | 
+        self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked |
                               QtGui.QAbstractItemView.DoubleClicked |
                               QtGui.QAbstractItemView.CurrentChanged )
         self.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -98,7 +98,7 @@ and above the text.
         self.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
         self.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
         self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
-        self.horizontalHeader().sectionClicked.connect( 
+        self.horizontalHeader().sectionClicked.connect(
             self.horizontal_section_clicked )
         if columns_frozen:
             frozen_table_view = FrozenTableWidget(self, columns_frozen)
@@ -106,7 +106,7 @@ and above the text.
             frozen_table_view.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
             frozen_table_view.verticalHeader().hide()
             frozen_table_view.horizontalHeader().setResizeMode(QtGui.QHeaderView.Fixed)
-            frozen_table_view.horizontalHeader().sectionClicked.connect( 
+            frozen_table_view.horizontalHeader().sectionClicked.connect(
                 self.horizontal_section_clicked )
             self.horizontalHeader().sectionResized.connect( self._update_section_width )
             self.verticalHeader().sectionResized.connect( self._update_section_height )
@@ -125,7 +125,7 @@ and above the text.
         if logical_index<self._columns_frozen and frozen_table_view:
             frozen_table_view.setColumnWidth( logical_index, new_size)
             self._update_frozen_table()
-    
+
     @QtCore.pyqtSlot(int, int, int)
     def _update_section_height(self, logical_index, _int, new_size):
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
@@ -137,11 +137,11 @@ and above the text.
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
         if frozen_table_view:
             frozen_table_view.setItemDelegate(item_delegate)
-            
+
     def resizeEvent(self, event):
         super(TableWidget, self).resizeEvent(event)
         self._update_frozen_table()
-        
+
     def moveCursor(self, cursorAction, modifiers):
         current = super(TableWidget, self).moveCursor(cursorAction, modifiers)
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
@@ -149,7 +149,7 @@ and above the text.
             frozen_width = 0
             last_frozen =  min(self._columns_frozen, self.model().columnCount())
             for column in range(0, last_frozen):
-                frozen_width += self.columnWidth(column)            
+                frozen_width += self.columnWidth(column)
             if cursorAction == QtGui.QAbstractItemView.MoveLeft and current.column() >= last_frozen and \
                self.visualRect(current).topLeft().x() < frozen_width:
                 new_value = self.horizontalScrollBar().value() + self.visualRect(current).topLeft().x() - frozen_width
@@ -159,7 +159,7 @@ and above the text.
     def scrollTo(self, index, hint):
         if(index.column()>=self._columns_frozen):
             super(TableWidget, self).scrollTo(index, hint)
-        
+
     def edit(self, index, trigger=None, event=None):
         #
         # columns in the frozen part should never be edited, because this might result
@@ -171,7 +171,7 @@ and above the text.
                 return super( TableWidget, self ).edit( index )
             return super( TableWidget, self ).edit( index, trigger, event )
         return False
-    
+
     @QtCore.pyqtSlot()
     def _update_frozen_table(self):
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
@@ -181,7 +181,7 @@ and above the text.
             frozen_width = 0
             for column in range(0, last_frozen):
                 frozen_width += self.columnWidth( column )
-                frozen_table_view.setColumnWidth( column, 
+                frozen_table_view.setColumnWidth( column,
                                                   self.columnWidth(column) )
             for column in range(last_frozen, self.model().columnCount()):
                 frozen_table_view.setColumnHidden(column, True)
@@ -198,7 +198,7 @@ and above the text.
         if not header.isSortIndicatorShown():
             header.setSortIndicatorShown( True )
         elif header.sortIndicatorSection()==logical_index:
-            # apparently, the sort order on the header is allready switched 
+            # apparently, the sort order on the header is allready switched
             # when the section was clicked, so there is no need to reverse it
             order = header.sortIndicatorOrder()
         header.setSortIndicator( logical_index, order )
@@ -227,13 +227,13 @@ and above the text.
     @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)
     def activated( self, selectedIndex, previousSelectedIndex ):
         option = QtGui.QStyleOptionViewItem()
-        new_size = self.itemDelegate( selectedIndex ).sizeHint( option, 
+        new_size = self.itemDelegate( selectedIndex ).sizeHint( option,
                                                                 selectedIndex )
         row = selectedIndex.row()
         if previousSelectedIndex.row() >= 0:
             previous_row = previousSelectedIndex.row()
             self.setRowHeight( previous_row, self._minimal_row_height )
-        self.setRowHeight( row, max( new_size.height(), 
+        self.setRowHeight( row, max( new_size.height(),
                                      self._minimal_row_height ) )
 
 class RowsWidget( QtGui.QLabel ):
@@ -255,7 +255,7 @@ class HeaderWidget( QtGui.QWidget ):
 
     search_widget = SimpleSearchControl
     rows_widget = RowsWidget
-    
+
     filters_changed_signal = QtCore.pyqtSignal()
 
     _title_font = QtGui.QApplication.font()
@@ -267,9 +267,9 @@ class HeaderWidget( QtGui.QWidget ):
         layout = QtGui.QVBoxLayout()
         widget_layout = QtGui.QHBoxLayout()
         search = self.search_widget( self )
-        search.expand_search_options_signal.connect( 
+        search.expand_search_options_signal.connect(
             self.expand_search_options )
-        title = UserTranslatableLabel( admin.get_verbose_name_plural(), 
+        title = UserTranslatableLabel( admin.get_verbose_name_plural(),
                                        self )
         title.setFont( self._title_font )
         widget_layout.addWidget( title )
@@ -298,8 +298,8 @@ class HeaderWidget( QtGui.QWidget ):
         layout = QtGui.QHBoxLayout()
         for field, attributes in columns:
             if 'operators' in attributes and attributes['operators']:
-                widget = FilterOperator( self._admin.entity, 
-                                         field, attributes, 
+                widget = FilterOperator( self._admin.entity,
+                                         field, attributes,
                                          self )
                 widget.filter_changed_signal.connect( self._filter_changed )
                 layout.addWidget( widget )
@@ -380,7 +380,7 @@ class TableView( AbstractView  ):
     # Format to use as the window title
     #
     title_format = '%(verbose_name_plural)s'
-    
+
     row_selected_signal = QtCore.pyqtSignal(int)
 
     def __init__( self, admin, search_text = None, parent = None ):
@@ -491,8 +491,8 @@ class TableView( AbstractView  ):
             self.table.deleteLater()
             self._table_model.deleteLater()
         splitter = self.findChild( QtGui.QWidget, 'splitter' )
-        self.table = self.TableWidget( splitter, 
-                                       self.admin.list_columns_frozen, 
+        self.table = self.TableWidget( splitter,
+                                       self.admin.list_columns_frozen,
                                        lines_per_row = self.admin.lines_per_row )
         self._table_model = self.create_table_model( admin )
         self.table.setModel( self._table_model )
@@ -615,7 +615,7 @@ class TableView( AbstractView  ):
     def refresh(self):
         """Refresh the whole view"""
         post( self.get_admin, self.set_admin )
-        
+
     @QtCore.pyqtSlot()
     def rebuild_query( self ):
         """resets the table model query"""
@@ -659,7 +659,7 @@ class TableView( AbstractView  ):
         for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
             selection.append( self._table_model._get_object(row) )
         return selection
-    
+
     @model_function
     def get_collection(self):
         """:return: a list with all the objects corresponding to the rows in the table
@@ -695,7 +695,7 @@ class TableView( AbstractView  ):
         if actions:
             #
             # Attention, the ActionBox should only contain a reference to the
-            # table, and not to the table model, since this will cause the 
+            # table, and not to the table model, since this will cause the
             # garbage collector to collect them both in random order, causing
             # segfaults (see the test_qt_bindings
             #

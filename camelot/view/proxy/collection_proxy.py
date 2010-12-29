@@ -206,7 +206,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self._horizontal_header_height = QtGui.QFontMetrics( self._header_font_required ).height() + 10
         vertical_header_font_height = QtGui.QFontMetrics( self._header_font ).height()
         self._vertical_header_height = vertical_header_font_height * self.admin.lines_per_row + 10
-        self.iconSize = QtCore.QSize( vertical_header_font_height, 
+        self.iconSize = QtCore.QSize( vertical_header_font_height,
                                       vertical_header_font_height )
         if self.header_icon:
             self.form_icon = QtCore.QVariant( self.header_icon.getQIcon().pixmap( self.iconSize ) )
@@ -336,7 +336,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_update( self, sender, entity ):
-        """Handles the entity signal, indicating that the model is out of 
+        """Handles the entity signal, indicating that the model is out of
         date"""
         self.logger.debug( '%s %s received entity update signal' % \
                      ( self.__class__.__name__, self.admin.get_verbose_name() ) )
@@ -366,7 +366,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_delete( self, sender, entity ):
-        """Handles the entity signal, indicating that the model is out of 
+        """Handles the entity signal, indicating that the model is out of
         date"""
         print 'handle entity delete', entity
         self.logger.debug( 'received entity delete signal' )
@@ -375,7 +375,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_create( self, sender, entity ):
-        """Handles the entity signal, indicating that the model is out of 
+        """Handles the entity signal, indicating that the model is out of
         date"""
         self.logger.debug( 'received entity create signal' )
         if sender != self:
@@ -496,7 +496,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         else:
             if role == Qt.SizeHintRole:
                 if self.header_icon:
-                    return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 10, 
+                    return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 10,
                                                           self._vertical_header_height ) )
                 else:
                     # if there is no icon, the line numbers will be displayed, so create some space for those
@@ -593,7 +593,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         locker.unlock()
         #
         # Handle the requests
-        # 
+        #
         for flushed, row, column, value in update_requests:
             attribute, field_attributes = self.getColumns()[column]
 
@@ -620,7 +620,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             #
             # When the value is a related object, the related object might have changed
             #
-            changed = ( new_value != old_value ) or ( 
+            changed = ( new_value != old_value ) or (
               field_attributes.get('embedded', False) and \
               field_attributes.get('target', False))
             #
@@ -696,9 +696,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                     self.unflushed_rows.remove( row )
                 except KeyError:
                     pass
-                locker.unlock()           
-        
-        
+                locker.unlock()
+
+
     def setData( self, index, value, role = Qt.EditRole ):
         """Value should be a function taking no arguments that returns the data to
         be set
@@ -900,7 +900,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                     depending_objects.remove( obj )
                 except KeyError:
                     pass
-            # 
+            #
             # remove the ojbect from the collection
             #
             self.remove( obj )
@@ -923,7 +923,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         for depending_obj in depending_objects:
             self.rsh.sendEntityUpdate( self, depending_obj )
         post( self.getRowCount, self._refresh_content )
-    
+
     @gui_function
     def remove_rows( self, rows, delete = True ):
         """Remove the entity associated with this row from this collection
