@@ -376,6 +376,10 @@ class FormView(AbstractView):
         collected before all requests have been handled.
         
         Not doing so seems to cause segmentation faults.
+        
+        This can be reproduced by opening a form from a onetomany editor,
+        invalidate it, and then press discard.  Doing so multiple times
+        might segfault the app.
         """
         # hide the widget, so it seems to be closed from a user
         # point of view
