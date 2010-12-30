@@ -1017,6 +1017,3 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     def get_admin( self ):
         """Get the admin object associated with this model"""
         return self.admin
-
-
-

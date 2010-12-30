@@ -367,6 +367,30 @@ class FormView(AbstractView):
         self._form.submit()
         self._form.to_previous()
 
+    #
+    # What happens here should be investigated, and maybe generalized
+    #
+    def delayed_close(self):
+        """Close the form after all pending model thread requests
+        have been handled, to make sure the associated model is not garbage 
+        collected before all requests have been handled.
+        
+        Not doing so seems to cause segmentation faults.
+        """
+        # hide the widget, so it seems to be closed from a user
+        # point of view
+        self.hide()
+        post( self._do_nothing, self._close )
+        
+    def _do_nothing(self):
+        pass
+    
+    def _close(self, _arg):
+        self.close()
+    #
+    # End of investigation
+    #    
+    
     def showMessage(self, valid):
         if not valid:
             reply = self.validator.validityDialog(
@@ -378,10 +402,10 @@ class FormView(AbstractView):
                 self._form.clear_mapping()
                 self.model.revertRow(self._form.get_index())
                 self.validate_before_close = False
-                self.close()
+                self.delayed_close()
         else:
             self.validate_before_close = False
-            self.close()
+            self.delayed_close()
 
     def validateClose(self):
         logger.debug('validate before close : %s' % self.validate_before_close)
