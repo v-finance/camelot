@@ -147,6 +147,9 @@ def setup_model():
      
 def main():
     import camelot
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    #logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
     parser = CommandOptionParser(usage=usage,
                                  description=description, 
                                  version=camelot.__version__)

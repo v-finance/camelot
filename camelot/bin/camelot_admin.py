@@ -77,7 +77,8 @@ For the management of deployed Camelot applications, see camelot_manage
 """
         return OptionParser.format_help(self) + ''.join(command_help)
     
-def license_update(project, license_file):
+def license_update(project, license_file):
+
     import os
     
     new_license = open(license_file).read()

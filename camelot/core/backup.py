@@ -126,6 +126,8 @@ class BackupMechanism(object):
         from sqlalchemy import create_engine
         from sqlalchemy import MetaData
         from sqlalchemy.pool import NullPool
+        from sqlalchemy.dialects import mysql as mysql_dialect
+        import sqlalchemy.types
         
         yield (0, 0, _('Analyzing database structure'))
         from_engine = settings.ENGINE()
@@ -153,6 +155,16 @@ class BackupMechanism(object):
         for from_table in from_meta_data.sorted_tables:
             if self.backup_table_filter(from_table):
                 to_table = from_table.tometadata(to_meta_data)
+                #
+                # Dirty hack : loop over all columns to detect mysql TINYINT
+                # columns and convert them to BOOL
+                #
+                for col in to_table.columns:
+                    if isinstance(col.type, mysql_dialect.TINYINT):
+                        col.type = sqlalchemy.types.Boolean()
+                #
+                # End of dirty hack
+                #
                 to_table.create(to_engine)
                 from_and_to_tables.append((from_table, to_table))
         
