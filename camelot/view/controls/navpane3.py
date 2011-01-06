@@ -27,25 +27,16 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.navpane3')
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from PyQt4 import QtGui, QtCore
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtCore import QCoreApplication
 
-from PyQt4.QtGui import QMenu
-from PyQt4.QtGui import QFrame
-from PyQt4.QtGui import QLabel
-from PyQt4.QtGui import QWidget
-from PyQt4.QtGui import QDockWidget
-from PyQt4.QtGui import QVBoxLayout
-from PyQt4.QtGui import QHBoxLayout
-from PyQt4.QtGui import QSizePolicy
+from PyQt4.QtGui import QMenu, QFrame, QLabel, QWidget, \
+    QDockWidget, QVBoxLayout, QHBoxLayout, QSizePolicy
 
 from camelot.view.action import ActionFactory
 from camelot.view.model_thread import post
-from camelot.view.controls.modeltree import ModelItem
-from camelot.view.controls.modeltree import ModelTree
+from camelot.view.controls.modeltree import ModelItem, ModelTree
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 
 class PaneButton(QWidget):
