@@ -63,7 +63,7 @@ class FormPage(QtGui.QWizardPage):
         validator = self._model.get_validator()
         
         layout = QtGui.QVBoxLayout()
-        form = FormWidget(admin)
+        form = FormWidget(self, admin)
         validator.validity_changed_signal.connect( self._validity_changed )
         form.set_model(self._model)
         layout.addWidget(form)

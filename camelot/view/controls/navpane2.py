@@ -102,6 +102,7 @@ class NavigationPane(QDockWidget):
     def get_sections(self):
         return self._sections
 
+    @QtCore.pyqtSlot(list)
     def set_sections(self, sections):
         logger.debug('setting navpane sections')
         animation = QtCore.QPropertyAnimation(self._toolbox, 'minimumWidth', self)
@@ -158,6 +159,7 @@ class NavigationPane(QDockWidget):
 
         post(get_models_for_tree, self.set_items_in_tree)
 
+    @QtCore.pyqtSlot(list)
     def set_items_in_tree(self, items):
         logger.debug('setting items for current navpane section')
         self._shared_tree_widget.clear()

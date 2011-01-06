@@ -715,13 +715,14 @@ The QWidget class to be used when a table view is needed
 
             def showMessage(self, valid):
                 self.emit_if_valid(valid)
-                if not valid:
+                form = self.form_view.findChild(QtGui.QWidget, 'form' )
+                if not valid and form:
                     row = 0
                     reply = validator.validityDialog(row, self).exec_()
                     if reply == QtGui.QMessageBox.Discard:
                         # clear mapping to prevent data being written again to
                         # the model, after we reverted the row
-                        self.form_view._form.clear_mapping()
+                        form.clear_mapping()
 
                         def onexpunge_on_all():
                             if onexpunge:
@@ -744,8 +745,9 @@ The QWidget class to be used when a table view is needed
                     'validate before close : %s' %
                     self.validate_before_close
                 )
+                form = self.form_view.findChild(QtGui.QWidget, 'form' )
                 if self.validate_before_close:
-                    self.form_view._form.submit()
+                    form.submit()
                     logger.debug(
                         'unflushed rows : %s' %
                         str(model.hasUnflushedRows())

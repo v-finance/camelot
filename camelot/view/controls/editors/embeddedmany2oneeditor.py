@@ -113,7 +113,7 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
                                               CollectionGetterFromObjectGetter( self.entity_instance_getter ),
                                               current_entity_admin.get_fields )
                 self.model.get_validator().validity_changed_signal.connect( self._validity_changed )
-                self.form = FormWidget( current_entity_admin )
+                self.form = FormWidget( self, current_entity_admin )
                 self.form.set_model( self.model )
                 #self.form = current_entity_admin.create_form_view( '', self.model, 0, self )
                 self.layout.addWidget( self.form )

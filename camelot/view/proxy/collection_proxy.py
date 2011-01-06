@@ -295,6 +295,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
         post( create_refresh_entity( row ), self._revert_row )
 
+    @QtCore.pyqtSlot(tuple)
     @gui_function
     def _revert_row(self, row_and_entity ):
         row, entity = row_and_entity
@@ -305,6 +306,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     def refresh( self ):
         post( self.getRowCount, self._refresh_content )
 
+    @QtCore.pyqtSlot(int)
     @gui_function
     def _refresh_content(self, rows ):
         self.display_cache = Fifo( 10 * self.max_number_of_rows )
@@ -381,6 +383,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         if sender != self:
             self.refresh()
 
+    @QtCore.pyqtSlot(int)
     def setRowCount( self, rows ):
         """Callback method to set the number of rows
         @param rows the new number of rows
@@ -399,6 +402,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         """:return: the columns as set by the setColumns method"""
         return self._columns
 
+    @QtCore.pyqtSlot(list)
     @gui_function
     def setColumns( self, columns ):
         """Callback method to set the columns
@@ -720,6 +724,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
         return True
 
+    @QtCore.pyqtSlot(int)
     @gui_function
     def _emit_changes( self, row ):
         if row!=None:
@@ -842,6 +847,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             pass
         return None
 
+    @QtCore.pyqtSlot(tuple)
     def _cache_extended( self, interval ):
         offset, limit = interval
         locker = QtCore.QMutexLocker(self._mutex)

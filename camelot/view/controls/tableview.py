@@ -442,6 +442,7 @@ class TableView( AbstractView  ):
     def get_title( self ):
         return self.title_format % {'verbose_name_plural':self.admin.get_verbose_name_plural()}
 
+    @QtCore.pyqtSlot(list)
     @gui_function
     def setSubclassTree( self, subclasses ):
         if len( subclasses ) > 0:
@@ -606,6 +607,7 @@ class TableView( AbstractView  ):
         prev = ( first.row() - 1 ) % self._table_model.rowCount()
         self.selectTableRow( prev )
 
+    @QtCore.pyqtSlot(object)
     def _set_query(self, query_getter):
         if isinstance(self._table_model, QueryTableProxy):
             self._table_model.setQuery(query_getter)
@@ -666,6 +668,7 @@ class TableView( AbstractView  ):
         """
         return self._table_model.get_collection()
 
+    @QtCore.pyqtSlot(tuple)
     @gui_function
     def set_filters_and_actions( self, filters_and_actions ):
         """sets filters for the tableview"""

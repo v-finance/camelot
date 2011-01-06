@@ -26,7 +26,7 @@ import logging
 
 LOGGER = logging.getLogger( 'camelot.view.controls.editors.onetomanyeditor' )
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 from wideeditor import WideEditor
 from customeditor import CustomEditor
@@ -143,6 +143,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
     def getModel( self ):
         return self.model
 
+    @QtCore.pyqtSlot(object)
     def update_delegates( self, *args ):
         if self.model:
             delegate = self.model.getItemDelegate()

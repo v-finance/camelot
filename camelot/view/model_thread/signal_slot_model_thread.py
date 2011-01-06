@@ -168,10 +168,12 @@ class SignalSlotModelThread( AbstractModelThread ):
         if response:
             assert response.im_self != None
             assert isinstance(response.im_self, QtCore.QObject)
+            # verify if the response has been defined as a slot
+            #assert hasattr(response, '__pyqtSignature__')
             task.finished.connect( response, QtCore.Qt.QueuedConnection )
         if exception:
             task.exception.connect( exception, QtCore.Qt.QueuedConnection )
-        task.moveToThread(self)
+        # task.moveToThread(self)
         # only put the task in the queue when it is completely set up
         self._request_queue.append(task)
         #print 'task created --->', id(task)

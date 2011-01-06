@@ -303,6 +303,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
             value = self.entity_instance_getter
         return value
 
+    @QtCore.pyqtSlot(tuple)
     def set_instance_represenation(self, representation_and_propagate):
         """Update the gui"""
         ((desc, pk), propagate) = representation_and_propagate
