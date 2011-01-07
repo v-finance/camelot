@@ -248,6 +248,14 @@ The QWidget class to be used when a table view is needed
         return self.get_verbose_name()
 
     def get_verbose_name(self):
+        
+#        def uncamelize(text):
+#            def downcase(matchobj):
+#                return "_" + matchobj.group(0).lower()
+#            if text:
+#                text = text[0].lower() + re.sub(r'([A-Z])', downcase, text[1:])
+#            return text 
+
         return unicode(
             self.verbose_name or self.name or _(self.entity.__name__.capitalize())
         )
