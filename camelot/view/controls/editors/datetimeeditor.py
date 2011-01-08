@@ -25,51 +25,50 @@
 import datetime
 
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor
-from camelot.core import constants
+from dateeditor import DateEditorfrom camelot.view.proxy import ValueLoading
 
+class TimeValidator(QtGui.QValidator):
+    
+    def __init__(self, parent, nullable):
+        QtGui.QValidator.__init__(self, parent)
+        self._nullable = nullable
+        
+    def validate(self, input, pos):
+        parts = str(input).split(':')
+        if len(parts)!=2:
+            return (QtGui.QValidator.Invalid, pos)
+        if str(input)=='--:--' and self._nullable:
+            return (QtGui.QValidator.Acceptable, pos)
+        for part in parts:
+            if not part.isdigit():
+                return (QtGui.QValidator.Invalid, pos)
+            if len(part) not in (1,2):
+                return (QtGui.QValidator.Intermediate, pos)
+        if not int(parts[0]) in range(0,24):
+            return (QtGui.QValidator.Invalid, pos)
+        if not int(parts[1]) in range(0,60):
+            return (QtGui.QValidator.Invalid, pos)
+        return (QtGui.QValidator.Acceptable, pos)
+            
 class DateTimeEditor(CustomEditor):
     """Widget for editing date and time separated and with popups"""
   
     def __init__(self,
                  parent,
                  editable=True,
-                 format=constants.camelot_datetime_format,
                  nullable=True,
                  **kwargs):
         CustomEditor.__init__(self, parent)
         import itertools
-        self.nullable = nullable
-        dateformat, _timeformat = format.split(' ')
+        self.nullable = nullable
         layout = QtGui.QHBoxLayout()
-        self.dateedit = QtGui.QDateEdit(self)
-        self.dateedit.setEnabled(editable)
-        self.dateedit.setDisplayFormat(dateformat)
-        self.dateedit.setCalendarPopup(True)
-        self.dateedit.dateChanged.connect( self.editing_finished )
+        self.dateedit = DateEditor(self, editable=editable, nullable=nullable, **kwargs)
+        self.dateedit.editingFinished.connect( self.editing_finished )
         layout.addWidget(self.dateedit, 1)
-            
-        class TimeValidator(QtGui.QValidator):
-            def __init__(self, parent):
-                QtGui.QValidator.__init__(self, parent)
-            def validate(self, input, pos):
-                parts = str(input).split(':')
-                if len(parts)!=2:
-                    return (QtGui.QValidator.Invalid, pos)
-                if str(input)=='--:--' and nullable:
-                    return (QtGui.QValidator.Acceptable, pos)
-                for part in parts:
-                    if not part.isdigit():
-                        return (QtGui.QValidator.Invalid, pos)
-                    if len(part) not in (1,2):
-                        return (QtGui.QValidator.Intermediate, pos)
-                if not int(parts[0]) in range(0,24):
-                    return (QtGui.QValidator.Invalid, pos)
-                if not int(parts[1]) in range(0,60):
-                    return (QtGui.QValidator.Invalid, pos)
-                return (QtGui.QValidator.Acceptable, pos)
-        
+
         self.timeedit = QtGui.QComboBox(self)
         self.timeedit.setEditable(True)
         if not editable:
@@ -79,51 +78,33 @@ class DateTimeEditor(CustomEditor):
                         for entry in itertools.chain(*(('%02i:00'%i, '%02i:30'%i)
                         for i in range(0,24)))]
         self.timeedit.addItems(time_entries)
-        self.timeedit.setValidator(TimeValidator(self))
+        self.timeedit.setValidator(TimeValidator(self, nullable))
         self.timeedit.currentIndexChanged.connect( self.editing_finished )
-        self.timeedit.editTextChanged.connect( self.editing_finished )
-    
-#    self.timeedit = QtGui.QTimeEdit(self)
-#    self.timeedit.setDisplayFormat(timeformat)
-#
-#    setting the tab order does not seem to work inside a table
-#
-#    self.dateedit.setTabOrder(self.dateedit, self.timeedit)
-
-#    Completion doesn't seems to work with a QTimeEdit widget
-#
-#    time_lineedit = self.timeedit.lineEdit()
-#    time_completions_model = QtGui.QStringListModel(['00:00', '00:30'], parent)
-#    time_completer = QtGui.QCompleter()
-#    time_completer.setModel(time_completions_model)
-#    time_completer.setCaseSensitivity(Qt.CaseInsensitive)
-#    time_completer.setCompletionMode(QtGui.QCompleter.UnfilteredPopupCompletion)
-#    time_lineedit.setCompleter(time_completer)
+        self.timeedit.editTextChanged.connect( self.editing_finished )        self.timeedit.setFocusPolicy( Qt.StrongFocus )
 
         layout.addWidget(self.timeedit, 1)
+        # focus proxy is needed to activate the editor with a single click
         self.setFocusProxy(self.dateedit)
         self.setLayout(layout)
         layout.setMargin(0)
-        layout.setSpacing(0)
-        layout.addStretch(1)
-        
-    @QtCore.pyqtSlot(QtCore.QDate)
+        layout.setSpacing(0)
     @QtCore.pyqtSlot(QtCore.QString)
     @QtCore.pyqtSlot(int)
-    def editing_finished(self, _arg):
+    @QtCore.pyqtSlot()
+    def editing_finished(self, _arg=None):
         if self.time() and self.date():
             self.editingFinished.emit()
         
     def get_value(self):
         time_value = self.time()
         date_value = self.date()
-        if time_value!=None and date_value!=None:
+        if time_value not in (None, ValueLoading) and date_value not in (None, ValueLoading):
             value = datetime.datetime(hour=time_value.hour(),
                                       minute=time_value.minute(),
                                       second=time_value.second(),
-                                      year=date_value.year(),
-                                      month=date_value.month(),
-                                      day=date_value.day())
+                                      year=date_value.year,
+                                      month=date_value.month,
+                                      day=date_value.day)
         else:
             value = None
         return CustomEditor.get_value(self) or value
@@ -131,14 +112,14 @@ class DateTimeEditor(CustomEditor):
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:
-            self.dateedit.setDate(QtCore.QDate(value.year, value.month, value.day))
+            self.dateedit.set_value(value.date())
             self.timeedit.lineEdit().setText('%02i:%02i'%(value.hour, value.minute))
         else:
-            self.dateedit.setDate(self.dateedit.minimumDate())
+            self.dateedit.set_value(None)
             self.timeedit.lineEdit().setText('--:--')
       
     def date(self):
-        return self.dateedit.date()
+        return self.dateedit.get_value()
     
     def time(self):
         text = str(self.timeedit.currentText())

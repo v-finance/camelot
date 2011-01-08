@@ -164,7 +164,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     @gui_function
     def activate_editor( self, _row ):
-        return
+#        return
 # Activating this code can cause segfaults
 # see ticket 765 in web issues
 # 
@@ -207,6 +207,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
     def deleteSelectedRows( self ):
         """Delete the selected rows in this tableview"""
         LOGGER.debug( 'delete selected rows called' )
+        self.table.close_editor()
         self.model.remove_rows( set( map( lambda x: x.row(), self.table.selectedIndexes() ) ) )
 
     def createFormForIndex( self, index ):

@@ -204,14 +204,23 @@ and above the text.
         header.setSortIndicator( logical_index, order )
         self.model().sort( logical_index, order )
 
+    def close_editor(self):
+        """Close the active editor, this method is used to prevent assertion
+        failures in QT when an editor is still open in the view for a cell
+        that no longer exists in the model
+        
+        thos assertion failures only exist in QT debug builds.
+        """
+        current_index = self.currentIndex()
+        self.closePersistentEditor( current_index )
+                
     def setModel( self, model ):
         #
         # An editor might be open that is no longer available for the new
         # model.  Not closing this editor, results in assertion failures
         # in qt, resulting in segfaults in the debug build.
         #
-        current_index = self.currentIndex()
-        self.closePersistentEditor( current_index )
+        self.close_editor()
         #
         # Editor, closed. it should be safe to change the model
         #

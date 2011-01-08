@@ -27,10 +27,20 @@ from PyQt4 import QtCore
 
 from camelot.view.proxy import ValueLoading
 
-
 class AbstractCustomEditor(object):
     """Helper class to be used to build custom editors.  This class provides
-  functionality to store and retrieve `ValueLoading` as an editor's value.
+functionality to store and retrieve `ValueLoading` as an editor's value.
+
+Guidelines for implementing CustomEditors :
+
+  * When an editor consists of multiple widgets, one widget must be the focusProxy
+    of the editor, to have that widget immediately activated when the user single
+    clicks in the table view.
+    
+  * When an editor has widgets that should not get selected when the user tabs
+    through the editor, setFocusPolicy(Qt.ClickFocus) should be called on those
+    widgets
+     
   """
 
     def __init__(self):

@@ -57,5 +57,5 @@ class DateTimeDelegate(CustomDelegate):
             )
             value_str = date_time.toString(self.datetime_format)
             
-        self.paint_text(painter, option, index, value_str)
+        self.paint_text(painter, option, index, value_str, horizontal_align=Qt.AlignRight)
         painter.restore()
