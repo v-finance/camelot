@@ -203,7 +203,9 @@ class Color(types.TypeDecorator):
 
   .. image:: ../_static/editors/ColorEditor_editable.png  
   
-  The colors are stored in the database as strings 
+  The colors are stored in the database as strings.
+  
+  Use QColor(*color) to convert it to a QColor
     """
     
     impl = types.Unicode
