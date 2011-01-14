@@ -50,21 +50,23 @@ class PaneButton(QWidget):
     def __init__(self, text, icon_pixmap, parent=None):
         super(PaneButton, self).__init__(parent)
 
+        button = QtGui.QPushButton(QtGui.QIcon(icon_pixmap), unicode(text), self)
+        button.pressed.connect( self._button_pressed )
         layout = QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0,0,0,0)
 
-        self.icon = QLabel()
-        self.icon.setSizePolicy(QSizePolicy(
-            QSizePolicy.Fixed, QSizePolicy.Preferred))
-        self.icon.setPixmap(icon_pixmap)
-        self.icon.setObjectName('PaneButtonIcon')
-        layout.addWidget(self.icon)
+        #self.icon = QLabel(self)
+        #self.icon.setSizePolicy(QSizePolicy(
+        #    QSizePolicy.Fixed, QSizePolicy.Preferred))
+        #self.icon.setPixmap(icon_pixmap)
+        #self.icon.setObjectName('PaneButtonIcon')
+        #layout.addWidget(self.icon)
 
-        self.label = UserTranslatableLabel(text, parent)
-        self.label.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
-        self.label.setObjectName('PaneButtonLabel')
-        layout.addWidget(self.label)
+        #self.label = UserTranslatableLabel(text, self)
+        #self.label.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+        #self.label.setObjectName('PaneButtonLabel')
+        layout.addWidget( button )
 
         self.setLayout(layout)
 
@@ -75,29 +77,17 @@ class PaneButton(QWidget):
         self.setObjectName('PaneButton')
 
     def toggle_bold(self):
-        font = self.label.font()
-        font.setBold(not font.bold())
-        self.label.setFont(font)
+        pass
+        #font = self.label.font()
+        #font.setBold(not font.bold())
+        #self.label.setFont(font)
 
     def layout_index(self):
         return self.parent().layout().indexOf(self)
 
-    def mousePressEvent(self, event):
+    @QtCore.pyqtSlot()
+    def _button_pressed(self):
         self.pressed.emit(self.layout_index())
-
-    # disabled: causes too much headache
-    #
-    #def reapply_application_stylesheet(self):
-    #    app = QCoreApplication.instance()
-    #    app.setStyleSheet(app.styleSheet())
-
-    #def enterEvent(self, event):
-    #    self.setObjectName('PaneButtonHovered')
-    #    self.reapply_application_stylesheet()
-
-    #def leaveEvent(self, event):
-    #    self.setObjectName('PaneButton')
-    #    self.reapply_application_stylesheet()
 
 class NavigationPane(QDockWidget):
     """NavigationPane made of PaneButtons and ModelTrees"""
@@ -108,6 +98,7 @@ class NavigationPane(QDockWidget):
         self.workspace = workspace
         self.app_admin = app_admin
         self._sections = None
+        self._animation = QtCore.QParallelAnimationGroup()
 
         self._title_widget = QWidget()
         self._dock_widget = self.get_dock_widget()
@@ -159,6 +150,12 @@ class NavigationPane(QDockWidget):
     def set_sections(self, sections):
         logger.debug('setting navpane sections')
 
+        animation = QtCore.QPropertyAnimation(self._dock_widget, 'minimumWidth', self)
+        animation.setDuration( 500 )
+        animation.setStartValue( 10 )
+        animation.setEndValue( 220 )
+        animation.start()
+        
         self._sections = sections
         self._buttons = [(
             index,
@@ -168,7 +165,8 @@ class NavigationPane(QDockWidget):
 
         for index, name, pixmap in self._buttons:
             tree_widget = self.get_tree_widget()
-            tree_widget.hide()
+            if index!=0:
+                tree_widget.setMaximumHeight(0)
 
             pane_button = PaneButton(name, pixmap)
             pane_button.pressed.connect(self.change_current)
@@ -197,16 +195,27 @@ class NavigationPane(QDockWidget):
     def change_current(self, index):
         logger.debug('setting current navpane index to %s' % index)
 
+        self._animation.stop()
+        self._animation.clear()
+        
         if self._current_tree_widget is not None:
-            self._current_tree_widget.hide()
             x = self._dock_widget.layout().indexOf(self._current_tree_widget)
             self._dock_widget.layout().itemAt(x-1).widget().toggle_bold()
-
+            hide = QtCore.QPropertyAnimation(self._current_tree_widget, 'maximumHeight')
+            hide.setDuration( 150 )
+            hide.setStartValue( self._current_tree_widget.height() )
+            hide.setEndValue( 0 )
+            self._animation.addAnimation( hide )
+                    
         self._dock_widget.layout().itemAt(index).widget().toggle_bold()
-
         tree_widget = self._dock_widget.layout().itemAt(index+1).widget()
+        show = QtCore.QPropertyAnimation(tree_widget, 'maximumHeight')
+        show.setDuration( 150 )
+        show.setStartValue( 0 )
+        show.setEndValue( 1000 )
+        self._animation.addAnimation( show )
+        self._animation.start()
         self._current_tree_widget = tree_widget
-        tree_widget.show()
 
     def get_section_item(self, item):
         index = self._current_tree_widget.indexFromItem(item)
