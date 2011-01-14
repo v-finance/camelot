@@ -52,6 +52,7 @@ class PaneButton(QWidget):
 
         button = QtGui.QPushButton(QtGui.QIcon(icon_pixmap), unicode(text), self)
         button.pressed.connect( self._button_pressed )
+        #button.setFlat(True)
         layout = QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0,0,0,0)

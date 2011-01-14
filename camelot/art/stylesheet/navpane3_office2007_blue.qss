@@ -8,6 +8,10 @@ QTreeWidget#PaneTree {
 
 QWidget#PaneButton QPushButton{
     padding-left: 3px;
+    margin-top: -1px;
+    border-top: 1px solid rgb(101, 147, 207);
+    border-left: 1px solid rgb(101, 147, 207);
+    border-bottom: 1px solid rgb(101, 147, 207);
     color: rgb(32, 77, 137);
     background-color: qlineargradient(spread:pad, x1:0.5, y1:0, x2:0.5, y2:1, stop:0 rgba(227, 239, 255, 255), stop:0.4 rgba(196, 221, 255, 255), stop:0.401 rgba(173, 209, 255, 255), stop:1 rgba(192, 219, 255, 255));
 }
@@ -21,10 +25,7 @@ QWidget#PaneButton QPushButton:hover {
 QWidget#PaneButton QLabel#PaneButtonIcon,
 QWidget#PaneButtonHovered QLabel#PaneButtonIcon {
     /* this is so top borders are merged */
-    margin-top: -1px;
-    border-top: 1px solid rgb(101, 147, 207);
-    border-left: 1px solid rgb(101, 147, 207);
-    border-bottom: 1px solid rgb(101, 147, 207);
+
 }
 
 QWidget#PaneButton QLabel#PaneButtonLabel,
