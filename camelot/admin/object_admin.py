@@ -387,7 +387,7 @@ The QWidget class to be used when a table view is needed
                     return_value = None
                     try:
                         return_value = value(obj)
-                    except (Exception, RuntimeError, TypeError, NameError), exc:
+                    except (ValueError, Exception, RuntimeError, TypeError, NameError), exc:
                         logger.error(u'error in field_attribute function of %s'%name, exc_info=exc)
                     finally:
                         dynamic_field_attributes[name] = return_value
