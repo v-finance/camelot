@@ -30,7 +30,7 @@ from PyQt4 import QtCore
 import logging
 from logging import handlers
 
-logger = logging.getLogger('camelot.core.logging')
+LOGGER = logging.getLogger('camelot.core.logging')
 
 class ThreadedTimer( QtCore.QThread ):
     """Thread that checks every interval milli seconds if there 
@@ -58,6 +58,7 @@ class ThreadedHttpHandler(handlers.HTTPHandler):
         self._threaded_timer = ThreadedTimer(1000, self)
         self._threaded_timer.start()
 
+    @QtCore.pyqtSlot()
     def timeout(self):
         while len(self._records_to_emit):
             record = self._records_to_emit.pop()
@@ -65,3 +66,62 @@ class ThreadedHttpHandler(handlers.HTTPHandler):
 
     def emit(self, record):
         self._records_to_emit.append(record)
+
+class ThreadedAwsHandler(logging.Handler):
+    """A logging handler that sends the logs to an AWS queue through the
+    SQS, this handler requires the boto library"""
+    
+    def __init__(self, access_key, secret_access_key, queue_name):
+        logging.Handler.__init__(self)
+        self._access_key = access_key
+        self._secret_access_key = secret_access_key
+        self._queue_name = queue_name
+        self._records_to_emit = []
+        self._queue = None
+        self._connected = True
+        self._threaded_timer = ThreadedTimer(1000, self)
+        self._threaded_timer.start()
+        
+    def emit(self, record):
+        # inspired by the code in logging.handlers.SocketHandler
+        import json
+        ei = record.exc_info
+        if ei:
+            dummy = self.format(record)
+            record.exc_info = None
+        self._records_to_emit.append( json.dumps( record.__dict__ ) )
+        if ei:
+            record.exc_info = ei  # for next handler
+        
+    @QtCore.pyqtSlot()
+    def timeout(self):
+        from boto.sqs.message import Message
+        if not self._queue and self._connected:
+            try:
+                from boto.sqs.connection import SQSConnection
+                sqs_connection = SQSConnection(self._access_key, self._secret_access_key)
+                self._queue = sqs_connection.get_queue( self._queue_name )
+            except Exception, e:
+                LOGGER.error('Could not connect to logging queue %s'%self._queue_name, exc_info=e)
+                self._connected = False
+        while len(self._records_to_emit) and self._connected:
+            record = self._records_to_emit.pop()
+            self._queue.write( Message(body=record) )
+
+class CloudLaunchHandler(ThreadedAwsHandler):
+    """A logging handler that sends the logs to the Cloud Launch service,
+    requires the cloudlaunch library, and only works with applications tested
+    or deployed through cloudlaunch
+    
+    The cloudlaunch record can be obtained using the get_cloud_record
+    method of the cloudlaunch.resources module.
+    """
+    
+    def __init__(self, cloud_record):
+        """:param cloud_record: the cloud record describing the application
+        """
+        queue_name = 'cloudlaunch-%s-%s-logging'%(cloud_record.author.replace(' ','_'), cloud_record.name.replace(' ','_') )
+        ThreadedAwsHandler.__init__(self, 
+                                    cloud_record.public_access_key, 
+                                    cloud_record.public_secret_key, 
+                                    queue_name)
