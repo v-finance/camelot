@@ -2,14 +2,21 @@
 
 QTreeWidget#PaneTree {
     background-color: rgb(255, 255, 255);
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
     border-right: 1px solid rgb(101, 147, 207);
     border-bottom: 1px solid rgb(101, 147, 207);
+    border-top: 1px solid rgb(101, 147, 207);
+    border-left: 1px solid rgb(101, 147, 207);
 }
 
 QWidget#PaneButton QPushButton{
     padding-left: 3px;
     margin-top: -1px;
     border-top: 1px solid rgb(101, 147, 207);
+    border-right: 1px solid rgb(101, 147, 207);
     border-left: 1px solid rgb(101, 147, 207);
     border-bottom: 1px solid rgb(101, 147, 207);
     color: rgb(32, 77, 137);

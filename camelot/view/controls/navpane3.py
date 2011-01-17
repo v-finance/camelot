@@ -100,8 +100,10 @@ class NavigationPane(QDockWidget):
         self.app_admin = app_admin
         self._sections = None
         self._animation = QtCore.QParallelAnimationGroup()
-
+        self._animation.finished.connect( self.animation_finished )
+        
         self._title_widget = QWidget()
+
         self._dock_widget = self.get_dock_widget()
         self._dock_widget.setMouseTracking(True)
 
@@ -119,7 +121,18 @@ class NavigationPane(QDockWidget):
     @QtCore.pyqtSlot()
     def update_sections(self):
         post(self.app_admin.get_sections, self.set_sections)
-
+        
+    @QtCore.pyqtSlot()
+    def animation_finished(self):
+        """Once the animation is finished, hide all non active
+        section trees"""
+        layout = self._dock_widget.layout()
+        for i in range( layout.count() ):
+            if i%2 == 1:
+                section_tree = layout.itemAt( i ).widget()
+                if section_tree != self._current_tree_widget:
+                    section_tree.hide()
+        
     def get_dock_widget(self):
         layout = QVBoxLayout()
         layout.setContentsMargins(0,0,0,0)
@@ -200,8 +213,10 @@ class NavigationPane(QDockWidget):
         self._animation.clear()
         
         if self._current_tree_widget is not None:
-            x = self._dock_widget.layout().indexOf(self._current_tree_widget)
-            self._dock_widget.layout().itemAt(x-1).widget().toggle_bold()
+            current_index = self._dock_widget.layout().indexOf(self._current_tree_widget) - 1
+            if index == current_index:
+                return
+            self._dock_widget.layout().itemAt(current_index).widget().toggle_bold()
             hide = QtCore.QPropertyAnimation(self._current_tree_widget, 'maximumHeight')
             hide.setDuration( 150 )
             hide.setStartValue( self._current_tree_widget.height() )
@@ -210,6 +225,7 @@ class NavigationPane(QDockWidget):
                     
         self._dock_widget.layout().itemAt(index).widget().toggle_bold()
         tree_widget = self._dock_widget.layout().itemAt(index+1).widget()
+        tree_widget.show()
         show = QtCore.QPropertyAnimation(tree_widget, 'maximumHeight')
         show.setDuration( 150 )
         show.setStartValue( 0 )

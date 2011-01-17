@@ -42,19 +42,92 @@ from camelot.view.model_thread import post
 from camelot.view.controls.modeltree import ModelItem
 from camelot.view.controls.modeltree import ModelTree
 
-class PlainWidgetWithNoMargins(QWidget):
+class PaneSection(QWidget):
 
-    def __init__(self, layout=None, parent=None):
-        super(PlainWidgetWithNoMargins, self).__init__(parent)
+    def __init__(self, parent, section, workspace):
+        super(PaneSection, self).__init__(parent)
+        self._items = []
+        self._workspace = workspace
+        layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+        section_tree = ModelTree(parent=self)
+        # i hate the sunken frame style
+        section_tree.setFrameShape(QFrame.NoFrame)
+        section_tree.setFrameShadow(QFrame.Plain)
+        section_tree.contextmenu = QMenu(self)
+        act = ActionFactory.new_tab(self, self.open_in_new_view)
+        section_tree.contextmenu.addAction( act )
+        section_tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        section_tree.customContextMenuRequested.connect(self.create_context_menu)
+        section_tree.setObjectName( 'SectionTree' )
+        section_tree.itemClicked.connect( self.open_in_current_view )
+        layout.addWidget( section_tree )
         self.setLayout(layout)
+        post( section.get_items, self.set_items )
 
+    @QtCore.pyqtSlot(list)
+    def set_items(self, items):
+        logger.debug('setting items for current navpane section')
+        section_tree = self.findChild(QtGui.QWidget, 'SectionTree')
+        self._items = items
+        if section_tree:
+            section_tree.clear()
+            section_tree.clear_model_items()
+    
+            if not items: return
+    
+            for item in items:
+                label = item.get_verbose_name()
+                model_item = ModelItem(section_tree, [label])
+                section_tree.modelitems.append(model_item)
+
+    def get_section_item(self, item):
+        index = self._shared_tree_widget.indexFromItem(item)
+        return self._tree_items[index.row()]
+
+    def create_context_menu(self, point):
+        logger.debug('creating context menu')
+        section_tree = self.findChild(QtGui.QWidget, 'SectionTree')
+        if section_tree:
+            item = section_tree.itemAt(point)
+            if item:
+                section_tree.setCurrentItem(item)
+                section_tree.contextmenu.popup(
+                    section_tree.mapToGlobal(point)
+                )
+
+    @QtCore.pyqtSlot(QtGui.QTreeWidgetItem, int)
+    def open_in_current_view(self, item, _column):
+        """pops a model window in parent's workspace"""
+        logger.debug('poping a window in parent')
+        section_tree = self.findChild(QtGui.QWidget, 'SectionTree')
+        if section_tree:
+            item = section_tree.currentItem()
+            index = section_tree.indexFromItem(item)
+            section_item = self._items[index.row()]
+            new_view = section_item.get_action().run(self._workspace)
+            if new_view:
+                self._workspace.set_view(new_view)
+
+    @QtCore.pyqtSlot()
+    def open_in_new_view(self):
+        """pops a model window in parent's workspace"""
+        logger.debug('poping a window in parent')
+        section_tree = self.findChild(QtGui.QWidget, 'SectionTree')
+        if section_tree:
+            item = section_tree.currentItem()
+            index = section_tree.indexFromItem(item)
+            section_item = self._items[index.row()]
+            new_view = section_item.get_action().run(self._workspace)
+            if new_view:
+                self._workspace.add_view(new_view)
+                        
 class NavigationPane(QDockWidget):
 
     def __init__(self, app_admin, workspace, parent):
         super(QDockWidget, self).__init__(parent)
 
-        self.workspace = workspace
+        self._workspace = workspace
         self.app_admin = app_admin
 
         self._tree_items = None
@@ -86,19 +159,6 @@ class NavigationPane(QDockWidget):
         tb.layout().setSpacing(1)
         return tb
 
-    def get_tree_widget(self):
-        tw = ModelTree(parent=self)
-        # i hate the sunken frame style
-        tw.setFrameShape(QFrame.NoFrame)
-        tw.setFrameShadow(QFrame.Plain)
-        tw.contextmenu = QMenu(self)
-        act = ActionFactory.new_tab(self, self.open_in_new_view)
-        tw.contextmenu.addAction( act )
-        tw.setContextMenuPolicy(Qt.CustomContextMenu)
-        tw.customContextMenuRequested.connect(self.create_context_menu)
-
-        return tw
-
     def get_sections(self):
         return self._sections
 
@@ -111,13 +171,6 @@ class NavigationPane(QDockWidget):
         animation.setEndValue( 220 )
         animation.start()
 
-        self._sections = sections
-        self._buttons = [(
-            index,
-            section.get_verbose_name(),
-            section.get_icon().getQPixmap(),
-        ) for index, section in enumerate(sections)]
-
         # performs QToolBox clean up
         # QToolbox won't delete items we have to do it explicitly
         count = self._toolbox.count()
@@ -126,85 +179,14 @@ class NavigationPane(QDockWidget):
             self._toolbox.removeItem(count-1)
             item.deleteLater()
             count -= 1
-
-        self._shared_tree_widget = self.get_tree_widget()
-        self._shared_tree_widget.itemClicked.connect(self.open_in_current_view)
-        self._toolbox_widgets = []
-
-        for _i, name, pixmap in self._buttons:
+            
+        for section in sections:
             # TODO: old navpane used translation here
-            name = unicode(name)
-            icon = QIcon(pixmap)
-            pwdg = PlainWidgetWithNoMargins(QVBoxLayout())
-            self._toolbox_widgets.append(pwdg)
+            name = unicode( section.get_verbose_name() )
+            icon = section.get_icon().getQIcon()
+            pwdg = PaneSection(self._toolbox, section, self._workspace)
             self._toolbox.addItem(pwdg, icon, name)
 
-        self._toolbox.currentChanged.connect(self.change_current)
         self._toolbox.setCurrentIndex(0)
-        # setCurrentIndex does not emit currentChanged
-        self.change_current(0)
         # WARNING: hardcoded width
         #self._toolbox.setMinimumWidth(220)
-
-    @QtCore.pyqtSlot(int)
-    def change_current(self, index):
-        logger.debug('setting current navpane index to %s' % index)
-
-        def get_models_for_tree():
-            """returns pairs of (Admin, query) classes for items in the tree"""
-            if index < len(self._sections):
-                section = self._sections[index]
-                return section.get_items()
-            return []
-
-        post(get_models_for_tree, self.set_items_in_tree)
-
-    @QtCore.pyqtSlot(list)
-    def set_items_in_tree(self, items):
-        logger.debug('setting items for current navpane section')
-        self._shared_tree_widget.clear()
-        self._shared_tree_widget.clear_model_items()
-        self._toolbox.currentWidget().layout().addWidget(self._shared_tree_widget)
-        self._tree_items = items
-
-        if not items: return
-
-        for item in items:
-            label = item.get_verbose_name()
-            model_item = ModelItem(self._shared_tree_widget, [label])
-            self._shared_tree_widget.modelitems.append(model_item)
-
-    def get_section_item(self, item):
-        index = self._shared_tree_widget.indexFromItem(item)
-        return self._tree_items[index.row()]
-
-    def create_context_menu(self, point):
-        logger.debug('creating context menu')
-        item = self._shared_tree_widget.itemAt(point)
-        if item:
-            self._shared_tree_widget.setCurrentItem(item)
-            self._shared_tree_widget.contextmenu.popup(
-                self._shared_tree_widget.mapToGlobal(point)
-            )
-
-    @QtCore.pyqtSlot(QtGui.QTreeWidgetItem, int)
-    def open_in_current_view(self, item, _column):
-        """pops a model window in parent's workspace"""
-        logger.debug('poping a window in parent')
-        item = self._shared_tree_widget.currentItem()
-        index = self._shared_tree_widget.indexFromItem(item)
-        section_item = self._tree_items[index.row()]
-        new_view = section_item.get_action().run(self.workspace)
-        if new_view:
-            self.workspace.set_view(new_view)
-
-    @QtCore.pyqtSlot()
-    def open_in_new_view(self):
-        """pops a model window in parent's workspace"""
-        logger.debug('poping a window in parent')
-        item = self._shared_tree_widget.currentItem()
-        index = self._shared_tree_widget.indexFromItem(item)
-        section_item = self._tree_items[index.row()]
-        new_view = section_item.get_action().run(self.workspace)
-        if new_view:
-            self.workspace.add_view(new_view)
