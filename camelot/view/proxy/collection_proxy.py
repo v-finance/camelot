@@ -402,7 +402,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         """:return: the columns as set by the setColumns method"""
         return self._columns
 
-    @QtCore.pyqtSlot(list)
+    @QtCore.pyqtSlot(object)
     @gui_function
     def setColumns( self, columns ):
         """Callback method to set the columns
