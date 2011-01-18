@@ -52,7 +52,7 @@ class AbstractView(QtGui.QWidget):
         """Refresh the data in the current view"""
         pass
     
-    @QtCore.pyqtSlot(str)
+    @QtCore.pyqtSlot(object)
     @gui_function
     def change_title(self, new_title):
         """Will emit the title_changed_signal"""
