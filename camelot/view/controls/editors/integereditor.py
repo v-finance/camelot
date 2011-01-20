@@ -94,6 +94,7 @@ an unneeded update of the db.
         self.calculatorButton = QtGui.QToolButton()
         self.calculatorButton.setIcon(self.calculator_icon.getQIcon())
         self.calculatorButton.setAutoRaise(True)
+        self.calculatorButton.setFocusPolicy(Qt.ClickFocus)
         self.calculatorButton.setFixedHeight(self.get_height())
         self.calculatorButton.clicked.connect(
             lambda:self.popupCalculator(self.spinBox.value())

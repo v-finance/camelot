@@ -36,6 +36,10 @@ from camelot.core.utils import CollectionGetterFromObjectGetter
 class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
     """Widget for editing a many 2 one relation a a form embedded in another
   form.
+  
+  @todo: properly take care of making the form editable or not, simply enabling
+  or disabling the widget as a whole is not functional, since tabs don't work
+  in that case
   """
 
     def __init__( self, admin = None, parent = None, **kwargs ):
@@ -53,6 +57,7 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
         self.entity_instance_getter = None
         self.form = None
         self.model = None
+        self._editable = True
         self.setLayout( self.layout )
         self.setEntity( lambda:ValueLoading, propagate = False )
 
@@ -61,8 +66,8 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
         if value:
             self.setEntity( value, propagate = False )
 
-    def set_field_attributes(self, **kwargs):
-        pass
+    def set_field_attributes(self, editable=True, **kwargs):
+        self._editable = editable
 
     def setEntity( self, entity_instance_getter, propagate = True ):
 
