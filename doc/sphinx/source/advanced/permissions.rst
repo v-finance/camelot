@@ -4,7 +4,6 @@
   Authentication and permissions
 ################################
 
-:Release: |version|
 :Date: |today|
 
 fine grained authentication and authorization is not

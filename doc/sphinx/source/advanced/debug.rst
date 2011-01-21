@@ -53,3 +53,32 @@ launch the python application::
   python main.py
 
 Then start Qt Creator, choose debug, and attach to the running process
+
+Enable core dumps
+=================
+
+Linux
+-----
+
+use::
+
+  ulimit -c unlimited
+  
+load core file in gdb::
+
+  gdb /usr/bin/python -c core
+
+Windows
+-------
+
+ * Install *Debugging tools for Windows* from MSDN
+
+Install 'Debug Diagnostic Tool'
+
+http://stackoverflow.com/questions/27742/finding-the-crash-dump-files-for-a-c-app
+
+http://blogs.msdn.com/b/tess/
+
+Setup Qt Creator 
+
+http://doc.qt.nokia.com/qtcreator-snapshot/creator-debugger-engines.html

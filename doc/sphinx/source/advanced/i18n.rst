@@ -4,7 +4,6 @@
   Internationalization
 ######################
 
-:Release: |version|
 :Date: |today|
 
 How to Specify Translation Strings
