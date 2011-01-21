@@ -1,6 +1,9 @@
 Trunk
 -----
 
+Release 10.11.27
+----------------
+
  * Tab based desktop
 
  * Faster table view
@@ -25,6 +28,8 @@ Trunk
  * Move to new style signal/slot connections
  
  * Support for frozen columns in a table view
+ 
+ * Faster backup and restore
    
 Release 10.07.02
 ----------------
