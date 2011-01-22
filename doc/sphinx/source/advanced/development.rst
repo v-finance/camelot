@@ -28,13 +28,13 @@ of objects :
   * Qt objects wrapped by Python are either:
   
     * owned by Qt when they have a parent object, Qt will
-      delete it, when the parent object is deleted
+      delete them, when their parent object is deleted
       
-    * owned by Python when it has no parent, Python will
-      delete it, and trigger the deletion of all its children
+    * owned by Python when they have no parent, Python will
+      delete them, and trigger the deletion of all their children
       by Qt
       
-  * Qt object that are not wrapped by Python, those are in
+  * Qt objects that are not wrapped by Python, those are in
     one way or another children of a Qt object that is wrapped
     by Python, they will get deleted by Qt.
 
@@ -51,7 +51,7 @@ in two ways :
     
     In this case PyQt is able to track when the object is 
     deleted by Qt and raises exceptions accordingly when a
-    method of underlying Qt object is called ::
+    method of underlying Qt object is called after the deletion ::
 
 		parent = QtCore.QObject()
 		child = QtCore.QObject(parent=parent)
