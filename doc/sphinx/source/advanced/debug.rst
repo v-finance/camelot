@@ -2,33 +2,40 @@
 Debugging Camelot and PyQt
 ==========================
 
+Log the SQL Queries
+===================
+
+Configure SQLAlchemy to log all queries::
+
+    logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
+
 Buiding Qt
 ==========
 
 Configure::
 
-  ./configure -prefix /home/tw55413/temp/nokia/qt_install/ -debug -opensource
+    ./configure -prefix /home/tw55413/temp/nokia/qt_install/ -debug -opensource
   
 Standard make::
 
-  make
-  make install
+    make
+    make install
 
 Building SIP
 ============
 
 Prepare the build::
 
-  python2.6 build.py prepare
+     python build.py prepare
 
 Configure the debugging symbols::
 
-  python2.6 configure.py -b /home/tw55413/temp/riverbank/sip_install/ -d /home/tw55413/temp/riverbank/sip_install/ -e /home/tw55413/temp/riverbank/sip_install/ -v  /home/tw55413/temp/riverbank/sip_install/ --debug
+     python configure.py -b /home/tw55413/temp/riverbank/sip_install/ -d /home/tw55413/temp/riverbank/sip_install/ -e /home/tw55413/temp/riverbank/sip_install/ -v  /home/tw55413/temp/riverbank/sip_install/ --debug
 
 Standard make::
 
-  make
-  make install
+     make
+     make install
 
 Building PyQt
 =============
