@@ -81,10 +81,6 @@ class PaneSection(QWidget):
                 model_item = ModelItem(section_tree, [label])
                 section_tree.modelitems.append(model_item)
 
-    def get_section_item(self, item):
-        index = self._shared_tree_widget.indexFromItem(item)
-        return self._tree_items[index.row()]
-
     def create_context_menu(self, point):
         logger.debug('creating context menu')
         section_tree = self.findChild(QtGui.QWidget, 'SectionTree')
@@ -129,35 +125,32 @@ class NavigationPane(QDockWidget):
 
         self._workspace = workspace
         self.app_admin = app_admin
-
-        self._tree_items = None
-        self._title_widget = QWidget()
-        self._toolbox = self.get_toolbox()
-        self._toolbox.setMouseTracking(True)
-        self._shared_tree_widget = None
-        self._tree_widgets = []
-        # hack for removing the dock title bar
-        self.setTitleBarWidget(self._title_widget)
-        self.setWidget(self._toolbox)
-
-        self.setFeatures(QDockWidget.NoDockWidgetFeatures)
-
-        # should happen at the top level
-        #self.setStyleSheet(art.read('stylesheet/navpane2_office2007_blue.qss'))
-
-        self.app_admin.sections_changed_signal.connect(self.update_sections)
-        self.update_sections()
-
-    @QtCore.pyqtSlot()
-    def update_sections(self):
-        post(self.app_admin.get_sections, self.set_sections)
-
-    def get_toolbox(self):
+        
         tb = QToolBox()
         tb.setFrameShape(QFrame.NoFrame)
         tb.layout().setContentsMargins(0,0,0,0)
         tb.layout().setSpacing(1)
-        return tb
+        tb.setObjectName('toolbox')
+        tb.setMouseTracking(True)
+        
+        # hack for removing the dock title bar
+        self.setTitleBarWidget(QWidget())
+        self.setWidget(tb)
+        self.setFeatures(QDockWidget.NoDockWidgetFeatures)
+
+        self.app_admin.sections_changed_signal.connect(self.update_sections)
+        self.update_sections()
+
+    def wheelEvent(self, wheel_event):
+        steps = -1 * wheel_event.delta() / (8 * 15)
+        toolbox = self.findChild(QtGui.QWidget, 'toolbox')
+        if steps and toolbox:
+            current_index = toolbox.currentIndex()
+            toolbox.setCurrentIndex( max( 0, min( current_index + steps, toolbox.count() ) ) )
+        
+    @QtCore.pyqtSlot()
+    def update_sections(self):
+        post(self.app_admin.get_sections, self.set_sections)
 
     def get_sections(self):
         return self._sections
@@ -165,7 +158,8 @@ class NavigationPane(QDockWidget):
     @QtCore.pyqtSlot(object)
     def set_sections(self, sections):
         logger.debug('setting navpane sections')
-        animation = QtCore.QPropertyAnimation(self._toolbox, 'minimumWidth', self)
+        toolbox = self.findChild(QtGui.QWidget, 'toolbox')
+        animation = QtCore.QPropertyAnimation(toolbox, 'minimumWidth', self)
         animation.setDuration( 500 )
         animation.setStartValue( 0 )
         animation.setEndValue( 220 )
@@ -173,10 +167,10 @@ class NavigationPane(QDockWidget):
 
         # performs QToolBox clean up
         # QToolbox won't delete items we have to do it explicitly
-        count = self._toolbox.count()
+        count = toolbox.count()
         while count:
-            item = self._toolbox.widget(count-1)
-            self._toolbox.removeItem(count-1)
+            item = toolbox.widget(count-1)
+            toolbox.removeItem(count-1)
             item.deleteLater()
             count -= 1
             
@@ -184,9 +178,9 @@ class NavigationPane(QDockWidget):
             # TODO: old navpane used translation here
             name = unicode( section.get_verbose_name() )
             icon = section.get_icon().getQIcon()
-            pwdg = PaneSection(self._toolbox, section, self._workspace)
-            self._toolbox.addItem(pwdg, icon, name)
+            pwdg = PaneSection(toolbox, section, self._workspace)
+            toolbox.addItem(pwdg, icon, name)
 
-        self._toolbox.setCurrentIndex(0)
+        toolbox.setCurrentIndex(0)
         # WARNING: hardcoded width
         #self._toolbox.setMinimumWidth(220)
