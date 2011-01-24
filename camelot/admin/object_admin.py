@@ -68,7 +68,7 @@ be specified using the verbose_name attribute.
 
 A human-readable name for the object, singular ::
 
-verbose_name = _('movie')
+    verbose_name = _('movie')
 
 If this isn't given, the class name will be used
 
@@ -76,7 +76,7 @@ If this isn't given, the class name will be used
 
 A human-readable name for the object, plural ::
 
-verbose_name_plural = _('movies')
+    verbose_name_plural = _('movies')
 
 If this isn't given, Camelot will use verbose_name + "s"
 
@@ -102,8 +102,8 @@ as the number of lines of text it should be able to display.  Defaults to 1.
 a list with the fields that should be displayed in a form view, defaults to
 the same fields as those specified in list_display ::
 
-class Admin(EntityAdmin):
-  form_display = ['title', 'rating', 'cover']
+    class Admin(EntityAdmin):
+      form_display = ['title', 'rating', 'cover']
 
 instead of telling which forms to display. It is also possible to define
 the form itself ::
@@ -142,8 +142,8 @@ a list of tuples (button_label, action_function) where action_function
 takes as its single argument, a method that returns the the object that
 was displayed by the form when the button was pressed::
 
-class Admin(EntityAdmin):
-  form_actions = [('Foo', lamda o_getter:print 'foo')]
+    class Admin(EntityAdmin):
+      form_actions = [('Foo', lamda o_getter:print 'foo')]
 
 **Field attributes**
 
@@ -153,12 +153,12 @@ A dictionary specifying for each field of the model some additional
 attributes on how they should be displayed.  All of these attributes
 are propagated to the constructor of the delegate of this field::
 
-class Movie(Entity):
-  title = Field(Unicode(50))
-
-  class Admin(EntityAdmin):
-    list_display = ['title']
-    field_attributes = dict(title=dict(editable=False))
+    class Movie(Entity):
+      title = Field(Unicode(50))
+    
+      class Admin(EntityAdmin):
+        list_display = ['title']
+        field_attributes = dict(title=dict(editable=False))
 
 The :ref:`doc-admin-field_attributes` documentation describes the various keys
 that can be used in the field attributes class attribute of an ObjectAdmin or EntityAdmin.
@@ -172,14 +172,14 @@ Please use the constants defined in camelot.core.constants (MINIMIZE and MAXIMIZ
 Note that this attr needs to be set at the form, highest in the form hierarchy to work. Setting this on embedded forms
 will not influence the window state. Example::
 
-class Movie(Entity):
-  title = Field(Unicode(50))
-
-  class Admin(EntityAdmin):
-    from camelot.core import constants
-    list_display = ['title']
-    form_state = constants.MAXIMIZED
-    field_attributes = dict(title=dict(editable=False))
+    class Movie(Entity):
+      title = Field(Unicode(50))
+    
+      class Admin(EntityAdmin):
+        from camelot.core import constants
+        list_display = ['title']
+        form_state = constants.MAXIMIZED
+        field_attributes = dict(title=dict(editable=False))
 
 **Varia**
 
