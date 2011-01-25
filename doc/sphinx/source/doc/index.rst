@@ -28,3 +28,4 @@ All other sections can be read on an as needed base.
    schemas.rst
    shortcuts.rst
    threads.rst
+   faq.rst
