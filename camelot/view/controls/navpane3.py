@@ -31,13 +31,12 @@ from PyQt4 import QtGui, QtCore
 
 from PyQt4.QtCore import Qt
 
-from PyQt4.QtGui import QMenu, QFrame, QLabel, QWidget, \
-    QDockWidget, QVBoxLayout, QHBoxLayout, QSizePolicy
+from PyQt4.QtGui import QMenu, QFrame, QWidget, \
+    QDockWidget, QVBoxLayout, QHBoxLayout
 
 from camelot.view.action import ActionFactory
 from camelot.view.model_thread import post
 from camelot.view.controls.modeltree import ModelItem, ModelTree
-from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 
 class PaneButton(QWidget):
     """Custom made navigation pane button"""
