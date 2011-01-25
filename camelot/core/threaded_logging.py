@@ -87,7 +87,7 @@ class ThreadedAwsHandler(logging.Handler):
         import json
         ei = record.exc_info
         if ei:
-            dummy = self.format(record)
+            self.format(record)
             record.exc_info = None
         self._records_to_emit.append( json.dumps( record.__dict__ ) )
         if ei:
