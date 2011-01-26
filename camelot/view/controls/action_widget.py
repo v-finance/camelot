@@ -28,10 +28,9 @@ Created on May 22, 2010
 @author: tw55413
 '''
 from PyQt4 import QtGui
-#from PyQt4 import QtCore
+from PyQt4 import QtCore
 
 from camelot.view.model_thread import post
-
 
 class ActionWidget(QtGui.QPushButton):
     """A button that can be pushed to trigger an action"""
@@ -44,6 +43,7 @@ class ActionWidget(QtGui.QPushButton):
         self._entity_getter = entity_getter
         self.clicked.connect(self.triggered)
 
+    @QtCore.pyqtSlot()
     def triggered(self):
         """This slot is triggered when the user triggers the action."""
         self._action.run(self._entity_getter)
@@ -59,4 +59,3 @@ class ActionWidget(QtGui.QPushButton):
     def _is_enabled(self):
         obj = self._entity_getter()
         return self._action.enabled(obj)
-

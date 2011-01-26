@@ -686,14 +686,14 @@ class TableView( AbstractView  ):
         from camelot.view.controls.actionsbox import ActionsBox
         logger.debug( 'setting filters for tableview' )
         filters_widget = self.findChild(FilterList, 'filters')
+        actions_widget = self.findChild(FilterList, 'actions')
         if filters_widget:
             filters_widget.filters_changed_signal.disconnect( self.rebuild_query )
             self.filters_layout.removeWidget(filters_widget)
             filters_widget.deleteLater()
-        if self.actions:
+        if actions_widget:
             self.filters_layout.removeWidget(self.actions)
-            self.actions.deleteLater()
-            self.actions = None
+            actions_widget.deleteLater()
         if filters:
             splitter = self.findChild( QtGui.QWidget, 'splitter' )
             filters_widget = FilterList( filters, parent=splitter )
@@ -709,14 +709,14 @@ class TableView( AbstractView  ):
             # Attention, the ActionBox should only contain a reference to the
             # table, and not to the table model, since this will cause the
             # garbage collector to collect them both in random order, causing
-            # segfaults (see the test_qt_bindings
+            # segfaults (see the test_qt_bindings)
             #
-            self.actions = ActionsBox( self,
-                                       self.get_collection,
-                                       self.get_selection )
-
-            self.actions.setActions( actions )
-            self.filters_layout.addWidget( self.actions )
+            actions_widget = ActionsBox( self,
+                                         self.get_collection,
+                                         self.get_selection )
+            actions_widget.setObjectName( 'actions' )
+            actions_widget.setActions( actions )
+            self.filters_layout.addWidget( actions_widget )
 
     def to_html( self ):
         """generates html of the table"""
