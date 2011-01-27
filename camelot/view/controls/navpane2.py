@@ -29,7 +29,6 @@ logger = logging.getLogger('camelot.view.controls.navpane2')
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QIcon
 from PyQt4.QtGui import QMenu
 from PyQt4.QtGui import QFrame
 from PyQt4.QtGui import QWidget
