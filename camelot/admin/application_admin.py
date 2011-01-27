@@ -77,6 +77,8 @@ class ApplicationAdmin(QtCore.QObject):
     # be changed.
     title_changed_signal = QtCore.pyqtSignal(str)
 
+    database_selection = False
+
     def __init__(self):
         QtCore.QObject.__init__(self)
         _application_admin_.append(self)
