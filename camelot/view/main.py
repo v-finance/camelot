@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -21,9 +21,11 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
+
 """Main function, to be called to start the GUI interface"""
 from PyQt4 import QtCore
 from camelot.core.utils import ugettext as _
+
 
 class Application(QtCore.QObject):
     """The camelot application.  This class will take care of the order of
@@ -87,7 +89,9 @@ class Application(QtCore.QObject):
         present the user with a dialog to select the database to use, and to store the
         result in some global variable that is later used in the settings.ENGINE function.
         """
-        pass
+        if self.application_admin.database_selection:
+            from camelot.view.database_selection import select_database
+            select_database()
 
     def start_model_thread(self):
         """Launch the second thread where the model lives"""
