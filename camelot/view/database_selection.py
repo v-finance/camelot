@@ -209,5 +209,28 @@ class DatabaseSelectionWizard(QWizard):
                 logger.info('Database settings saved')
 
         self.addPage(DatabaseSelectionPage())
-        self.addPage(ConfigurationFinished())
+        #self.addPage(ConfigurationFinished())
         self.setOption(QWizard.NoBackButtonOnStartPage)
+
+    def done(self, r):
+
+        if r:
+            logger.info('Saving database settings')
+            
+            settings = QSettings()
+            settings.setValue('database/driver', QVariant(encode_setting(
+                'mysql')))
+            settings.setValue('database/dialect', QVariant(encode_setting(
+                str(self.field('database_dialect').toString()))))
+            settings.setValue('database/host', QVariant(encode_setting(
+                str(self.field('database_host').toString()))))
+            settings.setValue('database/user', QVariant(encode_setting(
+                str(self.field('database_user').toString()))))
+            settings.setValue('database/password', QVariant(encode_setting(
+                str(self.field('database_password').toString()))))
+            settings.setValue('database/name', QVariant(encode_setting(
+                str(self.field('database_name').toString()))))
+
+            logger.info('Database settings saved')
+            
+        super(DatabaseSelectionWizard, self).done(r)
