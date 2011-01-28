@@ -86,6 +86,12 @@ class ThreadedAwsHandler(logging.Handler):
         # inspired by the code in logging.handlers.SocketHandler
         import json
         ei = record.exc_info
+        #
+        # prevent infinite loops when the boto lib logs something when
+        # a log is send to the queue
+        #
+        if record.name and record.name.startswith('boto'):
+            return
         if ei:
             self.format(record)
             record.exc_info = None
