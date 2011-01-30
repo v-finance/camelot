@@ -61,7 +61,7 @@ class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
         @model_function
         def insert():
             o = entity_instance_getter()
-            self.model.insertEntityInstance( 0, o )
+            self.model.append_object( o )
 
         post( insert, self.emit_editing_finished )
 

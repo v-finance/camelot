@@ -548,9 +548,8 @@ class TableView( AbstractView  ):
     def newRow( self ):
         """Create a new row in the tableview"""
         from camelot.view.workspace import show_top_level
-        form = self.admin.create_new_view( parent = None,
-                                           oncreate = lambda o:self._table_model.insertEntityInstance( 0, o ),
-                                           onexpunge = self._table_model.remove_objects )
+        form = self.admin.create_new_view( parent = None )
+        form.entity_created_signal.connect( self._table_model.append_row )
         show_top_level( form, self )
 
     def closeEvent( self, event ):

@@ -181,6 +181,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
     item_delegate_changed_signal = QtCore.pyqtSignal()
     row_changed_signal = QtCore.pyqtSignal(int)
+    exception_signal = QtCore.pyqtSignal(object)
 
     @gui_function
     def __init__( self, admin, collection_getter, columns_getter,
@@ -964,7 +965,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             def copy_function():
                 o = self._get_object(row)
                 new_object = self.admin.copy( o )
-                self.insertEntityInstance(self.getRowCount(), new_object)
+                self.append(new_object)
 
             return copy_function
 
@@ -972,24 +973,25 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         return True
 
     @model_function
-    def insertEntityInstance( self, row, o ):
-        """Insert object o into this collection, set the possible defaults and flush
+    def append_object( self, obj ):
+        """Append an object to this collection, set the possible defaults and flush
         the object if possible/needed
-        :param o: the object to be added to the collection
-        :return: the row at which the object was inserted
+        
+        :param obj: the object to be added to the collection
+        :return: the number of rows in the collection
         """
-        self.append( o )
+        self.append( obj )
         # defaults might depend on object being part of a collection
-        self.admin.set_defaults( o )
+        self.admin.set_defaults( obj )
         row = self.getRowCount() - 1
         self.unflushed_rows.add( row )
-        if self.flush_changes and not len( self.validator.objectValidity( o ) ):
-            self.admin.flush( o )
+        if self.flush_changes and not len( self.validator.objectValidity( obj ) ):
+            self.admin.flush( obj )
             try:
                 self.unflushed_rows.remove( row )
             except KeyError:
                 pass
-        for depending_obj in self.admin.get_depending_objects( o ):
+        for depending_obj in self.admin.get_depending_objects( obj ):
             self.rsh.sendEntityUpdate( self, depending_obj )
 # TODO : it's not because an object is added to this list, that it was created
 # it might as well exist allready, eg. manytomany relation
@@ -1000,21 +1002,24 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 #                       authentication = getCurrentAuthentication())
 #      elixir.session.flush([history])
 #      self.rsh.sendEntityCreate(self, o)
-        post( self.getRowCount, self._refresh_content )
-        return row
+        return self.getRowCount()
 
+    @QtCore.pyqtSlot(object)
     @gui_function
-    def insertRow( self, row, entity_instance_getter ):
+    def append_row( self, object_getter ):
+        """
+        :param object_getter: a function that returns the object to be put in the
+        appended row.
+        """
 
-        def create_insert_function( getter ):
+        def create_append_function( getter ):
 
-            @model_function
-            def insert_function():
-                self.insertEntityInstance( row, getter() )
+            def append_function():
+                return self.append_object( getter() )
 
-            return insert_function
+            return append_function
 
-        post( create_insert_function( entity_instance_getter ) )
+        post( create_append_function( object_getter ), self._refresh_content )
 
     @model_function
     def getData( self ):

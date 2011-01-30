@@ -648,7 +648,7 @@ The QWidget class to be used when a table view is needed
         return self.create_form_view(title, model, 0, parent)
 
     @gui_function
-    def create_new_view(admin, parent=None, oncreate=None, onexpunge=None):
+    def create_new_view(admin, parent=None):
         """Create a Qt widget containing a form to create a new instance of the
         entity related to this admin class
 
@@ -664,8 +664,6 @@ The QWidget class to be used when a table view is needed
         def collection_getter():
             if not new_object:
                 entity_instance = admin.entity()
-                if oncreate:
-                    oncreate(entity_instance)
                 # Give the default fields their value
                 admin.set_defaults(entity_instance)
                 new_object.append(entity_instance)
@@ -731,20 +729,9 @@ The QWidget class to be used when a table view is needed
                         # clear mapping to prevent data being written again to
                         # the model, after we reverted the row
                         form.clear_mapping()
-
-                        def onexpunge_on_all():
-                            if onexpunge:
-                                onexpunge( new_object )
-
-                        post(onexpunge_on_all)
                         self.validate_before_close = False
                         self.close()
                 else:
-                    def create_instance_getter(new_object):
-                        return lambda:new_object[0]
-
-                    for _o in new_object:
-                        self.entity_created_signal.emit( create_instance_getter(new_object) )
                     self.validate_before_close = False
                     self.close()
 
