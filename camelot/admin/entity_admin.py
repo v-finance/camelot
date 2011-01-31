@@ -57,6 +57,24 @@ field name should be followed by a field name of the related entity ::
 
 .. image:: ../_static/filter/group_box_filter.png
 
+**Copying**
+
+.. attribute:: copy_deep
+
+A dictionary of fields that will be deep copied when the user presses the copy
+button.  This is usefull for OneToMany fields.  The key in the dictionary should
+be the name of the field, and the value is a new dictionary that can contain other
+fields that need to be copied::
+
+    copy_deep = {'addresses':{}}
+
+.. attribute:: copy_exclude
+
+A list of fields that should not be copied when the user presses the copy button::
+
+    copy_exclude = ['name']
+
+The fields that form the primary key of the object will be excluded by default.
 
 **Searching**
 
@@ -79,6 +97,8 @@ attribute to enable search.
     """
 
     list_search = []
+    copy_deep = {}
+    copy_exclude = []
     search_all_fields = True
     validator = EntityValidator
 
@@ -536,7 +556,7 @@ attribute to enable search.
         """Duplicate this entity instance"""
         from sqlalchemy import orm
         new_entity_instance = entity_instance.__class__()
-        new_entity_instance.from_dict( entity_instance.to_dict(exclude=[c.name for c in self.mapper.primary_key]) )
+        new_entity_instance.from_dict( entity_instance.to_dict(deep=self.copy_deep, exclude=[c.name for c in self.mapper.primary_key]+self.copy_exclude) )
         #
         # recreate the ManyToOne relations
         #
