@@ -40,12 +40,10 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
                  parent=None,
                  minimum=constants.camelot_minint,
                  maximum=constants.camelot_maxint,
-                 editable=True,
 		 nullable=True,
                  **kwargs):
         QtGui.QCheckBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-        self.setEnabled(editable)
         self._nullable = nullable
         if self._nullable:
             self.setTristate( True )
@@ -83,6 +81,8 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         size = QtGui.QComboBox().sizeHint()
         return size
 
+    def set_field_attributes(self, editable=True, **kwargs):
+        self.set_enabled(editable)
 
 class TextBoolEditor(QtGui.QLabel, AbstractCustomEditor):
     """
