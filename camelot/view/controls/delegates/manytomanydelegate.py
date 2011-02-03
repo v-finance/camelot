@@ -45,5 +45,5 @@ class ManyToManyDelegate(One2ManyDelegate):
 
     def setModelData(self, editor, model, index):
         if editor.getModel():
-            model.setData(index, editor.getModel().collection_getter)
+            model.setData(index, editor.getModel().get_collection)
 

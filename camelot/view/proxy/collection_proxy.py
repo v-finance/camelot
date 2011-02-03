@@ -891,6 +891,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         if o not in collection:
             collection.append( o )
             self._rows += 1
+            self.layoutChanged.emit()
 
     @model_function
     def remove_objects( self, objects_to_remove, delete = True ):

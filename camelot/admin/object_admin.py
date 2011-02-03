@@ -731,7 +731,7 @@ The QWidget class to be used when a table view is needed
                     self.entity_created_signal.emit( model.get_new_object )
 
             @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
-            def dataChanged(self, index1, index2):
+            def dataChanged(self, _index1, _index2):
 
                 def validate():
                     return validator.isValid(0)
