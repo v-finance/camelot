@@ -73,6 +73,21 @@ class TableViewCases(unittest.TestCase):
             register.register_model_view(model, widget)
             gc.collect()
 
+class SignalEmitter(QtCore.QObject):
+    
+    my_signal = QtCore.pyqtSignal(object)
+    
+    def start_emitting(self):
+        for _i in range(1000):
+            o = object()
+            self.my_signal.emit(o)
+
+class SignalReceiver(QtCore.QObject):
+    
+    @QtCore.pyqtSlot(object)
+    def my_slot(self, obj):
+        print obj
+
 class SignalSlotCase( unittest.TestCase ):
     
     def setUp(self):
@@ -85,21 +100,6 @@ class SignalSlotCase( unittest.TestCase ):
         
         this used to deadlock in pyqt.
         """
-        
-        class SignalEmitter(QtCore.QObject):
-            
-            my_signal = QtCore.pyqtSignal(object)
-            
-            def start_emitting(self):
-                for _i in range(1000):
-                    o = object()
-                    self.my_signal.emit(o)
-        
-        class SignalReceiver(QtCore.QObject):
-            
-            @QtCore.pyqtSlot(object)
-            def my_slot(self, obj):
-                pass
             
         emitter = SignalEmitter()
         
@@ -116,3 +116,31 @@ class SignalSlotCase( unittest.TestCase ):
         thread.start()
         emitter.start_emitting()
         thread.wait()
+        
+    def test_received_signals(self):
+        """See what happens when an object that has
+        been deleted receives signals"""
+        
+        class ReceiverParent(QtCore.QObject):
+            
+            def __init__(self):
+                super(ReceiverParent, self).__init__()
+                self.receiver = SignalReceiver(parent=self)
+        
+        receiver_parent = ReceiverParent()
+                
+        class EmittingThread(QtCore.QThread):
+            
+            my_signal = QtCore.pyqtSignal(object)
+            
+            def run(self):
+                for i in range(1000):
+                    self.my_signal.emit( i )
+                                    
+        thread = EmittingThread()
+        thread.my_signal.connect( receiver_parent.receiver.my_slot, QtCore.Qt.QueuedConnection )
+        #del receiver_parent
+        thread.start()
+        #del receiver_parent
+        thread.wait()
+        self.app.processEvents()

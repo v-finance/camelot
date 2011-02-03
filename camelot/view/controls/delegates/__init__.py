@@ -113,7 +113,7 @@ _add_subclasses(CustomDelegate)
 
 custom_delegates.sort(key=lambda d:d.__name__)
 for custom_delegate in custom_delegates:
-    doc = doc + custom_delegate.__name__ + '\n' + '-'*len(custom_delegate.__name__) + '\n'
+    doc = doc + '\n' + custom_delegate.__name__ + '\n' + '-'*len(custom_delegate.__name__) + '\n'
     if hasattr(custom_delegate, '__doc__') and custom_delegate.__doc__:
         doc = doc + custom_delegate.__doc__ + '\n'
 

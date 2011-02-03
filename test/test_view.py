@@ -507,6 +507,11 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value('A person with this name allready exists')
         self.grab_widget( editor, 'editable' )
 
+    def test_LabelEditor(self):
+        editor = self.editors.LabelEditor(parent=None)
+        editor.set_value('Dynamic label')
+        self.grab_widget( editor, 'editable' )
+        
     def test_RichTextEditor(self):
         editor = self.editors.RichTextEditor(parent=None)
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -813,7 +818,31 @@ class DelegateTest(ModelThreadTestCase):
         self.grab_delegate(delegate, 'a')
         delegate = self.delegates.EnumerationDelegate(parent=None, choices=choices, editable=False)
         self.grab_delegate(delegate, 'a', 'disabled')
+        
+    def testLabelDelegate(self):
+        delegate = self.delegates.LabelDelegate(parent=None)
+        self.grab_delegate(delegate, 'dynamic label')
+        delegate = self.delegates.LabelDelegate(parent=None, editable=False)
+        self.grab_delegate(delegate, 'dynamic label', 'disabled')
 
+    def testNoteDelegate(self):
+        delegate = self.delegates.NoteDelegate(parent=None)
+        self.grab_delegate(delegate, 'important note')
+        delegate = self.delegates.NoteDelegate(parent=None, editable=False)
+        self.grab_delegate(delegate, 'important note', 'disabled')
+        
+    def testMonthsDelegate(self):
+        delegate = self.delegates.MonthsDelegate(parent=None)
+        self.grab_delegate(delegate, 15)
+        delegate = self.delegates.MonthsDelegate(parent=None, editable=False)
+        self.grab_delegate(delegate, 15, 'disabled')
+
+    def testMany2OneDelegate(self):
+        delegate = self.delegates.Many2OneDelegate(parent=None, admin=object())
+        self.grab_delegate(delegate, None)
+        delegate = self.delegates.Many2OneDelegate(parent=None, editable=False, admin=object())
+        self.grab_delegate(delegate, None, 'disabled')
+        
     def testTimeDelegate(self):
         from datetime import time
         delegate = self.delegates.TimeDelegate(parent=None, editable=True)

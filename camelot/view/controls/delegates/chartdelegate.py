@@ -28,7 +28,8 @@ import logging
 LOGGER = logging.getLogger('camelot.view.controls.delegates.chartdelegate')
 
 class ChartDelegate(CustomDelegate):
-    """Custom delegate for Matplotlib charts"""
+    """Custom delegate for Matplotlib charts
+    """
 
     editor = ChartEditor
     

@@ -25,17 +25,19 @@
 from PyQt4.QtCore import Qt
 
 from camelot.view.controls.editors import MonthsEditor
-from camelot.view.controls.delegates import CustomDelegate
+from camelot.view.controls.delegates.customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.core.utils import variant_to_pyobject, ugettext
 from camelot.view.proxy import ValueLoading
 
 class MonthsDelegate(CustomDelegate):
     """MonthsDelegate
 
-    custom delegate for showing and editing quarters in a year
+    custom delegate for showing and editing months and years
     """
 
     editor = MonthsEditor
+
+    __metaclass__ = DocumentationMetaclass
 
     def __init__(self, parent=None, forever=200*12, **kwargs):
         """
