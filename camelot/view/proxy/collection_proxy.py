@@ -214,7 +214,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         else:
             self.form_icon = QtCore.QVariant()
         self.validator = admin.create_validator( self )
-        self.collection_getter = collection_getter
+        self._collection_getter = collection_getter
         self.column_count = 0
         self.flush_changes = flush_changes
         self.delegate_manager = None
@@ -223,7 +223,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self._rows = 0
         self._columns = []
         self._static_field_attributes = []
-        self.max_number_of_rows = max_number_of_rows
+        self._max_number_of_rows = max_number_of_rows
         self.display_cache = Fifo( 10 * self.max_number_of_rows )
         self.edit_cache = Fifo( 10 * self.max_number_of_rows )
         self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
@@ -251,6 +251,11 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
 
+    @property
+    def max_number_of_rows(self):
+        """The maximum number of rows to be displayed at once"""
+        return self._max_number_of_rows
+
     def get_validator(self):
         return self.validator
 
@@ -263,7 +268,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     def updateUnflushedRows( self ):
         """Verify all rows to see if some of them should be added to the
         unflushed rows"""
-        for i, e in enumerate( self.collection_getter() ):
+        for i, e in enumerate( self.get_collection() ):
             if hasattr(e, 'id') and not e.id:
                 self.unflushed_rows.add( i )
 
@@ -279,7 +284,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     def getRowCount( self ):
         # make sure we don't count an object twice if it is twice
         # in the list, since this will drive the cache nuts
-        rows = len( set( self.collection_getter() ) )
+        rows = len( set( self.get_collection() ) )
         return rows
 
     @gui_function
@@ -321,12 +326,12 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
     def set_collection_getter( self, collection_getter ):
         self.logger.debug('set collection getter')
-        self.collection_getter = collection_getter
+        self._collection_getter = collection_getter
         self.refresh()
 
     @model_function
     def get_collection( self ):
-        return self.collection_getter()
+        return self._collection_getter()
 
     @gui_function
     def handleRowUpdate( self, row ):
@@ -519,7 +524,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         def create_sort(column, order):
 
             def sort():
-                unsorted_collection = [(i,o) for i,o in enumerate(self.collection_getter())]
+                unsorted_collection = [(i,o) for i,o in enumerate(self.get_collection())]
                 key = lambda item:getattr(item[1], self._columns[column][0])
                 unsorted_collection.sort(key=key, reverse=order)
                 for j,(i,_o) in enumerate(unsorted_collection):
@@ -817,7 +822,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         offset, limit = self._offset_and_limit_rows_to_get()
         if limit:
             columns = self.getColumns()
-            collection = self.collection_getter()
+            collection = self.get_collection()
             skipped_rows = 0
             for i in range(offset, min(offset + limit + 1, self._rows)):
                 object_found = False
@@ -843,7 +848,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         except KeyError:
             pass
         try:
-            return self.collection_getter()[self.map_to_source(sorted_row_number)]
+            return self.get_collection()[self.map_to_source(sorted_row_number)]
         except IndexError:
             pass
         return None
@@ -875,14 +880,14 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 
     @model_function
     def remove( self, o ):
-        collection = self.collection_getter()
+        collection = self.get_collection()
         if o in collection:
             collection.remove( o )
             self._rows -= 1
 
     @model_function
     def append( self, o ):
-        collection = self.collection_getter()
+        collection = self.get_collection()
         if o not in collection:
             collection.append( o )
             self._rows += 1
@@ -1024,7 +1029,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     @model_function
     def getData( self ):
         """Generator for all the data queried by this proxy"""
-        for _i, o in enumerate( self.collection_getter() ):
+        for _i, o in enumerate( self.get_collection() ):
             yield strip_data_from_object( o, self.getColumns() )
 
     def get_admin( self ):

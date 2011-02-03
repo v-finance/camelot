@@ -191,8 +191,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             post( create, self.activate_editor )
 
         else:
-            form = self.admin.create_new_view( parent = None )
-            form.entity_created_signal.connect( self.model.append_row )
+            form = self.admin.create_new_view( related_collection_proxy=self.model, parent = None )
             show_top_level( form, self )
 
     def copy_selected_rows( self ):
@@ -211,7 +210,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         from camelot.view.workspace import show_top_level
         from camelot.view.proxy.collection_proxy import CollectionProxy
         model = CollectionProxy( self.admin,
-                                 self.model.collection_getter,
+                                 self.model.get_collection,
                                  self.admin.get_fields,
                                  max_number_of_rows = 1,
                                  edits = None )

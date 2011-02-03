@@ -648,33 +648,54 @@ The QWidget class to be used when a table view is needed
         return self.create_form_view(title, model, 0, parent)
 
     @gui_function
-    def create_new_view(admin, parent=None):
+    def create_new_view(admin, related_collection_proxy=None, parent=None):
         """Create a Qt widget containing a form to create a new instance of the
         entity related to this admin class
 
         The returned class has an 'entity_created_signal' that will be fired
         when a valid new entity was created by the form
+
+        :param collection_proxy: if specified, the object will be appended to
+        its underlying collection upon creation and removed from it upon
+        discarding.
         """
         from PyQt4 import QtGui, QtCore
         from camelot.view.controls.view import AbstractView
         from camelot.view.model_thread import post
-        new_object = []
 
-        @model_function
-        def collection_getter():
-            if not new_object:
-                entity_instance = admin.entity()
-                # Give the default fields their value
-                admin.set_defaults(entity_instance)
-                new_object.append(entity_instance)
-            return new_object
+        class NewObjectCollectionProxy( CollectionProxy ):
+            """A CollectionProxy for creating new objects, the underlying collection
+            will always be filled with a single object."""
 
-        model = CollectionProxy(
-            admin,
-            collection_getter,
-            admin.get_fields,
-            max_number_of_rows=1
-        )
+            def __init__(self, related_collection_proxy, *args, **kwargs):
+                # set attributes before initializing NewObjectCollectionProxy,
+                # because this one contains posts that need these attributes
+                self._new_object = None
+                self._related_collection_proxy = related_collection_proxy
+                super(NewObjectCollectionProxy, self).__init__(*args, **kwargs)
+            
+            @property
+            def max_number_of_rows(self):
+                return 1
+
+            def get_new_object(self):
+                if not self._new_object:
+                    self._new_object = admin.entity()
+                    # Give the default fields their value
+                    admin.set_defaults(self._new_object)
+                    if self._related_collection_proxy:
+                        self._related_collection_proxy.append( self._new_object )
+                return self._new_object
+                
+            def get_collection(self):
+                return [self.get_new_object()]
+
+        model = NewObjectCollectionProxy( related_collection_proxy,
+                                          admin,
+                                          None,
+                                          admin.get_fields,
+                                          max_number_of_rows=1 )
+
         post(model.updateUnflushedRows)
         validator = admin.create_validator(model)
 
@@ -707,9 +728,7 @@ The QWidget class to be used when a table view is needed
                     def create_instance_getter(new_object):
                         return lambda:new_object[0]
 
-                    self.entity_created_signal.emit(
-                        create_instance_getter(new_object)
-                    )
+                    self.entity_created_signal.emit( model.get_new_object )
 
             @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
             def dataChanged(self, index1, index2):
@@ -752,7 +771,7 @@ The QWidget class to be used when a table view is needed
                         def validate_and_flush():
                             valid = validator.isValid(0)
                             if valid:
-                                admin.flush(new_object[0])
+                                admin.flush( model.get_new_object() )
                             return valid
 
                         post(validate_and_flush, self.showMessage)

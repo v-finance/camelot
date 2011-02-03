@@ -548,7 +548,8 @@ class TableView( AbstractView  ):
     def newRow( self ):
         """Create a new row in the tableview"""
         from camelot.view.workspace import show_top_level
-        form = self.admin.create_new_view( parent = None )
+        form = self.admin.create_new_view( related_collection_proxy=self.get_model(),
+                                           parent = None )
         form.entity_created_signal.connect( self._table_model.append_row )
         show_top_level( form, self )
 
@@ -685,13 +686,13 @@ class TableView( AbstractView  ):
         from camelot.view.controls.actionsbox import ActionsBox
         logger.debug( 'setting filters for tableview' )
         filters_widget = self.findChild(FilterList, 'filters')
-        actions_widget = self.findChild(FilterList, 'actions')
+        actions_widget = self.findChild(ActionsBox, 'actions')
         if filters_widget:
             filters_widget.filters_changed_signal.disconnect( self.rebuild_query )
             self.filters_layout.removeWidget(filters_widget)
             filters_widget.deleteLater()
         if actions_widget:
-            self.filters_layout.removeWidget(self.actions)
+            self.filters_layout.removeWidget(actions_widget)
             actions_widget.deleteLater()
         if filters:
             splitter = self.findChild( QtGui.QWidget, 'splitter' )
