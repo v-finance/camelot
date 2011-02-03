@@ -971,7 +971,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             def copy_function():
                 o = self._get_object(row)
                 new_object = self.admin.copy( o )
-                self.append(new_object)
+                self.append_object(new_object)
 
             return copy_function
 

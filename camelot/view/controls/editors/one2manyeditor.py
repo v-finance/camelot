@@ -39,6 +39,9 @@ from camelot.view import register
 class One2ManyEditor(CustomEditor, WideEditor):
 
     new_icon = Icon('tango/16x16/actions/document-new.png')
+    delete_icon = Icon( 'tango/16x16/places/user-trash.png' )
+    copy_icon = Icon( 'tango/16x16/actions/edit-copy.png' )
+    spreadsheet_icon = Icon( 'tango/16x16/mimetypes/x-office-spreadsheet.png' )
     
     def __init__( self,
                  admin = None,
@@ -99,8 +102,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         button_layout = QtGui.QVBoxLayout()
         button_layout.setSpacing( 0 )
         self.delete_button = QtGui.QToolButton()
-        icon = Icon( 'tango/16x16/places/user-trash.png' ).getQIcon()
-        self.delete_button.setIcon( icon )
+        self.delete_button.setIcon( self.delete_icon.getQIcon() )
         self.delete_button.setAutoRaise( True )
         self.delete_button.setToolTip(_('Delete'))
         self.delete_button.clicked.connect(self.deleteSelectedRows)
@@ -111,13 +113,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.add_button.setToolTip(_('New'))
         self.add_button.clicked.connect(self.newRow)
         self.copy_button = QtGui.QToolButton()
-        icon = Icon( 'tango/16x16/actions/edit-copy.png' ).getQIcon()
-        self.copy_button.setIcon( icon )
+        self.copy_button.setIcon( self.copy_icon.getQIcon() )
         self.copy_button.setAutoRaise( True )
         self.copy_button.setToolTip(_('Copy'))
         self.copy_button.clicked.connect(self.copy_selected_rows)
         export_button = QtGui.QToolButton()
-        export_button.setIcon( Icon( 'tango/16x16/mimetypes/x-office-spreadsheet.png' ).getQIcon() )
+        export_button.setIcon( self.spreadsheet_icon.getQIcon() )
         export_button.setAutoRaise( True )
         export_button.setToolTip(_('Export as spreadsheet'))
         export_button.clicked.connect(self.exportToExcel)
