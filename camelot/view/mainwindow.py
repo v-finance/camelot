@@ -100,9 +100,10 @@ class MainWindow(QtGui.QMainWindow):
 
         logger.debug('setting up printer object')
         self.printer = Printer()
-
-        logger.debug('setting up window title')
-        self.setWindowTitle(self.app_admin.get_name())
+        
+        windowtitle = self.app_admin.get_name()
+        logger.debug('setting up window title: %s' % windowtitle)
+        self.setWindowTitle(windowtitle)
         self.app_admin.title_changed_signal.connect( self.setWindowTitle )
 
         #QtCore.QTimer.singleShot(0, self.doInitialization)
