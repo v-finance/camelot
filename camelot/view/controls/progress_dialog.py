@@ -41,16 +41,21 @@ class ProgressDialog(QtGui.QProgressDialog):
     
     """
 
-    def __init__(self, name, icon=Icon('tango/32x32/actions/appointment-new.png')):
+    progress_icon = Icon('tango/32x32/actions/appointment-new.png')
+    
+    def __init__(self, name, icon=progress_icon):
         QtGui.QProgressDialog.__init__( self, QtCore.QString(), QtCore.QString(), 0, 0 )
         label = QtGui.QLabel(unicode(name))
         #label.setPixmap(icon.getQPixmap())
         self.setLabel(label)
         self.setWindowTitle( _('Please wait') )
 
-    def finished(self, success):
+    @QtCore.pyqtSlot(bool)
+    @QtCore.pyqtSlot()
+    def finished(self, success=True):
         self.close()
         
+    @QtCore.pyqtSlot(object)
     def exception(self, exception_info):
         from camelot.view.controls.exception import model_thread_exception_message_box
         model_thread_exception_message_box(exception_info)

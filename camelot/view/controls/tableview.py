@@ -35,6 +35,7 @@ from PyQt4.QtGui import QSizePolicy
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
+from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.model_thread import post
 from camelot.view.model_thread import gui_function
 from camelot.view.model_thread import model_function
@@ -65,7 +66,10 @@ class FrozenTableWidget( QtGui.QTableView ):
         super(FrozenTableWidget, self).currentChanged(current, previous)
 
 class TableWidget( QtGui.QTableView ):
-    """A widget displaying a table, to be used within a TableView
+    """A widget displaying a table, to be used within a TableView.  This is a
+pumped up version of the QTableView widget providing extra functions such as
+frozen columns.  But it does not rely on the model being Camelot specific, or
+a Collection Proxy.
 
 .. attribute:: margin
 
@@ -245,6 +249,43 @@ and above the text.
         self.setRowHeight( row, max( new_size.height(),
                                      self._minimal_row_height ) )
 
+class AdminTableWidget(TableWidget):
+    """A table widget that inspects the admin class and changes the behavior
+    of the table as specified in the admin class"""
+    
+    def __init__(self, admin, parent=None):
+        self._admin = admin
+        super(AdminTableWidget, self).__init__( columns_frozen = admin.list_columns_frozen,
+                                                lines_per_row = admin.lines_per_row,
+                                                parent=parent )
+                                   
+    @QtCore.pyqtSlot()
+    def delete_selected_rows(self):
+        logger.debug( 'delete selected rows called' )
+        confirmation_message = self._admin.get_confirm_delete()
+        confirmed = True
+        rows = set( index.row() for index in self.selectedIndexes() )
+        if not rows:
+            return
+        if confirmation_message:
+            if QtGui.QMessageBox.question(self,
+                                          _('Please confirm'),
+                                          unicode(confirmation_message),
+                                          QtGui.QMessageBox.Yes,
+                                          QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
+                confirmed = False
+        if confirmed:
+            #
+            # if there is an open editor on a row that will be deleted, there
+            # might be an assertion failure in QT
+            #
+            progress_dialog = ProgressDialog(_('Removing'))
+            self.model().rows_removed_signal.connect( progress_dialog.finished )
+            self.model().exception_signal.connect( progress_dialog.exception )
+            self.close_editor()
+            self.model().remove_rows( set( rows ) )
+            progress_dialog.exec_()
+        
 class RowsWidget( QtGui.QLabel ):
     """Widget that is part of the header widget, displaying the number of rows
     in the table view"""
@@ -379,7 +420,7 @@ class TableView( AbstractView  ):
   """
 
     header_widget = HeaderWidget
-    TableWidget = TableWidget
+    AdminTableWidget = AdminTableWidget
 
     #
     # The proxy class to use
@@ -501,9 +542,7 @@ class TableView( AbstractView  ):
             self.table.deleteLater()
             self._table_model.deleteLater()
         splitter = self.findChild( QtGui.QWidget, 'splitter' )
-        self.table = self.TableWidget( splitter,
-                                       self.admin.list_columns_frozen,
-                                       lines_per_row = self.admin.lines_per_row )
+        self.table = self.AdminTableWidget( self.admin, splitter )
         self._table_model = self.create_table_model( admin )
         self.table.setModel( self._table_model )
         self.table.verticalHeader().sectionClicked.connect( self.sectionClicked )
@@ -530,19 +569,7 @@ class TableView( AbstractView  ):
 
     def deleteSelectedRows( self ):
         """delete the selected rows in this tableview"""
-        logger.debug( 'delete selected rows called' )
-        confirmation_message = self.admin.get_confirm_delete()
-        confirmed = True
-        if confirmation_message:
-            if QtGui.QMessageBox.question(self,
-                                          _('Please confirm'),
-                                          unicode(confirmation_message),
-                                          QtGui.QMessageBox.Yes,
-                                          QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
-                confirmed = False
-        if confirmed:
-            rows = set( index.row() for index in self.table.selectedIndexes() )
-            self._table_model.remove_rows( set( rows ) )
+        self.table.delete_selected_rows()
 
     @gui_function
     def newRow( self ):

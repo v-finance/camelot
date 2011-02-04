@@ -68,17 +68,17 @@ class One2ManyEditor(CustomEditor, WideEditor):
         #
         # Setup table
         #
-        from camelot.view.controls.tableview import TableWidget
+        from camelot.view.controls.tableview import AdminTableWidget
         # parent set by layout manager
-        self.table = TableWidget(lines_per_row=admin.lines_per_row, 
-                                 columns_frozen=admin.list_columns_frozen)
+        table = AdminTableWidget(admin, self)
+        table.setObjectName('table')
         rowHeight = QtGui.QFontMetrics( self.font() ).height() + 5
         layout.setSizeConstraint( QtGui.QLayout.SetNoConstraint )
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
                             QtGui.QSizePolicy.Expanding )
         self.setMinimumHeight( rowHeight*5 )
         if vertical_header_clickable:
-            self.table.verticalHeader().sectionClicked.connect(
+            table.verticalHeader().sectionClicked.connect(
                 self.createFormForIndex
             )
         self.admin = admin
@@ -86,8 +86,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.add_button = None
         self.copy_button = None
         self.delete_button = None
-        layout.addWidget( self.table )
-        self.setupButtons( layout )
+        layout.addWidget( table )
+        self.setupButtons( layout, table )
         self.setLayout( layout )
         self.model = None
         self._new_message = None
@@ -98,14 +98,14 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.delete_button.setEnabled(editable)
         self._new_message = new_message
 
-    def setupButtons( self, layout ):
+    def setupButtons( self, layout, table ):
         button_layout = QtGui.QVBoxLayout()
         button_layout.setSpacing( 0 )
         self.delete_button = QtGui.QToolButton()
         self.delete_button.setIcon( self.delete_icon.getQIcon() )
         self.delete_button.setAutoRaise( True )
         self.delete_button.setToolTip(_('Delete'))
-        self.delete_button.clicked.connect(self.deleteSelectedRows)
+        self.delete_button.clicked.connect(table.delete_selected_rows)
         self.add_button = QtGui.QToolButton()
         icon = self.new_icon.getQIcon()
         self.add_button.setIcon( icon )
@@ -146,21 +146,23 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     @QtCore.pyqtSlot(object)
     def update_delegates( self, *args ):
-        if self.model:
+        table = self.findChild(QtGui.QWidget, 'table')
+        if self.model and table:
             delegate = self.model.getItemDelegate()
             if delegate:
-                self.table.setItemDelegate( delegate )
+                table.setItemDelegate( delegate )
                 for i in range( self.model.columnCount() ):
                     txtwidth = self.model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
-                    colwidth = self.table.columnWidth( i )
-                    self.table.setColumnWidth( i, max( txtwidth, colwidth ) )
+                    colwidth = table.columnWidth( i )
+                    table.setColumnWidth( i, max( txtwidth, colwidth ) )
 
     def set_value( self, model ):
         model = CustomEditor.set_value( self, model )
-        if model and model != self.model:
+        table = self.findChild(QtGui.QWidget, 'table')
+        if table and model and model != self.model:
             self.model = model
-            self.table.setModel( model )
-            register.register( self.model, self.table )
+            table.setModel( model )
+            register.register( self.model, table )
             post( model._extend_cache, self.update_delegates )
 
     @gui_function
@@ -172,10 +174,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
 # The segfault seems no longer there after disabling the
 # editor before setting a new model, but the code below
 # seems to have no effect.
-        index = self.model.index( _row, 0 )
-        self.table.scrollToBottom()
-        self.table.setCurrentIndex( index )
-        self.table.edit( index )
+        table = self.findChild(QtGui.QWidget, 'table')
+        if table:
+            index = self.model.index( _row, 0 )
+            table.scrollToBottom()
+            table.setCurrentIndex( index )
+            table.edit( index )
 
     def newRow( self ):
         from camelot.view.workspace import show_top_level
@@ -204,8 +208,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
     def deleteSelectedRows( self ):
         """Delete the selected rows in this tableview"""
         LOGGER.debug( 'delete selected rows called' )
-        self.table.close_editor()
-        self.model.remove_rows( set( map( lambda x: x.row(), self.table.selectedIndexes() ) ) )
+        table = self.findChild(QtGui.QWidget, 'table')
+        if table:
+            table.delete_selected_rows()
 
     def createFormForIndex( self, index ):
         from camelot.view.workspace import show_top_level

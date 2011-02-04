@@ -42,6 +42,7 @@ import sip
 from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
 from camelot.view.controls import delegates
+from camelot.view.controls.exception import register_exception
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import gui_function, \
                                       model_function, post
@@ -182,6 +183,7 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     item_delegate_changed_signal = QtCore.pyqtSignal()
     row_changed_signal = QtCore.pyqtSignal(int)
     exception_signal = QtCore.pyqtSignal(object)
+    rows_removed_signal = QtCore.pyqtSignal()
 
     @gui_function
     def __init__( self, admin, collection_getter, columns_getter,
@@ -559,6 +561,8 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             value = data[index.column()]
             if isinstance( value, DelayedProxy ):
                 value = value()
+                # store the created proxy, to prevent recreation of it
+                # afterwards.
                 data[index.column()] = value
             if isinstance( value, datetime.datetime ):
                 # Putting a python datetime into a QVariant and returning
@@ -916,25 +920,25 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                 except KeyError:
                     pass
             #
-            # remove the ojbect from the collection
-            #
-            self.remove( obj )
-            #
-            # remove the entity from the cache
-            #
-            self.display_cache.delete_by_entity( obj )
-            self.attributes_cache.delete_by_entity( obj )
-            self.edit_cache.delete_by_entity( obj )
-            #
             # if needed, delete the objects
             #
             if delete:
                 self.rsh.sendEntityDelete( self, obj )
                 self.admin.delete( obj )
+                # remove only when delete took place without exception
+                self.remove( obj )
             else:
                 # even if the object is not deleted, it needs to be flushed to make
                 # sure it's out of the collection
+                self.remove( obj )
                 self.admin.flush( obj )
+            #
+            # remove the entity from the cache, only if the delete and remove
+            # took place without exception
+            #
+            self.display_cache.delete_by_entity( obj )
+            self.attributes_cache.delete_by_entity( obj )
+            self.edit_cache.delete_by_entity( obj )
         for depending_obj in depending_objects:
             self.rsh.sendEntityUpdate( self, depending_obj )
         post( self.getRowCount, self._refresh_content )
@@ -944,6 +948,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         """Remove the entity associated with this row from this collection
         @param rows: a list with the numbers of the rows to remove
         @param delete: delete the entity as well
+        
+        The rows_removed signal will be emitted when the removal was 
+        successful, otherwise the exception_signal will be emitted.
         """
         self.logger.debug( 'remove rows' )
 
@@ -952,8 +959,15 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
             def delete_function():
                 """Remove all rows from the underlying collection
                 :return: the number of rows left in the collection"""
-                objects_to_remove = [self._get_object( row ) for row in rows]
-                self.remove_objects( objects_to_remove, delete )
+                try:
+                    objects_to_remove = [self._get_object( row ) for row in rows]
+                    self.remove_objects( objects_to_remove, delete )
+                    self.rows_removed_signal.emit()
+                except Exception, exc:
+                    exc_info = register_exception( logger,
+                                                   'exception while removing rows',
+                                                   exc )
+                    self.exception_signal.emit( exc_info )
 
             return delete_function
 
