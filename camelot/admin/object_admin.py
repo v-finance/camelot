@@ -344,6 +344,7 @@ The QWidget class to be used when a table view is needed
         
     def get_related_entity_admin(self, entity):
         """deprecated : use get_related_admin"""
+        return self.get_related_admin(entity)
 
 
     def get_static_field_attributes(self, field_names):
