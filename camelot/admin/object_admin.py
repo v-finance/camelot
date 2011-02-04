@@ -328,19 +328,23 @@ The QWidget class to be used when a table view is needed
         subclasses.sort(cmp=sort_admins)
         return subclasses
 
-    def get_related_entity_admin(self, entity):
-        """Get an admin object for another entity.  Taking into account
+    def get_related_admin(self, cls):
+        """Get an admin object for another object class.  Taking into account
         preferences of this admin object or for those of admin object higher up
         the chain such as the application admin object.
 
-        :param entity: the entity class for which an admin object is requested
+        :param cls: the class for which an admin object is requested
         """
-        if entity == self.entity:
+        if cls == self.entity:
             return self
-        related_admin = self.app_admin.get_entity_admin(entity)
+        related_admin = self.app_admin.get_entity_admin(cls)
         if not related_admin:
-            logger.warn('no related admin found for %s' % (entity.__name__))
+            logger.warn('no related admin found for %s' % (cls.__name__))
         return related_admin
+        
+    def get_related_entity_admin(self, entity):
+        """deprecated : use get_related_admin"""
+
 
     def get_static_field_attributes(self, field_names):
         """

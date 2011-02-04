@@ -482,11 +482,12 @@ class Party( Entity ):
         def flush(self, party):
             from sqlalchemy.orm.session import Session
             session = Session.object_session( party )
-            objects = [ party ]
-            for party_contact_mechanism in party.contact_mechanisms:
-                objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
-            session.flush( objects )
-            party.expire( ['phone', 'email'] )
+            if session:
+                objects = [ party ]
+                for party_contact_mechanism in party.contact_mechanisms:
+                    objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
+                session.flush( objects )
+                party.expire( ['phone', 'email'] )
 
 class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
