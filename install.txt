@@ -1,3 +1,12 @@
+The Conceptive Python Distribution
+==================================
+
+When working on Windows, the easiest way to get up and running is through
+the `Conceptive Python Distribution (CPD) <http://www.python-camelot.com/cpd.html>`_.
+
+CPD is a Python distribution targeted at the development and deployment of QT
+based applications.
+
 From the Python Package Index
 =============================
 
@@ -25,7 +34,7 @@ to crash, so newer versions of those libraries are required.
  * QT 4.7
  * PyQt 4.8 `PyQt Website <http://www.riverbankcomputing.co.uk/>`_
  * SQLAlchemy 0.6.5 `SQLAlchemy Website <http://www.sqlalchemy.org>`_
- * Elixir 0.7.1 `Elixir Website<http://elixir.ematia.de/>`_
+ * Elixir 0.7.1 `Elixir Website <http://elixir.ematia.de/>`_
  * sqlalchemy-migrate 0.6.0
  * Jinja2 2.5.5
  * chardet 1.0.1 
@@ -80,7 +89,3 @@ and issue these commands::
   >>> import PyQt4
   
 None of them should raise an ImportError.
-  
-Microsoft Windows
-=================
-

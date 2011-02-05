@@ -28,18 +28,31 @@ Contents:
 Support
 =======
 
-Commercial support
-------------------
+Community
+---------
 
-+-----------------------------------+-------------------------+
-| Conceptive Engineering            | L Van Bauwelstraat 16   |
-+-----------------------------------+-------------------------+
-| project-camelot@conceptive.be     | 2222 Heist-op-den-Berg  |
-+-----------------------------------+-------------------------+
-| http://www.conceptive.be          | Belgium                 |
-+-----------------------------------+-------------------------+
-| Fax : +32 3 303 64 41             | VAT BE 0878 169 209     |
-+-----------------------------------+-------------------------+
+Community support is available on the `mailing list <http://groups.google.com/group/project-camelot>`_.
+
+Commercial
+----------
+
+Commercial support and training is available from Conceptive Engineering, the
+main authors of Camelot :
+
+|
+| Conceptive Engineering            
+| L Van Bauwelstraat 16  
+| 2222 Heist-op-den-Berg
+| Belgium 
+|
+| project-camelot@conceptive.be
+| http://www.conceptive.be
+| VAT BE 0878 169 209
+| Fax : +32 3 303 64 41
+|
+
+Priority support tickets can be purchased from the `shop <http://www.python-camelot.com/shop.html>`_.
+Please contact us for support contracts.
 
 Indices and tables:
 
