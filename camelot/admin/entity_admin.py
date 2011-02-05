@@ -533,13 +533,19 @@ attribute to enable search.
                     Session.object_session( history ).flush( [history] )
 
     @model_function
+    def expunge(self, entity_instance):
+        """Expunge the entity from the session"""
+        from sqlalchemy.orm.session import Session
+        session = Session.object_session( entity_instance )
+        if session:
+            session.expunge( entity_instance )
+        
+    @model_function
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
         from sqlalchemy.orm.session import Session
         session = Session.object_session( entity_instance )
-        if not session:
-            logger.error('Programming Error : entity %s cannot be flushed because it has no session'%(unicode(entity_instance)))
-        else:
+        if session:
             session.flush( [entity_instance] )
 
     @model_function

@@ -53,7 +53,6 @@ class AbstractView(QtGui.QWidget):
         pass
     
     @QtCore.pyqtSlot(object)
-    @gui_function
     def change_title(self, new_title):
         """Will emit the title_changed_signal"""
         import sip

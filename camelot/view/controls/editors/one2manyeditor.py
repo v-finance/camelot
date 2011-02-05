@@ -105,7 +105,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.delete_button.setIcon( self.delete_icon.getQIcon() )
         self.delete_button.setAutoRaise( True )
         self.delete_button.setToolTip(_('Delete'))
-        self.delete_button.clicked.connect(table.delete_selected_rows)
+        self.delete_button.clicked.connect( table.delete_selected_rows )
         self.add_button = QtGui.QToolButton()
         icon = self.new_icon.getQIcon()
         self.add_button.setIcon( icon )
@@ -116,7 +116,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.copy_button.setIcon( self.copy_icon.getQIcon() )
         self.copy_button.setAutoRaise( True )
         self.copy_button.setToolTip(_('Copy'))
-        self.copy_button.clicked.connect(self.copy_selected_rows)
+        self.copy_button.clicked.connect( table.copy_selected_rows )
         export_button = QtGui.QToolButton()
         export_button.setIcon( self.spreadsheet_icon.getQIcon() )
         export_button.setAutoRaise( True )
@@ -198,19 +198,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
         else:
             form = self.admin.create_new_view( related_collection_proxy=self.model, parent = None )
             show_top_level( form, self )
-
-    def copy_selected_rows( self ):
-        """Copy the selected rows in this tableview"""
-        LOGGER.debug( 'delete selected rows called' )
-        for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-            self.model.copy_row( row )
-
-    def deleteSelectedRows( self ):
-        """Delete the selected rows in this tableview"""
-        LOGGER.debug( 'delete selected rows called' )
-        table = self.findChild(QtGui.QWidget, 'table')
-        if table:
-            table.delete_selected_rows()
 
     def createFormForIndex( self, index ):
         from camelot.view.workspace import show_top_level

@@ -285,6 +285,11 @@ class AdminTableWidget(TableWidget):
             self.close_editor()
             self.model().remove_rows( set( rows ) )
             progress_dialog.exec_()
+
+    @QtCore.pyqtSlot()
+    def copy_selected_rows(self):            
+        for row in set( map( lambda x: x.row(), self.selectedIndexes() ) ):
+            self.model().copy_row( row )
         
 class RowsWidget( QtGui.QLabel ):
     """Widget that is part of the header widget, displaying the number of rows
