@@ -184,7 +184,6 @@ class QueryTableProxy(CollectionProxy):
         row, overwrite this method for specific behaviour in subclasses"""
         if not o.id:
             self._appended_rows.append(o)
-        self._rows = self._rows + 1
 
     def remove(self, o):
         if o in self._appended_rows:

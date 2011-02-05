@@ -378,7 +378,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     def handle_entity_delete( self, sender, entity ):
         """Handles the entity signal, indicating that the model is out of
         date"""
-        print 'handle entity delete', entity
         self.logger.debug( 'received entity delete signal' )
         if sender != self:
             self.refresh()
@@ -894,8 +893,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         collection = self.get_collection()
         if o not in collection:
             collection.append( o )
-            self._rows += 1
-            self.layoutChanged.emit()
 
     @model_function
     def remove_objects( self, objects_to_remove, delete = True ):
@@ -998,12 +995,13 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         the object if possible/needed
         
         :param obj: the object to be added to the collection
-        :return: the number of rows in the collection
         """
+        rows = self.rowCount()
+        row = max( rows - 1, 0 )
+        self.beginInsertRows( QtCore.QModelIndex(), row, row )
         self.append( obj )
         # defaults might depend on object being part of a collection
         self.admin.set_defaults( obj )
-        row = self.getRowCount() - 1
         self.unflushed_rows.add( row )
         if self.flush_changes and not len( self.validator.objectValidity( obj ) ):
             self.admin.flush( obj )
@@ -1022,7 +1020,9 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
 #                       authentication = getCurrentAuthentication())
 #      elixir.session.flush([history])
 #      self.rsh.sendEntityCreate(self, o)
-        return self.getRowCount()
+        self._rows = rows + 1
+        self.endInsertRows()
+        return self._rows
 
     @QtCore.pyqtSlot(object)
     @gui_function

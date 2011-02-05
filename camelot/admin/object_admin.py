@@ -689,11 +689,23 @@ The QWidget class to be used when a table view is needed
                     # Give the default fields their value
                     admin.set_defaults(self._new_object)
                     if self._related_collection_proxy:
-                        self._related_collection_proxy.append( self._new_object )
+                        self._related_collection_proxy.append_object( self._new_object )
                 return self._new_object
                 
             def get_collection(self):
                 return [self.get_new_object()]
+                
+            def _expunge_new_object(self):
+                if self._new_object:
+                    admin.expunge( self._new_object )
+                    if self._related_collection_proxy:
+                        self._related_collection_proxy.remove_objects( [self._new_object],
+                                                                       delete = False )
+                                                                      
+            def expunge(self):
+                """Discontinue the creation of the new object, expunge it
+                from its session and the related_collection proxy"""
+                post( self._expunge_new_object )
 
         model = NewObjectCollectionProxy( related_collection_proxy,
                                           admin,
@@ -753,6 +765,7 @@ The QWidget class to be used when a table view is needed
                         # clear mapping to prevent data being written again to
                         # the model, after we reverted the row
                         form.clear_mapping()
+                        model.expunge()
                         self.validate_before_close = False
                         self.close()
                 else:
@@ -804,6 +817,11 @@ The QWidget class to be used when a table view is needed
     @model_function
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
+        pass
+    
+    @model_function
+    def expunge(self, entity_instance):
+        """Remove this object from the objects being managed"""
         pass
 
     @model_function

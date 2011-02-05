@@ -582,7 +582,6 @@ class TableView( AbstractView  ):
         from camelot.view.workspace import show_top_level
         form = self.admin.create_new_view( related_collection_proxy=self.get_model(),
                                            parent = None )
-        form.entity_created_signal.connect( self._table_model.append_row )
         show_top_level( form, self )
 
     def closeEvent( self, event ):
