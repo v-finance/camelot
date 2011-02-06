@@ -25,6 +25,8 @@
 """Module containing the FIFO cache used in the collection proxy to store
 the data that is passed between the model and the gui thread"""
 
+from copy import copy
+
 class Fifo(object):
     """Fifo, is the actual cache containing a limited set of copies of row data
     so the data in Fifo, is always immediately accessible to the gui thread,
@@ -45,6 +47,18 @@ class Fifo(object):
     def __unicode__(self):
         return u','.join(unicode(e) for e in self.entities)
     
+    def shallow_copy(self, max_entries):
+        """Copy the cache without the actual data but with the references
+        to which object is stored in which row"""
+        
+        new_fifo = Fifo(max_entries)
+        new_fifo.entities = copy( self.entities )
+        # None is to distinguish between a list of data and no data
+        new_fifo.data_by_rows = dict( (row, (entity,None)) for (row, (entity, value)) in self.data_by_rows.items() )
+        new_fifo.rows_by_entity = copy( self.rows_by_entity )
+        
+        return new_fifo
+        
     def add_data(self, row, entity, value):
         """The entity might allready be on another row, and this row
         might allready contain an entity"""
@@ -88,7 +102,13 @@ class Fifo(object):
     def has_data_at_row(self, row):
         """:return: True if there is data in the cache for the row, False if 
         there isn't"""
-        return row in self.data_by_rows
+        try:
+            data = self.get_data_at_row( row )
+            if data is not None:
+                return True
+        except KeyError:
+            pass
+        return False
     
     def get_data_at_row(self, row):
         """:return: the data at row"""

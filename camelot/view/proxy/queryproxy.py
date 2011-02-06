@@ -38,7 +38,8 @@ class QueryTableProxy(CollectionProxy):
     """
 
     def __init__(self, admin, query_getter, columns_getter,
-                 max_number_of_rows=10, edits=None):
+                 max_number_of_rows=10, edits=None,
+                 cache_collection_proxy=None):
         """@param query_getter: a model_thread function that returns a query, can be None at construction time and set later"""
         logger.debug('initialize query table')
         self._query_getter = query_getter
@@ -47,7 +48,10 @@ class QueryTableProxy(CollectionProxy):
         #database, and as such cannot be a result of the query
         self._appended_rows = []
         super(QueryTableProxy, self).__init__(admin, lambda: [],
-                                              columns_getter, max_number_of_rows=max_number_of_rows, edits=None)
+                                              columns_getter, 
+                                              max_number_of_rows=max_number_of_rows, 
+                                              edits=None,
+                                              cache_collection_proxy=cache_collection_proxy)
 
 #    def default_sort_decorator(self):
 #        """Create a function that sorts a query, by default we sort a query by the
@@ -213,15 +217,39 @@ class QueryTableProxy(CollectionProxy):
             offset, limit = self._offset_and_limit_rows_to_get()
             if limit:
                 columns = self.getColumns()
-                for i, obj in enumerate( self._get_collection_range(offset, limit) ):
-                    row = i + offset
+                #
+                # try to move the offset further by looking if the
+                # objects are allready in the cache.
+                #
+                # this has the advantage that we might not need a query,
+                # and more important, that objects remain at the same row
+                # while their position in the query might have been changed
+                # since the previous query.
+                #
+                rows_in_cache = 0
+                for row in range(offset, limit + 1):
                     try:
-                        previous_obj = self.edit_cache.get_entity_at_row(row)
-                        if previous_obj != obj:
-                            continue
+                        cached_obj =  self.edit_cache.get_entity_at_row(row)                        
+                        self._add_data( columns, row, cached_obj)
+                        rows_in_cache += 1
                     except KeyError:
-                        pass
-                    self._add_data(columns, i+offset, obj)
+                        break
+                #
+                # query the remaining rows
+                #
+                query_offset = offset + rows_in_cache
+                query_limit = limit - rows_in_cache
+                if query_limit > 0:
+                    for i, obj in enumerate( self._get_collection_range(query_offset, 
+                                                                        query_limit) ):
+                        row = i + query_offset
+                        try:
+                            previous_obj = self.edit_cache.get_entity_at_row(row)
+                            if previous_obj != obj:
+                                continue
+                        except KeyError:
+                            pass
+                        self._add_data(columns, row, obj)
                 rows_in_query = (self._rows - len(self._appended_rows))
                 # Verify if rows that have not yet been flushed have been 
                 # requested

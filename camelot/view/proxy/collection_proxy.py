@@ -186,20 +186,35 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
     rows_removed_signal = QtCore.pyqtSignal()
 
     @gui_function
-    def __init__( self, admin, collection_getter, columns_getter,
-                 max_number_of_rows = 10, edits = None, flush_changes = True ):
-        """@param admin: the admin interface for the items in the collection
-
-        @param collection_getter: a function that takes no arguments and returns
-        the collection that will be visualized. This function will be called inside
-        the model thread, to prevent delays when this function causes the database
-        to be hit.  If the collection is a list, it should not contain any duplicate
-        elements.
-
-        @param columns_getter: a function that takes no arguments and returns the
-        columns that will be cached in the proxy. This function will be called
-        inside the model thread.
+    def __init__( self, 
+                  admin, 
+                  collection_getter, 
+                  columns_getter,
+                  max_number_of_rows = 10, 
+                  edits = None, 
+                  flush_changes = True,
+                  cache_collection_proxy = None
+                  ):
         """
+:param admin: the admin interface for the items in the collection
+
+:param collection_getter: a function that takes no arguments and returns
+the collection that will be visualized. This function will be called inside
+the model thread, to prevent delays when this function causes the database
+to be hit.  If the collection is a list, it should not contain any duplicate
+elements.
+
+:param columns_getter: a function that takes no arguments and returns the
+columns that will be cached in the proxy. This function will be called
+inside the model thread.
+
+:param cache_collection_proxy: the CollectionProxy on which this CollectionProxy
+will reuse the cache. Passing a cache has the advantage that objects that were
+present in the original cache will remain at the same row in the new cache
+This is used when a form is created from a tableview.  Because between the last
+query of the tableview, and the first of the form, the object might have changed
+position in the query.
+"""
         super(CollectionProxy, self).__init__()
         from camelot.view.model_thread import get_model_thread
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
@@ -226,9 +241,14 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         self._columns = []
         self._static_field_attributes = []
         self._max_number_of_rows = max_number_of_rows
-        self.display_cache = Fifo( 10 * self.max_number_of_rows )
-        self.edit_cache = Fifo( 10 * self.max_number_of_rows )
-        self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
+        if cache_collection_proxy:
+            self.display_cache = cache_collection_proxy.display_cache.shallow_copy( 10 * self.max_number_of_rows )
+            self.edit_cache = cache_collection_proxy.edit_cache.shallow_copy( 10 * self.max_number_of_rows )
+            self.attributes_cache = cache_collection_proxy.attributes_cache.shallow_copy( 10 * self.max_number_of_rows )
+        else:        
+            self.display_cache = Fifo( 10 * self.max_number_of_rows )
+            self.edit_cache = Fifo( 10 * self.max_number_of_rows )
+            self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         self._update_requests = list()
@@ -872,7 +892,14 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
         :return: row_data
         """
         try:
-            return cache.get_data_at_row( row )
+            data = cache.get_data_at_row( row )
+            #
+            # check if data is None, then the cache was a copy of previous
+            # cache, and the data should be refetched
+            #
+            if data is None:
+                raise KeyError
+            return data
         except KeyError:
             if row not in self.rows_under_request:
                 locker = QtCore.QMutexLocker(self._mutex)
