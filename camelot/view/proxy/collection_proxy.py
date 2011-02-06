@@ -270,7 +270,10 @@ position in the query.
 #    # the initial collection might contain unflushed rows
         post( self.updateUnflushedRows )
 #    # in that way the number of rows is requested as well
-        post( self.getRowCount, self.setRowCount )
+        if cache_collection_proxy:
+            self.setRowCount( cache_collection_proxy.rowCount() )
+        else:
+            post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
 
     @property
