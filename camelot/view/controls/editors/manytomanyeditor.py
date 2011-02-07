@@ -23,7 +23,6 @@
 #  ============================================================================
 
 from PyQt4 import QtGui
-#from PyQt4 import QtCore
 
 from one2manyeditor import One2ManyEditor
 from abstractmanytooneeditor import AbstractManyToOneEditor
@@ -34,16 +33,19 @@ from camelot.view.model_thread import model_function, post
 
 class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
 
-    def setupButtons( self, layout ):
+    remove_icon = Icon( 'tango/16x16/actions/list-remove.png' )
+    add_icon = Icon( 'tango/16x16/actions/list-add.png' )
+    
+    def setupButtons( self, layout, _table ):
         button_layout = QtGui.QVBoxLayout()
         button_layout.setSpacing( 0 )
         self.remove_button = QtGui.QToolButton()
-        self.remove_button.setIcon( Icon( 'tango/16x16/actions/list-remove.png' ).getQIcon() )
+        self.remove_button.setIcon( self.remove_icon.getQIcon() )
         self.remove_button.setAutoRaise( True )
         self.remove_button.setFixedHeight( self.get_height() )
         self.remove_button.clicked.connect(self.removeSelectedRows)
         self.add_button = QtGui.QToolButton()
-        self.add_button.setIcon( Icon( 'tango/16x16/actions/list-add.png' ).getQIcon() )
+        self.add_button.setIcon( self.add_icon.getQIcon() )
         self.add_button.setAutoRaise( True )
         self.add_button.setFixedHeight( self.get_height() )
         self.add_button.clicked.connect(self.createSelectView)
@@ -70,6 +72,8 @@ class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
 
     def removeSelectedRows( self ):
         """Remove the selected rows in this tableview, but don't delete them"""
-        self.model.remove_rows( set( map( lambda x: x.row(), self.table.selectedIndexes() ) ), delete=False)
-        self.editingFinished.emit()
+        table = self.findChild(QtGui.QWidget, 'table')
+        if table:
+            self.model.remove_rows( set( map( lambda x: x.row(), table.selectedIndexes() ) ), delete=False)
+            self.editingFinished.emit()
 
