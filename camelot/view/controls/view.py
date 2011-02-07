@@ -28,7 +28,6 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 from camelot.view.model_thread import post
-from camelot.view.model_thread import gui_function
 from camelot.view.model_thread import model_function
 
 class AbstractView(QtGui.QWidget):
