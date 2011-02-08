@@ -22,6 +22,9 @@
 #
 #  ============================================================================
 
+import os
+import logging
+
 from camelot.view.model_thread import post
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.exception import model_thread_exception_message_box
@@ -29,6 +32,8 @@ from camelot.view.controls.exception import model_thread_exception_message_box
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import QFile
+
+LOGGER = logging.getLogger('camelot.view.storage')
 
 class OpenFileProgressDialog(QtGui.QProgressDialog):
 
@@ -139,6 +144,10 @@ def create_stored_file(parent, storage, on_finish, filter='All files (*)',
 
         def checkin():
             new_path = storage.checkin(unicode(filename))
+            try:
+                os.remove( unicode( filename ) )
+            except Exception, e:
+                LOGGER.warn('could not remove file', exc_info=e)
             if remove and QFile.exists(filename):
                 QFile.remove(filename)
             return lambda:on_finish(new_path)

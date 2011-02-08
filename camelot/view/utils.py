@@ -126,6 +126,8 @@ def datetime_from_string(s, format=constants.strftime_datetime_format):
         raise ParsingError()
     return dt
 
+def code_from_string(s, separator):
+    return s.split(separator)
 
 def int_from_string(s):
     if s is None: raise ParsingError()

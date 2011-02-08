@@ -43,6 +43,7 @@ from camelot.view.utils import (
     string_from_string,
     enumeration_to_string,
     default_language,
+    code_from_string,
 )
 
 _numerical_operators = (operator.eq, operator.ne, operator.lt, operator.le, operator.gt, operator.ge, between_op)
@@ -206,6 +207,7 @@ _sqlalchemy_to_python_type_ = {
         'parts': f.parts,
         'separator': f.separator,
         'operators' : _text_operators,
+        'from_string' : lambda s:code_from_string(s, f.separator),
     },
 
     camelot.types.IPAddress: lambda f: {

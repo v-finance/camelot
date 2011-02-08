@@ -62,10 +62,9 @@ def create_entity_search_query_decorator(admin, text):
             elif issubclass(c.type.__class__, camelot.types.File):
                 pass
             elif issubclass(c.type.__class__, camelot.types.Code):
-                codes = text.split(c.type.separator)
-                arg = c.like(['%'] + codes + ['%'])
-                arg = sql.or_(arg, c.like(['%'] + codes))
-                arg = sql.or_(arg, c.like(codes + ['%']))
+                codes = [u'%%%s%%'%s for s in text.split(c.type.separator)]
+                codes = codes + ['%']*(len(c.type.parts) - len(codes))
+                arg = c.like( codes )
             elif issubclass(c.type.__class__, camelot.types.VirtualAddress):
                 arg = c.like(('%', '%'+text+'%'))
             elif issubclass(c.type.__class__, camelot.types.Image):
