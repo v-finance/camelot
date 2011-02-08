@@ -63,6 +63,8 @@ def select_database():
     #    art.Icon('tango/22x22/categories/preferences-system.png').getQPixmap())
     #wizard.exec_()
 
+    return
+
     wizard = StandaloneWizardPage(None)
     wizard.set_banner_logo_pixmap(art.Icon(
         'tango/22x22/categories/preferences-system.png').getQPixmap())
