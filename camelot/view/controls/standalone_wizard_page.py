@@ -53,6 +53,7 @@ class StandaloneWizardPage(QDialog):
         banner_layout.addWidget(QLabel(), 0, 1, Qt.AlignRight)
         banner_layout.addLayout(QVBoxLayout(), 0, 0)
 
+        # TODO: allow banner widget to be supplied
         banner_widget = QWidget()
         banner_widget.setLayout(banner_layout)
 
@@ -68,6 +69,9 @@ class StandaloneWizardPage(QDialog):
 
     def main_widget(self):
         return self._vlayout.itemAt(2).widget()
+
+    def buttons_widget(self):
+        return self._vlayout.itemAt(4).widget()
 
     def banner_layout(self):
         return self.banner_widget().layout()
