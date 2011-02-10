@@ -22,6 +22,7 @@
 #
 #  ============================================================================
 
+import sys
 import base64
 import logging
 import pkgutil
@@ -29,11 +30,17 @@ import pkgutil
 import sqlalchemy.dialects
 from sqlalchemy import create_engine
 
-from PyQt4 import QtCore
-from PyQt4.QtGui import QWizard, QWizardPage, QGridLayout, QLabel, QLineEdit, \
-    QPushButton, QDialog, QVBoxLayout, QHBoxLayout, QPalette, QFrame, \
-    QWidget, QBoxLayout
-from PyQt4.QtCore import QSettings, QVariant, SIGNAL, Qt
+from PyQt4.QtCore import QSettings
+from PyQt4.QtCore import QVariant
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QBoxLayout
+from PyQt4.QtGui import QDialog
+from PyQt4.QtGui import QGridLayout
+from PyQt4.QtGui import QHBoxLayout
+from PyQt4.QtGui import QInputDialog
+from PyQt4.QtGui import QLabel
+from PyQt4.QtGui import QLineEdit
+from PyQt4.QtGui import QPushButton
 
 from camelot.view import art
 from camelot.view.controls.editors import ChoicesEditor, TextLineEditor
@@ -64,13 +71,16 @@ def decode_setting(value):
 def select_database():
     return
     wizard = ProfileSelection(None)
-    wizard.exec_()
+    dialog_code = wizard.exec_()
+    if dialog_code == QDialog.Rejected:
+        # the user chooses to exit
+        sys.exit(0)
 
 
 def fetch_profiles():
     profiles = []
     settings = QSettings()
-    size = settings.beginReadArray('databaseprofiles')
+    size = settings.beginReadArray('database_profiles')
 
     if size == 0:
         return profiles
@@ -78,7 +88,10 @@ def fetch_profiles():
     for index in range(size):
         settings.setArrayIndex(index)
         info = {}
-        info['profilename'] = decode_setting(settings.value('profilename', QVariant('')).toString())
+        profilename = decode_setting(settings.value('profilename', QVariant('')).toString())
+        if not profilename:
+            continue  # well we should not really be doing anything
+        info['profilename'] = profilename
         info['dialect'] = decode_setting(settings.value('dialect', QVariant('')).toString())
         info['host'] = decode_setting(settings.value('host', QVariant('')).toString())
         info['port'] = decode_setting(settings.value('port', QVariant('')).toString())
@@ -90,9 +103,10 @@ def fetch_profiles():
 
     return profiles
 
+
 def store_profiles(profiles):
     settings = QSettings()
-    settings.beginWriteArray('databaseprofiles')
+    settings.beginWriteArray('database_profiles')
 
     for index, info in enumerate(profiles):
         settings.setArrayIndex(index)
@@ -106,16 +120,42 @@ def store_profiles(profiles):
     settings.endArray()
 
 
+def use_chosen_profile(info):
+    settings = QSettings()
+    settings.setValue('last_used_database_profile', QVariant(encode_setting(
+        info['profilename'])))
+    settings.setValue('database/driver', QVariant(encode_setting('mysql')))
+    settings.setValue('database/dialect', QVariant(encode_setting(
+        info['dialect'])))
+    settings.setValue('database/host', QVariant(encode_setting(info['host'])))
+    settings.setValue('database/user', QVariant(encode_setting(info['user'])))
+    settings.setValue('database/password',
+            QVariant(encode_setting(info['pass'])))
+    settings.setValue('database/name',
+            QVariant(encode_setting(info['database'])))
+
+
+def last_used_profile():
+    settings = QSettings()
+    return str(decode_setting(settings.value('last_used_database_profile',
+        QVariant('')).toString()))
+
+
 class ProfileSelection(StandaloneWizardPage):
 
     def __init__(self, parent=None):
         super(ProfileSelection, self).__init__(parent)
 
+        self._connection_valid = False
+
         self.profiles = fetch_profiles()
-        self.profiles_choices = [
-            (profile['profilename'], profile['profilename'].capitalize())
-            for profile in self.profiles if 'profilename' in profile
-        ]
+        logger.debug('original profiles fetched:\n%s' % self.profiles)
+        self.profiles_choices = set()
+        for profile in self.profiles:
+            if 'profilename' in profile and profile['profilename']:
+                self.profiles_choices.add((profile['profilename'],
+                    profile['profilename']))
+        logger.debug('original profiles choices:\n%s' % self.profiles_choices)
 
         self.setWindowTitle(_('Profile Selection'))
         self.set_banner_logo_pixmap(art.Icon(
@@ -126,7 +166,7 @@ class ProfileSelection(StandaloneWizardPage):
 
         self.create_labels_and_widgets()
         self.set_widgets_values()
-        #self.connect_widgets()
+        self.connect_widgets()
 
         self.create_buttons()
         self.connect_buttons()
@@ -152,9 +192,7 @@ class ProfileSelection(StandaloneWizardPage):
         layout.addWidget(self.password_label, 5, 0, Qt.AlignRight)
 
         self.profile_editor = ChoicesEditor(parent=self)
-        self.profile_editor.setEditable(True)
         self.dialect_editor = ChoicesEditor(parent=self)
-
         self.host_editor = TextLineEditor(self)
         self.port_editor = TextLineEditor(self)
         self.port_editor.setFixedWidth(60)
@@ -174,22 +212,34 @@ class ProfileSelection(StandaloneWizardPage):
         self.main_widget().setLayout(layout)
 
     def set_widgets_values(self):
-        self.profile_editor.set_choices(self.profiles_choices)
+        if self.profiles_choices:
+            self.profile_editor.set_choices(self.profiles_choices)
+
+        last_used = last_used_profile()
+        if last_used:
+            self.profile_editor.set_value(last_used)
+
         self.dialect_editor.set_choices([(dialect, dialect.capitalize())
             for dialect in dialects])
         self.dialect_editor.set_value(self.get_profile_value('dialect') or
             'mysql')
+
         self.host_editor.setText(self.get_profile_value('host') or 'localhost')
         self.port_editor.setText(self.get_profile_value('port') or '3306')
         self.database_name_editor.setText(self.get_profile_value('database'))
         self.username_editor.setText(self.get_profile_value('user'))
         self.password_editor.setText(self.get_profile_value('pass'))
 
+    def connect_widgets(self):
+        self.profile_editor.valueChanged.connect(self.update_profile)
+
     def create_buttons(self):
         self.cancel_button = QPushButton(_('Cancel'))
         #self.clear_button = QPushButton(_('Clear'))
         self.ok_button = QPushButton(_('OK'))
-        self.add_button = QPushButton(_('Add'))
+        self.new_button = QPushButton(art.Icon(
+            'tango/16x16/actions/list-add.png').getQIcon(), '')
+        self.new_button.setToolTip(_('Add a new profile name'))
 
         layout = QHBoxLayout()
         layout.setDirection(QBoxLayout.RightToLeft)
@@ -198,18 +248,15 @@ class ProfileSelection(StandaloneWizardPage):
         #layout.addWidget(self.clear_button)
         layout.addWidget(self.ok_button)
         layout.addStretch()
-        layout.addWidget(self.add_button)
 
+        self.main_widget().layout().addWidget(self.new_button, 0, 5, 1, 1)
         self.buttons_widget().setLayout(layout)
 
     def connect_buttons(self):
         self.cancel_button.pressed.connect(self.reject)
-        self.ok_button.pressed.connect(self.connect)
+        self.ok_button.pressed.connect(self.proceed)
         #self.clear_button.pressed.connect(self.clear_fields)
-        self.add_button.pressed.connect(self.add_profile)
-
-    def connect(self):
-        pass
+        self.new_button.pressed.connect(self.add_new_profile_name)
 
     #def clear_fields(self):
     #    self.host_editor.clear()
@@ -218,20 +265,57 @@ class ProfileSelection(StandaloneWizardPage):
     #    self.username_editor.clear()
     #    self.password_editor.clear()
 
-    def add_profile(self):
-        logger.info('adding new database profile')
+    def proceed(self):
+        if self.is_connection_valid():
+            info = self.collect_info()
+            self.add_new_profile(info)
+            logger.debug('storing new profile:\n%s' % self.profiles)
+            store_profiles(self.profiles)
+            use_chosen_profile(info)
+            self.accept()
+
+    def is_connection_valid(self):
         info = self.collect_info()
-        if info:
-            self.profiles.append(info)
-            new = self.current_profile()
-            self.profiles_choices.append((new, new.capitalize()))
+        mt = SignalSlotModelThread(lambda:None)
+        mt.start()
+        progress = ProgressDialog(_('Verifying database settings'))
+        mt.post(lambda:self.test_connection(info['dialect'], info['host'],
+            info['user'], info['pass'], info['database']),
+            progress.finished, progress.exception)
+        progress.exec_()
+        return self._connection_valid
+
+    def test_connection(self, dialect, host, user, passwd, db):
+        self._connection_valid = False
+        connection_string = '%s://%s:%s@%s/%s' % (dialect, user,
+            passwd, host, db)
+        engine = create_engine(connection_string, pool_recycle=True)
+        connection = engine.raw_connection()
+        cursor = connection.cursor()
+        cursor.close()
+        connection.close()
+        self._connection_valid = True
+
+    def add_new_profile(self, info):
+        logger.info('adding a new profile')
+        for profile in self.profiles:
+            if info['profilename'] == profile['profilename']:
+                profile.update(info)
+                return
+        self.profiles.append(info)
+
+    def add_new_profile_name(self):
+        logger.info('adding a new profile name')
+        name, ok = QInputDialog.getText(self, _('New Profile Name'),
+            _('Enter a value:'))
+        if ok and name:
+            name = str(name)
+            self.profiles_choices.add((name, name))
             self.profile_editor.set_choices(self.profiles_choices)
-        #store_profiles(self.profiles)
+            self.profile_editor.set_value(name)
 
     def current_profile(self):
-        #return self.profile_editor.get_value()
-        # above returns ValueLoading...
-        return self.profile_editor.itemData(self.profile_editor.currentIndex())
+        return self.profile_editor.get_value()
 
     def get_profile_value(self, key):
         current = self.current_profile()
@@ -244,180 +328,10 @@ class ProfileSelection(StandaloneWizardPage):
         logger.info('collecting new database profile info')
         info = {}
         info['profilename'] = self.current_profile()
-        logger.info('profilename = %s' % info['profilename'])
         info['dialect'] = self.dialect_editor.get_value()
-        logger.info('dialect = %s' % info['dialect'])
         info['host'] = self.host_editor.text()
-        logger.info('host = %s' % info['host'])
         info['port'] = self.port_editor.text()
-        logger.info('port = %s' % info['port'])
         info['database'] = self.database_name_editor.text()
-        logger.info('database = %s' % info['database'])
         info['user'] = self.username_editor.text()
-        logger.info('user = %s' % info['user'])
         info['pass'] = self.password_editor.text()
-        logger.info('pass = %s' % info['pass'])
         return info
-
-
-#class ProfileCreationWizard(QWizard):
-#
-#    def __init__(self, parent):
-#        super(ProfileCreationWizard, self).__init__(parent)
-#        settings = QSettings()
-#
-#        self.setWindowTitle(_('Profile Creation Wizard'))
-#
-#        class DatabaseSettingsPage(QWizardPage):
-#
-#            def __init__(self):
-#                super(nPage, self).__init__()
-#                self.setTitle(_('Database Settings'))
-#                self.setSubTitle(_('Please enter or change the credentials of '
-#                    'the database.'))
-#
-#                self.layout = QGridLayout()
-#                self.setLayout(self.layout)
-#
-#
-#                #profiles = []
-#                #self.registerField('database_profile', profile_widget,
-#                #    'value', SIGNAL('editingFinished()'))
-#
-#                #dialects = [name for _importer, name, is_package \
-#                #    in pkgutil.iter_modules(sqlalchemy.dialects.__path__ ) \
-#                #    if is_package]
-#
-#                #self.registerField('database_dialect', dialect_widget,
-#                #    'value', SIGNAL('editingFinished()'))
-#                #dialect_widget.set_choices([(dialect, dialect.capitalize())
-#                #    for dialect in dialects])
-#                #dialect_widget.set_value(settings_database_dialect)
-#
-#                ## Qt docs specify that QLineEdit subclasses would work
-#                ## fine with the registerField() function so we dont
-#                ## need to set a property or signal
-#
-#                #database_host_widget.set_value(settings_database_host)
-#                #self.registerField('database_host',  database_host_widget)
-#
-#                #database_user_widget.set_value(settings_database_user)
-#                #self.registerField('database_user', database_user_widget)
-#
-#                #database_password_widget.set_value(settings_database_password)
-#                #database_password_widget.setEchoMode(QLineEdit.Password)
-#                #self.registerField('database_password',
-#                #    database_password_widget)
-#
-#                #database_name_widget.set_value(settings_database_name)
-#                #self.registerField('database_name', database_name_widget)
-#
-#                #layout.addWidget(create_new_profile_widget, 0, 3, Qt.AlignLeft)
-#
-#                #layout.addWidget(dialect_label_widget)
-#                #layout.addWidget(dialect_widget)
-#                #layout.addWidget(database_host_label_widget)
-#                #layout.addWidget(database_host_widget)
-#                #layout.addWidget(database_user_label_widget)
-#                #layout.addWidget(database_user_widget)
-#                #layout.addWidget(database_password_label_widget)
-#                #layout.addWidget(database_password_widget)
-#                #layout.addWidget(database_name_label_widget)
-#                #layout.addWidget(database_name_widget)
-#                #layout.addStretch(1)
-#
-#                #create_new_profile_widget.pressed.connect(
-#                #    self.fill_in_profile_values)
-#                #dialect_widget.valueChanged.connect(self.textChanged)
-#                #database_host_widget.textChanged.connect(self.textChanged)
-#                #database_user_widget.textChanged.connect(self.textChanged)
-#                #database_password_widget.textChanged.connect(self.textChanged)
-#                #database_name_widget.textChanged.connect(self.textChanged)
-#
-#            @QtCore.pyqtSlot()
-#            @QtCore.pyqtSlot(str)
-#            def textChanged(self, text=''):
-#                self.completeChanged.emit()
-#
-#            def isComplete(self):
-#                return True
-#
-#            def is_connection_valid(self, dialect, host, user, passwd, db):
-#                self._connection_valid = False
-#                connection_string = '%s://%s:%s@%s/%s' % (dialect, user,
-#                    passwd, host, db)
-#                engine = create_engine(connection_string, pool_recycle=True)
-#                connection = engine.raw_connection()
-#                cursor = connection.cursor()
-#                cursor.close()
-#                connection.close()
-#                self._connection_valid = True
-#                return True
-#
-#            def validatePage(self):
-#                dialect = str(self.field('database_dialect').toString())
-#                host = str(self.field('database_host').toString())
-#                user = str(self.field('database_user').toString())
-#                passwd = str(self.field('database_password').toString())
-#                db = str(self.field('database_name').toString())
-#
-#                mt = SignalSlotModelThread(lambda:None)
-#                mt.start()
-#
-#                progress = ProgressDialog(_('Verify database settings'))
-#                mt.post(lambda:self.is_connection_valid(dialect, host, user,
-#                    passwd, db), progress.finished, progress.exception)
-#                progress.exec_()
-#
-#                return self._connection_valid
-#
-#        #class ConfigurationFinished(QWizardPage):
-#
-#        #    def initializePage(self):
-#        #        self.setTitle(_('Configuration finished'))
-#        #        self.setSubTitle(_('Congratulations, the database settings '
-#        #            'will be saved'))
-#
-#        #        logger.info('Saving database settings')
-#
-#        #        settings.setValue('database/driver', QVariant(encode_setting(
-#        #            'mysql')))
-#        #        settings.setValue('database/dialect', QVariant(encode_setting(
-#        #            str(self.field('database_dialect').toString()))))
-#        #        settings.setValue('database/host', QVariant(encode_setting(
-#        #            str(self.field('database_host').toString()))))
-#        #        settings.setValue('database/user', QVariant(encode_setting(
-#        #            str(self.field('database_user').toString()))))
-#        #        settings.setValue('database/password', QVariant(encode_setting(
-#        #            str(self.field('database_password').toString()))))
-#        #        settings.setValue('database/name', QVariant(encode_setting(
-#        #            str(self.field('database_name').toString()))))
-#
-#        #        logger.info('Database settings saved')
-#
-#        self.addPage(DatabaseSelectionPage())
-#        #self.addPage(ConfigurationFinished())
-#        self.setOption(QWizard.NoBackButtonOnStartPage)
-#
-#    def done(self, r):
-#
-#        if r:
-#            logger.info('Saving database settings')
-#
-#            settings = QSettings()
-#            settings.setValue('database/driver', QVariant(encode_setting(
-#                'mysql')))
-#            settings.setValue('database/dialect', QVariant(encode_setting(
-#                str(self.field('database_dialect').toString()))))
-#            settings.setValue('database/host', QVariant(encode_setting(
-#                str(self.field('database_host').toString()))))
-#            settings.setValue('database/user', QVariant(encode_setting(
-#                str(self.field('database_user').toString()))))
-#            settings.setValue('database/password', QVariant(encode_setting(
-#                str(self.field('database_password').toString()))))
-#            settings.setValue('database/name', QVariant(encode_setting(
-#                str(self.field('database_name').toString()))))
-#
-#            logger.info('Database settings saved')
-#
-#        super(DatabaseSelectionWizard, self).done(r)
