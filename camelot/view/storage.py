@@ -45,7 +45,6 @@ class OpenFileProgressDialog(QtGui.QProgressDialog):
         self.setRange(0, 0)
 
     def open_path(self, path):
-        import os
         if not os.path.exists(path):
             QtGui.QMessageBox.critical(
                 self,
@@ -95,8 +94,6 @@ def open_stored_file(parent, stored_file):
 
 def save_stored_file(parent, stored_file):
     """Save a stored file as another file"""
-    import os
-
     settings = QtCore.QSettings()
     default_dir = settings.value('datasource').toString()
     proposal = os.path.join(unicode(default_dir), unicode(stored_file.verbose_name) )

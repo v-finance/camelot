@@ -75,8 +75,8 @@ class DelayedProxy( object ):
                                 self._columns_getter )
 
     def __unicode__(self):
-        return ','.join(list(unicode(o) for o,_i in zip(self._collection_getter(),
-                                                        range(3))))
+        return ','.join(list(unicode(o) or '' for o,_i in zip(self._collection_getter(),
+                                                              range(3))))
 
 @model_function
 def strip_data_from_object( obj, columns ):
