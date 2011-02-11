@@ -297,12 +297,13 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( True )
         editor.set_enabled( True )
         self.grab_widget( editor, 'set_enabled()_editable' )
-        editor.set_value( None )
+        # removed the tri state stuff, this is too complicated for the user        
+        # editor.set_value( None )
         # pretend the user has set the state to unchecked
-        editor.setCheckState(Qt.Unchecked)
-        self.assertEqual( editor.get_value(), False )
-        editor.set_value( None )
-        self.assertEqual( editor.get_value(), None )
+        #editor.setCheckState(Qt.Unchecked)
+        #self.assertEqual( editor.get_value(), False )
+        #editor.set_value( None )
+        #self.assertEqual( editor.get_value(), None )
         editor = self.editors.BoolEditor(parent=None, editable=False, nullable=False)
         editor.set_value( None )
         self.assertEqual( editor.get_value(), False )
@@ -432,7 +433,9 @@ class EditorsTest(ModelThreadTestCase):
         self.grab_widget( editor, 'set_enabled()_editable' )
 
     def test_FloatEditor(self):
-        editor = self.editors.FloatEditor(parent=None, editable=True, prefix='prefix')
+        editor = self.editors.FloatEditor(parent=None, 
+                                          editable=True, 
+                                          prefix='prefix')
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -441,7 +444,9 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), 3.14 )
         editor.set_value( self.ValueLoading )
         self.assertEqual( editor.get_value(), self.ValueLoading )
-        editor = self.editors.FloatEditor(parent=None, editable=False, suffix='suffix')
+        editor = self.editors.FloatEditor(parent=None, 
+                                          editable=False, 
+                                          suffix='suffix')
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -458,7 +463,14 @@ class EditorsTest(ModelThreadTestCase):
         # pretend the user has entered something
         editor.spinBox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
-
+        # verify if the calculator button is turned off
+        editor = self.editors.FloatEditor(parent=None, 
+                                          calculator=False)
+        editor.set_field_attributes( editable=True )
+        editor.set_value( 3.14 )
+        self.grab_widget( editor, 'no_calculator' )
+        self.assertTrue( editor.calculatorButton.isHidden() )
+        
     def test_ImageEditor(self):
         editor = self.editors.ImageEditor(parent=None, editable=True)
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -501,7 +513,14 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), 0 )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
-
+        # turn off the calculator
+        editor = self.editors.IntegerEditor(parent=None, 
+                                            calculator=False)
+        editor.set_field_attributes( editable=True )
+        editor.set_value( 3.14 )
+        self.grab_widget( editor, 'no_calculator' )
+        self.assertTrue( editor.calculatorButton.isHidden() )
+        
     def test_NoteEditor(self):
         editor = self.editors.NoteEditor(parent=None)
         editor.set_value('A person with this name allready exists')

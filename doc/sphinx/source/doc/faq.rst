@@ -6,10 +6,10 @@
 
 :Date: |today|
 
-After editing a record, it suddenly moves in or dissappears from the table view ?
+After editing a record, it suddenly moves in or disappears from the table view ?
 ---------------------------------------------------------------------------------
 
-It's all about sorting.  Camelot, nor SQLAlchemy or Elixir for a default
+It's all about sorting.  Camelot, nor SQLAlchemy or Elixir force a default
 order on the objects displayed in the table view.  This means a simple
 select query will be sent to the database::
 
@@ -21,7 +21,7 @@ but this is not required !  Postgres for example will return the rows that have
 been edited last as the last rows.  Thus editing a record moves the record in the
 table view.
 
-To prevent this behaviour, a default sorting can be forced upon an Entity, for example,
+To prevent this behavior, a default sorting can be forced upon an Entity, for example,
 by its primary key::
 
 	class Person(Entity):
