@@ -30,9 +30,12 @@ from customeditor import AbstractCustomEditor
 from camelot.core import constants
 from camelot.core.utils import ugettext
 
-
 class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
-    """Widget for editing a boolean field"""
+    """Widget for editing a boolean field.  The boolean editor does not support
+    the tri-state case where there is a difference between None and False.  So
+    when set_value(None) is called, get_value will return False.  Tri-state is
+    too difficult for the user.  In cases where this is needed, a ComboBox 
+    should be used."""
 
     editingFinished = QtCore.pyqtSignal()
     
@@ -49,8 +52,6 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         value = AbstractCustomEditor.set_value(self, value)
         if value:
             self.setCheckState(Qt.Checked)
-        elif value==None and self._nullable:
-            self.setCheckState(Qt.PartiallyChecked)
         else:
             self.setCheckState(Qt.Unchecked)
 
@@ -77,10 +78,7 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         size = QtGui.QComboBox().sizeHint()
         return size
 
-    def set_field_attributes(self, editable=True, nullable=True, **kwargs):
-        self._nullable = nullable
-        if self._nullable:
-            self.setTristate( True )
+    def set_field_attributes(self, editable=True, **kwargs):
         self.set_enabled(editable)
 
 class TextBoolEditor(QtGui.QLabel, AbstractCustomEditor):

@@ -41,8 +41,13 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
         return str( QtCore.QString("%L1").arg(float(value), 0, 'f', self.decimals()) )
 
 class FloatEditor(CustomEditor):
-    """Widget for editing a float field, with a calculator"""
+    """Widget for editing a float field, with a calculator button.  
+    The calculator button can be turned of with the **calculator** field
+    attribute.
+    """
 
+    calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
+    
     def __init__(self,
                  parent,
                  precision=2,
@@ -53,6 +58,7 @@ class FloatEditor(CustomEditor):
                  **kwargs):
         CustomEditor.__init__(self, parent)
         self._decimal = decimal
+        self._calculator = calculator
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
@@ -61,12 +67,11 @@ class FloatEditor(CustomEditor):
 
         self.spinBox.setRange(minimum, maximum)
         self.spinBox.setDecimals(precision)
-        self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+        self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
 
         self.spinBox.addAction(action)
         self.calculatorButton = QtGui.QToolButton()
-        icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
-        self.calculatorButton.setIcon(icon)
+        self.calculatorButton.setIcon( self.calculator_icon.getQIcon() )
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFixedHeight(self.get_height())
         self.calculatorButton.setToolTip('Calculator F3')
@@ -126,7 +131,7 @@ class FloatEditor(CustomEditor):
     def set_enabled(self, editable=True):
         self.spinBox.setReadOnly(not editable)
         self.spinBox.setEnabled(editable)
-        self.calculatorButton.setShown(editable)
+        self.calculatorButton.setShown(editable and self._calculator)
         if editable:
             self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
         else:

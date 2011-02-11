@@ -141,12 +141,11 @@ def create_stored_file(parent, storage, on_finish, filter='All files (*)',
 
         def checkin():
             new_path = storage.checkin(unicode(filename))
-            try:
-                os.remove( unicode( filename ) )
-            except Exception, e:
-                LOGGER.warn('could not remove file', exc_info=e)
-            if remove and QFile.exists(filename):
-                QFile.remove(filename)
+            if remove:
+                try:
+                    os.remove( unicode( filename ) )
+                except Exception, e:
+                    LOGGER.warn('could not remove file', exc_info=e)
             return lambda:on_finish(new_path)
 
         post(checkin, progress.finish, model_thread_exception_message_box)

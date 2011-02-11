@@ -112,6 +112,7 @@ an unneeded update of the db.
         self.setFocusProxy(self.spinBox)
         self.setLayout(layout)
         self._nullable = True
+        self._calculator = calculator
 
     def set_field_attributes(self, editable=True, background_color=None, 
                              prefix='', suffix='', nullable=True, 
@@ -146,7 +147,7 @@ an unneeded update of the db.
     def set_enabled(self, editable=True):
         self.spinBox.setReadOnly(not editable)
         self.spinBox.setEnabled(editable)
-        self.calculatorButton.setShown(editable)
+        self.calculatorButton.setShown(editable and self._calculator)
         if not editable:
             self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 

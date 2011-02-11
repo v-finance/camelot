@@ -148,7 +148,7 @@ class FileEditor(CustomEditor):
 
     def stored_file_ready(self, stored_file):
         """Slot to be called when a new stored_file has been created by
-        the storeage"""
+        the storage"""
         self.set_value(stored_file)
         self.editingFinished.emit()
 
