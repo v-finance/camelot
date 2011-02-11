@@ -228,7 +228,7 @@ attribute to enable search.
                         attributes.update(python_type(column_type))
                     if not isinstance(
                         property.columns[0],
-                        sqlalchemy.sql.expression._Label
+                        (sqlalchemy.sql.expression._Label, sqlalchemy.sql.expression.ColumnClause)
                     ):
                         attributes['nullable'] = property.columns[0].nullable
                         attributes['default'] = property.columns[0].default

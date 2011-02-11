@@ -53,6 +53,18 @@ class Fixture( Entity ):
             return entity.get( reference.primary_key )
 
     @classmethod
+    def findFixtureKey( cls, entity, primary_key ):
+        """Find the fixture key for an object of type entity with primary key
+        :return: fixture_key        
+        """
+        entity_name = unicode( entity.__name__ )
+        fixture = cls.query.filter_by( model = entity_name, primary_key = primary_key ).first()
+        if fixture:
+            return fixture.fixture_key
+        else:
+            return None
+        
+    @classmethod
     def findFixtureKeyAndClass( cls, obj ):
         """Find the fixture key and class of an object
         @param obj: the object we are looking for 
