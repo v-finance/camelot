@@ -25,3 +25,8 @@ def setup_model():
     #
     from fixtures import load_movie_fixtures
     load_movie_fixtures()
+    #
+    # setup the views
+    #
+    from view import setup_views
+    setup_views()

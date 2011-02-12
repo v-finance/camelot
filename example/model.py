@@ -42,6 +42,7 @@ def genre_choices(entity_instance):
 def burn_to_disk(o_getter):
     print 'burn burn burn'
 
+# begin short movie definition
 class Movie(Entity):
     using_options(tablename='movies')
     title = Field(Unicode(60), required=True)
@@ -56,6 +57,7 @@ class Movie(Entity):
     tags = ManyToMany('Tag')
     genre = Field(Unicode(15))
     rating = Field(camelot.types.Rating())
+# end short movie definition
     #
     # Camelot includes custom sqlalchemy types, like Image, which stores an
     # image on disk and keeps the reference to it in the database.
@@ -180,12 +182,13 @@ class Tag(Entity):
         form_display = ['name', 'movies']
         lines_per_row = 2
 
+# begin visitor report definition
 class VisitorReport(Entity):
     using_options(tablename='visitor_report')
     movie = ManyToOne('Movie', required=True)
-    #city = ManyToOne('City', required=True)
     date = Field(Date, required=True, default=datetime.date.today)
     visitors = Field(Integer, required=True, default=0)
+# end visitor report definition
 
     class Admin(EntityAdmin):
         verbose_name = _('Visitor Report')

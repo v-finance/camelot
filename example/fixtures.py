@@ -3,6 +3,7 @@ import datetime
 def load_movie_fixtures():
 
     from camelot.model.fixture import Fixture
+    from camelot.model.authentication import Person
     from model import Movie, VisitorReport
     from camelot.core.files.storage import StoredImage, Storage
 
@@ -13,7 +14,7 @@ def load_movie_fixtures():
             u'The Shining',
             u'The tide of terror that swept America is here.',
             datetime.date(1980, 5, 23),
-            u'Stanley Kubrick',
+            (u'Stanley', u'Kubrick',),
             [
                 u'Jack Nicholson',
                 u'Shelley Duvall',
@@ -34,7 +35,7 @@ def load_movie_fixtures():
             u'The Bourne Identity',
             u'Matt Damon is Jason Bourne.',
             datetime.date(2002, 6, 14),
-            u'Doug Liman',
+            (u'Doug', u'Liman'),
             [
                 u'Matt Damon',
                 u'Franka Potente',
@@ -53,7 +54,7 @@ def load_movie_fixtures():
             u'Casino Royale',
             u'Discover how James became Bond.',
             datetime.date(2006, 11, 17),
-            u'Martin Campbell',
+            (u'Martin', u'Campbell'),
             [
                 u'Daniel Craig',
                 u'Eva Green',
@@ -74,7 +75,7 @@ def load_movie_fixtures():
             u'Toy Story',
             u'Oooh...3-D.',
             datetime.date(1995, 11, 22),
-            u'John Lasseter',
+            (u'John', u'Lasseter'),
             [
                 u'Tom Hanks',
                 u'Tim Allen',
@@ -93,7 +94,7 @@ def load_movie_fixtures():
             u"Harry Potter and the Sorcerer's Stone",
             u'Let The Magic Begin.',
             datetime.date(2001, 11, 16),
-            u'Chris Columbus',
+            (u'Chris', u'Columbus'),
             [
                 u'Richard Harris',
                 u'Maggie Smith',
@@ -113,7 +114,7 @@ def load_movie_fixtures():
             u'Iron Man 2',
             u'The world now becomes aware of the dual life of the Iron Man.',
             datetime.date(2010, 5, 17),
-            u'Jon Favreau',
+            (u'Jon', 'Favreau'),
             [
                 u'Robert Downey Jr.',
                 u'Gwyneth Paltrow',
@@ -134,7 +135,7 @@ def load_movie_fixtures():
             u"Life's greatest adventure is finding your place in the Circle of"
             " Life.",
             datetime.date(1994, 6, 24),
-            u'Roger Allers',
+            (u'Roger', 'Allers'),
             [
                 u'Matthew Broderick',
                 u'Jeremy Irons',
@@ -154,7 +155,7 @@ def load_movie_fixtures():
             u'Avatar',
             u'Enter the World.',
             datetime.date(2009, 12, 18),
-            u'James Cameron',
+            (u'James', u'Cameron'),
             [
                 u'Sam Worthington',
                 u'Zoe Saldana',
@@ -174,7 +175,7 @@ def load_movie_fixtures():
             u'Pirates of the Caribbean: The Curse of the Black Pearl',
             u'Prepare to be blown out of the water.',
             datetime.date(2003, 7, 9),
-            u'Gore Verbinski',
+            (u'Gore', u'Verbinski'),
             [
                 u'Johnny Depp',
                 u'Geoffrey Rush',
@@ -194,7 +195,7 @@ def load_movie_fixtures():
             u'The Dark Knight',
             u'Why so serious?',
             datetime.date(2008, 7, 18),
-            u'Christopher Nolan',
+            (u'Christopher', u'Nolan'),
             [
                 u'Christian Bale',
                 u'Heath Ledger',
@@ -230,12 +231,19 @@ def load_movie_fixtures():
         ],
     }
 
-    for title, short_description, releasedate, director, cast, tags, genre, rating, cover, description in movies:
+    for title, short_description, releasedate, (director_first_name, director_last_name), cast, tags, genre, rating, cover, description in movies:
+        director = Fixture.insertOrUpdateFixture(
+            Person,
+            fixture_key = u'%s_%s'%(director_first_name, director_last_name),
+            values = {'first_name':director_first_name,
+                      'last_name':director_last_name}
+        )
         movie = Fixture.insertOrUpdateFixture(
             Movie,
             fixture_key = title,
             values = {
                 'title': title,
+                'director':director,
                 'short_description':short_description,
                 'releasedate':releasedate,
                 'rating':rating,
