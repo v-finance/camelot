@@ -68,7 +68,6 @@ An overview of field types from SQLAlchemy and Camelot is given in the table bel
 
 .. automodule:: camelot.view.field_attributes
 
-
 SQLAlchemy field types
 ----------------------
 
@@ -81,135 +80,8 @@ Camelot field types
 .. automodule:: camelot.types
    :members:
    
-Python properties as fields
-===========================
+.. toctree::
 
-Normal python properties can be used as fields on forms as well.  In that case, there
-will be no introspection to find out how to display the property.  Therefore the delegate 
-(:ref:`specifying-delegates`) attribute should be specified explicitly.
-
-  .. literalinclude:: ../../../../test/snippet/properties_as_fields.py
-  
-Attach actions to field changes
-===============================
-
-Whenever the value of a field is changed, an action on the model can be triggered by
-using properties to manipulate the field instead of manipulating it directly.  The
-example below demonstrates how the value of y should be chopped when x is changed.
-
-  .. literalinclude:: ../../../../test/snippet/fields_with_actions.py
-  
-  .. image:: ../_static/snippets/fields_with_actions.png
-
-Fields calculated by the database
-=================================
-
-Having certain summary fields of your models filled by the database has the advantage
-that the heavy processing is moved from the client to the server.  Moreover if the 
-summary builds on information in related records, having the database build the summary
-reduces the need to transfer additional data from the database to the server.
-
-To display fields in the table and the form view that are the result of a calculation 
-done by the database, a ColumnProperty needs to be defined in the Elixir model.  In this 
-ColumnProperty, the sql query can be defined using SQLAlchemy statements.  Then use the 
-field attributes mechanism to specify which delegate needs to be used to render the field.
-
-.. image:: ../_static/budget.png
-
-As an example we will create a budget with multiple budget lines, where the total budget 
-is calculated by the database ::
-
-	from elixir.properties import ColumnProperty
-	from camelot.view.controls import delegates
-	from sqlalchemy import sql, and_
-	
-	class Budget(Entity):
-	  lines = OneToMany('BudgetLine')
-	  total = ColumnProperty(lambda c:sql.select([sql.func.sum(BudgetLine.amount)], and_(BudgetLine.budget_id==Budget.id)))
-	
-	   class Admin(EntityAdmin):
-	    name = 'Budgets'
-	    list_display = [ 'total', 'lines']
-	    field_attributes = {'total':{'delegate':delegates.FloatDelegate}} 
-	
-	class BudgetLine(Entity):
-	  budget = ManyToOne('Budget', required=True, ondelete='cascade', onupdate='cascade')
-	  amount = Field(Float(precision=2), default=0)
-	
-	  class Admin(EntityAdmin):
-	    name = 'Budget lines'
-	    list_display = ['amount',] 
-	    
-When the user presses F9, all data in the application is refreshed from the database, and thus
-all fields are recalculated.
-
-An explanation of the lambda function inside the ColumnProperty can be found in the ElixirColumnProperty_ and
-the SqlalchemyMappers_ documentation.
-
-.. _ElixirColumnProperty: http://elixir.ematia.de/apidocs/elixir.properties.ColumnProperty.html
-
-.. _SqlalchemyMappers: http://www.sqlalchemy.org/docs/04/mappers.html#advdatamapping_mapper_expressions
-
-Under the hood
-==============
-
-A lot of things happen under the hood when a model is defined using Elixir, and
-picked up by Camelot :
-
-Metadata
---------
-
-Each file that contains a part of the model definition should contain these lines :
-
-.. literalinclude:: ../../../../camelot/empty_project/model.py
-   :start-after: begin meta data setup
-   :end-before: end meta data setup
-   
-They associate the Entities defined in this file with the default metadata.  The
-metadata is a datastructure that contains information about the database in which
-the tables for the model will be created.
-
-Engine
-------
-
-The settings.py file should contain a function named ENGINE that returns a
-connection to the database.  This connection will be associated with the default
-metadata used in the model definition.
-
-.. literalinclude:: ../../../../camelot/empty_project/settings.py
-   :pyobject: ENGINE
-
-As such, all defined models are associated with this database.
-
-Setup model
------------
-
-When the application starts up, the setup_model function in the settings.py file
-is called.  In this function, all model files should be imported, to make sure the
-model has been completely setup.
-
-.. literalinclude:: ../../../../camelot/empty_project/settings.py
-   :pyobject: setup_model
-   
-Working without the default model
-=================================
-
-Camelot comes with a default model for Persons, Organizations, History tracking, etc.
-
-You might want to turn this off, here's how to do so :
-
-1. In your settings.py, remove the line 'import camelot.model' and the line
-   'from camelot.model.authentication import updateLastLogin', this will make sure
-   no tables are created for the default Camelot model.  Tables are only created for
-   the models that have been imported before the call to 'setup_all()'
-  
-.. literalinclude:: ../../../../camelot/empty_project/settings.py
-   :pyobject: setup_model
-    
-2. Have a look in 'camelot/model/__init__.py' and copy the lines that do
-   the initialization of the elixir session and metadata to the top of your
-   own model file, imported first in the 'setup_model()' function.
-
-.. literalinclude:: ../../../../camelot/model/__init__.py
-   :start-after: begin session setup
-   :end-before: end session setup
+   calculated_fields.rst
+   views.rst
+   under_the_hood.rst
