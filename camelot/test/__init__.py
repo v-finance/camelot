@@ -205,9 +205,19 @@ class EntityViewsTest(ModelThreadTestCase):
     def get_admins(self):
         """Should return all admin for which a table and a form view should be displayed,
         by default, returns for all entities their default admin"""
-        from elixir import entities
+        from sqlalchemy.orm.mapper import _mapper_registry
+         
+        classes = []
+        for mapper in _mapper_registry.keys():
+            print mapper
+            if hasattr(mapper, 'class_'):
+                classes.append( mapper.class_ )
+            else:
+                print 'no class'
+                raise Exception()
+            
         app_admin = self.get_application_admin()
-        return [app_admin.get_entity_admin(e) for e in entities if app_admin.get_entity_admin(e)]
+        return [app_admin.get_entity_admin(c) for c in classes if app_admin.get_entity_admin(c)]
 
     def test_select_view(self):
         from PyQt4 import QtCore

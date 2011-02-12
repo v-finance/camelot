@@ -554,12 +554,14 @@ class UsernameAuthenticationMechanism( AuthenticationMechanism ):
         verbose_name = _('Authentication mechanism')
         list_display = ['username', 'last_login', 'is_active']
 
+# begin short person definition
 class Person( Party ):
     """Person represents natural persons
     """
     using_options( tablename = 'person', inheritance = 'multi' )
     first_name = Field( Unicode( 40 ), required = True )
     last_name = Field( Unicode( 40 ), required = True )
+# end short person definition
     middle_name = Field( Unicode( 40 ) )
     personal_title = Field( Unicode( 10 ) )
     suffix = Field( Unicode( 3 ) )

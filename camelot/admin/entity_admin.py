@@ -121,7 +121,8 @@ attribute to enable search.
         displayed in the table or the selection view.  Overwrite this method to
         change the default query, which selects all rows in the database.
         """
-        return self.entity.query
+        from elixir import session
+        return session.query( self.entity )
 
     @model_function
     def get_verbose_identifier(self, obj):
