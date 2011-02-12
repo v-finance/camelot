@@ -69,7 +69,6 @@ def decode_setting(value):
 
 
 def select_database():
-    return
     wizard = ProfileSelection(None)
     dialog_code = wizard.exec_()
     if dialog_code == QDialog.Rejected:
@@ -221,14 +220,8 @@ class ProfileSelection(StandaloneWizardPage):
 
         self.dialect_editor.set_choices([(dialect, dialect.capitalize())
             for dialect in dialects])
-        self.dialect_editor.set_value(self.get_profile_value('dialect') or
-            'mysql')
 
-        self.host_editor.setText(self.get_profile_value('host') or 'localhost')
-        self.port_editor.setText(self.get_profile_value('port') or '3306')
-        self.database_name_editor.setText(self.get_profile_value('database'))
-        self.username_editor.setText(self.get_profile_value('user'))
-        self.password_editor.setText(self.get_profile_value('pass'))
+        self.update_profile()
 
     def connect_widgets(self):
         self.profile_editor.valueChanged.connect(self.update_profile)
@@ -316,6 +309,16 @@ class ProfileSelection(StandaloneWizardPage):
 
     def current_profile(self):
         return self.profile_editor.get_value()
+
+    def update_profile(self):
+        self.dialect_editor.set_value(self.get_profile_value('dialect') or
+            'mysql')
+
+        self.host_editor.setText(self.get_profile_value('host') or 'localhost')
+        self.port_editor.setText(self.get_profile_value('port') or '3306')
+        self.database_name_editor.setText(self.get_profile_value('database'))
+        self.username_editor.setText(self.get_profile_value('user'))
+        self.password_editor.setText(self.get_profile_value('pass'))
 
     def get_profile_value(self, key):
         current = self.current_profile()
