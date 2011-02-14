@@ -210,7 +210,7 @@ attribute to enable search.
             # Get the default field_attributes trough introspection if the
             # field is a mapped field
             #
-            from sqlalchemy import orm
+            from sqlalchemy import orm, schema
             from sqlalchemy.exceptions import InvalidRequestError
             from camelot.view.field_attributes import _sqlalchemy_to_python_type_
 
@@ -227,10 +227,7 @@ attribute to enable search.
                     )
                     if python_type:
                         attributes.update(python_type(column_type))
-                    if not isinstance(
-                        property.columns[0],
-                        (sqlalchemy.sql.expression._Label, sqlalchemy.sql.expression.ColumnClause)
-                    ):
+                    if isinstance( property.columns[0], (schema.Column) ):
                         attributes['nullable'] = property.columns[0].nullable
                         attributes['default'] = property.columns[0].default
                 elif isinstance(property, orm.properties.PropertyLoader):
