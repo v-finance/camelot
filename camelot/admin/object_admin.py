@@ -551,7 +551,7 @@ The QWidget class to be used when a table view is needed
     def get_form_display(self):
         from camelot.view.forms import Form, structure_to_form
         if self.form_display:
-            return structure_to_form(self.form or self.form_display)
+            return structure_to_form(self.form_display)
         if self.list_display:
             return Form(self.list_display)
         return Form([])
