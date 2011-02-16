@@ -41,6 +41,7 @@ from PyQt4.QtGui import QInputDialog
 from PyQt4.QtGui import QLabel
 from PyQt4.QtGui import QLineEdit
 from PyQt4.QtGui import QPushButton
+from PyQt4.QtGui import QMessageBox
 
 from camelot.view import art
 from camelot.view.controls.editors import ChoicesEditor, TextLineEditor
@@ -69,14 +70,54 @@ def decode_setting(value):
 
 
 def select_database():
-    wizard = ProfileSelection(None)
-    dialog_code = wizard.exec_()
-    if dialog_code == QDialog.Rejected:
-        # the user chooses to exit
+    profiles_dict = create_profiles_dict()
+
+    unknown_profile_title = _('Unknown Profile')
+    unknown_profile_text = _('Do you want to create this profile now?')
+    input_dialog = profile_selection_dialog(profiles_dict.keys())
+
+    if input_dialog.exec_() == QDialog.Accepted:
+        selected = str(input_dialog.textValue())
+        logger.info('selected profile: %s' % selected)
+        if selected in profiles_dict:
+            use_chosen_profile(profiles_dict[selected])
+        else:
+            result = QMessageBox.question(None, unknown_profile_title,
+                unknown_profile_text, QMessageBox.Yes|QMessageBox.No)
+            if result == QMessageBox.No:
+                sys.exit(0)
+            else:
+                wizard = ProfileSelection(None)
+                wizard.profiles_choices.add((selected, selected))
+                wizard.profile_editor.set_choices(wizard.profiles_choices)
+                wizard.profile_editor.set_value(selected)
+                wizard.update_profile()
+                dialog_code = wizard.exec_()
+                if dialog_code == QDialog.Rejected:
+                    sys.exit(0)
+    else:
         sys.exit(0)
 
 
-def fetch_profiles():
+def profile_selection_dialog(profilenames):
+    title = _('Profile Selection')
+    input_label = _('Select a stored profile:')
+
+    input_dialog = QInputDialog(None)
+    input_dialog.setWindowTitle(title)
+    input_dialog.setLabelText(input_label)
+
+    input_dialog.setComboBoxEditable(True)
+    input_dialog.setComboBoxItems(profilenames)
+    input_dialog.setTextValue(profilenames[0])
+
+    input_dialog.setOkButtonText(_('Connect'))
+    input_dialog.setCancelButtonText(_('Quit'))
+
+    return input_dialog
+
+
+def fetch_profile_array():
     profiles = []
     settings = QSettings()
     size = settings.beginReadArray('database_profiles')
@@ -103,7 +144,7 @@ def fetch_profiles():
     return profiles
 
 
-def store_profiles(profiles):
+def store_profile_array(profiles):
     settings = QSettings()
     settings.beginWriteArray('database_profiles')
 
@@ -140,6 +181,26 @@ def last_used_profile():
         QVariant('')).toString()))
 
 
+def fetch_profile_names():
+    names = set()
+    for profile in fetch_profile_array():
+        if 'profilename' in profile and profile['profilename']:
+            names.add(profile['profilename'])
+    return names
+
+
+def create_profiles_dict():
+    d = {}
+    seen = set()
+    for profile in fetch_profile_array():
+        if 'profilename' in profile and profile['profilename']:
+            if profile['profilename'] in seen:
+                continue
+            seen.add(profile['profilename'])
+            d[profile['profilename']] = profile
+    return d
+
+
 class ProfileSelection(StandaloneWizardPage):
 
     def __init__(self, parent=None):
@@ -147,14 +208,9 @@ class ProfileSelection(StandaloneWizardPage):
 
         self._connection_valid = False
 
-        self.profiles = fetch_profiles()
-        logger.debug('original profiles fetched:\n%s' % self.profiles)
-        self.profiles_choices = set()
-        for profile in self.profiles:
-            if 'profilename' in profile and profile['profilename']:
-                self.profiles_choices.add((profile['profilename'],
-                    profile['profilename']))
-        logger.debug('original profiles choices:\n%s' % self.profiles_choices)
+        self.profiles = fetch_profile_array()
+        self.profiles_choices = set((name, name) for name in
+            fetch_profile_names())
 
         self.setWindowTitle(_('Profile Selection'))
         self.set_banner_logo_pixmap(art.Icon(
@@ -263,7 +319,7 @@ class ProfileSelection(StandaloneWizardPage):
             info = self.collect_info()
             self.add_new_profile(info)
             logger.debug('storing new profile:\n%s' % self.profiles)
-            store_profiles(self.profiles)
+            store_profile_array(self.profiles)
             use_chosen_profile(info)
             self.accept()
 
