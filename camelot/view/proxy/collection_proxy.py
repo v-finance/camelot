@@ -630,6 +630,7 @@ position in the query.
         #
         # Handle the requests
         #
+        return_list = []
         for flushed, row, column, value in update_requests:
             attribute, field_attributes = self.getColumns()[column]
 
@@ -724,7 +725,7 @@ position in the query.
                 self.rsh.sendEntityUpdate( self, o )
                 for depending_obj in self.admin.get_depending_objects( o ):
                     self.rsh.sendEntityUpdate( self, depending_obj )
-                return ( ( row, 0 ), ( row, len( self.getColumns() ) ) )
+                return_list.append(( ( row, 0 ), ( row, len( self.getColumns() ) ) ))
             elif flushed:
                 locker.relock()
                 self.logger.debug( 'old value equals new value, no need to flush this object' )
@@ -733,6 +734,7 @@ position in the query.
                 except KeyError:
                     pass
                 locker.unlock()
+        return return_list
 
 
     def setData( self, index, value, role = Qt.EditRole ):

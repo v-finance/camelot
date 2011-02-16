@@ -125,11 +125,23 @@ the form itself ::
 
 **Behaviour**
 
-.. attribute:: confirm_delete
+.. attribute:: save_mode
+
+Specifies when the data should be send from the view to the model and flushed
+to the database.  The default mode is 'on_change', meaning that every change
+in the view will be send immediately to the database.  Other possibilities are :
+
+  * 'on_leave' : the data will be send from the view to the model when the view
+    is closed, eg. : the form is closed.
+
+.. attribute:: delete_mode
 
 Indicates if the deletion of an object should be confirmed by the user, defaults
-to False.  Can be set to either True, False, or the message to display when asking
-confirmation of the deletion.
+to 'on_requrest', indicating object should be deleted when the user hits the trash
+button.  Other possibilities are :
+
+  * 'on_confirm' : the user will be asked for confirmation before the delete
+    takes place.
 
 .. attribute:: form_size
 
@@ -190,7 +202,6 @@ defaults to a CollectionProxy
 .. attribute:: TableView
 The QWidget class to be used when a table view is needed
     """
-    name = None #DEPRECATED
     verbose_name = None
     verbose_name_plural = None
     list_display = []
@@ -199,18 +210,21 @@ The QWidget class to be used when a table view is needed
     validator = ObjectValidator
     model = CollectionProxy
     fields = []
-    form = [] #DEPRECATED
     form_display = []
     list_filter = []
     list_charts = []
     list_actions = []
-    confirm_delete = False
     list_size = (600, 400)
     form_size = (700, 500)
     form_actions = []
-    form_title_column = None #DEPRECATED
     field_attributes = {}
     form_state = None
+    #
+    # Behavioral attributes
+    # 
+    save_mode = 'on_edit'
+    delete_mode = 'on_request'
+
     TableView = TableView
 
     def __init__(self, app_admin, entity):
@@ -257,13 +271,12 @@ The QWidget class to be used when a table view is needed
 #            return text 
 
         return unicode(
-            self.verbose_name or self.name or _(self.entity.__name__.capitalize())
+            self.verbose_name or _(self.entity.__name__.capitalize())
         )
 
     def get_verbose_name_plural(self):
         return unicode(
             self.verbose_name_plural
-            or self.name
             or (self.get_verbose_name() + 's')
         )
 
@@ -278,12 +291,14 @@ The QWidget class to be used when a table view is needed
     def get_entity_admin(self, entity):
         return self.app_admin.get_entity_admin(entity)
 
-    def get_confirm_delete(self):
-        if self.confirm_delete:
-            if self.confirm_delete==True:
-                return _('Are you sure you want to delete this')
-            return self.confirm_delete
-        return False
+    def get_save_mode(self):
+        return self.save_mode
+
+    def get_delete_mode(self):
+        return self.delete_mode
+
+    def get_delete_message(self, obj):
+        return _('Are you sure you want to delete this')
 
     @model_function
     def get_form_actions(self, entity):
@@ -510,7 +525,7 @@ The QWidget class to be used when a table view is needed
 
     @model_function
     def get_fields(self):
-        if self.form or self.form_display:
+        if self.form_display:
             fields = self.get_form_display().get_fields()
         elif self.fields:
             fields = self.fields

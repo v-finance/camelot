@@ -31,7 +31,6 @@ from camelot.view.controls.exception import model_thread_exception_message_box
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4.QtCore import QFile
 
 LOGGER = logging.getLogger('camelot.view.storage')
 

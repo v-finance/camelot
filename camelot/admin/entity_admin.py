@@ -25,13 +25,10 @@
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
-import sqlalchemy.sql.expression
-
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function, gui_function
 from camelot.core.utils import ugettext_lazy, ugettext
 from camelot.admin.validator.entity_validator import EntityValidator
-
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.

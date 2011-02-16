@@ -262,15 +262,14 @@ class AdminTableWidget(TableWidget):
     @QtCore.pyqtSlot()
     def delete_selected_rows(self):
         logger.debug( 'delete selected rows called' )
-        confirmation_message = self._admin.get_confirm_delete()
         confirmed = True
         rows = set( index.row() for index in self.selectedIndexes() )
         if not rows:
             return
-        if confirmation_message:
+        if self._admin.get_delete_mode()=='on_confirm':
             if QtGui.QMessageBox.question(self,
                                           _('Please confirm'),
-                                          unicode(confirmation_message),
+                                          unicode(self._admin.get_delete_message(None)),
                                           QtGui.QMessageBox.Yes,
                                           QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
                 confirmed = False
