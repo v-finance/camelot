@@ -47,7 +47,9 @@ def documented_entity():
         from elixir import Field
         from elixir.relationships import Relationship
         if isinstance(field, Field):
-            return '%s'%key
+            nullable = field.kwargs.get('nullable', True)
+            required = {True:'not required', False:'required'}[nullable]
+            return '%s : %s, %s'%(key, unicode(field.type), required)
         if isinstance(field, Relationship):
             return '%s : refers to %s'%(key, unicode(field.of_kind))
         
