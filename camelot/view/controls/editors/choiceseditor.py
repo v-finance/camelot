@@ -50,7 +50,8 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
 
     @QtCore.pyqtSlot(unicode)
     def _set_item_text(self, text):
-        self.setItemText(self.currentIndex(), text)
+        if self.findText(text) == -1:
+            self.setItemText(self.currentIndex(), text)
 
     def set_choices(self, choices):
         """
