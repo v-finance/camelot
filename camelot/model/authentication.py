@@ -833,8 +833,10 @@ class PartyCategory( Entity ):
         for party in self.parties:
             for party_contact_mechanism in party.contact_mechanisms:
                 contact_mechanism = party_contact_mechanism.contact_mechanism
-                if contact_mechanism and contact_mechanism[0] == virtual_address_type:
-                    yield contact_mechanism[0]
+                if contact_mechanism:
+                    virtual_address = contact_mechanism.mechanism
+                    if virtual_address and virtual_address[0] == virtual_address_type:
+                        yield virtual_address[1]
                 
     def __unicode__(self):
         return self.name or ''
