@@ -196,7 +196,6 @@ class ProfileWizard(StandaloneWizardPage):
     def connect_widgets(self):
         # happens when the item itself has changed
         self.profile_editor.valueChanged.connect(self.update_profile)
-        self.profile_editor.editTextchanged.connect(self.update_profile)
 
     def create_buttons(self):
         self.cancel_button = QPushButton(_('Cancel'))
