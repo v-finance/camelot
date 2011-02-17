@@ -156,6 +156,11 @@ class ProfileWizard(StandaloneWizardPage):
 
         self.profile_editor = ChoicesEditor(parent=self)
         self.profile_editor.setEditable(True)
+        # auto completion might be confusing, plus the fields are updated
+        # automatically
+        self.profile_editor.setCompleter(None)
+        # we also disable duplicates
+        self.profile_editor.setDuplicatesEnabled(False)
         self.dialect_editor = ChoicesEditor(parent=self)
         self.host_editor = TextLineEditor(self)
         self.port_editor = TextLineEditor(self)
