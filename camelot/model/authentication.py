@@ -26,9 +26,7 @@ from camelot.model import metadata
 from elixir import entities
 from camelot.view.controls import delegates
 
-from elixir.entity import Entity
-from elixir.options import using_options
-from elixir.fields import Field
+from elixir import Entity, using_options, Field, ManyToMany
 from sqlalchemy.types import Date, Unicode, Integer, DateTime, Boolean
 from elixir.relationships import ManyToOne, OneToMany
 from elixir.properties import ColumnProperty
@@ -364,6 +362,7 @@ class Party( Entity ):
     shares = OneToMany( 'SharedShareholder', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     status = OneToMany( type_3_status( 'Party', metadata, entities ), cascade='all, delete, delete-orphan' )
+    categories = ManyToMany( 'PartyCategory' )
 
     @property
     def name( self ):
@@ -450,6 +449,7 @@ class Party( Entity ):
         verbose_name_plural = _('Parties')
         list_display = ['name', 'contact_mechanisms_email', 'contact_mechanisms_phone'] # don't use full name, since it might be None for new objects
         list_search = ['full_name']
+        list_filter = ['categories.name']
         form_display = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
         field_attributes = dict(addresses = {'admin':AddressAdmin},
                                 contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin},
@@ -519,7 +519,7 @@ class Organization( Party ):
                                 ( _('Suppliers'), Form( ['suppliers'] ) ),
                                 ( _('Corporate'), Form( ['directors', 'shareholders', 'shares'] ) ),
                                 ( _('Branding'), Form( ['logo'] ) ),
-                                ( _('Status'), Form( ['status'] ) ),
+                                ( _('Category and Status'), Form( ['categories', 'status'] ) ),
                                 ] )
 
 Organization = documented_entity()( Organization )
@@ -603,7 +603,7 @@ class Person( Party ):
                                 ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
                                                         'passport_expiry_date', 'addresses', ], scrollbars = False ) ),
                                 ( _('Work'), Form( ['employers', 'directed_organizations', 'shares'], scrollbars = False ) ),
-                                ( _('Status'), Form( ['status'] ) ),
+                                ( _('Category and Status'), Form( ['categories', 'status'] ) ),
                                 ] )
         field_attributes = dict( Party.Admin.field_attributes )
         field_attributes['note'] = {'delegate':delegates.NoteDelegate}
@@ -817,4 +817,29 @@ class PartyContactMechanism( Entity ):
 
     Admin = PartyContactMechanismAdmin
 
+class PartyCategory( Entity ):
+    using_options( tablename = 'party_category' )
+    name = Field( Unicode(40), index=True, required=True )
+    color = Field( camelot.types.Color() )
+    parent = ManyToOne( 'PartyCategory' )
+    parties = ManyToMany( 'Party', lazy = True )
 
+    def get_contact_mechanisms(self, virtual_address_type):
+        """Function to be used to do messaging
+        
+        :param virtual_address_type: a virtual address type, such as 'phone' or 'email'
+        :return: a generator that yields strings of contact mechanisms, egg 'info@example.com'
+        """
+        for party in self.parties:
+            for party_contact_mechanism in party.contact_mechanisms:
+                contact_mechanism = party_contact_mechanism.contact_mechanism
+                if contact_mechanism and contact_mechanism[0] == virtual_address_type:
+                    yield contact_mechanism[0]
+                
+    def __unicode__(self):
+        return self.name or ''
+    
+    class Admin( EntityAdmin ):
+        verbose_name = _('Party Category')
+        verbose_name_plural = _('Party Categories')
+        list_display = ['name', 'color']
