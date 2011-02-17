@@ -23,15 +23,12 @@
 #  ============================================================================
 
 import sys
-import base64
 import logging
 import pkgutil
 
 import sqlalchemy.dialects
 from sqlalchemy import create_engine
 
-from PyQt4.QtCore import QSettings
-from PyQt4.QtCore import QVariant
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QBoxLayout
 from PyQt4.QtGui import QDialog
@@ -41,16 +38,18 @@ from PyQt4.QtGui import QInputDialog
 from PyQt4.QtGui import QLabel
 from PyQt4.QtGui import QLineEdit
 from PyQt4.QtGui import QPushButton
-from PyQt4.QtGui import QMessageBox
 
 from camelot.view import art
-from camelot.view.controls.editors import ChoicesEditor, TextLineEditor
 from camelot.view.controls.progress_dialog import ProgressDialog
+from camelot.view.controls.editors import ChoicesEditor, TextLineEditor
+from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+
 from camelot.core.utils import ugettext as _
 from camelot.view.model_thread.signal_slot_model_thread import \
     SignalSlotModelThread
 
-from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, \
+    last_used_profile, store_profiles
 
 
 logger = logging.getLogger('camelot.view.database_selection')
@@ -58,43 +57,21 @@ logger = logging.getLogger('camelot.view.database_selection')
 dialects = [name for _importer, name, is_package in \
         pkgutil.iter_modules(sqlalchemy.dialects.__path__ ) if is_package]
 
-
-def encode_setting(value):
-    result = base64.b64encode(str(value))
-    return result
-
-
-def decode_setting(value):
-    result = base64.b64decode(str(value))
-    return result
+# repeated labels
+NEW_PROFILE_LABEL = _('new profile')
 
 
 def select_database():
-    profiles_dict = create_profiles_dict()
-
-    unknown_profile_title = _('Unknown Profile')
-    unknown_profile_text = _('Do you want to create this profile now?')
-    input_dialog = profile_selection_dialog(profiles_dict.keys())
+    profiles = fetch_profiles()
+    input_dialog = profile_selection_dialog(profiles.keys())
 
     if input_dialog.exec_() == QDialog.Accepted:
         selected = str(input_dialog.textValue())
         logger.info('selected profile: %s' % selected)
-        if selected in profiles_dict:
-            use_chosen_profile(profiles_dict[selected])
-        else:
-            result = QMessageBox.question(None, unknown_profile_title,
-                unknown_profile_text, QMessageBox.Yes|QMessageBox.No)
-            if result == QMessageBox.No:
-                sys.exit(0)
-            else:
-                wizard = ProfileSelection(None)
-                wizard.profiles_choices.add((selected, selected))
-                wizard.profile_editor.set_choices(wizard.profiles_choices)
-                wizard.profile_editor.set_value(selected)
-                wizard.update_profile()
-                dialog_code = wizard.exec_()
-                if dialog_code == QDialog.Rejected:
-                    sys.exit(0)
+        if selected in profiles:
+            use_chosen_profile(selected, profiles[selected])
+        elif selected == NEW_PROFILE_LABEL:
+            create_new_profile()
     else:
         sys.exit(0)
 
@@ -107,7 +84,10 @@ def profile_selection_dialog(profilenames):
     input_dialog.setWindowTitle(title)
     input_dialog.setLabelText(input_label)
 
-    input_dialog.setComboBoxEditable(True)
+    # in case we are creating a new one
+    profilenames.append(NEW_PROFILE_LABEL)
+
+    #input_dialog.setComboBoxEditable(True)
     input_dialog.setComboBoxItems(profilenames)
     input_dialog.setTextValue(profilenames[0])
 
@@ -117,100 +97,27 @@ def profile_selection_dialog(profilenames):
     return input_dialog
 
 
-def fetch_profile_array():
-    profiles = []
-    settings = QSettings()
-    size = settings.beginReadArray('database_profiles')
-
-    if size == 0:
-        return profiles
-
-    for index in range(size):
-        settings.setArrayIndex(index)
-        info = {}
-        profilename = decode_setting(settings.value('profilename', QVariant('')).toString())
-        if not profilename:
-            continue  # well we should not really be doing anything
-        info['profilename'] = profilename
-        info['dialect'] = decode_setting(settings.value('dialect', QVariant('')).toString())
-        info['host'] = decode_setting(settings.value('host', QVariant('')).toString())
-        info['port'] = decode_setting(settings.value('port', QVariant('')).toString())
-        info['database'] = decode_setting(settings.value('database', QVariant('')).toString())
-        info['user'] = decode_setting(settings.value('user', QVariant('')).toString())
-        info['pass'] = decode_setting(settings.value('pass', QVariant('')).toString())
-        profiles.append(info)
-    settings.endArray()
-
-    return profiles
+def create_new_profile():
+    wizard = ProfileWizard(None)
+    wizard.profiles_choices.add((NEW_PROFILE_LABEL, NEW_PROFILE_LABEL))
+    wizard.profile_editor.set_choices(wizard.profiles_choices)
+    wizard.profile_editor.set_value(NEW_PROFILE_LABEL)
+    wizard.update_profile()
+    dialog_code = wizard.exec_()
+    if dialog_code == QDialog.Rejected:
+        sys.exit(0)
 
 
-def store_profile_array(profiles):
-    settings = QSettings()
-    settings.beginWriteArray('database_profiles')
-
-    for index, info in enumerate(profiles):
-        settings.setArrayIndex(index)
-        settings.setValue('profilename', QVariant(encode_setting(info['profilename'])))
-        settings.setValue('dialect', QVariant(encode_setting(info['dialect'])))
-        settings.setValue('host', QVariant(encode_setting(info['host'])))
-        settings.setValue('port', QVariant(encode_setting(info['port'])))
-        settings.setValue('database', QVariant(encode_setting(info['database'])))
-        settings.setValue('user', QVariant(encode_setting(info['user'])))
-        settings.setValue('pass', QVariant(encode_setting(info['pass'])))
-    settings.endArray()
-
-
-def use_chosen_profile(info):
-    settings = QSettings()
-    settings.setValue('last_used_database_profile', QVariant(encode_setting(
-        info['profilename'])))
-    settings.setValue('database/driver', QVariant(encode_setting('mysql')))
-    settings.setValue('database/dialect', QVariant(encode_setting(
-        info['dialect'])))
-    settings.setValue('database/host', QVariant(encode_setting(info['host'])))
-    settings.setValue('database/user', QVariant(encode_setting(info['user'])))
-    settings.setValue('database/password',
-            QVariant(encode_setting(info['pass'])))
-    settings.setValue('database/name',
-            QVariant(encode_setting(info['database'])))
-
-
-def last_used_profile():
-    settings = QSettings()
-    return str(decode_setting(settings.value('last_used_database_profile',
-        QVariant('')).toString()))
-
-
-def fetch_profile_names():
-    names = set()
-    for profile in fetch_profile_array():
-        if 'profilename' in profile and profile['profilename']:
-            names.add(profile['profilename'])
-    return names
-
-
-def create_profiles_dict():
-    d = {}
-    seen = set()
-    for profile in fetch_profile_array():
-        if 'profilename' in profile and profile['profilename']:
-            if profile['profilename'] in seen:
-                continue
-            seen.add(profile['profilename'])
-            d[profile['profilename']] = profile
-    return d
-
-
-class ProfileSelection(StandaloneWizardPage):
+class ProfileWizard(StandaloneWizardPage):
 
     def __init__(self, parent=None):
-        super(ProfileSelection, self).__init__(parent)
+        super(ProfileWizard, self).__init__(parent)
 
         self._connection_valid = False
+        self._saved_profilename = None
 
-        self.profiles = fetch_profile_array()
-        self.profiles_choices = set((name, name) for name in
-            fetch_profile_names())
+        self.profiles = fetch_profiles()
+        self.profiles_choices = set((name, name) for name in self.profiles.keys())
 
         self.setWindowTitle(_('Profile Selection'))
         self.set_banner_logo_pixmap(art.Icon(
@@ -226,7 +133,6 @@ class ProfileSelection(StandaloneWizardPage):
         self.create_buttons()
         self.connect_buttons()
 
-
     def create_labels_and_widgets(self):
         self.profile_label = QLabel(_('Profile Name:'))
         self.dialect_label = QLabel(_('Driver:'))
@@ -235,6 +141,7 @@ class ProfileSelection(StandaloneWizardPage):
         self.database_name_label = QLabel(_('Database Name:'))
         self.username_label = QLabel(_('Username:'))
         self.password_label = QLabel(_('Password:'))
+        self.media_location_label = QLabel(_('Media Location:'))
 
         layout = QGridLayout()
 
@@ -245,8 +152,10 @@ class ProfileSelection(StandaloneWizardPage):
         layout.addWidget(self.database_name_label, 3, 0, Qt.AlignRight)
         layout.addWidget(self.username_label, 4, 0, Qt.AlignRight)
         layout.addWidget(self.password_label, 5, 0, Qt.AlignRight)
+        layout.addWidget(self.media_location_label, 6, 0, Qt.AlignRight)
 
         self.profile_editor = ChoicesEditor(parent=self)
+        self.profile_editor.setEditable(True)
         self.dialect_editor = ChoicesEditor(parent=self)
         self.host_editor = TextLineEditor(self)
         self.port_editor = TextLineEditor(self)
@@ -255,6 +164,10 @@ class ProfileSelection(StandaloneWizardPage):
         self.username_editor = TextLineEditor(self)
         self.password_editor = TextLineEditor(self)
         self.password_editor.setEchoMode(QLineEdit.Password)
+        # 32767 is Qt max length for string
+        # should be more than enough for folders
+        # http://doc.qt.nokia.com/latest/qlineedit.html#maxLength-prop
+        self.media_location_editor = TextLineEditor(self, length=32767)
 
         layout.addWidget(self.profile_editor, 0, 1, 1, 4)
         layout.addWidget(self.dialect_editor, 1, 1, 1, 1)
@@ -263,6 +176,7 @@ class ProfileSelection(StandaloneWizardPage):
         layout.addWidget(self.database_name_editor, 3, 1, 1, 1)
         layout.addWidget(self.username_editor, 4, 1, 1, 1)
         layout.addWidget(self.password_editor, 5, 1, 1, 1)
+        layout.addWidget(self.media_location_editor, 6, 1, 1, 1)
 
         self.main_widget().setLayout(layout)
 
@@ -280,14 +194,15 @@ class ProfileSelection(StandaloneWizardPage):
         self.update_profile()
 
     def connect_widgets(self):
+        # happens when the item itself has changed
         self.profile_editor.valueChanged.connect(self.update_profile)
+        self.profile_editor.editTextchanged.connect(self.update_profile)
 
     def create_buttons(self):
         self.cancel_button = QPushButton(_('Cancel'))
         #self.clear_button = QPushButton(_('Clear'))
         self.ok_button = QPushButton(_('OK'))
-        self.new_button = QPushButton(art.Icon(
-            'tango/16x16/actions/list-add.png').getQIcon(), '')
+        self.new_button = QPushButton(art.Icon('tango/16x16/actions/list-add.png').getQIcon(), '')
         self.new_button.setToolTip(_('Add a new profile name'))
 
         layout = QHBoxLayout()
@@ -316,15 +231,17 @@ class ProfileSelection(StandaloneWizardPage):
 
     def proceed(self):
         if self.is_connection_valid():
-            info = self.collect_info()
-            self.add_new_profile(info)
-            logger.debug('storing new profile:\n%s' % self.profiles)
-            store_profile_array(self.profiles)
-            use_chosen_profile(info)
+            profilename, info = self.collect_info()
+            if profilename in self.profiles:
+                self.profiles[profilename].update(info)
+            else:
+                self.profiles[profilename] = info
+            store_profiles(self.profiles)
+            use_chosen_profile(profilename, info)
             self.accept()
 
     def is_connection_valid(self):
-        info = self.collect_info()
+        profilename, info = self.collect_info()
         mt = SignalSlotModelThread(lambda:None)
         mt.start()
         progress = ProgressDialog(_('Verifying database settings'))
@@ -336,8 +253,7 @@ class ProfileSelection(StandaloneWizardPage):
 
     def test_connection(self, dialect, host, user, passwd, db):
         self._connection_valid = False
-        connection_string = '%s://%s:%s@%s/%s' % (dialect, user,
-            passwd, host, db)
+        connection_string = '%s://%s:%s@%s/%s' % (dialect, user, passwd, host, db)
         engine = create_engine(connection_string, pool_recycle=True)
         connection = engine.raw_connection()
         cursor = connection.cursor()
@@ -345,52 +261,48 @@ class ProfileSelection(StandaloneWizardPage):
         connection.close()
         self._connection_valid = True
 
-    def add_new_profile(self, info):
-        logger.info('adding a new profile')
-        for profile in self.profiles:
-            if info['profilename'] == profile['profilename']:
-                profile.update(info)
-                return
-        self.profiles.append(info)
-
     def add_new_profile_name(self):
         logger.info('adding a new profile name')
-        name, ok = QInputDialog.getText(self, _('New Profile Name'),
-            _('Enter a value:'))
-        if ok and name:
-            name = str(name)
-            self.profiles_choices.add((name, name))
-            self.profile_editor.set_choices(self.profiles_choices)
-            self.profile_editor.set_value(name)
+        self.profiles_choices.add((NEW_PROFILE_LABEL, NEW_PROFILE_LABEL))
+        self.profile_editor.set_choices(self.profiles_choices)
+        self.profile_editor.set_value(NEW_PROFILE_LABEL)
 
     def current_profile(self):
-        return self.profile_editor.get_value()
+        return unicode(self.profile_editor.itemText(self.profile_editor.currentIndex()))
+
+    def update_profile_name(self, text):
+        # ok, the ChoicesEditor will have to be manually edited
+        value_in_choices_editor = self.current_profile()
+        self.profiles_choices.remove((value_in_choices_editor, value_in_choices_editor))
+        self.profiles_choices.add((text, text))
+        # this seems redundant but is necessary
+        self.profile_editor.set_choices(self.profiles_choices)
+        self.profile_editor.set_value(text)
 
     def update_profile(self):
-        self.dialect_editor.set_value(self.get_profile_value('dialect') or
-            'mysql')
-
+        self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
         self.host_editor.setText(self.get_profile_value('host') or 'localhost')
         self.port_editor.setText(self.get_profile_value('port') or '3306')
         self.database_name_editor.setText(self.get_profile_value('database'))
         self.username_editor.setText(self.get_profile_value('user'))
         self.password_editor.setText(self.get_profile_value('pass'))
+        self.media_location_editor.setText(self.get_profile_value('media_location'))
 
     def get_profile_value(self, key):
         current = self.current_profile()
-        for profile in self.profiles:
-            if profile['profilename'] == current:
-                return profile[key]
+        if current in self.profiles:
+            return self.profiles[current][key]
         return ''
 
     def collect_info(self):
         logger.info('collecting new database profile info')
         info = {}
-        info['profilename'] = self.current_profile()
+        profilename = self.current_profile()
         info['dialect'] = self.dialect_editor.get_value()
         info['host'] = self.host_editor.text()
         info['port'] = self.port_editor.text()
         info['database'] = self.database_name_editor.text()
         info['user'] = self.username_editor.text()
         info['pass'] = self.password_editor.text()
-        return info
+        info['media_location'] = self.media_location_editor.text()
+        return profilename, info
