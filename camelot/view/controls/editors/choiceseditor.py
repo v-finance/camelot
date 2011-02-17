@@ -38,7 +38,8 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
     def __init__(self, parent=None, nullable=True, **kwargs):
         QtGui.QComboBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-        self.activated.connect( self._activated )
+        self.activated.connect(self._activated)
+        self.editTextChanged.connect(self._set_item_text)
         self._nullable = nullable
 
     @QtCore.pyqtSlot(int)
@@ -46,6 +47,10 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
         self.setProperty( 'value', QtCore.QVariant( self.get_value() ) )
         self.valueChanged.emit()
         self.editingFinished.emit()
+
+    @QtCore.pyqtSlot(unicode)
+    def _set_item_text(self, text):
+        self.setItemText(self.currentIndex(), text)
 
     def set_choices(self, choices):
         """
@@ -111,4 +116,3 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
             else:
                 value = None
             return AbstractCustomEditor.get_value(self) or value
-
