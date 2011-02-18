@@ -1,11 +1,8 @@
 .. _doc-models:
 
-#################################################
- Creating models with Elixir/SQLAlchemy/Camelot
-#################################################
-
-:Release: |version|
-:Date: |today|
+#################
+ Creating models
+#################
 
 *Camelot* makes it easy to create views for any type of *Python* objects.  An important part of Camelot
 is introspection on Python objects mapped to a database with *SQLAlchemy*.  This allows a developer to
@@ -51,37 +48,13 @@ model of Camelot.  This code has some things to notice :
 The `Elixir website <http://elixir.ematia.de/trac/wiki/TutorialDivingIn>`_ provides a complete overview of 
 the creation of models with elixir.
 
-Where to define the model
-=========================
-
 When a new Camelot project is created, the :ref:`camelot-admin` tool creates an empty ``models.py`` file that
 can be used as a place to start the model definition.
 
-Which field types can be used
-=============================
-
-SQLAlchemy comes with a default set of field types that can be used. These field types will trigger the
-use of certain delegates and editors to visualize them in the views.  Camelot extends those SQLAlchemy
-field types with some of its own. 
-
-An overview of field types from SQLAlchemy and Camelot is given in the table below :
-
-.. automodule:: camelot.view.field_attributes
-
-SQLAlchemy field types
-----------------------
-
-SQLAlchemy provides a number of field types that map to available data types in SQL, more information on those
-can be found on the `SQLAlchemy website <http://www.sqlalchemy.org/docs/reference/sqlalchemy/types.html>`_ .
-   
-Camelot field types
--------------------
-
-.. automodule:: camelot.types
-   :members:
    
 .. toctree::
 
+   fields.rst
    calculated_fields.rst
    views.rst
    under_the_hood.rst

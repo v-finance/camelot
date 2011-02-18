@@ -49,28 +49,32 @@ field attributes mechanism to specify which delegate needs to be used to render 
 .. image:: ../_static/budget.png
 
 As an example we will create a budget with multiple budget lines, where the total budget 
-is calculated by the database ::
+is calculated by the database::
 
-	from elixir.properties import ColumnProperty
-	from camelot.view.controls import delegates
-	from sqlalchemy import sql, and_
+  from elixir.properties import ColumnProperty
+  from camelot.view.controls import delegates
+  from sqlalchemy import sql, and_
 	
-	class Budget(Entity):
-	  lines = OneToMany('BudgetLine')
-	  total = ColumnProperty(lambda c:sql.select([sql.func.sum(BudgetLine.amount)], and_(BudgetLine.budget_id==Budget.id)))
+  class Budget(Entity):
+      lines = OneToMany('BudgetLine')
+        
+      @ColumnProperty
+      def total(self):
+          return sql.select([sql.func.sum(BudgetLine.amount)], 
+                            and_(BudgetLine.budget_id==self.id))
 	
-	   class Admin(EntityAdmin):
-	    name = 'Budgets'
-	    list_display = [ 'total', 'lines']
-	    field_attributes = {'total':{'delegate':delegates.FloatDelegate}} 
+      class Admin(EntityAdmin):
+          verbose_name = 'Budgets'
+          list_display = [ 'total', 'lines']
+          field_attributes = {'total':{'delegate':delegates.FloatDelegate}} 
+
+  class BudgetLine(Entity):
+       budget = ManyToOne('Budget', required=True, ondelete='cascade', onupdate='cascade')
+       amount = Field(Float(precision=2), default=0)
 	
-	class BudgetLine(Entity):
-	  budget = ManyToOne('Budget', required=True, ondelete='cascade', onupdate='cascade')
-	  amount = Field(Float(precision=2), default=0)
-	
-	  class Admin(EntityAdmin):
-	    name = 'Budget lines'
-	    list_display = ['amount',] 
+       class Admin(EntityAdmin):
+           verbose_name = 'Budget lines'
+           list_display = ['amount',] 
 	    
 When the user presses F9, all data in the application is refreshed from the database, and thus
 all fields are recalculated.

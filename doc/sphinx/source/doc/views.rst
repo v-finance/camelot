@@ -36,6 +36,8 @@ And a relation between Movie and VisitorReport:
    :start-after: begin visitor report definition
    :end-before: end visitor report definition
 
+.. image:: ../_static/entityviews/table_view_visitorreport.png
+
 Definition of the view
 ======================
 
@@ -70,3 +72,5 @@ And add the plain old Python object to a section in the **ApplicationAdmin**:
 .. literalinclude:: ../../../../example/application_admin.py
    :start-after: begin sections
    :end-before: end sections
+
+.. image:: ../_static/entityviews/table_view_visitorsperdirector.png

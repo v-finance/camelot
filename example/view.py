@@ -11,7 +11,7 @@ class VisitorsPerDirector(object):
 def setup_views():
     from sqlalchemy.sql import select, func, and_
     from sqlalchemy.orm import mapper
-    
+ 
     from camelot.model.authentication import Person
     from model import Movie, VisitorReport
     

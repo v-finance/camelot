@@ -209,11 +209,9 @@ class EntityViewsTest(ModelThreadTestCase):
          
         classes = []
         for mapper in _mapper_registry.keys():
-            print mapper
             if hasattr(mapper, 'class_'):
                 classes.append( mapper.class_ )
             else:
-                print 'no class'
                 raise Exception()
             
         app_admin = self.get_application_admin()
