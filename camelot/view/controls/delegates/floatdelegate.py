@@ -49,7 +49,7 @@ class FloatDelegate( CustomDelegate ):
         to the precision specified in the definition of the Field.     
         
         """
-        
+        assert precision
         CustomDelegate.__init__(self,
                                 parent=parent,
                                 precision=precision,
