@@ -32,9 +32,9 @@ from sqlalchemy import create_engine
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QBoxLayout
 from PyQt4.QtGui import QDialog
+from PyQt4.QtGui import QFont
 from PyQt4.QtGui import QGridLayout
 from PyQt4.QtGui import QHBoxLayout
-from PyQt4.QtGui import QInputDialog
 from PyQt4.QtGui import QLabel
 from PyQt4.QtGui import QLineEdit
 from PyQt4.QtGui import QPushButton
@@ -43,13 +43,12 @@ from camelot.view import art
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.editors import ChoicesEditor, TextLineEditor
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from camelot.view.controls.combobox_input_dialog import ComboBoxInputDialog
 
 from camelot.core.utils import ugettext as _
-from camelot.view.model_thread.signal_slot_model_thread import \
-    SignalSlotModelThread
+from camelot.view.model_thread.signal_slot_model_thread import SignalSlotModelThread
 
-from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, \
-    last_used_profile, store_profiles
+from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, store_profiles
 
 
 logger = logging.getLogger('camelot.view.database_selection')
@@ -57,73 +56,73 @@ logger = logging.getLogger('camelot.view.database_selection')
 dialects = [name for _importer, name, is_package in \
         pkgutil.iter_modules(sqlalchemy.dialects.__path__ ) if is_package]
 
-# repeated labels
+PROFILES_DICT = fetch_profiles()
 NEW_PROFILE_LABEL = _('new profile')
 
 
 def select_database():
-    profiles = fetch_profiles()
-    input_dialog = profile_selection_dialog(profiles.keys())
+    if not PROFILES_DICT:
+        create_new_profile(PROFILES_DICT)
 
-    if input_dialog.exec_() == QDialog.Accepted:
-        selected = str(input_dialog.textValue())
-        logger.info('selected profile: %s' % selected)
-        if selected in profiles:
-            use_chosen_profile(selected, profiles[selected])
-        elif selected == NEW_PROFILE_LABEL:
-            create_new_profile()
+    selected = select_profile(sorted(PROFILES_DICT.keys()))
+    if selected in PROFILES_DICT:
+        use_chosen_profile(selected, PROFILES_DICT[selected])
+    elif selected == NEW_PROFILE_LABEL:
+        create_new_profile(PROFILES_DICT)
     else:
         sys.exit(0)
 
 
-def profile_selection_dialog(profilenames):
+def select_profile(profile_names):
     title = _('Profile Selection')
     input_label = _('Select a stored profile:')
+    ok_label = _('OK')
+    cancel_label = _('Quit')
 
-    input_dialog = QInputDialog(None)
-    input_dialog.setWindowTitle(title)
-    input_dialog.setLabelText(input_label)
+    input_dialog = ComboBoxInputDialog()
+    input_dialog.set_window_title(title)
+    input_dialog.set_label_text(input_label)
+    input_dialog.set_ok_button_text(ok_label)
+    input_dialog.set_cancel_button_text(cancel_label)
+    input_dialog.set_items(profile_names)
 
-    # in case we are creating a new one
-    profilenames.append(NEW_PROFILE_LABEL)
+    italic_font = QFont()
+    italic_font.setItalic(True)
+    input_dialog.combobox.addItem(NEW_PROFILE_LABEL)
+    input_dialog.set_item_font(input_dialog.count()-1, italic_font)
 
-    #input_dialog.setComboBoxEditable(True)
-    input_dialog.setComboBoxItems(profilenames)
-    input_dialog.setTextValue(profilenames[0])
+    dialog_code = input_dialog.exec_()
+    if dialog_code == QDialog.Accepted:
+        return str(input_dialog.get_text())
 
-    input_dialog.setOkButtonText(_('Connect'))
-    input_dialog.setCancelButtonText(_('Quit'))
-
-    return input_dialog
+    return None
 
 
-def create_new_profile():
-    wizard = ProfileWizard(None)
-    wizard.profiles_choices.add((NEW_PROFILE_LABEL, NEW_PROFILE_LABEL))
-    wizard.profile_editor.set_choices(wizard.profiles_choices)
-    wizard.profile_editor.set_value(NEW_PROFILE_LABEL)
-    wizard.update_profile()
+def create_new_profile(profiles):
+    wizard = ProfileWizard(profiles)
     dialog_code = wizard.exec_()
     if dialog_code == QDialog.Rejected:
-        sys.exit(0)
+        # no profiles so we exit
+        if not PROFILES_DICT:
+            sys.exit(0)
+        # one more time
+        select_database()
 
 
 class ProfileWizard(StandaloneWizardPage):
 
-    def __init__(self, parent=None):
+    def __init__(self, profiles, parent=None):
         super(ProfileWizard, self).__init__(parent)
 
         self._connection_valid = False
-        self._saved_profilename = None
 
-        self.profiles = fetch_profiles()
-        self.profiles_choices = set((name, name) for name in self.profiles.keys())
+        self.profiles = profiles
+        #self.profiles_choices = set((name, name) for name in self.profiles.keys())
 
-        self.setWindowTitle(_('Profile Selection'))
-        self.set_banner_logo_pixmap(art.Icon(
-            'tango/22x22/categories/preferences-system.png').getQPixmap())
-        self.set_banner_title(_('Database Settings'))
-        self.set_banner_subtitle(_('Connect with an existing profile'))
+        self.setWindowTitle(_('Profile Wizard'))
+        self.set_banner_logo_pixmap(art.Icon('tango/22x22/categories/preferences-system.png').getQPixmap())
+        self.set_banner_title(_('Create New Profile'))
+        self.set_banner_subtitle(_('Please enter the database settings'))
         self.banner_widget().setStyleSheet('background-color: white;')
 
         self.create_labels_and_widgets()
@@ -154,13 +153,15 @@ class ProfileWizard(StandaloneWizardPage):
         layout.addWidget(self.password_label, 5, 0, Qt.AlignRight)
         layout.addWidget(self.media_location_label, 6, 0, Qt.AlignRight)
 
-        self.profile_editor = ChoicesEditor(parent=self)
-        self.profile_editor.setEditable(True)
+        #self.profile_editor = ChoicesEditor(parent=self)
+        self.profile_editor = QLineEdit()
+        #self.profile_editor.setEditable(True)
         # auto completion might be confusing, plus the fields are updated
         # automatically
-        self.profile_editor.setCompleter(None)
+        #self.profile_editor.setCompleter(None)
         # we also disable duplicates
-        self.profile_editor.setDuplicatesEnabled(False)
+        #self.profile_editor.setDuplicatesEnabled(False)
+
         self.dialect_editor = ChoicesEditor(parent=self)
         self.host_editor = TextLineEditor(self)
         self.port_editor = TextLineEditor(self)
@@ -186,12 +187,12 @@ class ProfileWizard(StandaloneWizardPage):
         self.main_widget().setLayout(layout)
 
     def set_widgets_values(self):
-        if self.profiles_choices:
-            self.profile_editor.set_choices(self.profiles_choices)
+        #if self.profiles_choices:
+        #    self.profile_editor.set_choices(self.profiles_choices)
 
-        last_used = last_used_profile()
-        if last_used:
-            self.profile_editor.set_value(last_used)
+        #last_used = last_used_profile()
+        #if last_used:
+        #    self.profile_editor.set_value(last_used)
 
         self.dialect_editor.set_choices([(dialect, dialect.capitalize())
             for dialect in dialects])
@@ -199,15 +200,13 @@ class ProfileWizard(StandaloneWizardPage):
         self.update_profile()
 
     def connect_widgets(self):
-        # happens when the item itself has changed
-        self.profile_editor.valueChanged.connect(self.update_profile)
+        #self.profile_editor.valueChanged.connect(self.update_profile)
+        self.profile_editor.textChanged.connect(self.update_profile)
 
     def create_buttons(self):
         self.cancel_button = QPushButton(_('Cancel'))
         #self.clear_button = QPushButton(_('Clear'))
         self.ok_button = QPushButton(_('OK'))
-        self.new_button = QPushButton(art.Icon('tango/16x16/actions/list-add.png').getQIcon(), '')
-        self.new_button.setToolTip(_('Add a new profile name'))
 
         layout = QHBoxLayout()
         layout.setDirection(QBoxLayout.RightToLeft)
@@ -217,14 +216,12 @@ class ProfileWizard(StandaloneWizardPage):
         layout.addWidget(self.ok_button)
         layout.addStretch()
 
-        self.main_widget().layout().addWidget(self.new_button, 0, 5, 1, 1)
         self.buttons_widget().setLayout(layout)
 
     def connect_buttons(self):
         self.cancel_button.pressed.connect(self.reject)
         self.ok_button.pressed.connect(self.proceed)
         #self.clear_button.pressed.connect(self.clear_fields)
-        self.new_button.pressed.connect(self.add_new_profile_name)
 
     #def clear_fields(self):
     #    self.host_editor.clear()
@@ -265,23 +262,18 @@ class ProfileWizard(StandaloneWizardPage):
         connection.close()
         self._connection_valid = True
 
-    def add_new_profile_name(self):
-        logger.info('adding a new profile name')
-        self.profiles_choices.add((NEW_PROFILE_LABEL, NEW_PROFILE_LABEL))
-        self.profile_editor.set_choices(self.profiles_choices)
-        self.profile_editor.set_value(NEW_PROFILE_LABEL)
-
     def current_profile(self):
-        return unicode(self.profile_editor.itemText(self.profile_editor.currentIndex()))
+        #return unicode(self.profile_editor.itemText(self.profile_editor.currentIndex()))
+        return self.profile_editor.text()
 
-    def update_profile_name(self, text):
-        # ok, the ChoicesEditor will have to be manually edited
-        value_in_choices_editor = self.current_profile()
-        self.profiles_choices.remove((value_in_choices_editor, value_in_choices_editor))
-        self.profiles_choices.add((text, text))
-        # this seems redundant but is necessary
-        self.profile_editor.set_choices(self.profiles_choices)
-        self.profile_editor.set_value(text)
+    #def update_profile_name(self, text):
+    #    # ok, the ChoicesEditor will have to be manually edited
+    #    value_in_choices_editor = self.current_profile()
+    #    self.profiles_choices.remove((value_in_choices_editor, value_in_choices_editor))
+    #    self.profiles_choices.add((text, text))
+    #    # this seems redundant but is necessary
+    #    self.profile_editor.set_choices(self.profiles_choices)
+    #    self.profile_editor.set_value(text)
 
     def update_profile(self):
         self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
