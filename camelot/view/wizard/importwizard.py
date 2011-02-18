@@ -211,6 +211,7 @@ class RowDataAdminDecorator(object):
             string_value = attributes['getter'](obj)
             if 'from_string' in attributes:
                 valid = True
+                value = None
                 try:
                     value = attributes['from_string'](string_value)
                 except Exception:
@@ -409,6 +410,7 @@ class ImportWizard(QtGui.QWizard):
     final_page = FinalPage
     collection_getter = CsvCollectionGetter
     window_title = _('Import CSV data')
+    rowdata_admin_decorator = RowDataAdminDecorator
 
     def __init__(self, parent=None, admin=None):
         """:param admin: camelot model admin of the destination data"""
@@ -422,7 +424,7 @@ class ImportWizard(QtGui.QWizard):
         desktop = QtCore.QCoreApplication.instance().desktop()
         self.setMinimumSize(desktop.width()*2/3, desktop.height()*2/3)
 
-        row_data_admin = RowDataAdminDecorator(admin)
+        row_data_admin = self.rowdata_admin_decorator(admin)
         model = DataPreviewCollectionProxy(
             row_data_admin,
             lambda:[],
