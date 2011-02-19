@@ -25,6 +25,7 @@
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
 from camelot.admin.abstract_action import AbstractAction, AbstractOpenFileAction
+from camelot.view.controls.progress_dialog import ProgressDialog
 
 class ApplicationAction(AbstractAction):
     """An action that can be triggered by the user at the application level
@@ -99,8 +100,7 @@ class ApplicationActionFromModelFunction( ApplicationActionFromGuiFunction ):
     def run( self, parent = None ):
         from camelot.view.model_thread import post
         options = ApplicationAction.run( self, parent )
-        from camelot.admin.form_action import FormActionProgressDialog
-        progress = FormActionProgressDialog( unicode(self._name) )
+        progress = ProgressDialog( unicode(self._name) )
         
         if not options and self.Options:
             return options
@@ -112,7 +112,7 @@ class ApplicationActionFromModelFunction( ApplicationActionFromGuiFunction ):
 
             return request
 
-        post( create_request( self.options ), progress.finished, exception = progress.finished )
+        post( create_request( self.options ), progress.finished, exception = progress.exception )
         progress.exec_()
         
 class TableViewAction(ApplicationAction):
