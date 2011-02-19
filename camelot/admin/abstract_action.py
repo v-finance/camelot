@@ -31,6 +31,8 @@ import logging
 from PyQt4 import QtGui, QtCore
 
 from camelot.core.utils import ugettext as _
+from camelot.view.art import Icon
+from camelot.view.controls.progress_dialog import ProgressDialog
 
 LOGGER = logging.getLogger('camelot.admin.abstract_action')
 
@@ -86,3 +88,44 @@ class AbstractOpenFileAction(AbstractAction):
         LOGGER.debug(u'open url : %s'%unicode(url))
         QtGui.QDesktopServices.openUrl(url)
 
+class PrintProgressDialog(ProgressDialog):
+
+    def __init__(self, name, icon=Icon('tango/32x32/actions/appointment-new.png')):
+        super(PrintProgressDialog, self).__init__(name=name, icon=icon)
+        self.html_document = None
+        self.page_size = None
+        self.page_orientation = None
+
+    def print_result(self, html):
+        from camelot.view.export.printer import open_html_in_print_preview_from_gui_thread
+        self.close()
+        open_html_in_print_preview_from_gui_thread(
+            html, self.html_document,
+            self.page_size, self.page_orientation
+        )
+        
+class AbstractPrintHtmlAction(AbstractAction):
+    """
+.. image:: ../_static/formaction/print_html_form_action.png
+
+the rendering of the html can be customised using the HtmlDocument attribute :
+
+.. attribute:: HtmlDocument
+
+the class used to render the html, by default this is
+a QTextDocument, but a QtWebKit.QWebView can be used as well.
+
+.. attribute:: PageSize
+
+the page size, the default is QPrinter.A4
+
+.. attribute:: PageOrientation
+
+the page orientation, the default QPrinter.Portrait
+
+.. image:: ../_static/simple_report.png
+    """
+
+    HtmlDocument = QtGui.QTextDocument
+    PageSize = QtGui.QPrinter.A4
+    PageOrientation = QtGui.QPrinter.Portrait

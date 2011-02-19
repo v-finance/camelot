@@ -27,7 +27,8 @@ from PyQt4 import QtGui
 
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
-from camelot.admin.abstract_action import AbstractAction, AbstractOpenFileAction
+from camelot.admin.abstract_action import AbstractAction, \
+    AbstractOpenFileAction, PrintProgressDialog, AbstractPrintHtmlAction
 
 logger = logging.getLogger('camelot.admin.list_action')
 
@@ -133,21 +134,43 @@ class ListActionFromModelFunction( ListAction ):
         post( create_request( collection_getter, selection_getter, self.options ), progress.finished, exception = progress.finished )
         progress.exec_()
 
-class PrintHtmlListAction( ListActionFromModelFunction ):
+class PrintHtmlListAction( AbstractPrintHtmlAction, ListActionFromModelFunction ):
 
-    def __init__( self, name, icon = Icon( 'tango/22x22/actions/document-print.png' ) ):
+    def __init__( self, 
+                  name, 
+                  icon = Icon( 'tango/22x22/actions/document-print.png' ) ):
+        super(PrintHtmlListAction, self).__init__( name, icon)
 
-        def model_function( collection, selection ):
-            from camelot.view.export.printer import open_html_in_print_preview
-            html = self.html( collection, selection )
-            open_html_in_print_preview( html )
+    def run( self, collection_getter, selection_getter ):
+        self.options = super(ListActionFromModelFunction, self).run( collection_getter, selection_getter )
+        progress = PrintProgressDialog( unicode(self._name) )
+        progress.html_document = self.HtmlDocument
+        progress.page_size = self.PageSize
+        progress.page_orientation = self.PageOrientation
+        
+        if not self.options and self.Options:
+            return self.options
 
-        ListActionFromModelFunction.__init__( self, name, model_function, icon )
+        def create_request( collection_getter, selection_getter, options ):
 
-    def html( self, collection, selection ):
+            def request():
+                html = self.html( collection_getter(),
+                                  selection_getter(),
+                                  options )
+                return html
+
+            return request
+
+        post( create_request( collection_getter, selection_getter, self.options ), 
+              progress.print_result, 
+              exception = progress.exception )
+        progress.exec_()
+
+    def html( self, collection, selection, options ):
         """Overwrite this function to generate custom html to be printed
-    :arg collection: the collection of objects displayed in the list
-    :arg selection: the collection of selected objects in the list
+    :param collection: the collection of objects displayed in the list
+    :param selection: the collection of selected objects in the list
+    :param options: an instance of the Options class attribute, if provided
         """
         return '<br/>'.join( list( unicode( o ) for o in collection ) )
     

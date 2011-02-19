@@ -194,18 +194,22 @@ used too much memory, so now it's implemented using QT.
         
 class Color(types.TypeDecorator):
     """The Color field returns and accepts tuples of the form (r,g,b,a) where
-  r,g,b,a are integers between 0 and 255. The color is stored as an hexadecimal
-  string of the form AARRGGBB into the database, where AA is the transparency, 
-  RR is red, GG is green BB is blue::
+r,g,b,a are integers between 0 and 255. The color is stored as an hexadecimal
+string of the form AARRGGBB into the database, where AA is the transparency, 
+RR is red, GG is green BB is blue::
   
     class MovieType(Entity):
-      color = Field(camelot.types.Color())
+        color = Field(camelot.types.Color())
 
-  .. image:: ../_static/editors/ColorEditor_editable.png  
+.. image:: ../_static/editors/ColorEditor_editable.png  
   
-  The colors are stored in the database as strings.
+The colors are stored in the database as strings.
   
-  Use QColor(*color) to convert it to a QColor
+Use::
+    
+    QColor(*color) 
+    
+to convert a color tuple to a QColor.
     """
     
     impl = types.Unicode

@@ -48,6 +48,7 @@ overwritten.
 import logging
 
 from PyQt4 import QtGui, QtCore
+from camelot.admin.abstract_action import PrintProgressDialog
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post
 from camelot.view.controls.progress_dialog import ProgressDialog
@@ -115,22 +116,6 @@ class FormActionFromGuiFunction( FormAction ):
     def run( self, entity_getter ):
         self._gui_function( entity_getter )
 
-class FormActionProgressDialog(ProgressDialog):
-
-    def __init__(self, name, icon=Icon('tango/32x32/actions/appointment-new.png')):
-        super(FormActionProgressDialog, self).__init__(name=name, icon=icon)
-        self.html_document = None
-        self.page_size = None
-        self.page_orientation = None
-
-    def print_result(self, html):
-        from camelot.view.export.printer import open_html_in_print_preview_from_gui_thread
-        self.close()
-        open_html_in_print_preview_from_gui_thread(
-            html, self.html_document,
-            self.page_size, self.page_orientation
-        )
-
 class FormActionFromModelFunction( FormAction ):
     """Convert a function that is supposed to run in the model thread to a
     FormAction.  This type of action can be used to manipulate the model.
@@ -169,7 +154,7 @@ class FormActionFromModelFunction( FormAction ):
 
         :param entity_getter: a function that when called returns the object
         currently in the form."""
-        progress = FormActionProgressDialog(self._name)
+        progress = ProgressDialog(self._name)
 
         def create_request( entity_getter ):
 
@@ -225,7 +210,7 @@ the page size, the default is QPrinter.A4
 
 .. attribute:: PageOrientation
 
-the page orientation, the default QPrinter.Protrait
+the page orientation, the default QPrinter.Portrait
 
 .. image:: ../_static/simple_report.png
     """
@@ -245,7 +230,7 @@ the page orientation, the default QPrinter.Protrait
 
     @gui_function
     def run(self, entity_getter):
-        progress = FormActionProgressDialog(self._name)
+        progress = PrintProgressDialog(self._name)
         progress.html_document = self.HtmlDocument
         # the progress dialog can easily pass these parameters for us
         progress.page_size = self.PageSize

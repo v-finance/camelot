@@ -34,14 +34,14 @@ from camelot.view.model_thread import gui_function
 
 class Form( object ):
     """Base Form class to put fields on a form.  A form can be converted to a
-    QT widget by calling its render method.  The base form uses the QFormLayout
-    to render a form::
+QT widget by calling its render method.  The base form uses the QFormLayout
+to render a form::
 
     class Admin(EntityAdmin):
       form_display = Form(['title', 'short_description', 'director', 'release_date'])
 
-    .. image:: ../_static/form/form.png
-    """
+..image:: ../_static/form/form.png
+"""
 
     def __init__( self, content, scrollbars = False, columns = 1  ):
         """

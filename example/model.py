@@ -23,6 +23,7 @@ from sqlalchemy.types import Unicode, Date, Integer
 
 __metadata__ = metadata
 
+from action import PrintMovieListAction
 #
 # Some helper functions that will be used later on
 #
@@ -111,6 +112,8 @@ class Movie(Entity):
         # if the search function needs to look in related object attributes,
         # those should be specified within list_search
         list_search = ['director.full_name']
+        # the action buttons that should be available in the list view
+        list_actions = [PrintMovieListAction('Report')]
         # the form_display attribute specifies which entity attributes should be
         # visible in the form view
         form_display = TabForm([
