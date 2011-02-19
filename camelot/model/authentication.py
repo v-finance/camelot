@@ -362,7 +362,10 @@ class Party( Entity ):
     shares = OneToMany( 'SharedShareholder', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     status = OneToMany( type_3_status( 'Party', metadata, entities ), cascade='all, delete, delete-orphan' )
-    categories = ManyToMany( 'PartyCategory' )
+    categories = ManyToMany( 'PartyCategory', 
+                            tablename='party_category_party', 
+                            remote_colname='party_category_id',
+                            local_colname='party_id')
 
     @property
     def name( self ):
@@ -822,8 +825,11 @@ class PartyCategory( Entity ):
     name = Field( Unicode(40), index=True, required=True )
     color = Field( camelot.types.Color() )
     parent = ManyToOne( 'PartyCategory' )
-    parties = ManyToMany( 'Party', lazy = True )
-
+    parties = ManyToMany( 'Party', lazy = True,
+                          tablename='party_category_party', 
+                          remote_colname='party_id',
+                          local_colname='party_category_id')
+                            
     def get_contact_mechanisms(self, virtual_address_type):
         """Function to be used to do messaging
         
