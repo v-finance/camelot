@@ -274,7 +274,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 'face-monkey' )
         editor.set_enabled( True )
         self.grab_widget( editor, 'set_enabled()_editable' )
-
+        
     def test_BoolEditor(self):
         editor = self.editors.BoolEditor(parent=None, editable=False, nullable=True)
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -525,11 +525,34 @@ class EditorsTest(ModelThreadTestCase):
         editor = self.editors.NoteEditor(parent=None)
         editor.set_value('A person with this name allready exists')
         self.grab_widget( editor, 'editable' )
+        self.grab_widget( editor )
 
     def test_LabelEditor(self):
         editor = self.editors.LabelEditor(parent=None)
         editor.set_value('Dynamic label')
         self.grab_widget( editor, 'editable' )
+
+    def test_LanguageEditor(self):
+        editor = self.editors.LanguageEditor(parent=None)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 'en_US' )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), 'en_US' )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.LanguageEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 'en_US' )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), 'en_US' )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+
+    def test_Many2OneEditor(self):
+        editor = self.editors.Many2OneEditor(parent=None)
+        self.grab_widget( editor, 'editable' )
+        editor.set_field_attributes( editable=False )
+        self.grab_widget( editor, 'disabled' )
         
     def test_RichTextEditor(self):
         editor = self.editors.RichTextEditor(parent=None)
@@ -570,6 +593,22 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_enabled( True )
         self.grab_widget( editor, 'set_enabled()_editable' )
 
+    def test_TextEditEditor(self):
+        editor = self.editors.TextEditEditor(parent=None, editable=True)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 'Plain text' )
+        self.grab_widget( editor, 'editable' )
+        self.assertEqual( editor.get_value(), 'Plain text' )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor = self.editors.TextEditEditor(parent=None, editable=False)
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( 'Plain text' )
+        self.grab_widget( editor, 'disabled' )
+        self.assertEqual( editor.get_value(), 'Plain text' )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        
     def test_VirtualAddressEditor(self):
         editor = self.editors.VirtualAddressEditor(parent=None)
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -861,6 +900,12 @@ class DelegateTest(ModelThreadTestCase):
         self.grab_delegate(delegate, None)
         delegate = self.delegates.Many2OneDelegate(parent=None, editable=False, admin=object())
         self.grab_delegate(delegate, None, 'disabled')
+        
+    def testOne2ManyDelegate(self):
+        delegate = self.delegates.One2ManyDelegate(parent=None, admin=object())
+        self.grab_delegate(delegate, [])
+        delegate = self.delegates.One2ManyDelegate(parent=None, editable=False, admin=object())
+        self.grab_delegate(delegate, [], 'disabled')
         
     def testTimeDelegate(self):
         from datetime import time

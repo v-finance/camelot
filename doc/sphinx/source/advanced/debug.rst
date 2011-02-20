@@ -1,3 +1,5 @@
+.. _doc-debug:
+
 ==========================
 Debugging Camelot and PyQt
 ==========================

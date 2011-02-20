@@ -41,8 +41,6 @@ class One2ManyDelegate( CustomDelegate ):
     def __init__( self, parent = None, **kwargs ):
         super( One2ManyDelegate, self ).__init__( parent=parent, **kwargs )
         logger.debug( 'create one2manycolumn delegate' )
-        assert 'delegate' in kwargs
-
         self.kwargs = kwargs
 
     def createEditor( self, parent, option, index ):

@@ -1,4 +1,4 @@
-.. _doc-deployment:
+.. _doc-permissions:
 
 ################################
   Authentication and permissions

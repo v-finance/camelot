@@ -1,4 +1,4 @@
-.. _doc-index:
+.. _doc-advanced-index:
 
 ########################
   Advanced Topics

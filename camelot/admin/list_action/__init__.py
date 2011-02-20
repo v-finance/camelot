@@ -37,9 +37,9 @@ class ListAction( AbstractAction ):
     
 .. attribute:: Options
 
-Use the class attribute Options, to let the user enter some options for the action.  Where
-options is a class with and admin definition.  The admin definition will be used to pop up
-an interface screen for an object of type Options.  Defaults to None.
+    Use the class attribute Options, to let the user enter some options for the action.  Where
+    options is a class with and admin definition.  The admin definition will be used to pop up
+    an interface screen for an object of type Options.  Defaults to None.
     """
 
     Options = None
@@ -67,13 +67,13 @@ an interface screen for an object of type Options.  Defaults to None.
 
     def run( self, collection_getter, selection_getter ):
         """Overwrite this method to create an action that does something.  If the Options attribute
-        is specified, the default implementation of run will pop up a dialog requesting the user to
-        complete the options before executing the action.
-        
-        :param collection_getter: a method that returns an iterator over all objects in the list
-        :param selection_getter: a method that returns an iterator over all selected objects in a list
-        :return: None if there was no Options class attribute or if Cancel was pressed, otherwise
-        an object of of type Options
+is specified, the default implementation of run will pop up a dialog requesting the user to
+complete the options before executing the action.
+
+:param collection_getter: a method that returns an iterator over all objects in the list
+:param selection_getter: a method that returns an iterator over all selected objects in a list
+:return: None if there was no Options class attribute or if Cancel was pressed, otherwise an object of of type Options
+
         """
         return self.get_options()
 
@@ -88,15 +88,18 @@ class ListActionFromGuiFunction( ListAction ):
         self._gui_function( collection_getter, selection_getter )
 
 class ListActionFromModelFunction( ListAction ):
-    """Convert a function that is supposed to run in the model thread to a FormAction"""
+    """Convert a function that is supposed to run in the model thread to a ListAction"""
 
-    def __init__( self, name, model_function, icon = Icon( 'tango/22x22/categories/applications-system.png' ), collection_flush=False, selection_flush=False ):
-        """
-        :param model_function: a function that has 3 arguments : the collection in the list view and the selection
-        in the list view and the options.
-        :param collection_flush: flush all objects in the collection to the db and refresh them in the views
-        :param selection_flush: flush all objects in the selection to the db and refresh them in the views
-        """
+    def __init__( self, 
+                  name, 
+                  model_function, 
+                  icon = Icon( 'tango/22x22/categories/applications-system.png' ), 
+                  collection_flush=False, 
+                  selection_flush=False ):
+        """List Action for a function that runs in the model thread
+:param model_function: a function that has 3 arguments, the collection in the list view and the selection in the list view and the options.
+:param collection_flush: flush all objects in the collection to the db and refresh them in the views
+:param selection_flush: flush all objects in the selection to the db and refresh them in the views"""
         ListAction.__init__( self, name, icon )
         self._model_function = model_function
         self._collection_flush = collection_flush

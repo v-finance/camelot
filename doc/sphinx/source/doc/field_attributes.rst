@@ -67,16 +67,16 @@ Indicates whether the user can edit the field.
 minimum
 -------
 
-The minimum allowed value for :ctype:`Integer` and
-:ctype:`Float` delegates or their related delegates like the Star delegate.
+The minimum allowed value for :c:type:`Integer` and
+:c:type:`Float` delegates or their related delegates like the Star delegate.
 
 .. _field-attribute-maximum:
 
 maximum
 -------
 
-The maximum allowed value for :ctype:`Integer` and
-:ctype:`Float` delegates or their related delegates like the Star delegate.
+The maximum allowed value for :c:type:`Integer` and
+:c:type:`Float` delegates or their related delegates like the Star delegate.
 
 .. _field-attribute-choices:
 

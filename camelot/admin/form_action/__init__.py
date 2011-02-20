@@ -118,19 +118,19 @@ class FormActionFromGuiFunction( FormAction ):
 
 class FormActionFromModelFunction( FormAction ):
     """Convert a function that is supposed to run in the model thread to a
-    FormAction.  This type of action can be used to manipulate the model.
+FormAction.  This type of action can be used to manipulate the model.
     """
 
     def __init__( self, name, model_function, icon = None, flush=False, enabled=lambda obj:True ):
         """
-        :param name: the name of the action
-        :param model_function: a function that has 1 arguments, the object
-        currently in the form, this function will be called whenever the
-        action is triggered.
-        :param icon: an Icon
-        :param flush: flush the object to the db and refresh it in the views, set this to true when the
-        model function changes the object.
-        :param enabled: a function that has 1 argument : the object on which the action would be applied
+:param name: the name of the action
+:param model_function: a function that has 1 arguments, the object
+currently in the form, this function will be called whenever the
+action is triggered.
+:param icon: an Icon
+:param flush: flush the object to the db and refresh it in the views, set this to true when the
+model function changes the object.
+:param enabled: a function that has 1 argument, the object on which the action would be applied
         """
         FormAction.__init__( self, name, icon )
         self._model_function = model_function
@@ -140,20 +140,22 @@ class FormActionFromModelFunction( FormAction ):
     @model_function
     def enabled(self, entity):
         """This function will be called in the model thread, to evaluate if the
-        button should be enabled.
+button should be enabled.
 
-        :param entity: the object currently in the form
-        :return: True or False, defaults to True
+:param entity: the object currently in the form
+:return: True or False, defaults to True
+
         """
         return self._enabled( entity )
 
     @gui_function
     def run( self, entity_getter ):
         """When the run method is called, a progress dialog will apear while
-        the model function is executed.
+the model function is executed.
 
-        :param entity_getter: a function that when called returns the object
-        currently in the form."""
+:param entity_getter: a function that when called returns the object currently in the form.
+        
+        """
         progress = ProgressDialog(self._name)
 
         def create_request( entity_getter ):

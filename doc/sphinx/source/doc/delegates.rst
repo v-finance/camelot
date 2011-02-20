@@ -29,7 +29,7 @@ Specifying delegates
 ====================
 
 The use of a specific delegate can be forced by using the ``delegate`` field
-attribute.  Suppose ``rating`` is a field of type :ctype:`integer`, then it can
+attribute.  Suppose ``rating`` is a field of type :c:type:`integer`, then it can
 be forced to be visualized as stars::
 
   from camelot.view.controls import delegates
