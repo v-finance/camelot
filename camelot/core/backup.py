@@ -244,7 +244,7 @@ class BackupMechanism(object):
         yield (number_of_tables * 2 + 2, steps, _('Expire current session'))
         from sqlalchemy.orm.session import _sessions
         for session in _sessions.values():
-            session.expire_all()
+            session.expunge_all()
         
         yield (1, 1, _('Restore completed'))
                           
