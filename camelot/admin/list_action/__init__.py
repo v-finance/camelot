@@ -134,7 +134,9 @@ class ListActionFromModelFunction( ListAction ):
 
             return request
 
-        post( create_request( collection_getter, selection_getter, self.options ), progress.finished, exception = progress.finished )
+        post( create_request( collection_getter, selection_getter, self.options ), 
+              progress.finished,
+              exception = progress.exception )
         progress.exec_()
 
 class PrintHtmlListAction( AbstractPrintHtmlAction, ListActionFromModelFunction ):
