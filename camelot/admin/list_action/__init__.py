@@ -27,6 +27,7 @@ from PyQt4 import QtGui
 
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
+from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.admin.abstract_action import AbstractAction, \
     AbstractOpenFileAction, PrintProgressDialog, AbstractPrintHtmlAction
 
@@ -108,8 +109,7 @@ class ListActionFromModelFunction( ListAction ):
 
     def run( self, collection_getter, selection_getter ):
         self.options = super(ListActionFromModelFunction, self).run( collection_getter, selection_getter )
-        from camelot.admin.form_action import FormActionProgressDialog
-        progress = FormActionProgressDialog( unicode(self._name) )
+        progress = ProgressDialog( unicode(self._name) )
         
         if not self.options and self.Options:
             return self.options
