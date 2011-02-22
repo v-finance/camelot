@@ -146,8 +146,10 @@ class CustomDelegate(QItemDelegate):
         # Qt model's data for Qt.ToolTipRole
         # but i wonder if we should make the detour by Qt.ToolTipRole or just
         # get our tooltip from field_attributes
-        editor.setToolTip( unicode( field_attributes.get('tooltip', '') ) )
-
+        # (Nick G.): Avoid 'None' being set as tooltip.
+        if field_attributes.get('tooltip'):
+            editor.setToolTip( unicode( field_attributes.get('tooltip', '') ) )
+        
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
 
