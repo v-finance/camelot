@@ -89,9 +89,9 @@ def select_profile(profile_names):
     input_dialog.set_ok_button_default()
 
     custom_font = QFont()
-    custom_font.setBold(True)
     custom_font.setItalic(True)
-    input_dialog.combobox.addItem(NEW_PROFILE_LABEL)
+    icon = art.Icon('tango/16x16/actions/document-new.png').getQIcon()
+    input_dialog.combobox.addItem(icon, NEW_PROFILE_LABEL)
     input_dialog.set_item_font(input_dialog.count()-1, custom_font)
 
     dialog_code = input_dialog.exec_()
