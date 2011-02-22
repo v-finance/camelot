@@ -25,6 +25,8 @@
 import logging
 import datetime
 import settings
+from decimal import Decimal
+
 LOGGER = logging.getLogger('camelot.view.export.excel')
 
 from camelot.view.controls import delegates
@@ -197,6 +199,9 @@ def write_data_to_excel(filename, title, headerList, data_list):
         myDataTypeDict[ n ] = lst["python_type"]
         if lst["python_type"] == float:
             myPrecisionDict [ n ] = lst["precision"]    #Populating precision dictionary
+        elif issubclass(lst['delegate'], delegates.FloatDelegate):
+            myPrecisionDict [ n ] = lst.get("precision", 2)
+            myDataTypeDict[ n ] = float
         elif lst["python_type"] == datetime.date or issubclass(lst['delegate'], delegates.DateDelegate):
             myFormatDict [ n ] = lst.get('format', local_date_format())         #Populating date Format dictionary
             myDataTypeDict[ n ] = datetime.date
@@ -219,8 +224,10 @@ def write_data_to_excel(filename, title, headerList, data_list):
                 if isinstance(val, list):
                     val = '.'.join(val)
                 if not isinstance(val,(str,unicode,int,float,datetime.datetime,datetime.time,datetime.date,
-                                       ExcelFormula.Formula) ):
+                                       ExcelFormula.Formula, Decimal) ):
                     val = unicode(val)
+                if isinstance(val, Decimal):
+                    val = float(str(val))
                 if myDataTypeDict.has_key(column) == True:
                     if myLengthDict.get(column) != None:
                         if len(val) > myLengthDict[ column ]:

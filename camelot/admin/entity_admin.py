@@ -151,7 +151,9 @@ attribute to enable search.
          * editable : bool specifying wether the user can edit this field
          * widget : which widget to be used to render the field
          * ...
-        """
+        """        
+        from sqlalchemy.orm.mapper import _mapper_registry
+            
         try:
             return self._field_attributes[field_name]
         except KeyError:
@@ -190,17 +192,28 @@ attribute to enable search.
             except KeyError:
                 pass
 
+            def resolve_target(target):
+                """A class or name of the class representing the other
+                side of a relation.  Use the name of the class to avoid
+                circular dependencies"""
+                if isinstance(target, basestring):
+                    for mapped_class in _mapper_registry.keys():
+                        print mapped_class.class_.__name__, target
+                        if mapped_class.class_.__name__ == target:
+                            return mapped_class.class_
+                    raise Exception('No mapped class found for target %s'%target)
+                return target
+                
             def get_entity_admin(target):
                 """Helper function that instantiated an Admin object for a
                 target entity class.
 
                 :param target: an entity class for which an Admin object is
-                needed.
+                needed
                 """
+
                 try:
-                    fa = self.field_attributes[field_name]
-                    target = fa.get('target', target)
-                    admin_class = fa['admin']
+                    admin_class = forced_attributes['admin']
                     return admin_class(self.app_admin, target)
                 except KeyError:
                     return self.get_related_entity_admin(target)
@@ -229,7 +242,8 @@ attribute to enable search.
                         attributes['nullable'] = property.columns[0].nullable
                         attributes['default'] = property.columns[0].default
                 elif isinstance(property, orm.properties.PropertyLoader):
-                    target = property._get_target().class_
+                    target = forced_attributes.get( 'target', 
+                                                    property._get_target().class_ )
                     
                     #
                     # _foreign_keys is for sqla pre 0.6.4
@@ -302,6 +316,8 @@ attribute to enable search.
             # 'admin' attribute
             #
             if 'target' in attributes:
+                attributes['target'] = resolve_target(attributes['target'])
+                print 'TARGET', attributes['target']
                 attributes['admin'] = get_entity_admin(attributes['target'])
             
             self._field_attributes[field_name] = attributes
