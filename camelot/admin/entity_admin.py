@@ -165,6 +165,7 @@ attribute to enable search.
             #
             attributes = dict(
                 python_type = str,
+                to_string = unicode,
                 field_name = field_name,
                 getter = create_default_getter(field_name),
                 length = None,
@@ -287,6 +288,9 @@ attribute to enable search.
             if 'choices' in forced_attributes:
                 attributes['delegate'] = delegates.ComboBoxDelegate
                 attributes['editable'] = True
+                if isinstance(forced_attributes['choices'], list):
+                    choices_dict = dict(forced_attributes['choices'])
+                    attributes['to_string'] = lambda x : choices_dict[x]
 
             #
             # Overrule introspected field_attributes with those defined
