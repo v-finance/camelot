@@ -49,18 +49,15 @@ def structure_to_filter(structure):
 class Filter(object):
     """Base class for filters"""
     
-    def __init__(self, attribute, value_to_string=unicode):
+    def __init__(self, attribute):
         """
         @param attribute: the attribute on which to filter, this attribute
         may contain dots to indicate relationships that need to be followed, 
         eg.  'person.groups.name'
-        @param value_to_string: function that converts a value of the attribute to
-        a string that will be displayed in the filter 
         """
         self.attribute = attribute
-        self._value_to_string = value_to_string
-    
-    @gui_function     
+        
+    @gui_function
     def render(self, parent, name, options):
         """Render this filter as a qt object
         @param parent: its parent widget
@@ -86,6 +83,7 @@ class Filter(object):
         path = self.attribute.split('.')
         for field_name in path:
             attributes = admin.get_field_attributes(field_name)
+            
             filter_names.append(attributes['name'])
             # @todo: if the filter is not on an attribute of the relation, but on the relation itselves
             if 'target' in attributes:
@@ -98,7 +96,6 @@ class Filter(object):
         query = select([col], distinct=True, order_by=col.asc()).select_from(table)
           
         def create_decorator(col, attributes, value, joins):
-          
             def decorator(q):
                 if joins:
                     q = q.join(joins, aliased=True)
@@ -108,11 +105,17 @@ class Filter(object):
                 return q.filter(col==value)
               
             return decorator
-      
-        options = [(_(self._value_to_string(value[0])), create_decorator(col, attributes, value[0], joins))
-                   for value in session.execute(query)]
-    
-        return (filter_names[0],[(_('all'), lambda q: q)] + options)
+
+        options = []
+        for value in session.execute(query):
+            if 'to_string' in attributes:
+                option_name = attributes['to_string'](value[0])
+            else:
+                option_name = value[0]
+        
+            options.append((_(option_name), create_decorator(col, attributes, value[0], joins)))
+        
+        return (filter_names[0],[(_('Alle'), lambda q: q)] + options)
 
 class FilterWidget(QtGui.QGroupBox):
     """A box containing a filter that can be applied on a table view, this filter is
@@ -135,7 +138,8 @@ class FilterWidget(QtGui.QGroupBox):
     def setChoices(self, choices):
         self.choices = choices
         layout = QtGui.QVBoxLayout()
-        for i,name in enumerate([unicode(c[0]) for c in choices]):
+        
+        for i, name in enumerate([unicode(c[0]) for c in choices]):
             button = QtGui.QRadioButton(name, self)
             layout.addWidget(button)
             self.group.addButton(button, i)
