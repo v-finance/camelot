@@ -22,6 +22,7 @@
 #
 #  ============================================================================
 
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
@@ -30,12 +31,9 @@ from customeditor import AbstractCustomEditor
 from camelot.core import constants
 from camelot.core.utils import ugettext
 
+
 class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
-    """Widget for editing a boolean field.  The boolean editor does not support
-    the tri-state case where there is a difference between None and False.  So
-    when set_value(None) is called, get_value will return False.  Tri-state is
-    too difficult for the user.  In cases where this is needed, a ComboBox 
-    should be used."""
+    """Widget for editing a boolean field"""
 
     editingFinished = QtCore.pyqtSignal()
     
@@ -43,15 +41,23 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
                  parent=None,
                  minimum=constants.camelot_minint,
                  maximum=constants.camelot_maxint,
+                 editable=True,
+                 nullable=True,
                  **kwargs):
         QtGui.QCheckBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
+        self.setEnabled(editable)
+        self._nullable = nullable
+        #if self._nullable:
+        #    self.setTristate( True )
         self.stateChanged.connect(self._state_changed)
 
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
         if value:
             self.setCheckState(Qt.Checked)
+        #elif value==None and self._nullable:
+        #    self.setCheckState(Qt.PartiallyChecked)
         else:
             self.setCheckState(Qt.Unchecked)
 
@@ -60,9 +66,9 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         if value_loading is not None:
             return value_loading
         state = self.checkState()
-        if state==Qt.PartiallyChecked:
-            return None
-        elif state==Qt.Unchecked:
+        #if state==Qt.PartiallyChecked:
+        #    return None
+        if state==Qt.Unchecked:
             return False
         return True
 
@@ -78,8 +84,6 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         size = QtGui.QComboBox().sizeHint()
         return size
 
-    def set_field_attributes(self, editable=True, **kwargs):
-        self.set_enabled(editable)
 
 class TextBoolEditor(QtGui.QLabel, AbstractCustomEditor):
     """
@@ -120,4 +124,3 @@ class TextBoolEditor(QtGui.QLabel, AbstractCustomEditor):
                 selfpalette = self.palette()
                 selfpalette.setColor(QtGui.QPalette.WindowText, self.color_no)
                 self.setPalette(selfpalette)
-
