@@ -86,10 +86,13 @@ def select_profile(profile_names):
     input_dialog.set_cancel_button_text(cancel_label)
     input_dialog.set_items(profile_names)
 
-    italic_font = QFont()
-    italic_font.setItalic(True)
+    input_dialog.set_ok_button_default()
+
+    custom_font = QFont()
+    custom_font.setBold(True)
+    custom_font.setItalic(True)
     input_dialog.combobox.addItem(NEW_PROFILE_LABEL)
-    input_dialog.set_item_font(input_dialog.count()-1, italic_font)
+    input_dialog.set_item_font(input_dialog.count()-1, custom_font)
 
     dialog_code = input_dialog.exec_()
     if dialog_code == QDialog.Accepted:

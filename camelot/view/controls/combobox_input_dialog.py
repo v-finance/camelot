@@ -73,6 +73,12 @@ class ComboBoxInputDialog(QDialog):
 
         self._layout.insertLayout(2, button_layout)
 
+    def set_ok_button_default(self):
+        self.ok_button.setFocus()
+
+    def set_cancel_button_default(self):
+        self.cancel_button.setFocus()
+
     def set_ok_button_text(self, text):
         self.ok_button.setText(text)
 
