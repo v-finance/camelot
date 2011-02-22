@@ -92,7 +92,9 @@ class Filter(object):
                 if attributes['direction'] == orm.interfaces.MANYTOONE:
                     table = admin.entity.table.join(table)
                 else:
-                    table = admin.entity.table        col = getattr( admin.entity, field_name )
+                    table = admin.entity.table
+
+        col = getattr( admin.entity, field_name )
         query = select([col], distinct=True, order_by=col.asc()).select_from(table)
           
         def create_decorator(col, attributes, value, joins):
@@ -252,7 +254,7 @@ class ValidDateFilter(Filter):
         :param from_attribute: the name of the attribute representing the from date
         :param thru_attribute: the name of the attribute representing the thru date
         :param verbose_name: the displayed name of the filter"""
-        super(ValidDateFilter, self).__init__(None, None)
+        super(ValidDateFilter, self).__init__(None)
         self._from_attribute = from_attribute
         self._thru_attribute = thru_attribute
         self._verbose_name = verbose_name
