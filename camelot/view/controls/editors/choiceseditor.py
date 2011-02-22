@@ -34,12 +34,12 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
 
     editingFinished = QtCore.pyqtSignal()
     valueChanged = QtCore.pyqtSignal()
-
+    
     def __init__(self, parent=None, nullable=True, **kwargs):
         QtGui.QComboBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-        self.activated.connect(self._activated)
-        self._nullable = nullable
+        self.activated.connect( self._activated )
+        self._nullable = nullable 
 
     @QtCore.pyqtSlot(int)
     def _activated(self, _index):
@@ -98,8 +98,11 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
                 # it might happen, that when we set the editor data, the set_choices
                 # method has not happened yet, therefore, we temporary set ... in the
                 # text while setting the correct data to the editor
-                self.insertItem(self.count(), '...', QtCore.QVariant(value))
-                self.setCurrentIndex(self.count()-1)
+                # (Nick G.): On some occasions, value can be None or any 
+                # other non-insertable value like the databases default value.
+                if value != None:
+                    self.insertItem(self.count(), '...', QtCore.QVariant(value))
+                    self.setCurrentIndex(self.count()-1)
 
     def get_value(self):
         """Get the current value of the combobox"""
