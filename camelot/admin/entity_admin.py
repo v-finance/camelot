@@ -317,7 +317,6 @@ attribute to enable search.
             #
             if 'target' in attributes:
                 attributes['target'] = resolve_target(attributes['target'])
-                print 'TARGET', attributes['target']
                 attributes['admin'] = get_entity_admin(attributes['target'])
             
             self._field_attributes[field_name] = attributes
