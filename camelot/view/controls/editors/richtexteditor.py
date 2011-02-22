@@ -117,6 +117,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.bold_button.setFocusPolicy( Qt.ClickFocus )
         self.bold_button.setMaximumSize(QtCore.QSize(20, 20))
         self.bold_button.setShortcut(QtGui.QKeySequence('Ctrl+B'))
+        self.bold_button.setToolTip('Bold')
         self.bold_button.clicked.connect(self.set_bold)
 
         self.italic_button = QtGui.QToolButton(self)
@@ -127,6 +128,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.italic_button.setFocusPolicy( Qt.ClickFocus )
         self.italic_button.setMaximumSize(QtCore.QSize(20, 20))
         self.italic_button.setShortcut(QtGui.QKeySequence('Ctrl+I'))
+        self.italic_button.setToolTip('Italic')
         self.italic_button.clicked.connect(self.set_italic)
 
         self.underline_button = QtGui.QToolButton(self)
@@ -137,6 +139,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.underline_button.setFocusPolicy( Qt.ClickFocus )
         self.underline_button.setMaximumSize(QtCore.QSize(20, 20))
         self.underline_button.setShortcut(QtGui.QKeySequence('Ctrl+U'))
+        self.underline_button.setToolTip('Underline')
         self.underline_button.clicked.connect(self.set_underline)
 
         self.copy_button = QtGui.QToolButton(self)
@@ -145,6 +148,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.copy_button.setAutoRaise(True)
         self.copy_button.setMaximumSize(QtCore.QSize(20, 20))
         self.copy_button.setFocusPolicy( Qt.ClickFocus )
+        self.copy_button.setToolTip('Copy')
         self.copy_button.clicked.connect(self.textedit.copy)
 
         self.cut_button = QtGui.QToolButton(self)
@@ -152,6 +156,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.cut_button.setIcon(icon)
         self.cut_button.setAutoRaise(True)
         self.cut_button.setMaximumSize(QtCore.QSize(20, 20))
+        self.cut_button.setToolTip('Cut')
         self.cut_button.clicked.connect(self.textedit.cut)
         self.cut_button.setFocusPolicy( Qt.ClickFocus )
 
@@ -161,6 +166,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.paste_button.setAutoRaise(True)
         self.paste_button.setMaximumSize(QtCore.QSize(20, 20))
         self.paste_button.setFocusPolicy( Qt.ClickFocus )
+        self.paste_button.setToolTip('Paste')
         self.paste_button.clicked.connect(self.textedit.paste)
 
         self.alignleft_button = QtGui.QToolButton(self)
@@ -170,6 +176,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.alignleft_button.setCheckable(True)
         self.alignleft_button.setMaximumSize(QtCore.QSize(20, 20))
         self.alignleft_button.setFocusPolicy( Qt.ClickFocus )
+        self.alignleft_button.setToolTip('Align left')
         self.alignleft_button.clicked.connect(self.set_alignleft)
 
         self.aligncenter_button = QtGui.QToolButton(self)
@@ -179,6 +186,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.aligncenter_button.setCheckable(True)
         self.aligncenter_button.setMaximumSize(QtCore.QSize(20, 20))
         self.aligncenter_button.setFocusPolicy( Qt.ClickFocus )
+        self.aligncenter_button.setToolTip('Align Center')
         self.aligncenter_button.clicked.connect(self.set_aligncenter)
 
         self.alignright_button = QtGui.QToolButton(self)
@@ -188,12 +196,14 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.alignright_button.setCheckable(True)
         self.alignright_button.setMaximumSize(QtCore.QSize(20, 20))
         self.alignright_button.setFocusPolicy( Qt.ClickFocus )
+        self.alignright_button.setToolTip('Align Right')
         self.alignright_button.clicked.connect(self.set_alignright)
 
         self.color_button = QtGui.QToolButton(self)
         self.color_button.setAutoRaise(True)
         self.color_button.setMaximumSize(QtCore.QSize(20, 20))
         self.color_button.setFocusPolicy( Qt.ClickFocus )
+        self.color_button.setToolTip('Color')
         self.color_button.clicked.connect(self.set_color)
 
         self.toolbar.addWidget(self.copy_button)
