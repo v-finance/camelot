@@ -277,7 +277,7 @@ to render a form::
             scroll_area.setWidget( form_widget )
             scroll_area.setWidgetResizable( True )
             scroll_area.setFrameStyle( QtGui.QFrame.NoFrame )
-            scroll_area.setStyleSheet('background-color: transparent;')
+            #scroll_area.setStyleSheet('background-color: transparent;')
             return scroll_area
 
         return form_widget
