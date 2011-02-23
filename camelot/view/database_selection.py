@@ -142,10 +142,10 @@ class ProfileWizard(StandaloneWizardPage):
         self.banner_widget().setStyleSheet('background-color: white;')
 
         self.create_labels_and_widgets()
+        self.create_buttons()
+
         self.set_widgets_values()
         self.connect_widgets()
-
-        self.create_buttons()
         self.connect_buttons()
 
     def create_labels_and_widgets(self):
@@ -169,14 +169,7 @@ class ProfileWizard(StandaloneWizardPage):
         layout.addWidget(self.password_label, 5, 0, Qt.AlignRight)
         layout.addWidget(self.media_location_label, 6, 0, Qt.AlignRight)
 
-        #self.profile_editor = ChoicesEditor(parent=self)
         self.profile_editor = QLineEdit()
-        #self.profile_editor.setEditable(True)
-        # auto completion might be confusing, plus the fields are updated
-        # automatically
-        #self.profile_editor.setCompleter(None)
-        # we also disable duplicates
-        #self.profile_editor.setDuplicatesEnabled(False)
 
         self.dialect_editor = ChoicesEditor(parent=self)
         self.host_editor = TextLineEditor(self)
@@ -203,20 +196,12 @@ class ProfileWizard(StandaloneWizardPage):
         self.main_widget().setLayout(layout)
 
     def set_widgets_values(self):
-        #if self.profiles_choices:
-        #    self.profile_editor.set_choices(self.profiles_choices)
-
-        #last_used = last_used_profile()
-        #if last_used:
-        #    self.profile_editor.set_value(last_used)
-
         self.dialect_editor.set_choices([(dialect, dialect.capitalize())
             for dialect in dialects])
 
         self.update_profile()
 
     def connect_widgets(self):
-        #self.profile_editor.valueChanged.connect(self.update_profile)
         self.profile_editor.textChanged.connect(self.update_profile)
 
     def create_buttons(self):
@@ -278,18 +263,13 @@ class ProfileWizard(StandaloneWizardPage):
         connection.close()
         self._connection_valid = True
 
-    def current_profile(self):
-        #return unicode(self.profile_editor.itemText(self.profile_editor.currentIndex()))
-        return self.profile_editor.text()
+    def toggle_ok_button(self, enabled):
+        self.ok_button.setEnabled(enabled)
 
-    #def update_profile_name(self, text):
-    #    # ok, the ChoicesEditor will have to be manually edited
-    #    value_in_choices_editor = self.current_profile()
-    #    self.profiles_choices.remove((value_in_choices_editor, value_in_choices_editor))
-    #    self.profiles_choices.add((text, text))
-    #    # this seems redundant but is necessary
-    #    self.profile_editor.set_choices(self.profiles_choices)
-    #    self.profile_editor.set_value(text)
+    def current_profile(self):
+        text = self.profile_editor.text()
+        self.toggle_ok_button(bool(text))
+        return text
 
     def update_profile(self):
         self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
