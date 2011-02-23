@@ -38,6 +38,7 @@ from PyQt4.QtGui import QHBoxLayout
 from PyQt4.QtGui import QLabel
 from PyQt4.QtGui import QLineEdit
 from PyQt4.QtGui import QPushButton
+from PyQt4.QtGui import QFileDialog
 
 from camelot.view import art
 from camelot.view.controls.progress_dialog import ProgressDialog
@@ -171,17 +172,17 @@ class ProfileWizard(StandaloneWizardPage):
 
         self.profile_editor = QLineEdit()
 
-        self.dialect_editor = ChoicesEditor(parent=self)
-        self.host_editor = TextLineEditor(self)
-        self.port_editor = TextLineEditor(self)
-        self.port_editor.setFixedWidth(60)
-        self.database_name_editor = TextLineEditor(self)
-        self.username_editor = TextLineEditor(self)
-        self.password_editor = TextLineEditor(self)
-        self.password_editor.setEchoMode(QLineEdit.Password)
         # 32767 is Qt max length for string
         # should be more than enough for folders
         # http://doc.qt.nokia.com/latest/qlineedit.html#maxLength-prop
+        self.dialect_editor = ChoicesEditor(parent=self)
+        self.host_editor = TextLineEditor(self, length=32767)
+        self.port_editor = TextLineEditor(self)
+        self.port_editor.setFixedWidth(60)
+        self.database_name_editor = TextLineEditor(self, length=32767)
+        self.username_editor = TextLineEditor(self)
+        self.password_editor = TextLineEditor(self)
+        self.password_editor.setEchoMode(QLineEdit.Password)
         self.media_location_editor = TextLineEditor(self, length=32767)
 
         layout.addWidget(self.profile_editor, 0, 1, 1, 4)
@@ -219,10 +220,14 @@ class ProfileWizard(StandaloneWizardPage):
 
         self.buttons_widget().setLayout(layout)
 
+        self.browse_button = QPushButton(_('Browse'))
+        self.main_widget().layout().addWidget(self.browse_button, 6, 2, 1, 3)
+
     def connect_buttons(self):
         self.cancel_button.pressed.connect(self.reject)
         self.ok_button.pressed.connect(self.proceed)
         #self.clear_button.pressed.connect(self.clear_fields)
+        self.browse_button.pressed.connect(self.fill_media_location)
 
     #def clear_fields(self):
     #    self.host_editor.clear()
@@ -275,10 +280,10 @@ class ProfileWizard(StandaloneWizardPage):
         self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
         self.host_editor.setText(self.get_profile_value('host') or 'localhost')
         self.port_editor.setText(self.get_profile_value('port') or '3306')
-        self.database_name_editor.setText(self.get_profile_value('database'))
-        self.username_editor.setText(self.get_profile_value('user'))
-        self.password_editor.setText(self.get_profile_value('pass'))
-        self.media_location_editor.setText(self.get_profile_value('media_location'))
+        self.database_name_editor.setText(self.get_profile_value('database') or self.database_name_editor.text())
+        self.username_editor.setText(self.get_profile_value('user') or self.username_editor.text())
+        self.password_editor.setText(self.get_profile_value('pass') or self.password_editor.text())
+        self.media_location_editor.setText(self.get_profile_value('media_location') or self.media_location_editor.text())
 
     def get_profile_value(self, key):
         current = self.current_profile()
@@ -298,3 +303,9 @@ class ProfileWizard(StandaloneWizardPage):
         info['pass'] = self.password_editor.text()
         info['media_location'] = self.media_location_editor.text()
         return profilename, info
+
+    def fill_media_location(self):
+        caption = _('Select media location')
+        selected = str(QFileDialog.getExistingDirectory(self, caption))
+        if selected:
+            self.media_location_editor.setText(selected)
