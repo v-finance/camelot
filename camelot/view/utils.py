@@ -39,8 +39,13 @@ from camelot.core.utils import ugettext
 
 logger = logging.getLogger('camelot.view.utils')
 
+#
+# Cached date and time formats, for internal use only
+#
 _local_date_format = None
- 
+_local_datetime_format = None
+_local_time_format = None
+
 def local_date_format():
     """Get the local data format and cache it for reuse"""
     global _local_date_format
@@ -52,6 +57,25 @@ def local_date_format():
         _local_date_format = unicode(u''.join(format_sequence))
     return _local_date_format
 
+def local_datetime_format():
+    """Get the local datatime format and cache it for reuse"""
+    global _local_datetime_format
+    if not _local_datetime_format:
+        locale = QtCore.QLocale()
+        format_sequence = re.split('y*', unicode(locale.dateTimeFormat(locale.ShortFormat)))
+        # make sure a year always has 4 numbers
+        format_sequence.insert(-1, 'yyyy')
+        _local_datetime_format = unicode(u''.join(format_sequence))
+    return _local_datetime_format
+
+def local_time_format():
+    """Get the local time format and cache it for reuse"""
+    global _local_time_format
+    if not _local_time_format:
+        locale = QtCore.QLocale()
+        _local_time_format = unicode(locale.timeFormat(locale.ShortFormat) )
+    return _local_time_format
+    
 def default_language(*args):
     """takes arguments, to be able to use this function as a
     default field attribute"""
@@ -71,14 +95,12 @@ def bool_from_string(s):
     return eval(s.lower().capitalize())
 
 def date_from_string(s):
+    s = s.strip()
     if not s:
         return None
     from PyQt4.QtCore import QDate
     import string
-    s = s.strip()
     f = local_date_format()
-    if not s:
-        return None
     dt = QDate.fromString(s, f)
     if not dt.isValid():
         # try parsing without separators
@@ -106,25 +128,28 @@ def date_from_string(s):
                 return date(date.today().year, dt.month(), dt.day())
     return date(dt.year(), dt.month(), dt.day())
 
-def time_from_string(s, format=constants.strftime_time_format):
-    if s is None: raise ParsingError()
+def time_from_string(s):
     s = s.strip()
-    try:
-        dt = datetime.strptime(s, format)
-    except ValueError:
+    if not s:
+        return None
+    from PyQt4.QtCore import QTime
+    f = local_time_format()
+    tm = QTime.fromString(s, f)
+    if not tm.isValid():
         raise ParsingError()
-    return dt.time()
-
-
-def datetime_from_string(s, format=constants.strftime_datetime_format):
-    if s is None: raise ParsingError()
+    return time( tm.hour(), tm.minute(), tm.second() )
+                    
+def datetime_from_string(s):
     s = s.strip()
-
-    try:
-        dt = datetime.strptime(s, format)
-    except ValueError:
+    if not s:
+        return None
+    from PyQt4.QtCore import QDateTime
+    f = local_datetime_format()
+    dt = QDateTime.fromString(s, f)
+    if not dt.isValid():
         raise ParsingError()
-    return dt
+    return datetime(dt.date().year(), dt.date().month(), dt.date().day(), 
+                    dt.time().hour(), dt.time().minute(), dt.time().second())
 
 def code_from_string(s, separator):
     return s.split(separator)
