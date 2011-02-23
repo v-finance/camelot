@@ -66,7 +66,7 @@ class MainWindow(QtGui.QMainWindow):
         self.app_admin = app_admin
 
         logger.debug('setting up workspace')
-        self.workspace = DesktopWorkspace(self)
+        self.workspace = DesktopWorkspace(app_admin, self)
 
         logger.debug('setting child windows dictionary')
 

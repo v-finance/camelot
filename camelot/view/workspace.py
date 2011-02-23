@@ -34,11 +34,11 @@ import logging
 logger = logging.getLogger('camelot.view.workspace')
 
 from camelot.core.utils import ugettext as _
-from camelot.view.model_thread import gui_function
-
+from camelot.view.model_thread import gui_function, post
 
 class DesktopBackground(QtGui.QGraphicsView):
     """A custom background widget for the desktop"""
+    
     def __init__(self, parent=None):
         super(DesktopBackground, self).__init__(parent)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -50,6 +50,13 @@ class DesktopBackground(QtGui.QGraphicsView):
 #        )
 #        self.setAlignment(Qt.AlignBottom | Qt.AlignLeft)
 #        self.setScene(self.scene)
+
+    @QtCore.pyqtSlot(list)
+    def set_actions(self, actions):
+        """
+        :param actions: a list of ApplicationActions
+        """
+        print actions
 
 class DesktopTabbar(QtGui.QTabBar):
     
@@ -79,7 +86,7 @@ no open tabs on the desktop.
     last_view_closed_signal = QtCore.pyqtSignal()
 
     @gui_function
-    def __init__(self, parent):
+    def __init__(self, application_admin, parent):
         super(DesktopWorkspace, self).__init__(parent)
         layout = QtGui.QHBoxLayout()
         layout.setMargin( 0 )
@@ -102,6 +109,7 @@ no open tabs on the desktop.
         self._background_widget.show()
         layout.addWidget( self._background_widget )
         self.setLayout( layout )
+        post( application_admin.get_actions, self._background_widget.set_actions )
 
     @QtCore.pyqtSlot()
     def _change_view_mode(self):
