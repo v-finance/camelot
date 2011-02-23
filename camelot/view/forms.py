@@ -210,7 +210,7 @@ to render a form::
                 return '%s,%s'%(self.row, self.col)
 
         c = cursor()
-        
+
         has_vertical_expanding_row = False
         for field in self._content:
             if isinstance( field, Form ):
@@ -273,9 +273,11 @@ to render a form::
 
         if self._scrollbars:
             scroll_area = QtGui.QScrollArea( parent )
+            # we should inherit parent's background color
             scroll_area.setWidget( form_widget )
             scroll_area.setWidgetResizable( True )
             scroll_area.setFrameStyle( QtGui.QFrame.NoFrame )
+            scroll_area.setStyleSheet('background-color: transparent;')
             return scroll_area
 
         return form_widget
@@ -381,14 +383,14 @@ class TabForm( Form ):
             if form.replace_field( original_field, new_field ):
                 return True
         return False
-    
+
     def remove_field( self, original_field ):
         super(TabForm, self).remove_field( original_field )
         for _label, form in self.tabs:
             if form.remove_field( original_field ):
                 return True
         return False
-    
+
     def _get_fields_from_form( self ):
         for _label, form in self.tabs:
             for field in form._get_fields_from_form():
