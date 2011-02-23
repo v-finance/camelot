@@ -64,7 +64,7 @@ def select_database():
     if not PROFILES_DICT:
         create_new_profile(PROFILES_DICT)
 
-    selected = select_profile(sorted(PROFILES_DICT.keys()))
+    selected = select_profile(PROFILES_DICT)
     if selected in PROFILES_DICT:
         use_chosen_profile(selected, PROFILES_DICT[selected])
     elif selected == NEW_PROFILE_LABEL:
@@ -73,7 +73,7 @@ def select_database():
         sys.exit(0)
 
 
-def select_profile(profile_names):
+def select_profile(profiles_dict):
     title = _('Profile Selection')
     input_label = _('Select a stored profile:')
     ok_label = _('OK')
@@ -84,7 +84,7 @@ def select_profile(profile_names):
     input_dialog.set_label_text(input_label)
     input_dialog.set_ok_button_text(ok_label)
     input_dialog.set_cancel_button_text(cancel_label)
-    input_dialog.set_items(profile_names)
+    input_dialog.set_items(sorted(profiles_dict.keys()))
 
     input_dialog.set_ok_button_default()
 
@@ -92,7 +92,16 @@ def select_profile(profile_names):
     custom_font.setItalic(True)
     icon = art.Icon('tango/16x16/actions/document-new.png').getQIcon()
     input_dialog.combobox.addItem(icon, NEW_PROFILE_LABEL)
-    input_dialog.set_item_font(input_dialog.count()-1, custom_font)
+
+    last_index = input_dialog.count()-1
+    input_dialog.set_item_font(last_index, custom_font)
+    # we use a slot function that accept arguments because
+    # we are leaving the dialog and we need to close it otherwise
+    # the "new profile" item will stay selected, plus the dialog
+    # is model. we can use deleteLater() but this wont leave time
+    # to select any item...
+    input_dialog.register_on_index(last_index, new_profile_item_selected,
+        input_dialog)
 
     dialog_code = input_dialog.exec_()
     if dialog_code == QDialog.Accepted:
@@ -101,11 +110,15 @@ def select_profile(profile_names):
     return None
 
 
+def new_profile_item_selected(input_dialog):
+    input_dialog.accept()
+
+
 def create_new_profile(profiles):
     wizard = ProfileWizard(profiles)
     dialog_code = wizard.exec_()
     if dialog_code == QDialog.Rejected:
-        # no profiles so we exit
+        # no profiles? exit
         if not PROFILES_DICT:
             sys.exit(0)
         # one more time

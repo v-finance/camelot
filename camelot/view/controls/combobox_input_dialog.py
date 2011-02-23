@@ -23,6 +23,8 @@
 #  ============================================================================
 
 
+import logging
+
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QLabel
 from PyQt4.QtGui import QDialog
@@ -30,6 +32,9 @@ from PyQt4.QtGui import QComboBox
 from PyQt4.QtGui import QBoxLayout
 from PyQt4.QtGui import QVBoxLayout
 from PyQt4.QtGui import QPushButton
+
+
+logger = logging.getLogger('camelot.view.controls.combobox_input_dialog')
 
 
 class ComboBoxInputDialog(QDialog):
@@ -48,6 +53,9 @@ class ComboBoxInputDialog(QDialog):
         self.combobox = QComboBox()
         self.combobox.addItems(items)
         self._layout.insertWidget(1, self.combobox)
+
+        self.registered_functions = {}
+        self.combobox.activated[int].connect(self._make_call_if_registered)
 
     def count(self):
         return self.combobox.count()
@@ -87,3 +95,10 @@ class ComboBoxInputDialog(QDialog):
 
     def set_window_title(self, title):
         self.setWindowTitle(title)
+
+    def register_on_index(self, index, func, *a, **kw):
+        self.registered_functions[index] = lambda: func(*a, **kw)
+
+    def _make_call_if_registered(self, index):
+        if self.registered_functions and index in self.registered_functions:
+            self.registered_functions[index]()
