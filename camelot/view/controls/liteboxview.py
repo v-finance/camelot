@@ -25,7 +25,7 @@
 from PyQt4.QtGui import (
     QPainter,
     QGraphicsView,
-    QGraphicsScene,     
+    QGraphicsScene,
     QColor, QPixmap,
     QGraphicsPixmapItem,
 )
@@ -56,15 +56,15 @@ class CloseMark(QGraphicsPixmapItem):
 
     def __init__(self, pixmap=None, hover_pixmap=None, parent=None):
         super(CloseMark, self).__init__(parent)
-        
+
         DEFAULT_PIXMAP = Pixmap('close_mark.png').getQPixmap()
         DEFAULT_HOVER_PIXMAP = Pixmap('close_mark_hover.png').getQPixmap()
 
         self._pixmap = pixmap or DEFAULT_PIXMAP
         self._hover_pixmap = hover_pixmap or DEFAULT_HOVER_PIXMAP
-        
+
         self.setPixmap(self._pixmap)
-        
+
         # move to top right corner
         width = self.pixmap().width()
         height = self.pixmap().height()
@@ -93,7 +93,7 @@ class LiteBoxView(QGraphicsView):
     ALPHA = QColor(0, 0, 0, 192)
 
     closed_signal = QtCore.pyqtSignal()
-    
+
     def __init__(self, parent=None):
         super(LiteBoxView, self).__init__(parent)
         self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
@@ -114,7 +114,7 @@ class LiteBoxView(QGraphicsView):
     def close(self):
         self.closed_signal.emit()
         super(LiteBoxView, self).close()
-        
+
     def drawBackground(self, painter, rect):
         if self.desktopshot is None:
             self.desktopshot = get_desktop_pixmap()
@@ -128,13 +128,13 @@ class LiteBoxView(QGraphicsView):
         from PyQt4 import QtSvg
         item = QtSvg.QGraphicsSvgItem(path)
         self.show_fullscreen_item(item)
-    
+
     def show_fullscreen_image(self, image):
         """:param image: a QImage"""
         pixmap = QPixmap.fromImage(image)
         item = QGraphicsPixmapItem(pixmap)
         self.show_fullscreen_item(item)
-        
+
     def show_fullscreen_item(self, item):
         """:param item: a QGraphicsItem to be shown fullscreen"""
         item.setFlag(QtGui.QGraphicsItem.ItemIsFocusable, True)

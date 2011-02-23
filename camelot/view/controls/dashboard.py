@@ -50,7 +50,7 @@ class CloseMark(QLabel):
         super(CloseMark, self).__init__(parent)
         self.setPixmap(pixmap)
         self.toParentTopRight()
-        
+
     def mousePressEvent(self, event):
         self.parent().close()
 
@@ -64,7 +64,7 @@ class CloseMark(QLabel):
 
 
 class Dashboard(BareFrame):
-    
+
     SCALE  = .85
 
     def __init__(self, parent=None):
@@ -81,7 +81,7 @@ class Dashboard(BareFrame):
         mt = get_model_thread()
         mt.thread_busy_signal.connect( busy_widget.set_busy )
         busy_widget.set_busy(mt.busy())
-        
+
 
 
 if __name__ == '__main__':
