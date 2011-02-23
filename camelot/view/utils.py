@@ -32,7 +32,6 @@ import re
 import logging
 import operator
 
-from camelot.core import constants
 from camelot.core.sql import like_op
 from sqlalchemy.sql.operators import between_op
 from camelot.core.utils import ugettext
