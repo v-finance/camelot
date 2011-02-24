@@ -76,6 +76,8 @@ class ApplicationAdmin(QtCore.QObject):
     # This signal is emitted whenever the tile of the main window needs to
     # be changed.
     title_changed_signal = QtCore.pyqtSignal(str)
+    # Emitted whenever the application actions need to be changed
+    actions_changed_signal = QtCore.pyqtSignal()
 
     database_selection = False
 

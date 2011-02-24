@@ -64,6 +64,7 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self, parent)
 
         self.app_admin = app_admin
+        self.app_admin.actions_changed_signal.connect( self.actions_changed )
 
         logger.debug('setting up workspace')
         self.workspace = DesktopWorkspace(app_admin, self)
@@ -210,6 +211,7 @@ class MainWindow(QtGui.QMainWindow):
         self.importFromFileAct = ActionFactory.import_file(self, slot=self.importFromFile)
         self.sessionRefreshAct = ActionFactory.refresh(self, slot=self.refresh_session)
 
+    def actions_changed(self):
         self.app_actions = []
         for action in self.app_admin.get_actions():
 
@@ -229,6 +231,8 @@ class MainWindow(QtGui.QMainWindow):
                     tip=unicode(action.get_verbose_name())
                 )
             )
+        if self.app_actions:
+            addActions(self.tool_bar, self.app_actions)
 
     # QAction slots and methods implementations
 
@@ -464,9 +468,10 @@ class MainWindow(QtGui.QMainWindow):
         addActions(self.tool_bar, (self.printAct, self.previewAct))
 
         addActions(self.tool_bar, (self.helpAct,))
+        
+        self.actions_changed()
 
-        if self.app_actions:
-            addActions(self.tool_bar, self.app_actions)
+
 
     # Navigation Pane
     def createNavigationPane(self):
