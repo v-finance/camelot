@@ -166,6 +166,9 @@ class ProfileWizard(StandaloneWizardPage):
         self.media_location_label = QLabel(_('Media Location:'))
         self.language_label = QLabel(_('Language:'))
         self.country_label = QLabel(_('Country:'))
+        self.proxy_address_label = QLabel(_('Proxy Address:'))
+        self.proxy_username_label = QLabel(_('Proxy Username:'))
+        self.proxy_password_label = QLabel(_('Proxy Password:'))
 
         layout = QGridLayout()
 
@@ -179,6 +182,9 @@ class ProfileWizard(StandaloneWizardPage):
         layout.addWidget(self.media_location_label, 7, 0, Qt.AlignRight)
         layout.addWidget(self.language_label, 8, 0, Qt.AlignRight)
         layout.addWidget(self.country_label, 9, 0, Qt.AlignRight)
+        layout.addWidget(self.proxy_address_label, 10, 0, Qt.AlignRight)
+        layout.addWidget(self.proxy_username_label, 11, 0, Qt.AlignRight)
+        layout.addWidget(self.proxy_password_label, 12, 0, Qt.AlignRight)
 
         self.profile_editor = QLineEdit()
 
@@ -196,6 +202,10 @@ class ProfileWizard(StandaloneWizardPage):
         self.media_location_editor = TextLineEditor(self, length=32767)
         self.language_editor = ChoicesEditor(parent=self)
         self.country_editor = ChoicesEditor(parent=self)
+        self.proxy_address_editor = TextLineEditor(self, length=32767)
+        self.proxy_username_editor = TextLineEditor(self)
+        self.proxy_password_editor = TextLineEditor(self)
+        self.proxy_password_editor.setEchoMode(QLineEdit.Password)
 
         layout.addWidget(self.profile_editor, 0, 1, 1, 4)
         layout.addWidget(self.dialect_editor, 1, 1, 1, 1)
@@ -208,6 +218,9 @@ class ProfileWizard(StandaloneWizardPage):
         layout.addWidget(self.media_location_editor, 7, 1, 1, 1)
         layout.addWidget(self.language_editor, 8, 1, 1, 1)
         layout.addWidget(self.country_editor, 9, 1, 1, 1)
+        layout.addWidget(self.proxy_address_editor, 10, 1, 1, 1)
+        layout.addWidget(self.proxy_username_editor, 11, 1, 1, 1)
+        layout.addWidget(self.proxy_password_editor, 12, 1, 1, 1)
 
         self.main_widget().setLayout(layout)
 
@@ -295,10 +308,6 @@ class ProfileWizard(StandaloneWizardPage):
         return text
 
     def update_profile(self):
-        # the profile name could have changed, that's why the profile
-        # dictionary has precedence over the values the user has entered
-        # but should it be the case, since the wizard has become a creation
-        # only wizard?
         self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
         self.host_editor.setText(self.get_profile_value('host') or 'localhost')
         self.port_editor.setText(self.get_profile_value('port') or '3306')
@@ -306,8 +315,11 @@ class ProfileWizard(StandaloneWizardPage):
         self.username_editor.setText(self.get_profile_value('user') or self.username_editor.text())
         self.password_editor.setText(self.get_profile_value('pass') or self.password_editor.text())
         self.media_location_editor.setText(self.get_profile_value('media_location') or self.media_location_editor.text())
-        self.language_editor.set_value(self.get_profile_value('locale_language') or self.language_editor.get_value())
-        self.language_editor.set_value(self.get_profile_value('locale_country') or self.country_editor.get_value())
+        self.language_editor.set_value(self.get_profile_value('locale_language') or str(self.language_editor.get_value()))
+        self.country_editor.set_value(self.get_profile_value('locale_country') or str(self.country_editor.get_value()))
+        self.proxy_address_editor.setText(self.get_profile_value('proxy_host') or self.proxy_address_editor.text())
+        self.proxy_username_editor.setText(self.get_profile_value('proxy_username') or self.proxy_username_editor.text())
+        self.proxy_password_editor.setText(self.get_profile_value('proxy_password') or self.proxy_password_editor.text())
 
     def get_profile_value(self, key):
         current = self.current_profile()
@@ -328,6 +340,9 @@ class ProfileWizard(StandaloneWizardPage):
         info['media_location'] = self.media_location_editor.text()
         info['locale_language'] = self.language_editor.get_value()
         info['locale_country'] = self.country_editor.get_value()
+        info['proxy_host'] = self.proxy_address_editor.text()
+        info['proxy_username'] = self.proxy_username_editor.text()
+        info['proxy_password'] = self.proxy_password_editor.text()
         return profilename, info
 
     def fill_media_location(self):

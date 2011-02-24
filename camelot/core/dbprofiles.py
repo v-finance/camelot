@@ -70,6 +70,9 @@ def fetch_profiles():
         info['media_location'] = decode_setting(settings.value('media_location', QVariant('')).toString())
         info['locale_language'] = decode_setting(settings.value('locale_language', QVariant('')).toString())
         info['locale_country'] = decode_setting(settings.value('locale_country', QVariant('')).toString())
+        info['proxy_host'] = decode_setting(settings.value('proxy_host', QVariant('')).toString())
+        info['proxy_username'] = decode_setting(settings.value('proxy_username', QVariant('')).toString())
+        info['proxy_password'] = decode_setting(settings.value('proxy_password', QVariant('')).toString())
         profiles[profilename] = info
     settings.endArray()
 
@@ -92,6 +95,9 @@ def store_profiles(profiles):
         settings.setValue('media_location', QVariant(encode_setting(info['media_location'])))
         settings.setValue('locale_language', QVariant(encode_setting(info['locale_language'])))
         settings.setValue('locale_country', QVariant(encode_setting(info['locale_country'])))
+        settings.setValue('proxy_host', QVariant(encode_setting(info['proxy_host'])))
+        settings.setValue('proxy_username', QVariant(encode_setting(info['proxy_username'])))
+        settings.setValue('proxy_password', QVariant(encode_setting(info['proxy_password'])))
     settings.endArray()
 
 
@@ -107,3 +113,6 @@ def use_chosen_profile(profilename, info):
     settings.setValue('extra/media_location', QVariant(encode_setting(info['media_location'])))
     settings.setValue('locale/language', QVariant(encode_setting(info['locale_language'])))
     settings.setValue('locale/country', QVariant(encode_setting(info['locale_country'])))
+    settings.setValue('proxy/host', QVariant(encode_setting(info['proxy_host'])))
+    settings.setValue('proxy/username', QVariant(encode_setting(info['proxy_username'])))
+    settings.setValue('proxy/password', QVariant(encode_setting(info['proxy_password'])))
