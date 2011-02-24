@@ -43,6 +43,7 @@ from PyQt4.QtGui import QFileDialog
 from camelot.view import art
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.editors import ChoicesEditor, TextLineEditor
+from camelot.view.controls.standalone_wizard_page import HSeparator
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.controls.combobox_input_dialog import ComboBoxInputDialog
 
@@ -128,13 +129,14 @@ def create_new_profile(profiles):
 
 class ProfileWizard(StandaloneWizardPage):
 
+    country_choices = ['BE']
+    language_choices = ['nl','fr','en']
+
     def __init__(self, profiles, parent=None):
         super(ProfileWizard, self).__init__(parent)
 
         self._connection_valid = False
-
         self.profiles = profiles
-        #self.profiles_choices = set((name, name) for name in self.profiles.keys())
 
         self.setWindowTitle(_('Profile Wizard'))
         self.set_banner_logo_pixmap(art.Icon('tango/22x22/categories/preferences-system.png').getQPixmap())
@@ -146,6 +148,10 @@ class ProfileWizard(StandaloneWizardPage):
         self.create_buttons()
 
         self.set_widgets_values()
+
+        # note: connections come after labels and widgets are created
+        # and have default values. the issue encountered is that the profile
+        # name text line editor has its text edited
         self.connect_widgets()
         self.connect_buttons()
 
@@ -158,6 +164,8 @@ class ProfileWizard(StandaloneWizardPage):
         self.username_label = QLabel(_('Username:'))
         self.password_label = QLabel(_('Password:'))
         self.media_location_label = QLabel(_('Media Location:'))
+        self.language_label = QLabel(_('Language:'))
+        self.country_label = QLabel(_('Country:'))
 
         layout = QGridLayout()
 
@@ -168,7 +176,9 @@ class ProfileWizard(StandaloneWizardPage):
         layout.addWidget(self.database_name_label, 3, 0, Qt.AlignRight)
         layout.addWidget(self.username_label, 4, 0, Qt.AlignRight)
         layout.addWidget(self.password_label, 5, 0, Qt.AlignRight)
-        layout.addWidget(self.media_location_label, 6, 0, Qt.AlignRight)
+        layout.addWidget(self.media_location_label, 7, 0, Qt.AlignRight)
+        layout.addWidget(self.language_label, 8, 0, Qt.AlignRight)
+        layout.addWidget(self.country_label, 9, 0, Qt.AlignRight)
 
         self.profile_editor = QLineEdit()
 
@@ -184,6 +194,8 @@ class ProfileWizard(StandaloneWizardPage):
         self.password_editor = TextLineEditor(self)
         self.password_editor.setEchoMode(QLineEdit.Password)
         self.media_location_editor = TextLineEditor(self, length=32767)
+        self.language_editor = ChoicesEditor(parent=self)
+        self.country_editor = ChoicesEditor(parent=self)
 
         layout.addWidget(self.profile_editor, 0, 1, 1, 4)
         layout.addWidget(self.dialect_editor, 1, 1, 1, 1)
@@ -192,13 +204,19 @@ class ProfileWizard(StandaloneWizardPage):
         layout.addWidget(self.database_name_editor, 3, 1, 1, 1)
         layout.addWidget(self.username_editor, 4, 1, 1, 1)
         layout.addWidget(self.password_editor, 5, 1, 1, 1)
-        layout.addWidget(self.media_location_editor, 6, 1, 1, 1)
+        layout.addWidget(HSeparator(), 6, 0, 1, 5)
+        layout.addWidget(self.media_location_editor, 7, 1, 1, 1)
+        layout.addWidget(self.language_editor, 8, 1, 1, 1)
+        layout.addWidget(self.country_editor, 9, 1, 1, 1)
 
         self.main_widget().setLayout(layout)
 
     def set_widgets_values(self):
-        self.dialect_editor.set_choices([(dialect, dialect.capitalize())
-            for dialect in dialects])
+        self.dialect_editor.set_choices([(dialect, dialect.capitalize()) for dialect in dialects])
+        self.language_editor.set_choices([(lang, lang) for lang in self.language_choices])
+        self.country_editor.set_choices([(country, country) for country in self.country_choices])
+
+        self.profile_editor.setFocus()
 
         self.update_profile()
 
@@ -221,7 +239,7 @@ class ProfileWizard(StandaloneWizardPage):
         self.buttons_widget().setLayout(layout)
 
         self.browse_button = QPushButton(_('Browse'))
-        self.main_widget().layout().addWidget(self.browse_button, 6, 2, 1, 3)
+        self.main_widget().layout().addWidget(self.browse_button, 7, 2, 1, 3)
 
     def connect_buttons(self):
         self.cancel_button.pressed.connect(self.reject)
@@ -272,11 +290,15 @@ class ProfileWizard(StandaloneWizardPage):
         self.ok_button.setEnabled(enabled)
 
     def current_profile(self):
-        text = self.profile_editor.text()
+        text = str(self.profile_editor.text())
         self.toggle_ok_button(bool(text))
         return text
 
     def update_profile(self):
+        # the profile name could have changed, that's why the profile
+        # dictionary has precedence over the values the user has entered
+        # but should it be the case, since the wizard has become a creation
+        # only wizard?
         self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
         self.host_editor.setText(self.get_profile_value('host') or 'localhost')
         self.port_editor.setText(self.get_profile_value('port') or '3306')
@@ -284,6 +306,8 @@ class ProfileWizard(StandaloneWizardPage):
         self.username_editor.setText(self.get_profile_value('user') or self.username_editor.text())
         self.password_editor.setText(self.get_profile_value('pass') or self.password_editor.text())
         self.media_location_editor.setText(self.get_profile_value('media_location') or self.media_location_editor.text())
+        self.language_editor.set_value(self.get_profile_value('locale_language') or self.language_editor.get_value())
+        self.language_editor.set_value(self.get_profile_value('locale_country') or self.country_editor.get_value())
 
     def get_profile_value(self, key):
         current = self.current_profile()
@@ -302,6 +326,8 @@ class ProfileWizard(StandaloneWizardPage):
         info['user'] = self.username_editor.text()
         info['pass'] = self.password_editor.text()
         info['media_location'] = self.media_location_editor.text()
+        info['locale_language'] = self.language_editor.get_value()
+        info['locale_country'] = self.country_editor.get_value()
         return profilename, info
 
     def fill_media_location(self):

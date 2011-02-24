@@ -68,6 +68,8 @@ def fetch_profiles():
         info['user'] = decode_setting(settings.value('user', QVariant('')).toString())
         info['pass'] = decode_setting(settings.value('pass', QVariant('')).toString())
         info['media_location'] = decode_setting(settings.value('media_location', QVariant('')).toString())
+        info['locale_language'] = decode_setting(settings.value('locale_language', QVariant('')).toString())
+        info['locale_country'] = decode_setting(settings.value('locale_country', QVariant('')).toString())
         profiles[profilename] = info
     settings.endArray()
 
@@ -88,6 +90,8 @@ def store_profiles(profiles):
         settings.setValue('user', QVariant(encode_setting(info['user'])))
         settings.setValue('pass', QVariant(encode_setting(info['pass'])))
         settings.setValue('media_location', QVariant(encode_setting(info['media_location'])))
+        settings.setValue('locale_language', QVariant(encode_setting(info['locale_language'])))
+        settings.setValue('locale_country', QVariant(encode_setting(info['locale_country'])))
     settings.endArray()
 
 
@@ -101,3 +105,5 @@ def use_chosen_profile(profilename, info):
     settings.setValue('database/password', QVariant(encode_setting(info['pass'])))
     settings.setValue('database/name', QVariant(encode_setting(info['database'])))
     settings.setValue('extra/media_location', QVariant(encode_setting(info['media_location'])))
+    settings.setValue('locale/language', QVariant(encode_setting(info['locale_language'])))
+    settings.setValue('locale/country', QVariant(encode_setting(info['locale_country'])))
