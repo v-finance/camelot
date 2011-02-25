@@ -124,9 +124,10 @@ class BackupMechanism(object):
         import shutil
         import settings
         from sqlalchemy import create_engine
-        from sqlalchemy import MetaData
+        from sqlalchemy import MetaData, Table, Column, Integer
         from sqlalchemy.pool import NullPool
         from sqlalchemy.dialects import mysql as mysql_dialect
+        from sqlalchemy.dialects import postgresql as postgresql_dialect
         import sqlalchemy.types
         
         yield (0, 0, _('Analyzing database structure'))
@@ -154,7 +155,12 @@ class BackupMechanism(object):
         from_and_to_tables = []
         for from_table in from_meta_data.sorted_tables:
             if self.backup_table_filter(from_table):
-                to_table = from_table.tometadata(to_meta_data)
+                #print "backing up table:", from_table
+                #to_table = from_table.tometadata(to_meta_data)
+                new_cols = []
+                for col in from_table.columns:
+                    new_cols.append(Column(col.name, col.type))
+                to_table = Table(from_table.name, to_meta_data, *new_cols)
                 #
                 # Dirty hack : loop over all columns to detect mysql TINYINT
                 # columns and convert them to BOOL
@@ -162,6 +168,10 @@ class BackupMechanism(object):
                 for col in to_table.columns:
                     if isinstance(col.type, mysql_dialect.TINYINT):
                         col.type = sqlalchemy.types.Boolean()
+                    if isinstance(col.type, postgresql_dialect.DOUBLE_PRECISION):
+                        col.type = sqlalchemy.types.Float()
+                    if isinstance(col.type, postgresql_dialect.BYTEA):
+                        col.type = sqlalchemy.types.LargeBinary()
                 #
                 # End of dirty hack
                 #
@@ -262,5 +272,10 @@ class BackupMechanism(object):
         if len(table_data):
             to_connection = to_table.bind.connect()
             to_connection.execute(to_table.insert(), table_data)
+            if 'id' in [c.name for c in to_table.columns]:
+              if to_table.bind.url.get_dialect().name == 'postgresql':
+                table_name = to_table.name
+                seq_name = table_name + "_id_seq"
+                to_connection.execute("select setval('%s', max(id)) from %s" % (seq_name, table_name))
             to_connection.close()
 
