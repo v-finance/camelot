@@ -36,27 +36,173 @@ logger = logging.getLogger('camelot.view.workspace')
 from camelot.core.utils import ugettext as _
 from camelot.view.model_thread import gui_function, post
 
-class DesktopBackground(QtGui.QGraphicsView):
+class DesktopBackground(QtGui.QWidget):
     """A custom background widget for the desktop"""
     
     def __init__(self, parent=None):
         super(DesktopBackground, self).__init__(parent)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
-#        self.scene = QtGui.QGraphicsScene()
-#        self.pixitem = self.scene.addPixmap(
-#            Pixmap('camelot-home.png').getQPixmap()
-#        )
-#        self.setAlignment(Qt.AlignBottom | Qt.AlignLeft)
-#        self.setScene(self.scene)
+        
+        self.actionButtonsLayoutColumnCount = 5
+        
+        self.actionButtonsLayout = QtGui.QGridLayout()
+        self.setLayout(self.actionButtonsLayout)
+        self.actionButtonsLayout.setContentsMargins(20, 20, 20, 20)
+        
+        # Set a white background color
+        palette = self.palette()
+        self.setAutoFillBackground(True)
+        palette.setBrush(QtGui.QPalette.Window, Qt.white)
+        self.setPalette(palette)
 
     @QtCore.pyqtSlot(list)
     def set_actions(self, actions):
         """
         :param actions: a list of ApplicationActions
         """
-        print actions
+        position = 0
+        for action in actions:
+            actionButton = ActionButton(action, self)
+            self.actionButtonsLayout.addWidget(actionButton,
+                                               position / self.actionButtonsLayoutColumnCount,
+                                               position % self.actionButtonsLayoutColumnCount,
+                                               Qt.AlignHCenter or Qt.AlignBottom)
+            position += 1
+            
+    def resizeEvent(self, event):
+        for actionButton in self.findChildren(ActionButton):
+            actionButton.resetLayout()
+            
+        event.ignore()
+
+    @QtCore.pyqtSlot()
+    def makeInteractive(self):
+        for actionButton in self.findChildren(ActionButton):
+            actionButton.setInteractive(True)
+        
+class ActionButton(QtGui.QLabel):
+    """A custom desktop button for the desktop"""
+    
+    def __init__(self, action, parent = None):
+        super(ActionButton, self).__init__(parent)
+        self.action = action
+        
+        # This property holds if this button reacts to mouse events
+        self.interactive = False
+        
+        # This property is used to store the position of this button
+        # so it can be visually reset when the user leaves in the
+        # middle of an animation
+        self.originalPosition = None
+        
+        self.setPixmap(action.get_icon().getQPixmap())
+        self.setMinimumSize(70, 70)
+        self.setMaximumSize(110, 110)
+        self.setToolTip(action.get_verbose_name())
+        self.setMouseTracking(True)
+        self.setScaledContents(True)
+        
+        self.opacityEffect = QtGui.QGraphicsOpacityEffect()
+        self.opacityEffect.setOpacity(1.0)
+        self.setGraphicsEffect(self.opacityEffect)
+        
+        # Bounce animation when hovering #
+        self.bounceAnimation1 = QtCore.QPropertyAnimation(self, 'pos')
+        self.bounceAnimation1.setDuration(500)
+        self.bounceAnimation1.setEasingCurve(QtCore.QEasingCurve.Linear)
+        
+        self.bounceAnimation2 = QtCore.QPropertyAnimation(self, 'pos')
+        self.bounceAnimation2.setDuration(1500)
+        self.bounceAnimation2.setEasingCurve(QtCore.QEasingCurve.OutElastic)
+        
+        self.bounceAnimationGroup = QtCore.QSequentialAnimationGroup()
+        self.bounceAnimationGroup.setLoopCount(-1)
+        self.bounceAnimationGroup.addAnimation(self.bounceAnimation1)
+        self.bounceAnimationGroup.addAnimation(self.bounceAnimation2)
+        ##################################
+        
+        # Selection animation when clicking #
+        # Part 1 (instant repositioning) #
+        self.selectionAnimation1 = QtCore.QPropertyAnimation(self, 'pos')
+        self.selectionAnimation1.setDuration(50)
+        self.selectionAnimation1.setEasingCurve(QtCore.QEasingCurve.Linear)
+        
+        # Part 2 (quick resize and opacity effect) #
+        self.selectionAnimation2 = QtCore.QPropertyAnimation(self, 'size')
+        self.selectionAnimation2.setDuration(200)
+        self.selectionAnimation2.setEasingCurve(QtCore.QEasingCurve.OutCubic)
+        
+        # Part 3 (opacity effect) #
+        self.selectionAnimation3 = QtCore.QPropertyAnimation(self.opacityEffect, 'opacity')
+        self.selectionAnimation3.setDuration(200)
+        self.selectionAnimation3.setEasingCurve(QtCore.QEasingCurve.Linear)
+        
+        self.selectionAnimationGroup = QtCore.QParallelAnimationGroup()
+        self.selectionAnimationGroup.addAnimation(self.selectionAnimation1)
+        self.selectionAnimationGroup.addAnimation(self.selectionAnimation2)
+        self.selectionAnimationGroup.addAnimation(self.selectionAnimation3)
+        #####################################
+
+    def enterEvent(self, event):
+        if self.interactive:
+            if event.type() == QtCore.QEvent.Enter:
+                # Store the originalPosition of this label to be able to reset the position in leaveEvent.
+                if not self.originalPosition:
+                    self.originalPosition = self.mapFromParent(self.mapToParent(self.pos()))
+                
+                self.bounceAnimation1.setStartValue(self.originalPosition)
+                self.bounceAnimation1.setEndValue(self.originalPosition + QtCore.QPoint(0, -20))
+                
+                self.bounceAnimation2.setStartValue(self.originalPosition + QtCore.QPoint(0, -20))
+                self.bounceAnimation2.setEndValue(self.originalPosition)
+                
+                self.bounceAnimationGroup.start()
+
+        event.ignore()
+    
+    def leaveEvent(self, event):
+        if self.interactive:
+            if event.type() == QtCore.QEvent.Leave:
+                self.bounceAnimationGroup.stop()
+                if self.originalPosition:
+                    self.move(self.originalPosition)
+                    
+        self.resetLayout()
+
+        event.ignore()
+
+    def mousePressEvent(self, event):
+        if self.interactive:
+            self.action.run(self.parentWidget())
+        
+            self.bounceAnimationGroup.stop()
+            if self.originalPosition:
+                self.move(self.originalPosition)
+            else:
+                self.originalPosition = self.mapFromParent(self.mapToParent(self.pos()))
+    
+            self.selectionAnimation1.setStartValue(self.originalPosition)
+            self.selectionAnimation1.setEndValue(self.originalPosition + QtCore.QPoint(-20, -20))        
+            self.selectionAnimation2.setStartValue(self.size())
+            self.selectionAnimation2.setEndValue(self.size() + QtCore.QSize(40, 40))
+            self.selectionAnimation3.setStartValue(1.0)
+            self.selectionAnimation3.setEndValue(0.1)
+            
+            self.selectionAnimationGroup.start()
+            self.selectionAnimationGroup.finished.connect(self.resetLayout)
+            
+        event.ignore()
+        
+    @QtCore.pyqtSlot()
+    def resetLayout(self):
+        if self.originalPosition:
+            self.move(self.originalPosition)
+
+        self.originalPosition = None
+        self.resize(70, 70)
+        self.opacityEffect.setOpacity(1.0)
+        
+    def setInteractive(self, interactive):
+        self.interactive = interactive
 
 class DesktopTabbar(QtGui.QTabBar):
     
@@ -67,20 +213,20 @@ class DesktopTabbar(QtGui.QTabBar):
         event.accept()
 
 class DesktopWorkspace(QtGui.QWidget):
-    """A tab based workspace that can be used by views
-to display themselves. In essence this is A wrapper around the QTabWidget to
-do some initial setup and provide it with a background widget.  This was
-implemented first using the QMdiArea, but the QMdiArea has too many
-drawbacks, like not being able to add close buttons to the tabs in
-a decent way.
+    """
+    A tab based workspace that can be used by views to display themselves.
+    
+    In essence this is a wrapper around QTabWidget to do some initial setup
+    and provide it with a background widget.
+    This was originallly implemented using the QMdiArea, but the QMdiArea has 
+    too many drawbacks, like not being able to add close buttons to the tabs
+    in a decent way.
 
-.. attribute:: background
+    .. attribute:: background
 
-The widget class to be used as a background for when there are
-no open tabs on the desktop.
-"""
+    The widget class to be used as the view for the uncloseable 'Start' tab.
+    """
 
-    background = DesktopBackground
     view_activated_signal = QtCore.pyqtSignal(QtGui.QWidget)
     change_view_mode_signal = QtCore.pyqtSignal()
     last_view_closed_signal = QtCore.pyqtSignal()
@@ -88,28 +234,30 @@ no open tabs on the desktop.
     @gui_function
     def __init__(self, application_admin, parent):
         super(DesktopWorkspace, self).__init__(parent)
+        
         layout = QtGui.QHBoxLayout()
-        layout.setMargin( 0 )
-        layout.setSpacing( 0 )
-        # setup the tab widget
+        layout.setMargin(0)
+        layout.setSpacing(0)
+        
+        # Setup the tab widget
         self._tab_widget = QtGui.QTabWidget( self )
         tab_bar = DesktopTabbar(self._tab_widget)
-        tab_bar.setToolTip( _('Double click to (un)maximize') )
-        tab_bar.change_view_mode_signal.connect( self._change_view_mode )
-        self._tab_widget.setTabBar( tab_bar )
+        tab_bar.setToolTip(_('Double click to (un)maximize'))
+        tab_bar.change_view_mode_signal.connect(self._change_view_mode)
+        self._tab_widget.setTabBar(tab_bar)
         self._tab_widget.setDocumentMode(True)
-        self._tab_widget.setMovable( True )
-        self._tab_widget.setTabsClosable( True )
-        self._tab_widget.hide()
-        self._tab_widget.tabCloseRequested.connect( self._tab_close_request )
-        self._tab_widget.currentChanged.connect( self._tab_changed )
-        layout.addWidget( self._tab_widget )
-        # setup the background widget
-        self._background_widget = self.background( self )
+        self._tab_widget.setTabsClosable(True)
+        self._tab_widget.tabCloseRequested.connect(self._tab_close_request)
+        self._tab_widget.currentChanged.connect(self._tab_changed)
+        layout.addWidget(self._tab_widget)
+        
+        # Setup the background widget
+        self._background_widget = DesktopBackground(self)
+        self._tab_widget.addTab(self._background_widget, _('Start'))
         self._background_widget.show()
-        layout.addWidget( self._background_widget )
-        self.setLayout( layout )
-        post( application_admin.get_actions, self._background_widget.set_actions )
+        
+        self.setLayout(layout)
+        post(application_admin.get_actions, self._background_widget.set_actions)
 
     @QtCore.pyqtSlot()
     def _change_view_mode(self):
@@ -117,69 +265,87 @@ no open tabs on the desktop.
         
     @QtCore.pyqtSlot(int)
     def _tab_close_request(self, index):
-        """request the removal of the tab at index"""
-        self._tab_widget.removeTab( index )
-        if self._tab_widget.currentIndex() < 0:
-            self._tab_widget.hide()
-            self._background_widget.show()
-            self.last_view_closed_signal.emit()
+        """
+        Handle the request for the removal of a tab at index.
+        
+        Note that only at-runtime added tabs are being closed, implying
+        the immortality of the 'Start' tab.
+        """
+        if index > 0:
+            self._tab_widget.removeTab(index)
 
     @QtCore.pyqtSlot(int)
     def _tab_changed(self, _index):
-        """the active tab has changed, emit the view_activated signal"""
-        self.view_activated_signal.emit( self.active_view() )
+        """
+        The active tab has changed, emit the view_activated signal.
+        """
+        self.view_activated_signal.emit(self.active_view())
 
     def active_view(self):
-        """:return: the currently active view or None"""
+        """
+        :return: The currently active view or None in case of the 'Start' tab.
+        """
         i = self._tab_widget.currentIndex()
-        if i < 0:
+        
+        if i == 0: # 'Start' tab
             return None
-        return self._tab_widget.widget( i )
+        
+        return self._tab_widget.widget(i)
 
-    @QtCore.pyqtSlot( QtCore.QString )
+    @QtCore.pyqtSlot(QtCore.QString)
     def change_title(self, new_title):
-        """slot to be called when the tile of a view needs to
-        change"""
+        """
+        Slot to be called when the tile of a view needs to change.
+        
+        Note: the title of the 'Start' tab cannot be overwritten.
+        """
         # the request of the sender does not work in older pyqt versions
         # therefore, take the current index, notice this is not correct !!
         #
         # sender = self.sender()
         sender = self.active_view()
+        
         if sender:
-            index = self._tab_widget.indexOf( sender )
-            if index >= 0:
-                self._tab_widget.setTabText( index, new_title )
+            index = self._tab_widget.indexOf(sender)
+            if index > 0:
+                self._tab_widget.setTabText(index, new_title)
 
-    def set_view(self, view, title='...'):
-        """Remove the currently active view and replace it with a new
-        view"""
+    def set_view(self, view, title = '...'):
+        """
+        Remove the currently active view and replace it with a new view.
+        """
         index = self._tab_widget.currentIndex()
-        if index < 0:
-            self.add_view( view, title )
+        
+        if index == 0:
+            self.add_view(view, title)
         else:
-            view.title_changed_signal.connect( self.change_title )
-            self._tab_widget.removeTab( index )
-            index = self._tab_widget.insertTab( index, view, title )
-            self._tab_widget.setCurrentIndex( index )
+            self._tab_widget.removeTab(index)
+            
+            view.title_changed_signal.connect(self.change_title)            
+            index = self._tab_widget.insertTab(index, view, title)
+            self._tab_widget.setCurrentIndex(index)
 
     @gui_function
-    def add_view(self, view, title='...'):
-        """add a Widget implementing AbstractView to the workspace"""
-        view.title_changed_signal.connect( self.change_title )
-        index = self._tab_widget.addTab( view, title )
-        self._tab_widget.setCurrentIndex( index )
-        self._tab_widget.show()
-        self._background_widget.hide()
+    def add_view(self, view, title = '...'):
+        """
+        Add a Widget implementing AbstractView to the workspace.
+        """
+        view.title_changed_signal.connect(self.change_title)
+        index = self._tab_widget.addTab(view, title)
+        self._tab_widget.setCurrentIndex(index)
 
     def close_all_views(self):
-        """Remove all views from the workspace"""
+        """
+        Remove all views, except the 'Start' tab, from the workspace.
+        """
         # NOTE: will call removeTab until tab widget is cleared
         # but removeTab does not really delete the page objects
         #self._tab_widget.clear()
-        n = self._tab_widget.count()
-        while n:
-            self._tab_widget.tabCloseRequested.emit(n)
-            n -= 1
+        max_index = self._tab_widget.count()
+        
+        while max_index > 0:
+            self._tab_widget.tabCloseRequested.emit(max_index)
+            max_index -= 1
 
 def show_top_level(view, parent):
     """Show a widget as a top level window
