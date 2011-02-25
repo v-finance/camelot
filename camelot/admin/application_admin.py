@@ -263,15 +263,24 @@ class ApplicationAdmin(QtCore.QObject):
         :return: html which displays the versions of used libs for development
         """
         import sys
+        import sqlalchemy
+        import elixir
         python_version = '.'.join([str(el) for el in sys.version_info])
         qt_version = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
         pyqt_version = QtCore.PYQT_VERSION_STR
+        sqlalchemy_version = sqlalchemy.__version__
+        elixir_version = elixir.__version__
+        
         return """<em>Python version:</em> <b>%s</b><br>
             <em>Qt version:</em> <b>%s</b><br>
-            <em>PyQt version:</em> <b>%s</b>""" % (
+            <em>PyQt version:</em> <b>%s</b><br>
+            <em>SQLAlchemy version:</em> <b>%s</b><br>
+            <em>Elixir version:</em> <b>%s</b>""" % (
                 python_version,
                 qt_version,
-                pyqt_version
+                pyqt_version,
+                sqlalchemy_version,
+                elixir_version
             )
 
     def get_default_field_attributes(self, type_, field):
