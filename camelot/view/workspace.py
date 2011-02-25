@@ -42,11 +42,15 @@ class DesktopBackground(QtGui.QWidget):
     def __init__(self, parent=None):
         super(DesktopBackground, self).__init__(parent)
         
-        self.actionButtonsLayoutColumnCount = 5
+        self.actionButtonsMainLayout = QtGui.QVBoxLayout()
+        self.actionButtonsMainLayout.setContentsMargins(200, 50, 200, 50)
         
-        self.actionButtonsLayout = QtGui.QGridLayout()
-        self.setLayout(self.actionButtonsLayout)
-        self.actionButtonsLayout.setContentsMargins(20, 20, 20, 20)
+        self.actionButtonsRow1Layout = QtGui.QHBoxLayout()
+        self.actionButtonsRow2Layout = QtGui.QHBoxLayout()
+
+        self.actionButtonsMainLayout.addLayout(self.actionButtonsRow1Layout)
+        self.actionButtonsMainLayout.addLayout(self.actionButtonsRow2Layout)
+        self.setLayout(self.actionButtonsMainLayout)
         
         # Set a white background color
         palette = self.palette()
@@ -59,14 +63,15 @@ class DesktopBackground(QtGui.QWidget):
         """
         :param actions: a list of ApplicationActions
         """
-        position = 0
-        for action in actions:
-            actionButton = ActionButton(action, self)
-            self.actionButtonsLayout.addWidget(actionButton,
-                                               position / self.actionButtonsLayoutColumnCount,
-                                               position % self.actionButtonsLayoutColumnCount,
-                                               Qt.AlignHCenter or Qt.AlignBottom)
-            position += 1
+        self.actionButtonsLayoutMaxItemsPerRowCount = min(len(actions) + 1 / 2, 3)
+        
+        for position in xrange(0, self.actionButtonsLayoutMaxItemsPerRowCount):
+            actionButton = ActionButton(actions[position], self)
+            self.actionButtonsRow1Layout.addWidget(actionButton, 0, Qt.AlignHCenter or Qt.AlignBottom)
+        
+        for position in xrange(self.actionButtonsLayoutMaxItemsPerRowCount, len(actions)):
+            actionButton = ActionButton(actions[position], self)
+            self.actionButtonsRow2Layout.addWidget(actionButton, 0, Qt.AlignHCenter or Qt.AlignBottom)
             
     def resizeEvent(self, event):
         for actionButton in self.findChildren(ActionButton):
@@ -79,11 +84,51 @@ class DesktopBackground(QtGui.QWidget):
         for actionButton in self.findChildren(ActionButton):
             actionButton.setInteractive(True)
         
-class ActionButton(QtGui.QLabel):
-    """A custom desktop button for the desktop"""
-    
+class ActionButton(QtGui.QWidget):
+    """
+    A custom desktop button for the desktop.
+    """
     def __init__(self, action, parent = None):
         super(ActionButton, self).__init__(parent)
+        
+        self.action = action        
+        
+        self.animatedLabel = ActionButtonLabel(action, parent)
+        self.animatedLabel.enterSignal.connect(self.onEnterSignal)
+        self.animatedLabel.leaveSignal.connect(self.onLeaveSignal)
+        self.staticLabel = QtGui.QLabel('<font color="gray">' + action.get_verbose_name() + '<\font>')
+        self.staticLabelFont = QtGui.QApplication.font()
+        self.staticLabelFont.setPointSize(14)
+        self.staticLabel.setFont(self.staticLabelFont)
+        
+        mainLayout = QtGui.QVBoxLayout()
+        mainLayout.setContentsMargins(0, 20, 0, 20)
+        mainLayout.addWidget(self.animatedLabel, 0, Qt.AlignCenter)
+        mainLayout.addWidget(self.staticLabel, 0, Qt.AlignHCenter or Qt.AlignTop)
+        
+        self.setFixedSize(QtCore.QSize(120, 160))
+        self.setLayout(mainLayout)
+        
+    def resetLayout(self):
+        self.animatedLabel.resetLayout()
+        
+    def setInteractive(self, interactive):
+        self.animatedLabel.setInteractive(interactive)
+        
+    @QtCore.pyqtSlot()
+    def onEnterSignal(self):
+        self.staticLabel.setText('<font color="black">' + self.action.get_verbose_name() + '<\font>')
+
+    @QtCore.pyqtSlot()    
+    def onLeaveSignal(self):
+        self.staticLabel.setText('<font color="gray">' + self.action.get_verbose_name() + '<\font>')
+    
+class ActionButtonLabel(QtGui.QLabel):
+    enterSignal = QtCore.pyqtSignal()
+    leaveSignal = QtCore.pyqtSignal()
+    
+    def __init__(self, action, parent = None):
+        super(ActionButtonLabel, self).__init__(parent)
         self.action = action
         
         # This property holds if this button reacts to mouse events
@@ -156,6 +201,8 @@ class ActionButton(QtGui.QLabel):
                 self.bounceAnimation2.setEndValue(self.originalPosition)
                 
                 self.bounceAnimationGroup.start()
+                
+                self.enterSignal.emit()
 
         event.ignore()
     
@@ -166,7 +213,9 @@ class ActionButton(QtGui.QLabel):
                 if self.originalPosition:
                     self.move(self.originalPosition)
                     
-        self.resetLayout()
+            self.leaveSignal.emit()
+                    
+            self.resetLayout()
 
         event.ignore()
 
