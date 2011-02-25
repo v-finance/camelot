@@ -198,7 +198,6 @@ attribute to enable search.
                 circular dependencies"""
                 if isinstance(target, basestring):
                     for mapped_class in _mapper_registry.keys():
-                        print mapped_class.class_.__name__, target
                         if mapped_class.class_.__name__ == target:
                             return mapped_class.class_
                     raise Exception('No mapped class found for target %s'%target)
