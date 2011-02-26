@@ -1,11 +1,14 @@
-The Conceptive Python Distribution
-==================================
+All in one Windows installer
+============================
 
 When working on Windows, the easiest way to get up and running is through
 the `Conceptive Python Distribution (CPD) <http://www.python-camelot.com/cpd.html>`_.
 
+.. image:: ../_static/cpd_installer.png
+
 CPD is a Python distribution targeted at the development and deployment of QT
-based applications.
+based applications.  This all in one installation of Camelot with all its
+dependencies is available in the `shop <http://www.python-camelot.com/shop.html>`_.
 
 From the Python Package Index
 =============================
@@ -25,8 +28,7 @@ From source
 When installing Camelot from source, you need to make sure all dependencies
 are installed and available in your **PYTHONPATH**.
  
-Dependencies
-------------
+**Dependencies**
 
 Notice that bugs in QT 4.6 and PyQt 4.7 may cause a Camelot application
 to crash, so newer versions of those libraries are required.
@@ -41,8 +43,7 @@ to crash, so newer versions of those libraries are required.
  * xlwt 0.7.2 
  * xlrd 0.5.2
                         
-Releases
---------
+**Releases**
 
 The source code of a release can be downloaded from the 
 `Python Package Index <http://pypi.python.org/pypi/Camelot/>`_ and then
@@ -50,16 +51,14 @@ extracted::
 
   tar xzvf Camelot-10.07.02.tar.gz
 
-Trunk
------
+**Trunk**
 
 The latest and greatest version of the source can be checked out
 from the subversion repository::
 
   svn co http://guest:guest@repository.conceptive.be/camelot/svn/trunk/
   
-Adapting PYTHONPATH
--------------------
+**Adapting PYTHONPATH**
 
 You need to make sure Camelot and all its dependencies are in the **PYTHONPATH**
 before you start using it::

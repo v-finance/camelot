@@ -9,6 +9,8 @@
 
 In this tutorial we will create a fully functional movie database application
 with Camelot. We assume Camelot is properly :ref:`installed <doc-install>`.
+An all in one installer for Windows is available through the
+`shop <http://www.python-camelot.com/shop.html>`_.
 
 Starting a New Project
 ======================
