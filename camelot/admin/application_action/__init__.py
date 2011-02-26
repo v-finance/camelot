@@ -115,10 +115,15 @@ class ApplicationActionFromModelFunction( ApplicationActionFromGuiFunction ):
         post( create_request( self.options ), progress.finished, exception = progress.exception )
         progress.exec_()
         
-class TableViewAction(ApplicationAction):
-    """An application action that opens a TableView for an Entity"""
+class EntityAction(ApplicationAction):
+    """Generic ApplicationAction that acts upon an Entity class"""
 
-    def __init__(self, entity, admin=None, verbose_name=None, parent_admin=None):
+    def __init__(self, 
+                 entity, 
+                 admin=None, 
+                 verbose_name=None, 
+                 parent_admin=None,
+                 icon=None):
         from camelot.admin.application_admin import get_application_admin
         self.parent_admin = parent_admin or get_application_admin()
         if admin:
@@ -127,13 +132,30 @@ class TableViewAction(ApplicationAction):
             self.admin = self.parent_admin.get_entity_admin(entity)
         self.entity = entity
         self.verbose_name = verbose_name
+        self.icon = icon
 
     def get_verbose_name(self):
         return unicode(self.verbose_name or self.admin.get_verbose_name_plural())
 
+    def get_icon(self):
+        return self.icon
+        
+class TableViewAction(EntityAction):
+    """An application action that opens a TableView for an Entity"""
+
     def run(self, parent):
         """:return: a table view that can be added to the workspace"""
         return self.admin.create_table_view(parent)
+        
+class NewViewAction(EntityAction):
+    """An application action that opens a new view for an Entity"""
+
+    def run(self, parent):
+        """:return: a new view"""
+        from camelot.view.workspace import show_top_level
+        form = self.admin.create_new_view(parent=None)
+        show_top_level( form, parent )
+        return form
         
 class OpenFileApplicationAction( ApplicationActionFromModelFunction, AbstractOpenFileAction ):
     """Application action used to open a file in the prefered application of the user.
