@@ -51,13 +51,10 @@ class ApplicationAdmin(QtCore.QObject):
 
     The name of the application, as it will appear in the title of the main
     window.
-
-    .. attribute:: sections
-
-    A list containing the various sections that should appear in the left panel
-    of the mainwindow.
-
-    .. image:: ../_static/picture2.png
+    
+    .. attribute:: version
+    
+    A string with the version of the application
 
     .. attribute:: backup_mechanism
 
@@ -67,6 +64,7 @@ class ApplicationAdmin(QtCore.QObject):
 
     backup_mechanism = BackupMechanism
     name = 'Camelot'
+    version = '1.0'
     sections = ['Relations', 'Configuration']
     admins = {}
 
@@ -94,6 +92,10 @@ class ApplicationAdmin(QtCore.QObject):
 
     @model_function
     def get_sections(self):
+        """A list of sections, to be displayed in the left panel.
+        
+            .. image:: ../_static/picture2.png
+        """
         from camelot.admin.section import structure_to_sections
         return structure_to_sections(self.sections)
 
@@ -157,12 +159,14 @@ class ApplicationAdmin(QtCore.QObject):
         return []
 
     def get_name(self):
-        """:return: the name of the application"""
+        """:return: the name of the application, by default this is the class
+                    attribute name"""
         return self.name
 
     def get_version(self):
-        """:return: string representing version of the application"""
-        return '1.0'
+        """:return: string representing version of the application, by default this
+                    is the class attribute verion"""
+        return self.version
 
     def get_icon(self):
         """:return: the QIcon that should be used for the application"""
@@ -232,14 +236,14 @@ class ApplicationAdmin(QtCore.QObject):
         """Reimplement this method to add application specific translations
         to your application.
 
-        :return: a QTranslator that should be used to translate the application or
-        a list of QTranslors if multiple translators should be used
+        :return: a QTranslator that should be used to translate the application or a 
+                 list of QTranslors if multiple translators should be used
         """
         return QtCore.QTranslator()
 
     def get_about(self):
         """:return: the content of the About dialog, a string with html
-        syntax"""
+                    syntax"""
         import datetime
         from camelot.core import license
         today = datetime.date.today()

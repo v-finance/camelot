@@ -42,4 +42,3 @@ the class attributes like verbose_name or list_display.
    entity_admin.rst
    field_attributes.rst
    validators.rst
-   application_admin.rst

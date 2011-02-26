@@ -114,14 +114,20 @@ def to_pyside(project):
     output = os.path.join('to_pyside', os.path.basename(project))
     # first take a copy
     shutil.copytree(project, output)
-    
+   
+    def replace_word(original_str, old_word, new_word):
+        return new_word.join((t for t in original_str.split(old_word)))
+
     def translate_file(dirname, name):
         """translate a single file"""
         filename = os.path.join(dirname, name)
         print 'converting', filename
         source = open(filename).read()
         output = open(filename, 'w')
-        output.write('PySide'.join((t for t in source.split('PyQt4'))))
+        source = replace_word( source, 'PyQt4', 'PySide' )
+        source = replace_word( source, 'pyqtSlot', 'Slot' )
+        source = replace_word( source, 'pyqtSignal', 'Signal' )
+        output.write( source )
         
     def translate_directory(_arg, dirname, names):
         """recursively translate a directory"""

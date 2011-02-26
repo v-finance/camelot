@@ -18,6 +18,7 @@ All other sections can be read on an as needed base.
    install.rst
    models.rst
    admin.rst
+   application_admin.rst
    forms.rst
    actions.rst
    delegates.rst
