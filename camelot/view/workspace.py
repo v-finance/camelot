@@ -58,7 +58,7 @@ class DesktopBackground(QtGui.QWidget):
         palette.setBrush(QtGui.QPalette.Window, Qt.white)
         self.setPalette(palette)
 
-    @QtCore.pyqtSlot(list)
+    @QtCore.pyqtSlot(object)
     def set_actions(self, actions):
         """
         :param actions: a list of ApplicationActions
@@ -306,7 +306,8 @@ class DesktopWorkspace(QtGui.QWidget):
         self._background_widget.show()
         
         self.setLayout(layout)
-        post(application_admin.get_actions, self._background_widget.set_actions)
+        post(application_admin.get_actions, 
+             self._background_widget.set_actions)
 
     @QtCore.pyqtSlot()
     def _change_view_mode(self):
