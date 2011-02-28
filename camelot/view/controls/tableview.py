@@ -376,7 +376,8 @@ class HeaderWidget( QtGui.QWidget ):
     def expand_search_options(self):
         if self._expanded_search.isHidden():
             if not self._expanded_filters_created:
-                post( self._admin.get_columns, self._fill_expanded_search_options )
+                post( self._admin.get_expanded_search_fields, 
+                      self._fill_expanded_search_options )
             self._expanded_search.show()
         else:
             self._expanded_search.hide()

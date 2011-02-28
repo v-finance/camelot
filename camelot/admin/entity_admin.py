@@ -90,10 +90,17 @@ list_filter attribute apply
 Defaults to True, meaning that by default all searchable fields should be
 searched.  If this is set to False, one should explicitely set the list_search
 attribute to enable search.
+
+.. attribute:: expanded_list_search
+
+A list of fields that will be searchable through the expanded search.  When set 
+to None, all the fields in list_display will be searchable.  Use this attribute
+to limit the number of search widgets.  Defaults to None.
  
     """
 
     list_search = []
+    expanded_list_search = None
     copy_deep = {}
     copy_exclude = []
     search_all_fields = True
@@ -570,7 +577,19 @@ attribute to enable search.
         session = Session.object_session( entity_instance )
         if session:
             session.refresh( entity_instance )
-
+            
+    @model_function
+    def get_expanded_search_fields(self):
+        """
+        :return: a list of tuples of type [(field_name, field_attributes)]
+        """
+        if self.expanded_list_search == None:
+            field_list = self.list_display
+        else:
+            field_list = self.expanded_list_search
+        return [(field, self.get_field_attributes(field))
+                for field in field_list]
+    
     @model_function
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
