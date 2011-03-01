@@ -141,10 +141,10 @@ class ActionButtonLabel(QtGui.QLabel):
         
         self.setPixmap(action.get_icon().getQPixmap())
         self.setMinimumSize(70, 70)
-        self.setMaximumSize(110, 110)
+        #self.setMaximumSize(110, 110)
         self.setToolTip(action.get_verbose_name())
         self.setMouseTracking(True)
-        self.setScaledContents(True)
+        #self.setScaledContents(True)
         
         self.opacityEffect = QtGui.QGraphicsOpacityEffect()
         self.opacityEffect.setOpacity(1.0)
