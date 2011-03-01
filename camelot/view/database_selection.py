@@ -147,11 +147,12 @@ class ProfileWizard(StandaloneWizardPage):
         self.create_labels_and_widgets()
         self.create_buttons()
 
+        self.set_tab_order()
+
         self.set_widgets_values()
 
         # note: connections come after labels and widgets are created
-        # and have default values. the issue encountered is that the profile
-        # name text line editor has its text edited
+        # and have default values
         self.connect_widgets()
         self.connect_buttons()
 
@@ -253,6 +254,20 @@ class ProfileWizard(StandaloneWizardPage):
 
         self.browse_button = QPushButton(_('Browse'))
         self.main_widget().layout().addWidget(self.browse_button, 7, 2, 1, 3)
+
+    def set_tab_order(self):
+        all_widgets = [self.profile_editor, self.dialect_editor,
+            self.host_editor, self.port_editor,  self.database_name_editor,
+            self.username_editor, self.password_editor,
+            self.media_location_editor, self.browse_button,
+            self.language_editor, self.country_editor,
+            self.proxy_address_editor, self.proxy_username_editor,
+            self.proxy_password_editor, self.ok_button, self.cancel_button]
+
+        i = 1
+        while i != len(all_widgets):
+            self.setTabOrder(all_widgets[i-1], all_widgets[i])
+            i += 1
 
     def connect_buttons(self):
         self.cancel_button.pressed.connect(self.reject)
