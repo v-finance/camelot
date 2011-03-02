@@ -47,7 +47,8 @@ class FloatDelegate( CustomDelegate ):
         """
         :param precision:  The number of digits after the decimal point displayed.  This defaults
         to the precision specified in the definition of the Field.     
-        
+        If the attribute is a calculated field, which gets its precision from SQLAclhemy introspection,
+        precision will be set to None, so precision must be explicitely set in the field attributes.
         """
         assert precision
         CustomDelegate.__init__(self,
