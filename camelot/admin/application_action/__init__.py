@@ -28,13 +28,15 @@ from camelot.admin.abstract_action import AbstractAction, AbstractOpenFileAction
 from camelot.view.controls.progress_dialog import ProgressDialog
 
 class ApplicationAction(AbstractAction):
-    """An action that can be triggered by the user at the application level
+    """
+    An action that can be triggered by the user at the application level.
     
-.. attribute:: Options
+    .. attribute:: Options
 
-Use the class attribute Options, to let the user enter some options for the action.  Where
-options is a class with and admin definition.  The admin definition will be used to pop up
-an interface screen for an object of type Options.  Defaults to None.
+    Use the class attribute Options, to let the user enter some options
+    for the action.  Where options is a class with and admin definition.
+    The admin definition will be used to pop up an interface screen for 
+    an object of type Options. Defaults to None.
     """
 
     Options = None
@@ -57,6 +59,10 @@ an interface screen for an object of type Options.  Defaults to None.
     def get_icon(self):
         """:return: a camelot.view.art.Icon object"""
         raise NotImplemented
+
+    def is_notification(self):
+        """:return: False, subclasses should reimplement this."""
+        return False
         
 class ApplicationActionFromGuiFunction( ApplicationAction ):
     """Create an application action object from a function that is supposed to run
@@ -71,6 +77,7 @@ class ApplicationActionFromGuiFunction( ApplicationAction ):
         :param verbose_name: the name used to display the action, if not given,
         the capitalized name will be used
         """
+
         self._name = name
         self._verbose_name = verbose_name or _(name.capitalize())
         self._icon = icon
@@ -123,7 +130,14 @@ class EntityAction(ApplicationAction):
                  admin=None, 
                  verbose_name=None, 
                  parent_admin=None,
-                 icon=None):
+                 icon=None,
+                 notification = False):
+        """
+        :param notification: if set to True, this action will be visually 
+        animated to attract the users attention. Defaults to False.
+        """
+        super(EntityAction, self).__init__()
+        
         from camelot.admin.application_admin import get_application_admin
         self.parent_admin = parent_admin or get_application_admin()
         if admin:
@@ -133,12 +147,16 @@ class EntityAction(ApplicationAction):
         self.entity = entity
         self.verbose_name = verbose_name
         self.icon = icon
+        self.notification = notification
 
     def get_verbose_name(self):
         return unicode(self.verbose_name or self.admin.get_verbose_name_plural())
 
     def get_icon(self):
         return self.icon
+        
+    def is_notification(self):
+        return self.notification
         
 class TableViewAction(EntityAction):
     """An application action that opens a TableView for an Entity"""
