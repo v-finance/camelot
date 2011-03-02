@@ -27,6 +27,7 @@ first line support.
 
 from PyQt4 import QtCore
 
+import getpass
 import logging
 from logging import handlers
 
@@ -71,7 +72,7 @@ class ThreadedAwsHandler(logging.Handler):
     """A logging handler that sends the logs to an AWS queue through the
     SQS, this handler requires the boto library"""
     
-    def __init__(self, access_key, secret_access_key, queue_name):
+    def __init__(self, access_key, secret_access_key, queue_name, revision=0):
         logging.Handler.__init__(self)
         self._access_key = access_key
         self._secret_access_key = secret_access_key
@@ -81,6 +82,8 @@ class ThreadedAwsHandler(logging.Handler):
         self._connected = True
         self._threaded_timer = ThreadedTimer(1000, self)
         self._threaded_timer.start()
+        self._user = getpass.getuser()
+        self._revision = revision
         
     def emit(self, record):
         # inspired by the code in logging.handlers.SocketHandler
@@ -95,7 +98,9 @@ class ThreadedAwsHandler(logging.Handler):
         if ei:
             self.format(record)
             record.exc_info = None
-        self._records_to_emit.append( json.dumps( record.__dict__ ) )
+        record_dict = dict( user=self._user, revision=self._revision )
+        record_dict.update( record.__dict__ )
+        self._records_to_emit.append( json.dumps( record_dict ) )
         if ei:
             record.exc_info = ei  # for next handler
         
@@ -130,4 +135,5 @@ class CloudLaunchHandler(ThreadedAwsHandler):
         ThreadedAwsHandler.__init__(self, 
                                     cloud_record.public_access_key, 
                                     cloud_record.public_secret_key, 
-                                    queue_name)
+                                    queue_name,
+                                    revision = cloud_record.revision)
