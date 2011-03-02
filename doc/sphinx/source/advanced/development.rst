@@ -122,7 +122,7 @@ To play on safe, these guidelines are used when developing Camelot :
     			
     		def do_something( self ):
     		    child = self.findChild( QtGui.QWidget, 'label' )
-    		    if child:
+    		    if child != None:
     				print child.objectName()
     
     should the child object have been deleted by Qt, the findChild method
