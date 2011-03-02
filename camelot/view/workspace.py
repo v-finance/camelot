@@ -63,6 +63,12 @@ class DesktopBackground(QtGui.QWidget):
         """
         :param actions: a list of ApplicationActions
         """
+        
+        # Make sure that the action buttons aren't visually split
+        # up in two rows when there are e.g. only 3 of them.
+        # So:
+        #  <= 3 action buttons: 1 row and 1, 2 or 3 columns;
+        #  >= 4 action buttons: 2 rows and 2, 3, 4 or 5 columns.
         self.actionButtonsLayoutMaxItemsPerRowCount = min(len(actions) + 1 / 2, 3)
         
         for position in xrange(0, self.actionButtonsLayoutMaxItemsPerRowCount):
@@ -79,10 +85,13 @@ class DesktopBackground(QtGui.QWidget):
             
         event.ignore()
 
+    # This slot is called after the navpane's animation has completed.
     @QtCore.pyqtSlot()
     def makeInteractive(self):
         for actionButton in self.findChildren(ActionButton):
             actionButton.setInteractive(True)
+        
+        self.show()
         
 class ActionButton(QtGui.QWidget):
     """
@@ -91,48 +100,58 @@ class ActionButton(QtGui.QWidget):
     def __init__(self, action, parent = None):
         super(ActionButton, self).__init__(parent)
         
-        self.action = action        
+        self.action = action
+        
+        # This property holds if this button reacts to mouse events
+        self.interactive = False
         
         self.animatedLabel = ActionButtonLabel(action, parent)
-        self.animatedLabel.enterSignal.connect(self.onEnterSignal)
-        self.animatedLabel.leaveSignal.connect(self.onLeaveSignal)
         self.staticLabel = QtGui.QLabel('<font color="gray">' + action.get_verbose_name() + '<\font>')
         self.staticLabelFont = QtGui.QApplication.font()
         self.staticLabelFont.setPointSize(14)
         self.staticLabel.setFont(self.staticLabelFont)
+        self.staticLabel.adjustSize()
         
         mainLayout = QtGui.QVBoxLayout()
         mainLayout.setContentsMargins(0, 20, 0, 20)
         mainLayout.addWidget(self.animatedLabel, 0, Qt.AlignCenter)
         mainLayout.addWidget(self.staticLabel, 0, Qt.AlignHCenter or Qt.AlignTop)
         
-        self.setFixedSize(QtCore.QSize(120, 160))
+        self.setMouseTracking(True)
+        self.setMaximumHeight(160)
+        self.setMinimumWidth(max(self.animatedLabel.width(), self.staticLabel.width()))
         self.setLayout(mainLayout)
         
     def resetLayout(self):
         self.animatedLabel.resetLayout()
         
     def setInteractive(self, interactive):
-        self.animatedLabel.setInteractive(interactive)
-        
-    @QtCore.pyqtSlot()
-    def onEnterSignal(self):
-        self.staticLabel.setText('<font color="black">' + self.action.get_verbose_name() + '<\font>')
+        self.interactive = interactive
 
-    @QtCore.pyqtSlot()    
-    def onLeaveSignal(self):
-        self.staticLabel.setText('<font color="gray">' + self.action.get_verbose_name() + '<\font>')
+    def enterEvent(self, event):
+        if self.interactive and event.type() == QtCore.QEvent.Enter:
+            self.animatedLabel.startHoverAnimation()
+            self.staticLabel.setText('<font color="black">' + self.action.get_verbose_name() + '<\font>')
+                
+        event.ignore()
+    
+    def leaveEvent(self, event):
+        if self.interactive and event.type() == QtCore.QEvent.Leave:
+            self.animatedLabel.stopHoverAnimation()
+            self.staticLabel.setText('<font color="gray">' + self.action.get_verbose_name() + '<\font>')
+
+        event.ignore()
+
+    def mousePressEvent(self, event):
+        if self.interactive:
+            self.animatedLabel.startSelectionAnimation()
+            
+        event.ignore()
     
 class ActionButtonLabel(QtGui.QLabel):
-    enterSignal = QtCore.pyqtSignal()
-    leaveSignal = QtCore.pyqtSignal()
-    
     def __init__(self, action, parent = None):
         super(ActionButtonLabel, self).__init__(parent)
         self.action = action
-        
-        # This property holds if this button reacts to mouse events
-        self.interactive = False
         
         # This property is used to store the position of this button
         # so it can be visually reset when the user leaves in the
@@ -140,35 +159,32 @@ class ActionButtonLabel(QtGui.QLabel):
         self.originalPosition = None
         
         self.setPixmap(action.get_icon().getQPixmap())
-        self.setMinimumSize(70, 70)
-        #self.setMaximumSize(110, 110)
+        self.setMinimumSize(self.pixmap().width(), self.pixmap().height())
         self.setToolTip(action.get_verbose_name())
-        self.setMouseTracking(True)
-        #self.setScaledContents(True)
         
         self.opacityEffect = QtGui.QGraphicsOpacityEffect()
         self.opacityEffect.setOpacity(1.0)
         self.setGraphicsEffect(self.opacityEffect)
         
         # Bounce animation when hovering #
-        self.bounceAnimation1 = QtCore.QPropertyAnimation(self, 'pos')
-        self.bounceAnimation1.setDuration(500)
-        self.bounceAnimation1.setEasingCurve(QtCore.QEasingCurve.Linear)
+        self.hoverAnimation1 = QtCore.QPropertyAnimation(self, 'pos')
+        self.hoverAnimation1.setDuration(500)
+        self.hoverAnimation1.setEasingCurve(QtCore.QEasingCurve.Linear)
         
-        self.bounceAnimation2 = QtCore.QPropertyAnimation(self, 'pos')
-        self.bounceAnimation2.setDuration(1500)
-        self.bounceAnimation2.setEasingCurve(QtCore.QEasingCurve.OutElastic)
+        self.hoverAnimation2 = QtCore.QPropertyAnimation(self, 'pos')
+        self.hoverAnimation2.setDuration(1500)
+        self.hoverAnimation2.setEasingCurve(QtCore.QEasingCurve.OutElastic)
         
-        self.bounceAnimationGroup = QtCore.QSequentialAnimationGroup()
-        self.bounceAnimationGroup.setLoopCount(-1)
-        self.bounceAnimationGroup.addAnimation(self.bounceAnimation1)
-        self.bounceAnimationGroup.addAnimation(self.bounceAnimation2)
+        self.hoverAnimationGroup = QtCore.QSequentialAnimationGroup()
+        self.hoverAnimationGroup.setLoopCount(-1) # Infinite
+        self.hoverAnimationGroup.addAnimation(self.hoverAnimation1)
+        self.hoverAnimationGroup.addAnimation(self.hoverAnimation2)
         ##################################
         
         # Selection animation when clicking #
         # Part 1 (instant repositioning) #
         self.selectionAnimation1 = QtCore.QPropertyAnimation(self, 'pos')
-        self.selectionAnimation1.setDuration(50)
+        self.selectionAnimation1.setDuration(200)
         self.selectionAnimation1.setEasingCurve(QtCore.QEasingCurve.Linear)
         
         # Part 2 (quick resize and opacity effect) #
@@ -187,59 +203,47 @@ class ActionButtonLabel(QtGui.QLabel):
         self.selectionAnimationGroup.addAnimation(self.selectionAnimation3)
         #####################################
 
-    def enterEvent(self, event):
-        if self.interactive:
-            if event.type() == QtCore.QEvent.Enter:
-                # Store the originalPosition of this label to be able to reset the position in leaveEvent.
-                if not self.originalPosition:
-                    self.originalPosition = self.mapFromParent(self.mapToParent(self.pos()))
-                
-                self.bounceAnimation1.setStartValue(self.originalPosition)
-                self.bounceAnimation1.setEndValue(self.originalPosition + QtCore.QPoint(0, -20))
-                
-                self.bounceAnimation2.setStartValue(self.originalPosition + QtCore.QPoint(0, -20))
-                self.bounceAnimation2.setEndValue(self.originalPosition)
-                
-                self.bounceAnimationGroup.start()
-                
-                self.enterSignal.emit()
-
-        event.ignore()
-    
-    def leaveEvent(self, event):
-        if self.interactive:
-            if event.type() == QtCore.QEvent.Leave:
-                self.bounceAnimationGroup.stop()
-                if self.originalPosition:
-                    self.move(self.originalPosition)
-                    
-            self.leaveSignal.emit()
-                    
-            self.resetLayout()
-
-        event.ignore()
-
-    def mousePressEvent(self, event):
-        if self.interactive:
-            self.action.run(self.parentWidget())
+    def startHoverAnimation(self):
+        # Store the originalPosition of this label to be able
+        # to reset the position in leaveEvent later on.
+        if not self.originalPosition:
+            self.originalPosition = self.mapFromParent(self.mapToParent(self.pos()))
         
-            self.bounceAnimationGroup.stop()
-            if self.originalPosition:
-                self.move(self.originalPosition)
-            else:
-                self.originalPosition = self.mapFromParent(self.mapToParent(self.pos()))
-    
-            self.selectionAnimation1.setStartValue(self.originalPosition)
-            self.selectionAnimation1.setEndValue(self.originalPosition + QtCore.QPoint(-20, -20))        
-            self.selectionAnimation2.setStartValue(self.size())
-            self.selectionAnimation2.setEndValue(self.size() + QtCore.QSize(40, 40))
-            self.selectionAnimation3.setStartValue(1.0)
-            self.selectionAnimation3.setEndValue(0.1)
+        self.hoverAnimation1.setStartValue(self.originalPosition)
+        self.hoverAnimation1.setEndValue(self.originalPosition + QtCore.QPoint(0, -20))
+        
+        self.hoverAnimation2.setStartValue(self.originalPosition + QtCore.QPoint(0, -20))
+        self.hoverAnimation2.setEndValue(self.originalPosition)
+        
+        self.hoverAnimationGroup.start()
+
+    def stopHoverAnimation(self):
+        self.hoverAnimationGroup.stop()
+        if self.originalPosition:
+            self.move(self.originalPosition)
             
-            self.selectionAnimationGroup.start()
-            self.selectionAnimationGroup.finished.connect(self.resetLayout)
-            
-        event.ignore()
+        self.resetLayout()
+
+    def startSelectionAnimation(self):
+        self.hoverAnimationGroup.stop()
+
+        if self.originalPosition:
+            self.move(self.originalPosition)
+        else:
+            self.originalPosition = self.mapFromParent(self.mapToParent(self.pos()))
+
+        self.selectionAnimation1.setStartValue(self.originalPosition)
+        self.selectionAnimation1.setEndValue(self.originalPosition + QtCore.QPoint(-20, -20))        
+        self.selectionAnimation2.setStartValue(self.size())
+        self.selectionAnimation2.setEndValue(self.size() + QtCore.QSize(40, 40))
+        self.selectionAnimation3.setStartValue(1.0)
+        self.selectionAnimation3.setEndValue(0.1)
+
+        self.selectionAnimationGroup.finished.connect(self.resetLayout)
+        self.setScaledContents(True)
+        self.selectionAnimationGroup.start()
+        
+        self.action.run(self.parentWidget())            
         
     @QtCore.pyqtSlot()
     def resetLayout(self):
@@ -247,11 +251,9 @@ class ActionButtonLabel(QtGui.QLabel):
             self.move(self.originalPosition)
 
         self.originalPosition = None
-        self.resize(70, 70)
+        self.setScaledContents(False)
+        self.resize(self.pixmap().width(), self.pixmap().height())
         self.opacityEffect.setOpacity(1.0)
-        
-    def setInteractive(self, interactive):
-        self.interactive = interactive
 
 class DesktopTabbar(QtGui.QTabBar):
     
@@ -303,7 +305,6 @@ class DesktopWorkspace(QtGui.QWidget):
         # Setup the background widget
         self._background_widget = DesktopBackground(self)
         self._tab_widget.addTab(self._background_widget, _('Start'))
-        self._background_widget.show()
         
         self.setLayout(layout)
         post(application_admin.get_actions, 
@@ -366,7 +367,7 @@ class DesktopWorkspace(QtGui.QWidget):
         """
         index = self._tab_widget.currentIndex()
         
-        if index == 0:
+        if index == 0: # 'Start' tab
             self.add_view(view, title)
         else:
             self._tab_widget.removeTab(index)
