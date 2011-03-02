@@ -1140,6 +1140,28 @@ class ControlsTest(ModelThreadTestCase):
         header = HeaderWidget(parent=None, admin=person_admin)
         header.expand_search_options()
         self.grab_widget(header)
+        
+    def test_desktop_workspace(self):
+        from camelot.view.workspace import DesktopWorkspace
+        from camelot.admin.application_action import EntityAction
+        from camelot.view.art import Icon
+        
+        desktopWorkspace = DesktopWorkspace(self.app_admin, None)
+        actions = [EntityAction('Action name',
+                                None,
+                                verbose_name='Verbose action name 1',
+                                icon=Icon('file-manager.png'),
+                                notification = True),
+                   EntityAction('Action name',
+                                None,
+                                verbose_name='Verbose action name 2',
+                                icon=Icon('file-manager.png')),
+                   EntityAction('Action name',
+                                None,
+                                verbose_name='Verbose action name 3',
+                                icon=Icon('file-manager.png'))]
+        desktopWorkspace._background_widget.set_actions(actions)
+        self.grab_widget(desktopWorkspace)
 
 class CamelotEntityViewsTest(EntityViewsTest):
     """Test the views of all the Entity subclasses"""
