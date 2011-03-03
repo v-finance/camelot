@@ -188,7 +188,6 @@ class Application(QtCore.QObject):
             app.processEvents()
             self.start_model_thread()
             app.processEvents()
-
             #
             # WEIRD, if we put this code in a method, the translations
             # don't work

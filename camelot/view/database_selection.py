@@ -81,29 +81,20 @@ def select_profile(profiles_dict):
     ok_label = _('OK')
     cancel_label = _('Quit')
 
-    input_dialog = ComboBoxInputDialog()
+    input_dialog = ComboBoxInputDialog(autoaccept=True)
     input_dialog.set_window_title(title)
     input_dialog.set_label_text(input_label)
     input_dialog.set_ok_button_text(ok_label)
     input_dialog.set_cancel_button_text(cancel_label)
-    input_dialog.set_items(sorted(profiles_dict.keys()))
-
+    input_dialog.set_items(sorted(profiles_dict.keys()) + [NEW_PROFILE_LABEL])
     input_dialog.set_ok_button_default()
 
+    last_index = input_dialog.count()-1
     custom_font = QFont()
     custom_font.setItalic(True)
     icon = art.Icon('tango/16x16/actions/document-new.png').getQIcon()
-    input_dialog.combobox.addItem(icon, NEW_PROFILE_LABEL)
-
-    last_index = input_dialog.count()-1
-    input_dialog.set_item_font(last_index, custom_font)
-    # we use a slot function that accept arguments because
-    # we are leaving the dialog and we need to close it otherwise
-    # the "new profile" item will stay selected, plus the dialog
-    # is model. we can use deleteLater() but this wont leave time
-    # to select any item...
-    input_dialog.register_on_index(last_index, new_profile_item_selected,
-        input_dialog)
+    input_dialog.set_data(last_index, custom_font, Qt.FontRole)
+    input_dialog.set_data(last_index, icon, Qt.DecorationRole)
 
     dialog_code = input_dialog.exec_()
     if dialog_code == QDialog.Accepted:

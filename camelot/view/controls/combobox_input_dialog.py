@@ -25,6 +25,7 @@
 
 import logging
 
+from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QLabel
 from PyQt4.QtGui import QDialog
@@ -33,72 +34,90 @@ from PyQt4.QtGui import QBoxLayout
 from PyQt4.QtGui import QVBoxLayout
 from PyQt4.QtGui import QPushButton
 
-
 logger = logging.getLogger('camelot.view.controls.combobox_input_dialog')
-
 
 class ComboBoxInputDialog(QDialog):
 
-    def __init__(self, parent=None):
+    def __init__(self, autoaccept=False, parent=None):
+        """
+        :param autoaccept: if True, the value of the ComboBox is immediately
+        accepted after selecting it.
+        """
         super(ComboBoxInputDialog, self).__init__(parent)
-        self._layout = QVBoxLayout()
-        self._set_buttons()
-        self.setLayout(self._layout)
+        self._autoaccept = autoaccept
+        layout = QVBoxLayout()
+        label = QtGui.QLabel()
+        label.setObjectName( 'label' )
+        combobox = QtGui.QComboBox()
+        combobox.setObjectName( 'combobox' )
+        combobox.activated.connect( self._combobox_activated )
+        ok_button = QPushButton('OK')
+        ok_button.setObjectName( 'ok' )
+        cancel_button = QPushButton('Cancel')
+        cancel_button.setObjectName( 'cancel' )
+        ok_button.pressed.connect(self.accept)
+        cancel_button.pressed.connect(self.reject)
+        button_layout = QBoxLayout(QBoxLayout.RightToLeft)
+        button_layout.addWidget(cancel_button)
+        button_layout.addWidget(ok_button)
+        layout.addWidget( label )
+        layout.addWidget( combobox )
+        layout.addLayout( button_layout )
+        self.setLayout( layout )
 
+    @QtCore.pyqtSlot(int)
+    def _combobox_activated(self, index):
+        if self._autoaccept:
+            self.accept()
+        print index
+        
     def set_label_text(self, text):
-        self.label = QLabel(text)
-        self._layout.insertWidget(0, self.label)
+        label = self.findChild( QtGui.QWidget, 'label' )
+        if label != None:
+            label.setText( text )
 
     def set_items(self, items):
-        self.combobox = QComboBox()
-        self.combobox.addItems(items)
-        self._layout.insertWidget(1, self.combobox)
-
-        self.registered_functions = {}
-        self.combobox.activated[int].connect(self._make_call_if_registered)
+        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        if combobox != None:
+            combobox.addItems(items)
 
     def count(self):
-        return self.combobox.count()
+        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        if combobox != None:
+            return combobox.count()
+        return 0
 
-    def set_item_font(self, index, qfont=None):
-        combobox_model = self.combobox.model()
-        model_index = combobox_model.index(index, 0)
-        combobox_model.setData(model_index, qfont, Qt.FontRole)
+    def set_data(self, index, data, role):
+        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        if combobox != None:
+            combobox_model = combobox.model()
+            model_index = combobox_model.index(index, 0)
+            combobox_model.setData(model_index, data, role)
 
     def get_text(self):
-        return self.combobox.currentText()
-
-    def _set_buttons(self):
-        self.ok_button = QPushButton('OK')
-        self.cancel_button = QPushButton('Cancel')
-
-        self.ok_button.pressed.connect(self.accept)
-        self.cancel_button.pressed.connect(self.reject)
-
-        self.button_layout = QBoxLayout(QBoxLayout.RightToLeft)
-        self.button_layout.addWidget(self.cancel_button)
-        self.button_layout.addWidget(self.ok_button)
-
-        self._layout.insertLayout(2, self.button_layout)
+        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        if combobox != None:
+            return combobox.currentText()
 
     def set_ok_button_default(self):
-        self.ok_button.setFocus()
+        ok = self.findChild( QtGui.QWidget, 'ok' )
+        if ok != None:
+            ok.setFocus()
 
     def set_cancel_button_default(self):
-        self.cancel_button.setFocus()
+        cancel = self.findChild( QtGui.QWidget, 'cancel' )
+        if cancel != None:
+            cancel.setFocus()
 
     def set_ok_button_text(self, text):
-        self.ok_button.setText(text)
+        ok = self.findChild( QtGui.QWidget, 'ok' )
+        if ok != None:
+            ok.setText(text)
 
     def set_cancel_button_text(self, text):
-        self.cancel_button.setText(text)
+        cancel = self.findChild( QtGui.QWidget, 'cancel' )
+        if cancel != None:
+            cancel.setText(text)
 
     def set_window_title(self, title):
         self.setWindowTitle(title)
-
-    def register_on_index(self, index, func, *a, **kw):
-        self.registered_functions[index] = lambda: func(*a, **kw)
-
-    def _make_call_if_registered(self, index):
-        if self.registered_functions and index in self.registered_functions:
-            self.registered_functions[index]()
