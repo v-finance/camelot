@@ -30,9 +30,20 @@ from PyQt4.QtCore import QVariant
 
 logger = logging.getLogger('camelot.core.dbprofiles')
 
+def get_cipher():
+    import settings
+    from Crypto.Cipher import ARC4
+    if hasattr( settings, 'CAMELOT_DBPROFILES_CIPHER' ):
+        key = getattr( settings, 'CAMELOT_DBPROFILES_CIPHER' )
+    else:
+        key = 'The Knights Who Say Ni'
+    return ARC4.new( key )
+
 def _encode_setting(value):
-    result = base64.b64encode(str(value))
-    return result
+    return base64.b64encode( get_cipher().encrypt( unicode(value).encode('utf-8' ) ) )
+
+def _decode_setting(value):
+    return get_cipher().decrypt( base64.b64decode( value ) ).decode('utf-8')
 
 def selected_profile_info():
     """
@@ -44,22 +55,7 @@ def selected_profile_info():
     
 def engine_from_profile():
     from sqlalchemy import create_engine
-    profile = selected_profile_info()
-    
-    #from partnerplan.core.utils import decode_setting
-    ## WARNING
-    ## do not put this import at the top of the file, otherwise it is imported too early for build process
-    #from PyQt4 import QtCore
-    #settings = QtCore.QSettings(ORGANIZATION_NAME, APPLICATION_NAME)
-    #for key in ['driver', 'host', 'user', 'password', 'name']:
-        #if not decode_setting(settings.value('database/%s'%key, QtCore.QVariant('')).toString()):
-            #raise Exception('Settings have no %s defined'%(key))
-    #settings_database_dialect = decode_setting(settings.value('database/dialect', QtCore.QVariant('')).toString()) or 'mysql'
-    #settings_database_host = decode_setting(settings.value('database/host', QtCore.QVariant('')).toString())
-    #settings_database_user = decode_setting(settings.value('database/user', QtCore.QVariant('')).toString())
-    #settings_database_password = decode_setting(settings.value('database/password', QtCore.QVariant('')).toString())
-    #settings_database_name = decode_setting(settings.value('database/name', QtCore.QVariant('')).toString())
-    
+    profile = selected_profile_info()   
     connect_args = dict()
     if profile['dialect'] == 'mysql':
         connect_args['charset'] = 'utf8'
@@ -71,14 +67,10 @@ def engine_from_profile():
                                        profile['database'])
     return create_engine(connection, pool_recycle=True, connect_args=connect_args)
 
-def _decode_setting(value):
-    result = base64.b64decode(str(value))
-    return result
-
 def last_used_profile():
     settings = QtCore.QSettings()
-    return str(_decode_setting(settings.value('last_used_database_profile',
-        QVariant('')).toString()))
+    return unicode(settings.value('last_used_database_profile',
+        QVariant('')).toString(), 'utf-8')
 
 def fetch_profiles():
     profiles = {}
@@ -91,7 +83,7 @@ def fetch_profiles():
     for index in range(size):
         settings.setArrayIndex(index)
         info = {}
-        profilename = _decode_setting(settings.value('profilename', QVariant('')).toString())
+        profilename = unicode(settings.value('profilename', QVariant('')).toString(), 'utf-8')
         if not profilename:
             continue  # well we should not really be doing anything
         info['dialect'] = _decode_setting(settings.value('dialect', QVariant('')).toString())
@@ -116,7 +108,7 @@ def store_profiles(profiles):
 
     for index, (profilename, info) in enumerate(profiles.items()):
         settings.setArrayIndex(index)
-        settings.setValue('profilename', QVariant(_encode_setting(profilename)))
+        settings.setValue('profilename', QVariant(unicode(profilename).encode('utf-8')))
         settings.setValue('dialect', QVariant(_encode_setting(info['dialect'])))
         settings.setValue('host', QVariant(_encode_setting(info['host'])))
         settings.setValue('port', QVariant(_encode_setting(info['port'])))
@@ -132,4 +124,4 @@ def store_profiles(profiles):
 
 def use_chosen_profile(profilename):
     settings = QtCore.QSettings()
-    settings.setValue('last_used_database_profile', QVariant(_encode_setting(profilename)))
+    settings.setValue('last_used_database_profile', unicode(profilename).encode('utf-8') )

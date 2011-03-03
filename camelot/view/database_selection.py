@@ -96,14 +96,12 @@ def select_profile(profiles_dict):
 
     dialog_code = input_dialog.exec_()
     if dialog_code == QDialog.Accepted:
-        return str(input_dialog.get_text())
+        return unicode(input_dialog.get_text())
 
     return None
 
-
 def new_profile_item_selected(input_dialog):
     input_dialog.accept()
-
 
 def create_new_profile(app_admin, profiles):
     wizard = app_admin.database_profile_wizard(profiles)
@@ -318,7 +316,7 @@ allow all languages
         self.ok_button.setEnabled(enabled)
 
     def current_profile(self):
-        text = str(self.profile_editor.text())
+        text = unicode(self.profile_editor.text())
         self.toggle_ok_button(bool(text))
         return text
 
@@ -361,6 +359,6 @@ allow all languages
 
     def fill_media_location(self):
         caption = _('Select media location')
-        selected = str(QFileDialog.getExistingDirectory(self, caption))
+        selected = unicode(QFileDialog.getExistingDirectory(self, caption))
         if selected:
             self.media_location_editor.setText(selected)
