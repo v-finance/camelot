@@ -35,17 +35,45 @@ def encode_setting(value):
     result = base64.b64encode(str(value))
     return result
 
+def engine_from_profile():
+    from sqlalchemy import create_engine
+    profiles = fetch_profiles()
+    profilename = last_used_profile()
+    profile = profiles[profilename]
+    
+    #from partnerplan.core.utils import decode_setting
+    ## WARNING
+    ## do not put this import at the top of the file, otherwise it is imported too early for build process
+    #from PyQt4 import QtCore
+    #settings = QtCore.QSettings(ORGANIZATION_NAME, APPLICATION_NAME)
+    #for key in ['driver', 'host', 'user', 'password', 'name']:
+        #if not decode_setting(settings.value('database/%s'%key, QtCore.QVariant('')).toString()):
+            #raise Exception('Settings have no %s defined'%(key))
+    #settings_database_dialect = decode_setting(settings.value('database/dialect', QtCore.QVariant('')).toString()) or 'mysql'
+    #settings_database_host = decode_setting(settings.value('database/host', QtCore.QVariant('')).toString())
+    #settings_database_user = decode_setting(settings.value('database/user', QtCore.QVariant('')).toString())
+    #settings_database_password = decode_setting(settings.value('database/password', QtCore.QVariant('')).toString())
+    #settings_database_name = decode_setting(settings.value('database/name', QtCore.QVariant('')).toString())
+    
+    connect_args = dict()
+    if profile['dialect'] == 'mysql':
+        connect_args['charset'] = 'utf8'
+                    
+    connection = '%s://%s:%s@%s/%s' % (profile['dialect'], 
+                                       profile['user'], 
+                                       profile['pass'], 
+                                       profile['host'], 
+                                       profile['database'])
+    return create_engine(connection, pool_recycle=True, connect_args=connect_args)
 
 def decode_setting(value):
     result = base64.b64decode(str(value))
     return result
 
-
 def last_used_profile():
     settings = QtCore.QSettings()
     return str(decode_setting(settings.value('last_used_database_profile',
         QVariant('')).toString()))
-
 
 def fetch_profiles():
     profiles = {}
@@ -69,7 +97,6 @@ def fetch_profiles():
         info['pass'] = decode_setting(settings.value('pass', QVariant('')).toString())
         info['media_location'] = decode_setting(settings.value('media_location', QVariant('')).toString())
         info['locale_language'] = decode_setting(settings.value('locale_language', QVariant('')).toString())
-        info['locale_country'] = decode_setting(settings.value('locale_country', QVariant('')).toString())
         info['proxy_host'] = decode_setting(settings.value('proxy_host', QVariant('')).toString())
         info['proxy_username'] = decode_setting(settings.value('proxy_username', QVariant('')).toString())
         info['proxy_password'] = decode_setting(settings.value('proxy_password', QVariant('')).toString())
@@ -77,7 +104,6 @@ def fetch_profiles():
     settings.endArray()
 
     return profiles
-
 
 def store_profiles(profiles):
     settings = QtCore.QSettings()
@@ -94,25 +120,11 @@ def store_profiles(profiles):
         settings.setValue('pass', QVariant(encode_setting(info['pass'])))
         settings.setValue('media_location', QVariant(encode_setting(info['media_location'])))
         settings.setValue('locale_language', QVariant(encode_setting(info['locale_language'])))
-        settings.setValue('locale_country', QVariant(encode_setting(info['locale_country'])))
         settings.setValue('proxy_host', QVariant(encode_setting(info['proxy_host'])))
         settings.setValue('proxy_username', QVariant(encode_setting(info['proxy_username'])))
         settings.setValue('proxy_password', QVariant(encode_setting(info['proxy_password'])))
     settings.endArray()
 
-
-def use_chosen_profile(profilename, info):
+def use_chosen_profile(profilename):
     settings = QtCore.QSettings()
     settings.setValue('last_used_database_profile', QVariant(encode_setting(profilename)))
-    settings.setValue('database/driver', QVariant(encode_setting('mysql')))
-    settings.setValue('database/dialect', QVariant(encode_setting(info['dialect'])))
-    settings.setValue('database/host', QVariant(encode_setting(info['host'])))
-    settings.setValue('database/user', QVariant(encode_setting(info['user'])))
-    settings.setValue('database/password', QVariant(encode_setting(info['pass'])))
-    settings.setValue('database/name', QVariant(encode_setting(info['database'])))
-    settings.setValue('extra/media_location', QVariant(encode_setting(info['media_location'])))
-    settings.setValue('locale/language', QVariant(encode_setting(info['locale_language'])))
-    settings.setValue('locale/country', QVariant(encode_setting(info['locale_country'])))
-    settings.setValue('proxy/host', QVariant(encode_setting(info['proxy_host'])))
-    settings.setValue('proxy/username', QVariant(encode_setting(info['proxy_username'])))
-    settings.setValue('proxy/password', QVariant(encode_setting(info['proxy_password'])))

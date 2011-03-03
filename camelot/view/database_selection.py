@@ -67,7 +67,7 @@ def select_database(app_admin):
 
     selected = select_profile(profiles_dict)
     if selected in profiles_dict:
-        use_chosen_profile(selected, profiles_dict[selected])
+        use_chosen_profile(selected)
     elif selected == NEW_PROFILE_LABEL:
         create_new_profile(app_admin, profiles_dict)
     else:
@@ -290,7 +290,7 @@ allow all languages
             else:
                 self.profiles[profilename] = info
             store_profiles(self.profiles)
-            use_chosen_profile(profilename, info)
+            use_chosen_profile(profilename)
             self.accept()
 
     def is_connection_valid(self):
