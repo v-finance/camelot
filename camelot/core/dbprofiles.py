@@ -28,18 +28,23 @@ import logging
 from PyQt4 import QtCore
 from PyQt4.QtCore import QVariant
 
-
 logger = logging.getLogger('camelot.core.dbprofiles')
 
 def encode_setting(value):
     result = base64.b64encode(str(value))
     return result
 
-def engine_from_profile():
-    from sqlalchemy import create_engine
+def selected_profile_info():
+    """
+    :return: a dict with the info of the selected profile
+    """
     profiles = fetch_profiles()
     profilename = last_used_profile()
-    profile = profiles[profilename]
+    return profiles[profilename]
+    
+def engine_from_profile():
+    from sqlalchemy import create_engine
+    profile = selected_profile_info()
     
     #from partnerplan.core.utils import decode_setting
     ## WARNING
