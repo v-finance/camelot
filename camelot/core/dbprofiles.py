@@ -30,7 +30,7 @@ from PyQt4.QtCore import QVariant
 
 logger = logging.getLogger('camelot.core.dbprofiles')
 
-def encode_setting(value):
+def _encode_setting(value):
     result = base64.b64encode(str(value))
     return result
 
@@ -71,13 +71,13 @@ def engine_from_profile():
                                        profile['database'])
     return create_engine(connection, pool_recycle=True, connect_args=connect_args)
 
-def decode_setting(value):
+def _decode_setting(value):
     result = base64.b64decode(str(value))
     return result
 
 def last_used_profile():
     settings = QtCore.QSettings()
-    return str(decode_setting(settings.value('last_used_database_profile',
+    return str(_decode_setting(settings.value('last_used_database_profile',
         QVariant('')).toString()))
 
 def fetch_profiles():
@@ -91,20 +91,20 @@ def fetch_profiles():
     for index in range(size):
         settings.setArrayIndex(index)
         info = {}
-        profilename = decode_setting(settings.value('profilename', QVariant('')).toString())
+        profilename = _decode_setting(settings.value('profilename', QVariant('')).toString())
         if not profilename:
             continue  # well we should not really be doing anything
-        info['dialect'] = decode_setting(settings.value('dialect', QVariant('')).toString())
-        info['host'] = decode_setting(settings.value('host', QVariant('')).toString())
-        info['port'] = decode_setting(settings.value('port', QVariant('')).toString())
-        info['database'] = decode_setting(settings.value('database', QVariant('')).toString())
-        info['user'] = decode_setting(settings.value('user', QVariant('')).toString())
-        info['pass'] = decode_setting(settings.value('pass', QVariant('')).toString())
-        info['media_location'] = decode_setting(settings.value('media_location', QVariant('')).toString())
-        info['locale_language'] = decode_setting(settings.value('locale_language', QVariant('')).toString())
-        info['proxy_host'] = decode_setting(settings.value('proxy_host', QVariant('')).toString())
-        info['proxy_username'] = decode_setting(settings.value('proxy_username', QVariant('')).toString())
-        info['proxy_password'] = decode_setting(settings.value('proxy_password', QVariant('')).toString())
+        info['dialect'] = _decode_setting(settings.value('dialect', QVariant('')).toString())
+        info['host'] = _decode_setting(settings.value('host', QVariant('')).toString())
+        info['port'] = _decode_setting(settings.value('port', QVariant('')).toString())
+        info['database'] = _decode_setting(settings.value('database', QVariant('')).toString())
+        info['user'] = _decode_setting(settings.value('user', QVariant('')).toString())
+        info['pass'] = _decode_setting(settings.value('pass', QVariant('')).toString())
+        info['media_location'] = _decode_setting(settings.value('media_location', QVariant('')).toString())
+        info['locale_language'] = _decode_setting(settings.value('locale_language', QVariant('')).toString())
+        info['proxy_host'] = _decode_setting(settings.value('proxy_host', QVariant('')).toString())
+        info['proxy_username'] = _decode_setting(settings.value('proxy_username', QVariant('')).toString())
+        info['proxy_password'] = _decode_setting(settings.value('proxy_password', QVariant('')).toString())
         profiles[profilename] = info
     settings.endArray()
 
@@ -116,20 +116,20 @@ def store_profiles(profiles):
 
     for index, (profilename, info) in enumerate(profiles.items()):
         settings.setArrayIndex(index)
-        settings.setValue('profilename', QVariant(encode_setting(profilename)))
-        settings.setValue('dialect', QVariant(encode_setting(info['dialect'])))
-        settings.setValue('host', QVariant(encode_setting(info['host'])))
-        settings.setValue('port', QVariant(encode_setting(info['port'])))
-        settings.setValue('database', QVariant(encode_setting(info['database'])))
-        settings.setValue('user', QVariant(encode_setting(info['user'])))
-        settings.setValue('pass', QVariant(encode_setting(info['pass'])))
-        settings.setValue('media_location', QVariant(encode_setting(info['media_location'])))
-        settings.setValue('locale_language', QVariant(encode_setting(info['locale_language'])))
-        settings.setValue('proxy_host', QVariant(encode_setting(info['proxy_host'])))
-        settings.setValue('proxy_username', QVariant(encode_setting(info['proxy_username'])))
-        settings.setValue('proxy_password', QVariant(encode_setting(info['proxy_password'])))
+        settings.setValue('profilename', QVariant(_encode_setting(profilename)))
+        settings.setValue('dialect', QVariant(_encode_setting(info['dialect'])))
+        settings.setValue('host', QVariant(_encode_setting(info['host'])))
+        settings.setValue('port', QVariant(_encode_setting(info['port'])))
+        settings.setValue('database', QVariant(_encode_setting(info['database'])))
+        settings.setValue('user', QVariant(_encode_setting(info['user'])))
+        settings.setValue('pass', QVariant(_encode_setting(info['pass'])))
+        settings.setValue('media_location', QVariant(_encode_setting(info['media_location'])))
+        settings.setValue('locale_language', QVariant(_encode_setting(info['locale_language'])))
+        settings.setValue('proxy_host', QVariant(_encode_setting(info['proxy_host'])))
+        settings.setValue('proxy_username', QVariant(_encode_setting(info['proxy_username'])))
+        settings.setValue('proxy_password', QVariant(_encode_setting(info['proxy_password'])))
     settings.endArray()
 
 def use_chosen_profile(profilename):
     settings = QtCore.QSettings()
-    settings.setValue('last_used_database_profile', QVariant(encode_setting(profilename)))
+    settings.setValue('last_used_database_profile', QVariant(_encode_setting(profilename)))
