@@ -91,7 +91,7 @@ class Application(QtCore.QObject):
         """
         if self.application_admin.database_selection:
             from camelot.view.database_selection import select_database
-            select_database()
+            select_database(self.application_admin)
 
     def start_model_thread(self):
         """Launch the second thread where the model lives"""

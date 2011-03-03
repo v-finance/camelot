@@ -33,13 +33,22 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
     editingFinished = QtCore.pyqtSignal()
     language_choices = []
     
-    def __init__(self, parent=None, **kwargs):
+    def __init__(self, parent=None, languages=[], **kwargs):
+        """
+        :param languages: a list of ISO codes with languages
+        that are allowed in the combo box, if the list is empty, all languages
+        are allowed (the default)
+        """
         QtGui.QComboBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.index_by_language = dict()
+        languages = [QtCore.QLocale(lang).language() for lang in languages]
         if not self.language_choices:
             for language in range(QtCore.QLocale.C, QtCore.QLocale.Chewa + 1):
-                self.language_choices.append( (language, unicode( QtCore.QLocale.languageToString( language )) ) )
+                if languages and (language not in languages):
+                    continue
+                language_name = unicode( QtCore.QLocale.languageToString( language ))
+                self.language_choices.append( (language, language_name ) )
             self.language_choices.sort(key=lambda x:x[1])
         for i, (language, language_name) in enumerate( self.language_choices ):
             self.addItem( language_name, QtCore.QVariant(language) )

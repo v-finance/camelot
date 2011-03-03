@@ -29,6 +29,7 @@ import pkgutil
 import sqlalchemy.dialects
 from sqlalchemy import create_engine
 
+from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QBoxLayout
 from PyQt4.QtGui import QDialog
@@ -42,7 +43,7 @@ from PyQt4.QtGui import QFileDialog
 
 from camelot.view import art
 from camelot.view.controls.progress_dialog import ProgressDialog
-from camelot.view.controls.editors import ChoicesEditor, TextLineEditor
+from camelot.view.controls.editors import ChoicesEditor, TextLineEditor, LanguageEditor
 from camelot.view.controls.standalone_wizard_page import HSeparator
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.controls.combobox_input_dialog import ComboBoxInputDialog
@@ -52,28 +53,25 @@ from camelot.view.model_thread.signal_slot_model_thread import SignalSlotModelTh
 
 from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, store_profiles
 
-
 logger = logging.getLogger('camelot.view.database_selection')
 
 dialects = [name for _importer, name, is_package in \
         pkgutil.iter_modules(sqlalchemy.dialects.__path__ ) if is_package]
 
-PROFILES_DICT = fetch_profiles()
 NEW_PROFILE_LABEL = _('new profile')
 
+def select_database(app_admin):
+    profiles_dict = fetch_profiles()
+    if not profiles_dict:
+        create_new_profile(app_admin, profiles_dict)
 
-def select_database():
-    if not PROFILES_DICT:
-        create_new_profile(PROFILES_DICT)
-
-    selected = select_profile(PROFILES_DICT)
-    if selected in PROFILES_DICT:
-        use_chosen_profile(selected, PROFILES_DICT[selected])
+    selected = select_profile(profiles_dict)
+    if selected in profiles_dict:
+        use_chosen_profile(selected, profiles_dict[selected])
     elif selected == NEW_PROFILE_LABEL:
-        create_new_profile(PROFILES_DICT)
+        create_new_profile(app_admin, profiles_dict)
     else:
         sys.exit(0)
-
 
 def select_profile(profiles_dict):
     title = _('Profile Selection')
@@ -107,21 +105,27 @@ def new_profile_item_selected(input_dialog):
     input_dialog.accept()
 
 
-def create_new_profile(profiles):
-    wizard = ProfileWizard(profiles)
+def create_new_profile(app_admin, profiles):
+    wizard = app_admin.database_profile_wizard(profiles)
     dialog_code = wizard.exec_()
     if dialog_code == QDialog.Rejected:
         # no profiles? exit
-        if not PROFILES_DICT:
+        if not profiles:
             sys.exit(0)
         # one more time
-        select_database()
-
+        select_database(app_admin)
 
 class ProfileWizard(StandaloneWizardPage):
+    """Wizard for the creation of a new database
+profile.
 
-    country_choices = ['BE']
-    language_choices = ['nl','fr','en']
+.. attribute:: languages
+
+A list of languages allowed in the profile selection, an empty list will
+allow all languages
+    """
+
+    languages = []
 
     def __init__(self, profiles, parent=None):
         super(ProfileWizard, self).__init__(parent)
@@ -157,7 +161,6 @@ class ProfileWizard(StandaloneWizardPage):
         self.password_label = QLabel(_('Password:'))
         self.media_location_label = QLabel(_('Media Location:'))
         self.language_label = QLabel(_('Language:'))
-        self.country_label = QLabel(_('Country:'))
         self.proxy_address_label = QLabel(_('Proxy Address:'))
         self.proxy_username_label = QLabel(_('Proxy Username:'))
         self.proxy_password_label = QLabel(_('Proxy Password:'))
@@ -173,10 +176,9 @@ class ProfileWizard(StandaloneWizardPage):
         layout.addWidget(self.password_label, 5, 0, Qt.AlignRight)
         layout.addWidget(self.media_location_label, 7, 0, Qt.AlignRight)
         layout.addWidget(self.language_label, 8, 0, Qt.AlignRight)
-        layout.addWidget(self.country_label, 9, 0, Qt.AlignRight)
-        layout.addWidget(self.proxy_address_label, 10, 0, Qt.AlignRight)
-        layout.addWidget(self.proxy_username_label, 11, 0, Qt.AlignRight)
-        layout.addWidget(self.proxy_password_label, 12, 0, Qt.AlignRight)
+        layout.addWidget(self.proxy_address_label,  9, 0, Qt.AlignRight)
+        layout.addWidget(self.proxy_username_label, 10, 0, Qt.AlignRight)
+        layout.addWidget(self.proxy_password_label, 11, 0, Qt.AlignRight)
 
         self.profile_editor = QLineEdit()
 
@@ -192,8 +194,20 @@ class ProfileWizard(StandaloneWizardPage):
         self.password_editor = TextLineEditor(self)
         self.password_editor.setEchoMode(QLineEdit.Password)
         self.media_location_editor = TextLineEditor(self, length=32767)
-        self.language_editor = ChoicesEditor(parent=self)
-        self.country_editor = ChoicesEditor(parent=self)
+        self.language_editor = LanguageEditor(languages=self.languages, 
+                                              parent=self)
+        #
+        # try to find a default language
+        #
+        system_language = QtCore.QLocale.system().name()
+        if self.languages:
+            if system_language in self.languages:
+                self.language_editor.set_value( system_language )
+            else:
+                self.language_editor.set_value( self.languages[0] )
+        else:
+            self.language_editor.set_value( system_language )
+        
         self.proxy_address_editor = TextLineEditor(self, length=32767)
         self.proxy_username_editor = TextLineEditor(self)
         self.proxy_password_editor = TextLineEditor(self)
@@ -209,20 +223,15 @@ class ProfileWizard(StandaloneWizardPage):
         layout.addWidget(HSeparator(), 6, 0, 1, 5)
         layout.addWidget(self.media_location_editor, 7, 1, 1, 1)
         layout.addWidget(self.language_editor, 8, 1, 1, 1)
-        layout.addWidget(self.country_editor, 9, 1, 1, 1)
-        layout.addWidget(self.proxy_address_editor, 10, 1, 1, 1)
-        layout.addWidget(self.proxy_username_editor, 11, 1, 1, 1)
-        layout.addWidget(self.proxy_password_editor, 12, 1, 1, 1)
+        layout.addWidget(self.proxy_address_editor, 9, 1, 1, 1)
+        layout.addWidget(self.proxy_username_editor, 10, 1, 1, 1)
+        layout.addWidget(self.proxy_password_editor, 11, 1, 1, 1)
 
         self.main_widget().setLayout(layout)
 
     def set_widgets_values(self):
         self.dialect_editor.set_choices([(dialect, dialect.capitalize()) for dialect in dialects])
-        self.language_editor.set_choices([(lang, lang) for lang in self.language_choices])
-        self.country_editor.set_choices([(country, country) for country in self.country_choices])
-
         self.profile_editor.setFocus()
-
         self.update_profile()
 
     def connect_widgets(self):
@@ -251,7 +260,7 @@ class ProfileWizard(StandaloneWizardPage):
             self.host_editor, self.port_editor,  self.database_name_editor,
             self.username_editor, self.password_editor,
             self.media_location_editor, self.browse_button,
-            self.language_editor, self.country_editor,
+            self.language_editor,
             self.proxy_address_editor, self.proxy_username_editor,
             self.proxy_password_editor, self.ok_button, self.cancel_button]
 
@@ -314,15 +323,15 @@ class ProfileWizard(StandaloneWizardPage):
         return text
 
     def update_profile(self):
+        from camelot.view.proxy import ValueLoading
         self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
-        self.host_editor.setText(self.get_profile_value('host') or 'localhost')
+        self.host_editor.setText(self.get_profile_value('host') or '127.0.0.1')
         self.port_editor.setText(self.get_profile_value('port') or '3306')
         self.database_name_editor.setText(self.get_profile_value('database') or self.database_name_editor.text())
         self.username_editor.setText(self.get_profile_value('user') or self.username_editor.text())
         self.password_editor.setText(self.get_profile_value('pass') or self.password_editor.text())
         self.media_location_editor.setText(self.get_profile_value('media_location') or self.media_location_editor.text())
-        self.language_editor.set_value(self.get_profile_value('locale_language') or str(self.language_editor.get_value()))
-        self.country_editor.set_value(self.get_profile_value('locale_country') or str(self.country_editor.get_value()))
+        self.language_editor.set_value(self.get_profile_value('locale_language') or self.language_editor.get_value())
         self.proxy_address_editor.setText(self.get_profile_value('proxy_host') or self.proxy_address_editor.text())
         self.proxy_username_editor.setText(self.get_profile_value('proxy_username') or self.proxy_username_editor.text())
         self.proxy_password_editor.setText(self.get_profile_value('proxy_password') or self.proxy_password_editor.text())
@@ -345,7 +354,6 @@ class ProfileWizard(StandaloneWizardPage):
         info['pass'] = self.password_editor.text()
         info['media_location'] = self.media_location_editor.text()
         info['locale_language'] = self.language_editor.get_value()
-        info['locale_country'] = self.country_editor.get_value()
         info['proxy_host'] = self.proxy_address_editor.text()
         info['proxy_username'] = self.proxy_username_editor.text()
         info['proxy_password'] = self.proxy_password_editor.text()

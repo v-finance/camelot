@@ -31,7 +31,7 @@ from camelot.view.model_thread import model_function
 from camelot.core.utils import ugettext as _
 from camelot.core.backup import BackupMechanism
 from camelot.view import art
-
+from camelot.view import database_selection
 
 _application_admin_ = []
 
@@ -60,9 +60,14 @@ class ApplicationAdmin(QtCore.QObject):
 
     A subclass of camelot.core.backup.BackupMechanism that enables the application
     to perform backups an restores.
+    
+    .. attribute:: database_profile_wizard
+    
+    The wizard that should can be used to create new database profiles
     """
 
     backup_mechanism = BackupMechanism
+    database_profile_wizard = database_selection.ProfileWizard
     name = 'Camelot'
     version = '1.0'
     sections = ['Relations', 'Configuration']
