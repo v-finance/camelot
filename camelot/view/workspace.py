@@ -143,6 +143,7 @@ class ActionButton(QtGui.QWidget):
         mainLayout.setContentsMargins(0, 20, 0, 20)
         mainLayout.addWidget(animatedLabel, 1, Qt.AlignCenter)
         mainLayout.addWidget(staticLabel, 0, Qt.AlignHCenter or Qt.AlignTop)
+        
 
         self.setMouseTracking(True)
         self.setMinimumHeight(min(animatedLabel.height() + staticLabel.height(), 160))
