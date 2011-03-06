@@ -78,7 +78,7 @@ class DesktopBackground(QtGui.QWidget):
         #  >= 4 action buttons: 2 rows and 2, 3, 4 or 5 columns.
         self.actionButtonsLayoutMaxItemsPerRowCount = max((len(actions) + 1) / 2, 3)
         
-        for position in xrange(0, self.actionButtonsLayoutMaxItemsPerRowCount):
+        for position in xrange(0, min( len(actions), self.actionButtonsLayoutMaxItemsPerRowCount) ):
             actionButton = ActionButton(actions[position], self)
             self.actionButtonsRow1Layout.addWidget(actionButton, 0, Qt.AlignHCenter or Qt.AlignBottom)
         
@@ -107,7 +107,7 @@ class DesktopBackground(QtGui.QWidget):
             actionButton.setInteractive(True)
         
         self.show()
-        
+    
 class ActionButton(QtGui.QWidget):
     """
     A custom interactive desktop button for the desktop. Each 'button' is 
@@ -123,56 +123,135 @@ class ActionButton(QtGui.QWidget):
         self.interactive = False
         
         # The animated upper label.   
-        self.animatedLabel = ActionButtonLabel(action, parent)
+        animatedLabel = ActionButtonLabel(action, self)
+        animatedLabel.setObjectName('animatedLabel')
         
         # The static lower label. 
-        self.staticLabel = QtGui.QLabel(action.get_verbose_name())
-        self.staticLabelFont = QtGui.QApplication.font()
-        self.staticLabelFont.setPointSize(14)
-        self.staticLabel.setFont(self.staticLabelFont)
-        self.staticLabel.adjustSize()
-        self.staticLabelOpacityEffect = QtGui.QGraphicsOpacityEffect()
-        self.staticLabelOpacityEffect.setOpacity(0)
-        self.staticLabel.setGraphicsEffect(self.staticLabelOpacityEffect)
-        
+        staticLabel = QtGui.QLabel(action.get_verbose_name())
+        staticLabel.setObjectName('staticLabel')
+        staticLabelFont = QtGui.QApplication.font()
+        staticLabelFont.setPointSize(14)
+        staticLabel.setFont(staticLabelFont)
+        staticLabel.adjustSize()
+        staticLabelOpacityEffect = QtGui.QGraphicsOpacityEffect(parent=self)
+        staticLabelOpacityEffect.setObjectName('staticLabelOpacityEffect')
+        staticLabelOpacityEffect.setOpacity(0)
+        staticLabel.setGraphicsEffect(staticLabelOpacityEffect)
+
         mainLayout = QtGui.QVBoxLayout()
+        mainLayout.setObjectName('mainLayout')
         mainLayout.setContentsMargins(0, 20, 0, 20)
-        mainLayout.addWidget(self.animatedLabel, 1, Qt.AlignCenter)
-        mainLayout.addWidget(self.staticLabel, 0, Qt.AlignHCenter or Qt.AlignTop)
-        
+        mainLayout.addWidget(animatedLabel, 1, Qt.AlignCenter)
+        mainLayout.addWidget(staticLabel, 0, Qt.AlignHCenter or Qt.AlignTop)
+
         self.setMouseTracking(True)
-        self.setMinimumHeight(min(self.animatedLabel.height() + self.staticLabel.height(), 160))
+        self.setMinimumHeight(min(animatedLabel.height() + staticLabel.height(), 160))
         self.setMaximumHeight(160)
-        self.setMinimumWidth(max(self.animatedLabel.width(), self.staticLabel.width()))
+        self.setMinimumWidth(max(animatedLabel.width(), staticLabel.width()))
         self.setLayout(mainLayout)
                 
     def resetLayout(self):
-        self.animatedLabel.resetLayout()
+        animatedLabel = self.findChild(QtGui.QLabel, 'animatedLabel')
+        if animatedLabel is not None:
+            animatedLabel.resetLayout()
         
     def setInteractive(self, interactive):
         self.interactive = interactive
 
     def enterEvent(self, event):
         if self.interactive and event.type() == QtCore.QEvent.Enter:
-            self.staticLabelOpacityEffect.setOpacity(1)
+            staticLabelOpacityEffect = self.findChild(QtCore.QObject, 'staticLabelOpacityEffect')
+            if staticLabelOpacityEffect is not None:
+                staticLabelOpacityEffect.setOpacity(1)
             if not self.action.is_notification():
-                self.animatedLabel.startHoverAnimation()
-            
+                animatedLabel = self.findChild(QtGui.QLabel, 'animatedLabel')
+                if animatedLabel is not None:
+                    animatedLabel.startHoverAnimation()
         event.ignore()
     
     def leaveEvent(self, event):
         if self.interactive and event.type() == QtCore.QEvent.Leave:
             if not self.action.is_notification():
-                self.animatedLabel.stopHoverAnimation()
-            self.staticLabelOpacityEffect.setOpacity(0)
-
+                animatedLabel = self.findChild(QtCore.QObject, 'animatedLabel')
+                if animatedLabel is not None:
+                    animatedLabel.stopHoverAnimation()
+            staticLabelOpacityEffect = self.findChild(QtCore.QObject, 'staticLabelOpacityEffect')
+            if staticLabelOpacityEffect is not None:
+                staticLabelOpacityEffect.setOpacity(0)
         event.ignore()
 
     def mousePressEvent(self, event):
         if self.interactive:
-            self.animatedLabel.startSelectionAnimation()
-            
+            animatedLabel = self.findChild(QtCore.QObject, 'animatedLabel')
+            if animatedLabel is not None:
+                animatedLabel.startSelectionAnimation()
         event.ignore()
+        
+#class ActionButton(QtGui.QWidget):
+    #"""
+    #A custom interactive desktop button for the desktop. Each 'button' is 
+    #actually a vbox containing two labels: the upper one displays an animated
+    #icon, the lower one a hideable string which represents the actions name.
+    #"""
+    #def __init__(self, action, parent = None):
+        #super(ActionButton, self).__init__(parent)
+        
+        #self.action = action
+        
+        ## This property holds if this button reacts to mouse events.
+        #self.interactive = False
+        
+        ## The animated upper label.   
+        #self.animatedLabel = ActionButtonLabel(action, parent)
+        
+        ## The static lower label. 
+        #self.staticLabel = QtGui.QLabel(action.get_verbose_name())
+        #self.staticLabelFont = QtGui.QApplication.font()
+        #self.staticLabelFont.setPointSize(14)
+        #self.staticLabel.setFont(self.staticLabelFont)
+        #self.staticLabel.adjustSize()
+        #self.staticLabelOpacityEffect = QtGui.QGraphicsOpacityEffect()
+        #self.staticLabelOpacityEffect.setOpacity(0)
+        #self.staticLabel.setGraphicsEffect(self.staticLabelOpacityEffect)
+        
+        #mainLayout = QtGui.QVBoxLayout()
+        #mainLayout.setContentsMargins(0, 20, 0, 20)
+        #mainLayout.addWidget(self.animatedLabel, 1, Qt.AlignCenter)
+        #mainLayout.addWidget(self.staticLabel, 0, Qt.AlignHCenter or Qt.AlignTop)
+        
+        #self.setMouseTracking(True)
+        #self.setMinimumHeight(min(self.animatedLabel.height() + self.staticLabel.height(), 160))
+        #self.setMaximumHeight(160)
+        #self.setMinimumWidth(max(self.animatedLabel.width(), self.staticLabel.width()))
+        #self.setLayout(mainLayout)
+                
+    #def resetLayout(self):
+        #self.animatedLabel.resetLayout()
+        
+    #def setInteractive(self, interactive):
+        #self.interactive = interactive
+
+    #def enterEvent(self, event):
+        #if self.interactive and event.type() == QtCore.QEvent.Enter:
+            #self.staticLabelOpacityEffect.setOpacity(1)
+            #if not self.action.is_notification():
+                #self.animatedLabel.startHoverAnimation()
+            
+        #event.ignore()
+    
+    #def leaveEvent(self, event):
+        #if self.interactive and event.type() == QtCore.QEvent.Leave:
+            #if not self.action.is_notification():
+                #self.animatedLabel.stopHoverAnimation()
+            #self.staticLabelOpacityEffect.setOpacity(0)
+
+        #event.ignore()
+
+    #def mousePressEvent(self, event):
+        #if self.interactive:
+            #self.animatedLabel.startSelectionAnimation()
+            
+        #event.ignore()
     
 class ActionButtonLabel(QtGui.QLabel):
     """
