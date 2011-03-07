@@ -152,6 +152,7 @@ class ColorScheme(object):
     grey        = grey_0
 
     VALIDATION_ERROR = red_1
+    NOTIFICATION = yellow_1
     """
     for consistency with QT:
     Qt::white	3	 White (#ffffff)
