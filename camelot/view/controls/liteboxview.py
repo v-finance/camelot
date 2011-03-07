@@ -129,11 +129,15 @@ class LiteBoxView(QGraphicsView):
         item = QtSvg.QGraphicsSvgItem(path)
         self.show_fullscreen_item(item)
 
+    def show_fullscreen_pixmap(self, pixmap):
+        """:param pixmap: a QPixmap"""
+        item = QGraphicsPixmapItem(pixmap)
+        self.show_fullscreen_item(item)
+        
     def show_fullscreen_image(self, image):
         """:param image: a QImage"""
         pixmap = QPixmap.fromImage(image)
-        item = QGraphicsPixmapItem(pixmap)
-        self.show_fullscreen_item(item)
+        self.show_fullscreen_pixmap( pixmap )
 
     def show_fullscreen_item(self, item):
         """:param item: a QGraphicsItem to be shown fullscreen"""
