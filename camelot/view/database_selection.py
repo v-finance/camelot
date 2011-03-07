@@ -26,7 +26,6 @@ import sys
 import logging
 import pkgutil
 
-import sqlalchemy.dialects
 from sqlalchemy import create_engine
 
 from PyQt4 import QtCore
@@ -55,8 +54,6 @@ from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, store_pr
 
 logger = logging.getLogger('camelot.view.database_selection')
 
-dialects = [name for _importer, name, is_package in \
-        pkgutil.iter_modules(sqlalchemy.dialects.__path__ ) if is_package]
 
 NEW_PROFILE_LABEL = _('new profile')
 
@@ -228,6 +225,9 @@ allow all languages
         self.main_widget().setLayout(layout)
 
     def set_widgets_values(self):
+        import sqlalchemy.dialects
+        dialects = [name for _importer, name, is_package in \
+        pkgutil.iter_modules(sqlalchemy.dialects.__path__ ) if is_package]
         self.dialect_editor.set_choices([(dialect, dialect.capitalize()) for dialect in dialects])
         self.profile_editor.setFocus()
         self.update_profile()
