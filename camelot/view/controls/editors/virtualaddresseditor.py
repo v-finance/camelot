@@ -206,4 +206,13 @@ class VirtualAddressEditor(CustomEditor):
             self.editor.setPalette(palette)
         else:
             return False
+            
+    def set_field_attributes(self, editable=True, background_color=None, tooltip = '', **kwargs):
+        if tooltip:
+            self.editor.setStyleSheet("""QLineEdit {
+                                              border-right:  3px solid yellow;
+                                              border-left:   1px solid black;
+                                              border-bottom: 1px solid black;
+                                              border-top:    1px solid black; }""")
+            self.editor.setToolTip(tooltip)
 

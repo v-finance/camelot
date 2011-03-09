@@ -28,12 +28,14 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor
+from customeditor import CustomEditor
+
 from camelot.view.art import Icon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 from camelot.core.utils import ugettext as _
-
+
+
 class DateEditor(CustomEditor):
     """Widget for editing date values"""
 
@@ -140,6 +142,15 @@ class DateEditor(CustomEditor):
             value = None
         return CustomEditor.get_value(self) or value
 
+    def set_field_attributes(self, editable=True, background_color=None, tooltip = '', **kwargs):
+        if tooltip:
+            self.line_edit.setStyleSheet("""QLineEdit {
+                                              border-right:  3px solid yellow;
+                                              border-left:   1px solid black;
+                                              border-bottom: 1px solid black;
+                                              border-top:    1px solid black; }""")
+            self.setToolTip(tooltip)
+
     def set_enabled(self, editable=True):
         self.line_edit.setEnabled(editable)
         if editable:
@@ -155,4 +166,4 @@ class DateEditor(CustomEditor):
         elif action.text().compare(_('Clear')) == 0:
             self.set_value(None)
         self.editingFinished.emit()
-
+

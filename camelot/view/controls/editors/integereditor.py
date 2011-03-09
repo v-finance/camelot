@@ -115,14 +115,19 @@ an unneeded update of the db.
         self._calculator = calculator
 
     def set_field_attributes(self, editable=True, background_color=None, 
-                             prefix='', suffix='', nullable=True, 
-                             single_step=1, **kwargs):
+                             tooltip = '', prefix='', suffix='',
+                             nullable=True, single_step=1, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
         self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
         self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
         self.spinBox.setSingleStep(single_step)
         self._nullable = nullable
+
+        #if tooltip:
+            #print "setting stylesheet"
+            #self.spinBox.setStyleSheet("QDoubleSpinBox { border-right: 5px solid rgb(225, 0, 0); }")
+            #self.spinBox.setStyleSheet("QWidget { border-right: 1px solid #727272;}")
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)

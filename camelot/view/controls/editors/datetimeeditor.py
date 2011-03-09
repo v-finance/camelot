@@ -28,7 +28,8 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor
-from dateeditor import DateEditorfrom camelot.view.proxy import ValueLoading
+from dateeditor import DateEditor
+from camelot.view.proxy import ValueLoading
 
 class TimeValidator(QtGui.QValidator):
     
@@ -63,7 +64,8 @@ class DateTimeEditor(CustomEditor):
                  **kwargs):
         CustomEditor.__init__(self, parent)
         import itertools
-        self.nullable = nullable
+        self.nullable = nullable
+
         layout = QtGui.QHBoxLayout()
         self.dateedit = DateEditor(self, editable=editable, nullable=nullable, **kwargs)
         self.dateedit.editingFinished.connect( self.editing_finished )
@@ -80,14 +82,16 @@ class DateTimeEditor(CustomEditor):
         self.timeedit.addItems(time_entries)
         self.timeedit.setValidator(TimeValidator(self, nullable))
         self.timeedit.currentIndexChanged.connect( self.editing_finished )
-        self.timeedit.editTextChanged.connect( self.editing_finished )        self.timeedit.setFocusPolicy( Qt.StrongFocus )
+        self.timeedit.editTextChanged.connect( self.editing_finished )
+        self.timeedit.setFocusPolicy( Qt.StrongFocus )
 
         layout.addWidget(self.timeedit, 1)
         # focus proxy is needed to activate the editor with a single click
         self.setFocusProxy(self.dateedit)
         self.setLayout(layout)
         layout.setMargin(0)
-        layout.setSpacing(0)
+        layout.setSpacing(0)
+
     @QtCore.pyqtSlot(QtCore.QString)
     @QtCore.pyqtSlot(int)
     @QtCore.pyqtSlot()

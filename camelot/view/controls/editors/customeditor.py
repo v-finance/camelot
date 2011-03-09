@@ -64,7 +64,7 @@ Guidelines for implementing CustomEditors :
             return ValueLoading
         return None
 
-    def set_field_attributes(self, editable=True, background_color=None, **kwargs):
+    def set_field_attributes(self, editable = True, background_color = None, **kwargs):
         self.setEnabled(editable)
         self.set_background_color(background_color)
 

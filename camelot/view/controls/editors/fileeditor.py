@@ -133,10 +133,18 @@ class FileEditor(CustomEditor):
         return CustomEditor.get_value(self) or self.value
 
     def set_field_attributes(self, editable=True, background_color=None, 
-                             remove_original=False, **kwargs):
+                             tooltip = '', remove_original=False, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
         self.remove_original = remove_original
+        
+        if tooltip:
+            self.filename.setStyleSheet("""QLineEdit {
+                                              border-right:  3px solid yellow;
+                                              border-left:   1px solid black;
+                                              border-bottom: 1px solid black;
+                                              border-top:    1px solid black; }""")
+            self.filename.setToolTip(tooltip)
 
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)

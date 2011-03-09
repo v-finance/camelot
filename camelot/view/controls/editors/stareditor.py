@@ -38,7 +38,8 @@ class StarEditor(CustomEditor):
         self.setFocusPolicy(Qt.StrongFocus)
         layout = QtGui.QHBoxLayout(self)
         layout.setMargin(0)
-        layout.setSpacing(0)
+        layout.setSpacing(0)
+
         self.starCount = 5
         self.buttons = []
         for i in range(self.starCount):
