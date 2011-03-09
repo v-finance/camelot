@@ -45,22 +45,23 @@ class DesktopBackground(QtGui.QWidget):
     def __init__(self, parent=None):
         super(DesktopBackground, self).__init__(parent)
         
-        self.actionButtonsMainLayout = QtGui.QVBoxLayout()
-        self.actionButtonsMainLayout.setContentsMargins(200, 50, 200, 50)
+        actionButtonsMainLayout = QtGui.QVBoxLayout()
+        actionButtonsMainLayout.setContentsMargins(200, 50, 200, 50)
         
-        self.actionButtonsRow1Layout = QtGui.QHBoxLayout()
-        self.actionButtonsRow2Layout = QtGui.QHBoxLayout()
+        actionButtonsRow1Layout = QtGui.QHBoxLayout()
+        actionButtonsRow1Layout.setObjectName('actionButtonsRow1Layout')
+        actionButtonsRow2Layout = QtGui.QHBoxLayout()
+        actionButtonsRow2Layout.setObjectName('actionButtonsRow2Layout')
 
-        self.actionButtonsMainLayout.addLayout(self.actionButtonsRow1Layout)
-        self.actionButtonsMainLayout.addLayout(self.actionButtonsRow2Layout)
-        self.setLayout(self.actionButtonsMainLayout)
+        actionButtonsMainLayout.addLayout(actionButtonsRow1Layout)
+        actionButtonsMainLayout.addLayout(actionButtonsRow2Layout)
+        self.setLayout(actionButtonsMainLayout)
         
         # Set a white background color
         palette = self.palette()
         self.setAutoFillBackground(True)
         palette.setBrush(QtGui.QPalette.Window, Qt.white)
         self.setPalette(palette)
-        
         
     # This method is invoked when the desktop workspace decides or gets told
     # that the actions should be updated due to the presence of to be added 
@@ -76,15 +77,19 @@ class DesktopBackground(QtGui.QWidget):
         # So:
         #  <= 3 action buttons: 1 row and 1, 2 or 3 columns;
         #  >= 4 action buttons: 2 rows and 2, 3, 4 or 5 columns.
-        self.actionButtonsLayoutMaxItemsPerRowCount = max((len(actions) + 1) / 2, 3)
-        
-        for position in xrange(0, min( len(actions), self.actionButtonsLayoutMaxItemsPerRowCount) ):
+        actionButtonsLayoutMaxItemsPerRowCount = max((len(actions) + 1) / 2, 3)
+
+        for position in xrange(0, min( len(actions), actionButtonsLayoutMaxItemsPerRowCount) ):
             actionButton = ActionButton(actions[position], self)
-            self.actionButtonsRow1Layout.addWidget(actionButton, 0, Qt.AlignHCenter or Qt.AlignBottom)
+            row1 = self.findChild(QtGui.QHBoxLayout, 'actionButtonsRow1Layout')
+            if row1 is not None:
+                row1.addWidget(actionButton, 0, Qt.AlignHCenter or Qt.AlignBottom)
         
-        for position in xrange(self.actionButtonsLayoutMaxItemsPerRowCount, len(actions)):
+        for position in xrange(actionButtonsLayoutMaxItemsPerRowCount, len(actions)):
             actionButton = ActionButton(actions[position], self)
-            self.actionButtonsRow2Layout.addWidget(actionButton, 0, Qt.AlignHCenter or Qt.AlignBottom)
+            row2 = self.findChild(QtGui.QHBoxLayout, 'actionButtonsRow2Layout')
+            if row2 is not None:
+                row2.addWidget(actionButton, 0, Qt.AlignHCenter or Qt.AlignBottom)
             
     # This custom event handler makes sure that the action buttons aren't
     # drawn in the wrong position on this widget after the screen has been
@@ -139,11 +144,9 @@ class ActionButton(QtGui.QWidget):
         staticLabel.setGraphicsEffect(staticLabelOpacityEffect)
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setObjectName('mainLayout')
         mainLayout.setContentsMargins(0, 20, 0, 20)
         mainLayout.addWidget(animatedLabel, 1, Qt.AlignCenter)
         mainLayout.addWidget(staticLabel, 0, Qt.AlignHCenter or Qt.AlignTop)
-        
 
         self.setMouseTracking(True)
         self.setMinimumHeight(min(animatedLabel.height() + staticLabel.height(), 160))
@@ -161,13 +164,14 @@ class ActionButton(QtGui.QWidget):
 
     def enterEvent(self, event):
         if self.interactive and event.type() == QtCore.QEvent.Enter:
-            staticLabelOpacityEffect = self.findChild(QtCore.QObject, 'staticLabelOpacityEffect')
-            if staticLabelOpacityEffect is not None:
-                staticLabelOpacityEffect.setOpacity(1)
+            staticLabel = self.findChild(QtGui.QLabel, 'staticLabel')
+            if staticLabel is not None:
+                staticLabel.graphicsEffect().setOpacity(1)
             if not self.action.is_notification():
                 animatedLabel = self.findChild(QtGui.QLabel, 'animatedLabel')
                 if animatedLabel is not None:
                     animatedLabel.startHoverAnimation()
+
         event.ignore()
     
     def leaveEvent(self, event):
@@ -176,9 +180,10 @@ class ActionButton(QtGui.QWidget):
                 animatedLabel = self.findChild(QtCore.QObject, 'animatedLabel')
                 if animatedLabel is not None:
                     animatedLabel.stopHoverAnimation()
-            staticLabelOpacityEffect = self.findChild(QtCore.QObject, 'staticLabelOpacityEffect')
-            if staticLabelOpacityEffect is not None:
-                staticLabelOpacityEffect.setOpacity(0)
+            staticLabel = self.findChild(QtGui.QLabel, 'staticLabel')
+            if staticLabel is not None:
+                staticLabel.graphicsEffect().setOpacity(0)
+
         event.ignore()
 
     def mousePressEvent(self, event):
@@ -186,73 +191,8 @@ class ActionButton(QtGui.QWidget):
             animatedLabel = self.findChild(QtCore.QObject, 'animatedLabel')
             if animatedLabel is not None:
                 animatedLabel.startSelectionAnimation()
+
         event.ignore()
-        
-#class ActionButton(QtGui.QWidget):
-    #"""
-    #A custom interactive desktop button for the desktop. Each 'button' is 
-    #actually a vbox containing two labels: the upper one displays an animated
-    #icon, the lower one a hideable string which represents the actions name.
-    #"""
-    #def __init__(self, action, parent = None):
-        #super(ActionButton, self).__init__(parent)
-        
-        #self.action = action
-        
-        ## This property holds if this button reacts to mouse events.
-        #self.interactive = False
-        
-        ## The animated upper label.   
-        #self.animatedLabel = ActionButtonLabel(action, parent)
-        
-        ## The static lower label. 
-        #self.staticLabel = QtGui.QLabel(action.get_verbose_name())
-        #self.staticLabelFont = QtGui.QApplication.font()
-        #self.staticLabelFont.setPointSize(14)
-        #self.staticLabel.setFont(self.staticLabelFont)
-        #self.staticLabel.adjustSize()
-        #self.staticLabelOpacityEffect = QtGui.QGraphicsOpacityEffect()
-        #self.staticLabelOpacityEffect.setOpacity(0)
-        #self.staticLabel.setGraphicsEffect(self.staticLabelOpacityEffect)
-        
-        #mainLayout = QtGui.QVBoxLayout()
-        #mainLayout.setContentsMargins(0, 20, 0, 20)
-        #mainLayout.addWidget(self.animatedLabel, 1, Qt.AlignCenter)
-        #mainLayout.addWidget(self.staticLabel, 0, Qt.AlignHCenter or Qt.AlignTop)
-        
-        #self.setMouseTracking(True)
-        #self.setMinimumHeight(min(self.animatedLabel.height() + self.staticLabel.height(), 160))
-        #self.setMaximumHeight(160)
-        #self.setMinimumWidth(max(self.animatedLabel.width(), self.staticLabel.width()))
-        #self.setLayout(mainLayout)
-                
-    #def resetLayout(self):
-        #self.animatedLabel.resetLayout()
-        
-    #def setInteractive(self, interactive):
-        #self.interactive = interactive
-
-    #def enterEvent(self, event):
-        #if self.interactive and event.type() == QtCore.QEvent.Enter:
-            #self.staticLabelOpacityEffect.setOpacity(1)
-            #if not self.action.is_notification():
-                #self.animatedLabel.startHoverAnimation()
-            
-        #event.ignore()
-    
-    #def leaveEvent(self, event):
-        #if self.interactive and event.type() == QtCore.QEvent.Leave:
-            #if not self.action.is_notification():
-                #self.animatedLabel.stopHoverAnimation()
-            #self.staticLabelOpacityEffect.setOpacity(0)
-
-        #event.ignore()
-
-    #def mousePressEvent(self, event):
-        #if self.interactive:
-            #self.animatedLabel.startSelectionAnimation()
-            
-        #event.ignore()
     
 class ActionButtonLabel(QtGui.QLabel):
     """
@@ -273,131 +213,157 @@ class ActionButtonLabel(QtGui.QLabel):
         self.setPixmap(action.get_icon().getQPixmap())
         self.setMinimumSize(self.pixmap().width(), self.pixmap().height())
         
-        self.opacityEffect = QtGui.QGraphicsOpacityEffect()
-        self.opacityEffect.setOpacity(1.0)
-        self.setGraphicsEffect(self.opacityEffect)
+        opacityEffect = QtGui.QGraphicsOpacityEffect(parent = self)
+        opacityEffect.setOpacity(1.0)
+        self.setGraphicsEffect(opacityEffect)
         
         if action.is_notification():
             # Shake animation #
-            self.notificationAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
-            self.notificationAnimationPart1.setDuration(50)
-            self.notificationAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
+            notificationAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
+            notificationAnimationPart1.setObjectName('notificationAnimationPart1')
+            notificationAnimationPart1.setDuration(50)
+            notificationAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
             
-            self.notificationAnimationPart2 = QtCore.QPropertyAnimation(self, 'pos')
-            self.notificationAnimationPart2.setDuration(50)
-            self.notificationAnimationPart2.setEasingCurve(QtCore.QEasingCurve.Linear)
+            notificationAnimationPart2 = QtCore.QPropertyAnimation(self, 'pos')
+            notificationAnimationPart2.setObjectName('notificationAnimationPart2')
+            notificationAnimationPart2.setDuration(50)
+            notificationAnimationPart2.setEasingCurve(QtCore.QEasingCurve.Linear)
             
-            self.notificationAnimationPart3 = QtCore.QPropertyAnimation(self, 'pos')
-            self.notificationAnimationPart3.setDuration(50)
-            self.notificationAnimationPart3.setEasingCurve(QtCore.QEasingCurve.Linear)
+            notificationAnimationPart3 = QtCore.QPropertyAnimation(self, 'pos')
+            notificationAnimationPart3.setObjectName('notificationAnimationPart3')
+            notificationAnimationPart3.setDuration(50)
+            notificationAnimationPart3.setEasingCurve(QtCore.QEasingCurve.Linear)
             
-            self.notificationAnimation = QtCore.QSequentialAnimationGroup()
-            self.notificationAnimation.setLoopCount(10)
-            self.notificationAnimation.addAnimation(self.notificationAnimationPart1)
-            self.notificationAnimation.addAnimation(self.notificationAnimationPart2)
-            self.notificationAnimation.addAnimation(self.notificationAnimationPart3)
+            notificationAnimation = QtCore.QSequentialAnimationGroup(parent = self)
+            notificationAnimation.setObjectName('notificationAnimation')
+            notificationAnimation.setLoopCount(10)
+            notificationAnimation.addAnimation(notificationAnimationPart1)
+            notificationAnimation.addAnimation(notificationAnimationPart2)
+            notificationAnimation.addAnimation(notificationAnimationPart3)
 
             # Timer is used to simulate a pausing effect of the animation.
-            self.notificationAnimationTimer = QtCore.QTimer()
-            self.notificationAnimationTimer.setInterval(1500)
-            self.notificationAnimationTimer.setSingleShot(True)
-            self.notificationAnimationTimer.timeout.connect(self.notificationAnimation.start)
-            self.notificationAnimation.finished.connect(self.notificationAnimationTimer.start)
+            notificationAnimationTimer = QtCore.QTimer(parent = self)
+            notificationAnimationTimer.setInterval(1500)
+            notificationAnimationTimer.setSingleShot(True)
+            notificationAnimationTimer.timeout.connect(notificationAnimation.start)
+            notificationAnimation.finished.connect(notificationAnimationTimer.start)
             ###################
         else:
             # Bounce animation #
-            self.hoverAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
-            self.hoverAnimationPart1.setDuration(500)
-            self.hoverAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
+            hoverAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
+            hoverAnimationPart1.setObjectName('hoverAnimationPart1')
+            hoverAnimationPart1.setDuration(500)
+            hoverAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
             
-            self.hoverAnimationPart2 = QtCore.QPropertyAnimation(self, 'pos')
-            self.hoverAnimationPart2.setDuration(1500)
-            self.hoverAnimationPart2.setEasingCurve(QtCore.QEasingCurve.OutElastic)
+            hoverAnimationPart2 = QtCore.QPropertyAnimation(self, 'pos')
+            hoverAnimationPart2.setObjectName('hoverAnimationPart2')
+            hoverAnimationPart2.setDuration(1500)
+            hoverAnimationPart2.setEasingCurve(QtCore.QEasingCurve.OutElastic)
             
-            self.hoverAnimation = QtCore.QSequentialAnimationGroup()
-            self.hoverAnimation.setLoopCount(-1) # Infinite
-            self.hoverAnimation.addAnimation(self.hoverAnimationPart1)
-            self.hoverAnimation.addAnimation(self.hoverAnimationPart2)
+            hoverAnimation = QtCore.QSequentialAnimationGroup(parent = self)
+            hoverAnimation.setObjectName('hoverAnimation')
+            hoverAnimation.setLoopCount(-1) # Infinite
+            hoverAnimation.addAnimation(hoverAnimationPart1)
+            hoverAnimation.addAnimation(hoverAnimationPart2)
             ####################
-        
-        # Selection animation when clicking #
-        # Part 1 (instant repositioning) #
-        self.selectionAnimation1 = QtCore.QPropertyAnimation(self, 'pos')
-        self.selectionAnimation1.setDuration(200)
-        self.selectionAnimation1.setEasingCurve(QtCore.QEasingCurve.Linear)
-        
-        # Part 2 (quick resize and opacity effect) #
-        self.selectionAnimation2 = QtCore.QPropertyAnimation(self, 'size')
-        self.selectionAnimation2.setDuration(200)
-        self.selectionAnimation2.setEasingCurve(QtCore.QEasingCurve.OutCubic)
-        
-        # Part 3 (opacity effect) #
-        self.selectionAnimation3 = QtCore.QPropertyAnimation(self.opacityEffect, 'opacity')
-        self.selectionAnimation3.setDuration(200)
-        self.selectionAnimation3.setEasingCurve(QtCore.QEasingCurve.Linear)
-        
-        self.selectionAnimationGroup = QtCore.QParallelAnimationGroup()
-        self.selectionAnimationGroup.addAnimation(self.selectionAnimation1)
-        self.selectionAnimationGroup.addAnimation(self.selectionAnimation2)
-        self.selectionAnimationGroup.addAnimation(self.selectionAnimation3)
-        #####################################
 
     def showEvent(self, event):
         self.originalPosition = self.mapFromParent(self.mapToParent(self.pos()))
 
         if self.action.is_notification():        
-            self.notificationAnimationPart1.setStartValue(self.originalPosition)
-            self.notificationAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(-8, 0))
+            notificationAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart1')
+            if notificationAnimationPart1 is not None:
+                notificationAnimationPart1.setStartValue(self.originalPosition)
+                notificationAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(-8, 0))
 
-            self.notificationAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(-8, 0))
-            self.notificationAnimationPart2.setEndValue(self.originalPosition + QtCore.QPoint(8, 0))
+            notificationAnimationPart2 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart2')
+            if notificationAnimationPart2 is not None:
+                notificationAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(-8, 0))
+                notificationAnimationPart2.setEndValue(self.originalPosition + QtCore.QPoint(8, 0))
             
-            self.notificationAnimationPart3.setStartValue(self.originalPosition + QtCore.QPoint(8, 0))
-            self.notificationAnimationPart3.setEndValue(self.originalPosition)
+            notificationAnimationPart3 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart3')
+            if notificationAnimationPart3 is not None:
+                notificationAnimationPart3.setStartValue(self.originalPosition + QtCore.QPoint(8, 0))
+                notificationAnimationPart3.setEndValue(self.originalPosition)
             
-            self.notificationAnimation.start()
+            notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')
+            if notificationAnimation is not None:
+                notificationAnimation.start()
             
         event.ignore()
 
     def startHoverAnimation(self):
-        self.hoverAnimationPart1.setStartValue(self.originalPosition)
-        self.hoverAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(0, -20))
+        hoverAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart1')
+        if hoverAnimationPart1 is not None:
+            hoverAnimationPart1.setStartValue(self.originalPosition)
+            hoverAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(0, -20))
     
-        self.hoverAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(0, -20))
-        self.hoverAnimationPart2.setEndValue(self.originalPosition)
+        hoverAnimationPart2 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart2')
+        if hoverAnimationPart2 is not None:
+            hoverAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(0, -20))
+            hoverAnimationPart2.setEndValue(self.originalPosition)
         
-        self.hoverAnimation.start()
+        hoverAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'hoverAnimation')
+        if hoverAnimation is not None:
+            hoverAnimation.start()
 
     def stopHoverAnimation(self):
-        self.hoverAnimation.stop()
-        if self.originalPosition:
+        hoverAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'hoverAnimation')
+        if hoverAnimation is not None:
+            hoverAnimation.stop()
+        if self.originalPosition is not None:
             self.move(self.originalPosition)
             
         self.resetLayout()
 
     def startSelectionAnimation(self):
         if self.action.is_notification():
-            self.notificationAnimation.stop()
+            notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')            
+            if notificationAnimation is not None:
+                notificationAnimation.stop()
         else:
-            self.hoverAnimation.stop()
+            hoverAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'hoverAnimation')
+            if hoverAnimation is not None:
+                hoverAnimation.stop()
 
         self.move(self.originalPosition)
+        
+        # Selection animation when clicking #
+        # Part 1 (instant repositioning) #
+        selectionAnimation1 = QtCore.QPropertyAnimation(self, 'pos')
+        selectionAnimation1.setObjectName('selectionAnimation1')
+        selectionAnimation1.setDuration(200)
+        selectionAnimation1.setEasingCurve(QtCore.QEasingCurve.Linear)
+        selectionAnimation1.setStartValue(self.originalPosition)
+        selectionAnimation1.setEndValue(self.originalPosition + QtCore.QPoint(-20, -20))
 
-        self.selectionAnimation1.setStartValue(self.originalPosition)
-        self.selectionAnimation1.setEndValue(self.originalPosition + QtCore.QPoint(-20, -20))
-        self.selectionAnimation2.setStartValue(self.size())
-        self.selectionAnimation2.setEndValue(self.size() + QtCore.QSize(40, 40))
-        self.selectionAnimation3.setStartValue(1.0)
-        self.selectionAnimation3.setEndValue(0.1)
+        # Part 2 (quick resize and opacity effect) #
+        selectionAnimation2 = QtCore.QPropertyAnimation(self, 'size')
+        selectionAnimation2.setObjectName('selectionAnimation2')
+        selectionAnimation2.setDuration(200)
+        selectionAnimation2.setEasingCurve(QtCore.QEasingCurve.OutCubic)
+        selectionAnimation2.setStartValue(self.size())
+        selectionAnimation2.setEndValue(self.size() + QtCore.QSize(40, 40))
+        
+        # Part 3 (opacity effect) #
+        opacityEffect = self.graphicsEffect()
+        selectionAnimation3 = QtCore.QPropertyAnimation(opacityEffect, 'opacity')
+        selectionAnimation3.setObjectName('selectionAnimation3')
+        selectionAnimation3.setDuration(200)
+        selectionAnimation3.setEasingCurve(QtCore.QEasingCurve.Linear)
+        selectionAnimation3.setStartValue(1.0)
+        selectionAnimation3.setEndValue(0.1)
+        
+        selectionAnimationGroup = QtCore.QParallelAnimationGroup(parent = self)
+        selectionAnimationGroup.addAnimation(selectionAnimation1)
+        selectionAnimationGroup.addAnimation(selectionAnimation2)
+        selectionAnimationGroup.addAnimation(selectionAnimation3)
+        selectionAnimationGroup.finished.connect(self.resetLayout)
+        selectionAnimationGroup.finished.connect(self.performAction)
+        #####################################
 
-        # Doing 'self.selectionAnimationGroup.finished.connect(self.performAction)'
-        # results somehow in invoking self.performAction multiple times.
-        # So as a simple workaround, just focus on the state of the last
-        # of all grouped animations.
-        self.selectionAnimation3.finished.connect(self.resetLayout)
-        self.selectionAnimation3.finished.connect(self.performAction)
         self.setScaledContents(True)
-        self.selectionAnimationGroup.start()
+        selectionAnimationGroup.start()
 
     @QtCore.pyqtSlot()
     def performAction(self):
@@ -409,10 +375,10 @@ class ActionButtonLabel(QtGui.QLabel):
             self.move(self.originalPosition)
         self.setScaledContents(False)
         self.resize(self.pixmap().width(), self.pixmap().height())
-        self.opacityEffect.setOpacity(1.0)
+        self.graphicsEffect().setOpacity(1.0)
 
 class DesktopTabbar(QtGui.QTabBar):
-    
+
     change_view_mode_signal = QtCore.pyqtSignal()
     
     def mouseDoubleClickEvent(self, event):
