@@ -26,10 +26,7 @@
 import logging
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QLabel
 from PyQt4.QtGui import QDialog
-from PyQt4.QtGui import QComboBox
 from PyQt4.QtGui import QBoxLayout
 from PyQt4.QtGui import QVBoxLayout
 from PyQt4.QtGui import QPushButton

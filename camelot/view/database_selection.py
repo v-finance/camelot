@@ -321,7 +321,6 @@ allow all languages
         return text
 
     def update_profile(self):
-        from camelot.view.proxy import ValueLoading
         self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
         self.host_editor.setText(self.get_profile_value('host') or '127.0.0.1')
         self.port_editor.setText(self.get_profile_value('port') or '3306')

@@ -124,7 +124,7 @@ class BackupMechanism(object):
         import shutil
         import settings
         from sqlalchemy import create_engine
-        from sqlalchemy import MetaData, Table, Column, Integer
+        from sqlalchemy import MetaData, Table, Column
         from sqlalchemy.pool import NullPool
         from sqlalchemy.dialects import mysql as mysql_dialect
         from sqlalchemy.dialects import postgresql as postgresql_dialect

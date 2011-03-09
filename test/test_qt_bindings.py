@@ -120,27 +120,58 @@ class SignalSlotCase( unittest.TestCase ):
     def test_received_signals(self):
         """See what happens when an object that has
         been deleted receives signals"""
+
+        class SignalReceiver(QtGui.QWidget):
+    
+            def __init__(self, parent):
+                super(SignalReceiver, self).__init__(parent)
+                receiver_child = QtGui.QWidget(self)
+                receiver_child.setObjectName('child')
+                
+            @QtCore.pyqtSlot(object)
+            def my_slot(self, obj):
+                child = self.findChild(QtCore.QObject, 'child')
+                print child.objectName()
         
-        class ReceiverParent(QtCore.QObject):
+        class ReceiverParent(QtGui.QTabWidget):
             
             def __init__(self):
                 super(ReceiverParent, self).__init__()
-                self.receiver = SignalReceiver(parent=self)
+                receiver = SignalReceiver(parent=self)
+                receiver.setObjectName('receiver')
+                self.addTab(receiver, 'receiver')
+                
+            def get_receiver(self):
+                return self.findChild(QtCore.QObject, 'receiver')
         
         receiver_parent = ReceiverParent()
                 
         class EmittingThread(QtCore.QThread):
             
             my_signal = QtCore.pyqtSignal(object)
+            started = False
+            move_on = False
             
             def run(self):
-                for i in range(1000):
+                for i in range(10):
                     self.my_signal.emit( i )
+                    self.started = True
+                    while not self.move_on:
+                        pass
                                     
         thread = EmittingThread()
-        thread.my_signal.connect( receiver_parent.receiver.my_slot, QtCore.Qt.QueuedConnection )
+        thread.my_signal.connect( receiver_parent.get_receiver().my_slot, QtCore.Qt.QueuedConnection )
         #del receiver_parent
         thread.start()
-        #del receiver_parent
+        while thread.started == False:
+            thread.wait(1)
+            self.app.processEvents()
+        receiver_parent.widget(0).deleteLater()
+        receiver_parent.removeTab(0)
+        import gc
+        gc.collect()
+        print 'tab removed'
+        thread.move_on = True
         thread.wait()
+        print 'process events'
         self.app.processEvents()

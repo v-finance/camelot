@@ -1150,16 +1150,16 @@ class ControlsTest(ModelThreadTestCase):
         actions = [EntityAction('Action name',
                                 None,
                                 verbose_name='Verbose action name 1',
-                                icon=Icon('file-manager.png'),
+                                icon=Icon('tango/32x32/places/network-server.png'),
                                 notification = True),
                    EntityAction('Action name',
                                 None,
                                 verbose_name='Verbose action name 2',
-                                icon=Icon('file-manager.png')),
+                                icon=Icon('tango/32x32/places/user-trash.png')),
                    EntityAction('Action name',
                                 None,
                                 verbose_name='Verbose action name 3',
-                                icon=Icon('file-manager.png'))]
+                                icon=Icon('tango/32x32/places/start-here.png'))]
         desktopWorkspace._background_widget.set_actions(actions)
         self.grab_widget(desktopWorkspace)
 
