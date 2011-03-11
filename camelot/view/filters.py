@@ -224,11 +224,11 @@ class DateFilterWidget(QtGui.QGroupBox):
   
     filter_changed_signal = QtCore.pyqtSignal()
     
-    def __init__(self, name, query_decorator, parent):
+    def __init__(self, name, query_decorator, default, parent):
         QtGui.QGroupBox.__init__(self, unicode(name), parent)
         layout = QtGui.QVBoxLayout()
         self.date_editor = DateEditor(parent=self, nullable=True)
-        self.date_editor.set_value(datetime.date.today())
+        self.date_editor.set_value(default)
         self.query_decorator = query_decorator
         layout.addWidget(self.date_editor)
         self.setLayout(layout)
@@ -247,20 +247,26 @@ class ValidDateFilter(Filter):
     date and their end date after this date.  If no date is given, all entities will
     be shown"""
 
-    def __init__(self, from_attribute='from_date', 
+    def __init__(self, 
+                 from_attribute='from_date', 
                  thru_attribute='thru_date', 
-                 verbose_name=_('Valid at')):
+                 verbose_name=_('Valid at'),
+                 default = datetime.date.today ):
         """
         :param from_attribute: the name of the attribute representing the from date
         :param thru_attribute: the name of the attribute representing the thru date
-        :param verbose_name: the displayed name of the filter"""
+        :param verbose_name: the displayed name of the filter
+        :param default: a function returning a default date for the filter
+        """
         super(ValidDateFilter, self).__init__(None)
         self._from_attribute = from_attribute
         self._thru_attribute = thru_attribute
         self._verbose_name = verbose_name
+        self._default = default
         
     def render(self, parent, name, options):
-        return DateFilterWidget(name, options, parent)
+        query_decorator, default = options
+        return DateFilterWidget(name, query_decorator, default, parent)
         
     def get_name_and_options(self, admin):
         from sqlalchemy.sql import and_
@@ -272,5 +278,5 @@ class ValidDateFilter(Filter):
                                          getattr(e, self._thru_attribute)>=date))
             return query
         
-        return (self._verbose_name, query_decorator)
+        return (self._verbose_name, (query_decorator, self._default()))
 
