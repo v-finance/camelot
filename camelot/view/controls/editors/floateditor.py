@@ -54,7 +54,7 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
             super(CustomDoubleSpinBox, self).keyPressEvent(key_event)
 
     def textFromValue(self, value):
-        return str( QtCore.QString("%L1").arg(float(value), 0, 'f', self.decimals()) )
+        return unicode( QtCore.QString("%L1").arg(float(value), 0, 'f', self.decimals()) )
 
 class FloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator button.  
