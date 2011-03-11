@@ -457,6 +457,8 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), 0.0 )
         editor.set_value( 3.14 )
         self.grab_widget( editor, 'editable' )
+        editor.set_field_attributes(tooltip = 'tooltip')
+        self.grab_widget( editor, 'editable_tooltip')
         self.assertEqual( editor.get_value(), 3.14 )
         editor.set_value( self.ValueLoading )
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -479,6 +481,8 @@ class EditorsTest(ModelThreadTestCase):
         # pretend the user has entered something
         editor.spinBox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
+        editor.set_field_attributes(tooltip = 'tooltip')
+        self.grab_widget( editor, 'disabled_tooltip')
         # verify if the calculator button is turned off
         editor = self.editors.FloatEditor(parent=None, 
                                           calculator=False)
@@ -508,6 +512,8 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), 0 )
         editor.set_value( 3 )
         self.grab_widget( editor, 'editable' )
+        editor.set_field_attributes(tooltip = 'tooltip')
+        self.grab_widget( editor, 'editable_tooltip')
         self.assertEqual( editor.get_value(), 3 )
         editor.set_value( self.ValueLoading )
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -529,6 +535,8 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), 0 )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
+        editor.set_field_attributes(tooltip = 'tooltip')
+        self.grab_widget( editor, 'disabled_tooltip')
         # turn off the calculator
         editor = self.editors.IntegerEditor(parent=None, 
                                             calculator=False)
