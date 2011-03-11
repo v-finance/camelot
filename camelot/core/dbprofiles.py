@@ -39,6 +39,22 @@ def get_cipher():
         key = 'The Knights Who Say Ni'
     return ARC4.new( key )
 
+def get_languagecode(profile=None):
+    """
+    :return: two-letter ISO 639 language code
+    """
+    if not profile:
+        profile = selected_profile_info()
+    return selected_profile_info()['locale_language'][:2]
+
+def get_countrycode(profile=None):
+    """
+    :return: two-letter ISO 3166 country code
+    """
+    if not profile:
+        profile = selected_profile_info()
+    return selected_profile_info()['locale_language'][2:]
+
 def _encode_setting(value):
     return base64.b64encode( get_cipher().encrypt( unicode(value).encode('utf-8' ) ) )
 
