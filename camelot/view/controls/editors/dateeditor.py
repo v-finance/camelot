@@ -144,12 +144,11 @@ class DateEditor(CustomEditor):
 
     def set_field_attributes(self, editable=True, background_color=None, tooltip = '', **kwargs):
         if tooltip:
-            self.line_edit.setStyleSheet("""QLineEdit {
-                                              border-right:  3px solid yellow;
-                                              border-left:   1px solid black;
-                                              border-bottom: 1px solid black;
-                                              border-top:    1px solid black; }""")
-            self.setToolTip( unicode(tooltip) )
+            self.line_edit.setStyleSheet("""QLineEdit { 
+                                              background-image: url(:/tooltip_visualization_7x7_glow.png);
+                                              background-position: top left;
+                                              background-repeat: no-repeat; }""")
+            self.setToolTip(unicode(tooltip))
 
     def set_enabled(self, editable=True):
         self.line_edit.setEnabled(editable)

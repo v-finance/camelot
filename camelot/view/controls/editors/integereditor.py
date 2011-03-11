@@ -124,10 +124,12 @@ an unneeded update of the db.
         self.spinBox.setSingleStep(single_step)
         self._nullable = nullable
 
-        #if tooltip:
-            #print "setting stylesheet"
-            #self.spinBox.setStyleSheet("QDoubleSpinBox { border-right: 5px solid rgb(225, 0, 0); }")
-            #self.spinBox.setStyleSheet("QWidget { border-right: 1px solid #727272;}")
+        if tooltip:
+            self.spinBox.setStyleSheet("""QDoubleSpinBox { 
+                                              background-image: url(:/tooltip_visualization_7x7_glow.png);
+                                              background-position: top left;
+                                              background-repeat: no-repeat; }""")
+            self.spinBox.setToolTip(unicode(tooltip))
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)

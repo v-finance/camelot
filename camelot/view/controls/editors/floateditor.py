@@ -33,7 +33,7 @@ from camelot.view.proxy import ValueLoading
 
 class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
-
+    
     def wheelEvent(self, wheel_event):
         wheel_event.ignore()
         
@@ -124,6 +124,13 @@ class FloatEditor(CustomEditor):
         self.spinBox.setSuffix(u' %s'%(unicode(suffix or '').rstrip()))
         self.spinBox.setSingleStep(single_step)
         
+        if tooltip:
+            self.spinBox.setStyleSheet("""QDoubleSpinBox { 
+                                              background-image: url(:/tooltip_visualization_7x7_glow.png);
+                                              background-position: top left;
+                                              background-repeat: no-repeat; }""")
+            self.spinBox.setToolTip(unicode(tooltip))
+        
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:
@@ -177,6 +184,7 @@ class FloatEditor(CustomEditor):
 
     def set_background_color(self, background_color):
         if background_color not in (None, ValueLoading):
+            """
             selfpalette = self.spinBox.palette()
             sbpalette = self.spinBox.palette()
             lepalette = self.spinBox.lineEdit().palette()
@@ -190,6 +198,7 @@ class FloatEditor(CustomEditor):
             self.setPalette(selfpalette)
             self.spinBox.setPalette(sbpalette)
             self.spinBox.lineEdit().setPalette(lepalette)
+            """
             return True
         else:
             return False

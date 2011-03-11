@@ -140,11 +140,10 @@ class FileEditor(CustomEditor):
         
         if tooltip:
             self.filename.setStyleSheet("""QLineEdit {
-                                              border-right:  3px solid yellow;
-                                              border-left:   1px solid black;
-                                              border-bottom: 1px solid black;
-                                              border-top:    1px solid black; }""")
-            self.filename.setToolTip(tooltip)
+                                              background-image: url(:/tooltip_visualization_7x7_glow.png);
+                                              background-position: top left;
+                                              background-repeat: no-repeat; }""")
+            self.filename.setToolTip(unicode(tooltip))
 
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)
