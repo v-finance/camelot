@@ -149,7 +149,7 @@ class DateEditor(CustomEditor):
                                               border-left:   1px solid black;
                                               border-bottom: 1px solid black;
                                               border-top:    1px solid black; }""")
-            self.setToolTip(tooltip)
+            self.setToolTip( unicode(tooltip) )
 
     def set_enabled(self, editable=True):
         self.line_edit.setEnabled(editable)

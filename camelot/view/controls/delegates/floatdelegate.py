@@ -50,15 +50,14 @@ class FloatDelegate( CustomDelegate ):
         If the attribute is a calculated field, which gets its precision from SQLAclhemy introspection,
         precision will be set to None, so precision must be explicitely set in the field attributes.
         """
-        assert precision
         CustomDelegate.__init__(self,
                                 parent=parent,
-                                precision=precision,
+                                precision=precision or 2,
                                 minimum=minimum, maximum=maximum,
                                 **kwargs )                   
         self.minimum = minimum
         self.maximum = maximum
-        self.precision = precision
+        self.precision = precision or 2
         self.unicode_format = unicode_format
 
     def paint( self, painter, option, index ):
