@@ -67,7 +67,7 @@ def getCurrentAuthentication():
     global _current_authentication_
     if not hasattr( _current_authentication_, 'mechanism' ) or not _current_authentication_.mechanism:
         import getpass
-        _current_authentication_.mechanism = UsernameAuthenticationMechanism.getOrCreateAuthentication( unicode( getpass.getuser() ) )
+        _current_authentication_.mechanism = UsernameAuthenticationMechanism.getOrCreateAuthentication( unicode( getpass.getuser(), encoding='utf-8', errors='ignore' ) )
     return _current_authentication_.mechanism
 
 def clear_current_authentication():
