@@ -110,7 +110,7 @@ class DesktopBackground(QtGui.QWidget):
     def makeInteractive(self):
         for actionButton in self.findChildren(ActionButton):
             actionButton.setInteractive(True)
-        
+
         self.show()
     
 class ActionButton(QtGui.QWidget):
@@ -189,7 +189,7 @@ class ActionButton(QtGui.QWidget):
     def mousePressEvent(self, event):
         if self.interactive:
             animatedLabel = self.findChild(QtCore.QObject, 'animatedLabel')
-            if animatedLabel is not None:
+            if animatedLabel is not None and animatedLabel.getSelectionAnimationState() == QtCore.QAbstractAnimation.Stopped:
                 animatedLabel.startSelectionAnimation()
 
         event.ignore()
@@ -209,6 +209,12 @@ class ActionButtonLabel(QtGui.QLabel):
         # so it can be visually reset when the user leaves before the ongoing
         # animation has finished.
         self.originalPosition = None
+        
+        # This property holds the state of the selection animation. Since this
+        # animation is only created inside startSelectionAnimation() (to avoid
+        # the increasing amount of performAction() invocations), this variable is 
+        # used to continuously store the state of that animation.
+        self.selectionAnimationState = QtCore.QAbstractAnimation.Stopped
         
         self.setPixmap(action.get_icon().getQPixmap())
         self.setMinimumSize(self.pixmap().width(), self.pixmap().height())
@@ -355,15 +361,23 @@ class ActionButtonLabel(QtGui.QLabel):
         selectionAnimation3.setEndValue(0.1)
         
         selectionAnimationGroup = QtCore.QParallelAnimationGroup(parent = self)
+        selectionAnimationGroup.setObjectName('selectionAnimationGroup')
         selectionAnimationGroup.addAnimation(selectionAnimation1)
         selectionAnimationGroup.addAnimation(selectionAnimation2)
         selectionAnimationGroup.addAnimation(selectionAnimation3)
         selectionAnimationGroup.finished.connect(self.resetLayout)
         selectionAnimationGroup.finished.connect(self.performAction)
+        selectionAnimationGroup.stateChanged.connect(self.updateSelectionAnimationState)
         #####################################
 
         self.setScaledContents(True)
         selectionAnimationGroup.start()
+
+    def updateSelectionAnimationState(self, newState, oldState):
+        self.selectionAnimationState = newState
+
+    def getSelectionAnimationState(self):
+        return self.selectionAnimationState
 
     @QtCore.pyqtSlot()
     def performAction(self):
