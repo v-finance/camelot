@@ -79,7 +79,7 @@ class ApplicationActionFromGuiFunction( ApplicationAction ):
         """
 
         self._name = name
-        self._verbose_name = verbose_name or _(name.capitalize())
+        self._verbose_name = unicode(verbose_name or _(unicode(name).capitalize()))
         self._icon = icon
         self._gui_function = gui_function
         
@@ -204,7 +204,61 @@ class OpenFileApplicationAction( ApplicationActionFromModelFunction, AbstractOpe
         """
         file = open(file_name, 'w')
         file.write( 'Hello World' )
-            
+           
+class DocxApplicationAction( ApplicationActionFromModelFunction ):
+    """Action that generates a .docx file and opens it using Word.  It does so by generating an xml document
+with jinja templates that is a valid word document.  Implement at least its get_template method in a subclass
+to make this action functional.
+    """
+
+    def __init__( self, name, icon = Icon( 'tango/16x16/mimetypes/x-office-document.png' ) ):
+        super(DocxApplicationAction, self).__init__( name, self.open_xml, icon )
+
+    def get_context(self, options):
+        """
+:param options: the object displayed in the form
+:return: a dictionary with objects to be used as context when jinja fills up the xml document,
+by default returns a context that contains options"""
+        return {'options':options}
+
+    def get_environment(self, options):
+        """
+:param options: the object displayed in the form
+:return: the jinja environment to be used to render the xml document, by default returns an
+empty environment"""
+        from jinja2 import Environment
+        e = Environment()
+        return e
+
+    def get_template(self, options):
+        """
+:param options: the object displayed in the form
+:return: the name of the jinja template for xml document.  A template can be constructed by
+creating a document in MS Word and saving it as an xml file.  This file can then be manipulated by hand
+to include jinja constructs."""
+        raise NotImplemented
+
+    def document(self, options):
+        """
+:param options: the object displayed in the form
+:return: the xml content of the generated document. This method calls get_environment,
+get_template and get_context to create the final document."""
+        e = self.get_environment(options)
+        context = self.get_context(options)
+        t = e.get_template(self.get_template(options))
+        document_xml = t.render(context)
+        return document_xml
+
+    def open_xml(self, options):
+        from camelot.view.export.word import open_document_in_word
+        import tempfile
+        import os
+        fd, fn = tempfile.mkstemp(suffix='.xml')
+        docx_file = os.fdopen(fd, 'wb')
+        docx_file.write(self.document(options).encode('utf-8'))
+        docx_file.close()
+        open_document_in_word(fn)
+        
 def structure_to_application_action(structure):
     """Convert a python structure to an ApplicationAction"""
     if isinstance(structure, (ApplicationAction,)):
