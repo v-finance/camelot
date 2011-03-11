@@ -74,32 +74,34 @@ def last_used_profile():
 
 def fetch_profiles():
     profiles = {}
-    settings = QtCore.QSettings()
-    size = settings.beginReadArray('database_profiles')
-
-    if size == 0:
-        return profiles
-
-    for index in range(size):
-        settings.setArrayIndex(index)
-        info = {}
-        profilename = unicode(settings.value('profilename', QVariant('')).toString(), 'utf-8')
-        if not profilename:
-            continue  # well we should not really be doing anything
-        info['dialect'] = _decode_setting(settings.value('dialect', QVariant('')).toString())
-        info['host'] = _decode_setting(settings.value('host', QVariant('')).toString())
-        info['port'] = _decode_setting(settings.value('port', QVariant('')).toString())
-        info['database'] = _decode_setting(settings.value('database', QVariant('')).toString())
-        info['user'] = _decode_setting(settings.value('user', QVariant('')).toString())
-        info['pass'] = _decode_setting(settings.value('pass', QVariant('')).toString())
-        info['media_location'] = _decode_setting(settings.value('media_location', QVariant('')).toString())
-        info['locale_language'] = _decode_setting(settings.value('locale_language', QVariant('')).toString())
-        info['proxy_host'] = _decode_setting(settings.value('proxy_host', QVariant('')).toString())
-        info['proxy_username'] = _decode_setting(settings.value('proxy_username', QVariant('')).toString())
-        info['proxy_password'] = _decode_setting(settings.value('proxy_password', QVariant('')).toString())
-        profiles[profilename] = info
-    settings.endArray()
-
+    try:
+        settings = QtCore.QSettings()
+        size = settings.beginReadArray('database_profiles')
+    
+        if size == 0:
+            return profiles
+    
+        for index in range(size):
+            settings.setArrayIndex(index)
+            info = {}
+            profilename = unicode(settings.value('profilename', QVariant('')).toString(), 'utf-8')
+            if not profilename:
+                continue  # well we should not really be doing anything
+            info['dialect'] = _decode_setting(settings.value('dialect', QVariant('')).toString())
+            info['host'] = _decode_setting(settings.value('host', QVariant('')).toString())
+            info['port'] = _decode_setting(settings.value('port', QVariant('')).toString())
+            info['database'] = _decode_setting(settings.value('database', QVariant('')).toString())
+            info['user'] = _decode_setting(settings.value('user', QVariant('')).toString())
+            info['pass'] = _decode_setting(settings.value('pass', QVariant('')).toString())
+            info['media_location'] = _decode_setting(settings.value('media_location', QVariant('')).toString())
+            info['locale_language'] = _decode_setting(settings.value('locale_language', QVariant('')).toString())
+            info['proxy_host'] = _decode_setting(settings.value('proxy_host', QVariant('')).toString())
+            info['proxy_username'] = _decode_setting(settings.value('proxy_username', QVariant('')).toString())
+            info['proxy_password'] = _decode_setting(settings.value('proxy_password', QVariant('')).toString())
+            profiles[profilename] = info
+        settings.endArray()
+    except Exception, e:
+        logger.warn('Could not read existing profiles, proceed with what was available', exc_info=e)
     return profiles
 
 def store_profiles(profiles):
