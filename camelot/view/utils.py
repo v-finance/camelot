@@ -108,6 +108,12 @@ def date_from_string(s):
         # encoding, so we cannot convert them to unicode to compare them
         only_letters_format = u''.join([c for c in f if c in string.ascii_letters])
         only_letters_string = u''.join([c for c in s if c in (string.ascii_letters+string.digits)])
+	#
+	# if length format and string don't match, prepend the string with 0s
+	# this is to handle the case 1/01/2000
+	#
+	if len(only_letters_format) > len(only_letters_string):
+	    only_letters_string = '0' + only_letters_string
         dt = QDate.fromString(only_letters_string, only_letters_format)
         if not dt.isValid():
             # try parsing without the year, and take the current year by default
