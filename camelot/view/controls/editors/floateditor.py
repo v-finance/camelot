@@ -184,7 +184,6 @@ class FloatEditor(CustomEditor):
 
     def set_background_color(self, background_color):
         if background_color not in (None, ValueLoading):
-            """
             selfpalette = self.spinBox.palette()
             sbpalette = self.spinBox.palette()
             lepalette = self.spinBox.lineEdit().palette()
@@ -198,7 +197,6 @@ class FloatEditor(CustomEditor):
             self.setPalette(selfpalette)
             self.spinBox.setPalette(sbpalette)
             self.spinBox.lineEdit().setPalette(lepalette)
-            """
             return True
         else:
             return False
