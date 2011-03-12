@@ -25,10 +25,14 @@
 """Functions and classes to use a progress dialog in combination with
 a model thread"""
 
+import logging
+
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
 
 from PyQt4 import QtGui, QtCore
+
+LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
 class ProgressDialog(QtGui.QProgressDialog):
     """A Progress Dialog to be used in combination with a post to the model thread::
@@ -76,3 +80,9 @@ class ProgressDialog(QtGui.QProgressDialog):
         litebox = LiteBoxView(parent=self)
         litebox.closed_signal.connect( self.close )
         litebox.show_fullscreen_pixmap( pixmap.getQPixmap() )
+        
+    @QtCore.pyqtSlot(object)
+    def exit(self, return_code):
+        """Stop the application event loop, with the given return code"""
+        LOGGER.info( 'exit application with code %s'%return_code )
+        QtGui.QApplication.exit( int( return_code ) ) 

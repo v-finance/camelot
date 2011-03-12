@@ -137,7 +137,7 @@ class Application(QtCore.QObject):
         exit
         :param application: the QApplication to run"""
         import sys
-        sys.exit(application.exec_())
+        sys.exit( application.exec_() )
 
     def initialization_exception(self, exception_info):
         """This method is called whenever an exception occurs before the event

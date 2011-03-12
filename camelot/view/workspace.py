@@ -71,7 +71,11 @@ class DesktopBackground(QtGui.QWidget):
         """
         :param actions: a list of EntityActions
         """
-        
+        #
+        # Remove old actions
+        #
+        for child in self.findChildren( QtGui.QWidget, 'action_button' ):
+            child.deleteLater()
         # Make sure that the action buttons aren't visually split
         # up in two rows when there are e.g. only 3 of them.
         # So:
@@ -121,7 +125,7 @@ class ActionButton(QtGui.QWidget):
     """
     def __init__(self, action, parent = None):
         super(ActionButton, self).__init__(parent)
-        
+        self.setObjectName( 'action_button' )
         self.action = action
         
         # This property holds if this button reacts to mouse events.
