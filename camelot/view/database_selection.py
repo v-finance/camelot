@@ -30,21 +30,12 @@ from sqlalchemy import create_engine
 
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QBoxLayout
-from PyQt4.QtGui import QDialog
-from PyQt4.QtGui import QFont
-from PyQt4.QtGui import QGridLayout
-from PyQt4.QtGui import QHBoxLayout
-from PyQt4.QtGui import QLabel
-from PyQt4.QtGui import QLineEdit
-from PyQt4.QtGui import QPushButton
-from PyQt4.QtGui import QFileDialog
-
+from PyQt4.QtGui import QBoxLayout, QDialog, QFont, QGridLayout, QHBoxLayout, \
+    QLabel, QLineEdit, QPushButton, QFileDialog, QComboBox
 from camelot.view import art
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.editors import ChoicesEditor, TextLineEditor, LanguageEditor
-from camelot.view.controls.standalone_wizard_page import HSeparator
-from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from camelot.view.controls.standalone_wizard_page import HSeparator, StandaloneWizardPage
 from camelot.view.controls.combobox_input_dialog import ComboBoxInputDialog
 
 from camelot.core.utils import ugettext as _
@@ -55,7 +46,7 @@ from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, store_pr
 logger = logging.getLogger('camelot.view.database_selection')
 
 
-NEW_PROFILE_LABEL = _('new profile')
+NEW_PROFILE_LABEL = _('new/edit profile')
 
 def select_database(app_admin):
     profiles_dict = fetch_profiles()
@@ -130,7 +121,7 @@ allow all languages
 
         self.setWindowTitle(_('Profile Wizard'))
         self.set_banner_logo_pixmap(art.Icon('tango/22x22/categories/preferences-system.png').getQPixmap())
-        self.set_banner_title(_('Create New Profile'))
+        self.set_banner_title(_('Create New/Edit Profile'))
         self.set_banner_subtitle(_('Please enter the database settings'))
         self.banner_widget().setStyleSheet('background-color: white;')
 
@@ -175,7 +166,8 @@ allow all languages
         layout.addWidget(self.proxy_username_label, 10, 0, Qt.AlignRight)
         layout.addWidget(self.proxy_password_label, 11, 0, Qt.AlignRight)
 
-        self.profile_editor = QLineEdit()
+        self.profile_editor = QComboBox(self)
+        self.profile_editor.setEditable(True)
 
         # 32767 is Qt max length for string
         # should be more than enough for folders
@@ -229,11 +221,12 @@ allow all languages
         dialects = [name for _importer, name, is_package in \
         pkgutil.iter_modules(sqlalchemy.dialects.__path__ ) if is_package]
         self.dialect_editor.set_choices([(dialect, dialect.capitalize()) for dialect in dialects])
+        self.profile_editor.insertItems( 1, ['']+[item for item in fetch_profiles()] )
         self.profile_editor.setFocus()
         self.update_profile()
 
     def connect_widgets(self):
-        self.profile_editor.textChanged.connect(self.update_profile)
+        self.profile_editor.editTextChanged.connect(self.update_profile)
 
     def create_buttons(self):
         self.cancel_button = QPushButton(_('Cancel'))
@@ -316,7 +309,7 @@ allow all languages
         self.ok_button.setEnabled(enabled)
 
     def current_profile(self):
-        text = unicode(self.profile_editor.text())
+        text = unicode(self.profile_editor.currentText())
         self.toggle_ok_button(bool(text))
         return text
 
