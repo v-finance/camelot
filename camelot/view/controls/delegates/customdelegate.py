@@ -64,8 +64,30 @@ def DocumentationMetaclass(name, bases, dct):
                 add_field_attribute_item(arg)
 
     if 'editor' in dct:
-        dct['__doc__'] = dct['__doc__'] + '\n\nBy default, creates a %s as its editor.\n'%dct['editor'].__name__
-        dct['__doc__'] = dct['__doc__'] + '\n.. image:: ../_static/editors/%s_editable.png'%dct['editor'].__name__ + '\n'
+        
+        row_separator = '+' + '-'*40 + '+' + '-'*90 + '+'
+        row_format = """| %-38s | %-88s |"""
+        states = {'editable':['editable=True'], 
+                  'disabled':['editable=False'],
+                  'editable_tooltip':['editable=True', "tooltip='tooltip'"], 
+                  'disabled_tooltip':['editable=False', "tooltip='tooltip'"],
+                  'editable_background_color':['editable=True', 'background_color=ColorScheme.green'], 
+                  'disabled_background_color':['editable=False', 'background_color=ColorScheme.green']                  
+                  }
+
+        dct['__doc__'] = dct['__doc__'] + '\n\nBy default, creates a %s as its editor.\n\n'%dct['editor'].__name__
+        dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
+        dct['__doc__'] = dct['__doc__'] + row_format%('**Field Attributes**', '**Editor**') + '\n'
+        dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
+        for state, attrs in states.items():
+            for i,attr in enumerate(attrs):
+                if i==0:
+                    image = '.. image:: ../_static/editors/%s_%s.png'%(dct['editor'].__name__, state)
+                else:
+                    image = ''
+                dct['__doc__'] = dct['__doc__'] + row_format%(attr, image) + '\n'
+            dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
+        
         dct['__doc__'] = dct['__doc__'] + '\nStatic attributes supported by this editor : \n'
         args, _varargs, _varkw,  _defaults = inspect.getargspec(dct['editor'].__init__)
         for arg in args:

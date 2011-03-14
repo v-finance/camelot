@@ -69,11 +69,18 @@ class ModelThreadTestCase(unittest.TestCase):
             images_path = os.path.join(self.images_path, subdir)
         if not os.path.exists(images_path):
             os.makedirs(images_path)
-        test_case_name = sys._getframe(1).f_code.co_name[5:]
+        
+        # try to move up in the stack until we find a test method
+        for i in range(1, 10):
+            if sys._getframe(i).f_code.co_name.startswith('test'):
+                break
+            
+        test_case_name = sys._getframe(i).f_code.co_name[5:]
         image_name = '%s.png'%test_case_name
         if suffix:
             image_name = '%s_%s.png'%(test_case_name, suffix)
         widget.adjustSize()
+        widget.repaint()
         self.process()
         QtGui.QApplication.flush()
         inner_pixmap = QPixmap.grabWidget(widget)        

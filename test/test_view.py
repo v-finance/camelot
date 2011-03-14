@@ -6,6 +6,8 @@ import unittest
 import os
 
 from camelot.test import ModelThreadTestCase, EntityViewsTest, SchemaTest
+from camelot.view.art import ColorScheme
+
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
@@ -221,29 +223,36 @@ class EditorsTest(ModelThreadTestCase):
         editor = self.editors.TextLineEditor(parent=None, length=10)
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( u'za coś tam' )
-        self.grab_widget( editor, 'editable' )
-        editor.set_field_attributes(tooltip = 'tooltip')
-        self.grab_widget( editor, 'editable_tooltip')
+        self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), u'za coś tam' )
         editor.set_value( self.ValueLoading )
         self.assertEqual( editor.get_value(), self.ValueLoading )
-        editor = self.editors.TextLineEditor(parent=None, length=10, editable=False)
+        editor = self.editors.TextLineEditor(parent=None, length=10)
+        editor.set_field_attributes( editable=False )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( u'za coś tam' )
-        self.grab_widget( editor, 'disabled' )
-        editor.set_field_attributes(tooltip = 'tooltip')
-        self.grab_widget( editor, 'disabled_tooltip')
         self.assertEqual( editor.get_value(), u'za coś tam' )
         editor.set_value( self.ValueLoading )
         self.assertEqual( editor.get_value(), self.ValueLoading )
-        editor.set_value( u'editor.set_enabled() Test' )
-        editor.set_enabled( True )
-        self.grab_widget( editor, 'set_enabled()_editable' )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
         # pretend the user has entered some text
         editor.setText( u'foo' )
         self.assertTrue( editor.get_value() != None )
+        
+    def grab_default_states( self, editor ):
+        editor.set_field_attributes(tooltip = 'tooltip', editable=False)
+        self.grab_widget( editor, 'disabled_tooltip')
+        editor.set_field_attributes( background_color=ColorScheme.green, editable=False )
+        self.grab_widget( editor, 'disabled_background_color' )
+        editor.set_field_attributes( editable=True )
+        self.grab_widget( editor, 'editable' )
+        editor.set_field_attributes( editable=False )
+        self.grab_widget( editor, 'disabled' )
+        editor.set_field_attributes( editable=True, tooltip = 'tooltip')
+        self.grab_widget( editor, 'editable_tooltip')
+        editor.set_field_attributes( editable = True, background_color=ColorScheme.green )
+        self.grab_widget( editor, 'editable_background_color')
 
     def test_StarEditor(self):
         editor = self.editors.StarEditor(parent=None, maximum=5)
@@ -450,39 +459,30 @@ class EditorsTest(ModelThreadTestCase):
 
     def test_FloatEditor(self):
         editor = self.editors.FloatEditor(parent=None, 
-                                          editable=True, 
                                           prefix='prefix')
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
         editor.set_value( 3.14 )
-        self.grab_widget( editor, 'editable' )
-        editor.set_field_attributes(tooltip = 'tooltip')
-        self.grab_widget( editor, 'editable_tooltip')
+        self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
         editor.set_value( self.ValueLoading )
         self.assertEqual( editor.get_value(), self.ValueLoading )
-        editor = self.editors.FloatEditor(parent=None, 
-                                          editable=False, 
+        editor = self.editors.FloatEditor(parent=None,  
                                           suffix='suffix')
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
         editor.set_value( 3.14 )
-        self.grab_widget( editor, 'disabled' )
         self.assertEqual( editor.get_value(), 3.14 )
         editor.set_value( self.ValueLoading )
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 5.45 )
-        editor.set_enabled( True )
-        self.grab_widget( editor, 'set_enabled()_editable' )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
         # pretend the user has entered something
         editor.spinBox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
-        editor.set_field_attributes(tooltip = 'tooltip')
-        self.grab_widget( editor, 'disabled_tooltip')
         # verify if the calculator button is turned off
         editor = self.editors.FloatEditor(parent=None, 
                                           calculator=False)

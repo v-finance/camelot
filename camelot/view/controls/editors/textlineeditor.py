@@ -28,13 +28,11 @@ from customeditor import AbstractCustomEditor
 
 class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
 
-    def __init__(self, parent, length=20, editable=True, **kwargs):
+    def __init__(self, parent, length=20, **kwargs):
         QtGui.QLineEdit.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         if length:
             self.setMaxLength(length)
-        if not editable:
-            self.setEnabled(False)
 
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
@@ -56,6 +54,8 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
         return value
 
     def set_field_attributes(self, editable=True, background_color=None, tooltip = '', **kwargs):
+        self.set_background_color( background_color )
+        self.set_enabled( editable )
         if tooltip:
             self.setStyleSheet("""QLineEdit { background-image: url(:/tooltip_visualization_7x7_glow.png);
                                               background-position: top left;

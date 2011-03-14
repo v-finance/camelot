@@ -62,6 +62,13 @@ editable
   
 Indicates whether the user can edit the field.
 
+.. _field-attribute-length:
+
+length
+------
+
+The maximum number of characters that can be entered in a text field.
+
 .. _field-attribute-minimum:
 
 minimum
@@ -142,6 +149,16 @@ tooltip.  The string may contain html markup.
 .. literalinclude:: ../../../../test/snippet/fields_with_tooltips.py
   
 .. image:: ../_static/snippets/fields_with_tooltips.png
+
+.. _field-attribute-translate_content:
+
+translate_content 
+-----------------
+
+:const:`True` or :const:`False`
+  
+Wether the content of a field should be translated before displaying it.  This
+only works for displaying content, not while editing it.
 
 .. _field-attribute-background_color:
 
