@@ -27,21 +27,21 @@ from PyQt4 import QtCore
 
 from camelot.view.proxy import ValueLoading
 
-class ChangeableBackgroundColor(object):
-    """Helper class with a default implementation of
-    set_background_color"""
+def set_background_color_palette(widget, background_color):
+    """Set the palette of a widget to have a cerain background color
+    :param widget: a QWidget
+    :param background_color: a QColor
+    """
+    if background_color not in (None, ValueLoading):
+        palette = QtGui.QPalette( widget.palette() )
+        for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
+            for y in [widget.backgroundRole(), QtGui.QPalette.Window]:
+                palette.setColor(x, y, background_color)
+        widget.setPalette( palette )
+    else:
+        widget.setPalette( QtGui.QApplication.palette() )
         
-    def set_background_color(self, background_color):
-        if background_color not in (None, ValueLoading):
-            palette = QtGui.QPalette( self.palette() )
-            for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
-                for y in [self.backgroundRole(), QtGui.QPalette.Window]:
-                    palette.setColor(x, y, background_color)
-            self.setPalette( palette )
-        else:
-            self.setPalette( QtGui.QApplication.palette() )
-        
-class AbstractCustomEditor(ChangeableBackgroundColor):
+class AbstractCustomEditor(object):
     """Helper class to be used to build custom editors.  This class provides
 functionality to store and retrieve `ValueLoading` as an editor's value.
 
@@ -86,7 +86,6 @@ Guidelines for implementing CustomEditors :
     Get the 'standard' height for a cell
     """
     def get_height(self):
-
         height = [QtGui.QLineEdit().sizeHint().height(),
                QtGui.QDateEdit().sizeHint().height(),
                QtGui.QDateTimeEdit().sizeHint().height(),
@@ -98,6 +97,8 @@ Guidelines for implementing CustomEditors :
 
         return finalHeight
 
+    def set_background_color(self, background_color):
+        set_background_color_palette( self, background_color )
 
 class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     """Base class for implementing custom editor widgets.  This class provides
