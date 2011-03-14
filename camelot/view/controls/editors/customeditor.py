@@ -27,7 +27,21 @@ from PyQt4 import QtCore
 
 from camelot.view.proxy import ValueLoading
 
-class AbstractCustomEditor(object):
+class ChangeableBackgroundColor(object):
+    """Helper class with a default implementation of
+    set_background_color"""
+        
+    def set_background_color(self, background_color):
+        if background_color not in (None, ValueLoading):
+            palette = QtGui.QPalette( self.palette() )
+            for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
+                for y in [self.backgroundRole(), QtGui.QPalette.Window]:
+                    palette.setColor(x, y, background_color)
+            self.setPalette( palette )
+        else:
+            self.setPalette( QtGui.QApplication.palette() )
+        
+class AbstractCustomEditor(ChangeableBackgroundColor):
     """Helper class to be used to build custom editors.  This class provides
 functionality to store and retrieve `ValueLoading` as an editor's value.
 
@@ -83,16 +97,6 @@ Guidelines for implementing CustomEditors :
         finalHeight = max(height)
 
         return finalHeight
-
-    def set_background_color(self, background_color):
-        if background_color not in (None, ValueLoading):
-            palette = self.palette()
-            for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
-                for y in [self.backgroundRole(), QtGui.QPalette.Window]:
-                    palette.setColor(x, y, background_color)
-            self.setPalette(palette)
-        else:
-            return False
 
 
 class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
