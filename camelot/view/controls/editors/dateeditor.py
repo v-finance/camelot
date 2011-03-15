@@ -28,7 +28,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor
+from customeditor import CustomEditor, set_background_color_palette
 
 from camelot.view.art import Icon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
@@ -143,12 +143,20 @@ class DateEditor(CustomEditor):
         return CustomEditor.get_value(self) or value
 
     def set_field_attributes(self, editable=True, background_color=None, tooltip = '', **kwargs):
+        self.set_enabled(editable)
+        self.set_background_color(background_color)
+        
+        print "set_field_attributes"
         if tooltip:
-            self.line_edit.setStyleSheet("""QLineEdit { 
+            print "Tooltip \"", tooltip, "\" detected, applying stylesheet"
+            '''self.line_edit.setStyleSheet("""QLineEdit { 
                                               background-image: url(:/tooltip_visualization_7x7_glow.png);
                                               background-position: top left;
-                                              background-repeat: no-repeat; }""")
+                                              background-repeat: no-repeat; }""")'''
             self.setToolTip(unicode(tooltip))
+
+    def set_background_color(self, background_color):
+        set_background_color_palette( self.line_edit, background_color )
 
     def set_enabled(self, editable=True):
         self.line_edit.setEnabled(editable)
