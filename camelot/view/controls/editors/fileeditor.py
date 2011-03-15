@@ -40,6 +40,7 @@ class FileEditor(CustomEditor):
                  **kwargs):
         CustomEditor.__init__(self, parent)
         self.storage = storage
+        self.filename = None # the widget containing the filename
 
         # i'm a < 80 characters fanatic, i know :)
         self.new_icon = Icon(
@@ -138,7 +139,7 @@ class FileEditor(CustomEditor):
         self.set_background_color(background_color)
         self.remove_original = remove_original
         
-        if tooltip:
+        if tooltip and self.filename:
             self.filename.setStyleSheet("""QLineEdit {
                                               background-image: url(:/tooltip_visualization_7x7_glow.png);
                                               background-position: top left;

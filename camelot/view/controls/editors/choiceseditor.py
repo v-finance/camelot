@@ -70,8 +70,9 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
                 self.insertItem(i+1, current_name, QtCore.QVariant(current_value))
             self.set_value(current_value)
 
-    def set_field_attributes(self, editable=True, choices=[], **kwargs):
-        self.set_choices(choices or [])
+    def set_field_attributes(self, editable=True, choices=None, **kwargs):
+        if choices != None:
+            self.set_choices(choices)
         self.setEnabled(editable!=False)
 
     def get_choices(self):

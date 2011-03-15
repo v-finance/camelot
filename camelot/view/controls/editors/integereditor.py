@@ -119,8 +119,14 @@ an unneeded update of the db.
                              nullable=True, single_step=1, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
-        self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
+        if prefix:
+            self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
+        else:
+            self.spinBox.setPrefix('')
+        if suffix:
+            self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
+        else:
+            self.spinBox.setSuffix(u'')
         self.spinBox.setSingleStep(single_step)
         self._nullable = nullable
 
@@ -173,4 +179,3 @@ an unneeded update of the db.
     @QtCore.pyqtSlot()
     def spinbox_editing_finished(self):
         self.editingFinished.emit()
-
