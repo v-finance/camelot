@@ -131,10 +131,10 @@ an unneeded update of the db.
         self._nullable = nullable
 
         if tooltip:
-            self.spinBox.setStyleSheet("""QDoubleSpinBox { 
+            '''self.spinBox.setStyleSheet("""QDoubleSpinBox { 
                                               background-image: url(:/tooltip_visualization_7x7_glow.png);
                                               background-position: top left;
-                                              background-repeat: no-repeat; }""")
+                                              background-repeat: no-repeat; }""")'''
             self.spinBox.setToolTip(unicode(tooltip))
 
     def set_value(self, value):

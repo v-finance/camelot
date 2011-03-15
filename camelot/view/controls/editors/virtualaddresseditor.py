@@ -208,10 +208,13 @@ class VirtualAddressEditor(CustomEditor):
             return False
             
     def set_field_attributes(self, editable=True, background_color=None, tooltip = '', **kwargs):
+        self.set_enabled(editable)
+        self.set_background_color(background_color)
+        
         if tooltip:
-            self.editor.setStyleSheet("""QLineEdit {
+            '''self.editor.setStyleSheet("""QLineEdit {
                                               background-image: url(:/tooltip_visualization_7x7_glow.png);
                                               background-position: top left;
-                                              background-repeat: no-repeat; }""")
+                                              background-repeat: no-repeat; }""")'''
             self.editor.setToolTip(unicode(tooltip))
 
