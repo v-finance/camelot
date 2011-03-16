@@ -32,7 +32,7 @@ from camelot.view.art import Icon
 from camelot.core.constants import camelot_minint
 from camelot.core.constants import camelot_maxint
 
-from customeditor import CustomEditor
+from customeditor import CustomEditor, set_background_color_palette
 from camelot.view.controls.editors.floateditor import CustomDoubleSpinBox
 
 class IntegerEditor(CustomEditor):
@@ -118,7 +118,8 @@ an unneeded update of the db.
                              tooltip = '', prefix='', suffix='',
                              nullable=True, single_step=1, **kwargs):
         self.set_enabled(editable)
-        self.set_background_color(background_color)
+        set_background_color_palette( self.spinBox.lineEdit(),
+                                      background_color )
         if prefix:
             self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
         else:

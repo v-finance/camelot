@@ -37,7 +37,7 @@ from camelot.core.utils import ugettext as _
 from camelot.core.utils import variant_to_pyobject
 from camelot.core.utils import create_constant_function
 
-from customeditor import CustomEditor
+from customeditor import CustomEditor, set_background_color_palette
 from abstractmanytooneeditor import AbstractManyToOneEditor
 
 import logging
@@ -140,7 +140,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
 
     def set_field_attributes(self, editable=True, background_color=None, **kw):
         self.set_editable(editable)
-        self.set_background_color(background_color)
+        set_background_color_palette( self.search_input, background_color )
 
     def set_editable(self, editable):
         self._editable = editable

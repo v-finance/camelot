@@ -28,7 +28,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor
+from customeditor import CustomEditor, set_background_color_palette
 from camelot.view.art import Icon
 import camelot.types
 
@@ -200,12 +200,7 @@ class VirtualAddressEditor(CustomEditor):
             self.editingFinished.emit()
 
     def set_background_color(self, background_color):
-        if background_color:
-            palette = self.editor.palette()
-            palette.setColor(self.backgroundRole(), background_color)
-            self.editor.setPalette(palette)
-        else:
-            return False
+        set_background_color_palette( self.editor, background_color )
             
     def set_field_attributes(self, editable=True, background_color=None, tooltip = '', **kwargs):
         self.set_enabled(editable)

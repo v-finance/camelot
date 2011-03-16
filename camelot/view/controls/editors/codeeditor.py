@@ -26,7 +26,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor
+from customeditor import CustomEditor, set_background_color_palette
 import re
 
 class PartEditor(QtGui.QLineEdit):
@@ -97,13 +97,8 @@ class CodeEditor(CustomEditor):
         return CustomEditor.get_value(self) or value
 
     def set_background_color(self, background_color):
-        if background_color:
-            for editor in self.part_editors:
-                palette = editor.palette()
-                palette.setColor(editor.backgroundRole(), background_color)
-                editor.setPalette(palette)
-        else:
-            return False
+        for editor in self.part_editors:
+            set_background_color_palette( editor, background_color )
             
     def set_field_attributes(self, editable=True, background_color=None, tooltip = '', **kwargs):
         self.set_enabled(editable)

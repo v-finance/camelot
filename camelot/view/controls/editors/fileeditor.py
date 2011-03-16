@@ -25,7 +25,7 @@
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor
+from customeditor import CustomEditor, set_background_color_palette
 
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
@@ -136,7 +136,8 @@ class FileEditor(CustomEditor):
     def set_field_attributes(self, editable=True, background_color=None, 
                              tooltip = '', remove_original=False, **kwargs):
         self.set_enabled(editable)
-        self.set_background_color(background_color)
+        if self.filename:
+            set_background_color_palette( self.filename, background_color )
         self.remove_original = remove_original
         
         if tooltip and self.filename:

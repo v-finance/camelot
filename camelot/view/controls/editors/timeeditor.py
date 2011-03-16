@@ -25,7 +25,7 @@ import datetime
 
 from PyQt4 import QtGui
 
-from customeditor import AbstractCustomEditor
+from customeditor import AbstractCustomEditor, set_background_color_palette
 from camelot.core import constants
 
 class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):
@@ -56,4 +56,6 @@ class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):
       
     def set_enabled(self, editable=True):
         self.setEnabled(editable)
-
+        
+    def set_background_color( self, background_color ):
+        set_background_color_palette( self.lineEdit(), background_color )
