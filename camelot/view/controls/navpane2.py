@@ -163,7 +163,8 @@ class NavigationPane(QDockWidget):
         animation.setStartValue( 0 )
         animation.setEndValue( 220 )
         animation.start()
-        animation.finished.connect(self._workspace._background_widget.makeInteractive)
+        if self._workspace:
+            animation.finished.connect(self._workspace._background_widget.makeInteractive)
 
         # performs QToolBox clean up
         # QToolbox won't delete items we have to do it explicitly

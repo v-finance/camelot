@@ -1,6 +1,51 @@
 Trunk
 -----
 
+ * add legend function to chart container
+ 
+ * Workspace maximizes when double clicking on tab bar
+ 
+ * Fix tab behavour of some editors
+ 
+ * Support for editing columns in the frozen part of a table view
+ 
+ * New DateTime Editor
+ 
+   .. image:: _static/editors/DateTimeEditor_editable.png
+ 
+ * More intuitive navigation pane
+ 
+   .. image:: _static/controls/navigation_pane.png
+ 
+ * progress dialog when records are deleted
+ 
+ * FileEditor supports removing files after copying them
+ 
+ * EntityAdmin changes
+ 
+   * supports objects mapped with plain SQLAlchemy, documentation on how
+     to use this
+     
+   * confirm_delete reworked to delete_mode
+
+   * expanded_list_search option to tune which fields show up
+
+   
+ * ApplicationAdmin changes
+ 
+   * actions_changed_signal
+
+   * application actions show up in desktop workspace
+   
+     .. image:: _static/controls/desktop_workspace.png
+
+ * postgres support for backup / restore
+ 
+ * new actions : DocxApplicationAction, PixmapFormAction
+ 
+ * Most editors now support background_color, editable and tooltip
+   as dynamic attributes
+ 
 Release 10.11.27
 ----------------
 

@@ -40,7 +40,9 @@ def get_application():
         application = QApplication.instance()
         if not application:
             import sys
+            from camelot.view import art
             application = QApplication(sys.argv)
+            application.setStyleSheet( art.read('stylesheet/office2007_blue.qss') )
         _application_.append( application )
     return _application_[0]
 
