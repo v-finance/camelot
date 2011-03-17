@@ -29,7 +29,6 @@ from PyQt4.QtCore import Qt
 from customeditor import CustomEditor, set_background_color_palette
 from camelot.view.art import Icon
 from camelot.core import constants
-from camelot.view.proxy import ValueLoading
 
 class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""

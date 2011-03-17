@@ -29,7 +29,6 @@ from PyQt4.QtCore import Qt
 from customeditor import CustomEditor, set_background_color_palette
 from camelot.core import constants
 from camelot.view.art import Icon
-from camelot.view.proxy import ValueLoading
 
 from camelot.view.controls.editors.floateditor import CustomDoubleSpinBox
 
