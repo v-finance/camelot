@@ -58,7 +58,6 @@ class SimpleSearchControl(QtGui.QWidget):
         from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
         self.search_input = DecoratedLineEdit(self)
         self.search_input.set_background_text(_('Search...'))
-        self.search_input.setToolTip(_('type words to search for'))
         #self.search_input.setStyleSheet('QLineEdit{ border-radius: 0.25em;}')
         self.search_input.returnPressed.connect( self.emit_search )
         self.search_input.textEdited.connect( self.emit_search )
