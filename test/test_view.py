@@ -227,15 +227,20 @@ class EditorsTest(ModelThreadTestCase):
     def grab_default_states( self, editor ):
         editor.set_field_attributes( editable = True, background_color=ColorScheme.green )
         self.grab_widget( editor, 'editable_background_color')
-        editor.set_field_attributes(tooltip = 'tooltip', editable=False)
+        
+        editor.set_field_attributes( editable = False, tooltip = 'tooltip' )
         self.grab_widget( editor, 'disabled_tooltip')
-        editor.set_field_attributes( background_color=ColorScheme.green, editable=False )
+
+        editor.set_field_attributes( editable = False, background_color=ColorScheme.green )
         self.grab_widget( editor, 'disabled_background_color' )
-        editor.set_field_attributes( editable=True )
+
+        editor.set_field_attributes( editable = True )
         self.grab_widget( editor, 'editable' )
-        editor.set_field_attributes( editable=False )
+
+        editor.set_field_attributes( editable = False )
         self.grab_widget( editor, 'disabled' )
-        editor.set_field_attributes( editable=True, tooltip = 'tooltip')
+
+        editor.set_field_attributes( editable = True, tooltip = 'tooltip')
         self.grab_widget( editor, 'editable_tooltip')
 
     def test_StarEditor(self):
