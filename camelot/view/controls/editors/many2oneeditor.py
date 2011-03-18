@@ -138,9 +138,12 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.layout.addWidget(self.open_button)
         self.setLayout(self.layout)
 
-    def set_field_attributes(self, editable=True, background_color=None, **kw):
+    def set_field_attributes(self, editable = True, 
+                                   background_color = None,
+                                   tooltip = '', **kwargs):
         self.set_editable(editable)
         set_background_color_palette( self.search_input, background_color )
+        self.setToolTip(tooltip)
 
     def set_editable(self, editable):
         self._editable = editable

@@ -26,7 +26,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, set_background_color_palette
+from customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
 from camelot.view.art import Icon
 from camelot.core import constants
 
@@ -54,6 +54,12 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
 
     def textFromValue(self, value):
         return unicode( QtCore.QString("%L1").arg(float(value), 0, 'f', self.decimals()) )
+        
+    def paintEvent(self, event):
+        super(CustomDoubleSpinBox, self).paintEvent(event)
+        
+        if self.toolTip():
+            draw_tooltip_visualization(self)
 
 class FloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator button.  
@@ -63,14 +69,12 @@ class FloatEditor(CustomEditor):
 
     calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
     
-    def __init__(self,
-                 parent,
-                 precision=2,
-                 minimum=constants.camelot_minfloat,
-                 maximum=constants.camelot_maxfloat,
-                 calculator=True,
-                 decimal=False,
-                 **kwargs):
+    def __init__(self, parent,
+                       precision = 2,
+                       minimum = constants.camelot_minfloat,
+                       maximum = constants.camelot_maxfloat,
+                       calculator = True,
+                       decimal = False, **kwargs):
         CustomEditor.__init__(self, parent)
         self._decimal = decimal
         self._calculator = calculator
@@ -110,26 +114,19 @@ class FloatEditor(CustomEditor):
         self.setFocusProxy(self.spinBox)
         self.setLayout(layout)
 
-    def set_field_attributes(self,
-                             editable = True,
-                             background_color = None,
-                             tooltip = '',
-                             prefix = '',
-                             suffix = '',
-                             single_step = 1.0, **kwargs):
+    def set_field_attributes(self, editable = True,
+                                   background_color = None,
+                                   tooltip = '',
+                                   prefix = '',
+                                   suffix = '',
+                                   single_step = 1.0, **kwargs):
         self.set_enabled(editable)
-        self.set_background_color(background_color)        
+        self.set_background_color(background_color)
+        self.spinBox.setToolTip(unicode(tooltip))
         self.spinBox.setPrefix(u'%s '%(unicode(prefix or '').lstrip()))
         self.spinBox.setSuffix(u' %s'%(unicode(suffix or '').rstrip()))
         self.spinBox.setSingleStep(single_step)
-        
-        if tooltip:
-            self.spinBox.setStyleSheet("""QDoubleSpinBox { 
-                                              background-image: url(:/tooltip_visualization_7x7_glow.png);
-                                              background-position: top left;
-                                              background-repeat: no-repeat; }""")
-            self.spinBox.setToolTip(unicode(tooltip))
-        
+
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:

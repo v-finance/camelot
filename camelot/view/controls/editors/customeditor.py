@@ -28,7 +28,8 @@ from PyQt4 import QtCore
 from camelot.view.proxy import ValueLoading
 
 def set_background_color_palette(widget, background_color):
-    """Set the palette of a widget to have a cerain background color
+    """
+    Set the palette of a widget to have a cerain background color.
     :param widget: a QWidget
     :param background_color: a QColor
     """
@@ -41,21 +42,32 @@ def set_background_color_palette(widget, background_color):
     else:
         widget.setPalette( QtGui.QApplication.palette() )
         
+def draw_tooltip_visualization(widget):
+    """
+    Draws a small visual indication in the top-left corner of a widget.
+    :param widget: a QWidget
+    """
+    from camelot.art import resources # Required for image below.
+
+    painter = QtGui.QPainter(widget)
+    painter.drawPixmap(QtCore.QPoint(0, 0), QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))    
+        
 class AbstractCustomEditor(object):
-    """Helper class to be used to build custom editors.  This class provides
-functionality to store and retrieve `ValueLoading` as an editor's value.
+    """
+    Helper class to be used to build custom editors.
+    This class provides functionality to store and retrieve 
+    `ValueLoading` as an editor's value.
 
-Guidelines for implementing CustomEditors :
+    Guidelines for implementing CustomEditors :
 
-  * When an editor consists of multiple widgets, one widget must be the focusProxy
-    of the editor, to have that widget immediately activated when the user single
-    clicks in the table view.
+    * When an editor consists of multiple widgets, one widget must be the focusProxy
+      of the editor, to have that widget immediately activated when the user single
+      clicks in the table view.
     
-  * When an editor has widgets that should not get selected when the user tabs
-    through the editor, setFocusPolicy(Qt.ClickFocus) should be called on those
-    widgets
-     
-  """
+    * When an editor has widgets that should not get selected when the user tabs
+      through the editor, setFocusPolicy(Qt.ClickFocus) should be called on those
+      widgets.
+    """
 
     def __init__(self):
         self._value_loading = True
@@ -78,8 +90,9 @@ Guidelines for implementing CustomEditors :
             return ValueLoading
         return None
 
-    def set_field_attributes(self, editable = True, background_color = None, **kwargs):
-        self.setEnabled(editable)
+    def set_field_attributes(self, editable = True,
+                                   background_color = None,
+                                   tooltip = '', **kwargs):
         self.set_background_color(background_color)
 
     """
@@ -101,10 +114,12 @@ Guidelines for implementing CustomEditors :
         set_background_color_palette( self, background_color )
 
 class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
-    """Base class for implementing custom editor widgets.  This class provides
-  dual state functionality.  Each editor should have the posibility to have as
-  its value `ValueLoading` specifying that no value has been set yet.
-  """
+    """
+    Base class for implementing custom editor widgets.
+    This class provides dual state functionality.  Each 
+    editor should have the posibility to have `ValueLoading`
+    as its value, specifying that no value has been set yet.
+    """
 
     editingFinished = QtCore.pyqtSignal()
     valueChanged = QtCore.pyqtSignal()
@@ -112,3 +127,9 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
+        
+    def paintEvent(self, event):
+        super(CustomEditor, self).paintEvent(event)
+        
+        if self.toolTip():
+            draw_tooltip_visualization(self)

@@ -30,6 +30,7 @@ from customeditor import CustomEditor, set_background_color_palette
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 
+from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
 class FileEditor(CustomEditor):
     """Widget for editing File fields"""
@@ -95,7 +96,7 @@ class FileEditor(CustomEditor):
         self.open_button.setAutoRaise(True)
 
         # Filename
-        self.filename = QtGui.QLineEdit(self)
+        self.filename = DecoratedLineEdit(self)
 
         # Setup layout
         self.document_label = QtGui.QLabel(self)
@@ -133,19 +134,15 @@ class FileEditor(CustomEditor):
     def get_value(self):
         return CustomEditor.get_value(self) or self.value
 
-    def set_field_attributes(self, editable=True, background_color=None, 
-                             tooltip = '', remove_original=False, **kwargs):
+    def set_field_attributes(self, editable = True,
+                                   background_color = None,
+                                   tooltip = '',
+                                   remove_original = False, **kwargs):
         self.set_enabled(editable)
         if self.filename:
             set_background_color_palette( self.filename, background_color )
-        self.remove_original = remove_original
-        
-        if tooltip and self.filename:
-            self.filename.setStyleSheet("""QLineEdit {
-                                              background-image: url(:/tooltip_visualization_7x7_glow.png);
-                                              background-position: top left;
-                                              background-repeat: no-repeat; }""")
             self.filename.setToolTip(unicode(tooltip))
+        self.remove_original = remove_original
 
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)

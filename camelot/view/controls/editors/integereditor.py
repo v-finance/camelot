@@ -73,14 +73,10 @@ an unneeded update of the db.
 
     calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
     
-    def __init__(
-        self,
-        parent=None,
-        minimum=camelot_minint,
-        maximum=camelot_maxint,
-        calculator=True,
-        **kwargs
-    ):
+    def __init__(self, parent = None,
+                       minimum = camelot_minint,
+                       maximum = camelot_maxint,
+                       calculator = True, **kwargs):
         CustomEditor.__init__(self, parent)
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
@@ -114,12 +110,18 @@ an unneeded update of the db.
         self._nullable = True
         self._calculator = calculator
 
-    def set_field_attributes(self, editable=True, background_color=None, 
-                             tooltip = '', prefix='', suffix='',
-                             nullable=True, single_step=1, **kwargs):
+    def set_field_attributes(self, editable = True,
+                                   background_color = None, 
+                                   tooltip = '',
+                                   prefix = '',
+                                   suffix = '',
+                                   nullable = True,
+                                   single_step = 1, **kwargs):
         self.set_enabled(editable)
         set_background_color_palette( self.spinBox.lineEdit(),
                                       background_color )
+        self.spinBox.setToolTip(unicode(tooltip))
+        
         if prefix:
             self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
         else:
@@ -128,15 +130,9 @@ an unneeded update of the db.
             self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
         else:
             self.spinBox.setSuffix(u'')
+        
         self.spinBox.setSingleStep(single_step)
         self._nullable = nullable
-
-        if tooltip:
-            '''self.spinBox.setStyleSheet("""QDoubleSpinBox { 
-                                              background-image: url(:/tooltip_visualization_7x7_glow.png);
-                                              background-position: top left;
-                                              background-repeat: no-repeat; }""")'''
-            self.spinBox.setToolTip(unicode(tooltip))
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)

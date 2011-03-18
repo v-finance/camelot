@@ -28,19 +28,30 @@ from PyQt4 import QtCore
 from customeditor import AbstractCustomEditor
 
 class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
+
     editingFinished = QtCore.pyqtSignal()
-    def __init__(self,
-                 parent=None,
-                 text="<loading>",
-                 **kwargs):
+    
+    def __init__(self, parent = None, 
+                       text = "<loading>", **kwargs):
         QtGui.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-        # do not set disabled, it is quite pointless for LabelEditor
-        #self.setEnabled(False)
+
         self.text = text
 
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
         if value:
             self.setText(value)
+            
+    def set_field_attributes(self, editable = True,
+                                   background_color = None,
+                                   tooltip = '', **kwargs):
+        self.setToolTip(unicode(tooltip))
+            
+    def paintEvent(self, event):
+        if self.toolTip():
+            from camelot.art import resources # Required for image below.
+        
+            painter = QtGui.QPainter(self)
+            painter.drawPixmap(0, 0, QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
 

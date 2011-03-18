@@ -26,15 +26,17 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-from customeditor import CustomEditor, set_background_color_palette
+from customeditor import CustomEditor, set_background_color_palette, draw_tooltip_visualization
 import re
 
 class PartEditor(QtGui.QLineEdit):
 
-    def __init__(self, mask):
+    def __init__(self, mask, first = False):
         super(PartEditor, self).__init__()
         self.setInputMask(mask)
-                
+
+        self.firstPart = first
+
     def focusInEvent(self, event):
         super(PartEditor, self).focusInEvent(event)
         self.setCursorPosition(0)
@@ -42,6 +44,12 @@ class PartEditor(QtGui.QLineEdit):
     def focusOutEvent(self, event):
         self.editingFinished.emit()
         super(PartEditor, self).focusOutEvent(event)
+        
+    def paintEvent(self, event):
+        super(PartEditor, self).paintEvent(event)
+        
+        if self.firstPart and self.toolTip():
+            draw_tooltip_visualization(self)
 
 class CodeEditor(CustomEditor):
 
@@ -52,11 +60,13 @@ class CodeEditor(CustomEditor):
         layout = QtGui.QHBoxLayout()
         layout.setMargin(0)
         layout.setSpacing(0)
-        layout.setAlignment(Qt.AlignLeft)
-        for i,part in enumerate(parts):
+        layout.setAlignment(Qt.AlignLeft)   
+        firstPart = True
+        for i, part in enumerate(parts):
             part = re.sub('\W*', '', part)
             part_length = len(part)
-            editor = PartEditor(part)
+            editor = PartEditor(part, firstPart)
+            firstPart = False
             editor.setFocusPolicy( Qt.StrongFocus )
             if i==0:
                 self.setFocusProxy( editor )
@@ -100,12 +110,9 @@ class CodeEditor(CustomEditor):
         for editor in self.part_editors:
             set_background_color_palette( editor, background_color )
             
-    def set_field_attributes(self, editable=True, background_color=None, tooltip = '', **kwargs):
+    def set_field_attributes(self, editable = True,
+                                   background_color = None,
+                                   tooltip = '', **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        
-        if tooltip:
-            '''self.setStyleSheet("""QLineEdit { background-image: url(:/tooltip_visualization_7x7_glow.png);
-                                              background-position: top left;
-                                              background-repeat: no-repeat; }""")'''
-            self.setToolTip(unicode(tooltip))
+        self.layout().itemAt(0).widget().setToolTip(unicode(tooltip))

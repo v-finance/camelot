@@ -23,7 +23,7 @@
 #  ============================================================================
 
 from PyQt4 import QtGui
-from customeditor import AbstractCustomEditor
+from customeditor import AbstractCustomEditor, draw_tooltip_visualization
 
 
 class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
@@ -56,14 +56,15 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
     def set_field_attributes(self, editable=True, background_color=None, tooltip = '', **kwargs):
         self.set_background_color( background_color )
         self.set_enabled( editable )
-        if tooltip:
-            self.setStyleSheet("""QLineEdit { background-image: url(:/tooltip_visualization_7x7_glow.png);
-                                              background-position: top left;
-                                              background-repeat: no-repeat; }""")
-            self.setToolTip(unicode(tooltip))
-
+        self.setToolTip(unicode(tooltip))
 
     def set_enabled(self, editable=True):
         value = self.text()
         self.setEnabled(editable)
         self.setText(value)
+
+    def paintEvent(self, event):
+        super(TextLineEditor, self).paintEvent(event)
+        
+        if self.toolTip():
+            draw_tooltip_visualization(self)

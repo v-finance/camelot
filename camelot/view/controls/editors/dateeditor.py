@@ -35,18 +35,15 @@ from camelot.view.utils import local_date_format, date_from_string, ParsingError
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 from camelot.core.utils import ugettext as _
 
-
 class DateEditor(CustomEditor):
     """Widget for editing date values"""
 
     calendar_action_trigger = QtCore.pyqtSignal()
     special_date_icon = Icon('tango/16x16/apps/office-calendar.png')
     
-    def __init__(self,
-                 parent=None,
-                 editable=True,
-                 nullable=True,
-                 **kwargs):
+    def __init__(self, parent = None,
+                       editable = True,
+                       nullable = True, **kwargs):
         CustomEditor.__init__(self, parent)
 
         self.date_format = local_date_format()
@@ -142,18 +139,12 @@ class DateEditor(CustomEditor):
             value = None
         return CustomEditor.get_value(self) or value
 
-    def set_field_attributes(self, editable=True, background_color=None, tooltip = '', **kwargs):
+    def set_field_attributes(self, editable = True,
+                                   background_color = None,
+                                   tooltip = '', **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        
-        print "set_field_attributes"
-        if tooltip:
-            print "Tooltip \"", tooltip, "\" detected, applying stylesheet"
-            '''self.line_edit.setStyleSheet("""QLineEdit { 
-                                              background-image: url(:/tooltip_visualization_7x7_glow.png);
-                                              background-position: top left;
-                                              background-repeat: no-repeat; }""")'''
-            self.setToolTip(unicode(tooltip))
+        self.line_edit.setToolTip(unicode(tooltip))
 
     def set_background_color(self, background_color):
         set_background_color_palette( self.line_edit, background_color )
@@ -173,4 +164,3 @@ class DateEditor(CustomEditor):
         elif action.text().compare(_('Clear')) == 0:
             self.set_value(None)
         self.editingFinished.emit()
-
