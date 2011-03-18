@@ -24,6 +24,8 @@
 
 from PyQt4 import QtGui
 
+from editors.customeditor import draw_tooltip_visualization
+
 class DecoratedLineEdit(QtGui.QLineEdit):
     """
     A QLineEdit with additional decorations :
@@ -113,3 +115,8 @@ class DecoratedLineEdit(QtGui.QLineEdit):
                 self.setText('')
                 self._show_background_text()
 
+    def paintEvent(self, event):
+        super(DecoratedLineEdit, self).paintEvent(event)
+        
+        if self.toolTip():
+            draw_tooltip_visualization(self)
