@@ -140,10 +140,10 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
 
     def set_field_attributes(self, editable = True, 
                                    background_color = None,
-                                   tooltip = '', **kwargs):
+                                   tooltip = None, **kwargs):
         self.set_editable(editable)
         set_background_color_palette( self.search_input, background_color )
-        self.setToolTip(tooltip)
+        self.search_input.setToolTip(unicode(tooltip or ''))
 
     def set_editable(self, editable):
         self._editable = editable

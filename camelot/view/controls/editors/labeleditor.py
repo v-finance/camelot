@@ -25,7 +25,7 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from customeditor import AbstractCustomEditor
+from customeditor import AbstractCustomEditor, draw_tooltip_visualization
 
 class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
 
@@ -45,13 +45,10 @@ class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
             
     def set_field_attributes(self, editable = True,
                                    background_color = None,
-                                   tooltip = '', **kwargs):
-        self.setToolTip(unicode(tooltip))
+                                   tooltip = None, **kwargs):
+        self.setToolTip(unicode(tooltip or ''))
             
     def paintEvent(self, event):
         if self.toolTip():
-            from camelot.art import resources # Required for image below.
-        
-            painter = QtGui.QPainter(self)
-            painter.drawPixmap(0, 0, QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
+            draw_tooltip_visualization(self)
 

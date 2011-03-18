@@ -41,11 +41,14 @@ class RichTextEditor(CustomEditor, WideEditor):
                             QtGui.QSizePolicy.Expanding )
 
         class CustomTextEdit(QtGui.QTextEdit):
-            """A TextEdit editor that sends editingFinished events when the text was changed
-            and focus is lost
+            """
+            A TextEdit editor that sends editingFinished events 
+            when the text was changed and focus is lost.
             """
 
             editingFinished = QtCore.pyqtSignal()
+            receivedFocus = QtCore.pyqtSignal()
+            lostFocus = QtCore.pyqtSignal()
             
             def __init__(self, parent):
                 super(CustomTextEdit, self).__init__(parent)
@@ -53,10 +56,18 @@ class RichTextEditor(CustomEditor, WideEditor):
                 self.setTabChangesFocus( True )
                 self.textChanged.connect( self._handle_text_changed )
 
+            def focusInEvent(self, event):
+                super(CustomTextEdit, self).focusInEvent( event )
+                
+                self.receivedFocus.emit()
+
             def focusOutEvent(self, event):
                 if self._changed:
                     self.editingFinished.emit()
+                
                 super(CustomTextEdit, self).focusOutEvent( event )
+                
+                self.lostFocus.emit()
 
             def _handle_text_changed(self):
                 self._changed = True
@@ -70,9 +81,13 @@ class RichTextEditor(CustomEditor, WideEditor):
 
         self.textedit = CustomTextEdit(self)
 
-        self.textedit.editingFinished.connect( self.emit_editing_finished )
+        self.initButtons() # Has to be invoked before the connect's below.
+        
+        self.textedit.editingFinished.connect(self.emit_editing_finished)
+        self.textedit.receivedFocus.connect(self.toolbar.show)
+        self.textedit.lostFocus.connect(self.toolbar.hide)
         self.textedit.setAcceptRichText(True)
-        self.initButtons()
+        
 #      #
 #      # Layout
 #      #
@@ -98,8 +113,8 @@ class RichTextEditor(CustomEditor, WideEditor):
             self.editingFinished.emit()
 
     def set_editable(self, editable):
-        self.textedit.setReadOnly(editable==False)
-        self.toolbar.setShown(editable==True)
+        self.textedit.setReadOnly(not editable)
+        #self.toolbar.setVisible(editable)
 
     def set_field_attributes(self, editable=True, background_color=None, **kwargs):
         self.set_editable(editable)
@@ -224,6 +239,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         # Layout
         #
         self.layout.addWidget(self.toolbar)
+        self.toolbar.hide()
     #
     # Button methods
     #

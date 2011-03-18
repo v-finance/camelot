@@ -72,9 +72,10 @@ class MonthsEditor(CustomEditor):
         
     def set_field_attributes(self, editable = True,
                                    background_color = None,
-                                   tooltip = '', **kwargs):
+                                   tooltip = None, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
+        self.years_spinbox.setToolTip(unicode(tooltip or ''))
 
     def set_enabled(self, editable=True):
         self.years_spinbox.setReadOnly(not editable)
@@ -114,4 +115,3 @@ class MonthsEditor(CustomEditor):
         months = int(self.months_spinbox.value())
         value = (years * 12) + months
         return value
-

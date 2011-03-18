@@ -141,10 +141,10 @@ class DateEditor(CustomEditor):
 
     def set_field_attributes(self, editable = True,
                                    background_color = None,
-                                   tooltip = '', **kwargs):
+                                   tooltip = None, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.line_edit.setToolTip(unicode(tooltip))
+        self.line_edit.setToolTip(unicode(tooltip or ''))
 
     def set_background_color(self, background_color):
         set_background_color_palette( self.line_edit, background_color )

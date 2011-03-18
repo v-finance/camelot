@@ -106,17 +106,17 @@ class ColoredFloatEditor(CustomEditor):
                 0:Icon('tango/16x16/actions/zero.png').getQPixmap()
             }
 
-    def set_field_attributes(self, editable=True,
-                                   background_color=None,
-                                   tooltip = '',
-                                   prefix='',
-                                   suffix='',
-                                   minimum=constants.camelot_minfloat,
-                                   maximum=constants.camelot_maxfloat,
-                                   single_step=1.0, **kwargs):
+    def set_field_attributes(self, editable = True,
+                                   background_color = None,
+                                   tooltip = None,
+                                   prefix = '',
+                                   suffix = '',
+                                   minimum = constants.camelot_minfloat,
+                                   maximum = constants.camelot_maxfloat,
+                                   single_step = 1.0, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.setToolTip(unicode(tooltip))
+        self.setToolTip(unicode(tooltip or ''))
         self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
         self.spinBox.setSuffix(u' %s'%(unicode(suffix).rstrip()))
         self.spinBox.setRange(minimum, maximum)

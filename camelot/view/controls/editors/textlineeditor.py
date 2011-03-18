@@ -53,10 +53,12 @@ class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
 
         return value
 
-    def set_field_attributes(self, editable=True, background_color=None, tooltip = '', **kwargs):
+    def set_field_attributes(self, editable = True,
+                                   background_color = None, 
+                                   tooltip = None, **kwargs):
         self.set_background_color( background_color )
         self.set_enabled( editable )
-        self.setToolTip(unicode(tooltip))
+        self.setToolTip(unicode(tooltip or ''))
 
     def set_enabled(self, editable=True):
         value = self.text()

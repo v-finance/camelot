@@ -116,13 +116,13 @@ class FloatEditor(CustomEditor):
 
     def set_field_attributes(self, editable = True,
                                    background_color = None,
-                                   tooltip = '',
+                                   tooltip = None,
                                    prefix = '',
                                    suffix = '',
                                    single_step = 1.0, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
-        self.spinBox.setToolTip(unicode(tooltip))
+        self.spinBox.setToolTip(unicode(tooltip or ''))
         self.spinBox.setPrefix(u'%s '%(unicode(prefix or '').lstrip()))
         self.spinBox.setSuffix(u' %s'%(unicode(suffix or '').rstrip()))
         self.spinBox.setSingleStep(single_step)

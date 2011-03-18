@@ -112,7 +112,7 @@ an unneeded update of the db.
 
     def set_field_attributes(self, editable = True,
                                    background_color = None, 
-                                   tooltip = '',
+                                   tooltip = None,
                                    prefix = '',
                                    suffix = '',
                                    nullable = True,
@@ -120,7 +120,7 @@ an unneeded update of the db.
         self.set_enabled(editable)
         set_background_color_palette( self.spinBox.lineEdit(),
                                       background_color )
-        self.spinBox.setToolTip(unicode(tooltip))
+        self.spinBox.setToolTip(unicode(tooltip or ''))
         
         if prefix:
             self.spinBox.setPrefix(u'%s '%(unicode(prefix).lstrip()))
