@@ -131,11 +131,12 @@ class CustomDelegate(QItemDelegate):
         self._width = self._font_metrics.averageCharWidth() * 20
 
     def createEditor(self, parent, option, index):
-        """:param option: use an option with version 5 to indicate the widget
-        will be put onto a form
-
         """
-        editor = self.editor(parent, editable=self.editable, **self.kwargs)
+        :param option: use an option with version 5 to indicate the widget
+        will be put onto a form
+        """
+
+        editor = self.editor(parent, editable = self.editable, option = option, **self.kwargs)
         assert editor != None
         assert isinstance(editor, (QtGui.QWidget,))
         if option.version != 5:

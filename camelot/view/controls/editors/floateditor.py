@@ -33,24 +33,37 @@ from camelot.core import constants
 class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
     
+    def __init__(self, option = None, parent = None):
+        super(CustomDoubleSpinBox, self).__init__(parent)
+        
+        self.option = option
+    
     def wheelEvent(self, wheel_event):
         wheel_event.ignore()
         
     def keyPressEvent(self, key_event):
-        # Make sure that the Period key on the numpad is *always* 
-        # represented by the systems locale decimal separator to 
-        # facilitate user input.
-        if key_event.key() == Qt.Key_Period:
-            # Dynamically build a 'new' event that holds this locales decimal separator
-            new_key_event = QtGui.QKeyEvent(key_event.type(),
-                                            QtCore.QLocale.system().decimalPoint().unicode(),
-                                            key_event.modifiers(),
-                                            QtCore.QString(QtCore.QLocale.system().decimalPoint()))
-            key_event.accept() # Block 'old' event
-            QtGui.QApplication.sendEvent(self, new_key_event)
-        # Propagate all other events to the super class
+        # Disable the default behaviour when pressing the up or down arrow
+        # which would respectively increment and decrement the value
+        # inside the spinbox. This custom behaviour is only applicable
+        # when being displayed inside a table view, hence the version check.
+        # By ignoring key_event, the table view itself is scrolled instead.
+        if self.option.version != 5 and key_event.key() in (Qt.Key_Up, Qt.Key_Down):
+            key_event.ignore()
         else:
-            super(CustomDoubleSpinBox, self).keyPressEvent(key_event)
+            # Make sure that the Period key on the numpad is *always* 
+            # represented by the systems locale decimal separator to 
+            # facilitate user input.
+            if key_event.key() == Qt.Key_Period:
+                # Dynamically build a 'new' event that holds this locales decimal separator
+                new_key_event = QtGui.QKeyEvent(key_event.type(),
+                                                QtCore.QLocale.system().decimalPoint().unicode(),
+                                                key_event.modifiers(),
+                                                QtCore.QString(QtCore.QLocale.system().decimalPoint()))
+                key_event.accept() # Block 'old' event
+                QtGui.QApplication.sendEvent(self, new_key_event)
+            # Propagate all other events to the super class
+            else:
+                super(CustomDoubleSpinBox, self).keyPressEvent(key_event)
 
     def textFromValue(self, value):
         return unicode( QtCore.QString("%L1").arg(float(value), 0, 'f', self.decimals()) )

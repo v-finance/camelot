@@ -76,17 +76,22 @@ an unneeded update of the db.
     def __init__(self, parent = None,
                        minimum = camelot_minint,
                        maximum = camelot_maxint,
-                       calculator = True, **kwargs):
+                       calculator = True,
+                       option = None, **kwargs):
+        
         CustomEditor.__init__(self, parent)
+
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
-        self.spinBox = CustomDoubleSpinBox(parent)
+        
+        self.spinBox = CustomDoubleSpinBox(option, parent)
         self.spinBox.setRange(minimum, maximum)
         self.spinBox.setDecimals(0)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.spinBox.addAction(action)
         self.spinBox.lineEdit().setText('')
+        
         self.calculatorButton = QtGui.QToolButton()
         self.calculatorButton.setIcon(self.calculator_icon.getQIcon())
         self.calculatorButton.setAutoRaise(True)
@@ -109,6 +114,8 @@ an unneeded update of the db.
         self.setLayout(layout)
         self._nullable = True
         self._calculator = calculator
+        
+        self.option = option
 
     def set_field_attributes(self, editable = True,
                                    background_color = None, 
@@ -118,8 +125,8 @@ an unneeded update of the db.
                                    nullable = True,
                                    single_step = 1, **kwargs):
         self.set_enabled(editable)
-        set_background_color_palette( self.spinBox.lineEdit(),
-                                      background_color )
+        set_background_color_palette(self.spinBox.lineEdit(), background_color )
+
         self.spinBox.setToolTip(unicode(tooltip or ''))
         
         if prefix:
@@ -157,9 +164,16 @@ an unneeded update of the db.
     def set_enabled(self, editable=True):
         self.spinBox.setReadOnly(not editable)
         self.spinBox.setEnabled(editable)
-        self.calculatorButton.setShown(editable and self._calculator)
-        if not editable:
+        
+        # Version '5' indicates that this widget is put into a form.
+        # If so, the calculatorButton and the spinBox's controls should be hidden.
+        if self.option and self.option.version != 5:
+            self.calculatorButton.hide()
             self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+        else:
+            self.calculatorButton.setVisible(editable and self._calculator)
+            if not editable:
+                self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator
