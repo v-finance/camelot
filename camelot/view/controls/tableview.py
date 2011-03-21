@@ -52,7 +52,8 @@ class FrozenTableWidget( QtGui.QTableView ):
         super(FrozenTableWidget, self).__init__(parent)
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
         self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked |
-                              QtGui.QAbstractItemView.DoubleClicked )
+                              QtGui.QAbstractItemView.DoubleClicked |
+                              QtGui.QAbstractItemView.CurrentChanged )
         self._columns_frozen = columns_frozen
 
     @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)

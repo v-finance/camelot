@@ -35,8 +35,7 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     
     def __init__(self, option = None, parent = None):
         super(CustomDoubleSpinBox, self).__init__(parent)
-        
-        self.option = option
+        self._option = option
     
     def wheelEvent(self, wheel_event):
         wheel_event.ignore()
@@ -47,7 +46,7 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
         # inside the spinbox. This custom behaviour is only applicable
         # when being displayed inside a table view, hence the version check.
         # By ignoring key_event, the table view itself is scrolled instead.
-        if self.option.version != 5 and key_event.key() in (Qt.Key_Up, Qt.Key_Down):
+        if self._option and self._option.version != 5 and key_event.key() in (Qt.Key_Up, Qt.Key_Down):
             key_event.ignore()
         else:
             # Make sure that the Period key on the numpad is *always* 
@@ -87,7 +86,9 @@ class FloatEditor(CustomEditor):
                        minimum = constants.camelot_minfloat,
                        maximum = constants.camelot_maxfloat,
                        calculator = True,
-                       decimal = False, **kwargs):
+                       decimal = False, 
+                       option = None,
+                       **kwargs):
         CustomEditor.__init__(self, parent)
         self._decimal = decimal
         self._calculator = calculator
@@ -95,7 +96,7 @@ class FloatEditor(CustomEditor):
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
         self.precision = precision
-        self.spinBox = CustomDoubleSpinBox(parent)
+        self.spinBox = CustomDoubleSpinBox(option, parent)
 
         self.spinBox.setRange(minimum, maximum)
         self.spinBox.setDecimals(precision)
