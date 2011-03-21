@@ -40,13 +40,14 @@ class ColoredFloatEditor(CustomEditor):
                  precision=2,
                  reverse=False,
                  neutral=False,
+                 option=None,
                  **kwargs):
         CustomEditor.__init__(self, parent)
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
         
-        self.spinBox = CustomDoubleSpinBox(parent)
+        self.spinBox = CustomDoubleSpinBox(option, parent)
         self.spinBox.setDecimals(precision)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         self.spinBox.addAction(action)

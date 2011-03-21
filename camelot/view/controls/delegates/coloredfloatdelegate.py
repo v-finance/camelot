@@ -49,17 +49,16 @@ class ColoredFloatDelegate(CustomDelegate):
     }
 
     def __init__(self, parent=None, minimum=-1e15, maximum=1e15,
-        precision=2, editable=True, reverse=False, neutral=False,
+        precision=2, reverse=False, neutral=False,
         unicode_format=None, **kwargs
     ):
-        CustomDelegate.__init__(self, parent=parent, editable=editable,
+        CustomDelegate.__init__(self, parent=parent,
             minimum=minimum, maximum=maximum, reverse=reverse, neutral=neutral,
             precision=precision, unicode_format=unicode_format, **kwargs
         )
         self.minimum = minimum
         self.maximum = maximum
         self.precision = precision
-        self.editable = editable
         self.reverse = reverse
         self.neutral = neutral
         self.unicode_format = unicode_format
