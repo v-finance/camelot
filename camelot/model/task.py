@@ -30,14 +30,11 @@ categories and roles.  They are presented to the user as "Todo's"
 
 from elixir import Entity, using_options, Field, ManyToMany
 import sqlalchemy.types
-from elixir.relationships import ManyToOne
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import metadata
-from camelot.view import filters
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.document import documented_entity
-import camelot.types
 
 import datetime
 
@@ -56,7 +53,7 @@ class Task( Entity ):
     class Admin( EntityAdmin ):
         verbose_name = _('Todo')
         list_display = ['creation_date', 'description', 'due_date']
-        list_filter  = ['category']
+        list_filter  = ['categories.name']
         form_display = ['description', 'creation_date', 'due_date', 
                         'categories']
 
