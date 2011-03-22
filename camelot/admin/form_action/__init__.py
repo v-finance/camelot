@@ -262,7 +262,7 @@ eg: .txt or .pdf, defaults to .txt
 
     suffix = '.txt'
 
-    def __init__( self, name, icon = Icon( 'tango/22x22/actions/document-print.png' ) ):
+    def __init__( self, name, icon = Icon( 'tango/22x22/actions/document-print.png' ), **kwargs ):
 
         def model_function( obj ):
             import os
@@ -274,7 +274,7 @@ eg: .txt or .pdf, defaults to .txt
             logger.debug(u'open url : %s'%unicode(url))
             QtGui.QDesktopServices.openUrl(url)
 
-        FormActionFromModelFunction.__init__( self, name, model_function, icon )
+        FormActionFromModelFunction.__init__( self, name, model_function, icon, **kwargs )
 
     def write_file( self, file_name, obj ):
         """
