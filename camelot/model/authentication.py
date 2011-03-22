@@ -848,6 +848,6 @@ class PartyCategory( Entity ):
         return self.name or ''
     
     class Admin( EntityAdmin ):
-        verbose_name = _('Party Category')
-        verbose_name_plural = _('Party Categories')
+        verbose_name = _('Category')
+        verbose_name_plural = _('Categories')
         list_display = ['name', 'color']
