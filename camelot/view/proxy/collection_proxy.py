@@ -419,8 +419,8 @@ position in the query.
         @param rows the new number of rows
         """
         self._rows = rows
-        if not sip.isdeleted(self):
-            self.layoutChanged.emit()
+        #if not sip.isdeleted(self):
+        self.layoutChanged.emit()
 
     def getItemDelegate( self ):
         """:return: a DelegateManager for this model, or None if no DelegateManager yet available

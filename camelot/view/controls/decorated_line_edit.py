@@ -63,7 +63,7 @@ class DecoratedLineEdit(QtGui.QLineEdit):
             self._show_background_text()
             
     def _show_background_text(self):
-        if not self._showing_background_text and self.text().isEmpty() and self._background_text!=None:
+        if not self._showing_background_text and not self.text() and self._background_text!=None:
             self._showing_background_text = True
             self._update_foreground_color()
             self.setText(unicode(self._background_text))

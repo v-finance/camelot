@@ -30,10 +30,13 @@ from PyQt4 import QtCore
 import logging
 logger = logging.getLogger('camelot.core.utils')
 
-
+if hasattr(QtCore, 'PYQT_VERSION_STR'):
+    pyqt = True
+else:
+    pyqt = False
+    
 def create_constant_function(constant):
     return lambda:constant
-
 
 class CollectionGetterFromObjectGetter(object):
     """Convert an object getter to a collection getter.  The resulting
@@ -74,6 +77,8 @@ data types supported by QVariant, including GUI-related types:
 """
 def variant_to_pyobject(qvariant=None):
     """Try to convert a QVariant to a python object as good as possible"""
+    if not pyqt:
+        return qvariant
     import datetime
     if not qvariant:
         return None

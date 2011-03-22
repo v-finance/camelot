@@ -45,10 +45,10 @@ class BusyWidget(QtGui.QWidget):
         """start/stop the animation
         :arg busy_state: True or False
         """
-        import sip
-        if sip.isdeleted(self):
-            """underlying object is deleted, no use trying anything"""
-            return
+        #import sip
+        #if sip.isdeleted(self):
+        #    """underlying object is deleted, no use trying anything"""
+        #    return
 
         if busy_state:
             self.timer = self.startTimer(200)

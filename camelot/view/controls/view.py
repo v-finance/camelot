@@ -54,9 +54,9 @@ class AbstractView(QtGui.QWidget):
     @QtCore.pyqtSlot(object)
     def change_title(self, new_title):
         """Will emit the title_changed_signal"""
-        import sip
-        if not sip.isdeleted(self):
-            self.title_changed_signal.emit( unicode(new_title) )
+        #import sip
+        #if not sip.isdeleted(self):
+        self.title_changed_signal.emit( unicode(new_title) )
 
     @model_function
     def to_html(self):

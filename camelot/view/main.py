@@ -169,11 +169,11 @@ class Application(QtCore.QObject):
             #  font.setStyleStrategy(QtGui.QFont.PreferAntialias)
             #  font.setPointSize(font.pointSize()+1)
             #  app.setFont(font)
-
-            QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
-            logger.debug('qt version %s, pyqt version %s' %
-                         (QtCore.QT_VERSION_STR, QtCore.PYQT_VERSION_STR))
-            logger.debug('qt major version %f' % QT_MAJOR_VERSION)
+            if hasattr( QtCore, 'QT_MAJOR_VERSION'):
+                QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
+                logger.debug('qt version %s, pyqt version %s' %
+                             (QtCore.QT_VERSION_STR, QtCore.PYQT_VERSION_STR))
+                logger.debug('qt major version %f' % QT_MAJOR_VERSION)
             app.processEvents()
             import sqlalchemy, elixir
             logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)

@@ -36,7 +36,7 @@ class ActionWidget(QtGui.QPushButton):
     """A button that can be pushed to trigger an action"""
 
     def __init__(self, action, entity_getter, parent):
-        super(QtGui.QPushButton, self).__init__(unicode(action.get_name()))
+        super(ActionWidget, self).__init__(unicode(action.get_name()))
         if action.get_icon():
             self.setIcon(action.get_icon().getQIcon())
         self._action = action

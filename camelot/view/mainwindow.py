@@ -41,8 +41,6 @@ from camelot.view.controls.navpane2 import NavigationPane
 from camelot.view.controls.printer import Printer
 from camelot.view.model_thread import post
 
-QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
-
 from camelot.core.utils import ugettext as _
 
 def addActions(target, actions):

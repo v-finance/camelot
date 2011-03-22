@@ -34,9 +34,6 @@ from PyQt4.QtCore import Qt
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 
-QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
-
-
 class ModelItem(QtGui.QTreeWidgetItem):
     """Custom tree item widget"""
 
@@ -77,10 +74,7 @@ class ModelTree(QtGui.QTreeWidget):
         self.fix_header_labels()
 
     def fix_header_labels(self):
-        if QT_MAJOR_VERSION > 4.3:
-            self.setHeaderHidden(True)
-        else:
-            self.setHeaderLabels(self.header_labels)
+        self.setHeaderHidden(True)
 
     def clear_section_items(self):
         self.section_items = []

@@ -120,7 +120,7 @@ class PaneSection(QWidget):
 class NavigationPane(QDockWidget):
 
     def __init__(self, app_admin, workspace, parent):
-        super(QDockWidget, self).__init__(parent)
+        super(NavigationPane, self).__init__(parent)
 
         self._workspace = workspace
         self.app_admin = app_admin

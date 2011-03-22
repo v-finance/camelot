@@ -113,6 +113,8 @@ def to_pyside(project):
     import shutil
     output = os.path.join('to_pyside', os.path.basename(project))
     # first take a copy
+    if os.path.exists( output ):
+        shutil.rmtree( output )
     shutil.copytree(project, output)
    
     def replace_word(original_str, old_word, new_word):
@@ -127,6 +129,12 @@ def to_pyside(project):
         source = replace_word( source, 'PyQt4', 'PySide' )
         source = replace_word( source, 'pyqtSlot', 'Slot' )
         source = replace_word( source, 'pyqtSignal', 'Signal' )
+        source = replace_word( source, 'QtCore.QString', 'str' )
+        source = replace_word( source, 'QtCore.QVariant.', 'QtCore.Q')
+        source = replace_word( source, 'QtCore.QVariant(', '(' )
+        source = replace_word( source, 'QVariant', '()' )
+        source = replace_word( source, '.toByteArray()', '' )
+        source = replace_word( source, ').isValid()', ')' )
         output.write( source )
         
     def translate_directory(_arg, dirname, names):
