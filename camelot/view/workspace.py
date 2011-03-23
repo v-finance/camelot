@@ -449,7 +449,7 @@ class DesktopWorkspace(QtGui.QWidget):
         self._app_admin.actions_changed_signal.connect(self.reload_background_widget)
         self._tab_widget.addTab(self._background_widget,
                                 Icon('tango/16x16/actions/go-home.png').getQIcon(),
-                                _('Start'))
+                                _('Home'))
         
         self.setLayout(layout)
         self.reload_background_widget()

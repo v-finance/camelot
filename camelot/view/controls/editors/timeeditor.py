@@ -63,6 +63,7 @@ class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):
         self.setEnabled(editable)
 
     def paintEvent(self, event):
+        super(TimeEditor, self).paintEvent( event )
         if self.toolTip():
             draw_tooltip_visualization(self)
         
