@@ -166,7 +166,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             post( model._extend_cache, self.update_delegates )
 
     @gui_function
-    def activate_editor( self, _row ):
+    def activate_editor( self, number_of_rows ):
 #        return
 # Activating this code can cause segfaults
 # see ticket 765 in web issues
@@ -176,7 +176,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
 # seems to have no effect.
         table = self.findChild(QtGui.QWidget, 'table')
         if table:
-            index = self.model.index( _row, 0 )
+            index = self.model.index( max(0, number_of_rows-1), 0 )
             table.scrollToBottom()
             table.setCurrentIndex( index )
             table.edit( index )
@@ -209,6 +209,3 @@ class One2ManyEditor(CustomEditor, WideEditor):
                                  edits = None )
         form = self.admin.create_form_view( u'', model, self.model.map_to_source(index) )
         show_top_level( form, self )
-
-
-

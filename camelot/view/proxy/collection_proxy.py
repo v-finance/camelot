@@ -1027,6 +1027,7 @@ position in the query.
         the object if possible/needed
         
         :param obj: the object to be added to the collection
+        :return: the new number of rows in the collection
         """
         rows = self.rowCount()
         row = max( rows - 1, 0 )
