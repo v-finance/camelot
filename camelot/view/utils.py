@@ -21,7 +21,6 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-
 """Helper functions for the view subpackage"""
 from HTMLParser import HTMLParser 
 
@@ -220,7 +219,6 @@ def text_from_richtext(unstripped_text):
     :arg unstripped_text: string
     :return: list of strings
     """
-    # FIXME this implementation does not behave as expected, needs to be reviewed
     strings = ['']
     if not unstripped_text:
 	    return strings
@@ -234,10 +232,9 @@ def text_from_richtext(unstripped_text):
             from xml.sax.saxutils import escape
             data = data.strip()
             if data:
-                strings[-1] += escape(data)
+                strings.append(escape(data))
 
     parser = HtmlToTextParser()
     parser.feed(unstripped_text.strip())
-    
-    return strings
 
+    return strings
