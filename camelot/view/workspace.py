@@ -28,13 +28,13 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-#from camelot.view.art import Pixmap
-
 import logging
 logger = logging.getLogger('camelot.view.workspace')
 
 from camelot.core.utils import ugettext as _
 from camelot.view.model_thread import gui_function, post
+
+from camelot.view.art import Icon
 
 class DesktopBackground(QtGui.QWidget):
     """
@@ -447,7 +447,9 @@ class DesktopWorkspace(QtGui.QWidget):
         # Setup the background widget
         self._background_widget = DesktopBackground(self)
         self._app_admin.actions_changed_signal.connect(self.reload_background_widget)
-        self._tab_widget.addTab(self._background_widget, _('Start'))
+        self._tab_widget.addTab(self._background_widget,
+                                Icon('tango/16x16/actions/go-home.png').getQIcon(),
+                                _('Start'))
         
         self.setLayout(layout)
         self.reload_background_widget()
@@ -507,28 +509,34 @@ class DesktopWorkspace(QtGui.QWidget):
             if index > 0:
                 self._tab_widget.setTabText(index, new_title)
 
-    def set_view(self, view, title = '...'):
+    def set_view(self, view, icon = None, title = '...'):
         """
         Remove the currently active view and replace it with a new view.
         """
         index = self._tab_widget.currentIndex()
         
-        if index == 0: # 'Start' tab
-            self.add_view(view, title)
+        if index == 0: # 'Start' tab is currently visible.
+            self.add_view(view, icon, title)
         else:
             self._tab_widget.removeTab(index)
             
-            view.title_changed_signal.connect(self.change_title)            
-            index = self._tab_widget.insertTab(index, view, title)
+            view.title_changed_signal.connect(self.change_title)
+            if icon:
+                index = self._tab_widget.insertTab(index, view, icon, title)
+            else:
+                index = self._tab_widget.insertTab(index, view, title)
             self._tab_widget.setCurrentIndex(index)
 
     @gui_function
-    def add_view(self, view, title = '...'):
+    def add_view(self, view, icon = None, title = '...'):
         """
         Add a Widget implementing AbstractView to the workspace.
         """
         view.title_changed_signal.connect(self.change_title)
-        index = self._tab_widget.addTab(view, title)
+        if icon:
+            index = self._tab_widget.addTab(view, icon, title)
+        else:
+            index = self._tab_widget.addTab(view, title)
         self._tab_widget.setCurrentIndex(index)
 
     def close_all_views(self):
