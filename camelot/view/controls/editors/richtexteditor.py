@@ -34,7 +34,7 @@ class RichTextEditor(CustomEditor, WideEditor):
 
     def __init__(self, parent=None, **kwargs):
         CustomEditor.__init__(self, parent)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtGui.QHBoxLayout(self)
         self.layout.setSpacing(0)
         self.layout.setMargin(0)
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
@@ -82,23 +82,19 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit = CustomTextEdit(self)
 
         self.initButtons() # Has to be invoked before the connect's below.
+        self.toolbar.hide() # Should only be visible when textedit is focused.
         
         self.textedit.editingFinished.connect(self.emit_editing_finished)
         self.textedit.receivedFocus.connect(self.toolbar.show)
         self.textedit.lostFocus.connect(self.toolbar.hide)
         self.textedit.setAcceptRichText(True)
         
-#      #
-#      # Layout
-#      #
-#      self.layout.addWidget(self.toolbar)
+        # Layout
         self.layout.addWidget(self.textedit)
-
+        self.layout.addWidget(self.toolbar)
         self.setLayout(self.layout)
 
-        #
         # Format
-        #
         self.textedit.setFontWeight(QtGui.QFont.Normal)
         self.textedit.setFontItalic(False)
         self.textedit.setFontUnderline(False)
@@ -114,7 +110,6 @@ class RichTextEditor(CustomEditor, WideEditor):
 
     def set_editable(self, editable):
         self.textedit.setReadOnly(not editable)
-        #self.toolbar.setVisible(editable)
 
     def set_field_attributes(self, editable=True, background_color=None, **kwargs):
         self.set_editable(editable)
@@ -122,6 +117,7 @@ class RichTextEditor(CustomEditor, WideEditor):
 
     def initButtons(self):
         self.toolbar = QtGui.QToolBar(self)
+        self.toolbar.setOrientation(Qt.Vertical)
         self.toolbar.setContentsMargins(0, 0, 0, 0)
 
         self.bold_button = QtGui.QToolButton(self)
@@ -235,11 +231,6 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.toolbar.addSeparator()
         self.toolbar.addWidget(self.color_button)
 
-        #
-        # Layout
-        #
-        self.layout.addWidget(self.toolbar)
-        self.toolbar.hide()
     #
     # Button methods
     #
