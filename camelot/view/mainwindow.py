@@ -41,9 +41,6 @@ from camelot.view.controls.navpane2 import NavigationPane
 from camelot.view.controls.printer import Printer
 from camelot.view.model_thread import post
 
-# Required for the images within the Qt resource system.
-from camelot.art import resources
-
 from camelot.core.utils import ugettext as _
 
 def addActions(target, actions):

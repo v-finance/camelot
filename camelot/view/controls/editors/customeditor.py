@@ -47,8 +47,6 @@ def draw_tooltip_visualization(widget):
     Draws a small visual indication in the top-left corner of a widget.
     :param widget: a QWidget
     """
-    from camelot.art import resources # Required for image below.
-
     painter = QtGui.QPainter(widget)
     painter.drawPixmap(QtCore.QPoint(0, 0), QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))    
         
