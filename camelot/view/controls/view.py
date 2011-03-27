@@ -30,6 +30,7 @@ from PyQt4 import QtCore
 from camelot.view.model_thread import post
 from camelot.view.model_thread import model_function
 
+
 class AbstractView(QtGui.QWidget):
     """A string used to format the title of the view ::
     title_format = 'Movie rental overview'
@@ -50,7 +51,7 @@ class AbstractView(QtGui.QWidget):
     def refresh(self):
         """Refresh the data in the current view"""
         pass
-    
+
     @QtCore.pyqtSlot(object)
     def change_title(self, new_title):
         """Will emit the title_changed_signal"""
@@ -112,7 +113,7 @@ class TabView(AbstractView):
         for i in range(self._tab_widget.count()):
             view = self._tab_widget.widget(i)
             view.refresh()
-    
+
     def set_views_and_titles(self, views_and_titles):
         for view, title in views_and_titles:
             self._tab_widget.addTab(view, title)

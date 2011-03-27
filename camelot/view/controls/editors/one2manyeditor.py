@@ -42,7 +42,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
     delete_icon = Icon( 'tango/16x16/places/user-trash.png' )
     copy_icon = Icon( 'tango/16x16/actions/edit-copy.png' )
     spreadsheet_icon = Icon( 'tango/16x16/mimetypes/x-office-spreadsheet.png' )
-    
+
     def __init__( self,
                  admin = None,
                  parent = None,
@@ -136,8 +136,13 @@ class One2ManyEditor(CustomEditor, WideEditor):
             title = self.admin.get_verbose_name_plural()
             columns = self.admin.get_columns()
             if self.model:
-                data = list( self.model.getData() )
-                open_data_with_excel( title, columns, data )
+                data = list(self.model.getData())
+                for i, row in enumerate(data):
+                    for j, column in enumerate(row):
+                        if isinstance(column, basestring):
+                            row[j] = _(column)
+                    data[i] = row
+                open_data_with_excel(title, columns, data)
 
         post( export )
 
@@ -170,7 +175,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
 #        return
 # Activating this code can cause segfaults
 # see ticket 765 in web issues
-# 
+#
 # The segfault seems no longer there after disabling the
 # editor before setting a new model, but the code below
 # seems to have no effect.
@@ -186,7 +191,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         if self._new_message:
             QtGui.QMessageBox.information(self, _('New'), self._new_message)
             return
-        
+
         if self.create_inline:
 
             @model_function
