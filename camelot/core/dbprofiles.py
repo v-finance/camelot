@@ -142,3 +142,4 @@ def store_profiles(profiles):
 def use_chosen_profile(profilename):
     settings = QtCore.QSettings()
     settings.setValue('last_used_database_profile', unicode(profilename).encode('utf-8') )
+

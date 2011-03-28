@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -32,4 +32,5 @@ class ManyToOneEditorPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin, CamelotEdi
         from camelot.view.controls.editors import Many2OneEditor
         CamelotEditorPlugin.__init__(self)
         self._widget = Many2OneEditor
+
 

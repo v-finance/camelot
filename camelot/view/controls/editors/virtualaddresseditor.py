@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -208,3 +208,4 @@ class VirtualAddressEditor(CustomEditor):
         self.set_enabled(editable)
         self.set_background_color(background_color)
         self.setToolTip(unicode(tooltip or ''))
+

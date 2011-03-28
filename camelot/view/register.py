@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -85,4 +85,5 @@ def register(registered, monitored):
     if _global_register_ == None:
         _global_register_ = Register()
     _global_register_.register(registered, monitored)
+
 

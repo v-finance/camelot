@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -214,3 +214,4 @@ class One2ManyEditor(CustomEditor, WideEditor):
                                  edits = None )
         form = self.admin.create_form_view( u'', model, self.model.map_to_source(index) )
         show_top_level( form, self )
+

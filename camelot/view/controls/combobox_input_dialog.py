@@ -118,3 +118,4 @@ class ComboBoxInputDialog(QDialog):
 
     def set_window_title(self, title):
         self.setWindowTitle(title)
+

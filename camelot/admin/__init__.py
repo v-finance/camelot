@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -37,4 +37,5 @@ But for the gui generation itself, we don't use the class attributes, but we
 use methods, like 'getColumns', that way, we can make the gui very specific, on
 the context
 """
+
 

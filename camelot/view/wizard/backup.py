@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -86,4 +86,5 @@ class RestoreWizard(QtGui.QWizard):
         self.setWindowTitle( unicode(self.window_title) )
         self.addPage(self.select_restore_file_page(backup_mechanism))
         self.addPage(self.restore_page(backup_mechanism))
+
 

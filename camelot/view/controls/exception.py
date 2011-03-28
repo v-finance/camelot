@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -56,4 +56,5 @@ def model_thread_exception_message_box(exception_info, title=None, text=None):
     msgBox.setInformativeText(unicode(exc)[:1000])
     msgBox.setDetailedText(traceback)
     msgBox.exec_()
+
 

@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -241,4 +241,5 @@ class SelectBackupFilePage(Page):
                 self, unicode(self.caption), dir, ugettext('Database files (*%s);;All files (*.*)' % self.extension),
             )
         return path
+
 

@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -146,3 +146,4 @@ class DateTimeEditor(CustomEditor):
     def set_background_color(self, background_color):
         self.dateedit.set_background_color( background_color )
         set_background_color_palette( self.timeedit.lineEdit(), background_color )
+

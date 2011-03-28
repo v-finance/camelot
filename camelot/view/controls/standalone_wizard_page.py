@@ -92,3 +92,4 @@ class StandaloneWizardPage(QDialog):
     def set_banner_subtitle(self, subtitle):
         subtitle_widget = QLabel('<dd>%s</dd>' % subtitle)
         self.banner_text_layout().insertWidget(1, subtitle_widget)
+

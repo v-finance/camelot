@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -68,5 +68,6 @@ def update_database_from_model():
         missingInDatabase, _missingInModel, _diffDecl = schema_diff.colDiffs[table_with_diff.name]
         for col in missingInDatabase:
             create_column(col, table_with_diff)
+
 
 

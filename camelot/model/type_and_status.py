@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -216,4 +216,5 @@ def entity_type( typable_entity, metadata, collection, verbose_entity_name = Non
             return u'Type: %s' % ( self.description )
 
     return type_name
+
 

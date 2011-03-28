@@ -354,3 +354,4 @@ allow all languages
         selected = unicode(QFileDialog.getExistingDirectory(self, caption))
         if selected:
             self.media_location_editor.setText(selected)
+

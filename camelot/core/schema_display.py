@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -196,4 +196,5 @@ def create_schema_graph(tables=None, metadata=None, show_indexes=True, show_data
 #                graph.edge_dst_list.append(fk.column.table.name)
 #            graph.sorted_graph_elements.append(graph_edge)
     return graph
+
 

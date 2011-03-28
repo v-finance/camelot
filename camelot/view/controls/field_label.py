@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -95,3 +95,4 @@ class FieldLabel(UserTranslatableLabel):
         
         dialog = FieldAttributesDialog(self._field_name, self)
         dialog.exec_()
+

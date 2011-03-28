@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -131,3 +131,4 @@ class UpdateValueWizard(QtGui.QWizard):
         assert admin
         self.addPage(SelectValuePage(parent=self, admin=admin, data=data))
         self.addPage(ReplaceContentsPage(parent=self, collection_getter=selection_getter, data=data))
+

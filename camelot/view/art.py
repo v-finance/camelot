@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2010 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -176,4 +176,5 @@ class ColorScheme(object):
     Qt::color0	0	0 pixel value (for bitmaps)
     Qt::color1	1	1 pixel value (for bitmaps)
     """
+
 
