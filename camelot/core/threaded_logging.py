@@ -91,7 +91,7 @@ class ThreadedAwsHandler(logging.Handler):
         ei = record.exc_info
         #
         # prevent infinite loops when the boto lib logs something when
-        # a log is send to the queue
+        # a log is sent to the queue
         #
         if record.name and record.name.startswith('boto'):
             return
@@ -100,7 +100,7 @@ class ThreadedAwsHandler(logging.Handler):
             record.exc_info = None
         record_dict = dict( user=self._user, revision=self._revision )
         record_dict.update( record.__dict__ )
-        self._records_to_emit.append( json.dumps( record_dict ) )
+        self._records_to_emit.append( json.dumps( record_dict, encoding='utf-8' ) )
         if ei:
             record.exc_info = ei  # for next handler
         
