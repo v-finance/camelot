@@ -48,7 +48,7 @@ class SignalHandler(QtCore.QObject):
     can inform other signal handlers on the network of the change.
     
     A couple of the methods of this thread are protected by a QMutex through
-    the synchronized decorator.  It appears that python/qt deqdlocks when the
+    the synchronized decorator.  It appears that python/qt deadlocks when the
     entity_update_signal is connected to and emitted at the same time.  This
     can happen when the user closes a window that is still building up (the
     CollectionProxies are being constructed and they connect to the signal
