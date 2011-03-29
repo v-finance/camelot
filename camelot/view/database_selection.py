@@ -181,7 +181,7 @@ allow all languages
         self.password_editor = TextLineEditor(self)
         self.password_editor.setEchoMode(QLineEdit.Password)
         self.media_location_editor = TextLineEditor(self, length=32767)
-        self.language_editor = LanguageEditor(languages=self.languages, 
+        self.language_editor = LanguageEditor(languages=self.languages,
                                               parent=self)
         #
         # try to find a default language
@@ -194,13 +194,13 @@ allow all languages
                 self.language_editor.set_value( self.languages[0] )
         else:
             self.language_editor.set_value( system_language )
-        
+
         self.proxy_address_editor = TextLineEditor(self, length=32767)
         self.proxy_username_editor = TextLineEditor(self)
         self.proxy_password_editor = TextLineEditor(self)
         self.proxy_password_editor.setEchoMode(QLineEdit.Password)
 
-        layout.addWidget(self.profile_editor, 0, 1, 1, 4)
+        layout.addWidget(self.profile_editor, 0, 1, 1, 1)
         layout.addWidget(self.dialect_editor, 1, 1, 1, 1)
         layout.addWidget(self.host_editor, 2, 1, 1, 1)
         layout.addWidget(self.port_editor, 2, 4, 1, 1)
@@ -217,18 +217,25 @@ allow all languages
         self.main_widget().setLayout(layout)
 
     def set_widgets_values(self):
+        self.dialect_editor.clear()
+        self.profile_editor.clear()
+
         import sqlalchemy.dialects
         dialects = [name for _importer, name, is_package in \
-        pkgutil.iter_modules(sqlalchemy.dialects.__path__ ) if is_package]
-        self.dialect_editor.set_choices([(dialect, dialect.capitalize()) for dialect in dialects])
-        self.profile_editor.insertItems( 1, ['']+[item for item in fetch_profiles()] )
+            pkgutil.iter_modules(sqlalchemy.dialects.__path__) if is_package]
+        self.dialect_editor.set_choices([(dialect, dialect.capitalize()) \
+            for dialect in dialects])
+
+        self.profile_editor.insertItems(1, [''] + \
+            [item for item in fetch_profiles()])
         self.profile_editor.setFocus()
-        self.update_profile()
+        self.update_wizard_values()
 
     def connect_widgets(self):
-        self.profile_editor.editTextChanged.connect(self.update_profile)
+        self.profile_editor.editTextChanged.connect(self.update_wizard_values)
 
     def create_buttons(self):
+        self.save_button = QPushButton(_('Save profiles'))
         self.cancel_button = QPushButton(_('Cancel'))
         #self.clear_button = QPushButton(_('Clear'))
         self.ok_button = QPushButton(_('OK'))
@@ -240,11 +247,14 @@ allow all languages
         #layout.addWidget(self.clear_button)
         layout.addWidget(self.ok_button)
         layout.addStretch()
+        layout.addWidget(self.save_button)
 
         self.buttons_widget().setLayout(layout)
 
         self.browse_button = QPushButton(_('Browse'))
+        self.load_button = QPushButton(_('Load profiles'))
         self.main_widget().layout().addWidget(self.browse_button, 7, 2, 1, 3)
+        self.main_widget().layout().addWidget(self.load_button, 0, 2, 1, 3)
 
     def set_tab_order(self):
         all_widgets = [self.profile_editor, self.dialect_editor,
@@ -265,6 +275,8 @@ allow all languages
         self.ok_button.pressed.connect(self.proceed)
         #self.clear_button.pressed.connect(self.clear_fields)
         self.browse_button.pressed.connect(self.fill_media_location)
+        self.save_button.pressed.connect(self.save_profiles_to_file)
+        self.load_button.pressed.connect(self.load_profiles_from_file)
 
     #def clear_fields(self):
     #    self.host_editor.clear()
@@ -313,7 +325,7 @@ allow all languages
         self.toggle_ok_button(bool(text))
         return text
 
-    def update_profile(self):
+    def update_wizard_values(self):
         self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
         self.host_editor.setText(self.get_profile_value('host') or '127.0.0.1')
         self.port_editor.setText(self.get_profile_value('port') or '3306')
@@ -355,3 +367,36 @@ allow all languages
         if selected:
             self.media_location_editor.setText(selected)
 
+    def save_profiles_to_file(self):
+        caption = _('Save Profiles To a File')
+        filters = _('Profiles file (*.ini)')
+        path = QFileDialog.getSaveFileName(self, caption, 'profiles', filters)
+
+        if not path:
+            return
+
+        mt = SignalSlotModelThread(lambda:None)
+        mt.start()
+        progress = ProgressDialog(_('Saving progiles to file'))
+        mt.post(lambda:store_profiles(self.profiles, to_file=path),
+            progress.finished, progress.exception)
+        progress.exec_()
+
+    def load_profiles_from_file(self):
+        caption = _('Load Profiles From a File')
+        filters = _('Profiles file (*.ini)')
+        path = QFileDialog.getOpenFileName(self, caption, 'profiles', filters)
+
+        if not path:
+            return
+
+        mt = SignalSlotModelThread(lambda:None)
+        mt.start()
+        progress = ProgressDialog(_('Loading progiles from file'))
+        mt.post(lambda:setattr(self, 'profiles',
+            fetch_profiles(from_file=path)), progress.finished,
+            progress.exception)
+        progress.exec_()
+
+        if self.profiles:
+            self.set_widgets_values()

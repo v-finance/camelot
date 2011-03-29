@@ -67,18 +67,18 @@ def selected_profile_info():
     profiles = fetch_profiles()
     profilename = last_used_profile()
     return profiles[profilename]
-    
+
 def engine_from_profile():
     from sqlalchemy import create_engine
-    profile = selected_profile_info()   
+    profile = selected_profile_info()
     connect_args = dict()
     if profile['dialect'] == 'mysql':
         connect_args['charset'] = 'utf8'
-                    
-    connection = '%s://%s:%s@%s/%s' % (profile['dialect'], 
-                                       profile['user'], 
-                                       profile['pass'], 
-                                       profile['host'], 
+
+    connection = '%s://%s:%s@%s/%s' % (profile['dialect'],
+                                       profile['user'],
+                                       profile['pass'],
+                                       profile['host'],
                                        profile['database'])
     return create_engine(connection, pool_recycle=True, connect_args=connect_args)
 
@@ -87,15 +87,19 @@ def last_used_profile():
     return unicode(settings.value('last_used_database_profile',
         QtCore.QVariant('')).toString(), 'utf-8')
 
-def fetch_profiles():
+def fetch_profiles(from_file=None):
     profiles = {}
     try:
-        settings = QtCore.QSettings()
+        if from_file is None:
+            settings = QtCore.QSettings()
+        else:
+            settings = QtCore.QSettings(from_file, QtCore.QSettings.IniFormat)
+
         size = settings.beginReadArray('database_profiles')
-    
+
         if size == 0:
             return profiles
-    
+
         for index in range(size):
             settings.setArrayIndex(index)
             info = {}
@@ -119,8 +123,12 @@ def fetch_profiles():
         logger.warn('Could not read existing profiles, proceed with what was available', exc_info=e)
     return profiles
 
-def store_profiles(profiles):
-    settings = QtCore.QSettings()
+def store_profiles(profiles, to_file=None):
+    if to_file is None:
+        settings = QtCore.QSettings()
+    else:
+        settings = QtCore.QSettings(to_file, QtCore.QSettings.IniFormat)
+
     settings.beginWriteArray('database_profiles')
 
     for index, (profilename, info) in enumerate(profiles.items()):
