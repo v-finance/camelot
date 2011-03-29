@@ -480,7 +480,6 @@ to limit the number of search widgets.  Defaults to None.
         QueryTableModel
 
         :param query_getter: sqlalchemy query object
-
         :param parent: the widget that will contain the table view
         """
         from camelot.view.workspace import show_top_level

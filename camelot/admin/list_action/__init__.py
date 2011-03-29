@@ -93,21 +93,31 @@ class ListActionFromModelFunction( ListAction ):
 
     def __init__( self, 
                   name, 
-                  model_function, 
+                  model_function = None, 
                   icon = Icon( 'tango/22x22/categories/applications-system.png' ), 
                   collection_flush=False, 
                   selection_flush=False ):
         """List Action for a function that runs in the model thread
 :param model_function: a function that has 3 arguments, the collection in the list view and the selection in the list view and the options.
 :param collection_flush: flush all objects in the collection to the db and refresh them in the views
-:param selection_flush: flush all objects in the selection to the db and refresh them in the views"""
+:param selection_flush: flush all objects in the selection to the db and refresh them in the views
+
+Either give a model function as argument or overwrite the model_run method in a subclass.
+        """
         ListAction.__init__( self, name, icon )
         self._model_function = model_function
         self._collection_flush = collection_flush
         self._selection_flush = selection_flush
         self.options = None
 
+    def model_run(self, collection, selection, options):
+        """This method will be called in the Model thread when the user initiates the
+        action, this is the place to do all kind of model manipulation or querying things"""
+        if self._model_function:
+            self._model_function( collection, selection, options )
+    
     def run( self, collection_getter, selection_getter ):
+        """This method will be called in the GUI thread, when the user initiates the action"""
         self.options = super(ListActionFromModelFunction, self).run( collection_getter, selection_getter )
         progress = ProgressDialog( unicode(self._name) )
         
@@ -122,7 +132,7 @@ class ListActionFromModelFunction( ListAction ):
                 sh = get_signal_handler()
                 c = list(collection_getter())
                 s = list(selection_getter())
-                self._model_function( c, s, options )
+                self.model_run( c, s, options )
                 to_flush = []
                 if self._selection_flush:
                     to_flush = s
