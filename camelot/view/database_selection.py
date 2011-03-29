@@ -392,7 +392,7 @@ allow all languages
 
         mt = SignalSlotModelThread(lambda:None)
         mt.start()
-        progress = ProgressDialog(_('Loading progiles from file'))
+        progress = ProgressDialog(_('Loading profiles from file'))
         mt.post(lambda:setattr(self, 'profiles',
             fetch_profiles(from_file=path)), progress.finished,
             progress.exception)
