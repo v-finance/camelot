@@ -21,11 +21,14 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
+import tempfile
+import re, os
 
 from camelot.core.utils import ugettext as _
 from camelot.view.art import Icon
 from camelot.admin.abstract_action import AbstractAction, AbstractOpenFileAction
 from camelot.view.controls.progress_dialog import ProgressDialog
+from camelot.view.export.word import open_document_in_word
 
 class ApplicationAction(AbstractAction):
     """
@@ -250,12 +253,10 @@ get_template and get_context to create the final document."""
         return document_xml
 
     def open_xml(self, options):
-        from camelot.view.export.word import open_document_in_word
-        import tempfile
-        import os
         fd, fn = tempfile.mkstemp(suffix='.xml')
         docx_file = os.fdopen(fd, 'wb')
-        docx_file.write(self.document(options).encode('utf-8'))
+        data = re.sub("\r?\n", "\r\n", self.document(options).encode('utf-8'))
+        docx_file.write(data)
         docx_file.close()
         open_document_in_word(fn)
         
