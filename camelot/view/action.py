@@ -446,8 +446,7 @@ class ActionFactory(object):
         default = dict(
             parent = parent,
             text = _('Open in New Tab'),
-            slot = slot,
-            shortcut = 'Ctrl+Enter'
+            slot = slot
         )
         default.update(kwargs)
         return cls.create_action(**default)
