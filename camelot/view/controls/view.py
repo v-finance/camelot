@@ -46,6 +46,7 @@ class AbstractView(QtGui.QWidget):
     header_widget = None
 
     title_changed_signal = QtCore.pyqtSignal(QtCore.QString)
+    icon_changed_signal = QtCore.pyqtSignal(QtGui.QIcon)
 
     @QtCore.pyqtSlot()
     def refresh(self):
@@ -58,6 +59,10 @@ class AbstractView(QtGui.QWidget):
         #import sip
         #if not sip.isdeleted(self):
         self.title_changed_signal.emit( unicode(new_title) )
+        
+    @QtCore.pyqtSlot(object)
+    def change_icon(self, new_icon):
+        self.icon_changed_signal.emit(new_icon)
 
     @model_function
     def to_html(self):
