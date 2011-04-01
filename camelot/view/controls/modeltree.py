@@ -30,7 +30,6 @@ logger = logging.getLogger('camelot.view.controls.modeltree')
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 
-from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
 
 class ModelItem(QtGui.QTreeWidgetItem):
@@ -39,20 +38,20 @@ class ModelItem(QtGui.QTreeWidgetItem):
     def __init__(self, parent, columns_names):
         logger.debug('creating new modelitem')
         super(ModelItem, self).__init__(parent, columns_names)
-        self.column = 0
-        self.set_icon()
+        
+        self.textColumn = 0
+        self.iconColumn = 1
 
-        self.setToolTip(self.column, _('Right click to open in New Tab'))
+        for column in (self.textColumn, self.iconColumn):
+            self.setToolTip(column, _('Right click to open in New Tab'))
 
     def _underline(self, enable=False):
-        font = self.font(self.column)
+        font = self.font(self.textColumn)
         font.setUnderline(enable)
-        self.setFont(self.column, font)
+        self.setFont(self.textColumn, font)
 
-    def set_icon(self, qicon=None):
-        if qicon is None:
-            qicon = Icon('tango/16x16/actions/window-new.png').getQIcon()
-        self.setIcon(self.column, qicon)
+    def set_icon(self, icon):
+        self.setIcon(self.iconColumn, icon)
 
 
 class ModelTree(QtGui.QTreeWidget):
@@ -67,6 +66,10 @@ class ModelTree(QtGui.QTreeWidget):
         # we track mouse movement when no button is pressed
         self.setMouseTracking(True)
         self.header_labels = header_labels
+        
+        self.setColumnCount(2)
+        self.setColumnWidth(0, 160)
+        self.setColumnWidth(1, 18)
         
         self.clear_model_items()
         self.clear_section_items()
