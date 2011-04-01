@@ -73,8 +73,7 @@ def structure_to_sections(structure):
     return [rule(section) for section in structure]
 
 class SectionItem(object):
-    """An item inside a section, the user can click on and trigger an action
-  """
+    """An item inside a section, the user can click on and trigger an action."""
 
     def __init__(self, action, verbose_name=None):
         from camelot.admin.application_action import structure_to_application_action
@@ -86,6 +85,9 @@ class SectionItem(object):
 
     def get_action(self):
         return self.action
+        
+    def get_icon(self):
+        return self.action.get_icon()
 
 def structure_to_section_items(structure):
 
