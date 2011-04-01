@@ -219,6 +219,8 @@ The QWidget class to be used when a table view is needed
     form_actions = []
     field_attributes = {}
     form_state = None
+    icon = None # Default
+    
     #
     # Behavioral attributes
     # 
@@ -279,6 +281,9 @@ The QWidget class to be used when a table view is needed
             self.verbose_name_plural
             or (self.get_verbose_name() + 's')
         )
+        
+    def get_icon(self):
+        return self.icon
 
     @model_function
     def get_verbose_identifier(self, obj):
