@@ -128,13 +128,13 @@ class ApplicationActionFromModelFunction( ApplicationActionFromGuiFunction ):
 class EntityAction(ApplicationAction):
     """Generic ApplicationAction that acts upon an Entity class"""
 
-    def __init__(self, 
-                 entity, 
-                 admin=None, 
-                 verbose_name=None, 
-                 parent_admin=None,
-                 icon=None,
-                 notification = False):
+    def __init__(self, entity,
+                       admin = None, 
+                       verbose_name = None,
+                       description = None,
+                       parent_admin = None,
+                       icon = None,
+                       notification = False):
         """
         :param notification: if set to True, this action will be visually 
         animated to attract the users attention. Defaults to False.
@@ -143,20 +143,26 @@ class EntityAction(ApplicationAction):
         
         from camelot.admin.application_admin import get_application_admin
         self.parent_admin = parent_admin or get_application_admin()
+
         if admin:
             self.admin = admin(self.parent_admin, entity)
         else:
             self.admin = self.parent_admin.get_entity_admin(entity)
+
+        self.icon = icon or self.admin.get_icon()
         self.entity = entity
         self.verbose_name = verbose_name
-        self.icon = icon
         self.notification = notification
+        self.description = description
 
     def get_verbose_name(self):
         return unicode(self.verbose_name or self.admin.get_verbose_name_plural())
 
     def get_icon(self):
         return self.icon
+        
+    def get_description(self):
+        return unicode(self.description or '')
         
     def is_notification(self):
         return self.notification
