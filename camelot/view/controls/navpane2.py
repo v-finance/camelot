@@ -55,6 +55,7 @@ class PaneSection(QWidget):
         section_tree.setFrameShadow(QFrame.Plain)
         section_tree.contextmenu = QMenu(self)
         act = ActionFactory.new_tab(self, self.open_in_new_view)
+        act.setIconVisibleInMenu(False)
         section_tree.contextmenu.addAction( act )
         section_tree.setContextMenuPolicy(Qt.CustomContextMenu)
         section_tree.customContextMenuRequested.connect(self.create_context_menu)
@@ -77,7 +78,10 @@ class PaneSection(QWidget):
     
             for item in items:
                 label = item.get_verbose_name()
+                icon = item.get_icon()
                 model_item = ModelItem(section_tree, [label])
+                if icon:
+                    model_item.set_icon(icon.getQIcon())
                 section_tree.modelitems.append(model_item)
 
     def create_context_menu(self, point):
@@ -87,9 +91,7 @@ class PaneSection(QWidget):
             item = section_tree.itemAt(point)
             if item:
                 section_tree.setCurrentItem(item)
-                section_tree.contextmenu.popup(
-                    section_tree.mapToGlobal(point)
-                )
+                section_tree.contextmenu.popup(section_tree.mapToGlobal(point))
 
     @QtCore.pyqtSlot(QtGui.QTreeWidgetItem, int)
     def open_in_current_view(self, item, _column):
@@ -101,8 +103,12 @@ class PaneSection(QWidget):
             index = section_tree.indexFromItem(item)
             section_item = self._items[index.row()]
             new_view = section_item.get_action().run(self._workspace)
+            icon = section_item.get_action().get_icon()
             if new_view:
-                self._workspace.set_view(new_view)
+                if icon:
+                    self._workspace.set_view(new_view, icon = icon.getQIcon())
+                else:
+                    self._workspace.set_view(new_view)
 
     @QtCore.pyqtSlot()
     def open_in_new_view(self):
@@ -114,8 +120,12 @@ class PaneSection(QWidget):
             index = section_tree.indexFromItem(item)
             section_item = self._items[index.row()]
             new_view = section_item.get_action().run(self._workspace)
+            icon = section_item.get_action().get_icon()
             if new_view:
-                self._workspace.add_view(new_view)
+                if icon:
+                    self._workspace.add_view(new_view, icon = icon.getQIcon())
+                else:
+                    self._workspace.add_view(new_view)
                         
 class NavigationPane(QDockWidget):
 
