@@ -42,20 +42,22 @@ class DesktopBackground(QtGui.QWidget):
     by the first tab ('Start' tab) of the desktop workspace.
     """
     
-    def __init__(self, parent=None):
+    def __init__(self, parent = None):
         super(DesktopBackground, self).__init__(parent)
         
-        actionButtonsMainLayout = QtGui.QVBoxLayout()
-        actionButtonsMainLayout.setContentsMargins(200, 50, 200, 50)
+        mainLayout = QtGui.QVBoxLayout()
         
-        actionButtonsRow1Layout = QtGui.QHBoxLayout()
-        actionButtonsRow1Layout.setObjectName('actionButtonsRow1Layout')
-        actionButtonsRow2Layout = QtGui.QHBoxLayout()
-        actionButtonsRow2Layout.setObjectName('actionButtonsRow2Layout')
-
-        actionButtonsMainLayout.addLayout(actionButtonsRow1Layout)
-        actionButtonsMainLayout.addLayout(actionButtonsRow2Layout)
-        self.setLayout(actionButtonsMainLayout)
+        actionButtonsLayout = QtGui.QGridLayout()
+        actionButtonsLayout.setObjectName('actionButtonsLayout')
+        actionButtonsLayout.setContentsMargins(200, 20, 200, 20)
+        
+        actionButtonInfoWidget = ActionButtonInfoWidget()
+        actionButtonInfoWidget.setObjectName('actionButtonInfoWidget')
+                
+        mainLayout.addWidget(actionButtonInfoWidget, 0, Qt.AlignCenter)
+        mainLayout.addLayout(actionButtonsLayout)
+        
+        self.setLayout(mainLayout)
         
         # Set a white background color
         palette = self.palette()
@@ -74,34 +76,53 @@ class DesktopBackground(QtGui.QWidget):
         #
         # Remove old actions
         #
-        for child in self.findChildren( QtGui.QWidget, 'action_button' ):
-            child.deleteLater()
+        for actionButton in self.findChildren(ActionButton):
+            actionButton.deleteLater()
+        
         # Make sure that the action buttons aren't visually split
         # up in two rows when there are e.g. only 3 of them.
         # So:
         #  <= 3 action buttons: 1 row and 1, 2 or 3 columns;
         #  >= 4 action buttons: 2 rows and 2, 3, 4 or 5 columns.
         actionButtonsLayoutMaxItemsPerRowCount = max((len(actions) + 1) / 2, 3)
-
-        for position in xrange(0, min( len(actions), actionButtonsLayoutMaxItemsPerRowCount) ):
-            actionButton = ActionButton(actions[position], self)
-            row1 = self.findChild(QtGui.QHBoxLayout, 'actionButtonsRow1Layout')
-            if row1 is not None:
-                row1.addWidget(actionButton, 0, Qt.AlignHCenter or Qt.AlignBottom)
         
-        for position in xrange(actionButtonsLayoutMaxItemsPerRowCount, len(actions)):
-            actionButton = ActionButton(actions[position], self)
-            row2 = self.findChild(QtGui.QHBoxLayout, 'actionButtonsRow2Layout')
-            if row2 is not None:
-                row2.addWidget(actionButton, 0, Qt.AlignHCenter or Qt.AlignBottom)
+        actionButtonsLayout = self.findChild(QtGui.QGridLayout, 'actionButtonsLayout')
+        if actionButtonsLayout is not None:
+            for position in xrange(0, min( len(actions), actionButtonsLayoutMaxItemsPerRowCount) ):
+                actionButton = ActionButton(actions[position], self)
+                #actionButton.setStyleSheet(""" border: 2px solid black; """)
+                actionButton.entered.connect(self.onActionButtonEntered)
+                actionButton.left.connect(self.onActionButtonLeft)
+                actionButtonsLayout.addWidget(actionButton, 0, position, Qt.AlignCenter)
+
+            for position in xrange(actionButtonsLayoutMaxItemsPerRowCount, len(actions)):
+                actionButton = ActionButton(actions[position], self)                
+                #actionButton.setStyleSheet(""" border: 2px solid black; """)
+                actionButton.entered.connect(self.onActionButtonEntered)
+                actionButton.left.connect(self.onActionButtonLeft)
+                actionButtonsLayout.addWidget(actionButton, 1, position % actionButtonsLayoutMaxItemsPerRowCount, Qt.AlignCenter)
             
+    @QtCore.pyqtSlot()
+    def onActionButtonEntered(self):
+        actionButton = self.sender()
+        actionButtonInfoWidget = self.findChild(QtGui.QWidget, 'actionButtonInfoWidget')
+        if actionButtonInfoWidget is not None:
+            actionButtonInfoWidget.setInfoFromAction(actionButton.getAction())
+       
+    @QtCore.pyqtSlot()
+    def onActionButtonLeft(self):
+        actionButtonInfoWidget = self.findChild(QtGui.QWidget, 'actionButtonInfoWidget')
+        if actionButtonInfoWidget is not None:
+            actionButtonInfoWidget.resetInfo()
+        
     # This custom event handler makes sure that the action buttons aren't
     # drawn in the wrong position on this widget after the screen has been
     # e.g. maximized or resized by using the window handles.
+    
     def resizeEvent(self, event):
         for actionButton in self.findChildren(ActionButton):
             actionButton.resetLayout()
-            
+
         event.ignore()
 
     # This slot is called after the navpane's animation has finished. During 
@@ -114,119 +135,90 @@ class DesktopBackground(QtGui.QWidget):
     def makeInteractive(self):
         for actionButton in self.findChildren(ActionButton):
             actionButton.setInteractive(True)
+            
+class ActionButtonInfoWidget(QtGui.QWidget):
+    def __init__(self, parent = None):
+        super(ActionButtonInfoWidget, self).__init__(parent)
+        
+        mainLayout = QtGui.QHBoxLayout()
+        
+        font = self.font()
+        font.setPointSize(14)
+        
+        actionNameLabel = QtGui.QLabel()
+        actionNameLabel.setFont(font)
+        actionNameLabel.setFixedSize(250, 50)
+        actionNameLabel.setAlignment(Qt.AlignCenter)
+        actionNameLabel.setObjectName('actionNameLabel')
+        
+        actionDescriptionLabel = QtGui.QLabel()
+        actionDescriptionLabel.setFixedSize(250, 200)
+        actionDescriptionLabel.setObjectName('actionDescriptionLabel')
 
-        self.show()
+        mainLayout.addWidget(actionNameLabel, 0, Qt.AlignVCenter)
+        mainLayout.addWidget(actionDescriptionLabel)
+
+        self.setLayout(mainLayout)
+        
+        #self.setStyleSheet(""" QWidget {border: 2px solid black; }""")
     
-class ActionButton(QtGui.QWidget):
+    @QtCore.pyqtSlot()
+    def setInfoFromAction(self, action):
+        actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
+        if actionNameLabel is not None:
+            actionNameLabel.setText(action.get_verbose_name())
+        
+        actionDescriptionLabel = self.findChild(QtGui.QLabel, 'actionDescriptionLabel')
+        if actionDescriptionLabel is not None:
+            actionDescriptionLabel.setText(action.get_description())
+            
+    def resetInfo(self):
+        actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
+        if actionNameLabel is not None:
+            actionNameLabel.setText('')
+        
+        actionDescriptionLabel = self.findChild(QtGui.QLabel, 'actionDescriptionLabel')
+        if actionDescriptionLabel is not None:
+            actionDescriptionLabel.setText('')
+    
+class ActionButton(QtGui.QLabel):
+    entered = QtCore.pyqtSignal()
+    left = QtCore.pyqtSignal()    
+    
     """
     A custom interactive desktop button for the desktop. Each 'button' is 
-    actually a vbox containing two labels: the upper one displays an animated
-    icon, the lower one a hideable string which represents the actions name.
+    actually an animated label.
     """
     def __init__(self, action, parent = None):
         super(ActionButton, self).__init__(parent)
-        self.setObjectName( 'action_button' )
+        
+        self.setObjectName('ActionButton')
+        self.setMouseTracking(True)
+
         self.action = action
         
         # This property holds if this button reacts to mouse events.
         self.interactive = False
         
-        # The animated upper label.   
-        animatedLabel = ActionButtonLabel(action, self)
-        animatedLabel.setObjectName('animatedLabel')
-        
-        # The static lower label. 
-        staticLabel = QtGui.QLabel(action.get_verbose_name())
-        staticLabel.setObjectName('staticLabel')
-        staticLabelFont = QtGui.QApplication.font()
-        staticLabelFont.setPointSize(14)
-        staticLabel.setFont(staticLabelFont)
-        staticLabel.adjustSize()
-        staticLabelOpacityEffect = QtGui.QGraphicsOpacityEffect(parent=self)
-        staticLabelOpacityEffect.setObjectName('staticLabelOpacityEffect')
-        staticLabelOpacityEffect.setOpacity(0)
-        staticLabel.setGraphicsEffect(staticLabelOpacityEffect)
-
-        mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setContentsMargins(0, 20, 0, 20)
-        mainLayout.addWidget(animatedLabel, 1, Qt.AlignCenter)
-        mainLayout.addWidget(staticLabel, 0, Qt.AlignHCenter or Qt.AlignTop)
-
-        self.setMouseTracking(True)
-        self.setMinimumHeight(min(animatedLabel.height() + staticLabel.height(), 160))
-        self.setMaximumHeight(160)
-        self.setMinimumWidth(max(animatedLabel.width(), staticLabel.width()))
-        self.setLayout(mainLayout)
-                
-    def resetLayout(self):
-        animatedLabel = self.findChild(QtGui.QLabel, 'animatedLabel')
-        if animatedLabel is not None:
-            animatedLabel.resetLayout()
-        
-    def setInteractive(self, interactive):
-        self.interactive = interactive
-
-    def enterEvent(self, event):
-        if self.interactive and event.type() == QtCore.QEvent.Enter:
-            staticLabel = self.findChild(QtGui.QLabel, 'staticLabel')
-            if staticLabel is not None:
-                staticLabel.graphicsEffect().setOpacity(1)
-            if not self.action.is_notification():
-                animatedLabel = self.findChild(QtGui.QLabel, 'animatedLabel')
-                if animatedLabel is not None:
-                    animatedLabel.startHoverAnimation()
-
-        event.ignore()
-    
-    def leaveEvent(self, event):
-        if self.interactive and event.type() == QtCore.QEvent.Leave:
-            if not self.action.is_notification():
-                animatedLabel = self.findChild(QtCore.QObject, 'animatedLabel')
-                if animatedLabel is not None:
-                    animatedLabel.stopHoverAnimation()
-            staticLabel = self.findChild(QtGui.QLabel, 'staticLabel')
-            if staticLabel is not None:
-                staticLabel.graphicsEffect().setOpacity(0)
-
-        event.ignore()
-
-    def mousePressEvent(self, event):
-        if self.interactive:
-            animatedLabel = self.findChild(QtCore.QObject, 'animatedLabel')
-            if animatedLabel is not None and animatedLabel.getSelectionAnimationState() == QtCore.QAbstractAnimation.Stopped:
-                animatedLabel.startSelectionAnimation()
-
-        event.ignore()
-    
-class ActionButtonLabel(QtGui.QLabel):
-    """
-    This class provides an animated QLabel and is used by the ActionButton class.
-    Given the intention of the respresented action (notification or a regular
-    action), a different animation is applied to this label (respectively a fast
-    shaking and a bouncing one).
-    """
-    def __init__(self, action, parent = None):
-        super(ActionButtonLabel, self).__init__(parent)
-        self.action = action
-        
         # This property is used to store the original position of this label
         # so it can be visually reset when the user leaves before the ongoing
         # animation has finished.
         self.originalPosition = None
-        
+
         # This property holds the state of the selection animation. Since this
         # animation is only created inside startSelectionAnimation() (to avoid
         # the increasing amount of performAction() invocations), this variable is 
         # used to continuously store the state of that animation.
         self.selectionAnimationState = QtCore.QAbstractAnimation.Stopped
-        
+
         self.setPixmap(action.get_icon().getQPixmap())
-        self.setMinimumSize(self.pixmap().width(), self.pixmap().height())
+        self.resize(self.pixmap().width(), self.pixmap().height())
+        self.setMaximumHeight(160)
         
         opacityEffect = QtGui.QGraphicsOpacityEffect(parent = self)
         opacityEffect.setOpacity(1.0)
         self.setGraphicsEffect(opacityEffect)
-        
+
         if action.is_notification():
             # Shake animation #
             notificationAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
@@ -253,54 +245,31 @@ class ActionButtonLabel(QtGui.QLabel):
 
             # Timer is used to simulate a pausing effect of the animation.
             notificationAnimationTimer = QtCore.QTimer(parent = self)
+            notificationAnimationTimer.setObjectName('notificationAnimationTimer')
             notificationAnimationTimer.setInterval(1500)
             notificationAnimationTimer.setSingleShot(True)
             notificationAnimationTimer.timeout.connect(notificationAnimation.start)
             notificationAnimation.finished.connect(notificationAnimationTimer.start)
             ###################
-        else:
-            # Bounce animation #
-            hoverAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
-            hoverAnimationPart1.setObjectName('hoverAnimationPart1')
-            hoverAnimationPart1.setDuration(500)
-            hoverAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
-            
-            hoverAnimationPart2 = QtCore.QPropertyAnimation(self, 'pos')
-            hoverAnimationPart2.setObjectName('hoverAnimationPart2')
-            hoverAnimationPart2.setDuration(1500)
-            hoverAnimationPart2.setEasingCurve(QtCore.QEasingCurve.OutElastic)
-            
-            hoverAnimation = QtCore.QSequentialAnimationGroup(parent = self)
-            hoverAnimation.setObjectName('hoverAnimation')
-            hoverAnimation.setLoopCount(-1) # Infinite
-            hoverAnimation.addAnimation(hoverAnimationPart1)
-            hoverAnimation.addAnimation(hoverAnimationPart2)
-            ####################
 
-    def showEvent(self, event):
-        self.originalPosition = self.mapFromParent(self.mapToParent(self.pos()))
-
-        if self.action.is_notification():        
-            notificationAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart1')
-            if notificationAnimationPart1 is not None:
-                notificationAnimationPart1.setStartValue(self.originalPosition)
-                notificationAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(-8, 0))
-
-            notificationAnimationPart2 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart2')
-            if notificationAnimationPart2 is not None:
-                notificationAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(-8, 0))
-                notificationAnimationPart2.setEndValue(self.originalPosition + QtCore.QPoint(8, 0))
-            
-            notificationAnimationPart3 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart3')
-            if notificationAnimationPart3 is not None:
-                notificationAnimationPart3.setStartValue(self.originalPosition + QtCore.QPoint(8, 0))
-                notificationAnimationPart3.setEndValue(self.originalPosition)
-            
-            notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')
-            if notificationAnimation is not None:
-                notificationAnimation.start()
-            
-        event.ignore()
+    
+        # Bounce animation #
+        hoverAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
+        hoverAnimationPart1.setObjectName('hoverAnimationPart1')
+        hoverAnimationPart1.setDuration(500)
+        hoverAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
+        
+        hoverAnimationPart2 = QtCore.QPropertyAnimation(self, 'pos')
+        hoverAnimationPart2.setObjectName('hoverAnimationPart2')
+        hoverAnimationPart2.setDuration(1500)
+        hoverAnimationPart2.setEasingCurve(QtCore.QEasingCurve.OutElastic)
+        
+        hoverAnimation = QtCore.QSequentialAnimationGroup(parent = self)
+        hoverAnimation.setObjectName('hoverAnimation')
+        hoverAnimation.setLoopCount(-1) # Infinite
+        hoverAnimation.addAnimation(hoverAnimationPart1)
+        hoverAnimation.addAnimation(hoverAnimationPart2)
+        ####################
 
     def startHoverAnimation(self):
         hoverAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart1')
@@ -380,20 +349,96 @@ class ActionButtonLabel(QtGui.QLabel):
     def updateSelectionAnimationState(self, newState, oldState):
         self.selectionAnimationState = newState
 
-    def getSelectionAnimationState(self):
-        return self.selectionAnimationState
-
     @QtCore.pyqtSlot()
     def performAction(self):
         self.action.run(self.parentWidget())
-        
+
+    def getAction(self):
+        return self.action
+
     @QtCore.pyqtSlot()
     def resetLayout(self):
+        if self.action.is_notification():
+            self.stopNotificationAnimation()
+        
+        if self.sender() and self.originalPosition:
+            self.move(self.originalPosition)
+
         if self.originalPosition:
+            self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0))
             self.move(self.originalPosition)
         self.setScaledContents(False)
         self.resize(self.pixmap().width(), self.pixmap().height())
         self.graphicsEffect().setOpacity(1.0)
+        
+        if self.action.is_notification() and self.originalPosition:
+            self.startNotificationAnimation()
+        
+    def setInteractive(self, interactive):
+        self.interactive = interactive
+        
+        self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0))
+
+        if self.action.is_notification():
+            self.startNotificationAnimation()
+
+    def enterEvent(self, event):
+        if self.interactive:
+            if self.action.is_notification():
+                self.stopNotificationAnimation()
+                
+            self.startHoverAnimation()
+            
+            self.entered.emit()
+
+        event.ignore()
+    
+    def leaveEvent(self, event):
+        if self.interactive:
+            self.stopHoverAnimation()
+            
+            if self.action.is_notification():
+                self.startNotificationAnimation()
+            
+            self.left.emit()
+
+        event.ignore()
+
+    def mousePressEvent(self, event):
+        if self.interactive and self.selectionAnimationState == QtCore.QAbstractAnimation.Stopped:
+            self.startSelectionAnimation()
+
+        event.ignore()
+        
+    def startNotificationAnimation(self):
+        notificationAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart1')
+        if notificationAnimationPart1 is not None:
+            notificationAnimationPart1.setStartValue(self.originalPosition)
+            notificationAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(-8, 0))
+
+        notificationAnimationPart2 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart2')
+        if notificationAnimationPart2 is not None:
+            notificationAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(-8, 0))
+            notificationAnimationPart2.setEndValue(self.originalPosition + QtCore.QPoint(8, 0))
+        
+        notificationAnimationPart3 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart3')
+        if notificationAnimationPart3 is not None:
+            notificationAnimationPart3.setStartValue(self.originalPosition + QtCore.QPoint(8, 0))
+            notificationAnimationPart3.setEndValue(self.originalPosition)
+        
+        notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')
+        notificationAnimationTimer = self.findChild(QtCore.QTimer, 'notificationAnimationTimer')
+        if notificationAnimation is not None and notificationAnimationTimer is not None:
+            notificationAnimationTimer.start()
+            notificationAnimation.start()
+
+    def stopNotificationAnimation(self):
+        notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')
+        notificationAnimationTimer = self.findChild(QtCore.QTimer, 'notificationAnimationTimer')
+        
+        if notificationAnimation is not None and notificationAnimationTimer is not None:
+            notificationAnimationTimer.stop()
+            notificationAnimation.stop()
 
 class DesktopTabbar(QtGui.QTabBar):
 
@@ -402,6 +447,12 @@ class DesktopTabbar(QtGui.QTabBar):
     def mouseDoubleClickEvent(self, event):
         self.change_view_mode_signal.emit()
         event.accept()
+        
+    def tabSizeHint(self, index):
+        originalSizeHint = super(DesktopTabbar, self).tabSizeHint(index)
+        minimumWidth = max(160, originalSizeHint.width())
+        
+        return QtCore.QSize(minimumWidth, originalSizeHint.height())
 
 class DesktopWorkspace(QtGui.QWidget):
     """
@@ -450,6 +501,7 @@ class DesktopWorkspace(QtGui.QWidget):
         self._tab_widget.addTab(self._background_widget,
                                 Icon('tango/16x16/actions/go-home.png').getQIcon(),
                                 _('Home'))
+        tab_bar.tabButton(0, QtGui.QTabBar.RightSide).hide()
         
         self.setLayout(layout)
         self.reload_background_widget()
@@ -508,6 +560,24 @@ class DesktopWorkspace(QtGui.QWidget):
             index = self._tab_widget.indexOf(sender)
             if index > 0:
                 self._tab_widget.setTabText(index, new_title)
+                
+    @QtCore.pyqtSlot(QtGui.QIcon)
+    def change_icon(self, new_icon):
+        """
+        Slot to be called when the icon of a view needs to change.
+        
+        Note: the icon of the 'Start' tab cannot be overwritten.
+        """
+        # the request of the sender does not work in older pyqt versions
+        # therefore, take the current index, notice this is not correct !!
+        #
+        # sender = self.sender()
+        sender = self.active_view()
+        
+        if sender:
+            index = self._tab_widget.indexOf(sender)
+            if index > 0:
+                self._tab_widget.setTabIcon(index, new_icon)
 
     def set_view(self, view, icon = None, title = '...'):
         """
@@ -521,6 +591,7 @@ class DesktopWorkspace(QtGui.QWidget):
             self._tab_widget.removeTab(index)
             
             view.title_changed_signal.connect(self.change_title)
+            view.icon_changed_signal.connect(self.change_icon)
             if icon:
                 index = self._tab_widget.insertTab(index, view, icon, title)
             else:
@@ -533,6 +604,7 @@ class DesktopWorkspace(QtGui.QWidget):
         Add a Widget implementing AbstractView to the workspace.
         """
         view.title_changed_signal.connect(self.change_title)
+        view.icon_changed_signal.connect(self.change_icon)
         if icon:
             index = self._tab_widget.addTab(view, icon, title)
         else:
@@ -566,6 +638,7 @@ def show_top_level(view, parent):
     #
     view.setWindowTitle( u'' )
     view.title_changed_signal.connect( view.setWindowTitle )
+    view.icon_changed_signal.connect( view.setWindowIcon )
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
     #
