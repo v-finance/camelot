@@ -57,11 +57,11 @@ class ApplicationAction(AbstractAction):
     
     def get_verbose_name(self):
         """:return: the name of the action, as it can be shown to the user"""
-        raise NotImplemented
+        raise NotImplementedError()
     
     def get_icon(self):
         """:return: a camelot.view.art.Icon object"""
-        raise NotImplemented
+        raise NotImplementedError()
 
     def is_notification(self):
         """:return: False, subclasses should reimplement this."""
