@@ -61,6 +61,7 @@ class PaneSection(QWidget):
         section_tree.customContextMenuRequested.connect(self.create_context_menu)
         section_tree.setObjectName( 'SectionTree' )
         section_tree.itemClicked.connect( self.open_in_current_view )
+        section_tree.setWordWrap( False )
         layout.addWidget( section_tree )
         self.setLayout(layout)
         post( section.get_items, self.set_items )
@@ -83,6 +84,7 @@ class PaneSection(QWidget):
                 if icon:
                     model_item.set_icon(icon.getQIcon())
                 section_tree.modelitems.append(model_item)
+            section_tree.resizeColumnToContents( 0 )
 
     def create_context_menu(self, point):
         logger.debug('creating context menu')

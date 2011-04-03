@@ -70,11 +70,16 @@ class ModelTree(QtGui.QTreeWidget):
         self.setColumnCount(2)
         self.setColumnWidth(0, 160)
         self.setColumnWidth(1, 18)
+        self.setHorizontalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
+        self.setSelectionBehavior( self.SelectRows )
         
         self.clear_model_items()
         self.clear_section_items()
         self.fix_header_labels()
 
+    def resizeEvent(self, event):
+        self.setColumnWidth(0, self.width()  - 30 )
+        
     def fix_header_labels(self):
         self.setHeaderHidden(True)
 
