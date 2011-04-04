@@ -245,7 +245,7 @@ empty environment"""
 :return: the name of the jinja template for xml document.  A template can be constructed by
 creating a document in MS Word and saving it as an xml file.  This file can then be manipulated by hand
 to include jinja constructs."""
-        raise NotImplemented
+        raise NotImplementedError()
 
     def document(self, options):
         """

@@ -501,7 +501,10 @@ class DesktopWorkspace(QtGui.QWidget):
         self._tab_widget.addTab(self._background_widget,
                                 Icon('tango/16x16/actions/go-home.png').getQIcon(),
                                 _('Home'))
-        tab_bar.tabButton(0, QtGui.QTabBar.RightSide).hide()
+        try:
+            tab_bar.tabButton(0, QtGui.QTabBar.RightSide).hide()
+        except Exception, e:
+            logger.debug(e)
         
         self.setLayout(layout)
         self.reload_background_widget()
