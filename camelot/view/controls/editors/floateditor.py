@@ -49,15 +49,16 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
         if self._option and self._option.version != 5 and key_event.key() in (Qt.Key_Up, Qt.Key_Down):
             key_event.ignore()
         else:
+            decimal_point = QtCore.QLocale.system().decimalPoint()
             # Make sure that the Period key on the numpad is *always* 
             # represented by the systems locale decimal separator to 
             # facilitate user input.
-            if key_event.key() == Qt.Key_Period:
+            if key_event.key() == Qt.Key_Period and decimal_point.unicode() != Qt.Key_Period:
                 # Dynamically build a 'new' event that holds this locales decimal separator
-                new_key_event = QtGui.QKeyEvent(key_event.type(),
-                                                QtCore.QLocale.system().decimalPoint().unicode(),
-                                                key_event.modifiers(),
-                                                QtCore.QString(QtCore.QLocale.system().decimalPoint()))
+                new_key_event = QtGui.QKeyEvent( key_event.type(),
+                                                 decimal_point.unicode(),
+                                                 key_event.modifiers(),
+                                                 QtCore.QString(decimal_point) )
                 key_event.accept() # Block 'old' event
                 QtGui.QApplication.sendEvent(self, new_key_event)
             # Propagate all other events to the super class
