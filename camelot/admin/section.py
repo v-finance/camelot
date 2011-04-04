@@ -87,10 +87,7 @@ class SectionItem(object):
         return self.action
         
     def get_icon(self):
-        try:
-            return self.action.get_icon()
-        except Exception:
-            return None
+        return self.action.get_icon()
 
 def structure_to_section_items(structure):
 
