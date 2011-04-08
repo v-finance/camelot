@@ -159,8 +159,6 @@ class ActionButtonInfoWidget(QtGui.QWidget):
         mainLayout.addWidget(actionDescriptionLabel)
 
         self.setLayout(mainLayout)
-        
-        #self.setStyleSheet(""" QWidget {border: 2px solid black; }""")
     
     @QtCore.pyqtSlot()
     def setInfoFromAction(self, action):
@@ -171,6 +169,10 @@ class ActionButtonInfoWidget(QtGui.QWidget):
         actionDescriptionLabel = self.findChild(QtGui.QLabel, 'actionDescriptionLabel')
         if actionDescriptionLabel is not None:
             actionDescriptionLabel.setText(action.get_description())
+            if action.get_description():                
+                actionDescriptionLabel.show()
+            else:
+                actionDescriptionLabel.hide()
             
     def resetInfo(self):
         actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
