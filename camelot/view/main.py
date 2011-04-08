@@ -26,6 +26,9 @@
 from PyQt4 import QtCore
 from camelot.core.utils import ugettext as _
 
+from camelot.art import resources # Required for tooltip visualization
+resources.__name__ # Dodge PyFlakes' attack
+
 class Application(QtCore.QObject):
     """The camelot application.  This class will take care of the order of
     initialization of various stuff needed to get the application up and
