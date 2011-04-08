@@ -53,6 +53,7 @@ from PyQt4 import QtCore
 import getpass
 import logging
 from logging import handlers
+import sys
 
 LOGGER = logging.getLogger('camelot.core.logging')
 
@@ -105,7 +106,19 @@ class ThreadedAwsHandler(logging.Handler):
         self._connected = True
         self._threaded_timer = ThreadedTimer(1000, self)
         self._threaded_timer.start()
-        self._user = getpass.getuser()
+        try:
+            if sys.platform.startswith('win'):
+                # on windows getuser() uses the USERNAME env var
+                # from sys.getfilesystemencoding documentation:
+                # On Windows NT+, file names are Unicode natively, so no conversion is performed. 
+                # getfilesystemencoding() still returns 'mbcs', as this is the encoding that applications 
+                # should use when they explicitly want to convert Unicode strings 
+                # to byte strings that are equivalent when used as file names.
+                self._user = getpass.getuser().decode('mbcs')
+            else:
+                self._user = getpass.getuser()
+        except Exception:
+            self._user = getpass.getuser().encode('ascii', 'ignore')
         self._revision = revision
         
     def emit(self, record):
@@ -123,7 +136,7 @@ class ThreadedAwsHandler(logging.Handler):
             record.exc_info = None
         record_dict = dict( user=self._user, revision=self._revision )
         record_dict.update( record.__dict__ )
-        self._records_to_emit.append( json.dumps( record_dict, encoding='utf-8' ) )
+        self._records_to_emit.append( json.dumps( record_dict ) )
         if ei:
             record.exc_info = ei  # for next handler
         
