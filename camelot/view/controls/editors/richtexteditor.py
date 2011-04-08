@@ -34,7 +34,7 @@ class RichTextEditor(CustomEditor, WideEditor):
 
     def __init__(self, parent=None, **kwargs):
         CustomEditor.__init__(self, parent)
-        self.layout = QtGui.QHBoxLayout(self)
+        self.layout = QtGui.QVBoxLayout(self)
         self.layout.setSpacing(0)
         self.layout.setMargin(0)
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
@@ -48,7 +48,6 @@ class RichTextEditor(CustomEditor, WideEditor):
 
             editingFinished = QtCore.pyqtSignal()
             receivedFocus = QtCore.pyqtSignal()
-            lostFocus = QtCore.pyqtSignal()
             
             def __init__(self, parent):
                 super(CustomTextEdit, self).__init__(parent)
@@ -64,10 +63,6 @@ class RichTextEditor(CustomEditor, WideEditor):
             def focusOutEvent(self, event):
                 if self._changed:
                     self.editingFinished.emit()
-                
-                super(CustomTextEdit, self).focusOutEvent( event )
-                
-                self.lostFocus.emit()
 
             def _handle_text_changed(self):
                 self._changed = True
@@ -81,17 +76,16 @@ class RichTextEditor(CustomEditor, WideEditor):
 
         self.textedit = CustomTextEdit(self)
 
-        self.initButtons() # Has to be invoked before the connect's below.
+        self.initToolbar() # Has to be invoked before the connect's below.
         self.toolbar.hide() # Should only be visible when textedit is focused.
         
         self.textedit.editingFinished.connect(self.emit_editing_finished)
         self.textedit.receivedFocus.connect(self.toolbar.show)
-        self.textedit.lostFocus.connect(self.toolbar.hide)
         self.textedit.setAcceptRichText(True)
         
         # Layout
-        self.layout.addWidget(self.textedit)
         self.layout.addWidget(self.toolbar)
+        self.layout.addWidget(self.textedit)
         self.setLayout(self.layout)
 
         # Format
@@ -115,9 +109,9 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.set_editable(editable)
         self.set_background_color(background_color)
 
-    def initButtons(self):
+    def initToolbar(self):
         self.toolbar = QtGui.QToolBar(self)
-        self.toolbar.setOrientation(Qt.Vertical)
+        self.toolbar.setOrientation(Qt.Horizontal)
         self.toolbar.setContentsMargins(0, 0, 0, 0)
 
         self.bold_button = QtGui.QToolButton(self)
