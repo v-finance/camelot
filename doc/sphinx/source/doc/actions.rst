@@ -98,5 +98,42 @@ DOCX Word documents
 List view actions
 =================
 
-.. autoclass:: camelot.admin.list_action.ListAction
+List actions, are actions that will appear on a table view, a very simple list
+action is one that pops up a print preview of a report based on the current
+table :
+
+.. autoclass:: camelot.admin.list_action.PrintHtmlListAction
+
+It is used by appending an instance of this action to the list actions of the
+EntityAdmin::
+
+   list_actions = [PrintHtmlListAction('Report')]
+   
+This will result in a Report button being displayed on the table view.
+
+.. image:: ../_static/entityviews/table_view_movie.png
+
+When this button is pressed, a report of the current table view will pop up.
+To customize this report, one should subclass the PrintHtmlListAction and
+create a custom html method::
+
+   def html(self, collection, selection, options):
+       return '<br/>'.join([movie.title for movie in collection])
+
+The html function takes 3 arguments:
+
+.. automethod:: camelot.admin.list_action.PrintHtmlListAction.html
+
+Printing through Html documents
+-------------------------------
+
+A full example of a custom PrintHtmlListAction, including the use of Options
+can look like this :
+
+.. literalinclude:: ../../../../example/action.py
+
+Actions in the model thread
+---------------------------
+
+.. autoclass:: camelot.admin.list_action.ListActionFromModelFunction
    :members:

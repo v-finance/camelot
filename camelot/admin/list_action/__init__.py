@@ -150,10 +150,20 @@ Either give a model function as argument or overwrite the model_run method in a 
         progress.exec_()
 
 class PrintHtmlListAction( AbstractPrintHtmlAction, ListActionFromModelFunction ):
+    """List action that pops-up a print preview page, displaying html
+    generated for a list or a a selection.  This class should be subclassed
+    with a custom html function to create a custom report.
+    """
 
     def __init__( self, 
-                  name, 
-                  icon = Icon( 'tango/22x22/actions/document-print.png' ) ):
+                    name, 
+                    icon = Icon( 'tango/22x22/actions/document-print.png' ) ):
+        """        
+        :param name: the label to be used on the action button
+        :param icon: a camelot.view.art.Icon object, to be used as an icon on the
+        action button
+
+        """
         super(PrintHtmlListAction, self).__init__( name, icon)
 
     def run( self, collection_getter, selection_getter ):
@@ -183,9 +193,13 @@ class PrintHtmlListAction( AbstractPrintHtmlAction, ListActionFromModelFunction 
 
     def html( self, collection, selection, options ):
         """Overwrite this function to generate custom html to be printed
-    :param collection: the collection of objects displayed in the list
-    :param selection: the collection of selected objects in the list
-    :param options: an instance of the Options class attribute, if provided
+
+:param collection: the collection of objects displayed in the list
+:param selection: the collection of selected objects in the list
+:param options: an instance of the Options class attribute, if provided.
+                the options allow the user to further specify how the html 
+                should look like
+                
         """
         return '<br/>'.join( list( unicode( o ) for o in collection ) )
     
@@ -235,5 +249,3 @@ def structure_to_list_actions( structure ):
         return ListActionFromGuiFunction( o[0], o[1] )
 
     return [object_to_action( o ) for o in structure]
-
-
