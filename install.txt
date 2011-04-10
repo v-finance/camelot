@@ -21,7 +21,15 @@ If you are using a debian based distribution, you can type::
 Then use easy_install to install Camelot, under Linux this would be done by typing::
 
   sudo easy_install camelot
-  
+
+Packages
+========
+
+Linux distributions often offer packages for various applications, including
+Camelot and its dependencies :
+
+ * `OpenSUSE build service  <https://build.opensuse.org/project/show?project=home%3Afrispete%3APyQt>`_.
+
 From source
 ===========
 
