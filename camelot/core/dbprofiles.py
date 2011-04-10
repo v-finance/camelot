@@ -115,6 +115,7 @@ def fetch_profiles(from_file=None):
             info['media_location'] = _decode_setting(settings.value('media_location', QtCore.QVariant('')).toString())
             info['locale_language'] = _decode_setting(settings.value('locale_language', QtCore.QVariant('')).toString())
             info['proxy_host'] = _decode_setting(settings.value('proxy_host', QtCore.QVariant('')).toString())
+            info['proxy_port'] = _decode_setting(settings.value('proxy_port', QtCore.QVariant('')).toString())
             info['proxy_username'] = _decode_setting(settings.value('proxy_username', QtCore.QVariant('')).toString())
             info['proxy_password'] = _decode_setting(settings.value('proxy_password', QtCore.QVariant('')).toString())
             profiles[profilename] = info
@@ -143,6 +144,7 @@ def store_profiles(profiles, to_file=None):
         settings.setValue('media_location', QtCore.QVariant(_encode_setting(info['media_location'])))
         settings.setValue('locale_language', QtCore.QVariant(_encode_setting(info['locale_language'])))
         settings.setValue('proxy_host', QtCore.QVariant(_encode_setting(info['proxy_host'])))
+        settings.setValue('proxy_port', QtCore.QVariant(_encode_setting(info['proxy_port'])))
         settings.setValue('proxy_username', QtCore.QVariant(_encode_setting(info['proxy_username'])))
         settings.setValue('proxy_password', QtCore.QVariant(_encode_setting(info['proxy_password'])))
     settings.endArray()
@@ -151,3 +153,37 @@ def use_chosen_profile(profilename):
     settings = QtCore.QSettings()
     settings.setValue('last_used_database_profile', unicode(profilename).encode('utf-8') )
 
+class EmptyProxy():
+
+    @classmethod
+    def hostName(cls):
+        return ''
+
+    @classmethod
+    def user(cls):
+        return ''
+
+    @classmethod
+    def port(cls):
+        return ''
+
+    @classmethod
+    def password(cls):
+        return ''
+
+def get_network_proxy():
+    from PyQt4 import QtCore, QtNetwork
+    proxy = None
+    settings = QtCore.QSettings()
+    proxies = QtNetwork.QNetworkProxyFactory.systemProxyForQuery(
+        QtNetwork.QNetworkProxyQuery(QtCore.QUrl('http://aws.amazon.com')))
+    if proxies and proxies[0].hostName():
+        logger.info('Proxy servers found, taking first: %s' % \
+            ['%s:%s' % (str(proxy.hostName()),str(proxy.port()))
+                for proxy in proxies])
+        proxy = proxies[0]
+
+    if proxy is None:
+        return EmptyProxy()
+
+    return proxy

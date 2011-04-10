@@ -41,7 +41,7 @@ from camelot.view.controls.combobox_input_dialog import ComboBoxInputDialog
 from camelot.core.utils import ugettext as _
 from camelot.view.model_thread.signal_slot_model_thread import SignalSlotModelThread
 
-from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, store_profiles
+from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, store_profiles, get_network_proxy
 
 logger = logging.getLogger('camelot.view.database_selection')
 
@@ -147,7 +147,8 @@ allow all languages
         self.password_label = QLabel(_('Password:'))
         self.media_location_label = QLabel(_('Media Location:'))
         self.language_label = QLabel(_('Language:'))
-        self.proxy_address_label = QLabel(_('Proxy Address:'))
+        self.proxy_host_label = QLabel(_('Proxy Host:'))
+        self.proxy_port_label = QLabel(_('Proxy Port:'))
         self.proxy_username_label = QLabel(_('Proxy Username:'))
         self.proxy_password_label = QLabel(_('Proxy Password:'))
 
@@ -162,9 +163,10 @@ allow all languages
         layout.addWidget(self.password_label, 5, 0, Qt.AlignRight)
         layout.addWidget(self.media_location_label, 7, 0, Qt.AlignRight)
         layout.addWidget(self.language_label, 8, 0, Qt.AlignRight)
-        layout.addWidget(self.proxy_address_label,  9, 0, Qt.AlignRight)
-        layout.addWidget(self.proxy_username_label, 10, 0, Qt.AlignRight)
-        layout.addWidget(self.proxy_password_label, 11, 0, Qt.AlignRight)
+        layout.addWidget(self.proxy_host_label,  9, 0, Qt.AlignRight)
+        layout.addWidget(self.proxy_port_label,  10, 0, Qt.AlignRight)
+        layout.addWidget(self.proxy_username_label, 11, 0, Qt.AlignRight)
+        layout.addWidget(self.proxy_password_label, 12, 0, Qt.AlignRight)
 
         self.profile_editor = QComboBox(self)
         self.profile_editor.setEditable(True)
@@ -195,7 +197,8 @@ allow all languages
         else:
             self.language_editor.set_value( system_language )
 
-        self.proxy_address_editor = TextLineEditor(self, length=32767)
+        self.proxy_host_editor = TextLineEditor(self, length=32767)
+        self.proxy_port_editor = TextLineEditor(self)
         self.proxy_username_editor = TextLineEditor(self)
         self.proxy_password_editor = TextLineEditor(self)
         self.proxy_password_editor.setEchoMode(QLineEdit.Password)
@@ -210,9 +213,10 @@ allow all languages
         layout.addWidget(HSeparator(), 6, 0, 1, 5)
         layout.addWidget(self.media_location_editor, 7, 1, 1, 1)
         layout.addWidget(self.language_editor, 8, 1, 1, 1)
-        layout.addWidget(self.proxy_address_editor, 9, 1, 1, 1)
-        layout.addWidget(self.proxy_username_editor, 10, 1, 1, 1)
-        layout.addWidget(self.proxy_password_editor, 11, 1, 1, 1)
+        layout.addWidget(self.proxy_host_editor, 9, 1, 1, 1)
+        layout.addWidget(self.proxy_port_editor, 10, 1, 1, 1)
+        layout.addWidget(self.proxy_username_editor, 11, 1, 1, 1)
+        layout.addWidget(self.proxy_password_editor, 12, 1, 1, 1)
 
         self.main_widget().setLayout(layout)
 
@@ -262,8 +266,9 @@ allow all languages
             self.username_editor, self.password_editor,
             self.media_location_editor, self.browse_button,
             self.language_editor,
-            self.proxy_address_editor, self.proxy_username_editor,
-            self.proxy_password_editor, self.ok_button, self.cancel_button]
+            self.proxy_host_editor, self.proxy_port_editor,
+            self.proxy_username_editor, self.proxy_password_editor,
+            self.ok_button, self.cancel_button]
 
         i = 1
         while i != len(all_widgets):
@@ -334,9 +339,15 @@ allow all languages
         self.password_editor.setText(self.get_profile_value('pass') or self.password_editor.text())
         self.media_location_editor.setText(self.get_profile_value('media_location') or self.media_location_editor.text())
         self.language_editor.set_value(self.get_profile_value('locale_language') or self.language_editor.get_value())
-        self.proxy_address_editor.setText(self.get_profile_value('proxy_host') or self.proxy_address_editor.text())
-        self.proxy_username_editor.setText(self.get_profile_value('proxy_username') or self.proxy_username_editor.text())
-        self.proxy_password_editor.setText(self.get_profile_value('proxy_password') or self.proxy_password_editor.text())
+
+        self.update_proxy_values()
+
+    def update_proxy_values(self):
+        network_proxy = get_network_proxy()
+        self.proxy_host_editor.setText(self.get_profile_value('proxy_host') or str(network_proxy.hostName()))
+        self.proxy_port_editor.setText(self.get_profile_value('proxy_port') or str(network_proxy.port()))
+        self.proxy_username_editor.setText(self.get_profile_value('proxy_username') or str(network_proxy.user()))
+        self.proxy_password_editor.setText(self.get_profile_value('proxy_password') or str(network_proxy.password()))
 
     def get_profile_value(self, key):
         current = self.current_profile()
@@ -356,7 +367,8 @@ allow all languages
         info['pass'] = self.password_editor.text()
         info['media_location'] = self.media_location_editor.text()
         info['locale_language'] = self.language_editor.get_value()
-        info['proxy_host'] = self.proxy_address_editor.text()
+        info['proxy_host'] = self.proxy_host_editor.text()
+        info['proxy_port'] = self.proxy_port_editor.text()
         info['proxy_username'] = self.proxy_username_editor.text()
         info['proxy_password'] = self.proxy_password_editor.text()
         return profilename, info

@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 """Helper functions for the view subpackage"""
-from HTMLParser import HTMLParser 
+from HTMLParser import HTMLParser
 
 from PyQt4 import QtCore
 
@@ -73,7 +73,7 @@ def local_time_format():
         locale = QtCore.QLocale()
         _local_time_format = unicode(locale.timeFormat(locale.ShortFormat) )
     return _local_time_format
-    
+
 def default_language(*args):
     """takes arguments, to be able to use this function as a
     default field attribute"""
@@ -123,7 +123,7 @@ def date_from_string(s):
 #                # try parsing without year and month, and take the current year and month by default
 #                only_letters_format = u''.join([c for c in only_letters_format if c not in ['M']])
 #                dt = QDate.fromString(only_letters_string, only_letters_format)
-#                if not dt.isValid():   
+#                if not dt.isValid():
 #                    raise ParsingError()
 #                else:
 #                    today = date.today()
@@ -142,7 +142,7 @@ def time_from_string(s):
     if not tm.isValid():
         raise ParsingError()
     return time( tm.hour(), tm.minute(), tm.second() )
-                    
+
 def datetime_from_string(s):
     s = s.strip()
     if not s:
@@ -227,7 +227,7 @@ def text_from_richtext(unstripped_text):
         def handle_endtag(self, tag):
             if tag == 'br':
                 strings.append('')
-                  
+
         def handle_data(self, data):
             from xml.sax.saxutils import escape
             data = data.strip()
@@ -238,4 +238,3 @@ def text_from_richtext(unstripped_text):
     parser.feed(unstripped_text.strip())
 
     return strings
-
