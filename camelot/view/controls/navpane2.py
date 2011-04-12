@@ -79,7 +79,11 @@ class PaneSection(QWidget):
     
             for item in items:
                 label = item.get_verbose_name()
-                icon = item.get_icon()
+                try:
+                    icon = item.get_icon()
+                except NotImplementedError, e:
+                    logger.debug('Icon set to None: %s' % e)
+                    icon = None
                 model_item = ModelItem(section_tree, [label])
                 if icon:
                     model_item.set_icon(icon.getQIcon())
