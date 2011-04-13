@@ -22,6 +22,7 @@
 #
 #  ============================================================================
 
+import os
 import sys
 import logging
 import pkgutil
@@ -31,7 +32,8 @@ from sqlalchemy import create_engine
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QBoxLayout, QDialog, QFont, QGridLayout, QHBoxLayout, \
-    QLabel, QLineEdit, QPushButton, QFileDialog, QComboBox
+    QLabel, QLineEdit, QPushButton, QFileDialog, QComboBox, QWidget, \
+    QLayout, QVBoxLayout
 from camelot.view import art
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.editors import ChoicesEditor, TextLineEditor, LanguageEditor
@@ -148,9 +150,15 @@ allow all languages
         self.media_location_label = QLabel(_('Media Location:'))
         self.language_label = QLabel(_('Language:'))
         self.proxy_host_label = QLabel(_('Proxy Host:'))
-        self.proxy_port_label = QLabel(_('Proxy Port:'))
+        self.proxy_port_label = QLabel(_('Port:'))
         self.proxy_username_label = QLabel(_('Proxy Username:'))
         self.proxy_password_label = QLabel(_('Proxy Password:'))
+
+        self.working_proxy_label = QLabel(_('Internet available.'))
+        self.working_proxy_label.setStyleSheet('color: green')
+
+        self.not_working_proxy_label = QLabel(_('Internet not available.'))
+        self.not_working_proxy_label.setStyleSheet('color: red')
 
         layout = QGridLayout()
 
@@ -163,8 +171,8 @@ allow all languages
         layout.addWidget(self.password_label, 5, 0, Qt.AlignRight)
         layout.addWidget(self.media_location_label, 7, 0, Qt.AlignRight)
         layout.addWidget(self.language_label, 8, 0, Qt.AlignRight)
-        layout.addWidget(self.proxy_host_label,  9, 0, Qt.AlignRight)
-        layout.addWidget(self.proxy_port_label,  10, 0, Qt.AlignRight)
+        layout.addWidget(self.proxy_host_label,  10, 0, Qt.AlignRight)
+        layout.addWidget(self.proxy_port_label,  10, 3, Qt.AlignRight)
         layout.addWidget(self.proxy_username_label, 11, 0, Qt.AlignRight)
         layout.addWidget(self.proxy_password_label, 12, 0, Qt.AlignRight)
 
@@ -199,6 +207,7 @@ allow all languages
 
         self.proxy_host_editor = TextLineEditor(self, length=32767)
         self.proxy_port_editor = TextLineEditor(self)
+        self.proxy_port_editor.setFixedWidth(60)
         self.proxy_username_editor = TextLineEditor(self)
         self.proxy_password_editor = TextLineEditor(self)
         self.proxy_password_editor.setEchoMode(QLineEdit.Password)
@@ -213,8 +222,9 @@ allow all languages
         layout.addWidget(HSeparator(), 6, 0, 1, 5)
         layout.addWidget(self.media_location_editor, 7, 1, 1, 1)
         layout.addWidget(self.language_editor, 8, 1, 1, 1)
-        layout.addWidget(self.proxy_host_editor, 9, 1, 1, 1)
-        layout.addWidget(self.proxy_port_editor, 10, 1, 1, 1)
+        layout.addWidget(HSeparator(), 9, 0, 1, 5)
+        layout.addWidget(self.proxy_host_editor, 10, 1, 1, 1)
+        layout.addWidget(self.proxy_port_editor, 10, 4, 1, 1)
         layout.addWidget(self.proxy_username_editor, 11, 1, 1, 1)
         layout.addWidget(self.proxy_password_editor, 12, 1, 1, 1)
 
@@ -239,7 +249,9 @@ allow all languages
         self.profile_editor.editTextChanged.connect(self.update_wizard_values)
 
     def create_buttons(self):
-        self.save_button = QPushButton(_('Save profiles'))
+        self.more_button = QPushButton(_('More'))
+        self.more_button.setCheckable(True)
+        self.more_button.setAutoDefault(False)
         self.cancel_button = QPushButton(_('Cancel'))
         #self.clear_button = QPushButton(_('Clear'))
         self.ok_button = QPushButton(_('OK'))
@@ -251,14 +263,35 @@ allow all languages
         #layout.addWidget(self.clear_button)
         layout.addWidget(self.ok_button)
         layout.addStretch()
-        layout.addWidget(self.save_button)
+        layout.addWidget(self.more_button)
 
         self.buttons_widget().setLayout(layout)
 
         self.browse_button = QPushButton(_('Browse'))
-        self.load_button = QPushButton(_('Load profiles'))
         self.main_widget().layout().addWidget(self.browse_button, 7, 2, 1, 3)
-        self.main_widget().layout().addWidget(self.load_button, 0, 2, 1, 3)
+
+        self.setup_extension()
+
+    def setup_extension(self):
+        self.extension = QWidget()
+
+        self.load_button = QPushButton(_('Load profiles'))
+        self.save_button = QPushButton(_('Save profiles'))
+
+        extension_buttons_layout = QHBoxLayout()
+        extension_buttons_layout.setMargin(0)
+        extension_buttons_layout.addWidget(self.load_button)
+        extension_buttons_layout.addWidget(self.save_button)
+        extension_buttons_layout.addStretch()
+
+        extension_layout = QVBoxLayout()
+        extension_layout.setMargin(0)
+        extension_layout.addWidget(HSeparator())
+        extension_layout.addLayout(extension_buttons_layout)
+
+        self.extension.setLayout(extension_layout)
+        self.main_widget().layout().addWidget(self.extension, 15, 0, 1, 5)
+        self.extension.hide()
 
     def set_tab_order(self):
         all_widgets = [self.profile_editor, self.dialect_editor,
@@ -279,7 +312,11 @@ allow all languages
         self.cancel_button.pressed.connect(self.reject)
         self.ok_button.pressed.connect(self.proceed)
         #self.clear_button.pressed.connect(self.clear_fields)
+
         self.browse_button.pressed.connect(self.fill_media_location)
+
+        self.more_button.toggled.connect(self.extension.setVisible)
+
         self.save_button.pressed.connect(self.save_profiles_to_file)
         self.load_button.pressed.connect(self.load_profiles_from_file)
 
@@ -343,11 +380,18 @@ allow all languages
         self.update_proxy_values()
 
     def update_proxy_values(self):
-        network_proxy = get_network_proxy()
+        internet_available, network_proxy = get_network_proxy()
         self.proxy_host_editor.setText(self.get_profile_value('proxy_host') or str(network_proxy.hostName()))
         self.proxy_port_editor.setText(self.get_profile_value('proxy_port') or str(network_proxy.port()))
         self.proxy_username_editor.setText(self.get_profile_value('proxy_username') or str(network_proxy.user()))
         self.proxy_password_editor.setText(self.get_profile_value('proxy_password') or str(network_proxy.password()))
+
+        if internet_available:
+            self.main_widget().layout().addWidget(
+                self.working_proxy_label, 13, 1, 1, 4)
+        else:
+            self.main_widget().layout().addWidget(
+                self.not_working_proxy_label, 13, 1, 1, 4)
 
     def get_profile_value(self, key):
         current = self.current_profile()
@@ -387,12 +431,14 @@ allow all languages
         if not path:
             return
 
-        mt = SignalSlotModelThread(lambda:None)
-        mt.start()
-        progress = ProgressDialog(_('Saving progiles to file'))
-        mt.post(lambda:store_profiles(self.profiles, to_file=path),
-            progress.finished, progress.exception)
-        progress.exec_()
+        store_profiles(self.profiles, to_file=path)
+
+        #mt = SignalSlotModelThread(lambda:None)
+        #mt.start()
+        #progress = ProgressDialog(_('Saving progiles to file'))
+        #mt.post(lambda:store_profiles(self.profiles, to_file=path),
+        #    progress.finished, progress.exception)
+        #progress.exec_()
 
     def load_profiles_from_file(self):
         caption = _('Load Profiles From a File')
@@ -402,13 +448,16 @@ allow all languages
         if not path:
             return
 
-        mt = SignalSlotModelThread(lambda:None)
-        mt.start()
-        progress = ProgressDialog(_('Loading profiles from file'))
-        mt.post(lambda:setattr(self, 'profiles',
-            fetch_profiles(from_file=path)), progress.finished,
-            progress.exception)
-        progress.exec_()
+        self.profiles = fetch_profiles(from_file=path)
+
+        #mt = SignalSlotModelThread(lambda:None)
+        #mt.start()
+        #progress = ProgressDialog(_('Loading profiles from file'))
+        #mt.post(lambda:setattr(self, 'profiles',
+        #    fetch_profiles(from_file=path)), progress.finished,
+        #    progress.exception)
+        #progress.exec_()
 
         if self.profiles:
-            self.set_widgets_values()
+            store_profiles(self.profiles)
+            os.execv(sys.executable, [sys.executable] + sys.argv)

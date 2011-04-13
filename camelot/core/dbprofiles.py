@@ -24,6 +24,7 @@
 
 import base64
 import logging
+import urllib2
 
 from PyQt4 import QtCore
 
@@ -171,6 +172,16 @@ class EmptyProxy():
     def password(cls):
         return ''
 
+def internet_available():
+    try:
+        if urllib2.urlopen('http://aws.amazon.com', timeout=1).getcode() \
+            == 200:
+            return True
+    except urllib2.URLError:
+        pass
+    return False
+
+
 def get_network_proxy():
     from PyQt4 import QtCore, QtNetwork
     proxy = None
@@ -184,6 +195,6 @@ def get_network_proxy():
         proxy = proxies[0]
 
     if proxy is None:
-        return EmptyProxy()
+        return (internet_available(), EmptyProxy())
 
-    return proxy
+    return (internet_available(), proxy)

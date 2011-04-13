@@ -25,7 +25,7 @@
 
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QDialog, QFrame, QGridLayout, QLabel, QVBoxLayout, \
-    QWidget
+    QWidget, QLayout
 
 
 class HSeparator(QFrame):
@@ -47,6 +47,10 @@ class StandaloneWizardPage(QDialog):
         self._vlayout = QVBoxLayout()
         self._vlayout.setSpacing(0)
         self._vlayout.setContentsMargins(0,0,0,0)
+
+        # needed in case we have a widget that changes the size
+        # of the widget and can be hidden
+        self._vlayout.setSizeConstraint(QLayout.SetFixedSize)
 
         banner_layout = QGridLayout()
         banner_layout.setColumnStretch(0, 1)
@@ -92,4 +96,3 @@ class StandaloneWizardPage(QDialog):
     def set_banner_subtitle(self, subtitle):
         subtitle_widget = QLabel('<dd>%s</dd>' % subtitle)
         self.banner_text_layout().insertWidget(1, subtitle_widget)
-
