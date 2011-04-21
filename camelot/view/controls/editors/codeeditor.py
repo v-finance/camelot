@@ -116,4 +116,3 @@ class CodeEditor(CustomEditor):
         self.set_enabled(editable)
         self.set_background_color(background_color)
         self.layout().itemAt(0).widget().setToolTip(unicode(tooltip or ''))
-

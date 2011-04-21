@@ -186,5 +186,3 @@ class ObjectValidator(QtCore.QObject):
             QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard,
             parent
         )
-
-

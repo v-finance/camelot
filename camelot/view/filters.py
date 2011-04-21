@@ -117,7 +117,7 @@ class Filter(object):
         
             options.append((_(option_name), create_decorator(col, attributes, value[0], joins)))
         
-        return (filter_names[0],[(_('Alle'), lambda q: q)] + options)
+        return (filter_names[0],[(_('All'), lambda q: q)] + options)
 
 class FilterWidget(QtGui.QGroupBox):
     """A box containing a filter that can be applied on a table view, this filter is

@@ -101,6 +101,7 @@ class DateEditor(CustomEditor):
         self.calendar_action_trigger.emit()
         self.set_value(date)
         self.editingFinished.emit()
+        self.line_edit.setFocus()
 
     def line_edit_finished(self):
         self.setProperty( 'value', QtCore.QVariant( self.get_value() ) )
@@ -163,5 +164,5 @@ class DateEditor(CustomEditor):
             self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
         elif action.text().compare(_('Clear')) == 0:
             self.set_value(None)
+        self.line_edit.setFocus()
         self.editingFinished.emit()
-
