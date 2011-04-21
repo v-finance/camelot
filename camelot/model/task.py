@@ -28,13 +28,16 @@ These classes provide basic task tracking with configurable statuses,
 categories and roles.  They are presented to the user as "Todo's"
 """
 
-from elixir import Entity, using_options, Field, ManyToMany, OneToMany, ManyToOne
+from elixir import Entity, using_options, Field, ManyToMany, OneToMany, ManyToOne, entities, ColumnProperty
 import sqlalchemy.types
+from sqlalchemy import sql
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import metadata
 from camelot.model.authentication import getCurrentAuthentication
+from camelot.model.type_and_status import type_3_status, create_type_3_status_mixin, get_status_type_class, get_status_class
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.admin.form_action import FormActionFromModelFunction, ProcessFilesFormAction
 from camelot.core.document import documented_entity
 from camelot.view import forms
 from camelot.view.controls import delegates
@@ -44,16 +47,37 @@ import datetime
 
 __metadata__ = metadata
 
-class Task( Entity ):
+class AttachFilesAction(ProcessFilesFormAction):
+    
+    def process_files( self, obj, file_names, _options ):
+        print file_names
+
+class Task( Entity, create_type_3_status_mixin('status') ):
     using_options(tablename='task', order_by=['-creation_date'] )
     creation_date    = Field( sqlalchemy.types.Date, required=True, default=datetime.date.today )
     due_date         = Field( sqlalchemy.types.Date, required=False, default=None )
     description      = Field( sqlalchemy.types.Unicode(255), required=True )
+    status           = OneToMany( type_3_status( 'Task', metadata, entities ), cascade='all, delete, delete-orphan' )
     notes            = OneToMany( 'TaskNote', cascade='all, delete, delete-orphan' )
+    documents        = OneToMany( 'TaskDocument', cascade='all, delete, delete-orphan' )
     categories = ManyToMany( 'PartyCategory',
                              tablename='party_category_task', 
                              remote_colname='party_category_id',
                              local_colname='task_id')
+    
+
+    @ColumnProperty
+    def current_status_sql( self ):
+        status_class = get_status_class('Task')
+        status_type_class = get_status_type_class('Task')
+        return sql.select( [status_type_class.code],
+                          whereclause = sql.and_( status_class.status_for_id == self.id,
+                                           status_class.status_from_date <= sql.functions.current_date(),
+                                           status_class.status_thru_date >= sql.functions.current_date() ),
+                          from_obj = [status_type_class.table.join( status_class.table )] )
+    
+    def __unicode__( self ):
+        return self.description or ''
     
     def _get_first_note(self):
         if self.notes:
@@ -69,14 +93,37 @@ class Task( Entity ):
     note = property( _get_first_note, _set_first_note )
     
     class Admin( EntityAdmin ):
-        verbose_name = _('Todo')
-        list_display = ['creation_date', 'description', 'due_date']
-        list_filter  = ['categories.name']
-        form_display = forms.Form( ['description', 'creation_date', 'due_date', 
-                        'note', 'categories'] )
+        verbose_name = _('Task')
+        list_display = ['creation_date', 'due_date', 'current_status_sql', 'description']
+        list_filter  = ['current_status_sql', 'categories.name']
+        #form_actions = [AttachFilesAction( _('Attach Documents') )]
+        form_display = forms.TabForm( [ ( _('Task'),    ['description', 'current_status', 
+                                                          'creation_date', 'due_date',  'note',]),
+                                        ( _('Category'), ['categories'] ),
+                                        ( _('Documents'), ['documents'] ),
+                                        ( _('Status'), ['status'] ) ] )
         field_attributes = {'note':{'delegate':delegates.RichTextDelegate,
-                                    'editable':lambda self:self.id}}
+                                    'editable':lambda self:self.id},
+                            'description':{'minimal_column_width':50},
+                            'current_status_sql':{'name':'Current status',
+                                                  'editable':False}}
+        
+        def get_form_actions(self, obj):
+            form_actions = EntityAdmin.get_form_actions(self, obj)
+            status_type_class = get_status_type_class( 'Task' )
+            
+            def status_change_action( status_type ):
+                return FormActionFromModelFunction( status_type.code,
+                                                     lambda o:o.change_status( status_type ),
+                                                     flush = True )
+            
+            for status_type in status_type_class.query.all():
+                if not obj or (status_type.code != obj.current_status):
+                    form_actions.append( status_change_action( status_type ) )
+            return form_actions
+                
 
+TaskStatusType = get_status_type_class( 'Task' )
 Task = documented_entity()( Task )
 
 class TaskNote( Entity ):
@@ -91,3 +138,29 @@ class TaskNote( Entity ):
         list_display = ['created_at', 'created_by']
         form_display = list_display + ['note']
 
+class TaskDocumentType( Entity ):
+    using_options(tablename='task_document_type', order_by=['description'])
+    description = Field( sqlalchemy.types.Unicode(48), required=True, index=True )
+    
+    def __unicode__(self):
+        return self.description or ''
+    
+    class Admin( EntityAdmin ):
+        verbose_name = _('Document Type')
+        list_display = ['description']
+  
+class TaskDocument( Entity ):
+    using_options(tablename='task_document')
+    of = ManyToOne('Task', required=True, onupdate='cascade', ondelete='cascade')
+    created_at = Field( sqlalchemy.types.Date(), default = datetime.date.today, required = True, index = True )
+    created_by = ManyToOne('AuthenticationMechanism', required=True )
+    type = ManyToOne('TaskDocumentType', required = False, ondelete = 'restrict', onupdate = 'cascade')
+    document = Field( camelot.types.File(), required=True )
+    description = Field( sqlalchemy.types.Unicode(200) )
+    summary = Field( camelot.types.RichText() )
+        
+    class Admin(EntityAdmin):
+        verbose_name = _('Document')
+        list_display = ['created_at', 'created_by', 'type', 'document', 'description']
+        form_display = list_display + ['summary']
+        field_attributes = {'type':{'delegate':delegates.ManyToOneChoicesDelegate}}

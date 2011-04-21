@@ -121,7 +121,7 @@ class FormActionFromModelFunction( FormAction ):
 FormAction.  This type of action can be used to manipulate the model.
     """
 
-    def __init__( self, name, model_function, icon = None, flush=False, enabled=lambda obj:True ):
+    def __init__( self, name, model_function=None, icon = None, flush=False, enabled=lambda obj:True ):
         """
 :param name: the name of the action
 :param model_function: a function that has 1 arguments, the object
@@ -176,6 +176,27 @@ the model function is executed.
         post( create_request( entity_getter ), progress.finished, exception = progress.exception )
         progress.exec_()
 
+class ProcessFilesFormAction(FormActionFromModelFunction):
+    """This action presents the user with a File Selection Dialog, that allows
+    the user to select files, those file names are then fed to the process_files
+    function.
+    
+    overwrite the process_files method to have the action do something.
+    """
+
+    @gui_function
+    def run( self, entity_getter ):
+        file_names = QtGui.QFileDialog.getOpenFileNames(caption=unicode(self.get_name()))
+        
+    def process_files( self, obj, file_names, options = None ):
+        """overwrite this method in a subclass
+
+        :param obj: the object that is displayed in the form
+        :param file_names: a list of file names selected by the users
+        :param options: an options object if applicable
+        """
+        pass
+    
 class PrintHtmlFormAction(FormActionFromModelFunction):
     """Create an action for a form that pops up a print preview for generated html.
 Overwrite the html function to customize the html that should be shown::

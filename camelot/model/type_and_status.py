@@ -47,6 +47,7 @@ from camelot.types import Code, Enumeration
 # Global dict keeping track of which status class is used for which class
 #
 __status_classes__ = {}
+__status_type_classes__ = {}
 
 def get_status_class(cls_name):
     """
@@ -54,7 +55,14 @@ def get_status_class(cls_name):
     :return: the status class used for this entity
     """
     return __status_classes__[cls_name]
-    
+
+def get_status_type_class(cls_name):
+    """
+    :param cls_name: an Entity class name
+    :return: the status type class used for this entity
+    """
+    return __status_type_classes__[cls_name]
+
 def create_type_3_status_mixin(status_attribute):
     """Create a class that can be subclassed to provide a class that
     has a type 3 status with methods to manipulate and review its status
@@ -122,12 +130,12 @@ def type_3_status( statusable_entity, metadata, collection, verbose_entity_name 
             using_options( tablename = t3_status_type_name.lower(), metadata=metadata, collection=collection )
             __metaclass__ = Type3StatusTypeMeta
     
-            code = Field( Code( parts = ['>AAAA'] ), index = True,
-                               required = True, unique = True )
+            code = Field( Unicode(10), index = True,
+                          required = True, unique = True )
             description = Field( Unicode( 40 ), index = True )
     
             def __unicode__( self ):
-                return 'Status type: %s : %s' % ( '.'.join( self.code ), self.description )
+                return self.code or ''
     
             class Admin( EntityAdmin ):
                 list_display = ['code', 'description']
@@ -135,6 +143,8 @@ def type_3_status( statusable_entity, metadata, collection, verbose_entity_name 
                 if verbose_entity_name is not None:
                     verbose_name = verbose_entity_name + ' Status Type'
 
+        __status_type_classes__[statusable_entity] = Type3StatusType
+        
     class Type3StatusMeta( EntityMeta ):
         def __new__( cls, classname, bases, dictionary ):
             return EntityMeta.__new__( cls, t3_status_name,
