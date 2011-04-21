@@ -268,7 +268,7 @@ position in the query.
 
         post( get_columns, self.setColumns )
 #    # the initial collection might contain unflushed rows
-        post( self.updateUnflushedRows )
+        post( self._update_unflushed_rows )
 #    # in that way the number of rows is requested as well
         if cache_collection_proxy:
             self.setRowCount( cache_collection_proxy.rowCount() )
@@ -290,7 +290,7 @@ position in the query.
         return self._sort_and_filter[sorted_row_number]
 
     @model_function
-    def updateUnflushedRows( self ):
+    def _update_unflushed_rows( self ):
         """Verify all rows to see if some of them should be added to the
         unflushed rows"""
         for i, e in enumerate( self.get_collection() ):
@@ -569,6 +569,10 @@ position in the query.
 
         Using Qt.UserRole as a role will return all the field attributes
         of the index.
+        
+        Using Qt.UserRole+1 will return the object of which an attribute
+        is displayed in that specific cell
+        
         """
         if not index.isValid() or \
            not ( 0 <= index.row() <= self.rowCount( index ) ) or \
@@ -605,6 +609,11 @@ position in the query.
             if dynamic_field_attributes != ValueLoading:
                 field_attributes.update( dynamic_field_attributes )
             return QtCore.QVariant(field_attributes)
+        elif role == Qt.UserRole + 1:
+            try:
+                return QtCore.QVariant( self.edit_cache.get_entity_at_row( index.row() ) )
+            except KeyError:
+                return QtCore.QVariant( ValueLoading )
         return QtCore.QVariant()
 
     def _get_field_attribute_value(self, index, field_attribute):
@@ -743,6 +752,12 @@ position in the query.
 
         This function will then be called in the model_thread
         """
+        #
+        # prevent data of being set in rows not actually in this model
+        #
+        if not index.isValid():
+            return False
+        
         if role == Qt.EditRole:
 
             # if the field is not editable, don't waste any time and get out of here

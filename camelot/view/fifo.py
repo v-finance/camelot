@@ -47,6 +47,13 @@ class Fifo(object):
     def __unicode__(self):
         return u','.join(unicode(e) for e in self.entities)
     
+    def rows(self):
+        """
+        :return: a interator of the row numbers for which this fifo
+        had data
+        """
+        return self.data_by_rows.keys()
+    
     def shallow_copy(self, max_entries):
         """Copy the cache without the actual data but with the references
         to which object is stored in which row"""
@@ -121,5 +128,3 @@ class Fifo(object):
     def get_entity_at_row(self, row):
         """:return: the entity that is stored at a row"""
         return self.data_by_rows[row][0]
-
-

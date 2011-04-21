@@ -32,7 +32,7 @@ from camelot.view.model_thread import model_function, gui_function, post
 
 
 class QueryTableProxy(CollectionProxy):
-    """The QueryTableProxy contains a limited copy of the data in the Elixir
+    """The QueryTableProxy contains a limited copy of the data in the SQLAlchemy
     model, which is fetched from the database to be used as the model for a
     QTableView
     """
@@ -76,6 +76,10 @@ class QueryTableProxy(CollectionProxy):
                 return self._sort_decorator(self._query_getter())
             
             return sorted_query_getter
+    
+    def _update_unflushed_rows( self ):
+        """Does nothing since all rows returned by a query are flushed"""
+        pass
     
     @model_function
     def _clean_appended_rows(self):
@@ -261,8 +265,9 @@ class QueryTableProxy(CollectionProxy):
 
     @model_function
     def _get_object(self, row):
-        """Get the object corresponding to row"""
-        if self._rows > 0:
+        """Get the object corresponding to row.  If row is smaller than 0
+        (in case of an invalid widget mapper), None is returned as an object"""
+        if self._rows > 0 and row >= 0:
             self._clean_appended_rows()
             rows_in_query = (self._rows - len(self._appended_rows))
             if row >= rows_in_query:
@@ -284,5 +289,3 @@ class QueryTableProxy(CollectionProxy):
                     return res.limit(1).first()
                 except:
                     pass
-
-

@@ -307,6 +307,9 @@ The QWidget class to be used when a table view is needed
 
     @model_function
     def get_form_actions(self, entity):
+        """
+        :return: a list of FormAction objects
+        """
         from camelot.admin.form_action import structure_to_form_actions
         return structure_to_form_actions(self.form_actions)
 
@@ -733,7 +736,6 @@ The QWidget class to be used when a table view is needed
                                           admin.get_fields,
                                           max_number_of_rows=1 )
 
-        post(model.updateUnflushedRows)
         validator = admin.create_validator(model)
 
         class NewForm(AbstractView):
