@@ -37,7 +37,7 @@ class SimpleSearchControl(QtGui.QWidget):
     expand_search_options_signal = QtCore.pyqtSignal()
     cancel_signal = QtCore.pyqtSignal()
     search_signal = QtCore.pyqtSignal(str)
-    
+    on_arrow_down_signal = QtCore.pyqtSignal()
 
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
@@ -61,6 +61,7 @@ class SimpleSearchControl(QtGui.QWidget):
         #self.search_input.setStyleSheet('QLineEdit{ border-radius: 0.25em;}')
         self.search_input.returnPressed.connect( self.emit_search )
         self.search_input.textEdited.connect( self.emit_search )
+        self.search_input.arrow_down_key_pressed.connect(self.on_arrow_down_key_pressed)
 
         self.setFocusProxy( self.search_input )
 
@@ -98,4 +99,6 @@ class SimpleSearchControl(QtGui.QWidget):
         self.search_input.setText('')
         self.cancel_signal.emit()
 
-
+    @QtCore.pyqtSlot()
+    def on_arrow_down_key_pressed(self):
+        self.on_arrow_down_signal.emit()

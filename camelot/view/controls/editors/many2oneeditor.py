@@ -50,6 +50,8 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
     new_icon = Icon('tango/16x16/actions/document-new.png')
     search_icon = Icon('tango/16x16/actions/system-search.png')
 
+    arrow_down_key_pressed = QtCore.pyqtSignal()
+
     class CompletionsModel(QtCore.QAbstractListModel):
 
         def __init__(self, parent=None):
@@ -114,6 +116,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.search_input = DecoratedLineEdit(self)
         self.search_input.set_background_text(_('Search...'))
         self.search_input.textEdited.connect(self.textEdited)
+        self.search_input.arrow_down_key_pressed.connect(self.on_arrow_down_key_pressed)
         # suppose garbage was entered, we need to refresh the content
         self.search_input.editingFinished.connect( self.search_input_editing_finished )
         self.setFocusProxy(self.search_input)
@@ -149,6 +152,9 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self._editable = editable
         self.search_input.setEnabled(editable)
         self.search_button.setEnabled(editable)
+
+    def on_arrow_down_key_pressed(self):
+        self.arrow_down_key_pressed.emit()
 
     def textEdited(self, text):
         self._last_highlighted_entity_getter = None

@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 
 from editors.customeditor import draw_tooltip_visualization
 
@@ -35,7 +35,9 @@ class DecoratedLineEdit(QtGui.QLineEdit):
     
     Use the user_input method to get the text that was entered by the user. 
     """
-        
+      
+    arrow_down_key_pressed = QtCore.pyqtSignal()
+      
     def __init__(self, parent = None):
         QtGui.QLineEdit.__init__(self, parent)
         self._foreground_color = self.palette().color(self.foregroundRole())
@@ -100,6 +102,12 @@ class DecoratedLineEdit(QtGui.QLineEdit):
         self._show_background_text()
         self._update_foreground_color()
         QtGui.QLineEdit.focusOutEvent(self, e)
+        
+    def keyPressEvent(self, e):
+        if e.key() == QtCore.Qt.Key_Down:
+            self.arrow_down_key_pressed.emit()
+        else:
+            QtGui.QLineEdit.keyPressEvent(self, e)
         
     def user_input(self):
         if self._showing_background_text:

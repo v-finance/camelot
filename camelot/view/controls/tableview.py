@@ -449,6 +449,7 @@ class TableView( AbstractView  ):
             widget_layout.addWidget( self.header )
             self.header.search.search_signal.connect( self.startSearch )
             self.header.search.cancel_signal.connect( self.cancelSearch )
+            self.header.search.on_arrow_down_signal.connect(self.focusTable)
             if search_text:
                 self.header.search.search( search_text )
         else:
@@ -774,5 +775,9 @@ class TableView( AbstractView  ):
         wizard = ImportWizard(self, self.admin)
         wizard.exec_()
 
-
+    @QtCore.pyqtSlot()
+    def focusTable(self):
+        if self.table and self._table_model.rowCount() > 0:
+            self.table.setFocus()
+            self.table.selectRow(0)
 
