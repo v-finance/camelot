@@ -247,6 +247,10 @@ allow all languages
 
     def connect_widgets(self):
         self.profile_editor.editTextChanged.connect(self.update_wizard_values)
+        self.proxy_host_editor.editTextChanged.connect(self.update_proxy_values)
+        self.proxy_port_editor.editTextChanged.connect(self.update_proxy_values)
+        self.proxy_username_editor.editTextChanged.connect(self.update_proxy_values)
+        self.proxy_password_editor.editTextChanged.connect(self.update_proxy_values)
 
     def create_buttons(self):
         self.more_button = QPushButton(_('More'))
@@ -386,7 +390,7 @@ allow all languages
         self.proxy_username_editor.setText(self.get_profile_value('proxy_username') or str(network_proxy.user()))
         self.proxy_password_editor.setText(self.get_profile_value('proxy_password') or str(network_proxy.password()))
 
-        if check_connection():
+        if check_connection(proxy=network_proxy):
             self.main_widget().layout().addWidget(
                 self.working_proxy_label, 13, 1, 1, 4)
         else:

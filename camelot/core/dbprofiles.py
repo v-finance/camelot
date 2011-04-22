@@ -171,19 +171,21 @@ class EmptyProxy():
     def password(cls):
         return ''
 
-def check_connection():
+def check_connection(proxy=None):
     from PyQt4 import QtNetwork
-    try:
-        nam = QtNetwork.QNetworkAccessManager()
-        proxy = get_network_proxy()
-        if proxy:
-            nam.setProxy(proxy)
-        reply = nam.get(QtNetwork.QNetworkRequest('http://aws.amazon.com'))
-        logger.debug('Reply in check_connection is: %s' % reply.error())
-        return reply
-    except IOError, e:
-        logger.warning('Internet connection failed: %s' % e)
-        return None
+    from PyQt4.QtCore import QEventLoop
+
+    event_loop = QEventLoop()
+    manager = QtNetwork.QNetworkAccessManager()
+    manager.finished.connect(event_loop.exit)
+    if proxy:
+        manager.setProxy(proxy)
+    reply = manager.get(QtNetwork.QNetworkRequest('http://aws.amazon.com'))
+    event_loop.exec_(flags=QEventLoop.ExcludeUserInputEvents)
+
+    if reply.isFinished():
+        return True
+    return False
 
 def get_network_proxy():
     from PyQt4 import QtNetwork
