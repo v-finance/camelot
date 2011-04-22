@@ -175,13 +175,13 @@ def check_connection(proxy=None):
     from PyQt4 import QtNetwork
     from PyQt4.QtCore import QUrl, QEventLoop
 
-    event_loop = QEventLoop()
+    #event_loop = QEventLoop()
     manager = QtNetwork.QNetworkAccessManager()
-    manager.finished.connect(event_loop.exit)
+    #manager.finished.connect(event_loop.exit)
     if proxy:
         manager.setProxy(proxy)
     reply = manager.get(QtNetwork.QNetworkRequest(QUrl('http://aws.amazon.com')))
-    event_loop.exec_()
+    #event_loop.exec_()
 
     if reply.isFinished():
         return True
