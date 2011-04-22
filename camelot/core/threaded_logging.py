@@ -38,7 +38,7 @@ The added functionallity is needed for two reasons :
       time.
 
 Both issues are resolved by using a logging handler that collects all logs, and
-periodically sends them to an http server::
+periodically sends them to an http server in the background::
     
     handler = ThreadedHttpHandler('www.example.com:80', '/my_logs/')
     handler.setLevel(logging.INFO)
@@ -96,10 +96,14 @@ class ThreadedAwsHandler(logging.Handler):
     """A logging handler that sends the logs to an AWS queue through the
     SQS, this handler requires the boto library"""
     
-    def __init__(self, access_key, secret_access_key, queue_name, revision=0):
+    def __init__(self, access_key, secret_access_key, queue_name, 
+                 revision=0, connection_kwargs={}):
+        """:param connection_kwargs: arguments to be used when creating the
+        underlying boto connection to aws"""
         logging.Handler.__init__(self)
         self._access_key = access_key
         self._secret_access_key = secret_access_key
+        self._connection_kwargs = connection_kwargs
         self._queue_name = queue_name
         self._records_to_emit = []
         self._queue = None
@@ -146,7 +150,9 @@ class ThreadedAwsHandler(logging.Handler):
         if not self._queue and self._connected:
             try:
                 from boto.sqs.connection import SQSConnection
-                sqs_connection = SQSConnection(self._access_key, self._secret_access_key)
+                sqs_connection = SQSConnection(self._access_key, 
+                                               self._secret_access_key,
+                                               **self._connection_kwargs)
                 self._queue = sqs_connection.get_queue( self._queue_name )
             except Exception, e:
                 LOGGER.error('Could not connect to logging queue %s'%self._queue_name, exc_info=e)
@@ -173,4 +179,3 @@ class CloudLaunchHandler(ThreadedAwsHandler):
                                     cloud_record.public_secret_key, 
                                     queue_name,
                                     revision = cloud_record.revision)
-
