@@ -24,7 +24,6 @@
 
 import base64
 import logging
-import urllib2
 
 from PyQt4 import QtCore
 
@@ -172,29 +171,35 @@ class EmptyProxy():
     def password(cls):
         return ''
 
-def internet_available():
+def check_connection():
+    from PyQt4 import QtNetwork
     try:
-        if urllib2.urlopen('http://aws.amazon.com', timeout=1).getcode() \
-            == 200:
-            return True
-    except urllib2.URLError:
-        pass
-    return False
-
+        nam = QtNetwork.QNetworkAccessManager()
+        proxy = get_network_proxy()
+        if proxy:
+            nam.setProxy(proxy)
+        reply = nam.get(QtNetwork.QNetworkRequest('http://aws.amazon.com'))
+        logger.debug('Reply in check_connection is: %s' % reply.error())
+        return reply
+    except IOError, e:
+        logger.warning('Internet connection failed: %s' % e)
+        return None
 
 def get_network_proxy():
-    from PyQt4 import QtCore, QtNetwork
+    from PyQt4 import QtNetwork
+
     proxy = None
-    settings = QtCore.QSettings()
-    proxies = QtNetwork.QNetworkProxyFactory.systemProxyForQuery(
-        QtNetwork.QNetworkProxyQuery(QtCore.QUrl('http://aws.amazon.com')))
-    if proxies and proxies[0].hostName():
-        logger.info('Proxy servers found, taking first: %s' % \
-            ['%s:%s' % (str(proxy.hostName()),str(proxy.port()))
-                for proxy in proxies])
-        proxy = proxies[0]
+    query = QtNetwork.QNetworkProxyQuery(QtCore.QUrl('http://aws.amazon.com'))
+    proxies = QtNetwork.QNetworkProxyFactory.systemProxyForQuery(query)
 
+    if proxies:
+        logger.info('Proxy servers found: %s' % ['%s:%s' %
+            (str(proxy.hostName()),str(proxy.port())) for proxy in proxies])
+        if proxies[0].hostName():
+            proxy = proxies[0]
+
+    # we still need some empty values for the profile
     if proxy is None:
-        return (internet_available(), EmptyProxy())
+        return EmptyProxy()
 
-    return (internet_available(), proxy)
+    return proxy

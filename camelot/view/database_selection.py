@@ -32,8 +32,7 @@ from sqlalchemy import create_engine
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QBoxLayout, QDialog, QFont, QGridLayout, QHBoxLayout, \
-    QLabel, QLineEdit, QPushButton, QFileDialog, QComboBox, QWidget, \
-    QLayout, QVBoxLayout
+    QLabel, QLineEdit, QPushButton, QFileDialog, QComboBox, QWidget, QVBoxLayout
 from camelot.view import art
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.editors import ChoicesEditor, TextLineEditor, LanguageEditor
@@ -43,7 +42,8 @@ from camelot.view.controls.combobox_input_dialog import ComboBoxInputDialog
 from camelot.core.utils import ugettext as _
 from camelot.view.model_thread.signal_slot_model_thread import SignalSlotModelThread
 
-from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, store_profiles, get_network_proxy
+from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, \
+    store_profiles, get_network_proxy, check_connection
 
 logger = logging.getLogger('camelot.view.database_selection')
 
@@ -380,13 +380,13 @@ allow all languages
         self.update_proxy_values()
 
     def update_proxy_values(self):
-        internet_available, network_proxy = get_network_proxy()
+        network_proxy = get_network_proxy()
         self.proxy_host_editor.setText(self.get_profile_value('proxy_host') or str(network_proxy.hostName()))
         self.proxy_port_editor.setText(self.get_profile_value('proxy_port') or str(network_proxy.port()))
         self.proxy_username_editor.setText(self.get_profile_value('proxy_username') or str(network_proxy.user()))
         self.proxy_password_editor.setText(self.get_profile_value('proxy_password') or str(network_proxy.password()))
 
-        if internet_available:
+        if check_connection():
             self.main_widget().layout().addWidget(
                 self.working_proxy_label, 13, 1, 1, 4)
         else:
