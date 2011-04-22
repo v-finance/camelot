@@ -44,12 +44,11 @@ if not QtGui.QApplication.instance():
 
 def setup_a_win32_http_system_proxy(hostname, port):
     # XXX:
-    # ProxyHTTPServer is not setting up a system proxy with regards to
-    # Windows. PyQt will go through the registry first and look for a
-    # system proxy setting, then through Internet Explorer's settings.
-    # Not sure how Internet Explorer's settings can be changed
-    # programmatically so we will simulate a system proxy with proxcfg
-    # which should be in PATH
+    # We are not using a system proxy with regards to Windows. PyQt will go
+    # through the registry first and look for a system proxy setting, then
+    # through Internet Explorer's settings.  Not sure how Internet Explorer's
+    # settings can be changed programmatically so we will simulate a system
+    # proxy with proxcfg which should be in PATH
     # reference page:
     # http://msdn.microsoft.com/en-us/library/aa384069%28v=vs.85%29.aspx
     http_proxy_value = 'http=http://%s:%s' % (hostname, port)
