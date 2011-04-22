@@ -81,6 +81,8 @@ and above the text.
 """
 
     margin = 5
+    
+    keyboard_selection_signal = QtCore.pyqtSignal()
 
     def __init__( self, parent = None, columns_frozen = 0, lines_per_row = 1 ):
         """
@@ -249,6 +251,12 @@ and above the text.
             self.setRowHeight( previous_row, self._minimal_row_height )
         self.setRowHeight( row, max( new_size.height(),
                                      self._minimal_row_height ) )
+                                     
+    def keyPressEvent(self, e):
+        if self.hasFocus() and e.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return):
+            self.keyboard_selection_signal.emit()
+        else:
+            super(TableWidget, self).keyPressEvent(e) 
 
 class AdminTableWidget(TableWidget):
     """A table widget that inspects the admin class and changes the behavior
@@ -550,9 +558,11 @@ class TableView( AbstractView  ):
             self._table_model.deleteLater()
         splitter = self.findChild( QtGui.QWidget, 'splitter' )
         self.table = self.AdminTableWidget( self.admin, splitter )
+        self.table.setObjectName('AdminTableWidget')
         self._table_model = self.create_table_model( admin )
         self.table.setModel( self._table_model )
         self.table.verticalHeader().sectionClicked.connect( self.sectionClicked )
+        self.table.keyboard_selection_signal.connect(self.on_keyboard_selection_signal)
         self._table_model.layoutChanged.connect( self.tableLayoutChanged )
         self.tableLayoutChanged()
         self.table_layout.insertWidget( 1, self.table )
@@ -561,6 +571,10 @@ class TableView( AbstractView  ):
             return ( admin.get_filters(), admin.get_list_actions() )
 
         post( get_filters_and_actions,  self.set_filters_and_actions )
+
+    @QtCore.pyqtSlot()
+    def on_keyboard_selection_signal(self):
+        self.table.verticalHeader().sectionClicked.emit(self.table.currentIndex().row())
 
     @QtCore.pyqtSlot()
     @gui_function
@@ -780,4 +794,3 @@ class TableView( AbstractView  ):
         if self.table and self._table_model.rowCount() > 0:
             self.table.setFocus()
             self.table.selectRow(0)
-

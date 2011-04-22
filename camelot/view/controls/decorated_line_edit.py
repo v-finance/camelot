@@ -106,8 +106,8 @@ class DecoratedLineEdit(QtGui.QLineEdit):
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_Down:
             self.arrow_down_key_pressed.emit()
-        else:
-            QtGui.QLineEdit.keyPressEvent(self, e)
+        
+        QtGui.QLineEdit.keyPressEvent(self, e)
         
     def user_input(self):
         if self._showing_background_text:

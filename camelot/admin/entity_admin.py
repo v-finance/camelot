@@ -431,7 +431,7 @@ to limit the number of search widgets.  Defaults to None.
         """
         from camelot.view.art import Icon
         from camelot.view.proxy.queryproxy import QueryTableProxy
-        from PyQt4 import QtCore
+        from PyQt4 import QtCore, QtGui
 
         class SelectQueryTableProxy(QueryTableProxy):
             header_icon = Icon('tango/16x16/emblems/emblem-symbolic-link.png')
@@ -449,8 +449,19 @@ to limit the number of search widgets.  Defaults to None.
                 self.row_selected_signal.connect( self.sectionClicked )
                 self.setUpdatesEnabled(True)
 
+                table = self.findChild(QtGui.QTableView, 'AdminTableWidget')
+                if table != None:
+                    table.keyboard_selection_signal.connect(self.on_keyboard_selection)
+                    table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+
             def emit_entity_selected(self, instance_getter):
                 self.entity_selected_signal.emit( instance_getter )
+                
+            @QtCore.pyqtSlot()
+            def on_keyboard_selection(self):
+                table = self.findChild(QtGui.QTableView, 'AdminTableWidget')
+                if table != None:
+                    self.row_selected_signal.emit(table.currentIndex().row())
 
             @QtCore.pyqtSlot(int)
             def sectionClicked(self, index):
