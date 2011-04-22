@@ -247,10 +247,15 @@ allow all languages
 
     def connect_widgets(self):
         self.profile_editor.editTextChanged.connect(self.update_wizard_values)
-        self.proxy_host_editor.editTextChanged.connect(self.update_proxy_values)
-        self.proxy_port_editor.editTextChanged.connect(self.update_proxy_values)
-        self.proxy_username_editor.editTextChanged.connect(self.update_proxy_values)
-        self.proxy_password_editor.editTextChanged.connect(self.update_proxy_values)
+
+        self.proxy_host_editor.textChanged.connect(lambda text: \
+            self.update_proxy_values())
+        self.proxy_port_editor.textChanged.connect(lambda text: \
+            self.update_proxy_values())
+        self.proxy_username_editor.textChanged.connect(lambda text: \
+            self.update_proxy_values())
+        self.proxy_password_editor.textChanged.connect(lambda text: \
+            self.update_proxy_values())
 
     def create_buttons(self):
         self.more_button = QPushButton(_('More'))
