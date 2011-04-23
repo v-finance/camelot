@@ -24,14 +24,17 @@
 
 import sys
 import unittest
+import StringIO
 import subprocess
 from subprocess import PIPE
 
 from PyQt4 import QtGui
-from PyQt4 import QtCore
-from PyQt4 import QtNetwork
-from PyQt4.QtCore import QTimer
+from PyQt4.QtCore import QUrl
 from PyQt4.QtCore import QEventLoop
+
+from PyQt4.QtNetwork import QNetworkProxy
+from PyQt4.QtNetwork import QNetworkRequest
+from PyQt4.QtNetwork import QNetworkAccessManager
 
 from camelot.test.http_proxy import HTTPProxy
 from camelot.core.dbprofiles import get_network_proxy
@@ -80,49 +83,92 @@ class ProxyTestCase(unittest.TestCase):
 
     def setUp(self):
         self.server = HTTPProxy()
-        setup_a_win32_http_system_proxy('127.0.0.1', 8000)
+        self.server.debug = True
+        self.server.log = StringIO.StringIO()
+
+        self.server.startServing()
 
     def tearDown(self):
         self.server.stopServing()
-        clear_win_http_settings()
 
-    def test_proxy(self):
+    def test_getting_proxy(self):
         proxy = get_network_proxy()
-        self.assertTrue(isinstance(proxy, QtNetwork.QNetworkProxy))
+        self.assertTrue(isinstance(proxy, QNetworkProxy))
         self.assertEquals(str(proxy.hostName()), '127.0.0.1')
         self.assertEquals(proxy.port(), 8000)
 
-        #manager = QtNetwork.QNetworkAccessManager()
-        #manager.setProxy(proxy)
+    def test_access_without_credentials(self):
+        loop = QEventLoop()
+        proxy = get_network_proxy()
+        manager = QNetworkAccessManager()
 
-        #event_loop = QEventLoop()
-        #request_timer = QTimer()
-        #request_timer.timeout.connect(event_loop.exit)
-        #manager.finished.connect(event_loop.exit)
+        manager.setProxy(proxy)
+        manager.finished.connect(loop.exit)
 
-        #request = QtNetwork.QNetworkRequest()
-        #request.setUrl(QtCore.QUrl('http://aws.amazon.com/'))
-        #reply = manager.get(request)
-        #self.server.handler_request()
-        #reply.readyRead.connect(self.server.handle_request)
-        #request_timer.start(5*1000)
-        #event_loop.exec_(flags=QEventLoop.ExcludeUserInputEvents)
+        reply = manager.get(QNetworkRequest(QUrl('http://aws.amazon.com/')))
+        loop.exec_(flags=QEventLoop.ExcludeUserInputEvents)
 
-        #if reply.isFinished():
-        #    parts = self.server_log.getvalue().split()
-        #    hostname = parts[0]
-        #    url = parts[6]
-        #    response_code = parts[8]
-        #    self.assertTrue(hostname in ['localhost', '127.0.0.1'])
-        #    self.assertEquals(url, 'http://aws.amazon.com/')
-        #    self.assertEquals(response_code, '200')
-        #else:
-        #    if reply.isRunning():
-        #        self.failUnless(False, msg='The request has timed out.')
-        #    else:
-        #        self.failUnless(False, msg='Something else happened; the '
-        #            'request is not running.')
+        if reply.isFinished():
+            self.assertEquals(self.server.log.getvalue(),
+                '407 Proxy Authentication Required\n\n')
+        else:
+            if reply.isRunning():
+                self.failUnless(False, msg='The request has timed out.')
+            else:
+                self.failUnless(False, msg='A Network error occurred.')
+
+    def test_access_with_credentials(self):
+        loop = QEventLoop()
+        proxy = get_network_proxy()
+        proxy.setUser(self.server.username)
+        proxy.setPassword(self.server.password)
+        manager = QNetworkAccessManager()
+
+        manager.setProxy(proxy)
+        manager.finished.connect(loop.exit)
+
+        reply = manager.get(QNetworkRequest(QUrl('http://aws.amazon.com/')))
+        loop.exec_(flags=QEventLoop.ExcludeUserInputEvents)
+
+        if reply.isFinished():
+            self.assertEquals(self.server.log.getvalue(),
+                '407 Proxy Authentication Required\n\n'\
+                'GET http://aws.amazon.com/ HTTP/1.1\n\n')
+        else:
+            if reply.isRunning():
+                self.failUnless(False, msg='The request has timed out.')
+            else:
+                self.failUnless(False, msg='A Network error occurred.')
+
+    def test_access_to_remote_succeeded(self):
+        loop = QEventLoop()
+        proxy = get_network_proxy()
+        proxy.setUser(self.server.username)
+        proxy.setPassword(self.server.password)
+        manager = QNetworkAccessManager()
+
+        manager.setProxy(proxy)
+        manager.finished.connect(loop.exit)
+
+        reply = manager.get(QNetworkRequest(QUrl('http://aws.amazon.com/')))
+        loop.exec_(flags=QEventLoop.ExcludeUserInputEvents)
+
+        if reply.isFinished():
+            response_code = reply.attribute(
+                QNetworkRequest.HttpStatusCodeAttribute).toString()
+            reply_url = reply.url()
+
+            self.assertEquals(response_code, '200')
+            self.assertEquals(reply.url(), QUrl('http://aws.amazon.com/'))
+        else:
+            if reply.isRunning():
+                self.failUnless(False, msg='The request has timed out.')
+            else:
+                self.failUnless(False, msg='A Network error occurred.')
+
 
 
 if __name__ == '__main__':
+    setup_a_win32_http_system_proxy('127.0.0.1', 8000)
     unittest.main()
+    clear_win_http_settings()
