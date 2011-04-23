@@ -31,6 +31,7 @@ from sqlalchemy import create_engine
 
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
+from PyQt4.QtCore import QFileInfo
 from PyQt4.QtGui import QBoxLayout, QDialog, QFont, QGridLayout, QHBoxLayout, \
     QLabel, QLineEdit, QPushButton, QFileDialog, QComboBox, QWidget, QVBoxLayout
 from camelot.view import art
@@ -159,6 +160,13 @@ allow all languages
 
         self.not_working_proxy_label = QLabel(_('Internet not available.'))
         self.not_working_proxy_label.setStyleSheet('color: red')
+
+        self.not_accessible_media_path_label = QLabel(_('Media location path '\
+            'is not accessible.'))
+        self.not_accessible_media_path_label.setStyleSheet('color: red')
+        self.not_writable_media_path_label = QLabel(_('Media location path '\
+            'is not writable.'))
+        self.not_writable_media_path_label.setStyleSheet('color: red')
 
         layout = QGridLayout()
 
@@ -429,8 +437,22 @@ allow all languages
     def fill_media_location(self):
         caption = _('Select media location')
         selected = unicode(QFileDialog.getExistingDirectory(self, caption))
-        if selected:
-            self.media_location_editor.setText(selected)
+
+        if not selected:
+            return
+
+        info = QFileInfo(selected)
+        if not info.isReadable():
+            self.main_widget().layout().addWidget(
+                self.not_accessible_media_path_label, 13, 1, 1, 4)
+            return
+        if not info.isWritable():
+            self.main_widget().layout().addWidget(
+                self.not_writable_media_path_label, 13, 1, 1, 4)
+            return
+
+        self.media_location_editor.setText(selected)
+
 
     def save_profiles_to_file(self):
         caption = _('Save Profiles To a File')
