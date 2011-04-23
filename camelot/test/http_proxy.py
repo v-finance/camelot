@@ -30,6 +30,7 @@ from PyQt4.QtCore import QUrl
 from PyQt4.QtCore import QString
 from PyQt4.QtCore import QObject
 from PyQt4.QtCore import pyqtSlot
+from PyQt4.QtCore import QEventLoop
 from PyQt4.QtCore import QCoreApplication
 from PyQt4.QtNetwork import QTcpSocket
 from PyQt4.QtNetwork import QTcpServer
@@ -59,7 +60,7 @@ class HTTPProxy(QObject):
         self.proxy_server.newConnection.connect(self.manage_request)
 
         if self.debug:
-            self.log.write('Proxy server running on 0.0.0.0 port %s\n' %
+            self.log.write('Proxy server running on 0.0.0.0 port %s\n\n' %
                 self.port())
 
     def port(self):
@@ -70,8 +71,16 @@ class HTTPProxy(QObject):
 
     def stopServing(self):
         if self.debug:
-            self.log.write('Service is stopping...\n')
+            self.log.write('Service is stopping...\n\n')
+
+        # does not "close" the server, just stop listening...
         self.proxy_server.close()
+
+        if self.proxy_server.hasPendingConnections():
+            socket = self.proxy_server.nextPendingConnection()
+            while socket:
+                socket.abort()
+                socket = self.proxy_server.nextPendingConnection()
 
     def manage_request(self):
         proxy_server = self.sender()
@@ -83,6 +92,9 @@ class HTTPProxy(QObject):
 
     def authorize_request(self, request_data):
         header = QHttpRequestHeader(QString(request_data))
+        if self.debug:
+            self.log.write(header.toString())
+
         auth = header.value('Proxy-Authorization')
         if not auth:
             return False
@@ -97,7 +109,7 @@ class HTTPProxy(QObject):
         if not self.authorize_request(request_data):
             socket.write('HTTP/1.1 407 Proxy Authentication Required\r\n')
             if self.debug:
-                self.log.write('407 Proxy Authentication Required\n')
+                self.log.write('407 Proxy Authentication Required\n\n')
             socket.write('Proxy-Authenticate: Basic realm="test"\r\n')
             socket.write('\r\n')
             socket.disconnectFromHost()
@@ -107,6 +119,7 @@ class HTTPProxy(QObject):
             start = request_data.indexOf('Proxy-Authorization:')
             end = request_data.lastIndexOf('\r\n')
             request_data.remove(start, end)
+            request_data.append('\r\n')
 
         pos = request_data.indexOf('\r\n')
         request_line = request_data.left(pos)
@@ -120,7 +133,7 @@ class HTTPProxy(QObject):
         url = QUrl.fromEncoded(address)
         if not url.isValid():
             if self.debug:
-                self.log.write('Invalid URL: %s\n', url)
+                self.log.write('Invalid URL: %s\n\n', url)
             socket.disconnectFromHost()
             return
 
@@ -133,7 +146,7 @@ class HTTPProxy(QObject):
         request_data.prepend(request_line)
 
         if self.debug:
-            self.log.write(method + ' ' + address + ' ' + version + '\n')
+            self.log.write(method + ' ' + address + ' ' + version + '\n\n')
 
         key = host + ':' + QString.number(port)
         proxy_socket = socket.findChild(QTcpSocket, key)
@@ -174,7 +187,7 @@ class HTTPProxy(QObject):
                 error_string = proxy_socket.errorString()
 
                 if self.debug:
-                    self.log.write('Error for %s %s' % (url, error_string))
+                    self.log.write('Error for %s %s\n\n' % (url, error_string))
 
             proxy_socket.deleteLater()
 
@@ -185,6 +198,7 @@ if __name__ == '__main__':
     server = HTTPProxy()
     manager = QNetworkAccessManager()
     manager.finished.connect(server.stopServing)
+    manager.finished.connect(app.quit)
 
     proxy = QNetworkProxy()
     proxy.setType(QNetworkProxy.HttpProxy)
@@ -194,6 +208,6 @@ if __name__ == '__main__':
     proxy.setPassword(server.password)
 
     manager.setProxy(proxy)
-    manager.get(QNetworkRequest(QUrl('http://aws.amazon.com/')))
+    reply = manager.get(QNetworkRequest(QUrl('http://aws.amazon.com/')))
 
     sys.exit(app.exec_())
