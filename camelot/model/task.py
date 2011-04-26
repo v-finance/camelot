@@ -49,7 +49,7 @@ __metadata__ = metadata
 
 class AttachFilesAction(ProcessFilesFormAction):
     
-    def process_files( self, obj, file_names, _options ):
+    def process_files( self, obj, file_names, _options=None ):
         print file_names
 
 class Task( Entity, create_type_3_status_mixin('status') ):
@@ -60,11 +60,16 @@ class Task( Entity, create_type_3_status_mixin('status') ):
     status           = OneToMany( type_3_status( 'Task', metadata, entities ), cascade='all, delete, delete-orphan' )
     notes            = OneToMany( 'TaskNote', cascade='all, delete, delete-orphan' )
     documents        = OneToMany( 'TaskDocument', cascade='all, delete, delete-orphan' )
+    type             = ManyToOne('TaskDocumentType', required = False, ondelete = 'restrict', onupdate = 'cascade')
     categories = ManyToMany( 'PartyCategory',
                              tablename='party_category_task', 
                              remote_colname='party_category_id',
                              local_colname='task_id')
     
+    @ColumnProperty
+    def number_of_documents( self ):
+        return sql.select( [sql.func.count( TaskDocument.id ) ],
+                            whereclause = TaskDocument.of_id == self.id )
 
     @ColumnProperty
     def current_status_sql( self ):
@@ -94,16 +99,17 @@ class Task( Entity, create_type_3_status_mixin('status') ):
     
     class Admin( EntityAdmin ):
         verbose_name = _('Task')
-        list_display = ['creation_date', 'due_date', 'current_status_sql', 'description']
-        list_filter  = ['current_status_sql', 'categories.name']
-        #form_actions = [AttachFilesAction( _('Attach Documents') )]
-        form_display = forms.TabForm( [ ( _('Task'),    ['description', 'current_status', 
+        list_display = ['creation_date', 'due_date', 'description', 'type', 'current_status_sql', 'number_of_documents']
+        list_filter  = ['type.description', 'current_status_sql', 'categories.name']
+        form_actions = [AttachFilesAction( _('Attach Documents') )]
+        form_display = forms.TabForm( [ ( _('Task'),    ['description', 'type', 'current_status', 
                                                           'creation_date', 'due_date',  'note',]),
                                         ( _('Category'), ['categories'] ),
                                         ( _('Documents'), ['documents'] ),
                                         ( _('Status'), ['status'] ) ] )
         field_attributes = {'note':{'delegate':delegates.RichTextDelegate,
                                     'editable':lambda self:self.id},
+                            'type':{'delegate':delegates.ManyToOneChoicesDelegate},
                             'description':{'minimal_column_width':50},
                             'current_status_sql':{'name':'Current status',
                                                   'editable':False}}
@@ -115,17 +121,34 @@ class Task( Entity, create_type_3_status_mixin('status') ):
             def status_change_action( status_type ):
                 return FormActionFromModelFunction( status_type.code,
                                                      lambda o:o.change_status( status_type ),
+                                                     enabled = lambda o:o.current_status != status_type,
                                                      flush = True )
             
+            if obj:
+                current_status = obj.current_status
+            else:
+                current_status = None
+                
             for status_type in status_type_class.query.all():
-                if not obj or (status_type.code != obj.current_status):
+                if status_type != current_status:
                     form_actions.append( status_change_action( status_type ) )
             return form_actions
                 
-
 TaskStatusType = get_status_type_class( 'Task' )
 Task = documented_entity()( Task )
 
+class TaskType( Entity ):
+    using_options(tablename='task_type', order_by=['rank', 'description'])
+    description = Field( sqlalchemy.types.Unicode(48), required=True, index=True )
+    rank = Field(sqlalchemy.types.Integer(), default=1)
+    
+    def __unicode__(self):
+        return self.description or ''
+    
+    class Admin( EntityAdmin ):
+        verbose_name = _('Task Type')
+        list_display = ['description', 'rank']
+        
 class TaskNote( Entity ):
     using_options(tablename='task_note', order_by=['-created_at'] )
     of = ManyToOne('Task', required=True, onupdate='cascade', ondelete='cascade')
@@ -139,21 +162,22 @@ class TaskNote( Entity ):
         form_display = list_display + ['note']
 
 class TaskDocumentType( Entity ):
-    using_options(tablename='task_document_type', order_by=['description'])
+    using_options(tablename='task_document_type', order_by=['rank', 'description'])
     description = Field( sqlalchemy.types.Unicode(48), required=True, index=True )
-    
+    rank = Field(sqlalchemy.types.Integer(), default=1)
+        
     def __unicode__(self):
         return self.description or ''
     
     class Admin( EntityAdmin ):
         verbose_name = _('Document Type')
-        list_display = ['description']
+        list_display = ['description', 'rank']
   
 class TaskDocument( Entity ):
     using_options(tablename='task_document')
     of = ManyToOne('Task', required=True, onupdate='cascade', ondelete='cascade')
     created_at = Field( sqlalchemy.types.Date(), default = datetime.date.today, required = True, index = True )
-    created_by = ManyToOne('AuthenticationMechanism', required=True )
+    created_by = ManyToOne('AuthenticationMechanism', required=True)
     type = ManyToOne('TaskDocumentType', required = False, ondelete = 'restrict', onupdate = 'cascade')
     document = Field( camelot.types.File(), required=True )
     description = Field( sqlalchemy.types.Unicode(200) )
@@ -161,6 +185,7 @@ class TaskDocument( Entity ):
         
     class Admin(EntityAdmin):
         verbose_name = _('Document')
-        list_display = ['created_at', 'created_by', 'type', 'document', 'description']
-        form_display = list_display + ['summary']
-        field_attributes = {'type':{'delegate':delegates.ManyToOneChoicesDelegate}}
+        list_display = ['document', 'description', 'type']
+        form_display = list_display + ['created_at', 'created_by', 'summary']
+        field_attributes = {'type':{'delegate':delegates.ManyToOneChoicesDelegate},
+                            'created_by':{'default':getCurrentAuthentication}}

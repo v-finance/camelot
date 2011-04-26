@@ -62,7 +62,7 @@ def end_of_times():
 
 from camelot.model.type_and_status import type_3_status
 
-def getCurrentAuthentication():
+def getCurrentAuthentication(_obj=None):
     """Get the currently logged in person"""
     global _current_authentication_
     if not hasattr( _current_authentication_, 'mechanism' ) or not _current_authentication_.mechanism:

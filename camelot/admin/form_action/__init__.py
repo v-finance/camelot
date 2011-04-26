@@ -148,6 +148,24 @@ button should be enabled.
         """
         return self._enabled( entity )
 
+    def create_request( self, entity_getter, model_function ):
+        """Create the request that will be send to the model thread, this function
+        encapsulates the original function in a flush and refresh of the underlying
+        entity"""
+
+        def request():
+            from sqlalchemy.orm.session import Session
+            from camelot.view.remote_signals import get_signal_handler
+            o = entity_getter()
+            model_function( o )
+            if self._flush:
+                sh = get_signal_handler()
+                Session.object_session( o ).flush( [o] )
+                sh.sendEntityUpdate( self, o )
+            return True
+
+        return request
+
     @gui_function
     def run( self, entity_getter ):
         """When the run method is called, a progress dialog will apear while
@@ -157,23 +175,7 @@ the model function is executed.
         
         """
         progress = ProgressDialog(self._name)
-
-        def create_request( entity_getter ):
-
-            def request():
-                from sqlalchemy.orm.session import Session
-                from camelot.view.remote_signals import get_signal_handler
-                o = entity_getter()
-                self._model_function( o )
-                if self._flush:
-                    sh = get_signal_handler()
-                    Session.object_session( o ).flush( [o] )
-                    sh.sendEntityUpdate( self, o )
-                return True
-
-            return request
-
-        post( create_request( entity_getter ), progress.finished, exception = progress.exception )
+        post( self.create_request( entity_getter, self._model_function ), progress.finished, exception = progress.exception )
         progress.exec_()
 
 class ProcessFilesFormAction(FormActionFromModelFunction):
@@ -184,9 +186,13 @@ class ProcessFilesFormAction(FormActionFromModelFunction):
     overwrite the process_files method to have the action do something.
     """
 
-    @gui_function
-    def run( self, entity_getter ):
+    def create_request( self, entity_getter, model_function ):
         file_names = QtGui.QFileDialog.getOpenFileNames(caption=unicode(self.get_name()))
+        
+        def process_files_model_function( obj ):
+             return self.process_files( obj, file_names )
+                 
+        return super(ProcessFilesFormAction, self).create_request( entity_getter, process_files_model_function )
         
     def process_files( self, obj, file_names, options = None ):
         """overwrite this method in a subclass
