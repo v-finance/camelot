@@ -60,7 +60,8 @@ class Task( Entity, create_type_3_status_mixin('status') ):
     status           = OneToMany( type_3_status( 'Task', metadata, entities ), cascade='all, delete, delete-orphan' )
     notes            = OneToMany( 'TaskNote', cascade='all, delete, delete-orphan' )
     documents        = OneToMany( 'TaskDocument', cascade='all, delete, delete-orphan' )
-    type             = ManyToOne('TaskDocumentType', required = False, ondelete = 'restrict', onupdate = 'cascade')
+    roles            = OneToMany( 'TaskRole', cascade='all, delete, delete-orphan' )
+    type             = ManyToOne('TaskType', required = False, ondelete = 'restrict', onupdate = 'cascade')
     categories = ManyToMany( 'PartyCategory',
                              tablename='party_category_task', 
                              remote_colname='party_category_id',
@@ -105,6 +106,7 @@ class Task( Entity, create_type_3_status_mixin('status') ):
         form_display = forms.TabForm( [ ( _('Task'),    ['description', 'type', 'current_status', 
                                                           'creation_date', 'due_date',  'note',]),
                                         ( _('Category'), ['categories'] ),
+                                        ( _('Roles'), ['roles'] ),
                                         ( _('Documents'), ['documents'] ),
                                         ( _('Status'), ['status'] ) ] )
         field_attributes = {'note':{'delegate':delegates.RichTextDelegate,
@@ -148,7 +150,35 @@ class TaskType( Entity ):
     class Admin( EntityAdmin ):
         verbose_name = _('Task Type')
         list_display = ['description', 'rank']
+
+class TaskRoleType( Entity ):
+    using_options(tablename='task_role_type', order_by=['rank', 'description'])
+    description = Field( sqlalchemy.types.Unicode(48), required=True, index=True )
+    rank = Field(sqlalchemy.types.Integer(), default=1)
+    
+    def __unicode__(self):
+        return self.description or ''
+    
+    class Admin( EntityAdmin ):
+        verbose_name = _('Task Role Type')
+        list_display = ['description', 'rank']
         
+
+class TaskRole( Entity ):
+    using_options(tablename='task_role')
+    task = ManyToOne('Task', required = True, ondelete = 'cascade', onupdate = 'cascade')
+    party = ManyToOne('Party', required=True, ondelete='restrict', onupdate='cascade')
+    described_by = ManyToOne('TaskRoleType', required = False, ondelete = 'restrict', onupdate = 'cascade')
+    rank = Field(sqlalchemy.types.Integer(), required=True, default=1)
+    comment = Field( sqlalchemy.types.Unicode( 256 ) )
+
+    class Admin(EntityAdmin):
+        verbose_name = _('Role within task')
+        list_display = ['party', 'described_by', 'comment', 'rank']
+        field_attributes = {'described_by':{'name':_('Type'), 'delegate':delegates.ManyToOneChoicesDelegate},
+                                 'rank':{'choices':[(i,str(i)) for i in range(1,5)]},
+                                 }
+
 class TaskNote( Entity ):
     using_options(tablename='task_note', order_by=['-created_at'] )
     of = ManyToOne('Task', required=True, onupdate='cascade', ondelete='cascade')
