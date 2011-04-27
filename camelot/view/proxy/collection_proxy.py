@@ -761,7 +761,9 @@ position in the query.
         if role == Qt.EditRole:
 
             # if the field is not editable, don't waste any time and get out of here
-            if not self._get_field_attribute_value(index, 'editable'):
+            # editable should be explicitely True, since the _get_field_attribute_value
+            # might return intermediary values such as ValueLoading ??
+            if self._get_field_attribute_value(index, 'editable') != True:
                 return
 
             locker = QtCore.QMutexLocker( self._mutex )
