@@ -393,6 +393,17 @@ class Party( Entity ):
                                               cm.table.c.mechanism.like( ( u'phone', u'%' ) ) ),
                           from_obj = [cm.table.join( pcm.table )] ).limit(1)
 
+    @ColumnProperty
+    def fax( self ):
+
+        cm = ContactMechanism
+        pcm = PartyContactMechanism
+
+        return sql.select( [cm.mechanism],
+                          whereclause = and_( pcm.table.c.party_id == self.id,
+                                              cm.table.c.mechanism.like( ( u'fax', u'%' ) ) ),
+                          from_obj = [cm.table.join( pcm.table )] ).limit(1)
+    
     #
     # Create virtual properties for email and phone that can
     # get and set a contact mechanism for the party
