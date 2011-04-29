@@ -26,18 +26,14 @@ from PyQt4 import QtCore, QtGui
 
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
+from camelot.view.controls.abstract_widget import AbstractSearchWidget
 
-class SimpleSearchControl(QtGui.QWidget):
+class SimpleSearchControl(AbstractSearchWidget):
     """A control that displays a single text field in which search keywords can
-  be typed
+    be typed
 
-  emits a search and a cancel signal if the user starts or cancels the search
-  """
-
-    expand_search_options_signal = QtCore.pyqtSignal()
-    cancel_signal = QtCore.pyqtSignal()
-    search_signal = QtCore.pyqtSignal(str)
-    on_arrow_down_signal = QtCore.pyqtSignal()
+    emits a search and a cancel signal if the user starts or cancels the search
+    """
 
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
