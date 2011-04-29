@@ -90,14 +90,12 @@ class DesktopBackground(QtGui.QWidget):
         if actionButtonsLayout is not None:
             for position in xrange(0, min( len(actions), actionButtonsLayoutMaxItemsPerRowCount) ):
                 actionButton = ActionButton(actions[position], self)
-                #actionButton.setStyleSheet(""" border: 2px solid black; """)
                 actionButton.entered.connect(self.onActionButtonEntered)
                 actionButton.left.connect(self.onActionButtonLeft)
                 actionButtonsLayout.addWidget(actionButton, 0, position, Qt.AlignCenter)
 
             for position in xrange(actionButtonsLayoutMaxItemsPerRowCount, len(actions)):
                 actionButton = ActionButton(actions[position], self)                
-                #actionButton.setStyleSheet(""" border: 2px solid black; """)
                 actionButton.entered.connect(self.onActionButtonEntered)
                 actionButton.left.connect(self.onActionButtonLeft)
                 actionButtonsLayout.addWidget(actionButton, 1, position % actionButtonsLayoutMaxItemsPerRowCount, Qt.AlignCenter)
@@ -169,10 +167,13 @@ class ActionButtonInfoWidget(QtGui.QWidget):
         actionDescriptionLabel = self.findChild(QtGui.QLabel, 'actionDescriptionLabel')
         if actionDescriptionLabel is not None:
             actionDescriptionLabel.setText(action.get_description())
-            if action.get_description():                
-                actionDescriptionLabel.show()
+            if action.get_description():
+                # Do not use show() or hide() in this case, since it will
+                # cause the actionButtons to be drawn on the wrong position.
+                # Instead, just set the width of the widget to either 0 or 250.
+                actionDescriptionLabel.setFixedWidth(250)
             else:
-                actionDescriptionLabel.hide()
+                actionDescriptionLabel.setFixedWidth(0)
             
     def resetInfo(self):
         actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
