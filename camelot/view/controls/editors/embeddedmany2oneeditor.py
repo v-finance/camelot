@@ -84,6 +84,7 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
                 else:
                     return False, False, current_entity_admin
             else:
+                new_entity = None
                 try:
                     new_entity = self.admin.entity()
                 except Exception, e:
