@@ -341,7 +341,7 @@ class ChartFormAction( FormAction ):
         :return: a camelot.container.chartcontainer FigureContainer or AxesContainer object
         """
         from camelot.container.chartcontainer import PlotContainer
-        return PlotContainer( [0,1,2,3] [0,2,4,9] )
+        return PlotContainer( [0,1,2,3], [0,2,4,9] )
 
 class PixmapFormAction( FormAction ):
     """Action that displays an image, overwrite its image
