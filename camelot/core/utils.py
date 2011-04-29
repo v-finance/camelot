@@ -155,9 +155,12 @@ def ugettext(string_to_translate):
         result = unicode(QtCore.QCoreApplication.translate('',
             QtCore.QString(string_to_translate)))
         # try one more time with string_to_translate capitalized
-        if result == string_to_translate:
-            result = unicode(QtCore.QCoreApplication.translate('',
+        if result is string_to_translate:
+            result2 = unicode(QtCore.QCoreApplication.translate('',
                 QtCore.QString(string_to_translate.capitalize())))
+            if result2 is not string_to_translate.capitalize():
+                result = result2
+
     return result
 
 
