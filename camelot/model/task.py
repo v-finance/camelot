@@ -55,7 +55,7 @@ class AttachFilesAction(ProcessFilesFormAction):
         authentication = getCurrentAuthentication()
         for file_name in file_names:
             stored_file = storage.checkin( file_name )
-            document = TaskDocument( of = obj, document=stored_file, created_by=authentication )
+            TaskDocument( of = obj, document=stored_file, created_by=authentication )
 
 class Task( Entity, create_type_3_status_mixin('status') ):
     using_options(tablename='task', order_by=['-creation_date'] )
