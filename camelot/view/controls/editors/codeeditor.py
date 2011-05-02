@@ -31,10 +31,13 @@ import re
 
 class PartEditor(QtGui.QLineEdit):
 
-    def __init__(self, mask, first = False):
+    def __init__(self, mask, max_length, first = False, last = False):
         super(PartEditor, self).__init__()
         self.setInputMask(mask)
         self.firstPart = first
+        self.last = last
+        self.max_length = max_length
+        self.textEdited.connect( self.text_edited )
 
     def focusInEvent(self, event):
         super(PartEditor, self).focusInEvent(event)
@@ -50,6 +53,14 @@ class PartEditor(QtGui.QLineEdit):
         if self.firstPart and self.toolTip():
             draw_tooltip_visualization(self)
 
+    @QtCore.pyqtSlot(str)
+    def text_edited(self, text):
+        if self.cursorPosition() == self.max_length:
+            if self.last:
+                self.editingFinished.emit()
+            else:
+                self.focusNextChild()
+        
 class CodeEditor(CustomEditor):
 
     def __init__(self, parent=None, parts=['99','AA'], editable=True, **kwargs):
@@ -59,13 +70,11 @@ class CodeEditor(CustomEditor):
         layout = QtGui.QHBoxLayout()
         layout.setMargin(0)
         layout.setSpacing(0)
-        layout.setAlignment(Qt.AlignLeft)   
-        firstPart = True
+        layout.setAlignment(Qt.AlignLeft)
         for i, part in enumerate(parts):
             part = re.sub('\W*', '', part)
             part_length = len(part)
-            editor = PartEditor(part, firstPart)
-            firstPart = False
+            editor = PartEditor(part, part_length, i==0, i==(len(parts)-1) )
             editor.setFocusPolicy( Qt.StrongFocus )
             if i==0:
                 self.setFocusProxy( editor )
