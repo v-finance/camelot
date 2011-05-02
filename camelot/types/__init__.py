@@ -332,6 +332,19 @@ class File(types.TypeDecorator):
       script = Field(camelot.types.File(upload_to='script'))
       
   .. image:: ../_static/editors/FileEditor_editable.png
+  
+  Retrieving the actual storage from a File field can be a little cumbersome.
+  The easy way is taking it from the field attributes, in which it will be
+  put by default.  If no field attributes are available at the location where
+  the storage is needed, eg in some function doing document processing, one 
+  needs to go through SQLAlchemy to retrieve it.
+  
+  For an Enity named TaskDocument with a File field named 'document', the
+  storage can be retrieved::
+  
+      document_property = TaskDocument.mapper.get_property('document')
+      storage = document_property.columns[0].type.storage
+      
     """
     
     impl = types.Unicode

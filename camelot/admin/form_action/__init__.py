@@ -187,7 +187,7 @@ class ProcessFilesFormAction(FormActionFromModelFunction):
     """
 
     def create_request( self, entity_getter, model_function ):
-        file_names = QtGui.QFileDialog.getOpenFileNames(caption=unicode(self.get_name()))
+        file_names = [unicode(fn) for fn in QtGui.QFileDialog.getOpenFileNames(caption=unicode(self.get_name()))]
         
         def process_files_model_function( obj ):
              return self.process_files( obj, file_names )

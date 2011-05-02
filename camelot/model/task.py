@@ -50,7 +50,12 @@ __metadata__ = metadata
 class AttachFilesAction(ProcessFilesFormAction):
     
     def process_files( self, obj, file_names, _options=None ):
-        print file_names
+        document_property = TaskDocument.mapper.get_property('document')
+        storage = document_property.columns[0].type.storage
+        authentication = getCurrentAuthentication()
+        for file_name in file_names:
+            stored_file = storage.checkin( file_name )
+            document = TaskDocument( of = obj, document=stored_file, created_by=authentication )
 
 class Task( Entity, create_type_3_status_mixin('status') ):
     using_options(tablename='task', order_by=['-creation_date'] )
@@ -80,7 +85,7 @@ class Task( Entity, create_type_3_status_mixin('status') ):
                           whereclause = sql.and_( status_class.status_for_id == self.id,
                                            status_class.status_from_date <= sql.functions.current_date(),
                                            status_class.status_thru_date >= sql.functions.current_date() ),
-                          from_obj = [status_type_class.table.join( status_class.table )] )
+                          from_obj = [status_type_class.table.join( status_class.table )] ).limit(1)
     
     def __unicode__( self ):
         return self.description or ''
@@ -102,7 +107,8 @@ class Task( Entity, create_type_3_status_mixin('status') ):
         verbose_name = _('Task')
         list_display = ['creation_date', 'due_date', 'description', 'type', 'current_status_sql', 'number_of_documents']
         list_filter  = ['type.description', 'current_status_sql', 'categories.name']
-        form_actions = [AttachFilesAction( _('Attach Documents') )]
+        form_state = 'maximized'
+        form_actions = [AttachFilesAction( _('Attach Documents'), flush=True )]
         form_display = forms.TabForm( [ ( _('Task'),    ['description', 'type', 'current_status', 
                                                           'creation_date', 'due_date',  'note',]),
                                         ( _('Category'), ['categories'] ),
