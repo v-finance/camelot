@@ -41,7 +41,7 @@ from elixir.relationships import ManyToOne, OneToMany
 
 from camelot.model.authentication import end_of_times
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.types import Code, Enumeration
+from camelot.types import Enumeration
 
 #
 # Global dict keeping track of which status class is used for which class

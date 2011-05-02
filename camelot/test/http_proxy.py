@@ -30,7 +30,6 @@ from PyQt4.QtCore import QUrl
 from PyQt4.QtCore import QString
 from PyQt4.QtCore import QObject
 from PyQt4.QtCore import pyqtSlot
-from PyQt4.QtCore import QEventLoop
 from PyQt4.QtCore import QCoreApplication
 from PyQt4.QtNetwork import QTcpSocket
 from PyQt4.QtNetwork import QTcpServer

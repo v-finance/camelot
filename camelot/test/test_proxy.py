@@ -156,8 +156,6 @@ class ProxyTestCase(unittest.TestCase):
         if reply.isFinished():
             response_code = reply.attribute(
                 QNetworkRequest.HttpStatusCodeAttribute).toString()
-            reply_url = reply.url()
-
             self.assertEquals(response_code, '200')
             self.assertEquals(reply.url(), QUrl('http://aws.amazon.com/'))
         else:
