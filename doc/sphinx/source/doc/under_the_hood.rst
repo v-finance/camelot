@@ -67,3 +67,26 @@ You might want to turn this off, here's how to do so :
 .. literalinclude:: ../../../../camelot/model/__init__.py
    :start-after: begin session setup
    :end-before: end session setup
+
+Using Camelot without the GUI
+=============================
+
+Often a Camelot application also has a non GUI part, like batch scripts, server side
+scripts, etc.
+
+It is of course perfectly possible to reuse the whole model definition in those non
+GUI parts.  The easiest way to do so is to leave the Camelot GUI application as it
+is and then in the non GUI script, initialize the model first ::
+
+import settings
+settings.setup_model()
+
+From that point, all model manipulations can be done.  Access to the session can
+be obtained via any Entity subclass, such as Person ::
+
+session = Person.query.session
+
+After the manipulations to the model have been done, they can be flushed to the db ::
+
+session.flush()
+
