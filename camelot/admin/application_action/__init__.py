@@ -183,6 +183,9 @@ class NewViewAction(EntityAction):
         form = self.admin.create_new_view(parent=None)
         show_top_level( form, parent )
         return form
+    
+    def get_description(self):
+        return _('Create a new %s')%(self.admin.get_verbose_name())
         
 class OpenFileApplicationAction( ApplicationActionFromModelFunction, AbstractOpenFileAction ):
     """Application action used to open a file in the prefered application of the user.
