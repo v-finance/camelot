@@ -39,6 +39,7 @@ from camelot.view.action import ActionFactory
 from camelot.view.controls.navpane2 import NavigationPane
 #from camelot.view.controls.navpane3 import NavigationPane
 from camelot.view.controls.printer import Printer
+from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.model_thread import post
 
 from camelot.core.utils import ugettext as _
@@ -310,17 +311,23 @@ class MainWindow(QtGui.QMainWindow):
     def exportToExcel(self):
         """creates an excel file from the view"""
         widget = self.activeMdiChild()
-        post(widget.export_to_excel)
+        d = ProgressDialog(_('Please wait'))
+        post(widget.export_to_excel, d.finished, d.exception)
+        d.exec_()
 
     def exportToWord(self):
         """Use windows COM to export the active child window to MS word,
         by using its to_html function"""
         widget = self.activeMdiChild()
-        post(widget.export_to_word)
+        d = ProgressDialog(_('Please wait'))
+        post(widget.export_to_word, d.finished, d.exception)
+        d.exec_()
 
     def exportToMail(self):
         widget = self.activeMdiChild()
-        post(widget.export_to_mail)
+        d = ProgressDialog(_('Please wait'))
+        post(widget.export_to_mail, d.finished, d.exception)
+        d.exec_()
 
     def importFromFile(self):
         self.activeMdiChild().importFromFile()
