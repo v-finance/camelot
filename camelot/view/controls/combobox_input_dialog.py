@@ -118,4 +118,16 @@ class ComboBoxInputDialog(QDialog):
 
     def set_window_title(self, title):
         self.setWindowTitle(title)
-
+    
+    def set_choice_by_text(self, text):
+        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        if combobox != None:
+            index = combobox.findText(text)
+            self.set_choice_by_index(index)
+    
+    def set_choice_by_index(self, index):
+        combobox = self.findChild( QtGui.QWidget, 'combobox' )
+        if combobox != None:
+            combobox.setCurrentIndex(index)
+        else:
+            raise Exception('No combobox to set the choice')

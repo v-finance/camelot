@@ -42,9 +42,8 @@ from camelot.view.controls.combobox_input_dialog import ComboBoxInputDialog
 
 from camelot.core.utils import ugettext as _
 from camelot.view.model_thread.signal_slot_model_thread import SignalSlotModelThread
-
 from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, \
-    store_profiles, get_network_proxy, check_connection
+    store_profiles, get_network_proxy, check_connection, last_used_profile
 
 logger = logging.getLogger('camelot.view.database_selection')
 
@@ -76,6 +75,9 @@ def select_profile(profiles_dict):
     input_dialog.set_ok_button_text(ok_label)
     input_dialog.set_cancel_button_text(cancel_label)
     input_dialog.set_items(sorted(profiles_dict.keys()) + [NEW_PROFILE_LABEL])
+    _last_used_profile = last_used_profile()
+    if _last_used_profile:
+        input_dialog.set_choice_by_text(_last_used_profile)
     input_dialog.set_ok_button_default()
 
     last_index = input_dialog.count()-1
