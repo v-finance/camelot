@@ -40,7 +40,7 @@ class ProgressDialog(QtGui.QProgressDialog):
     to display a progress dialog until my_function has finished :
     
     d = ProgressDialog()
-    post(my_function, p.finished, p.exception)
+    post(my_function, d.finished, d.exception)
     d.exec_()
     
     """
