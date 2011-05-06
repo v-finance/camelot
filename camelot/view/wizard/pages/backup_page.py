@@ -134,7 +134,7 @@ class Page(QtGui.QWizardPage):
 
     def _customButtonClicked(self):
         settings = QtCore.QSettings()
-        dir = settings.value('custom_filename').toString()
+        dir = settings.value('custom_backup_filename').toString()
         path = self._setPath(dir)
         if path:
             self._custom_edit.setText(QtCore.QDir.toNativeSeparators(path))

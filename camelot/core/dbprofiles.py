@@ -82,6 +82,10 @@ def engine_from_profile():
                                        profile['database'])
     return create_engine(connection, pool_recycle=True, connect_args=connect_args)
 
+def media_root_from_profile():
+    profile = selected_profile_info()
+    return profile['media_location']
+
 def last_used_profile():
     settings = QtCore.QSettings()
     return unicode(settings.value('last_used_database_profile',

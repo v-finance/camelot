@@ -126,7 +126,8 @@ class Storage( object ):
         return self._upload_to
         
     def available(self):
-        """Verify if the storage is available 
+        """Verify if the storage is available
+        :return: True if the storage is available, False otherwise
         """
         import os
         try:
@@ -135,8 +136,15 @@ class Storage( object ):
             return True
         except Exception, e:
             logger.warn( 'Could not access or create path %s, files will be unreachable' % self.upload_to, exc_info = e )
-        return False
-    
+
+    def writeable(self):
+        """Verify if the storage is available and writeable
+        :return: True if the storage is writeable, False otherwise
+        """
+        import os
+        if self.available():
+            return os.access(self.upload_to, os.W_OK) 
+        
     def exists( self, name ):
         """True if a file exists given some name"""
         if self.available():

@@ -184,8 +184,10 @@ class BackupMechanism(object):
             self.copy_table_data(from_table, to_table)
         yield (number_of_tables, number_of_tables + 1, _('Store backup at requested location') )
         if not self._storage:
+            logger.info(u'move backup file to its final location')
             shutil.move(temp_file_name, self._filename)
         else:
+            logger.info(u'check backfup file in to storage with name %s'%self._filename)
             self._storage.checkin( temp_file_name, self._filename )
             os.remove( temp_file_name )
         yield (number_of_tables + 1, number_of_tables + 1, _('Backup completed'))

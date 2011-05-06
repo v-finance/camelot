@@ -126,16 +126,30 @@ class HTTPProxy(QObject):
 
         entries = request_line.split(' ')
         method = entries[0]
-        address = entries[1]
+        address = str( entries[1] )
         version = entries[2]
-
-        url = QUrl.fromEncoded(address)
+        port = '80'
+        
+        
+        
+        if address.count(':') > 1:
+            protocol, host, port = address.split(':')
+        else:
+            protocol, host = address.split(':')
+           
+        print 'address', address, protocol, host, port
+        
+        url = QUrl( protocol + host )
+        #url.setHost( host )
+        #url.setPort( int(port) )
+        
         if not url.isValid():
             if self.debug:
                 self.log.write('Invalid URL: %s\n\n', url)
             socket.disconnectFromHost()
             return
 
+        print 'HOST', address, url.host(), url.port()
         host = url.host()
         port = 80 if (url.port() < 0) else url.port()
         req = url.encodedPath()

@@ -44,7 +44,6 @@ _application_ = None
 if not QtGui.QApplication.instance():
     _application_ = QtGui.QApplication([a for a in sys.argv if a])
 
-
 def setup_a_win32_http_system_proxy(hostname, port):
     # XXX:
     # We are not using a system proxy with regards to Windows. PyQt will go
@@ -58,7 +57,6 @@ def setup_a_win32_http_system_proxy(hostname, port):
     command = ['proxycfg', '-p', http_proxy_value, '"<local>"']
     subprocess.call(command, shell=True, stdin=PIPE, stdout=PIPE,
         stderr=PIPE, universal_newlines=True)
-
 
 def clear_win_http_settings():
     # XXX:
