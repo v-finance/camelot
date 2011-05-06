@@ -847,18 +847,22 @@ position in the query.
         #
         # see if there is anything left to do
         #
-        if rows_to_get:
-            rows_to_get = list(rows_to_get)
-            locker.unlock()
-            rows_to_get.sort()
-            offset = rows_to_get[0]
-            #
-            # find first discontinuity
-            #
-            for i in range(offset, rows_to_get[-1]+1):
-                if rows_to_get[i-offset] != i:
-                    break
-            limit = i - offset + 1
+        try:
+            if rows_to_get:
+                rows_to_get = list(rows_to_get)
+                locker.unlock()
+                rows_to_get.sort()
+                offset = rows_to_get[0]
+                #
+                # find first discontinuity
+                #
+                for i in range(offset, rows_to_get[-1]+1):
+                    if rows_to_get[i-offset] != i:
+                        break
+                limit = i - offset + 1
+        except IndexError, e:
+            logger.warn('index error with rows_to_get %s'%unicode(rows_to_get), exc_info=e)
+            raise e
         return (offset, limit)
 
     @model_function
