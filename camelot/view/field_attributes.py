@@ -107,7 +107,7 @@ _sqlalchemy_to_python_type_ = {
 
     sqlalchemy.types.Float: lambda f: {
         'python_type': float,
-        'precision': f.precision if not isinstance(f.precision, tuple) else f.precision[1],
+        'precision': (f.precision if not isinstance(f.precision, tuple) else f.precision[1]) or 2,
         'editable': True,
         'minimum': constants.camelot_minfloat,
         'maximum': constants.camelot_maxfloat,
