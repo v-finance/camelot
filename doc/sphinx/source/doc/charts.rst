@@ -4,9 +4,6 @@
   Charts
 ##########
 
-:Release: |version|
-:Date: |today|
-
 To enable charts, **Camelot** is closely integrate with `Matplotlib <http://www.matplotlib.org>`_,
 one of the very high quality Python charting packages.
 

@@ -23,6 +23,7 @@ All other sections can be read on an as needed base.
    actions.rst
    delegates.rst
    charts.rst
+   documents.rst
    data_model.rst
    fixtures.rst
    manage.rst

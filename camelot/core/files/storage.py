@@ -87,7 +87,8 @@ class Storage( object ):
   as all of it's methods might block.
 
   The methods of this class don't verify if they are called on the model
-  thread, because these classes can be used on the server as well.
+  thread, because these classes can be used server side or in a non-gui
+  script as well.
     """
 
     def __init__( self, upload_to = '', 

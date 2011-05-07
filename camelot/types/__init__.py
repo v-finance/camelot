@@ -324,9 +324,8 @@ class Enumeration(types.TypeDecorator):
 class File(types.TypeDecorator):
     """Sqlalchemy column type to store files.  Only the location of the file is stored
     
-  This column type accepts and returns a StoredFile, and stores them in the directory
-  specified by settings.CAMELOT_MEDIA_ROOT.  The name of the file is stored as a string in
-  the database.  A subdirectory upload_to can be specified::
+  This column type accepts and returns a StoredFile. The name of the file is 
+  stored as a string in the database.  A subdirectory upload_to can be specified::
   
     class Movie(Entity):
       script = Field(camelot.types.File(upload_to='script'))
@@ -351,6 +350,15 @@ class File(types.TypeDecorator):
     stored_file_implementation = StoredFile
     
     def __init__(self, max_length=100, upload_to='', storage=Storage, **kwargs):
+        """
+        :param max_length: the maximum length of the name of the file that will
+        be saved in the database.
+        
+        :param upload_to: a subdirectory in the Storage, in which the the file
+        should be stored.
+        
+        :param storage: an alternative storage to use for this field.
+        """
         self.max_length = max_length
         self.storage = storage(upload_to, self.stored_file_implementation)
         types.TypeDecorator.__init__(self, length=max_length, **kwargs)
@@ -390,7 +398,7 @@ class Image(File):
     """Sqlalchemy column type to store images
     
   This column type accepts and returns a StoredImage, and stores them in the directory
-  specified by settings.MEDIA_ROOT.  The name of the file is stored as a string in
+  specified by settings.CAMELOT_MEDIA_ROOT.  The name of the file is stored as a string in
   the database.
   
   The Image field type provides the same functionallity as the File field type, but
