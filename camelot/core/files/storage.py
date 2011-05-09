@@ -59,15 +59,24 @@ class StoredImage( StoredFile ):
         
     @model_function
     def checkout_image( self ):
-        """Checkout the image from the storage, and return a QImage"""
+        """Checkout the image from the storage, this function is only to be
+        used in the model thread.
+        
+        :return: a QImage
+        """
         from PyQt4.QtGui import QImage
         p = self.storage.checkout( self )
         return QImage( p )
 
     @model_function
     def checkout_thumbnail( self, width, height ):
-        """Checkout a thumbnail for this image from the storage
-        :return: a QImage"""
+        """Checkout a thumbnail for this image from the storage, this function
+        is only to be used in the model thread
+        :param width: the requested width of the thumbnail
+
+        
+        :return: a QImage
+        """
         key = (width, height)
         try:
             thumbnail_image = self._thumbnails[key]
@@ -128,6 +137,7 @@ class Storage( object ):
         
     def available(self):
         """Verify if the storage is available
+
         :return: True if the storage is available, False otherwise
         """
         import os
@@ -140,6 +150,7 @@ class Storage( object ):
 
     def writeable(self):
         """Verify if the storage is available and writeable
+
         :return: True if the storage is writeable, False otherwise
         """
         import os
@@ -155,6 +166,7 @@ class Storage( object ):
         
     def list(self, prefix='*', suffix='*'):
         """Lists all files with a given prefix and or suffix available in this storage
+
         :return: a iterator of StoredFile objects
         """
         import glob
@@ -169,6 +181,7 @@ class Storage( object ):
     def checkin( self, local_path, filename=None ):
         """Check the file pointed to by local_path into the storage, and
         return a StoredFile
+        
         :param local_path: the path to the local file that needs to be checked in
         :param filename: a hint for the filename to be given to the checked in file, if None
         is given, the filename from the local path will be taken.
@@ -193,6 +206,7 @@ class Storage( object ):
 
     def checkin_stream( self, prefix, suffix, stream ):
         """Check the datastream in as a file into the storage
+
         :param prefix: the prefix to use for generating a file name
         :param suffix: the suffix to use for generating a filen name, eg '.png'
         :return: a StoredFile"""
@@ -216,6 +230,7 @@ class Storage( object ):
 
     def checkout_stream( self, stored_file ):
         """Check the file stored_file out of the storage as a datastream
+
         :return: a file object
         """
         self.available()

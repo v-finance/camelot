@@ -14,15 +14,17 @@ the database, and don't store the file itself.
 Three concepts are important for understanding how Camelot handles documents :
 
     * The **Storage** : this is the place where Camelot stores its documents,
-      by default this is a directory on the local system.  Files are checked in
-      and checked out of the storage by their name.
+      by default this is a directory on the local system.  When a file is
+      checked in into a storage, a StoredFile is returned.  Files are checked
+      out from the storage by their StoredFile representation.
       
     * The **StoredFile** : a stored file is a representation of a file stored
       in a storage.  It does not contain the file itself but its name and meta
       information.
       
     * The **File** Field type : is a custom field type to write and read the
-      name of a StoredFile into the database.
+      StoredFile into the database.  The actual name of the StoredFile is the
+      only thing stored in the database.
       
 The File field type
 ===================
@@ -43,10 +45,12 @@ type StoredFile.
 
 
 .. autoclass:: camelot.core.files.storage.StoredFile
+   :members:
 
 The Image field type will return objects of type StoredImage.
 
 .. autoclass:: camelot.core.files.storage.StoredImage
+   :members:
 
 The Storage
 ===========
@@ -55,3 +59,4 @@ This is where the actual file is stored.  The default storage implementation
 simply represents a directory on the file system.
 
 .. autoclass:: camelot.core.files.storage.Storage
+   :members:
