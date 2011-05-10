@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor, set_background_color_palette
@@ -97,6 +97,19 @@ class FileEditor(CustomEditor):
 
         # Filename
         self.filename = DecoratedLineEdit(self)
+        
+        # Search Completer
+        self.completer = QtGui.QCompleter()
+        self.completions_model = QtGui.QFileSystemModel()
+        self.completer.setCompletionMode(
+            QtGui.QCompleter.UnfilteredPopupCompletion
+        )        
+        self.completer.setModel( self.completions_model )
+        self.completer.activated[QtCore.QModelIndex].connect(self.file_completion_activated)
+        self.filename.setCompleter( self.completer )
+        settings = QtCore.QSettings()
+        last_path = settings.value('lastpath').toString()
+        self.completions_model.setRootPath( last_path )
 
         # Setup layout
         self.document_label = QtGui.QLabel(self)
@@ -108,6 +121,20 @@ class FileEditor(CustomEditor):
         self.layout.addWidget(self.save_as_button)
         self.setLayout(self.layout)
 
+    def file_completion_activated(self, index):
+        from camelot.view.storage import create_stored_file
+        source_index = index.model().mapToSource( index )
+        if not self.completions_model.isDir( source_index ):
+            path = self.completions_model.filePath( source_index )
+            create_stored_file(
+                self,
+                self.storage,
+                self.stored_file_ready,
+                filter=self.filter,
+                remove_original=self.remove_original,
+                filename = path,
+            )
+            
     def set_tab_order(self):
         if self.filename.text() != '':
             self.setTabOrder(self.clear_button, self.filename)
@@ -192,21 +219,16 @@ class FileEditor(CustomEditor):
         event.acceptProposedAction()
 
     def dropEvent(self, event):
+        from camelot.view.storage import create_stored_file
         if event.mimeData().hasUrls():
             url = event.mimeData().urls()[0]
             filename = url.toLocalFile()
-            if filename != '':
-                from camelot.view.storage import SaveFileProgressDialog
-                from camelot.view.model_thread import post
-                progress = SaveFileProgressDialog()
-
-                if self.remove_original and self.set_remove_ok():
-                    self.original_path = filename
-
-                def checkin():
-                    stored_file = self.storage.checkin(unicode(filename))
-                    return lambda:self.stored_file_ready(stored_file)
-
-                post(checkin, progress.finish)
-                progress.exec_()
-
+            if filename:
+                create_stored_file(
+                    self,
+                    self.storage,
+                    self.stored_file_ready,
+                    filter=self.filter,
+                    remove_original=self.remove_original,
+                    filename = path,
+                )

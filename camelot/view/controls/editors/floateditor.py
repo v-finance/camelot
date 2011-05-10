@@ -83,7 +83,6 @@ class FloatEditor(CustomEditor):
     calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
     
     def __init__(self, parent,
-                       precision = 2,
                        minimum = constants.camelot_minfloat,
                        maximum = constants.camelot_maxfloat,
                        calculator = True,
@@ -96,11 +95,10 @@ class FloatEditor(CustomEditor):
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)
-        self.precision = precision
         self.spinBox = CustomDoubleSpinBox(option, parent)
 
         self.spinBox.setRange(minimum, maximum)
-        self.spinBox.setDecimals(precision)
+        self.spinBox.setDecimals(2)
         self.spinBox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
 
         self.spinBox.addAction(action)
@@ -134,6 +132,7 @@ class FloatEditor(CustomEditor):
                                    tooltip = None,
                                    prefix = '',
                                    suffix = '',
+                                   precision = 2,
                                    single_step = 1.0, **kwargs):
         self.set_enabled(editable)
         self.set_background_color(background_color)
@@ -141,6 +140,8 @@ class FloatEditor(CustomEditor):
         self.spinBox.setPrefix(u'%s '%(unicode(prefix or '').lstrip()))
         self.spinBox.setSuffix(u' %s'%(unicode(suffix or '').rstrip()))
         self.spinBox.setSingleStep(single_step)
+        if self.spinBox.decimals() != precision:
+            self.spinBox.setDecimals( precision )
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
@@ -164,7 +165,7 @@ class FloatEditor(CustomEditor):
 
         if self._decimal:
             import decimal
-            value = decimal.Decimal('%.*f' % (self.precision, value))
+            value = decimal.Decimal('%.*f' % (self.spinBox.decimals(), value))
 
         return value
 

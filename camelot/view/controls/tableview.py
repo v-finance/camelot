@@ -396,6 +396,26 @@ class HeaderWidget( QtGui.QWidget ):
         if self.number_of_rows:
             self.number_of_rows.setNumberOfRows( rows )
 
+class SplitterHandle( QtGui.QSplitterHandle ):
+    """Custom implementation of QSplitterHandle to provide more functions, 
+    such as hiding a widget by clicking the handle"""
+    
+    def __init__ (self, orientation, splitter, widget_to_hide = None):
+        super(SplitterHandle, self).__init__ (orientation, splitter)
+        self.setToolTip('Click to close')
+        self._widget_to_hide = widget_to_hide
+        
+    def mousePressEvent(self, event):
+        splitter = self.splitter()
+        print splitter.count()
+        splitter.widget( splitter.count() - 1 ).hide()
+        
+class Splitter(QtGui.QSplitter):
+    """Custom implementation of QSplitter to use the custom SplitterHandle"""
+    
+    def createHandle(self):
+        return SplitterHandle( self.orientation(), self, self._widget_to_hide )
+    
 class TableView( AbstractView  ):
     """A generic tableview widget that puts together some other widgets.  The behaviour of this class and
   the resulting interface can be tuned by specifying specific class attributes which define the underlying

@@ -172,7 +172,11 @@ class CustomDelegate(QItemDelegate):
         # (Nick G.): Avoid 'None' being set as tooltip.
         if field_attributes.get('tooltip'):
             editor.setToolTip( unicode( field_attributes.get('tooltip', '') ) )
-        
+        #
+        # first set the field attributes, as these may change the 'state' of the
+        # editor to properly display and hold the value, eg 'precision' of a 
+        # float might be changed
+        #
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
 

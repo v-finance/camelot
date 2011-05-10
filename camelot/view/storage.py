@@ -112,16 +112,27 @@ def save_stored_file(parent, stored_file):
         progress.exec_()
 
 def create_stored_file(parent, storage, on_finish, filter='All files (*)',
-                       remove_original=False):
+                       remove_original = False,
+                       filename = None):
     """Popup a QFileDialog, put the selected file in the storage and
-    return the call on_finish with the StoredFile when done"""
+    return the call on_finish with the StoredFile when done
+    
+    :param on_finish: function that will be called in the gui thread when
+    the file is stored.  the first argument of the function should be the
+    StoredFile
+    
+    :param filename: if None, a dialog will pop up, asking the user for
+    the file, otherwise a string with the name of the file to be stored
+    """
     settings = QtCore.QSettings()
     dir = settings.value('lastpath').toString()
     # use last path saved in settings, if none current dir is used by Qt
-    filename = QtGui.QFileDialog.getOpenFileName(
-        parent, 'Open file', dir, filter
-    )
+    if filename == None:
+        filename = QtGui.QFileDialog.getOpenFileName(
+            parent, 'Open file', dir, filter
+        )
     if filename:
+        filename = unicode( filename )
         remove = False
         if remove_original:
             reply = QtGui.QMessageBox(
@@ -135,19 +146,17 @@ def create_stored_file(parent, storage, on_finish, filter='All files (*)',
             if reply == QtGui.QMessageBox.Yes:
                 remove = True
         # save it back
-        settings.setValue('lastpath', QtCore.QVariant(filename))
+        settings.setValue('lastpath', QtCore.QVariant( os.path.dirname( filename ) ) )
         progress = SaveFileProgressDialog()
 
         def checkin():
-            new_path = storage.checkin(unicode(filename))
+            new_path = storage.checkin( filename )
             if remove:
                 try:
-                    os.remove( unicode( filename ) )
+                    os.remove( filename )
                 except Exception, e:
                     LOGGER.warn('could not remove file', exc_info=e)
             return lambda:on_finish(new_path)
 
         post(checkin, progress.finish, model_thread_exception_message_box)
         progress.exec_()
-
-

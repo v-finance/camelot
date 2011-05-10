@@ -40,37 +40,34 @@ class FloatDelegate( CustomDelegate ):
     def __init__( self,
                  minimum=constants.camelot_minfloat,
                  maximum=constants.camelot_maxfloat,
-                 precision=2,
                  parent=None,
                  unicode_format=None,
                  **kwargs ):
-        """
-        :param precision:  The number of digits after the decimal point displayed.  This defaults
-        to the precision specified in the definition of the Field.     
-        If the attribute is a calculated field, which gets its precision from SQLAclhemy introspection,
-        precision will be set to None, so precision must be explicitely set in the field attributes.
-        """
         CustomDelegate.__init__(self,
                                 parent=parent,
-                                precision=precision or 2,
                                 minimum=minimum, maximum=maximum,
                                 **kwargs )                   
         self.minimum = minimum
         self.maximum = maximum
-        self.precision = precision or 2
         self.unicode_format = unicode_format
 
     def paint( self, painter, option, index ):
         painter.save()
         self.drawBackground(painter, option, index)
         value = variant_to_pyobject(index.model().data(index, Qt.EditRole))
+        field_attributes = variant_to_pyobject( index.model().data( index, Qt.UserRole ) )
 
+        if field_attributes == ValueLoading:
+            precision = 2
+        else:
+            precision = field_attributes.get('precision', 2)
+            
         if value in (None, ValueLoading):
             value_str = ''
         elif self.unicode_format:
             value_str = self.unicode_format(value)
         else:
-            value_str = QtCore.QString("%L1").arg(float(value),0,'f',self.precision)
+            value_str = QtCore.QString("%L1").arg(float(value),0,'f',precision)
 
         self.paint_text( painter, option, index, value_str, horizontal_align=Qt.AlignRight )
         painter.restore()
