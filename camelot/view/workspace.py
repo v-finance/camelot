@@ -92,13 +92,13 @@ class DesktopBackground(QtGui.QWidget):
                 actionButton = ActionButton(actions[position], self)
                 actionButton.entered.connect(self.onActionButtonEntered)
                 actionButton.left.connect(self.onActionButtonLeft)
-                actionButtonsLayout.addWidget(actionButton, 0, position, Qt.AlignCenter)
+                actionButtonsLayout.addWidget(ActionButtonContainer(actionButton), 0, position, Qt.AlignCenter)
 
             for position in xrange(actionButtonsLayoutMaxItemsPerRowCount, len(actions)):
                 actionButton = ActionButton(actions[position], self)                
                 actionButton.entered.connect(self.onActionButtonEntered)
                 actionButton.left.connect(self.onActionButtonLeft)
-                actionButtonsLayout.addWidget(actionButton, 1, position % actionButtonsLayoutMaxItemsPerRowCount, Qt.AlignCenter)
+                actionButtonsLayout.addWidget(ActionButtonContainer(actionButton), 1, position % actionButtonsLayoutMaxItemsPerRowCount, Qt.AlignCenter)
             
     @QtCore.pyqtSlot()
     def onActionButtonEntered(self):
@@ -134,6 +134,21 @@ class DesktopBackground(QtGui.QWidget):
         for actionButton in self.findChildren(ActionButton):
             actionButton.setInteractive(True)
             
+class ActionButtonContainer(QtGui.QWidget):
+    def __init__(self, actionButton, parent = None):
+        super(ActionButtonContainer, self).__init__(parent)
+        
+        mainLayout = QtGui.QHBoxLayout()
+        # Set some margins to avoid the ActionButton being visually clipped
+        # when performing the hoverAnimation.
+        mainLayout.setContentsMargins(20, 20, 20, 20)
+        mainLayout.addWidget(actionButton)
+        self.setLayout(mainLayout)
+        
+    def mousePressEvent(self, event):
+        # Send this event to the ActionButton that is contained by this widget.
+        self.layout().itemAt(0).widget().onContainerMousePressEvent(event)
+            
 class ActionButtonInfoWidget(QtGui.QWidget):
     def __init__(self, parent = None):
         super(ActionButtonInfoWidget, self).__init__(parent)
@@ -157,7 +172,7 @@ class ActionButtonInfoWidget(QtGui.QWidget):
         mainLayout.addWidget(actionDescriptionLabel)
 
         self.setLayout(mainLayout)
-    
+
     @QtCore.pyqtSlot()
     def setInfoFromAction(self, action):
         actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
@@ -273,6 +288,33 @@ class ActionButton(QtGui.QLabel):
         hoverAnimation.addAnimation(hoverAnimationPart1)
         hoverAnimation.addAnimation(hoverAnimationPart2)
         ####################
+        
+        # Selection animation #
+        selectionAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
+        selectionAnimationPart1.setObjectName('selectionAnimationPart1')
+        selectionAnimationPart1.setDuration(200)
+        selectionAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
+        
+        selectionAnimationPart2 = QtCore.QPropertyAnimation(self, 'size')
+        selectionAnimationPart2.setObjectName('selectionAnimationPart2')
+        selectionAnimationPart2.setDuration(200)
+        selectionAnimationPart2.setEasingCurve(QtCore.QEasingCurve.OutCubic)
+        
+        selectionAnimationPart3 = QtCore.QPropertyAnimation(self.graphicsEffect(), 'opacity')
+        selectionAnimationPart3.setObjectName('selectionAnimationPart3')
+        selectionAnimationPart3.setDuration(200)
+        selectionAnimationPart3.setEasingCurve(QtCore.QEasingCurve.Linear)
+        
+        selectionAnimation = QtCore.QParallelAnimationGroup(parent = self)
+        selectionAnimation.setObjectName('selectionAnimation')
+        selectionAnimation.addAnimation(selectionAnimationPart1)
+        selectionAnimation.addAnimation(selectionAnimationPart2)
+        selectionAnimation.addAnimation(selectionAnimationPart3)
+        # Not working when clicking the white area underneath the ActionButton image.
+        #selectionAnimation.finished.connect(self.resetLayout)
+        #selectionAnimation.finished.connect(self.performAction)
+        selectionAnimation.stateChanged.connect(self.updateSelectionAnimationState)
+        #######################
 
     def startHoverAnimation(self):
         hoverAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart1')
@@ -310,56 +352,40 @@ class ActionButton(QtGui.QLabel):
 
         self.move(self.originalPosition)
         
-        # Selection animation when clicking #
-        # Part 1 (instant repositioning) #
-        selectionAnimation1 = QtCore.QPropertyAnimation(self, 'pos')
-        selectionAnimation1.setObjectName('selectionAnimation1')
-        selectionAnimation1.setDuration(200)
-        selectionAnimation1.setEasingCurve(QtCore.QEasingCurve.Linear)
-        selectionAnimation1.setStartValue(self.originalPosition)
-        selectionAnimation1.setEndValue(self.originalPosition + QtCore.QPoint(-20, -20))
+        # Selection animation when clicked #
+        selectionAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'selectionAnimationPart1')
+        selectionAnimationPart2 = self.findChild(QtCore.QPropertyAnimation, 'selectionAnimationPart2')
+        selectionAnimationPart3 = self.findChild(QtCore.QPropertyAnimation, 'selectionAnimationPart3')
+        selectionAnimation = self.findChild(QtCore.QParallelAnimationGroup, 'selectionAnimation')
+        if None not in (selectionAnimationPart1, selectionAnimationPart2, 
+                        selectionAnimationPart3, selectionAnimation):
+            selectionAnimationPart1.setStartValue(self.originalPosition)
+            selectionAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(-20, -20))
 
-        # Part 2 (quick resize and opacity effect) #
-        selectionAnimation2 = QtCore.QPropertyAnimation(self, 'size')
-        selectionAnimation2.setObjectName('selectionAnimation2')
-        selectionAnimation2.setDuration(200)
-        selectionAnimation2.setEasingCurve(QtCore.QEasingCurve.OutCubic)
-        selectionAnimation2.setStartValue(self.size())
-        selectionAnimation2.setEndValue(self.size() + QtCore.QSize(40, 40))
-        
-        # Part 3 (opacity effect) #
-        opacityEffect = self.graphicsEffect()
-        selectionAnimation3 = QtCore.QPropertyAnimation(opacityEffect, 'opacity')
-        selectionAnimation3.setObjectName('selectionAnimation3')
-        selectionAnimation3.setDuration(200)
-        selectionAnimation3.setEasingCurve(QtCore.QEasingCurve.Linear)
-        selectionAnimation3.setStartValue(1.0)
-        selectionAnimation3.setEndValue(0.1)
-        
-        selectionAnimationGroup = QtCore.QParallelAnimationGroup(parent = self)
-        selectionAnimationGroup.setObjectName('selectionAnimationGroup')
-        selectionAnimationGroup.addAnimation(selectionAnimation1)
-        selectionAnimationGroup.addAnimation(selectionAnimation2)
-        selectionAnimationGroup.addAnimation(selectionAnimation3)
-        selectionAnimationGroup.finished.connect(self.resetLayout)
-        selectionAnimationGroup.finished.connect(self.performAction)
-        selectionAnimationGroup.stateChanged.connect(self.updateSelectionAnimationState)
-        #####################################
+            selectionAnimationPart2.setStartValue(self.size())
+            selectionAnimationPart2.setEndValue(self.size() + QtCore.QSize(40, 40))
 
-        self.setScaledContents(True)
-        selectionAnimationGroup.start()
+            selectionAnimationPart3.setStartValue(1.0)
+            selectionAnimationPart3.setEndValue(0.1)
+        
+            self.setScaledContents(True)
+            
+            selectionAnimation.start()
 
     def updateSelectionAnimationState(self, newState, oldState):
         self.selectionAnimationState = newState
+        
+        # Simulate finished signal (see comment in animation buildup code).
+        if oldState == QtCore.QAbstractAnimation.Running and newState == QtCore.QAbstractAnimation.Stopped:
+            self.performAction()
+            self.resetLayout()
 
-    @QtCore.pyqtSlot()
     def performAction(self):
         self.action.run(self.parentWidget())
 
     def getAction(self):
         return self.action
 
-    @QtCore.pyqtSlot()
     def resetLayout(self):
         if self.action.is_notification():
             self.stopNotificationAnimation()
@@ -367,9 +393,6 @@ class ActionButton(QtGui.QLabel):
         if self.sender() and self.originalPosition:
             self.move(self.originalPosition)
 
-        if self.originalPosition:
-            self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0))
-            self.move(self.originalPosition)
         self.setScaledContents(False)
         self.resize(self.pixmap().width(), self.pixmap().height())
         self.graphicsEffect().setOpacity(1.0)
@@ -407,7 +430,8 @@ class ActionButton(QtGui.QLabel):
 
         event.ignore()
 
-    def mousePressEvent(self, event):
+    def onContainerMousePressEvent(self, event):
+        # Second part blocks fast consecutive clicks.
         if self.interactive and self.selectionAnimationState == QtCore.QAbstractAnimation.Stopped:
             self.startSelectionAnimation()
 
