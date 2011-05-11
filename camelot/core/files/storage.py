@@ -66,7 +66,12 @@ class StoredImage( StoredFile ):
         """
         from PyQt4.QtGui import QImage
         p = self.storage.checkout( self )
-        return QImage( p )
+        image = QImage(p)
+        
+        if image.isNull():
+            return QImage(':/image_not_found.png')
+        else:
+            return image
 
     @model_function
     def checkout_thumbnail( self, width, height ):

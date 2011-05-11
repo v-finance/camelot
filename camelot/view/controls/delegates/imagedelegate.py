@@ -38,7 +38,8 @@ class ImageDelegate(FileDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        pixmap = QtGui.QPixmap(index.model().data(index, Qt.DisplayRole))
+        
+        pixmap = QtGui.QPixmap(index.data(Qt.DisplayRole))
         
         if pixmap.width() > 0 and pixmap.height() > 0:
             rect = option.rect
@@ -54,6 +55,3 @@ class ImageDelegate(FileDelegate):
             painter.setPen(pen)
             painter.drawRect(rect)
         painter.restore()
-
-
-
