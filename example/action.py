@@ -21,12 +21,11 @@ class PrintMovieListAction( PrintHtmlListAction ):
         class Admin( ObjectAdmin ):
             form_display = ['only_selected']
             # Since there is no introspection, the delegate should
-            # be specified explicitely and set to editable
+            # be specified explicitely, and set to editable
             field_attributes = {'only_selected':{'delegate':BoolDelegate,
                                                  'editable':True}}
-                                                 
+                                   
     def html(self, collection, selection, options):
-        print options.only_selected
         if options.only_selected:
             generator = selection
         else:
