@@ -29,11 +29,8 @@ class MyApplicationAdmin(ApplicationAdmin):
 # end sections
 
     def get_actions(self):
-        from camelot.admin.application_action import ApplicationActionFromGuiFunction
+        from camelot.admin.application_action import NewViewAction
+        from model import Movie
         
-        def print_test(parent):
-            print 'test'
-            
-        return [ApplicationActionFromGuiFunction('Test', 
-                                                 print_test, 
-                                                 icon=Icon('tango/22x22/mimetypes/x-office-presentation.png'))]
+        return [NewViewAction(Movie,
+                              icon = Icon('tango/22x22/mimetypes/x-office-presentation.png'))]

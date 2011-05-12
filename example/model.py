@@ -126,7 +126,7 @@ class Movie(Entity):
             'genre',
             'description',], columns = 2)),
           ('Cast', WidgetOnlyForm('cast')),
-          ('Visitors', WidgetOnlyForm('visitors_chart')),
+         # ('Visitors', WidgetOnlyForm('visitors_chart')),
           ('Tags', WidgetOnlyForm('tags'))
         ])
 
