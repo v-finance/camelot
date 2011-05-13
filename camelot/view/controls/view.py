@@ -103,6 +103,7 @@ class TabView(AbstractView):
             self.header = None
         layout.addWidget(self.header)
         self._tab_widget = QtGui.QTabWidget(self)
+        self._tab_widget.setObjectName( 'tab_widget' )
         layout.addWidget(self._tab_widget)
         self.setLayout(layout)
 
