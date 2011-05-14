@@ -170,7 +170,7 @@ class CloudLaunchHandler(ThreadedAwsHandler):
     method of the cloudlaunch.resources module.
     """
     
-    def __init__(self, cloud_record):
+    def __init__(self, cloud_record, connection_kwargs={}):
         """:param cloud_record: the cloud record describing the application
         """
         queue_name = 'cloudlaunch-%s-%s-logging'%(cloud_record.author.replace(' ','_'), cloud_record.name.replace(' ','_') )
@@ -178,4 +178,5 @@ class CloudLaunchHandler(ThreadedAwsHandler):
                                     cloud_record.public_access_key, 
                                     cloud_record.public_secret_key, 
                                     queue_name,
-                                    revision = cloud_record.revision)
+                                    revision = cloud_record.revision,
+                                    connection_kwargs = connection_kwargs)

@@ -30,6 +30,7 @@ import pkgutil
 from sqlalchemy import create_engine
 
 from PyQt4 import QtCore
+from PyQt4 import QtNetwork
 from PyQt4.QtCore import Qt
 from PyQt4.QtCore import QFileInfo
 from PyQt4.QtGui import QBoxLayout, QDialog, QFont, QGridLayout, QHBoxLayout, \
@@ -43,7 +44,7 @@ from camelot.view.controls.combobox_input_dialog import ComboBoxInputDialog
 from camelot.core.utils import ugettext as _
 from camelot.view.model_thread.signal_slot_model_thread import SignalSlotModelThread
 from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, \
-    store_profiles, get_network_proxy, check_connection, last_used_profile
+    store_profiles, get_network_proxy, last_used_profile
 
 logger = logging.getLogger('camelot.view.database_selection')
 
@@ -122,6 +123,7 @@ allow all languages
         super(ProfileWizard, self).__init__(parent)
 
         self._connection_valid = False
+        self.network_reply = None
         self.profiles = profiles
 
         self.setWindowTitle(_('Profile Wizard'))
@@ -130,17 +132,25 @@ allow all languages
         self.set_banner_subtitle(_('Please enter the database settings'))
         self.banner_widget().setStyleSheet('background-color: white;')
 
+        self.manager = QtNetwork.QNetworkAccessManager( self )
+        self.manager.finished.connect( self.update_network_status )
+        #self.manager.networkAccessibleChanged.connect( self.network_accessible_changed )
+        self.manager.proxyAuthenticationRequired.connect( self.proxy_authentication_required )
+        
         self.create_labels_and_widgets()
         self.create_buttons()
-
         self.set_tab_order()
-
         self.set_widgets_values()
-
         # note: connections come after labels and widgets are created
         # and have default values
         self.connect_widgets()
         self.connect_buttons()
+        
+        timer = QtCore.QTimer(self)
+        timer.timeout.connect( self.new_network_request )
+        timer.setInterval( 3000 )
+        timer.start()
+        self.new_network_request()
 
     def create_labels_and_widgets(self):
         self.profile_label = QLabel(_('Profile Name:'))
@@ -156,12 +166,7 @@ allow all languages
         self.proxy_port_label = QLabel(_('Port:'))
         self.proxy_username_label = QLabel(_('Proxy Username:'))
         self.proxy_password_label = QLabel(_('Proxy Password:'))
-
-        self.working_proxy_label = QLabel(_('Internet available.'))
-        self.working_proxy_label.setStyleSheet('color: green')
-
-        self.not_working_proxy_label = QLabel(_('Internet not available.'))
-        self.not_working_proxy_label.setStyleSheet('color: red')
+        self.network_status_label = QLabel()
 
         self.not_accessible_media_path_label = QLabel(_('Media location path '\
             'is not accessible.'))
@@ -237,7 +242,9 @@ allow all languages
         layout.addWidget(self.proxy_port_editor, 10, 4, 1, 1)
         layout.addWidget(self.proxy_username_editor, 11, 1, 1, 1)
         layout.addWidget(self.proxy_password_editor, 12, 1, 1, 1)
-
+        
+        layout.addWidget(self.network_status_label, 13, 1, 1, 4)
+        
         self.main_widget().setLayout(layout)
 
     def set_widgets_values(self):
@@ -258,28 +265,17 @@ allow all languages
     def connect_widgets(self):
         self.profile_editor.editTextChanged.connect(self.update_wizard_values)
 
-        #self.proxy_host_editor.textChanged.connect(lambda text: \
-        #    self.update_proxy_values())
-        #self.proxy_port_editor.textChanged.connect(lambda text: \
-        #    self.update_proxy_values())
-        #self.proxy_username_editor.textChanged.connect(lambda text: \
-        #    self.update_proxy_values())
-        #self.proxy_password_editor.textChanged.connect(lambda text: \
-        #    self.update_proxy_values())
-
     def create_buttons(self):
         self.more_button = QPushButton(_('More'))
         self.more_button.setCheckable(True)
         self.more_button.setAutoDefault(False)
         self.cancel_button = QPushButton(_('Cancel'))
-        #self.clear_button = QPushButton(_('Clear'))
         self.ok_button = QPushButton(_('OK'))
 
         layout = QHBoxLayout()
         layout.setDirection(QBoxLayout.RightToLeft)
 
         layout.addWidget(self.cancel_button)
-        #layout.addWidget(self.clear_button)
         layout.addWidget(self.ok_button)
         layout.addStretch()
         layout.addWidget(self.more_button)
@@ -330,21 +326,10 @@ allow all languages
     def connect_buttons(self):
         self.cancel_button.pressed.connect(self.reject)
         self.ok_button.pressed.connect(self.proceed)
-        #self.clear_button.pressed.connect(self.clear_fields)
-
         self.browse_button.pressed.connect(self.fill_media_location)
-
         self.more_button.toggled.connect(self.extension.setVisible)
-
         self.save_button.pressed.connect(self.save_profiles_to_file)
         self.load_button.pressed.connect(self.load_profiles_from_file)
-
-    #def clear_fields(self):
-    #    self.host_editor.clear()
-    #    self.port_editor.clear()
-    #    self.database_name_editor.clear()
-    #    self.username_editor.clear()
-    #    self.password_editor.clear()
 
     def proceed(self):
         if self.is_connection_valid():
@@ -387,6 +372,7 @@ allow all languages
         return text
 
     def update_wizard_values(self):
+        network_proxy = get_network_proxy()
         self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
         self.host_editor.setText(self.get_profile_value('host') or '127.0.0.1')
         self.port_editor.setText(self.get_profile_value('port') or '3306')
@@ -395,22 +381,42 @@ allow all languages
         self.password_editor.setText(self.get_profile_value('pass') or self.password_editor.text())
         self.media_location_editor.setText(self.get_profile_value('media_location') or self.media_location_editor.text())
         self.language_editor.set_value(self.get_profile_value('locale_language') or self.language_editor.get_value())
-
-        self.update_proxy_values()
-
-    def update_proxy_values(self):
-        network_proxy = get_network_proxy()
         self.proxy_host_editor.setText(self.get_profile_value('proxy_host') or str(network_proxy.hostName()))
         self.proxy_port_editor.setText(self.get_profile_value('proxy_port') or str(network_proxy.port()))
         self.proxy_username_editor.setText(self.get_profile_value('proxy_username') or str(network_proxy.user()))
         self.proxy_password_editor.setText(self.get_profile_value('proxy_password') or str(network_proxy.password()))
+        self.network_status_label.setText('')
+        self.network_status_label.setStyleSheet('')
+        
+    @QtCore.pyqtSlot(QtNetwork.QNetworkProxy, QtNetwork.QAuthenticator)
+    def proxy_authentication_required(self, proxy, authenticator):
+        pass
 
-        if check_connection(proxy=network_proxy):
-            self.main_widget().layout().addWidget(
-                self.working_proxy_label, 13, 1, 1, 4)
+    @QtCore.pyqtSlot(QtNetwork.QNetworkReply)
+    def update_network_status(self, reply):
+        if reply.isFinished():
+            error = reply.error()
+            if error == QtNetwork.QNetworkReply.NoError:
+                self.network_status_label.setText(_('Internet available.'))
+                self.network_status_label.setStyleSheet('color: green')
+                return
+        self.network_status_label.setText(_('Internet not available.\n%s.'%reply.errorString()))
+        self.network_status_label.setStyleSheet('color: red')
+                
+    @QtCore.pyqtSlot()
+    def new_network_request(self):
+        if self.network_reply and not self.network_reply.isFinished():
+            self.network_reply.abort()
+        if self.proxy_host_editor.text():
+            proxy = QtNetwork.QNetworkProxy( QtNetwork.QNetworkProxy.HttpProxy, 
+                                             self.proxy_host_editor.text(), 
+                                             int( str( self.proxy_port_editor.text() ) ) )#,
+                                             #self.proxy_username_editor.text(),
+                                             #self.proxy_password_editor.text() )
+            self.manager.setProxy( proxy )
         else:
-            self.main_widget().layout().addWidget(
-                self.not_working_proxy_label, 13, 1, 1, 4)
+            self.manager.setProxy( QtNetwork.QNetworkProxy() )
+        self.network_reply = self.manager.get( QtNetwork.QNetworkRequest( QtCore.QUrl('http://aws.amazon.com') ) )
 
     def get_profile_value(self, key):
         current = self.current_profile()
