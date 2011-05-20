@@ -35,7 +35,7 @@ from camelot.core.utils import xls2list
 from camelot.core.utils import ugettext as _
 from camelot.core.utils import ugettext_lazy
 
-from camelot.view.art import Pixmap
+from camelot.view.art import Pixmap, ColorScheme
 from camelot.view.model_thread import post
 from camelot.view.wizard.pages.select import SelectFilePage
 from camelot.view.wizard.pages.progress_page import ProgressPage
@@ -44,7 +44,6 @@ from camelot.view.proxy.collection_proxy import CollectionProxy
 
 import logging
 logger = logging.getLogger('camelot.view.wizard.importwizard')
-
 
 class RowData(object):
     """Class representing the data in a single row of the imported file as an
@@ -152,8 +151,6 @@ class RowDataAdminDecorator(object):
     background color pink if the data is invalid for being imported.
     """
 
-    invalid_color = QColor('Pink')
-
     def __init__(self, object_admin):
         """:param object_admin: the object_admin object that will be
         decorated"""
@@ -180,7 +177,7 @@ class RowDataAdminDecorator(object):
                     [c[0] for c in columns]
                 )
                 for attrs in dynamic_attributes:
-                    if attrs['background_color'] == self.admin.invalid_color:
+                    if attrs['background_color'] == ColorScheme.pink_1:
                         logger.debug('we have an invalid field')
                         return ['invalid field']
                 return []
@@ -209,22 +206,19 @@ class RowDataAdminDecorator(object):
         for field_name in field_names:
             attributes = self.get_field_attributes(field_name)
             string_value = attributes['getter'](obj)
+            valid = True
+            value = None
             if 'from_string' in attributes:
-                valid = True
-                value = None
                 try:
                     value = attributes['from_string'](string_value)
                 except Exception:
                     valid = False
-                if value==None and attributes['nullable']==False:
+                if not value and not attributes['nullable']:
                     valid = False
-                if valid:
-                    yield {'background_color':None}
-                else:
-                    yield {'background_color':self.invalid_color}
-            # when 'from_string' is not present
-            else:
+            if valid:
                 yield {'background_color':None}
+            else:
+                yield {'background_color':ColorScheme.pink_1}
 
     def new_field_attributes(self, i, original_field_attributes, original_field):
         from camelot.view.controls import delegates
