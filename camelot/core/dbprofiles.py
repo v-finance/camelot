@@ -176,20 +176,23 @@ class EmptyProxy():
         return ''
 
 def get_network_proxy():
-    from PyQt4 import QtNetwork
+    # turn this temporary off, because it freezes the app on winblows
+    return EmptyProxy()
 
-    proxy = None
-    query = QtNetwork.QNetworkProxyQuery(QtCore.QUrl('http://aws.amazon.com'))
-    proxies = QtNetwork.QNetworkProxyFactory.systemProxyForQuery(query)
+    #from PyQt4 import QtNetwork
 
-    if proxies:
-        logger.info('Proxy servers found: %s' % ['%s:%s' %
-            (str(proxy.hostName()),str(proxy.port())) for proxy in proxies])
-        if proxies[0].hostName():
-            proxy = proxies[0]
+    #proxy = None
+    #query = QtNetwork.QNetworkProxyQuery(QtCore.QUrl('http://aws.amazon.com'))
+    ##proxies = QtNetwork.QNetworkProxyFactory.systemProxyForQuery(query)
 
-    # we still need some empty values for the profile
-    if proxy is None:
-        return EmptyProxy()
+    #if proxies:
+        #logger.info('Proxy servers found: %s' % ['%s:%s' %
+            #(str(proxy.hostName()),str(proxy.port())) for proxy in proxies])
+        #if proxies[0].hostName():
+            #proxy = proxies[0]
 
-    return proxy
+    ## we still need some empty values for the profile
+    #if proxy is None:
+        #return EmptyProxy()
+
+    #return proxy
