@@ -33,10 +33,20 @@ def set_background_color_palette(widget, background_color):
     :param widget: a QWidget
     :param background_color: a QColor
     """
+    #
+    # WARNING : Changing this code requires extensive testing of all editors
+    # in all states on all platforms (Mac, Linux, Win XP, Win Vista, Win 7)
+    #
     if background_color not in (None, ValueLoading):
         palette = QtGui.QPalette( widget.palette() )
         for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive, QtGui.QPalette.Disabled]:
-            for y in [widget.backgroundRole(), QtGui.QPalette.Window]:
+            # 
+            # backgroundRole : role that is used to render the background, If role is QPalette.NoRole, 
+            #                  then the widget inherits its parent's background role
+            # Window : general background color
+            # Base : background color for text entry widgets
+            #
+            for y in [widget.backgroundRole(), QtGui.QPalette.Window, QtGui.QPalette.Base]:
                 palette.setColor(x, y, background_color)
         widget.setPalette( palette )
     else:

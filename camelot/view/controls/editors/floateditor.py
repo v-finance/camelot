@@ -70,7 +70,6 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
         
     def paintEvent(self, event):
         super(CustomDoubleSpinBox, self).paintEvent(event)
-        
         if self.toolTip():
             draw_tooltip_visualization(self)
 
@@ -195,5 +194,13 @@ class FloatEditor(CustomEditor):
         self.editingFinished.emit()
 
     def set_background_color(self, background_color):
+        #
+        # WARNING : Changing this code requires extensive testing of all editors
+        # in all states on all platforms (Mac, Linux, Win XP, Win Vista, Win 7)
+        #
+        # There seems to be a bug in Windows QStyle that requires the spinbox as
+        # well as its line edit to require the bgcolor to be set, was however 
+        # unable to reproduce this properly in a test case
+        #
         set_background_color_palette( self.spinBox.lineEdit(), background_color )
-
+        set_background_color_palette( self.spinBox, background_color )
