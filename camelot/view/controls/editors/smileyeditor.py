@@ -28,68 +28,59 @@ from PyQt4.QtCore import Qt
 from customeditor import CustomEditor
 from camelot.view.art import Icon
 
+default_icon_names = [
+    'face-angel',
+    'face-crying',
+    'face-devilish',
+    'face-glasses',
+    'face-grin',
+    'face-kiss',
+    'face-monkey',
+    'face-plain',
+    'face-sad',
+    'face-smile',
+    'face-smile-big',
+    'face-surprise',
+    'face-wink',
+]
+
+default_icons = list( (icon_name, Icon('tango/16x16/emotes/%s.png'%icon_name)) for icon_name in default_icon_names)
+
 class SmileyEditor(CustomEditor):
 
-    def __init__(self, parent, img='face-plain', editable=True, **kwargs):
+    def __init__(self, parent, editable=True, icons=default_icons, **kwargs):
         CustomEditor.__init__(self, parent)
         self.box = QtGui.QComboBox()
         self.box.setFrame(True)
         self.box.setEditable(False)
-        self.allSmileys = []
+        self.name_by_position = {0:None}
+        self.position_by_name = {None:0}
 
-        self.allSmileys.append('face-angel')
-        self.allSmileys.append('face-crying')
-        self.allSmileys.append('face-devilish')
-        self.allSmileys.append('face-glasses')
-        self.allSmileys.append('face-grin')
-        self.allSmileys.append('face-kiss')
-        self.allSmileys.append('face-monkey')
-        self.allSmileys.append('face-plain')
-        self.allSmileys.append('face-sad')
-        self.allSmileys.append('face-smile')
-        self.allSmileys.append('face-smile-big')
-        self.allSmileys.append('face-surprise')
-        self.allSmileys.append('face-wink')
-
-        for i, value in enumerate(self.allSmileys):
-            imgPath = 'tango/16x16/emotes/' + value + '.png'
-            icon = Icon(imgPath).getQIcon()
-
-            self.box.addItem(icon, '')
+        self.box.addItem('')
+        for i,(icon_name, icon) in enumerate(self.icons):
+            self.name_by_position[i+1] = icon_name
+            self.position_by_name[icon_name] = i+1
+            self.box.addItem(icon.getQIcon(), '')
             self.box.setFixedHeight(self.get_height())
-
-            if value == 'face-plain':
-                self.box.setCurrentIndex(i)
-
 
         self.setFocusPolicy(Qt.StrongFocus)
         layout = QtGui.QHBoxLayout(self)
         layout.setMargin(0)
         layout.setSpacing(0)
-        self.img = img
-        self.imgPath = 'tango/16x16/emotes/' + img + '.png'
-        self.Icon = Icon(self.imgPath).getQIcon()
         self.setAutoFillBackground(True)
-        #self.starCount = maximum
         if not editable:
             self.box.setEnabled(False)
         else:
             self.box.setEnabled(True)
-        self.box.currentIndexChanged.connect(self.smiley_changed)
 
+        self.box.currentIndexChanged.connect(self.smiley_changed)
         layout.addWidget(self.box)
         layout.addStretch()
         self.setLayout(layout)
 
     def get_value(self):
-        imgIndex = self.box.currentIndex()
-
-        for i, emot in enumerate(self.allSmileys):
-            if imgIndex == i:
-                imgName = emot
-
-        return CustomEditor.get_value(self) or imgName
-
+        position = self.box.currentIndex()
+        return CustomEditor.get_value(self) or self.name_py_position[position]
 
     def set_enabled(self, editable=True):
         self.box.setEnabled(editable)
@@ -98,12 +89,5 @@ class SmileyEditor(CustomEditor):
         self.editingFinished.emit()
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value) or 'face-plain'
-        self.img = value
-        #self.imgPath = 'tango/16x16/emotes/' + self.img + '.png'
-
-        for i, smiley in enumerate(self.allSmileys):
-            if smiley == self.img:
-                self.box.setCurrentIndex(i)
-
-
+        name = CustomEditor.set_value(self, value)
+        self.box.setCurrentIndex( self.position_by_name[name] )
