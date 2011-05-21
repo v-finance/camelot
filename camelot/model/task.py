@@ -40,6 +40,7 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.form_action import FormActionFromModelFunction, ProcessFilesFormAction
 from camelot.core.document import documented_entity
 from camelot.view import forms
+from camelot.view.art import Icon
 from camelot.view.controls import delegates
 import camelot.types
 
@@ -87,6 +88,11 @@ class Task( Entity, create_type_3_status_mixin('status') ):
                                            status_class.status_thru_date >= sql.functions.current_date() ),
                           from_obj = [status_type_class.table.join( status_class.table )] ).limit(1)
     
+    @property
+    def documents_icon(self):
+        if (self.number_of_documents > 0) or len(self.documents):
+            return 'document'
+    
     def __unicode__( self ):
         return self.description or ''
     
@@ -105,7 +111,7 @@ class Task( Entity, create_type_3_status_mixin('status') ):
     
     class Admin( EntityAdmin ):
         verbose_name = _('Task')
-        list_display = ['creation_date', 'due_date', 'description', 'type', 'current_status_sql', 'number_of_documents']
+        list_display = ['creation_date', 'due_date', 'description', 'type', 'current_status_sql', 'documents_icon']
         list_filter  = ['type.description', 'current_status_sql', 'categories.name']
         form_state = 'maximized'
         form_actions = [AttachFilesAction( _('Attach Documents'), flush=True )]
@@ -117,8 +123,11 @@ class Task( Entity, create_type_3_status_mixin('status') ):
                                         ( _('Status'), ['status'] ) ] )
         field_attributes = {'note':{'delegate':delegates.RichTextDelegate,
                                     'editable':lambda self:self.id},
+                            'documents_icon':{'delegate':delegates.SmileyDelegate, 
+                                              'name':_('Documents'),
+                                              'icons':[('document', Icon('tango/16x16/mimetypes/x-office-document.png'))]},
                             'type':{'delegate':delegates.ManyToOneChoicesDelegate},
-                            'description':{'minimal_column_width':50},
+                            'description':{'minimal_column_width':30},
                             'current_status_sql':{'name':'Current status',
                                                   'editable':False}}
         
@@ -224,4 +233,5 @@ class TaskDocument( Entity ):
         list_display = ['document', 'description', 'type']
         form_display = list_display + ['created_at', 'created_by', 'summary']
         field_attributes = {'type':{'delegate':delegates.ManyToOneChoicesDelegate},
+                            'document':{'minimal_column_width':30},
                             'created_by':{'default':getCurrentAuthentication}}
