@@ -92,6 +92,10 @@ def bool_from_string(s):
     if s.lower() not in ['false', 'true']: raise ParsingError()
     return eval(s.lower().capitalize())
 
+def _insert_string(original, new, pos):
+    '''Inserts new inside original at pos.'''
+    return original[:pos] + new + original[pos:]
+
 def date_from_string(s):
     s = s.strip()
     if not s:
@@ -108,11 +112,18 @@ def date_from_string(s):
         only_letters_format = u''.join([c for c in f if c in string.ascii_letters])
         only_letters_string = u''.join([c for c in s if c in (string.ascii_letters+string.digits)])
 	#
-	# if length format and string don't match, prepend the string with 0s
-	# this is to handle the case 1/01/2000
+	# if length format and string don't match, pre- or append the string with 0s
+	# this is to handle the case 1012000 > 10/01/2000 - we assume that when a user specifies a zero, he does not mean a leading zero
 	#
 	if len(only_letters_format) > len(only_letters_string):
-	    only_letters_string = '0' + only_letters_string
+	    try:
+	        if only_letters_string[1] == '0':
+	            only_letters_string = _insert_string(only_letters_string, '0', 2)
+	        else:
+                # this is to handle the case 1112000 > 01/11/2000
+	            only_letters_string = '0' + only_letters_string
+	    except IndexError:
+	        only_letters_string = '0' + only_letters_string
         dt = QDate.fromString(only_letters_string, only_letters_format)
         if not dt.isValid():
             # try parsing without the year, and take the current year by default
