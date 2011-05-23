@@ -29,6 +29,7 @@ from decimal import Decimal
 
 LOGGER = logging.getLogger('camelot.view.export.excel')
 
+from camelot.core.utils import ugettext
 from camelot.view.controls import delegates
 from camelot.view.utils import local_date_format
 
@@ -220,10 +221,17 @@ def write_data_to_excel(filename, title, headerList, data_list):
         for column, val in enumerate( data ): #for i in dictCounter:
             valueAddedInSize = 0
             if val != None:
+                # make sure translations are tried on types that might have one
+                if isinstance(val, (unicode, str)):
+                    newval = ugettext(val.capitalize())
+                    if newval == val.capitalize():
+                        newval = ugettext(val)
+                    val = newval
                 # this is to handle fields of type code
                 if isinstance(val, list):
                     val = '.'.join(val)
-                if not isinstance(val,(str,unicode,int,float,datetime.datetime,datetime.time,datetime.date,
+                if not isinstance(val,(str,unicode,int,float,
+                                       datetime.datetime,datetime.time,datetime.date,
                                        ExcelFormula.Formula, Decimal) ):
                     val = unicode(val)
                 if isinstance(val, Decimal):
