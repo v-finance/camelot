@@ -47,6 +47,9 @@ class Fifo(object):
     def __unicode__(self):
         return u','.join(unicode(e) for e in self.entities)
     
+    def __str__(self):
+        return 'Fifo cache of %s rows'%(len(self.entities))
+    
     def rows(self):
         """
         :return: a interator of the row numbers for which this fifo

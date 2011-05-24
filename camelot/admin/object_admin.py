@@ -565,6 +565,16 @@ The QWidget class to be used when a table view is needed
             return Form(self.list_display)
         return Form([])
 
+    def _apply_form_state(self, widget):
+        """apply the consequences of the form_state class attribute
+        to a widget"""
+        if hasattr(self, 'form_state'):
+            from camelot.core import constants
+            if self.form_state == constants.MAXIMIZED:
+                widget.setWindowState(QtCore.Qt.WindowMaximized)
+            if self.form_state == constants.MINIMIZED:
+                widget.setWindowState(QtCore.Qt.WindowMinimized)
+        
     @gui_function
     def create_form_view(self, title, model, index, parent=None):
         """Creates a Qt widget containing a form view, for a specific index in
@@ -579,14 +589,7 @@ The QWidget class to be used when a table view is needed
         logger.debug('creating form view for index %s' % index)
         from camelot.view.controls.formview import FormView
         form = FormView(title, self, model, index)
-
-        if hasattr(self, 'form_state'):
-            from camelot.core import constants
-            if self.form_state == constants.MAXIMIZED:
-                form.setWindowState(QtCore.Qt.WindowMaximized)
-            if self.form_state == constants.MINIMIZED:
-                form.setWindowState(QtCore.Qt.WindowMinimized)
-
+        self._apply_form_state( form )
         return form
 
     # simply copied from EntityAdmin
@@ -828,6 +831,7 @@ The QWidget class to be used when a table view is needed
                     event.ignore()
 
         form = NewForm(parent)
+        admin._apply_form_state( form )
         if hasattr(admin, 'form_size'):
             form.setMinimumSize(admin.form_size[0], admin.form_size[1])
         return form

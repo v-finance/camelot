@@ -503,10 +503,10 @@ to limit the number of search widgets.  Defaults to None.
             def openForm(index):
                 model = QueryTableProxy(
                     tableview.admin,
-                    tableview._table_model.get_query_getter(),
+                    tableview.table.model().get_query_getter(),
                     tableview.admin.get_fields,
                     max_number_of_rows=1,
-                    cache_collection_proxy=tableview._table_model
+                    cache_collection_proxy=tableview.table.model()
                 )
                 title = ''
                 formview = tableview.admin.create_form_view(

@@ -497,7 +497,6 @@ class TableView( AbstractView  ):
         self.filters_layout.setSpacing( 0 )
         self.filters_layout.setMargin( 0 )
         self.actions = None
-        self._table_model = None
         table_widget.setLayout( self.table_layout )
         filters_widget.setLayout( self.filters_layout )
         #filters_widget.hide()
@@ -545,9 +544,9 @@ class TableView( AbstractView  ):
     def copy_selected_rows( self ):
         """Copy the selected rows in this tableview"""
         logger.debug( 'delete selected rows called' )
-        if self.table and self._table_model:
+        if self.table and self.table.model():
             for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-                self._table_model.copy_row( row )
+                self.table.model().copy_row( row )
 
     def select_all_rows( self ):
         self.table.selectAll()
@@ -562,7 +561,7 @@ class TableView( AbstractView  ):
         return self.admin
 
     def get_model(self):
-        return self._table_model
+        return self.table.model()
 
     @QtCore.pyqtSlot( object )
     @gui_function
@@ -572,18 +571,18 @@ class TableView( AbstractView  ):
         logger.debug('set_admin called')
         self.admin = admin
         if self.table:
-            self._table_model.layoutChanged.disconnect( self.tableLayoutChanged )
+            self.table.model().layoutChanged.disconnect( self.tableLayoutChanged )
             self.table_layout.removeWidget(self.table)
             self.table.deleteLater()
-            self._table_model.deleteLater()
+            self.table.model().deleteLater()
         splitter = self.findChild( QtGui.QWidget, 'splitter' )
         self.table = self.AdminTableWidget( self.admin, splitter )
         self.table.setObjectName('AdminTableWidget')
-        self._table_model = self.create_table_model( admin )
-        self.table.setModel( self._table_model )
+        new_model = self.create_table_model( admin )
+        self.table.setModel( new_model )
         self.table.verticalHeader().sectionClicked.connect( self.sectionClicked )
         self.table.keyboard_selection_signal.connect(self.on_keyboard_selection_signal)
-        self._table_model.layoutChanged.connect( self.tableLayoutChanged )
+        self.table.model().layoutChanged.connect( self.tableLayoutChanged )
         self.tableLayoutChanged()
         self.table_layout.insertWidget( 1, self.table )
 
@@ -600,13 +599,14 @@ class TableView( AbstractView  ):
     @gui_function
     def tableLayoutChanged( self ):
         logger.debug('tableLayoutChanged')
+        model = self.table.model()
         if self.header:
-            self.header.setNumberOfRows( self._table_model.rowCount() )
-        item_delegate = self._table_model.getItemDelegate()
+            self.header.setNumberOfRows( model.rowCount() )
+        item_delegate = model.getItemDelegate()
         if item_delegate:
             self.table.setItemDelegate( item_delegate )
-        for i in range( self._table_model.columnCount() ):
-            self.table.setColumnWidth( i, self._table_model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
+        for i in range( model.columnCount() ):
+            self.table.setColumnWidth( i, model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
 
     def deleteSelectedRows( self ):
         """delete the selected rows in this tableview"""
@@ -656,7 +656,7 @@ class TableView( AbstractView  ):
 
     def getData( self ):
         """generator for data queried by table model"""
-        for d in self._table_model.getData():
+        for d in self.table.model().getData():
             yield d
 
     def getTitle( self ):
@@ -669,24 +669,24 @@ class TableView( AbstractView  ):
 
     def viewLast( self ):
         """selects last row"""
-        self.selectTableRow( self._table_model.rowCount() - 1 )
+        self.selectTableRow( self.table.model().rowCount() - 1 )
 
     def viewNext( self ):
         """selects next row"""
         first = self.selectedTableIndexes()[0]
-        next = ( first.row() + 1 ) % self._table_model.rowCount()
+        next = ( first.row() + 1 ) % self.table.model().rowCount()
         self.selectTableRow( next )
 
     def viewPrevious( self ):
         """selects previous row"""
         first = self.selectedTableIndexes()[0]
-        prev = ( first.row() - 1 ) % self._table_model.rowCount()
+        prev = ( first.row() - 1 ) % self.table.model().rowCount()
         self.selectTableRow( prev )
 
     @QtCore.pyqtSlot(object)
     def _set_query(self, query_getter):
-        if isinstance(self._table_model, QueryTableProxy):
-            self._table_model.setQuery(query_getter)
+        if isinstance(self.table.model(), QueryTableProxy):
+            self.table.model().setQuery(query_getter)
         self.table.clearSelection()
 
     @QtCore.pyqtSlot()
@@ -734,15 +734,16 @@ class TableView( AbstractView  ):
         """:return: a list with all the objects corresponding to the selected rows in the
         table """
         selection = []
+        model = self.table.model()
         for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-            selection.append( self._table_model._get_object(row) )
+            selection.append( model._get_object(row) )
         return selection
 
     @model_function
     def get_collection(self):
         """:return: a list with all the objects corresponding to the rows in the table
         """
-        return self._table_model.get_collection()
+        return self.table.model().get_collection()
 
     @QtCore.pyqtSlot(object)
     @gui_function
@@ -787,8 +788,8 @@ class TableView( AbstractView  ):
 
     def to_html( self ):
         """generates html of the table"""
-        if self._table_model:
-            query_getter = self._table_model.get_query_getter()
+        if self.table and self.table.model():
+            query_getter = self.table.model().get_query_getter()
             table = [[getattr( row, col[0] ) for col in self.admin.get_columns()]
                      for row in query_getter().all()]
             context = {
@@ -811,6 +812,6 @@ class TableView( AbstractView  ):
 
     @QtCore.pyqtSlot()
     def focusTable(self):
-        if self.table and self._table_model.rowCount() > 0:
+        if self.table and self.table.model().rowCount() > 0:
             self.table.setFocus()
             self.table.selectRow(0)

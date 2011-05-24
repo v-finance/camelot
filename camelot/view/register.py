@@ -86,4 +86,8 @@ def register(registered, monitored):
         _global_register_ = Register()
     _global_register_.register(registered, monitored)
 
-
+def dump_register():
+    """Method to see the currently monitored objects, for debugging
+    purposes"""
+    for k,v in _global_register_._registed_by_monitor_key.items():
+        print k,v

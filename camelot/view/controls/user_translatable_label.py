@@ -65,7 +65,10 @@ within by right clicking on it and selecting the appropriate submenu.
                                                              _('Translation'),
                                                              QtGui.QLineEdit.Normal,
                                                              unicode(self._text))
-            if ok:
+            # when the user presses ok in a blank dialog, the labels
+            # should not disappear
+            new_translation = unicode( new_translation ).strip()
+            if ok and new_translation:
                 from camelot.core.utils import set_translation
                 self.setText(new_translation)
                 set_translation(self._text._string_to_translate, new_translation)

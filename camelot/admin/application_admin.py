@@ -136,6 +136,12 @@ class ApplicationAdmin(QtCore.QObject):
             mainwindow
         )
         shortcut_versions.activated.connect( self.show_versions )
+        shortcut_dump_state = QtGui.QShortcut(
+            QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_D,
+            mainwindow
+        )
+        shortcut_dump_state.activated.connect( self.dump_state )
+
         return mainwindow
 
     @QtCore.pyqtSlot()
@@ -291,46 +297,48 @@ class ApplicationAdmin(QtCore.QObject):
                 sqlalchemy_version,
                 elixir_version
             )
+    
+    def dump_state(self):
+        """Dump the state of the application to the output, this method is
+        triggered by pressing Ctrl-Alt-D in the GUI"""
+        from camelot.view.model_thread import post
+        from camelot.view.register import dump_register
+        from camelot.view.proxy.collection_proxy import CollectionProxy
 
+        import gc
+        gc.collect()
+
+            
+        dump_register()
+        
+        def dump_session_state():
+            import collections
+            
+            from camelot.model.authentication import Person
+
+            print '======= begin session =============='
+            type_counter = collections.defaultdict(int)
+            for o in Person.query.session:
+                type_counter[type(o).__name__] += 1
+            for k,v in type_counter.items():
+                print k,v
+            print '====== end session =============='
+
+        post( dump_session_state )
+
+        for o in gc.get_objects():
+            if isinstance(o, CollectionProxy):
+                print o
+                for r in gc.get_referrers(o):
+                    print ' ', type(r).__name__
+                    for rr in gc.get_referrers(r):
+                        print  '  ', type(rr).__name__
+                
     def get_default_field_attributes(self, type_, field):
         """Returns the default field attributes"""
         from camelot.core.view.field_attributes import \
             _sqlalchemy_to_python_type_
         return _sqlalchemy_to_python_type_[type_](field)
-
-    def update_window_menu(self, mainwin):
-
-        def add_actions():
-            mainwin.windowMenu.clear()
-            mainwin.windowMenu.addAction(mainwin.closeAllAct)
-            mainwin.windowMenu.addAction(mainwin.cascadeAct)
-            mainwin.windowMenu.addAction(mainwin.separatorAct)
-
-            windows = mainwin.workspace.subWindowList()
-
-            mainwin.separatorAct.setVisible(len(windows) != 0)
-
-            for i, child in enumerate(windows):
-                title = child.windowTitle()
-                if i < 9:
-                    text = _('&%s %s' % (i+1, title))
-                else:
-                    text = _('%s %s' % (i+1, title))
-
-                action = mainwin.windowMenu.addAction(text)
-                action.setCheckable(True)
-                action.setChecked(child == mainwin.activeMdiChild())
-
-                def create_window_activator(window):
-
-                    def activate_window():
-                        mainwin.workspace.setActiveSubWindow(window)
-
-                    return activate_window
-
-                action.triggered.conect( create_window_activator( child ) )
-
-        return add_actions
 
     def backup(self, main_window):
         from camelot.view.wizard.backup import BackupWizard
