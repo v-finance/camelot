@@ -313,7 +313,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         return value
 
     @QtCore.pyqtSlot(tuple)
-    def set_instance_represenation(self, representation_and_propagate):
+    def set_instance_representation(self, representation_and_propagate):
         """Update the gui"""
         ((desc, pk), propagate) = representation_and_propagate
         self._entity_representation = desc
@@ -348,7 +348,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         def create_instance_getter(entity_instance):
             return lambda:entity_instance
 
-        def get_instance_represenation():
+        def get_instance_representation():
             """Get a representation of the instance
 
             :return: (unicode, pk) its unicode representation and its primary
@@ -361,7 +361,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
                 return ((unicode(entity), False), propagate)
             return ((None, False), propagate)
 
-        post(get_instance_represenation, self.set_instance_represenation)
+        post(get_instance_representation, self.set_instance_representation)
 
     def selectEntity(self, entity_instance_getter):
         self.setEntity(entity_instance_getter)
