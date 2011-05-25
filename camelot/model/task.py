@@ -38,9 +38,10 @@ from camelot.model.authentication import getCurrentAuthentication
 from camelot.model.type_and_status import type_3_status, create_type_3_status_mixin, get_status_type_class, get_status_class
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.form_action import FormActionFromModelFunction, ProcessFilesFormAction
+from camelot.admin.list_action import ListActionFromModelFunction
+from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.document import documented_entity
 from camelot.view import forms
-from camelot.view.art import Icon
 from camelot.view.controls import delegates
 import camelot.types
 
@@ -57,130 +58,7 @@ class AttachFilesAction(ProcessFilesFormAction):
         for file_name in file_names:
             stored_file = storage.checkin( file_name )
             TaskDocument( of = obj, document=stored_file, created_by=authentication )
-
-class Task( Entity, create_type_3_status_mixin('status') ):
-    using_options(tablename='task', order_by=['-creation_date'] )
-    creation_date    = Field( sqlalchemy.types.Date, required=True, default=datetime.date.today )
-    due_date         = Field( sqlalchemy.types.Date, required=False, default=None )
-    description      = Field( sqlalchemy.types.Unicode(255), required=True )
-    status           = OneToMany( type_3_status( 'Task', metadata, entities ), cascade='all, delete, delete-orphan' )
-    notes            = OneToMany( 'TaskNote', cascade='all, delete, delete-orphan' )
-    documents        = OneToMany( 'TaskDocument', cascade='all, delete, delete-orphan' )
-    roles            = OneToMany( 'TaskRole', cascade='all, delete, delete-orphan' )
-    described_by     = ManyToOne('TaskType', required = False, ondelete = 'restrict', onupdate = 'cascade')
-    categories = ManyToMany( 'PartyCategory',
-                             tablename='party_category_task', 
-                             remote_colname='party_category_id',
-                             local_colname='task_id')
-    
-    @ColumnProperty
-    def number_of_documents( self ):
-        return sql.select( [sql.func.count( TaskDocument.id ) ],
-                            whereclause = TaskDocument.of_id == self.id )
-
-    @ColumnProperty
-    def current_status_sql( self ):
-        status_class = get_status_class('Task')
-        status_type_class = get_status_type_class('Task')
-        return sql.select( [status_type_class.code],
-                          whereclause = sql.and_( status_class.status_for_id == self.id,
-                                           status_class.status_from_date <= sql.functions.current_date(),
-                                           status_class.status_thru_date >= sql.functions.current_date() ),
-                          from_obj = [status_type_class.table.join( status_class.table )] ).limit(1)
-    
-    @classmethod
-    def role_query(cls, columns, role_type_rank ):
-        from camelot.model.authentication import Party
-        return sql.select( [Party.full_name],
-                            sql.and_( Party.id == TaskRole.party_id,
-                                      TaskRole.task_id == columns.id,
-                                      TaskRoleType.id == TaskRole.described_by_id,
-                                      TaskRoleType.rank == role_type_rank ) ).limit(1)
-    
-    @ColumnProperty
-    def role_1(self):
-        return Task.role_query( self, 1 )
-    
-    @ColumnProperty
-    def role_2(self):
-        return Task.role_query( self, 2 )
-    
-    @property
-    def documents_icon(self):
-        if (self.number_of_documents > 0) or len(self.documents):
-            return 'document'
-    
-    def __unicode__( self ):
-        return self.description or ''
-    
-    def _get_first_note(self):
-        if self.notes:
-            return self.notes[0].note
-
-    def _set_first_note(self, note):
-        if note and self.id:
-            if self.notes:
-                self.notes[0].note = note
-            else:
-                self.notes.append( TaskNote( note=note, created_by=getCurrentAuthentication() ) )
- 
-    note = property( _get_first_note, _set_first_note )
-    
-    class Admin( EntityAdmin ):
-        verbose_name = _('Task')
-        list_display = ['creation_date', 'due_date', 'description', 'described_by', 'current_status_sql', 'role_1', 'role_2', 'documents_icon']
-        list_filter  = ['described_by.description', 'current_status_sql', 'categories.name']
-        form_state = 'maximized'
-        form_actions = [AttachFilesAction( _('Attach Documents'), flush=True )]
-        form_display = forms.TabForm( [ ( _('Task'),    ['description', 'described_by', 'current_status', 
-                                                          'creation_date', 'due_date',  'note',]),
-                                        ( _('Category'), ['categories'] ),
-                                        ( _('Roles'), ['roles'] ),
-                                        ( _('Documents'), ['documents'] ),
-                                        ( _('Status'), ['status'] ) ] )
-        field_attributes = {'note':{'delegate':delegates.RichTextDelegate,
-                                    'editable':lambda self:self.id},
-                            'documents_icon':{'delegate':delegates.SmileyDelegate, 
-                                              'name':_('Documents'),
-                                              'icons':[('document', Icon('tango/16x16/mimetypes/x-office-document.png'))]},
-                            'described_by':{'delegate':delegates.ManyToOneChoicesDelegate, 'name':_('Type')},
-                            'role_1':{'editable':False},
-                            'role_2':{'editable':False},
-                            'description':{'minimal_column_width':30},
-                            'current_status_sql':{'name':'Current status',
-                                                  'editable':False}}
-        
-        def get_field_attributes(self, field_name):
-            field_attributes = EntityAdmin.get_field_attributes(self, field_name)
-            if field_name in ['role_1', 'role_2']:
-                name_query = sql.select( [TaskRoleType.description], TaskRoleType.rank == int(field_name[-1]) ).limit(1)
-                name = TaskRoleType.query.session.scalar( name_query )
-                field_attributes['name'] = name or field_attributes['name']
-            return field_attributes
-        
-        def get_form_actions(self, obj):
-            form_actions = EntityAdmin.get_form_actions(self, obj)
-            status_type_class = get_status_type_class( 'Task' )
             
-            def status_change_action( status_type ):
-                return FormActionFromModelFunction( status_type.code,
-                                                     lambda o:o.change_status( status_type ),
-                                                     enabled = lambda o:o.current_status != status_type,
-                                                     flush = True )
-            
-            if obj:
-                current_status = obj.current_status
-            else:
-                current_status = None
-                
-            for status_type in status_type_class.query.all():
-                if status_type != current_status:
-                    form_actions.append( status_change_action( status_type ) )
-            return form_actions
-                
-TaskStatusType = get_status_type_class( 'Task' )
-Task = documented_entity()( Task )
-
 class TaskType( Entity ):
     using_options(tablename='task_type', order_by=['rank', 'description'])
     description = Field( sqlalchemy.types.Unicode(48), required=True, index=True )
@@ -260,5 +138,181 @@ class TaskDocument( Entity ):
         list_display = ['document', 'description', 'type']
         form_display = list_display + ['created_at', 'created_by', 'summary']
         field_attributes = {'type':{'delegate':delegates.ManyToOneChoicesDelegate},
-                            'document':{'minimal_column_width':30},
                             'created_by':{'default':getCurrentAuthentication}}
+
+class AssignRolesFormAction(FormActionFromModelFunction):
+    
+    class Options(object):
+        
+        def __init__(self):
+            self.role = None
+            self.assignee = None
+            
+        class Admin(ObjectAdmin):
+    
+            form_display = forms.Form(['role', 'assignee'])
+            
+            field_attributes = {'role': {'editable': True,
+                                         'required': True,
+                                         'delegate': delegates.One2ManyDelegate,
+                                         'target': TaskRole},
+                                'assignee': {'required': True,
+                                             'editable': True,
+                                             'delegate': delegates.Many2OneDelegate,
+                                             'target': camelot.model.authentication.Person}
+                                }
+                                
+class AssignRolesListAction(ListActionFromModelFunction):
+    
+    class Options(object):
+        
+        def __init__(self):
+            self.role = None
+            self.assignee = None
+            
+        class Admin(ObjectAdmin):
+    
+            form_display = forms.Form(['role', 'assignee'])
+            
+            field_attributes = {'role': {'editable': True,
+                                         'required': True,
+                                         'delegate': delegates.ManyToOneChoicesDelegate,
+                                         'target': TaskRoleType},
+                                'assignee': {'required': True,
+                                             'editable': True,
+                                             'delegate': delegates.Many2OneDelegate,
+                                             'target': camelot.model.authentication.Person}
+                                }
+                                
+    def model_run(self, collection, selection, options):
+        # Ignore if either no tasks were selected or no role or assignee was specified.
+        if not selection or not options.role or not options.assignee:
+            return
+            
+        for selectedTask in selection:
+            taskRole = TaskRole()
+            taskRole.described_by = options.role
+            taskRole.party = options.assignee
+            selectedTask.roles.append(taskRole)
+
+class Task( Entity, create_type_3_status_mixin('status') ):
+    using_options(tablename='task', order_by=['-creation_date'] )
+    creation_date    = Field( sqlalchemy.types.Date, required=True, default=datetime.date.today )
+    due_date         = Field( sqlalchemy.types.Date, required=False, default=None )
+    description      = Field( sqlalchemy.types.Unicode(255), required=True )
+    status           = OneToMany( type_3_status( 'Task', metadata, entities ), cascade='all, delete, delete-orphan' )
+    notes            = OneToMany( 'TaskNote', cascade='all, delete, delete-orphan' )
+    documents        = OneToMany( 'TaskDocument', cascade='all, delete, delete-orphan' )
+    roles            = OneToMany( 'TaskRole', cascade='all, delete, delete-orphan' )
+    described_by     = ManyToOne( 'TaskType', required = False, ondelete = 'restrict', onupdate = 'cascade')
+    categories = ManyToMany( 'PartyCategory',
+                             tablename='party_category_task', 
+                             remote_colname='party_category_id',
+                             local_colname='task_id')
+    
+    @ColumnProperty
+    def number_of_documents( self ):
+        return sql.select( [sql.func.count( TaskDocument.id ) ],
+                            whereclause = TaskDocument.of_id == self.id )
+
+    @ColumnProperty
+    def current_status_sql( self ):
+        status_class = get_status_class('Task')
+        status_type_class = get_status_type_class('Task')
+        return sql.select( [status_type_class.code],
+                          whereclause = sql.and_( status_class.status_for_id == self.id,
+                                           status_class.status_from_date <= sql.functions.current_date(),
+                                           status_class.status_thru_date >= sql.functions.current_date() ),
+                          from_obj = [status_type_class.table.join( status_class.table )] ).limit(1)
+
+    @classmethod
+    def role_query(cls, columns, role_type_rank ):
+        from camelot.model.authentication import Party
+        return sql.select( [Party.full_name],
+                            sql.and_( Party.id == TaskRole.party_id,
+                                      TaskRole.task_id == columns.id,
+                                      TaskRoleType.id == TaskRole.described_by_id,
+                                      TaskRoleType.rank == role_type_rank ) ).limit(1)
+    
+    @ColumnProperty
+    def role_1(self):
+        return Task.role_query( self, 1 )
+    
+    @ColumnProperty
+    def role_2(self):
+        return Task.role_query( self, 2 )
+    
+    @property
+    def documents_icon(self):
+        if (self.number_of_documents > 0) or len(self.documents):
+            return 'document'
+
+    def __unicode__( self ):
+        return self.description or ''
+    
+    def _get_first_note(self):
+        if self.notes:
+            return self.notes[0].note
+
+    def _set_first_note(self, note):
+        if note and self.id:
+            if self.notes:
+                self.notes[0].note = note
+            else:
+                self.notes.append( TaskNote( note=note, created_by=getCurrentAuthentication() ) )
+ 
+    note = property( _get_first_note, _set_first_note )
+    
+    class Admin( EntityAdmin ):
+        verbose_name = _('Task')
+        list_display = ['creation_date', 'due_date', 'description', 'described_by', 'current_status_sql', 'role_1', 'role_2', 'documents_icon']
+        list_filter  = ['described_by.description', 'current_status_sql', 'categories.name']
+        list_actions = [AssignRolesListAction( _('Assign role'), selection_flush = True)]
+        form_state = 'maximized'
+        form_actions = [AttachFilesAction( _('Attach Documents'), flush = True )]
+                        #AssignRolesFormAction( _('Assign Roles'), flush=True )]
+        form_display = forms.TabForm( [ ( _('Task'), ['description', 'described_by', 'current_status', 
+                                                      'creation_date', 'due_date',  'note',]),
+                                        ( _('Category'), ['categories'] ),
+                                        ( _('Roles'), ['roles'] ),
+                                        ( _('Documents'), ['documents'] ),
+                                        ( _('Status'), ['status'] ) ] )
+        field_attributes = {'note':{'delegate':delegates.RichTextDelegate,
+                                    'editable':lambda self:self.id},
+                            'described_by':{'delegate':delegates.ManyToOneChoicesDelegate, 'name':_('Type')},
+                            'role_1':{'editable':False},
+                            'role_2':{'editable':False},
+                            'description':{'minimal_column_width':50},
+                            'current_status_sql':{'name':'Current status',
+                                                  'editable':False}}
+        
+        def get_field_attributes(self, field_name):
+            field_attributes = EntityAdmin.get_field_attributes(self, field_name)
+            if field_name in ['role_1', 'role_2']:
+                name_query = sql.select( [TaskRoleType.description], TaskRoleType.rank == int(field_name[-1]) ).limit(1)
+                name = TaskRoleType.query.session.scalar( name_query )
+                field_attributes['name'] = name or field_attributes['name']
+            return field_attributes
+        
+        def get_form_actions(self, obj):
+            form_actions = EntityAdmin.get_form_actions(self, obj)
+            status_type_class = get_status_type_class( 'Task' )
+            
+            def status_change_action( status_type ):
+                return FormActionFromModelFunction( status_type.code,
+                                                     lambda o:o.change_status( status_type ),
+                                                     enabled = lambda o:o.current_status != status_type,
+                                                     flush = True )
+            
+            if obj:
+                current_status = obj.current_status
+            else:
+                current_status = None
+                
+            for status_type in status_type_class.query.all():
+                if status_type != current_status:
+                    form_actions.append( status_change_action( status_type ) )
+            return form_actions
+                        
+TaskStatusType = get_status_type_class( 'Task' )
+Task = documented_entity()( Task )
