@@ -62,8 +62,8 @@ class AbstractManyToOneEditor(object):
 
         self.selectDialog = SelectDialog(self)
         self.selectDialog.entity_selected_signal.connect( self.selectEntity )
-        #selectDialog.exec_()
-        self.selectDialog.show()
+        #self.selectDialog.show()
+        self.selectDialog.exec_()
 
     def selectEntity(self, entity_instance_getter):
         #raise Exception('Not implemented')
