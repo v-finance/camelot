@@ -67,7 +67,7 @@ class Task( Entity, create_type_3_status_mixin('status') ):
     notes            = OneToMany( 'TaskNote', cascade='all, delete, delete-orphan' )
     documents        = OneToMany( 'TaskDocument', cascade='all, delete, delete-orphan' )
     roles            = OneToMany( 'TaskRole', cascade='all, delete, delete-orphan' )
-    type             = ManyToOne('TaskType', required = False, ondelete = 'restrict', onupdate = 'cascade')
+    described_by     = ManyToOne('TaskType', required = False, ondelete = 'restrict', onupdate = 'cascade')
     categories = ManyToMany( 'PartyCategory',
                              tablename='party_category_task', 
                              remote_colname='party_category_id',
@@ -87,6 +87,23 @@ class Task( Entity, create_type_3_status_mixin('status') ):
                                            status_class.status_from_date <= sql.functions.current_date(),
                                            status_class.status_thru_date >= sql.functions.current_date() ),
                           from_obj = [status_type_class.table.join( status_class.table )] ).limit(1)
+    
+    @classmethod
+    def role_query(cls, columns, role_type_rank ):
+        from camelot.model.authentication import Party
+        return sql.select( [Party.full_name],
+                            sql.and_( Party.id == TaskRole.party_id,
+                                      TaskRole.task_id == columns.id,
+                                      TaskRoleType.id == TaskRole.described_by_id,
+                                      TaskRoleType.rank == role_type_rank ) ).limit(1)
+    
+    @ColumnProperty
+    def role_1(self):
+        return Task.role_query( self, 1 )
+    
+    @ColumnProperty
+    def role_2(self):
+        return Task.role_query( self, 2 )
     
     @property
     def documents_icon(self):
@@ -111,11 +128,11 @@ class Task( Entity, create_type_3_status_mixin('status') ):
     
     class Admin( EntityAdmin ):
         verbose_name = _('Task')
-        list_display = ['creation_date', 'due_date', 'description', 'type', 'current_status_sql', 'documents_icon']
-        list_filter  = ['type.description', 'current_status_sql', 'categories.name']
+        list_display = ['creation_date', 'due_date', 'description', 'described_by', 'current_status_sql', 'role_1', 'role_2', 'documents_icon']
+        list_filter  = ['described_by.description', 'current_status_sql', 'categories.name']
         form_state = 'maximized'
         form_actions = [AttachFilesAction( _('Attach Documents'), flush=True )]
-        form_display = forms.TabForm( [ ( _('Task'),    ['description', 'type', 'current_status', 
+        form_display = forms.TabForm( [ ( _('Task'),    ['description', 'described_by', 'current_status', 
                                                           'creation_date', 'due_date',  'note',]),
                                         ( _('Category'), ['categories'] ),
                                         ( _('Roles'), ['roles'] ),
@@ -126,10 +143,20 @@ class Task( Entity, create_type_3_status_mixin('status') ):
                             'documents_icon':{'delegate':delegates.SmileyDelegate, 
                                               'name':_('Documents'),
                                               'icons':[('document', Icon('tango/16x16/mimetypes/x-office-document.png'))]},
-                            'type':{'delegate':delegates.ManyToOneChoicesDelegate},
+                            'described_by':{'delegate':delegates.ManyToOneChoicesDelegate, 'name':_('Type')},
+                            'role_1':{'editable':False},
+                            'role_2':{'editable':False},
                             'description':{'minimal_column_width':30},
                             'current_status_sql':{'name':'Current status',
                                                   'editable':False}}
+        
+        def get_field_attributes(self, field_name):
+            field_attributes = EntityAdmin.get_field_attributes(self, field_name)
+            if field_name in ['role_1', 'role_2']:
+                name_query = sql.select( [TaskRoleType.description], TaskRoleType.rank == int(field_name[-1]) ).limit(1)
+                name = TaskRoleType.query.session.scalar( name_query )
+                field_attributes['name'] = name or field_attributes['name']
+            return field_attributes
         
         def get_form_actions(self, obj):
             form_actions = EntityAdmin.get_form_actions(self, obj)

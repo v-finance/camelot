@@ -467,13 +467,13 @@ to limit the number of search widgets.  Defaults to None.
             def sectionClicked(self, index):
                 # table model will be set by the model thread, we can't
                 # decently select if it has not been set yet
-                if self._table_model:
+                if self.table.model():
 
                     def create_constant_getter(cst):
                         return lambda:cst
 
                     def create_instance_getter():
-                        entity = self._table_model._get_object(index)
+                        entity = self.table.model()._get_object(index)
                         return create_constant_getter(entity)
 
                     post(create_instance_getter, self.emit_entity_selected)
