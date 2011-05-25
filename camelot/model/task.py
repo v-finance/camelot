@@ -34,7 +34,7 @@ from sqlalchemy import sql
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import metadata
-from camelot.model.authentication import getCurrentAuthentication
+from camelot.model.authentication import getCurrentAuthentication, PartyCategory
 from camelot.model.type_and_status import type_3_status, create_type_3_status_mixin, get_status_type_class, get_status_class
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.form_action import FormActionFromModelFunction, ProcessFilesFormAction
@@ -162,8 +162,7 @@ class AssignRolesFormAction(FormActionFromModelFunction):
                                              'target': camelot.model.authentication.Person}
                                 }
                                 
-class AssignRolesListAction(ListActionFromModelFunction):
-    
+class AssignRolesListAction(ListActionFromModelFunction): 
     class Options(object):
         
         def __init__(self):
@@ -194,6 +193,30 @@ class AssignRolesListAction(ListActionFromModelFunction):
             taskRole.described_by = options.role
             taskRole.party = options.assignee
             selectedTask.roles.append(taskRole)
+            
+class AssignCategoriesListAction(ListActionFromModelFunction):
+    class Options(object):
+        
+        def __init__(self):
+            self.category = None
+            
+        class Admin(ObjectAdmin):
+    
+            form_display = forms.Form(['category'])
+            
+            field_attributes = {'category': {'editable': True,
+                                             'required': True,
+                                             'delegate': delegates.ManyToOneChoicesDelegate,
+                                             'target': PartyCategory}
+                                }
+                                
+    def model_run(self, collection, selection, options):
+        # Ignore if either no tasks were selected or no category was specified.
+        if not selection or not options.category:
+            return
+            
+        for selectedTask in selection:
+            selectedTask.categories.append(options.category)
 
 class Task( Entity, create_type_3_status_mixin('status') ):
     using_options(tablename='task', order_by=['-creation_date'] )
@@ -267,7 +290,8 @@ class Task( Entity, create_type_3_status_mixin('status') ):
         verbose_name = _('Task')
         list_display = ['creation_date', 'due_date', 'description', 'described_by', 'current_status_sql', 'role_1', 'role_2', 'documents_icon']
         list_filter  = ['described_by.description', 'current_status_sql', 'categories.name']
-        list_actions = [AssignRolesListAction( _('Assign role'), selection_flush = True)]
+        list_actions = [AssignRolesListAction( _('Assign role'), selection_flush = True),
+                        AssignCategoriesListAction( _('Assign categories'), selection_flush = True)]
         form_state = 'maximized'
         form_actions = [AttachFilesAction( _('Attach Documents'), flush = True )]
                         #AssignRolesFormAction( _('Assign Roles'), flush=True )]
