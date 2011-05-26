@@ -75,11 +75,12 @@ def engine_from_profile():
     if profile['dialect'] == 'mysql':
         connect_args['charset'] = 'utf8'
 
-    connection = '%s://%s:%s@%s/%s' % (profile['dialect'],
-                                       profile['user'],
-                                       profile['pass'],
-                                       profile['host'],
-                                       profile['database'])
+    connection = '%s://%s:%s@%s:%s/%s' % (profile['dialect'],
+                                          profile['user'],
+                                          profile['pass'],
+                                          profile['host'],
+                                          profile['port'],
+                                          profile['database'])
     return create_engine(connection, pool_recycle=True, connect_args=connect_args)
 
 def media_root_from_profile():

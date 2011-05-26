@@ -348,20 +348,24 @@ allow all languages
         mt.start()
         progress = ProgressDialog(_('Verifying database settings'))
         mt.post(lambda:self.test_connection(info['dialect'], info['host'],
-            info['user'], info['pass'], info['database']),
+            info['port'], info['user'], info['pass'], info['database']),
             progress.finished, progress.exception)
         progress.exec_()
         return self._connection_valid
 
-    def test_connection(self, dialect, host, user, passwd, db):
+    def test_connection(self, dialect, host, port, user, passwd, db):
         self._connection_valid = False
-        connection_string = '%s://%s:%s@%s/%s' % (dialect, user, passwd, host, db)
+        connection_string = '%s://%s:%s@%s:%s/%s' % (dialect, user, passwd, host, port, db)
         engine = create_engine(connection_string, pool_recycle=True)
-        connection = engine.raw_connection()
-        cursor = connection.cursor()
-        cursor.close()
-        connection.close()
-        self._connection_valid = True
+        try:
+            connection = engine.raw_connection()
+            cursor = connection.cursor()
+            cursor.close()
+            connection.close()
+            self._connection_valid = True
+        except Exception, e:
+            self._connection_valid = False
+            raise Exception('Could not connect to database, please check host and port. Additional info: %s', e)
 
     def toggle_ok_button(self, enabled):
         self.ok_button.setEnabled(enabled)
