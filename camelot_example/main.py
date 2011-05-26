@@ -10,7 +10,7 @@ except:
 
 def main():
     from camelot.view.main import main
-    from application_admin import MyApplicationAdmin
+    from camelot_example.application_admin import MyApplicationAdmin
     main(MyApplicationAdmin())
     
 if __name__ == '__main__':

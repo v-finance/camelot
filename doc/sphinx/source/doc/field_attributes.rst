@@ -13,7 +13,7 @@ Field attributes are the most convenient way to customize
 an application, they can be specified through the
 `field_attributes` dictionary of an `Admin` class :
 
-.. literalinclude:: ../../../../example/model.py
+.. literalinclude:: ../../../../camelot_example/model.py
    :pyobject: VisitorReport
    
 Each combination of a delegate and an editor used to handle

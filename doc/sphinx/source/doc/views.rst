@@ -26,13 +26,13 @@ Movie and VisitorReport:
 
 There is a relation between Person and Movie through the director attribute:
 
-.. literalinclude:: ../../../../example/model.py
+.. literalinclude:: ../../../../camelot_example/model.py
    :start-after: begin short movie definition
    :end-before: end short movie definition
 
 And a relation between Movie and VisitorReport:
 
-.. literalinclude:: ../../../../example/model.py
+.. literalinclude:: ../../../../camelot_example/model.py
    :start-after: begin visitor report definition
    :end-before: end visitor report definition
 
@@ -46,13 +46,13 @@ for all movies of a director.
 
 We first define a plain old Python class that represents the expected results :
 
-.. literalinclude:: ../../../../example/view.py
+.. literalinclude:: ../../../../camelot_example/view.py
    :pyobject: VisitorsPerDirector
 
 Then define a function that maps the query that calculates those results 
 to the plain old Python object :
 
-.. literalinclude:: ../../../../example/view.py
+.. literalinclude:: ../../../../camelot_example/view.py
    :pyobject: setup_views
 
 Put all this in a file called view.py
@@ -64,12 +64,12 @@ Then make sure the plain old Python object is mapped to the query, just after
 the Elixir model has been setup, by modifying the setup_model function in 
 settings.py:
 
-.. literalinclude:: ../../../../example/settings.py
+.. literalinclude:: ../../../../camelot_example/settings.py
    :pyobject: setup_model
 
 And add the plain old Python object to a section in the **ApplicationAdmin**:
 
-.. literalinclude:: ../../../../example/application_admin.py
+.. literalinclude:: ../../../../camelot_example/application_admin.py
    :start-after: begin sections
    :end-before: end sections
 

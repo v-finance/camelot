@@ -35,7 +35,7 @@ setup(
     entry_points = {'console_scripts':[
                      'camelot_admin = camelot.bin.camelot_admin:main',
                      'camelot_manage = camelot.bin.camelot_manage:main',
-                     'camelot_example = example.main:main',
+                     'camelot_example = camelot_example.main:main',
                     ]
                     },
     classifiers=[

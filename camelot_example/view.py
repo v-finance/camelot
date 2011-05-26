@@ -13,7 +13,7 @@ def setup_views():
     from sqlalchemy.orm import mapper
  
     from camelot.model.authentication import Person
-    from model import Movie, VisitorReport
+    from camelot_example.model import Movie, VisitorReport
     
     s = select([Person.party_id,
                 Person.first_name.label('first_name'),

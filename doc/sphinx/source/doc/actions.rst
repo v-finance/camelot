@@ -130,7 +130,7 @@ Printing through Html documents
 A full example of a custom PrintHtmlListAction, including the use of Options
 can look like this :
 
-.. literalinclude:: ../../../../example/action.py
+.. literalinclude:: ../../../../camelot_example/action.py
 
 Actions in the model thread
 ---------------------------

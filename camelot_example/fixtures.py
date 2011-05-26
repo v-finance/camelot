@@ -4,7 +4,7 @@ def load_movie_fixtures():
 
     from camelot.model.fixture import Fixture
     from camelot.model.authentication import Person
-    from model import Movie, VisitorReport
+    from camelot_example.model import Movie, VisitorReport
     from camelot.core.files.storage import StoredImage, Storage
 
     storage = Storage(upload_to='covers')

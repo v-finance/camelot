@@ -13,8 +13,8 @@ class MyApplicationAdmin(ApplicationAdmin):
         from camelot.model.authentication import Person, Organization
         from camelot.model.i18n import Translation
         
-        from model import Movie, Tag, VisitorReport
-        from view import VisitorsPerDirector
+        from camelot_example.model import Movie, Tag, VisitorReport
+        from camelot_example.view import VisitorsPerDirector
         
         return [Section('movies',
                         Icon('tango/22x22/mimetypes/x-office-presentation.png'),
@@ -30,7 +30,7 @@ class MyApplicationAdmin(ApplicationAdmin):
 
     def get_actions(self):
         from camelot.admin.application_action import NewViewAction
-        from model import Movie
+        from camelot_example.model import Movie
         
         return [NewViewAction(Movie,
                               icon = Icon('tango/22x22/mimetypes/x-office-presentation.png'))]

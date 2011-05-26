@@ -1,6 +1,10 @@
 Trunk
 -----
 
+ * Faster opening of forms
+
+ * 'Home' tab with application actions
+
  * add legend function to chart container
  
  * Workspace maximizes when double clicking on tab bar
@@ -12,6 +16,8 @@ Trunk
  * New DateTime Editor
  
    .. image:: _static/editors/DateTimeEditor_editable.png
+
+ * More intuitive Code editor
  
  * More intuitive navigation pane
  
@@ -29,7 +35,6 @@ Trunk
    * confirm_delete reworked to delete_mode
 
    * expanded_list_search option to tune which fields show up
-
    
  * ApplicationAdmin changes
  
@@ -58,7 +63,7 @@ Release 10.11.27
  * Much more dynamic field attributes : tooltip, background_color, editable,
    choices, prefix, suffix, arrow
 
- * Document merge import wizard
+ * Document merge wizard
  
    .. image:: _static/mergedocumentwizard/wizard_widget.png
    
@@ -102,6 +107,7 @@ Release 10.07.02
      .. image:: _static/editors/NoteEditor_editable.png
      
    * LabelDelegate
+
    * TextBoolDelegate
    
  * i18n improvements

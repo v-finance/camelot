@@ -23,7 +23,7 @@ from sqlalchemy.types import Unicode, Date, Integer
 
 __metadata__ = metadata
 
-from action import PrintMovieListAction
+from camelot_example.action import PrintMovieListAction
 #
 # Some helper functions that will be used later on
 #
