@@ -213,7 +213,8 @@ class RowDataAdminDecorator(object):
                     value = attributes['from_string'](string_value)
                 except Exception:
                     valid = False
-                if not value and not attributes['nullable']:
+                # 0 is valid
+                if value != 0 and not value and not attributes['nullable']:
                     valid = False
             if valid:
                 yield {'background_color':None}
