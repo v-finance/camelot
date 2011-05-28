@@ -230,5 +230,5 @@ class FileEditor(CustomEditor):
                     self.stored_file_ready,
                     filter=self.filter,
                     remove_original=self.remove_original,
-                    filename = path,
+                    filename = filename,
                 )

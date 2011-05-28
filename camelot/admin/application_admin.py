@@ -28,7 +28,6 @@ logger = logging.getLogger('camelot.admin.application_admin')
 from PyQt4 import QtCore, QtGui
 
 from camelot.view.model_thread import model_function
-from camelot.core.utils import ugettext as _
 from camelot.core.backup import BackupMechanism
 from camelot.view import art
 from camelot.view import database_selection

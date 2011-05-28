@@ -29,7 +29,6 @@ import codecs
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4.QtGui import QColor
 
 from camelot.core.utils import xls2list
 from camelot.core.utils import ugettext as _
