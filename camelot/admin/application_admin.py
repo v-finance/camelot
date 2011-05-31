@@ -279,23 +279,35 @@ class ApplicationAdmin(QtCore.QObject):
         import sys
         import sqlalchemy
         import elixir
-        python_version = '.'.join([str(el) for el in sys.version_info])
-        qt_version = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
-        pyqt_version = QtCore.PYQT_VERSION_STR
-        sqlalchemy_version = sqlalchemy.__version__
-        elixir_version = elixir.__version__
-        
+        import cloudlaunch2
+        import chardet
+        import jinja2
+        import pdfminer
+        import xlrd
+        import xlwt
+                
         return """<em>Python version:</em> <b>%s</b><br>
-            <em>Qt version:</em> <b>%s</b><br>
-            <em>PyQt version:</em> <b>%s</b><br>
-            <em>SQLAlchemy version:</em> <b>%s</b><br>
-            <em>Elixir version:</em> <b>%s</b>""" % (
-                python_version,
-                qt_version,
-                pyqt_version,
-                sqlalchemy_version,
-                elixir_version
-            )
+                  <em>Qt:</em> <b>%s</b><br>
+                  <em>Qt:</em> <b>%s</b><br>
+                  <em>PyQt:</em> <b>%s</b><br>
+                  <em>SQLAlchemy:</em> <b>%s</b><br>
+                  <em>Elixir:</em> <b>%s</b><br>
+                  <em>Cloudlaunch:</em> <b>%s</b><br>
+                  <em>Chardet:</em> <b>%s</b><br>
+                  <em>Jinja:</em> <b>%s</b><br>
+                  <em>PDFMiner:</em> <b>%s</b><br>
+                  <em>xlrd:</em> <b>%s</b><br>
+                  <em>xlwt:</em> <b>%s</b><br>""" % ('.'.join([str(el) for el in sys.version_info]),
+                                                     float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])),
+                                                     QtCore.PYQT_VERSION_STR,
+                                                     sqlalchemy.__version__,
+                                                     elixir.__version__,
+                                                     cloudlaunch2.__version__,
+                                                     chardet.__version__,
+                                                     jinja2.__version__,
+                                                     pdfminer.__version__,
+                                                     xlrd.__VERSION__,
+                                                     xlwt.__VERSION__)
     
     def dump_state(self):
         """Dump the state of the application to the output, this method is
