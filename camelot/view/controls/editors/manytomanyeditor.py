@@ -54,6 +54,7 @@ class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
         self.add_button.setFixedHeight( self.get_height() )
         self.add_button.clicked.connect(self.createSelectView)
         
+        """
         self.delete_button = QtGui.QToolButton()
         self.delete_button.setIcon( self.delete_icon.getQIcon() )
         self.delete_button.setAutoRaise( True )
@@ -61,20 +62,20 @@ class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
         table = self.findChild(QtGui.QWidget, 'table')
         if table:
             self.delete_button.clicked.connect( table.delete_selected_rows )
-        
+        """
         self.new_button = QtGui.QToolButton()
         self.new_button.setIcon( self.new_icon.getQIcon() )
         self.new_button.setAutoRaise( True )
         self.new_button.setToolTip(_('New'))
         self.new_button.clicked.connect(self.newRow)
-        
+        """
         self.copy_button = QtGui.QToolButton()
         self.copy_button.setIcon( self.copy_icon.getQIcon() )
         self.copy_button.setAutoRaise( True )
         self.copy_button.setToolTip(_('Copy'))
         if table:
             self.copy_button.clicked.connect( table.copy_selected_rows )
-
+        """
         export_button = QtGui.QToolButton()
         export_button.setIcon( self.spreadsheet_icon.getQIcon() )
         export_button.setAutoRaise( True )
@@ -86,8 +87,8 @@ class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
         button_layout.addWidget( self.remove_button )
         button_layout.addSpacing( 8 )
         button_layout.addWidget( self.new_button )
-        button_layout.addWidget( self.copy_button )
-        button_layout.addWidget( self.delete_button )
+        #button_layout.addWidget( self.copy_button )
+        #button_layout.addWidget( self.delete_button )
         button_layout.addWidget( export_button )
         layout.addLayout( button_layout )
 
