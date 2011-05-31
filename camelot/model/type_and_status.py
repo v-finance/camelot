@@ -139,6 +139,7 @@ def type_3_status( statusable_entity, metadata, collection, verbose_entity_name 
     
             class Admin( EntityAdmin ):
                 list_display = ['code', 'description']
+                form_display = ['code', 'description']
                 verbose_name = statusable_entity + ' Status Type'
                 if verbose_entity_name is not None:
                     verbose_name = verbose_entity_name + ' Status Type'
