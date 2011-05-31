@@ -49,6 +49,11 @@ import datetime
 
 __metadata__ = metadata
 
+task_status_type_features = [(1, 'hidden', 'Zichtbaar in lijst', ((0, 'False'), (1, 'True')))]
+task_status_type_features_enumeration = [(f[0], f[1]) for f in task_status_type_features]
+task_status_type_feature_descriptions = dict((f[1], f[2]) for f in task_status_type_features)
+task_status_type_feature_values = dict((f[1], f[3]) for f in task_status_type_features)
+
 class AttachFilesAction(ProcessFilesFormAction):
     
     def process_files( self, obj, file_names, _options=None ):
@@ -367,3 +372,21 @@ class TaskAdmin( EntityAdmin ):
 Task.Admin = TaskAdmin                      
 TaskStatusType = get_status_type_class( 'Task' )
 Task = documented_entity()( Task )
+
+class TaskStatusTypeFeature(Entity):
+    using_options(tablename='task_status_type_feature')
+    task_status_type_id = ManyToOne( TaskStatusType, required = True, ondelete = 'cascade', onupdate = 'cascade', backref='available_with')
+    described_by = Field(camelot.types.Enumeration(task_status_type_features_enumeration))
+    comment = Field( sqlalchemy.types.Unicode( 256 ) )
+    value = Field( sqlalchemy.types.Integer() )
+    
+    class Admin(EntityAdmin):
+        verbose_name = _('TaskStatusTypeFeature')
+        list_display = ['described_by', 'comment']
+        form_display = list_display + ['comment']
+        field_attributes = {'described_by': {'name': _('Feature'), 
+                                             'tooltip': lambda o:task_status_type_feature_descriptions.get(o.described_by, None)},
+                            'value': {'choices': [task_status_type_feature_values.keys()]},
+                            }
+                            
+TaskStatusType.Admin.form_display.append('available_with')
