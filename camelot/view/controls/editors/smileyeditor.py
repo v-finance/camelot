@@ -57,7 +57,7 @@ class SmileyEditor(CustomEditor):
         self.position_by_name = {None:0}
 
         self.box.addItem('')
-        for i,(icon_name, icon) in enumerate(self.icons):
+        for i,(icon_name, icon) in enumerate(icons):
             self.name_by_position[i+1] = icon_name
             self.position_by_name[icon_name] = i+1
             self.box.addItem(icon.getQIcon(), '')
@@ -80,7 +80,7 @@ class SmileyEditor(CustomEditor):
 
     def get_value(self):
         position = self.box.currentIndex()
-        return CustomEditor.get_value(self) or self.name_py_position[position]
+        return CustomEditor.get_value(self) or self.name_by_position[position]
 
     def set_enabled(self, editable=True):
         self.box.setEnabled(editable)
