@@ -5,9 +5,9 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] 
 
 def setup_model():
     import camelot.model
-    import example.model
-    from example.view import setup_views
-    from example.fixtures import load_movie_fixtures
+    import camelot_example.model
+    from camelot_example.view import setup_views
+    from camelot_example.fixtures import load_movie_fixtures
     from elixir import setup_all
     from camelot.model.authentication import updateLastLogin
     setup_all(create_tables=True)
