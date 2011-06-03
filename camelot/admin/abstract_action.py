@@ -40,6 +40,13 @@ class AbstractAction(object):
     """Helper class with methods to be used by all Action classes
     """
     
+    def get_description(self):
+        """
+        :return: a string with a long description of what the action will
+        perform
+        """
+        return ''
+    
     def get_options(self):
         """Check if the object has an **Options** attribute, and if it has,
         present the user with a form to fill in the options.  Returns if the user
