@@ -122,6 +122,12 @@ def variant_to_pyobject(qvariant=None):
 #
 _translations_ = {}
 
+#
+# Encoding used when transferring translation strings from
+# python to qt
+#
+_encoding=QtCore.QCoreApplication.UnicodeUTF8
+
 def set_translation(source, value):
     """Store a tranlation in the global translation dictionary"""
     _translations_[source] = value
@@ -143,6 +149,15 @@ def load_translations():
         _translations_[source] = value
 
 
+def _qtranslate(string_to_translate):
+    """Translate a string using the QCoreApplication translation framework
+    :param string_to_translate: a unicode string
+    :return: the translated unicode string if it was possible to translage
+    """
+    return unicode(QtCore.QCoreApplication.translate('', 
+                                                     string_to_translate.encode('utf-8'), 
+                                                     encoding=_encoding))
+    
 def ugettext(string_to_translate):
     """Translate the string_to_translate to the language of the current locale.
     This is a two step process.  First the function will try to get the
@@ -152,12 +167,10 @@ def ugettext(string_to_translate):
     assert isinstance(string_to_translate, basestring)
     result = _translations_.get(string_to_translate, None)
     if not result:
-        result = unicode(QtCore.QCoreApplication.translate('',
-            QtCore.QString(string_to_translate)))
+        result = _qtranslate( string_to_translate )
         # try one more time with string_to_translate capitalized
         if result is string_to_translate:
-            result2 = unicode(QtCore.QCoreApplication.translate('',
-                QtCore.QString(string_to_translate.capitalize())))
+            result2 = _qtranslate( string_to_translate.capitalize() )
             if result2 is not string_to_translate.capitalize():
                 result = result2
 

@@ -59,7 +59,10 @@ class PlainTextDelegate(CustomDelegate):
         
         value_str = u''
         if value not in (None, ValueLoading):
-            value_str = ugettext(unicode(value))
+            if self._translate_content:
+                value_str = unicode(value)
+            else:
+                value_str = ugettext( unicode(value) )
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()
