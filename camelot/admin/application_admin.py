@@ -288,7 +288,6 @@ class ApplicationAdmin(QtCore.QObject):
                 
         return """<em>Python version:</em> <b>%s</b><br>
                   <em>Qt:</em> <b>%s</b><br>
-                  <em>Qt:</em> <b>%s</b><br>
                   <em>PyQt:</em> <b>%s</b><br>
                   <em>SQLAlchemy:</em> <b>%s</b><br>
                   <em>Elixir:</em> <b>%s</b><br>
