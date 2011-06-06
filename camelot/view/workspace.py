@@ -528,10 +528,11 @@ class DesktopWorkspace(QtGui.QWidget):
         self._tab_widget.addTab(self._background_widget,
                                 Icon('tango/16x16/actions/go-home.png').getQIcon(),
                                 _('Home'))
-        try:
+        if tab_bar.tabButton(0, QtGui.QTabBar.RightSide):
             tab_bar.tabButton(0, QtGui.QTabBar.RightSide).hide()
-        except Exception, e:
-            logger.debug(e)
+        elif tab_bar.tabButton(0, QtGui.QTabBar.LeftSide):
+            # mac for example has the close button on the left side by default
+            tab_bar.tabButton(0, QtGui.QTabBar.LeftSide).hide()
         
         self.setLayout(layout)
         self.reload_background_widget()
