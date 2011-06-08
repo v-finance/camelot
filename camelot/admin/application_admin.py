@@ -286,7 +286,7 @@ class ApplicationAdmin(QtCore.QObject):
         import xlrd
         import xlwt
                 
-        return """<em>Python version:</em> <b>%s</b><br>
+        return """<em>Python:</em> <b>%s</b><br>
                   <em>Qt:</em> <b>%s</b><br>
                   <em>PyQt:</em> <b>%s</b><br>
                   <em>SQLAlchemy:</em> <b>%s</b><br>

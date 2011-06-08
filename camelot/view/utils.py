@@ -126,7 +126,6 @@ def date_from_string(s):
 	        else:
                 # this is to handle the case 1112000 -> 01/11/2000
 	            only_letters_string = '0' + only_letters_string
-	            print 'only_letters_string added 0: ', only_letters_string
 	    except IndexError, e:
 	        logger.debug(e)
 	        only_letters_string = '0' + only_letters_string
