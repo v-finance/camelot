@@ -75,6 +75,7 @@ class Filter(object):
         @return:  (filter_name, [(option_name, query_decorator), ...)
         """
         from sqlalchemy.sql import select
+        #from sqlalchemy.sql.expression import alias
         from sqlalchemy import orm
         from elixir import session
         filter_names = []
@@ -90,7 +91,7 @@ class Filter(object):
                 admin = attributes['admin']
                 joins.append(field_name)
                 if attributes['direction'] == orm.interfaces.MANYTOONE:
-                    table = admin.entity.table.join(table)
+                    table = admin.entity.table.join( table )
                 else:
                     table = admin.entity.table
 

@@ -26,6 +26,8 @@ from functools import wraps
 
 import sqlalchemy.sql.operators
 
+LOGGER = logging.getLogger('camelot.core.sql')
+
 def like_op(column, string):
     return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)
 
@@ -67,6 +69,7 @@ def update_database_from_model():
     for table_with_diff in schema_diff.tablesWithDiff:
         missingInDatabase, _missingInModel, _diffDecl = schema_diff.colDiffs[table_with_diff.name]
         for col in missingInDatabase:
+            LOGGER.warn( 'column %s missing in table %s'%(column, table) )
             create_column(col, table_with_diff)
 
 
