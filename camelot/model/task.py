@@ -35,7 +35,7 @@ from sqlalchemy.orm import backref
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import metadata
-from camelot.model.authentication import getCurrentAuthentication, PartyCategory
+from camelot.model.authentication import getCurrentAuthentication, PartyCategory, end_of_times
 from camelot.model.type_and_status import type_3_status, create_type_3_status_mixin, get_status_type_class, get_status_class
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.form_action import FormActionFromModelFunction, ProcessFilesFormAction
@@ -50,7 +50,9 @@ import datetime
 
 __metadata__ = metadata
 
-task_status_type_features = [(None, None, '', ()), (1, 'hidden', 'Zichtbaar in lijst', ((0, 'False'), (1, 'True')))]
+task_status_type_features = [(None, None, '', ()),
+                             (1, 'hidden', 'Zichtbaar in lijst', ((0, 'False'), (1, 'True'))),
+                             (2, 'default', '', ((0, 'False'), (1, 'True')))]
 task_status_type_features_enumeration = [(f[0], f[1]) for f in task_status_type_features]
 task_status_type_feature_descriptions = dict((f[1], f[2]) for f in task_status_type_features)
 task_status_type_feature_values = dict((f[1], f[3]) for f in task_status_type_features)
@@ -318,6 +320,17 @@ class AssignStatusesListAction(ListActionFromModelFunction):
         for selectedTask in selection:
             selectedTask.change_status(options.status)
 
+TaskStatusType = get_status_type_class( 'Task' )
+Task = documented_entity()( Task )
+
+class TaskStatusTypeAdmin(TaskStatusType.Admin):
+    def get_delete_message(self, obj):
+        return _('All tasks that are related to this status will be effected by this removal.\n\n' +
+                 'Are you sure you want to remove this status?')
+                  
+TaskStatusType.Admin = TaskStatusTypeAdmin
+TaskStatusType.Admin.delete_mode = 'on_confirm'
+
 class TaskAdmin( EntityAdmin ):
     verbose_name = _('Task')
     list_display = ['creation_date', 'due_date', 'description', 'described_by', 'current_status_sql', 'role_1', 'role_2', 'documents_icon']
@@ -369,10 +382,16 @@ class TaskAdmin( EntityAdmin ):
             if status_type != current_status:
                 form_actions.append( status_change_action( status_type ) )
         return form_actions
+        
+    def flush(self, obj):
+        """Set the status of the agreement to draft if it has no status yet"""
+        if not len(obj.status):
+            obj.status.append(self.get_field_attributes('status')['target'](status_from_date=datetime.date.today(),
+                                                                            status_thru_date=end_of_times(),
+                                                                            classified_by=TaskStatusType.query.first()))
+        EntityAdmin.flush(self, obj)
   
 Task.Admin = TaskAdmin                      
-TaskStatusType = get_status_type_class( 'Task' )
-Task = documented_entity()( Task )
 
 class TaskStatusTypeFeature(Entity):
     using_options(tablename='task_status_type_feature')
