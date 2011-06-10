@@ -138,7 +138,7 @@ in the view will be send immediately to the database.  Other possibilities are :
 .. attribute:: delete_mode
 
 Indicates if the deletion of an object should be confirmed by the user, defaults
-to 'on_requrest', indicating object should be deleted when the user hits the trash
+to 'on_request', indicating object should be deleted when the user hits the trash
 button.  Other possibilities are :
 
   * 'on_confirm' : the user will be asked for confirmation before the delete
