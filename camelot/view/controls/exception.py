@@ -25,36 +25,55 @@
 """Functions and widget to represent exceptions to the user"""
 
 from camelot.core.utils import ugettext as _
+from camelot.core.exception import UserException
 
 def register_exception(logger, text, exception):
-    """Log an exception and return a tuple of strings with exception information in a 
-    user readable format, to be used when displaying an exception message box
-    :return: (exception_name, exception_traceback) """
+    """Log an exception and return a serialized form of the exception with 
+    exception information in a  user readable format, to be used when displaying 
+    an exception message box.
+    
+    that serialized form can be fed to the model_thread_exception_message_box 
+    function.
+    
+    :return: a tuple with exception information """
+    if isinstance( exception, (UserException,) ):
+        # this exception is not supposed to generate any logging
+        # or inform the developer about something
+
+        return (exception.title, 
+                exception.text, 
+                exception.icon, 
+                exception.resolution, 
+                exception.detail)
+
     logger.error( text, exc_info = exception )
+    title = _('Exception')
+    text  = _('An unexpected event occurred')
+    icon  = None
+    resolution = unicode(exception)[:1000]
     import traceback, cStringIO
     sio = cStringIO.StringIO()
     traceback.print_exc(file=sio)
-    traceback_print = sio.getvalue()
+    detail = sio.getvalue()
     sio.close()
-    return ( unicode(exception), traceback_print)
+    return (title, text, icon, resolution, detail)
     
 def model_thread_exception_message_box(exception_info, title=None, text=None):
     """Display an exception that occurred in the model thread in a message box,
   use this function as the exception argument in the model thread's post function
   to represent the exception to the user
     
-  :param exception_info: a tuple containing the exception that was thrown and the
-  traceback
+  :param exception_info: a tuple containing exception information
   """
     from PyQt4 import QtGui
-    title = title or _('Exception')
-    text  = text  or _('An unexpected event occurred')
-    exc, traceback = exception_info
+    (exc_title, exc_text, icon, resolution, detail) = exception_info
+    title = title or exc_title
+    text = text or exc_text
     msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
                                unicode(title), unicode(text))
     # chop the size of the text to prevent error dialogs larger than the screen
-    msgBox.setInformativeText(unicode(exc)[:1000])
-    msgBox.setDetailedText(traceback)
+    msgBox.setInformativeText(resolution)
+    msgBox.setDetailedText(detail)
     msgBox.exec_()
 
 

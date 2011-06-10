@@ -57,8 +57,8 @@ class Task(QtCore.QObject):
             result = self._request()
             self.finished.emit( result )
         except Exception, e:
-            name, trace = register_exception(logger, 'exception caught in model thread while executing %s'%self._name, e)
-            self.exception.emit( (name, trace) )
+            exc_info = register_exception(logger, 'exception caught in model thread while executing %s'%self._name, e)
+            self.exception.emit( exc_info )
             # the stack might contain references to QT objects which could be kept alive this way
             sys.exc_clear()
         except:
@@ -137,8 +137,8 @@ class SignalSlotModelThread( AbstractModelThread ):
         try:
             self._setup_thread()
         except Exception, e:
-            name, trace = register_exception(logger, 'Exception when setting up the SignalSlotModelThread', e)
-            self.setup_exception_signal.emit(name, trace)
+            exc_info = register_exception(logger, 'Exception when setting up the SignalSlotModelThread', e)
+            self.setup_exception_signal.emit( exc_info )
         self._thread_busy(False)
         self.logger.debug('thread setup finished')
         # Some tasks might have been posted before the signals were connected to the task handler,

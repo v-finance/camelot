@@ -45,8 +45,8 @@ class NoThreadModelThread( AbstractModelThread ):
         try:
             self._setup_thread()
         except Exception, e:
-            name, trace = register_exception(logger, 'Exception when setting up the NoThreadModelThread', e)
-            self.setup_exception_signal.emit(name, trace)
+            exc_info = register_exception(logger, 'Exception when setting up the NoThreadModelThread', e)
+            self.setup_exception_signal.emit(exc_info)
 
     def post( self, request, response = None, exception = None ):
         try:
@@ -54,13 +54,7 @@ class NoThreadModelThread( AbstractModelThread ):
             response( result )
         except Exception, e:
             if exception:
-                logger.error( 'exception caught in model thread while executing %s'%self._name, exc_info = e )
-                import traceback, cStringIO
-                sio = cStringIO.StringIO()
-                traceback.print_exc(file=sio)
-                traceback_print = sio.getvalue()
-                sio.close()
-                exception_info = (e, traceback_print)
+                exc_info = register_exception(logger, 'Exception caught in model thread while executing %s'%self._name, exc_info = e )
                 exception(exception_info)
 
     def wait_on_work(self):

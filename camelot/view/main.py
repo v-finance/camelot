@@ -44,13 +44,7 @@ class Application(QtCore.QObject):
         customized to your app"""
         super(Application, self).__init__()
         self.application_admin = application_admin
-
-    @QtCore.pyqtSlot(str, str)
-    def setup_exception(self, exc_name, exc_trace):
-        """This slot will be called when the setup of the model thread fails, eg
-        in case of database connection failure"""
-        from camelot.view.controls.exception import model_thread_exception_message_box
-        model_thread_exception_message_box( (exc_name, exc_trace) )
+        self._splash_window = None
 
     def show_splashscreen(self):
         """:return: the splash window"""
@@ -62,6 +56,7 @@ class Application(QtCore.QObject):
         # flag = QtCore.Qt.WindowStaysOnTopHint
         splash_window = QtGui.QSplashScreen(pixmap) #, flag)
         splash_window.show()
+        self._splash_window = splash_window
         return splash_window
 
     def show_splash_message(self, splash_window, message):
@@ -99,7 +94,7 @@ class Application(QtCore.QObject):
         construct_model_thread()
         construct_signal_handler()
         mt = get_model_thread()
-        mt.setup_exception_signal.connect( self.setup_exception )
+        mt.setup_exception_signal.connect( self.initialization_exception )
         mt.start()
 
     def load_translations(self, application):
@@ -137,16 +132,19 @@ class Application(QtCore.QObject):
         import sys
         sys.exit( application.exec_() )
 
+    @QtCore.pyqtSlot(object)
     def initialization_exception(self, exception_info):
         """This method is called whenever an exception occurs before the event
-        loop has been started, by default, this method pops up a message box to
-        inform the user
-        :param exception_info: a tuple (exception, traceback_print) where traceback_print
-        is a string representation of the traceback
+        loop has been started, or if the setup of the model thread failed.  By
+        default this pops up a dialog.
+        
+        :param exception_info: a serialized form of the exception
         """
         from camelot.view.controls import exception
+        if self._splash_window:
+            self._splash_window.hide()
         exception.model_thread_exception_message_box(exception_info)
-
+        
     def main(self):
         """the main function of the application, this will call all other
         functions before starting the event loop"""
@@ -221,14 +219,9 @@ class Application(QtCore.QObject):
             self.close_splashscreen(splash_window, main_window)
             return self.start_event_loop(app)
         except Exception, e:
-            logger.error( 'exception in initialization', exc_info = e )
-            import traceback, cStringIO
-            sio = cStringIO.StringIO()
-            traceback.print_exc(file=sio)
-            traceback_print = sio.getvalue()
-            sio.close()
-            exception_info = (e, traceback_print)
-            self.initialization_exception(exception_info)
+            from camelot.view.controls import exception
+            exc_info = exception.register_exception( logger, 'exception in initialization', e )
+            self.initialization_exception( exc_info )
 
 def main(application_admin,
          initialization=lambda:None,

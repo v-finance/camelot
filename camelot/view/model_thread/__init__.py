@@ -107,7 +107,7 @@ class AbstractModelThread(QtCore.QThread):
     """
 
     thread_busy_signal = QtCore.pyqtSignal(bool)
-    setup_exception_signal = QtCore.pyqtSignal(str, str)
+    setup_exception_signal = QtCore.pyqtSignal(object)
 
     def __init__(self, setup_thread=setup_model):
         """:param setup_thread: function to be called at startup of the thread
