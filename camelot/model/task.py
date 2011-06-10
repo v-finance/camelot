@@ -31,6 +31,7 @@ categories and roles.  They are presented to the user as "Todo's"
 from elixir import Entity, using_options, Field, ManyToMany, OneToMany, ManyToOne, entities, ColumnProperty
 import sqlalchemy.types
 from sqlalchemy import sql
+from sqlalchemy.orm import backref
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import metadata
@@ -49,7 +50,7 @@ import datetime
 
 __metadata__ = metadata
 
-task_status_type_features = [(1, 'hidden', 'Zichtbaar in lijst', ((0, 'False'), (1, 'True')))]
+task_status_type_features = [(None, None, '', ()), (1, 'hidden', 'Zichtbaar in lijst', ((0, 'False'), (1, 'True')))]
 task_status_type_features_enumeration = [(f[0], f[1]) for f in task_status_type_features]
 task_status_type_feature_descriptions = dict((f[1], f[2]) for f in task_status_type_features)
 task_status_type_feature_values = dict((f[1], f[3]) for f in task_status_type_features)
@@ -375,18 +376,19 @@ Task = documented_entity()( Task )
 
 class TaskStatusTypeFeature(Entity):
     using_options(tablename='task_status_type_feature')
-    task_status_type_id = ManyToOne( TaskStatusType, required = True, ondelete = 'cascade', onupdate = 'cascade', backref='available_with')
-    described_by = Field(camelot.types.Enumeration(task_status_type_features_enumeration))
+    task_status_type_id = ManyToOne( TaskStatusType, required = True, ondelete = 'cascade', onupdate = 'cascade',
+                                     backref=backref('available_with', cascade="all, delete-orphan"))
+    described_by = Field(camelot.types.Enumeration(task_status_type_features_enumeration), required = True, default = "hidden")
     comment = Field( sqlalchemy.types.Unicode( 256 ) )
     value = Field( sqlalchemy.types.Integer() )
     
     class Admin(EntityAdmin):
         verbose_name = _('TaskStatusTypeFeature')
-        list_display = ['described_by', 'comment']
+        list_display = ['described_by', 'comment', 'value']
         form_display = list_display + ['comment']
         field_attributes = {'described_by': {'name': _('Feature'), 
                                              'tooltip': lambda o:task_status_type_feature_descriptions.get(o.described_by, None)},
-                            'value': {'choices': [task_status_type_feature_values.keys()]},
+                            'value': {'choices': lambda f:task_status_type_feature_values[f.described_by]},
                             }
                             
 TaskStatusType.Admin.form_display.append('available_with')
