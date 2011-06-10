@@ -63,6 +63,10 @@ class ApplicationAdmin(QtCore.QObject):
     .. attribute:: database_profile_wizard
     
     The wizard that should can be used to create new database profiles
+    
+    .. attribute:: database_selection
+        if this is set to True, present the user with a database selection
+        wizard prior to starting the application.
     """
 
     backup_mechanism = BackupMechanism

@@ -36,7 +36,7 @@ class Application(QtCore.QObject):
     overwrite any of them to customize its behaviour.
 
     This class will create the QApplication and call its processEvents
-    method regulary will starting up the application
+    method regulary while starting up the application.
     """
 
     def __init__(self, application_admin):
@@ -84,12 +84,9 @@ class Application(QtCore.QObject):
         """Method that is called before the model thread is started, while the app is still
         running single threaded.
 
-        The default implementation does nothing and returns None. Overwrite
-        this method for custom behaviour.
-
-        An example use of this function would be to
-        present the user with a dialog to select the database to use, and to store the
-        result in some global variable that is later used in the settings.ENGINE function.
+        The default implementation verifies if the select_database attribute is set to
+        True on the ApplicationAdmin, and if this is the case, present the user with a
+        database selection wizard.
         """
         if self.application_admin.database_selection:
             from camelot.view.database_selection import select_database

@@ -173,6 +173,9 @@ class NavigationPane(QDockWidget):
     @QtCore.pyqtSlot(object)
     def set_sections(self, sections):
         logger.debug('setting navpane sections')
+        if not sections:
+            self.setMaximumWidth(0)
+            return
         toolbox = self.findChild(QtGui.QWidget, 'toolbox')
         animation = QtCore.QPropertyAnimation(toolbox, 'minimumWidth', self)
         animation.setDuration( 500 )
