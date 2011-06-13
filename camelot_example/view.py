@@ -21,9 +21,9 @@ def setup_views():
                 func.sum( VisitorReport.visitors ).label('visitors'),],
                 whereclause = and_( Person.party_id == Movie.director_party_id,
                                     Movie.id == VisitorReport.movie_id),
-                group_by = [ Person.table.c.party_id, 
-                             Person.table.c.first_name, 
-                             Person.table.c.last_name ] )
+                group_by = [ Person.party_id, 
+                             Person.first_name, 
+                             Person.last_name ] )
                             
     s=s.alias('visitors_per_director')
     
