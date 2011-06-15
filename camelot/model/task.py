@@ -171,7 +171,7 @@ class AssignRolesFormAction(FormActionFromModelFunction):
                                 }
 
 class Task( Entity, create_type_3_status_mixin('status') ):
-    using_options(tablename='task', order_by=['-creation_date'] )
+    using_options(tablename='task', order_by=['-creation_date', 'id'] )
     creation_date    = Field( sqlalchemy.types.Date, required=True, default=datetime.date.today )
     due_date         = Field( sqlalchemy.types.Date, required=False, default=None )
     description      = Field( sqlalchemy.types.Unicode(255), required=True )
