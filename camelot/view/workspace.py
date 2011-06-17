@@ -92,12 +92,14 @@ class DesktopBackground(QtGui.QWidget):
                 actionButton = ActionButton(actions[position], self)
                 actionButton.entered.connect(self.onActionButtonEntered)
                 actionButton.left.connect(self.onActionButtonLeft)
+                actionButton.setInteractive(True)
                 actionButtonsLayout.addWidget(ActionButtonContainer(actionButton), 0, position, Qt.AlignCenter)
 
             for position in xrange(actionButtonsLayoutMaxItemsPerRowCount, len(actions)):
                 actionButton = ActionButton(actions[position], self)                
                 actionButton.entered.connect(self.onActionButtonEntered)
                 actionButton.left.connect(self.onActionButtonLeft)
+                actionButton.setInteractive(True)
                 actionButtonsLayout.addWidget(ActionButtonContainer(actionButton), 1, position % actionButtonsLayoutMaxItemsPerRowCount, Qt.AlignCenter)
             
     @QtCore.pyqtSlot()
@@ -130,9 +132,9 @@ class DesktopBackground(QtGui.QWidget):
     # cannot perform mouse interaction with the action buttons until they're
     # static.
     @QtCore.pyqtSlot()
-    def makeInteractive(self):
+    def makeInteractive(self, interactive=True):
         for actionButton in self.findChildren(ActionButton):
-            actionButton.setInteractive(True)
+            actionButton.setInteractive(interactive)
             
 class ActionButtonContainer(QtGui.QWidget):
     def __init__(self, actionButton, parent = None):
@@ -315,6 +317,8 @@ class ActionButton(QtGui.QLabel):
         #selectionAnimation.finished.connect(self.performAction)
         selectionAnimation.stateChanged.connect(self.updateSelectionAnimationState)
         #######################
+        self.setInteractive(True)
+
 
     def startHoverAnimation(self):
         hoverAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart1')
