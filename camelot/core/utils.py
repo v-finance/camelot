@@ -203,7 +203,16 @@ class ugettext_lazy(object):
 
     def __unicode__(self):
         return ugettext(self._string_to_translate)
-
+    
+    def __eq__(self, other_string):
+        if isinstance(other_string, basestring):
+            return other_string == self._string_to_translate
+        if isinstance(other_string, ugettext_lazy):
+            return other_string._string_to_translate == self._string_to_translate
+        return False
+    
+    def __ne__(self, other_string):
+        return not self.__eq__( other_string )
 
 def xls2list(xf):
     import xlrd
