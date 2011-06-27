@@ -863,6 +863,11 @@ The QWidget class to be used when a table view is needed
         pass
 
     @model_function
+    def is_persistent(self, _obj):
+        """:return: True if the object has a persisted state, False otherwise"""
+        return False
+    
+    @model_function
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()

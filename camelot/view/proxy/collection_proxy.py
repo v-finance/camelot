@@ -982,9 +982,10 @@ position in the query.
                 self.remove( obj )
             else:
                 # even if the object is not deleted, it needs to be flushed to make
-                # sure it's out of the collection
+                # sure the persisted object is out of the collection as well
                 self.remove( obj )
-                self.admin.flush( obj )
+                if self.admin.is_persistent( obj ):
+                    self.admin.flush( obj )
             #
             # remove the entity from the cache, only if the delete and remove
             # took place without exception

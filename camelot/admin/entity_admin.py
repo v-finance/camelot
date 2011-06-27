@@ -587,7 +587,20 @@ to limit the number of search widgets.  Defaults to None.
         session = Session.object_session( entity_instance )
         if session:
             session.refresh( entity_instance )
-            
+       
+    @model_function
+    def is_persistent(self, obj):
+        """:return: True if the object has a persisted state, False otherwise"""
+        from sqlalchemy.orm.session import Session
+        session = Session.object_session( obj )
+        if session:
+            if obj in session.new:
+                return False
+            if obj in session.deleted:
+                return False
+            return True
+        return False
+    
     @model_function
     def get_expanded_search_fields(self):
         """

@@ -43,6 +43,7 @@ from camelot.admin.list_action import ListActionFromModelFunction
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.document import documented_entity
 from camelot.view import forms
+from camelot.view.filters import ComboBoxFilter
 from camelot.view.controls import delegates
 import camelot.types
 
@@ -197,11 +198,23 @@ class Task( Entity, create_type_3_status_mixin('status') ):
         status_class = get_status_class('Task')
         status_type_class = get_status_type_class('Task')
         return sql.select( [status_type_class.code],
-                          whereclause = sql.and_( status_class.status_for_id == self.id,
-                                           status_class.status_from_date <= sql.functions.current_date(),
-                                           status_class.status_thru_date >= sql.functions.current_date() ),
-                          from_obj = [status_type_class.table.join( status_class.table )] ).limit(1)
+                           whereclause = sql.and_( status_class.status_for_id == self.id,
+                                                   status_class.status_from_date <= sql.functions.current_date(),
+                                                   status_class.status_thru_date >= sql.functions.current_date() ),
+                           from_obj = [status_type_class.table.join( status_class.table )] ).limit(1)
 
+    @ColumnProperty
+    def hidden(self):
+        status_class = get_status_class('Task')
+        status_type_class = get_status_type_class('Task')
+        query = sql.select( [TaskStatusTypeFeature.value],
+                            whereclause = sql.and_( status_class.status_for_id == self.id,
+                                                    status_class.status_from_date <= sql.functions.current_date(),
+                                                    status_class.status_thru_date >= sql.functions.current_date(),
+                                                    TaskStatusTypeFeature.described_by == 'hidden' ),
+                            from_obj = [status_type_class.table.join( status_class.table ).join( TaskStatusTypeFeature.table )] ).limit(1)
+        return sql.func.coalesce( query.as_scalar(), 0 )
+        
     @classmethod
     def role_query(cls, columns, role_type_rank ):
         from camelot.model.authentication import Party
@@ -334,7 +347,9 @@ TaskStatusType.Admin.delete_mode = 'on_confirm'
 class TaskAdmin( EntityAdmin ):
     verbose_name = _('Task')
     list_display = ['creation_date', 'due_date', 'description', 'described_by', 'current_status_sql', 'role_1', 'role_2', 'documents_icon']
-    list_filter  = ['described_by.description', 'current_status_sql', 'categories.name']
+    list_filter  = [ComboBoxFilter('described_by.description'), 
+                    ComboBoxFilter('current_status_sql'), 
+                    ComboBoxFilter('categories.name'), 'hidden']
     list_actions = [AssignRolesListAction( _('Assign role'), selection_flush = True),
                     AssignCategoriesListAction( _('Assign categories'), selection_flush = True),
                     AssignStatusesListAction( _('Assign status'), selection_flush = True)]

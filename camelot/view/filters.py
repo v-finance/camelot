@@ -49,13 +49,19 @@ def structure_to_filter(structure):
 class Filter(object):
     """Base class for filters"""
     
-    def __init__(self, attribute):
+    class All(object):
+        pass
+    
+    def __init__(self, attribute, default=All):
         """
-        @param attribute: the attribute on which to filter, this attribute
-        may contain dots to indicate relationships that need to be followed, 
-        eg.  'person.groups.name'
+        :param attribute: the attribute on which to filter, this attribute
+            may contain dots to indicate relationships that need to be followed, 
+            eg.  'person.name'
+        :param default: the default value to filter on when the view opens,
+            defaults to showing all records.
         """
         self.attribute = attribute
+        self._default = default
         
     @gui_function
     def render(self, parent, name, options):
@@ -259,11 +265,10 @@ class ValidDateFilter(Filter):
         :param verbose_name: the displayed name of the filter
         :param default: a function returning a default date for the filter
         """
-        super(ValidDateFilter, self).__init__(None)
+        super(ValidDateFilter, self).__init__(None, default=default)
         self._from_attribute = from_attribute
         self._thru_attribute = thru_attribute
         self._verbose_name = verbose_name
-        self._default = default
         
     def render(self, parent, name, options):
         query_decorator, default = options
