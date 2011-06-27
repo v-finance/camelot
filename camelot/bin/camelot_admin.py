@@ -41,6 +41,9 @@ command_description = [
     ('makemessages', """Outputs a message file with all field names of all 
 entities.  This command requires settings.py of the project to be in the 
 PYTHONPATH"""),
+    ('apidoc', """Extract API documentation from source code, to be used
+with sphinx.
+"""),
     ('license_update', """Change the license header of a project,
 use license_update project_directory license_file"""),
     ('to_pyside', """Takes a folder with PyQt4 source code and translates it to
@@ -76,6 +79,68 @@ For the management of deployed Camelot applications, see camelot_manage
 
 """
         return OptionParser.format_help(self) + ''.join(command_help)
+    
+def apidoc(source, destination):
+
+    import os
+   
+    def is_module_directory( dirname ):
+        """:return: True if the directory is a python module, False otherwise"""
+        if not os.path.isdir( dirname ):
+            return False
+        if os.path.basename( dirname ).startswith( '.' ):
+            return False
+        return os.path.exists( os.path.join( dirname, '__init__.py' ) ) 
+
+    def document_directory(_arg, dirname, names):
+        """create .rst files for a directory of source files"""
+        print dirname, is_module_directory( dirname )
+        if is_module_directory( dirname ):
+            targetdir = os.path.join( destination, dirname[len(source)+1:] )
+            if not os.path.exists( targetdir ):
+                os.makedirs( targetdir )
+            srcs = [n for n in names if n.endswith('.py') and not n.startswith('__')]
+            dirs = [n for n in names if is_module_directory( os.path.join( dirname, n ) )]
+            title = os.path.basename( dirname )
+            if dirname == source:
+                title = '%s API'%(dirname.capitalize())
+            ifn = os.path.join( targetdir, 'index.rst' )
+            module_name = dirname.replace('/', '.')
+            with open( ifn, 'w' ) as index:
+               lines = [ '=' * len(title),
+                         title,
+                         '=' * len(title),
+                         '',
+                         '',
+                         '.. automodule:: %s'%module_name,
+                         '   :members:'
+               ]
+               toclines = []
+               for sn in srcs:
+                  sname = sn[:-3]
+                  sfn = sname + '.rst'
+                  toclines.append( '   %s'%sfn )
+                  with open( os.path.join( targetdir, sfn ), 'w' ) as sf:
+                      slines  = ['-' * len(sname),
+                                 sname,
+                                 '-' * len(sname),
+                                 '',
+                                 '', 
+                                 '.. automodule:: %s'%(module_name + '.' + sname),
+                                 '   :members:', ]
+                      sf.writelines( '%s\n'%line for line in slines )
+               toclines.extend( '   %s/index.rst'%dn for dn in dirs )
+               if toclines:
+                   toclines.sort()
+                   lines.extend( ['',
+                                  '.. toctree::',
+                                  ''] )
+                   lines.extend( toclines )
+               index.writelines( '%s\n'%line for line in lines )
+                    
+            print dirname, destination, targetdir
+        
+    os.path.walk(source, document_directory, None)
     
 def license_update(project, license_file):
 

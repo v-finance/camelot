@@ -23,6 +23,7 @@ Contents:
 
    tutorial/index.rst
    doc/index.rst
+   api/index.rst
    advanced/index.rst
 
 Support
