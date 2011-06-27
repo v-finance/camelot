@@ -25,8 +25,6 @@
 """Camelot specific subclasses of Exception
 """
 
-from camelot.core.utils import ugettext_lazy as _
-
 class UserException(Exception):
     """
     Raise this exception to inform the user he did something wrong, without
