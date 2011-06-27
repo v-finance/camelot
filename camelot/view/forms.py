@@ -32,8 +32,13 @@ logger = logging.getLogger( 'camelot.view.forms' )
 
 from camelot.view.model_thread import gui_function
 
-class Form( object ):
-    """Base Form class to put fields on a form.  A form can be converted to a
+class Form( list ):
+    """Base Form class to put fields on a form.  The base class of a form is
+a list.  So the form itself is nothing more than a list of field names or
+sub-forms.  A form can thus be manipulated using the list's method such as
+append or insert.
+    
+A form can be converted to a
 QT widget by calling its render method.  The base form uses the QFormLayout
 to render a form::
 
@@ -45,7 +50,7 @@ to render a form::
 
     def __init__( self, content, scrollbars = False, columns = 1  ):
         """
-        :param content: a list with the field names and forms to render
+        :param content: an iterable with the field names and forms to render
         :param columns: the number of columns in which to order the fields.
 
         eg : with 2 columns, the fields ['street', 'city', 'country'] will
@@ -58,8 +63,7 @@ to render a form::
         +-------------+--------------+
 
         """
-        assert isinstance( content, list )
-        self._content = content
+        super(Form, self).__init__( content )
         self._scrollbars = scrollbars
         self._columns = columns
 
@@ -68,7 +72,7 @@ to render a form::
         return [field for field in self._get_fields_from_form()]
 
     def _get_fields_from_form( self ):
-        for field in self._content:
+        for field in self:
             if isinstance( field, Form ):
                 for nested_field in  field._get_fields_from_form():
                     yield nested_field
@@ -84,14 +88,11 @@ to render a form::
         :param original_field: the name of the field to be removed
         :return: True if the field was found and removed
         """
-        for c in self._content:
+        for c in self:
             if isinstance( c, Form ):
                 c.remove_field( original_field )
-            if original_field in self._content:
-                self._content.remove( original_field )
-                return True
-            if original_field in self._fields:
-                self._fields.remove( original_field )
+            if original_field in self:
+                self.remove( original_field )
                 return True
         return False
 
@@ -103,19 +104,19 @@ to render a form::
         :param new_field : the name of the new field
         :return: True if the original field was found and replaced.
         """
-        for i, c in enumerate( self._content ):
+        for i, c in enumerate( self ):
             if isinstance( c, Form ):
                 c.replace_field( original_field, new_field )
             elif c == original_field:
-                self._content[i] = new_field
+                self[i] = new_field
                 return True
         return False
 
     def add_field( self, new_field ):
-        self._content.append( new_field )
+        self.append( new_field )
 
     def __unicode__( self ):
-        return 'Form(%s)' % ( u','.join( unicode( c ) for c in self._content ) )
+        return 'Form(%s)' % ( u','.join( unicode( c ) for c in self ) )
 
     def render_ooxml( self, obj, delegates ):
         """Generator for lines of text in Office Open XML representing this form, using tables
@@ -140,7 +141,7 @@ to render a form::
         yield '      <w:gridCol w:w="4811"/>'
         yield '    </w:tblGrid>'
         yield '    <w:tr>'
-        for index, field in enumerate(self._content):
+        for index, field in enumerate(self):
             if index % self._columns == 0 and index != 0:
                 yield '    </w:tr><w:tr>'
             yield '<w:tc>'
@@ -179,7 +180,7 @@ to render a form::
         form_layout = QtGui.QGridLayout()
 
         # where 1 column in the form is a label and a field, so two columns in the grid
-        columns = min(self._columns, len(self._content))
+        columns = min(self._columns, len(self))
         # make sure all columns have the same width
         if columns > 1:
             for i in range(columns*2):
@@ -212,7 +213,7 @@ to render a form::
         c = cursor()
 
         has_vertical_expanding_row = False
-        for field in self._content:
+        for field in self:
             if isinstance( field, Form ):
                 has_vertical_expanding_row = True
                 c.next_empty_row()
@@ -245,7 +246,7 @@ to render a form::
             else:
                 logger.warning('ProgrammingError : widgets should contain a widget for field %s'%unicode(field))
 
-        if self._content and form_layout.count():
+        if len(self) and form_layout.count():
 #            # get last item in the layout
 #            last_item = form_layout.itemAt( form_layout.count() - 1 )
 #
@@ -354,7 +355,7 @@ class TabForm( Form ):
         """
         tab_form = structure_to_form( tab_form )
         self.tabs.insert( index, ( tab_label, tab_form ) )
-        self._content.extend( [tab_form] )
+        self.extend( [tab_form] )
 
     def add_tab( self, tab_label, tab_form ):
         """Add a tab to the form
@@ -364,7 +365,7 @@ class TabForm( Form ):
         """
         tab_form = structure_to_form( tab_form )
         self.tabs.append( ( tab_label, tab_form ) )
-        self._content.extend( [tab_form] )
+        self.extend( [tab_form] )
 
     def get_tab( self, tab_label ):
         """Get the tab form of associated with a tab_label, use this function to
@@ -538,14 +539,14 @@ class GridForm( Form ):
         """:param row: the list of fields that should come in the additional row
         use this method to modify inherited grid forms"""
         assert isinstance( row, list )
-        self._content.extend(row)
+        self.extend(row)
         self._grid.append(row)
 
     def append_column(self, column):
         """:param column: the list of fields that should come in the additional column
         use this method to modify inherited grid forms"""
         assert isinstance( column, list )
-        self._content.extend(column)
+        self.extend(column)
         for row, additional_field in zip(self._grid, column):
             row.append(additional_field)
 
