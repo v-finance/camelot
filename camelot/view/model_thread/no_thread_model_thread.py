@@ -54,7 +54,7 @@ class NoThreadModelThread( AbstractModelThread ):
             response( result )
         except Exception, e:
             if exception:
-                exception_info_info = register_exception(logger, 'Exception caught in model thread while executing %s'%self._name, exc_info = e )
+                exception_info = register_exception(logger, 'Exception caught in model thread while executing %s'%self._name, exc_info = e )
                 exception(exception_info)
 
     def wait_on_work(self):
