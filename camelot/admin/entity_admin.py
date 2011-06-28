@@ -58,18 +58,18 @@ field name should be followed by a field name of the related entity ::
 
 .. attribute:: copy_deep
 
-A dictionary of fields that will be deep copied when the user presses the copy
-button.  This is usefull for OneToMany fields.  The key in the dictionary should
-be the name of the field, and the value is a new dictionary that can contain other
-fields that need to be copied::
+   A dictionary of fields that will be deep copied when the user presses the copy
+   button.  This is usefull for OneToMany fields.  The key in the dictionary should
+   be the name of the field, and the value is a new dictionary that can contain other
+   fields that need to be copied::
 
-    copy_deep = {'addresses':{}}
+       copy_deep = {'addresses':{}}
 
 .. attribute:: copy_exclude
 
-A list of fields that should not be copied when the user presses the copy button::
+   A list of fields that should not be copied when the user presses the copy button::
 
-    copy_exclude = ['name']
+       copy_exclude = ['name']
 
 The fields that form the primary key of the object will be excluded by default.
 
@@ -612,22 +612,56 @@ to limit the number of search widgets.  Defaults to None.
             field_list = self.expanded_list_search
         return [(field, self.get_field_attributes(field))
                 for field in field_list]
-    
+        
     @model_function
-    def copy(self, entity_instance):
-        """Duplicate this entity instance"""
+    def copy(self, obj, new_obj=None):
+        """Duplicate an object.  If no new object is given to copy to, a new
+        one will be created.  This function will be called every time the
+        user presses a copy button.
+        
+        :param obj: the object to be copied from
+        :param new_obj: the object to be copied to, defaults to None
+        :return: the new object
+        
+        This function takes into account the deep_copy and the copy_exclude
+        attributes.  It tries to recreate relations with a minimum of side
+        effects.
+        """
         from sqlalchemy import orm
-        new_entity_instance = entity_instance.__class__()
-        new_entity_instance.from_dict( entity_instance.to_dict(deep=self.copy_deep, exclude=[c.name for c in self.mapper.primary_key]+self.copy_exclude) )
+        if not new_obj:
+            new_obj = obj.__class__()
+        #
+        # serialize the object to be copied
+        #
+        # @todo: this code depends on elixir
+        serialized = obj.to_dict(deep=self.copy_deep, exclude=[c.name for c in self.mapper.primary_key]+self.copy_exclude)
+        #
+        # make sure we don't move duplicated OneToMany relations from the
+        # old object to the new, but instead duplicate them, by manipulating
+        # the serialized structure
+        #
+        # @todo: this should be recursive
+        for property in self.mapper.iterate_properties:
+            if isinstance(property, orm.properties.PropertyLoader):
+                if property.direction == orm.interfaces.ONETOMANY:
+                    target = property._get_target().class_
+                    for relation in serialized.get(property.key, []):
+                        relation_mapper = orm.class_mapper(target)
+                        for primary_key_field in relation_mapper.primary_key:
+                            relation[primary_key_field.name] = None
+        #from pprint import pprint
+        #pprint( serialized )
+        #
+        # deserialize into the new object
+        #
+        new_obj.from_dict( serialized )
         #
         # recreate the ManyToOne relations
         #
         for property in self.mapper.iterate_properties:
             if isinstance(property, orm.properties.PropertyLoader):
                 if property.direction == orm.interfaces.MANYTOONE:
-                    setattr( new_entity_instance, 
+                    setattr( new_obj, 
                              property.key,
-                             getattr( entity_instance, property.key ) )
-        return new_entity_instance
-
-
+                             getattr( obj, property.key ) )
+        return new_obj
