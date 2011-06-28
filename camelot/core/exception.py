@@ -33,7 +33,7 @@ class UserException(Exception):
     a non-event for the developer.
     """
     
-    def __init__(self, title, text, icon=None, resolution=None, detail=None):
+    def __init__(self, text, title=_('Could not proceed'), icon=None, resolution=None, detail=None):
         """
         :param title: the title of the dialog box that informs the user
         :param text: the top text in the dialog

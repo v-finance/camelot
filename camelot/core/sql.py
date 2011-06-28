@@ -26,6 +26,8 @@ from functools import wraps
 
 import sqlalchemy.sql.operators
 
+from camelot.core.exception import UserException
+
 LOGGER = logging.getLogger('camelot.core.sql')
 
 def like_op(column, string):
@@ -44,8 +46,9 @@ def transaction(original_function):
             result = original_function(cls, *args, **kwargs)
             session.commit()
         except Exception, e:
-            logger.error('Unhandled exception, rolling back transaction', 
-                         exc_info=e)
+            if not isinstance( e, (UserException,) ):
+                logger.error('Unhandled exception, rolling back transaction', 
+                             exc_info=e)
             session.rollback()
             raise e
         return result
@@ -71,6 +74,3 @@ def update_database_from_model():
         for column in missingInDatabase:
             LOGGER.warn( 'column %s missing in table %s'%(column, table_with_diff.name) )
             create_column(column, table_with_diff)
-
-
-
