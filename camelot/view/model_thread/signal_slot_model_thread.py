@@ -41,10 +41,11 @@ class Task(QtCore.QObject):
     finished = QtCore.pyqtSignal(object)
     exception = QtCore.pyqtSignal(object)
 
-    def __init__(self, request, name=''):
+    def __init__(self, request, name='', args=()):
         QtCore.QObject.__init__(self)
         self._request = request
         self._name = name
+        self._args = args
 
     def clear(self):
         """clear this tasks references to other objects"""
@@ -54,7 +55,7 @@ class Task(QtCore.QObject):
     def execute(self):
         logger.debug('executing %s' % (self._name))
         try:
-            result = self._request()
+            result = self._request( *self._args )
             self.finished.emit( result )
         except Exception, e:
             exc_info = register_exception(logger, 'exception caught in model thread while executing %s'%self._name, e)
@@ -153,7 +154,7 @@ class SignalSlotModelThread( AbstractModelThread ):
         self.thread_busy_signal.emit( busy_state )
 
     @synchronized
-    def post( self, request, response = None, exception = None ):
+    def post( self, request, response = None, exception = None, args = () ):
         if not self._connected and self._task_handler:
             # creating this connection in the model thread throws QT exceptions
             self.task_available.connect( self._task_handler.handle_task, QtCore.Qt.QueuedConnection )
@@ -163,7 +164,7 @@ class SignalSlotModelThread( AbstractModelThread ):
             name = '%s -> %s.%s'%(request.__name__, response.im_self.__class__.__name__, response.__name__)
         else:
             name = request.__name__
-        task = Task(request, name=name)
+        task = Task(request, name=name, args=args)
         # QObject::connect is a thread safe function
         if response:
             assert response.im_self != None

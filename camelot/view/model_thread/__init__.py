@@ -133,7 +133,7 @@ class AbstractModelThread(QtCore.QThread):
     all work is done"""
         pass
 
-    def post(self, request, response=None, exception=None):
+    def post(self, request, response=None, exception=None, args=()):
         """Post a request to the model thread, request should be a function
         that takes no arguments. The request function will be called within the
         model thread. When the request is finished, on first occasion, the
@@ -144,7 +144,9 @@ class AbstractModelThread(QtCore.QThread):
         :param response: a slot that will be called with the result of the
         request function
         :param exception: a slot that will be called in case request throws an
-        exception"""
+        exception
+        :param args: arguments with which the request function will be called        
+        """
         raise NotImplemented
 
     def busy(self):
@@ -172,9 +174,9 @@ def get_model_thread():
     return _model_thread_[0]
 
 
-def post(request, response=None, exception=None):
+def post(request, response=None, exception=None, args=()):
     """Post a request and a response to the default model thread"""
     mt = get_model_thread()
-    mt.post(request, response, exception)
+    mt.post(request, response, exception, args)
 
 

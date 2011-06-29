@@ -48,9 +48,9 @@ class NoThreadModelThread( AbstractModelThread ):
             exc_info = register_exception(logger, 'Exception when setting up the NoThreadModelThread', e)
             self.setup_exception_signal.emit(exc_info)
 
-    def post( self, request, response = None, exception = None ):
+    def post( self, request, response = None, exception = None, args=() ):
         try:
-            result = request()
+            result = request(*args)
             response( result )
         except Exception, e:
             if exception:

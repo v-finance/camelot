@@ -853,7 +853,7 @@ The QWidget class to be used when a table view is needed
 
     @model_function
     def refresh(self, entity_instance):
-        """Undu the pending changes to the backend and restore the original
+        """Undo the pending changes to the backend and restore the original
         state"""
         pass
 

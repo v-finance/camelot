@@ -340,16 +340,18 @@ class FormView(AbstractView):
         """Refresh the data in the current view"""
         self.model.refresh()
     
+    def _get_title( self, index ):
+        obj = self.model._get_object( index )
+        return u'%s %s' % (
+            self.title_prefix,
+            self.admin.get_verbose_identifier(obj)
+        )
+            
     def update_title(self):
-
-        def get_title():
-            obj = self.getEntity()
-            return u'%s %s' % (
-                self.title_prefix,
-                self.admin.get_verbose_identifier(obj)
-            )
-
-        post(get_title, self.change_title)
+        form = self.findChild(QtGui.QWidget, 'form' )
+        if form:
+            current_index = form.get_index()
+            post( self._get_title, self.change_title, args=(current_index,) )
 
     def getEntity(self):
         form = self.findChild(QtGui.QWidget, 'form' )
