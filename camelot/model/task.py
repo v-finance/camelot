@@ -51,6 +51,9 @@ import datetime
 
 __metadata__ = metadata
 
+def task_has_id(task):
+    return task.id
+
 task_status_type_features = [(None, None, '', ()),
                              (1, 'hidden', 'Zichtbaar in lijst', ((0, 'False'), (1, 'True'))),
                              (2, 'default', '', ((0, 'False'), (1, 'True')))]
@@ -354,7 +357,8 @@ class TaskAdmin( EntityAdmin ):
                     AssignCategoriesListAction( _('Assign categories'), selection_flush = True),
                     AssignStatusesListAction( _('Assign status'), selection_flush = True)]
     form_state = 'maximized'
-    form_actions = [AttachFilesAction( _('Attach Documents'), flush = True )]
+    form_actions = [AttachFilesAction( _('Attach Documents'),
+                                       enabled = task_has_id, flush = True)]
     form_display = forms.TabForm( [ ( _('Task'), ['description', 'described_by', 'current_status', 
                                                   'creation_date', 'due_date',  'note',]),
                                     ( _('Category'), ['categories'] ),
@@ -377,7 +381,7 @@ class TaskAdmin( EntityAdmin ):
             name = TaskRoleType.query.session.scalar( name_query )
             field_attributes['name'] = name or field_attributes['name']
         return field_attributes
-    
+    """
     def get_form_actions(self, obj):
         form_actions = EntityAdmin.get_form_actions(self, obj)
         status_type_class = get_status_type_class( 'Task' )
@@ -397,6 +401,7 @@ class TaskAdmin( EntityAdmin ):
             if status_type != current_status:
                 form_actions.append( status_change_action( status_type ) )
         return form_actions
+  """
         
     def flush(self, obj):
         """Set the status of the agreement to draft if it has no status yet"""
