@@ -185,8 +185,8 @@ class ProcessFilesFormAction(FormActionFromModelFunction):
     
     overwrite the process_files method to have the action do something.
     """
-    def __init__(self, name, icon = Icon('tango/22x22/actions/document-open.png')):
-        super(ProcessFilesFormAction, self).__init__(self, name, icon = icon)
+    def __init__(self, name, icon = Icon('tango/22x22/actions/document-open.png'), flush=False, enabled=lambda obj:True ):
+        super(ProcessFilesFormAction, self).__init__(name, icon = icon, flush=flush, enabled=enabled)
 
     def create_request( self, entity_getter, model_function ):
         file_names = [unicode(fn) for fn in QtGui.QFileDialog.getOpenFileNames(caption=unicode(self.get_name()))]
