@@ -283,10 +283,8 @@ class ApplicationAdmin(QtCore.QObject):
         import sys
         import sqlalchemy
         import elixir
-        import cloudlaunch2
         import chardet
         import jinja2
-        import pdfminer
         import xlrd
         import xlwt
                 
@@ -295,20 +293,16 @@ class ApplicationAdmin(QtCore.QObject):
                   <em>PyQt:</em> <b>%s</b><br>
                   <em>SQLAlchemy:</em> <b>%s</b><br>
                   <em>Elixir:</em> <b>%s</b><br>
-                  <em>Cloudlaunch:</em> <b>%s</b><br>
                   <em>Chardet:</em> <b>%s</b><br>
                   <em>Jinja:</em> <b>%s</b><br>
-                  <em>PDFMiner:</em> <b>%s</b><br>
                   <em>xlrd:</em> <b>%s</b><br>
                   <em>xlwt:</em> <b>%s</b><br>""" % ('.'.join([str(el) for el in sys.version_info]),
                                                      float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])),
                                                      QtCore.PYQT_VERSION_STR,
                                                      sqlalchemy.__version__,
                                                      elixir.__version__,
-                                                     cloudlaunch2.__version__,
                                                      chardet.__version__,
                                                      jinja2.__version__,
-                                                     pdfminer.__version__,
                                                      xlrd.__VERSION__,
                                                      xlwt.__VERSION__)
     
