@@ -296,7 +296,8 @@ class ApplicationAdmin(QtCore.QObject):
                   <em>Chardet:</em> <b>%s</b><br>
                   <em>Jinja:</em> <b>%s</b><br>
                   <em>xlrd:</em> <b>%s</b><br>
-                  <em>xlwt:</em> <b>%s</b><br>""" % ('.'.join([str(el) for el in sys.version_info]),
+                  <em>xlwt:</em> <b>%s</b><br><br>
+                  <em>path:<br></em> %s""" % ('.'.join([str(el) for el in sys.version_info]),
                                                      float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])),
                                                      QtCore.PYQT_VERSION_STR,
                                                      sqlalchemy.__version__,
@@ -304,7 +305,8 @@ class ApplicationAdmin(QtCore.QObject):
                                                      chardet.__version__,
                                                      jinja2.__version__,
                                                      xlrd.__VERSION__,
-                                                     xlwt.__VERSION__)
+                                                     xlwt.__VERSION__,
+                                                     unicode(sys.path))
     
     def dump_state(self):
         """Dump the state of the application to the output, this method is
