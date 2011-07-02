@@ -75,12 +75,18 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         def columnCount(self, index=None):
             return 1
 
-    def __init__(self, admin=None, parent=None, editable=True, **kwargs):
+    def __init__(self, 
+                 admin=None, 
+                 parent=None, 
+                 editable=True, 
+                 field_name='manytoone', 
+                 **kwargs):
         """:param entity_admin : The Admin interface for the object on the one
         side of the relation
         """
 
         CustomEditor.__init__(self, parent)
+        self.setObjectName( field_name )
         self.admin = admin
         self.entity_set = False
         self._editable = editable

@@ -31,8 +31,9 @@ from customeditor import CustomEditor
 
 class ColorEditor(CustomEditor):
 
-    def __init__(self, parent=None, editable=True, **kwargs):
+    def __init__(self, parent=None, editable=True, field_name='color', **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setObjectName( field_name )
         layout = QtGui.QVBoxLayout(self)
         layout.setSpacing(0)
         layout.setMargin(0)

@@ -32,8 +32,12 @@ from camelot.view.art import Icon
 
 class RichTextEditor(CustomEditor, WideEditor):
 
-    def __init__(self, parent=None, **kwargs):
+    def __init__(self, 
+                 parent = None, 
+                 field_name = 'richtext',
+                 **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setObjectName( field_name )
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.setSpacing(0)
         self.layout.setMargin(0)

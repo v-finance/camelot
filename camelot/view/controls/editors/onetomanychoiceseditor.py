@@ -26,8 +26,14 @@ from choiceseditor import ChoicesEditor
 
 class OneToManyChoicesEditor(ChoicesEditor):
   
-    def __init__(self, parent, target=None, nullable=True, **kwargs):
+    def __init__(self, 
+                 parent, 
+                 target=None, 
+                 nullable=True, 
+                 field_name='onetomanychoices',
+                 **kwargs):
         super(OneToManyChoicesEditor, self).__init__(parent, **kwargs)
+        self.setObjectName( field_name )
         assert target!=None
         self._target = target
         self._nullable = nullable

@@ -37,9 +37,13 @@ class FileEditor(CustomEditor):
 
     filter = 'All files (*)'
 
-    def __init__(self, parent=None, storage=None, remove_original=False, 
+    def __init__(self, parent=None, 
+                 storage=None, 
+                 field_name='file', 
+                 remove_original=False, 
                  **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setObjectName( field_name )
         self.storage = storage
         self.filename = None # the widget containing the filename
 

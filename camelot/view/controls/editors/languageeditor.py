@@ -33,7 +33,7 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
     editingFinished = QtCore.pyqtSignal()
     language_choices = []
     
-    def __init__(self, parent=None, languages=[], **kwargs):
+    def __init__(self, parent=None, languages=[], field_name='language', **kwargs):
         """
         :param languages: a list of ISO codes with languages
         that are allowed in the combo box, if the list is empty, all languages
@@ -41,6 +41,7 @@ class LanguageEditor(QtGui.QComboBox, AbstractCustomEditor):
         """
         QtGui.QComboBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
+        self.setObjectName( field_name )
         self.index_by_language = dict()
         languages = [QtCore.QLocale(lang).language() for lang in languages]
         if not self.language_choices:

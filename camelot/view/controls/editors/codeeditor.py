@@ -63,8 +63,9 @@ class PartEditor(QtGui.QLineEdit):
         
 class CodeEditor(CustomEditor):
 
-    def __init__(self, parent=None, parts=['99','AA'], editable=True, **kwargs):
+    def __init__(self, parent=None, parts=['99','AA'], editable=True, field_name='code', **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setObjectName( field_name )
         self.parts = parts
         self.part_editors = []
         layout = QtGui.QHBoxLayout()

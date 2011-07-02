@@ -35,9 +35,10 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
     editingFinished = QtCore.pyqtSignal()
     valueChanged = QtCore.pyqtSignal()
     
-    def __init__(self, parent=None, nullable=True, **kwargs):
+    def __init__(self, parent=None, nullable=True, field_name='choices', **kwargs):
         QtGui.QComboBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
+        self.setObjectName( field_name )
         self.activated.connect( self._activated )
         self._nullable = nullable 
 

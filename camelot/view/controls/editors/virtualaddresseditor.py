@@ -34,8 +34,19 @@ import camelot.types
 
 class VirtualAddressEditor(CustomEditor):
 
-    def __init__(self, parent=None, editable=True, address_type=None, **kwargs):
+    def __init__(self, 
+                 parent = None, 
+                 editable = True, 
+                 address_type = None, 
+                 field_name = 'virtual_address',
+                 **kwargs):
+        """
+        :param address_type: limit the allowed address to be entered to be
+            of a certain time, can be 'phone', 'fax', 'email', 'mobile', 'pager'.
+            If set to None, all types are allowed.
+        """
         CustomEditor.__init__(self, parent)
+        self.setObjectName( field_name )
         self._address_type = address_type
         self.layout = QtGui.QHBoxLayout()
         self.layout.setMargin(0)

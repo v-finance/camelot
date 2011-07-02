@@ -47,10 +47,11 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
     show_fullscreen_signal = QtCore.pyqtSignal()
     editingFinished = QtCore.pyqtSignal()
 
-    def __init__(self, parent=None, width=50, height=40, dpi=50, **kwargs):
+    def __init__(self, parent=None, width=50, height=40, dpi=50, field_name='chart', **kwargs):
         from matplotlib.figure import Figure
         from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
         super(ChartEditor, self).__init__(parent)
+        self.setObjectName( field_name )
         
         chart_frame = QtGui.QFrame( self )
         chart_frame.setFrameShape( self.Box )

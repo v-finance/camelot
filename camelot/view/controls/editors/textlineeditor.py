@@ -28,8 +28,13 @@ from customeditor import AbstractCustomEditor, draw_tooltip_visualization
 
 class TextLineEditor(QtGui.QLineEdit, AbstractCustomEditor):
 
-    def __init__(self, parent, length=20, **kwargs):
+    def __init__(self, 
+                 parent, 
+                 length = 20, 
+                 field_name = 'text_line',
+                 **kwargs):
         QtGui.QLineEdit.__init__(self, parent)
+        self.setObjectName( field_name )
         AbstractCustomEditor.__init__(self)
         if length:
             self.setMaxLength(length)

@@ -33,8 +33,14 @@ class StarEditor(CustomEditor):
     star_icon = Icon('tango/16x16/status/weather-clear.png')
     no_star_icon = Icon('tango/16x16/status/weather-clear-noStar.png')
         
-    def __init__(self, parent, maximum=5, editable=True, **kwargs):
+    def __init__(self, 
+                 parent, 
+                 maximum = 5, 
+                 editable = True, 
+                 field_name = 'star',
+                 **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setObjectName( field_name )
         self.setFocusPolicy(Qt.StrongFocus)
         layout = QtGui.QHBoxLayout(self)
         layout.setMargin(0)

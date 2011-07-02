@@ -30,8 +30,14 @@ class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
 
     editingFinished = QtCore.pyqtSignal()
  
-    def __init__(self, parent, length=20, editable=True, **kwargs):
+    def __init__(self, 
+                 parent, 
+                 length=20, 
+                 editable=True, 
+                 field_name = 'text',
+                 **kwargs):
         QtGui.QTextEdit.__init__(self, parent)
+        self.setObjectName( field_name )
         AbstractCustomEditor.__init__(self)
         self.setReadOnly(not editable)
 

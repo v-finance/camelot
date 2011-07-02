@@ -48,6 +48,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
                  parent = None,
                  create_inline = False,
                  vertical_header_clickable = True,
+                 field_name = 'onetomany',
                  **kw ):
         """
     :param admin: the Admin interface for the objects on the one side of the
@@ -63,6 +64,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
     """
 
         CustomEditor.__init__( self, parent )
+        self.setObjectName( field_name )
         layout = QtGui.QHBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
         #

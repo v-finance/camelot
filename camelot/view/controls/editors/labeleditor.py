@@ -31,10 +31,14 @@ class LabelEditor(QtGui.QLabel, AbstractCustomEditor):
 
     editingFinished = QtCore.pyqtSignal()
     
-    def __init__(self, parent = None, 
-                       text = "<loading>", **kwargs):
+    def __init__(self, 
+                 parent = None, 
+                 text = "<loading>", 
+                 field_name = 'label',
+                 **kwargs):
         QtGui.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
+        self.setObjectName( field_name )
 
         self.text = text
 

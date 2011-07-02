@@ -43,9 +43,12 @@ class DateEditor(CustomEditor):
     
     def __init__(self, parent = None,
                        editable = True,
-                       nullable = True, **kwargs):
+                       nullable = True, 
+                       field_name = 'date',
+                       **kwargs):
         CustomEditor.__init__(self, parent)
 
+        self.setObjectName( field_name )
         self.date_format = local_date_format()
         self.line_edit = DecoratedLineEdit()
         self.line_edit.set_background_text( QtCore.QDate(2000,1,1).toString(self.date_format) )

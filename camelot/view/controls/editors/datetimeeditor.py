@@ -61,8 +61,10 @@ class DateTimeEditor(CustomEditor):
                  parent,
                  editable=True,
                  nullable=True,
+                 field_name = 'datetime',
                  **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setObjectName( field_name )
         import itertools
         self.nullable = nullable
 

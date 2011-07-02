@@ -42,9 +42,11 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
                  minimum=constants.camelot_minint,
                  maximum=constants.camelot_maxint,
                  nullable=True,
+                 field_name = 'boolean',
                  **kwargs):
         QtGui.QCheckBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
+        self.setObjectName( field_name )
         self._nullable = nullable
         #if self._nullable:
         #    self.setTristate( True )

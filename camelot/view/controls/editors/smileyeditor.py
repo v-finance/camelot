@@ -48,8 +48,14 @@ default_icons = list( (icon_name, Icon('tango/16x16/emotes/%s.png'%icon_name)) f
 
 class SmileyEditor(CustomEditor):
 
-    def __init__(self, parent, editable=True, icons=default_icons, **kwargs):
+    def __init__(self, 
+                 parent, 
+                 editable = True, 
+                 icons = default_icons, 
+                 field_name = 'icons',
+                 **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setObjectName( field_name )
         self.box = QtGui.QComboBox()
         self.box.setFrame(True)
         self.box.setEditable(False)

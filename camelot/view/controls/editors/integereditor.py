@@ -77,10 +77,12 @@ an unneeded update of the db.
                        minimum = camelot_minint,
                        maximum = camelot_maxint,
                        calculator = True,
-                       option = None, **kwargs):
+                       option = None, 
+                       field_name = 'integer',
+                       **kwargs):
         
         CustomEditor.__init__(self, parent)
-
+        self.setObjectName( field_name )
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)

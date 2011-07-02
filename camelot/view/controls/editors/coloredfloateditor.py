@@ -41,8 +41,10 @@ class ColoredFloatEditor(CustomEditor):
                  reverse=False,
                  neutral=False,
                  option=None,
+                 field_name = 'float',
                  **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setObjectName( field_name )
         action = QtGui.QAction(self)
         action.setShortcut(Qt.Key_F3)
         self.setFocusPolicy(Qt.StrongFocus)

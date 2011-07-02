@@ -49,6 +49,7 @@ class ImageEditor(FileEditor, WideEditor):
             storage=None,
             preview_width=100,
             preview_height=100,
+            field_name = 'image',
             **kwargs
         ):
         self.preview_width = preview_width
@@ -56,6 +57,7 @@ class ImageEditor(FileEditor, WideEditor):
         FileEditor.__init__(
             self, parent=parent, storage=storage, **kwargs
         )
+        self.setObjectName( field_name )
 
     def setup_widget(self):
         self.layout = QtGui.QHBoxLayout()

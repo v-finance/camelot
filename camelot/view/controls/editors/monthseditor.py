@@ -38,8 +38,9 @@ class MonthsEditor(CustomEditor):
     composite months and years editor
     """
 
-    def __init__(self, parent=None, editable=True, **kw):
+    def __init__(self, parent=None, editable=True, field_name='months', **kw):
         CustomEditor.__init__(self, parent)
+        self.setObjectName( field_name )
         self.years_spinbox = CustomDoubleSpinBox()
         self.months_spinbox = CustomDoubleSpinBox()
         self.years_spinbox.setMinimum(0)

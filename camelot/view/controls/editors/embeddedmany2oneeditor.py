@@ -42,9 +42,10 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
   in that case
   """
 
-    def __init__( self, admin = None, parent = None, **kwargs ):
+    def __init__( self, admin = None, parent = None, field_name='embedded', **kwargs ):
         assert admin != None
         CustomEditor.__init__( self, parent )
+        self.setObjectName( field_name )
         self.admin = admin
         #
         # The admin class of the current entity can be different from

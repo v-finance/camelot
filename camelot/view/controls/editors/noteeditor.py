@@ -31,9 +31,13 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
     
     editingFinished = QtCore.pyqtSignal()
     
-    def __init__(self, parent=None, **kwargs):
+    def __init__(self, 
+                 parent=None,
+                 field_name='note',
+                 **kwargs):
         QtGui.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
+        self.setObjectName( field_name )
         self.setTextFormat(QtCore.Qt.RichText)
         from camelot.view.art import ColorScheme
         style = """

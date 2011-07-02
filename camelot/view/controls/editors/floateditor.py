@@ -87,8 +87,10 @@ class FloatEditor(CustomEditor):
                        calculator = True,
                        decimal = False, 
                        option = None,
+                       field_name = 'float',
                        **kwargs):
         CustomEditor.__init__(self, parent)
+        self.setObjectName( field_name )
         self._decimal = decimal
         self._calculator = calculator
         action = QtGui.QAction(self)

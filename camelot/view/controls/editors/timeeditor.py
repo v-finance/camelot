@@ -30,11 +30,14 @@ from camelot.core import constants
 
 class TimeEditor(QtGui.QTimeEdit, AbstractCustomEditor):
   
-    def __init__(self, parent,
-                       editable = True,
-                       format = constants.camelot_time_format, **kwargs):
+    def __init__(self, 
+                 parent,
+                 editable = True,
+                 field_name = 'time',
+                 format = constants.camelot_time_format, **kwargs):
         QtGui.QTimeEdit.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
+        self.setObjectName( field_name )
         self.setDisplayFormat(format)
         self.setEnabled(editable)
 
