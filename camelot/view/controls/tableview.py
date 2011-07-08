@@ -216,10 +216,16 @@ and above the text.
         failures in QT when an editor is still open in the view for a cell
         that no longer exists in the model
         
-        thos assertion failures only exist in QT debug builds.
+        those assertion failures only exist in QT debug builds.
         """
         current_index = self.currentIndex()
-        self.closePersistentEditor( current_index )
+        if not current_index:
+            return
+        if(current_index.column()>=self._columns_frozen):
+            table_widget = self
+        else:
+            table_widget = self.findChild(QtGui.QWidget, 'frozen_table_view' )
+        table_widget.closePersistentEditor( current_index )
                 
     def setModel( self, model ):
         #
@@ -285,7 +291,8 @@ class AdminTableWidget(TableWidget):
         if confirmed:
             #
             # if there is an open editor on a row that will be deleted, there
-            # might be an assertion failure in QT
+            # might be an assertion failure in QT, or the data of the editor 
+            # might be pushed to the row that replaces the deleted one
             #
             progress_dialog = ProgressDialog(_('Removing'))
             self.model().rows_removed_signal.connect( progress_dialog.finished )
