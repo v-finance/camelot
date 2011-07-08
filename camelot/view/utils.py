@@ -105,34 +105,21 @@ def date_from_string(s):
     f = local_date_format()
     dt = QDate.fromString(s, f)
     if not dt.isValid():
+        #
+	# try alternative separators
+        #
+        separators = u''.join([c for c in f if c not in string.ascii_letters])
+        if separators:
+            alternative_string = u''.join([(c if c in string.digits else separators[0]) for c in s])
+            print alternative_string
+            dt = QDate.fromString(alternative_string, f)
+    if not dt.isValid():
         # try parsing without separators
         # attention : using non ascii letters will fail on windows
         # string.letters then contains non ascii letters of which we don't know the
         # encoding, so we cannot convert them to unicode to compare them
         only_letters_format = u''.join([c for c in f if c in string.ascii_letters])
         only_letters_string = u''.join([c for c in s if c in (string.ascii_letters+string.digits)])
-	#
-	# if length format and string don't match, insert the string with 0
-	# this is to handle the case 1012000 > 10/01/2000
-	#
-	if len(only_letters_format) > len(only_letters_string):
-	    try:
-            # we assume that when a user specifies 1, 2 or 3, as first digit and a zero as second, 
-            # he does not mean it as a leading zero for the month
-            # so we insert the leading zero 
-            # this is debatable of course, a more elegant solution is prolly not unthinkable
-	        if int(only_letters_string[0]) <= 3  and only_letters_string[1] == '0':
-	            only_letters_string = _insert_string(only_letters_string, '0', 2)
-	        else:
-                # this is to handle the case 1112000 -> 01/11/2000
-	            only_letters_string = '0' + only_letters_string
-	    except IndexError, e:
-	        logger.debug(e)
-	        only_letters_string = '0' + only_letters_string
-	    except Exception:
-	        logger.debug(e)
-	        only_letters_string = '0' + only_letters_string
-	        
         dt = QDate.fromString(only_letters_string, only_letters_format)
         if not dt.isValid():
             # try parsing without the year, and take the current year by default
