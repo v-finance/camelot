@@ -225,7 +225,8 @@ and above the text.
             table_widget = self
         else:
             table_widget = self.findChild(QtGui.QWidget, 'frozen_table_view' )
-        table_widget.closePersistentEditor( current_index )
+        if table_widget:
+            table_widget.closePersistentEditor( current_index )
                 
     def setModel( self, model ):
         #

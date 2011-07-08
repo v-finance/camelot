@@ -106,12 +106,19 @@ def date_from_string(s):
     dt = QDate.fromString(s, f)
     if not dt.isValid():
         #
+        # if there is a mismatch of 1 in length between format and
+        # string, prepend a 0, to handle the case of 1/11/2011
+        #
+        if len(f) == len(s) + 1:
+            s = '0' + s
+            dt = QDate.fromString(s, f)
+    if not dt.isValid():
+        #
 	# try alternative separators
         #
         separators = u''.join([c for c in f if c not in string.ascii_letters])
         if separators:
             alternative_string = u''.join([(c if c in string.digits else separators[0]) for c in s])
-            print alternative_string
             dt = QDate.fromString(alternative_string, f)
     if not dt.isValid():
         # try parsing without separators
