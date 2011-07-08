@@ -35,6 +35,8 @@ def open_html_in_print_preview_from_gui_thread(html,
     html_document=QTextDocument, page_size=None, page_orientation=None):
 
      printer = QPrinter()
+     if printer.isValid():
+         printer.setOutputFormat(QPrinter.PdfFormat)
      printer.setPageSize(page_size or QPrinter.A4)
      printer.setOrientation(page_orientation or QPrinter.Portrait)
      dialog = QPrintPreviewDialog(printer)
