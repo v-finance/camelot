@@ -44,31 +44,15 @@ import logging
 logger = logging.getLogger('camelot.core.resources')
 
 
-def resource_filename(module_name, filename, settings_attribute=None):
+def resource_filename(module_name, filename):
     """Return the absolute path to a file in a directory
-    if the directory for the module cannot be accessed through pkg_resources,
-    fall back to the settings attribute
+    using pkg_resources
     """
-    import settings
-    if sys.path[0].endswith('.zip') and not hasattr(settings, 'BOOTSTRAPPER'):
-        # we're running from a zip file, pkg_resources won't work
-        if not settings_attribute:
-            logger.error('resources of module %s cannot be loaded because no settings_attribute is specified and the module is inside a zip file')
-            return ''
-        absolute_path = os.path.join(getattr(settings, settings_attribute), filename)
-        if not os.path.exists(absolute_path):
-            logger.error('resources of module %s cannot be loaded because %s does not exist'%(module_name, absolute_path))
-            return ''
-        return os.path.join(absolute_path)
-    else:
-        return pkg_resources.resource_filename(module_name, filename)
+    return pkg_resources.resource_filename(module_name, filename)
 
 
-def resource_string(module_name, filename, settings_attribute):
-    import settings
-    if sys.path[0].endswith('.zip') and not hasattr(settings, 'BOOTSTRAPPER'):
-        return open(resource_filename(module_name, filename, settings_attribute), 'rb').read()
-    else:
-        return pkg_resources.resource_string(module_name, filename)
+def resource_string(module_name, filename):
+    """load a file as a string using pkg_resources"""
+    return pkg_resources.resource_string(module_name, filename)
 
 

@@ -30,6 +30,8 @@ from PyQt4 import QtCore
 import logging
 logger = logging.getLogger('camelot.view.model_thread')
 
+from camelot.core.conf import settings
+
 _model_thread_ = []
 
 
@@ -80,8 +82,7 @@ def gui_function(original_function):
 
 def setup_model():
     """Call the setup_model function in the settings"""
-    from settings import setup_model
-    setup_model()
+    settings.setup_model()
 
 
 class AbstractModelThread(QtCore.QThread):
@@ -156,14 +157,8 @@ class AbstractModelThread(QtCore.QThread):
 
 
 def construct_model_thread(*args, **kwargs):
-    import settings
-    if hasattr(settings, 'THREADING') and settings.THREADING==False:
-        logger.info('running without threads')
-        from no_thread_model_thread import NoThreadModelThread
-        _model_thread_.insert(0, NoThreadModelThread(*args, **kwargs))
-    else:
-        from signal_slot_model_thread import SignalSlotModelThread
-        _model_thread_.insert(0, SignalSlotModelThread(*args, **kwargs))
+    from signal_slot_model_thread import SignalSlotModelThread
+    _model_thread_.insert(0, SignalSlotModelThread(*args, **kwargs))
 
 
 def has_model_thread():

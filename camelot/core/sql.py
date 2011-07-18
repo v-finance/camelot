@@ -26,6 +26,7 @@ from functools import wraps
 
 import sqlalchemy.sql.operators
 
+from camelot.core.conf import settings
 from camelot.core.exception import UserException
 
 LOGGER = logging.getLogger('camelot.core.sql')
@@ -60,7 +61,6 @@ def update_database_from_model():
     
     this function can be ran in setup_model after setup_all(create_tables=True)
     """
-    import settings
     migrate_engine = settings.ENGINE()
     migrate_connection = migrate_engine.connect()
     

@@ -27,10 +27,11 @@ import logging
 
 from PyQt4 import QtCore
 
+from camelot.core.conf import settings
+
 logger = logging.getLogger('camelot.core.dbprofiles')
 
 def get_cipher():
-    import settings
     from Crypto.Cipher import ARC4
     if hasattr( settings, 'CAMELOT_DBPROFILES_CIPHER' ):
         key = getattr( settings, 'CAMELOT_DBPROFILES_CIPHER' )

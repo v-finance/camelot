@@ -24,12 +24,12 @@
 
 import logging
 import datetime
-import settings
 from decimal import Decimal
 
 LOGGER = logging.getLogger('camelot.view.export.excel')
 
 from camelot.core.utils import ugettext
+from camelot.core.conf import settings
 from camelot.view.controls import delegates
 from camelot.view.utils import local_date_format
 

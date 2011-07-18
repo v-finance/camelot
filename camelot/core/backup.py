@@ -26,6 +26,7 @@ import logging
 import sqlalchemy
 
 from camelot.core.utils import ugettext as _
+from camelot.core.conf import settings
 
 logger = logging.getLogger('camelot.core.backup')
 
@@ -122,7 +123,6 @@ class BackupMechanism(object):
         import os
         import tempfile
         import shutil
-        import settings
         from sqlalchemy import create_engine
         from sqlalchemy import MetaData, Table, Column
         from sqlalchemy.pool import NullPool
@@ -207,7 +207,6 @@ class BackupMechanism(object):
         #
         import os
         from camelot.core.files.storage import StoredFile
-        import settings
         from sqlalchemy import create_engine
         from sqlalchemy import MetaData
         from sqlalchemy.pool import NullPool

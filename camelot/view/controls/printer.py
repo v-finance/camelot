@@ -30,6 +30,8 @@ import logging
 logger = logging.getLogger( 'printer' )
 
 from PyQt4 import QtGui
+
+from camelot.core.conf import settings
 from camelot.view.model_thread import post
 
 icon = '../art/tango/32x32/apps/system-users.png'
@@ -40,7 +42,6 @@ class Printer:
         self.printer.setPageSize( QtGui.QPrinter.Letter )
 
     def printView( self, view, parent ):
-        import settings
         logger.debug( 'printing table view' )
         dialog = QtGui.QPrintDialog( self.printer, parent )
         if not dialog.exec_():

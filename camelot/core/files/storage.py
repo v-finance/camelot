@@ -26,6 +26,7 @@ import logging
 
 logger = logging.getLogger( 'camelot.core.files.storage' )
 
+from camelot.core.conf import settings
 from camelot.view.model_thread import model_function
 
 class StoredFile( object ):
@@ -119,7 +120,6 @@ class Storage( object ):
     The actual files will be put in root + upload to.  If None is given as root,
     the settings.CAMELOT_MEDIA_ROOT will be taken as the root directory.
     """
-        import settings
         self._root = (root or settings.CAMELOT_MEDIA_ROOT)
         self._subfolder = upload_to
         self._upload_to = None
@@ -265,7 +265,6 @@ class S3Storage( object ):
         #import locale
 #    locale.setlocale(locale.LC_TIME, 'en_US.utf8')
 #    print 'create S3 storage'
-        import settings
         import S3
         self.upload_to = upload_to
         conn = S3.AWSAuthConnection( settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY )

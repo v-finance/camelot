@@ -35,7 +35,7 @@ from PyQt4 import QtGui
 def file_(name):
     from camelot.core.resources import resource_filename
     import camelot
-    return resource_filename(camelot.__name__, 'art/%s'%name, 'CAMELOT_MAIN_DIRECTORY')
+    return resource_filename(camelot.__name__, 'art/%s'%name)
 
 
 def read(fname):
@@ -44,7 +44,6 @@ def read(fname):
     return resource_string(
         camelot.__name__,
         'art/%s' % fname,
-        'CAMELOT_MAIN_DIRECTORY'
     )
 
 
@@ -75,7 +74,7 @@ class Pixmap(object):
         from its package and copy it to a temp folder if the resource is
         packaged."""
         from camelot.core.resources import resource_filename
-        pth = resource_filename(self._module_name, 'art/%s'%(self._path), 'CAMELOT_MAIN_DIRECTORY')
+        pth = resource_filename(self._module_name, 'art/%s'%(self._path))
         if os.path.exists(pth):
             return pth
         else:
@@ -90,8 +89,7 @@ class Pixmap(object):
         from PyQt4.QtGui import QPixmap
         qpm = QPixmap()
         success = qpm.loadFromData(resource_string(self._module_name,
-                                                   'art/%s'%(self._path),
-                                                   'CAMELOT_MAIN_DIRECTORY'))
+                                                   'art/%s'%(self._path),))
         if not success:
             msg = u'Could not load pixmap %s from camelot art library'
             logger.warn(msg % self._path)
