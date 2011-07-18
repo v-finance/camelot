@@ -69,6 +69,11 @@ Enable core dumps
 Linux
 -----
 
+For older gdb versions (pre 7),
+copy the gdbinit file from the python Misc folder::
+
+  cp gdbinit ~/.gdbinit
+  
 use::
 
   ulimit -c unlimited
@@ -76,6 +81,24 @@ use::
 load core file in gdb::
 
   gdb /usr/bin/python -c core
+
+
+In newer gdb versions, Python can run inside gdb:
+
+http://bugs.python.org/issue8032
+
+To give gdb python super powers::
+
+(gdb) python
+>import sys
+>sys.path.append('Python-2.7.1/Tools/gdb/libpython.py')
+>import libpython
+>reload(libpython)
+>
+>end
+
+https://fedoraproject.org/wiki/Features/EasierPythonDebugging
+
 
 Windows
 -------
