@@ -37,8 +37,6 @@ runnin from within a zip file.
 """
 
 import pkg_resources
-import sys
-import os
 import logging
 
 logger = logging.getLogger('camelot.core.resources')
