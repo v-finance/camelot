@@ -470,37 +470,19 @@ allow all languages
         caption = _('Save Profiles To a File')
         filters = _('Profiles file (*.ini)')
         path = QFileDialog.getSaveFileName(self, caption, 'profiles', filters)
-
         if not path:
+            logger.debug('Could not save profiles to file; no path.')
             return
-
         store_profiles(self.profiles, to_file=path)
-
-        #mt = SignalSlotModelThread(lambda:None)
-        #mt.start()
-        #progress = ProgressDialog(_('Saving progiles to file'))
-        #mt.post(lambda:store_profiles(self.profiles, to_file=path),
-        #    progress.finished, progress.exception)
-        #progress.exec_()
 
     def load_profiles_from_file(self):
         caption = _('Load Profiles From a File')
         filters = _('Profiles file (*.ini)')
         path = QFileDialog.getOpenFileName(self, caption, 'profiles', filters)
-
         if not path:
+            logger.debug('Could not load profiles from file; no path.')
             return
-
         self.profiles = fetch_profiles(from_file=path)
-
-        #mt = SignalSlotModelThread(lambda:None)
-        #mt.start()
-        #progress = ProgressDialog(_('Loading profiles from file'))
-        #mt.post(lambda:setattr(self, 'profiles',
-        #    fetch_profiles(from_file=path)), progress.finished,
-        #    progress.exception)
-        #progress.exec_()
-
         if self.profiles:
             store_profiles(self.profiles)
             os.execv(sys.executable, [sys.executable] + sys.argv)
