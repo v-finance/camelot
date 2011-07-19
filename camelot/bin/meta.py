@@ -95,6 +95,85 @@ features = [
    #('author_email',          '',                                      delegates.PlainTextDelegate,   '''E-mail address of the author'''),                                 
 ]
 
+#
+# Templates of the files to create when starting a new project
+#
+ 
+templates = [
+    ('application_admin.py', '''
+from camelot.view.art import Icon
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.section import Section
+
+class MyApplicationAdmin(ApplicationAdmin):
+  
+    def get_sections(self):
+        from camelot.model.memento import Memento
+        from camelot.model.authentication import Person, Organization
+        from camelot.model.i18n import Translation
+        return [Section('relation',
+                        Icon('tango/22x22/apps/system-users.png'),
+                        items = [Person, Organization]),
+                Section('configuration',
+                        Icon('tango/22x22/categories/preferences-system.png'),
+                        items = [Memento, Translation])
+                ]
+    '''),
+    ('__init__.py', ''),
+    
+    ('main.py', '''
+import logging
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger('main')
+
+if __name__ == '__main__':
+    from camelot.view.main import main
+    from application_admin import MyApplicationAdmin
+    main(MyApplicationAdmin())
+    '''),
+    
+    ('model.py', '''
+from camelot.model import metadata
+
+__metadata__ = metadata
+    '''),
+    
+    ('settings.py', '''
+import logging
+import os
+
+logger = logging.getLogger('settings')
+
+# media root needs to be an absolute path for the file open functions
+# to function correctly
+CAMELOT_MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'media')
+
+# backup root is the directory where the default backups are stored
+CAMELOT_BACKUP_ROOT = os.path.join(os.path.dirname(__file__), 'backup')
+
+# default extension for backup files
+CAMELOT_BACKUP_EXTENSION = 'db'
+
+# template used to create and find default backups
+CAMELOT_BACKUP_FILENAME_TEMPLATE = 'default-backup-%(text)s.' + CAMELOT_BACKUP_EXTENSION
+
+
+def ENGINE():
+    """This function should return a connection to the database"""
+    from sqlalchemy import create_engine
+    return create_engine('sqlite:///model-data.sqlite')
+
+def setup_model():
+    """This function will be called at application startup, it is used to setup
+    the model"""
+    import camelot.model
+    from elixir import setup_all
+    import model
+    setup_all(create_tables=True)
+    from camelot.model.authentication import updateLastLogin
+    updateLastLogin()
+    '''),
+]
 class CreateNewProject( ApplicationActionFromModelFunction ):
     """Action to create a new project, based on a form with
     options the user fills in."""
