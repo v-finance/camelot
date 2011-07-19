@@ -137,71 +137,74 @@ be specified using the verbose_name attribute.
 
 .. attribute:: delete_mode
 
-Indicates if the deletion of an object should be confirmed by the user, defaults
-to 'on_request', indicating object should be deleted when the user hits the trash
-button.  Other possibilities are :
+    Indicates if the deletion of an object should be confirmed by the user, defaults
+    to 'on_request', indicating object should be deleted when the user hits the trash
+    button.  Other possibilities are :
 
-  * 'on_confirm' : the user will be asked for confirmation before the delete
-    takes place.
+      * 'on_confirm' : the user will be asked for confirmation before the delete
+        takes place.
 
 .. attribute:: form_size
 
-a tuple indicating the size of a form view, defaults to (700,500)
+    a tuple indicating the size of a form view, defaults to (700,500)
 
 .. attribute:: form_actions
 
-Actions to be accessible by pushbuttons on the side of a form,
-a list of tuples (button_label, action_function) where action_function
-takes as its single argument, a method that returns the the object that
-was displayed by the form when the button was pressed::
+    Actions to be accessible by pushbuttons on the side of a form,
+    a list of tuples (button_label, action_function) where action_function
+    takes as its single argument, a method that returns the the object that
+    was displayed by the form when the button was pressed::
 
-    class Admin(EntityAdmin):
-      form_actions = [('Foo', lamda o_getter:print 'foo')]
+        class Admin(EntityAdmin):
+            form_actions = [('Foo', lamda o_getter:print 'foo')]
 
 **Field attributes**
 
 .. attribute:: field_attributes
 
-A dictionary specifying for each field of the model some additional
-attributes on how they should be displayed.  All of these attributes
-are propagated to the constructor of the delegate of this field::
+    A dictionary specifying for each field of the model some additional
+    attributes on how they should be displayed.  All of these attributes
+    are propagated to the constructor of the delegate of this field::
 
-    class Movie(Entity):
-      title = Field(Unicode(50))
+        class Movie(Entity):
+            title = Field(Unicode(50))
     
-      class Admin(EntityAdmin):
-        list_display = ['title']
-        field_attributes = dict(title=dict(editable=False))
+            class Admin(EntityAdmin):
+                list_display = ['title']
+                field_attributes = dict(title=dict(editable=False))
 
-The :ref:`doc-admin-field_attributes` documentation describes the various keys
-that can be used in the field attributes class attribute of an ObjectAdmin or EntityAdmin.
+    The :ref:`doc-admin-field_attributes` documentation describes the various keys
+    that can be used in the field attributes class attribute of an ObjectAdmin 
+    or EntityAdmin.
 
 **Window state**
 
 .. attribute:: form_state
 
-Set this attribute to 'maximized' or 'minimized' for respective behaviour. These are the only two defined at the moment.
-Please use the constants defined in camelot.core.constants (MINIMIZE and MAXIMIZE).
-Note that this attr needs to be set at the form, highest in the form hierarchy to work. Setting this on embedded forms
-will not influence the window state. Example::
+    Set this attribute to 'maximized' or 'minimized' for respective behaviour. These are the only two defined at the moment.
+    Please use the constants defined in camelot.core.constants (MINIMIZE and MAXIMIZE).
+    Note that this attr needs to be set at the form, highest in the form hierarchy to work. Setting this on embedded forms
+    will not influence the window state. Example::
 
-    class Movie(Entity):
-      title = Field(Unicode(50))
+        class Movie(Entity):
+            title = Field(Unicode(50))
     
-      class Admin(EntityAdmin):
-        from camelot.core import constants
-        list_display = ['title']
-        form_state = constants.MAXIMIZED
-        field_attributes = dict(title=dict(editable=False))
+            class Admin(EntityAdmin):
+                from camelot.core import constants
+                list_display = ['title']
+                form_state = constants.MAXIMIZED
+                field_attributes = dict(title=dict(editable=False))
 
 **Varia**
 
 .. attribute:: model
-The QAbstractItemModel class to be used to display collections of this object,
-defaults to a CollectionProxy
+
+    The QAbstractItemModel class to be used to display collections of this object,
+    defaults to a CollectionProxy
 
 .. attribute:: TableView
-The QWidget class to be used when a table view is needed
+
+    The QWidget class to be used when a table view is needed
     """
     verbose_name = None
     verbose_name_plural = None
@@ -232,11 +235,10 @@ The QWidget class to be used when a table view is needed
 
     def __init__(self, app_admin, entity):
         """
-
-        :param app_admin: the application admin object for this application, if None,
-        then the default application_admin is taken
+        :param app_admin: the application admin object for this application, 
+            if None, then the default application_admin is taken
         :param entity: the entity class for which this admin instance is to be
-        used
+            used
         """
         from camelot.view.remote_signals import get_signal_handler
         if not app_admin:
@@ -579,7 +581,8 @@ The QWidget class to be used when a table view is needed
     def create_form_view(self, title, model, index, parent=None):
         """Creates a Qt widget containing a form view, for a specific index in
         a model.  Use this method to create a form view for a collection of objects,
-        the user will be able to use PgUp/PgDown to move to the next object.
+        the user will be able to use :kbd:`PgUp`/:kbd:`PgDown` to move to 
+        the next object.
 
         :param title: the title of the form view
         :param model: the data model to be used to fill the form view
@@ -648,8 +651,8 @@ The QWidget class to be used when a table view is needed
 
     @gui_function
     def create_object_form_view(self, title, object_getter, parent=None):
-        """Create a form view for a single object, PgUp/PgDown will do
-        nothing.
+        """Create a form view for a single object, :kbd:`PgUp`/:kbd:`PgDown` 
+        will do nothing.
 
         :param title: the title of the form view
         :param object_getter: a function taking no arguments, and returning the object
@@ -661,10 +664,10 @@ The QWidget class to be used when a table view is needed
             returns a collection with only the object returned by object
             getter.
 
-            :param object_getter: a function that returns the object that should be in
-            the collection
+            :param object_getter: a function that returns the object that 
+                should be in the collection
             :param object_cache: a list that will be used to store the result
-            of object_getter, to prevent multiple calls of object_getter
+                of object_getter, to prevent multiple calls of object_getter
             """
 
             def collection_getter():

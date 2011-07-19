@@ -41,8 +41,9 @@ def get_application_admin():
 
 
 class ApplicationAdmin(QtCore.QObject):
-    """The Application Admin class defines how the application should look
-like, it also ties python classes to their associated admin classes.  It's
+    """The ApplicationAdmin class defines how the application should look
+like, it also ties Python classes to their associated 
+:class:`camelot.admin.object_admin.ObjectAdmin` class or subclass.  It's
 behaviour can be steered by overwriting its static attributes or it's
 methods :
 
@@ -57,17 +58,18 @@ methods :
 
 .. attribute:: backup_mechanism
 
-    A subclass of :class:`camelot.core.backup.BackupMechanism` that enables the application
-    to perform backups an restores.
+    A subclass of :class:`camelot.core.backup.BackupMechanism` that enables 
+    the application to perform backups an restores.
     
 .. attribute:: database_profile_wizard
     
-    The wizard that should be used to create new database profiles
+    The wizard that should be used to create new database profiles. Defaults
+    to :class:`camelot.view.database_selection.ProfileWizard`
     
 .. attribute:: database_selection
 
     if this is set to True, present the user with a database selection
-    wizard prior to starting the application.
+    wizard prior to starting the application.  Defaults to :keyword:`False`.
     """
 
     backup_mechanism = BackupMechanism
@@ -89,6 +91,8 @@ methods :
     database_selection = False
 
     def __init__(self):
+        """Construct an ApplicationAdmin object and register it as the 
+        prefered ApplicationAdmin to use througout the application"""
         QtCore.QObject.__init__(self)
         _application_admin_.append(self)
         #
@@ -97,20 +101,35 @@ methods :
         self._object_admin_cache = {}
 
     def register(self, entity, admin_class):
+        """Associate a certain ObjectAdmin class with another class.  This
+        ObjectAdmin will be used as default to render object the specified
+        type.
+        
+        :param entity: :class:`class`
+        :param admin_class: a subclass of 
+            :class:`camelot.admin.object_admin.ObjectAdmin` or
+            :class:`camelot.admin.entity_admin.EntityAdmin`
+        """
         self.admins[entity] = admin_class
 
     @model_function
     def get_sections(self):
-        """A list of sections, to be displayed in the left panel.
+        """A list of :class:`camelot.admin.section.Section` objects,
+        these are the sections to be displayed in the left panel.
         
-            .. image:: /_static/picture2.png
+        .. image:: /_static/picture2.png
         """
         from camelot.admin.section import structure_to_sections
         return structure_to_sections(self.sections)
 
     def get_entity_admin(self, entity):
-        """Get the default entity admin for this entity, return None, if not
-        existant"""
+        """Get the default :class:`camelot.admin.object_admin.ObjectAdmin` class
+        for a specific entity, return None, if not known.  The ObjectAdmin
+        should either be registered through the :meth:`register` method or be
+        defined as an inner class with name :keyword:`Admin` of the entity.
+
+        :param entity: a :class:`class`
+        """
 
         admin_class = None
         try:
@@ -127,12 +146,13 @@ methods :
                 self._object_admin_cache[admin_class] = admin
                 return admin
 
-    def get_entity_query(self, entity):
-        """Get the root query for an entity"""
-        return entity.query
-
     def create_main_window(self):
-        """create_main_window"""
+        """Create the main window that will be shown when the application
+        starts up.  By default, returns an instance of 
+         :class:`camelot.view.mainwindow.MainWindow`
+         
+        :return: a :class:`PyQt4.QtGui.QWidget`
+        """
         from camelot.view.mainwindow import MainWindow
         mainwindow = MainWindow(self)
         shortcut_versions = QtGui.QShortcut(
@@ -150,32 +170,24 @@ methods :
 
     @QtCore.pyqtSlot()
     def show_versions(self):
+        """Pops up a messagebox showing the version of certain
+        libraries used.  This is for debugging purposes."""
         logger.debug('showing about message box with versions')
         abtmsg = self.get_versions()
         QtGui.QMessageBox.about(None, 'Versions', abtmsg)
         logger.debug('about message with versions closed')
 
-    def get_entities_and_queries_in_section(self, section):
-        """:return: a list of tuples of (admin, query) instances related to
-        the entities in this section.
-        """
-        result = [(self.get_entity_admin(e), self.get_entity_query(e))
-                  for e, a in self.admins.items()
-                  if hasattr(a, 'section')
-                  and a.section == section]
-        result.sort(cmp = lambda x, y: cmp(x[0].get_verbose_name_plural(),
-                                           y[0].get_verbose_name_plural()))
-        return result
-
     def get_actions(self):
-        """:return: a list of camelot.admin.application_action.ApplicationAction objects
-        that should be added to the menu and the icon bar for this application
+        """
+        :return: a list of :class:`camelot.admin.application_action.ApplicationAction` objects
+            that should be added to the menu and the icon bar for this application
         """
         return []
 
     def get_name(self):
-        """:return: the name of the application, by default this is the class
-                    attribute name"""
+        """
+        :return: the name of the application, by default this is the class
+            attribute name"""
         return self.name
 
     def get_version(self):
@@ -184,12 +196,12 @@ methods :
         return self.version
 
     def get_icon(self):
-        """:return: the QIcon that should be used for the application"""
+        """:return: the :class:`camelot.view.art.Icon` that should be used for the application"""
         from camelot.view.art import Icon
         return Icon('tango/32x32/apps/system-users.png').getQIcon()
 
     def get_splashscreen(self):
-        """:return: a QtGui.QPixmap to be used as splash screen"""
+        """:return: a :class:`PyQt4.QtGui.QPixmap` to be used as splash screen"""
         from camelot.view.art import Pixmap
         return Pixmap('splashscreen.png').getQPixmap()
 
@@ -200,7 +212,7 @@ methods :
         return 'conceptive.be'
 
     def get_help_url(self):
-        """:return: a QUrl pointing to the index page for help"""
+        """:return: a :class:`PyQt4.QtCore.QUrl` pointing to the index page for help"""
         from PyQt4.QtCore import QUrl
         return QUrl('http://www.python-camelot.com/docs.html')
 
@@ -209,7 +221,7 @@ methods :
         return None
 
     def get_affiliated_url(self):
-        """:return: a QUrl pointing to an affiliated webpage
+        """:return: a :class:`PyQt4.QtCore.QUrl` pointing to an affiliated webpage
 
         When this method returns a QUrl, an additional item will be available
         in the 'Help' menu, when clicked the system browser will be opened
@@ -221,7 +233,7 @@ methods :
         return None
 
     def get_remote_support_url(self):
-        """:return: a QUrl pointing to a page to get remote support
+        """:return: a :class:`PyQt4.QtCore.QUrl` pointing to a page to get remote support
 
         When this method returns a QUrl, an additional item will be available
         in the 'Help' menu, when clicked the system browser will be opened
