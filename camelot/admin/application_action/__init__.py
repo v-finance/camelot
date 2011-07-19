@@ -141,7 +141,7 @@ class EntityAction(ApplicationAction):
         :param notification: if set to True, this action will be visually 
         animated to attract the users attention. Defaults to False.
         """
-        super(EntityAction, self).__init__()
+        super(EntityAction, self).__init__(verbose_name, icon)
         
         from camelot.admin.application_admin import get_application_admin
         self.parent_admin = parent_admin or get_application_admin()

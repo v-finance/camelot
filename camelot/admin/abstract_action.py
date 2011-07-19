@@ -40,6 +40,15 @@ class AbstractAction(object):
     """Helper class with methods to be used by all Action classes
     """
 
+    def __init__(self, name, icon=None):
+        """
+        :param name: the name of the action as displayed to the user
+        :param icon: a :class:`camelot.view.art.Icon` to be used to display the
+            action
+        """
+        self._name = name
+        self._icon = icon
+        
     def get_icon(self):
         """:return: a camelot.view.art.Icon object"""        
         return self._icon or Icon( 'tango/22x22/categories/applications-system.png' )
