@@ -32,7 +32,8 @@ from camelot.admin.validator.entity_validator import EntityValidator
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
-This allows for much more introspection than the standard ObjectAdmin.
+This allows for much more introspection than the standard 
+:class:`camelot.admin.object_admin.ObjectAdmin`.
     
 It has additional class attributes that customise its behaviour.
 
@@ -40,19 +41,19 @@ It has additional class attributes that customise its behaviour.
 
 .. attribute:: list_filter
 
-A list of fields that should be used to generate filters for in the table
-view.  If the field named is a one2many, many2one or many2many field, the
-field name should be followed by a field name of the related entity ::
+    A list of fields that should be used to generate filters for in the table
+    view.  If the field named is a one2many, many2one or many2many field, the
+    field name should be followed by a field name of the related entity ::
 
-    class Project(Entity):
-      oranization = OneToMany('Organization')
-      name = Field(Unicode(50))
+        class Project(Entity):
+            oranization = OneToMany('Organization')
+            name = Field(Unicode(50))
     
-      class Admin(EntityAdmin):
-        list_display = ['organization']
-        list_filter = ['organization.name']
+          class Admin(EntityAdmin):
+              list_display = ['organization']
+              list_filter = ['organization.name']
 
-.. image:: ../_static/filter/group_box_filter.png
+    .. image:: /_static/filter/group_box_filter.png
 
 **Copying**
 
@@ -67,35 +68,35 @@ field name should be followed by a field name of the related entity ::
 
 .. attribute:: copy_exclude
 
-   A list of fields that should not be copied when the user presses the copy button::
+    A list of fields that should not be copied when the user presses the copy button::
 
-       copy_exclude = ['name']
+        copy_exclude = ['name']
 
-The fields that form the primary key of the object will be excluded by default.
+    The fields that form the primary key of the object will be excluded by default.
 
 **Searching**
 
 .. attribute:: list_search
 
-A list of fields that should be searched when the user enters something in
-the search box in the table view.  By default all fields are
-searched for which Camelot can do a conversion of the entered string to the
-datatype of the underlying column.  
+    A list of fields that should be searched when the user enters something in
+    the search box in the table view.  By default all fields are
+    searched for which Camelot can do a conversion of the entered string to the
+    datatype of the underlying column.  
 
-For use with one2many, many2one or many2many fields, the same rules as for the 
-list_filter attribute apply
+    For use with one2many, many2one or many2many fields, the same rules as for the 
+    list_filter attribute apply
 
 .. attribute:: search_all_fields
 
-Defaults to True, meaning that by default all searchable fields should be
-searched.  If this is set to False, one should explicitely set the list_search
-attribute to enable search.
+    Defaults to True, meaning that by default all searchable fields should be
+    searched.  If this is set to False, one should explicitely set the list_search
+    attribute to enable search.
 
 .. attribute:: expanded_list_search
 
-A list of fields that will be searchable through the expanded search.  When set 
-to None, all the fields in list_display will be searchable.  Use this attribute
-to limit the number of search widgets.  Defaults to None.
+    A list of fields that will be searchable through the expanded search.  When set 
+    to None, all the fields in list_display will be searchable.  Use this attribute
+    to limit the number of search widgets.  Defaults to None.
  
     """
 

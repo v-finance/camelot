@@ -27,7 +27,7 @@ from one2manydelegate import One2ManyDelegate
 
 class ManyToManyDelegate(One2ManyDelegate):
     """
-  .. image:: ../_static/manytomany.png
+  .. image:: /_static/manytomany.png
   """
 
     def createEditor(self, parent, option, index):

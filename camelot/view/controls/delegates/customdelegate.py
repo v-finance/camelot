@@ -42,11 +42,11 @@ def DocumentationMetaclass(name, bases, dct):
 
 .. _delegate-%s:
 
-.. image:: ../_static/delegates/%s_unselected_disabled.png
-.. image:: ../_static/delegates/%s_unselected_editable.png
+.. image:: /_static/delegates/%s_unselected_disabled.png
+.. image:: /_static/delegates/%s_unselected_editable.png
 
-.. image:: ../_static/delegates/%s_selected_disabled.png
-.. image:: ../_static/delegates/%s_selected_editable.png
+.. image:: /_static/delegates/%s_selected_disabled.png
+.. image:: /_static/delegates/%s_selected_editable.png
 
 """%(name, name, name, name, name,)
     import inspect
@@ -82,7 +82,7 @@ def DocumentationMetaclass(name, bases, dct):
         for state, attrs in states.items():
             for i,attr in enumerate(attrs):
                 if i==0:
-                    image = '.. image:: ../_static/editors/%s_%s.png'%(dct['editor'].__name__, state)
+                    image = '.. image:: /_static/editors/%s_%s.png'%(dct['editor'].__name__, state)
                 else:
                     image = ''
                 dct['__doc__'] = dct['__doc__'] + row_format%(attr, image) + '\n'

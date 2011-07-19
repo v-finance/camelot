@@ -321,7 +321,7 @@ for field_type in field_types:
     delegate = field_attributes['delegate']
     row = row_format%(field_type.__name__,
                       ':ref:`%s <delegate-%s>`'%(delegate.__name__, delegate.__name__),
-                      '.. image:: ../_static/editors/%s_editable.png'%(delegate.editor.__name__))
+                      '.. image:: /_static/editors/%s_editable.png'%(delegate.editor.__name__))
     doc += row + """
 """ + row_separator + """
 """

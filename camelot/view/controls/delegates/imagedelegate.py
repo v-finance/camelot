@@ -29,7 +29,7 @@ from PyQt4.QtCore import Qt
 
 class ImageDelegate(FileDelegate):
     """
-    .. image:: ../_static/image.png
+    .. image:: /_static/image.png
     """
     
     editor = editors.ImageEditor

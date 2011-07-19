@@ -45,7 +45,7 @@ to render a form::
     class Admin(EntityAdmin):
       form_display = Form(['title', 'short_description', 'director', 'release_date'])
 
-..image:: ../_static/form/form.png
+..image:: /_static/form/form.png
 """
 
     def __init__( self, content, scrollbars = False, columns = 1  ):
@@ -321,7 +321,7 @@ class TabForm( Form ):
     from = TabForm([('First tab', ['title', 'short_description']),
                     ('Second tab', ['director', 'release_date'])])
 
-  .. image:: ../_static/form/tab_form.png
+  .. image:: /_static/form/tab_form.png
     """
 
     NORTH = 'North'
@@ -421,7 +421,7 @@ class HBoxForm( Form ):
 
     form = forms.HBoxForm([['title', 'short_description'], ['director', 'release_date']])
 
-  .. image:: ../_static/form/hbox_form.png
+  .. image:: /_static/form/hbox_form.png
 
   """
 
@@ -468,7 +468,7 @@ class VBoxForm( Form ):
 
     form = forms.VBoxForm([['title', 'short_description'], ['director', 'release_date']])
 
-  .. image:: ../_static/form/vbox_form.png
+  .. image:: /_static/form/vbox_form.png
   """
 
     def __init__( self, rows ):
@@ -520,7 +520,7 @@ class GridForm( Form ):
 
     GridForm([['title', 'short_description'], ['director','release_date']])
 
-  .. image:: ../_static/form/grid_form.png
+  .. image:: /_static/form/grid_form.png
   """
 
     def __init__( self, grid, nomargins = False ):
@@ -597,7 +597,7 @@ class GroupBoxForm( Form ):
     class Admin(EntityAdmin):
       form_display = GroupBoxForm('Movie', ['title', 'short_description'])
 
-  .. image:: ../_static/form/group_box_form.png
+  .. image:: /_static/form/group_box_form.png
   """
 
     def __init__( self, title, content, scrollbars=None, min_width=None, min_height=None, columns=1 ):

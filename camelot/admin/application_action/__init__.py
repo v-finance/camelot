@@ -35,11 +35,10 @@ class ApplicationAction(AbstractAction):
     An action that can be triggered by the user at the application level.
     
     .. attribute:: Options
-
-    Use the class attribute Options, to let the user enter some options
-    for the action.  Where options is a class with and admin definition.
-    The admin definition will be used to pop up an interface screen for 
-    an object of type Options. Defaults to None.
+        Use the class attribute Options, to let the user enter some options
+        for the action.  Where options is a class with and admin definition.
+        The admin definition will be used to pop up an interface screen for 
+        an object of type Options. Defaults to None.
     """
 
     Options = None
@@ -57,10 +56,6 @@ class ApplicationAction(AbstractAction):
     
     def get_verbose_name(self):
         """:return: the name of the action, as it can be shown to the user"""
-        raise NotImplementedError()
-    
-    def get_icon(self):
-        """:return: a camelot.view.art.Icon object"""
         raise NotImplementedError()
 
     def is_notification(self):
@@ -88,9 +83,6 @@ class ApplicationActionFromGuiFunction( ApplicationAction ):
         
     def run(self, parent):
         self._gui_function(parent)
-        
-    def get_icon(self):
-        return self._icon
     
     def get_verbose_name(self):
         return self._verbose_name
@@ -98,7 +90,11 @@ class ApplicationActionFromGuiFunction( ApplicationAction ):
 class ApplicationActionFromModelFunction( ApplicationActionFromGuiFunction ):
     """Convert a function that is supposed to run in the model thread to an ApplicationAction"""
 
-    def __init__( self, name, model_function, icon = None, session_flush=False ):
+    def __init__( self, 
+                  name, 
+                  model_function = None, 
+                  icon = None, 
+                  session_flush=False ):
         """
         :param model_function: a function that has one argument, the options requested by the user
         :param session_flush: flush all objects in the session and refresh them in the views
@@ -107,6 +103,12 @@ class ApplicationActionFromModelFunction( ApplicationActionFromGuiFunction ):
         self._model_function = model_function
         self._session_flush = session_flush
 
+    def model_run(self, options):
+        """This method will be called in the Model thread when the user initiates the
+        action, this is the place to do all kind of model manipulation or querying things"""
+        if self._model_function:
+            self._model_function( options )
+            
     def run( self, parent = None ):
         from camelot.view.model_thread import post
         options = ApplicationAction.run( self, parent )

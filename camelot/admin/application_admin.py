@@ -42,31 +42,32 @@ def get_application_admin():
 
 class ApplicationAdmin(QtCore.QObject):
     """The Application Admin class defines how the application should look
-    like, it also ties python classes to their associated admin classes.  It's
-    behaviour can be steered by overwriting its static attributes or it's
-    methods :
+like, it also ties python classes to their associated admin classes.  It's
+behaviour can be steered by overwriting its static attributes or it's
+methods :
 
-    .. attribute:: name
+.. attribute:: name
 
     The name of the application, as it will appear in the title of the main
     window.
     
-    .. attribute:: version
+.. attribute:: version
     
     A string with the version of the application
 
-    .. attribute:: backup_mechanism
+.. attribute:: backup_mechanism
 
-    A subclass of camelot.core.backup.BackupMechanism that enables the application
+    A subclass of :class:`camelot.core.backup.BackupMechanism` that enables the application
     to perform backups an restores.
     
-    .. attribute:: database_profile_wizard
+.. attribute:: database_profile_wizard
     
-    The wizard that should can be used to create new database profiles
+    The wizard that should be used to create new database profiles
     
-    .. attribute:: database_selection
-        if this is set to True, present the user with a database selection
-        wizard prior to starting the application.
+.. attribute:: database_selection
+
+    if this is set to True, present the user with a database selection
+    wizard prior to starting the application.
     """
 
     backup_mechanism = BackupMechanism
@@ -102,7 +103,7 @@ class ApplicationAdmin(QtCore.QObject):
     def get_sections(self):
         """A list of sections, to be displayed in the left panel.
         
-            .. image:: ../_static/picture2.png
+            .. image:: /_static/picture2.png
         """
         from camelot.admin.section import structure_to_sections
         return structure_to_sections(self.sections)
@@ -310,7 +311,7 @@ class ApplicationAdmin(QtCore.QObject):
     
     def dump_state(self):
         """Dump the state of the application to the output, this method is
-        triggered by pressing Ctrl-Alt-D in the GUI"""
+        triggered by pressing :kbd:`Ctrl-Alt-D` in the GUI"""
         from camelot.view.model_thread import post
         from camelot.view.register import dump_register
         from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -359,6 +360,3 @@ class ApplicationAdmin(QtCore.QObject):
         from camelot.view.wizard.backup import RestoreWizard
         wizard = RestoreWizard(self.backup_mechanism, main_window)
         wizard.exec_()
-
-
-

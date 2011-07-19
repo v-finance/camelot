@@ -226,7 +226,7 @@ Overwrite the html function to customize the html that should be shown::
 
 will put a print button on the form :
 
-.. image:: ../_static/formaction/print_html_form_action.png
+.. image:: /_static/formaction/print_html_form_action.png
 
 the rendering of the html can be customised using the HtmlDocument attribute :
 
@@ -243,7 +243,7 @@ the page size, the default is QPrinter.A4
 
 the page orientation, the default QPrinter.Portrait
 
-.. image:: ../_static/simple_report.png
+.. image:: /_static/simple_report.png
     """
 
     HtmlDocument = QtGui.QTextDocument

@@ -37,7 +37,7 @@ logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
 class Many2OneDelegate(CustomDelegate):
     """Custom delegate for many 2 one relations
 
-  .. image:: ../_static/manytoone.png
+  .. image:: /_static/manytoone.png
 
   Once an item has been selected, it is represented by its unicode representation
   in the editor or the table.  So the related classes need an implementation of

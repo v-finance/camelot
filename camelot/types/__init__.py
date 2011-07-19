@@ -51,7 +51,7 @@ class VirtualAddress(types.TypeDecorator):
     eg: ``('email','project-camelot@conceptive.be')`` is stored as
     ``email://project-camelot@conceptive.be``
   
-    .. image:: ../_static/virtualaddress_editor.png
+    .. image:: /_static/virtualaddress_editor.png
     """
     
     impl = types.Unicode
@@ -102,7 +102,7 @@ class Code(types.TypeDecorator):
   
     eg: ``['08', 'AB']`` is stored as ``08.AB``
     
-    .. image:: ../_static/editors/CodeEditor_editable.png
+    .. image:: /_static/editors/CodeEditor_editable.png
     """
     
     impl = types.Unicode
@@ -162,7 +162,7 @@ class Rating(types.TypeDecorator):
       title = Field(Unicode(60), required=True)
       rating = Field(camelot.types.Rating())
       
-  .. image:: ../_static/editors/StarEditor_editable.png
+  .. image:: /_static/editors/StarEditor_editable.png
 """
     
     impl = types.Integer
@@ -171,7 +171,7 @@ class RichText(types.TypeDecorator):
     """RichText fields are unlimited text fields which contain html.  The html will be
   rendered in a rich text editor.  
   
-    .. image:: ../_static/editors/RichTextEditor_editable.png
+    .. image:: /_static/editors/RichTextEditor_editable.png
 """
     
     impl = types.UnicodeText
@@ -201,7 +201,7 @@ RR is red, GG is green BB is blue::
     class MovieType(Entity):
         color = Field(camelot.types.Color())
 
-.. image:: ../_static/editors/ColorEditor_editable.png  
+.. image:: /_static/editors/ColorEditor_editable.png  
   
 The colors are stored in the database as strings.
   
@@ -264,7 +264,7 @@ class Enumeration(types.TypeDecorator):
       state = Field(camelot.types.Enumeration([(1,'planned'), (2,'recording'), (3,'finished'), (4,'canceled')]), 
                                               index=True, required=True, default='planning')
   
-  .. image:: ../_static/editors/ChoicesEditor_editable.png  
+  .. image:: /_static/editors/ChoicesEditor_editable.png  
   
   If None should be a possible value of the enumeration, add (None, None) to the list of
   possible enumerations.  None will be presented as empty in the GUI.
@@ -330,7 +330,7 @@ class File(types.TypeDecorator):
     class Movie(Entity):
       script = Field(camelot.types.File(upload_to='script'))
       
-  .. image:: ../_static/editors/FileEditor_editable.png
+  .. image:: /_static/editors/FileEditor_editable.png
   
   Retrieving the actual storage from a File field can be a little cumbersome.
   The easy way is taking it from the field attributes, in which it will be
@@ -404,7 +404,7 @@ class Image(File):
   The Image field type provides the same functionallity as the File field type, but
   the files stored should be images.
   
-  .. image:: ../_static/editors/ImageEditor_editable.png
+  .. image:: /_static/editors/ImageEditor_editable.png
     """
   
     stored_file_implementation = StoredImage

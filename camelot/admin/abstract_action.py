@@ -39,6 +39,10 @@ LOGGER = logging.getLogger('camelot.admin.abstract_action')
 class AbstractAction(object):
     """Helper class with methods to be used by all Action classes
     """
+
+    def get_icon(self):
+        """:return: a camelot.view.art.Icon object"""        
+        return self._icon or Icon( 'tango/22x22/categories/applications-system.png' )
     
     def get_description(self):
         """
@@ -58,7 +62,7 @@ class AbstractAction(object):
             
             class OptionsPage(FormPage):
                 Data = self.Options
-                icon = self._icon
+                icon = self.get_icon()
                 title = self._name
                 sub_title = _('Please complete the options and continue')
                 
@@ -113,7 +117,7 @@ class PrintProgressDialog(ProgressDialog):
         
 class AbstractPrintHtmlAction(AbstractAction):
     """
-.. image:: ../_static/formaction/print_html_form_action.png
+.. image:: /_static/formaction/print_html_form_action.png
 
 the rendering of the html can be customised using the HtmlDocument attribute :
 
@@ -130,7 +134,7 @@ the page size, the default is QPrinter.A4
 
 the page orientation, the default QPrinter.Portrait
 
-.. image:: ../_static/simple_report.png
+.. image:: /_static/simple_report.png
     """
 
     HtmlDocument = QtGui.QTextDocument

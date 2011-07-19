@@ -32,7 +32,7 @@ class Section(object):
     class MyApplicationAdmin(ApplicationAdmin):
       sections = [Section('configuration')]
 
-  .. image:: ../_static/configuration_section.png
+  .. image:: /_static/configuration_section.png
 
     """
 

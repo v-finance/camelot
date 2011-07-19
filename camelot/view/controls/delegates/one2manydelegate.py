@@ -33,7 +33,7 @@ logger = logging.getLogger( 'camelot.view.controls.delegates.one2manydelegate' )
 class One2ManyDelegate( CustomDelegate ):
     """Custom delegate for many 2 one relations
   
-  .. image:: ../_static/onetomany.png  
+  .. image:: /_static/onetomany.png  
   """
 
     __metaclass__ = DocumentationMetaclass

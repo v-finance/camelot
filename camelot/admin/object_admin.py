@@ -67,73 +67,73 @@ be specified using the verbose_name attribute.
 
 .. attribute:: verbose_name
 
-A human-readable name for the object, singular ::
+    A human-readable name for the object, singular ::
 
-    verbose_name = _('movie')
+        verbose_name = _('movie')
 
-If this isn't given, the class name will be used
+    If this isn't given, the class name will be used
 
 .. attribute:: verbose_name_plural
 
-A human-readable name for the object, plural ::
+    A human-readable name for the object, plural ::
 
-    verbose_name_plural = _('movies')
+        verbose_name_plural = _('movies')
 
-If this isn't given, Camelot will use verbose_name + "s"
+    If this isn't given, Camelot will use verbose_name + "s"
 
 **Fields displayed**
 
 .. attribute:: list_display
 
-a list with the fields that should be displayed in a table view
+    a list with the fields that should be displayed in a table view
 
 .. attribute:: list_columns_frozen
 
-the number of columns on the left of the tableview that should be frozen
-(don't dissapear when the user uses the horizontal scroll bar), defaults
-to zero
+    the number of columns on the left of the tableview that should be frozen
+    (don't dissapear when the user uses the horizontal scroll bar), defaults
+    to zero
 
 .. attribute:: lines_per_row
 
-An integer number specifying the height of a row in the table view, expressed
-as the number of lines of text it should be able to display.  Defaults to 1.
+    An integer number specifying the height of a row in the table view, expressed
+    as the number of lines of text it should be able to display.  Defaults to 1.
 
 .. attribute:: form_display
 
-a list with the fields that should be displayed in a form view, defaults to
-the same fields as those specified in list_display ::
+    a list with the fields that should be displayed in a form view, defaults to
+    the same fields as those specified in list_display ::
 
-    class Admin(EntityAdmin):
-      form_display = ['title', 'rating', 'cover']
+        class Admin(EntityAdmin):
+            form_display = ['title', 'rating', 'cover']
 
-instead of telling which forms to display. It is also possible to define
-the form itself ::
+    instead of telling which fields to display. It is also possible to define
+    the form itself ::
 
-    from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
+        from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
 
-    class Admin(EntityAdmin):
-      form_display = TabForm([
-        ('Movie', Form([
-          HBoxForm([['title', 'rating'], WidgetOnlyForm('cover')]),
-          'short_description',
-          'releasedate',
-          'director',
-          'script',
-          'genre',
-          'description', 'tags'], scrollbars=True)),
-        ('Cast', WidgetOnlyForm('cast'))
-      ])
+        class Admin(EntityAdmin):
+            form_display = TabForm([
+            ('Movie', Form([
+              HBoxForm([['title', 'rating'], WidgetOnlyForm('cover')]),
+              'short_description',
+              'releasedate',
+              'director',
+              'script',
+              'genre',
+              'description', 'tags'], scrollbars=True)),
+            ('Cast', WidgetOnlyForm('cast'))
+          ])
 
 **Behaviour**
 
 .. attribute:: save_mode
 
-Specifies when the data should be send from the view to the model and flushed
-to the database.  The default mode is 'on_change', meaning that every change
-in the view will be send immediately to the database.  Other possibilities are :
+    Specifies when the data should be send from the view to the model and flushed
+    to the database.  The default mode is 'on_change', meaning that every change
+    in the view will be send immediately to the database.  Other possibilities are :
 
-  * 'on_leave' : the data will be send from the view to the model when the view
-    is closed, eg. : the form is closed.
+      * 'on_leave' : the data will be send from the view to the model when the view
+                     is closed, eg. : the form is closed.
 
 .. attribute:: delete_mode
 
