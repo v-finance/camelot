@@ -1,6 +1,11 @@
 Trunk
 -----
 
+ * UserException
+
+Release 11.05.13
+----------------
+
  * Faster opening of forms
 
  * 'Home' tab with application actions
