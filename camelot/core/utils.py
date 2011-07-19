@@ -213,6 +213,9 @@ class ugettext_lazy(object):
     
     def __ne__(self, other_string):
         return not self.__eq__( other_string )
+    
+    def __repr__(self):
+        return u"_('%s')"%self._string_to_translate
 
 def xls2list(xf):
     import xlrd
