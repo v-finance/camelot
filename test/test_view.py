@@ -1083,32 +1083,3 @@ class CamelotSchemaTest(SchemaTest):
 
     images_path = static_images_path
 
-
-if __name__ == '__main__':
-    logger.info('running unit tests')
-    app = get_application()
-    runner=unittest.TextTestRunner(verbosity=2)
-    snippets_test =  unittest.makeSuite(SnippetsTest, 'test')
-    runner.run(snippets_test)
-#  proxy_test =  unittest.makeSuite(ProxyEntityTest, 'test')
-#  runner.run(proxy_test)
-#  proxy_one_to_many_test =  unittest.makeSuite(ProxyOneToManyTest, 'test')
-#  runner.run(proxy_one_to_many_test)
-    schema_test =  unittest.makeSuite(CamelotSchemaTest, 'test')
-    runner.run(schema_test)
-
-    form_action_test =  unittest.makeSuite(FormActionTest, 'test')
-    runner.run(form_action_test)
-    editors_test =  unittest.makeSuite(EditorsTest, 'test')
-    runner.run(editors_test)
-    editor_test =  unittest.makeSuite(DelegateTest, 'test')
-    runner=unittest.TextTestRunner(verbosity=2)
-    runner.run(editor_test)
-    controls_test = unittest.makeSuite(ControlsTest, 'test')
-    runner.run(controls_test)
-    form_test = unittest.makeSuite(FormTest, 'test')
-    runner.run(form_test)
-    filter_test = unittest.makeSuite(FilterTest, 'test')
-    runner.run(filter_test)
-    entity_views_test = unittest.makeSuite(CamelotEntityViewsTest, 'test')
-    runner.run(entity_views_test)

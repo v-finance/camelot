@@ -14,6 +14,11 @@ class ViewUtilsCase(unittest.TestCase):
         result = datetime.date(2011,2,22)
         self.assertEqual( date_from_string('02222011'), result )
         self.assertEqual( date_from_string('02-22-2011'), result )
+        self.assertEqual( date_from_string('2-22-2011'), result )
+        self.assertEqual( date_from_string('2/22/2011'), result )
+        result = datetime.date(2011,2,2)
+        self.assertEqual( date_from_string('2/2/2011'), result )
+        self.assertEqual( date_from_string('2-2-2011'), result )
         
     def test_datetime_from_string(self):
         from camelot.view.utils import datetime_from_string
