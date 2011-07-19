@@ -22,7 +22,12 @@
 #
 #  ============================================================================
 
+import logging
 from optparse import OptionParser
+
+from camelot.core.conf import settings
+
+logging.basicConfig()
 
 #
 # Description of the application, out of which the help text as well as the
@@ -30,7 +35,8 @@ from optparse import OptionParser
 #
 
 description = """camelot_admin is a tool to assist in the creation and development of Camelot
-projects.
+projects.  Use this application without any options to start a GUI to create
+a new Camelot project.
 """
 
 usage = "usage: %prog [options] command"
@@ -94,7 +100,6 @@ def apidoc(source, destination):
 
     def document_directory(_arg, dirname, names):
         """create .rst files for a directory of source files"""
-        print dirname, is_module_directory( dirname )
         if is_module_directory( dirname ):
             targetdir = os.path.join( destination, dirname[len(source)+1:] )
             if not os.path.exists( targetdir ):
@@ -236,7 +241,6 @@ def startproject(project):
       
 def makemessages():
     print 'Not yet implemented'
-    import settings
     settings.setup_model()
     
     
@@ -244,11 +248,14 @@ commands = locals()
 
 def main():
     import camelot
+    from camelot.bin.meta import launch_meta_camelot
     parser = CommandOptionParser(description=description,
                                  usage=usage,
                                  version=camelot.__version__,)
     (_options, args) = parser.parse_args()
-    if not len(args)>=2:
+    if not len(args):
+        launch_meta_camelot()
+    elif not len(args)>=2:
         parser.print_help()
     else:
         command, command_args = args[0], args[1:] 

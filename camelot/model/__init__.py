@@ -31,7 +31,7 @@ from sqlalchemy.orm import scoped_session, create_session
 
 elixir.session = scoped_session( create_session )
 
-import settings
+from camelot.core.conf import settings
 
 metadata = MetaData()
 

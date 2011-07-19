@@ -26,6 +26,8 @@ from optparse import OptionParser
 from code import InteractiveConsole
 import sys
 
+from camelot.core.conf import settings
+
 #
 # Description of the application, out of which the help text as well as the
 # __doc__ strings can be generated
@@ -77,7 +79,7 @@ for command, desc in command_description:
         __doc__ += "    %s\n"%line
 
 __doc__ += """
-   .. image:: ../_static/schema.png
+   .. image:: /_static/schema.png
       :width: 400"""
 
 #
@@ -142,7 +144,6 @@ def schema_display(image_path='schema.png'):
     graph.write_png(image_path)
      
 def setup_model():
-    import settings
     settings.setup_model()
      
 def main():
@@ -164,7 +165,6 @@ def main():
         setup_model()
         schema_display()
     elif args[0] in ('version_control', 'db_version', 'version', 'upgrade'):
-        import settings
         from migrate.versioning.repository import Repository
         from migrate.versioning.schema import ControlledSchema
         from migrate.versioning.exceptions import DatabaseNotControlledError
