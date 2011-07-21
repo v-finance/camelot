@@ -26,6 +26,8 @@ Utility functions and classes to start a new Camelot project, this
 could be the start of MetaCamelot
 """
 
+import os
+
 from camelot.core.conf import settings
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.object_admin import ObjectAdmin
@@ -119,6 +121,7 @@ class MyApplicationAdmin(ApplicationAdmin):
                         items = [Memento, Translation])
                 ]
     '''),
+    
     ('__init__.py', ''),
     
     ('main.py', '''
@@ -190,3 +193,11 @@ class CreateNewProject( ApplicationActionFromModelFunction ):
                 ( feature[0],{ 'editable':True,
                                'delegate':feature[2],
                                'tooltip':feature[3]   } ) for feature in features)
+            
+    def model_run(self, options):
+        os.makedirs( os.path.join( options.source, options.module ) )
+        for filename, template in templates:
+            fp = open( os.path.join( options.source, options.module, filename ), 
+                       'w' )
+            fp.write( template )
+            fp.close()

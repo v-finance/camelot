@@ -216,29 +216,17 @@ def to_pyside(project):
     os.path.walk(output, translate_directory, None)
     
     
-def startproject(project):
-    import shutil, os, sys
-    if os.path.exists(project):
-        raise Exception('Directory %s allready exists, cannot start a project in it'%project)
+def startproject(module):
+    import os
+    from camelot.bin.meta import CreateNewProject
+    if os.path.exists(module):
+        raise Exception('Directory %s allready exists, cannot start a project in it'%module)
     
-    def ignore(_directory, content):
-        """ignore .svn files"""
-        for c in content:
-            if c.startswith('.'):
-                yield c
-                
-    # ignore is only supported as of python 2.6
-    v = sys.version_info
-    if v[0]>2 or (v[0]==2 and v[1]>=6):
-        shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
-                        project, ignore=ignore)
-    else:
-        shutil.copytree(os.path.join(os.path.dirname(__file__), '..', 'empty_project'), 
-                        project)    
-    # creating a repository doesn't seems to work when migrate is easy intalled
-    #from migrate.versioning.api import create
-    #create(os.path.join(project, 'repository'), project)
-      
+    options = CreateNewProject.Options()
+    options.module = module
+    action = CreateNewProject('')
+    action.model_run( options )
+
 def makemessages():
     print 'Not yet implemented'
     settings.setup_model()
@@ -263,5 +251,3 @@ def main():
     
 if __name__ == '__main__':
     main()
-
-
