@@ -89,10 +89,9 @@ class Pixmap(object):
         from PyQt4.QtGui import QPixmap
         qpm = QPixmap()
         success = qpm.loadFromData(resource_string(self._module_name,
-                                                   'art/%s'%(self._path),))
+                                                   'art/%s' % self._path))
         if not success:
-            msg = u'Could not load pixmap %s from camelot art library'
-            logger.warn(msg % self._path)
+            logger.warn(u'Could not load pixmap %s from camelot art library' % self._path)
         self._cached_pixmap = qpm
         return qpm
 
