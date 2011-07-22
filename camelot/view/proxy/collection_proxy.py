@@ -77,8 +77,11 @@ class DelayedProxy( object ):
     def __unicode__(self):
         collection = self._collection_getter()
         if collection:
-            return u','.join(list(unicode(o) or '' for o,_i in zip(collection,
-                                                                   range(3))))
+            try:
+               return u','.join(list(unicode(o) or '' for o,_i in zip(collection,
+                                                                      range(3))))
+            except TypeError, e:
+               logger.error( 'could not convert object to unicode' )
         return u''
 
 @model_function
