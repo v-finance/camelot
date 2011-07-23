@@ -81,7 +81,7 @@ class DelayedProxy( object ):
                return u','.join(list(unicode(o) or '' for o,_i in zip(collection,
                                                                       range(3))))
             except TypeError, e:
-               logger.error( 'could not convert object to unicode' )
+               logger.error( 'could not convert object to unicode', exc_info=e )
         return u''
 
 @model_function

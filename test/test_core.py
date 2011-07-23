@@ -1,3 +1,4 @@
+import unittest
 from camelot.test import ModelThreadTestCase
 
 class CoreCase(ModelThreadTestCase):
