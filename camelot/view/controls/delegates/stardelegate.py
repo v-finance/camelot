@@ -24,6 +24,7 @@
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
+from camelot.core.utils import variant_to_pyobject
 from customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.view.art import Icon
@@ -48,7 +49,7 @@ class StarDelegate(CustomDelegate):
     def paint(self, painter, option, index):
         painter.save()
         self.drawBackground(painter, option, index)
-        stars = index.model().data(index, Qt.EditRole).toInt()[0]
+        stars = variant_to_pyobject( index.model().data(index, Qt.EditRole) )
         
         background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
         

@@ -204,6 +204,9 @@ def to_pyside(project):
         source = replace_word( source, 'QtCore.QVariant(', '(' )
         source = replace_word( source, 'QVariant', '()' )
         source = replace_word( source, '.toByteArray()', '' )
+        source = replace_word( source, '.toString()', '' )
+        source = replace_word( source, '.toSize()', '' )
+        source = replace_word( source, '.toLongLong()', ', True' )
         source = replace_word( source, ').isValid()', ')' )
         output.write( source )
         
