@@ -752,7 +752,7 @@ be specified using the verbose_name attribute.
             def __init__(self, parent):
                 AbstractView.__init__(self, parent)
                 self.widget_layout = QtGui.QVBoxLayout()
-                self.widget_layout.setMargin(0)
+                self.widget_layout.setContentsMargins(0, 0, 0, 0)
                 title = _('New')
                 index = 0
                 self.form_view = admin.create_form_view(

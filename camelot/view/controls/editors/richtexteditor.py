@@ -40,7 +40,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.setObjectName( field_name )
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.setSpacing(0)
-        self.layout.setMargin(0)
+        self.layout.setContentsMargins( 0, 0, 0, 0)
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
                             QtGui.QSizePolicy.Expanding )
 

@@ -43,7 +43,7 @@ class AbstractManyToOneEditor(object):
             def __init__(self, parent):
                 super(SelectDialog, self).__init__(None)
                 layout = QtGui.QVBoxLayout()
-                layout.setMargin(0)
+                layout.setContentsMargin( 0, 0, 0, 0)
                 layout.setSpacing(0)
                 self.setWindowTitle('Select %s' % admin.get_verbose_name())
                 self.select = admin.create_select_view(

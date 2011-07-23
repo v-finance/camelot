@@ -43,7 +43,7 @@ class StarEditor(CustomEditor):
         self.setObjectName( field_name )
         self.setFocusPolicy(Qt.StrongFocus)
         layout = QtGui.QHBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
 
         self.starCount = 5

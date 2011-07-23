@@ -294,13 +294,13 @@ allow all languages
         self.save_button = QPushButton(_('Save profiles'))
 
         extension_buttons_layout = QHBoxLayout()
-        extension_buttons_layout.setMargin(0)
+        extension_buttons_layout.setContentsMargins(0, 0, 0, 0)
         extension_buttons_layout.addWidget(self.load_button)
         extension_buttons_layout.addWidget(self.save_button)
         extension_buttons_layout.addStretch()
 
         extension_layout = QVBoxLayout()
-        extension_layout.setMargin(0)
+        extension_layout.setContentsMargins(0, 0, 0, 0)
         extension_layout.addWidget(HSeparator())
         extension_layout.addLayout(extension_buttons_layout)
 

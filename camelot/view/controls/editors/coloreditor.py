@@ -36,7 +36,7 @@ class ColorEditor(CustomEditor):
         self.setObjectName( field_name )
         layout = QtGui.QVBoxLayout(self)
         layout.setSpacing(0)
-        layout.setMargin(0)
+        layout.setContentsMargins( 0, 0, 0, 0)
         self.color_button = QtGui.QPushButton(parent)
         self.color_button.setMaximumSize(QtCore.QSize(20, 20))
         layout.addWidget(self.color_button)

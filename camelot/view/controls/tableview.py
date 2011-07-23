@@ -491,7 +491,7 @@ class TableView( AbstractView  ):
         else:
             self.header = None
         widget_layout.setSpacing( 0 )
-        widget_layout.setMargin( 0 )
+        widget_layout.setContentsMargins(0, 0, 0, 0)
         splitter = QtGui.QSplitter( self )
         splitter.setObjectName('splitter')
         widget_layout.addWidget( splitter )
@@ -499,11 +499,11 @@ class TableView( AbstractView  ):
         filters_widget = QtGui.QWidget( self )
         self.table_layout = QtGui.QVBoxLayout()
         self.table_layout.setSpacing( 0 )
-        self.table_layout.setMargin( 0 )
+        self.table_layout.setContentsMargins(0, 0, 0, 0)
         self.table = None
         self.filters_layout = QtGui.QVBoxLayout()
         self.filters_layout.setSpacing( 0 )
-        self.filters_layout.setMargin( 0 )
+        self.filters_layout.setContentsMargins(0, 0, 0, 0)
         self.actions = None
         table_widget.setLayout( self.table_layout )
         filters_widget.setLayout( self.filters_layout )

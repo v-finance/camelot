@@ -91,7 +91,7 @@ class DateTimeEditor(CustomEditor):
         # focus proxy is needed to activate the editor with a single click
         self.setFocusProxy(self.dateedit)
         self.setLayout(layout)
-        layout.setMargin(0)
+        layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
 
     @QtCore.pyqtSlot(QtCore.QString)

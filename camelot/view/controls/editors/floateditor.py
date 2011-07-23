@@ -121,7 +121,7 @@ class FloatEditor(CustomEditor):
         self.releaseKeyboard()
 
         layout = QtGui.QHBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(self.spinBox)
         layout.addWidget(self.calculatorButton)

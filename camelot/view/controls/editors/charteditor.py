@@ -57,7 +57,7 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
         chart_frame.setFrameShape( self.Box )
         chart_frame.setContentsMargins( 1, 1, 1, 1 )
         chart_frame_layout = QtGui.QHBoxLayout()
-        chart_frame_layout.setMargin(0)
+        chart_frame_layout.setContentsMargins( 0, 0, 0, 0)
         chart_frame.setLayout( chart_frame_layout )
 
         # find out background color, because using a transparent
@@ -96,7 +96,7 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
         button_layout.addWidget( copy_button )
                 
         layout.addLayout( button_layout )
-        layout.setMargin(0)
+        layout.setContentsMargins( 0, 0, 0, 0)
         self.setLayout(layout)
         self.canvas.setSizePolicy(
             QtGui.QSizePolicy.Expanding,

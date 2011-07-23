@@ -74,7 +74,7 @@ class ImageEditor(FileEditor, WideEditor):
         #
         button_layout = QtGui.QVBoxLayout()
         button_layout.setSpacing(0)
-        button_layout.setMargin(0)
+        button_layout.setContentsMargins( 0, 0, 0, 0)
 
         self.open_button = QtGui.QToolButton()
         self.open_button.setIcon(self.open_icon)

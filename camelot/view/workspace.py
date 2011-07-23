@@ -511,7 +511,7 @@ class DesktopWorkspace(QtGui.QWidget):
         self._app_admin = app_admin
         
         layout = QtGui.QHBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
         # Setup the tab widget

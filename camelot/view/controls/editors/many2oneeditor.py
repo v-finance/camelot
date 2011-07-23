@@ -96,7 +96,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
 
         self.layout = QtGui.QHBoxLayout()
         self.layout.setSpacing(0)
-        self.layout.setMargin(0)
+        self.layout.setContentsMargins( 0, 0, 0, 0)
 
         # Search button
         self.search_button = QtGui.QToolButton()

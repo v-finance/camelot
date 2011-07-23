@@ -71,7 +71,7 @@ class SmileyEditor(CustomEditor):
 
         self.setFocusPolicy(Qt.StrongFocus)
         layout = QtGui.QHBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargin( 0, 0, 0, 0)
         layout.setSpacing(0)
         self.setAutoFillBackground(True)
         if not editable:

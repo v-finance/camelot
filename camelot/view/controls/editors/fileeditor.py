@@ -73,7 +73,7 @@ class FileEditor(CustomEditor):
         file edit widgets"""
         self.layout = QtGui.QHBoxLayout()
         self.layout.setSpacing(0)
-        self.layout.setMargin(0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
 
         # Save As button
         self.save_as_button = QtGui.QToolButton()

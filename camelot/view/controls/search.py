@@ -39,7 +39,7 @@ class SimpleSearchControl(AbstractSearchWidget):
         QtGui.QWidget.__init__(self, parent)
         layout = QtGui.QHBoxLayout()
         layout.setSpacing(0)
-        layout.setMargin(3)
+        layout.setContentsMargins(3, 3, 3, 3)
 
         # Search button
         self.search_button = QtGui.QToolButton()

@@ -108,7 +108,7 @@ an unneeded update of the db.
         self.spinBox.editingFinished.connect( self.spinbox_editing_finished )
 
         layout = QtGui.QHBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargin( 0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(self.spinBox)
         layout.addWidget(self.calculatorButton)

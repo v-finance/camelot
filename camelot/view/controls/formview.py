@@ -72,7 +72,7 @@ class FormWidget(QtGui.QWidget):
             widget_mapper.setSubmitPolicy(QtGui.QDataWidgetMapper.ManualSubmit)
         widget_layout = QtGui.QHBoxLayout()
         widget_layout.setSpacing(0)
-        widget_layout.setMargin(0)
+        widget_layout.setContentsMargins(0, 0, 0, 0)
         self._index = 0
         self._model = None
         self._form = None

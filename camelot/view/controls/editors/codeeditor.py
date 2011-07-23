@@ -69,7 +69,7 @@ class CodeEditor(CustomEditor):
         self.parts = parts
         self.part_editors = []
         layout = QtGui.QHBoxLayout()
-        layout.setMargin(0)
+        layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
         layout.setAlignment(Qt.AlignLeft)
         for i, part in enumerate(parts):

@@ -49,7 +49,7 @@ class VirtualAddressEditor(CustomEditor):
         self.setObjectName( field_name )
         self._address_type = address_type
         self.layout = QtGui.QHBoxLayout()
-        self.layout.setMargin(0)
+        self.layout.setContentsMargins( 0, 0, 0, 0)
         self.combo = QtGui.QComboBox()
         self.combo.addItems(camelot.types.VirtualAddress.virtual_address_types)
         self.combo.setEnabled(editable)
