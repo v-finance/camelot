@@ -23,7 +23,6 @@
 #  ============================================================================
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
 
 from editors.customeditor import draw_tooltip_visualization
 
