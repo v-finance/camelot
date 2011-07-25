@@ -36,10 +36,6 @@ from camelot.view.controls import delegates
 
 from camelot.view.main import Application
 
-def launch_meta_camelot():
-    app = MetaCamelotApplication( MetaCamelotAdmin() )
-    app.main()
-    
 class MetaSettings(object):
     """settings target to be used within MetaCamelot, when no real
     settings are available yet"""
@@ -52,7 +48,10 @@ class MetaSettings(object):
     def setup_model(self):
         pass
         
-settings.append( MetaSettings() )
+def launch_meta_camelot():
+    settings.append( MetaSettings() )
+    app = MetaCamelotApplication( MetaCamelotAdmin() )
+    app.main()
 
 class MetaCamelotAdmin( ApplicationAdmin ):
     """ApplicationAdmin class to be used within meta camelot"""
