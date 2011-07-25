@@ -223,32 +223,15 @@ class Application(QtCore.QObject):
             exc_info = exception.register_exception( logger, 'exception in initialization', e )
             self.initialization_exception( exc_info )
 
-def main(application_admin,
-         initialization=lambda:None,
-         pre_initialization=lambda:None):
+def main(application_admin):
     """shortcut main function, call this function to start the GUI interface with minimal hassle
     and without the need to construct an Application object.  If you need to customize the initialization
     process, construct an Application subclass and use it's main method.
 
-    @param application_admin: object of type ApplicationAdmin (as defined in application_admin.py)
+    :param application_admin: object of type ApplicationAdmin (as defined in application_admin.py)
     that specifies the look of the GUI interface
-    @param initialization: function that will be called during the appearance of the splash
-    screen, put all time consuming initialization here.  this function will be called after the
-    model thread has been started.
-    @param pre-initialization: function that will be called before the model thread has been started,
-    but after the QApplication has been created.  This function can be used to run a configuration
-    wizard before a connection to the database was made or any gui element has been constructed.
     """
-
-    class ShortcutApplication(Application):
-
-        def initialization(self):
-            initialization()
-
-        def pre_initialization(self):
-            pre_initialization()
-
-    app = ShortcutApplication(application_admin)
+    app = Application(application_admin)
     app.main()
 
 if __name__ == '__main__':
