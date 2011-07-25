@@ -174,7 +174,7 @@ class TableViewAction(EntityAction):
 
     def run(self, parent):
         """:return: a table view that can be added to the workspace"""
-        return self.admin.create_table_view(parent)
+        return self.admin.create_table_view(parent=parent)
         
 class NewViewAction(EntityAction):
     """An application action that opens a new view for an Entity"""

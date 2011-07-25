@@ -31,7 +31,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-import sip
+#import sip
 
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
@@ -104,14 +104,16 @@ class FormWidget(QtGui.QWidget):
         if widget_mapper:
             widget_mapper.clearMapping()
 
+    @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex  )
     def _data_changed(self, index_from, index_to):
         #@TODO: only revert if this form is in the changed range
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             widget_mapper.revert()
-        if not sip.isdeleted(self):
-            self.changed_signal.emit()
+        #if not sip.isdeleted(self):
+        self.changed_signal.emit()
 
+    @QtCore.pyqtSlot()
     def _layout_changed(self):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:

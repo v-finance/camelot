@@ -23,6 +23,7 @@
 #  ============================================================================
 
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
 from editors.customeditor import draw_tooltip_visualization
 
@@ -34,6 +35,9 @@ class DecoratedLineEdit(QtGui.QLineEdit):
      * a validity, which will trigger the background color
     
     Use the user_input method to get the text that was entered by the user. 
+    
+    Note : since QT 4.7 the background text could be replaced with the
+    setPlaceholderText on a QLineEdit
     """
       
     arrow_down_key_pressed = QtCore.pyqtSignal()

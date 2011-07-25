@@ -22,11 +22,11 @@
 #
 #  ============================================================================
 '''
-Global registry to register than an object should
-be scheduled for garbage collection, when an other
-object is destroyed.
+Global registry to register that an Python Object should
+be scheduled for garbage collection, when a
+QObject is destroyed.
 
-This is used to combine models and views, Where
+This is used to combine models and views, where
 the model should be garbage collected once it has
 no views any more.  But as long as it has views, it
 should be kept alive.
@@ -61,7 +61,7 @@ class Register(QtCore.QObject):
         else:
             self._max_monitor_key += 1
             key = self._max_monitor_key
-            monitored.destroyed.connect( self._monitored_object_destroyed )
+            monitored.destroyed[QtCore.QObject].connect( self._monitored_object_destroyed )
         LOGGER.debug('monitor object with key %s'%key)
         self._registed_by_monitor_key[key] = registered
         monitored.setProperty( self._key_name, key )

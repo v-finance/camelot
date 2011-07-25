@@ -558,7 +558,12 @@ class DesktopWorkspace(QtGui.QWidget):
         the immortality of the 'Start' tab.
         """
         if index > 0:
-            self._tab_widget.removeTab(index)
+            view = self._tab_widget.widget(index)
+            if view:
+                # it's not enough to simply remove the tab, because this
+                # would keep the underlying view widget alive
+                view.deleteLater()
+                self._tab_widget.removeTab(index)
 
     @QtCore.pyqtSlot(int)
     def _tab_changed(self, _index):
@@ -623,8 +628,7 @@ class DesktopWorkspace(QtGui.QWidget):
         if index == 0: # 'Start' tab is currently visible.
             self.add_view(view, icon, title)
         else:
-            self._tab_widget.removeTab(index)
-            
+            self._tab_close_request(index)
             view.title_changed_signal.connect(self.change_title)
             view.icon_changed_signal.connect(self.change_icon)
             if icon:
@@ -659,13 +663,27 @@ class DesktopWorkspace(QtGui.QWidget):
             self._tab_widget.tabCloseRequested.emit(max_index)
             max_index -= 1
 
+top_level_windows = []
+
 def show_top_level(view, parent):
     """Show a widget as a top level window
     :param view: the widget extend AbstractView
     :param parent: the widget with regard to which the top level
     window will be placed.
      """
-    view.setParent( parent )
+    from camelot.view.register import register
+    #
+    # Register the view with reference to itself.  This will keep
+    # the Python object alive as long as the Qt object is not
+    # destroyed.  Hence Python will not trigger the deletion of the
+    # view as long as the window is not closed
+    #
+    register( view, view )
+    #
+    # set the parent to None to avoid the window being destructed
+    # once the parent gets destructed
+    #
+    view.setParent( None )
     view.setWindowFlags(QtCore.Qt.Window)
     #
     # Make the window title blank to prevent the something
@@ -675,7 +693,6 @@ def show_top_level(view, parent):
     view.title_changed_signal.connect( view.setWindowTitle )
     view.icon_changed_signal.connect( view.setWindowIcon )
     view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-
     #
     # position the new window in the center of the same screen
     # as the parent
@@ -691,5 +708,3 @@ def show_top_level(view, parent):
 
     #view.setWindowModality(QtCore.Qt.WindowModal)
     view.show()
-
-

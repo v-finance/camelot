@@ -37,7 +37,7 @@ import itertools
 
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
-import sip
+#import sip
 
 from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
@@ -485,9 +485,9 @@ position in the query.
 
         # Only set the delegate manager when it is fully set up
         self.delegate_manager = delegate_manager
-        if not sip.isdeleted( self ):
-            self.item_delegate_changed_signal.emit()
-            self.layoutChanged.emit()
+        #if not sip.isdeleted( self ):
+        self.item_delegate_changed_signal.emit()
+        self.layoutChanged.emit()
 
     def rowCount( self, index = None ):
         return self._rows
