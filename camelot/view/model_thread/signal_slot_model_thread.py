@@ -181,6 +181,11 @@ class SignalSlotModelThread( AbstractModelThread ):
         self.task_available.emit()
 
     @synchronized
+    def stop( self ):
+        self.quit()
+        return True
+    
+    @synchronized
     def pop( self ):
         """Pop a task from the queue, return None if the queue is empty"""
         if len(self._request_queue):

@@ -106,9 +106,7 @@ class MainWindow(QtGui.QMainWindow):
 
         #QtCore.QTimer.singleShot(0, self.doInitialization)
         logger.debug('initialization complete')
-
-    # Application settings
-
+        
     def about(self):
         logger.debug('showing about message box')
         abtmsg = self.app_admin.get_about()
@@ -468,18 +466,11 @@ class MainWindow(QtGui.QMainWindow):
         self.setStatusBar(statusbar)
         statusbar.showMessage(_('Ready'), 5000)
 
-#    # Events
-#
-#    def closeEvent(self, event):
-#        self.workspace.closeAllSubWindows()
-#        if self.activeMdiChild():
-#            event.ignore()
-#        else:
-#            self.writeSettings()
-#            event.accept()
-
     def closeEvent(self, event):
+        from camelot.view.model_thread import get_model_thread
+        model_thread = get_model_thread()
         self.workspace.close_all_views()
         self.writeSettings()
-        event.accept()
-
+        logger.info( 'closing mainwindow' )
+        model_thread.stop()
+        super( MainWindow, self ).closeEvent( event )

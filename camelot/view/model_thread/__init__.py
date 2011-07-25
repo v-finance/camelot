@@ -154,7 +154,11 @@ class AbstractModelThread(QtCore.QThread):
         """Return True or False indicating wether either the model or the gui
         thread is doing something"""
         return False
-
+    
+    def stop(self):
+        """Stop the model thread from accepting any further posts.
+        """
+        return True
 
 def construct_model_thread(*args, **kwargs):
     from signal_slot_model_thread import SignalSlotModelThread
