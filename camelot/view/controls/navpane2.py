@@ -183,7 +183,6 @@ class NavigationPane(QDockWidget):
         animation.setEndValue( 220 )
 
         if self._workspace:
-            self._workspace._background_widget.makeInteractive(False)
             animation.finished.connect(self._workspace._background_widget.makeInteractive)
 
         animation.start()

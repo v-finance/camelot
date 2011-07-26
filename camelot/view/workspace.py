@@ -36,6 +36,9 @@ from camelot.view.model_thread import gui_function, post
 
 from camelot.view.art import Icon
 
+HOVER_ANIMATION_DISTANCE = 20
+NOTIFICATION_ANIMATION_DISTANCE = 8
+
 class DesktopBackground(QtGui.QWidget):
     """
     A custom background widget for the desktop. This widget is contained
@@ -143,7 +146,10 @@ class ActionButtonContainer(QtGui.QWidget):
         mainLayout = QtGui.QHBoxLayout()
         # Set some margins to avoid the ActionButton being visually clipped
         # when performing the hoverAnimation.
-        mainLayout.setContentsMargins(20, 20, 20, 20)
+        mainLayout.setContentsMargins(NOTIFICATION_ANIMATION_DISTANCE,
+                                      HOVER_ANIMATION_DISTANCE,
+                                      NOTIFICATION_ANIMATION_DISTANCE,
+                                      HOVER_ANIMATION_DISTANCE)
         mainLayout.addWidget(actionButton)
         self.setLayout(mainLayout)
         
@@ -317,18 +323,16 @@ class ActionButton(QtGui.QLabel):
         #selectionAnimation.finished.connect(self.performAction)
         selectionAnimation.stateChanged.connect(self.updateSelectionAnimationState)
         #######################
-        self.setInteractive(True)
-
 
     def startHoverAnimation(self):
         hoverAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart1')
         if hoverAnimationPart1 is not None:
             hoverAnimationPart1.setStartValue(self.originalPosition)
-            hoverAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(0, -20))
+            hoverAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(0, -HOVER_ANIMATION_DISTANCE))
     
         hoverAnimationPart2 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart2')
         if hoverAnimationPart2 is not None:
-            hoverAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(0, -20))
+            hoverAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(0, -HOVER_ANIMATION_DISTANCE))
             hoverAnimationPart2.setEndValue(self.originalPosition)
         
         hoverAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'hoverAnimation')
@@ -364,7 +368,7 @@ class ActionButton(QtGui.QLabel):
         if None not in (selectionAnimationPart1, selectionAnimationPart2, 
                         selectionAnimationPart3, selectionAnimation):
             selectionAnimationPart1.setStartValue(self.originalPosition)
-            selectionAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(-20, -20))
+            selectionAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(-HOVER_ANIMATION_DISTANCE, -HOVER_ANIMATION_DISTANCE))
 
             selectionAnimationPart2.setStartValue(self.size())
             selectionAnimationPart2.setEndValue(self.size() + QtCore.QSize(40, 40))
@@ -407,8 +411,9 @@ class ActionButton(QtGui.QLabel):
     def setInteractive(self, interactive):
         self.interactive = interactive
         
-        self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0))
-
+        self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0)) + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE,
+                                                                                      HOVER_ANIMATION_DISTANCE)
+        
         if self.action.is_notification():
             self.startNotificationAnimation()
 
@@ -445,16 +450,16 @@ class ActionButton(QtGui.QLabel):
         notificationAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart1')
         if notificationAnimationPart1 is not None:
             notificationAnimationPart1.setStartValue(self.originalPosition)
-            notificationAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(-8, 0))
+            notificationAnimationPart1.setEndValue(self.originalPosition + QtCore.QPoint(-NOTIFICATION_ANIMATION_DISTANCE, 0))
 
         notificationAnimationPart2 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart2')
         if notificationAnimationPart2 is not None:
-            notificationAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(-8, 0))
-            notificationAnimationPart2.setEndValue(self.originalPosition + QtCore.QPoint(8, 0))
+            notificationAnimationPart2.setStartValue(self.originalPosition + QtCore.QPoint(-NOTIFICATION_ANIMATION_DISTANCE, 0))
+            notificationAnimationPart2.setEndValue(self.originalPosition + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, 0))
         
         notificationAnimationPart3 = self.findChild(QtCore.QPropertyAnimation, 'notificationAnimationPart3')
         if notificationAnimationPart3 is not None:
-            notificationAnimationPart3.setStartValue(self.originalPosition + QtCore.QPoint(8, 0))
+            notificationAnimationPart3.setStartValue(self.originalPosition + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, 0))
             notificationAnimationPart3.setEndValue(self.originalPosition)
         
         notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')
