@@ -1,7 +1,14 @@
 Trunk
 -----
 
- * UserException
+ * API documentation integrated with sphinx
+
+ * :class:`camelot.core.exception.UserException`, a subclass of Exception that
+   can be used to inform the user in a gentle way he should behave different.
+
+   .. image:: /_static/controls/user_exception.png
+
+ * reduced memory usage
 
 Release 11.05.13
 ----------------

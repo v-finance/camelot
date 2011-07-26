@@ -33,6 +33,11 @@ class UserException(Exception):
     showing a stack trace or other internals.  Raising this exception won't
     log stack traces either, as the occurance of this exception is considered
     a non-event for the developer.
+
+    Will popup a gentle dialog for the user :
+
+    .. image:: /_static/controls/user_exception.png
+
     """
     
     def __init__(self, text, title=_('Could not proceed'), icon=None, resolution=None, detail=None):

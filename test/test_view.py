@@ -1001,6 +1001,22 @@ class ControlsTest(ModelThreadTestCase):
         desktopWorkspace._background_widget.set_actions(actions)
         self.grab_widget(desktopWorkspace)
 
+    def test_user_exception(self):
+        from camelot.view.controls.exception import register_exception, ExceptionDialog
+        try:
+            #begin user_exception
+            from camelot.core.exception import UserException
+
+            raise UserException( text = "Could not burn movie to non empty DVD",
+                                 resolution = "Insert an empty DVD and retry" )
+            #end user_exception
+        except Exception, e:
+            pass
+
+        exc_info = register_exception(logger, 'unit test', e)
+        dialog = ExceptionDialog( exc_info )
+        self.grab_widget( dialog )   
+
 class CamelotEntityViewsTest(EntityViewsTest):
     """Test the views of all the Entity subclasses"""
 
