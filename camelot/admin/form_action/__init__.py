@@ -52,29 +52,13 @@ from camelot.admin.abstract_action import PrintProgressDialog
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post
 from camelot.view.controls.progress_dialog import ProgressDialog
+from camelot.admin.abstract_action import AbstractAction
 
 logger = logging.getLogger('camelot.admin.form_action')
 
-class FormAction( object ):
+class FormAction( AbstractAction ):
     """Abstract base class to implement form actions
     """
-
-    def __init__( self, name, icon = None ):
-        """
-        :param name: the name used in the button to trigger the action
-        :param icon: Icon to be used in the button to trigger the action
-        """
-        self._name = name
-        self._icon = icon
-
-    def get_name(self):
-        """:return: the name to be used in the button to trigger the action"""
-        return self._name
-
-    def get_icon(self):
-        """:return: the Icon to be used in the button to trigger the
-action"""
-        return self._icon
 
     def render( self, parent, entity_getter ):
         """:return: a QWidget the user can use to trigger the action, by default
@@ -91,7 +75,7 @@ returns a Button that will trigger the run method when clicked"""
         The entity_getter function should not be called within the gui
         thread, it exists for being able to pass it to the model thread.
         """
-        raise NotImplementedError
+        return super(FormAction, self).get_options()
 
     def enabled(self, entity):
         """Overwrite this method to have the action only enabled for
@@ -124,7 +108,7 @@ FormAction.  This type of action can be used to manipulate the model.
     def __init__( self, name, model_function=None, icon = None, flush=False, enabled=lambda obj:True ):
         """
 :param name: the name of the action
-:param model_function: a function that has 1 arguments, the object
+:param model_function: a function that has 1 argument, the object
 currently in the form, this function will be called whenever the
 action is triggered.
 :param icon: an Icon
@@ -148,7 +132,7 @@ button should be enabled.
         """
         return self._enabled( entity )
 
-    def create_request( self, entity_getter, model_function ):
+    def create_request( self, entity_getter, options ):
         """Create the request that will be send to the model thread, this function
         encapsulates the original function in a flush and refresh of the underlying
         entity"""
@@ -157,7 +141,7 @@ button should be enabled.
             from sqlalchemy.orm.session import Session
             from camelot.view.remote_signals import get_signal_handler
             o = entity_getter()
-            model_function( o )
+            self.model_run( o, options )
             if self._flush:
                 sh = get_signal_handler()
                 Session.object_session( o ).flush( [o] )
@@ -174,9 +158,17 @@ the model function is executed.
 :param entity_getter: a function that when called returns the object currently in the form.
         
         """
+        options = super( FormActionFromModelFunction, self ).run( entity_getter )
         progress = ProgressDialog(self._name)
-        post( self.create_request( entity_getter, self._model_function ), progress.finished, exception = progress.exception )
+        post( self.create_request( entity_getter, options ), progress.finished, exception = progress.exception )
         progress.exec_()
+        
+    def model_run(self, obj, options):
+        """This method will be called in the Model thread when the user initiates the
+        action, this is the place to do all kind of model manipulation or querying things"""
+        if self._model_function:
+            self._model_function( obj )
+
 
 class ProcessFilesFormAction(FormActionFromModelFunction):
     """This action presents the user with a File Selection Dialog, that allows

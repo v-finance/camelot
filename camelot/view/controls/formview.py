@@ -25,7 +25,7 @@
 """form view"""
 
 import logging
-logger = logging.getLogger('camelot.view.controls.formview')
+LOGGER = logging.getLogger('camelot.view.controls.formview')
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -216,16 +216,20 @@ class FormWidget(QtGui.QWidget):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if not widget_mapper:
             return
+        LOGGER.debug( 'begin creating widgets' )
         widget_mapper.setItemDelegate(self._delegate)
         option = QtGui.QStyleOptionViewItem()
         # set version to 5 to indicate the widget will appear on a
         # a form view and not on a table view
         option.version = 5
 
+        bold_font = QtGui.QApplication.font()
+        bold_font.setBold(True)
         #
         # this loop can take a while to complete, so processEvents is called
         # regulary
         #
+        LOGGER.debug( 'begin creation loop' )
         for i, (field_name, field_attributes ) in enumerate( self._columns):
 #            if i%10==0:
 #                QtCore.QCoreApplication.processEvents(
@@ -233,9 +237,7 @@ class FormWidget(QtGui.QWidget):
 #                    100
 #                )
             model_index = self._model.index(self._index, i)
-            hide_title = False
-            if 'hide_title' in field_attributes:
-                hide_title = field_attributes['hide_title']
+            hide_title = field_attributes.get( 'hide_title', False )
             widget_label = None
             widget_editor = self._delegate.createEditor(
                 self,
@@ -257,9 +259,7 @@ class FormWidget(QtGui.QWidget):
             # required fields font is bold
             if ('nullable' in field_attributes) and \
                (not field_attributes['nullable']):
-                font = QtGui.QApplication.font()
-                font.setBold(True)
-                widget_label.setFont(font)
+                widget_label.setFont(bold_font)
 
             assert widget_editor != None
             assert isinstance(widget_editor, QtGui.QWidget)
@@ -267,8 +267,11 @@ class FormWidget(QtGui.QWidget):
             widget_mapper.addMapping(widget_editor, i)
             widgets[field_name] = (widget_label, widget_editor)
 
+        LOGGER.debug( 'end creation loop' )
         widget_mapper.setCurrentIndex(self._index)
+        LOGGER.debug( 'put widgets on form' )
         self.layout().insertWidget(0, self._form.render(widgets, self))
+        LOGGER.debug( 'done' )
         #self._widget_layout.setContentsMargins(7, 7, 7, 7)
 
 
@@ -367,7 +370,7 @@ class FormView(AbstractView):
         if actions and form and layout:
             side_panel_layout = QtGui.QVBoxLayout()
             from camelot.view.controls.actionsbox import ActionsBox
-            logger.debug('setting Actions for formview')
+            LOGGER.debug('setting Actions for formview')
             actions_widget = ActionsBox(self, self.getEntity)
             actions_widget.setObjectName('actions')
             action_widgets = actions_widget.setActions(actions)
@@ -431,7 +434,7 @@ class FormView(AbstractView):
             self.close()
 
     def validateClose(self):
-        logger.debug('validate before close : %s' % self.validate_before_close)
+        LOGGER.debug('validate before close : %s' % self.validate_before_close)
         form = self.findChild(QtGui.QWidget, 'form' )
         if self.validate_before_close and form:
             # submit should not happen a second time, since then we don't
@@ -448,7 +451,7 @@ class FormView(AbstractView):
 
     def closeEvent(self, event):
         #print 'close event'
-        logger.debug('formview closed')
+        LOGGER.debug('formview closed')
         if self.validateClose():
             event.accept()
         else:

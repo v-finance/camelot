@@ -40,6 +40,8 @@ class AbstractAction(object):
     """Helper class with methods to be used by all Action classes
     """
 
+    Options = None
+    
     def __init__(self, name, icon=None):
         """
         :param name: the name of the action as displayed to the user
@@ -49,6 +51,10 @@ class AbstractAction(object):
         self._name = name
         self._icon = icon
         
+    def get_name(self):
+        """:return: the name to be used in the button to trigger the action"""
+        return self._name
+
     def get_icon(self):
         """:return: a camelot.view.art.Icon object"""        
         return self._icon or Icon( 'tango/22x22/categories/applications-system.png' )
@@ -64,7 +70,7 @@ class AbstractAction(object):
         """Check if the object has an **Options** attribute, and if it has,
         present the user with a form to fill in the options.  Returns if the user
         has pressed OK or Cancel
-        :return: an object of type Options or None
+        :return: an object of type Options or None if cancel was pressed
         """
         if self.Options:
             from camelot.view.wizard.pages.form_page import FormPage
