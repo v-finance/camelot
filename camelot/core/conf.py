@@ -13,6 +13,9 @@ Developers can add targets to the settings proxy, to enable reading settings
 from other sources.
 """
 
+import logging
+LOGGER = logging.getLogger('camelot.core.conf')
+
 class LazyProxy(list):
     """A lazy proxy of the 'settings' module on the PYTHONPATH, or other
     targets that contain global configuration.  This proxy behaves as a list
@@ -29,6 +32,7 @@ class LazyProxy(list):
         for target in self:
             if hasattr(target, name):
                 return getattr(target, name)
+        LOGGER.warning( u'no such settings attribute : %s'%name )
         raise AttributeError()
         
     def __hasattr__(self, name):
@@ -50,5 +54,4 @@ class LazyProxy(list):
             raise ImportError, "Could not import settings (Is it on sys.path? Does it have syntax errors?): %s" % (e)
         self.append( mod )
 
-        
 settings = LazyProxy()
