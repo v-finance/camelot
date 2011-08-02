@@ -47,7 +47,7 @@ overwritten.
 """
 import logging
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 from camelot.admin.abstract_action import PrintProgressDialog
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post
