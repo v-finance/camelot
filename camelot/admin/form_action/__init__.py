@@ -52,7 +52,7 @@ from camelot.admin.abstract_action import PrintProgressDialog
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post
 from camelot.view.controls.progress_dialog import ProgressDialog
-from camelot.admin.abstract_action import AbstractAction
+from camelot.admin.abstract_action import AbstractAction, AbstractOpenFileAction
 
 logger = logging.getLogger('camelot.admin.form_action')
 
@@ -179,14 +179,14 @@ class ProcessFilesFormAction(FormActionFromModelFunction):
     """
     def __init__(self, name, icon = Icon('tango/22x22/actions/document-open.png'), flush=False, enabled=lambda obj:True ):
         super(ProcessFilesFormAction, self).__init__(name, icon = icon, flush=flush, enabled=enabled)
-
-    def create_request( self, entity_getter, model_function ):
-        file_names = [unicode(fn) for fn in QtGui.QFileDialog.getOpenFileNames(caption=unicode(self.get_name()))]
         
-        def process_files_model_function( obj ):
-             return self.process_files( obj, file_names )
-                 
-        return super(ProcessFilesFormAction, self).create_request( entity_getter, process_files_model_function )
+    def create_request( self, entity_getter, options=None ):
+        file_names = [unicode(fn) for fn in QtGui.QFileDialog.getOpenFileNames(caption=unicode(self.get_name()))]                 
+        return super(ProcessFilesFormAction, self).create_request( entity_getter, (file_names, options) )
+        
+    def model_run(self, obj, options):
+        file_names, options = options
+        self.process_files( obj, file_names, options )
         
     def process_files( self, obj, file_names, options = None ):
         """overwrite this method in a subclass
@@ -270,7 +270,7 @@ the page orientation, the default QPrinter.Portrait
         post(create_request(entity_getter), progress.print_result, exception=progress.exception)
         progress.exec_()
 
-class OpenFileFormAction( FormActionFromModelFunction ):
+class OpenFileFormAction( FormActionFromModelFunction, AbstractOpenFileAction ):
     """Form action used to open a file in the prefered application of the user.
 To be used for example to generate pdfs with reportlab and open them in
 the default pdf viewer.
@@ -282,22 +282,13 @@ eg: .txt or .pdf, defaults to .txt
     """
 
     suffix = '.txt'
-
-    def __init__( self, name, icon = Icon( 'tango/22x22/actions/document-print.png' ), **kwargs ):
-
-        def model_function( obj ):
-            import os
-            import tempfile
-            file_descriptor, file_name = tempfile.mkstemp(suffix=self.suffix)
-            os.close(file_descriptor)
-            self.write_file(file_name, obj )
-            url = QtCore.QUrl.fromLocalFile(file_name)
-            logger.debug(u'open url : %s'%unicode(url))
-            QtGui.QDesktopServices.openUrl(url)
-
-        FormActionFromModelFunction.__init__( self, name, model_function, icon, **kwargs )
-
-    def write_file( self, file_name, obj ):
+    
+    def model_run(self, obj, options=None):
+        filename = self.create_temp_file()
+        self.write_file( filename, obj, options )
+        self.open_file( filename )
+            
+    def write_file( self, file_name, obj, options=None ):
         """
 :param file_name: the name of the file to which should be written
 :param obj: the object displayed in the form

@@ -474,3 +474,4 @@ class MainWindow(QtGui.QMainWindow):
         logger.info( 'closing mainwindow' )
         model_thread.stop()
         super( MainWindow, self ).closeEvent( event )
+        QtCore.QCoreApplication.exit(0)
