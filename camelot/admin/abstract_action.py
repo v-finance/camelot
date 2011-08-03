@@ -101,11 +101,22 @@ class AbstractOpenFileAction(AbstractAction):
 
     suffix = '.txt'
     
-    def create_temp_file(self):
+    def get_suffix( self, options=None ):
+        """
+        Get the suffix to be used for the file to generate, by default, returns
+        the suffix class attribute.
+        
+        :param options: the options object, as filled in by the user,
+            if applicable, None otherwise
+        :return: the suffix to use for generating the temporary file
+        """
+        return self.suffix
+    
+    def create_temp_file(self, options=None ):
         """:return: a temporary file name"""
         import os
         import tempfile
-        file_descriptor, file_name = tempfile.mkstemp(suffix=self.suffix)
+        file_descriptor, file_name = tempfile.mkstemp(suffix=self.get_suffix( options ))
         os.close(file_descriptor)
         return file_name
     

@@ -219,7 +219,7 @@ class OpenFileListAction( ListActionFromModelFunction, AbstractOpenFileAction ):
         """
 
         def model_function( collection, selection, options ):
-            file_name = self.create_temp_file()
+            file_name = self.create_temp_file( options )
             self.write_file(file_name, collection, selection, options )
             self.open_file(file_name)
 
