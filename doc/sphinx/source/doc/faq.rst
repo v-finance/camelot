@@ -4,7 +4,19 @@
  Frequently Asked Questions
 ###########################
 
-:Date: |today|
+How to the PySide bindings instead of PyQt ?
+--------------------------------------------
+
+The Camelot sources as well as the example videostore application can be
+converted from PyQt applications to PySide with the `camelot_admin` tool.
+
+Download the sources and position the shell in the main directory, and then
+issue these commands::
+
+    python camelot/bin/camelot_admin.py to_pyside .
+    
+This will create a subdirectory 'to_pyside' which contains the converted
+source code.
 
 After editing a record, it suddenly moves in or disappears from the table view ?
 ---------------------------------------------------------------------------------
