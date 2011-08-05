@@ -332,7 +332,8 @@ class FormView(AbstractView):
         self.addAction( ActionFactory.view_next(self, self.viewNext) )
         self.addAction( ActionFactory.view_previous(self, self.viewPrevious) )
         self.addAction( ActionFactory.refresh(self, self.refresh_session) )
-        self.addAction( ActionFactory.export_ooxml(self, form.export_ooxml) )
+        # Disabled the export to Word feature until it's finish
+        # self.addAction( ActionFactory.export_ooxml(self, form.export_ooxml) )
 
     @QtCore.pyqtSlot()
     def refresh_session(self):
