@@ -146,10 +146,10 @@ class ActionButtonContainer(QtGui.QWidget):
         mainLayout = QtGui.QHBoxLayout()
         # Set some margins to avoid the ActionButton being visually clipped
         # when performing the hoverAnimation.
-        mainLayout.setContentsMargins(NOTIFICATION_ANIMATION_DISTANCE,
-                                      HOVER_ANIMATION_DISTANCE,
-                                      NOTIFICATION_ANIMATION_DISTANCE,
-                                      HOVER_ANIMATION_DISTANCE)
+        mainLayout.setContentsMargins(2*NOTIFICATION_ANIMATION_DISTANCE,
+                                      2*HOVER_ANIMATION_DISTANCE,
+                                      2*NOTIFICATION_ANIMATION_DISTANCE,
+                                      2*HOVER_ANIMATION_DISTANCE)
         mainLayout.addWidget(actionButton)
         self.setLayout(mainLayout)
         
@@ -411,8 +411,7 @@ class ActionButton(QtGui.QLabel):
     def setInteractive(self, interactive):
         self.interactive = interactive
         
-        self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0)) + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE,
-                                                                                      HOVER_ANIMATION_DISTANCE)
+        self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0))# + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, HOVER_ANIMATION_DISTANCE)
         
         if self.action.is_notification():
             self.startNotificationAnimation()
