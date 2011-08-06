@@ -4,9 +4,6 @@
  Actions and Reports
 ####################
 
-:Release: |version|
-:Date: |today|
-
 Besides displaying and editing data, every application needs the
 functions to manipulate data or create reports.  In the Camelot
 framework this is done through actions.  Actions appear as buttons

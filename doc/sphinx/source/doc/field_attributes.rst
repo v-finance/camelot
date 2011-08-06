@@ -53,6 +53,14 @@ calculator
 
 :const:`True` or :const:`False` Indicates whether a calculator should be available when editing this field.
 
+.. _field-attribute-directory:
+
+directory 
+---------
+
+:const:`True` or :const:`False` indicates if the file editor should point to a
+directory instead of a file.  By default it points to a file.
+
 .. _field-attribute-editable:
 
 editable 
