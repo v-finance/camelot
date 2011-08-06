@@ -35,42 +35,40 @@ actions  (:class:`camelot.admin.action.ApplicationAction`,
 :class:`camelot.admin.action.FromAction`)
 that share the same behavior and class attributes ::
 
-    from camelot.admin.action import FormAction, PrintPreview
+    from camelot.admin.action import ApplicationAction, PrintPreview
     from camelot.core.utils import ugettext_lazy as _
     from camelot.view.art import Icon
     
-    class PrintReport( FormAction ):
+    class PrintReport( ApplicationAction ):
         verbose_name = _('Print Report')
         icon = Icon('tango/16x16/actions/document-print.png')
         tooltip = _('Print a report with all the movies')
         
-        def model_run( self, obj, mode=None ):
-            yield PrintPreview( 'hello %s'%(obj.name) )
+        def model_run( self, mode=None ):
+            yield PrintPreview( 'Hello World' )
             
-Each standard action has two methods, `gui_run` and `model_run`, one of
+Each standard action has two methods, :meth:`ApplicationAction.gui_run` and 
+:meth:`ApplicationAction.model_run`, one of
 them should be overloaded in the subclass to either run the action in the
-gui thread or to run the action in the model thread.  The default `gui_run`
-behavior is to pop-up a 'Please wait' dialog and pass control to the `model_run`
-method.
+gui thread or to run the action in the model thread.  The default 
+:meth:`ApplicationAction.gui_run`
+behavior is to pop-up a :class:`camelot.view.controls.ProgressDialog` dialog and 
+start the :meth:`ApplicationAction.model_run` method in the model thread.
 
-`model_run` in itself is a generator, that can yield object back to the gui,
-such as a :class:`camelot.admin.action.PrintPreview`.
+:meth:`ApplicationAction.model_run` in itself is a generator, that can yield 
+object back to the gui, such as a :class:`camelot.admin.action.PrintPreview`.
             
 The action subclass can than be used a an element of the actions list of an 
-:class:`camelot.admin.entity_admin.EntityAdmin` subclass::
+:class:`camelot.admin.application_admin.ApplicationAdmin` subclass::
 
-    from camelot.admin.entity_admin import EntityAdmin
-    from elixir import Entity
+    from camelot.admin.application_admin import ApplicationAdmin
     
-    class Movie( Entity ):
-        name = Field( Unicode( 50 ) )
-        
-        class Admin( EntityAdmin ):
-            list_display = [ 'name' ]
-            list_actions = [ PrintReport ]
+    class MyApplicationAdmin( ApplicationAdmin ):
+
+        actions = [ PrintReport ]
             
-What can happen inside :meth:`FormAction.model_run`
-===================================================
+What can happen inside :meth:`ApplicationAction.model_run`
+==========================================================
 
 manipulation of the model
 -------------------------
@@ -84,25 +82,27 @@ keep the user informed about progress
 
 Every action object has a method :
 
-.. method:: update_progress(value=0, maximum=0, text=None, info=None, clear=False)
+.. method:: update_progress(value=0, maximum=0, text=None, detail=None, clear_details=False)
     :param value: the current step
     :param maximum: the maximum number of steps that will be executed. set it
         to 0 to display a busy indicator instead of a progres bar
     :param text: the text to be displayed inside the progres bar
-    :param info: the text to be displayed below the progres bar, this text is
+    :param detail: the text to be displayed below the progres bar, this text is
         appended to the text allready there
-    :param clear: clear the info text allready there before putting the new info
-        text.
+    :param clear_details: clear the details text allready there before putting 
+        the new detail text.
         
 This method should be called regulary to keep the user informed about the
 progres of the action::
 
-    report = '<table>'
     movie_count = Movie.query.count()
+
+    report = '<table>'
     for i, movie in enumerate( Movie.query.all() ):
         report += '<tr><td>%s</td></tr>'%(movie.name)
         self.update_progress( i, movie_count )
     report += '</table>'
+
     yield PrintPreview( report )
 
 Should the user press the :guilabel:`Cancel` button in the progress dialog, the
@@ -146,13 +146,41 @@ When the :meth:`model_run` method raises a :class:`camelot.core.exception.Cancel
 or a :class:`GeneratorExit` exception, these are ignored and nothing will be
 shown to the user.
 
-the user cancels the action
----------------------------
+request information from the user
+---------------------------------
 
-Should the user press the :guilabel:`Cancel` button in the progress dialog, the
-next :keyword:`yield` statement will raise a :class:`GeneratorExit` exception.
+The pop-up of a dialog that presents the user with a number of options can be 
+triggered from within the :meth:`ApplicationAction.model_run` method.  This
+happens by transferring an 'options' object back and forth between the 
+'model_thread' and the 'gui_thread'.  To transfer such an object, this object
+first needs to be defined::
 
-When this exception is raised, the :meth:`model_run` should handle it by not
-not catching this exception, or do some cleanup, and then stop the iterator.
+    class Options( object ):
+        
+        def __init__(self):
+            self.earliest_releasedate = datetime.date(2000, 1, 1)
+            self.latest_releasedate = datetime.date.today()
+            
+        class Admin( ObjectAdmin ):
+            form_display = [ 'earliest_releasedate', 'latest_releasedate' ]
+            field_attributes = { 'earliest_releasedate':{'delegate':delegates.DateDelegate},
+                                 'latest_releasedate':{'delegate':delegates.DateDelegate}, }
+                                 
+Than a :class:`camelot.admin.action.FormDialog' can be :keyword:`yield` to present
+the options to the user and get the filled in values back::
 
-:pep:`342`
+    from camelot.admin.action import FormDialog
+    
+    options = Options()
+    filled_in_options = yield FormDialog( options )
+                                 
+When the user presses :guilabel:`Cancel` button in the progress dialog, the
+:keyword:`yield` statement will raise a :class:`camelot.core.exception.CancelRequest`.
+
+Inspiration
+===========
+
+Implementing actions as generators was made possible with the language functions
+of :pep:`342`.  The EuroPython talk of Erik Groeneveld inspired the use of these
+features. 
+(http://ep2011.europython.eu/conference/talks/beyond-python-enhanched-generators)
