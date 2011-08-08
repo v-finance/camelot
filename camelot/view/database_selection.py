@@ -27,6 +27,8 @@ import sys
 import logging
 import pkgutil
 
+# from collections import defaultdict
+
 from sqlalchemy import create_engine
 
 from PyQt4 import QtCore
@@ -112,12 +114,14 @@ class ProfileWizard(StandaloneWizardPage):
 profile.
 
 .. attribute:: languages
+.. attribute:: dialects
 
 A list of languages allowed in the profile selection, an empty list will
 allow all languages
     """
 
     languages = []
+    dialects = []
 
     def __init__(self, profiles, parent=None):
         super(ProfileWizard, self).__init__(parent)
@@ -250,10 +254,14 @@ allow all languages
     def set_widgets_values(self):
         self.dialect_editor.clear()
         self.profile_editor.clear()
-
-        import sqlalchemy.dialects
-        dialects = [name for _importer, name, is_package in \
-            pkgutil.iter_modules(sqlalchemy.dialects.__path__) if is_package]
+        
+        if self.dialects:
+            dialects = self.dialects
+        else:
+            import sqlalchemy.dialects
+            dialects = [name for _importer, name, is_package in \
+                        pkgutil.iter_modules(sqlalchemy.dialects.__path__) \
+                        if is_package]
         self.dialect_editor.set_choices([(dialect, dialect.capitalize()) \
             for dialect in dialects])
 
@@ -264,6 +272,7 @@ allow all languages
 
     def connect_widgets(self):
         self.profile_editor.editTextChanged.connect(self.update_wizard_values)
+        self.dialect_editor.currentIndexChanged.connect(self.update_wizard_values)
 
     def create_buttons(self):
         self.more_button = QPushButton(_('More'))
@@ -374,12 +383,24 @@ allow all languages
         text = unicode(self.profile_editor.currentText())
         self.toggle_ok_button(bool(text))
         return text
-
+    
+    # FIXME can't get this to work properly (call in update_wizard_values(): port_editor )
+    # def _related_default_port(self, dialect_editor):
+    #     class Missing(defaultdict):
+    #         def __missing__(self, key):
+    #             return ''
+    #     ports = Missing(mysql='3306', postgresql='5432')
+    #     return ports[dialect_editor.get_value()]
+    
     def update_wizard_values(self):
         network_proxy = get_network_proxy()
-        self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
-        self.host_editor.setText(self.get_profile_value('host') or '127.0.0.1')
-        self.port_editor.setText(self.get_profile_value('port') or '3306')
+        # self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
+        # self.host_editor.setText(self.get_profile_value('host') or '127.0.0.1')
+        # self.port_editor.setText(self.get_profile_value('port') or '3306')        
+        self.dialect_editor.set_value(self.get_profile_value('dialect') or self.dialect_editor.get_value())
+        self.host_editor.setText(self.get_profile_value('host') or self.host_editor.text())
+        self.port_editor.setText(self.get_profile_value('port') or self.port_editor.text())        
+        # self.port_editor.setText(self.get_profile_value('port') or self._related_default_port(self.dialect_editor))
         self.database_name_editor.setText(self.get_profile_value('database') or self.database_name_editor.text())
         self.username_editor.setText(self.get_profile_value('user') or self.username_editor.text())
         self.password_editor.setText(self.get_profile_value('pass') or self.password_editor.text())

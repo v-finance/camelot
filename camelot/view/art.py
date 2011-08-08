@@ -88,10 +88,15 @@ class Pixmap(object):
         from camelot.core.resources import resource_string
         from PyQt4.QtGui import QPixmap
         qpm = QPixmap()
-        success = qpm.loadFromData(resource_string(self._module_name,
-                                                   'art/%s' % self._path))
-        if not success:
-            logger.warn(u'Could not load pixmap %s from camelot art library' % self._path)
+        p = os.path.join('art', self._path)
+        try:
+            # For some reason this throws a unicode error if the path contains an accent (cf windows username)
+            #  this happens only here, not for icons further on in the application
+            #  so they see no splash screen, tant pis
+            r = resource_string(self._module_name, p)
+            qpm.loadFromData(r)
+        except Exception, e:
+            logger.warn(u'Could not load pixmap "%s" from module: %s, encountered exception' % (p, self._module_name), exc_info=e)
         self._cached_pixmap = qpm
         return qpm
 
