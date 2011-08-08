@@ -90,7 +90,7 @@ class BatchJob(Entity):
         traceback.print_exc(file=sio)
         traceback_print = sio.getvalue()
         sio.close()
-        self.message = (self.message or '') + '<br/>' + unicode(exception) + '<br/>' +  traceback_print.replace('\n', '<br/>')
+        self.message = (self.message or '') + '<br/>' + unicode(exception) + '<br/><font color="grey">' +  traceback_print.replace('\n', '<br/>') + '</font>'
         
     def add_strings_to_message(self, strings):
         """:param strings: a list or generator of strings"""
