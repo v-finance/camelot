@@ -75,11 +75,14 @@ class LabelComboBox(QtGui.QComboBox):
         return self._file_name
 
 class Page(QtGui.QWizardPage):
+    """Abstract class for the select file page of a backup and a restore file.
+    """
     title = _('Select backup file')
     sub_title = _('Please select a backup file. All data in this file will be overwritten.')
     icon = Icon('tango/32x32/actions/document-save.png')
     caption = _('Select file')
     extension = '.db'
+    settings_key = 'custom_backup_filename'
 
     def __init__(self, backup_mechanism=None, parent=None):
         self.backup_mechanism = backup_mechanism
@@ -95,6 +98,10 @@ class Page(QtGui.QWizardPage):
         self._default_radio.setChecked(True)
         self._showWidgets(self._default_radio)
 
+    def _setPath(self, dir):
+        """Override this method in a subclass, to make the page do something"""
+        raise NotImplementedError()
+    
     def _setupUi(self):
         # controls
         self._default_radio = QtGui.QRadioButton(ugettext('Default Location'))
@@ -134,10 +141,12 @@ class Page(QtGui.QWizardPage):
 
     def _customButtonClicked(self):
         settings = QtCore.QSettings()
-        dir = settings.value('custom_backup_filename').toString()
-        path = self._setPath(dir)
+        previous_location = settings.value( self.settings_key ).toString()
+        path = self._setPath( previous_location )
         if path:
             self._custom_edit.setText(QtCore.QDir.toNativeSeparators(path))
+            settings.setValue( self.settings_key, path )
+            
         
 class SelectRestoreFilePage(Page):
     title = _('Select restore file')
