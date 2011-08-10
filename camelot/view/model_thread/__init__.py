@@ -34,6 +34,8 @@ from camelot.core.conf import settings
 
 _model_thread_ = []
 
+# this might be set to False, for unittesting purpose
+verify_threads = True
 
 class ModelThreadException(Exception):
     pass
@@ -55,7 +57,7 @@ def model_function(original_function):
 
     @wraps(original_function)
     def wrapper(*args, **kwargs):
-        assert in_model_thread()
+        assert (not verify_threads) or in_model_thread()
         return original_function(*args, **kwargs)
 
     return wrapper
@@ -74,7 +76,7 @@ def gui_function(original_function):
 
     @wraps(original_function)
     def wrapper(*args, **kwargs):
-        assert in_gui_thread()
+        assert (not verify_threads) or in_gui_thread()
         return original_function(*args, **kwargs)
 
     return wrapper
