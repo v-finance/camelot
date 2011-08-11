@@ -272,8 +272,8 @@ allow all languages
 
     def connect_widgets(self):
         self.profile_editor.editTextChanged.connect(self.update_wizard_values)
-        self.dialect_editor.currentIndexChanged.connect(self.update_wizard_values)
-
+        # self.dialect_editor.currentIndexChanged.connect(self.update_wizard_values)    
+    
     def create_buttons(self):
         self.more_button = QPushButton(_('More'))
         self.more_button.setCheckable(True)
@@ -397,7 +397,7 @@ allow all languages
         # self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
         # self.host_editor.setText(self.get_profile_value('host') or '127.0.0.1')
         # self.port_editor.setText(self.get_profile_value('port') or '3306')        
-        self.dialect_editor.set_value(self.get_profile_value('dialect') or self.dialect_editor.get_value())
+        self.dialect_editor.set_value(self.get_profile_value('dialect') or 'postgresql')
         self.host_editor.setText(self.get_profile_value('host') or self.host_editor.text())
         self.port_editor.setText(self.get_profile_value('port') or self.port_editor.text())        
         # self.port_editor.setText(self.get_profile_value('port') or self._related_default_port(self.dialect_editor))
