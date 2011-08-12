@@ -24,6 +24,7 @@
 
 """Proxies representing the results of a query"""
 
+import functools
 import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
@@ -51,31 +52,20 @@ class QueryTableProxy(CollectionProxy):
                                               columns_getter, 
                                               max_number_of_rows=max_number_of_rows, 
                                               edits=None,
-                                              cache_collection_proxy=cache_collection_proxy)
-
-#    def default_sort_decorator(self):
-#        """Create a function that sorts a query, by default we sort a query by the
-#        primary keys because we always want a unique ordering of the results, eg,
-#        2 consecutive results should have the same order.  This is not necessary the
-#        case when the query is not sorted, which will result to flicker on the screen.
-#        """
-#        #
-#        # _foreign_keys is for sqla pre 0.6.4
-#        # 
-#        if hasattr(property, '_foreign_keys'):
-#            class_attribute = list(property._foreign_keys)[0]
-#        else:                             
-#            class_attribute = list(property._calculated_foreign_keys)[0]         
+                                              cache_collection_proxy=cache_collection_proxy)     
         
     def get_query_getter(self):
-        if not self._sort_decorator or self._query_getter==None:
-            return self._query_getter
-        else:
+        if self._query_getter == None:
+            return None
+        if self._sort_decorator == None:
+            self._set_sort_decorator()
             
-            def sorted_query_getter():
-                return self._sort_decorator(self._query_getter())
+        def sorted_query_getter( query_getter, sort_decorator ):
+            return sort_decorator( query_getter() )
             
-            return sorted_query_getter
+        return functools.partial( sorted_query_getter,
+                                  self._query_getter,
+                                  self._sort_decorator )
     
     def _update_unflushed_rows( self ):
         """Does nothing since all rows returned by a query are flushed"""
@@ -125,67 +115,92 @@ class QueryTableProxy(CollectionProxy):
             return []
         return self.get_query_getter()().all()
     
+    @model_function
+    def _set_sort_decorator( self, column=None, order=None ):
+        """set the sort decorator attribute of this model to a function that
+        sorts a query by the given column using the given order.  When no
+        arguments are given, use the default sorting, which is according to
+        the primary keys of the model.  This to impose a string ordening of
+        the rows in the model.
+        """
+        from sqlalchemy import orm
+        from sqlalchemy.exceptions import InvalidRequestError
+        
+        class_attributes_to_sort_by, join = [], None
+        mapper = orm.class_mapper(self.admin.entity)
+        #
+        # First sort according the requested column
+        #
+        if column != None and order != None:
+            property = None
+            field_name = self._columns[column][0]
+            class_attribute = getattr(self.admin.entity, field_name)
+            try:
+                property = mapper.get_property(
+                    field_name,
+                    resolve_synonyms=True
+                )
+            except InvalidRequestError:
+                #
+                # If the field name is not a property of the mapper, we cannot
+                # sort it using sql
+                #
+                pass
+            
+            # If the field is a relation: 
+            #  If it specifies an order_by option we have to join the related table, 
+            #  else we use the foreing key as sort field, without joining
+            if property and isinstance(property, orm.properties.PropertyLoader):
+                target = property._get_target()
+                if target:
+                    if target.order_by:
+                        join = field_name
+                        class_attribute = target.order_by[0]
+                    else:
+                        #
+                        # _foreign_keys is for sqla pre 0.6.4
+                        # 
+                        if hasattr(property, '_foreign_keys'):
+                            class_attribute = list(property._foreign_keys)[0]
+                        else:                             
+                            class_attribute = list(property._calculated_foreign_keys)[0]
+            if property:
+                if order:
+                    class_attributes_to_sort_by.append( class_attribute.desc() )
+                else:
+                    class_attributes_to_sort_by.append( class_attribute )
+                    
+        #
+        # Next sort according to default sort column if any
+        #
+        if mapper.order_by:
+            class_attributes_to_sort_by.extend( mapper.order_by )
+            
+        #
+        # In the end, sort according to the primary keys of the model, to enforce
+        # a unique order in any case
+        #
+        class_attributes_to_sort_by.extend( mapper.primary_key )
+                                
+        def sort_decorator(class_attributes_to_sort_by, join, query):
+            if join:
+                query = query.join(join)                            
+            if class_attributes_to_sort_by:
+                return query.order_by( *class_attributes_to_sort_by )
+            else:
+                return query       
+        
+        self._sort_decorator = functools.partial( sort_decorator,
+                                                  class_attributes_to_sort_by, 
+                                                  join )
+        return self._rows
+        
     @gui_function
     def sort( self, column, order ):
-        
-        def create_set_sort_decorator(column, order):
-
-            def set_sort_decorator():
-                from sqlalchemy import orm
-                from sqlalchemy.exceptions import InvalidRequestError
-                field_name = self._columns[column][0]
-                class_attribute = getattr(self.admin.entity, field_name)
-                mapper = orm.class_mapper(self.admin.entity)
-                try:
-                    property = mapper.get_property(
-                        field_name,
-                        resolve_synonyms=True
-                    )
-                except InvalidRequestError:
-                    #
-                    # If the field name is not a property of the mapper, we cannot
-                    # sort it using sql
-                    #
-                    return self._rows
-                
-                # If the field is a relation: 
-                #  If it specifies an order_by option we have to join the related table, 
-                #  else we use the foreing key as sort field, without joining
-                join = None
-                if isinstance(property, orm.properties.PropertyLoader):
-                    target = property._get_target()
-                    if target:
-                        if target.order_by:
-                            join = field_name
-                            class_attribute = target.order_by[0]
-                        else:
-                            #
-                            # _foreign_keys is for sqla pre 0.6.4
-                            # 
-                            if hasattr(property, '_foreign_keys'):
-                                class_attribute = list(property._foreign_keys)[0]
-                            else:                             
-                                class_attribute = list(property._calculated_foreign_keys)[0]                    
-                    
-                def create_sort_decorator(class_attribute, order, join):
-                                        
-                    def sort_decorator(query):
-                        if join:
-                            query = query.join(join)                            
-                        if order:
-                            return query.order_by(class_attribute.desc())
-                        else:
-                            return query.order_by(class_attribute)
-                    
-                    return sort_decorator
-                
-                
-                self._sort_decorator = create_sort_decorator(class_attribute, order, join)
-                return self._rows
-                    
-            return set_sort_decorator
-            
-        post( create_set_sort_decorator(column, order), self._refresh_content )
+        """Overwrites the QAbstractItemModel.sort method
+        """
+        post( functools.update_wrapper( functools.partial( self._set_sort_decorator, column, order ), self._set_sort_decorator ), 
+              self._refresh_content )
 
     def append(self, o):
         """Add an object to this collection, used when inserting a new
