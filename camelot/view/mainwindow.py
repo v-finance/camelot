@@ -212,7 +212,7 @@ class MainWindow(QtGui.QMainWindow):
     def refresh_session(self):
         from elixir import session
         from camelot.core.orm import refresh_session
-        post( functools.partial( refresh_session, session ) )
+        post( functools.update_wrapper( functools.partial( refresh_session, session ), refresh_session ) )
 
     def help(self):
         #
