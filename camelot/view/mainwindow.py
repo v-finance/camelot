@@ -22,6 +22,7 @@
 #
 #  ============================================================================
 
+import functools
 import logging
 logger = logging.getLogger('camelot.view.mainwindow')
 
@@ -211,7 +212,7 @@ class MainWindow(QtGui.QMainWindow):
     def refresh_session(self):
         from elixir import session
         from camelot.core.orm import refresh_session
-        refresh_session( session )
+        post( functools.partial( refresh_session, session ) )
 
     def help(self):
         #

@@ -17,4 +17,6 @@ def setup_model():
 
 CAMELOT_MEDIA_ROOT = 'media'
 
-ENGINE = lambda:'sqlite:///'
+def ENGINE():
+   from sqlalchemy import create_engine
+   return create_engine( 'sqlite:///' )

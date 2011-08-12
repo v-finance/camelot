@@ -71,7 +71,7 @@ class MetaCamelotApplication( Application ):
 #
 
 features = [
-   ('source',                '.',                                       delegates.PlainTextDelegate, '''The directory in which to create<br/>'''
+   ('source',                '.',                                       delegates.LocalFileDelegate, '''The directory in which to create<br/>'''
                                                                                                      '''the sources of the new project '''),
    ('name',                  'My Application',                          delegates.PlainTextDelegate, '''The name of the application<br/>'''
                                                                                                      '''as it will appear in the main window and<br/>'''
@@ -101,13 +101,19 @@ features = [
 #
  
 templates = [
-    ('application_admin.py', '''
+    ('{{options.module}}/application_admin.py', '''
 from camelot.view.art import Icon
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.section import Section
 
 class MyApplicationAdmin(ApplicationAdmin):
   
+    name = '{{options.name}}'
+    application_url = '{{options.application_url}}'
+    help_url = '{{options.help_url}}'
+    author = '{{options.author}}'
+    domain = '{{options.domain}}'
+    
     def get_sections(self):
         from camelot.model.memento import Memento
         from camelot.model.authentication import Person, Organization
@@ -123,6 +129,8 @@ class MyApplicationAdmin(ApplicationAdmin):
     
     ('__init__.py', ''),
     
+    ('{{options.module}}/__init__.py', ''),
+    
     ('main.py', '''
 import logging
 logging.basicConfig(level=logging.ERROR)
@@ -130,11 +138,11 @@ logger = logging.getLogger('main')
 
 if __name__ == '__main__':
     from camelot.view.main import main
-    from application_admin import MyApplicationAdmin
+    from {{options.module}}.application_admin import MyApplicationAdmin
     main(MyApplicationAdmin())
     '''),
     
-    ('model.py', '''
+    ('{{options.module}}/model.py', '''
 from camelot.model import metadata
 
 __metadata__ = metadata
@@ -176,6 +184,7 @@ def setup_model():
     updateLastLogin()
     '''),
 ]
+
 class CreateNewProject( ApplicationActionFromModelFunction ):
     """Action to create a new project, based on a form with
     options the user fills in."""
@@ -194,9 +203,14 @@ class CreateNewProject( ApplicationActionFromModelFunction ):
                                'tooltip':feature[3]   } ) for feature in features)
             
     def model_run(self, options):
+        from jinja2 import Environment
+        context = {'options':options}
+        e = Environment()
         os.makedirs( os.path.join( options.source, options.module ) )
-        for filename, template in templates:
-            fp = open( os.path.join( options.source, options.module, filename ), 
+        for filename_template, code_template in templates:
+            filename = e.get_template( filename_template ).render( context )
+            code = e.get_template( code_template ).render( context )            
+            fp = open( os.path.join( options.source, filename ), 
                        'w' )
-            fp.write( template )
+            fp.write( code )
             fp.close()

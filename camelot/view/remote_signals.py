@@ -38,7 +38,7 @@ LOGGER = logging.getLogger('remote_signals')
 
 from PyQt4 import QtCore
 
-from camelot.core.threading import synchronized
+#from camelot.core.threading import synchronized
 from camelot.core.conf import settings
 
 class SignalHandler(QtCore.QObject):
@@ -54,6 +54,9 @@ class SignalHandler(QtCore.QObject):
     can happen when the user closes a window that is still building up (the
     CollectionProxies are being constructed and they connect to the signal
     handler).
+    
+    These deadlock issues are resolved in recent PyQt, so comment out the 
+    mutex stuff. (2011-08-12)
      """
 
     entity_update_signal = QtCore.pyqtSignal(object, object)
@@ -64,7 +67,7 @@ class SignalHandler(QtCore.QObject):
     
     def __init__(self):
         super(SignalHandler, self).__init__()
-        self._mutex = QtCore.QMutex()
+        #self._mutex = QtCore.QMutex()
         self.update_expression = re.compile(self.entity_update_pattern)
         if hasattr(settings, 'CAMELOT_SERVER') and settings.CAMELOT_SERVER:
             from stomp import stomp
@@ -76,7 +79,7 @@ class SignalHandler(QtCore.QObject):
             self.connection = None
             LOGGER.debug('not connected to a server')
             
-    @synchronized
+    #@synchronized
     def connect_signals(self, obj):
         """Connect the SignalHandlers its signals to the slots of obj, while
         the mutex is locked"""
@@ -122,7 +125,7 @@ class SignalHandler(QtCore.QObject):
         changed"""
         self.sendEntityUpdate(sender, entity, scope)
     
-    @synchronized        
+    #@synchronized        
     def sendEntityUpdate(self, sender, entity, scope='local'):
         """Call this method to inform the whole application an entity has 
         changed"""
@@ -131,14 +134,14 @@ class SignalHandler(QtCore.QObject):
         if self.connection and scope == 'remote':
             self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.update'%entity.__class__.__name__)
         
-    @synchronized    
+    #@synchronized    
     def sendEntityDelete(self, sender, entity, scope='local'):
         """Call this method to inform the whole application an entity is 
         about to be deleted"""
         if self.connection and scope == 'remote':
             self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.delete'%entity.__class__.__name__)
             
-    @synchronized
+    #@synchronized
     def sendEntityCreate(self, sender, entity, scope='local'):
         """Call this method to inform the whole application an entity 
         was created"""

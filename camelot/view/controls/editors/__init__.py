@@ -53,6 +53,7 @@ from floateditor import FloatEditor
 from imageeditor import ImageEditor
 from integereditor import IntegerEditor
 from languageeditor import LanguageEditor
+from localfileeditor import LocalFileEditor
 from many2oneeditor import Many2OneEditor
 from manytomanyeditor import ManyToManyEditor
 from one2manyeditor import One2ManyEditor
@@ -86,6 +87,7 @@ __all__ = [
     IntegerEditor.__name__,
     LabelEditor.__name__,
     LanguageEditor.__name__,
+    LocalFileEditor.__name__,
     ManyToManyEditor.__name__,
     Many2OneEditor.__name__,
     MonthsEditor.__name__,

@@ -23,34 +23,33 @@
 #  ============================================================================
 
 import logging
-logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
+logger = logging.getLogger('camelot.view.controls.delegates.localfiledelegate')
 
 from PyQt4.QtCore import Qt
 
 from customdelegate import CustomDelegate
 from customdelegate import DocumentationMetaclass
 
-from camelot.core.utils import ugettext
 from camelot.core.utils import variant_to_pyobject
 
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 
-class PlainTextDelegate(CustomDelegate):
-    """Custom delegate for simple string values"""
+class LocalFileDelegate(CustomDelegate):
+    """Delegate for displaying a path on the local file system.  This path can
+    either point to a file or a directory
+    """
 
     __metaclass__ = DocumentationMetaclass
 
-    editor = editors.TextLineEditor
+    editor = editors.LocalFileEditor
 
     def __init__(
-        self, parent=None, length=20,
-        editable=True, translate_content=False, **kw
+        self, 
+        parent=None,
+        **kw
     ):
-        CustomDelegate.__init__(self, parent, editable, length=length, **kw)
-        self.length = length
-        self.editable = editable
-        self._translate_content = translate_content
+        CustomDelegate.__init__(self, parent, **kw)
 
     def paint(self, painter, option, index):
         painter.save()
@@ -59,10 +58,7 @@ class PlainTextDelegate(CustomDelegate):
         
         value_str = u''
         if value not in (None, ValueLoading):
-            if self._translate_content:
-                value_str = ugettext( unicode(value) )
-            else:
-                value_str = unicode(value)
+            value_str = unicode(value)
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()

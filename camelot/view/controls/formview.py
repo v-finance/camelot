@@ -24,6 +24,7 @@
 
 """form view"""
 
+import functools
 import logging
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
@@ -339,7 +340,7 @@ class FormView(AbstractView):
     def refresh_session(self):
         from elixir import session
         from camelot.core.orm import refresh_session
-        refresh_session( session )
+        post( functools.partial( refresh_session, session ) )
                 
     @QtCore.pyqtSlot()
     def refresh(self):

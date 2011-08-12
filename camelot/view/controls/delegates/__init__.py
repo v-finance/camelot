@@ -39,6 +39,7 @@ from imagedelegate import ImageDelegate
 from integerdelegate import IntegerDelegate
 from intervalsdelegate import IntervalsDelegate
 from languagedelegate import LanguageDelegate
+from localfiledelegate import LocalFileDelegate
 from manytomanydelegate import ManyToManyDelegate
 from many2onedelegate import Many2OneDelegate
 from one2manydelegate import One2ManyDelegate
@@ -74,6 +75,7 @@ __all__ = [
     IntegerDelegate.__name__,
     IntervalsDelegate.__name__,
     LanguageDelegate.__name__,
+    LocalFileDelegate.__name__,
     ManyToManyDelegate.__name__,
     Many2OneDelegate.__name__,
     One2ManyDelegate.__name__,

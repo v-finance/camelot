@@ -39,7 +39,6 @@ def get_application_admin():
         raise Exception('No application admin class has been constructed yet')
     return _application_admin_[0]
 
-
 class ApplicationAdmin(QtCore.QObject):
     """The ApplicationAdmin class defines how the application should look
 like, it also ties Python classes to their associated 
@@ -51,6 +50,25 @@ methods :
 
     The name of the application, as it will appear in the title of the main
     window.
+
+.. attribute:: application_url
+
+    The url of the web site where the user can find more information on
+    the application.
+
+.. attribute:: help_url
+
+    Points to either a local html file or a web site that contains the
+    documentation of the application.
+
+.. attribute:: author
+
+    The name of the author of the application
+    
+.. attribute:: domain
+
+    The domain name of the author of the application, eg 'mydomain.com', this
+    domain will be used to store settings of the application.
     
 .. attribute:: version
     
@@ -74,7 +92,13 @@ methods :
 
     backup_mechanism = BackupMechanism
     database_profile_wizard = database_selection.ProfileWizard
+
     name = 'Camelot'
+    application_url = 'http://www.python-camelot.com'
+    help_url = 'http://www.python-camelot.com/docs.html'
+    author = 'Conceptive Engineering'
+    domain = 'python-camelot.com'
+
     version = '1.0'
     sections = ['Relations', 'Configuration']
     admins = {}
@@ -188,7 +212,7 @@ methods :
         """
         :return: the name of the application, by default this is the class
             attribute name"""
-        return self.name
+        return unicode( self.name )
 
     def get_version(self):
         """:return: string representing version of the application, by default this
@@ -206,15 +230,15 @@ methods :
         return Pixmap('splashscreen.png').getQPixmap()
 
     def get_organization_name(self):
-        return 'Conceptive Engineering'
+        return self.author
 
     def get_organization_domain(self):
-        return 'conceptive.be'
+        return self.domain
 
     def get_help_url(self):
         """:return: a :class:`PyQt4.QtCore.QUrl` pointing to the index page for help"""
         from PyQt4.QtCore import QUrl
-        return QUrl('http://www.python-camelot.com/docs.html')
+        return QUrl( self.help_url )
 
     def get_whats_new(self):
         """:return: a widget that has a show() method """
@@ -230,7 +254,8 @@ methods :
         This can be used to connect the user to a website that is used a lot
         in the organization, but hard to remember.
         """
-        return None
+        from PyQt4.QtCore import QUrl
+        return QUrl( self.application_url )
 
     def get_remote_support_url(self):
         """:return: a :class:`PyQt4.QtCore.QUrl` pointing to a page to get remote support

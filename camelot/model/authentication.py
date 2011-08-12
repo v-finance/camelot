@@ -610,7 +610,7 @@ class Person( Party ):
         verbose_name = _( 'Person' )
         verbose_name_plural = _( 'Persons' )
         list_display = ['first_name', 'last_name', 'contact_mechanisms_email', 'contact_mechanisms_phone']
-        form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [Form( [WidgetOnlyForm('note'), 'first_name', 'last_name', 'sex'] ),
+        form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [Form( [WidgetOnlyForm('note'), 'first_name', 'last_name', 'sex',] ),
                                                           Form( ['picture', ] ),
                                                          ] ),
                                                          'contact_mechanisms', 'comment', ], scrollbars = False ) ),
