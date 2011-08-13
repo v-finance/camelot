@@ -51,6 +51,7 @@ class Task(QtCore.QObject):
         """clear this tasks references to other objects"""
         self._request = None
         self._name = None
+        self._args = None
 
     def execute(self):
         logger.debug('executing %s' % (self._name))
@@ -80,7 +81,7 @@ class TaskHandler(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self._mutex = QtCore.QMutex()
         self._queue = queue
-        self._tasks_done = []
+        #self._tasks_done = []
         self._busy = False
         logger.debug("TaskHandler created.")
 
@@ -102,7 +103,7 @@ class TaskHandler(QtCore.QObject):
             # @todo: this should be investigated in more detail, since we are causing
             #        a deliberate memory leak here
             task.clear()
-            self._tasks_done.append(task)
+            #self._tasks_done.append(task)
             task = self._queue.pop()
         self.task_handler_busy_signal.emit( False )
         self._busy = False
