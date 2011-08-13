@@ -107,7 +107,7 @@ class Filter(object):
         def create_decorator(col, attributes, value, joins):
             def decorator(q):
                 if joins:
-                    q = q.join(joins, aliased=True)
+                    q = q.join( *joins, aliased=True)
                 if 'precision' in attributes:
                     delta = pow( 10,  -1*attributes['precision'])
                     return q.filter( sql.and_(col < value+delta, col > value-delta) )
