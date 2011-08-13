@@ -475,7 +475,7 @@ class Party( Entity ):
                                 directors = {'admin':DirectedDirector.DirectorAdmin},
                                 shares = {'admin':SharedShareholder.SharedAdmin},
                                 shareholders = {'admin':SharedShareholder.ShareholderAdmin},
-                                sex = dict( choices = lambda obj:[( u'M', _('male') ), ( u'F', _('female') )], ),
+                                sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )] ),
                                 name = dict( minimal_column_width = 50 ),
                                 email = dict( editable = False, minimal_column_width = 20 ),
                                 phone = dict( editable = False, minimal_column_width = 20 ),
