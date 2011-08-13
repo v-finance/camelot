@@ -21,6 +21,7 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
+import functools
 import logging
 
 from PyQt4 import QtGui
@@ -50,20 +51,26 @@ class ListAction( AbstractAction ):
         self._icon = icon
         self.options = None
 
-    def render( self, parent, collection_getter, selection_getter ):
+    def render( self, 
+                parent, 
+                collection_getter_getter, 
+                selection_getter_getter ):
         """Returns a QWidget the user can use to trigger the action"""
 
-        def create_clicked_function( self, collection_getter, selection_getter ):
-
-            def clicked( *args ):
-                self.run( collection_getter, selection_getter )
-
-            return clicked
+        def clicked( action,
+                     collection_getter_getter,
+                     selection_getter_getter,
+                     *args ):
+            action.run( collection_getter_getter(), 
+                        selection_getter_getter() )
 
         button = QtGui.QPushButton( unicode(self._name) )
         if self._icon:
             button.setIcon( self._icon.getQIcon() )
-        button.clicked.connect( create_clicked_function( self, collection_getter, selection_getter ) )
+        button.clicked.connect( functools.partial( clicked,
+                                                   self,
+                                                   collection_getter_getter,
+                                                   selection_getter_getter ) )
         return button
 
     def run( self, collection_getter, selection_getter ):

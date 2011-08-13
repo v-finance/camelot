@@ -24,6 +24,7 @@
 
 """Tableview"""
 
+import functools
 import logging
 logger = logging.getLogger( 'camelot.view.controls.tableview' )
 
@@ -246,7 +247,7 @@ and above the text.
             self._update_frozen_table()
         register.register( model, self )
         self.selectionModel().currentChanged.connect( self.activated )
-
+        
     @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)
     def activated( self, selectedIndex, previousSelectedIndex ):
         option = QtGui.QStyleOptionViewItem()
@@ -654,6 +655,7 @@ class TableView( AbstractView  ):
 #
 #    post( makeImport )
 
+    @gui_function
     def selectedTableIndexes( self ):
         """returns a list of selected rows indexes"""
         return self.table.selectedIndexes()
@@ -737,21 +739,31 @@ class TableView( AbstractView  ):
         self.search_filter = lambda q: q
         self.rebuild_query()
 
-    @model_function
-    def get_selection(self):
-        """:return: a list with all the objects corresponding to the selected rows in the
-        table """
-        selection = []
+    @gui_function
+    def get_selection_getter(self):
+        """:return: a function that when called return an iterable with all the 
+        objects corresponding to the selected rows in the table."""
         model = self.table.model()
-        for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-            selection.append( model._get_object(row) )
-        return selection
+        selected_rows = set( map( lambda x: x.row(), self.table.selectedIndexes() ) )
+        
+        def selection_getter(table, selected_rows):
+            selection = []
+            model = table.model()
+            for row in selected_rows:
+                selection.append( model._get_object(row) )
+            return selection
+        
+        return functools.partial( selection_getter, self.table, selected_rows )
 
-    @model_function
-    def get_collection(self):
+    @gui_function
+    def get_collection_getter(self):
         """:return: a list with all the objects corresponding to the rows in the table
         """
-        return self.table.model().get_collection()
+        
+        def get_collection(table):
+            return table.model().get_collection()
+        
+        return functools.partial( get_collection, self.table )
 
     @QtCore.pyqtSlot(object)
     @gui_function
@@ -788,8 +800,8 @@ class TableView( AbstractView  ):
             # segfaults (see the test_qt_bindings)
             #
             actions_widget = ActionsBox( self,
-                                         self.get_collection,
-                                         self.get_selection )
+                                         self.get_collection_getter,
+                                         self.get_selection_getter )
             actions_widget.setObjectName( 'actions' )
             actions_widget.setActions( actions )
             self.filters_layout.addWidget( actions_widget )

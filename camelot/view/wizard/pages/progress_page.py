@@ -118,5 +118,3 @@ class ProgressPage(QtGui.QWizardPage):
     def initializePage(self):
         from camelot.view.model_thread import post
         post(self.run, self.finished, self.exception)
-
-

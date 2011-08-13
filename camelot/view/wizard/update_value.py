@@ -50,16 +50,16 @@ class SelectValuePage(QtGui.QWizardPage):
         self.setTitle( unicode(self.title) )
         self.setSubTitle( unicode(self.sub_title) )
 
-        self.editor = ChoicesEditor()
+        editor = ChoicesEditor( parent=self )
+        editor.setObjectName( 'field_choice' )
         layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.editor)
-        self.setLayout(layout)
+        layout.addWidget( editor )
+        self.setLayout( layout )
         self._fields = {}
         self._data = data
-        self.editor.currentIndexChanged.connect( self.field_changed )
-        self._value_editor = None
-        
-        post(admin.get_all_fields_and_attributes, self.set_fields)
+        editor.currentIndexChanged.connect( self.field_changed )
+        post( admin.get_all_fields_and_attributes, 
+              self.set_fields )
         
     def set_fields(self, fields):
         self._fields = fields
@@ -72,35 +72,43 @@ class SelectValuePage(QtGui.QWizardPage):
             return True
         
         choices = [(field, attributes['name']) for field, attributes in fields.items() if filter(attributes)]
-        self.editor.set_choices(choices)
-        self.editor.set_value((choices+[(None,None)])[1][0])
-        self.field_changed(0)
+        editor = self.findChild( QtGui.QWidget, 'field_choice' )
+        if editor != None:
+            editor.set_choices(choices)
+            editor.set_value((choices+[(None,None)])[1][0])
+            self.field_changed(0)
         
     def value_changed(self):
-        if self._value_editor:
-            self._data.value = self._value_editor.get_value()
+        value_editor = self.findChild( QtGui.QWidget, 'value_editor' )
+        if value_editor != None:
+            self._data.value = value_editor.get_value()
             
     @QtCore.pyqtSlot(int)
     def field_changed(self, index):
-        if self._value_editor:
-            self.layout().removeWidget(self._value_editor)
-            self._value_editor.deleteLater()
-            self._value_editor = None
-        selected_field = self.editor.get_value()
-        if selected_field!=ValueLoading:
+        selected_field = ValueLoading
+        editor = self.findChild( QtGui.QWidget, 'field_choice' )
+        value_editor = self.findChild( QtGui.QWidget, 'value_editor' )
+        if editor != None:
+            selected_field = editor.get_value()
+        if value_editor != None:
+            value_editor.deleteLater()
+        if selected_field != ValueLoading:
             self._data.field = selected_field
             self._data.value = None
             field_attributes = self._fields[selected_field]
-            delegate = field_attributes['delegate'](**field_attributes)
+            delegate = field_attributes['delegate']( parent = self,
+                                                     **field_attributes)
             option = QtGui.QStyleOptionViewItem()
             option.version = 5
-            self._value_editor = delegate.createEditor( self, option, None )
-            self._value_editor.editingFinished.connect( self.value_changed )
-            self.layout().addWidget(self._value_editor)
+            value_editor = delegate.createEditor( self, option, None )
+            value_editor.setObjectName( 'value_editor' )
+            value_editor.set_field_attributes( **dict( (k,v) for k,v in field_attributes.items() if not callable(v) ) )
             if isinstance(delegate, delegates.Many2OneDelegate):
-                self._value_editor.set_value(lambda:None)
+                value_editor.set_value(lambda:None)
             else:
-                self._value_editor.set_value(None)
+                value_editor.set_value(None)
+            self.layout().addWidget( value_editor )
+            value_editor.editingFinished.connect( self.value_changed )
 
 class ReplaceContentsPage(UpdateEntitiesPage):
     
