@@ -58,8 +58,9 @@ class SelectValuePage(QtGui.QWizardPage):
         self._fields = {}
         self._data = data
         editor.currentIndexChanged.connect( self.field_changed )
-        post( admin.get_all_fields_and_attributes, 
-              self.set_fields )
+        if admin:
+            post( admin.get_all_fields_and_attributes, 
+                  self.set_fields )
         
     def set_fields(self, fields):
         self._fields = fields
@@ -136,7 +137,6 @@ class UpdateValueWizard(QtGui.QWizard):
         self.setWindowTitle( unicode(self.window_title) )
         data = ReplaceContentsData()
         assert selection_getter
-        assert admin
         self.addPage(SelectValuePage(parent=self, admin=admin, data=data))
         self.addPage(ReplaceContentsPage(parent=self, collection_getter=selection_getter, data=data))
 

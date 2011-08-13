@@ -39,7 +39,6 @@ class UpdateEntitiesPage(ProgressPage):
     
     def __init__(self, collection_getter, parent):
         super(UpdateEntitiesPage, self).__init__( parent )
-        self._wizard = parent
         self._collection_getter = collection_getter
     
     def update_entity(self, entity):
