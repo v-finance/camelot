@@ -36,7 +36,7 @@ def refresh_session(session):
     this method ought to be called in the model thread.
     """
     from camelot.view.remote_signals import get_signal_handler
-    import sqlalchemy.exceptions as sa_exc
+    import sqlalchemy.exc as sa_exc
     logger.debug('session refresh requested')
     signal_handler = get_signal_handler()
     refreshed_objects = []

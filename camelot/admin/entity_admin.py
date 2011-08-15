@@ -229,7 +229,7 @@ It has additional class attributes that customise its behaviour.
             # field is a mapped field
             #
             from sqlalchemy import orm, schema
-            from sqlalchemy.exceptions import InvalidRequestError
+            from sqlalchemy.exc import InvalidRequestError
             from camelot.view.field_attributes import _sqlalchemy_to_python_type_
 
             try:

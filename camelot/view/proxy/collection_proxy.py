@@ -649,7 +649,7 @@ position in the query.
         for flushed, row, column, value in update_requests:
             attribute, field_attributes = self.getColumns()[column]
 
-            from sqlalchemy.exceptions import DatabaseError
+            from sqlalchemy.exc import DatabaseError
             from sqlalchemy import orm
             new_value = value()
             self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )

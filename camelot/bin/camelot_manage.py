@@ -168,7 +168,7 @@ def main():
         from migrate.versioning.repository import Repository
         from migrate.versioning.schema import ControlledSchema
         from migrate.versioning.exceptions import DatabaseNotControlledError
-        from sqlalchemy.exceptions import NoSuchTableError
+        from sqlalchemy.exc import NoSuchTableError
         migrate_engine = settings.ENGINE()
         repository = Repository(settings.REPOSITORY)
         schema = None

@@ -124,7 +124,7 @@ class QueryTableProxy(CollectionProxy):
         the rows in the model.
         """
         from sqlalchemy import orm
-        from sqlalchemy.exceptions import InvalidRequestError
+        from sqlalchemy.exc import InvalidRequestError
         
         class_attributes_to_sort_by, join = [], None
         mapper = orm.class_mapper(self.admin.entity)
