@@ -66,8 +66,8 @@ Loading translations
 
 Translations are loaded when the application starts.  To enforce the loading
 of the correct translation file, one should overwrite the 
-:meth:`camelot.admin.application_admin.get_translator` method.  This method
-should return the proper :obj:`QtCore.QTranslator` object.
+:meth:`camelot.admin.application_admin.ApplicationAdmin.get_translator` method.  
+This method should return the proper :obj:`QtCore.QTranslator` object.
   
 End user translations
 =====================
@@ -76,7 +76,7 @@ Often it is convenient to let the end user create or update the translations of 
 application, this allows the end user to put a lot of domain knowledge into the application.
 
 Therefore, all lazy translation strings can be translated by the end user.  When the user
-right-clicks on a label in a form, he can select :gui:`Change translation` from the menu and
+right-clicks on a label in a form, he can select :guilabel:`Change translation` from the menu and
 update the current translation (for the current language).  This effectively updates the
 content of the **Translation** table.
 

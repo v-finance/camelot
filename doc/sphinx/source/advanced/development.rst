@@ -76,9 +76,9 @@ in two ways :
     
 A segmentation fault will happen in several cases :
 
-  * Python tries to delete a Qt object allready deleted by Qt
-  * PyQt calls a function of a Qt object allready deleted
-  * Qt calls a function of a Qt object allready deleted by Python
+  * Python tries to delete a Qt object already deleted by Qt
+  * PyQt calls a function of a Qt object already deleted
+  * Qt calls a function of a Qt object already deleted by Python
   
 In principle, PyQt is able to handle all cases where the object
 has been created by Python.  However, when this ownership tracking 
