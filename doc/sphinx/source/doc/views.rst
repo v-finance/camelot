@@ -6,7 +6,7 @@ Views
 
 Traditionally, in database land, **views** are queries defined at the database
 level that act like read-only tables.  They allow reuse of common queries
-accross an application, and are very suitable for reporting.
+across an application, and are very suitable for reporting.
 
 Using **SQLAlchemy** this traditional approach can be used, but a more dynamic
 approach is possible as well.  We can map arbitrary queries to an object,

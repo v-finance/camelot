@@ -70,8 +70,8 @@ class Fifo(object):
         return new_fifo
         
     def add_data(self, row, entity, value):
-        """The entity might allready be on another row, and this row
-        might allready contain an entity"""
+        """The entity might already be on another row, and this row
+        might already contain an entity"""
 #        try:
 #            previous_entity = self.get_entity_at_row(row)
 #            self.delete_by_entity(previous_entity)

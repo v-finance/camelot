@@ -383,7 +383,7 @@ It has additional class attributes that customise its behaviour.
             if has_default:
                 #
                 # prevent the setting of a default value when one has been
-                # set allready
+                # set already
                 #
                 value = attributes['getter'](entity_instance)
                 if value!=None: # False is a legitimate value for Booleans
@@ -538,7 +538,7 @@ It has additional class attributes that customise its behaviour.
             if entity_instance in session.new:
                 session.expunge(entity_instance)
             elif (entity_instance not in session.deleted) and \
-                 (entity_instance in session): # if the object is not in the session, it might allready be deleted
+                 (entity_instance in session): # if the object is not in the session, it might already be deleted
                 history = None
                 #
                 # only if we know the primary key, we can keep track of its history

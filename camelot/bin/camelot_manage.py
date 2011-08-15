@@ -205,7 +205,7 @@ def main():
                 #
                 try:
                     if schema.version == version:
-                        print 'database is allready at requested version'
+                        print 'database is already at requested version'
                     if schema.version <= version:
                         step = 1
                     else:

@@ -206,7 +206,7 @@ and above the text.
         if not header.isSortIndicatorShown():
             header.setSortIndicatorShown( True )
         elif header.sortIndicatorSection()==logical_index:
-            # apparently, the sort order on the header is allready switched
+            # apparently, the sort order on the header is already switched
             # when the section was clicked, so there is no need to reverse it
             order = header.sortIndicatorOrder()
         header.setSortIndicator( logical_index, order )

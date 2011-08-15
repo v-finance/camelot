@@ -223,7 +223,7 @@ def startproject(module):
     import os
     from camelot.bin.meta import CreateNewProject
     if os.path.exists(module):
-        raise Exception('Directory %s allready exists, cannot start a project in it'%module)
+        raise Exception('Directory %s already exists, cannot start a project in it'%module)
     
     options = CreateNewProject.Options()
     options.module = module

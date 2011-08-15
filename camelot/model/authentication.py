@@ -595,7 +595,7 @@ class Person( Party ):
     def note(self):
         for person in self.__class__.query.filter_by(first_name=self.first_name, last_name=self.last_name):
             if person != self:
-                return _('A person with the same name allready exists')
+                return _('A person with the same name already exists')
 
     @property
     def name( self ):

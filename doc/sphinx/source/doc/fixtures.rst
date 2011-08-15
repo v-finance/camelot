@@ -78,7 +78,7 @@ Update fixtures
 
 When a new version of the application gets released, we might want to change
 the static data and add some icons to the movie types.  Thanks to the 'fixture key',
-it's easy to retrieve and update the allready inserted data, just modify the 
+it's easy to retrieve and update the already inserted data, just modify the 
 update_fixtures function::
 
 	def update_fixtures():

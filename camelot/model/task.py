@@ -21,7 +21,7 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-"""Most users have the need to do some basic task tracking accross various
+"""Most users have the need to do some basic task tracking across various
 parts of the data model.
 
 These classes provide basic task tracking with configurable statuses, 

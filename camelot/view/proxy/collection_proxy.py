@@ -814,7 +814,7 @@ position in the query.
         self.row_changed_signal.emit( row )
 
     def _skip_row(self, row, obj):
-        """:return: True if the object obj is allready in the cache, but at a
+        """:return: True if the object obj is already in the cache, but at a
         different row then row.  If this is the case, this object should not
         be put in the cache at row, and this row should be skipped alltogether.
         """
@@ -845,11 +845,11 @@ position in the query.
         # the gui thread didn't know about
         #
         rows_to_get = self.rows_under_request
-        rows_allready_there = set()
+        rows_already_there = set()
         for row in rows_to_get:
             if self.edit_cache.has_data_at_row(row):
-                rows_allready_there.add(row)
-        rows_to_get.difference_update( rows_allready_there )
+                rows_already_there.add(row)
+        rows_to_get.difference_update( rows_already_there )
         #
         # see if there is anything left to do
         #
@@ -1073,7 +1073,7 @@ position in the query.
         for depending_obj in self.admin.get_depending_objects( obj ):
             self.rsh.sendEntityUpdate( self, depending_obj )
 # TODO : it's not because an object is added to this list, that it was created
-# it might as well exist allready, eg. manytomany relation
+# it might as well exist already, eg. manytomany relation
 #      from camelot.model.memento import Create
 #      from camelot.model.authentication import getCurrentAuthentication
 #      history = Create(model=unicode(self.admin.entity.__name__),

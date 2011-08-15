@@ -96,7 +96,7 @@ class QueryTableProxy(CollectionProxy):
         
     def get_collection(self):
         """In case the collection is requested of a QueryProxy, we will return
-        a collection getter for a collection that reuses the data allready queried by
+        a collection getter for a collection that reuses the data already queried by
         the collection proxy, and available in the cache.
          
         We do this to :
@@ -238,7 +238,7 @@ class QueryTableProxy(CollectionProxy):
                 columns = self.getColumns()
                 #
                 # try to move the offset further by looking if the
-                # objects are allready in the cache.
+                # objects are already in the cache.
                 #
                 # this has the advantage that we might not need a query,
                 # and more important, that objects remain at the same row

@@ -57,7 +57,7 @@ A note on a form is nothing more than a property with the NoteDelegate as its
 delegate and where the widget is inside a WidgetOnlyForm.
 
 In the case of a Person, we display a note if another person with the same name
-allready exists :
+already exists :
 
 .. literalinclude:: ../../../../camelot/model/authentication.py
    :pyobject: Person

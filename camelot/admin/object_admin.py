@@ -613,7 +613,7 @@ be specified using the verbose_name attribute.
             if has_default:
                 #
                 # prevent the setting of a default value when one has been
-                # set allready
+                # set already
                 #
                 value = attributes['getter'](object_instance)
                 if value!=None: # False is a legitimate value for Booleans

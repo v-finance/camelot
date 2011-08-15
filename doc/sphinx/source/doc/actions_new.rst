@@ -81,8 +81,8 @@ Every action object has a method :
         to 0 to display a busy indicator instead of a progres bar
     :param text: the text to be displayed inside the progres bar
     :param detail: the text to be displayed below the progres bar, this text is
-        appended to the text allready there
-    :param clear_details: clear the details text allready there before putting 
+        appended to the text already there
+    :param clear_details: clear the details text already there before putting 
         the new detail text.
         
 This method should be called regulary to keep the user informed about the
