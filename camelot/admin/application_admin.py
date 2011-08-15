@@ -288,8 +288,9 @@ methods :
         """Reimplement this method to add application specific translations
         to your application.
 
-        :return: a QTranslator that should be used to translate the application or a 
-                 list of QTranslors if multiple translators should be used
+        :return: a :obj:`QtCore.QTranslator` that should be used to translate 
+            the application or a list of :obj:`QtCore.QTranslator` objects
+            if multiple translators should be used
         """
         return QtCore.QTranslator()
 

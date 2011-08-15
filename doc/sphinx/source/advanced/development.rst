@@ -126,4 +126,6 @@ To play on safe, these guidelines are used when developing Camelot :
     				print child.objectName()
     
     should the child object have been deleted by Qt, the findChild method
-    will return None, and a segmentation fault is prevented.
+    will return None, and a segmentation fault is prevented.  An explicit
+    check for None is needed, since even if the widget exists, it might
+    evaluate to 0 or an empty string.

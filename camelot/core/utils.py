@@ -152,7 +152,7 @@ def load_translations():
 def _qtranslate(string_to_translate):
     """Translate a string using the QCoreApplication translation framework
     :param string_to_translate: a unicode string
-    :return: the translated unicode string if it was possible to translage
+    :return: the translated unicode string if it was possible to translate
     """
     return unicode(QtCore.QCoreApplication.translate('', 
                                                      string_to_translate.encode('utf-8'), 

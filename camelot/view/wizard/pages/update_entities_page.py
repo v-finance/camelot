@@ -29,7 +29,6 @@ Created on Jan 18, 2010
 
 from progress_page import ProgressPage
 
-
 class UpdateEntitiesPage(ProgressPage):
     """A progress page that updates each entity in a collection,
     then flushes the entity, and informs all views that the entity

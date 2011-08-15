@@ -1,10 +1,17 @@
-.. _doc-i18n:
+.. _dolc-i18n:
 
 ######################
   Internationalization
 ######################
 
-:Date: |today|
+The Camelot translation system is a very small wrapper around the Qt translation
+system.  Internally, it uses the :meth:`QCoreApplication.translate` method to
+do the actual translation.
+
+On top of that, it adds the possibility for end users to change translations
+theirselves.  Those translations are stored in the database.  This mechanism
+can be used to adapt the vocabulary of an application to that of a specific 
+company.
 
 How to Specify Translation Strings
 ==================================
@@ -36,7 +43,7 @@ Create a message catalog
 
 Open message catalog with linguist ::
 
-  linquist camelot.po
+  linguist camelot.po
   
 And edit it :  
   
@@ -53,6 +60,14 @@ Translations can be put in 2 places :
     menu.  This is the place to put translations that should be editable by the users.  At
     application startup, all records in this table related to the current language will be 
     put in memory.
+    
+Loading translations
+====================
+
+Translations are loaded when the application starts.  To enforce the loading
+of the correct translation file, one should overwrite the 
+:meth:`camelot.admin.application_admin.get_translator` method.  This method
+should return the proper :obj:`QtCore.QTranslator` object.
   
 End user translations
 =====================
@@ -61,9 +76,9 @@ Often it is convenient to let the end user create or update the translations of 
 application, this allows the end user to put a lot of domain knowledge into the application.
 
 Therefore, all lazy translation strings can be translated by the end user.  When the user
-right-clicks on a label in a form, he can select 'Change translation' from the menu and
+right-clicks on a label in a form, he can select :gui:`Change translation` from the menu and
 update the current translation (for the current language).  This effectively updates the
-content of the 'Translation' table.
+content of the **Translation** table.
 
 After some time the developer can take a copy of this table and decide to put these translations
 in po files.

@@ -47,15 +47,15 @@ that share the same behavior and class attributes ::
         def model_run( self, mode=None ):
             yield PrintPreview( 'Hello World' )
             
-Each standard action has two methods, :meth:`ApplicationAction.gui_run` and 
-:meth:`ApplicationAction.model_run`, one of
+Each standard action has two methods, :meth:`gui_run` and 
+:meth:`model_run`, one of
 them should be overloaded in the subclass to either run the action in the
 gui thread or to run the action in the model thread.  The default 
 :meth:`ApplicationAction.gui_run`
 behavior is to pop-up a :class:`camelot.view.controls.ProgressDialog` dialog and 
-start the :meth:`ApplicationAction.model_run` method in the model thread.
+start the :meth:`model_run` method in the model thread.
 
-:meth:`ApplicationAction.model_run` in itself is a generator, that can yield 
+:meth:`model_run` in itself is a generator, that can yield 
 object back to the gui, such as a :class:`camelot.admin.action.PrintPreview`.
             
 The action subclass can than be used a an element of the actions list of an 
@@ -67,15 +67,8 @@ The action subclass can than be used a an element of the actions list of an
 
         actions = [ PrintReport ]
             
-What can happen inside :meth:`ApplicationAction.model_run`
-==========================================================
-
-manipulation of the model
--------------------------
-
-The most important purpose of an action is to query or manipulate the model,
-all such things can be done in the `model_run` method, such as executing queries,
-manipulating files, etc.
+What can happen inside :meth:`model_run`
+========================================
 
 keep the user informed about progress
 -------------------------------------
@@ -134,6 +127,27 @@ Possible results that can be send to the GUI are:
   * :class:`camelot.admin.action.ShowChart`
   * :class:`camelot.admin.action.OpenDocx`
 
+manipulation of the model
+-------------------------
+
+The most important purpose of an action is to query or manipulate the model,
+all such things can be done in the :meth:`model_run` method, such as executing 
+queries, manipulating files, etc.
+
+inform the GUI of model manipulations
+-------------------------------------
+
+Whenever a part of the model has been changed, it might be needed to inform
+the GUI about this, so that it can update itself, this is done by yielding
+an instance of :class:'camelot.admin.action.UpdateObject`, eg::
+
+    movie.rating = 5
+    Movie.query.session.flush()
+    yield UpdateObject( movie )
+    
+will update the visualisation of the changed movie on every screen in the
+movie that displays this object.
+
 raise exceptions
 ----------------
 
@@ -150,7 +164,7 @@ request information from the user
 ---------------------------------
 
 The pop-up of a dialog that presents the user with a number of options can be 
-triggered from within the :meth:`ApplicationAction.model_run` method.  This
+triggered from within the :meth:`model_run` method.  This
 happens by transferring an 'options' object back and forth between the 
 'model_thread' and the 'gui_thread'.  To transfer such an object, this object
 first needs to be defined::
@@ -176,6 +190,15 @@ the options to the user and get the filled in values back::
                                  
 When the user presses :guilabel:`Cancel` button in the progress dialog, the
 :keyword:`yield` statement will raise a :class:`camelot.core.exception.CancelRequest`.
+
+ApplicationAction
+=================
+
+FromAction
+==========
+
+ListAction
+==========
 
 Inspiration
 ===========
