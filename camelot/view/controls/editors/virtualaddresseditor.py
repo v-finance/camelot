@@ -32,22 +32,46 @@ from customeditor import CustomEditor, set_background_color_palette
 from camelot.view.art import Icon
 import camelot.types
 
+email_expression = re.compile('^\S+@\S+\.\S+$')
+phone_expression = re.compile('^[0-9 ]+$')
+any_character_expression =  re.compile('^.+$')
+
+def default_address_validator( address_type, address ):
+    """Validates wether a virtual address is valid and
+    correct it if possible.
+    :param address_type: the type of address to validate, eg 'phone'
+    :param address: the address itself
+    :return: (valid, corrected_address) a tuple with a :type:`boolean`
+        indicating if the address is valid and a string with the corrected
+        address.
+    """
+    if address_type == 'email':
+        return ( email_expression.match( address ), address )
+    if address_type in ('phone', 'pager', 'fax', 'mobile'):
+        return ( phone_expression.match( address ), address )
+    return ( any_character_expression.match( address ), address )
+                
 class VirtualAddressEditor(CustomEditor):
 
     def __init__(self, 
                  parent = None, 
                  editable = True, 
                  address_type = None, 
+                 address_validator = default_address_validator,
                  field_name = 'virtual_address',
                  **kwargs):
         """
         :param address_type: limit the allowed address to be entered to be
             of a certain time, can be 'phone', 'fax', 'email', 'mobile', 'pager'.
             If set to None, all types are allowed.
+            
+        Upto now, the corrected address returned by the address validator is
+        not yet taken into account.
         """
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
         self._address_type = address_type
+        self._address_validator = address_validator
         self.layout = QtGui.QHBoxLayout()
         self.layout.setContentsMargins( 0, 0, 0, 0)
         self.combo = QtGui.QComboBox()
@@ -139,57 +163,18 @@ class VirtualAddressEditor(CustomEditor):
                 self.label.setEnabled(True)
 
     def checkValue(self, text):
-        if self.combo.currentText() == 'email':
-            email = unicode(text)
-            mailCheck = re.compile('^\S+@\S+\.\S+$')
-            if not mailCheck.match(email):
-                palette = self.editor.palette()
-                palette.setColor(QtGui.QPalette.Active,
-                                 QtGui.QPalette.Base,
-                                 QtGui.QColor(255, 0, 0))
-                self.editor.setPalette(palette)
-            else:
-                palette = self.editor.palette()
+        address_type = unicode( self.combo.currentText() )
+        valid, _corrected = self._address_validator( address_type, unicode( text ) )
+        palette = self.editor.palette()
+        if valid:
                 palette.setColor(QtGui.QPalette.Active,
                                  QtGui.QPalette.Base,
                                  QtGui.QColor(255, 255, 255))
-                self.editor.setPalette(palette)
-
-        elif self.combo.currentText() == 'phone' \
-         or self.combo.currentText() == 'pager' \
-         or self.combo.currentText() == 'fax' \
-         or self.combo.currentText() == 'mobile':
-
-            number = unicode(text)
-            numberCheck = re.compile('^[0-9 ]+$')
-
-            if not numberCheck.match(number):
-                palette = self.editor.palette()
-                palette.setColor(QtGui.QPalette.Active,
-                                 QtGui.QPalette.Base,
-                                 QtGui.QColor(255, 0, 0))
-                self.editor.setPalette(palette)
-            else:
-                palette = self.editor.palette()
-                palette.setColor(QtGui.QPalette.Active,
-                                 QtGui.QPalette.Base,
-                                 QtGui.QColor(255, 255, 255))
-                self.editor.setPalette(palette)
-
         else:
-            Check = re.compile('^.+$')
-            if not Check.match(unicode(text)):
-                palette = self.editor.palette()
                 palette.setColor(QtGui.QPalette.Active,
                                  QtGui.QPalette.Base,
-                                  QtGui.QColor(255, 0, 0))
-                self.editor.setPalette(palette)
-            else:
-                palette = self.editor.palette()
-                palette.setColor(QtGui.QPalette.Active,
-                                  QtGui.QPalette.Base,
-                                  QtGui.QColor(255, 255, 255))
-                self.editor.setPalette(palette)
+                                 QtGui.QColor(255, 0, 0))
+        self.editor.setPalette(palette)
 
     def editorValueChanged(self, text):
         self.checkValue(text)

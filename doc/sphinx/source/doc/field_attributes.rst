@@ -46,6 +46,19 @@ These are the field attributes that can be dynamic:
 Overview of the field attributes
 ================================
 
+.. _field-attribute-address_validator:
+
+address_validator 
+-----------------
+
+A function that verifies if a virtual address is valid, and eventually
+corrects it.  The default implementation can is 
+:func:`camelot.view.controls.editors.virtualaddresseditor.default_address_validator`
+
+This function will be called while the user is editing the address, therefor it
+should take very little time to do the validation.  If the address is invalid,
+this will be shown to the user, but it will not block the input of the address.
+
 .. _field-attribute-calculator:
 
 calculator 
