@@ -7,6 +7,5 @@ class I18NTest(ModelThreadTestCase):
         self.assertTrue(message)
       
     def test_ugettext_lazy(self):
-        pass
         from snippet.i18n.specify_lazy_translation_string import message
         self.assertTrue(message)

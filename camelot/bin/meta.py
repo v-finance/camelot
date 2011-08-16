@@ -203,13 +203,12 @@ class CreateNewProject( ApplicationActionFromModelFunction ):
                                'tooltip':feature[3]   } ) for feature in features)
             
     def model_run(self, options):
-        from jinja2 import Environment
+        from jinja2 import Template
         context = {'options':options}
-        e = Environment()
         os.makedirs( os.path.join( options.source, options.module ) )
         for filename_template, code_template in templates:
-            filename = e.get_template( filename_template ).render( context )
-            code = e.get_template( code_template ).render( context )            
+            filename = Template( filename_template ).render( context )
+            code = Template( code_template ).render( context )            
             fp = open( os.path.join( options.source, filename ), 
                        'w' )
             fp.write( code )

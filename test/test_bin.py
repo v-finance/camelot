@@ -17,8 +17,7 @@ class BinCase(unittest.TestCase):
         #
         for filename, _template in templates:
             code = open( os.path.join( options.source, 
-                                       options.module,
-                                       filename ) ).read()
+                                       filename.replace('{{options.module}}', options.module) ) ).read()
             compile( code, 
                      filename,
                      'exec' )

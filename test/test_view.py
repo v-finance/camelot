@@ -413,7 +413,7 @@ class EditorsTest(ModelThreadTestCase):
         
     def test_NoteEditor(self):
         editor = self.editors.NoteEditor(parent=None)
-        editor.set_value('A person with this name allready exists')
+        editor.set_value('A person with this name already exists')
         self.grab_widget( editor )
         self.grab_default_states( editor )
 
