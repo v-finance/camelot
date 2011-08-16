@@ -945,10 +945,10 @@ class ControlsTest(ModelThreadTestCase):
         self.grab_widget(widget)
 
     def test_navigation_pane(self):
-        from camelot.empty_project.application_admin import MyApplicationAdmin
+        from camelot.admin.application_admin import ApplicationAdmin
         from camelot.view.controls import navpane2
         
-        app_admin = MyApplicationAdmin()
+        app_admin = ApplicationAdmin()
         widget = navpane2.NavigationPane(app_admin,
                                          workspace = None,
                                          parent = None)

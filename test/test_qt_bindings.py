@@ -2,8 +2,13 @@
 """
 
 import unittest
+import gc
 
 from PyQt4 import QtGui, QtCore
+
+#
+# some helper classes to create all kinds of weird object structures
+#
 
 class ReferenceHoldingBox(QtGui.QGroupBox):
     """A group box holding references to the table
@@ -27,6 +32,20 @@ class TableView( QtGui.QWidget  ):
         widget_layout.addWidget( table )
         widget_layout.addWidget( ReferenceHoldingBox( table_model, self ) )
         self.setLayout( widget_layout )
+
+class CyclicChildWidget(QtGui.QWidget):
+    
+    def __init__( self, parent ):
+        super( CyclicChildWidget, self ).__init__( parent )
+        self._parent = parent
+        
+class CyclicWidget(QtGui.QWidget):
+    
+    def __init__( self ):
+        super( CyclicWidget, self ).__init__()
+        CyclicChildWidget( self )
+                
+alive = lambda :sum( isinstance(o,CyclicWidget) for o in gc.get_objects() )
 
 class ModelViewRegister(QtCore.QObject):
     
@@ -62,7 +81,6 @@ class TableViewCases(unittest.TestCase):
         """            
         register = ModelViewRegister()
         
-        import gc
         for _i in range(100):
             
             class TableModelSubclass(QtGui.QStringListModel):
@@ -96,29 +114,32 @@ class GarbageCollectionCase( unittest.TestCase ):
             import sys
             self.application = QtGui.QApplication(sys.argv)
         
+    def test_custom_garbage_collectory( self ):
+        from camelot.view.model_thread.garbage_collector import GarbageCollector
+        collector = GarbageCollector(None)
+        self.assertFalse( alive() )
+        cycle = CyclicWidget()
+        self.assertTrue( alive() )
+        del cycle
+        self.assertTrue( alive() )
+        collector._check()
+        self.assertFalse( alive() )
+        
     def test_cyclic_dependency( self ):
         """Create 2 widgets with a cyclic dependency, so that they can
         only be removed by the garbage collector, and then invoke the
         garbage collector in a different thread.
         """
-        import gc
-        
-        class CyclicChildWidget(QtGui.QWidget):
-            
-            def __init__( self, parent ):
-                super( CyclicChildWidget, self ).__init__( parent )
-                self._parent = parent
-                
-        class CyclicWidget(QtGui.QWidget):
-            
-            def __init__( self ):
-                super( CyclicWidget, self ).__init__()
-                CyclicChildWidget( self )
+
+        #
+        # dont run this test, since it will segfault the
+        # interpreter
+        #
+        return
                     
         # turn off automatic garbage collection, to be able to trigger it
         # at the 'right' time
         gc.disable()
-        alive = lambda :sum( isinstance(o,CyclicWidget) for o in gc.get_objects() )
         #
         # first proof that the wizard is only destructed by the garbage
         # collector
@@ -228,7 +249,6 @@ class SignalSlotCase( unittest.TestCase ):
             self.app.processEvents()
         receiver_parent.widget(0).deleteLater()
         receiver_parent.removeTab(0)
-        import gc
         gc.collect()
         thread.move_on = True
         thread.wait()

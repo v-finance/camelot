@@ -124,12 +124,14 @@ class SignalSlotModelThread( AbstractModelThread ):
         everything, by default this will setup the model.  set to None if nothing should
         be done.
         """
+        from camelot.view.model_thread.garbage_collector import GarbageCollector
         super(SignalSlotModelThread, self).__init__( setup_thread )
         self._task_handler = None
         self._mutex = QtCore.QMutex()
         self._request_queue = []
         self._connected = False
         self._setup_busy = True
+        GarbageCollector( self )
 
     def run( self ):
         self.logger.debug( 'model thread started' )
