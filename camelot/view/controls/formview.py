@@ -62,7 +62,7 @@ class ContextMenuAction(QtGui.QAction):
 class FormWidget(QtGui.QWidget):
     """A form widget comes inside a form view or inside an embedded manytoone editor"""
 
-    changed_signal = QtCore.pyqtSignal()
+    changed_signal = QtCore.pyqtSignal( int )
 
     def __init__(self, parent, admin):
         QtGui.QWidget.__init__(self, parent)
@@ -111,15 +111,14 @@ class FormWidget(QtGui.QWidget):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             widget_mapper.revert()
-        #if not sip.isdeleted(self):
-        self.changed_signal.emit()
+            self.changed_signal.emit( widget_mapper.currentIndex() )
 
     @QtCore.pyqtSlot()
     def _layout_changed(self):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             widget_mapper.revert()
-        self.changed_signal.emit()
+            self.changed_signal.emit( widget_mapper.currentIndex() )
 
     @QtCore.pyqtSlot()
     def _item_delegate_changed(self):
@@ -151,25 +150,25 @@ class FormWidget(QtGui.QWidget):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             widget_mapper.toFirst()
-            self.changed_signal.emit()
+            self.changed_signal.emit( widget_mapper.currentIndex() )
 
     def to_last(self):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             widget_mapper.toLast()
-            self.changed_signal.emit()
+            self.changed_signal.emit( widget_mapper.currentIndex() )
 
     def to_next(self):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             widget_mapper.toNext()
-            self.changed_signal.emit()
+            self.changed_signal.emit( widget_mapper.currentIndex() )
 
     def to_previous(self):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             widget_mapper.toPrevious()
-            self.changed_signal.emit()
+            self.changed_signal.emit( widget_mapper.currentIndex() )
 
     def export_ooxml(self):
         from camelot.view.export.word import open_stream_in_word
@@ -323,7 +322,6 @@ class FormView(AbstractView):
             return admin.get_form_actions(None)
 
         post(get_actions, self.setActions)
-        self.update_title()
         #
         # Define actions
         #
@@ -354,16 +352,14 @@ class FormView(AbstractView):
             self.admin.get_verbose_identifier(obj)
         )
             
-    def update_title(self):
-        form = self.findChild(QtGui.QWidget, 'form' )
-        if form:
-            current_index = form.get_index()
-            post( self._get_title, self.change_title, args=(current_index,) )
+    @QtCore.pyqtSlot( int )
+    def update_title(self, current_index ):
+        post( self._get_title, self.change_title, args=(current_index,) )
 
-    def getEntity(self):
-        form = self.findChild(QtGui.QWidget, 'form' )
-        if form:
-            return self.model._get_object(form.get_index())
+    #def getEntity(self):
+        #form = self.findChild(QtGui.QWidget, 'form' )
+        #if form:
+            #return self.model._get_object(form.get_index())
 
     @QtCore.pyqtSlot(list)
     def setActions(self, actions):
@@ -373,12 +369,12 @@ class FormView(AbstractView):
             side_panel_layout = QtGui.QVBoxLayout()
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
-            actions_widget = ActionsBox(self, self.getEntity)
+            actions_widget = ActionsBox(self, self.model )
             actions_widget.setObjectName('actions')
             action_widgets = actions_widget.setActions(actions)
             for action_widget in action_widgets:
                 form.changed_signal.connect( action_widget.changed )
-                action_widget.changed()
+                action_widget.changed( form.get_index() )
             side_panel_layout.insertWidget(1, actions_widget)
             side_panel_layout.addStretch()
             layout.addLayout(side_panel_layout)
