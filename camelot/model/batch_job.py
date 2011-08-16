@@ -28,16 +28,19 @@ These classes provide the means to store the result of batch jobs to enable the 
 review or plan them.
 """
 
+import sqlalchemy.types
+from sqlalchemy import orm, sql
+
 from elixir.entity import Entity
 from elixir.options import using_options
 from elixir.fields import Field
-import sqlalchemy.types
 from elixir.relationships import ManyToOne
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import metadata
 from camelot.view import filters
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.admin import form_action
 from camelot.core.document import documented_entity
 import camelot.types
 
@@ -73,15 +76,41 @@ def hostname():
     import socket
     return socket.gethostname()
     
+class CancelBatchJob(form_action.FormActionFromModelFunction):
+    
+    def model_run( self, batch_job, options ):
+        batch_job.status = 'canceled'
+        
 class BatchJob(Entity):
     """Information the batch job that is planned, running or has run"""
     using_options( tablename = 'batch_job', order_by=['-date'] )
     date    = Field(sqlalchemy.types.DateTime, required=True, default=datetime.datetime.now)
     host    = Field(sqlalchemy.types.Unicode(256), required=True, default=hostname)
     type    = ManyToOne('BatchJobType', required=True, ondelete = 'restrict', onupdate = 'cascade')
-    status  = Field(camelot.types.Enumeration([(-2, 'planned'), (-1, 'running'), (0, 'success'), (1,'warnings'), (2,'errors')]), required=True, default='planned' )
+    status  = Field(camelot.types.Enumeration([ (-2, 'planned'), 
+                                                (-1, 'running'), 
+                                                (0,  'success'), 
+                                                (1,  'warnings'), 
+                                                (2,  'errors'),
+                                                (3,  'canceled'), ]), required=True, default='planned' )
     message = Field(camelot.types.RichText())
     
+    def is_canceled(self):
+        """Verifies if this Batch Job is canceled.  Returns :keyword:`True` if 
+        it is.  This verification is done without using the ORM, so the verification
+        has no impact on the current session or the objects itself.  This method
+        is thus suited to call inside a running batch job to verifiy if another
+        user has canceled the running job.
+        
+        :return: :keyword:`True` or :keyword:`False`
+        """
+        table = orm.class_mapper( BatchJob ).mapped_table
+        query = sql.select( [table.c.status] ).where( table.c.id == self.id )
+        for row in table.bind.execute( query ):
+            if row['status'] == 'canceled':
+                return True
+        return False
+        
     def add_exception_to_message(self, exception):
         """If an exception occurs in a batch job, this method can be used to add
         the stack trace of the exception to the message"""
@@ -101,6 +130,7 @@ class BatchJob(Entity):
         list_display = ['date', 'host', 'type', 'status']
         list_filter = ['status', filters.ComboBoxFilter('host')]
         form_display = list_display + ['message']
+        form_actions = [ CancelBatchJob( _('Cancel'), flush=True ) ]
         
 BatchJob = documented_entity()( BatchJob )
 
