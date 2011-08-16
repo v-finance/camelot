@@ -1,0 +1,666 @@
+# PartnerPlan translation file NL.
+# Copyright (C) 2011
+# This file is distributed under the same license as the PartnerPlan application.
+# Probis <partnerplan@probis.be>, 2011.
+
+msgid "Options"
+msgstr "Opties"
+
+msgid "Please complete the options and continue"
+msgstr "Gelieve te vervolledigen"
+
+msgid "Commit"
+msgstr "Uitvoeren"
+
+msgid "Day"
+msgstr "Dag"
+
+msgid "Week"
+msgstr "Week"
+
+msgid "Month"
+msgstr "Maand"
+
+msgid "Quarter"
+msgstr "Kwartaal"
+
+msgid "Year"
+msgstr "Jaar"
+
+msgid "Male"
+msgstr "Man"
+
+msgid "Female"
+msgstr "Vrouw"
+
+msgid "Hr"
+msgstr "Uren"
+
+msgid "Basic"
+msgstr "Basis"
+
+msgid "Official"
+msgstr "Officiëel"
+
+msgid "Report"
+msgstr "Rapport"
+
+msgid "Work"
+msgstr "Werk"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Organization"
+msgstr "Organisatie"
+
+msgid "Organizations"
+msgstr "Organisaties"
+
+msgid "Corporate"
+msgstr "Bedrijf"
+
+msgid "Person"
+msgstr "Persoon"
+
+msgid "Persons"
+msgstr "Personen"
+
+msgid "Name"
+msgstr "Naam"
+
+msgid "Phone"
+msgstr "Telefoon"
+
+msgid "History"
+msgstr "Geschiedenis"
+
+msgid "Social security number"
+msgstr "Rijksregisternummer"
+
+msgid "Last name"
+msgstr "Achternaam"
+
+msgid "First name"
+msgstr "Voornaam"
+
+msgid "Type"
+msgstr "Type "
+
+msgid "Amount"
+msgstr "Bedrag"
+
+msgid "Referential index"
+msgstr "Referentie index"
+
+msgid "Comment"
+msgstr "Commentaar"
+
+msgid "Index"
+msgstr "Index"
+
+msgid "Code"
+msgstr "Code"
+
+msgid "Description"
+msgstr "Beschrijving"
+
+msgid "Model"
+msgstr "Model"
+
+msgid "Primary key"
+msgstr "Primaire sleutel"
+
+msgid "Source"
+msgstr "Bron"
+
+msgid "Language"
+msgstr "Taal"
+
+msgid "Value"
+msgstr "Waarde"
+
+msgid "Uid"
+msgstr "Uid"
+
+msgid "Tax id"
+msgstr "BTW Nummer"
+
+msgid "Sex"
+msgstr "Geslacht"
+
+msgid "Picture"
+msgstr "Foto"
+
+msgid "Contact mechanisms"
+msgstr "Contactmechanismen"
+
+msgid "Passport number"
+msgstr "Identiteitskaartnummer"
+
+msgid "Passport expiry date"
+msgstr "Vervaldag identiteitskaart"
+
+msgid "Addresses"
+msgstr "Adres"
+
+msgid "Employers"
+msgstr "Werkgevers"
+
+msgid "Directed organizations"
+msgstr " "
+
+msgid "Shares"
+msgstr "Aandelen"
+
+msgid "Address"
+msgstr "Adres"
+
+msgid "Contact mechanism"
+msgstr "Contactpersoon"
+
+msgid "Employees"
+msgstr "Werknemers"
+
+msgid "Customers"
+msgstr "Klanten"
+
+msgid "Suppliers"
+msgstr "Leveranciers"
+
+msgid "Director"
+msgstr "Verantwoordelijke"
+
+msgid "Directors"
+msgstr "Verantwoordelijken"
+
+msgid "Shareholder"
+msgstr "Aandeelhouder"
+
+msgid "Shareholders"
+msgstr "Aandeelhouders"
+
+msgid "Logo"
+msgstr "Logo"
+
+msgid "Official numbers"
+msgstr "Officiële nummers"
+
+msgid "Shareholder name"
+msgstr "Namen van de aandeelhouders"
+
+msgid "Number type"
+msgstr "Nummertype"
+
+msgid "Number"
+msgstr "Nummer"
+
+msgid "From time"
+msgstr "Vanaf"
+
+msgid "Thru time"
+msgstr "Tot en met"
+
+msgid "Duration"
+msgstr "Duur"
+
+msgid "Relations"
+msgstr "Relaties"
+
+msgid "Configuration"
+msgstr "Configuratie"
+
+msgid "Translation"
+msgstr "Vertaling"
+
+msgid "Translations"
+msgstr "Vertalingen"
+
+msgid "Employment"
+msgstr "Tewerkstelling"
+
+msgid "Summary"
+msgstr "Samenvatting"
+
+msgid "New"
+msgstr "Nieuw"
+
+msgid "Add file"
+msgstr "Bestand toevoegen"
+
+msgid "Open file"
+msgstr "Bestand openen"
+
+msgid "Delete file"
+msgstr "Bestand verwijderen"
+
+msgid "Select"
+msgstr "Selecteren"
+
+msgid "Open image"
+msgstr "Afbeelding openen"
+
+msgid "Delete image"
+msgstr "Afbeelding verwijderen"
+
+msgid "Clear"
+msgstr "Wissen"
+
+msgid "Copy"
+msgstr "Kopiëren"
+
+msgid "Delete"
+msgstr "Verwijderen"
+
+msgid "Open"
+msgstr "Openen"
+
+msgid "Search"
+msgstr "Zoeken"
+
+msgid "Search..."
+msgstr "Zoeken..."
+
+msgid "Today"
+msgstr "Vandaag"
+
+msgid "Last date"
+msgstr "Laatste datum"
+
+msgid "Special dates"
+msgstr "Speciale data"
+
+msgid "Export as spreadsheet"
+msgstr "Als rekenblad exporteren"
+
+msgid "Type words to search for"
+msgstr "Uw zoekterm typen"
+
+msgid "Save as pdf"
+msgstr "Als pdf opslaan"
+
+msgid "Bed license"
+msgstr "Erkenning"
+
+msgid "All"
+msgstr "Alle"
+
+msgid "Import"
+msgstr "Importeer"
+
+msgid "Select file:"
+msgstr "Selecteer bestand:"
+
+msgid "Import CSV data"
+msgstr "Importeer CSV data"
+
+msgid "Data Preview"
+msgstr "Data nakijken"
+
+msgid "Please correct the data above before proceeding with the import.<br/>Incorrect cells have a pink background."
+msgstr "Kijk bovenstaande preview na op fouten; foutieve benamingen inzake kwalificatie of type contract, lege cellen en dergelijke hebben een roze achtergrondkleur: deze gegevens dienen gecorrigeerd te worden."
+
+#: camelot/model/authentication.py:124 camelot/model/authentication.py:130
+#: camelot/model/authentication.py:148 camelot/model/authentication.py:154
+#: camelot/model/authentication.py:169 camelot/model/authentication.py:185
+#: camelot/model/authentication.py:191 camelot/model/authentication.py:215
+msgid "name"
+msgstr "naam"
+
+#: camelot/model/authentication.py:300
+msgid "male"
+msgstr "Man"
+
+#: camelot/model/authentication.py:300
+msgid "female"
+msgstr "Vrouw"
+
+#: camelot/model/authentication.py:371
+msgid "Authentication mechanism"
+msgstr ""
+
+#: camelot/model/authentication.py:445
+msgid "Country"
+msgstr "Land"
+
+#: camelot/model/authentication.py:446
+msgid "Countries"
+msgstr "Landen"
+
+#: camelot/model/authentication.py:463
+msgid "City"
+msgstr "Stad"
+
+#: camelot/model/authentication.py:464
+msgid "Cities"
+msgstr "Steden"
+
+#: camelot/model/authentication.py:548
+msgid "Address role type"
+msgstr ""
+
+#: camelot/view/elixir_admin.py:352
+#: camelot/view/controls/editors/many2oneeditor.py:69
+#: camelot/view/controls/editors/many2oneeditor.py:243
+#: camelot/view/controls/editors/one2manyeditor.py:70
+msgid "new"
+msgstr "nieuw"
+
+#: camelot/view/filters.py:112
+msgid "all"
+msgstr "alle"
+
+#: camelot/view/mainwindow.py:111
+msgid "About"
+msgstr "Info"
+
+#: camelot/view/mainwindow.py:167
+msgid "&Save"
+msgstr "&Bewaar"
+
+#: camelot/view/mainwindow.py:171
+msgid "Save"
+msgstr "Bewaar"
+
+#: camelot/view/mainwindow.py:174 camelot/view/mainwindow.py:177
+msgid "Page Setup..."
+msgstr "Pagina opmaak..."
+
+#: camelot/view/mainwindow.py:180 camelot/view/mainwindow.py:184
+msgid "Print..."
+msgstr "Afdrukken..."
+
+#: camelot/view/mainwindow.py:187 camelot/view/mainwindow.py:190
+msgid "Print Preview"
+msgstr "Afdruk voorbeeld"
+
+#: camelot/view/mainwindow.py:193
+msgid "E&xit"
+msgstr "Sluit af"
+
+#: camelot/view/mainwindow.py:195
+msgid "Exit the application"
+msgstr "Sluit de applicatie af"
+
+#: camelot/view/mainwindow.py:197
+msgid "Cut the current selection's contents to the clipboard"
+msgstr ""
+
+#: camelot/view/mainwindow.py:199
+msgid "Cu&t"
+msgstr "Knip"
+
+#: camelot/view/mainwindow.py:205
+msgid "Copy the current selection's contents to the clipboard"
+msgstr ""
+
+#: camelot/view/mainwindow.py:207
+msgid "&Copy"
+msgstr "&Kopieer"
+
+#: camelot/view/mainwindow.py:213
+msgid "Paste the clipboard's contents into the current selection"
+msgstr ""
+
+#: camelot/view/mainwindow.py:215
+msgid "&Paste"
+msgstr "Plak"
+
+#: camelot/view/mainwindow.py:227
+msgid "Cl&ose"
+msgstr "Sl&uit"
+
+#: camelot/view/mainwindow.py:230
+msgid "Close the active window"
+msgstr "Sluit het actieve venster"
+
+#: camelot/view/mainwindow.py:233
+msgid "Close &All"
+msgstr "Sluit &Alle"
+
+#: camelot/view/mainwindow.py:235
+msgid "Close all the windows"
+msgstr "Sluit alle vensters"
+
+#: camelot/view/mainwindow.py:238
+msgid "&Cascade windows"
+msgstr ""
+
+#: camelot/view/mainwindow.py:240
+msgid "Arranges all the child windows in a cascade pattern."
+msgstr ""
+
+#: camelot/view/mainwindow.py:247
+msgid "&About"
+msgstr "&Info"
+
+#: camelot/view/mainwindow.py:249
+msgid "Show the application's About box"
+msgstr "Toon de Info box van de applicatie"
+
+#: camelot/view/mainwindow.py:252 camelot/view/mainwindow.py:603
+msgid "Help"
+msgstr "Help"
+
+#: camelot/view/mainwindow.py:256
+msgid "Help content"
+msgstr "Help inhoud"
+
+#: camelot/view/mainwindow.py:273 camelot/view/mainwindow.py:277
+msgid "First"
+msgstr "Eerste"
+
+#: camelot/view/mainwindow.py:280 camelot/view/mainwindow.py:284
+msgid "Last"
+msgstr "Laatste"
+
+#: camelot/view/mainwindow.py:287 camelot/view/mainwindow.py:291
+msgid "Next"
+msgstr "Volgende"
+
+#: camelot/view/mainwindow.py:294 camelot/view/mainwindow.py:298
+msgid "Previous"
+msgstr "Vorige"
+
+#: camelot/view/mainwindow.py:307 camelot/view/mainwindow.py:310
+msgid "Export to MS Excel"
+msgstr "Exporteer naar Microsoft Excel"
+
+#: camelot/view/mainwindow.py:313 camelot/view/mainwindow.py:316
+msgid "Export to MS Word"
+msgstr "Exporteer naar Microsoft Word"
+
+#: camelot/view/mainwindow.py:319 camelot/view/mainwindow.py:322
+msgid "Send by e-mail"
+msgstr "Verstuur per email"
+
+#: camelot/view/mainwindow.py:325 camelot/view/mainwindow.py:328
+msgid "Import from file"
+msgstr "Importeer van bestand"
+
+#: camelot/view/mainwindow.py:356
+msgid "Help Browser"
+msgstr ""
+
+#: camelot/view/mainwindow.py:456
+msgid "&File"
+msgstr "&Bestand"
+
+#: camelot/view/mainwindow.py:463
+msgid "Export To"
+msgstr "Exporteer naar"
+
+#: camelot/view/mainwindow.py:470
+msgid "Import From"
+msgstr "Importeer van"
+
+#: camelot/view/mainwindow.py:476
+msgid "&Edit"
+msgstr "Be&werken"
+
+#: camelot/view/mainwindow.py:483 camelot/view/mainwindow.py:570
+msgid "View"
+msgstr "Weergave"
+
+#: camelot/view/mainwindow.py:484
+msgid "Go To"
+msgstr "Ga naar"
+
+#: camelot/view/mainwindow.py:490
+msgid "&Window"
+msgstr "&Venster"
+
+#: camelot/view/mainwindow.py:496
+msgid "&Help"
+msgstr ""
+
+#: camelot/view/mainwindow.py:581
+msgid "Edit"
+msgstr "Bewerk"
+
+#: camelot/view/mainwindow.py:589
+msgid "Export"
+msgstr "Exporteer"
+
+#: camelot/view/mainwindow.py:597
+msgid "Print"
+msgstr "Afdruk"
+
+#: camelot/view/mainwindow.py:610
+msgid "Application"
+msgstr "Applicatie"
+
+#: camelot/view/mainwindow.py:649
+msgid "Ready"
+msgstr "Klaar"
+
+#: camelot/view/controls/actionsbox.py:41
+msgid "Actions"
+msgstr "Acties"
+
+#: camelot/view/controls/exception.py:43
+msgid "Exception"
+msgstr "Uitzondering"
+
+#: camelot/view/controls/exception.py:43
+msgid "An unexpected event occurred"
+msgstr "Er trad een onverwachte fout op"
+
+#: camelot/view/controls/navpane.py:281
+msgid "Open in New Window"
+msgstr "Open in nieuw venster"
+
+#: camelot/view/controls/search.py:57
+msgid "type words to search for"
+msgstr "Uw zoekterm typen"
+
+#: camelot/view/controls/user_translatable_label.py:40
+#: camelot/view/controls/user_translatable_label.py:66
+msgid "Change translation"
+msgstr "Wijzig vertaling"
+
+#: camelot/view/controls/editors/fileeditor.py:39
+msgid "delete file"
+msgstr "Bestand verwijderen"
+
+#: camelot/view/controls/editors/fileeditor.py:50
+#: camelot/view/controls/editors/fileeditor.py:82
+#: camelot/view/controls/editors/imageeditor.py:93
+msgid "add file"
+msgstr "Bestand toevoegen"
+
+#: camelot/view/controls/editors/fileeditor.py:78
+#: camelot/view/controls/editors/imageeditor.py:86
+msgid "open file"
+msgstr "Bestand openen"
+
+#: camelot/view/controls/editors/imageeditor.py:48
+msgid "open image"
+msgstr "Afbeelding openen"
+
+#: camelot/view/controls/editors/imageeditor.py:54
+msgid "delete image"
+msgstr "Afbeelding verwijderen"
+
+#: camelot/view/controls/editors/many2oneeditor.py:58
+#: camelot/view/controls/editors/many2oneeditor.py:238
+msgid "clear"
+msgstr "Wissen"
+
+#: camelot/view/controls/editors/many2oneeditor.py:176
+msgid "select"
+msgstr "Selecteren"
+
+#: camelot/view/controls/editors/many2oneeditor.py:235
+msgid "open"
+msgstr "Openen"
+
+#: camelot/view/controls/editors/many2oneeditor.py:246
+msgid "search"
+msgstr "Zoeken"
+
+#: camelot/view/controls/editors/one2manyeditor.py:62
+msgid "delete"
+msgstr "Verwijderen"
+
+#: camelot/view/controls/editors/one2manyeditor.py:76
+msgid "copy"
+msgstr "Kopiëren"
+
+#: camelot/view/controls/editors/one2manyeditor.py:81
+msgid "export as spreadsheet"
+msgstr "Exporteer als spreadsheet"
+
+#: camelot/view/wizard/importwizard.py:271
+msgid "Close"
+msgstr "Sluiten"
+
+#:Configuration Wizard
+msgid "Username"
+msgstr "Gebruikersnaam"
+
+msgid "Password"
+msgstr "Paswoord"
+
+msgid "Database"
+msgstr "Databank"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "No"
+msgstr "Nee"
+
+msgid "Discard"
+msgstr "Negeer veranderingen"
+
+msgid "What's new"
+msgstr "Nieuwigheden"
+
+msgid "&What's new"
+msgstr "Nieuwigheden"
+
+msgid "Restart"
+msgstr "Herstarten"
+
+msgid "Restart later"
+msgstr "Herstart later"
+
+msgid "Update unsuccessful"
+msgstr "Update niet gelukt"
+
+msgid "Remote support"
+msgstr "Hulp op afstand"
+
+msgid "Select file"
+msgstr "Selecteer een bestand"
+
+msgid "Default Location"
+msgstr "Standaard locatie"
+
+msgid "Custom Location"
+msgstr "Eigen locatie"
+
+msgid "Database files (*%s);;All files (*.*)"
+msgstr "Databank bestanden (*%s);;Alle bestanden (*.*)"
+

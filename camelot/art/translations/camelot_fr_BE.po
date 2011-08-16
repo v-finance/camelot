@@ -1,0 +1,574 @@
+
+msgid "Please complete the options and continue"
+msgstr "Veuillez remplir et continuer"
+
+msgid "from"
+msgstr "de"
+
+msgid "thru"
+msgstr "à"
+
+msgid "Commit"
+msgstr "Uitvoeren"
+
+msgid "Male"
+msgstr "Masculin"
+
+msgid "Female"
+msgstr "Feminin"
+
+#, fuzzy
+msgid "Basic"
+msgstr "Basis"
+
+#, fuzzy
+msgid "Official"
+msgstr "Officiel"
+
+#, fuzzy
+msgid "Work"
+msgstr "Travail"
+
+#, fuzzy
+msgid "Status"
+msgstr "Status"
+
+#, fuzzy
+msgid "Person"
+msgstr "Personne"
+
+msgid "Corporate"
+msgstr "Entreprise"
+
+#, fuzzy
+msgid "Persons"
+msgstr "Personnes"
+
+msgid "Name"
+msgstr "Nom"
+
+#, fuzzy
+msgid "History"
+msgstr "Historique"
+
+msgid "Social security number"
+msgstr "Numéro RN"
+
+msgid "Last name"
+msgstr "Nom"
+
+msgid "First name"
+msgstr "Prénom"
+
+msgid "From date"
+msgstr "Date de début"
+
+msgid "Thru date"
+msgstr "Date de fin"
+
+#, fuzzy
+msgid "Employee"
+msgstr "Salariée"
+
+msgid "Birthdate"
+msgstr "Date de naissance"
+
+
+
+
+
+
+
+
+msgid "Type"
+msgstr "Type "
+
+msgid "Amount"
+msgstr "Montant"
+
+msgid "Comment"
+msgstr "Commentaire"
+
+#, fuzzy
+msgid "Source"
+msgstr "Source"
+
+msgid "Language"
+msgstr "Langage"
+
+#, fuzzy
+msgid "Uid"
+msgstr "Uid"
+
+msgid "Sex"
+msgstr "Sexe"
+
+msgid "Picture"
+msgstr "Photo"
+
+#, fuzzy
+msgid "Contact mechanisms"
+msgstr "Mécanisme de contact"
+
+msgid "Passport number"
+msgstr "Carte d'identité n°"
+
+#, fuzzy
+msgid "Passport expiry date"
+msgstr "Vervaldag identiteitskaart"
+
+msgid "Addresses"
+msgstr "Adresse"
+
+msgid "Employers"
+msgstr "Employeurs"
+
+#, fuzzy
+msgid "Directed organizations"
+msgstr " "
+
+#, fuzzy
+msgid "Shares"
+msgstr "Actions"
+
+msgid "Address"
+msgstr "Adresse"
+
+msgid "Contact mechanism"
+msgstr "Personne de contact"
+
+msgid "Employees"
+msgstr "Personnel"
+
+#, fuzzy
+msgid "Customers"
+msgstr "Clients"
+
+#, fuzzy
+msgid "Suppliers"
+msgstr "Fournisseurs"
+
+#, fuzzy
+msgid "Director"
+msgstr "Directeur"
+
+#, fuzzy
+msgid "Directors"
+msgstr "Directeurs"
+
+msgid "Shareholder"
+msgstr "Actionnaire"
+
+#, fuzzy
+msgid "Shareholders"
+msgstr "Actionnaires"
+
+msgid "Logo"
+msgstr "Logo"
+
+#, fuzzy
+msgid "Official numbers"
+msgstr "Numéros officiels"
+
+msgid "Translation"
+msgstr "Traduction"
+
+msgid "Translations"
+msgstr "Traductions"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+msgid "Date"
+msgstr "Date"
+
+
+msgid "Add file"
+msgstr "Ajouter"
+
+msgid "Open file"
+msgstr "Ouvrir"
+
+msgid "Delete file"
+msgstr "essuyer"
+
+msgid "Select"
+msgstr "Sélecter"
+
+msgid "Search"
+msgstr "Chercher"
+
+msgid "Search..."
+msgstr "Chercher..."
+
+msgid "Today"
+msgstr "aujourd'hui"
+
+#: camelot/model/authentication.py:124 camelot/model/authentication.py:130
+#: camelot/model/authentication.py:148 camelot/model/authentication.py:154
+#: camelot/model/authentication.py:169 camelot/model/authentication.py:185
+#: camelot/model/authentication.py:191 camelot/model/authentication.py:215
+msgid "name"
+msgstr "nom"
+
+#: camelot/model/authentication.py:300
+msgid "male"
+msgstr "Masculin"
+
+#: camelot/model/authentication.py:300
+msgid "female"
+msgstr "Feminin"
+
+#: camelot/model/authentication.py:371
+#, fuzzy
+msgid "Authentication mechanism"
+msgstr "Mécanisme d'authentification"
+
+#: camelot/model/authentication.py:445
+#, fuzzy
+msgid "Country"
+msgstr "Pays"
+
+#: camelot/model/authentication.py:446
+#, fuzzy
+msgid "Countries"
+msgstr "Pays"
+
+#: camelot/model/authentication.py:463
+#, fuzzy
+msgid "City"
+msgstr "Stad"
+
+#: camelot/model/authentication.py:464
+#, fuzzy
+msgid "Cities"
+msgstr "Steden"
+
+#: camelot/model/authentication.py:548
+#, fuzzy
+msgid "Address role type"
+msgstr "Address role type"
+
+#: camelot/view/elixir_admin.py:352
+#: camelot/view/controls/editors/many2oneeditor.py:69
+#: camelot/view/controls/editors/many2oneeditor.py:243
+#: camelot/view/controls/editors/one2manyeditor.py:70
+#, fuzzy
+msgid "new"
+msgstr "nouveau"
+
+#: camelot/view/filters.py:112
+#, fuzzy
+msgid "all"
+msgstr "tous"
+
+#: camelot/view/mainwindow.py:111
+#, fuzzy
+msgid "About"
+msgstr "A propos de Partnerplan"
+
+#: camelot/view/mainwindow.py:167
+#, fuzzy
+msgid "&Save"
+msgstr "Enregistrer"
+
+#: camelot/view/mainwindow.py:171
+#, fuzzy
+msgid "Save"
+msgstr "Enregistrer"
+
+#: camelot/view/mainwindow.py:174 camelot/view/mainwindow.py:177
+#, fuzzy
+msgid "Page Setup..."
+msgstr "Options d'impression..."
+
+#: camelot/view/mainwindow.py:180 camelot/view/mainwindow.py:184
+#, fuzzy
+msgid "Print..."
+msgstr "Imprimer..."
+
+#: camelot/view/mainwindow.py:187 camelot/view/mainwindow.py:190
+#, fuzzy
+msgid "Print Preview"
+msgstr "Aperçu avant impression"
+
+#: camelot/view/mainwindow.py:193
+msgid "E&xit"
+msgstr "Quitter"
+
+#: camelot/view/mainwindow.py:195
+msgid "Exit the application"
+msgstr "Quitter l'application"
+
+#: camelot/view/mainwindow.py:197
+msgid "Cut the current selection's contents to the clipboard"
+msgstr ""
+
+#: camelot/view/mainwindow.py:199
+msgid "Cu&t"
+msgstr "Couper"
+
+#: camelot/view/mainwindow.py:205
+msgid "Copy the current selection's contents to the clipboard"
+msgstr ""
+
+#: camelot/view/mainwindow.py:207
+msgid "&Copy"
+msgstr "Copier"
+
+#: camelot/view/mainwindow.py:213
+msgid "Paste the clipboard's contents into the current selection"
+msgstr ""
+
+#: camelot/view/mainwindow.py:215
+msgid "&Paste"
+msgstr "Coller"
+
+#: camelot/view/mainwindow.py:227
+msgid "Cl&ose"
+msgstr "Fermer"
+
+#: camelot/view/mainwindow.py:230
+msgid "Close the active window"
+msgstr "Fermer la fenêtre active"
+
+#: camelot/view/mainwindow.py:233
+msgid "Close &All"
+msgstr "Fermer tous"
+
+#: camelot/view/mainwindow.py:235
+msgid "Close all the windows"
+msgstr "Fermer toutes les fenêtres"
+
+#: camelot/view/mainwindow.py:238
+msgid "&Cascade windows"
+msgstr ""
+
+#: camelot/view/mainwindow.py:240
+msgid "Arranges all the child windows in a cascade pattern."
+msgstr ""
+
+#: camelot/view/mainwindow.py:247
+msgid "&About"
+msgstr "A propos"
+
+#: camelot/view/mainwindow.py:249
+msgid "Show the application's About box"
+msgstr ""
+
+#: camelot/view/mainwindow.py:252 camelot/view/mainwindow.py:603
+msgid "Help"
+msgstr "Aide"
+
+#: camelot/view/mainwindow.py:256
+msgid "Help content"
+msgstr "Aide"
+
+#: camelot/view/mainwindow.py:273 camelot/view/mainwindow.py:277
+msgid "First"
+msgstr "Premier"
+
+#: camelot/view/mainwindow.py:280 camelot/view/mainwindow.py:284
+msgid "Last"
+msgstr "Dernier"
+
+#: camelot/view/mainwindow.py:287 camelot/view/mainwindow.py:291
+msgid "Next"
+msgstr "Suivant"
+
+#: camelot/view/mainwindow.py:294 camelot/view/mainwindow.py:298
+msgid "Previous"
+msgstr "Précédent"
+
+#: camelot/view/mainwindow.py:307 camelot/view/mainwindow.py:310
+msgid "Export to MS Excel"
+msgstr "Exporter å Microsoft Excel"
+
+#: camelot/view/mainwindow.py:313 camelot/view/mainwindow.py:316
+msgid "Export to MS Word"
+msgstr "Exporter å Microsoft Word"
+
+#: camelot/view/mainwindow.py:319 camelot/view/mainwindow.py:322
+msgid "Send by e-mail"
+msgstr "Envoyer par email"
+
+#: camelot/view/mainwindow.py:325 camelot/view/mainwindow.py:328
+msgid "Import from file"
+msgstr "Importer d'un fichier"
+
+#: camelot/view/mainwindow.py:356
+msgid "Help Browser"
+msgstr ""
+
+#: camelot/view/mainwindow.py:456
+msgid "&File"
+msgstr "Fichier"
+
+#: camelot/view/mainwindow.py:463
+msgid "Export To"
+msgstr "Exporter vers"
+
+#: camelot/view/mainwindow.py:470
+msgid "Import From"
+msgstr "Importer de"
+
+#: camelot/view/mainwindow.py:476
+msgid "&Edit"
+msgstr "Editer"
+
+#: camelot/view/mainwindow.py:483 camelot/view/mainwindow.py:570
+msgid "View"
+msgstr "Afficher"
+
+msgid "Refresh"
+msgstr "Recharger"
+
+#: camelot/view/mainwindow.py:484
+msgid "Go To"
+msgstr "Aller à"
+
+#: camelot/view/mainwindow.py:490
+msgid "&Window"
+msgstr "Fenêtre"
+
+#: camelot/view/mainwindow.py:496
+msgid "&Help"
+msgstr "Aide"
+
+#: camelot/view/mainwindow.py:581
+msgid "Edit"
+msgstr "Editer"
+
+#: camelot/view/mainwindow.py:589
+msgid "Export"
+msgstr "Exporter"
+
+#: camelot/view/mainwindow.py:597
+msgid "Print"
+msgstr "Impression"
+
+#: camelot/view/mainwindow.py:610
+msgid "Application"
+msgstr "Application"
+
+#: camelot/view/mainwindow.py:649
+msgid "Ready"
+msgstr "Prêt"
+
+#: camelot/view/controls/actionsbox.py:41
+msgid "Actions"
+msgstr "Actions"
+
+#: camelot/view/controls/exception.py:43
+msgid "Exception"
+msgstr "Exception"
+
+#: camelot/view/controls/exception.py:43
+msgid "An unexpected event occurred"
+msgstr "Un événement inattendu s'est produit"
+
+#: camelot/view/controls/navpane.py:281
+msgid "Open in New Window"
+msgstr "Ouvrir dans une nouvelle fenêtre"
+
+#: camelot/view/controls/search.py:57
+msgid "type words to search for"
+msgstr "Donner des mots pur rechercher"
+
+#: camelot/view/controls/user_translatable_label.py:40
+#: camelot/view/controls/user_translatable_label.py:66
+msgid "Change translation"
+msgstr "Changer la traduction"
+
+#: camelot/view/controls/editors/fileeditor.py:39
+msgid "delete file"
+msgstr "Supprimer le fichier"
+
+#: camelot/view/controls/editors/fileeditor.py:50
+#: camelot/view/controls/editors/fileeditor.py:82
+#: camelot/view/controls/editors/imageeditor.py:93
+msgid "add file"
+msgstr "Ajouter un fichier"
+
+#: camelot/view/controls/editors/fileeditor.py:78
+#: camelot/view/controls/editors/imageeditor.py:86
+msgid "open file"
+msgstr "Ouvrir"
+
+#: camelot/view/controls/editors/imageeditor.py:48
+msgid "open image"
+msgstr "Ouvrir l'image"
+
+#: camelot/view/controls/editors/imageeditor.py:54
+msgid "delete image"
+msgstr "Supprimer l'image"
+
+#: camelot/view/controls/editors/many2oneeditor.py:58
+#: camelot/view/controls/editors/many2oneeditor.py:238
+msgid "clear"
+msgstr "Effacer"
+
+#: camelot/view/controls/editors/many2oneeditor.py:176
+msgid "select"
+msgstr "Sélecter"
+
+#: camelot/view/controls/editors/many2oneeditor.py:235
+msgid "open"
+msgstr "Ouvrir"
+
+#: camelot/view/controls/editors/one2manyeditor.py:62
+msgid "delete"
+msgstr "Supprimer"
+
+#: camelot/view/controls/editors/one2manyeditor.py:76
+msgid "copy"
+msgstr "Copier"
+
+#: camelot/view/wizard/importwizard.py:271
+msgid "Close"
+msgstr "Fermer"
+
+
+
+
+
+msgid "Download new version failed"
+msgstr "Télécharger la version nouvelle a échoué"
+
+msgid "Restart"
+msgstr "Relancement"
+
+msgid "Restart later"
+msgstr "Herstart later"
+
+msgid "The update of PartnerPlan was unsuccessful, please try again or contact support. Reason: %s"
+msgstr "Updaten van PartnerPlan is niet gelukt, Gelieve later opnieuw te proberen. Reden: %s"
+
+msgid "Update unsuccessful"
+msgstr "Mise à jour non réussie"
+
+
+msgid "Select file"
+msgstr "Selecter un fichier"
+
+msgid "Default Location"
+msgstr "Location standard"
+
+msgid "Custom Location"
+msgstr "Location specifique"
+
+msgid "Database files (*%s);;All files (*.*)"
+msgstr "Fichiers database (*%s);;Tous fichiers (*.*)"
+
