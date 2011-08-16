@@ -743,7 +743,6 @@ class TableView( AbstractView  ):
     def get_selection_getter(self):
         """:return: a function that when called return an iterable with all the 
         objects corresponding to the selected rows in the table."""
-        model = self.table.model()
         selected_rows = set( map( lambda x: x.row(), self.table.selectedIndexes() ) )
         
         def selection_getter(table, selected_rows):

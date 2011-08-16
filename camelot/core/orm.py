@@ -45,7 +45,7 @@ def refresh_session(session):
         try:
             session.refresh( obj )
             refreshed_objects.append( obj )
-        except sa_exc.InvalidRequestError, e:
+        except sa_exc.InvalidRequestError:
             #
             # this object could not be refreshed, it was probably deleted
             # outside the scope of this session, so assume it is deleted
