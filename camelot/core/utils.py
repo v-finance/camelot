@@ -163,11 +163,12 @@ def ugettext(string_to_translate):
     This is a two step process.  First the function will try to get the
     translation out of the Translation entity, if this is not successfull, the
     function will ask QCoreApplication to translate string_to_translate (which
-    tries to get the translation from the .po files)"""
+    tries to get the translation from the .qm files)"""
     assert isinstance(string_to_translate, basestring)
     result = _translations_.get(string_to_translate, None)
     if not result:
         result = _qtranslate( string_to_translate )
+        #print string_to_translate, result
         # try one more time with string_to_translate capitalized
         if result is string_to_translate:
             result2 = _qtranslate( string_to_translate.capitalize() )

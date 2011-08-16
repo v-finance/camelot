@@ -204,8 +204,6 @@ class Application(QtCore.QObject):
             else:
                 app.installTranslator( translator )
             app.processEvents()
-
-            #self.load_translations(app)
             # Set the style sheet
             self.show_splash_message(splash_window, _('Create main window'))
             app.processEvents()

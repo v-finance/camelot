@@ -241,6 +241,7 @@ class ActionFactory(object):
             parent=parent,
             text=_('E&xit'),
             slot=slot,
+            shortcut=QtGui.QKeySequence.Quit,
             actionicon=Icon('tango/16x16/actions/system-shutdown.png'),
             tip=_('Exit the application')
         )

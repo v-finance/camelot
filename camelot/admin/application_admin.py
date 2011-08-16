@@ -34,6 +34,12 @@ from camelot.view import database_selection
 
 _application_admin_ = []
 
+#
+# The translations data needs to be kept alive during the
+# running of the application
+#
+_translations_data_ = []
+
 def get_application_admin():
     if not len(_application_admin_):
         raise Exception('No application admin class has been constructed yet')
@@ -284,15 +290,77 @@ methods :
         """
         return art.read('stylesheet/office2007_blue.qss')
 
+    def _load_translator_from_file( self, 
+                                    module_name, 
+                                    file_name, 
+                                    directory = '', 
+                                    search_delimiters = '_', 
+                                    suffix = '.qm' ):
+        """
+        Tries to create a translator based on a file stored within a module.
+        The file is loaded through the pkg_resources, to enable loading it from
+        within a Python egg.  This method tries to mimic the behavior of
+        :meth:`QtCore.QTranslator.load` while looking for an appropriate
+        translation file.
+        
+        :param module_name: the name of the module in which to look for
+            the translation file with pkg_resources.
+        :param file_name: the filename of the the tranlations file, without 
+            suffix
+        :param directory: the directory, relative to the module in which
+            to look for translation files
+        :param suffix: the suffix of the filename
+        :return: :keyword:None if unable to load the file, otherwise a
+            :obj:`QtCore.QTranslator` object.
+        """
+        from camelot.core.resources import resource_string
+        file_names = [] #[ file_name + suffix, file_name ]
+        for search_delimiter in search_delimiters:
+            file_name_parts = file_name.split( search_delimiter )
+            for i in range( len(file_name_parts) ):
+                partial_file_name = search_delimiter.join( file_name_parts[:len(file_name_parts)-i] )
+                file_names.append( partial_file_name + suffix )
+                file_names.append( partial_file_name )
+        translations = None
+        print file_names
+        for file_name in file_names:
+            try:
+                translations = resource_string( module_name, directory + file_name )
+                break
+            except IOError:
+                pass
+        if translations:
+            _translations_data_.append( translations ) # keep the data alive
+            translator = QtCore.QTranslator()
+            translator.loadFromData( translations )
+            return translator
+        
     def get_translator(self):
         """Reimplement this method to add application specific translations
-        to your application.
+        to your application.  The default method returns a list with the
+        default Qt and the default Camelot translator for the current system
+        locale.
 
         :return: a :obj:`QtCore.QTranslator` that should be used to translate 
             the application or a list of :obj:`QtCore.QTranslator` objects
             if multiple translators should be used
         """
-        return QtCore.QTranslator()
+        qt_translator = QtCore.QTranslator()
+        system_locale = QtCore.QLocale.system().name()
+        QtCore.QLocale.setDefault( QtCore.QLocale.system() )
+        logger.info( u'using locale %s'%system_locale )
+        qt_translator.load( "qt_" + QtCore.QLocale.system().name(),
+                            QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) )
+        translators = [ qt_translator ]
+        camelot_translator = self._load_translator_from_file( 'camelot', 
+                                                              'camelot_%s'%system_locale,
+                                                              'art/translations/' )
+        if camelot_translator:
+            translators.append( camelot_translator )
+            logger.debug( 'camelot translations found' )
+        else:
+            logger.debug( 'no camelot translations found for %s'%system_locale )
+        return translators
 
     def get_about(self):
         """:return: the content of the About dialog, a string with html

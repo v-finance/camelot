@@ -203,8 +203,9 @@ class EntityViewsTest(ModelThreadTestCase):
     def setUp(self):
         super(EntityViewsTest, self).setUp()
         from PyQt4 import QtCore
-        translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)
+        translators = self.get_application_admin().get_translator()
+        for translator in translators:
+            QtCore.QCoreApplication.installTranslator(translator)
 
     def get_application_admin(self):
         """Overwrite this method to make use of a custom application admin"""
@@ -227,25 +228,16 @@ class EntityViewsTest(ModelThreadTestCase):
         return [app_admin.get_entity_admin(c) for c in classes if app_admin.get_entity_admin(c)]
 
     def test_select_view(self):
-        from PyQt4 import QtCore
-        translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)        
         for admin in self.get_admins():
             widget = admin.create_select_view()
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
             
     def test_table_view(self):
-        from PyQt4 import QtCore
-        translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)        
         for admin in self.get_admins():
             widget = admin.create_table_view()
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
 
     def test_new_view(self):
-        from PyQt4 import QtCore
-        translator = self.get_application_admin().get_translator()
-        QtCore.QCoreApplication.installTranslator(translator)        
         for admin in self.get_admins():
             widget = admin.create_new_view()
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')

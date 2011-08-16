@@ -48,7 +48,6 @@ def resource_filename(module_name, filename):
     """
     return pkg_resources.resource_filename(module_name, filename)
 
-
 def resource_string(module_name, filename):
     """load a file as a string using pkg_resources"""
     return pkg_resources.resource_string(module_name, filename)
