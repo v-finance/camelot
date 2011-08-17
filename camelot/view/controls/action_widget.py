@@ -50,7 +50,7 @@ class ActionWidget(QtGui.QPushButton):
     @QtCore.pyqtSlot()
     def triggered(self):
         """This slot is triggered when the user triggers the action."""
-        if self._current_index:
+        if self._current_index != None:
             self._action.run( functools.partial( self._model._get_object, self._current_index ) )
 
     @QtCore.pyqtSlot( int )
