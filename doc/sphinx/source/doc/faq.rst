@@ -82,6 +82,9 @@ Some couter arguments for this decision are :
     'complete' state once its ready.  This state change will then check if
     debit equals credit.
 
+Two years after we made this move, Apple decided to follow our
+example : http://www.apple.com/macosx/whats-new/auto-save.html
+
 But my users really want a :guilabel:`Save` button ?
 ----------------------------------------------------
 
