@@ -22,6 +22,7 @@
 #
 #  ============================================================================
 
+import os
 import logging
 logger = logging.getLogger('camelot.admin.application_admin')
 
@@ -327,7 +328,7 @@ methods :
         print file_names
         for file_name in file_names:
             try:
-                translations = resource_string( module_name, directory + file_name )
+                translations = resource_string( module_name, os.path.join(directory,file_name) )
                 break
             except IOError:
                 pass
