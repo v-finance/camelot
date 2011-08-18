@@ -1,14 +1,35 @@
 .. _doc-actions-new:
 
-##############
- Actions (New)
-##############
+#############
+ New Actions
+#############
 
-.. note::
+status : draft
 
-   The functionality described here is currently not implemented in Camelot,
-   but is a proposal for implementation, a Camelot Enhancement Proposal
-   
+Motivation
+==========
+
+The current action framework in Camelot has worked well for 
+actions with little user interaction.  It however misses some
+functions such as enabling the user to cancel an ongoing action,
+or to decide at run time which questions will be asked to the
+user.
+
+The implementation of the actions within Camelot requires a
+lot of boilerplate code that needs to be written for each 
+type of action.  There are for example 2 print preview actions,
+one for the form view and one for the list view.
+
+This proposal aims to solve these issues, and make it easy 
+to implement more sophisticated actions.
+
+After implementing this proposal it should be possible to
+implement parts of Camelot itself as actions.  This would
+enable more customization.
+
+Introduction
+============
+
 Besides displaying and editing data, every application needs the
 functions to manipulate data or create reports.  In the Camelot
 framework this is done through actions.  Actions appear as buttons
@@ -154,8 +175,10 @@ will update the visualisation of the changed movie on every screen in the
 application that displays this object.  Other updates that can be generated
 are :
 
-  * :class:`camelot.admin.action.ObjectDeleted`
-  * :class:`camelot.admin.action.ObjectCreated`
+  * :class:`camelot.admin.action.ObjectDeleted`, if one wants to inform
+    the GUI an object is going to be deleted.
+  * :class:`camelot.admin.action.ObjectCreated`, if one wants to inform
+    the GUI an object has been deleted.
 
 raise exceptions
 ----------------
