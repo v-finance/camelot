@@ -100,7 +100,7 @@ methods :
     database_profile_wizard = database_selection.ProfileWizard
 
     name = 'Camelot'
-    application_url = 'http://www.python-camelot.com'
+    application_url = None
     help_url = 'http://www.python-camelot.com/docs.html'
     author = 'Conceptive Engineering'
     domain = 'python-camelot.com'
@@ -244,7 +244,8 @@ methods :
     def get_help_url(self):
         """:return: a :class:`PyQt4.QtCore.QUrl` pointing to the index page for help"""
         from PyQt4.QtCore import QUrl
-        return QUrl( self.help_url )
+        if self.help_url:
+            return QUrl( self.help_url )
 
     def get_whats_new(self):
         """:return: a widget that has a show() method """
@@ -261,7 +262,8 @@ methods :
         in the organization, but hard to remember.
         """
         from PyQt4.QtCore import QUrl
-        return QUrl( self.application_url )
+        if self.application_url:
+            return QUrl( self.application_url )
 
     def get_remote_support_url(self):
         """:return: a :class:`PyQt4.QtCore.QUrl` pointing to a page to get remote support
