@@ -219,12 +219,12 @@ def enumeration_to_string(value):
     return ugettext(unicode(value or u'').replace('_', ' ').capitalize())
 
 operator_names = {
-    operator.eq : u'=',
-    operator.ne : u'!=',
-    operator.lt : u'<',
-    operator.le : u'<=',
-    operator.gt : u'>',
-    operator.ge : u'>=',
+    operator.eq : _( u'=' ),
+    operator.ne : _( u'!=' ),
+    operator.lt : _( u'<' ),
+    operator.le : _( u'<=' ),
+    operator.gt : _( u'>' ),
+    operator.ge : _( u'>=' ),
     like_op : _( u'like' ),
     between_op: _( u'between' ),
 }

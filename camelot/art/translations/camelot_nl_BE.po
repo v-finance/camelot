@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2011-08-19 11:30+0200\n"
+"POT-Creation-Date: 2011-08-19 16:58+0200\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -95,8 +95,8 @@ msgid "Update schema after restore"
 msgstr "Update van database structuur na restore"
 
 #: camelot/core/backup.py:255
-msgid "Expire current session"
-msgstr ""
+msgid "Load new data"
+msgstr "Inladen nieuwe gegevens"
 
 #: camelot/core/backup.py:260
 msgid "Restore completed"
@@ -401,7 +401,6 @@ msgid "Type"
 msgstr "Type "
 
 #: camelot/model/task.py:122
-#, fuzzy
 msgid "Note"
 msgstr "Nota"
 
@@ -410,9 +409,8 @@ msgid "Document Type"
 msgstr ""
 
 #: camelot/model/task.py:149
-#, fuzzy
 msgid "Document"
-msgstr "Commentaar"
+msgstr "Document"
 
 #: camelot/model/task.py:344
 msgid ""
@@ -468,7 +466,7 @@ msgstr "Kopiëren"
 
 #: camelot/view/action.py:95 camelot/view/controls/editors/charteditor.py:94
 msgid "Copy to clipboard"
-msgstr ""
+msgstr "Kopieren naar klembord"
 
 #: camelot/view/action.py:103
 msgid "Paste"
@@ -476,7 +474,7 @@ msgstr "Plak"
 
 #: camelot/view/action.py:108
 msgid "Paste content from clipboard"
-msgstr ""
+msgstr "De inhoud van het klembord plakken"
 
 #: camelot/view/action.py:116 camelot/view/action.py:121
 msgid "First"
@@ -495,9 +493,8 @@ msgid "Previous"
 msgstr "Vorige"
 
 #: camelot/view/action.py:168
-#, fuzzy
 msgid "To Word Processor"
-msgstr "E"
+msgstr "Exporteren naar tekstverwerker"
 
 #: camelot/view/action.py:172
 msgid "Open using MS Word or Open Office"
@@ -508,7 +505,6 @@ msgid "&Backup"
 msgstr "&Backup"
 
 #: camelot/view/action.py:184
-#, fuzzy
 msgid "Backup the database"
 msgstr "Maak een backup van de database"
 
@@ -547,7 +543,6 @@ msgid "&Copy"
 msgstr "&Kopieer"
 
 #: camelot/view/action.py:259
-#, fuzzy
 msgid "Duplicate the selected rows"
 msgstr "Dupliceer de geselecteerde rijen"
 
@@ -556,7 +551,6 @@ msgid "Select &All"
 msgstr "Selecteer &Alle"
 
 #: camelot/view/action.py:271
-#, fuzzy
 msgid "Select all rows in the table"
 msgstr "Selecteer alle rijen in de tabel"
 
@@ -577,7 +571,6 @@ msgid "Show the What's New box"
 msgstr "Toon de nieuwigheden in de applicatie"
 
 #: camelot/view/action.py:304
-#, fuzzy
 msgid "Affiliated website"
 msgstr "Website"
 
@@ -644,7 +637,7 @@ msgstr "Open in nieuwe tab"
 
 #: camelot/view/database_selection.py:55
 msgid "new/edit profile"
-msgstr ""
+msgstr "nieuw/wijzig profiel"
 
 #: camelot/view/database_selection.py:71
 msgid "Profile Selection"
@@ -786,29 +779,29 @@ msgstr "Alle"
 msgid "Valid at"
 msgstr "Geldig op"
 
-#: camelot/view/main.py:163
+#: camelot/view/main.py:174
 msgid "Initialize application"
 msgstr "Initialiseer de applicatie"
 
-#: camelot/view/main.py:184
+#: camelot/view/main.py:195
 msgid "Setup database"
 msgstr "Connecteer met de database"
 
-#: camelot/view/main.py:194
+#: camelot/view/main.py:205
 msgid "Load translations"
 msgstr "Vertalingen inladen"
 
-#: camelot/view/main.py:197
+#: camelot/view/main.py:208
 #, fuzzy
 msgid "Create translator"
 msgstr "Wijzig vertaling"
 
-#: camelot/view/main.py:200
+#: camelot/view/main.py:211
 #, fuzzy
 msgid "Install translator"
 msgstr "Wijzig vertaling"
 
-#: camelot/view/main.py:208
+#: camelot/view/main.py:219
 msgid "Create main window"
 msgstr "Aanmaak van het hoofdvenster"
 
@@ -891,6 +884,38 @@ msgstr "Het bestand zal worden opgeslagen."
 #: camelot/view/storage.py:141
 msgid "Do you want to remove the original file?"
 msgstr "Wilt u het originele bestand verwijderen ?"
+
+#: camelot/view/utils.py:222
+msgid "="
+msgstr "= gelijk"
+
+#: camelot/view/utils.py:223
+msgid "!="
+msgstr "≠ verschillend"
+
+#: camelot/view/utils.py:224
+msgid "<"
+msgstr "< kleiner"
+
+#: camelot/view/utils.py:225
+msgid "<="
+msgstr "≤ kleiner of gelijk"
+
+#: camelot/view/utils.py:226
+msgid ">"
+msgstr "> groter"
+
+#: camelot/view/utils.py:227
+msgid ">="
+msgstr "≥ groter of gelijk"
+
+#: camelot/view/utils.py:228
+msgid "like"
+msgstr "Bevat"
+
+#: camelot/view/utils.py:229
+msgid "between"
+msgstr "tussen"
 
 #: camelot/view/workspace.py:524
 msgid "Double click to (un)maximize"
@@ -1218,7 +1243,7 @@ msgstr "Gelieve ter vervolledigen"
 
 #: camelot/view/wizard/pages/progress_page.py:54
 msgid "Action in progress"
-msgstr ""
+msgstr "Actie wordt uitgevoerd"
 
 #: camelot/view/wizard/pages/progress_page.py:55
 msgid "Please wait for completion"

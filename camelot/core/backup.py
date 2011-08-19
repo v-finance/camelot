@@ -252,7 +252,7 @@ class BackupMechanism(object):
         yield (number_of_tables * 2 + 1, steps, _('Update schema after restore'))
         self.update_schema_after_restore(from_engine, to_engine)
         
-        yield (number_of_tables * 2 + 2, steps, _('Expire current session'))
+        yield (number_of_tables * 2 + 2, steps, _('Load new data'))
         from sqlalchemy.orm.session import _sessions
         for session in _sessions.values():
             session.expunge_all()
