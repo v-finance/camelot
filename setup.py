@@ -23,6 +23,11 @@ setup(
         '':['*.txt', '*.rst', '*.html', '*.js', '*.png', '*.doc', '*.GPL'],
         'doc':['*.rst', '*.html', '*.png'],
     },
+    options = {
+        'extract_messages':{'input_dirs':('camelot',),
+                            'output_file':'camelot/art/translations/camelot.pot',
+                            'keywords':'ugettext tr _ ugettext_lazy'},
+    },  
     license = 'GPL, Commercial',
     platforms = 'Linux, Windows, OS X',
     install_requires = ['SQLAlchemy>=0.6.4, <0.7.0',
