@@ -24,6 +24,8 @@
 
 """A wizard to update a field on a collection of objects"""
 
+import sqlalchemy.schema
+
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.controls.editors import ChoicesEditor
@@ -82,6 +84,7 @@ class SelectValuePage(QtGui.QWizardPage):
     def value_changed(self):
         value_editor = self.findChild( QtGui.QWidget, 'value_editor' )
         if value_editor != None:
+            print 'value changed', value_editor, value_editor.get_value()
             self._data.value = value_editor.get_value()
             
     @QtCore.pyqtSlot(int)
@@ -97,19 +100,32 @@ class SelectValuePage(QtGui.QWizardPage):
             self._data.field = selected_field
             self._data.value = None
             field_attributes = self._fields[selected_field]
+            static_field_attributes = dict( (k,v) for k,v in field_attributes.items() if not callable(v) )
             delegate = field_attributes['delegate']( parent = self,
-                                                     **field_attributes)
+                                                     **static_field_attributes)
             option = QtGui.QStyleOptionViewItem()
             option.version = 5
             value_editor = delegate.createEditor( self, option, None )
             value_editor.setObjectName( 'value_editor' )
-            value_editor.set_field_attributes( **dict( (k,v) for k,v in field_attributes.items() if not callable(v) ) )
+            value_editor.set_field_attributes( **static_field_attributes )
+            self.layout().addWidget( value_editor )
+            value_editor.editingFinished.connect( self.value_changed )
+            # try to set sensible defaults for value
             if isinstance(delegate, delegates.Many2OneDelegate):
                 value_editor.set_value(lambda:None)
             else:
-                value_editor.set_value(None)
-            self.layout().addWidget( value_editor )
-            value_editor.editingFinished.connect( self.value_changed )
+                default = static_field_attributes.get('default', None)
+                choices = static_field_attributes.get('choices', None)
+                if default != None and not isinstance(default, sqlalchemy.schema.ColumnDefault):
+                    print 'default'
+                    value_editor.set_value( default )
+                elif choices and len(choices):
+                    print 'choices', choices
+                    value_editor.set_value( choices[0][0] )
+                else:
+                    print 'None'
+                    value_editor.set_value( None )
+            self._data.value = value_editor.get_value()
 
 class ReplaceContentsPage(UpdateEntitiesPage):
     
