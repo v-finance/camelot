@@ -34,6 +34,7 @@ import operator
 from camelot.core.sql import like_op
 from sqlalchemy.sql.operators import between_op
 from camelot.core.utils import ugettext
+from camelot.core.utils import ugettext_lazy as _
 
 logger = logging.getLogger('camelot.view.utils')
 
@@ -224,8 +225,8 @@ operator_names = {
     operator.le : u'<=',
     operator.gt : u'>',
     operator.ge : u'>=',
-    like_op : u'like',
-    between_op: u'between',
+    like_op : _( u'like' ),
+    between_op: _( u'between' ),
 }
 
 def text_from_richtext(unstripped_text):

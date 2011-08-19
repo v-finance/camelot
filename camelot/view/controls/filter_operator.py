@@ -39,7 +39,7 @@ class FilterOperator(QtGui.QGroupBox):
         layout = QtGui.QVBoxLayout()
         self._operators = field_attributes.get('operators', [])
         self._choices = [(0, ugettext('All')), (1, ugettext('None'))] + \
-                        [(i+2, ugettext(operator_names[operator])) for i, operator in enumerate(self._operators)]
+                        [(i+2, unicode(operator_names[operator])) for i, operator in enumerate(self._operators)]
         combobox = QtGui.QComboBox(self)
         layout.addWidget(combobox)
         for i, name in self._choices:

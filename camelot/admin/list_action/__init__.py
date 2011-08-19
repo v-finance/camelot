@@ -174,7 +174,7 @@ class PrintHtmlListAction( AbstractPrintHtmlAction, ListActionFromModelFunction 
         super(PrintHtmlListAction, self).__init__( name, icon)
 
     def run( self, collection_getter, selection_getter ):
-        self.options = super(ListActionFromModelFunction, self).run( collection_getter, selection_getter )
+        self.options = ListAction.run( self, collection_getter, selection_getter )
         progress = PrintProgressDialog( unicode(self._name) )
         progress.html_document = self.HtmlDocument
         progress.page_size = self.PageSize
