@@ -104,8 +104,8 @@ class Application(QtCore.QObject):
         from camelot.core.utils import load_translations
         from camelot.view.model_thread import get_model_thread
         get_model_thread().post(load_translations)
-        translator = self.application_admin.get_translator()
-        application.installTranslator(translator)
+        for translator in self.application_admin.get_translator():
+            application.installTranslator(translator)
 
     def initialization(self):
         """Method that is called afther the model has been set up, before the main

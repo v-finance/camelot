@@ -325,7 +325,6 @@ methods :
                 file_names.append( partial_file_name + suffix )
                 file_names.append( partial_file_name )
         translations = None
-        print file_names
         for file_name in file_names:
             try:
                 translations = resource_string( module_name, os.path.join(directory,file_name) )
@@ -335,8 +334,9 @@ methods :
         if translations:
             _translations_data_.append( translations ) # keep the data alive
             translator = QtCore.QTranslator()
-            translator.loadFromData( translations )
-            return translator
+            if translator.loadFromData( translations ):
+                logger.info("add translation %s" % (directory + file_name))
+                return translator
         
     def get_translator(self):
         """Reimplement this method to add application specific translations
@@ -344,23 +344,22 @@ methods :
         default Qt and the default Camelot translator for the current system
         locale.
 
-        :return: a :obj:`QtCore.QTranslator` that should be used to translate 
-            the application or a list of :obj:`QtCore.QTranslator` objects
-            if multiple translators should be used
+        :return: a list of :obj:`QtCore.QTranslator` objects that should be 
+            used to translate the application
         """
+        translators = []
         qt_translator = QtCore.QTranslator()
         system_locale = QtCore.QLocale.system().name()
         QtCore.QLocale.setDefault( QtCore.QLocale.system() )
         logger.info( u'using locale %s'%system_locale )
-        qt_translator.load( "qt_" + QtCore.QLocale.system().name(),
-                            QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) )
-        translators = [ qt_translator ]
+        if qt_translator.load( "qt_" + QtCore.QLocale.system().name(),
+                              QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
+            translators.append(qt_translator)
         camelot_translator = self._load_translator_from_file( 'camelot', 
                                                               'camelot_%s'%system_locale,
                                                               'art/translations/' )
         if camelot_translator:
             translators.append( camelot_translator )
-            logger.debug( 'camelot translations found' )
         else:
             logger.debug( 'no camelot translations found for %s'%system_locale )
         return translators
