@@ -342,26 +342,26 @@ methods :
         """Reimplement this method to add application specific translations
         to your application.  The default method returns a list with the
         default Qt and the default Camelot translator for the current system
-        locale.
+        locale.  Call :meth:`QLocale.setDefault` before this method is called
+        if you want to load different translations then the system default.
 
         :return: a list of :obj:`QtCore.QTranslator` objects that should be 
             used to translate the application
         """
         translators = []
         qt_translator = QtCore.QTranslator()
-        system_locale = QtCore.QLocale.system().name()
-        QtCore.QLocale.setDefault( QtCore.QLocale.system() )
-        logger.info( u'using locale %s'%system_locale )
-        if qt_translator.load( "qt_" + QtCore.QLocale.system().name(),
+        locale_name = QtCore.QLocale().name()
+        logger.info( u'using locale %s'%locale_name )
+        if qt_translator.load( "qt_" + locale_name,
                               QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
             translators.append(qt_translator)
         camelot_translator = self._load_translator_from_file( 'camelot', 
-                                                              'camelot_%s'%system_locale,
+                                                              'camelot_%s'%locale_name,
                                                               'art/translations/' )
         if camelot_translator:
             translators.append( camelot_translator )
         else:
-            logger.debug( 'no camelot translations found for %s'%system_locale )
+            logger.debug( 'no camelot translations found for %s'%locale_name )
         return translators
 
     def get_about(self):
