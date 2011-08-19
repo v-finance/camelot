@@ -497,7 +497,7 @@ msgstr ""
 #: camelot/model/task.py:366
 #, fuzzy
 msgid "Documents"
-msgstr "Commentaar"
+msgstr "Documenten"
 
 #: camelot/model/task.py:367
 msgid "Status"
@@ -563,7 +563,7 @@ msgstr ""
 #: camelot/view/action.py:193
 #, fuzzy
 msgid "&Restore"
-msgstr "Herstarten"
+msgstr "&Restore"
 
 #: camelot/view/action.py:196
 msgid "Restore the database from a backup"
@@ -638,8 +638,9 @@ msgid "Remote support"
 msgstr "Hulp op afstand"
 
 #: camelot/view/action.py:319
+#, fuzzy
 msgid "Let the support agent take over your desktop"
-msgstr ""
+msgstr "Laat de helpdesk uw scherm overnemen"
 
 #: camelot/view/action.py:328
 msgid "Help"
@@ -651,12 +652,14 @@ msgstr "Help inhoud"
 
 #: camelot/view/action.py:367 camelot/view/wizard/update_value.py:45
 #: camelot/view/wizard/update_value.py:116
+#, fuzzy
 msgid "Replace field contents"
-msgstr ""
+msgstr "Veldinhoud vervangen"
 
 #: camelot/view/action.py:369
+#, fuzzy
 msgid "Replace the content of a field for all rows in a selection"
-msgstr ""
+msgstr "Vervang de inhoud van een veld voor alle rijen in een selectie"
 
 #: camelot/view/action.py:378
 #, fuzzy
@@ -743,12 +746,14 @@ msgid "Driver:"
 msgstr ""
 
 #: camelot/view/database_selection.py:164
+#, fuzzy
 msgid "Server Host:"
-msgstr ""
+msgstr "Server adres"
 
 #: camelot/view/database_selection.py:165 camelot/view/database_selection.py:172
+#, fuzzy
 msgid "Port:"
-msgstr ""
+msgstr "Poort"
 
 #: camelot/view/database_selection.py:166
 #, fuzzy
@@ -768,7 +773,7 @@ msgstr "Paswoord"
 #: camelot/view/database_selection.py:169
 #, fuzzy
 msgid "Media Location:"
-msgstr "Standaard locatie"
+msgstr "Bestands locatie"
 
 #: camelot/view/database_selection.py:170
 #, fuzzy
@@ -776,8 +781,9 @@ msgid "Language:"
 msgstr "Taal"
 
 #: camelot/view/database_selection.py:171
+#, fuzzy
 msgid "Proxy Host:"
-msgstr ""
+msgstr "Proxy Adres"
 
 #: camelot/view/database_selection.py:173
 #, fuzzy
@@ -790,46 +796,52 @@ msgid "Proxy Password:"
 msgstr "Paswoord"
 
 #: camelot/view/database_selection.py:177
+#, fuzzy
 msgid "Media location path is not accessible."
-msgstr ""
+msgstr "Bestands locatie is niet bereikbaar"
 
 #: camelot/view/database_selection.py:180
+#, fuzzy
 msgid "Media location path is not writable."
-msgstr ""
+msgstr "Geen schrijftoegang tot bestandslocatie"
 
 #: camelot/view/database_selection.py:280
+#, fuzzy
 msgid "More"
-msgstr ""
+msgstr "Meer"
 
 #: camelot/view/database_selection.py:296
 #: camelot/view/controls/editors/localfileeditor.py:66
 #, fuzzy
 msgid "Browse"
-msgstr "Help inhoud"
+msgstr "Bladeren"
 
 #: camelot/view/database_selection.py:304
 #, fuzzy
 msgid "Load profiles"
-msgstr "Bestand toevoegen"
+msgstr "Profielen inladen van bestand"
 
 #: camelot/view/database_selection.py:305
+#, fuzzy
 msgid "Save profiles"
-msgstr ""
+msgstr "Profielen opslaan in bestand"
 
 #: camelot/view/database_selection.py:360
+#, fuzzy
 msgid "Verifying database settings"
-msgstr ""
+msgstr "Controle van de database"
 
 #: camelot/view/database_selection.py:427
+#, fuzzy
 msgid "Internet available."
-msgstr ""
+msgstr "Internet beschikbaar"
 
 #: camelot/view/database_selection.py:430
-#, python-format
+#, fuzzy, python-format
 msgid ""
 "Internet not available.\n"
 "%s."
-msgstr ""
+msgstr "Internet niet beschikbaar. %s."
 
 #: camelot/view/database_selection.py:473
 msgid "Select media location"
@@ -840,8 +852,9 @@ msgid "Save Profiles To a File"
 msgstr ""
 
 #: camelot/view/database_selection.py:494 camelot/view/database_selection.py:503
+#, fuzzy
 msgid "Profiles file (*.ini)"
-msgstr ""
+msgstr "Profielen bestand (*.ini)"
 
 #: camelot/view/database_selection.py:502
 msgid "Load Profiles From a File"
@@ -852,8 +865,9 @@ msgid "All"
 msgstr "Alle"
 
 #: camelot/view/filters.py:260
+#, fuzzy
 msgid "Valid at"
-msgstr ""
+msgstr "Geldig op"
 
 #: camelot/view/main.py:163
 #, fuzzy
@@ -983,8 +997,9 @@ msgid "Actions"
 msgstr "Acties"
 
 #: camelot/view/controls/calculator.py:43
+#, fuzzy
 msgid "Calculator"
-msgstr ""
+msgstr "Rekenmachine"
 
 #: camelot/view/controls/exception.py:53
 msgid "Exception"
@@ -1003,16 +1018,18 @@ msgid "Field Attributes"
 msgstr ""
 
 #: camelot/view/controls/filter_operator.py:41
+#, fuzzy
 msgid "None"
-msgstr ""
+msgstr "Geen"
 
 #: camelot/view/controls/modeltree.py:46
 msgid "Right click to open in New Tab"
 msgstr ""
 
 #: camelot/view/controls/search.py:50
+#, fuzzy
 msgid "Expand or collapse search options"
-msgstr ""
+msgstr "Open of sluit extra zoek mogelijkheden"
 
 #: camelot/view/controls/search.py:56
 #: camelot/view/controls/editors/many2oneeditor.py:123
@@ -1020,17 +1037,19 @@ msgid "Search..."
 msgstr "Zoeken..."
 
 #: camelot/view/controls/tableview.py:288
+#, fuzzy
 msgid "Please confirm"
-msgstr ""
+msgstr "Gelieve te bevestigen"
 
 #: camelot/view/controls/tableview.py:299
+#, fuzzy
 msgid "Removing"
-msgstr ""
+msgstr "Verwijderen"
 
 #: camelot/view/controls/tableview.py:322
-#, python-format
+#, fuzzy, python-format
 msgid "(%i rows)"
-msgstr ""
+msgstr "(%i rijen)"
 
 #: camelot/view/controls/user_translatable_label.py:37
 #: camelot/view/controls/user_translatable_label.py:64
@@ -1042,18 +1061,19 @@ msgid "Translation"
 msgstr "Vertaling"
 
 #: camelot/view/controls/delegates/monthsdelegate.py:61
+#, fuzzy
 msgid "Forever"
-msgstr ""
+msgstr "Voor altijd"
 
 #: camelot/view/controls/delegates/monthsdelegate.py:65
-#, python-format
+#, fuzzy, python-format
 msgid "%i years "
-msgstr ""
+msgstr "%i jaren"
 
 #: camelot/view/controls/delegates/monthsdelegate.py:67
-#, python-format
+#, fuzzy, python-format
 msgid "%i months"
-msgstr ""
+msgstr "%i maanden"
 
 #: camelot/view/controls/editors/dateeditor.py:68
 #: camelot/view/controls/editors/dateeditor.py:163
@@ -1062,8 +1082,9 @@ msgstr "Vandaag"
 
 #: camelot/view/controls/editors/dateeditor.py:69
 #: camelot/view/controls/editors/dateeditor.py:165
+#, fuzzy
 msgid "Far future"
-msgstr ""
+msgstr "Verre toekomst"
 
 #: camelot/view/controls/editors/dateeditor.py:73
 #, fuzzy
@@ -1126,8 +1147,9 @@ msgid "Search"
 msgstr "Zoeken"
 
 #: camelot/view/controls/editors/manytomanyeditor.py:46
+#, fuzzy
 msgid "Remove"
-msgstr ""
+msgstr "Verwijder"
 
 #: camelot/view/controls/editors/manytomanyeditor.py:53
 #, fuzzy
@@ -1140,8 +1162,9 @@ msgid "Export as spreadsheet"
 msgstr "Als rekenblad exporteren"
 
 #: camelot/view/controls/editors/monthseditor.py:50
+#, fuzzy
 msgid " years"
-msgstr ""
+msgstr "jaren"
 
 #: camelot/view/controls/editors/monthseditor.py:51
 #, fuzzy
@@ -1149,12 +1172,14 @@ msgid " months"
 msgstr "Maand"
 
 #: camelot/view/wizard/backup.py:32
+#, fuzzy
 msgid "Backup in progress"
-msgstr ""
+msgstr "Backup wordt gemaakt"
 
 #: camelot/view/wizard/backup.py:49
+#, fuzzy
 msgid "Backup"
-msgstr ""
+msgstr "Backup"
 
 #: camelot/view/wizard/backup.py:62
 msgid "Restore in progress"
@@ -1170,8 +1195,9 @@ msgid "Data Preview"
 msgstr "Data nakijken"
 
 #: camelot/view/wizard/importwizard.py:271
+#, fuzzy
 msgid "Please review the data below."
-msgstr ""
+msgstr "Gelieve deze gegevens na te kijken."
 
 #: camelot/view/wizard/importwizard.py:298
 msgid "Import"
@@ -1202,17 +1228,18 @@ msgid "Import Progress"
 msgstr "Importeer van"
 
 #: camelot/view/wizard/importwizard.py:351
+#, fuzzy
 msgid "Please wait while data is being imported."
-msgstr ""
+msgstr "Gelieve te wachten terwijl de gegevens geimporteerd worden"
 
 #: camelot/view/wizard/importwizard.py:363
 msgid "Close"
 msgstr "Sluiten"
 
 #: camelot/view/wizard/importwizard.py:385
-#, python-format
+#, fuzzy, python-format
 msgid "Row %i of %i imported"
-msgstr ""
+msgstr "Rij %i van de %i geimporteerd"
 
 #: camelot/view/wizard/importwizard.py:406
 msgid "Import CSV data"

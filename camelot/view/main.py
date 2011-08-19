@@ -84,6 +84,17 @@ class Application(QtCore.QObject):
         database selection wizard.
         """
         if self.application_admin.database_selection:
+            #
+            # in case of profile selection, load the system locale translations for
+            # the profile dialog.  These might be different from the final translations
+            # that are specified in the profile
+            #
+            system_locale = QtCore.QLocale.system().name()
+            camelot_translator = self.application_admin._load_translator_from_file( 'camelot', 
+                                                                                    'camelot_%s'%system_locale,
+                                                                                    'art/translations/' )
+            if camelot_translator:
+                QtCore.QCoreApplication.instance().installTranslator( camelot_translator )
             from camelot.view.database_selection import select_database
             select_database(self.application_admin)
 
