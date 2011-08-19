@@ -81,11 +81,18 @@ class SelectValuePage(QtGui.QWizardPage):
             editor.set_value((choices+[(None,None)])[1][0])
             self.field_changed(0)
         
-    def value_changed(self):
-        value_editor = self.findChild( QtGui.QWidget, 'value_editor' )
+    def value_changed(self, value_editor=None):
+        if not value_editor:
+            value_editor = self.findChild( QtGui.QWidget, 'value_editor' )
         if value_editor != None:
-            print 'value changed', value_editor, value_editor.get_value()
-            self._data.value = value_editor.get_value()
+            delegate = self._fields[self._data.field]['delegate']
+            value = value_editor.get_value()
+            # make sure a value is always callable
+            if issubclass(delegate, delegates.Many2OneDelegate):
+                value_getter = value
+            else:
+                value_getter = lambda:value
+            self._data.value = value_getter
             
     @QtCore.pyqtSlot(int)
     def field_changed(self, index):
@@ -117,15 +124,13 @@ class SelectValuePage(QtGui.QWizardPage):
                 default = static_field_attributes.get('default', None)
                 choices = static_field_attributes.get('choices', None)
                 if default != None and not isinstance(default, sqlalchemy.schema.ColumnDefault):
-                    print 'default'
                     value_editor.set_value( default )
                 elif choices and len(choices):
-                    print 'choices', choices
                     value_editor.set_value( choices[0][0] )
                 else:
-                    print 'None'
                     value_editor.set_value( None )
-            self._data.value = value_editor.get_value()
+            # force the value editor, since the previous one is still around
+            self.value_changed( value_editor )
 
 class ReplaceContentsPage(UpdateEntitiesPage):
     
@@ -136,7 +141,8 @@ class ReplaceContentsPage(UpdateEntitiesPage):
         self._data = data
         
     def update_entity(self, obj):
-        setattr(obj, self._data.field, self._data.value)
+        value = self._data.value()
+        setattr(obj, self._data.field, value)
     
 class UpdateValueWizard(QtGui.QWizard):
     """This wizard presents the user with a selection of the possible fields to
