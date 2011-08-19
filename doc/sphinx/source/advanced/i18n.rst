@@ -32,22 +32,42 @@ Translation strings in model definitions should always be specified as lazy tran
 strings.  Only lazy translation strings can be translated by the end user in various
 forms.
 
-How to Create Language Files
-============================
+Translating Camelot itself
+==========================
 
-Create a message catalog template ::
+In the root folder of the Camelot source directory.
 
-  pybabel extract -k "tr, _" camelot/ > camelot.pot
-  
-Create a message catalog
+First update the translation template::
 
-Open message catalog with linguist ::
+    python setup.py extract_messages
+    
+If your language directory does not yet exists in 'camelot/art/translations'::
 
-  linguist camelot.po
+    python setup.py init_catalog --locale nl
+    
+If it allready exists, update it from the translation template::
+
+    python setup.py update_catalog
+    
+In the language subdirectory of 'camelot/art/translations', there is a 
+subdirectory 'LC_MESSAGES' which contains the .po translation file. 
+This translation file can then be translated with linguist ::
+
+   linguist camelot.po
   
 And edit it :  
   
   .. image:: ../_static/camelot_qt_linguist.png
+  
+Then the .po file should be converted to a .qm file to make it loadable
+at run time::
+
+    lrelease camelot.po
+    
+Don't forget to post your new .po file on the mailing list, so it can
+be included in the next release.
+
+http://babel.edgewall.org/wiki/Documentation/setup.html
   
 Where to put Translations
 =========================

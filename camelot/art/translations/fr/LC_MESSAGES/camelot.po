@@ -1,17 +1,13 @@
-# Translations template for Camelot.
-# Copyright (C) 2011 ORGANIZATION
-# This file is distributed under the same license as the Camelot project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
-#
-#, fuzzy
+
 msgid ""
 msgstr ""
-"Project-Id-Version: Camelot trunk\n"
+"Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2011-08-19 19:14+0200\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2011-08-19 19:24+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -19,15 +15,17 @@ msgstr ""
 
 #: camelot/admin/abstract_action.py:82
 msgid "Please complete the options and continue"
-msgstr ""
+msgstr "Veuillez remplir et continuer"
 
 #: camelot/admin/abstract_action.py:88
+#, fuzzy
 msgid "Options"
-msgstr ""
+msgstr "Actions"
 
 #: camelot/admin/entity_admin.py:341
+#, fuzzy
 msgid "Please complete the form first"
-msgstr ""
+msgstr "Veuillez remplir et continuer"
 
 #: camelot/admin/object_admin.py:309
 msgid "Are you sure you want to delete this"
@@ -38,8 +36,9 @@ msgstr ""
 #: camelot/view/controls/editors/manytomanyeditor.py:69
 #: camelot/view/controls/editors/one2manyeditor.py:115
 #: camelot/view/controls/editors/one2manyeditor.py:194
+#, fuzzy
 msgid "New"
-msgstr ""
+msgstr "nouveau"
 
 #: camelot/admin/application_action/__init__.py:190
 #, python-format
@@ -77,8 +76,9 @@ msgid "Backup completed"
 msgstr ""
 
 #: camelot/core/backup.py:214
+#, fuzzy
 msgid "Open backup file"
-msgstr ""
+msgstr "Ouvrir"
 
 #: camelot/core/backup.py:226
 msgid "Prepare database for restore"
@@ -107,28 +107,33 @@ msgid "Load new data"
 msgstr ""
 
 #: camelot/core/backup.py:260
+#, fuzzy
 msgid "Restore completed"
-msgstr ""
+msgstr "Herstart later"
 
 #: camelot/core/exception.py:43
 msgid "Could not proceed"
 msgstr ""
 
 #: camelot/model/authentication.py:113
+#, fuzzy
 msgid "Country"
-msgstr ""
+msgstr "Pays"
 
 #: camelot/model/authentication.py:114
+#, fuzzy
 msgid "Countries"
-msgstr ""
+msgstr "Pays"
 
 #: camelot/model/authentication.py:136 camelot/model/authentication.py:295
+#, fuzzy
 msgid "City"
-msgstr ""
+msgstr "Stad"
 
 #: camelot/model/authentication.py:137
+#, fuzzy
 msgid "Cities"
-msgstr ""
+msgstr "Steden"
 
 #: camelot/model/authentication.py:151
 msgid "Relationship"
@@ -139,88 +144,102 @@ msgid "Relationships"
 msgstr ""
 
 #: camelot/model/authentication.py:174
+#, fuzzy
 msgid "Employed by"
-msgstr ""
+msgstr "Salariée"
 
 #: camelot/model/authentication.py:177
 msgid "Employment relation"
 msgstr ""
 
 #: camelot/model/authentication.py:178
+#, fuzzy
 msgid "Employment relations"
-msgstr ""
+msgstr "Employeurs"
 
 #: camelot/model/authentication.py:183
+#, fuzzy
 msgid "Employee"
-msgstr ""
+msgstr "Salariée"
 
 #: camelot/model/authentication.py:186 camelot/model/authentication.py:192
 #: camelot/model/authentication.py:233 camelot/model/authentication.py:249
 #: camelot/model/authentication.py:255
 msgid "Name"
-msgstr ""
+msgstr "Nom"
 
 #: camelot/model/authentication.py:189
+#, fuzzy
 msgid "Employer"
-msgstr ""
+msgstr "Employeurs"
 
 #: camelot/model/authentication.py:203
 msgid "Direction structure"
 msgstr ""
 
 #: camelot/model/authentication.py:204
+#, fuzzy
 msgid "Direction structures"
-msgstr ""
+msgstr "Directeurs"
 
 #: camelot/model/authentication.py:207 camelot/model/authentication.py:269
 #: camelot/model/authentication.py:527
+#, fuzzy
 msgid "Organization"
-msgstr ""
+msgstr "Traduction"
 
 #: camelot/model/authentication.py:208 camelot/model/authentication.py:211
+#, fuzzy
 msgid "Director"
-msgstr ""
+msgstr "Directeur"
 
 #: camelot/model/authentication.py:216
+#, fuzzy
 msgid "Directed organization"
-msgstr ""
+msgstr " "
 
 #: camelot/model/authentication.py:230
 msgid "Represented by"
 msgstr ""
 
 #: camelot/model/authentication.py:242
+#, fuzzy
 msgid "Supplier - Customer"
-msgstr ""
+msgstr "Fournisseurs"
 
 #: camelot/model/authentication.py:246
+#, fuzzy
 msgid "Customer"
-msgstr ""
+msgstr "Clients"
 
 #: camelot/model/authentication.py:252
+#, fuzzy
 msgid "Supplier"
-msgstr ""
+msgstr "Fournisseurs"
 
 #: camelot/model/authentication.py:265
+#, fuzzy
 msgid "Shareholder structure"
-msgstr ""
+msgstr "Actionnaires"
 
 #: camelot/model/authentication.py:266
+#, fuzzy
 msgid "Shareholder structures"
-msgstr ""
+msgstr "Actionnaires"
 
 #: camelot/model/authentication.py:270 camelot/model/authentication.py:273
 msgid "Shareholder"
-msgstr ""
+msgstr "Actionnaire"
 
 #: camelot/model/authentication.py:279 camelot/model/authentication.py:280
+#, fuzzy
 msgid "Shares"
-msgstr ""
+msgstr "Actions"
 
 #: camelot/model/authentication.py:287 camelot/model/authentication.py:657
 #: camelot/model/authentication.py:729
 msgid "Address"
-msgstr ""
+msgstr "Adresse"
 
 #: camelot/model/authentication.py:290
 msgid "Street"
@@ -232,31 +251,34 @@ msgstr ""
 
 #: camelot/model/authentication.py:314 camelot/model/authentication.py:768
 msgid "Contact mechanism"
-msgstr ""
+msgstr "Personne de contact"
 
 #: camelot/model/authentication.py:315
+#, fuzzy
 msgid "Contact mechanisms"
-msgstr ""
+msgstr "Mécanisme de contact"
 
 #: camelot/model/authentication.py:324
+#, fuzzy
 msgid "Mechanism"
-msgstr ""
+msgstr "Personne de contact"
 
 #: camelot/model/authentication.py:462
 msgid "Party"
 msgstr ""
 
 #: camelot/model/authentication.py:463
+#, fuzzy
 msgid "Parties"
-msgstr ""
+msgstr "Steden"
 
 #: camelot/model/authentication.py:478
 msgid "male"
-msgstr ""
+msgstr "Masculin"
 
 #: camelot/model/authentication.py:478
 msgid "female"
-msgstr ""
+msgstr "Feminin"
 
 #: camelot/model/authentication.py:483
 msgid "Email"
@@ -267,28 +289,33 @@ msgid "Phone"
 msgstr ""
 
 #: camelot/model/authentication.py:528
+#, fuzzy
 msgid "Organizations"
-msgstr ""
+msgstr "Traductions"
 
 #: camelot/model/authentication.py:530 camelot/model/authentication.py:613
+#, fuzzy
 msgid "Basic"
-msgstr ""
+msgstr "Basis"
 
 #: camelot/model/authentication.py:531
+#, fuzzy
 msgid "Employment"
-msgstr ""
+msgstr "Salariée"
 
 #: camelot/model/authentication.py:532
+#, fuzzy
 msgid "Customers"
-msgstr ""
+msgstr "Clients"
 
 #: camelot/model/authentication.py:533
+#, fuzzy
 msgid "Suppliers"
-msgstr ""
+msgstr "Fournisseurs"
 
 #: camelot/model/authentication.py:534
 msgid "Corporate"
-msgstr ""
+msgstr "Entreprise"
 
 #: camelot/model/authentication.py:535
 msgid "Branding"
@@ -299,44 +326,51 @@ msgid "Category and Status"
 msgstr ""
 
 #: camelot/model/authentication.py:547 camelot/model/authentication.py:568
+#, fuzzy
 msgid "Authentication mechanism"
-msgstr ""
+msgstr "Mécanisme d'authentification"
 
 #: camelot/model/authentication.py:598
 msgid "A person with the same name already exists"
 msgstr ""
 
 #: camelot/model/authentication.py:610
+#, fuzzy
 msgid "Person"
-msgstr ""
+msgstr "Personne"
 
 #: camelot/model/authentication.py:611
+#, fuzzy
 msgid "Persons"
-msgstr ""
+msgstr "Personnes"
 
 #: camelot/model/authentication.py:617
+#, fuzzy
 msgid "Official"
-msgstr ""
+msgstr "Officiel"
 
 #: camelot/model/authentication.py:619
+#, fuzzy
 msgid "Work"
-msgstr ""
+msgstr "Travail"
 
 #: camelot/model/authentication.py:658 camelot/model/authentication.py:730
 msgid "Addresses"
-msgstr ""
+msgstr "Adresse"
 
 #: camelot/model/authentication.py:746
+#, fuzzy
 msgid "Address role type"
-msgstr ""
+msgstr "Address role type"
 
 #: camelot/model/authentication.py:862 camelot/model/task.py:364
 msgid "Category"
 msgstr ""
 
 #: camelot/model/authentication.py:863
+#, fuzzy
 msgid "Categories"
-msgstr ""
+msgstr "Pays"
 
 #: camelot/model/batch_job.py:70
 msgid "Batch job type"
@@ -351,20 +385,23 @@ msgid "Cancel"
 msgstr ""
 
 #: camelot/model/i18n.py:52
+#, fuzzy
 msgid "po export"
-msgstr ""
+msgstr "Exporter"
 
 #: camelot/model/i18n.py:59
+#, fuzzy
 msgid "Save File"
-msgstr ""
+msgstr "Enregistrer"
 
 #: camelot/model/i18n.py:87
 msgid "Translations"
-msgstr ""
+msgstr "Traductions"
 
 #: camelot/model/memento.py:58 camelot/model/memento.py:59
+#, fuzzy
 msgid "History"
-msgstr ""
+msgstr "Historique"
 
 #: camelot/model/memento.py:81
 msgid "Update"
@@ -377,12 +414,14 @@ msgstr ""
 #: camelot/model/memento.py:94 camelot/view/action.py:354
 #: camelot/view/action.py:358
 #: camelot/view/controls/editors/one2manyeditor.py:109
+#, fuzzy
 msgid "Delete"
-msgstr ""
+msgstr "Supprimer"
 
 #: camelot/model/memento.py:95
+#, fuzzy
 msgid "Deletes"
-msgstr ""
+msgstr "Supprimer"
 
 #: camelot/model/memento.py:106
 msgid "Create"
@@ -393,8 +432,9 @@ msgid "Creates"
 msgstr ""
 
 #: camelot/model/task.py:83
+#, fuzzy
 msgid "Task Type"
-msgstr ""
+msgstr "Type "
 
 #: camelot/model/task.py:95
 msgid "Task Role Type"
@@ -406,7 +446,7 @@ msgstr ""
 
 #: camelot/model/task.py:110 camelot/model/task.py:370
 msgid "Type"
-msgstr ""
+msgstr "Type "
 
 #: camelot/model/task.py:122
 msgid "Note"
@@ -417,8 +457,9 @@ msgid "Document Type"
 msgstr ""
 
 #: camelot/model/task.py:149
+#, fuzzy
 msgid "Document"
-msgstr ""
+msgstr "Commentaire"
 
 #: camelot/model/task.py:344
 msgid ""
@@ -453,12 +494,14 @@ msgid "Roles"
 msgstr ""
 
 #: camelot/model/task.py:366
+#, fuzzy
 msgid "Documents"
-msgstr ""
+msgstr "Commentaire"
 
 #: camelot/model/task.py:367
+#, fuzzy
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: camelot/model/task.py:425
 msgid "TaskStatusTypeFeature"
@@ -470,16 +513,18 @@ msgstr ""
 
 #: camelot/view/action.py:90
 #: camelot/view/controls/editors/one2manyeditor.py:120
+#, fuzzy
 msgid "Copy"
-msgstr ""
+msgstr "Copier"
 
 #: camelot/view/action.py:95 camelot/view/controls/editors/charteditor.py:94
 msgid "Copy to clipboard"
 msgstr ""
 
 #: camelot/view/action.py:103
+#, fuzzy
 msgid "Paste"
-msgstr ""
+msgstr "Coller"
 
 #: camelot/view/action.py:108
 msgid "Paste content from clipboard"
@@ -487,19 +532,19 @@ msgstr ""
 
 #: camelot/view/action.py:116 camelot/view/action.py:121
 msgid "First"
-msgstr ""
+msgstr "Premier"
 
 #: camelot/view/action.py:129 camelot/view/action.py:134
 msgid "Last"
-msgstr ""
+msgstr "Dernier"
 
 #: camelot/view/action.py:142 camelot/view/action.py:147
 msgid "Next"
-msgstr ""
+msgstr "Suivant"
 
 #: camelot/view/action.py:155 camelot/view/action.py:160
 msgid "Previous"
-msgstr ""
+msgstr "Précédent"
 
 #: camelot/view/action.py:168
 msgid "To Word Processor"
@@ -518,46 +563,51 @@ msgid "Backup the database"
 msgstr ""
 
 #: camelot/view/action.py:193
+#, fuzzy
 msgid "&Restore"
-msgstr ""
+msgstr "Relancement"
 
 #: camelot/view/action.py:196
 msgid "Restore the database from a backup"
 msgstr ""
 
 #: camelot/view/action.py:205 camelot/view/action.py:208
+#, fuzzy
 msgid "Page Setup..."
-msgstr ""
+msgstr "Options d'impression..."
 
 #: camelot/view/action.py:217 camelot/view/action.py:221
+#, fuzzy
 msgid "Print..."
-msgstr ""
+msgstr "Imprimer..."
 
 #: camelot/view/action.py:230 camelot/view/action.py:233
 #: camelot/view/mainwindow.py:261
 #: camelot/view/controls/editors/charteditor.py:86
+#, fuzzy
 msgid "Print Preview"
-msgstr ""
+msgstr "Aperçu avant impression"
 
 #: camelot/view/action.py:242
 msgid "E&xit"
-msgstr ""
+msgstr "Quitter"
 
 #: camelot/view/action.py:246
 msgid "Exit the application"
-msgstr ""
+msgstr "Quitter l'application"
 
 #: camelot/view/action.py:255
 msgid "&Copy"
-msgstr ""
+msgstr "Copier"
 
 #: camelot/view/action.py:259
 msgid "Duplicate the selected rows"
 msgstr ""
 
 #: camelot/view/action.py:268
+#, fuzzy
 msgid "Select &All"
-msgstr ""
+msgstr "Selecter un fichier"
 
 #: camelot/view/action.py:271
 msgid "Select all rows in the table"
@@ -565,7 +615,7 @@ msgstr ""
 
 #: camelot/view/action.py:280
 msgid "&About"
-msgstr ""
+msgstr "A propos"
 
 #: camelot/view/action.py:283
 msgid "Show the application's About box"
@@ -597,11 +647,11 @@ msgstr ""
 
 #: camelot/view/action.py:328
 msgid "Help"
-msgstr ""
+msgstr "Aide"
 
 #: camelot/view/action.py:332
 msgid "Help content"
-msgstr ""
+msgstr "Aide"
 
 #: camelot/view/action.py:367 camelot/view/wizard/update_value.py:47
 #: camelot/view/wizard/update_value.py:137
@@ -622,27 +672,28 @@ msgstr ""
 
 #: camelot/view/action.py:389 camelot/view/action.py:392
 msgid "Export to MS Excel"
-msgstr ""
+msgstr "Exporter å Microsoft Excel"
 
 #: camelot/view/action.py:401 camelot/view/action.py:404
 msgid "Export to MS Word"
-msgstr ""
+msgstr "Exporter å Microsoft Word"
 
 #: camelot/view/action.py:413 camelot/view/action.py:416
 msgid "Send by e-mail"
-msgstr ""
+msgstr "Envoyer par email"
 
 #: camelot/view/action.py:425 camelot/view/action.py:428
 msgid "Import from file"
-msgstr ""
+msgstr "Importer d'un fichier"
 
 #: camelot/view/action.py:437
 msgid "Refresh"
-msgstr ""
+msgstr "Recharger"
 
 #: camelot/view/action.py:449
+#, fuzzy
 msgid "Open in New Tab"
-msgstr ""
+msgstr "Ouvrir dans une nouvelle fenêtre"
 
 #: camelot/view/database_selection.py:55
 msgid "new/edit profile"
@@ -653,8 +704,9 @@ msgid "Profile Selection"
 msgstr ""
 
 #: camelot/view/database_selection.py:72
+#, fuzzy
 msgid "Select a stored profile:"
-msgstr ""
+msgstr "Selecter un fichier"
 
 #: camelot/view/database_selection.py:73 camelot/view/database_selection.py:284
 msgid "OK"
@@ -698,20 +750,23 @@ msgid "Database Name:"
 msgstr ""
 
 #: camelot/view/database_selection.py:167
+#, fuzzy
 msgid "Username:"
-msgstr ""
+msgstr "nom"
 
 #: camelot/view/database_selection.py:168
 msgid "Password:"
 msgstr ""
 
 #: camelot/view/database_selection.py:169
+#, fuzzy
 msgid "Media Location:"
-msgstr ""
+msgstr "Location standard"
 
 #: camelot/view/database_selection.py:170
+#, fuzzy
 msgid "Language:"
-msgstr ""
+msgstr "Langage"
 
 #: camelot/view/database_selection.py:171
 msgid "Proxy Host:"
@@ -743,8 +798,9 @@ msgid "Browse"
 msgstr ""
 
 #: camelot/view/database_selection.py:304
+#, fuzzy
 msgid "Load profiles"
-msgstr ""
+msgstr "Ajouter un fichier"
 
 #: camelot/view/database_selection.py:305
 msgid "Save profiles"
@@ -783,40 +839,47 @@ msgid "Load Profiles From a File"
 msgstr ""
 
 #: camelot/view/filters.py:127 camelot/view/controls/filter_operator.py:41
+#, fuzzy
 msgid "All"
-msgstr ""
+msgstr "tous"
 
 #: camelot/view/filters.py:260
 msgid "Valid at"
 msgstr ""
 
 #: camelot/view/main.py:174
+#, fuzzy
 msgid "Initialize application"
-msgstr ""
+msgstr "Quitter l'application"
 
 #: camelot/view/main.py:195
 msgid "Setup database"
 msgstr ""
 
 #: camelot/view/main.py:205
+#, fuzzy
 msgid "Load translations"
-msgstr ""
+msgstr "Traductions"
 
 #: camelot/view/main.py:208
+#, fuzzy
 msgid "Create translator"
-msgstr ""
+msgstr "Changer la traduction"
 
 #: camelot/view/main.py:211
+#, fuzzy
 msgid "Install translator"
-msgstr ""
+msgstr "Changer la traduction"
 
 #: camelot/view/main.py:219
+#, fuzzy
 msgid "Create main window"
-msgstr ""
+msgstr "Fermer la fenêtre active"
 
 #: camelot/view/mainwindow.py:114
+#, fuzzy
 msgid "About"
-msgstr ""
+msgstr "A propos de Partnerplan"
 
 #: camelot/view/mainwindow.py:167 camelot/view/mainwindow.py:313
 #: camelot/view/mainwindow.py:321 camelot/view/mainwindow.py:327
@@ -831,31 +894,31 @@ msgstr ""
 
 #: camelot/view/mainwindow.py:336
 msgid "&File"
-msgstr ""
+msgstr "Fichier"
 
 #: camelot/view/mainwindow.py:349
 msgid "Export To"
-msgstr ""
+msgstr "Exporter vers"
 
 #: camelot/view/mainwindow.py:357
 msgid "Import From"
-msgstr ""
+msgstr "Importer de"
 
 #: camelot/view/mainwindow.py:363
 msgid "&Edit"
-msgstr ""
+msgstr "Editer"
 
 #: camelot/view/mainwindow.py:370
 msgid "View"
-msgstr ""
+msgstr "Afficher"
 
 #: camelot/view/mainwindow.py:372
 msgid "Go To"
-msgstr ""
+msgstr "Aller à"
 
 #: camelot/view/mainwindow.py:382
 msgid "&Help"
-msgstr ""
+msgstr "Aide"
 
 #: camelot/view/mainwindow.py:427
 msgid "Toolbar"
@@ -863,15 +926,16 @@ msgstr ""
 
 #: camelot/view/mainwindow.py:468
 msgid "Ready"
-msgstr ""
+msgstr "Prêt"
 
 #: camelot/view/storage.py:43
 msgid "Open file"
-msgstr ""
+msgstr "Ouvrir"
 
 #: camelot/view/storage.py:50
+#, fuzzy
 msgid "Could not open file"
-msgstr ""
+msgstr "Ouvrir"
 
 #: camelot/view/storage.py:51
 #, python-format
@@ -879,12 +943,14 @@ msgid "%s does not exist"
 msgstr ""
 
 #: camelot/view/storage.py:74
+#, fuzzy
 msgid "Save file"
-msgstr ""
+msgstr "Ajouter un fichier"
 
 #: camelot/view/storage.py:101
+#, fuzzy
 msgid "Save as"
-msgstr ""
+msgstr "Enregistrer"
 
 #: camelot/view/storage.py:140
 msgid "The file will be stored."
@@ -936,7 +1002,7 @@ msgstr ""
 
 #: camelot/view/controls/actionsbox.py:38
 msgid "Actions"
-msgstr ""
+msgstr "Actions"
 
 #: camelot/view/controls/calculator.py:43
 msgid "Calculator"
@@ -944,11 +1010,11 @@ msgstr ""
 
 #: camelot/view/controls/exception.py:53
 msgid "Exception"
-msgstr ""
+msgstr "Exception"
 
 #: camelot/view/controls/exception.py:54
 msgid "An unexpected event occurred"
-msgstr ""
+msgstr "Un événement inattendu s'est produit"
 
 #: camelot/view/controls/field_label.py:57
 msgid "View attributes"
@@ -973,7 +1039,7 @@ msgstr ""
 #: camelot/view/controls/search.py:56
 #: camelot/view/controls/editors/many2oneeditor.py:123
 msgid "Search..."
-msgstr ""
+msgstr "Chercher..."
 
 #: camelot/view/controls/tableview.py:288
 msgid "Please confirm"
@@ -991,11 +1057,11 @@ msgstr ""
 #: camelot/view/controls/user_translatable_label.py:37
 #: camelot/view/controls/user_translatable_label.py:64
 msgid "Change translation"
-msgstr ""
+msgstr "Changer la traduction"
 
 #: camelot/view/controls/user_translatable_label.py:65
 msgid "Translation"
-msgstr ""
+msgstr "Traduction"
 
 #: camelot/view/controls/delegates/monthsdelegate.py:61
 msgid "Forever"
@@ -1014,7 +1080,7 @@ msgstr ""
 #: camelot/view/controls/editors/dateeditor.py:68
 #: camelot/view/controls/editors/dateeditor.py:163
 msgid "Today"
-msgstr ""
+msgstr "aujourd'hui"
 
 #: camelot/view/controls/editors/dateeditor.py:69
 #: camelot/view/controls/editors/dateeditor.py:165
@@ -1027,65 +1093,69 @@ msgstr ""
 
 #: camelot/view/controls/editors/dateeditor.py:81
 #: camelot/view/controls/editors/dateeditor.py:167
+#, fuzzy
 msgid "Clear"
-msgstr ""
+msgstr "Effacer"
 
 #: camelot/view/controls/editors/fileeditor.py:82
+#, fuzzy
 msgid "Save file as"
-msgstr ""
+msgstr "Selecter un fichier"
 
 #: camelot/view/controls/editors/fileeditor.py:90
 msgid "delete file"
-msgstr ""
+msgstr "Supprimer le fichier"
 
 #: camelot/view/controls/editors/fileeditor.py:98
 #: camelot/view/controls/editors/fileeditor.py:170
 #: camelot/view/controls/editors/imageeditor.py:183
 msgid "add file"
-msgstr ""
+msgstr "Ajouter un fichier"
 
 #: camelot/view/controls/editors/fileeditor.py:165
 #: camelot/view/controls/editors/imageeditor.py:171
 msgid "open file"
-msgstr ""
+msgstr "Ouvrir"
 
 #: camelot/view/controls/editors/imageeditor.py:82
 msgid "open image"
-msgstr ""
+msgstr "Ouvrir l'image"
 
 #: camelot/view/controls/editors/imageeditor.py:87
 msgid "delete image"
-msgstr ""
+msgstr "Supprimer l'image"
 
 #: camelot/view/controls/editors/many2oneeditor.py:110
 #: camelot/view/controls/editors/many2oneeditor.py:338
 msgid "clear"
-msgstr ""
+msgstr "Effacer"
 
 #: camelot/view/controls/editors/many2oneeditor.py:119
 #: camelot/view/controls/editors/many2oneeditor.py:342
+#, fuzzy
 msgid "new"
-msgstr ""
+msgstr "nouveau"
 
 #: camelot/view/controls/editors/many2oneeditor.py:247
 msgid "select"
-msgstr ""
+msgstr "Sélecter"
 
 #: camelot/view/controls/editors/many2oneeditor.py:332
 msgid "open"
-msgstr ""
+msgstr "Ouvrir"
 
 #: camelot/view/controls/editors/many2oneeditor.py:346
 msgid "Search"
-msgstr ""
+msgstr "Chercher"
 
 #: camelot/view/controls/editors/manytomanyeditor.py:46
 msgid "Remove"
 msgstr ""
 
 #: camelot/view/controls/editors/manytomanyeditor.py:53
+#, fuzzy
 msgid "Add"
-msgstr ""
+msgstr "Adresse"
 
 #: camelot/view/controls/editors/manytomanyeditor.py:82
 #: camelot/view/controls/editors/one2manyeditor.py:125
@@ -1113,20 +1183,23 @@ msgid "Restore in progress"
 msgstr ""
 
 #: camelot/view/wizard/backup.py:79
+#, fuzzy
 msgid "Restore"
-msgstr ""
+msgstr "Relancement"
 
 #: camelot/view/wizard/importwizard.py:270
+#, fuzzy
 msgid "Data Preview"
-msgstr ""
+msgstr "Aperçu avant impression"
 
 #: camelot/view/wizard/importwizard.py:271
 msgid "Please review the data below."
 msgstr ""
 
 #: camelot/view/wizard/importwizard.py:298
+#, fuzzy
 msgid "Import"
-msgstr ""
+msgstr "Importer de"
 
 #: camelot/view/wizard/importwizard.py:316
 msgid ""
@@ -1145,8 +1218,9 @@ msgid ""
 msgstr ""
 
 #: camelot/view/wizard/importwizard.py:350
+#, fuzzy
 msgid "Import Progress"
-msgstr ""
+msgstr "Importer de"
 
 #: camelot/view/wizard/importwizard.py:351
 msgid "Please wait while data is being imported."
@@ -1154,7 +1228,7 @@ msgstr ""
 
 #: camelot/view/wizard/importwizard.py:363
 msgid "Close"
-msgstr ""
+msgstr "Fermer"
 
 #: camelot/view/wizard/importwizard.py:385
 #, python-format
@@ -1190,8 +1264,9 @@ msgid "Replace"
 msgstr ""
 
 #: camelot/view/wizard/pages/backup_page.py:80
+#, fuzzy
 msgid "Select backup file"
-msgstr ""
+msgstr "Selecter un fichier"
 
 #: camelot/view/wizard/pages/backup_page.py:81
 msgid "Please select a backup file. All data in this file will be overwritten."
@@ -1200,15 +1275,15 @@ msgstr ""
 #: camelot/view/wizard/pages/backup_page.py:83
 #: camelot/view/wizard/pages/select.py:41
 msgid "Select file"
-msgstr ""
+msgstr "Selecter un fichier"
 
 #: camelot/view/wizard/pages/backup_page.py:107
 msgid "Default Location"
-msgstr ""
+msgstr "Location standard"
 
 #: camelot/view/wizard/pages/backup_page.py:108
 msgid "Custom Location"
-msgstr ""
+msgstr "Location specifique"
 
 #: camelot/view/wizard/pages/backup_page.py:110
 #: camelot/view/wizard/pages/select.py:53
@@ -1216,8 +1291,9 @@ msgid "Browse..."
 msgstr ""
 
 #: camelot/view/wizard/pages/backup_page.py:152
+#, fuzzy
 msgid "Select restore file"
-msgstr ""
+msgstr "Selecter un fichier"
 
 #: camelot/view/wizard/pages/backup_page.py:153
 msgid ""
@@ -1229,7 +1305,7 @@ msgstr ""
 #: camelot/view/wizard/pages/backup_page.py:250
 #, python-format
 msgid "Database files (*%s);;All files (*.*)"
-msgstr ""
+msgstr "Fichiers database (*%s);;Tous fichiers (*.*)"
 
 #: camelot/view/wizard/pages/backup_page.py:200
 msgid "Label:"
@@ -1248,14 +1324,19 @@ msgid "Please wait for completion"
 msgstr ""
 
 #: camelot/view/wizard/pages/select.py:36
+#, fuzzy
 msgid "Import data from a file"
-msgstr ""
+msgstr "Importer d'un fichier"
 
 #: camelot/view/wizard/pages/select.py:37
 msgid "To import data, click 'Browse' to select a file then click 'Next'."
 msgstr ""
 
 #: camelot/view/wizard/pages/select.py:50
+#, fuzzy
 msgid "Select file:"
-msgstr ""
+msgstr "Selecter un fichier"
+
+#~ msgid "Expire current session"
+#~ msgstr ""
 
