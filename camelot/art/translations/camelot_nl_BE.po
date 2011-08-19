@@ -18,12 +18,10 @@ msgid "Options"
 msgstr "Opties"
 
 #: camelot/admin/entity_admin.py:341
-#, fuzzy
 msgid "Please complete the form first"
-msgstr "Gelieve te vervolledigen"
+msgstr "Gelieve eerst de verplichte velden in te vullen"
 
 #: camelot/admin/object_admin.py:309
-#, fuzzy
 msgid "Are you sure you want to delete this"
 msgstr "Bent u zeker dat u dit wenst te verwijderen"
 
@@ -36,72 +34,63 @@ msgid "New"
 msgstr "Nieuw"
 
 #: camelot/admin/application_action/__init__.py:190
-#, fuzzy, python-format
+#, python-format
 msgid "Create a new %s"
-msgstr "Creeer een nieuwe"
+msgstr "Creeer een nieuwe %s"
 
 #: camelot/admin/validator/object_validator.py:131
-#, fuzzy, python-format
+#, python-format
 msgid "%s is a required field"
 msgstr "%s is een verplicht veld"
 
 #: camelot/admin/validator/object_validator.py:184
-#, fuzzy
 msgid "Invalid form"
 msgstr "Ongeldig formulier"
 
 #: camelot/core/backup.py:133 camelot/core/backup.py:235
-#, fuzzy
 msgid "Analyzing database structure"
 msgstr "Analyse van de database structuur"
 
 #: camelot/core/backup.py:139
-#, fuzzy
 msgid "Preparing backup file"
 msgstr "Voorbereiden van de backup file"
 
 #: camelot/core/backup.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "Copy data of table %s"
 msgstr "Kopieren van data van tabel %s"
 
 #: camelot/core/backup.py:185
-#, fuzzy
 msgid "Store backup at requested location"
 msgstr "Opslaan van de backup op de gevraagde locatie"
 
 #: camelot/core/backup.py:193
-#, fuzzy
 msgid "Backup completed"
 msgstr "Backup volledig"
 
 #: camelot/core/backup.py:214
-#, fuzzy
 msgid "Open backup file"
-msgstr "Bestand openen"
+msgstr "Backup bestand openen"
 
 #: camelot/core/backup.py:226
-#, fuzzy
 msgid "Prepare database for restore"
 msgstr "Database voorbereiden voor restore"
 
 #: camelot/core/backup.py:230
-#, fuzzy
 msgid "Analyzing backup structure"
 msgstr "Analyse van de backup structuur"
 
 #: camelot/core/backup.py:244
-#, fuzzy, python-format
+#, python-format
 msgid "Delete data from table %s"
 msgstr "Verwijderen van gegevens in tabel %s"
 
 #: camelot/core/backup.py:249
-#, fuzzy, python-format
+#, python-format
 msgid "Copy data from table %s"
 msgstr "Kopieren van data van tabel %s"
 
 #: camelot/core/backup.py:252
-#, fuzzy
 msgid "Update schema after restore"
 msgstr "Update van database structuur na restore"
 
@@ -110,12 +99,10 @@ msgid "Expire current session"
 msgstr ""
 
 #: camelot/core/backup.py:260
-#, fuzzy
 msgid "Restore completed"
-msgstr "Herstart later"
+msgstr "Restore volledig"
 
 #: camelot/core/exception.py:43
-#, fuzzy
 msgid "Could not proceed"
 msgstr "Kon niet verdergaan"
 
@@ -136,34 +123,28 @@ msgid "Cities"
 msgstr "Steden"
 
 #: camelot/model/authentication.py:151
-#, fuzzy
 msgid "Relationship"
-msgstr "Relaties"
+msgstr "Relatie"
 
 #: camelot/model/authentication.py:152
-#, fuzzy
 msgid "Relationships"
 msgstr "Relaties"
 
 #: camelot/model/authentication.py:174
-#, fuzzy
 msgid "Employed by"
 msgstr "Werkgevers"
 
 #: camelot/model/authentication.py:177
-#, fuzzy
 msgid "Employment relation"
 msgstr "Tewerkstelling"
 
 #: camelot/model/authentication.py:178
-#, fuzzy
 msgid "Employment relations"
 msgstr "Tewerkstelling"
 
 #: camelot/model/authentication.py:183
-#, fuzzy
 msgid "Employee"
-msgstr "Werknemers"
+msgstr "Werknemer"
 
 #: camelot/model/authentication.py:186 camelot/model/authentication.py:192
 #: camelot/model/authentication.py:233 camelot/model/authentication.py:249
@@ -172,19 +153,16 @@ msgid "Name"
 msgstr "Naam"
 
 #: camelot/model/authentication.py:189
-#, fuzzy
 msgid "Employer"
-msgstr "Werkgevers"
+msgstr "Werkgever"
 
 #: camelot/model/authentication.py:203
-#, fuzzy
 msgid "Direction structure"
 msgstr "Directie structuur"
 
 #: camelot/model/authentication.py:204
-#, fuzzy
 msgid "Direction structures"
-msgstr "Verantwoordelijken"
+msgstr "Directie structuren"
 
 #: camelot/model/authentication.py:207 camelot/model/authentication.py:269
 #: camelot/model/authentication.py:527
@@ -196,37 +174,30 @@ msgid "Director"
 msgstr "Verantwoordelijke"
 
 #: camelot/model/authentication.py:216
-#, fuzzy
 msgid "Directed organization"
-msgstr " "
+msgstr "Gecontroleerde organizatie"
 
 #: camelot/model/authentication.py:230
-#, fuzzy
 msgid "Represented by"
 msgstr "Gerepresenteerd door"
 
 #: camelot/model/authentication.py:242
-#, fuzzy
 msgid "Supplier - Customer"
 msgstr "Leveranciers"
 
 #: camelot/model/authentication.py:246
-#, fuzzy
 msgid "Customer"
-msgstr "Klanten"
+msgstr "Klant"
 
 #: camelot/model/authentication.py:252
-#, fuzzy
 msgid "Supplier"
-msgstr "Leveranciers"
+msgstr "Leverancier"
 
 #: camelot/model/authentication.py:265
-#, fuzzy
 msgid "Shareholder structure"
-msgstr "Aandeelhouders"
+msgstr "Aandeelhouder"
 
 #: camelot/model/authentication.py:266
-#, fuzzy
 msgid "Shareholder structures"
 msgstr "Aandeelhouders"
 
@@ -244,12 +215,10 @@ msgid "Address"
 msgstr "Adres"
 
 #: camelot/model/authentication.py:290
-#, fuzzy
 msgid "Street"
 msgstr "Straat"
 
 #: camelot/model/authentication.py:293
-#, fuzzy
 msgid "Street Extra"
 msgstr "Straat (bijkomend)"
 
@@ -262,17 +231,14 @@ msgid "Contact mechanisms"
 msgstr "Contactmechanismen"
 
 #: camelot/model/authentication.py:324
-#, fuzzy
 msgid "Mechanism"
-msgstr "Contactpersoon"
+msgstr "Contact gegeven"
 
 #: camelot/model/authentication.py:462
-#, fuzzy
 msgid "Party"
 msgstr "Organisatie of Persoon"
 
 #: camelot/model/authentication.py:463
-#, fuzzy
 msgid "Parties"
 msgstr "Organisaties en Personen"
 
@@ -285,7 +251,6 @@ msgid "female"
 msgstr "Vrouw"
 
 #: camelot/model/authentication.py:483
-#, fuzzy
 msgid "Email"
 msgstr "E-mail"
 
@@ -318,22 +283,18 @@ msgid "Corporate"
 msgstr "Bedrijf"
 
 #: camelot/model/authentication.py:535
-#, fuzzy
 msgid "Branding"
 msgstr "Marketing"
 
 #: camelot/model/authentication.py:536 camelot/model/authentication.py:620
-#, fuzzy
 msgid "Category and Status"
 msgstr "Categorie en status"
 
 #: camelot/model/authentication.py:547 camelot/model/authentication.py:568
-#, fuzzy
 msgid "Authentication mechanism"
 msgstr "Inloggegevens"
 
 #: camelot/model/authentication.py:598
-#, fuzzy
 msgid "A person with the same name already exists"
 msgstr "Er bestaat reeds een persoon met deze naam"
 
@@ -358,17 +319,14 @@ msgid "Addresses"
 msgstr "Adres"
 
 #: camelot/model/authentication.py:746
-#, fuzzy
 msgid "Address role type"
 msgstr "Adres voor"
 
 #: camelot/model/authentication.py:862 camelot/model/task.py:364
-#, fuzzy
 msgid "Category"
 msgstr "Categorie"
 
 #: camelot/model/authentication.py:863
-#, fuzzy
 msgid "Categories"
 msgstr "Categorieen"
 
@@ -381,19 +339,16 @@ msgid "Batch job"
 msgstr ""
 
 #: camelot/model/batch_job.py:133 camelot/view/database_selection.py:283
-#, fuzzy
 msgid "Cancel"
 msgstr "Annulleer"
 
 #: camelot/model/i18n.py:52
-#, fuzzy
 msgid "po export"
-msgstr "Exporteer"
+msgstr "Exporteer als vertalings bestand"
 
 #: camelot/model/i18n.py:59
-#, fuzzy
 msgid "Save File"
-msgstr "Bewaar"
+msgstr "Bestand opslaan"
 
 #: camelot/model/i18n.py:87
 msgid "Translations"
@@ -405,36 +360,33 @@ msgstr "Geschiedenis"
 
 #: camelot/model/memento.py:81
 msgid "Update"
-msgstr ""
+msgstr "Wijziging"
 
 #: camelot/model/memento.py:82
-#, fuzzy
 msgid "Updates"
-msgstr "Speciale data"
+msgstr "Wijzigingen"
 
 #: camelot/model/memento.py:94 camelot/view/action.py:354
 #: camelot/view/action.py:358
 #: camelot/view/controls/editors/one2manyeditor.py:109
 msgid "Delete"
-msgstr "Verwijderen"
+msgstr "Verwijder"
 
 #: camelot/model/memento.py:95
-#, fuzzy
 msgid "Deletes"
-msgstr "Verwijderen"
+msgstr "Verwijderden"
 
 #: camelot/model/memento.py:106
 msgid "Create"
-msgstr ""
+msgstr "Aanmaak"
 
 #: camelot/model/memento.py:107
 msgid "Creates"
-msgstr ""
+msgstr "Aangemaakt"
 
 #: camelot/model/task.py:83
-#, fuzzy
 msgid "Task Type"
-msgstr "Type "
+msgstr "Taak Type"
 
 #: camelot/model/task.py:95
 msgid "Task Role Type"
@@ -495,7 +447,6 @@ msgid "Roles"
 msgstr ""
 
 #: camelot/model/task.py:366
-#, fuzzy
 msgid "Documents"
 msgstr "Documenten"
 
@@ -520,7 +471,6 @@ msgid "Copy to clipboard"
 msgstr ""
 
 #: camelot/view/action.py:103
-#, fuzzy
 msgid "Paste"
 msgstr "Plak"
 
@@ -545,29 +495,30 @@ msgid "Previous"
 msgstr "Vorige"
 
 #: camelot/view/action.py:168
+#, fuzzy
 msgid "To Word Processor"
-msgstr ""
+msgstr "E"
 
 #: camelot/view/action.py:172
 msgid "Open using MS Word or Open Office"
-msgstr ""
+msgstr "Open in tekstverwerker"
 
 #: camelot/view/action.py:181
 msgid "&Backup"
-msgstr ""
+msgstr "&Backup"
 
 #: camelot/view/action.py:184
+#, fuzzy
 msgid "Backup the database"
-msgstr ""
+msgstr "Maak een backup van de database"
 
 #: camelot/view/action.py:193
-#, fuzzy
 msgid "&Restore"
 msgstr "&Restore"
 
 #: camelot/view/action.py:196
 msgid "Restore the database from a backup"
-msgstr ""
+msgstr "Plaats een backup van de database terug"
 
 #: camelot/view/action.py:205 camelot/view/action.py:208
 msgid "Page Setup..."
@@ -596,17 +547,18 @@ msgid "&Copy"
 msgstr "&Kopieer"
 
 #: camelot/view/action.py:259
+#, fuzzy
 msgid "Duplicate the selected rows"
-msgstr ""
+msgstr "Dupliceer de geselecteerde rijen"
 
 #: camelot/view/action.py:268
-#, fuzzy
 msgid "Select &All"
-msgstr "Selecteer een bestand"
+msgstr "Selecteer &Alle"
 
 #: camelot/view/action.py:271
+#, fuzzy
 msgid "Select all rows in the table"
-msgstr ""
+msgstr "Selecteer alle rijen in de tabel"
 
 #: camelot/view/action.py:280
 msgid "&About"
@@ -621,24 +573,23 @@ msgid "&What's new"
 msgstr "Nieuwigheden"
 
 #: camelot/view/action.py:295
-#, fuzzy
 msgid "Show the What's New box"
-msgstr "Toon de Info box van de applicatie"
+msgstr "Toon de nieuwigheden in de applicatie"
 
 #: camelot/view/action.py:304
+#, fuzzy
 msgid "Affiliated website"
-msgstr ""
+msgstr "Website"
 
 #: camelot/view/action.py:307
 msgid "Go to the affiliated website"
-msgstr ""
+msgstr "Ga naar de website"
 
 #: camelot/view/action.py:316
 msgid "Remote support"
 msgstr "Hulp op afstand"
 
 #: camelot/view/action.py:319
-#, fuzzy
 msgid "Let the support agent take over your desktop"
 msgstr "Laat de helpdesk uw scherm overnemen"
 
@@ -652,22 +603,18 @@ msgstr "Help inhoud"
 
 #: camelot/view/action.py:367 camelot/view/wizard/update_value.py:45
 #: camelot/view/wizard/update_value.py:116
-#, fuzzy
 msgid "Replace field contents"
 msgstr "Veldinhoud vervangen"
 
 #: camelot/view/action.py:369
-#, fuzzy
 msgid "Replace the content of a field for all rows in a selection"
 msgstr "Vervang de inhoud van een veld voor alle rijen in een selectie"
 
 #: camelot/view/action.py:378
-#, fuzzy
 msgid "Merge document"
 msgstr "Document samenvoegen"
 
 #: camelot/view/action.py:380
-#, fuzzy
 msgid "Merge a template document with all rows in a selection"
 msgstr "Genereer documenten vanuit een template en alle geselecteerde rijen"
 
@@ -688,156 +635,128 @@ msgid "Import from file"
 msgstr "Importeer van bestand"
 
 #: camelot/view/action.py:437
-#, fuzzy
 msgid "Refresh"
 msgstr "Vernieuwen"
 
 #: camelot/view/action.py:449
-#, fuzzy
 msgid "Open in New Tab"
-msgstr "Open in nieuw venster"
+msgstr "Open in nieuwe tab"
 
 #: camelot/view/database_selection.py:55
 msgid "new/edit profile"
 msgstr ""
 
 #: camelot/view/database_selection.py:71
-#, fuzzy
 msgid "Profile Selection"
 msgstr "Profiel selectie"
 
 #: camelot/view/database_selection.py:72
-#, fuzzy
 msgid "Select a stored profile:"
 msgstr "Selecteer een profiel:"
 
 #: camelot/view/database_selection.py:73 camelot/view/database_selection.py:284
-#, fuzzy
 msgid "OK"
 msgstr "OK"
 
 #: camelot/view/database_selection.py:74
-#, fuzzy
 msgid "Quit"
 msgstr "Afsluiten"
 
 #: camelot/view/database_selection.py:134
-#, fuzzy
 msgid "Profile Wizard"
 msgstr "Profiel Wizard"
 
 #: camelot/view/database_selection.py:136
-#, fuzzy
 msgid "Create New/Edit Profile"
 msgstr "Nieuw profiel aanmaken of profiel wijzigen"
 
 #: camelot/view/database_selection.py:137
-#, fuzzy
 msgid "Please enter the database settings"
 msgstr "Gelieve de database gegevens in te vullen"
 
 #: camelot/view/database_selection.py:162
-#, fuzzy
 msgid "Profile Name:"
 msgstr "Profiel Naam:"
 
 #: camelot/view/database_selection.py:163
 msgid "Driver:"
-msgstr ""
+msgstr "Driver:"
 
 #: camelot/view/database_selection.py:164
-#, fuzzy
 msgid "Server Host:"
-msgstr "Server adres"
+msgstr "Server adres:"
 
 #: camelot/view/database_selection.py:165 camelot/view/database_selection.py:172
-#, fuzzy
 msgid "Port:"
-msgstr "Poort"
+msgstr "Poort:"
 
 #: camelot/view/database_selection.py:166
-#, fuzzy
 msgid "Database Name:"
-msgstr "Databank"
+msgstr "Database Naam:"
 
 #: camelot/view/database_selection.py:167
-#, fuzzy
 msgid "Username:"
-msgstr "Gebruikersnaam"
+msgstr "Gebruikersnaam:"
 
 #: camelot/view/database_selection.py:168
-#, fuzzy
 msgid "Password:"
-msgstr "Paswoord"
+msgstr "Paswoord:"
 
 #: camelot/view/database_selection.py:169
-#, fuzzy
 msgid "Media Location:"
-msgstr "Bestands locatie"
+msgstr "Bestands locatie:"
 
 #: camelot/view/database_selection.py:170
-#, fuzzy
 msgid "Language:"
-msgstr "Taal"
+msgstr "Taal:"
 
 #: camelot/view/database_selection.py:171
-#, fuzzy
 msgid "Proxy Host:"
-msgstr "Proxy Adres"
+msgstr "Proxy Adres:"
 
 #: camelot/view/database_selection.py:173
-#, fuzzy
 msgid "Proxy Username:"
-msgstr "Gebruikersnaam"
+msgstr "Proxy Gebruikersnaam:"
 
 #: camelot/view/database_selection.py:174
-#, fuzzy
 msgid "Proxy Password:"
-msgstr "Paswoord"
+msgstr "Proxy Paswoord:"
 
 #: camelot/view/database_selection.py:177
-#, fuzzy
 msgid "Media location path is not accessible."
-msgstr "Bestands locatie is niet bereikbaar"
+msgstr "Bestands locatie is niet bereikbaar."
 
 #: camelot/view/database_selection.py:180
-#, fuzzy
 msgid "Media location path is not writable."
-msgstr "Geen schrijftoegang tot bestandslocatie"
+msgstr "Geen schrijftoegang tot bestandslocatie."
 
 #: camelot/view/database_selection.py:280
-#, fuzzy
 msgid "More"
 msgstr "Meer"
 
 #: camelot/view/database_selection.py:296
 #: camelot/view/controls/editors/localfileeditor.py:66
-#, fuzzy
 msgid "Browse"
 msgstr "Bladeren"
 
 #: camelot/view/database_selection.py:304
-#, fuzzy
 msgid "Load profiles"
 msgstr "Profielen inladen van bestand"
 
 #: camelot/view/database_selection.py:305
-#, fuzzy
 msgid "Save profiles"
 msgstr "Profielen opslaan in bestand"
 
 #: camelot/view/database_selection.py:360
-#, fuzzy
 msgid "Verifying database settings"
-msgstr "Controle van de database"
+msgstr "Controle van de database instellingen"
 
 #: camelot/view/database_selection.py:427
-#, fuzzy
 msgid "Internet available."
-msgstr "Internet beschikbaar"
+msgstr "Internet beschikbaar."
 
 #: camelot/view/database_selection.py:430
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "Internet not available.\n"
 "%s."
@@ -845,44 +764,39 @@ msgstr "Internet niet beschikbaar. %s."
 
 #: camelot/view/database_selection.py:473
 msgid "Select media location"
-msgstr ""
+msgstr "Selecteer de bestandslocatie"
 
 #: camelot/view/database_selection.py:493
 msgid "Save Profiles To a File"
-msgstr ""
+msgstr "Sla de profielen op in een bestand"
 
 #: camelot/view/database_selection.py:494 camelot/view/database_selection.py:503
-#, fuzzy
 msgid "Profiles file (*.ini)"
 msgstr "Profielen bestand (*.ini)"
 
 #: camelot/view/database_selection.py:502
 msgid "Load Profiles From a File"
-msgstr ""
+msgstr "Laad profielen in van een bestand"
 
 #: camelot/view/filters.py:127 camelot/view/controls/filter_operator.py:41
 msgid "All"
 msgstr "Alle"
 
 #: camelot/view/filters.py:260
-#, fuzzy
 msgid "Valid at"
 msgstr "Geldig op"
 
 #: camelot/view/main.py:163
-#, fuzzy
 msgid "Initialize application"
-msgstr "Sluit de applicatie af"
+msgstr "Initialiseer de applicatie"
 
 #: camelot/view/main.py:184
-#, fuzzy
 msgid "Setup database"
-msgstr "Databank"
+msgstr "Connecteer met de database"
 
 #: camelot/view/main.py:194
-#, fuzzy
 msgid "Load translations"
-msgstr "Vertalingen"
+msgstr "Vertalingen inladen"
 
 #: camelot/view/main.py:197
 #, fuzzy
@@ -895,9 +809,8 @@ msgid "Install translator"
 msgstr "Wijzig vertaling"
 
 #: camelot/view/main.py:208
-#, fuzzy
 msgid "Create main window"
-msgstr "Sluit het actieve venster"
+msgstr "Aanmaak van het hoofdvenster"
 
 #: camelot/view/mainwindow.py:114
 msgid "About"
@@ -908,10 +821,9 @@ msgstr "Info"
 #: camelot/view/storage.py:41 camelot/view/storage.py:72
 #: camelot/view/controls/progress_dialog.py:55
 msgid "Please wait"
-msgstr ""
+msgstr "Gelieve even te wachten"
 
 #: camelot/view/mainwindow.py:230
-#, fuzzy
 msgid "Help Browser"
 msgstr "Help inhoud"
 
@@ -940,13 +852,12 @@ msgid "Go To"
 msgstr "Ga naar"
 
 #: camelot/view/mainwindow.py:382
-#, fuzzy
 msgid "&Help"
-msgstr "Help"
+msgstr "&Help"
 
 #: camelot/view/mainwindow.py:427
 msgid "Toolbar"
-msgstr ""
+msgstr "Toolbar"
 
 #: camelot/view/mainwindow.py:468
 msgid "Ready"
@@ -957,47 +868,43 @@ msgid "Open file"
 msgstr "Bestand openen"
 
 #: camelot/view/storage.py:50
-#, fuzzy
 msgid "Could not open file"
-msgstr "Bestand openen"
+msgstr "Kon bestand niet openen"
 
 #: camelot/view/storage.py:51
 #, python-format
 msgid "%s does not exist"
-msgstr ""
+msgstr "%s bestaat niet"
 
 #: camelot/view/storage.py:74
-#, fuzzy
 msgid "Save file"
-msgstr "Bestand toevoegen"
+msgstr "Bestand opslaan"
 
 #: camelot/view/storage.py:101
-#, fuzzy
 msgid "Save as"
-msgstr "Als pdf opslaan"
+msgstr "Opslaan"
 
 #: camelot/view/storage.py:140
 msgid "The file will be stored."
-msgstr ""
+msgstr "Het bestand zal worden opgeslagen."
 
 #: camelot/view/storage.py:141
 msgid "Do you want to remove the original file?"
-msgstr ""
+msgstr "Wilt u het originele bestand verwijderen ?"
 
 #: camelot/view/workspace.py:524
 msgid "Double click to (un)maximize"
-msgstr ""
+msgstr "Dubbel klikken om te (de)maximaliseren "
 
 #: camelot/view/workspace.py:538
 msgid "Home"
-msgstr ""
+msgstr "Home"
 
 #: camelot/view/controls/actionsbox.py:38
 msgid "Actions"
 msgstr "Acties"
 
 #: camelot/view/controls/calculator.py:43
-#, fuzzy
 msgid "Calculator"
 msgstr "Rekenmachine"
 
@@ -1011,23 +918,21 @@ msgstr "Er trad een onverwachte fout op"
 
 #: camelot/view/controls/field_label.py:57
 msgid "View attributes"
-msgstr ""
+msgstr "Bekijk veld attributen"
 
 #: camelot/view/controls/field_label.py:87
 msgid "Field Attributes"
-msgstr ""
+msgstr "Veld attributen"
 
 #: camelot/view/controls/filter_operator.py:41
-#, fuzzy
 msgid "None"
 msgstr "Geen"
 
 #: camelot/view/controls/modeltree.py:46
 msgid "Right click to open in New Tab"
-msgstr ""
+msgstr "Klik rechts om te openen in nieuwe tab"
 
 #: camelot/view/controls/search.py:50
-#, fuzzy
 msgid "Expand or collapse search options"
 msgstr "Open of sluit extra zoek mogelijkheden"
 
@@ -1037,17 +942,15 @@ msgid "Search..."
 msgstr "Zoeken..."
 
 #: camelot/view/controls/tableview.py:288
-#, fuzzy
 msgid "Please confirm"
 msgstr "Gelieve te bevestigen"
 
 #: camelot/view/controls/tableview.py:299
-#, fuzzy
 msgid "Removing"
 msgstr "Verwijderen"
 
 #: camelot/view/controls/tableview.py:322
-#, fuzzy, python-format
+#, python-format
 msgid "(%i rows)"
 msgstr "(%i rijen)"
 
@@ -1061,17 +964,16 @@ msgid "Translation"
 msgstr "Vertaling"
 
 #: camelot/view/controls/delegates/monthsdelegate.py:61
-#, fuzzy
 msgid "Forever"
 msgstr "Voor altijd"
 
 #: camelot/view/controls/delegates/monthsdelegate.py:65
-#, fuzzy, python-format
+#, python-format
 msgid "%i years "
 msgstr "%i jaren"
 
 #: camelot/view/controls/delegates/monthsdelegate.py:67
-#, fuzzy, python-format
+#, python-format
 msgid "%i months"
 msgstr "%i maanden"
 
@@ -1082,14 +984,12 @@ msgstr "Vandaag"
 
 #: camelot/view/controls/editors/dateeditor.py:69
 #: camelot/view/controls/editors/dateeditor.py:165
-#, fuzzy
 msgid "Far future"
 msgstr "Verre toekomst"
 
 #: camelot/view/controls/editors/dateeditor.py:73
-#, fuzzy
 msgid "Calendar and special dates"
-msgstr "Speciale data"
+msgstr "Kalender en speciale datums"
 
 #: camelot/view/controls/editors/dateeditor.py:81
 #: camelot/view/controls/editors/dateeditor.py:167
@@ -1097,9 +997,8 @@ msgid "Clear"
 msgstr "Wissen"
 
 #: camelot/view/controls/editors/fileeditor.py:82
-#, fuzzy
 msgid "Save file as"
-msgstr "Als pdf opslaan"
+msgstr "Bestand oplsaan als"
 
 #: camelot/view/controls/editors/fileeditor.py:90
 msgid "delete file"
@@ -1147,14 +1046,12 @@ msgid "Search"
 msgstr "Zoeken"
 
 #: camelot/view/controls/editors/manytomanyeditor.py:46
-#, fuzzy
 msgid "Remove"
 msgstr "Verwijder"
 
 #: camelot/view/controls/editors/manytomanyeditor.py:53
-#, fuzzy
 msgid "Add"
-msgstr "Adres"
+msgstr "Voeg toe"
 
 #: camelot/view/controls/editors/manytomanyeditor.py:82
 #: camelot/view/controls/editors/one2manyeditor.py:125
@@ -1162,40 +1059,34 @@ msgid "Export as spreadsheet"
 msgstr "Als rekenblad exporteren"
 
 #: camelot/view/controls/editors/monthseditor.py:50
-#, fuzzy
 msgid " years"
 msgstr "jaren"
 
 #: camelot/view/controls/editors/monthseditor.py:51
-#, fuzzy
 msgid " months"
-msgstr "Maand"
+msgstr "maanden"
 
 #: camelot/view/wizard/backup.py:32
-#, fuzzy
 msgid "Backup in progress"
 msgstr "Backup wordt gemaakt"
 
 #: camelot/view/wizard/backup.py:49
-#, fuzzy
 msgid "Backup"
 msgstr "Backup"
 
 #: camelot/view/wizard/backup.py:62
 msgid "Restore in progress"
-msgstr ""
+msgstr "Backup wordt teruggezet"
 
 #: camelot/view/wizard/backup.py:79
-#, fuzzy
 msgid "Restore"
-msgstr "Herstarten"
+msgstr "Restore"
 
 #: camelot/view/wizard/importwizard.py:270
 msgid "Data Preview"
 msgstr "Data nakijken"
 
 #: camelot/view/wizard/importwizard.py:271
-#, fuzzy
 msgid "Please review the data below."
 msgstr "Gelieve deze gegevens na te kijken."
 
@@ -1214,30 +1105,30 @@ msgstr ""
 
 #: camelot/view/wizard/importwizard.py:333
 msgid "Proceed with import"
-msgstr ""
+msgstr "Verdergaan met de import"
 
 #: camelot/view/wizard/importwizard.py:334
 msgid ""
 "Importing data cannot be undone,\n"
 "are you sure you want to continue"
 msgstr ""
+"Het importeren van gegevens kan niet worden ongedaan gemaakt, bent u zeker "
+"dat u wilt verdergaan"
 
 #: camelot/view/wizard/importwizard.py:350
-#, fuzzy
 msgid "Import Progress"
-msgstr "Importeer van"
+msgstr "Gegevens worden geimporteerd"
 
 #: camelot/view/wizard/importwizard.py:351
-#, fuzzy
 msgid "Please wait while data is being imported."
-msgstr "Gelieve te wachten terwijl de gegevens geimporteerd worden"
+msgstr "Gelieve te wachten terwijl de gegevens geimporteerd worden."
 
 #: camelot/view/wizard/importwizard.py:363
 msgid "Close"
 msgstr "Sluiten"
 
 #: camelot/view/wizard/importwizard.py:385
-#, fuzzy, python-format
+#, python-format
 msgid "Row %i of %i imported"
 msgstr "Rij %i van de %i geimporteerd"
 
@@ -1247,36 +1138,39 @@ msgstr "Importeer CSV data"
 
 #: camelot/view/wizard/merge_document.py:42
 msgid "Merge a template document"
-msgstr ""
+msgstr "Maak bestanden aan op basis van template"
 
 #: camelot/view/wizard/merge_document.py:43
 msgid "Click 'Browse' to select a template file, then click 'Next'."
 msgstr ""
+"Klik op 'Bladeren' om een template bestand te selecteren, en klik dan op "
+"'Volgende'."
 
 #: camelot/view/wizard/merge_document.py:50
 msgid "Merge in progress"
-msgstr ""
+msgstr "Documenten worden samengevoegd"
 
 #: camelot/view/wizard/merge_document.py:85
 msgid "Merge Document"
-msgstr ""
+msgstr "Document samenvoegen"
 
 #: camelot/view/wizard/update_value.py:46
 msgid "Select the field to update and enter its new value"
-msgstr ""
+msgstr "Selecteer het te wijzigen veld en geef de nieuwe waarde"
 
 #: camelot/view/wizard/update_value.py:132
 msgid "Replace"
-msgstr ""
+msgstr "Vervang"
 
 #: camelot/view/wizard/pages/backup_page.py:80
-#, fuzzy
 msgid "Select backup file"
-msgstr "Selecteer een bestand"
+msgstr "Selecteer een backup bestand"
 
 #: camelot/view/wizard/pages/backup_page.py:81
 msgid "Please select a backup file. All data in this file will be overwritten."
 msgstr ""
+"Gelieve een backup bestand te selecteren.  Alle gegevens in dit bestand "
+"zullen worden overschreven."
 
 #: camelot/view/wizard/pages/backup_page.py:83
 #: camelot/view/wizard/pages/select.py:41
@@ -1294,18 +1188,19 @@ msgstr "Eigen locatie"
 #: camelot/view/wizard/pages/backup_page.py:110
 #: camelot/view/wizard/pages/select.py:53
 msgid "Browse..."
-msgstr ""
+msgstr "Bladeren..."
 
 #: camelot/view/wizard/pages/backup_page.py:152
-#, fuzzy
 msgid "Select restore file"
-msgstr "Selecteer een bestand"
+msgstr "Selecteer een backup bestand om van te restoren"
 
 #: camelot/view/wizard/pages/backup_page.py:153
 msgid ""
 "Please select a backup file from which to restore the database. All data in "
 "the database will be overwritten with data from this file"
 msgstr ""
+"Gelieve een backup bestand te selecteren om te restoren.  Alle gegevens in "
+"de database zullen worden overschreven met de data van dit bestand"
 
 #: camelot/view/wizard/pages/backup_page.py:188
 #: camelot/view/wizard/pages/backup_page.py:250
@@ -1315,11 +1210,11 @@ msgstr "Databank bestanden (*%s);;Alle bestanden (*.*)"
 
 #: camelot/view/wizard/pages/backup_page.py:200
 msgid "Label:"
-msgstr ""
+msgstr "Veldnaam:"
 
 #: camelot/view/wizard/pages/form_page.py:107
 msgid "Please complete"
-msgstr ""
+msgstr "Gelieve ter vervolledigen"
 
 #: camelot/view/wizard/pages/progress_page.py:54
 msgid "Action in progress"
@@ -1327,16 +1222,17 @@ msgstr ""
 
 #: camelot/view/wizard/pages/progress_page.py:55
 msgid "Please wait for completion"
-msgstr ""
+msgstr "Gelieve te wachten"
 
 #: camelot/view/wizard/pages/select.py:36
-#, fuzzy
 msgid "Import data from a file"
 msgstr "Importeer van bestand"
 
 #: camelot/view/wizard/pages/select.py:37
 msgid "To import data, click 'Browse' to select a file then click 'Next'."
 msgstr ""
+"Om een bestand te importeren, klik 'Bladeren' om een bestand te selecteren "
+"en klik dan op 'Volgende'."
 
 #: camelot/view/wizard/pages/select.py:50
 msgid "Select file:"
