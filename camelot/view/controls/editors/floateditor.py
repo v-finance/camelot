@@ -94,7 +94,7 @@ class FloatEditor(CustomEditor):
         self._decimal = decimal
         self._calculator = calculator
         action = QtGui.QAction(self)
-        action.setShortcut(Qt.Key_F3)
+        action.setShortcut(Qt.Key_F4)
         self.setFocusPolicy(Qt.StrongFocus)
         self.spinBox = CustomDoubleSpinBox(option, parent)
 
@@ -107,7 +107,7 @@ class FloatEditor(CustomEditor):
         self.calculatorButton.setIcon( self.calculator_icon.getQIcon() )
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFixedHeight(self.get_height())
-        self.calculatorButton.setToolTip('Calculator F3')
+        self.calculatorButton.setToolTip('Calculator F4')
         self.calculatorButton.setFocusPolicy(Qt.ClickFocus)
 
         self.calculatorButton.clicked.connect(
