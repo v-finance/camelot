@@ -44,8 +44,9 @@ class CyclicWidget(QtGui.QWidget):
     def __init__( self ):
         super( CyclicWidget, self ).__init__()
         CyclicChildWidget( self )
-                
-alive = lambda :sum( isinstance(o,CyclicWidget) for o in gc.get_objects() )
+     
+count_alive = lambda:sum( isinstance(o,CyclicWidget) for o in gc.get_objects() )
+alive = lambda initial:count_alive()-initial
 
 class ModelViewRegister(QtCore.QObject):
     
@@ -116,14 +117,16 @@ class GarbageCollectionCase( unittest.TestCase ):
         
     def test_custom_garbage_collectory( self ):
         from camelot.view.model_thread.garbage_collector import GarbageCollector
-        collector = GarbageCollector(None)
-        self.assertFalse( alive() )
+        initial = count_alive()
+        collector = GarbageCollector(None, debug=True)
+        collector._threshold = [0, 0, 0]
+        self.assertFalse( alive(initial) )
         cycle = CyclicWidget()
-        self.assertTrue( alive() )
+        self.assertTrue( alive(initial) )
         del cycle
-        self.assertTrue( alive() )
+        self.assertTrue( alive(initial) )
         collector._check()
-        self.assertFalse( alive() )
+        self.assertFalse( alive(initial) )
         
     def test_cyclic_dependency( self ):
         """Create 2 widgets with a cyclic dependency, so that they can
@@ -137,6 +140,7 @@ class GarbageCollectionCase( unittest.TestCase ):
         #
         return
                     
+        initial = count_alive()
         # turn off automatic garbage collection, to be able to trigger it
         # at the 'right' time
         gc.disable()
@@ -145,25 +149,25 @@ class GarbageCollectionCase( unittest.TestCase ):
         # collector
         #
         cycle = CyclicWidget()
-        self.assertTrue( alive() )
+        self.assertTrue( alive(initial) )
         del cycle
-        self.assertTrue( alive() )
+        self.assertTrue( alive(initial) )
         gc.collect()
-        self.assertFalse( alive() )
+        self.assertFalse( alive(initial) )
         #
         # now run the garbage collector in a different thread
         #
         cycle = CyclicWidget()
         del cycle
-        self.assertTrue( alive() )
+        self.assertTrue( alive(initial) )
 
         class GarbageCollectingThread(QtCore.QThread):
             
             def run(thread):
-                self.assertTrue( alive() )
+                self.assertTrue( alive(initial) )
                 # assertian failure here, and core dump
                 gc.collect()
-                self.assertFalse( alive() )
+                self.assertFalse( alive(initial) )
                     
         thread = GarbageCollectingThread()
         thread.start()
