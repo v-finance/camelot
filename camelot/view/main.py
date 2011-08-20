@@ -89,10 +89,11 @@ class Application(QtCore.QObject):
             # the profile dialog.  These might be different from the final translations
             # that are specified in the profile
             #
-            system_locale = QtCore.QLocale.system().name()
-            camelot_translator = self.application_admin._load_translator_from_file( 'camelot', 
-                                                                                    'camelot_%s'%system_locale,
-                                                                                    'art/translations/' )
+            locale_name = QtCore.QLocale().name()
+            language_name = locale_name.split('_')[0]
+            camelot_translator = self._load_translator_from_file( 'camelot', 
+                                                                  'camelot',
+                                                                  'art/translations/%s/LC_MESSAGES/'%language_name )
             if camelot_translator:
                 QtCore.QCoreApplication.instance().installTranslator( camelot_translator )
             from camelot.view.database_selection import select_database

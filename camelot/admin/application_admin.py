@@ -317,7 +317,7 @@ methods :
             :obj:`QtCore.QTranslator` object.
         """
         from camelot.core.resources import resource_string
-        file_names = [] #[ file_name + suffix, file_name ]
+        file_names = []
         for search_delimiter in search_delimiters:
             file_name_parts = file_name.split( search_delimiter )
             for i in range( len(file_name_parts) ):
@@ -351,13 +351,14 @@ methods :
         translators = []
         qt_translator = QtCore.QTranslator()
         locale_name = QtCore.QLocale().name()
+        language_name = locale_name.split('_')[0]
         logger.info( u'using locale %s'%locale_name )
         if qt_translator.load( "qt_" + locale_name,
                               QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
-            translators.append(qt_translator)
+            translators.append( qt_translator )
         camelot_translator = self._load_translator_from_file( 'camelot', 
-                                                              'camelot_%s'%locale_name,
-                                                              'art/translations/' )
+                                                              'camelot',
+                                                              'art/translations/%s/LC_MESSAGES/'%language_name )
         if camelot_translator:
             translators.append( camelot_translator )
         else:

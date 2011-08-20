@@ -35,6 +35,9 @@ forms.
 Translating Camelot itself
 ==========================
 
+To extract translation files from the Camelot source code, 
+`Babel <http://babel.edgewall.org/>`_ needs to be installed.
+
 In the root folder of the Camelot source directory.
 
 First update the translation template::
@@ -59,6 +62,8 @@ And edit it :
   
   .. image:: ../_static/camelot_qt_linguist.png
   
+Make sure to save them back as GNU gettext .po files.
+  
 Then the .po file should be converted to a .qm file to make it loadable
 at run time::
 
@@ -67,7 +72,8 @@ at run time::
 Don't forget to post your new .po file on the mailing list, so it can
 be included in the next release.
 
-http://babel.edgewall.org/wiki/Documentation/setup.html
+For more background information, please have a look at the 
+`Babel Documentation <http://babel.edgewall.org/wiki/Documentation/setup.html>`_
   
 Where to put Translations
 =========================
