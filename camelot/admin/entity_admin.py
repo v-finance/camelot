@@ -441,7 +441,7 @@ It has additional class attributes that customise its behaviour.
         class SelectView(admin.TableView):
             table_model = SelectQueryTableProxy
             entity_selected_signal = QtCore.pyqtSignal(object)
-            title_format = 'Select %s'
+            title_format = ugettext('Select %s')
 
             def __init__(self, admin, parent):
                 super(SelectView, self).__init__(

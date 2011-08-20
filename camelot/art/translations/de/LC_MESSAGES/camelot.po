@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Camelot 2011-08-11\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2011-08-19 19:14+0200\n"
+"POT-Creation-Date: 2011-08-20 16:43+0200\n"
 "PO-Revision-Date: 2011-08-12 21:45+0200\n"
 "Last-Translator: Hans-Peter Jansen <hpj@urpla.net>\n"
 "Language-Team: de <project-camelot@googlegroups.com>\n"
@@ -29,6 +29,12 @@ msgstr "Optionen"
 #: camelot/admin/entity_admin.py:341
 msgid "Please complete the form first"
 msgstr "Bitte zuerst das Formular ausfüllen"
+
+#: camelot/admin/entity_admin.py:444
+#: camelot/view/controls/editors/abstractmanytooneeditor.py:49
+#, fuzzy, python-format
+msgid "Select %s"
+msgstr "Wählen"
 
 #: camelot/admin/object_admin.py:309
 msgid "Are you sure you want to delete this"
@@ -799,27 +805,27 @@ msgstr "Alle"
 msgid "Valid at"
 msgstr "Gültig bis"
 
-#: camelot/view/main.py:174
+#: camelot/view/main.py:175
 msgid "Initialize application"
 msgstr "Programm initialisieren"
 
-#: camelot/view/main.py:195
+#: camelot/view/main.py:196
 msgid "Setup database"
 msgstr "Datenbank einrichten"
 
-#: camelot/view/main.py:205
+#: camelot/view/main.py:206
 msgid "Load translations"
 msgstr "Übersetzungen laden"
 
-#: camelot/view/main.py:208
+#: camelot/view/main.py:209
 msgid "Create translator"
 msgstr "Übersetzung erzeugen"
 
-#: camelot/view/main.py:211
+#: camelot/view/main.py:212
 msgid "Install translator"
 msgstr "Übersetzung installieren"
 
-#: camelot/view/main.py:219
+#: camelot/view/main.py:220
 msgid "Create main window"
 msgstr "Hauptfenster erzeugen"
 
@@ -1279,7 +1285,4 @@ msgstr ""
 #: camelot/view/wizard/pages/select.py:50
 msgid "Select file:"
 msgstr "Datei auswählen:"
-
-#~ msgid "Expire current session"
-#~ msgstr "Aktuelle Sitzung invalidieren"
 

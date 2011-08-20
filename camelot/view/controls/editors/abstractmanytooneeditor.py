@@ -25,6 +25,7 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
+from camelot.core.utils import ugettext as _
 
 class AbstractManyToOneEditor(object):
     """Helper functions for implementing a `ManyToOneEditor`, to be used in the
@@ -45,7 +46,7 @@ class AbstractManyToOneEditor(object):
                 layout = QtGui.QVBoxLayout()
                 layout.setContentsMargins( 0, 0, 0, 0)
                 layout.setSpacing(0)
-                self.setWindowTitle('Select %s' % admin.get_verbose_name())
+                self.setWindowTitle( _('Select %s') % admin.get_verbose_name())
                 self.select = admin.create_select_view(
                     query,
                     parent=parent,

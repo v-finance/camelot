@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2011-08-19 19:14+0200\n"
+"POT-Creation-Date: 2011-08-20 16:43+0200\n"
 "PO-Revision-Date: 2011-08-19 19:24+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -26,6 +26,12 @@ msgstr "Actions"
 #, fuzzy
 msgid "Please complete the form first"
 msgstr "Veuillez remplir et continuer"
+
+#: camelot/admin/entity_admin.py:444
+#: camelot/view/controls/editors/abstractmanytooneeditor.py:49
+#, fuzzy, python-format
+msgid "Select %s"
+msgstr "Sélecter"
 
 #: camelot/admin/object_admin.py:309
 msgid "Are you sure you want to delete this"
@@ -847,31 +853,31 @@ msgstr "tous"
 msgid "Valid at"
 msgstr ""
 
-#: camelot/view/main.py:174
+#: camelot/view/main.py:175
 #, fuzzy
 msgid "Initialize application"
 msgstr "Quitter l'application"
 
-#: camelot/view/main.py:195
+#: camelot/view/main.py:196
 msgid "Setup database"
 msgstr ""
 
-#: camelot/view/main.py:205
+#: camelot/view/main.py:206
 #, fuzzy
 msgid "Load translations"
 msgstr "Traductions"
 
-#: camelot/view/main.py:208
+#: camelot/view/main.py:209
 #, fuzzy
 msgid "Create translator"
 msgstr "Changer la traduction"
 
-#: camelot/view/main.py:211
+#: camelot/view/main.py:212
 #, fuzzy
 msgid "Install translator"
 msgstr "Changer la traduction"
 
-#: camelot/view/main.py:219
+#: camelot/view/main.py:220
 #, fuzzy
 msgid "Create main window"
 msgstr "Fermer la fenêtre active"
@@ -1336,7 +1342,4 @@ msgstr ""
 #, fuzzy
 msgid "Select file:"
 msgstr "Selecter un fichier"
-
-#~ msgid "Expire current session"
-#~ msgstr ""
 

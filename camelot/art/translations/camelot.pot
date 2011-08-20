@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Camelot trunk\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2011-08-19 19:14+0200\n"
+"POT-Creation-Date: 2011-08-20 16:43+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,6 +27,12 @@ msgstr ""
 
 #: camelot/admin/entity_admin.py:341
 msgid "Please complete the form first"
+msgstr ""
+
+#: camelot/admin/entity_admin.py:444
+#: camelot/view/controls/editors/abstractmanytooneeditor.py:49
+#, python-format
+msgid "Select %s"
 msgstr ""
 
 #: camelot/admin/object_admin.py:309
@@ -790,27 +796,27 @@ msgstr ""
 msgid "Valid at"
 msgstr ""
 
-#: camelot/view/main.py:174
+#: camelot/view/main.py:175
 msgid "Initialize application"
 msgstr ""
 
-#: camelot/view/main.py:195
+#: camelot/view/main.py:196
 msgid "Setup database"
 msgstr ""
 
-#: camelot/view/main.py:205
+#: camelot/view/main.py:206
 msgid "Load translations"
 msgstr ""
 
-#: camelot/view/main.py:208
+#: camelot/view/main.py:209
 msgid "Create translator"
 msgstr ""
 
-#: camelot/view/main.py:211
+#: camelot/view/main.py:212
 msgid "Install translator"
 msgstr ""
 
-#: camelot/view/main.py:219
+#: camelot/view/main.py:220
 msgid "Create main window"
 msgstr ""
 
