@@ -165,7 +165,7 @@ inform the GUI of model manipulations
 
 Whenever a part of the model has been changed, it might be needed to inform
 the GUI about this, so that it can update itself, this is done by yielding
-an instance of :class:'camelot.admin.action.UpdateObject`, eg::
+an instance of :class:`camelot.admin.action.UpdateObject` such as::
 
     movie.rating = 5
     Movie.query.session.flush()
@@ -197,8 +197,8 @@ request information from the user
 
 The pop-up of a dialog that presents the user with a number of options can be 
 triggered from within the :meth:`model_run` method.  This
-happens by transferring an 'options' object back and forth between the 
-'model_thread' and the 'gui_thread'.  To transfer such an object, this object
+happens by transferring an **options** object back and forth between the 
+**model_thread** and the **gui_thread**.  To transfer such an object, this object
 first needs to be defined::
 
     class Options( object ):
@@ -232,9 +232,11 @@ class ::
 
     class AbstractAction( object ):
     
+        name = 'action'
         verbose_name = _('Action')
         icon = Icon('tango/16x16/actions/document-print.png')
         tooltip = _('Click here to run this action')
+        shortcut = _('Ctrl+P') 
         modes = []
 
         def __init__( self, admin ):
@@ -256,10 +258,13 @@ class ::
         def get_modes( self ):
             return self.modes
                     
+        def get_shortcut( self ):
+            return self.shortcut
+
 The different types of actions share a number of method names, but with a
 different signature:
 
-  - :meth:`run` is called inside the GUI thread when the action is triggered,
+  - :meth:`gui_run` is called inside the GUI thread when the action is triggered,
       the default behavior is to pop up a progress bar and fire
       :meth:`model_run`
       
@@ -270,6 +275,9 @@ different signature:
   - :meth:`is_visible`, :meth:`is_enabled` and :meth:`has_permission` are
     called in the Model thread each time the underlying data changes to update
     the state of the widget that triggers the action.
+    
+The :attr:`name` attribute specifies the name of the action as it will appear
+in the permission system.
   
 ApplicationAction
 -----------------
@@ -285,7 +293,7 @@ The API of the :class:`camelot.admin.action.ApplicationAction`::
                 will execute the run method.
             """
             
-        def run( self, widget, mode=None ):
+        def gui_run( self, widget, mode=None ):
             """This method is called inside the GUI thread, by default it
             executes the :meth:`model_run` in the Model thread.
             :param widget: the rendered :class:`QtGui.QWidget` that triggered
@@ -319,6 +327,27 @@ The API of the :class:`camelot.admin.action.ApplicationAction`::
             """
             return True
             
+To enable Application Actions for a certain 
+:class:`camelot.admin.application_admin.ApplicationAdmin` either overwrite
+its :meth:`camelot.admin.application_admin.ApplicationAdmin.get_actions`
+or specify the :attr:`actions` attribute::
+
+    from camelot.admin.application_admin import ApplicationAdmin
+    from camelot.admin.action import ApplicationAction
+    
+    class GenerateReports(ApplicationAction):
+    
+        verbose_name = _('Generate Reports')
+        
+        def model_run( self, mode=None):
+            print 'generating reports'
+            for i in range(10):
+                yield UpdateProgress(i, 10)
+    
+    class MyApplicationAdmin( ApplicationAdmin )
+    
+          actions = [GenerateReports,]
+
 FormAction
 ----------
 
@@ -336,10 +365,10 @@ The API of the :class:`camelot.admin.action.FormAction`::
                 will execute the run method.
             """
             
-        def run( self,
-                 widget,
-                 widget_mapper,
-                 mode ):
+        def gui_run( self,
+                     widget,
+                     widget_mapper,
+                     mode ):
             """This method is called inside the GUI thread, by default it
             executes the :meth:`model_run` in the Model thread.
             :param widget: the rendered :class:`QtGui.QWidget` that triggered
@@ -400,10 +429,10 @@ The API of the :class:`camelot.admin.action.ListAction`::
                 will execute the run method.
             """
             
-        def run( self,
-                 widget,
-                 selection_model,
-                 mode ):
+        def gui_run( self,
+                     widget,
+                     selection_model,
+                     mode ):
             """This method is called inside the GUI thread, by default it
             executes the :meth:`model_run` in the Model thread.
             :param widget: the rendered :class:`QtGui.QWidget` that triggered
