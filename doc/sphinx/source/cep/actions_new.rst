@@ -164,21 +164,25 @@ inform the GUI of model manipulations
 -------------------------------------
 
 Whenever a part of the model has been changed, it might be needed to inform
-the GUI about this, so that it can update itself, this is done by yielding
-an instance of :class:`camelot.admin.action.UpdateObject` such as::
+the GUI about this, so that it can update itself, the easy way of doing so
+is by yielding an instance of :class:`camelot.admin.action.FlushSession` 
+such as::
 
+    from sqlalchemy.orm.session import object_session
     movie.rating = 5
-    Movie.query.session.flush()
-    yield UpdateObject( movie )
+    yield FlushSession( object_session( movie ) )
     
-will update the visualisation of the changed movie on every screen in the
-application that displays this object.  Other updates that can be generated
-are :
+This will flush the session to the database, and at the same time update
+the GUI so that the flushed changes are shown to the user by updating the
+visualisation of the changed movie on every screen in the application that 
+displays this object.  Alternative updates that can be generated are :
 
+  * :class:`camelot.admin.action.ObjectUpdated`, if one wants to inform
+    the GUI an object is going to be updated.
   * :class:`camelot.admin.action.ObjectDeleted`, if one wants to inform
     the GUI an object is going to be deleted.
   * :class:`camelot.admin.action.ObjectCreated`, if one wants to inform
-    the GUI an object has been deleted.
+    the GUI an object has been created.
 
 raise exceptions
 ----------------
@@ -212,17 +216,25 @@ first needs to be defined::
             field_attributes = { 'earliest_releasedate':{'delegate':delegates.DateDelegate},
                                  'latest_releasedate':{'delegate':delegates.DateDelegate}, }
                                  
-Than a :class:`camelot.admin.action.FormDialog' can be :keyword:`yield` to present
+Than a :class:`camelot.admin.action.ChangeObject` can be :keyword:`yield` to present
 the options to the user and get the filled in values back::
 
-    from camelot.admin.action import FormDialog
+    from camelot.admin.action import ChangeObject
     
     options = Options()
-    filled_in_options = yield FormDialog( options )
+    filled_in_options = yield ChangeObject( options )
                                  
 When the user presses :guilabel:`Cancel` button in the progress dialog or on the
 print preview dialog, the :keyword:`yield` statement will raise a 
 :class:`camelot.core.exception.CancelRequest`.
+
+Other ways of requesting information are :
+
+  * :class:`camelot.admin.action.NewObject`, to request the user to fill in
+    a new form for an object of a specified class.  This will return such
+    a new object or None if the user canceled the operation.
+  * :class:`camelot.admin.action.SelectFile`, to request to select an existing
+    file to process or a new file to save information.
 
 Types of actions
 ================
