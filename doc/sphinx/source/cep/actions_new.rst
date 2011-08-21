@@ -236,6 +236,33 @@ Other ways of requesting information are :
   * :class:`camelot.admin.action.SelectFile`, to request to select an existing
     file to process or a new file to save information.
 
+States and Modes
+================
+
+States
+------
+
+The widget that is used to trigger an action can be in different states.  The
+default supported states are :
+
+  - 'enabled' : this is the default state, where the user is able to trigger
+    the action
+    
+  - 'disabled' : in this state the user is unable to trigger the action
+  
+  - 'forbidden' : the user has no permission to trigger the action
+  
+  - 'hidden' : the action widget is not visible
+  
+  - 'notification' : the action widget attracts the attention of the user, this
+    implies it is 'enabled'
+    
+Modes
+-----
+
+An action widget can be triggered in different modes, for example a print button
+can be triggered as simply 'Print' or 'Export to PDF'
+
 Types of actions
 ================
 
@@ -284,9 +311,8 @@ different signature:
       thread.  This generator can yield objects that perform user interaction
       or update the GUI.
       
-  - :meth:`is_visible`, :meth:`is_enabled` and :meth:`has_permission` are
-    called in the Model thread each time the underlying data changes to update
-    the state of the widget that triggers the action.
+  - :meth:`get_state` is called in the Model thread each time the underlying 
+    data changes to update the state of the widget that triggers the action.
     
 The :attr:`name` attribute specifies the name of the action as it will appear
 in the permission system.
@@ -318,26 +344,13 @@ The API of the :class:`camelot.admin.action.ApplicationAction`::
             """This generator method is called inside the Model thread"""
             pass
             
-        def is_visible( self ):
+        def get_state( self ):
             """This method is called inside the Model thread to verify if
-            this action is visible to the current user.
-            :return: :keyword:`True` or :keyword:`False`
+            the state of the action widget for the current user.
+            :return: a :keyword:`str`, such as 'enabled', 'disabled',
+            'forbidden'
             """
-            return True
-
-        def is_enabled( self ):
-            """This method is called inside the Model thread to verify if
-            this action is enabled to the current user.
-            :return: :keyword:`True` or :keyword:`False`
-            """
-            return True
-            
-        def has_permission( self ):
-            """This method is called inside the Model thread to verify if
-            the current user has permission to run the action.
-            :return: :keyword:`True` or :keyword:`False`
-            """
-            return True
+            return 'enabled'
             
 To enable Application Actions for a certain 
 :class:`camelot.admin.application_admin.ApplicationAdmin` either overwrite
@@ -400,29 +413,13 @@ The API of the :class:`camelot.admin.action.FormAction`::
             """
             pass
             
-        def is_visible( self, 
+        def get_state( self, 
                         current_obj ):
             """This method is called inside the Model thread to verify if
-            this action is visible to the current user.
-            :return: :keyword:`True` or :keyword:`False`
+            the state of the action widget visible to the current user.
+            :return: a :keyword:`str`
             """
-            return True
-
-        def is_enabled( self, 
-                        current_obj ):
-            """This method is called inside the Model thread to verify if
-            this action is enabled to the current user.
-            :return: :keyword:`True` or :keyword:`False`
-            """
-            return True
-            
-        def has_permission( self,
-                            current_obj ):
-            """This method is called inside the Model thread to verify if
-            the current user has permission to run the action.
-            :return: :keyword:`True` or :keyword:`False`
-            """
-            return True
+            return 'enabled'
 
 ListAction
 ----------
@@ -471,38 +468,16 @@ The API of the :class:`camelot.admin.action.ListAction`::
             """
             pass
             
-        def is_visible( self, 
-                        collection_length,
-                        selection_length,
-                        current_obj,
-                        current_field ):
-            """This method is called inside the Model thread to verify if
-            this action is visible to the current user.
-            :return: :keyword:`True` or :keyword:`False`
+        def get_state( self, 
+                       collection_length,
+                       selection_length,
+                       current_obj,
+                       current_field ):
+            """This method is called inside the Model thread to verify the state
+            of the action widget visible to the current user.
+            :return: a :keyword:`str`
             """
-            return True
-
-        def is_enabled( self, 
-                        collection_length,
-                        selection_length,
-                        current_obj,
-                        current_field ):
-            """This method is called inside the Model thread to verify if
-            this action is enabled to the current user.
-            :return: :keyword:`True` or :keyword:`False`
-            """
-            return True
-            
-        def has_permission( self,
-                            collection_length,
-                            selection_length,
-                            current_obj,
-                            current_field ):
-            """This method is called inside the Model thread to verify if
-            the current user has permission to run the action.
-            :return: :keyword:`True` or :keyword:`False`
-            """
-            return True
+            return 'enabled'
             
 Inspiration
 ===========
