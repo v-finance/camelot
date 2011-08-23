@@ -214,7 +214,20 @@ class Storage( object ):
 
         :param prefix: the prefix to use for generating a file name
         :param suffix: the suffix to use for generating a filen name, eg '.png'
-        :return: a StoredFile"""
+        :return: a StoredFile
+        
+        This method can also be used in combination with the StringIO module::
+        
+            import StringIO
+                
+            stream = StringIO.StringIO()
+            # write everything to the stream
+            stream.write( 'bla bla bla' )
+            # prepare the stream for reading
+            stream.seek( 0 )
+            stored_file = storage.checkin_stream( 'document', '.txt', stream )
+            
+        """
         self.available()
         import tempfile
         import os

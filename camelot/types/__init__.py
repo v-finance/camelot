@@ -338,10 +338,13 @@ class File(types.TypeDecorator):
   the storage is needed, eg in some function doing document processing, one 
   needs to go through SQLAlchemy to retrieve it.
   
-  For an Enity named TaskDocument with a File field named 'document', the
+  For an 'task' object  with a File field named 'document', the
   storage can be retrieved::
   
-      document_property = TaskDocument.mapper.get_property('document')
+      from sqlalchemy import orm
+      
+      task_mapper = orm.object_mapper( task )
+      document_property = task_mapper.get_property('document')
       storage = document_property.columns[0].type.storage
       
     """
