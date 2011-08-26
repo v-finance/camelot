@@ -81,7 +81,7 @@ class TaskHandler(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self._mutex = QtCore.QMutex()
         self._queue = queue
-        #self._tasks_done = []
+        self._tasks_done = []
         self._busy = False
         logger.debug("TaskHandler created.")
 
@@ -102,8 +102,13 @@ class TaskHandler(QtCore.QObject):
             # signal slot connections seem to survive this recycling.
             # @todo: this should be investigated in more detail, since we are causing
             #        a deliberate memory leak here
+            #
+            # not keeping track of the tasks might result in corruption
+            #
+            # see : http://www.riverbankcomputing.com/pipermail/pyqt/2011-August/030452.html
+            #
             task.clear()
-            #self._tasks_done.append(task)
+            self._tasks_done.append(task)
             task = self._queue.pop()
         self.task_handler_busy_signal.emit( False )
         self._busy = False
