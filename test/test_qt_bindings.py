@@ -96,8 +96,8 @@ class SignalEmitter(QtCore.QObject):
     
     my_signal = QtCore.pyqtSignal(object)
     
-    def start_emitting(self):
-        for _i in range(1000):
+    def start_emitting(self, limit=1000):
+        for _i in range(limit):
             o = object()
             self.my_signal.emit(o)
 
@@ -138,7 +138,6 @@ class GarbageCollectionCase( unittest.TestCase ):
         # dont run this test, since it will segfault the
         # interpreter
         #
-        return
                     
         initial = count_alive()
         # turn off automatic garbage collection, to be able to trigger it
@@ -176,10 +175,58 @@ class GarbageCollectionCase( unittest.TestCase ):
 class SignalSlotCase( unittest.TestCase ):
     
     def setUp(self):
-        from camelot.test import get_application
-        self.app = get_application()
+        self.app = QtGui.QApplication.instance()
+        if self.app == None:
+            self.app = QtGui.QApplication([])
+        #from camelot.test import get_application
+        #self.app = get_application()
 
-    def test_multiple_threads(self):
+    def test_queued_connection_after_delete(self):
+        """Connect emitter and receiver in a different thread with a
+        queued connection.  Emitter emits a signal and then deletes
+        itself before the receiver its slot is called.
+        
+        this corrupts the program.
+        """
+        import random
+        import time
+        receiver = SignalReceiver()
+        threads = []
+        for i in range(1000):
+            
+
+            class EmittingThread(QtCore.QThread):
+                
+                def __init__( self ):
+                    QtCore.QThread.__init__( self )
+                    self.emitter = SignalEmitter()
+                    
+                def connect( self, receiver ):
+                    self.emitter.my_signal[object].connect( receiver.my_slot, QtCore.Qt.QueuedConnection )
+                    
+                def run(self): 
+                    self.emitter.start_emitting( 10 )
+                    #time.sleep( 0.01 / random.randint(1, 100) )
+                    #for i in range(  ):
+                    #    pass
+                    self.emitter = None
+                    
+            thread = EmittingThread()
+            thread.connect( receiver )
+            thread.start()
+            
+            self.app.processEvents()
+            threads.append( thread )
+            #thread.wait()
+            #del thread
+            
+        for thread in threads:
+            thread.wait()
+            
+            
+        
+        
+    def test_multiple_threads_emit_and_connect(self):
         """Emit a signal containing a python object and at the
         same time connect to it.
         
