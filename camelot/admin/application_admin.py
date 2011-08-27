@@ -153,6 +153,17 @@ methods :
         from camelot.admin.section import structure_to_sections
         return structure_to_sections(self.sections)
 
+    def get_related_admin(self, cls):
+        """Get the default :class:`camelot.admin.object_admin.ObjectAdmin` class
+        for a specific class, return None, if not known.  The ObjectAdmin
+        should either be registered through the :meth:`register` method or be
+        defined as an inner class with name :keyword:`Admin` of the entity.
+
+        :param entity: a :class:`class`
+        
+        """
+        return self.get_entity_admin( cls )
+    
     def get_entity_admin(self, entity):
         """Get the default :class:`camelot.admin.object_admin.ObjectAdmin` class
         for a specific entity, return None, if not known.  The ObjectAdmin
@@ -160,6 +171,8 @@ methods :
         defined as an inner class with name :keyword:`Admin` of the entity.
 
         :param entity: a :class:`class`
+        
+        deprecated : use get_related_admin instead
         """
 
         admin_class = None

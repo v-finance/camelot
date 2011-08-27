@@ -106,21 +106,30 @@ will be blocked while the action in the GUI thread takes place, eg ::
 
 Will pop up a print preview dialog in the GUI.
 
-Possible results that can be send to the GUI are:
+Action Steps
+------------
 
-  * :class:`camelot.admin.action.PrintPreview`
-  * :class:`camelot.admin.action.OpenFile`
-  * :class:`camelot.admin.action.ShowPixmap`
-  * :class:`camelot.admin.action.ShowChart`
-  * :class:`camelot.admin.action.OpenDocx`
+Events that can be yielded to the GUI are of type 
+:class:`camelot.admin.action.ActionStep`.  Action steps are reusable parts of
+an action::
+
+.. autoclass:: camelot.admin.action.ActionStep
+
+Possible Action Steps that can be yielded to the GUI are:
+
+  * :class:`camelot.view.action_steps.PrintPreview`
+  * :class:`camelot.view.action_steps.OpenFile`
+  * :class:`camelot.view.action_steps.ShowPixmap`
+  * :class:`camelot.view.action_steps.ShowChart`
+  * :class:`camelot.view.action_steps.OpenDocx`
 
 keep the user informed about progress
 -------------------------------------
 
-An :obj:`camelot.admin.action.UpdateProgress` object can be yielded, to update
+An :obj:`camelot.view.action_steps.UpdateProgress` object can be yielded, to update
 the state of the progress dialog::
 
-    class UpdateProgress(object):
+    class UpdateProgress( ActionStep ):
     
         def __init__(value=0, maximum=0, text=None, detail=None, clear_details=False):
             """
@@ -149,7 +158,14 @@ progres of the action::
 
 Should the user have pressed the :guilabel:`Cancel` button in the progress 
 dialog, the next yield of an UpdateProgress object will raise a 
-:class:`camelot.core.exeption.CancelRequest`.  The :meth:`model_run` its 
+:class:`camelot.core.exeption.CancelRequest`.  
+
+In case an unexpected event occurs in the GUI, the :keyword:`yield` statement 
+will raise a :class:`camelot.core.exception.GuiException`.  This exception
+will propagate through the action an will be ignored unless handled by the
+developer.
+
+The :meth:`model_run` its 
 execution will not be blocked while the GUI updates the 
 :class:`camelot.view.controls.ProgressDialog`
 
@@ -177,11 +193,11 @@ the GUI so that the flushed changes are shown to the user by updating the
 visualisation of the changed movie on every screen in the application that 
 displays this object.  Alternative updates that can be generated are :
 
-  * :class:`camelot.admin.action.ObjectUpdated`, if one wants to inform
+  * :class:`camelot.view.action_steps.ObjectUpdated`, if one wants to inform
     the GUI an object is going to be updated.
-  * :class:`camelot.admin.action.ObjectDeleted`, if one wants to inform
+  * :class:`camelot.view.action_steps.ObjectDeleted`, if one wants to inform
     the GUI an object is going to be deleted.
-  * :class:`camelot.admin.action.ObjectCreated`, if one wants to inform
+  * :class:`camelot.view.action_steps.ObjectCreated`, if one wants to inform
     the GUI an object has been created.
 
 raise exceptions
@@ -216,10 +232,10 @@ first needs to be defined::
             field_attributes = { 'earliest_releasedate':{'delegate':delegates.DateDelegate},
                                  'latest_releasedate':{'delegate':delegates.DateDelegate}, }
                                  
-Than a :class:`camelot.admin.action.ChangeObject` can be :keyword:`yield` to present
+Than a :class:`camelot.view.action_steps.ChangeObject` can be :keyword:`yield` to present
 the options to the user and get the filled in values back::
 
-    from camelot.admin.action import ChangeObject
+    from camelot.view.action_steps import ChangeObject
     
     options = Options()
     filled_in_options = yield ChangeObject( options )
@@ -230,10 +246,10 @@ print preview dialog, the :keyword:`yield` statement will raise a
 
 Other ways of requesting information are :
 
-  * :class:`camelot.admin.action.NewObject`, to request the user to fill in
+  * :class:`camelot.view.action_steps.NewObject`, to request the user to fill in
     a new form for an object of a specified class.  This will return such
     a new object or None if the user canceled the operation.
-  * :class:`camelot.admin.action.SelectFile`, to request to select an existing
+  * :class:`camelot.view.action_steps.SelectFile`, to request to select an existing
     file to process or a new file to save information.
 
 States and Modes
@@ -261,15 +277,40 @@ Modes
 -----
 
 An action widget can be triggered in different modes, for example a print button
-can be triggered as simply 'Print' or 'Export to PDF'
+can be triggered as simply 'Print' or 'Export to PDF'.  The different modes of
+an action are specified as a list of :class:`camelot.admin.action.Mode` objects::
 
-Types of actions
-================
+    class Mode( object ):
+    
+        def __init__( name, verbose_name=None, icon=None):
+            "
+            :param name: the name of the mode, as it will be passed to the
+                gui_run and model_run method
+            :param verbose_name: the name shown to the user
+            :param icon: the icon of the mode
+            """
+            self._name = name
+            self._verbose_name = name
+            self._icon = icon
+            
+        def get_name( self ):
+            return self._name
+            
+        def get_verbose_name( self ):
+            return self._verbose_name or self._name
+            
+        def get_icon( self ):
+            return self._icon
+            
 
-All action classes are based on the :class:`camelot.admin.action.AbstractAction`
-class ::
+Actions and Context
+===================
 
-    class AbstractAction( object ):
+All action classes are based on the :class:`camelot.admin.action.Action`
+class.  An Action is in fact a special :class:`camelot.admin.action.ActionStep`,
+with some additional methods::
+
+    class Action( ActionStep ):
     
         name = 'action'
         verbose_name = _('Action')
@@ -277,13 +318,6 @@ class ::
         tooltip = _('Click here to run this action')
         shortcut = _('Ctrl+P') 
         modes = []
-
-        def __init__( self, admin ):
-            """
-            :param admin: the Admin class for which this Action was constructed,
-                either an ApplicationAdmin or an ObjectAdmin subclass
-            """
-            self._admin = admin
             
         def get_verbose_name( self ):
             return self.verbose_name
@@ -300,23 +334,52 @@ class ::
         def get_shortcut( self ):
             return self.shortcut
 
-The different types of actions share a number of method names, but with a
-different signature:
-
-  - :meth:`gui_run` is called inside the GUI thread when the action is triggered,
-      the default behavior is to pop up a progress bar and fire
-      :meth:`model_run`
-      
-  - :meth:`model_run` is a generator method that gets called inside the Model
-      thread.  This generator can yield objects that perform user interaction
-      or update the GUI.
-      
-  - :meth:`get_state` is called in the Model thread each time the underlying 
-    data changes to update the state of the widget that triggers the action.
+        def render( self, parent, gui_context ):
+            """
+            :param parent: the parent :class:`QtGui.QWidget`
+            :param gui_context: the context available in the *GUI thread*, a
+                subclass of :class:`camelot.action.GuiContext`
+            :return: a :class:`QtGui.QWidget` which when triggered
+                will execute the :meth:`gui_run` method.
+            """
+            
+        def gui_run( self, gui_context ):
+            """This method is called inside the GUI thread, by default it
+            executes the :meth:`model_run` in the Model thread.
+            :param gui_context: the context available in ghe *GUI thread*
+            """
+            pass
+            
+        def model_run( self, model_context ):
+            """This generator method is called inside the Model thread.
+            :param model_context: the context available in the *Model thread*
+            """
+            pass
+            
+        def get_state( self, model_context ):
+            """
+            This method is called inside the Model thread to verify if
+            the state of the action widget visible to the current user.
+            
+            :param model_context: the context available in the *Model thread*
+            :return: a :keyword:`str`
+            """
+            return 'enabled'
     
-The :attr:`name` attribute specifies the name of the action as it will appear
-in the permission system.
+The :attr:`name` attribute specifies the name of the action as it will be stored
+in the permission and preferences system.
   
+Context
+-------
+
+Depending on where an action was triggered, a different context will be 
+available during its execution in :meth:`camelot.admin.action.Action.gui_run`
+and :meth:`camelot.admin.action.Action.model_run`.
+
+The minimal context available in the *GUI thread* is :
+
+.. autoclass:: camelot.admin.action.GuiContext
+
 ApplicationAction
 -----------------
 
@@ -324,19 +387,21 @@ The API of the :class:`camelot.admin.action.ApplicationAction`::
 
     class ApplicationAction( AbstractAction ):
     
-        def render( self, parent ):
+        def render( self, parent, gui_context ):
             """
             :param parent: the parent :class:`QtGui.QWidget`
+            :param workspace: the :class:`camelot.view.workspace.DesktopWorkspace`
+                that is active.
             :return: a :class:`QtGui.QWidget` which when triggered
                 will execute the run method.
             """
             
-        def gui_run( self, widget, mode=None ):
+        def gui_run( self, widget, workspace, mode=None ):
             """This method is called inside the GUI thread, by default it
             executes the :meth:`model_run` in the Model thread.
             :param widget: the rendered :class:`QtGui.QWidget` that triggered
                 the method call
-            :param mode: the mode in which this action was triggered.
+            :param mode: the name of the mode in which this action was triggered.
             """
             pass
             
@@ -380,9 +445,11 @@ The API of the :class:`camelot.admin.action.FormAction`::
 
     class FormAction( AbstractAction ):
     
-        def render( self, parent, widget_mapper ):
+        def render( self, parent, view, widget_mapper ):
             """
             :param parent: the parent :class:`QtGui.QWidget`
+            :param view: the :class:`camelot.view.controls.AbstractView` object
+                to which this action belongs.
             :param widget_mapper: the :class:`QtGui.QDataWidgetMapper` class
                 that relates to the form view on which the widget will be
                 placed.
@@ -399,7 +466,7 @@ The API of the :class:`camelot.admin.action.FormAction`::
             :param widget: the rendered :class:`QtGui.QWidget` that triggered
                 the method call
             :param selection_model: the :class:`QtGui.QDataWidgetMapper` class
-            :param mode: the mode in which this action was triggered.
+            :param mode: the name of the mode in which this action was triggered.
             """
             pass
             
@@ -428,9 +495,11 @@ The API of the :class:`camelot.admin.action.ListAction`::
 
     class ListAction( AbstractAction ):
     
-        def render( self, parent, selection_model ):
+        def render( self, parent, view, selection_model ):
             """
             :param parent: the parent :class:`QtGui.QWidget`
+            :param view: the :class:`camelot.view.controls.AbstractView` object
+                to which this action belongs.
             :param selection_model: the :class:`QtGui.QItemSelectionModel` class
                 that relates to the table view on which the widget will be
                 placed.
@@ -447,7 +516,7 @@ The API of the :class:`camelot.admin.action.ListAction`::
             :param widget: the rendered :class:`QtGui.QWidget` that triggered
                 the method call
             :param selection_model: the :class:`QtGui.QItemSelectionModel` class
-            :param mode: the mode in which this action was triggered.
+            :param mode: the name of the mode in which this action was triggered.
             """
             pass
             
@@ -482,7 +551,12 @@ The API of the :class:`camelot.admin.action.ListAction`::
 Inspiration
 ===========
 
-Implementing actions as generators was made possible with the language functions
-of :pep:`342`.  The EuroPython talk of Erik Groeneveld inspired the use of these
-features. 
-(http://ep2011.europython.eu/conference/talks/beyond-python-enhanched-generators)
+  * Implementing actions as generators was made possible with the language functions
+    of :pep:`342`.  
+    
+  * The EuroPython talk of Erik Groeneveld inspired the use of these
+    features. (http://ep2011.europython.eu/conference/talks/beyond-python-enhanched-generators)
+    
+  * Action steps were introduced to be able to take advantage of the new language
+    features of :pep:`380` in Python 3.3
+

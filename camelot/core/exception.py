@@ -53,3 +53,11 @@ class UserException(Exception):
         self.icon = icon
         self.resolution = resolution
         self.detail = detail
+
+class GuiException(Exception):
+    """
+    This exception is raised by the Action mechanism when the action requested
+    something from the GUI but an unexpected event occured.  The action can
+    choose to ignore it or handle it.
+    """
+    pass
