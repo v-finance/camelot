@@ -61,7 +61,7 @@ class LocalFileEditor(CustomEditor):
         layout.setContentsMargins(0, 0, 0, 0)
 
         browse_button = QtGui.QToolButton( self )
-        browse_button.setFocusPolicy( Qt.StrongFocus )
+        browse_button.setFocusPolicy( Qt.ClickFocus )
         browse_button.setIcon( self.browse_icon.getQIcon() )
         browse_button.setToolTip( _('Browse') )
         browse_button.setAutoRaise( True )
@@ -69,6 +69,8 @@ class LocalFileEditor(CustomEditor):
 
         self.filename = DecoratedLineEdit(self)
         self.filename.editingFinished.connect( self.filename_editing_finished )
+        self.setFocusProxy( self.filename )
+        
         layout.addWidget( self.filename )
         layout.addWidget( browse_button )
         self.setLayout( layout )

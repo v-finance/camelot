@@ -31,7 +31,7 @@ import os
 from camelot.core.conf import settings
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.admin.application_action import ApplicationActionFromModelFunction
+from camelot.admin.action import ActionStep
 from camelot.view.controls import delegates
 
 from camelot.view.main import Application
@@ -47,16 +47,25 @@ class MetaSettings(object):
         
     def setup_model(self):
         pass
-        
-def launch_meta_camelot():
-    settings.append( MetaSettings() )
-    app = MetaCamelotApplication( MetaCamelotAdmin() )
-    app.main()
 
 class MetaCamelotAdmin( ApplicationAdmin ):
     """ApplicationAdmin class to be used within meta camelot"""
     
     name = 'Meta Camelot'
+
+def launch_meta_camelot():
+    import sys
+    from camelot.view.model_thread import construct_model_thread, get_model_thread
+    from camelot.admin.action import GuiContext
+    from PyQt4 import QtGui
+    app = QtGui.QApplication([a for a in sys.argv if a])
+    construct_model_thread()
+    mt = get_model_thread()
+    mt.start()
+    application_admin = MetaCamelotAdmin()
+    settings.append( MetaSettings() )
+    new_project = CreateNewProject()
+    new_project.gui_run( GuiContext( application_admin ) )
     
 class MetaCamelotApplication( Application ):
     """A Camelot application to build new Camelot
@@ -86,8 +95,8 @@ features = [
                                                                                                      '''be used to store settings in the registry'''),
    ('application_url',       'http://www.python-camelot.com',           delegates.PlainTextDelegate, '''Website of the application'''),
    ('help_url',              'http://www.python-camelot.com/docs.html', delegates.PlainTextDelegate, '''Part of the website with online help'''),
-   ('default_models',        True,                                      delegates.BoolDelegate,      '''Use the default Camelot model for Organizations,<br/>'''
-                                                                                                     '''Persons, etc.'''),
+   #('default_models',        True,                                      delegates.BoolDelegate,      '''Use the default Camelot model for Organizations,<br/>'''
+   #                                                                                                  '''Persons, etc.'''),
    #('integrate_cloudlaunch', False,                                     delegates.BoolDelegate,      '''Integrate updates, logging and online backups<br/>'''
                                                                                                      #'''This requires CloudLaunch to be installed<br/>'''
                                                                                                      #'''as well as credentials'''),
@@ -178,14 +187,14 @@ def setup_model():
     the model"""
     import camelot.model
     from elixir import setup_all
-    import model
+    import {{options.module}}.model
     setup_all(create_tables=True)
     from camelot.model.authentication import updateLastLogin
     updateLastLogin()
     '''),
 ]
 
-class CreateNewProject( ApplicationActionFromModelFunction ):
+class CreateNewProject( ActionStep ):
     """Action to create a new project, based on a form with
     options the user fills in."""
     
@@ -202,7 +211,15 @@ class CreateNewProject( ApplicationActionFromModelFunction ):
                                'delegate':feature[2],
                                'tooltip':feature[3]   } ) for feature in features)
             
-    def model_run(self, options):
+    def model_run(self, context = None):
+        from camelot.view import action_steps
+        options = CreateNewProject.Options()
+        yield action_steps.ChangeObject( options )
+        print 'object changed'
+        self.start_project( options )
+        yield
+        
+    def start_project( self, options ):
         from jinja2 import Template
         context = {'options':options}
         os.makedirs( os.path.join( options.source, options.module ) )

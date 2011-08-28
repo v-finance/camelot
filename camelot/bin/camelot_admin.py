@@ -227,8 +227,9 @@ def startproject(module):
     
     options = CreateNewProject.Options()
     options.module = module
-    action = CreateNewProject('')
-    action.model_run( options )
+    
+    action = CreateNewProject()
+    action.start_project( options )
 
 def makemessages():
     print 'Not yet implemented'

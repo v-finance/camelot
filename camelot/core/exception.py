@@ -61,3 +61,10 @@ class GuiException(Exception):
     choose to ignore it or handle it.
     """
     pass
+
+class CancelRequest(Exception):
+    """
+    This exception is raised by the GUI when the user wants to cancel an action,
+    this exception is then past to the *model thread*
+    """
+    pass

@@ -22,7 +22,6 @@
 #
 #  ============================================================================
 
-
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QDialog, QFrame, QGridLayout, QLabel, QVBoxLayout, \
     QWidget, QLayout
@@ -39,8 +38,8 @@ class HSeparator(QFrame):
 class StandaloneWizardPage(QDialog):
     """A Standalone Wizard Page Dialog for quick configuration windows"""
 
-    def __init__(self, window_title=None, parent=None):
-        super(StandaloneWizardPage, self).__init__(parent)
+    def __init__(self, window_title=None, parent=None, flags=Qt.WindowFlags(0)):
+        super(StandaloneWizardPage, self).__init__(parent, flags)
         self.setWindowTitle(window_title or '')
         self.set_layouts()
 

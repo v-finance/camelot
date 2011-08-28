@@ -31,8 +31,10 @@ import logging
 
 from PyQt4 import QtCore
 
+from camelot.core.exception import GuiException, CancelRequest
+from camelot.core.utils import ugettext_lazy as _
 from camelot.view.model_thread import post
-from camelot.core.exception import GuiException
+from camelot.view.art import Icon
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
@@ -71,21 +73,51 @@ class ActionRunner( QtCore.QEventLoop ):
         :param gui_context: the GUI context of the generator
         """
         super( ActionRunner, self ).__init__()
+        self._generator_function = generator_function
         self._generator = None
         self._gui_context = gui_context
-        post( generator_function, self.generator, self.exception )
-        print 'posted'
+        post( self._wrapped_generator_function, self.generator, self.exception )
+        
+    def _wrapped_generator_function( self ):
+        """Wrapper around the generator_function that handles exceptions"""
+        try:
+            return self._generator_function()
+        except CancelRequest:
+            return None
+
+    def _wrapped_generator_next( self ):
+        """Wrapper around the next call of the generator that handles exceptions"""
+        try:
+            return self._generator.next()
+        except CancelRequest:
+            return None
+        
+    def _wrapped_generator_send( self, obj ):
+        """Wrapper around the send call of the generator that handles exceptions"""
+        raise Exception('foo')
+        try:
+            return self._generator.send( obj )
+        except CancelRequest:
+            return None
+        
+    def _wrapped_generator_throw( self, exc ):
+        """Wrapper around the throw call of the generator that handles exceptions"""
+        try:
+            return self._generator.throw( exc )
+        except CancelRequest:
+            return None
         
     @QtCore.pyqtSlot( object )
     def exception( self, exception_info ):
-        print 'exception'
+        print 'exceptin slot called'
+        from camelot.view.controls.exception import model_thread_exception_message_box
+        model_thread_exception_message_box( exception_info )
         self.exit()
         
     @QtCore.pyqtSlot( object )
     def generator( self, generator ):
         self._generator = generator
-        print 'generator ready'
-        post( self._generator.next, self.next, self.exception )
+        post( self._wrapped_generator_next, self.next, self.exception )
         
     @QtCore.pyqtSlot( object )
     def next( self, yielded ):
@@ -94,14 +126,18 @@ class ActionRunner( QtCore.QEventLoop ):
         :param yielded: the object that was yielded by the generator in the
             *model thread*
         """
-        print 'next'
         if isinstance( yielded, (ActionStep,) ):
             try:
                 to_send = yielded.gui_run( self._gui_context )
-                post( self._generator.send, 
+                post( self._wrapped_generator_send, 
                       self.next, 
                       self.exception, 
                       args = (to_send,) )
+            except CancelRequest, exc:
+                post( self._wrapped_generator_throw,
+                      self.next,
+                      self.exception,
+                      args = (exc,) )
             except Exception, exc:
                 LOGGER.error( 'gui exception while executing action', 
                               exc_info=exc)
@@ -111,14 +147,28 @@ class ActionRunner( QtCore.QEventLoop ):
                 # the very same exception, because no references from the GUI
                 # should be past to the model.
                 #
-                post( self._generator.throw,
+                post( self._wrapped_generator_throw,
                       self.next,
                       self.exception,
                       args = ( GuiException(), ) )
+        #
+        # Process the events before exiting, as there might be exceptions
+        # left in the signal slot queue
+        #
+        self.processEvents()
         self.exit()
     
 class ActionStep( object ):
 
+    verbose_name = _('Step')
+    icon = Icon('tango/16x16/emblems/emblem-system.png')
+        
+    def get_verbose_name( self ):
+        return self.verbose_name
+        
+    def get_icon( self ):
+        return self.icon
+        
     def gui_run( self, gui_context ):
         """This method is called in the *GUI thread* upon execution of the
         action step.  The return value of this method is the result of the
@@ -134,10 +184,6 @@ class ActionStep( object ):
         """
         runner = ActionRunner( self.model_run, gui_context )
         runner.exec_()
-        
-        print 'gui_run'
-        generator = self.model_run( None )
-        print generator
         
     def model_run( self, model_context = None ):
         """A generator that yields :class:`camelot.admin.action.ActionStep`

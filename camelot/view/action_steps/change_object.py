@@ -25,10 +25,17 @@
 from PyQt4 import QtGui, QtCore
 
 from camelot.admin.action import ActionStep
+from camelot.core.exception import CancelRequest
+from camelot.core.utils import ugettext as _
+from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 
-class ChangeObjectDialog( QtGui.QDialog ):
+class ChangeObjectDialog( StandaloneWizardPage ):
     
-    def __init__( self, obj, admin, parent=None, flags=QtCore.Qt.WindowFlags(0) ):
+    def __init__( self, 
+                  obj, 
+                  admin, 
+                  parent=None, 
+                  flags=QtCore.Qt.WindowFlags(0) ):
         """A dialog to change an object.  This differs from a FormView in that
         it does not contains Actions, and has an OK button that is enabled when
         the object is valid.
@@ -37,7 +44,14 @@ class ChangeObjectDialog( QtGui.QDialog ):
         """
         from camelot.view.controls.formview import FormWidget
         from camelot.view.proxy.collection_proxy import CollectionProxy
-        super(ChangeObjectDialog, self).__init__( parent, flags )
+        super(ChangeObjectDialog, self).__init__( '', parent, flags )
+        
+        self.setWindowTitle( admin.get_verbose_name() )
+        #self.set_banner_logo_pixmap(art.Icon('tango/22x22/categories/preferences-system.png').getQPixmap())
+        self.set_banner_title( _('Please complete') )
+        self.set_banner_subtitle(_('Complete the form and press the OK button'))
+        self.banner_widget().setStyleSheet('background-color: white;')
+        
         model = CollectionProxy(admin, lambda:[obj], admin.get_fields)
         validator = model.get_validator()
         layout = QtGui.QVBoxLayout()
@@ -45,11 +59,22 @@ class ChangeObjectDialog( QtGui.QDialog ):
         layout.addWidget( form_widget )
         validator.validity_changed_signal.connect( self._validity_changed )
         form_widget.set_model( model )
-        self.setLayout(layout)
+        self.main_widget().setLayout(layout)
     
         # do inital validation, so the validity changed signal is valid
         self._valid = False
         #self._validity_changed(0)
+        
+        cancel_button = QtGui.QPushButton( _('Cancel') )
+        ok_button = QtGui.QPushButton( _('OK') )
+        layout = QtGui.QHBoxLayout()
+        layout.setDirection( QtGui.QBoxLayout.RightToLeft )
+        layout.addWidget( cancel_button )
+        layout.addWidget( ok_button )
+        layout.addStretch()
+        self.buttons_widget().setLayout( layout )
+        cancel_button.pressed.connect( self.reject )
+        ok_button.pressed.connect( self.accept )
         
     @QtCore.pyqtSlot(int)
     def _validity_changed(self, row):
@@ -79,5 +104,7 @@ class ChangeObject( ActionStep ):
         cls = self._obj.__class__
         admin = self._admin or gui_context.get_admin().get_related_admin( cls )
         dialog = ChangeObjectDialog( self._obj, admin )
-        dialog.exec_()
+        result = dialog.exec_()
+        if result == QtGui.QDialog.Rejected:
+            raise CancelRequest()
         return self._obj

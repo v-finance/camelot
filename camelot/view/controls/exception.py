@@ -40,7 +40,7 @@ def register_exception(logger, text, exception):
     
     :return: a tuple with exception information
     """
-    if isinstance( exception, (UserException,) ):
+    if isinstance( exception, UserException ):
         # this exception is not supposed to generate any logging
         # or inform the developer about something
         return (exception.title, 
