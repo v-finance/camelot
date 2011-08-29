@@ -40,16 +40,15 @@ import pkg_resources
 import logging
 
 logger = logging.getLogger('camelot.core.resources')
-
-
+        
 def resource_filename(module_name, filename):
     """Return the absolute path to a file in a directory
     using pkg_resources
     """
-    return pkg_resources.resource_filename(module_name, filename)
+    return pkg_resources.resource_filename(module_name, filename.encode('utf-8'))
 
 def resource_string(module_name, filename):
     """load a file as a string using pkg_resources"""
-    return pkg_resources.resource_string(module_name, filename)
+    return pkg_resources.resource_string(module_name, filename.encode('utf-8'))
 
 
