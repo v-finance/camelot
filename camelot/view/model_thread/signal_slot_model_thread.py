@@ -58,6 +58,13 @@ class Task(QtCore.QObject):
         try:
             result = self._request( *self._args )
             self.finished.emit( result )
+        #
+        # don't handle StopIteration as a normal exception, but return a new
+        # instance of StopIteration (in order to not keep alive a stack trace),
+        # and to signal to the caller that an iterator has ended
+        #
+        except StopIteration:
+            self.finished.emit( StopIteration() )
         except Exception, e:
             exc_info = register_exception(logger, 'exception caught in model thread while executing %s'%self._name, e)
             self.exception.emit( exc_info )

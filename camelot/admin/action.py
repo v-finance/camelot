@@ -94,7 +94,6 @@ class ActionRunner( QtCore.QEventLoop ):
         
     def _wrapped_generator_send( self, obj ):
         """Wrapper around the send call of the generator that handles exceptions"""
-        raise Exception('foo')
         try:
             return self._generator.send( obj )
         except CancelRequest:
@@ -109,7 +108,6 @@ class ActionRunner( QtCore.QEventLoop ):
         
     @QtCore.pyqtSlot( object )
     def exception( self, exception_info ):
-        print 'exceptin slot called'
         from camelot.view.controls.exception import model_thread_exception_message_box
         model_thread_exception_message_box( exception_info )
         self.exit()
@@ -151,12 +149,20 @@ class ActionRunner( QtCore.QEventLoop ):
                       self.next,
                       self.exception,
                       args = ( GuiException(), ) )
-        #
-        # Process the events before exiting, as there might be exceptions
-        # left in the signal slot queue
-        #
-        self.processEvents()
-        self.exit()
+        elif isinstance( yielded, (StopIteration,) ):
+             #
+             # Process the events before exiting, as there might be exceptions
+             # left in the signal slot queue
+             #
+            self.processEvents()
+            self.exit()
+        else:
+            post( self._wrapped_generator_next,
+                  self.next,
+                  self.exception, )
+
+
+        #self.exit()
     
 class ActionStep( object ):
 
