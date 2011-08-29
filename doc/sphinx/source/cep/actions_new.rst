@@ -313,17 +313,9 @@ with some additional methods::
     class Action( ActionStep ):
     
         name = 'action'
-        verbose_name = _('Action')
-        icon = Icon('tango/16x16/actions/document-print.png')
         tooltip = _('Click here to run this action')
         shortcut = _('Ctrl+P') 
         modes = []
-            
-        def get_verbose_name( self ):
-            return self.verbose_name
-            
-        def get_icon( self ):
-            return self.icon
 
         def get_tooltip( self ):
             return self.tooltip
