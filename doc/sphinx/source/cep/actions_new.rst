@@ -53,7 +53,7 @@ Summary
 In general, actions are defined by subclassing one of the standard Camelot
 actions  (:class:`camelot.admin.action.ApplicationAction`,
 :class:`camelot.admin.action.ListAction` or 
-:class:`camelot.admin.action.FromAction`)
+:class:`camelot.admin.action.FormAction`)
 that share the same behavior and class attributes ::
 
     from camelot.admin.action import ApplicationAction, PrintPreview
@@ -65,7 +65,7 @@ that share the same behavior and class attributes ::
         icon = Icon('tango/16x16/actions/document-print.png')
         tooltip = _('Print a report with all the movies')
         
-        def model_run( self, mode=None ):
+        def model_run( self, model_context ):
             yield PrintPreview( 'Hello World' )
             
 Each standard action has two methods, :meth:`gui_run` and 
@@ -106,16 +106,13 @@ will be blocked while the action in the GUI thread takes place, eg ::
 
 Will pop up a print preview dialog in the GUI.
 
-Action Steps
-------------
-
-Events that can be yielded to the GUI are of type 
+Events that can be yielded to the GUI should be of type 
 :class:`camelot.admin.action.ActionStep`.  Action steps are reusable parts of
-an action::
+an action:
 
 .. autoclass:: camelot.admin.action.ActionStep
 
-Possible Action Steps that can be yielded to the GUI are:
+Possible Action Steps that can be yielded to the GUI include:
 
   * :class:`camelot.view.action_steps.PrintPreview`
   * :class:`camelot.view.action_steps.OpenFile`
@@ -158,7 +155,7 @@ progres of the action::
 
 Should the user have pressed the :guilabel:`Cancel` button in the progress 
 dialog, the next yield of an UpdateProgress object will raise a 
-:class:`camelot.core.exeption.CancelRequest`.  
+:class:`camelot.core.exception.CancelRequest`.  
 
 In case an unexpected event occurs in the GUI, the :keyword:`yield` statement 
 will raise a :class:`camelot.core.exception.GuiException`.  This exception
@@ -176,12 +173,9 @@ The most important purpose of an action is to query or manipulate the model,
 all such things can be done in the :meth:`model_run` method, such as executing 
 queries, manipulating files, etc.
 
-inform the GUI of model manipulations
--------------------------------------
-
 Whenever a part of the model has been changed, it might be needed to inform
 the GUI about this, so that it can update itself, the easy way of doing so
-is by yielding an instance of :class:`camelot.admin.action.FlushSession` 
+is by yielding an instance of :class:`camelot.view.action_steps.FlushSession` 
 such as::
 
     from sqlalchemy.orm.session import object_session
@@ -206,11 +200,14 @@ raise exceptions
 When an action fails, a normal Python :keyword:`Exception` can be raised, which
 will pop-up an exception dialog to the user that displays a stack trace of the
 exception.  In case no stack trace should be shown to the user, a 
-:class:`camelot.core.exception.UserException` should be raised.
+:class:`camelot.core.exception.UserException` should be raised. This will popup
+a friendly dialog :
 
-When the :meth:`model_run` method raises a :class:`camelot.core.exception.CancelRequest`
-or a :class:`GeneratorExit` exception, these are ignored and nothing will be
-shown to the user.
+.. image:: /_static/controls/user_exception.png
+
+When the :meth:`model_run` method raises a :class:`camelot.core.exception.CancelRequest`,
+a :class:`GeneratorExit` or a :class:`StopIteration` exception, these are 
+ignored and nothing will be shown to the user.
 
 request information from the user
 ---------------------------------
@@ -233,15 +230,18 @@ first needs to be defined::
                                  'latest_releasedate':{'delegate':delegates.DateDelegate}, }
                                  
 Than a :class:`camelot.view.action_steps.ChangeObject` can be :keyword:`yield` to present
-the options to the user and get the filled in values back::
+the options to the user and get the filled in values back:
 
-    from camelot.view.action_steps import ChangeObject
-    
-    options = Options()
-    filled_in_options = yield ChangeObject( options )
+.. literalinclude:: ../../../../camelot/bin/meta.py
+   :start-after: begin change object
+   :end-before: end change object
                                  
-When the user presses :guilabel:`Cancel` button in the progress dialog or on the
-print preview dialog, the :keyword:`yield` statement will raise a 
+Will show a dialog to modify the object:
+
+..image:: /_static/actionsteps/change_object.png
+
+When the user presses :guilabel:`Cancel` button of the dialog, the 
+:keyword:`yield` statement will raise a 
 :class:`camelot.core.exception.CancelRequest`.
 
 Other ways of requesting information are :
@@ -261,16 +261,16 @@ States
 The widget that is used to trigger an action can be in different states.  The
 default supported states are :
 
-  - 'enabled' : this is the default state, where the user is able to trigger
+  - *enabled* : this is the default state, where the user is able to trigger
     the action
     
-  - 'disabled' : in this state the user is unable to trigger the action
+  - *disabled* : in this state the user is unable to trigger the action
   
-  - 'forbidden' : the user has no permission to trigger the action
+  - *forbidden* : the user has no permission to trigger the action
   
-  - 'hidden' : the action widget is not visible
+  - *hidden* : the action widget is not visible
   
-  - 'notification' : the action widget attracts the attention of the user, this
+  - *notification* : the action widget attracts the attention of the user, this
     implies it is 'enabled'
     
 Modes
