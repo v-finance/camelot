@@ -194,30 +194,30 @@ def setup_model():
     '''),
 ]
 
+class NewProjectOptions(object):
+    
+    def __init__(self):
+        for feature in features:
+            setattr( self, feature[0], feature[1] )           
+
+    class Admin( ObjectAdmin ):
+        form_display = [feature[0] for feature in features]
+        field_attributes = dict(
+            ( feature[0],{ 'editable':True,
+                           'delegate':feature[2],
+                           'tooltip':feature[3]   } ) for feature in features)
+            
 class CreateNewProject( ActionStep ):
     """Action to create a new project, based on a form with
     options the user fills in."""
-    
-    class Options(object):
-        
-        def __init__(self):
-            for feature in features:
-                setattr( self, feature[0], feature[1] )           
-
-        class Admin( ObjectAdmin ):
-            form_display = [feature[0] for feature in features]
-            field_attributes = dict(
-                ( feature[0],{ 'editable':True,
-                               'delegate':feature[2],
-                               'tooltip':feature[3]   } ) for feature in features)
             
     def model_run(self, context = None):
+        # begin change object
         from camelot.view import action_steps
-        options = CreateNewProject.Options()
+        options = NewProjectOptions()
         yield action_steps.ChangeObject( options )
-        print 'object changed'
+        # end change object
         self.start_project( options )
-        yield
         
     def start_project( self, options ):
         from jinja2 import Template

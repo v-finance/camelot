@@ -26,30 +26,38 @@ from PyQt4 import QtGui, QtCore
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext as _
+from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from camelot.view.art import Icon
 
 class ChangeObjectDialog( StandaloneWizardPage ):
     
     def __init__( self, 
                   obj, 
-                  admin, 
+                  admin,
+                  title =  _('Please complete'),
+                  subtitle = _('Complete the form and press the OK button'),
+                  icon = Icon('tango/22x22/categories/preferences-system.png'),
                   parent=None, 
                   flags=QtCore.Qt.WindowFlags(0) ):
         """A dialog to change an object.  This differs from a FormView in that
         it does not contains Actions, and has an OK button that is enabled when
         the object is valid.
+        
         :param obj: The object to change
         :param admin: The admin class used to create a form
+        
+        ..image:: /_static/actionsteps/change_object.png
         """
         from camelot.view.controls.formview import FormWidget
         from camelot.view.proxy.collection_proxy import CollectionProxy
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
         
         self.setWindowTitle( admin.get_verbose_name() )
-        #self.set_banner_logo_pixmap(art.Icon('tango/22x22/categories/preferences-system.png').getQPixmap())
-        self.set_banner_title( _('Please complete') )
-        self.set_banner_subtitle(_('Complete the form and press the OK button'))
+        self.set_banner_logo_pixmap( icon.getQPixmap() )
+        self.set_banner_title( unicode(title) )
+        self.set_banner_subtitle( unicode(subtitle) )
         self.banner_widget().setStyleSheet('background-color: white;')
         
         model = CollectionProxy(admin, lambda:[obj], admin.get_fields)
@@ -65,12 +73,12 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self._valid = False
         #self._validity_changed(0)
         
-        cancel_button = QtGui.QPushButton( _('Cancel') )
-        ok_button = QtGui.QPushButton( _('OK') )
+        cancel_button = QtGui.QPushButton( ugettext('Cancel') )
+        ok_button = QtGui.QPushButton( ugettext('OK') )
         layout = QtGui.QHBoxLayout()
         layout.setDirection( QtGui.QBoxLayout.RightToLeft )
-        layout.addWidget( cancel_button )
         layout.addWidget( ok_button )
+        layout.addWidget( cancel_button )
         layout.addStretch()
         self.buttons_widget().setLayout( layout )
         cancel_button.pressed.connect( self.reject )

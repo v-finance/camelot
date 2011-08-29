@@ -165,6 +165,12 @@ class ActionRunner( QtCore.QEventLoop ):
         #self.exit()
     
 class ActionStep( object ):
+    """A reusable part of an action.  Action step object can be yielded inside
+    the :meth:`model_run`.  When this happens, their :meth:`gui_run` method will
+    be called inside the *GUI thread*.  The :meth:`gui_run` can pop up a dialog
+    box or perform other GUI related tasks, and when finished return control
+    to the :meth:`model_run` method.
+    """
 
     verbose_name = _('Step')
     icon = Icon('tango/16x16/emblems/emblem-system.png')
