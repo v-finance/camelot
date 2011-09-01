@@ -195,5 +195,4 @@ latex_documents = [
 
 # If false, no module index is generated.
 #latex_use_modindex = True
- 
-autoclass_content = "both"
+

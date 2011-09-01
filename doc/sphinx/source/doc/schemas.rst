@@ -40,3 +40,38 @@ running, but very nice), you can even create database views and
 update those views as well, and migrate data to the next
 schema revision etc.
 
+A possible scenario is to create a :meth:`migrate_model` method.  This
+:meth:`migrate_model` needs to be called inside the :meth:`setup_model` of
+settings.py before anything else happens::
+
+    def controlled_schema(engine):
+        """Get or create a ControlledSchema for an engine"""
+        import settings
+        from migrate.versioning.schema import ControlledSchema
+        from migrate import exceptions
+        try:
+            schema = ControlledSchema.create(engine, 
+                                             settings.REPOSITORY, 
+                                             0)
+        except exceptions.DatabaseAlreadyControlledError:
+            schema = ControlledSchema(engine, settings.REPOSITORY)
+            logger.info('current database version : %s'%schema.version)
+        return schema
+    
+    def migrate_model():
+        import settings
+        migrate_engine = settings.ENGINE()
+        migrate_connection = migrate_engine.connect()
+            
+        schema = controlled_schema(migrate_engine)
+            
+        from migrate.versioning.repository import Repository
+        repository = Repository(settings.REPOSITORY)
+        logger.info('latest available version : %s'%str(repository.latest))
+        version = repository.latest        
+        schema.upgrade(version)
+        migrate_connection.close()
+
+Where settings.REPOSITORY is the directory of the sqlalchemy-migrate 
+repository.  For more source code, have a look at the source of 
+:module:`camelot.bin.camelot_manage`.
