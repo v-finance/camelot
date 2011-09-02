@@ -188,6 +188,9 @@ class NewViewAction(EntityAction):
     
     def get_description(self):
         return _('Create a new %s')%(self.admin.get_verbose_name())
+    
+    def get_verbose_name(self):
+        return unicode(self.verbose_name or _('New %s')%(self.admin.get_verbose_name()))
         
 class OpenFileApplicationAction( ApplicationActionFromModelFunction, AbstractOpenFileAction ):
     """Application action used to open a file in the prefered application of the user.
