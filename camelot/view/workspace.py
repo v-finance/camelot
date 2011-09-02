@@ -139,6 +139,9 @@ class DesktopBackground(QtGui.QWidget):
         for actionButton in self.findChildren(ActionButton):
             actionButton.setInteractive(interactive)
             
+    def refresh(self):
+        pass
+            
 class ActionButtonContainer(QtGui.QWidget):
     def __init__(self, actionButton, parent = None):
         super(ActionButtonContainer, self).__init__(parent)
@@ -654,6 +657,11 @@ class DesktopWorkspace(QtGui.QWidget):
             index = self._tab_widget.addTab(view, title)
         self._tab_widget.setCurrentIndex(index)
 
+    def refresh(self):
+        """Refresh all views on the desktop"""
+        for i in range( self._tab_widget.count() ):
+            self._tab_widget.widget(i).refresh()
+            
     def close_all_views(self):
         """
         Remove all views, except the 'Start' tab, from the workspace.
