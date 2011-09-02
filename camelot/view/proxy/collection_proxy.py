@@ -37,8 +37,8 @@ import itertools
 
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
-#import sip
 
+from camelot.core.utils import is_deleted
 from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
 from camelot.view.controls import delegates
@@ -425,7 +425,6 @@ position in the query.
         @param rows the new number of rows
         """
         self._rows = rows
-        #if not sip.isdeleted(self):
         self.layoutChanged.emit()
 
     def getItemDelegate( self ):
@@ -485,7 +484,6 @@ position in the query.
 
         # Only set the delegate manager when it is fully set up
         self.delegate_manager = delegate_manager
-        #if not sip.isdeleted( self ):
         self.item_delegate_changed_signal.emit()
         self.layoutChanged.emit()
 
@@ -811,7 +809,12 @@ position in the query.
         self.display_cache.add_data( row, obj, unicode_row_data )
         self.attributes_cache.add_data(row, obj, dynamic_field_attributes )
         locker.unlock()
-        self.row_changed_signal.emit( row )
+        #
+        # it might be that the CollectionProxy is deleted on the QT side of
+        # the application
+        #
+        if not is_deleted( self ):
+            self.row_changed_signal.emit( row )
 
     def _skip_row(self, row, obj):
         """:return: True if the object obj is already in the cache, but at a

@@ -32,8 +32,25 @@ logger = logging.getLogger('camelot.core.utils')
 
 if hasattr(QtCore, 'PYQT_VERSION_STR'):
     pyqt = True
+    
+    def is_deleted( qobj ):
+        """
+        :param qobj: a :class:`QtCore.QObject`
+        :return: :keyword:`True` if the qobj was deleted, :keyword:`False`
+            otherwise
+        """
+        import sip
+        return sip.isdeleted( qobj )
 else:
     pyqt = False
+    
+    def is_deleted( qobj ):
+        """
+        :param qobj: a :class:`QtCore.QObject`
+        :return: :keyword:`True` if the qobj was deleted, :keyword:`False`
+            otherwise
+        """
+        return False
 
 def create_constant_function(constant):
     return lambda:constant
