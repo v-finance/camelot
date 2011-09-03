@@ -22,6 +22,8 @@
 #
 #  ============================================================================
 
+import collections
+
 from camelot.model import metadata
 from elixir import entities
 from camelot.view.controls import delegates
@@ -352,8 +354,9 @@ class Party( Entity ):
 
     def __new__(cls, *args, **kwargs):
         party = super(Party, cls).__new__(cls, *args, **kwargs)
-        setattr(party, '_contact_mechanisms_email', None)
-        setattr(party, '_contact_mechanisms_phone', None)
+        # store the contact mechanisms as a temp variable before
+        # the party has been flushed to the db
+        setattr(party, '_contact_mechanisms', collections.defaultdict(lambda:None))
         return party
 
     is_synchronized( 'synchronized', lazy = True )
@@ -409,42 +412,40 @@ class Party( Entity ):
     # get and set a contact mechanism for the party
     #
     def _get_contact_mechanisms_email(self):
-        return self.email or self._contact_mechanisms_email
+        return self.email or self._contact_mechanisms['email']
 
     def _set_contact_mechanism_email(self, value):
         # todo : if no value, the existing value should be removed
         if not value or not value[1]:
             return
-        self._contact_mechanisms_email = value
-        for party_contact_mechanism in self.contact_mechanisms:
-            mechanism = party_contact_mechanism.contact_mechanism_mechanism
-            if mechanism and mechanism[0] == 'email':
-                party_contact_mechanism.contact_mechanism_mechanism = value
-                return
-        contact_mechanism = ContactMechanism( mechanism = value )
-        self.contact_mechanisms.append( PartyContactMechanism(contact_mechanism=contact_mechanism) )
+        self._contact_mechanisms['email'] = value
 
     def _get_contact_mechanisms_phone(self):
-        return self.phone or self._contact_mechanisms_phone
+        return self.phone or self._contact_mechanisms['phone']
 
     def _set_contact_mechanism_phone(self, value):
         # todo : if no value, the existing value should be removed
         if not value or not value[1]:
             return
-        self._contact_mechanisms_phone = value
-        for party_contact_mechanism in self.contact_mechanisms:
-            mechanism = party_contact_mechanism.contact_mechanism_mechanism
-            if mechanism and mechanism[0] == 'phone':
-                party_contact_mechanism.contact_mechanism_mechanism = value
-                return
-        contact_mechanism = ContactMechanism( mechanism = value )
-        self.contact_mechanisms.append( PartyContactMechanism(contact_mechanism=contact_mechanism) )
+        self._contact_mechanisms['phone'] = value
+        
+    def _get_contact_mechanisms_fax(self):
+        return self.fax or self._contact_mechanisms['fax']
 
+    def _set_contact_mechanism_fax(self, value):
+        # todo : if no value, the existing value should be removed
+        if not value or not value[1]:
+            return
+        self._contact_mechanisms['fax'] = value
+        
     contact_mechanisms_email = property(_get_contact_mechanisms_email,
                                         _set_contact_mechanism_email)
 
     contact_mechanisms_phone = property(_get_contact_mechanisms_phone,
                                         _set_contact_mechanism_phone)
+    
+    contact_mechanisms_fax = property(_get_contact_mechanisms_fax,
+                                      _set_contact_mechanism_fax)
 
     @ColumnProperty
     def full_name( self ):
@@ -491,6 +492,12 @@ class Party( Entity ):
                                                                  minimal_column_width = 20,
                                                                  from_string = lambda s:('phone', s),
                                                                  delegate = delegates.VirtualAddressDelegate ),
+                                contact_mechanisms_fax = dict( editable = True,
+                                                               name = _('Fax'),
+                                                               address_type = 'fax',
+                                                               minimal_column_width = 20,
+                                                               from_string = lambda s:('fax', s),
+                                                               delegate = delegates.VirtualAddressDelegate ),
                                 )
 
         def flush(self, party):
@@ -498,10 +505,32 @@ class Party( Entity ):
             session = Session.object_session( party )
             if session:
                 objects = [ party ]
+                #
+                # make sure the temporary contact mechanisms are added
+                # relational
+                #
+                for cm in party._contact_mechanisms.values():
+                    if not cm:
+                        break
+                    found = False
+                    for party_contact_mechanism in party.contact_mechanisms:
+                        mechanism = party_contact_mechanism.contact_mechanism_mechanism
+                        if mechanism and mechanism[0] == cm[0]:
+                            party_contact_mechanism.contact_mechanism_mechanism = cm
+                            found = True
+                            break
+                    if not found:
+                        contact_mechanism = ContactMechanism( mechanism = cm )
+                        party.contact_mechanisms.append( PartyContactMechanism(contact_mechanism=contact_mechanism) )
+                #
+                # then clear the temporary store to make sure they are not created
+                # a second time
+                #
+                party._contact_mechanisms.clear()
                 for party_contact_mechanism in party.contact_mechanisms:
                     objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
                 session.flush( objects )
-                party.expire( ['phone', 'email'] )
+                party.expire( ['phone', 'email', 'fax'] )
                 
 class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
@@ -610,14 +639,20 @@ class Person( Party ):
         verbose_name = _( 'Person' )
         verbose_name_plural = _( 'Persons' )
         list_display = ['first_name', 'last_name', 'contact_mechanisms_email', 'contact_mechanisms_phone']
-        form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [Form( [WidgetOnlyForm('note'), 'first_name', 'last_name', 'sex',] ),
+        form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [ Form( [WidgetOnlyForm('note'), 
+                                                                  'first_name', 
+                                                                  'last_name', 
+                                                                  'sex',
+                                                                  'contact_mechanisms_email',
+                                                                  'contact_mechanisms_phone',
+                                                                  'contact_mechanisms_fax'] ),
                                                           Form( ['picture', ] ),
                                                          ] ),
-                                                         'contact_mechanisms', 'comment', ], scrollbars = False ) ),
+                                                         'comment', ], scrollbars = False ) ),
                                 ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
-                                                        'passport_expiry_date', 'addresses', ], scrollbars = False ) ),
+                                                        'passport_expiry_date', 'addresses', 'contact_mechanisms',], scrollbars = False ) ),
                                 ( _('Work'), Form( ['employers', 'directed_organizations', 'shares'], scrollbars = False ) ),
-                                ( _('Category and Status'), Form( ['categories', 'status'] ) ),
+                                ( _('Category'), Form( ['categories',] ) ),
                                 ] )
         field_attributes = dict( Party.Admin.field_attributes )
         field_attributes['note'] = {'delegate':delegates.NoteDelegate}
