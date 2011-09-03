@@ -31,7 +31,7 @@ import os
 from camelot.core.conf import settings
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.admin.action import ActionStep
+from camelot.admin.action import ApplicationAction
 from camelot.view.controls import delegates
 
 from camelot.view.main import Application
@@ -66,6 +66,8 @@ def launch_meta_camelot():
     settings.append( MetaSettings() )
     new_project = CreateNewProject()
     new_project.gui_run( GuiContext( application_admin ) )
+    # keep app alive during running of app
+    return app
     
 class MetaCamelotApplication( Application ):
     """A Camelot application to build new Camelot
@@ -198,16 +200,17 @@ class NewProjectOptions(object):
     
     def __init__(self):
         for feature in features:
-            setattr( self, feature[0], feature[1] )           
+            setattr( self, feature[0], feature[1] )       
 
     class Admin( ObjectAdmin ):
         form_display = [feature[0] for feature in features]
         field_attributes = dict(
             ( feature[0],{ 'editable':True,
                            'delegate':feature[2],
+                           'nullable':False,
                            'tooltip':feature[3]   } ) for feature in features)
             
-class CreateNewProject( ActionStep ):
+class CreateNewProject( ApplicationAction ):
     """Action to create a new project, based on a form with
     options the user fills in."""
             

@@ -310,53 +310,7 @@ All action classes are based on the :class:`camelot.admin.action.Action`
 class.  An Action is in fact a special :class:`camelot.admin.action.ActionStep`,
 with some additional methods::
 
-    class Action( ActionStep ):
-    
-        name = 'action'
-        tooltip = _('Click here to run this action')
-        shortcut = _('Ctrl+P') 
-        modes = []
-
-        def get_tooltip( self ):
-            return self.tooltip
-            
-        def get_modes( self ):
-            return self.modes
-                    
-        def get_shortcut( self ):
-            return self.shortcut
-
-        def render( self, parent, gui_context ):
-            """
-            :param parent: the parent :class:`QtGui.QWidget`
-            :param gui_context: the context available in the *GUI thread*, a
-                subclass of :class:`camelot.action.GuiContext`
-            :return: a :class:`QtGui.QWidget` which when triggered
-                will execute the :meth:`gui_run` method.
-            """
-            
-        def gui_run( self, gui_context ):
-            """This method is called inside the GUI thread, by default it
-            executes the :meth:`model_run` in the Model thread.
-            :param gui_context: the context available in ghe *GUI thread*
-            """
-            pass
-            
-        def model_run( self, model_context ):
-            """This generator method is called inside the Model thread.
-            :param model_context: the context available in the *Model thread*
-            """
-            pass
-            
-        def get_state( self, model_context ):
-            """
-            This method is called inside the Model thread to verify if
-            the state of the action widget visible to the current user.
-            
-            :param model_context: the context available in the *Model thread*
-            :return: a :keyword:`str`
-            """
-            return 'enabled'
+.. autoclass:: camelot.admin.action.Action
     
 The :attr:`name` attribute specifies the name of the action as it will be stored
 in the permission and preferences system.
@@ -377,37 +331,7 @@ ApplicationAction
 
 The API of the :class:`camelot.admin.action.ApplicationAction`::
 
-    class ApplicationAction( AbstractAction ):
-    
-        def render( self, parent, gui_context ):
-            """
-            :param parent: the parent :class:`QtGui.QWidget`
-            :param workspace: the :class:`camelot.view.workspace.DesktopWorkspace`
-                that is active.
-            :return: a :class:`QtGui.QWidget` which when triggered
-                will execute the run method.
-            """
-            
-        def gui_run( self, widget, workspace, mode=None ):
-            """This method is called inside the GUI thread, by default it
-            executes the :meth:`model_run` in the Model thread.
-            :param widget: the rendered :class:`QtGui.QWidget` that triggered
-                the method call
-            :param mode: the name of the mode in which this action was triggered.
-            """
-            pass
-            
-        def model_run( self, mode=None ):
-            """This generator method is called inside the Model thread"""
-            pass
-            
-        def get_state( self ):
-            """This method is called inside the Model thread to verify if
-            the state of the action widget for the current user.
-            :return: a :keyword:`str`, such as 'enabled', 'disabled',
-            'forbidden'
-            """
-            return 'enabled'
+.. autoclass:: camelot.admin.action.ApplicationAction
             
 To enable Application Actions for a certain 
 :class:`camelot.admin.application_admin.ApplicationAdmin` either overwrite

@@ -49,6 +49,7 @@ class GuiContext( object ):
         """
         self._admin = admin
         self._workspace = workspace
+        self._progress_dialog = None
         
     def get_admin( self ):
         """
@@ -61,15 +62,36 @@ class GuiContext( object ):
     def get_workspace( self ):
         return self._workspace
     
+    def get_progress_dialog( self ):
+        """
+        :return: an instance of :class:`QtGui.QProgressDialog` 
+            or :keyword:`None'
+        """
+        return self._progress_dialog
+    
+    def set_progress_dialog( self, progress_dialog ):
+        """
+        :param progress_dialog:  an instance of :class:`QtGui.QProgressDialog` 
+            or :keyword:`None'
+        """
+        self._progress_dialog = progress_dialog
+    
+class ApplicationActionGuiContext( GuiContext ):
+    pass
+    
 class ActionRunner( QtCore.QEventLoop ):
     """Helper class for handling the signals and slots when an action
-    is running.
+    is running.  This class takes a generator and iterates it within the
+    model thread while taking care of Exceptions raised and ActionSteps
+    yielded by the generator.
+    
+    This is class is inteded for internal Camelot use only.
     """
     
     def __init__( self, generator_function, gui_context ):
         """
         :param generator_function: function to be called in the model thread,
-            that will return a generator
+            that will return the generator
         :param gui_context: the GUI context of the generator
         """
         super( ActionRunner, self ).__init__()
@@ -108,12 +130,14 @@ class ActionRunner( QtCore.QEventLoop ):
         
     @QtCore.pyqtSlot( object )
     def exception( self, exception_info ):
+        """Handle an exception raised by the generator"""
         from camelot.view.controls.exception import model_thread_exception_message_box
         model_thread_exception_message_box( exception_info )
         self.exit()
         
     @QtCore.pyqtSlot( object )
     def generator( self, generator ):
+        """Handle the creation of the generator"""
         self._generator = generator
         post( self._wrapped_generator_next, self.next, self.exception )
         
@@ -159,11 +183,8 @@ class ActionRunner( QtCore.QEventLoop ):
         else:
             post( self._wrapped_generator_next,
                   self.next,
-                  self.exception, )
+                  self.exception, )    
 
-
-        #self.exit()
-    
 class ActionStep( object ):
     """A reusable part of an action.  Action step object can be yielded inside
     the :meth:`model_run`.  When this happens, their :meth:`gui_run` method will
@@ -206,6 +227,73 @@ class ActionStep( object ):
             of this action available in the model_thread.  What is in the 
             context depends on how the action was called.
         """
-        print 1
         yield
-        print 2
+
+class Action( ActionStep ):
+
+    name = 'action'
+    tooltip = _('Click here to run this action')
+    shortcut = _('Ctrl+P') 
+    modes = []
+
+    def get_tooltip( self ):
+        return self.tooltip
+        
+    def get_modes( self ):
+        return self.modes
+                
+    def get_shortcut( self ):
+        return self.shortcut
+
+    def render( self, parent, gui_context ):
+        """
+        :param parent: the parent :class:`QtGui.QWidget`
+        :param gui_context: the context available in the *GUI thread*, a
+            subclass of :class:`camelot.action.GuiContext`
+        :return: a :class:`QtGui.QWidget` which when triggered
+            will execute the :meth:`gui_run` method.
+        """
+        
+    def gui_run( self, gui_context ):
+        """This method is called inside the GUI thread, by default it
+        executes the :meth:`model_run` in the Model thread.
+        :param gui_context: the context available in ghe *GUI thread*,
+            of type :class:`GuiContext`
+        """
+        super(Action, self).gui_run( gui_context )
+        
+    def get_state( self, model_context ):
+        """
+        This method is called inside the Model thread to verify if
+        the state of the action widget visible to the current user.
+        
+        :param model_context: the context available in the *Model thread*
+        :return: a :keyword:`str`
+        """
+        return 'enabled'
+    
+class ApplicationAction( Action ):
+
+    def render( self, parent, gui_context ):
+        """
+        :param parent: the parent :class:`QtGui.QWidget`
+        :param workspace: the :class:`camelot.view.workspace.DesktopWorkspace`
+            that is active.
+        :return: a :class:`QtGui.QWidget` which when triggered
+            will execute the run method.
+        """
+        
+    def gui_run( self, gui_context ):
+        """This method is called inside the GUI thread, by default it
+        pops up a progress dialog and executes the :meth:`model_run` in 
+        the Model thread, while updating the progress dialob
+
+        :param gui_context: the context available in ghe *GUI thread*
+          of type :class:`ApplicationActionGuiContext`
+        """
+        from camelot.view.controls.progress_dialog import ProgressDialog
+        progress_dialog = ProgressDialog( self.get_verbose_name() )
+        gui_context.set_progress_dialog( progress_dialog )
+        progress_dialog.show()
+        super(ApplicationAction, self).gui_run( gui_context )
+        progress_dialog.close()
