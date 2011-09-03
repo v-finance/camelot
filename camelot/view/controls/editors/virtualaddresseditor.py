@@ -30,6 +30,7 @@ from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor, set_background_color_palette
 from camelot.view.art import Icon
+from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 import camelot.types
 
 email_expression = re.compile('^\S+@\S+\.\S+$')
@@ -82,7 +83,7 @@ class VirtualAddressEditor(CustomEditor):
         if address_type:
             self.combo.setVisible(False)
         self.layout.addWidget(self.combo)
-        self.editor = QtGui.QLineEdit()
+        self.editor = DecoratedLineEdit( self )
         self.editor.setEnabled(editable)
         self.layout.addWidget(self.editor)
         self.setFocusProxy(self.editor)
@@ -164,16 +165,7 @@ class VirtualAddressEditor(CustomEditor):
     def checkValue(self, text):
         address_type = unicode( self.combo.currentText() )
         valid, _corrected = self._address_validator( address_type, unicode( text ) )
-        palette = self.editor.palette()
-        if valid:
-                palette.setColor(QtGui.QPalette.Active,
-                                 QtGui.QPalette.Base,
-                                 QtGui.QColor(255, 255, 255))
-        else:
-                palette.setColor(QtGui.QPalette.Active,
-                                 QtGui.QPalette.Base,
-                                 QtGui.QColor(255, 0, 0))
-        self.editor.setPalette(palette)
+        self.editor.set_valid( valid )
 
     def editorValueChanged(self, text):
         self.checkValue(text)
