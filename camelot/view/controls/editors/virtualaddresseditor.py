@@ -45,6 +45,8 @@ def default_address_validator( address_type, address ):
         indicating if the address is valid and a string with the corrected
         address.
     """
+    if not address:
+        return ( True, address )
     if address_type == 'email':
         return ( email_expression.match( address ), address )
     if address_type in ('phone', 'pager', 'fax', 'mobile'):
@@ -88,10 +90,12 @@ class VirtualAddressEditor(CustomEditor):
         nullIcon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
         self.label = QtGui.QToolButton()
         self.label.setIcon(nullIcon)
-        self.label.setAutoFillBackground(False)
         self.label.setAutoRaise(True)
         self.label.setEnabled(False)
         self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        self.label.setFocusPolicy(Qt.ClickFocus)
+        self.label.clicked.connect( self.mail_click )
+        self.label.hide()
 
         self.layout.addWidget(self.label)
         self.editor.editingFinished.connect(self.emit_editing_finished)
@@ -99,7 +103,6 @@ class VirtualAddressEditor(CustomEditor):
         self.combo.currentIndexChanged.connect(self.comboIndexChanged)
 
         self.setLayout(self.layout)
-        self.setAutoFillBackground(True)
         self.checkValue(self.editor.text())
 
     @QtCore.pyqtSlot()
@@ -128,17 +131,13 @@ class VirtualAddressEditor(CustomEditor):
             if str(self.combo.currentText()) == 'email':
                 icon = Icon('tango/16x16/apps/internet-mail.png').getQIcon()
                 #self.label.setFocusPolicy(Qt.StrongFocus)
-                self.label.setAutoRaise(True)
                 #self.label.setAutoFillBackground(True)
                 self.label.setIcon(icon)
-                self.label.setEnabled(self.editable)
-                self.label.clicked.connect(
-                    lambda:self.mailClick(self.editor.text())
-                )
+                self.label.setEnabled( self.editable )
+                self.label.show()
             else:
+                self.label.hide()
                 self.label.setIcon(icon)
-                #self.label.setAutoFillBackground(False)
-                self.label.setAutoRaise(True)
                 self.label.setEnabled(self.editable)
                 self.label.setToolButtonStyle(Qt.ToolButtonIconOnly)
 
@@ -179,9 +178,11 @@ class VirtualAddressEditor(CustomEditor):
     def editorValueChanged(self, text):
         self.checkValue(text)
 
-    def mailClick(self, adress):
+    @QtCore.pyqtSlot()
+    def mail_click(self):
+        address = self.editor.text()
         url = QtCore.QUrl()
-        url.setUrl('mailto:%s?subject=Subject'%str(adress))
+        url.setUrl( u'mailto:%s?subject=Subject'%unicode(address) )
         QtGui.QDesktopServices.openUrl(url)
 
     def emit_editing_finished(self):
@@ -189,7 +190,6 @@ class VirtualAddressEditor(CustomEditor):
         self.value.append(str(self.combo.currentText()))
         self.value.append(str(self.editor.text()))
         self.set_value(self.value)
-        self.label.setFocus()
         # emiting editingFinished without a value for the mechanism itself will lead to
         # integrity errors
         if self.value[1]:

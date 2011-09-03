@@ -28,8 +28,9 @@ from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
-from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.art import Icon
+from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from camelot.view.model_thread import post
 
 class ChangeObjectDialog( StandaloneWizardPage ):
     
@@ -67,14 +68,13 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         layout.addWidget( form_widget )
         validator.validity_changed_signal.connect( self._validity_changed )
         form_widget.set_model( model )
+        form_widget.setObjectName( 'form' )
         self.main_widget().setLayout(layout)
     
-        # do inital validation, so the validity changed signal is valid
-        self._valid = False
-        #self._validity_changed(0)
-        
         cancel_button = QtGui.QPushButton( ugettext('Cancel') )
         ok_button = QtGui.QPushButton( ugettext('OK') )
+        ok_button.setObjectName( 'ok' )
+        ok_button.setEnabled( False )
         layout = QtGui.QHBoxLayout()
         layout.setDirection( QtGui.QBoxLayout.RightToLeft )
         layout.addWidget( ok_button )
@@ -84,16 +84,25 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         cancel_button.pressed.connect( self.reject )
         ok_button.pressed.connect( self.accept )
         
+        # do inital validation, so the validity changed signal is valid
+        self._validity_changed( 0 )
+        
     @QtCore.pyqtSlot(int)
     def _validity_changed(self, row):
-        
+        form = self.findChild( QtGui.QWidget, 'form' )
+        if not form:
+            return
+        model = form.get_model()
+ 
         def is_valid():
-            return self._model.get_validator().isValid(0)
+            return model.get_validator().isValid(0)
         
         post(is_valid, self._change_complete)
         
     def _change_complete(self, complete):
-        self._complete = complete
+        ok_button = self.findChild( QtGui.QPushButton, 'ok' )
+        if ok_button:
+            ok_button.setEnabled( complete )
 
 class ChangeObject( ActionStep ):
     

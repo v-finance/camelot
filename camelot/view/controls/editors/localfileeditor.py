@@ -102,7 +102,7 @@ class LocalFileEditor(CustomEditor):
         return value
 
     def get_value(self):
-        return CustomEditor.get_value(self) or self.filename.text()
+        return CustomEditor.get_value(self) or unicode( self.filename.text() )
 
     def set_field_attributes( self, 
                               editable = True,

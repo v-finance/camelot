@@ -87,15 +87,18 @@ class ImageEditor(FileEditor, WideEditor):
         self.clear_button.setToolTip(unicode(_('delete image')))
         self.clear_button.setAutoRaise(True)
         self.clear_button.clicked.connect(self.clear_button_clicked)
+        self.clear_button.setFocusPolicy(Qt.ClickFocus)
         
         copy_button = QtGui.QToolButton()
         copy_button.setDefaultAction( ActionFactory.copy(self, self.copy_to_clipboard ) )
         copy_button.setAutoRaise(True)
+        copy_button.setFocusPolicy(Qt.ClickFocus)
 
         paste_button = QtGui.QToolButton()
         paste_button.setDefaultAction( ActionFactory.paste(self, self.paste_from_clipboard ) )
         paste_button.setAutoRaise(True)
         paste_button.setObjectName('paste')
+        paste_button.setFocusPolicy(Qt.ClickFocus)
         
         button_layout.addStretch()
         button_layout.addWidget(self.open_button)
