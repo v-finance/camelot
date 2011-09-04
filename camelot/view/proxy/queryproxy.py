@@ -45,6 +45,7 @@ class QueryTableProxy(CollectionProxy):
         logger.debug('initialize query table')
         self._query_getter = query_getter
         self._sort_decorator = None
+        self._mapper = admin.mapper
         #rows appended to the table which have not yet been flushed to the
         #database, and as such cannot be a result of the query
         self._appended_rows = []
@@ -76,7 +77,8 @@ class QueryTableProxy(CollectionProxy):
         """Remove those rows from appended rows that have been flushed"""
         flushed_rows = []
         for o in self._appended_rows:
-            if o.id:
+            primary_key = self._mapper.primary_key_from_instance(o)
+            if None not in primary_key:
                 flushed_rows.append(o)
         for o in flushed_rows:
             self._appended_rows.remove(o)
@@ -197,7 +199,7 @@ class QueryTableProxy(CollectionProxy):
         
     @gui_function
     def sort( self, column, order ):
-        """Overwrites the QAbstractItemModel.sort method
+        """Overwrites the :meth:`QAbstractItemModel.sort` method
         """
         post( functools.update_wrapper( functools.partial( self._set_sort_decorator, column, order ), self._set_sort_decorator ), 
               self._refresh_content )
@@ -205,7 +207,8 @@ class QueryTableProxy(CollectionProxy):
     def append(self, o):
         """Add an object to this collection, used when inserting a new
         row, overwrite this method for specific behaviour in subclasses"""
-        if not o.id:
+        primary_key = self._mapper.primary_key_from_instance(o)
+        if None in primary_key:
             self._appended_rows.append(o)
 
     def remove(self, o):

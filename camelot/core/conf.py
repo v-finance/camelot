@@ -14,6 +14,9 @@ from other sources.
 """
 
 import logging
+import os
+import sys
+
 LOGGER = logging.getLogger('camelot.core.conf')
 
 class LazyProxy(list):
@@ -55,3 +58,33 @@ class LazyProxy(list):
         self.append( mod )
 
 settings = LazyProxy()
+
+class SimpleSettings( object ):
+    """Settings that can be used for the creation of a simple Camelot
+    application.  Use these settings by appending them to the global settings
+    at application startup::
+    
+        from camelot.core.conf import settings, SimpleSettings
+        
+        settings.append( SimpleSettings('myapp') )
+    """
+
+    def __init__( self, app_name ):
+        """
+        :param app_name: the name of the application, this name will be used
+            to create a folder where the local data will be stored.
+        """        
+        if ('win' in sys.platform) and ('darwin' not in sys.platform):
+            import winpaths
+            self._local_folder = os.path.join(winpaths.get_local_appdata(), app_name )
+        else:
+            self._local_folder = os.path.join( os.path.expanduser('~'), u'.%s'%app_name )
+        if not os.path.exists( self._local_folder ):
+            os.makedirs( self._local_folder )
+            
+    def CAMELOT_MEDIA_ROOT(self):
+        return os.path.join( self._local_folder, 'media' )
+    
+    def ENGINE( self ):
+        from sqlalchemy import create_engine
+        return create_engine(u'sqlite:///%s/data.sqlite'%self._local_folder)
