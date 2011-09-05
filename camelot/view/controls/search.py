@@ -40,6 +40,17 @@ class SimpleSearchControl(AbstractSearchWidget):
         layout = QtGui.QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(3, 3, 3, 3)
+        
+        #
+        # The search timer reduced the number of search signals that are
+        # emitted, by waiting for the next keystroke before emitting the
+        # search signal
+        #
+        timer = QtCore.QTimer( self )
+        timer.setInterval( 300 )
+        timer.setSingleShot( True )
+        timer.setObjectName( 'timer' )
+        timer.timeout.connect( self.emit_search )
 
         # Search button
         self.search_button = QtGui.QToolButton()
@@ -56,7 +67,7 @@ class SimpleSearchControl(AbstractSearchWidget):
         self.search_input.set_background_text(_('Search...'))
         #self.search_input.setStyleSheet('QLineEdit{ border-radius: 0.25em;}')
         self.search_input.returnPressed.connect( self.emit_search )
-        self.search_input.textEdited.connect( self.emit_search )
+        self.search_input.textEdited.connect( self._start_search_timer )
         self.search_input.arrow_down_key_pressed.connect(self.on_arrow_down_key_pressed)
 
         self.setFocusProxy( self.search_input )
@@ -81,17 +92,31 @@ class SimpleSearchControl(AbstractSearchWidget):
         self.emit_search()
 
     @QtCore.pyqtSlot()
+    @QtCore.pyqtSlot(str)
+    def _start_search_timer(self, str=''):
+        timer = self.findChild( QtCore.QTimer, 'timer' )
+        if timer:
+            timer.stop()
+            timer.start()
+        
+    @QtCore.pyqtSlot()
     def emit_expand_search_options(self):
         self.expand_search_options_signal.emit()
 
     @QtCore.pyqtSlot()
     @QtCore.pyqtSlot(str)
     def emit_search(self, str=''):
+        timer = self.findChild( QtCore.QTimer, 'timer' )
+        if timer:
+            timer.stop()
         text = unicode(self.search_input.user_input())
         self.search_signal.emit( text )
 
     @QtCore.pyqtSlot()
     def emit_cancel(self):
+        timer = self.findChild( QtCore.QTimer, 'timer' )
+        if timer:
+            timer.stop()
         self.search_input.setText('')
         self.cancel_signal.emit()
 
