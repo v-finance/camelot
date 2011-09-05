@@ -20,6 +20,7 @@ class PrintMovieListAction( PrintHtmlListAction ):
         # use an EntityAdmin, and should use the ObjectAdmin            
         class Admin( ObjectAdmin ):
             form_display = ['only_selected']
+            form_size = (100, 100)
             # Since there is no introspection, the delegate should
             # be specified explicitely, and set to editable
             field_attributes = {'only_selected':{'delegate':BoolDelegate,
