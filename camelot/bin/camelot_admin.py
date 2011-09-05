@@ -221,11 +221,11 @@ def to_pyside(project):
     
 def startproject(module):
     import os
-    from camelot.bin.meta import CreateNewProject
+    from camelot.bin.meta import CreateNewProject, NewProjectOptions
     if os.path.exists(module):
         raise Exception('Directory %s already exists, cannot start a project in it'%module)
     
-    options = CreateNewProject.Options()
+    options = NewProjectOptions()
     options.module = module
     
     action = CreateNewProject()
