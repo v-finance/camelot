@@ -69,16 +69,19 @@ class SimpleSettings( object ):
         settings.append( SimpleSettings('myapp') )
     """
 
-    def __init__( self, app_name ):
+    def __init__( self, author, name ):
         """
-        :param app_name: the name of the application, this name will be used
-            to create a folder where the local data will be stored.
+        :param author: the name of the writer of the application
+        :param name: the name of the application
+        
+        these name will be used to create a folder where the local data will 
+        be stored.
         """        
         if ('win' in sys.platform) and ('darwin' not in sys.platform):
             import winpaths
-            self._local_folder = os.path.join(winpaths.get_local_appdata(), app_name )
+            self._local_folder = os.path.join(winpaths.get_local_appdata(), author, name )
         else:
-            self._local_folder = os.path.join( os.path.expanduser('~'), u'.%s'%app_name )
+            self._local_folder = os.path.join( os.path.expanduser('~'), u'.%s'%author, name )
         if not os.path.exists( self._local_folder ):
             os.makedirs( self._local_folder )
             

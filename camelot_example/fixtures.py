@@ -1,13 +1,18 @@
 import datetime
+import StringIO
+import os
 
 def load_movie_fixtures():
 
     from camelot.model.fixture import Fixture
     from camelot.model.authentication import Person
     from camelot_example.model import Movie, VisitorReport
-    from camelot.core.files.storage import StoredImage, Storage
+    from camelot.core.files.storage import Storage, StoredImage
+    from camelot.core.conf import settings
+    from camelot.core.resources import resource_string
 
-    storage = Storage(upload_to='covers')
+    storage = Storage(upload_to='covers',
+                      stored_file_implementation = StoredImage)
 
     movies = [
         [
@@ -238,20 +243,28 @@ def load_movie_fixtures():
             values = {'first_name':director_first_name,
                       'last_name':director_last_name}
         )
-        movie = Fixture.insertOrUpdateFixture(
-            Movie,
-            fixture_key = title,
-            values = {
-                'title': title,
-                'director':director,
-                'short_description':short_description,
-                'releasedate':releasedate,
-                'rating':rating,
-                'genre':genre,
-                'description':description,
-                'cover':StoredImage(storage, cover),
-            },
-        )
+        movie = Fixture.findFixture( Movie, title )
+        if not movie:
+            image = resource_string( 'camelot_example', os.path.join( 'media', 'covers', cover ) )
+            stream = StringIO.StringIO()
+            stream.write( image )
+            stream.seek( 0 )
+            prefix, suffix = os.path.splitext( cover )
+            stored_image = storage.checkin_stream( prefix, suffix, stream )
+            movie = Fixture.insertOrUpdateFixture(
+                Movie,
+                fixture_key = title,
+                values = {
+                    'title': title,
+                    'director':director,
+                    'short_description':short_description,
+                    'releasedate':releasedate,
+                    'rating':rating,
+                    'genre':genre,
+                    'description':description,
+                    'cover':stored_image,
+                },
+            )
         rep = visits.get(title, None)
         if rep:
             for city, visitors, date in rep:

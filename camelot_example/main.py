@@ -37,7 +37,7 @@ class ExampleSettings( SimpleSettings ):
         from camelot_example.view import setup_views
         setup_views()
 
-settings.append( ExampleSettings('videostore') )
+settings.append( ExampleSettings('camelot', 'videostore') )
 
 def main():
     from camelot.view.main import main
