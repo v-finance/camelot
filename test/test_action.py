@@ -18,5 +18,9 @@ class ActionStepsCase(ModelThreadTestCase):
         from camelot.bin.meta import NewProjectOptions
         from camelot.view.action_steps.change_object import ChangeObjectDialog
         admin = NewProjectOptions.Admin( self.app_admin, NewProjectOptions )
-        dialog = ChangeObjectDialog( NewProjectOptions(), admin )
+        options = NewProjectOptions()
+        options.name = 'Videostore'
+        options.module = 'videostore'
+        options.domain = 'example.com'
+        dialog = ChangeObjectDialog( options, admin )
         self.grab_widget( dialog )

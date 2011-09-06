@@ -105,7 +105,7 @@ class SignalReceiver(QtCore.QObject):
     
     @QtCore.pyqtSlot(object)
     def my_slot(self, obj):
-        print obj
+        print self.sender()
 
 class GarbageCollectionCase( unittest.TestCase ):
     
@@ -191,7 +191,7 @@ class SignalSlotCase( unittest.TestCase ):
         import random
         import time
         receiver = SignalReceiver()
-        threads = []
+        #threads = []
         for i in range(1000):
             
 
@@ -205,23 +205,22 @@ class SignalSlotCase( unittest.TestCase ):
                     self.emitter.my_signal[object].connect( receiver.my_slot, QtCore.Qt.QueuedConnection )
                     
                 def run(self): 
-                    self.emitter.start_emitting( 10 )
+                    self.emitter.start_emitting( 1 )
                     #time.sleep( 0.01 / random.randint(1, 100) )
-                    #for i in range(  ):
-                    #    pass
+                    for i in range( random.randint(1000,100000) ):
+                        pass
                     self.emitter = None
                     
             thread = EmittingThread()
             thread.connect( receiver )
             thread.start()
-            
             self.app.processEvents()
-            threads.append( thread )
-            #thread.wait()
+            #3threads.append( thread )
+            thread.wait()
             #del thread
             
-        for thread in threads:
-            thread.wait()
+        #for thread in threads:
+        #    thread.wait()
             
             
         

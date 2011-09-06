@@ -9,33 +9,38 @@
 
 In this tutorial we will create a fully functional movie database application
 with Camelot. We assume Camelot is properly :ref:`installed <doc-install>`.
-An all in one installer for Windows is available through the
-`shop <http://www.python-camelot.com/shop.html>`_.
+An all in one installer for Windows is available as an SDK to develop Camelot
+applications `(Python SDK) <http://www.conceptive.be/python-sdk.html>`_.
 
 Starting a New Project
 ======================
 
-We begin with the creation of a new project. Typing the following command in
-your favorite command prompt (or shell) creates one::
+We begin with the creation of a new project. Open your favourite command prompt
+(or shell) and go to the directory in which the new project should be created.
+Typing the following command::
 
-  python PTC\camelot\bin\camelot_admin.py startproject videostore
+  python -m camelot.bin.camelot_admin
 
-Under linux, you may have to adjust the folder separator. This tutorial has
-been written under the Windows XP operating system. The pictures also reflect
-that operating system.
+A dialog appears where the basic information of the application can be
+filled in.
 
-`PTC` is the path to Camelot main directory. The folder :file:`videostore`
-should appear in your the directory you are working in. We will be working the
-Python modules created and put inside this directory.
+.. image:: /_static/actionsteps/change_object.png
+
+Press `OK` to generate the source code of the project.
+
+The folder :file:`videostore` should appear in your the directory you are 
+working in. We will be working the Python modules created and put inside this 
+directory.
 
 Main Window and Views
 =====================
 
-:option:`camelot_admin.py` created some modules for us. Let's focus on the
+:option:`camelot_admin` created some modules for us. Let's focus on the
 one called :file:`main.py` which contains the entry point of your Camelot
 application. If you launch it::
 
-  python videostore\main.py
+  set PYTHONPATH=.
+  python main.py
 
 your `PyQt <http://www.riverbankcomputing.co.uk/software/pyqt/intro>`_
 :abbr:`Graphical User Interface <GUI>` should look like the one we show in the

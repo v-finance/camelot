@@ -225,7 +225,8 @@ class CreateNewProject( ApplicationAction ):
     def start_project( self, options ):
         from jinja2 import Template
         context = {'options':options}
-        os.makedirs( os.path.join( options.source, options.module ) )
+        if not os.path.exists( os.path.join( options.source, options.module ) ):
+            os.makedirs( os.path.join( options.source, options.module ) )
         for filename_template, code_template in templates:
             filename = Template( filename_template ).render( context )
             code = Template( code_template ).render( context )            

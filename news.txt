@@ -1,6 +1,14 @@
 Trunk
 -----
 
+ * The settings mechanism becomes plugable
+ 
+ * Print previeuw does pdf export when no printer is available
+ 
+ * Wizard to create a new project
+ 
+   .. image:: /_static/actionsteps/change_object.png
+   
  * API documentation integrated with sphinx
 
  * :class:`camelot.core.exception.UserException`, a subclass of Exception that
@@ -8,7 +16,17 @@ Trunk
 
    .. image:: /_static/controls/user_exception.png
 
- * reduced memory usage
+ * Reduced memory usage
+ 
+ * Experimental PySide support
+ 
+ * Table views are sorted by primary key to avoid row flicker
+ 
+ * German, French and Dutch translations
+ 
+ * Generation of .po files integrated with setuptools
+ 
+ * Fixes of VirtualAddress editor
 
 Release 11.05.13
 ----------------

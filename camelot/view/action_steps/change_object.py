@@ -49,7 +49,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         :param obj: The object to change
         :param admin: The admin class used to create a form
         
-        ..image:: /_static/actionsteps/change_object.png
+        .. image:: /_static/actionsteps/change_object.png
         """
         from camelot.view.controls.formview import FormWidget
         from camelot.view.proxy.collection_proxy import CollectionProxy
