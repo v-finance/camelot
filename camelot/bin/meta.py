@@ -147,10 +147,13 @@ import logging
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger('main')
 
-if __name__ == '__main__':
+def start_application():
     from camelot.view.main import main
     from {{options.module}}.application_admin import MyApplicationAdmin
     main(MyApplicationAdmin())
+
+if __name__ == '__main__':
+    start_application()
     '''),
     
     ('{{options.module}}/model.py', '''
@@ -193,6 +196,36 @@ def setup_model():
     setup_all(create_tables=True)
     from camelot.model.authentication import updateLastLogin
     updateLastLogin()
+    '''),
+    ('setup.py', '''
+
+import datetime
+
+from setuptools import setup, find_packages
+
+setup(
+    name = '{{options.name}}',
+    version = '1.0',
+    author = '{{options.author}}',
+    url = '{{options.application_url}}',
+    include_package_data = True,
+    packages = find_packages(),
+    py_modules = ['settings', 'main'],
+    entry_points = {'gui_scripts':[
+                     'main = main:start_application',
+                    ],},
+    options = {
+        'bdist_cloud':{'revision':'0',
+                       'branch':'trunk',
+                       'update_before_launch':False,
+                       'default_entry_point':('gui_scripts','main'),
+                       'changes':[],
+                       'timestamp':datetime.datetime.now(),
+                       },
+    }, 
+
+  )
+
     '''),
 ]
 
