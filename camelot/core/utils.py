@@ -30,28 +30,31 @@ from PyQt4 import QtCore
 import logging
 logger = logging.getLogger('camelot.core.utils')
 
+def is_deleted_pyqt( qobj ):
+    """
+    :param qobj: a :class:`QtCore.QObject`
+    :return: :keyword:`True` if the qobj was deleted, :keyword:`False`
+        otherwise
+    """
+    import sip
+    return sip.isdeleted( qobj )
+
+
+def is_deleted_pyside( qobj ):
+    """
+    :param qobj: a :class:`QtCore.QObject`
+    :return: :keyword:`True` if the qobj was deleted, :keyword:`False`
+        otherwise
+    """
+    return False
+
 if hasattr(QtCore, 'PYQT_VERSION_STR'):
     pyqt = True
-    
-    def is_deleted( qobj ):
-        """
-        :param qobj: a :class:`QtCore.QObject`
-        :return: :keyword:`True` if the qobj was deleted, :keyword:`False`
-            otherwise
-        """
-        import sip
-        return sip.isdeleted( qobj )
+    is_deleted = is_deleted_pyqt 
 else:
     pyqt = False
+    is_deleted = is_deleted_pyside
     
-    def is_deleted( qobj ):
-        """
-        :param qobj: a :class:`QtCore.QObject`
-        :return: :keyword:`True` if the qobj was deleted, :keyword:`False`
-            otherwise
-        """
-        return False
-
 def create_constant_function(constant):
     return lambda:constant
 
