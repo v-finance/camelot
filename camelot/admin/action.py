@@ -78,7 +78,7 @@ class GuiContext( object ):
     
 class ApplicationActionGuiContext( GuiContext ):
     pass
-    
+        
 class ActionRunner( QtCore.QEventLoop ):
     """Helper class for handling the signals and slots when an action
     is running.  This class takes a generator and iterates it within the
@@ -87,6 +87,8 @@ class ActionRunner( QtCore.QEventLoop ):
     
     This is class is inteded for internal Camelot use only.
     """
+    
+    non_blocking_action_step_signal = QtCore.pyqtSignal(object)
     
     def __init__( self, generator_function, gui_context ):
         """
@@ -98,35 +100,34 @@ class ActionRunner( QtCore.QEventLoop ):
         self._generator_function = generator_function
         self._generator = None
         self._gui_context = gui_context
-        post( self._wrapped_generator_function, self.generator, self.exception )
+        self.non_blocking_action_step_signal.connect( self.non_blocking_action_step )
+        post( self._generator_function, self.generator, self.exception )
+    
+    def _iterate_until_blocking( self, generator_method, *args ):
+        """Helper calling for generator methods.  The decorated method iterates
+        the generator until the generator yields an :class:`ActionStep` object that
+        is blocking.  If a non blocking :class:`ActionStep` object is yielded, then
+        send it to the GUI thread for execution through the signal slot mechanism.
         
-    def _wrapped_generator_function( self ):
-        """Wrapper around the generator_function that handles exceptions"""
+        :param generator_method: the method of the generator to be called
+        :param *args: the arguments to use when calling the generator method.
+        """
+        result = None
         try:
-            return self._generator_function()
+            result = generator_method( *args )
         except CancelRequest:
-            return None
+            pass
+        while True:
+            if isinstance( result, (ActionStep,)):
+                if result.blocking:
+                    return result
+                else:
+                    self.non_blocking_action_step_signal.emit( result )
+            result = self._generator.next()
 
-    def _wrapped_generator_next( self ):
-        """Wrapper around the next call of the generator that handles exceptions"""
-        try:
-            return self._generator.next()
-        except CancelRequest:
-            return None
-        
-    def _wrapped_generator_send( self, obj ):
-        """Wrapper around the send call of the generator that handles exceptions"""
-        try:
-            return self._generator.send( obj )
-        except CancelRequest:
-            return None
-        
-    def _wrapped_generator_throw( self, exc ):
-        """Wrapper around the throw call of the generator that handles exceptions"""
-        try:
-            return self._generator.throw( exc )
-        except CancelRequest:
-            return None
+    @QtCore.pyqtSlot( object )
+    def non_blocking_action_step( self, action_step ):
+        action_step.gui_run( self._gui_context )
         
     @QtCore.pyqtSlot( object )
     def exception( self, exception_info ):
@@ -139,7 +140,10 @@ class ActionRunner( QtCore.QEventLoop ):
     def generator( self, generator ):
         """Handle the creation of the generator"""
         self._generator = generator
-        post( self._wrapped_generator_next, self.next, self.exception )
+        post( self._iterate_until_blocking, 
+              self.next, 
+              self.exception,
+              args = ( self._generator.next, ) )
         
     @QtCore.pyqtSlot( object )
     def next( self, yielded ):
@@ -151,15 +155,15 @@ class ActionRunner( QtCore.QEventLoop ):
         if isinstance( yielded, (ActionStep,) ):
             try:
                 to_send = yielded.gui_run( self._gui_context )
-                post( self._wrapped_generator_send, 
+                post( self._iterate_until_blocking, 
                       self.next, 
                       self.exception, 
-                      args = (to_send,) )
+                      args = ( self._generator.send, to_send,) )
             except CancelRequest, exc:
-                post( self._wrapped_generator_throw,
+                post( self._iterate_until_blocking,
                       self.next,
                       self.exception,
-                      args = (exc,) )
+                      args = ( self._generator.throw, exc,) )
             except Exception, exc:
                 LOGGER.error( 'gui exception while executing action', 
                               exc_info=exc)
@@ -169,10 +173,10 @@ class ActionRunner( QtCore.QEventLoop ):
                 # the very same exception, because no references from the GUI
                 # should be past to the model.
                 #
-                post( self._wrapped_generator_throw,
+                post( self._iteratore_until_blocking,
                       self.next,
                       self.exception,
-                      args = ( GuiException(), ) )
+                      args = ( self._generator.throw, GuiException(), ) )
         elif isinstance( yielded, (StopIteration,) ):
              #
              # Process the events before exiting, as there might be exceptions
@@ -181,21 +185,31 @@ class ActionRunner( QtCore.QEventLoop ):
             self.processEvents()
             self.exit()
         else:
-            post( self._wrapped_generator_next,
-                  self.next,
-                  self.exception, )    
+            print yielded
+            raise Exception( 'this should not happen' )
 
 class ActionStep( object ):
     """A reusable part of an action.  Action step object can be yielded inside
     the :meth:`model_run`.  When this happens, their :meth:`gui_run` method will
     be called inside the *GUI thread*.  The :meth:`gui_run` can pop up a dialog
-    box or perform other GUI related tasks, and when finished return control
-    to the :meth:`model_run` method.
+    box or perform other GUI related tasks.
+    
+    When the ActionStep is blocking, it will return control after the 
+    :meth:`gui_run` is finished, and the return value of :meth:`gui_run` will
+    be the result of the :keyword:`yield` statement.
+    
+    When the ActionStep is not blocking, the :keyword:`yield` statement will
+    return immediately and the :meth:`model_run` will not be blocked.
+    
+    .. attribute:: blocking
+        a :keyword:`boolean` indicating if the ActionStep is blocking, defaults
+        to :keyword:`True`
     """
 
     verbose_name = _('Step')
     icon = Icon('tango/16x16/emblems/emblem-system.png')
-        
+    blocking = True
+
     def get_verbose_name( self ):
         return self.verbose_name
         
@@ -282,6 +296,7 @@ class ApplicationAction( Action ):
         :return: a :class:`QtGui.QWidget` which when triggered
             will execute the run method.
         """
+        pass
         
     def gui_run( self, gui_context ):
         """This method is called inside the GUI thread, by default it

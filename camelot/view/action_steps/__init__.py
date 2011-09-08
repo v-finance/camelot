@@ -28,7 +28,9 @@ intended for production use
 """
 
 from change_object import ChangeObject
+from update_progress import UpdateProgress
 
 __all__ = [
     ChangeObject.__name__,
+    UpdateProgress.__name__,
     ]

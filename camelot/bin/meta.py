@@ -29,6 +29,7 @@ could be the start of MetaCamelot
 import os
 
 from camelot.core.conf import settings
+from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.action import ApplicationAction
@@ -236,6 +237,7 @@ class NewProjectOptions(object):
             setattr( self, feature[0], feature[1] )       
 
     class Admin( ObjectAdmin ):
+        verbose_name = _('New project')
         form_display = [feature[0] for feature in features]
         field_attributes = dict(
             ( feature[0],{ 'editable':True,
@@ -251,8 +253,10 @@ class CreateNewProject( ApplicationAction ):
         # begin change object
         from camelot.view import action_steps
         options = NewProjectOptions()
+        yield action_steps.UpdateProgress( text = 'Request information' )
         yield action_steps.ChangeObject( options )
         # end change object
+        yield action_steps.UpdateProgress( text = 'Creating new project' )
         self.start_project( options )
         
     def start_project( self, options ):
