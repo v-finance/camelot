@@ -43,6 +43,7 @@ from camelot.view.controls.editors import ChoicesEditor, TextLineEditor, Languag
 from camelot.view.controls.standalone_wizard_page import HSeparator, StandaloneWizardPage
 from camelot.view.controls.combobox_input_dialog import ComboBoxInputDialog
 
+from camelot.core.exception import UserException
 from camelot.core.utils import ugettext as _
 from camelot.view.model_thread.signal_slot_model_thread import SignalSlotModelThread
 from camelot.view.model_thread import gui_function
@@ -376,7 +377,9 @@ allow all languages
             self._connection_valid = True
         except Exception, e:
             self._connection_valid = False
-            raise Exception('Could not connect to database, please check host and port. Additional info: %s', e)
+            raise UserException( _('Could not connect to database, please check host and port'),
+                                 resolution = _('Verify driver, host and port or contact your system administrator'),
+                                 detail = unicode(e) )
 
     def toggle_ok_button(self, enabled):
         self.ok_button.setEnabled(enabled)
