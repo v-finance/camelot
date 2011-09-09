@@ -866,6 +866,13 @@ be specified using the verbose_name attribute.
         pass
 
     @model_function
+    def is_deleted(self, _obj):
+        """
+        :return: True if the object has been deleted from the persistent
+            state, False otherwise"""
+        return False
+    
+    @model_function
     def is_persistent(self, _obj):
         """:return: True if the object has a persisted state, False otherwise"""
         return False

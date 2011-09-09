@@ -138,6 +138,7 @@ class SignalHandler(QtCore.QObject):
     def sendEntityDelete(self, sender, entity, scope='local'):
         """Call this method to inform the whole application an entity is 
         about to be deleted"""
+        self.entity_delete_signal.emit( sender, entity )
         if self.connection and scope == 'remote':
             self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.delete'%entity.__class__.__name__)
             
@@ -145,6 +146,7 @@ class SignalHandler(QtCore.QObject):
     def sendEntityCreate(self, sender, entity, scope='local'):
         """Call this method to inform the whole application an entity 
         was created"""
+        self.entity_create_signal.emit( sender, entity )
         if self.connection and scope == 'remote':
             self.connection.send(str([entity.id]), destination='/topic/Camelot.Entity.%s.create'%entity.__class__.__name__)
 

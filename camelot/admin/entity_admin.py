@@ -373,6 +373,10 @@ It has additional class attributes that customise its behaviour.
             the user to set the field to None
         """
         from sqlalchemy.schema import ColumnDefault
+        
+        if self.is_deleted( entity_instance ):
+            return False
+
         for field, attributes in self.get_fields():
             has_default = False
             try:
@@ -588,7 +592,8 @@ It has additional class attributes that customise its behaviour.
         from sqlalchemy.orm.session import Session
         session = Session.object_session( entity_instance )
         if session:
-            session.refresh( entity_instance )
+            if not self.is_deleted( entity_instance ):
+                session.refresh( entity_instance )
        
     @model_function
     def is_persistent(self, obj):
@@ -600,6 +605,17 @@ It has additional class attributes that customise its behaviour.
                 return False
             if obj in session.deleted:
                 return False
+            return True
+        return False
+    
+    @model_function
+    def is_deleted(self, obj):
+        """
+        :return: True if the object has been deleted from the persistent
+            state, False otherwise"""
+        from sqlalchemy.orm.attributes import instance_state
+        state = instance_state( obj )
+        if state != None and state.deleted:
             return True
         return False
     

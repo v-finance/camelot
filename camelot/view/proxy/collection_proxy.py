@@ -408,16 +408,21 @@ position in the query.
         """Handles the entity signal, indicating that the model is out of
         date"""
         self.logger.debug( 'received entity delete signal' )
-        if sender != self:
-            self.refresh()
+        #
+        # simply removing the entity from the collection might have
+        # undesirable effects.  eg when a form is pointing to this entity, 
+        # so instead update the entity
+        #
+        self.handle_entity_update( sender, entity )
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_create( self, sender, entity ):
         """Handles the entity signal, indicating that the model is out of
         date"""
         self.logger.debug( 'received entity create signal' )
-        if sender != self:
-            self.refresh()
+        # @todo : decide what to do when a new entity has been created,
+        #         probably do nothing
+        return
 
     @QtCore.pyqtSlot(int)
     def setRowCount( self, rows ):
@@ -665,6 +670,12 @@ position in the query.
                 except KeyError:
                     pass
                 return
+            
+            #
+            # the object might have been deleted while an editor was open
+            # 
+            if self.admin.is_deleted( o ):
+                return
 
             old_value = getattr( o, attribute )
             #
@@ -799,11 +810,16 @@ position in the query.
         :param row: the row in the cache into which to add data
         :param obj: the object from which to strip the data
         """
-        row_data = strip_data_from_object( obj, columns )
-
-        dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
-        static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
-        unicode_row_data = stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes )
+        if not self.admin.is_deleted( obj ):
+            row_data = strip_data_from_object( obj, columns )
+            dynamic_field_attributes = list(self.admin.get_dynamic_field_attributes( obj, (c[0] for c in columns)))
+            static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
+            unicode_row_data = stripped_data_to_unicode( row_data, obj, static_field_attributes, dynamic_field_attributes )
+        else:
+            row_data = [None] * len(columns)
+            dynamic_field_attributes =  [{'editable':False}] * len(columns)
+            static_field_attributes = self.admin.get_static_field_attributes( (c[0] for c in columns) )
+            unicode_row_data = [u''] * len(columns)
         locker = QtCore.QMutexLocker( self._mutex )
         self.edit_cache.add_data( row, obj, row_data )
         self.display_cache.add_data( row, obj, unicode_row_data )

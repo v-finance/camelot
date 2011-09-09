@@ -32,7 +32,14 @@ class UserException(Exception):
     Raise this exception to inform the user he did something wrong, without
     showing a stack trace or other internals.  Raising this exception won't
     log stack traces either, as the occurance of this exception is considered
-    a non-event for the developer.
+    a non-event for the developer::
+    
+        from camelot.core.exception import UserException
+        from camelot.core.utils import ugettext
+        
+        if not dvd.empty:
+            raise UserException( ugettext('Could not burn movie to non empty DVD'),
+                                 resolution = ugettext('Insert an empty DVD and retry') )
 
     Will popup a gentle dialog for the user :
 
