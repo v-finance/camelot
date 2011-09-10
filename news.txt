@@ -1,6 +1,13 @@
-Trunk
------
+Release 11.09.10
+----------------
 
+ * Refresh reexecutes queries in the table view
+ 
+ * Deleted entities are grayed out in the GUI if they are deleted when
+   visible
+   
+ * Add setup.py to new projects for easy packaging
+ 
  * The settings mechanism becomes plugable
  
  * Print previeuw does pdf export when no printer is available
@@ -27,6 +34,9 @@ Trunk
  * Generation of .po files integrated with setuptools
  
  * Fixes of VirtualAddress editor
+ 
+ * example renamed to camelot_example to resolve naming conflicts with other 
+   projects
 
 Release 11.05.13
 ----------------
