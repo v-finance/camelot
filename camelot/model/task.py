@@ -349,6 +349,7 @@ TaskStatusType.Admin.delete_mode = 'on_confirm'
 
 class TaskAdmin( EntityAdmin ):
     verbose_name = _('Task')
+    verbose_name_plural = _('Tasks')
     list_display = ['creation_date', 'due_date', 'description', 'described_by', 'current_status_sql', 'role_1', 'role_2', 'documents_icon']
     list_filter  = [ComboBoxFilter('described_by.description'), 
                     ComboBoxFilter('current_status_sql'), 
@@ -381,7 +382,7 @@ class TaskAdmin( EntityAdmin ):
             name = TaskRoleType.query.session.scalar( name_query )
             field_attributes['name'] = name or field_attributes['name']
         return field_attributes
-    """
+
     def get_form_actions(self, obj):
         form_actions = EntityAdmin.get_form_actions(self, obj)
         status_type_class = get_status_type_class( 'Task' )
@@ -401,14 +402,13 @@ class TaskAdmin( EntityAdmin ):
             if status_type != current_status:
                 form_actions.append( status_change_action( status_type ) )
         return form_actions
-  """
         
     def flush(self, obj):
         """Set the status of the agreement to draft if it has no status yet"""
-        if not len(obj.status):
-            obj.status.append(self.get_field_attributes('status')['target'](status_from_date=datetime.date.today(),
-                                                                            status_thru_date=end_of_times(),
-                                                                            classified_by=TaskStatusType.query.first()))
+        #if not len(obj.status):
+            #obj.status.append(self.get_field_attributes('status')['target'](status_from_date=datetime.date.today(),
+                                                                            #status_thru_date=end_of_times(),
+                                                                            #classified_by=TaskStatusType.query.order_by(TaskStatusType.).first()))
         EntityAdmin.flush(self, obj)
   
 Task.Admin = TaskAdmin                      

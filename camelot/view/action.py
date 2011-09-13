@@ -92,7 +92,7 @@ class ActionFactory(object):
             parent=parent,
             shortcut=QtGui.QKeySequence.Copy,
             actionicon=Icon('tango/16x16/actions/edit-copy.png'),
-            tip=_('Copy to clipboard')
+            tip=_('Duplicate')
         )
         default.update(kwargs)
         return cls.create_action(**default)

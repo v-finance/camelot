@@ -149,7 +149,6 @@ topleftCellStyle.pattern = pat1
 toprightCellStyle.pattern = pat1
 
 def open_data_with_excel(title, headerList, dataList):
-    import sys
     import tempfile
     _xls_fd, xls_fn = tempfile.mkstemp(suffix='.xls')
     write_data_to_excel(xls_fn, title, headerList, dataList)
