@@ -62,7 +62,7 @@ class UpdateProgress( ActionStep ):
         
         :param gui_context: a :class:`camelot.admin.action.GuiContext` instance
         """
-        progress_dialog = gui_context.get_progress_dialog()
+        progress_dialog = gui_context.progress_dialog
         if progress_dialog:
             if progress_dialog.wasCanceled():
                 progress_dialog.reset()

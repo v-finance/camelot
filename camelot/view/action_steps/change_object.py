@@ -119,7 +119,7 @@ class ChangeObject( ActionStep ):
 
     def gui_run( self, gui_context ):
         cls = self._obj.__class__
-        admin = self._admin or gui_context.get_admin().get_related_admin( cls )
+        admin = self._admin or gui_context.admin.get_related_admin( cls )
         dialog = ChangeObjectDialog( self._obj, admin )
         result = dialog.exec_()
         if result == QtGui.QDialog.Rejected:

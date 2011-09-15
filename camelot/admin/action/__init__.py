@@ -189,7 +189,7 @@ class ActionRunner( QtCore.QEventLoop ):
                 # the very same exception, because no references from the GUI
                 # should be past to the model.
                 #
-                post( self._iteratore_until_blocking,
+                post( self._iterate_until_blocking,
                       self.next,
                       self.exception,
                       args = ( self._generator.throw, GuiException(), ) )

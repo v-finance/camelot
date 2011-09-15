@@ -32,7 +32,7 @@ from camelot.core.conf import settings
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.admin.action import ApplicationAction
+from camelot.admin.action.application_action import ApplicationAction
 from camelot.view.controls import delegates
 
 from camelot.view.main import Application
@@ -63,10 +63,11 @@ def launch_meta_camelot():
     construct_model_thread()
     mt = get_model_thread()
     mt.start()
-    application_admin = MetaCamelotAdmin()
     settings.append( MetaSettings() )
     new_project = CreateNewProject()
-    new_project.gui_run( GuiContext( application_admin ) )
+    gui_context = GuiContext()
+    gui_context.admin = MetaCamelotAdmin()
+    new_project.gui_run( gui_context )
     # keep app alive during running of app
     return app
     
