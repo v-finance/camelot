@@ -35,7 +35,7 @@ from sqlalchemy.orm import backref
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import metadata
-from camelot.model.authentication import getCurrentAuthentication, PartyCategory, end_of_times
+from camelot.model.authentication import getCurrentAuthentication, PartyCategory
 from camelot.model.type_and_status import type_3_status, create_type_3_status_mixin, get_status_type_class, get_status_class
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.form_action import FormActionFromModelFunction, ProcessFilesFormAction
@@ -184,10 +184,10 @@ class Task( Entity, create_type_3_status_mixin('status') ):
     documents        = OneToMany( 'TaskDocument', cascade='all, delete, delete-orphan' )
     roles            = OneToMany( 'TaskRole', cascade='all, delete, delete-orphan' )
     described_by     = ManyToOne( 'TaskType', required = False, ondelete = 'restrict', onupdate = 'cascade')
-    categories = ManyToMany( 'PartyCategory',
-                             tablename='party_category_task', 
-                             remote_colname='party_category_id',
-                             local_colname='task_id')
+    categories       = ManyToMany( 'PartyCategory',
+                                   tablename='party_category_task', 
+                                   remote_colname='party_category_id',
+                                   local_colname='task_id')
                              
     Admin = None
     

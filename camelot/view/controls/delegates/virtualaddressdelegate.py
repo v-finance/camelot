@@ -56,33 +56,6 @@ class VirtualAddressDelegate(CustomDelegate):
                     self.paint_text(painter, option, index, u'%s : %s'%(virtual_address[0], virtual_address[1]), margin_left=0, margin_right=18)
                 else:
                     self.paint_text(painter, option, index, u'%s'%virtual_address[1], margin_left=0, margin_right=18)
-# Incomplete
-#            if virtual_address[1]:
-#                x, y, w, h = option.rect.getRect()
-#                icon_rect = QtCore.QRect(x + w - 18, y + (h-16)/2, 16, 16)
-#                if virtual_address[0] == 'email':
-#                    icon = Icon('tango/16x16/apps/internet-mail.png').getQPixmap()
-#                    painter.drawPixmap(icon_rect, icon)
-## These icons don't exist any more in the new tango icon set                    
-##                elif virtual_address[0] == 'phone':
-##                    icon = Icon('tango/16x16/devices/phone.png').getQPixmap()
-##                    painter.drawPixmap(icon_rect, icon)
-#                elif virtual_address[0] == 'fax':
-#                    icon = Icon('tango/16x16/devices/printer.png').getQPixmap()
-#                    painter.drawPixmap(icon_rect, icon)
-##                elif virtual_address[0] == 'mobile':
-##                    icon = Icon('tango/16x16/devices/mobile.png').getQPixmap()
-##                    painter.drawPixmap(icon_rect, icon)
-##                elif virtual_address[0] == 'im':
-##                    icon = Icon('tango/16x16/places/instant-messaging.png').getQPixmap()
-##                    painter.drawPixmap(icon_rect, icon)
-##                elif virtual_address[0] == 'pager':
-##                    icon = Icon('tango/16x16/devices/pager.png').getQPixmap()
-##                    painter.drawPixmap(icon_rect, icon)  
-##                else:
-#                elif virtual_address[0] == 'phone':
-#                    icon = Icon('tango/16x16/devices/audio-input-microphone.png').getQPixmap()
-#                    painter.drawPixmap(icon_rect, icon)
 
         painter.restore()
 
