@@ -31,8 +31,10 @@ from PyQt4.QtGui import QApplication, QPrinter, QTextDocument, QPrintPreviewDial
 from camelot.view.model_thread import gui_function
 
 @gui_function
-def open_html_in_print_preview_from_gui_thread(html,
-    html_document=QTextDocument, page_size=None, page_orientation=None):
+def open_html_in_print_preview_from_gui_thread( html,
+                                                html_document=QTextDocument, 
+                                                page_size=None, 
+                                                page_orientation=None ):
 
      printer = QPrinter()
      if not printer.isValid():

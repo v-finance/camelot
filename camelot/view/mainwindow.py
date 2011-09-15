@@ -38,7 +38,6 @@ from PyQt4 import QtGui, QtCore
 
 from camelot.view.action import ActionFactory
 from camelot.view.controls.navpane2 import NavigationPane
-#from camelot.view.controls.navpane3 import NavigationPane
 from camelot.view.controls.printer import Printer
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.model_thread import post

@@ -35,12 +35,13 @@ from camelot.core.utils import ugettext as _
 class ModelItem(QtGui.QTreeWidgetItem):
     """Custom tree item widget"""
 
-    def __init__(self, parent, columns_names):
+    def __init__(self, parent, columns_names, section_item):
         logger.debug('creating new modelitem')
         super(ModelItem, self).__init__(parent, columns_names)
         
         self.textColumn = 0
         self.iconColumn = 1
+        self.section_item = section_item
 
         for column in (self.textColumn, self.iconColumn):
             self.setToolTip(column, _('Right click to open in New Tab'))
@@ -52,8 +53,7 @@ class ModelItem(QtGui.QTreeWidgetItem):
 
     def set_icon(self, icon):
         self.setIcon(self.iconColumn, icon)
-
-
+        
 class ModelTree(QtGui.QTreeWidget):
     """Custom tree widget"""
 

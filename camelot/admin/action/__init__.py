@@ -29,7 +29,7 @@ intended for production use
 
 import logging
 
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 
 from camelot.core.exception import GuiException, CancelRequest
 from camelot.core.utils import ugettext_lazy as _
@@ -39,45 +39,61 @@ from camelot.view.art import Icon
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
 class GuiContext( object ):
+    """
     
-    def __init__( self, admin = None, workspace = None ):
+    .. attribute:: progress_dialog
+        an instance of :class:`QtGui.QProgressDialog` or :keyword:`None'
+        
+    .. attribute:: mode_name
+        the name of the mode in which the action was triggered
+    """
+    
+    def __init__( self ):
         """The context of an action available in the *GUI thread*
         during the execution of the action.
-        :param admin: the Admin class to use during the execution of the action,
-           to be used to retrieve Admin classes for classes when needed.
-           defaults to the unique ApplicationAdmin.
         """
-        self._admin = admin
-        self._workspace = workspace
-        self._progress_dialog = None
+        self.progress_dialog = None
+        self.mode_name = None
+                    
+class Mode( object ):
+    """A mode is a way in which an action can be triggered, a print action could
+    be triggered as 'Export to PDF' or 'Export to Word'.  None always represents
+    the default mode.
+    
+    .. attribute:: name
+        a string representing the mode to the developer and the authentication
+        system.  this name will be used in the :class:`GuiContext`
         
-    def get_admin( self ):
-        """
-        :return: the admin class that can be used to retrieve related admin
-           classes
-        """
-        from camelot.admin.application_admin import get_application_admin
-        return self._admin or get_application_admin()
+    .. attribute:: verbose_name
+        The name shown to the user
+        
+    .. attribute:: icon
+        The icon of the mode
+    """
     
-    def get_workspace( self ):
-        return self._workspace
-    
-    def get_progress_dialog( self ):
+    def __init__( self, name, verbose_name=None, icon=None):
         """
-        :return: an instance of :class:`QtGui.QProgressDialog` 
-            or :keyword:`None'
+        :param name: the name of the mode, as it will be passed to the
+            gui_run and model_run method
+        :param verbose_name: the name shown to the user
+        :param icon: the icon of the mode
         """
-        return self._progress_dialog
-    
-    def set_progress_dialog( self, progress_dialog ):
+        self.name = name
+        self.verbose_name = verbose_name or name.capitalize()
+        self.icon = icon
+        
+    def render( self, parent ):
+        """Create a :class:`QtGui.QAction` that can be used to enable widget
+        to trigger the action in a specific mode.  The data attribute of the
+        action will contain the name of the mode.
+        
+        :return: a :class:`QtGui.QAction` class to use this mode
         """
-        :param progress_dialog:  an instance of :class:`QtGui.QProgressDialog` 
-            or :keyword:`None'
-        """
-        self._progress_dialog = progress_dialog
-    
-class ApplicationActionGuiContext( GuiContext ):
-    pass
+        action = QtGui.QAction( parent )
+        action.setData( self.name )
+        action.setText( unicode(self.verbose_name) )
+        action.setIconVisibleInMenu( False )
+        return action
         
 class ActionRunner( QtCore.QEventLoop ):
     """Helper class for handling the signals and slots when an action
@@ -206,15 +222,7 @@ class ActionStep( object ):
         to :keyword:`True`
     """
 
-    verbose_name = _('Step')
-    icon = Icon('tango/16x16/emblems/emblem-system.png')
     blocking = True
-
-    def get_verbose_name( self ):
-        return self.verbose_name
-        
-    def get_icon( self ):
-        return self.icon
         
     def gui_run( self, gui_context ):
         """This method is called in the *GUI thread* upon execution of the
@@ -244,21 +252,39 @@ class ActionStep( object ):
         yield
 
 class Action( ActionStep ):
-
-    name = 'action'
-    tooltip = _('Click here to run this action')
-    shortcut = _('Ctrl+P') 
-    modes = []
-
-    def get_tooltip( self ):
-        return self.tooltip
+    """
+    .. attribute:: name
+        The internal name of the action, this can be used to store preferences
+        concerning the action in the settings
         
-    def get_modes( self ):
-        return self.modes
-                
-    def get_shortcut( self ):
-        return self.shortcut
+    .. attribute:: verbose_name
+        The name as displayed to the user, this should be of type 
+        :class:`camelot.core.utils.ugettext_lazy`
+        
+    .. attribute:: icon
+        The icon that represents the action, of type 
+        :class:`camelot.view.art.Icon`
 
+    .. attribute:: tooltip
+        The tooltip as displayed to the user, this should be of type 
+        :class:`camelot.core.utils.ugettext_lazy`
+
+    .. attribute:: shortcut
+        The shortcut that can be used to trigger the action, this should be of 
+        type :class:`camelot.core.utils.ugettext_lazy`
+
+    .. attribute:: modes
+        The modes in which an action can be triggered, a list of :class:`Mode`
+        objects.
+        """
+    
+    name = 'action'
+    verbose_name = None
+    icon = None
+    tooltip = None
+    shortcut = None 
+    modes = []
+    
     def render( self, parent, gui_context ):
         """
         :param parent: the parent :class:`QtGui.QWidget`
@@ -271,7 +297,7 @@ class Action( ActionStep ):
     def gui_run( self, gui_context ):
         """This method is called inside the GUI thread, by default it
         executes the :meth:`model_run` in the Model thread.
-        :param gui_context: the context available in ghe *GUI thread*,
+        :param gui_context: the context available in the *GUI thread*,
             of type :class:`GuiContext`
         """
         super(Action, self).gui_run( gui_context )
@@ -285,30 +311,3 @@ class Action( ActionStep ):
         :return: a :keyword:`str`
         """
         return 'enabled'
-    
-class ApplicationAction( Action ):
-
-    def render( self, parent, gui_context ):
-        """
-        :param parent: the parent :class:`QtGui.QWidget`
-        :param workspace: the :class:`camelot.view.workspace.DesktopWorkspace`
-            that is active.
-        :return: a :class:`QtGui.QWidget` which when triggered
-            will execute the run method.
-        """
-        pass
-        
-    def gui_run( self, gui_context ):
-        """This method is called inside the GUI thread, by default it
-        pops up a progress dialog and executes the :meth:`model_run` in 
-        the Model thread, while updating the progress dialob
-
-        :param gui_context: the context available in ghe *GUI thread*
-          of type :class:`ApplicationActionGuiContext`
-        """
-        from camelot.view.controls.progress_dialog import ProgressDialog
-        progress_dialog = ProgressDialog( self.get_verbose_name() )
-        gui_context.set_progress_dialog( progress_dialog )
-        progress_dialog.show()
-        super(ApplicationAction, self).gui_run( gui_context )
-        progress_dialog.close()

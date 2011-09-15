@@ -27,26 +27,29 @@ from camelot.core.utils import ugettext_lazy as _
 class Section(object):
     """A Section as displayed in the left pane of the application.  Each Section
   contains a list of SectionItems the user can click on.  Sections should be used
-  in the definition of the ApplicationAdmin.
+  in the definition of the Application admin.
 
     class MyApplicationAdmin(ApplicationAdmin):
-      sections = [Section('configuration')]
+    
+        def get_sections( self ):
+            return [Section( _('configuration'), self)]
 
   .. image:: /_static/configuration_section.png
 
     """
 
-    def __init__(self, name, icon=None, items=[], verbose_name=None):
-        self.name = name
+    def __init__( self, 
+                  verbose_name,
+                  application_admin,
+                  icon=None, 
+                  items=[] ):
         self.verbose_name = verbose_name
         self.icon = icon
-        self.items = structure_to_section_items(items)
+        self.items = structure_to_section_items( items, application_admin )
 
-    def get_name(self):
-        return self.name
 
     def get_verbose_name(self):
-        return self.verbose_name or _(self.name.capitalize())
+        return self.verbose_name
 
     def get_icon(self):
         from camelot.view.art import Icon
@@ -75,27 +78,31 @@ def structure_to_sections(structure):
 class SectionItem(object):
     """An item inside a section, the user can click on and trigger an action."""
 
-    def __init__(self, action, verbose_name=None):
-        from camelot.admin.application_action import structure_to_application_action
-        self.action = structure_to_application_action(action)
+    def __init__( self,
+                  action, 
+                  application_admin,
+                  verbose_name = None ):
+        from camelot.admin.action.application_action import structure_to_application_action
+        self.action = structure_to_application_action(action, application_admin)
         self.verbose_name = verbose_name
 
     def get_verbose_name(self):
-        return self.verbose_name or self.action.get_verbose_name()
+        return self.verbose_name or self.action.verbose_name
 
     def get_action(self):
         return self.action
         
     def get_icon(self):
-        return self.action.get_icon()
+        return self.action.icon
 
-def structure_to_section_items(structure):
+    def get_modes(self):
+        return self.action.modes
+    
+def structure_to_section_items(structure, application_admin):
 
     def rule(element):
         if isinstance(element, (SectionItem,)):
             return element
-        return SectionItem(element)
+        return SectionItem(element, application_admin)
 
     return [rule(item) for item in structure]
-
-

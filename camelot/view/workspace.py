@@ -188,12 +188,13 @@ class ActionButtonInfoWidget(QtGui.QWidget):
     def setInfoFromAction(self, action):
         actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
         if actionNameLabel is not None:
-            actionNameLabel.setText(action.get_verbose_name())
+            actionNameLabel.setText(action.verbose_name)
         
         actionDescriptionLabel = self.findChild(QtGui.QLabel, 'actionDescriptionLabel')
         if actionDescriptionLabel is not None:
-            actionDescriptionLabel.setText(action.get_description())
-            if action.get_description():
+            tooltip = unicode( action.tooltip or '' )
+            actionDescriptionLabel.setText(tooltip)
+            if tooltip:
                 # Do not use show() or hide() in this case, since it will
                 # cause the actionButtons to be drawn on the wrong position.
                 # Instead, just set the width of the widget to either 0 or 250.
@@ -211,6 +212,7 @@ class ActionButtonInfoWidget(QtGui.QWidget):
             actionDescriptionLabel.setText('')
     
 class ActionButton(QtGui.QLabel):
+    
     entered = QtCore.pyqtSignal()
     left = QtCore.pyqtSignal()    
     
@@ -218,13 +220,15 @@ class ActionButton(QtGui.QLabel):
     A custom interactive desktop button for the desktop. Each 'button' is 
     actually an animated label.
     """
-    def __init__(self, action, parent = None):
+    def __init__(self, action, workspace, parent = None):
         super(ActionButton, self).__init__(parent)
         
         self.setObjectName('ActionButton')
         self.setMouseTracking(True)
 
         self.action = action
+        self._state = 'enabled'
+        self._workspace = workspace
         
         # This property holds if this button reacts to mouse events.
         self.interactive = False
@@ -240,7 +244,7 @@ class ActionButton(QtGui.QLabel):
         # used to continuously store the state of that animation.
         self.selectionAnimationState = QtCore.QAbstractAnimation.Stopped
 
-        self.setPixmap(action.get_icon().getQPixmap())
+        self.setPixmap(action.icon.getQPixmap())
         self.resize(self.pixmap().width(), self.pixmap().height())
         self.setMaximumHeight(160)
         
@@ -248,7 +252,7 @@ class ActionButton(QtGui.QLabel):
         opacityEffect.setOpacity(1.0)
         self.setGraphicsEffect(opacityEffect)
 
-        if action.is_notification():
+        if self._state == 'notification':
             # Shake animation #
             notificationAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
             notificationAnimationPart1.setObjectName('notificationAnimationPart1')
@@ -352,7 +356,7 @@ class ActionButton(QtGui.QLabel):
         self.resetLayout()
 
     def startSelectionAnimation(self):
-        if self.action.is_notification():
+        if self._state == 'notification':
             notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')            
             if notificationAnimation is not None:
                 notificationAnimation.stop()
@@ -392,13 +396,16 @@ class ActionButton(QtGui.QLabel):
             self.resetLayout()
 
     def performAction(self):
-        self.action.run(self.parentWidget())
+        from camelot.admin.action.application_action import ApplicationActionGuiContext
+        gui_context = ApplicationActionGuiContext()
+        gui_context.workspace = self._workspace
+        self.action.gui_run( gui_context )
 
     def getAction(self):
         return self.action
 
     def resetLayout(self):
-        if self.action.is_notification():
+        if self._state == 'notification':
             self.stopNotificationAnimation()
         
         if self.sender() and self.originalPosition:
@@ -408,7 +415,7 @@ class ActionButton(QtGui.QLabel):
         self.resize(self.pixmap().width(), self.pixmap().height())
         self.graphicsEffect().setOpacity(1.0)
         
-        if self.action.is_notification() and self.originalPosition:
+        if self._state == 'notification' and self.originalPosition:
             self.startNotificationAnimation()
         
     def setInteractive(self, interactive):
@@ -416,12 +423,12 @@ class ActionButton(QtGui.QLabel):
         
         self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0))# + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, HOVER_ANIMATION_DISTANCE)
         
-        if self.action.is_notification():
+        if self._state == 'notification':
             self.startNotificationAnimation()
 
     def enterEvent(self, event):
         if self.interactive:
-            if self.action.is_notification():
+            if self._state == 'notification':
                 self.stopNotificationAnimation()
                 
             self.startHoverAnimation()
@@ -434,7 +441,7 @@ class ActionButton(QtGui.QLabel):
         if self.interactive:
             self.stopHoverAnimation()
             
-            if self.action.is_notification():
+            if self._state == 'notification':
                 self.startNotificationAnimation()
             
             self.left.emit()

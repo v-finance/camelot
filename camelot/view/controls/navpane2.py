@@ -36,6 +36,8 @@ from PyQt4.QtGui import QToolBox
 from PyQt4.QtGui import QDockWidget
 from PyQt4.QtGui import QVBoxLayout
 
+from camelot.admin.action.application_action import ApplicationActionGuiContext
+from camelot.core.utils import variant_to_pyobject
 from camelot.view.action import ActionFactory
 from camelot.view.model_thread import post
 from camelot.view.controls.modeltree import ModelItem
@@ -54,13 +56,10 @@ class PaneSection(QWidget):
         section_tree.setFrameShape(QFrame.NoFrame)
         section_tree.setFrameShadow(QFrame.Plain)
         section_tree.contextmenu = QMenu(self)
-        act = ActionFactory.new_tab(self, self.open_in_new_view)
-        act.setIconVisibleInMenu(False)
-        section_tree.contextmenu.addAction( act )
         section_tree.setContextMenuPolicy(Qt.CustomContextMenu)
         section_tree.customContextMenuRequested.connect(self.create_context_menu)
         section_tree.setObjectName( 'SectionTree' )
-        section_tree.itemClicked.connect( self.open_in_current_view )
+        section_tree.itemClicked.connect( self._item_clicked )
         section_tree.setWordWrap( False )
         layout.addWidget( section_tree )
         self.setLayout(layout)
@@ -79,15 +78,13 @@ class PaneSection(QWidget):
     
             for item in items:
                 label = item.get_verbose_name()
-                try:
-                    icon = item.get_icon()
-                except NotImplementedError, e:
-                    logger.debug('Icon set to None: %s' % e)
-                    icon = None
-                model_item = ModelItem(section_tree, [label])
+                icon = item.get_icon()
+                model_item = ModelItem( section_tree, 
+                                        [unicode(label)],
+                                        item )
                 if icon:
                     model_item.set_icon(icon.getQIcon())
-                section_tree.modelitems.append(model_item)
+                section_tree.modelitems.append( model_item )
             section_tree.resizeColumnToContents( 0 )
 
     def create_context_menu(self, point):
@@ -96,42 +93,34 @@ class PaneSection(QWidget):
         if section_tree:
             item = section_tree.itemAt(point)
             if item:
+                section_tree.contextmenu.clear()
+                for mode in item.section_item.get_modes():
+                    action = mode.render( self )
+                    action.triggered.connect( self._action_triggered )
+                    section_tree.contextmenu.addAction( action )
                 section_tree.setCurrentItem(item)
                 section_tree.contextmenu.popup(section_tree.mapToGlobal(point))
 
+    @QtCore.pyqtSlot(bool)
+    def _action_triggered( self, _checked ):
+        action = self.sender()
+        mode_name = variant_to_pyobject( action.data() )
+        self._run_current_action( mode_name )
+        
     @QtCore.pyqtSlot(QtGui.QTreeWidgetItem, int)
-    def open_in_current_view(self, item, _column):
-        """pops a model window in parent's workspace"""
-        logger.debug('poping a window in parent')
-        section_tree = self.findChild(QtGui.QWidget, 'SectionTree')
-        if section_tree:
-            item = section_tree.currentItem()
-            index = section_tree.indexFromItem(item)
-            section_item = self._items[index.row()]
-            new_view = section_item.get_action().run(self._workspace)
-            icon = section_item.get_action().get_icon()
-            if new_view:
-                if icon:
-                    self._workspace.set_view(new_view, icon = icon.getQIcon())
-                else:
-                    self._workspace.set_view(new_view)
+    def _item_clicked(self, _item, _column):
+        self._run_current_action()
 
-    @QtCore.pyqtSlot()
-    def open_in_new_view(self):
-        """pops a model window in parent's workspace"""
-        logger.debug('poping a window in parent')
+    def _run_current_action( self, mode_name=None ):
         section_tree = self.findChild(QtGui.QWidget, 'SectionTree')
         if section_tree:
             item = section_tree.currentItem()
             index = section_tree.indexFromItem(item)
             section_item = self._items[index.row()]
-            new_view = section_item.get_action().run(self._workspace)
-            icon = section_item.get_action().get_icon()
-            if new_view:
-                if icon:
-                    self._workspace.add_view(new_view, icon = icon.getQIcon())
-                else:
-                    self._workspace.add_view(new_view)
+            gui_context = ApplicationActionGuiContext()
+            gui_context.mode_name = mode_name
+            gui_context.workspace = self._workspace
+            section_item.get_action().gui_run( gui_context )
                         
 class NavigationPane(QDockWidget):
 
