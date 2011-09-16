@@ -116,29 +116,18 @@ Possible Action Steps that can be yielded to the GUI include:
 
   * :class:`camelot.view.action_steps.PrintPreview`
   * :class:`camelot.view.action_steps.OpenFile`
+  * :class:`camelot.view.action_steps.OpenStream`
+  * :class:`camelot.view.action_steps.OpenJinjaTemplate`
   * :class:`camelot.view.action_steps.ShowPixmap`
   * :class:`camelot.view.action_steps.ShowChart`
-  * :class:`camelot.view.action_steps.OpenDocx`
 
 keep the user informed about progress
 -------------------------------------
 
 An :obj:`camelot.view.action_steps.UpdateProgress` object can be yielded, to update
-the state of the progress dialog::
+the state of the progress dialog:
 
-    class UpdateProgress( ActionStep ):
-    
-        def __init__(value=0, maximum=0, text=None, detail=None, clear_details=False):
-            """
-            :param value: the current step
-            :param maximum: the maximum number of steps that will be executed. set it
-                to 0 to display a busy indicator instead of a progres bar
-            :param text: the text to be displayed inside the progres bar
-            :param detail: the text to be displayed below the progres bar, this text is
-                appended to the text already there
-            :param clear_details: clear the details text already there before putting 
-                the new detail text.
-            """
+.. autoclass:: camelot.view.action_steps.UpdateProgress
         
 This should be done regulary to keep the user informed about the
 progres of the action::
@@ -161,10 +150,6 @@ In case an unexpected event occurs in the GUI, the :keyword:`yield` statement
 will raise a :class:`camelot.core.exception.GuiException`.  This exception
 will propagate through the action an will be ignored unless handled by the
 developer.
-
-The :meth:`model_run` its 
-execution will not be blocked while the GUI updates the 
-:class:`camelot.view.controls.ProgressDialog`
 
 manipulation of the model
 -------------------------
@@ -278,37 +263,16 @@ Modes
 
 An action widget can be triggered in different modes, for example a print button
 can be triggered as simply 'Print' or 'Export to PDF'.  The different modes of
-an action are specified as a list of :class:`camelot.admin.action.Mode` objects::
+an action are specified as a list of :class:`camelot.admin.action.Mode` objects:
 
-    class Mode( object ):
-    
-        def __init__( name, verbose_name=None, icon=None):
-            "
-            :param name: the name of the mode, as it will be passed to the
-                gui_run and model_run method
-            :param verbose_name: the name shown to the user
-            :param icon: the icon of the mode
-            """
-            self._name = name
-            self._verbose_name = name
-            self._icon = icon
-            
-        def get_name( self ):
-            return self._name
-            
-        def get_verbose_name( self ):
-            return self._verbose_name or self._name
-            
-        def get_icon( self ):
-            return self._icon
-            
+.. autoclass:: camelot.admin.action.Action            
 
 Actions and Context
 ===================
 
 All action classes are based on the :class:`camelot.admin.action.Action`
 class.  An Action is in fact a special :class:`camelot.admin.action.ActionStep`,
-with some additional methods::
+with some additional methods:
 
 .. autoclass:: camelot.admin.action.Action
     
