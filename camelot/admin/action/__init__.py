@@ -99,7 +99,7 @@ class ActionRunner( QtCore.QEventLoop ):
     
     non_blocking_action_step_signal = QtCore.pyqtSignal(object)
     
-    def __init__( self, generator_function, gui_context ):
+    def __init__( self, generator_function, gui_context, model_context ):
         """
         :param generator_function: function to be called in the model thread,
             that will return the generator
@@ -109,8 +109,9 @@ class ActionRunner( QtCore.QEventLoop ):
         self._generator_function = generator_function
         self._generator = None
         self._gui_context = gui_context
+        self._model_context = model_context
         self.non_blocking_action_step_signal.connect( self.non_blocking_action_step )
-        post( self._generator_function, self.generator, self.exception )
+        post( self._generator_function, self.generator, self.exception, args=(model_context,) )
     
     def _iterate_until_blocking( self, generator_method, *args ):
         """Helper calling for generator methods.  The decorated method iterates
@@ -230,7 +231,7 @@ class ActionStep( object ):
             of this action available in the *GUI thread*.  What is in the 
             context depends on how the action was called.
         """
-        runner = ActionRunner( self.model_run, gui_context )
+        runner = ActionRunner( self.model_run, gui_context, None )
         runner.exec_()
         
     def model_run( self, model_context = None ):

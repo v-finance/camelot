@@ -48,6 +48,7 @@ class PaneSection(QWidget):
         super(PaneSection, self).__init__(parent)
         self._items = []
         self._workspace = workspace
+        self._section = section
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         section_tree = ModelTree(parent=self)
@@ -119,6 +120,7 @@ class PaneSection(QWidget):
             gui_context = ApplicationActionGuiContext()
             gui_context.mode_name = mode_name
             gui_context.workspace = self._workspace
+            gui_context.admin = self._section.admin
             section_item.get_action().gui_run( gui_context )
                         
 class NavigationPane(QDockWidget):

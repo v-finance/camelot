@@ -28,13 +28,14 @@ intended for production use
 """
 
 from change_object import ChangeObject
-from open_file import OpenFile, OpenStream
+from open_file import OpenFile, OpenStream, OpenJinjaTemplate
 from print_preview import PrintPreview
 from update_progress import UpdateProgress
 
 __all__ = [
     ChangeObject.__name__,
     OpenFile.__name__,
+    OpenJinjaTemplate.__name__,
     OpenStream.__name__,
     PrintPreview.__name__,
     UpdateProgress.__name__,

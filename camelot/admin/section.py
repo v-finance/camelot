@@ -45,7 +45,7 @@ class Section(object):
         self.verbose_name = verbose_name
         self.icon = icon
         self.items = structure_to_section_items( items, application_admin )
-
+        self.admin = application_admin
 
     def get_verbose_name(self):
         return self.verbose_name

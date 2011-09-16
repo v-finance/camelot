@@ -61,11 +61,11 @@ class OpenStream( OpenFile ):
         import tempfile
         file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
         output_stream = os.fdopen( file_descriptor, 'wb' )
-        output_stream.writelines( stream )
+        output_stream.write( stream.read() )
         output_stream.close()
         super( OpenStream, self ).__init__( file_name )
 
-class OpenJinjaTemplate( OpenFile ):
+class OpenJinjaTemplate( OpenStream ):
     
     def __init__( self,
                   environment,
@@ -87,6 +87,10 @@ class OpenJinjaTemplate( OpenFile ):
         :param context: a dictionary with objects to be used when rendering
             the template
         """
+        from cStringIO import StringIO
         template = environment.get_template( template )
-        stream = template.render( context )        
-        super( OpenJinjaTemplate, self).__init__( stream, suffix=suffix )
+        template_stream = template.stream( context )
+        output_stream = StringIO()
+        template_stream.dump( output_stream, encoding='utf-8' )
+        output_stream.seek( 0 )
+        super( OpenJinjaTemplate, self).__init__( output_stream, suffix=suffix )
