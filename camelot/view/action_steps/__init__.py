@@ -22,14 +22,10 @@
 #
 #  ============================================================================
 
-"""
-This is part of a test implementation of the new actions draft, it is not
-intended for production use
-"""
-
 from change_object import ChangeObject
 from open_file import OpenFile, OpenStream, OpenJinjaTemplate
 from print_preview import PrintPreview
+from select_file import SelectOpenFile
 from update_progress import UpdateProgress
 
 __all__ = [
@@ -38,5 +34,6 @@ __all__ = [
     OpenJinjaTemplate.__name__,
     OpenStream.__name__,
     PrintPreview.__name__,
+    SelectOpenFile.__name__,
     UpdateProgress.__name__,
     ]
