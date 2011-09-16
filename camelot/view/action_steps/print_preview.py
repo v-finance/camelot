@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 
 from camelot.admin.action import ActionStep
 
@@ -58,6 +58,7 @@ class PrintPreview( ActionStep ):
         self.html = html
 
     def gui_run( self, gui_context ):
+        from camelot.view.export.printer import open_html_in_print_preview_from_gui_thread
         open_html_in_print_preview_from_gui_thread( self.html,
                                                     html_document = self.html_document or QtGui.QTextDocument, 
                                                     page_size = self.page_size or QtGui.QPrinter.A4, 

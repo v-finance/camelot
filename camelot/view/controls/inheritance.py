@@ -39,7 +39,7 @@ QT_MAJOR_VERSION = float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2]))
 
 class SubclassItem(ModelItem):
     def __init__(self, parent, admin):
-        ModelItem.__init__(self, parent, [admin.get_verbose_name()])
+        ModelItem.__init__(self, parent, [admin.get_verbose_name()], None)
         self.admin = admin
 
 class SubclassTree( ModelTree ):

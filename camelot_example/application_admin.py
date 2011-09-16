@@ -1,6 +1,7 @@
 from camelot.view.art import Icon
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.section import Section
+from camelot.core.utils import ugettext_lazy as _
 
 class MyApplicationAdmin(ApplicationAdmin):
 
@@ -16,21 +17,28 @@ class MyApplicationAdmin(ApplicationAdmin):
         from camelot_example.model import Movie, Tag, VisitorReport
         from camelot_example.view import VisitorsPerDirector
         
-        return [Section('movies',
-                        Icon('tango/22x22/mimetypes/x-office-presentation.png'),
-                        items = [Movie, Tag, VisitorReport, VisitorsPerDirector]),
-                Section('relation',
-                        Icon('tango/22x22/apps/system-users.png'),
-                        items = [Person, Organization]),
-                Section('configuration',
-                        Icon('tango/22x22/categories/preferences-system.png'),
-                        items = [Memento, Translation])
+        return [Section( _('Movies'),
+                         self,
+                         Icon('tango/22x22/mimetypes/x-office-presentation.png'),
+                         items = [Movie, Tag, VisitorReport, VisitorsPerDirector]),
+                Section( _('Relation'),
+                         self,
+                         Icon('tango/22x22/apps/system-users.png'),
+                         items = [Person, Organization]),
+                Section( _('Configuration'),
+                         self,
+                         Icon('tango/22x22/categories/preferences-system.png'),
+                         items = [Memento, Translation])
                 ]
 # end sections
 
+# begin actions
     def get_actions(self):
-        from camelot.admin.application_action import NewViewAction
+        from camelot.admin.action.application_action import NewViewAction
         from camelot_example.model import Movie
         
-        return [NewViewAction(Movie,
-                              icon = Icon('tango/22x22/mimetypes/x-office-presentation.png'))]
+        new_movie_action = NewViewAction( self.get_related_admin(Movie) )
+        new_movie_action.icon = Icon('tango/22x22/mimetypes/x-office-presentation.png')
+
+        return [new_movie_action]
+# end actions

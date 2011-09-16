@@ -22,19 +22,12 @@
 #
 #  ============================================================================
 
-"""
-This is part of a test implementation of the new actions draft, it is not
-intended for production use
-"""
-
 import logging
 
 from PyQt4 import QtCore, QtGui
 
 from camelot.core.exception import GuiException, CancelRequest
-from camelot.core.utils import ugettext_lazy as _
 from camelot.view.model_thread import post
-from camelot.view.art import Icon
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 

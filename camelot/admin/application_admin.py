@@ -30,6 +30,7 @@ from PyQt4 import QtCore, QtGui
 
 from camelot.view.model_thread import model_function
 from camelot.core.backup import BackupMechanism
+from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
 from camelot.view import database_selection
 
@@ -107,7 +108,6 @@ methods :
     domain = 'python-camelot.com'
 
     version = '1.0'
-    sections = ['Relations', 'Configuration']
     admins = {}
 
     # This signal is emitted whenever the sections are changed, and the views
@@ -150,9 +150,12 @@ methods :
         
         .. image:: /_static/picture2.png
         """
-        from camelot.admin.section import structure_to_sections
-        return structure_to_sections(self.sections)
-
+        from camelot.admin.section import Section
+        
+        return [ Section( _('Relations'), self ),
+                 Section( _('Configuration'), self ),
+                 ]
+        
     def get_related_admin(self, cls):
         """Get the default :class:`camelot.admin.object_admin.ObjectAdmin` class
         for a specific class, return None, if not known.  The ObjectAdmin

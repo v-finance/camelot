@@ -38,7 +38,6 @@ from PyQt4.QtGui import QVBoxLayout
 
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.core.utils import variant_to_pyobject
-from camelot.view.action import ActionFactory
 from camelot.view.model_thread import post
 from camelot.view.controls.modeltree import ModelItem
 from camelot.view.controls.modeltree import ModelTree

@@ -22,7 +22,6 @@
 #
 #  ============================================================================
 from camelot.view.model_thread import model_function
-from camelot.core.utils import ugettext_lazy as _
 
 class Section(object):
     """A Section as displayed in the left pane of the application.  Each Section
@@ -58,22 +57,6 @@ class Section(object):
     @model_function
     def get_items(self):
         return self.items
-
-def structure_to_sections(structure):
-    """Convert a list of python objects to a list of sections, using
-  applying these rules on each of the elements in the list :
-
-    - if the element is a instance of Section, leave it as it is
-    - if the element is an instance of a basestr, construct a Section
-      for it"""
-
-    def rule(element):
-        if isinstance(element, (Section,)):
-            return element
-        else:
-            return Section(element)
-
-    return [rule(section) for section in structure]
 
 class SectionItem(object):
     """An item inside a section, the user can click on and trigger an action."""
