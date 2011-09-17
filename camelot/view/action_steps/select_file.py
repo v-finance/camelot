@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
   
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
