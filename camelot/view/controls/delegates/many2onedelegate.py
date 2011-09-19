@@ -71,11 +71,15 @@ class Many2OneDelegate(CustomDelegate):
 
     def createEditor(self, parent, option, index):
         if self._embedded:
-            editor = editors.EmbeddedMany2OneEditor(self.admin, parent,
-                                                    editable=self.editable)
+            editor = editors.EmbeddedMany2OneEditor( self.admin, 
+                                                     parent,
+                                                     editable = self.editable,
+                                                     **self._kwargs )
         else:
-            editor = editors.Many2OneEditor(self.admin, parent,
-                                            editable=self.editable)
+            editor = editors.Many2OneEditor( self.admin, 
+                                             parent,
+                                             editable=self.editable,
+                                             **self._kwargs )
         if option.version != 5:
             editor.setAutoFillBackground(True)
         editor.editingFinished.connect( self.commitAndCloseEditor )

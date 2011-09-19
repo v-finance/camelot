@@ -42,7 +42,13 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
   in that case
   """
 
-    def __init__( self, admin = None, parent = None, field_name='embedded', **kwargs ):
+    def __init__( self, 
+                  admin = None, 
+                  parent = None, 
+                  field_name = 'embedded',
+                  size_policy = QtGui.QSizePolicy( QtGui.QSizePolicy.MinimumExpanding,
+                                                   QtGui.QSizePolicy.Minimum ),
+                  **kwargs ):
         assert admin != None
         CustomEditor.__init__( self, parent )
         self.setObjectName( field_name )
@@ -60,6 +66,7 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
         self.model = None
         self._editable = True
         self.setLayout( self.layout )
+        self.setSizePolicy( size_policy )
         self.setEntity( lambda:ValueLoading, propagate = False )
 
     def set_value( self, value ):

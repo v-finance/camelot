@@ -270,7 +270,7 @@ class FormWidget(QtGui.QWidget):
         LOGGER.debug( 'end creation loop' )
         widget_mapper.setCurrentIndex(self._index)
         LOGGER.debug( 'put widgets on form' )
-        self.layout().insertWidget(0, self._form.render(widgets, self))
+        self.layout().insertWidget(0, self._form.render(widgets, self, True))
         LOGGER.debug( 'done' )
         #self._widget_layout.setContentsMargins(7, 7, 7, 7)
 

@@ -167,23 +167,29 @@ to render a form::
         yield '</w:tbl>'
 
     @gui_function
-    def render( self, widgets, parent = None, nomargins = False):
-        """:param widgets: a dictionary mapping each field in this form to a tuple
-        of (label, widget editor)
+    def render( self, widgets, parent = None, toplevel = False):
+        """
+        :param widgets: a dictionary mapping each field in this form to a tuple
+            of widgets (label, widget editor)
+        :param parent: the :class:`QtGui.QWidget` in which the form is placed
+        :param toplevel: a :keyword:`boolean` indicating if this form is toplevel,
+            or a child form of another form.  A toplevel form will be expanding,
+            while a non toplevel form is only expanding if it contains other
+            expanding elements.
 
         :return: a QWidget into which the form is rendered
         """
-        logger.debug( 'rendering %s' % self.__class__.__name__ )
+        logger.debug( 'rendering %s' % (self.__class__.__name__) )
         from camelot.view.controls.editors.wideeditor import WideEditor
-
         from PyQt4 import QtGui
-        form_layout = QtGui.QGridLayout()
 
+        form_widget = QtGui.QWidget( parent )
+        form_layout = QtGui.QGridLayout()
         # where 1 column in the form is a label and a field, so two columns in the grid
         columns = min(self._columns, len(self))
         # make sure all columns have the same width
-        if columns > 1:
-            for i in range(columns*2):
+        for i in range(columns*2):
+            if i%2:
                 form_layout.setColumnStretch(i, 1)
 
         row_span = 1
@@ -214,15 +220,17 @@ to render a form::
 
         has_vertical_expanding_row = False
         for field in self:
+            size_policy = None
             if isinstance( field, Form ):
                 has_vertical_expanding_row = True
                 c.next_empty_row()
                 col_span = 2 * columns
-                f = field.render( widgets, parent, True )
+                f = field.render( widgets, parent, False )
                 if isinstance( f, QtGui.QLayout ):
                     form_layout.addLayout( f, c.row, c.col, row_span, col_span )
                 else:
                     form_layout.addWidget( f, c.row, c.col, row_span, col_span )
+                    size_policy = f.sizePolicy()
                 c.next_row()
             elif field in widgets:
                 label, editor = widgets[field]
@@ -241,35 +249,21 @@ to render a form::
                     form_layout.addWidget( editor, c.row, c.col + 1, row_span, col_span )
                     c.next_col()
                 size_policy = editor.sizePolicy()
-                if size_policy.verticalPolicy()==QtGui.QSizePolicy.Expanding:
-                    has_vertical_expanding_row = True
             else:
                 logger.warning('ProgrammingError : widgets should contain a widget for field %s'%unicode(field))
+            if size_policy and size_policy.verticalPolicy() == QtGui.QSizePolicy.Expanding:
+                has_vertical_expanding_row = True
 
-        if len(self) and form_layout.count():
-#            # get last item in the layout
-#            last_item = form_layout.itemAt( form_layout.count() - 1 )
-#
-#            # if last item does not contain a widget, 0 is returned
-#            # which is fine with the isinstance test
-#            w = last_item.widget()
-#
-#            # add stretch only if last item is not expandable
-#            last_size_policy = w.sizePolicy()
-#            if last_size_policy.verticalPolicy()==QtGui.QSizePolicy.Expanding:
-#                pass
-#            else:
-            if not has_vertical_expanding_row:
-                form_layout.setRowStretch( form_layout.rowCount(), 1 )
-
-        form_widget = QtGui.QWidget( parent )
+        if (not has_vertical_expanding_row) and toplevel and form_layout.rowCount():
+            form_layout.setRowStretch( form_layout.rowCount(), 1 )
 
         # fix embedded forms
-        if nomargins:
-            form_layout.setContentsMargins( 0, 0, 0, 0 )
-
-        form_widget.setSizePolicy( QtGui.QSizePolicy.Expanding,
-                                   QtGui.QSizePolicy.Expanding )
+        if not toplevel:
+            form_layout.setContentsMargins( 2, 2, 2, 2 )
+  
+        if toplevel or has_vertical_expanding_row:
+            form_widget.setSizePolicy( QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Expanding )
         form_widget.setLayout( form_layout )
 
         if self._scrollbars:
@@ -278,9 +272,10 @@ to render a form::
             scroll_area.setWidget( form_widget )
             scroll_area.setWidgetResizable( True )
             scroll_area.setFrameStyle( QtGui.QFrame.NoFrame )
-            #scroll_area.setStyleSheet('background-color: transparent;')
             return scroll_area
 
+        logger.debug( 'end rendering %s' % self.__class__.__name__ )
+        
         return form_widget
 
 
@@ -306,7 +301,7 @@ class Label( Form ):
 
 
     @gui_function
-    def render( self, widgets, parent = None, nomargins = False ):
+    def render( self, widgets, parent = None, toplevel = False ):
         from PyQt4 import QtGui
         if self.style:
             widget = QtGui.QLabel( '<p align="%s" style="%s">%s</p>' % (self.alignment, self.style,unicode(self.label)) )
@@ -398,14 +393,14 @@ class TabForm( Form ):
                 yield field
 
     @gui_function
-    def render( self, widgets, parent = None, nomargins = False ):
+    def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         from PyQt4 import QtGui
         widget = QtGui.QTabWidget( parent )
         widget.setTabPosition(getattr(QtGui.QTabWidget, self.position))
         vertical_expanding = False
         for tab_label, tab_form in self.tabs:
-            tab_form_widget = tab_form.render( widgets, widget )
+            tab_form_widget = tab_form.render( widgets, widget, False )
             size_policy = tab_form_widget.sizePolicy()
             if size_policy.verticalPolicy()==QtGui.QSizePolicy.Expanding:
                 vertical_expanding = True
@@ -413,7 +408,6 @@ class TabForm( Form ):
         if vertical_expanding:
             widget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         return widget
-
 
 class HBoxForm( Form ):
     """
@@ -448,13 +442,13 @@ class HBoxForm( Form ):
                 yield field
 
     @gui_function
-    def render( self, widgets, parent = None, nomargins = False ):
+    def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         from PyQt4 import QtGui
         widget = QtGui.QWidget( parent )
         form_layout = QtGui.QHBoxLayout()
         for form in self.columns:
-            f = form.render( widgets, widget, nomargins )
+            f = form.render( widgets, widget, False )
             if isinstance( f, QtGui.QLayout ):
                 form_layout.addLayout( f )
             else:
@@ -494,13 +488,13 @@ class VBoxForm( Form ):
         return 'VBoxForm [ %s\n         ]' % ( '         \n'.join( [unicode( form ) for form in self.rows] ) )
 
     @gui_function
-    def render( self, widgets, parent = None, nomargins = False ):
+    def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         from PyQt4 import QtGui
         widget = QtGui.QWidget( parent )
         form_layout = QtGui.QVBoxLayout()
         for form in self.rows:
-            f = form.render( widgets, widget, nomargins )
+            f = form.render( widgets, widget, False )
             if isinstance( f, QtGui.QLayout ):
                 form_layout.addLayout( f )
             else:
@@ -509,6 +503,7 @@ class VBoxForm( Form ):
         return widget
 
 class ColumnSpan( Form ):
+    
     def __init__(self, field=None, num=2):
         self.num = num
         self.field = field
@@ -551,7 +546,7 @@ class GridForm( Form ):
             row.append(additional_field)
 
     @gui_function
-    def render( self, widgets, parent = None, nomargins = False ):
+    def render( self, widgets, parent = None, toplevel = False ):
         from PyQt4 import QtGui
         widget = QtGui.QWidget( parent )
         grid_layout = QtGui.QGridLayout()
@@ -572,7 +567,7 @@ class GridForm( Form ):
                     skip += num - 1
 
         widget.setLayout( grid_layout )
-        if nomargins:
+        if not toplevel:
             grid_layout.setContentsMargins( 0, 0, 0, 0 )
 
         return widget
@@ -585,7 +580,7 @@ class WidgetOnlyForm( Form ):
         super( WidgetOnlyForm, self ).__init__( [field] )
 
     @gui_function
-    def render( self, widgets, parent = None, nomargins = False ):
+    def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         _label, editor = widgets[self.get_fields()[0]]
         return editor
@@ -609,14 +604,14 @@ class GroupBoxForm( Form ):
         Form.__init__( self, content, scrollbars, columns=columns )
 
     @gui_function
-    def render( self, widgets, parent = None, nomargins = False ):
+    def render( self, widgets, parent = None, toplevel = False ):
         from PyQt4 import QtGui
         widget = QtGui.QGroupBox( unicode(self.title), parent )
         layout = QtGui.QVBoxLayout()
         if self.min_width and self.min_height:
             widget.setMinimumSize ( self.min_width, self.min_height )
         widget.setLayout( layout )
-        form = Form.render( self, widgets, widget, nomargins )
+        form = Form.render( self, widgets, widget, toplevel )
         layout.addWidget( form )
         return widget
 
