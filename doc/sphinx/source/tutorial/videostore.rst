@@ -4,9 +4,6 @@
  Creating a Movie Database Application
 ########################################
 
-:Release: |version|
-:Date: |today|
-
 In this tutorial we will create a fully functional movie database application
 with Camelot. We assume Camelot is properly :ref:`installed <doc-install>`.
 An all in one installer for Windows is available as an SDK to develop Camelot
@@ -228,10 +225,12 @@ this method contains::
     from camelot.model.memento import Memento
     from camelot.model.authentication import Person, Organization
     from camelot.model.i18n import Translation
-    return [Section('relation',
+    return [Section('Relation',
+		    self,
                     Icon('tango/22x22/apps/system-users.png'),
                     items = [Person, Organization]),
-            Section('configuration',
+            Section('Configuration',
+		    self,
                     Icon('tango/22x22/categories/preferences-system.png'),
                     items = [Memento, Translation])
             ]
@@ -244,13 +243,15 @@ We need to add a new section for our ``Movie`` entity, this is done by
 extending the list of sections returned by the ``get_sections`` method with a
 Movie section::
 
-	Section('movies',
-            Icon('tango/22x22/mimetypes/x-office-presentation.png'),
-            items = [Movie])
+	Section('Movies',
+		self,
+                Icon('tango/22x22/mimetypes/x-office-presentation.png'),
+                items = [Movie])
 
-The constructor of a section object takes the name of the section, the icon to
-be used and the items in the section.  The items is a list of the entities for
-which a table view should shown. 
+The constructor of a section object takes the name of the section, a reference
+to the application admin object, the icon to be used and the items in the 
+section.  The items is a list of the entities for which a table view should 
+shown. 
 
 Camelot comes with the `Tango <http://tango.freedesktop.org/Tango_Icon_Library>`_
 icon collection; we use a suitable icon for our movie section.
@@ -262,13 +263,16 @@ The resulting method now becomes::
     from camelot.model.authentication import Person, Organization
     from camelot.model.i18n import Translation    
     from model import Movie
-    return [Section('movies', 
+    return [Section('Movies', 
+		    self,
                     Icon('tango/22x22/mimetypes/x-office-presentation.png'),
                     items = [Movie]),
-            Section('relation',
+            Section('Relation',
+		    self,
                     Icon('tango/22x22/apps/system-users.png'),
                     items = [Person, Organization]),
-            Section('configuration',
+            Section('Configuration',
+		    self,
                     Icon('tango/22x22/categories/preferences-system.png'),
                     items = [Memento, Translation])
             ]
@@ -388,9 +392,10 @@ For completeness the two entities are once again listed below::
 The last step is to fix :file:`application_admin.py` by adding the following
 lines to the Director entity to the Movie section::
 
-	Section('movies', 
-            Icon('tango/22x22/mimetypes/x-office-presentation.png'),
-            items = [Movie, Director])
+	Section('Movies', 
+		self,
+                Icon('tango/22x22/mimetypes/x-office-presentation.png'),
+                items = [Movie, Director])
 
 This takes care of the relationship between our two entities. Below is the new
 look of our video store application.

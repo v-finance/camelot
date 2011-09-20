@@ -265,7 +265,7 @@ An action widget can be triggered in different modes, for example a print button
 can be triggered as simply 'Print' or 'Export to PDF'.  The different modes of
 an action are specified as a list of :class:`camelot.admin.action.Mode` objects:
 
-.. autoclass:: camelot.admin.action.Action            
+.. autoclass:: camelot.admin.action.Mode        
 
 Actions and Context
 ===================
@@ -290,12 +290,14 @@ The minimal context available in the *GUI thread* is :
 
 .. autoclass:: camelot.admin.action.GuiContext
 
+.. _doc-application-action:
+
 ApplicationAction
 -----------------
 
-The API of the :class:`camelot.admin.action.ApplicationAction`::
+The API of the :class:`camelot.admin.action.application_action.ApplicationAction`::
 
-.. autoclass:: camelot.admin.action.ApplicationAction
+.. autoclass:: camelot.admin.action.application_action.ApplicationAction
             
 To enable Application Actions for a certain 
 :class:`camelot.admin.application_admin.ApplicationAdmin` either overwrite

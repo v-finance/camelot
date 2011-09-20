@@ -33,12 +33,14 @@ LOGGER = logging.getLogger( 'camelot.admin.action' )
 
 class GuiContext( object ):
     """
+The GUI context in which an action is running.  This object can contain
+references to widgets and other usefull information.
+
+.. attribute:: progress_dialog
+    an instance of :class:`QtGui.QProgressDialog` or :keyword:`None'
     
-    .. attribute:: progress_dialog
-        an instance of :class:`QtGui.QProgressDialog` or :keyword:`None'
-        
-    .. attribute:: mode_name
-        the name of the mode in which the action was triggered
+.. attribute:: mode_name
+    the name of the mode in which the action was triggered
     """
     
     def __init__( self ):
@@ -50,18 +52,18 @@ class GuiContext( object ):
                     
 class Mode( object ):
     """A mode is a way in which an action can be triggered, a print action could
-    be triggered as 'Export to PDF' or 'Export to Word'.  None always represents
-    the default mode.
+be triggered as 'Export to PDF' or 'Export to Word'.  None always represents
+the default mode.
     
-    .. attribute:: name
-        a string representing the mode to the developer and the authentication
-        system.  this name will be used in the :class:`GuiContext`
-        
-    .. attribute:: verbose_name
-        The name shown to the user
-        
-    .. attribute:: icon
-        The icon of the mode
+.. attribute:: name
+    a string representing the mode to the developer and the authentication
+    system.  this name will be used in the :class:`GuiContext`
+    
+.. attribute:: verbose_name
+    The name shown to the user
+    
+.. attribute:: icon
+    The icon of the mode
     """
     
     def __init__( self, name, verbose_name=None, icon=None):
@@ -246,30 +248,36 @@ class ActionStep( object ):
         yield
 
 class Action( ActionStep ):
-    """
-    .. attribute:: name
-        The internal name of the action, this can be used to store preferences
-        concerning the action in the settings
-        
-    .. attribute:: verbose_name
-        The name as displayed to the user, this should be of type 
-        :class:`camelot.core.utils.ugettext_lazy`
-        
-    .. attribute:: icon
-        The icon that represents the action, of type 
-        :class:`camelot.view.art.Icon`
+    """An action has a set of attributes that define its appearance in the
+GUI.
+    
+.. attribute:: name
+    The internal name of the action, this can be used to store preferences
+    concerning the action in the settings
+    
+.. attribute:: verbose_name
+    The name as displayed to the user, this should be of type 
+    :class:`camelot.core.utils.ugettext_lazy`
+    
+.. attribute:: icon
+    The icon that represents the action, of type 
+    :class:`camelot.view.art.Icon`
 
-    .. attribute:: tooltip
-        The tooltip as displayed to the user, this should be of type 
-        :class:`camelot.core.utils.ugettext_lazy`
+.. attribute:: tooltip
+    The tooltip as displayed to the user, this should be of type 
+    :class:`camelot.core.utils.ugettext_lazy`
 
-    .. attribute:: shortcut
-        The shortcut that can be used to trigger the action, this should be of 
-        type :class:`camelot.core.utils.ugettext_lazy`
+.. attribute:: shortcut
+    The shortcut that can be used to trigger the action, this should be of 
+    type :class:`camelot.core.utils.ugettext_lazy`
 
-    .. attribute:: modes
-        The modes in which an action can be triggered, a list of :class:`Mode`
-        objects.
+.. attribute:: modes
+    The modes in which an action can be triggered, a list of :class:`Mode`
+    objects.
+    
+An action has two important methods that can be reimplemented.  These are 
+:meth:`model_run` for manipulations of the model and :meth:`gui_run` for
+direct manipulations of the user interface without a need to access the model.
         """
     
     name = 'action'

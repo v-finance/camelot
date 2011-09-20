@@ -33,7 +33,8 @@ class SelectOpenFile( ActionStep ):
         """Select one or more files to open or to process.
         
         :param file_name_filter: Filter on the names of the files that can
-            be selected, see :class:`QtGui.QFileDialog` for more documentation.
+            be selected, such as 'All files (*)'.  
+            See :class:`QtGui.QFileDialog` for more documentation.
         
         .. attribute:: single
             defaults to :keyword:`True`, set to :keyword:`False` if selection
@@ -48,7 +49,7 @@ class SelectOpenFile( ActionStep ):
         self.single = True
     
     def gui_run( self, gui_context ):
-        if self.single:
+        if self.single == False:
             file_names = [unicode(fn) for fn in QtGui.QFileDialog.getOpenFileNames( filter = self.file_name_filter )]
             if not file_names:
                 raise CancelRequest()

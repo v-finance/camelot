@@ -16,19 +16,26 @@ class MyApplicationAdmin(ApplicationAdmin):
         
         from camelot_example.model import Movie, Tag, VisitorReport
         from camelot_example.view import VisitorsPerDirector
+        from camelot_example.importer import ImportCovers
         
         return [Section( _('Movies'),
                          self,
                          Icon('tango/22x22/mimetypes/x-office-presentation.png'),
-                         items = [Movie, Tag, VisitorReport, VisitorsPerDirector]),
+                         items = [ Movie, 
+                                   Tag, 
+                                   VisitorReport, 
+                                   VisitorsPerDirector,
+                                   ImportCovers() ]),
                 Section( _('Relation'),
                          self,
                          Icon('tango/22x22/apps/system-users.png'),
-                         items = [Person, Organization]),
+                         items = [ Person, 
+                                   Organization ]),
                 Section( _('Configuration'),
                          self,
                          Icon('tango/22x22/categories/preferences-system.png'),
-                         items = [Memento, Translation])
+                         items = [ Memento, 
+                                   Translation ])
                 ]
 # end sections
 
