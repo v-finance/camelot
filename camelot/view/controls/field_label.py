@@ -22,6 +22,7 @@
 #
 #  ============================================================================
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
 from camelot.core.utils import ugettext as _
 from camelot.admin.object_admin import ObjectAdmin
@@ -45,6 +46,8 @@ class FieldLabel(UserTranslatableLabel):
     of the label and review its field attributes.
     """
     
+    font_width = None
+    
     def __init__(self, field_name, text, field_attributes, admin, parent=None):
         """
         :param field_name: the name of the field
@@ -54,6 +57,8 @@ class FieldLabel(UserTranslatableLabel):
         :param admin: the admin of the object of the field
         """
         super(FieldLabel, self).__init__(text, parent)
+        if FieldLabel.font_width == None:
+            FieldLabel.font_width = QtGui.QFontMetrics( QtGui.QApplication.font() ).size( Qt.TextSingleLine, 'A' ).width()
         show_field_attributes_action = QtGui.QAction(_('View attributes'), self)
         show_field_attributes_action.triggered.connect( self.show_field_attributes )
         self.addAction(show_field_attributes_action)
@@ -61,6 +66,11 @@ class FieldLabel(UserTranslatableLabel):
         self._admin = admin
         self._field_attributes = field_attributes
         
+    def sizeHint( self ):
+        size_hint = super(FieldLabel, self).sizeHint()
+        size_hint.setWidth( self.font_width * max( 20, len( self._field_name ) ) )
+        return size_hint
+    
     def get_attributes(self):
         import inspect
         
