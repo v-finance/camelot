@@ -259,7 +259,7 @@ to render a form::
 
         # fix embedded forms
         if not toplevel:
-            form_layout.setContentsMargins( 2, 2, 2, 2 )
+            form_layout.setContentsMargins( 0, 0, 0, 0 )
   
         if toplevel or has_vertical_expanding_row:
             form_widget.setSizePolicy( QtGui.QSizePolicy.Expanding,
@@ -397,16 +397,34 @@ class TabForm( Form ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         from PyQt4 import QtGui
         widget = QtGui.QTabWidget( parent )
-        widget.setTabPosition(getattr(QtGui.QTabWidget, self.position))
-        vertical_expanding = False
+        widget.setTabPosition( getattr(QtGui.QTabWidget, self.position) )
+        #
+        # keep track for each of the tabs wether they are expanding
+        #
+        vertical_expanding = []
         for tab_label, tab_form in self.tabs:
-            tab_form_widget = tab_form.render( widgets, widget, False )
+            tab_widget = QtGui.QWidget( widget )
+            layout = QtGui.QVBoxLayout( tab_widget )
+            tab_form_widget = tab_form.render( widgets, tab_widget, False )
+            layout.addWidget( tab_form_widget )
+            tab_widget.setLayout( layout )
             size_policy = tab_form_widget.sizePolicy()
             if size_policy.verticalPolicy()==QtGui.QSizePolicy.Expanding:
-                vertical_expanding = True
-            widget.addTab( tab_form_widget, unicode(tab_label) )
-        if vertical_expanding:
+                vertical_expanding.append( True )
+            else:
+                vertical_expanding.append( False )
+            widget.addTab( tab_widget, unicode(tab_label) )
+        if sum(vertical_expanding):
             widget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+            #
+            # if one of the tabs is expanding, the others should have spacer
+            # items to stretch
+            #
+            for i, vertical_expanding_of_widget in enumerate(vertical_expanding):
+                if vertical_expanding_of_widget == False:
+                    tab_widget = widget.widget( i )
+                    tab_widget.layout().addStretch( 1 )
+                
         return widget
 
 class HBoxForm( Form ):
