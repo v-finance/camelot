@@ -222,11 +222,18 @@ to render a form::
         for field in self:
             size_policy = None
             if isinstance( field, Form ):
-                has_vertical_expanding_row = True
                 c.next_empty_row()
                 col_span = 2 * columns
                 f = field.render( widgets, parent, False )
                 if isinstance( f, QtGui.QLayout ):
+                    #
+                    # this should maybe be recursive ??
+                    #
+                    for layout_item_index in range( f.count() ):
+                        layout_item = f.itemAt( layout_item_index )
+                        layout_item_widget = layout_item.widget()
+                        if layout_item_widget and layout_item_widget.sizePolicy().verticalPolicy() == QtGui.QSizePolicy.Expanding:
+                            has_vertical_expanding_row = True
                     form_layout.addLayout( f, c.row, c.col, row_span, col_span )
                 else:
                     form_layout.addWidget( f, c.row, c.col, row_span, col_span )
@@ -409,7 +416,7 @@ class TabForm( Form ):
             layout.addWidget( tab_form_widget )
             tab_widget.setLayout( layout )
             size_policy = tab_form_widget.sizePolicy()
-            if size_policy.verticalPolicy()==QtGui.QSizePolicy.Expanding:
+            if size_policy.verticalPolicy() == QtGui.QSizePolicy.Expanding:
                 vertical_expanding.append( True )
             else:
                 vertical_expanding.append( False )
@@ -629,7 +636,7 @@ class GroupBoxForm( Form ):
         if self.min_width and self.min_height:
             widget.setMinimumSize ( self.min_width, self.min_height )
         widget.setLayout( layout )
-        form = Form.render( self, widgets, widget, toplevel )
+        form = Form.render( self, widgets, widget, False )
         layout.addWidget( form )
         return widget
 
