@@ -22,20 +22,15 @@
 #
 #  ============================================================================
 
-from change_object import ChangeObject
-from gui import Refresh
-from open_file import OpenFile, OpenStream, OpenJinjaTemplate
-from print_preview import PrintPreview
-from select_file import SelectOpenFile
-from update_progress import UpdateProgress
+"""
+Various ``ActionStep`` subclasses that manipulate the GUI of the application.
+"""
 
-__all__ = [
-    ChangeObject.__name__,
-    OpenFile.__name__,
-    OpenJinjaTemplate.__name__,
-    OpenStream.__name__,
-    PrintPreview.__name__,
-    Refresh.__name__,
-    SelectOpenFile.__name__,
-    UpdateProgress.__name__,
-    ]
+from camelot.admin.action import ActionStep
+
+class Refresh( ActionStep ):
+    """Refresh all the open screens on the desktop, this will reload queries
+    from the database"""
+    
+    def gui_run( self, gui_context ):
+        gui_context.workspace.refresh()

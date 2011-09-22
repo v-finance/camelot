@@ -6,10 +6,31 @@ class ImportCovers( ApplicationAction ):
     
 # begin select files
     def model_run( self, model_context ):
-        from camelot.view.action_steps import SelectOpenFile
+        from camelot.view.action_steps import SelectOpenFile, UpdateProgress, Refresh
         
         select_image_files = SelectOpenFile( 'Image Files (*.png *.jpg);;All Files (*)' )
         select_image_files.single = False
         file_names = yield select_image_files
+        file_count = len( file_names )
 # end select files
-        print file_names
+# begin create movies
+        import os
+        from sqlalchemy import orm
+        from camelot_example.model import Movie
+              
+        movie_mapper = orm.class_mapper( Movie )
+        cover_property = movie_mapper.get_property( 'cover' )
+        storage = cover_property.columns[0].type.storage
+
+        for i, file_name in enumerate(file_names):
+            yield UpdateProgress( i, file_count )
+            title = os.path.splitext( os.path.basename( file_name ) )[0]
+            stored_file = storage.checkin( file_name )
+            movie = Movie( title = title )
+            movie.cover = stored_file
+            
+        Movie.query.session.flush()
+# end create movies
+# begin refresh
+        yield Refresh()
+# end refresh

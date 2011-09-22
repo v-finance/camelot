@@ -48,18 +48,27 @@ user.
 
 The most important method of the action is the ``model_run`` method, which
 will be triggered when the user clicks the action.  This method should be a
-generator that yields an object whenever user interaction is required.
+generator that yields an object whenever user interaction is required.  
+Everything that happens inside the ``model_run`` method happens in a different
+thread than the GUI thread, so it will not block the GUI.
 
 Add the action to the GUI
 =========================
 
-Now the user needs to be able to trigger the action, therefor we add an instance
-of the ``ImportCovers`` action to the sections defined in the ``get_sections``
-method of the ``ApplicationAdmin``:
+Now the user needs to be able to trigger the action.  We edit the
+:file:`application_admin.py` file and make sure the ``ImportCoversAction``
+is imported.
 
 .. literalinclude:: ../../../../camelot_example/application_admin.py
-   :start-after: begin sections
-   :end-before: end sections
+   :start-after: begin import action
+   :end-before: end import action
+
+Then we add an instance of the ``ImportCovers`` action to the sections 
+defined in the ``get_sections`` method of the ``ApplicationAdmin``:
+
+.. literalinclude:: ../../../../camelot_example/application_admin.py
+   :start-after: begin section with action
+   :end-before: end section with action
 
 This will make sure the action pops up in the **Movies** section of the
 application.
@@ -69,9 +78,12 @@ Select the files
 
 To make the action do something usefull, we will implement its ``model_run``
 method.  Inside the ``model_run`` method, we can :keyword:`yield` various 
-``ActionStep`` objects to the GUI.  An ``ActionStep`` is a part of the action
-that requires user interaction (the user answering a question).  The result
-of this interaction is returned by the :keyword:`yield` statement.
+:class:`camelot.admin.action.ActionStep` objects to the GUI.  An ``ActionStep`` 
+is a part of the action that requires user interaction (the user answering 
+a question).  The result of this interaction is returned by the 
+:keyword:`yield` statement.
+
+::
 
 To ask the user for a number of image files to import, we will pop up a file
 selection dialog inside the ``model_run`` method:
@@ -80,8 +92,78 @@ selection dialog inside the ``model_run`` method:
    :start-after: begin select files
    :end-before: end select files
 
+The :keyword:`yield` statement returns a list of file names selected by
+the user.
+
 Create new movies
 =================
 
-Keep the user informed
-======================
+First make sure the ``Movie`` class has an :class:`camelot.types.Image` field
+named ``cover`` which will store the image files.
+
+.. literalinclude:: ../../../../camelot_example/model.py
+   :start-after: begin image definition
+   :end-before: end image definition
+
+Next we add to the ``model_run`` method the actual creation of new movies.
+
+.. literalinclude:: ../../../../camelot_example/importer.py
+   :start-after: begin create movies
+   :end-before: end create movies
+
+In this part of the code several things happen :
+
+**Store the images**
+
+In the first lines, we do some sqlalchemy magic to get access to the
+``storage`` attribute of the ``cover`` field.  This ``storage`` attribute
+is of type :class:`camelot.core.files.storage.Storage`.  The ``Storage``
+represents the files managed by Camelot.
+   
+**Create Movie objects**
+
+Then for each file, a new ``Movie`` object is created with as title the
+name of the file.  For the ``cover`` attribute, the file is checked in into
+the ``Storage``.  This actually means the file is copied from its original
+directory to a directory managed by Camelot.
+   
+**Write to the database**
+
+In the last line, the ``session`` is flushed and thus all changes are
+written to the database.
+
+**Keep the user informed**
+
+For each movie imported, a :class:`camelot.view.action_steps.UpdateProgress`
+object is :keyword:`yield` to the GUI to inform the user of the import progress.
+   
+   
+Refresh the GUI
+===============
+
+The last step of the ``model_run`` method will be to refresh the GUI.  So if
+the user has the ``Movies`` table open when importing, this table will show the
+newly created movies.
+
+.. literalinclude:: ../../../../camelot_example/importer.py
+   :start-after: begin refresh
+   :end-before: end refresh
+   
+Conclusion
+==========
+
+We went through the basics of the action framework Camelot :
+
+  * Subclassing a :class:`camelot.admin.action.application_action.ApplicationAction`
+    class
+    
+  * Implementing the ``model_run`` method
+  
+  * :keyword:`yield` :class:`camelot.admin.action.ActionStep` objects to 
+    interact with the user
+    
+  * Add the :class:`camelot.admin.action.Action` object to a 
+    :class:`camelot.admin.section.Section` in the side pane
+  
+More :class:`camelot.admin.action.ActionStep` classes can be found in 
+the :mod:`camelot.view.action_steps` module.

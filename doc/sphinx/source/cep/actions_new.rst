@@ -295,7 +295,7 @@ The minimal context available in the *GUI thread* is :
 ApplicationAction
 -----------------
 
-The API of the :class:`camelot.admin.action.application_action.ApplicationAction`::
+The API of the :class:`camelot.admin.action.application_action.ApplicationAction`:
 
 .. autoclass:: camelot.admin.action.application_action.ApplicationAction
             

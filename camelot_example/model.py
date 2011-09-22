@@ -63,7 +63,9 @@ class Movie(Entity):
     # Camelot includes custom sqlalchemy types, like Image, which stores an
     # image on disk and keeps the reference to it in the database.
     #
+# begin image definition
     cover = Field(camelot.types.Image(upload_to='covers'))
+# end image definition
     #
     # Or File, which stores a file in the upload_to directory and stores a
     # reference to it in the database
