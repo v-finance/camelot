@@ -169,8 +169,8 @@ to render a form::
     @gui_function
     def render( self, widgets, parent = None, toplevel = False):
         """
-        :param widgets: a dictionary mapping each field in this form to a tuple
-            of widgets (label, widget editor)
+        :param widgets: a :class:`camelot.view.controls.formview.FormEditors` object
+            that is able to create the widgets for this form
         :param parent: the :class:`QtGui.QWidget` in which the form is placed
         :param toplevel: a :keyword:`boolean` indicating if this form is toplevel,
             or a child form of another form.  A toplevel form will be expanding,
@@ -239,25 +239,28 @@ to render a form::
                     form_layout.addWidget( f, c.row, c.col, row_span, col_span )
                     size_policy = f.sizePolicy()
                 c.next_row()
-            elif field in widgets:
-                label, editor = widgets[field]
-                if isinstance( editor, ( WideEditor, ) ):
-                    c.next_empty_row()
-                    col_span = 2 * columns
-                    if label:
-                        form_layout.addWidget( label, c.row, c.col, row_span, col_span )
-                        c.next_row()
-                    form_layout.addWidget( editor, c.row, c.col, row_span, col_span )
-                    c.next_row()
-                else:
-                    col_span = 1
-                    if label:
-                        form_layout.addWidget( label, c.row, c.col, row_span, col_span )
-                    form_layout.addWidget( editor, c.row, c.col + 1, row_span, col_span )
-                    c.next_col()
-                size_policy = editor.sizePolicy()
             else:
-                logger.warning('ProgrammingError : widgets should contain a widget for field %s'%unicode(field))
+                editor = widgets.create_editor( field, form_widget )
+                if editor:
+                    if isinstance( editor, ( WideEditor, ) ):
+                        c.next_empty_row()
+                        col_span = 2 * columns
+                        label = widgets.create_label( field, editor, form_widget )
+                        if label:
+                            form_layout.addWidget( label, c.row, c.col, row_span, col_span )
+                            c.next_row()
+                        form_layout.addWidget( editor, c.row, c.col, row_span, col_span )
+                        c.next_row()
+                    else:
+                        col_span = 1
+                        label = widgets.create_label( field, editor, form_widget )
+                        if label:
+                            form_layout.addWidget( label, c.row, c.col, row_span, col_span )
+                        form_layout.addWidget( editor, c.row, c.col + 1, row_span, col_span )
+                        c.next_col()
+                    size_policy = editor.sizePolicy()
+                else:
+                    logger.warning('ProgrammingError : widgets should contain a widget for field %s'%unicode(field))
             if size_policy and size_policy.verticalPolicy() == QtGui.QSizePolicy.Expanding:
                 has_vertical_expanding_row = True
 
@@ -587,7 +590,7 @@ class GridForm( Form ):
                     grid_layout.addWidget( field.render( widgets, parent ), i, j + skip, 1, num )
                     skip += num - 1
                 else:
-                    _label, editor = widgets[field]
+                    editor = widgets.create_editor( field, widget )
                     grid_layout.addWidget( editor, i, j + skip, 1, num )
                     skip += num - 1
 
@@ -607,7 +610,7 @@ class WidgetOnlyForm( Form ):
     @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
-        _label, editor = widgets[self.get_fields()[0]]
+        editor = widgets.create_editor( self.get_fields()[0], parent )
         return editor
 
 class GroupBoxForm( Form ):

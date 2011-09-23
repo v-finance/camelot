@@ -32,8 +32,6 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
-#import sip
-
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
 from camelot.view.model_thread import model_function
@@ -59,6 +57,75 @@ class ContextMenuAction(QtGui.QAction):
         else:
             self.setIcon(self.default_icon.getQIcon())
 
+class FormEditors( object ):
+    """A class that holds the editors used on a form
+    """
+    
+    option = None
+    bold_font = None
+    
+    def __init__( self, columns, widget_mapper, delegate, admin ):
+        if self.option == None:
+            self.option = QtGui.QStyleOptionViewItem()
+            # set version to 5 to indicate the widget will appear on a
+            # a form view and not on a table view
+            self.option.version = 5
+            self.bold_font = QtGui.QApplication.font()
+            self.bold_font.setBold(True)
+            
+        self._admin = admin
+        self._editors = dict()
+        self._field_attributes = dict()
+        
+        model = widget_mapper.model()
+        
+        LOGGER.debug( 'begin creation loop' )
+        for i, (field_name, field_attributes ) in enumerate( columns):
+            model_index = model.index( 0, i )
+            widget_editor = delegate.createEditor(
+                None,
+                self.option,
+                model_index
+            )
+            widget_editor.setObjectName('%s_editor'%field_name)
+
+            assert widget_editor != None
+            assert isinstance(widget_editor, QtGui.QWidget)
+
+            widget_mapper.addMapping(widget_editor, i)
+            self._editors[field_name] = widget_editor
+            self._field_attributes[field_name] = field_attributes
+
+        LOGGER.debug( 'end creation loop' )
+        
+    def create_editor( self, field_name, parent ):
+        """
+        :return: a :class:`QtGuiQWidget` or None if field_name is unknown
+        """
+        return self._editors.get( field_name, None )
+    
+    def create_label( self, field_name, editor, parent ):
+        from camelot.view.controls.field_label import FieldLabel
+        from camelot.view.controls.editors.wideeditor import WideEditor
+        field_attributes = self._field_attributes[field_name]
+        hide_title = field_attributes.get( 'hide_title', False )
+        widget_label = None
+        if not hide_title:
+            widget_label = FieldLabel(
+                field_name,
+                field_attributes['name'],
+                field_attributes,
+                self._admin
+            )
+            widget_label.setObjectName('%s_label'%field_name)
+            if not isinstance(editor, WideEditor):
+                widget_label.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        # required fields font is bold
+        nullable = field_attributes.get( 'nullable', True )
+        if not nullable:
+            widget_label.setFont( self.bold_font )
+        return widget_label
+    
 class FormWidget(QtGui.QWidget):
     """A form widget comes inside a form view or inside an embedded manytoone editor"""
 
@@ -196,8 +263,6 @@ class FormWidget(QtGui.QWidget):
 
     def _create_widgets(self):
         """Create value and label widgets"""
-        from camelot.view.controls.field_label import FieldLabel
-        from camelot.view.controls.editors.wideeditor import WideEditor
         #
         # Dirty trick to make form views work during unit tests, since unit
         # tests have no event loop running, so the delegate will never be set,
@@ -212,65 +277,17 @@ class FormWidget(QtGui.QWidget):
         # only if all information is available, we can start building the form
         if not (self._form and self._columns and self._delegate):
             return
+        
         widgets = {}
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if not widget_mapper:
             return
         LOGGER.debug( 'begin creating widgets' )
         widget_mapper.setItemDelegate(self._delegate)
-        option = QtGui.QStyleOptionViewItem()
-        # set version to 5 to indicate the widget will appear on a
-        # a form view and not on a table view
-        option.version = 5
-
-        bold_font = QtGui.QApplication.font()
-        bold_font.setBold(True)
-        #
-        # this loop can take a while to complete, so processEvents is called
-        # regulary
-        #
-        LOGGER.debug( 'begin creation loop' )
-        for i, (field_name, field_attributes ) in enumerate( self._columns):
-#            if i%10==0:
-#                QtCore.QCoreApplication.processEvents(
-#                    QtCore.QEventLoop.ExcludeSocketNotifiers,
-#                    100
-#                )
-            model_index = self._model.index(self._index, i)
-            hide_title = field_attributes.get( 'hide_title', False )
-            widget_label = None
-            widget_editor = self._delegate.createEditor(
-                self,
-                option,
-                model_index
-            )
-            widget_editor.setObjectName('%s_editor'%field_name)
-            if not hide_title:
-                widget_label = FieldLabel(
-                    field_name,
-                    field_attributes['name'],
-                    field_attributes,
-                    self._admin
-                )
-                widget_label.setObjectName('%s_label'%field_name)
-                if not isinstance(widget_editor, WideEditor):
-                    widget_label.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
-
-            # required fields font is bold
-            if ('nullable' in field_attributes) and \
-               (not field_attributes['nullable']):
-                widget_label.setFont(bold_font)
-
-            assert widget_editor != None
-            assert isinstance(widget_editor, QtGui.QWidget)
-
-            widget_mapper.addMapping(widget_editor, i)
-            widgets[field_name] = (widget_label, widget_editor)
-
-        LOGGER.debug( 'end creation loop' )
-        widget_mapper.setCurrentIndex(self._index)
+        widgets = FormEditors( self._columns, widget_mapper, self._delegate, self._admin )
+        widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
-        self.layout().insertWidget(0, self._form.render(widgets, self, True))
+        self.layout().insertWidget(0, self._form.render( widgets, self, True) )
         LOGGER.debug( 'done' )
         #self._widget_layout.setContentsMargins(7, 7, 7, 7)
 
