@@ -35,6 +35,13 @@ from camelot.view.controls.editors.floateditor import CustomDoubleSpinBox
 class ColoredFloatEditor(CustomEditor):
     """Widget for editing a float field, with a calculator"""
 
+    calculator_icon = Icon('tango/16x16/apps/accessories-calculator.png')
+    zero = Icon('tango/16x16/actions/zero.png')
+    go_down_red = Icon('tango/16x16/actions/go-down-red.png')
+    go_up = Icon('tango/16x16/actions/go-up.png')
+    go_down_blue = Icon('tango/16x16/actions/go-down-blue.png')
+    go_up_blue = Icon('tango/16x16/actions/go-up-blue.png')
+    
     def __init__(self,
                  parent,
                  precision=2,
@@ -56,15 +63,14 @@ class ColoredFloatEditor(CustomEditor):
         self.spinBox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
         self.arrow = QtGui.QLabel()
-        self.arrow.setPixmap(Icon('tango/16x16/actions/go-up.png').getQPixmap())
+        self.arrow.setPixmap( self.go_up.getQPixmap() )
         self.arrow.setFixedHeight(self.get_height())
 
         self.arrow.setAutoFillBackground(False)
         self.arrow.setMaximumWidth(19)
 
         self.calculatorButton = QtGui.QToolButton()
-        icon = Icon('tango/16x16/apps/accessories-calculator.png').getQIcon()
-        self.calculatorButton.setIcon(icon)
+        self.calculatorButton.setIcon( self.calculator_icon.getQIcon() )
         self.calculatorButton.setAutoRaise(True)
         self.calculatorButton.setFixedHeight(self.get_height())
 
@@ -92,21 +98,21 @@ class ColoredFloatEditor(CustomEditor):
         if not self.reverse:
             if not self.neutral:
                 self.icons = {
-                    -1:Icon('tango/16x16/actions/go-down-red.png').getQPixmap(),
-                    1:Icon('tango/16x16/actions/go-up.png').getQPixmap(),
-                    0:Icon('tango/16x16/actions/zero.png').getQPixmap()
+                    -1:self.go_down_red,
+                    1:self.go_up,
+                    0:self.zero,
                 }
             else:
                 self.icons = {
-                    -1:Icon('tango/16x16/actions/go-down-blue.png').getQPixmap(),
-                    1:Icon('tango/16x16/actions/go-up-blue.png').getQPixmap(),
-                    0:Icon('tango/16x16/actions/zero.png').getQPixmap()
+                    -1:self.go_down_blue,
+                    1:self.go_up_blue,
+                    0:self.zero,
                 }
         else:
             self.icons = {
-                1:Icon('tango/16x16/actions/go-down-red.png').getQPixmap(),
-                -1:Icon('tango/16x16/actions/go-up.png').getQPixmap(),
-                0:Icon('tango/16x16/actions/zero.png').getQPixmap()
+                1:self.go_down_red,
+                -1:self.go_up,
+                0:self.zero,
             }
 
     def set_field_attributes(self, editable = True,
@@ -137,7 +143,7 @@ class ColoredFloatEditor(CustomEditor):
     def set_value(self, value):
         value = CustomEditor.set_value(self, value) or 0.0
         self.spinBox.setValue(value)
-        self.arrow.setPixmap(self.icons[cmp(value,0)])
+        self.arrow.setPixmap( self.icons[cmp(value,0)].getQPixmap() )
 
     def get_value(self):
         self.spinBox.interpretText()
