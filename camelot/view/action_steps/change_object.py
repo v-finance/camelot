@@ -116,6 +116,13 @@ class ChangeObject( ActionStep ):
         """
         self._obj = obj
         self._admin = admin
+        
+    def get_object( self ):
+        """Use this method to get access to the object to change in unit tests
+        
+        :return: the object to change
+        """
+        return self._obj
 
     def gui_run( self, gui_context ):
         cls = self._obj.__class__

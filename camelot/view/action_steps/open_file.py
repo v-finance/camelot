@@ -35,9 +35,19 @@ class OpenFile( ActionStep ):
         egg and in all kinds of setups.
         
         :param path: the absolute path to the file to open
+        
+        The :keyword:`yield` statement will return :keyword:`True if the file was
+        opend successfull.
         """
         self._path = path
 
+    def get_path( self ):
+        """
+        :return: the path to the file that will be opened, use this method
+        to verify the content of the file in unit tests
+        """
+        return self._path
+        
     def gui_run( self, gui_context ):
         #
         # support for windows shares
@@ -46,7 +56,7 @@ class OpenFile( ActionStep ):
             url = QtCore.QUrl.fromLocalFile( self._path )
         else:
             url = QtCore.QUrl( self._path, QtCore.QUrl.TolerantMode )
-        QtGui.QDesktopServices.openUrl( url )
+        return QtGui.QDesktopServices.openUrl( url )
     
 class OpenStream( OpenFile ):
 
