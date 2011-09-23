@@ -188,7 +188,7 @@ class ActionButtonInfoWidget(QtGui.QWidget):
     def setInfoFromAction(self, action):
         actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
         if actionNameLabel is not None:
-            actionNameLabel.setText(action.verbose_name)
+            actionNameLabel.setText( unicode( action.verbose_name ) )
         
         actionDescriptionLabel = self.findChild(QtGui.QLabel, 'actionDescriptionLabel')
         if actionDescriptionLabel is not None:
@@ -227,8 +227,8 @@ class ActionButton(QtGui.QLabel):
         self.setMouseTracking(True)
 
         self.action = action
-        self._state = 'enabled'
         self._workspace = workspace
+        self._state = None
         
         # This property holds if this button reacts to mouse events.
         self.interactive = False
@@ -252,39 +252,7 @@ class ActionButton(QtGui.QLabel):
         opacityEffect.setOpacity(1.0)
         self.setGraphicsEffect(opacityEffect)
 
-        if self._state == 'notification':
-            # Shake animation #
-            notificationAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
-            notificationAnimationPart1.setObjectName('notificationAnimationPart1')
-            notificationAnimationPart1.setDuration(50)
-            notificationAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
-            
-            notificationAnimationPart2 = QtCore.QPropertyAnimation(self, 'pos')
-            notificationAnimationPart2.setObjectName('notificationAnimationPart2')
-            notificationAnimationPart2.setDuration(50)
-            notificationAnimationPart2.setEasingCurve(QtCore.QEasingCurve.Linear)
-            
-            notificationAnimationPart3 = QtCore.QPropertyAnimation(self, 'pos')
-            notificationAnimationPart3.setObjectName('notificationAnimationPart3')
-            notificationAnimationPart3.setDuration(50)
-            notificationAnimationPart3.setEasingCurve(QtCore.QEasingCurve.Linear)
-            
-            notificationAnimation = QtCore.QSequentialAnimationGroup(parent = self)
-            notificationAnimation.setObjectName('notificationAnimation')
-            notificationAnimation.setLoopCount(10)
-            notificationAnimation.addAnimation(notificationAnimationPart1)
-            notificationAnimation.addAnimation(notificationAnimationPart2)
-            notificationAnimation.addAnimation(notificationAnimationPart3)
-
-            # Timer is used to simulate a pausing effect of the animation.
-            notificationAnimationTimer = QtCore.QTimer(parent = self)
-            notificationAnimationTimer.setObjectName('notificationAnimationTimer')
-            notificationAnimationTimer.setInterval(1500)
-            notificationAnimationTimer.setSingleShot(True)
-            notificationAnimationTimer.timeout.connect(notificationAnimation.start)
-            notificationAnimation.finished.connect(notificationAnimationTimer.start)
-            ###################
-
+        post( action.get_state, self._set_state, args = (None,) )
     
         # Bounce animation #
         hoverAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
@@ -331,6 +299,40 @@ class ActionButton(QtGui.QLabel):
         selectionAnimation.stateChanged.connect(self.updateSelectionAnimationState)
         #######################
 
+    def _set_state( self, state ):
+        self._state = state
+        if state == 'notification':
+            # Shake animation #
+            notificationAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
+            notificationAnimationPart1.setObjectName('notificationAnimationPart1')
+            notificationAnimationPart1.setDuration(50)
+            notificationAnimationPart1.setEasingCurve(QtCore.QEasingCurve.Linear)
+            
+            notificationAnimationPart2 = QtCore.QPropertyAnimation(self, 'pos')
+            notificationAnimationPart2.setObjectName('notificationAnimationPart2')
+            notificationAnimationPart2.setDuration(50)
+            notificationAnimationPart2.setEasingCurve(QtCore.QEasingCurve.Linear)
+            
+            notificationAnimationPart3 = QtCore.QPropertyAnimation(self, 'pos')
+            notificationAnimationPart3.setObjectName('notificationAnimationPart3')
+            notificationAnimationPart3.setDuration(50)
+            notificationAnimationPart3.setEasingCurve(QtCore.QEasingCurve.Linear)
+            
+            notificationAnimation = QtCore.QSequentialAnimationGroup(parent = self)
+            notificationAnimation.setObjectName('notificationAnimation')
+            notificationAnimation.setLoopCount(10)
+            notificationAnimation.addAnimation(notificationAnimationPart1)
+            notificationAnimation.addAnimation(notificationAnimationPart2)
+            notificationAnimation.addAnimation(notificationAnimationPart3)
+
+            # Timer is used to simulate a pausing effect of the animation.
+            notificationAnimationTimer = QtCore.QTimer(parent = self)
+            notificationAnimationTimer.setObjectName('notificationAnimationTimer')
+            notificationAnimationTimer.setInterval(1500)
+            notificationAnimationTimer.setSingleShot(True)
+            notificationAnimationTimer.timeout.connect(notificationAnimation.start)
+            notificationAnimation.finished.connect(notificationAnimationTimer.start)
+        
     def startHoverAnimation(self):
         hoverAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart1')
         if hoverAnimationPart1 is not None:
