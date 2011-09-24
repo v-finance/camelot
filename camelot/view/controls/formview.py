@@ -74,35 +74,31 @@ class FormEditors( object ):
             self.bold_font.setBold(True)
             
         self._admin = admin
-        self._editors = dict()
+        self._widget_mapper = widget_mapper
         self._field_attributes = dict()
-        
-        model = widget_mapper.model()
-        
-        LOGGER.debug( 'begin creation loop' )
+        self._index = dict()
         for i, (field_name, field_attributes ) in enumerate( columns):
-            model_index = model.index( 0, i )
-            widget_editor = delegate.createEditor(
-                None,
-                self.option,
-                model_index
-            )
-            widget_editor.setObjectName('%s_editor'%field_name)
-
-            assert widget_editor != None
-            assert isinstance(widget_editor, QtGui.QWidget)
-
-            widget_mapper.addMapping(widget_editor, i)
-            self._editors[field_name] = widget_editor
             self._field_attributes[field_name] = field_attributes
-
-        LOGGER.debug( 'end creation loop' )
+            self._index[field_name] = i
         
     def create_editor( self, field_name, parent ):
         """
         :return: a :class:`QtGuiQWidget` or None if field_name is unknown
         """
-        return self._editors.get( field_name, None )
+        field_attributes = self._field_attributes[field_name]
+        index = self._index[field_name]
+        model = self._widget_mapper.model()
+        delegate = self._widget_mapper.itemDelegate()
+        model_index = model.index( self._widget_mapper.currentIndex(), index )
+        widget_editor = delegate.createEditor(
+            parent,
+            self.option,
+            model_index
+        )
+        widget_editor.setObjectName('%s_editor'%field_name)
+        delegate.setEditorData( widget_editor, model_index )
+        self._widget_mapper.addMapping( widget_editor, index )
+        return widget_editor
     
     def create_label( self, field_name, editor, parent ):
         from camelot.view.controls.field_label import FieldLabel

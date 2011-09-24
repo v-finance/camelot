@@ -241,7 +241,7 @@ to render a form::
                 c.next_row()
             else:
                 editor = widgets.create_editor( field, form_widget )
-                if editor:
+                if editor != None:
                     if isinstance( editor, ( WideEditor, ) ):
                         c.next_empty_row()
                         col_span = 2 * columns
@@ -381,7 +381,7 @@ the moment the tab is shown.
         else:
             self._vertical_expanding[index] = False
         #
-        # if other widgets are expanding, and this one isnt, add some stretch
+        # if other widgets are expanding, and this one isn't, add some stretch
         #
         if self._vertical_expanding[index] == False and sum(self._vertical_expanding):
             tab_widget.layout().addStretch( 1 )
