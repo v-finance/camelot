@@ -30,6 +30,8 @@ well.  Form classes can be used recursive.
 import logging
 logger = logging.getLogger( 'camelot.view.forms' )
 
+from PyQt4 import QtCore, QtGui
+
 from camelot.view.model_thread import gui_function
 
 class Form( list ):
@@ -181,8 +183,6 @@ to render a form::
         """
         logger.debug( 'rendering %s' % (self.__class__.__name__) )
         from camelot.view.controls.editors.wideeditor import WideEditor
-        from PyQt4 import QtGui
-
         form_widget = QtGui.QWidget( parent )
         form_layout = QtGui.QGridLayout()
         # where 1 column in the form is a label and a field, so two columns in the grid
@@ -319,14 +319,81 @@ class Label( Form ):
             widget = QtGui.QLabel( '<p align="%s">%s</p>' % (self.alignment,unicode(self.label)) )
         return widget
 
+class DelayedTabWidget( QtGui.QTabWidget ):
+    """Helper class for :class:`TabForm` to delay the creation of tabs to
+the moment the tab is shown.
+    """
+    
+    def __init__( self,  widgets, tabs, parent = None ):
+        super( DelayedTabWidget, self ).__init__( parent )
+        self._widgets = widgets
+        self._forms = []
+        #
+        # keep track for each of the tabs wether they are expanding,
+        #
+        self._vertical_expanding = [False] * len(tabs)
+        #
+        # set dummy tab widgets
+        #
+        for tab_label, tab_form in tabs:
+            self._forms.append( tab_form )
+            tab_widget = QtGui.QWidget( self )
+            self.addTab( tab_widget, unicode(tab_label) )
+        #
+        # render the first tab and continue rendering until we have
+        # a tab with an expanding size policy, because then we know
+        # the widget itself should be expanding, and we can delay
+        # the rendering of the other tabs
+        #
+        for i in range( len(tabs) ):
+            self.render_tab( 0 )
+            if sum(self._vertical_expanding):
+                self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+                #
+                # if one of the tabs is expanding, the others should have spacer
+                # items to stretch
+                #
+                for j, vertical_expanding_of_widget in zip(range(i), self._vertical_expanding):
+                    if vertical_expanding_of_widget == False:
+                        tab_widget = widget.widget( j )
+                        tab_widget.layout().addStretch( 1 )                
+                break
+        self.currentChanged.connect( self.render_tab )
+            
+    @QtCore.pyqtSlot( int )
+    def render_tab( self, index ):
+        """
+        Render the tab at index
+        """
+        tab_widget = self.widget( index )
+        layout = tab_widget.layout()
+        if layout != None:
+            # this tab has been rendered before
+            return
+        layout = QtGui.QVBoxLayout( tab_widget )
+        tab_form = self._forms[index]
+        tab_form_widget = tab_form.render( self._widgets, tab_widget, False )
+        layout.addWidget( tab_form_widget )
+        tab_widget.setLayout( layout )
+        size_policy = tab_form_widget.sizePolicy()
+        if size_policy.verticalPolicy() == QtGui.QSizePolicy.Expanding:
+            self._vertical_expanding[index] = True
+        else:
+            self._vertical_expanding[index] = False
+        #
+        # if other widgets are expanding, and this one isnt, add some stretch
+        #
+        if self._vertical_expanding[index] == False and sum(self._vertical_expanding):
+            tab_widget.layout().addStretch( 1 )
+
 class TabForm( Form ):
     """
-  Render forms within a QTabWidget::
+Render forms within a QTabWidget::
 
     from = TabForm([('First tab', ['title', 'short_description']),
                     ('Second tab', ['director', 'release_date'])])
 
-  .. image:: /_static/form/tab_form.png
+.. image:: /_static/form/tab_form.png
     """
 
     NORTH = 'North'
@@ -405,36 +472,8 @@ class TabForm( Form ):
     @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
-        from PyQt4 import QtGui
-        widget = QtGui.QTabWidget( parent )
-        widget.setTabPosition( getattr(QtGui.QTabWidget, self.position) )
-        #
-        # keep track for each of the tabs wether they are expanding
-        #
-        vertical_expanding = []
-        for tab_label, tab_form in self.tabs:
-            tab_widget = QtGui.QWidget( widget )
-            layout = QtGui.QVBoxLayout( tab_widget )
-            tab_form_widget = tab_form.render( widgets, tab_widget, False )
-            layout.addWidget( tab_form_widget )
-            tab_widget.setLayout( layout )
-            size_policy = tab_form_widget.sizePolicy()
-            if size_policy.verticalPolicy() == QtGui.QSizePolicy.Expanding:
-                vertical_expanding.append( True )
-            else:
-                vertical_expanding.append( False )
-            widget.addTab( tab_widget, unicode(tab_label) )
-        if sum(vertical_expanding):
-            widget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-            #
-            # if one of the tabs is expanding, the others should have spacer
-            # items to stretch
-            #
-            for i, vertical_expanding_of_widget in enumerate(vertical_expanding):
-                if vertical_expanding_of_widget == False:
-                    tab_widget = widget.widget( i )
-                    tab_widget.layout().addStretch( 1 )
-                
+        widget = DelayedTabWidget( widgets, self.tabs, parent )
+        widget.setTabPosition( getattr(QtGui.QTabWidget, self.position) )                
         return widget
 
 class HBoxForm( Form ):
@@ -472,7 +511,6 @@ class HBoxForm( Form ):
     @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
-        from PyQt4 import QtGui
         widget = QtGui.QWidget( parent )
         form_layout = QtGui.QHBoxLayout()
         for form in self.columns:
@@ -518,7 +556,6 @@ class VBoxForm( Form ):
     @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
-        from PyQt4 import QtGui
         widget = QtGui.QWidget( parent )
         form_layout = QtGui.QVBoxLayout()
         for form in self.rows:
@@ -575,7 +612,6 @@ class GridForm( Form ):
 
     @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
-        from PyQt4 import QtGui
         widget = QtGui.QWidget( parent )
         grid_layout = QtGui.QGridLayout()
         for i, row in enumerate( self._grid ):
@@ -633,7 +669,6 @@ class GroupBoxForm( Form ):
 
     @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
-        from PyQt4 import QtGui
         widget = QtGui.QGroupBox( unicode(self.title), parent )
         layout = QtGui.QVBoxLayout()
         if self.min_width and self.min_height:
