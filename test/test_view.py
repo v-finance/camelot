@@ -4,6 +4,7 @@ from PyQt4 import QtGui
 import logging
 import unittest
 import os
+import time
 
 from camelot.test import ModelThreadTestCase, EntityViewsTest, SchemaTest
 from camelot.view.art import ColorScheme
@@ -966,6 +967,10 @@ class ControlsTest(ModelThreadTestCase):
     def test_main_window(self):
         from camelot.view.mainwindow import MainWindow
         widget = MainWindow(self.app_admin)
+        # wait a while to make sure all animations are finished
+        for i in range(10):
+            time.sleep(0.1)
+            self.app.processEvents()
         self.grab_widget(widget)
 
     def test_status_bar(self):

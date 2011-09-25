@@ -31,6 +31,10 @@ class ExampleSettings( SimpleSettings ):
         #
         from camelot_example.fixtures import load_movie_fixtures
         load_movie_fixtures()
+        from camelot.core.sql import update_database_from_model
+        print 'updating db'
+        update_database_from_model()
+        print 'updated'
         #
         # setup the views
         #

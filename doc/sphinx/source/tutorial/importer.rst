@@ -10,6 +10,8 @@ application created in the :ref:`tutorial-videostore` tutorial.
 We assume Camelot is properly :ref:`installed <doc-install>` and the movie
 database application is working.
 
+.. image:: /_static/controls/main_window.png
+
 Introduction
 ============
 
@@ -43,8 +45,6 @@ the entry point of the import wizard::
 So now we haven an ``ImportCovers`` action.  Such an action has a 
 ``verbose_name`` class attribute with the name of the action as shown to the
 user.
-
-::
 
 The most important method of the action is the ``model_run`` method, which
 will be triggered when the user clicks the action.  This method should be a
@@ -82,8 +82,6 @@ method.  Inside the ``model_run`` method, we can :keyword:`yield` various
 is a part of the action that requires user interaction (the user answering 
 a question).  The result of this interaction is returned by the 
 :keyword:`yield` statement.
-
-::
 
 To ask the user for a number of image files to import, we will pop up a file
 selection dialog inside the ``model_run`` method:
@@ -136,7 +134,9 @@ written to the database.
 
 For each movie imported, a :class:`camelot.view.action_steps.UpdateProgress`
 object is :keyword:`yield` to the GUI to inform the user of the import progress.
+Each time such an object is yielded, the progress bar is updated.
    
+.. image:: /_static/controls/progress_dialog.png
    
 Refresh the GUI
 ===============

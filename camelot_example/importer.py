@@ -1,8 +1,10 @@
 from camelot.admin.action.application_action import ApplicationAction
 from camelot.core.utils import ugettext_lazy as _
+from camelot.view.art import Icon
 
 class ImportCovers( ApplicationAction ):
     verbose_name = _('Import cover images')
+    icon = Icon('tango/22x22/mimetypes/image-x-generic.png')
     
 # begin select files
     def model_run( self, model_context ):
