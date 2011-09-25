@@ -202,20 +202,21 @@ class ActionRunner( QtCore.QEventLoop ):
 
 class ActionStep( object ):
     """A reusable part of an action.  Action step object can be yielded inside
-    the :meth:`model_run`.  When this happens, their :meth:`gui_run` method will
-    be called inside the *GUI thread*.  The :meth:`gui_run` can pop up a dialog
-    box or perform other GUI related tasks.
-    
-    When the ActionStep is blocking, it will return control after the 
-    :meth:`gui_run` is finished, and the return value of :meth:`gui_run` will
-    be the result of the :keyword:`yield` statement.
-    
-    When the ActionStep is not blocking, the :keyword:`yield` statement will
-    return immediately and the :meth:`model_run` will not be blocked.
-    
-    .. attribute:: blocking
-        a :keyword:`boolean` indicating if the ActionStep is blocking, defaults
-        to :keyword:`True`
+the :meth:`model_run`.  When this happens, their :meth:`gui_run` method will
+be called inside the *GUI thread*.  The :meth:`gui_run` can pop up a dialog
+box or perform other GUI related tasks.
+
+When the ActionStep is blocking, it will return control after the 
+:meth:`gui_run` is finished, and the return value of :meth:`gui_run` will
+be the result of the :keyword:`yield` statement.
+
+When the ActionStep is not blocking, the :keyword:`yield` statement will
+return immediately and the :meth:`model_run` will not be blocked.
+
+.. attribute:: blocking
+
+    a :keyword:`boolean` indicating if the ActionStep is blocking, defaults
+    to :keyword:`True`
     """
 
     blocking = True
@@ -252,18 +253,22 @@ class Action( ActionStep ):
 GUI.
     
 .. attribute:: name
+
     The internal name of the action, this can be used to store preferences
     concerning the action in the settings
     
 .. attribute:: verbose_name
+
     The name as displayed to the user, this should be of type 
     :class:`camelot.core.utils.ugettext_lazy`
     
 .. attribute:: icon
+
     The icon that represents the action, of type 
     :class:`camelot.view.art.Icon`
 
 .. attribute:: tooltip
+
     The tooltip as displayed to the user, this should be of type 
     :class:`camelot.core.utils.ugettext_lazy`
 
@@ -272,6 +277,7 @@ GUI.
     type :class:`camelot.core.utils.ugettext_lazy`
 
 .. attribute:: modes
+
     The modes in which an action can be triggered, a list of :class:`Mode`
     objects.
     

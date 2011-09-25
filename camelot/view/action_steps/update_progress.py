@@ -26,7 +26,6 @@ from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 
 class UpdateProgress( ActionStep ):
-    """"""
 
     blocking = False
     

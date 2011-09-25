@@ -73,6 +73,8 @@ defined in the ``get_sections`` method of the ``ApplicationAdmin``:
 This will make sure the action pops up in the **Movies** section of the
 application.
 
+.. image:: /_static/controls/navigation_pane.png
+
 Select the files
 ================
 
@@ -92,6 +94,8 @@ selection dialog inside the ``model_run`` method:
 
 The :keyword:`yield` statement returns a list of file names selected by
 the user.
+
+.. image:: /_static/actionsteps/select_file.png
 
 Create new movies
 =================
@@ -149,6 +153,27 @@ newly created movies.
    :start-after: begin refresh
    :end-before: end refresh
    
+Result
+======
+
+This is how the resulting :file:`importer.py` file looks like :
+
+.. literalinclude:: ../../../../camelot_example/importer.py
+
+Unit tests
+==========
+
+Once an action works, its important to keep it working as the development of
+the application continues.  One of the advantages of working with generators
+for the user interaction, is that its easy to simulate the user interaction
+towards the :meth:`model_run` method of the action.  This is done by using
+the :meth:`send` method of the generator that is returned when calling
+:meth:`model_run` :
+
+.. literalinclude:: ../../../../test/test_action.py
+   :start-after: begin test application action
+   :end-before: end test application action
+
 Conclusion
 ==========
 

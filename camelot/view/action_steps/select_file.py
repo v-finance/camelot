@@ -44,18 +44,24 @@ class SelectOpenFile( ActionStep ):
         of selected file names.  This list has only one element when single is
         set to :keyword:`True`.  Raises a 
         :class:`camelot.core.exception.CancelRequest` when no file was selected.
+        
+        .. image:: /_static/actionsteps/select_file.png
+        
         """
         self.file_name_filter = file_name_filter
         self.single = True
     
-    def gui_run( self, gui_context ):
-        if self.single == False:
-            file_names = [unicode(fn) for fn in QtGui.QFileDialog.getOpenFileNames( filter = self.file_name_filter )]
-            if not file_names:
-                raise CancelRequest()
+    def render( self ):
+        dialog = QtGui.QFileDialog( filter = self.file_name_filter )
+        if self.single == True:
+            dialog.setFileMode( QtGui.QFileDialog.ExistingFile )
         else:
-            file_name = unicode( QtGui.QFileDialog.getOpenFileName( filter = self.file_name_filter ) )
-            if not file_name:
-                raise CancelRequest()
-            file_names = [file_name]
+            dialog.setFileMode( QtGui.QFileDialog.ExistingFiles )
+        return dialog
+    
+    def gui_run( self, gui_context ):
+        dialog = self.render()
+        if dialog.exec_() == QtGui.QDialog.Rejected:
+            raise CancelRequest()
+        file_names = [unicode(fn) for fn in dialog.selectedFiles()]
         return file_names

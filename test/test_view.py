@@ -949,6 +949,12 @@ class ControlsTest(ModelThreadTestCase):
         from camelot_example.application_admin import MyApplicationAdmin
         self.app_admin = MyApplicationAdmin()
 
+    def wait_for_animation():
+        # wait a while to make sure all animations are finished
+        for i in range(10):
+            time.sleep(0.1)
+            self.app.processEvents()
+        
     def test_table_view(self):
         from camelot.view.controls.tableview import TableView
         from camelot.model.authentication import Person
@@ -957,7 +963,7 @@ class ControlsTest(ModelThreadTestCase):
 
     def test_navigation_pane(self):
         from camelot.view.controls import navpane2
-        
+        self.wait_for_animation()
         widget = navpane2.NavigationPane( self.app_admin,
                                           workspace = None,
                                           parent = None )
@@ -967,10 +973,7 @@ class ControlsTest(ModelThreadTestCase):
     def test_main_window(self):
         from camelot.view.mainwindow import MainWindow
         widget = MainWindow(self.app_admin)
-        # wait a while to make sure all animations are finished
-        for i in range(10):
-            time.sleep(0.1)
-            self.app.processEvents()
+        self.wait_for_animation()
         self.grab_widget(widget)
 
     def test_status_bar(self):

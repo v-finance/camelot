@@ -114,10 +114,13 @@ an action:
 
 Possible Action Steps that can be yielded to the GUI include:
 
+  * :class:`camelot.view.action_steps.ChangeObject`
   * :class:`camelot.view.action_steps.PrintPreview`
   * :class:`camelot.view.action_steps.OpenFile`
   * :class:`camelot.view.action_steps.OpenStream`
   * :class:`camelot.view.action_steps.OpenJinjaTemplate`
+  * :class:`camelot.view.action_steps.PrintPreview`
+  * :class:`camelot.view.action_steps.Refresh`
   * :class:`camelot.view.action_steps.ShowPixmap`
   * :class:`camelot.view.action_steps.ShowChart`
 

@@ -48,6 +48,18 @@ class ApplicationActionGuiContext( GuiContext ):
         self.admin = None
         
 class ApplicationAction( Action ):
+    """A subclass of :class:`camelot.admin.action.Action` that runs in the 
+    context of the application. Typical places to use this action are :
+    
+    * within the :meth:`camelot.admin.ApplicationAdmin.get_sections` method,
+      as elements of a section (:class:`camelot.admin.section.Section`)
+      
+    * within the :meth:`camelot.admin.ApplicationAdmin.get_actions` method,
+      for the actions that are displayed on the home screen.
+      
+    To make an action do something usefull, its :meth:`gui_run` or 
+    :meth:`model_run` should be reimplemented in a subclass.
+    """
 
     def render( self, workspace, parent ):
         """
