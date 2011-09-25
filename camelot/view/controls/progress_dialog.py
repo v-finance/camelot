@@ -35,14 +35,16 @@ from PyQt4 import QtGui, QtCore
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
 class ProgressDialog(QtGui.QProgressDialog):
-    """A Progress Dialog to be used in combination with a post to the model thread::
+    """
+A Progress Dialog to be used in combination with a post to the model thread:
     
-    to display a progress dialog until my_function has finished :
-    
+to display a progress dialog until my_function has finished::
+
     d = ProgressDialog()
     post(my_function, d.finished, d.exception)
     d.exec_()
     
+.. image:: /_static/controls/progress_dialog.png
     """
 
     progress_icon = Icon('tango/32x32/actions/appointment-new.png')

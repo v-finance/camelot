@@ -10,4 +10,4 @@ class Movie(Entity):
     director = ManyToOne('Person')
   
     class Admin(EntityAdmin):
-        form_display = forms.Form(['title', 'short_description', 'director', 'release_date'])
+        form_display = forms.Form(['title', 'short_description', 'director', 'releasedate'])

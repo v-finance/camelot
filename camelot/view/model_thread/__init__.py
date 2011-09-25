@@ -30,8 +30,6 @@ from PyQt4 import QtCore
 import logging
 logger = logging.getLogger('camelot.view.model_thread')
 
-from camelot.core.conf import settings
-
 _model_thread_ = []
 
 # this might be set to False, for unittesting purpose
@@ -84,8 +82,8 @@ def gui_function(original_function):
 
 def setup_model():
     """Call the setup_model function in the settings"""
+    from camelot.core.conf import settings
     settings.setup_model()
-
 
 class AbstractModelThread(QtCore.QThread):
     """Abstract implementation of a model thread class

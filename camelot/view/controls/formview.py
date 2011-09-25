@@ -85,7 +85,6 @@ class FormEditors( object ):
         """
         :return: a :class:`QtGuiQWidget` or None if field_name is unknown
         """
-        field_attributes = self._field_attributes[field_name]
         index = self._index[field_name]
         model = self._widget_mapper.model()
         delegate = self._widget_mapper.itemDelegate()

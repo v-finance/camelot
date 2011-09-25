@@ -26,10 +26,7 @@ from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 
 class UpdateProgress( ActionStep ):
-    """Inform the user about the progress the application is making
-    while executing an action.  This ActionStep is not blocking.  So it can
-    be used inside transactions and will result in a minimum of delay when
-    yielded"""
+    """"""
 
     blocking = False
     
@@ -40,14 +37,22 @@ class UpdateProgress( ActionStep ):
                   detail=None, 
                   clear_details=False ):
         """
-        :param value: the current step
-        :param maximum: the maximum number of steps that will be executed. set it
-            to 0 to display a busy indicator instead of a progres bar
-        :param text: the text to be displayed inside the progres bar
-        :param detail: the text to be displayed below the progres bar, this text is
-            appended to the text already there
-        :param clear_details: clear the details text already there before putting 
-            the new detail text.
+Inform the user about the progress the application is making
+while executing an action.  This ActionStep is not blocking.  So it can
+be used inside transactions and will result in a minimum of delay when
+yielded.  Each time an object is yielded, the progress dialog will be
+updated.
+
+.. image:: /_static/controls/progress_dialog.png
+        
+:param value: the current step
+:param maximum: the maximum number of steps that will be executed. set it
+    to 0 to display a busy indicator instead of a progres bar
+:param text: the text to be displayed inside the progres bar
+:param detail: the text to be displayed below the progres bar, this text is
+    appended to the text already there
+:param clear_details: clear the details text already there before putting 
+    the new detail text.
         """
         super(UpdateProgress, self).__init__()
         self._value = value

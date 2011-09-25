@@ -489,18 +489,28 @@ class FormTest(ModelThreadTestCase):
 
     def setUp(self):
         ModelThreadTestCase.setUp(self)
-        from camelot.view.controls.editors import TextLineEditor, DateEditor
-        self.widgets = {
-          'title':(QLabel('Title'), TextLineEditor(parent=None, editable=True)),
-          'short_description':(QLabel('Short description'), TextLineEditor(parent=None, editable=True)),
-          'director':(QLabel('Director'), TextLineEditor(parent=None, editable=True)),
-          'release_date':(QLabel('Release date'), DateEditor(parent=None, editable=True)),
-        }
+        from camelot.view.controls.formview import FormEditors
         from elixir import entities
         self.entities = [e for e in entities]
         from camelot.admin.application_admin import ApplicationAdmin
+        from camelot.view.proxy.queryproxy import QueryTableProxy
         from camelot.model.authentication import Person
+        from camelot_example.model import Movie
         self.app_admin = ApplicationAdmin()
+        self.movie_admin = self.app_admin.get_related_admin( Movie )
+        
+        self.movie_model = QueryTableProxy( self.movie_admin, 
+                                            lambda:Movie.query,
+                                            self.movie_admin.get_fields )
+        
+        widget_mapper = QtGui.QDataWidgetMapper()
+        widget_mapper.setModel( self.movie_model )
+        widget_mapper.setItemDelegate( self.movie_model.getItemDelegate() )
+        self.widgets = FormEditors( self.movie_admin.get_fields(),
+                                    widget_mapper,
+                                    self.movie_model.getItemDelegate(),
+                                    self.movie_admin )
+        
         self.person_entity = Person
         self.collection_getter = lambda:[Person()]
 
@@ -527,15 +537,15 @@ class FormTest(ModelThreadTestCase):
         self.grab_widget(form.render(self.widgets))
 
     def test_grid_form(self):
-        form = forms.GridForm([['title', 'short_description'], ['director','release_date']])
+        form = forms.GridForm([['title', 'short_description'], ['director','releasedate']])
         self.grab_widget(form.render(self.widgets))
 
     def test_vbox_form(self):
-        form = forms.VBoxForm([['title', 'short_description'], ['director', 'release_date']])
+        form = forms.VBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
 
     def test_hbox_form(self):
-        form = forms.HBoxForm([['title', 'short_description'], ['director', 'release_date']])
+        form = forms.HBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
 
     def test_nested_form(self):

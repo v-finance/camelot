@@ -355,7 +355,7 @@ the moment the tab is shown.
                 #
                 for j, vertical_expanding_of_widget in zip(range(i), self._vertical_expanding):
                     if vertical_expanding_of_widget == False:
-                        tab_widget = widget.widget( j )
+                        tab_widget = self.widget( j )
                         tab_widget.layout().addStretch( 1 )                
                 break
         self.currentChanged.connect( self.render_tab )
