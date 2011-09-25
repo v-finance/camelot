@@ -935,8 +935,8 @@ class ControlsTest(ModelThreadTestCase):
 
     def setUp(self):
         super(ControlsTest, self).setUp()
-        from camelot.admin.application_admin import ApplicationAdmin
-        self.app_admin = ApplicationAdmin()
+        from camelot_example.application_admin import MyApplicationAdmin
+        self.app_admin = MyApplicationAdmin()
 
     def test_table_view(self):
         from camelot.view.controls.tableview import TableView
@@ -945,14 +945,12 @@ class ControlsTest(ModelThreadTestCase):
         self.grab_widget(widget)
 
     def test_navigation_pane(self):
-        from camelot.admin.application_admin import ApplicationAdmin
         from camelot.view.controls import navpane2
         
-        app_admin = ApplicationAdmin()
-        widget = navpane2.NavigationPane(app_admin,
-                                         workspace = None,
-                                         parent = None)
-        widget.set_sections( app_admin.get_sections() )
+        widget = navpane2.NavigationPane( self.app_admin,
+                                          workspace = None,
+                                          parent = None )
+        widget.set_sections( self.app_admin.get_sections() )
         self.grab_widget(widget)
 
     def test_main_window(self):
@@ -981,26 +979,26 @@ class ControlsTest(ModelThreadTestCase):
         
     def test_desktop_workspace(self):
         from camelot.view.workspace import DesktopWorkspace
-        from camelot.admin.application_action import EntityAction
+        from camelot.admin.action.application_action import ApplicationAction
         from camelot.view.art import Icon
-        
+       
+        action1 = ApplicationAction()
+        action1.icon=Icon('tango/32x32/places/network-server.png')
+        action2 = ApplicationAction()
+        action2.icon=Icon('tango/32x32/places/user-trash.png')
+        action3 = ApplicationAction()
+        action3.icon=Icon('tango/32x32/places/start-here.png')
         desktopWorkspace = DesktopWorkspace(self.app_admin, None)
-        actions = [EntityAction('Action name',
-                                None,
-                                verbose_name='Verbose action name 1',
-                                icon=Icon('tango/32x32/places/network-server.png'),
-                                notification = True),
-                   EntityAction('Action name',
-                                None,
-                                verbose_name='Verbose action name 2',
-                                icon=Icon('tango/32x32/places/user-trash.png')),
-                   EntityAction('Action name',
-                                None,
-                                verbose_name='Verbose action name 3',
-                                icon=Icon('tango/32x32/places/start-here.png'))]
+        actions = [ action1, action2, action3 ]
+
         desktopWorkspace._background_widget.set_actions(actions)
         self.grab_widget(desktopWorkspace)
 
+    def test_progress_dialog( self ):
+        from camelot.view.controls.progress_dialog import ProgressDialog
+        dialog = ProgressDialog( 'Import cover images' )
+        self.grab_widget( dialog )
+        
     def test_user_exception(self):
         from camelot.view.controls.exception import register_exception, ExceptionDialog
         try:
