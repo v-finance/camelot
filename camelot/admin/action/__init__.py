@@ -152,10 +152,15 @@ class ActionRunner( QtCore.QEventLoop ):
     def generator( self, generator ):
         """Handle the creation of the generator"""
         self._generator = generator
-        post( self._iterate_until_blocking, 
-              self.next, 
-              self.exception,
-              args = ( self._generator.next, ) )
+        #
+        # when model_run is not a generator, but a normal function it returns
+        # no generator
+        #
+        if self._generator != None:
+            post( self._iterate_until_blocking, 
+                  self.next, 
+                  self.exception,
+                  args = ( self._generator.next, ) )
         
     @QtCore.pyqtSlot( object )
     def next( self, yielded ):

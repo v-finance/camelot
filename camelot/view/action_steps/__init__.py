@@ -25,7 +25,7 @@
 from change_object import ChangeObject
 from gui import Refresh
 from open_file import OpenFile, OpenStream, OpenJinjaTemplate
-from print_preview import PrintPreview
+from print_preview import PrintPreview, PrintJinjaTemplate
 from select_file import SelectOpenFile
 from update_progress import UpdateProgress
 
@@ -34,6 +34,7 @@ __all__ = [
     OpenFile.__name__,
     OpenJinjaTemplate.__name__,
     OpenStream.__name__,
+    PrintJinjaTemplate.__name__,
     PrintPreview.__name__,
     Refresh.__name__,
     SelectOpenFile.__name__,
