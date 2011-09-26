@@ -64,3 +64,24 @@ class PrintPreview( ActionStep ):
                                                     page_size = self.page_size or QtGui.QPrinter.A4, 
                                                     page_orientation= self.page_orientation or QtGui.QPrinter.Portrait )
 
+
+class PrintJinjaTemplate( PrintPreview ):
+    
+    def __init__( self,
+                  environment,
+                  template, 
+                  context={}, ):
+        """Render a jinja template into a print preview dialog.
+        
+        :param environment: a :class:`jinja2.Environment` object to be used
+            to load templates from.
+            
+        :param template: the name of the template as it can be fetched from
+            the Jinja environment.
+            
+        :param context: a dictionary with objects to be used when rendering
+            the template
+        """
+        template = environment.get_template( template )
+        html = template.render( context )
+        super( PrintJinjaTemplate, self).__init__( html )
