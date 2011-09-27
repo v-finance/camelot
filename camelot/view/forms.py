@@ -346,7 +346,7 @@ the moment the tab is shown.
         # the rendering of the other tabs
         #
         for i in range( len(tabs) ):
-            self.render_tab( 0 )
+            self.render_tab( i )
             if sum(self._vertical_expanding):
                 self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
                 #
