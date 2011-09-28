@@ -111,8 +111,10 @@ class DateEditor(CustomEditor):
         self.editingFinished.emit()
 
     def focusOutEvent(self, event):
-        self.setProperty( 'value', QtCore.QVariant( self.get_value() ) )
-        self.valueChanged.emit()
+        # explicitely set value on focus out to format the date in case
+        # it was entered unformatted
+        value = self.get_value()
+        self.set_value( value )
         self.editingFinished.emit()
 
     def set_value(self, value):
