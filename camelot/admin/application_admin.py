@@ -212,7 +212,11 @@ methods :
             mainwindow
         )
         shortcut_dump_state.activated.connect( self.dump_state )
-
+        shortcut_read_null = QtGui.QShortcut(
+            QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_0,
+            mainwindow
+        )
+        shortcut_read_null.activated.connect( self.read_null )
         return mainwindow
 
     @QtCore.pyqtSlot()
@@ -433,6 +437,18 @@ methods :
                                               xlrd.__VERSION__,
                                               xlwt.__VERSION__,
                                               unicode(sys.path))
+    
+    def read_null(self):
+        """Create a segmentation fault by reading null, this is to test
+        the faulthandling functions.  this method is triggered by pressing
+        :kbd:`Ctrl-Alt-0` in the GUI"""
+        ok = QtGui.QMessageBox.critical( None, 
+                                         'Experimental segfault',
+                                         'Are you sure you want to segfault the application',
+                                         buttons = QtGui.QMessageBox.No | QtGui.QMessageBox.Yes )
+        if ok == QtGui.QMessageBox.Yes:
+            import faulthandler
+            faulthandler._read_null()
     
     def dump_state(self):
         """Dump the state of the application to the output, this method is
