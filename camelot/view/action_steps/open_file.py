@@ -27,18 +27,18 @@ from PyQt4 import QtGui, QtCore
 from camelot.admin.action import ActionStep
 
 class OpenFile( ActionStep ):
+    """
+    Open a file with the preferred application from the user.  The absolute
+    path is preferred, as this is most likely to work when running from an
+    egg and in all kinds of setups.
     
+    :param path: the absolute path to the file to open
+    
+    The :keyword:`yield` statement will return :keyword:`True if the file was
+    opend successfull.
+    """
+        
     def __init__( self, path ):
-        """
-        Open a file with the preferred application from the user.  The absolute
-        path is preferred, as this is most likely to work when running from an
-        egg and in all kinds of setups.
-        
-        :param path: the absolute path to the file to open
-        
-        The :keyword:`yield` statement will return :keyword:`True if the file was
-        opend successfull.
-        """
         self._path = path
 
     def get_path( self ):
@@ -59,14 +59,14 @@ class OpenFile( ActionStep ):
         return QtGui.QDesktopServices.openUrl( url )
     
 class OpenStream( OpenFile ):
+    """Write a stream to a temporary file and open that file with the 
+    preferred application of the user.
+    
+    :param stream: the stream to write to a file
+    :param suffix: the suffix of the temporary file
+    """
 
     def __init__( self, stream, suffix='.txt' ):
-        """Write a stream to a temporary file and open that file with the 
-        preferred application of the user.
-        
-        :param stream: the stream to write to a file
-        :param suffix: the suffix of the temporary file
-        """
         import os
         import tempfile
         file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
@@ -76,27 +76,27 @@ class OpenStream( OpenFile ):
         super( OpenStream, self ).__init__( file_name )
 
 class OpenJinjaTemplate( OpenStream ):
+    """Render a jinja template into a temporary file and open that
+    file with the prefered application of the user.
+    
+    :param environment: a :class:`jinja2.Environment` object to be used
+        to load templates from.
+        
+    :param template: the name of the template as it can be fetched from
+        the Jinja environment.
+    
+    :param suffix: the suffix of the temporary file to create, this will
+        determine the application used to open the file.
+        
+    :param context: a dictionary with objects to be used when rendering
+        the template
+    """
     
     def __init__( self,
                   environment,
                   template, 
                   suffix='.txt', 
                   context={}, ):
-        """Render a jinja template into a temporary file and open that
-        file with the prefered application of the user.
-        
-        :param environment: a :class:`jinja2.Environment` object to be used
-            to load templates from.
-            
-        :param template: the name of the template as it can be fetched from
-            the Jinja environment.
-        
-        :param suffix: the suffix of the temporary file to create, this will
-            determine the application used to open the file.
-            
-        :param context: a dictionary with objects to be used when rendering
-            the template
-        """
         from cStringIO import StringIO
         template = environment.get_template( template )
         template_stream = template.stream( context )

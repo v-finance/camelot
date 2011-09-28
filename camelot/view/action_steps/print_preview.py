@@ -27,31 +27,33 @@ from PyQt4 import QtGui
 from camelot.admin.action import ActionStep
 
 class PrintPreview( ActionStep ):
+    """
+    Display a print preview dialog box.
+    
+    :param html: a string containing the html to render in the print
+        preview.
+        
+    the rendering of the html can be customised using these attributes :
+    
+    .. attribute:: html_document
+    
+        the class used to render the html, by default a
+        :class:`QtGui.QTextDocument` is taken, but a :class:`QtWebKit.QWebView` 
+        can be used as well.
+    
+    .. attribute:: page_size
+    
+        the page size, by default :class:`QtGui.QPrinter.A4` is used
+    
+    .. attribute:: PageOrientation
+    
+        the page orientation, by default :class:`QtGui.QPrinter.Portrait`
+        is used.
+    
+    .. image:: /_static/simple_report.png
+        """
     
     def __init__( self, html ):
-        """
-        Display a print preview dialog box.
-        
-        :param html: a string containing the html to render in the print
-            preview.
-            
-        the rendering of the html can be customised using these attributes :
-
-        .. attribute:: html_document
-            the class used to render the html, by default a
-            :class:`QtGui.QTextDocument` is taken, but a :class:`QtWebKit.QWebView` 
-            can be used as well.
-        
-        .. attribute:: page_size
-            the page size, by default :class:`QtGui.QPrinter.A4` is used
-        
-        .. attribute:: PageOrientation
-            the page orientation, by default :class:`QtGui.QPrinter.Portrait`
-            is used.
-        
-        .. image:: /_static/simple_report.png
-            """
-
         self.html_document = None
         self.page_size = None
         self.page_orientation = None

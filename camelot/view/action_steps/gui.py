@@ -26,7 +26,7 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 
-from camelot.admin.action import ActionStep
+from camelot.admin.action.base import ActionStep
 
 class Refresh( ActionStep ):
     """Refresh all the open screens on the desktop, this will reload queries

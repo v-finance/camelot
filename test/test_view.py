@@ -530,7 +530,7 @@ class FormTest(ModelThreadTestCase):
 
     def test_tab_form(self):
         form = forms.TabForm([('First tab', ['title', 'short_description']),
-                              ('Second tab', ['director', 'release_date'])])
+                              ('Second tab', ['director', 'releasedate'])])
         self.grab_widget(form.render(self.widgets))
 
     def test_group_box_form(self):
@@ -949,7 +949,7 @@ class ControlsTest(ModelThreadTestCase):
         from camelot_example.application_admin import MyApplicationAdmin
         self.app_admin = MyApplicationAdmin()
 
-    def wait_for_animation():
+    def wait_for_animation( self ):
         # wait a while to make sure all animations are finished
         for i in range(10):
             time.sleep(0.1)

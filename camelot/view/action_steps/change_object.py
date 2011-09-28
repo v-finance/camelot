@@ -33,7 +33,16 @@ from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.model_thread import post
 
 class ChangeObjectDialog( StandaloneWizardPage ):
+    """A dialog to change an object.  This differs from a FormView in that
+    it does not contains Actions, and has an OK button that is enabled when
+    the object is valid.
     
+    :param obj: The object to change
+    :param admin: The admin class used to create a form
+    
+    .. image:: /_static/actionsteps/change_object.png
+    """
+        
     def __init__( self, 
                   obj, 
                   admin,
@@ -42,15 +51,6 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   icon = Icon('tango/22x22/categories/preferences-system.png'),
                   parent=None, 
                   flags=QtCore.Qt.WindowFlags(0) ):
-        """A dialog to change an object.  This differs from a FormView in that
-        it does not contains Actions, and has an OK button that is enabled when
-        the object is valid.
-        
-        :param obj: The object to change
-        :param admin: The admin class used to create a form
-        
-        .. image:: /_static/actionsteps/change_object.png
-        """
         from camelot.view.controls.formview import FormWidget
         from camelot.view.proxy.collection_proxy import CollectionProxy
         super(ChangeObjectDialog, self).__init__( '', parent, flags )

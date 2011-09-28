@@ -33,7 +33,7 @@ In this file we create subclass of
 :class:`camelot.admin.action.application_action.ApplicationAction` which will be 
 the entry point of the import wizard::
 
-    from camelot.admin.action.application_action import ApplicationAction
+    from camelot.admin.action import ApplicationAction
     from camelot.core.utils import ugettext_lazy as _
     
     class ImportCovers( ApplicationAction ):
@@ -80,7 +80,7 @@ Select the files
 
 To make the action do something usefull, we will implement its ``model_run``
 method.  Inside the ``model_run`` method, we can :keyword:`yield` various 
-:class:`camelot.admin.action.ActionStep` objects to the GUI.  An ``ActionStep`` 
+:class:`camelot.admin.action.base.ActionStep` objects to the GUI.  An ``ActionStep`` 
 is a part of the action that requires user interaction (the user answering 
 a question).  The result of this interaction is returned by the 
 :keyword:`yield` statement.
@@ -136,7 +136,7 @@ written to the database.
 
 **Keep the user informed**
 
-For each movie imported, a :class:`camelot.view.action_steps.UpdateProgress`
+For each movie imported, a :class:`camelot.view.action_steps.update_progress.UpdateProgress`
 object is :keyword:`yield` to the GUI to inform the user of the import progress.
 Each time such an object is yielded, the progress bar is updated.
    
@@ -184,11 +184,11 @@ We went through the basics of the action framework Camelot :
     
   * Implementing the ``model_run`` method
   
-  * :keyword:`yield` :class:`camelot.admin.action.ActionStep` objects to 
+  * :keyword:`yield` :class:`camelot.admin.action.base.ActionStep` objects to 
     interact with the user
     
-  * Add the :class:`camelot.admin.action.Action` object to a 
+  * Add the :class:`camelot.admin.action.base.Action` object to a 
     :class:`camelot.admin.section.Section` in the side pane
   
-More :class:`camelot.admin.action.ActionStep` classes can be found in 
+More :class:`camelot.admin.action.base.ActionStep` classes can be found in 
 the :mod:`camelot.view.action_steps` module.

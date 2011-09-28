@@ -1,4 +1,4 @@
-from camelot.admin.action.application_action import ApplicationAction
+from camelot.admin.action import ApplicationAction
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import Icon
 

@@ -70,6 +70,7 @@ various layouts.  Each subclass maps to a QT Layout class.
 
 .. automodule:: camelot.view.forms
    :members:
+   :noindex:
    
 Customizing Forms
 =================

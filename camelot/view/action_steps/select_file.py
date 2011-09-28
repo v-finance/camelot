@@ -28,26 +28,26 @@ from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 
 class SelectOpenFile( ActionStep ):
+    """Select one or more files to open or to process.
+    
+    :param file_name_filter: Filter on the names of the files that can
+        be selected, such as 'All files (*)'.  
+        See :class:`QtGui.QFileDialog` for more documentation.
+    
+    .. attribute:: single
+        defaults to :keyword:`True`, set to :keyword:`False` if selection
+        of multiple files is allowed
+        
+    The :keyword:`yield` statement of :class:`SelectOpenFile` returns a list
+    of selected file names.  This list has only one element when single is
+    set to :keyword:`True`.  Raises a 
+    :class:`camelot.core.exception.CancelRequest` when no file was selected.
+    
+    .. image:: /_static/actionsteps/select_file.png
+    
+    """
     
     def __init__( self, file_name_filter = '' ):
-        """Select one or more files to open or to process.
-        
-        :param file_name_filter: Filter on the names of the files that can
-            be selected, such as 'All files (*)'.  
-            See :class:`QtGui.QFileDialog` for more documentation.
-        
-        .. attribute:: single
-            defaults to :keyword:`True`, set to :keyword:`False` if selection
-            of multiple files is allowed
-            
-        The :keyword:`yield` statement of :class:`SelectOpenFile` returns a list
-        of selected file names.  This list has only one element when single is
-        set to :keyword:`True`.  Raises a 
-        :class:`camelot.core.exception.CancelRequest` when no file was selected.
-        
-        .. image:: /_static/actionsteps/select_file.png
-        
-        """
         self.file_name_filter = file_name_filter
         self.single = True
     

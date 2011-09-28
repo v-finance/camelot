@@ -51,12 +51,13 @@ Summary
 =======
 
 In general, actions are defined by subclassing one of the standard Camelot
-actions  (:class:`camelot.admin.action.ApplicationAction`,
-:class:`camelot.admin.action.ListAction` or 
-:class:`camelot.admin.action.FormAction`)
+actions  (:class:`camelot.admin.action.application_action.ApplicationAction`,
+:class:`camelot.admin.action.list_action.ListAction` or 
+:class:`camelot.admin.action.list_action.FormAction`)
 that share the same behavior and class attributes ::
 
-    from camelot.admin.action import ApplicationAction, PrintPreview
+    from camelot.admin.action import ApplicationAction
+    from camelot.view.action_steps import PrintPreview
     from camelot.core.utils import ugettext_lazy as _
     from camelot.view.art import Icon
     
@@ -73,11 +74,11 @@ Each standard action has two methods, :meth:`gui_run` and
 them should be overloaded in the subclass to either run the action in the
 gui thread or to run the action in the model thread.  The default 
 :meth:`ApplicationAction.gui_run`
-behavior is to pop-up a :class:`camelot.view.controls.ProgressDialog` dialog and 
+behavior is to pop-up a :class:`camelot.view.controls.progress_dialog.ProgressDialog` dialog and 
 start the :meth:`model_run` method in the model thread.
 
 :meth:`model_run` in itself is a generator, that can yield 
-object back to the gui, such as a :class:`camelot.admin.action.PrintPreview`.
+object back to the gui, such as a :class:`camelot.view.action_steps.print_preview.PrintPreview`.
             
 The action subclass can than be used a an element of the actions list of an 
 :class:`camelot.admin.application_admin.ApplicationAdmin` subclass::
@@ -107,30 +108,32 @@ will be blocked while the action in the GUI thread takes place, eg ::
 Will pop up a print preview dialog in the GUI.
 
 Events that can be yielded to the GUI should be of type 
-:class:`camelot.admin.action.ActionStep`.  Action steps are reusable parts of
+:class:`camelot.admin.action.base.ActionStep`.  Action steps are reusable parts of
 an action:
 
-.. autoclass:: camelot.admin.action.ActionStep
+.. autoclass:: camelot.admin.action.base.ActionStep
+   :noindex:
 
 Possible Action Steps that can be yielded to the GUI include:
 
-  * :class:`camelot.view.action_steps.ChangeObject`
-  * :class:`camelot.view.action_steps.PrintPreview`
-  * :class:`camelot.view.action_steps.OpenFile`
-  * :class:`camelot.view.action_steps.OpenStream`
-  * :class:`camelot.view.action_steps.OpenJinjaTemplate`
-  * :class:`camelot.view.action_steps.PrintPreview`
-  * :class:`camelot.view.action_steps.Refresh`
+  * :class:`camelot.view.action_steps.change_object.ChangeObject`
+  * :class:`camelot.view.action_steps.print_preview.PrintPreview`
+  * :class:`camelot.view.action_steps.print_preview.PrintJinjaTemplate`
+  * :class:`camelot.view.action_steps.open_file.OpenFile`
+  * :class:`camelot.view.action_steps.open_file.OpenStream`
+  * :class:`camelot.view.action_steps.open_file.OpenJinjaTemplate`
+  * :class:`camelot.view.action_steps.gui.Refresh`
   * :class:`camelot.view.action_steps.ShowPixmap`
   * :class:`camelot.view.action_steps.ShowChart`
 
 keep the user informed about progress
 -------------------------------------
 
-An :obj:`camelot.view.action_steps.UpdateProgress` object can be yielded, to update
+An :obj:`camelot.view.action_steps.update_progress.UpdateProgress` object can be yielded, to update
 the state of the progress dialog:
 
 .. autoclass:: camelot.view.action_steps.UpdateProgress
+   :noindex:
         
 This should be done regulary to keep the user informed about the
 progres of the action::
@@ -163,7 +166,7 @@ queries, manipulating files, etc.
 
 Whenever a part of the model has been changed, it might be needed to inform
 the GUI about this, so that it can update itself, the easy way of doing so
-is by yielding an instance of :class:`camelot.view.action_steps.FlushSession` 
+is by yielding an instance of :class:`camelot.view.action_steps.orm.FlushSession` 
 such as::
 
     from sqlalchemy.orm.session import object_session
@@ -175,11 +178,11 @@ the GUI so that the flushed changes are shown to the user by updating the
 visualisation of the changed movie on every screen in the application that 
 displays this object.  Alternative updates that can be generated are :
 
-  * :class:`camelot.view.action_steps.ObjectUpdated`, if one wants to inform
+  * :class:`camelot.view.action_steps.orm.ObjectUpdated`, if one wants to inform
     the GUI an object is going to be updated.
-  * :class:`camelot.view.action_steps.ObjectDeleted`, if one wants to inform
+  * :class:`camelot.view.action_steps.orm.ObjectDeleted`, if one wants to inform
     the GUI an object is going to be deleted.
-  * :class:`camelot.view.action_steps.ObjectCreated`, if one wants to inform
+  * :class:`camelot.view.action_steps.orm.ObjectCreated`, if one wants to inform
     the GUI an object has been created.
 
 raise exceptions
@@ -217,7 +220,7 @@ first needs to be defined::
             field_attributes = { 'earliest_releasedate':{'delegate':delegates.DateDelegate},
                                  'latest_releasedate':{'delegate':delegates.DateDelegate}, }
                                  
-Than a :class:`camelot.view.action_steps.ChangeObject` can be :keyword:`yield` to present
+Than a :class:`camelot.view.action_steps.change_object.ChangeObject` can be :keyword:`yield` to present
 the options to the user and get the filled in values back:
 
 .. literalinclude:: ../../../../camelot/bin/meta.py
@@ -237,7 +240,7 @@ Other ways of requesting information are :
   * :class:`camelot.view.action_steps.NewObject`, to request the user to fill in
     a new form for an object of a specified class.  This will return such
     a new object or None if the user canceled the operation.
-  * :class:`camelot.view.action_steps.SelectFile`, to request to select an existing
+  * :class:`camelot.view.action_steps.select_file.SelectFile`, to request to select an existing
     file to process or a new file to save information.
 
 States and Modes
@@ -266,18 +269,20 @@ Modes
 
 An action widget can be triggered in different modes, for example a print button
 can be triggered as simply 'Print' or 'Export to PDF'.  The different modes of
-an action are specified as a list of :class:`camelot.admin.action.Mode` objects:
+an action are specified as a list of :class:`camelot.admin.action.base.Mode` objects:
 
-.. autoclass:: camelot.admin.action.Mode        
+.. autoclass:: camelot.admin.action.base.Mode
+   :noindex:        
 
 Actions and Context
 ===================
 
-All action classes are based on the :class:`camelot.admin.action.Action`
-class.  An Action is in fact a special :class:`camelot.admin.action.ActionStep`,
+All action classes are based on the :class:`camelot.admin.action.base.Action`
+class.  An Action is in fact a special :class:`camelot.admin.action.base.ActionStep`,
 with some additional methods:
 
-.. autoclass:: camelot.admin.action.Action
+.. autoclass:: camelot.admin.action.base.Action
+   :noindex:
     
 The :attr:`name` attribute specifies the name of the action as it will be stored
 in the permission and preferences system.
@@ -286,12 +291,13 @@ Context
 -------
 
 Depending on where an action was triggered, a different context will be 
-available during its execution in :meth:`camelot.admin.action.Action.gui_run`
-and :meth:`camelot.admin.action.Action.model_run`.
+available during its execution in :meth:`camelot.admin.action.base.Action.gui_run`
+and :meth:`camelot.admin.action.base.Action.model_run`.
 
 The minimal context available in the *GUI thread* is :
 
-.. autoclass:: camelot.admin.action.GuiContext
+.. autoclass:: camelot.admin.action.base.GuiContext
+   :noindex:
 
 .. _doc-application-action:
 
@@ -326,7 +332,7 @@ or specify the :attr:`actions` attribute::
 FormAction
 ----------
 
-The API of the :class:`camelot.admin.action.FormAction`::
+The API of the :class:`camelot.admin.action.form_action.FormAction`::
 
     class FormAction( AbstractAction ):
     
@@ -376,7 +382,7 @@ The API of the :class:`camelot.admin.action.FormAction`::
 ListAction
 ----------
 
-The API of the :class:`camelot.admin.action.ListAction`::
+The API of the :class:`camelot.admin.action.list_action.ListAction`::
 
     class ListAction( AbstractAction ):
     
