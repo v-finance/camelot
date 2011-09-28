@@ -64,8 +64,8 @@ Then make sure the plain old Python object is mapped to the query, just after
 the Elixir model has been setup, by modifying the setup_model function in 
 settings.py:
 
-.. literalinclude:: ../../../../camelot_example/settings.py
-   :pyobject: setup_model
+.. literalinclude:: ../../../../camelot_example/main.py
+   :pyobject: ExampleSettings.setup_model
 
 And add the plain old Python object to a section in the **ApplicationAdmin**:
 

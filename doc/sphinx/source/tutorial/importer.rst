@@ -4,6 +4,10 @@
  Add an import wizard to an application
 ########################################
 
+.. note::
+  This tutorial depends on functionallity under development in the trunk.
+  This functionallity is not yet available in the latest release.
+  
 In this tutorial we will add an import wizard to the movie database 
 application created in the :ref:`tutorial-videostore` tutorial.
 

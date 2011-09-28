@@ -244,6 +244,15 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_field_attributes( editable = True, tooltip = 'tooltip')
         self.grab_widget( editor, 'editable_tooltip')
 
+    def test_LocalFileEditor( self ):
+        editor = self.editors.LocalFileEditor( parent=None )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_value( '/home/lancelot/quests.txt' )
+        self.grab_default_states( editor )
+        self.assertEqual( editor.get_value(), '/home/lancelot/quests.txt' )
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        
     def test_StarEditor(self):
         editor = self.editors.StarEditor(parent=None, maximum=5)
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -721,6 +730,12 @@ class DelegateTest(ModelThreadTestCase):
         self.grab_delegate(delegate, 'a')
         delegate = self.delegates.EnumerationDelegate(parent=None, choices=choices, editable=False)
         self.grab_delegate(delegate, 'a', 'disabled')
+
+    def testLocalFileDelegate(self):
+        delegate = self.delegates.LocalFileDelegate(parent=None)
+        self.grab_delegate(delegate, '/home/lancelot/quests.txt')
+        delegate = self.delegates.LocalFileDelegate(parent=None, editable=False)
+        self.grab_delegate(delegate, '/home/lancelot/quests.txt', 'disabled')
         
     def testLabelDelegate(self):
         delegate = self.delegates.LabelDelegate(parent=None)

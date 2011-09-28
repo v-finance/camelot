@@ -24,13 +24,7 @@
 from camelot.view.model_thread import model_function
 
 class Section(object):
-
-    def __init__( self, 
-                  verbose_name,
-                  application_admin,
-                  icon=None, 
-                  items=[] ):
-        """A Section as displayed in the left pane of the application.  Each Section
+    """A Section as displayed in the left pane of the application.  Each Section
 contains a list of SectionItems the user can click on.  Sections should be used
 in the definition of the Application admin::
 
@@ -39,7 +33,13 @@ in the definition of the Application admin::
    :end-before: end section with action
 
 .. image:: /_static/controls/navigation_pane.png
-        """
+    """
+        
+    def __init__( self, 
+                  verbose_name,
+                  application_admin,
+                  icon=None, 
+                  items=[] ):
         self.verbose_name = verbose_name
         self.icon = icon
         self.items = structure_to_section_items( items, application_admin )

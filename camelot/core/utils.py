@@ -214,6 +214,10 @@ def dgettext(domain, message):
 
 
 class ugettext_lazy(object):
+    """Like :function:`ugettext`, but delays the translation until the string
+    is shown to the user.  This makes it possible for the user to translate
+    the string.
+    """
 
     def __init__(self, string_to_translate):
         assert isinstance(string_to_translate, basestring)

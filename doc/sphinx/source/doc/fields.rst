@@ -19,23 +19,32 @@ can be found on the `SQLAlchemy website <http://www.sqlalchemy.org/docs/referenc
 The types used mosed common are :
 
 .. autoclass:: sqlalchemy.types.Boolean
+   :noindex:
 
 .. autoclass:: sqlalchemy.types.Date
-
+   :noindex:
+   
 .. autoclass:: sqlalchemy.types.DateTime
-
+   :noindex:
+   
 .. autoclass:: sqlalchemy.types.Float
-
+   :noindex:
+   
 .. autoclass:: sqlalchemy.types.Integer
-
+   :noindex:
+   
 .. autoclass:: sqlalchemy.types.Numeric
-
+   :noindex:
+   
 .. autoclass:: sqlalchemy.types.Time
-
+   :noindex:
+   
 .. autoclass:: sqlalchemy.types.Unicode
+   :noindex:
    
 Camelot field types
 -------------------
 
 .. automodule:: camelot.types
    :members:
+   :noindex:

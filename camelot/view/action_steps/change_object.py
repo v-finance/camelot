@@ -105,15 +105,15 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             ok_button.setEnabled( complete )
 
 class ChangeObject( ActionStep ):
+    """
+    Pop up a form for the user to change an object
     
-    def __init__( self, obj, admin=None ):
-        """
-        Pop up a form for the user to change an object
+    :param obj: the object to change
+    :param admin: an instance of an admin class to use to edit the
+        object, None if the default is to be taken
+    """
         
-        :param obj: the object to change
-        :param admin: an instance of an admin class to use to edit the
-            object, None if the default is to be taken
-        """
+    def __init__( self, obj, admin=None ):
         self._obj = obj
         self._admin = admin
         

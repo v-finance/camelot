@@ -55,4 +55,4 @@ Available delegates
 ===================
 
 .. automodule:: camelot.view.controls.delegates
-
+   :noindex:

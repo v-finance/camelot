@@ -4,7 +4,11 @@
  New Actions
 #############
 
-status : draft
+status : approved
+
+.. note::
+  This proposal is being implemented in the trunk, the functionallity described
+  here is not yet available in the latest release.
 
 Motivation
 ==========
@@ -53,7 +57,7 @@ Summary
 In general, actions are defined by subclassing one of the standard Camelot
 actions  (:class:`camelot.admin.action.application_action.ApplicationAction`,
 :class:`camelot.admin.action.list_action.ListAction` or 
-:class:`camelot.admin.action.list_action.FormAction`)
+:class:`camelot.admin.action.form_action.FormAction`)
 that share the same behavior and class attributes ::
 
     from camelot.admin.action import ApplicationAction
@@ -229,7 +233,7 @@ the options to the user and get the filled in values back:
                                  
 Will show a dialog to modify the object:
 
-..image:: /_static/actionsteps/change_object.png
+.. image:: /_static/actionsteps/change_object.png
 
 When the user presses :guilabel:`Cancel` button of the dialog, the 
 :keyword:`yield` statement will raise a 
@@ -240,8 +244,8 @@ Other ways of requesting information are :
   * :class:`camelot.view.action_steps.NewObject`, to request the user to fill in
     a new form for an object of a specified class.  This will return such
     a new object or None if the user canceled the operation.
-  * :class:`camelot.view.action_steps.select_file.SelectFile`, to request to select an existing
-    file to process or a new file to save information.
+  * :class:`camelot.view.action_steps.select_file.SelectOpenFile`, to request 
+    to select an existing file to process or a new file to save information.
 
 States and Modes
 ================
