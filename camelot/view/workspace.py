@@ -188,11 +188,11 @@ class ActionButtonInfoWidget(QtGui.QWidget):
     def setInfoFromAction(self, action):
         actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
         if actionNameLabel is not None:
-            actionNameLabel.setText( unicode( action.verbose_name ) )
+            actionNameLabel.setText( unicode( action.get_verbose_name() ) )
         
         actionDescriptionLabel = self.findChild(QtGui.QLabel, 'actionDescriptionLabel')
         if actionDescriptionLabel is not None:
-            tooltip = unicode( action.tooltip or '' )
+            tooltip = unicode( action.get_tooltip() or '' )
             actionDescriptionLabel.setText(tooltip)
             if tooltip:
                 # Do not use show() or hide() in this case, since it will
@@ -244,7 +244,7 @@ class ActionButton(QtGui.QLabel):
         # used to continuously store the state of that animation.
         self.selectionAnimationState = QtCore.QAbstractAnimation.Stopped
 
-        self.setPixmap(action.icon.getQPixmap())
+        self.setPixmap(action.get_icon().getQPixmap())
         self.resize(self.pixmap().width(), self.pixmap().height())
         self.setMaximumHeight(160)
         

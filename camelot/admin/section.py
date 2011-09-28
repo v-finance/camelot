@@ -68,16 +68,16 @@ class SectionItem(object):
         self.verbose_name = verbose_name
 
     def get_verbose_name(self):
-        return self.verbose_name or self.action.verbose_name
+        return self.verbose_name or self.action.get_verbose_name()
 
     def get_action(self):
         return self.action
         
     def get_icon(self):
-        return self.action.icon
+        return self.action.get_icon()
 
     def get_modes(self):
-        return self.action.modes
+        return self.action.get_modes()
     
 def structure_to_section_items(structure, application_admin):
 

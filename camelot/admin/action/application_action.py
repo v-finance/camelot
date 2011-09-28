@@ -27,7 +27,7 @@ This is part of a test implementation of the new actions draft, it is not
 intended for production use
 """
 
-from camelot.admin.action import Action, GuiContext, Mode
+from camelot.admin.action.base import Action, GuiContext, Mode
 from camelot.core.utils import ugettext, ugettext_lazy as _
 
 class ApplicationActionGuiContext( GuiContext ):
@@ -106,9 +106,8 @@ class TableViewAction( EntityAction ):
 
     modes = [ Mode( 'new_tab', _('Open in New Tab') ) ]
     
-    @property
-    def verbose_name( self ):
-        return super( TableViewAction, self ).verbose_name or self._entity_admin.get_verbose_name_plural()
+    def get_verbose_name( self ):
+        return self.verbose_name or self._entity_admin.get_verbose_name_plural()
     
     def gui_run( self, gui_context ):
         table_view = self._entity_admin.create_table_view()
@@ -120,12 +119,10 @@ class TableViewAction( EntityAction ):
 class NewViewAction( EntityAction ):
     """An application action that opens a new view of an Entity"""
 
-    @property
-    def verbose_name( self ):
-        return super( NewViewAction, self ).verbose_name or ugettext('New %s')%(self._entity_admin.get_verbose_name())
+    def get_verbose_name( self ):
+        return self.verbose_name or ugettext('New %s')%(self._entity_admin.get_verbose_name())
     
-    @property
-    def tooltip(self):
+    def get_tooltip(self):
         return ugettext('Create a new %s')%(self._entity_admin.get_verbose_name())
         
     def gui_run( self, gui_context ):
