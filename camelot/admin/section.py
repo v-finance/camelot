@@ -26,7 +26,7 @@ from camelot.view.model_thread import model_function
 class Section(object):
     """A Section as displayed in the left pane of the application.  Each Section
 contains a list of SectionItems the user can click on.  Sections should be used
-in the definition of the Application admin::
+in the definition of the Application admin:
 
 .. literalinclude:: ../../../../camelot_example/application_admin.py
    :start-after: begin section with action

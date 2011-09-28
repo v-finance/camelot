@@ -24,7 +24,7 @@
 
 import logging
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore
 
 from camelot.admin.action import ActionStep
 from camelot.core.exception import GuiException, CancelRequest
