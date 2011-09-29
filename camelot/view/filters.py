@@ -86,7 +86,7 @@ class Filter(object):
         from elixir import session
         filter_names = []
         joins = []
-        table = admin.entity.table
+        table = admin.mapper.mapped_table
         path = self.attribute.split('.')
         for field_name in path:
             attributes = admin.get_field_attributes(field_name)

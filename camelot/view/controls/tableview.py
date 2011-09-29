@@ -184,7 +184,12 @@ and above the text.
     def _update_frozen_table(self):
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
         if frozen_table_view:
-            frozen_table_view.setSelectionModel(self.selectionModel())
+            selection_model = self.selectionModel()
+            if selection_model != None: 
+                # explicitly check if there is a selection model, because
+                # setting the selection model to None will cause an assertion
+                # failure in Qt
+                frozen_table_view.setSelectionModel( selection_model )
             last_frozen =  min(self._columns_frozen, self.model().columnCount())
             frozen_width = 0
             for column in range(0, last_frozen):
