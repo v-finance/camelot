@@ -45,12 +45,13 @@ class BusyWidget(QtGui.QWidget):
         """start/stop the animation
         :arg busy_state: True or False
         """
-        #import sip
-        #if sip.isdeleted(self):
-        #    """underlying object is deleted, no use trying anything"""
-        #    return
-
-        if busy_state:
+        #
+        # the set_busy method might get called multiple times with 
+        # busy_state=True before calls with busy_state=False,
+        # so a check on self.timer is needed to prevent multiple timers
+        # from being started
+        #
+        if busy_state and self.timer==None:
             self.timer = self.startTimer(200)
             self.counter = 0
             self.show()
@@ -89,5 +90,3 @@ class BusyWidget(QtGui.QWidget):
         self.highlighted_orb -= 1
         if self.highlighted_orb < 0:
             self.highlighted_orb = self.orbs
-
-
