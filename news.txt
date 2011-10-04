@@ -10,7 +10,7 @@ Release 11.09.10
  
  * The settings mechanism becomes plugable
  
- * Print previeuw does pdf export when no printer is available
+ * Print preview does pdf export when no printer is available
  
  * Wizard to create a new project
  
