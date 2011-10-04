@@ -660,7 +660,12 @@ position in the query.
             if new_value == ValueLoading:
                 return None
 
-            o = self._get_object( row )
+            #
+            # don't use _get_object, but only update objects which are in the
+            # cache, otherwise it is not sure that the object updated is the
+            # one that was edited
+            #
+            o = self.edit_cache.get_entity_at_row( row )
             if not o:
                 # the object might have been deleted from the collection while the editor
                 # was still open
