@@ -48,6 +48,15 @@ references to widgets and other usefull information.
         """
         self.progress_dialog = None
         self.mode_name = None
+        
+    def copy( self ):
+        """Create a copy of the GuiContext, this function is used
+        to create new GuiContext's that are more specialized without
+        modifying the original one."""
+        new_context = self.__class__()
+        new_context.progress_dialog = self.progress_dialog
+        new_context.mode_name = self.mode_name
+        return new_context
                     
 class Mode( object ):
     """A mode is a way in which an action can be triggered, a print action could

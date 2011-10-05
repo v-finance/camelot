@@ -454,4 +454,3 @@ Inspiration
     
   * Action steps were introduced to be able to take advantage of the new language
     features of :pep:`380` in Python 3.3
-

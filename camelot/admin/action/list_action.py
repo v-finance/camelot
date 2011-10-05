@@ -27,24 +27,48 @@ This is part of a test implementation of the new actions draft, it is not
 intended for production use
 """
 
-from ApplicationAction import ApplicationActionGuiContext
+from ApplicationAction import ApplicationAction, ApplicationActionGuiContext
 
 class ListActionGuiContext( ApplicationActionGuiContext ):
-    """The context for an :class:`ListAction`.  On top of the attributes
-    of the :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, this context contains :
-    
-    .. attribute:: selection_model
-    
-       the :class:`QtGui.QItemSelectionModel` class that relates to the table 
-       view on which the widget will be placed.
-       
-    .. attribute:: admin
-    
-       the admin object used to for the table view.
-    """
     
     def __init__( self ):
+        """The context for an :class:`ListAction`.  On top of the attributes of the 
+        :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
+        this context contains :
+    
+        .. attribute:: selection_model
+        
+           the :class:`QtGui.QItemSelectionModel` class that relates to the table 
+           view on which the widget will be placed.
+           
+        """
         super( ListActionGuiContext, self ).__init__()
-        self.workspace = None
-        self.admin = None
         self.selection_model = None
+
+    def copy( self ):
+        new_context = super( ListActionGuiContext, self ).copy()
+        new_context.selection_model = selection_model
+        return new_context
+    
+class ListAction( ApplicationAction ):
+
+    def render( self, gui_context, parent ):
+        """
+        :param gui_context: the context available in the *GUI thread*
+            of type :class:`ListActionGuiContext`
+        :param parent: the parent :class:`QtGui.QWidget`
+        :return: a :class:`QtGui.QWidget` which when triggered
+            will execute the run method.
+        """
+        from camelot.view.contols.action_widget import ActionPushButton
+        return ActionPushButton( self, gui_context, parent )
+        
+    def gui_run( self, gui_context ):
+        """This method is called inside the GUI thread, by default it
+        pops up a progress dialog and executes the :meth:`model_run` in 
+        the Model thread, while updating the progress dialog.
+
+        :param gui_context: the context available in the *GUI thread*
+          of type :class:`ListActionGuiContext`
+        """
+        super( ApplicationAction, self ).__init__( gui_context )

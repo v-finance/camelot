@@ -22,11 +22,6 @@
 #
 #  ============================================================================
 
-"""
-This is part of a test implementation of the new actions draft, it is not
-intended for production use
-"""
-
 from camelot.admin.action.base import Action, GuiContext, Mode
 from camelot.core.utils import ugettext, ugettext_lazy as _
 
@@ -35,10 +30,12 @@ class ApplicationActionGuiContext( GuiContext ):
     of the :class:`camelot.admin.action.GuiContext`, this context contains :
     
     .. attribute:: workspace
-        the workspace of the application in which views can be opened or
-        adapted.
+    
+        the the :class:`camelot.view.workspace.DesktopWorkspace` of the 
+        application in which views can be opened or adapted.
         
     .. attribute:: admin
+    
         the application admin.
     """
     
@@ -46,6 +43,12 @@ class ApplicationActionGuiContext( GuiContext ):
         super( ApplicationActionGuiContext, self ).__init__()
         self.workspace = None
         self.admin = None
+        
+    def copy( self ):
+        new_context = super( ApplicationActionGuiContext, self ).copy()
+        new_context.workspace = self.workspace
+        new_context.admin = self.admin
+        return new_context
         
 class ApplicationAction( Action ):
     """A subclass of :class:`camelot.admin.action.Action` that runs in the 
@@ -61,23 +64,23 @@ class ApplicationAction( Action ):
     :meth:`model_run` should be reimplemented in a subclass.
     """
 
-    def render( self, workspace, parent ):
+    def render( self, gui_context, parent ):
         """
-        :param workspace: the :class:`camelot.view.workspace.DesktopWorkspace`
-            that is active.
+        :param gui_context: the context available in the *GUI thread*
+            of type :class:`ApplicationActionGuiContext`
         :param parent: the parent :class:`QtGui.QWidget`
         :return: a :class:`QtGui.QWidget` which when triggered
             will execute the gui_run method. of the action.
         """
-        from camelot.view.workspace import ActionButton
-        return ActionButton( self, workspace, parent )
+        from camelot.view.controls.action_widget import ActionLabel
+        return ActionLabel( self, gui_context, parent )
         
     def gui_run( self, gui_context ):
         """This method is called inside the GUI thread, by default it
         pops up a progress dialog and executes the :meth:`model_run` in 
         the Model thread, while updating the progress dialog.
 
-        :param gui_context: the context available in ghe *GUI thread*
+        :param gui_context: the context available in the *GUI thread*
           of type :class:`ApplicationActionGuiContext`
         """
         from camelot.view.controls.progress_dialog import ProgressDialog
