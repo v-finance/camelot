@@ -47,7 +47,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
 
     def copy( self ):
         new_context = super( ListActionGuiContext, self ).copy()
-        new_context.selection_model = selection_model
+        new_context.selection_model = self.selection_model
         return new_context
     
 class ListAction( ApplicationAction ):
