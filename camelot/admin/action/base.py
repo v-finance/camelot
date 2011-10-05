@@ -28,10 +28,26 @@ from PyQt4 import QtGui
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
+class ModelContext( object ):
+    """
+The Model context in which an action is running.  The model context can contain
+reference to database sessions or other model related data. This object can not 
+contain references to widgets as those belong strictly to the :class:`GuiContext`.    
+
+.. attribute:: mode_name
+
+    the name of the mode in which the action was triggered
+    """
+          
+    def __init__( self ):
+        self.mode_name = None
+        
 class GuiContext( object ):
     """
 The GUI context in which an action is running.  This object can contain
-references to widgets and other usefull information.
+references to widgets and other usefull information.  This object cannot
+contain reference to anything database or model related, as those belong
+strictly to the :class:`ModelContext`
 
 .. attribute:: progress_dialog
 
@@ -40,14 +56,28 @@ references to widgets and other usefull information.
 .. attribute:: mode_name
 
     the name of the mode in which the action was triggered
+    
+.. attribute:: model_context
+
+    a subclass of :class:`ModelContext` to be used in :method:`create_model_context`
+    as the type of object to return.
     """
     
+    model_context = ModelContext
+    
     def __init__( self ):
-        """The context of an action available in the *GUI thread*
-        during the execution of the action.
-        """
         self.progress_dialog = None
         self.mode_name = None
+        
+    def create_model_context( self ):
+        """Create a :class:`ModelContext` filled with base information, 
+        extracted from this GuiContext.
+        
+        :return: a :class:`ModelContext`
+        """
+        context = self.model_context()
+        context.mode_name = self.mode_name
+        return context
         
     def copy( self ):
         """Create a copy of the GuiContext, this function is used

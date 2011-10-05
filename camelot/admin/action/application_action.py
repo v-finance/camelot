@@ -22,11 +22,23 @@
 #
 #  ============================================================================
 
-from camelot.admin.action.base import Action, GuiContext, Mode
+from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.utils import ugettext, ugettext_lazy as _
 
+class ApplicationActionModelContext( ModelContext ):
+    """The Model context for an :class:`ApplicationAction`.  On top of the attributes
+    of the :class:`camelot.admin.action.ModelContext`, this context contains :
+        
+    .. attribute:: admin
+        the application admin.
+    """
+    
+    def __init__( self ):
+        super( ApplicationActionModelContext, self ).__init__()
+        self.admin = None
+        
 class ApplicationActionGuiContext( GuiContext ):
-    """The context for an :class:`ApplicationAction`.  On top of the attributes
+    """The GUI context for an :class:`ApplicationAction`.  On top of the attributes
     of the :class:`camelot.admin.action.GuiContext`, this context contains :
     
     .. attribute:: workspace
@@ -39,10 +51,17 @@ class ApplicationActionGuiContext( GuiContext ):
         the application admin.
     """
     
+    model_context = ApplicationActionModelContext
+    
     def __init__( self ):
         super( ApplicationActionGuiContext, self ).__init__()
         self.workspace = None
         self.admin = None
+        
+    def create_model_context( self ):
+        context = super( ApplicationActionGuiContext, self ).create_model_context()
+        context.admin = self.admin
+        return context
         
     def copy( self ):
         new_context = super( ApplicationActionGuiContext, self ).copy()
