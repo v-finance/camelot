@@ -104,6 +104,88 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         if ok_button:
             ok_button.setEnabled( complete )
 
+class ChangeObjectsDialog( StandaloneWizardPage ):
+    """A dialog to change a list of objects.  This differs from a ListView in 
+    that it does not contains Actions, and has an OK button that is enabled when
+    all objects are valid.
+    
+    :param objects: The object to change
+    :param admin: The admin class used to create a form
+    
+    .. image:: /_static/actionsteps/change_object.png
+    """
+
+    def __init__( self, 
+                  objects, 
+                  admin, 
+                  parent = None, 
+                  flags=QtCore.Qt.WindowFlags(0) ):
+        from camelot.view.controls import editors
+        from camelot.view.proxy.collection_proxy import CollectionProxy
+        
+        super(ChangeObjectsDialog, self).__init__( '', parent, flags )
+        
+        self.set_banner_title( _('Data Preview') )
+        self.set_banner_subtitle( _('Please review the data below.') )
+        self.banner_widget().setStyleSheet('background-color: white;')
+        self.set_banner_logo_pixmap( Icon('tango/32x32/mimetypes/x-office-spreadsheet.png').getQPixmap() )
+        model = CollectionProxy( admin, lambda:objects, admin.get_columns)
+        self.validator = model.get_validator()
+        self.validator.validity_changed_signal.connect( self.update_complete )
+        model.layoutChanged.connect( self.validate_all_rows )
+
+        table_widget = editors.One2ManyEditor(
+            admin = admin,
+            parent = self,
+            create_inline = True,
+            vertical_header_clickable = False,
+        )
+        table_widget.set_value( model )
+        table_widget.setObjectName( 'table_widget' )
+        note = editors.NoteEditor( parent=self )
+        note.set_value(None)
+        note.setObjectName( 'note' )
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget( table_widget )
+        layout.addWidget( note )
+        self.main_widget().setLayout( layout )
+    
+        cancel_button = QtGui.QPushButton( ugettext('Cancel') )
+        ok_button = QtGui.QPushButton( ugettext('OK') )
+        ok_button.setObjectName( 'ok' )
+        ok_button.setEnabled( False )
+        layout = QtGui.QHBoxLayout()
+        layout.setDirection( QtGui.QBoxLayout.RightToLeft )
+        layout.addWidget( ok_button )
+        layout.addWidget( cancel_button )
+        layout.addStretch()
+        self.buttons_widget().setLayout( layout )
+        cancel_button.pressed.connect( self.reject )
+        ok_button.pressed.connect( self.accept )
+        self.validate_all_rows()
+
+    @QtCore.pyqtSlot()
+    def validate_all_rows(self):
+        post( self.validator.validate_all_rows, self._all_rows_validated)
+
+    def _all_rows_validated(self, *args):
+        self.update_complete( 0 )
+
+    @QtCore.pyqtSlot(int)
+    def update_complete(self, row=0):
+        complete = (self.validator.number_of_invalid_rows()==0)
+        note = self.findChild( QtGui.QWidget, 'note' )
+        ok = self.findChild( QtGui.QWidget, 'ok' )
+        if note != None and ok != None:
+            ok.setEnabled( complete )
+            if complete:
+                note.set_value( None )
+            else:
+                note.set_value(_(
+                    'Please correct the data above before proceeding with the '
+                    'import.<br/>Incorrect cells have a pink background.'
+                ))
+    
 class ChangeObject( ActionStep ):
     """
     Pop up a form for the user to change an object
@@ -132,3 +214,29 @@ class ChangeObject( ActionStep ):
         if result == QtGui.QDialog.Rejected:
             raise CancelRequest()
         return self._obj
+
+class ChangeObjects( ActionStep ):
+    """
+    Pop up a list for the user to change objects
+    
+    :param objects: a list of objects to change
+    :param admin: an instance of an admin class to use to edit the objects.
+    """
+    
+    def __init__( self, objects, admin ):
+        self.objects = objects
+        self.admin = admin
+        
+    def get_objects( self ):
+        """Use this method to get access to the objects to change in unit tests
+        
+        :return: the object to change
+        """
+        return self.objects        
+    
+    def gui_run( self, gui_context ):
+        dialog = ChangeObjectsDialog( self.objects, self.admin )
+        result = dialog.exec_()
+        if result == QtGui.QDialog.Rejected:
+            raise CancelRequest()
+        return self.objects

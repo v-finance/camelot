@@ -891,7 +891,7 @@ position in the query.
                         break
                 limit = i - offset + 1
         except IndexError, e:
-            logger.warn('index error with rows_to_get %s'%unicode(rows_to_get), exc_info=e)
+            logger.error('index error with rows_to_get %s'%unicode(rows_to_get), exc_info=e)
             raise e
         return (offset, limit)
 

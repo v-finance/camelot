@@ -38,7 +38,7 @@ class ActionRunner( QtCore.QEventLoop ):
     model thread while taking care of Exceptions raised and ActionSteps
     yielded by the generator.
     
-    This is class is inteded for internal Camelot use only.
+    This is class is intended for internal Camelot use only.
     """
     
     non_blocking_action_step_signal = QtCore.pyqtSignal(object)
@@ -53,10 +53,16 @@ class ActionRunner( QtCore.QEventLoop ):
         self._generator_function = generator_function
         self._generator = None
         self._gui_context = gui_context
-        self._model_context = model_context
+        self._model_context = None
         self.non_blocking_action_step_signal.connect( self.non_blocking_action_step )
-        post( self._generator_function, self.generator, self.exception, args=(model_context,) )
+        post( self._initiate_generator, self.generator, self.exception )
     
+    def _initiate_generator( self ):
+        """Create the model context and start the generator"""
+        if self._model_context == None:
+            self._model_context = self._gui_context.create_model_context()
+        return self._generator_function( self._model_context )
+            
     def _iterate_until_blocking( self, generator_method, *args ):
         """Helper calling for generator methods.  The decorated method iterates
         the generator until the generator yields an :class:`ActionStep` object that

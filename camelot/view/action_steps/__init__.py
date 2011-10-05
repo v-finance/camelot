@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from change_object import ChangeObject
+from change_object import ChangeObject, ChangeObjects
 from gui import Refresh
 from open_file import OpenFile, OpenStream, OpenJinjaTemplate
 from print_preview import PrintPreview, PrintJinjaTemplate
@@ -31,6 +31,7 @@ from update_progress import UpdateProgress
 
 __all__ = [
     ChangeObject.__name__,
+    ChangeObjects.__name__,
     OpenFile.__name__,
     OpenJinjaTemplate.__name__,
     OpenStream.__name__,
