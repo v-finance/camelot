@@ -71,7 +71,10 @@ strictly to the :class:`ModelContext`
         
     def create_model_context( self ):
         """Create a :class:`ModelContext` filled with base information, 
-        extracted from this GuiContext.
+        extracted from this GuiContext.  This function will be called in the
+        GUI thread, so it should not access the model directly, but rather
+        extract all information needed from te GUI to be available in the
+        model.
         
         :return: a :class:`ModelContext`
         """
@@ -269,14 +272,21 @@ direct manipulations of the user interface without a need to access the model.
         """
         return self.modes
     
-    def render( self, parent, gui_context ):
-        """
-        :param parent: the parent :class:`QtGui.QWidget`
+    def render( self, gui_context, parent ):
+        """Create a widget to trigger the action.  Depending on the type of
+        gui_context and parent, a different widget type might be returned.
+        
         :param gui_context: the context available in the *GUI thread*, a
             subclass of :class:`camelot.action.GuiContext`
+        :param parent: the parent :class:`QtGui.QWidget`
         :return: a :class:`QtGui.QWidget` which when triggered
             will execute the :meth:`gui_run` method.
         """
+        from camelot.view.controls.action_widget import ActionLabel, ActionPushButton
+        from camelot.view.workspace import DesktopBackground
+        if isinstance( parent, DesktopBackground ):
+            return ActionLabel( self, gui_context, parent )
+        return ActionPushButton( self, gui_context, parent )
         
     def gui_run( self, gui_context ):
         """This method is called inside the GUI thread, by default it
@@ -284,7 +294,12 @@ direct manipulations of the user interface without a need to access the model.
         :param gui_context: the context available in the *GUI thread*,
             of type :class:`GuiContext`
         """
+        from camelot.view.controls.progress_dialog import ProgressDialog
+        progress_dialog = ProgressDialog( unicode( self.verbose_name ) )
+        gui_context.progress_dialog = progress_dialog
+        progress_dialog.show()
         super(Action, self).gui_run( gui_context )
+        progress_dialog.close()
         
     def get_state( self, model_context ):
         """

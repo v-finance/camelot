@@ -24,6 +24,7 @@
 
 from application_action import ( ApplicationAction, ApplicationActionGuiContext,
                                  NewViewAction, TableViewAction)
+from list_action import ListActionGuiContext
 
 from base import Action, ActionStep, GuiContext, Mode
 

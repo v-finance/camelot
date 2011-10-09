@@ -30,6 +30,7 @@ class ApplicationActionModelContext( ModelContext ):
     of the :class:`camelot.admin.action.ModelContext`, this context contains :
         
     .. attribute:: admin
+    
         the application admin.
     """
     

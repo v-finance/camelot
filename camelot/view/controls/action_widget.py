@@ -48,10 +48,19 @@ class AbstractActionWidget( object ):
 
     def set_state( self, state ):
         self.state = state
+        if state in ('disabled', 'forbidden'):
+            self.show()
+            self.setEnabled( False )
+        elif state in ('hidden', None):
+            self.hide()
+        else:
+            self.show()
+            self.setEnabled( True )
         
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
         gui_context.mode = mode
+        print 'run action', self.action
         self.action.gui_run( gui_context )
 
 HOVER_ANIMATION_DISTANCE = 20
@@ -324,6 +333,9 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
     def __init__( self, action, gui_context, parent ):
         """A :class:`QtGui.QPushButton` that when pressed, will run an 
         action.
+        
+        .. image:: /_static/actionwidgets/action_push_botton_application_enabled.png
+        
         """
         QtGui.QPushButton.__init__( self, 
                                     unicode( action.get_verbose_name() ), 
@@ -332,7 +344,7 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
         icon = action.get_icon()
         if icon:
             self.setIcon( icon.getQIcon() )
-        self.clicked.connect(self.triggered)
+        self.clicked.connect( self.triggered )
 
     @QtCore.pyqtSlot()
     def triggered(self):
