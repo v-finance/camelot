@@ -34,3 +34,32 @@ class Refresh( ActionStep ):
     
     def gui_run( self, gui_context ):
         gui_context.workspace.refresh()
+
+
+class ShowChart( ActionStep ):
+    
+    def __init__( self, chart ):
+        """
+        :param chart: a :class:`camelot.core.container.FigureContainer` or
+            :class:`camelot.core.container.AxesContainer`
+        """
+        self.chart = chart
+        
+    def gui_run( self, gui_context ):
+        from camelot.view.controls.editors import ChartEditor
+        litebox = ChartEditor.show_fullscreen_chart( self._chart, 
+                                                     gui_context.workspace )
+
+    
+class ShowPixmap( ActionStep ):
+    
+    def __init__( self, pixmap ):
+        """
+        :param pixmap: a :class:`camelot.view.art.Pixmap` object
+        """
+        self.pixmap = pixmap
+        
+    def gui_run( self, gui_context ):
+        from camelot.view.controls.liteboxview import LiteBoxView
+        litebox = LiteBoxView( parent = gui_context.workspace )
+        litebox.show_fullscreen_pixmap( self.pixmap.getQPixmap() )

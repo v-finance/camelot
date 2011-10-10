@@ -318,8 +318,7 @@ be specified using the verbose_name attribute.
 
     @model_function
     def get_list_actions(self):
-        from camelot.admin.list_action import structure_to_list_actions
-        return structure_to_list_actions(self.list_actions)
+        return self.list_actions
 
     @model_function
     def get_depending_objects(self, obj):

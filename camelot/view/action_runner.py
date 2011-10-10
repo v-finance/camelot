@@ -53,14 +53,12 @@ class ActionRunner( QtCore.QEventLoop ):
         self._generator_function = generator_function
         self._generator = None
         self._gui_context = gui_context
-        self._model_context = None
+        self._model_context = gui_context.create_model_context()
         self.non_blocking_action_step_signal.connect( self.non_blocking_action_step )
         post( self._initiate_generator, self.generator, self.exception )
     
     def _initiate_generator( self ):
         """Create the model context and start the generator"""
-        if self._model_context == None:
-            self._model_context = self._gui_context.create_model_context()
         return self._generator_function( self._model_context )
             
     def _iterate_until_blocking( self, generator_method, *args ):

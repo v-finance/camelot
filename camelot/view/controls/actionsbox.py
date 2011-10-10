@@ -47,9 +47,8 @@ class ActionsBox(QtGui.QGroupBox):
         self.actions = actions
         layout = QtGui.QVBoxLayout()
         for action in actions:
-            action_widget = action.render(self, *self.args)
+            action_widget = action.render(*self.args, parent=self, **self.kwargs)
             layout.addWidget(action_widget)
             action_widgets.append(action_widget)
         self.setLayout(layout)
         return action_widgets
-

@@ -60,7 +60,6 @@ class AbstractActionWidget( object ):
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
         gui_context.mode = mode
-        print 'run action', self.action
         self.action.gui_run( gui_context )
 
 HOVER_ANIMATION_DISTANCE = 20

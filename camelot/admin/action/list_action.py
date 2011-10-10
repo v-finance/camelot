@@ -47,6 +47,11 @@ class ListActionModelContext( ApplicationActionModelContext ):
     
         an ordered list with tuples of selected row ranges.  the range is
         inclusive.
+        
+    .. attribute:: session
+    
+        The session to which the objects in the list belong.
+        
     """
     
     def __init__( self ):
@@ -56,6 +61,10 @@ class ListActionModelContext( ApplicationActionModelContext ):
         self.selection_count = 0
         self.collection_count = 0
         self.selected_rows = []
+        
+    @property
+    def session( self ):
+        return self._model.get_query_getter()().session
         
     def get_selection( self, yield_per = None ):
         """

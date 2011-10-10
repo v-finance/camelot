@@ -381,7 +381,7 @@ class FormView(AbstractView):
             side_panel_layout = QtGui.QVBoxLayout()
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
-            actions_widget = ActionsBox(self, self.model )
+            actions_widget = ActionsBox( parent=self, entity_gettter=self.model )
             actions_widget.setObjectName('actions')
             action_widgets = actions_widget.setActions(actions)
             for action_widget in action_widgets:

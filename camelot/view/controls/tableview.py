@@ -774,6 +774,7 @@ class TableView( AbstractView  ):
     def set_filters_and_actions( self, filters_and_actions ):
         """sets filters for the tableview"""
         filters, actions = filters_and_actions
+        from camelot.admin.action import ListActionGuiContext
         from camelot.view.controls.filterlist import FilterList
         from camelot.view.controls.actionsbox import ActionsBox
         logger.debug( 'setting filters for tableview' )
@@ -797,15 +798,11 @@ class TableView( AbstractView  ):
         #
         self.rebuild_query()
         if actions:
-            #
-            # Attention, the ActionBox should only contain a reference to the
-            # table, and not to the table model, since this will cause the
-            # garbage collector to collect them both in random order, causing
-            # segfaults (see the test_qt_bindings)
-            #
-            actions_widget = ActionsBox( self,
-                                         self.get_collection_getter,
-                                         self.get_selection_getter )
+            gui_context = ListActionGuiContext()
+            gui_context.admin = self.admin
+            gui_context.item_view = self.table
+            actions_widget = ActionsBox( parent = self,
+                                         gui_context = gui_context )
             actions_widget.setObjectName( 'actions' )
             actions_widget.setActions( actions )
             self.filters_layout.addWidget( actions_widget )

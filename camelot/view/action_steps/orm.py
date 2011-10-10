@@ -22,20 +22,33 @@
 #
 #  ============================================================================
 
-from application_action import ( ApplicationAction, ApplicationActionGuiContext,
-                                 NewViewAction, TableViewAction)
-from list_action import ListActionGuiContext
+"""
+Various ``ActionStep`` subclasses that inform the GUI of changes
+in the model.
+"""
 
-from base import Action, ActionStep, GuiContext, Mode
+from camelot.admin.action.base import ActionStep
 
-__all__ = [
-    Action.__name__,
-    ActionStep.__name__,
-    ApplicationAction.__name__,
-    ApplicationActionGuiContext.__name__,
-    ListActionGuiContext.__init__,
-    NewViewAction.__name__,
-    TableViewAction.__name__,
-    GuiContext.__name__,
-    Mode.__name__,
-    ]
+class FlushSession( ActionStep ):
+    
+    def __init__( self, session ):
+        """Flushes the session and informs the GUI about the
+        changes.
+    
+        :param session: an instance of :class:`sqlalchemy.orm.Session`
+        """
+        #
+        # @todo : deleting of objects should be moved from the collection_proxy
+        #         to here, once deleting rows is reimplemented as an action
+        #
+        # @todo : handle the creation of new objects
+        #
+        from camelot.view.remote_signals import get_signal_handler
+        signal_handler = get_signal_handler()
+        dirty_objects = list( session.dirty )
+        session.flush()
+        for obj in dirty_objects:
+            signal_handler.sendEntityUpdate( self, obj )
+    
+    def gui_run( self, gui_context ):
+        pass
