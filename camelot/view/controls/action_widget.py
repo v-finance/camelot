@@ -344,6 +344,12 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
         if icon:
             self.setIcon( icon.getQIcon() )
         self.clicked.connect( self.triggered )
+        modes = action.get_modes()
+        if modes:
+            menu = QtGui.QMenu( self )
+            for mode in modes:
+                menu.addAction( mode.render( menu ) )
+            self.setMenu( menu )
 
     @QtCore.pyqtSlot()
     def triggered(self):

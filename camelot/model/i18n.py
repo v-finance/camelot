@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 from camelot.model import metadata
-from camelot.admin.list_action import ListAction
+from camelot.admin.action import Action
 import camelot.types
 from elixir.entity import Entity
 from elixir.options import using_options
@@ -46,29 +46,22 @@ def tr( source ):
     language = unicode( QtCore.QLocale().name() )
     return Translation.translate_or_register( source, language )
 
-class ExportAsPO(ListAction):
-    
-    def __init__(self):
-        super(ExportAsPO, self).__init__(name=_('po export'), 
-                                         icon=Icon('tango/16x16/actions/document-save.png'))
-        
-    def run( self, collection_getter, selection_getter ):
-        from PyQt4 import QtGui
-        from camelot.view.model_thread import post
-        from camelot.core.utils import ugettext as _
-        filename = unicode(QtGui.QFileDialog.getSaveFileName(None, _("Save File"),))
-        
-        def create_po_exporter(filename, collection_getter):
-            
-            def po_exporter():
-                file = open(filename, 'w')
-                for translation in collection_getter():
-                    file.write( (u'msgid  "%s"\n'%translation.source).encode('utf-8') )
-                    file.write( (u'msgstr "%s"\n\n'%translation.value).encode('utf-8') )
+class ExportAsPO( Action ):
+
+    verbose_name = _('PO Export')
+    icon = Icon('tango/16x16/actions/document-save.png')
+
+    def model_run( self, model_context ):
+        from camelot.view.action_steps import SelectOpenFile
+        select_file = SelectOpenFile()
+        select_file.existing = False
+        filenames = yield select_file
+        for filename in filenames:
+            file = open(filename, 'w')
+            for translation in model_context.get_collection():
+                file.write( (u'msgid  "%s"\n'%translation.source).encode('utf-8') )
+                file.write( (u'msgstr "%s"\n\n'%translation.value).encode('utf-8') )
                 
-            return po_exporter
-        
-        post(create_po_exporter(filename, collection_getter))
         
 class Translation( Entity ):
     using_options( tablename = 'translation' )

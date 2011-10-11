@@ -37,6 +37,10 @@ class SelectOpenFile( ActionStep ):
     .. attribute:: single
         defaults to :keyword:`True`, set to :keyword:`False` if selection
         of multiple files is allowed
+
+    .. attribute:: existing
+        defaults to :keyword:`True`, set to :keyword:`False` if non existing
+        files are allowed (to save something)
         
     The :keyword:`yield` statement of :class:`SelectOpenFile` returns a list
     of selected file names.  This list has only one element when single is
@@ -50,13 +54,18 @@ class SelectOpenFile( ActionStep ):
     def __init__( self, file_name_filter = '' ):
         self.file_name_filter = file_name_filter
         self.single = True
+        self.existing = True
     
     def render( self ):
         dialog = QtGui.QFileDialog( filter = self.file_name_filter )
-        if self.single == True:
-            dialog.setFileMode( QtGui.QFileDialog.ExistingFile )
+        if self.existing == False:
+            file_mode = QtGui.QFileDialog.AnyFile
         else:
-            dialog.setFileMode( QtGui.QFileDialog.ExistingFiles )
+            if self.single == True:
+                file_mode = QtGui.QFileDialog.ExistingFile
+            else:
+                file_mode = QtGui.QFileDialog.ExistingFiles
+        dialog.setFileMode( file_mode )
         return dialog
     
     def gui_run( self, gui_context ):

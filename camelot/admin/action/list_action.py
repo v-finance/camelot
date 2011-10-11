@@ -27,6 +27,7 @@ This is part of a test implementation of the new actions draft, it is not
 intended for production use
 """
 
+from camelot.admin.action.base import Action
 from application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 
@@ -128,3 +129,6 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         new_context = super( ListActionGuiContext, self ).copy()
         new_context.item_view = self.item_view
         return new_context
+
+class CallMethod( Action ):
+    pass
