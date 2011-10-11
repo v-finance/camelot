@@ -60,11 +60,11 @@ class FormAction( AbstractAction ):
     """Abstract base class to implement form actions
     """
 
-    def render( self, parent, entity_getter ):
+    def render( self, parent, model ):
         """:return: a QWidget the user can use to trigger the action, by default
 returns a Button that will trigger the run method when clicked"""
         from camelot.view.controls.action_widget import ActionWidget
-        return ActionWidget( self, entity_getter, parent=parent )
+        return ActionWidget( self, model=model, parent=parent )
 
     def run( self, entity_getter ):
         """Overwrite this method to create an action that does something, the
