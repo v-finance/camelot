@@ -47,8 +47,8 @@ class ShowChart( ActionStep ):
         
     def gui_run( self, gui_context ):
         from camelot.view.controls.editors import ChartEditor
-        litebox = ChartEditor.show_fullscreen_chart( self._chart, 
-                                                     gui_context.workspace )
+        ChartEditor.show_fullscreen_chart( self._chart, 
+                                           gui_context.workspace )
 
     
 class ShowPixmap( ActionStep ):
