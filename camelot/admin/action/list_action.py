@@ -131,4 +131,25 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         return new_context
 
 class CallMethod( Action ):
-    pass
+    
+    def __init__( self, verbose_name, method ):
+        """
+        Call a method on all objects in a selection, and flush the
+        session.
+        
+        :param verbose_name: the name of the action, as it should appear
+            to the user
+        :param method: the method to call on the objects
+        """
+        self.verbose_name = verbose_name
+        self.method = method
+        
+    def model_run( self, model_context ):
+        from camelot.view.action_steps import UpdateProgress, FlushSession
+        if isinstance( model_context, ListActionModelContext ):
+            step = max( 1, model_context.selection_count / 100 )
+            for i, obj in enumerate( model_context.get_selection() ):
+                if i%step == 0:
+                    yield UpdateProgress( i, model_context.selection_count )
+                self.method( obj )
+            yield FlushSession( model_context.session )

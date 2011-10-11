@@ -34,7 +34,7 @@ class OpenFile( ActionStep ):
     
     :param path: the absolute path to the file to open
     
-    The :keyword:`yield` statement will return :keyword:`True if the file was
+    The :keyword:`yield` statement will return :keyword:`True` if the file was
     opend successfull.
     """
         
@@ -47,6 +47,21 @@ class OpenFile( ActionStep ):
         to verify the content of the file in unit tests
         """
         return self._path
+
+    @classmethod
+    def create_temporary_file( self, suffix ):
+        """
+        Create a temporary filename that can be used to write to, and open
+        later on.
+        
+        :param suffix: the suffix of the file to create
+        :return: the filename of the temporary file
+        """
+        import tempfile
+        import os
+        file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
+        os.close( file_descriptor )
+        return file_name
         
     def gui_run( self, gui_context ):
         #
