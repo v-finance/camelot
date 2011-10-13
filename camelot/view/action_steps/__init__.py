@@ -24,7 +24,7 @@
 
 from change_object import ChangeObject, ChangeObjects
 from gui import Refresh, ShowChart, ShowPixmap
-from open_file import OpenFile, OpenStream, OpenJinjaTemplate
+from open_file import OpenFile, OpenStream, OpenString, OpenJinjaTemplate
 from orm import FlushSession
 from print_preview import PrintPreview, PrintJinjaTemplate
 from select_file import SelectOpenFile
@@ -37,6 +37,7 @@ __all__ = [
     OpenFile.__name__,
     OpenJinjaTemplate.__name__,
     OpenStream.__name__,
+    OpenString.__name__,
     PrintJinjaTemplate.__name__,
     PrintPreview.__name__,
     Refresh.__name__,

@@ -90,6 +90,23 @@ class OpenStream( OpenFile ):
         output_stream.close()
         super( OpenStream, self ).__init__( file_name )
 
+class OpenString( OpenFile ):
+    
+    def __init__( self, string, suffix='.txt' ):
+        """Write a string to a temporary file and open that file with the
+        preferred application of the user.
+        
+        :param string: the string to write to a file
+        :param suffix: the suffix of the temporary file
+        """
+        import os
+        import tempfile
+        file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
+        output_stream = os.fdopen( file_descriptor, 'wb' )
+        output_stream.write( string )
+        output_stream.close()
+        super( OpenStream, self ).__init__( file_name )
+        
 class OpenJinjaTemplate( OpenStream ):
     """Render a jinja template into a temporary file and open that
     file with the prefered application of the user.
