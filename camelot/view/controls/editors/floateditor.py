@@ -66,7 +66,8 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
                 super(CustomDoubleSpinBox, self).keyPressEvent(key_event)
 
     def textFromValue(self, value):
-        return unicode( QtCore.QString("%L1").arg(float(value), 0, 'f', self.decimals()) )
+        text = unicode( QtCore.QString("%L1").arg(float(value), 0, 'f', self.decimals()) )
+        return text
         
     def paintEvent(self, event):
         super(CustomDoubleSpinBox, self).paintEvent(event)

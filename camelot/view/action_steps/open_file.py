@@ -105,7 +105,7 @@ class OpenString( OpenFile ):
         output_stream = os.fdopen( file_descriptor, 'wb' )
         output_stream.write( string )
         output_stream.close()
-        super( OpenStream, self ).__init__( file_name )
+        super( OpenString, self ).__init__( file_name )
         
 class OpenJinjaTemplate( OpenStream ):
     """Render a jinja template into a temporary file and open that

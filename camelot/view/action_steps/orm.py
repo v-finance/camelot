@@ -28,6 +28,7 @@ in the model.
 """
 
 from camelot.admin.action.base import ActionStep
+from camelot.view.remote_signals import get_signal_handler
 
 class FlushSession( ActionStep ):
     
@@ -43,12 +44,53 @@ class FlushSession( ActionStep ):
         #
         # @todo : handle the creation of new objects
         #
-        from camelot.view.remote_signals import get_signal_handler
         signal_handler = get_signal_handler()
         dirty_objects = list( session.dirty )
         session.flush()
         for obj in dirty_objects:
             signal_handler.sendEntityUpdate( self, obj )
+    
+    def gui_run( self, gui_context ):
+        pass
+    
+class UpdateObject( ActionStep ):
+    
+    def __init__( self, obj ):
+        """Inform the GUI that obj has changed.
+    
+        :param obj: the object that has changed
+        """
+        signal_handler = get_signal_handler()
+        if obj != None:
+            signal_handler.sendEntityUpdate( self, obj )
+    
+    def gui_run( self, gui_context ):
+        pass
+
+class DeleteObject( ActionStep ):
+    
+    def __init__( self, obj ):
+        """Inform the GUI that obj is going to be deleted.
+    
+        :param obj: the object that is going to be deleted
+        """
+        signal_handler = get_signal_handler()
+        if obj != None:
+            signal_handler.sendEntityDelete( self, obj )
+    
+    def gui_run( self, gui_context ):
+        pass
+    
+class CreateObject( ActionStep ):
+    
+    def __init__( self, obj ):
+        """Inform the GUI that obj was created.
+    
+        :param obj: the object that was created
+        """
+        signal_handler = get_signal_handler()
+        if obj != None:
+            signal_handler.sendEntityCreate( self, obj )
     
     def gui_run( self, gui_context ):
         pass
