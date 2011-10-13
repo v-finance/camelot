@@ -54,18 +54,15 @@ section gives more detail on this.
 Summary
 =======
 
-In general, actions are defined by subclassing one of the standard Camelot
-actions  (:class:`camelot.admin.action.application_action.ApplicationAction`,
-:class:`camelot.admin.action.list_action.ListAction` or 
-:class:`camelot.admin.action.form_action.FormAction`)
-that share the same behavior and class attributes ::
+In general, actions are defined by subclassing the standard Camelot
+actions  (:class:`camelot.admin.action.Action`) ::
 
-    from camelot.admin.action import ApplicationAction
+    from camelot.admin.action import Action
     from camelot.view.action_steps import PrintPreview
     from camelot.core.utils import ugettext_lazy as _
     from camelot.view.art import Icon
     
-    class PrintReport( ApplicationAction ):
+    class PrintReport( Action ):
         verbose_name = _('Print Report')
         icon = Icon('tango/16x16/actions/document-print.png')
         tooltip = _('Print a report with all the movies')
@@ -77,8 +74,8 @@ Each standard action has two methods, :meth:`gui_run` and
 :meth:`model_run`, one of
 them should be overloaded in the subclass to either run the action in the
 gui thread or to run the action in the model thread.  The default 
-:meth:`ApplicationAction.gui_run`
-behavior is to pop-up a :class:`camelot.view.controls.progress_dialog.ProgressDialog` dialog and 
+:meth:`Action.gui_run` behavior is to pop-up a 
+:class:`camelot.view.controls.progress_dialog.ProgressDialog` dialog and 
 start the :meth:`model_run` method in the model thread.
 
 :meth:`model_run` in itself is a generator, that can yield 
@@ -127,8 +124,8 @@ Possible Action Steps that can be yielded to the GUI include:
   * :class:`camelot.view.action_steps.open_file.OpenStream`
   * :class:`camelot.view.action_steps.open_file.OpenJinjaTemplate`
   * :class:`camelot.view.action_steps.gui.Refresh`
-  * :class:`camelot.view.action_steps.ShowPixmap`
-  * :class:`camelot.view.action_steps.ShowChart`
+  * :class:`camelot.view.action_steps.gui.ShowPixmap`
+  * :class:`camelot.view.action_steps.gui.ShowChart`
 
 keep the user informed about progress
 -------------------------------------
@@ -257,16 +254,26 @@ The widget that is used to trigger an action can be in different states.  The
 default supported states are :
 
   - *enabled* : this is the default state, where the user is able to trigger
-    the action
+    the action.
+    
+    .. image:: /_static/actionwidgets/action_push_botton_application_enabled.png
     
   - *disabled* : in this state the user is unable to trigger the action
   
+    .. image:: /_static/actionwidgets/action_push_botton_application_disabled.png
+  
   - *forbidden* : the user has no permission to trigger the action
+  
+    .. image:: /_static/actionwidgets/action_push_botton_application_forbidden.png
   
   - *hidden* : the action widget is not visible
   
+    .. image:: /_static/actionwidgets/action_push_botton_application_hidden.png
+  
   - *notification* : the action widget attracts the attention of the user, this
     implies it is 'enabled'
+    
+    .. image:: /_static/actionwidgets/action_push_botton_application_notification.png
     
 Modes
 -----
@@ -307,10 +314,6 @@ The minimal context available in the *GUI thread* is :
 
 ApplicationAction
 -----------------
-
-The API of the :class:`camelot.admin.action.application_action.ApplicationAction`:
-
-.. autoclass:: camelot.admin.action.application_action.ApplicationAction
             
 To enable Application Actions for a certain 
 :class:`camelot.admin.application_admin.ApplicationAdmin` either overwrite
@@ -318,9 +321,9 @@ its :meth:`camelot.admin.application_admin.ApplicationAdmin.get_actions`
 or specify the :attr:`actions` attribute::
 
     from camelot.admin.application_admin import ApplicationAdmin
-    from camelot.admin.action import ApplicationAction
+    from camelot.admin.action import Action
     
-    class GenerateReports(ApplicationAction):
+    class GenerateReports( Action ):
     
         verbose_name = _('Generate Reports')
         
@@ -385,63 +388,6 @@ The API of the :class:`camelot.admin.action.form_action.FormAction`::
 
 ListAction
 ----------
-
-The API of the :class:`camelot.admin.action.list_action.ListAction`::
-
-    class ListAction( AbstractAction ):
-    
-        def render( self, parent, view, selection_model ):
-            """
-            :param parent: the parent :class:`QtGui.QWidget`
-            :param view: the :class:`camelot.view.controls.AbstractView` object
-                to which this action belongs.
-            :param selection_model: the :class:`QtGui.QItemSelectionModel` class
-                that relates to the table view on which the widget will be
-                placed.
-            :return: a :class:`QtGui.QWidget` which when triggered
-                will execute the run method.
-            """
-            
-        def gui_run( self,
-                     widget,
-                     selection_model,
-                     mode ):
-            """This method is called inside the GUI thread, by default it
-            executes the :meth:`model_run` in the Model thread.
-            :param widget: the rendered :class:`QtGui.QWidget` that triggered
-                the method call
-            :param selection_model: the :class:`QtGui.QItemSelectionModel` class
-            :param mode: the name of the mode in which this action was triggered.
-            """
-            pass
-            
-        def model_run( self,
-                       collection, 
-                       selection,
-                       current_obj,
-                       current_field,
-                       mode = None):
-            """This generator method is called inside the Model thread.
-            :param collection: an iterator for all objects in the collection
-                displayed in the table view.
-            :param selection: an iterator for all object selected
-            :param current_obj: the object in the current row
-            :param current_field: the name of the field that is displayed in the
-                current column
-            :param mode: the mode in which the action was triggered.
-            """
-            pass
-            
-        def get_state( self, 
-                       collection_length,
-                       selection_length,
-                       current_obj,
-                       current_field ):
-            """This method is called inside the Model thread to verify the state
-            of the action widget visible to the current user.
-            :return: a :keyword:`str`
-            """
-            return 'enabled'
             
 Inspiration
 ===========

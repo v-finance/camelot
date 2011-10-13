@@ -32,7 +32,7 @@ from camelot.core.conf import settings
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.admin.action.application_action import ApplicationAction
+from camelot.admin.action import Action
 from camelot.view.controls import delegates
 
 from camelot.view.main import Application
@@ -248,7 +248,7 @@ class NewProjectOptions(object):
                            'nullable':False,
                            'tooltip':feature[3]   } ) for feature in features)
             
-class CreateNewProject( ApplicationAction ):
+class CreateNewProject( Action ):
     """Action to create a new project, based on a form with
     options the user fills in."""
             
@@ -274,3 +274,4 @@ class CreateNewProject( ApplicationAction ):
                        'w' )
             fp.write( code )
             fp.close()
+

@@ -1,8 +1,8 @@
-from camelot.admin.action import ApplicationAction
+from camelot.admin.action import Action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import Icon
 
-class ImportCovers( ApplicationAction ):
+class ImportCovers( Action ):
     verbose_name = _('Import cover images')
     icon = Icon('tango/22x22/mimetypes/image-x-generic.png')
     

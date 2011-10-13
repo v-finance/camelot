@@ -96,7 +96,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
     model_context = ListActionModelContext
     
     def __init__( self ):
-        """The context for an :class:`ListAction`.  On top of the attributes of the 
+        """The context for an :class:`Action` on a table view.  On top of the attributes of the 
         :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
         this context contains :
     

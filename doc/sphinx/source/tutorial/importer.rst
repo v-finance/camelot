@@ -33,14 +33,13 @@ actions that run in the context of the application, we use the
 :ref:`doc-application-action`.  We first create a file :file:`importer.py` in 
 the same directory as :file:`application_admin.py`.
 
-In this file we create subclass of 
-:class:`camelot.admin.action.application_action.ApplicationAction` which will be 
-the entry point of the import wizard::
+In this file we create subclass of :class:`camelot.admin.action.Action` which 
+will be the entry point of the import wizard::
 
-    from camelot.admin.action import ApplicationAction
+    from camelot.admin.action import Action
     from camelot.core.utils import ugettext_lazy as _
     
-    class ImportCovers( ApplicationAction ):
+    class ImportCovers( Action ):
         verbose_name = _('Import cover images')
         
         def model_run( self, model_context ):
@@ -183,7 +182,7 @@ Conclusion
 
 We went through the basics of the action framework Camelot :
 
-  * Subclassing a :class:`camelot.admin.action.application_action.ApplicationAction`
+  * Subclassing a :class:`camelot.admin.action.Action`
     class
     
   * Implementing the ``model_run`` method

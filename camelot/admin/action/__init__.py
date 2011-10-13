@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from application_action import ( ApplicationAction, ApplicationActionGuiContext,
+from application_action import ( ApplicationActionGuiContext,
                                  NewViewAction, TableViewAction)
 from list_action import ListActionGuiContext, CallMethod
 
@@ -31,7 +31,6 @@ from base import Action, ActionStep, GuiContext, Mode
 __all__ = [
     Action.__name__,
     ActionStep.__name__,
-    ApplicationAction.__name__,
     ApplicationActionGuiContext.__name__,
     CallMethod.__name__,
     ListActionGuiContext.__init__,

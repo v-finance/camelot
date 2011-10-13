@@ -32,7 +32,7 @@ class ExampleSettings( SimpleSettings ):
         from camelot_example.fixtures import load_movie_fixtures
         load_movie_fixtures()
         from camelot.core.sql import update_database_from_model
-        update_database_from_model()
+        #update_database_from_model()
         #
         # setup the views
         #

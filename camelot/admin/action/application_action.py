@@ -25,9 +25,14 @@
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.utils import ugettext, ugettext_lazy as _
 
+"""ModelContex, GuiContext and Actions that run in the context of an 
+application.
+"""
+
 class ApplicationActionModelContext( ModelContext ):
-    """The Model context for an :class:`ApplicationAction`.  On top of the attributes
-    of the :class:`camelot.admin.action.ModelContext`, this context contains :
+    """The Model context for an :class:`camelot.admin.action.Action`.  On top 
+    of the attributes of the :class:`camelot.admin.action.ModelContext`, this 
+    context contains :
         
     .. attribute:: admin
     
@@ -39,8 +44,9 @@ class ApplicationActionModelContext( ModelContext ):
         self.admin = None
         
 class ApplicationActionGuiContext( GuiContext ):
-    """The GUI context for an :class:`ApplicationAction`.  On top of the attributes
-    of the :class:`camelot.admin.action.GuiContext`, this context contains :
+    """The GUI context for an :class:`camelot.admin.action.Action`.  On top of 
+    the attributes of the :class:`camelot.admin.action.GuiContext`, this context
+    contains :
     
     .. attribute:: workspace
     
@@ -70,47 +76,7 @@ class ApplicationActionGuiContext( GuiContext ):
         new_context.admin = self.admin
         return new_context
         
-class ApplicationAction( Action ):
-    """A subclass of :class:`camelot.admin.action.Action` that runs in the 
-    context of the application. Typical places to use this action are :
-    
-    * within the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_sections` method,
-      as elements of a section (:class:`camelot.admin.section.Section`)
-      
-    * within the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_actions` method,
-      for the actions that are displayed on the home screen.
-      
-    To make an action do something usefull, its :meth:`gui_run` or 
-    :meth:`model_run` should be reimplemented in a subclass.
-    """
-
-    def render( self, gui_context, parent ):
-        """
-        :param gui_context: the context available in the *GUI thread*
-            of type :class:`ApplicationActionGuiContext`
-        :param parent: the parent :class:`QtGui.QWidget`
-        :return: a :class:`QtGui.QWidget` which when triggered
-            will execute the gui_run method. of the action.
-        """
-        from camelot.view.controls.action_widget import ActionLabel
-        return ActionLabel( self, gui_context, parent )
-        
-    def gui_run( self, gui_context ):
-        """This method is called inside the GUI thread, by default it
-        pops up a progress dialog and executes the :meth:`model_run` in 
-        the Model thread, while updating the progress dialog.
-
-        :param gui_context: the context available in the *GUI thread*
-          of type :class:`ApplicationActionGuiContext`
-        """
-        from camelot.view.controls.progress_dialog import ProgressDialog
-        progress_dialog = ProgressDialog( unicode( self.verbose_name ) )
-        gui_context.progress_dialog = progress_dialog
-        progress_dialog.show()
-        super(ApplicationAction, self).gui_run( gui_context )
-        progress_dialog.close()
-
-class EntityAction( ApplicationAction ):
+class EntityAction( Action ):
     """Generic ApplicationAction that acts upon an Entity class"""
 
     def __init__( self, 
@@ -161,7 +127,7 @@ def structure_to_application_action(structure, application_admin):
         :class:`camelot.admin.application_admin.ApplicationAdmin` to use to
         create other Admin classes.
     """
-    if isinstance(structure, (ApplicationAction,)):
+    if isinstance(structure, (Action,)):
         return structure
     admin = application_admin.get_related_admin( structure )
     return TableViewAction( admin )

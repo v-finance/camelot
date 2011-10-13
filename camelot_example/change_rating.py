@@ -1,7 +1,7 @@
 """Example code for attaching actions to camelot views
 """
 
-from camelot.admin.action import Action
+from camelot.admin.action import Action, Mode
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.action_steps import ChangeObject, FlushSession, UpdateProgress
 from camelot.view.controls import delegates
@@ -33,6 +33,7 @@ class ChangeRatingAction( Action ):
     """Action to print a list of movies"""
     
     verbose_name = _('Change Rating')
+    modes = [Mode('increase'), Mode('decrease')]
     
     def model_run( self, model_context ):
         #
