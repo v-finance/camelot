@@ -366,6 +366,13 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
     @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
     def data_changed( self, index1, index2 ):
         AbstractActionWidget.data_changed( self, index1, index2 )
+        
+    def set_state( self, state ):
+        super( ActionPushButton, self ).set_state( state )
+        if state == 'down':
+            self.setDown( True )
+        else:
+            self.setDown( False )
             
 class ActionWidget(QtGui.QPushButton):
     """A button that can be pushed to trigger an action"""
