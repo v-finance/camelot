@@ -183,6 +183,8 @@ class BackupMechanism(object):
             yield (i, number_of_tables + 1, _('Copy data of table %s')%from_table.name)
             self.copy_table_data(from_table, to_table)
         yield (number_of_tables, number_of_tables + 1, _('Store backup at requested location') )
+        from_engine.dispose()
+        to_engine.dispose()
         if not self._storage:
             logger.info(u'move backup file to its final location')
             shutil.move(temp_file_name, self._filename)
@@ -251,6 +253,9 @@ class BackupMechanism(object):
                 
         yield (number_of_tables * 2 + 1, steps, _('Update schema after restore'))
         self.update_schema_after_restore(from_engine, to_engine)
+        
+        from_engine.dispose()
+        to_engine.dispose()
         
         yield (number_of_tables * 2 + 2, steps, _('Load new data'))
         from sqlalchemy.orm.session import _sessions
