@@ -32,6 +32,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
+from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
 from camelot.view.model_thread import model_function
@@ -379,14 +380,15 @@ class FormView(AbstractView):
         layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
         if actions and form and layout:
             side_panel_layout = QtGui.QVBoxLayout()
+            widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
-            actions_widget = ActionsBox( parent=self, model=self.model )
+            gui_context = FormActionGuiContext()
+            gui_context.admin = self.admin
+            gui_context.widget_mapper = widget_mapper
+            actions_widget = ActionsBox( parent=self, gui_context=gui_context )
             actions_widget.setObjectName('actions')
             action_widgets = actions_widget.setActions(actions)
-            for action_widget in action_widgets:
-                form.changed_signal.connect( action_widget.changed )
-                action_widget.changed( form.get_index() )
             side_panel_layout.insertWidget(1, actions_widget)
             side_panel_layout.addStretch()
             layout.addLayout(side_panel_layout)

@@ -100,13 +100,15 @@ class ActionRunner( QtCore.QEventLoop ):
         self._generator = generator
         #
         # when model_run is not a generator, but a normal function it returns
-        # no generator
+        # no generator, and as such we can exit the event loop
         #
         if self._generator != None:
             post( self._iterate_until_blocking, 
                   self.next, 
                   self.exception,
                   args = ( self._generator.next, ) )
+        else:
+            self.exit()
         
     @QtCore.pyqtSlot( object )
     def next( self, yielded ):

@@ -179,11 +179,11 @@ the GUI so that the flushed changes are shown to the user by updating the
 visualisation of the changed movie on every screen in the application that 
 displays this object.  Alternative updates that can be generated are :
 
-  * :class:`camelot.view.action_steps.orm.ObjectUpdated`, if one wants to inform
+  * :class:`camelot.view.action_steps.orm.UpdateObject`, if one wants to inform
     the GUI an object is going to be updated.
-  * :class:`camelot.view.action_steps.orm.ObjectDeleted`, if one wants to inform
+  * :class:`camelot.view.action_steps.orm.DeleteObject`, if one wants to inform
     the GUI an object is going to be deleted.
-  * :class:`camelot.view.action_steps.orm.ObjectCreated`, if one wants to inform
+  * :class:`camelot.view.action_steps.orm.CreateObject`, if one wants to inform
     the GUI an object has been created.
 
 raise exceptions

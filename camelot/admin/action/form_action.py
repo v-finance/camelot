@@ -51,10 +51,10 @@ class FormActionModelContext( ApplicationActionModelContext ):
     """
     
     def __init__( self ):
-        super( ListActionModelContext, self ).__init__()
+        super( FormActionModelContext, self ).__init__()
         self._model = None
         self.admin = None
-        self.current_row = 0
+        self.current_row = None
         self.collection_count = 0
         
     @property
@@ -66,7 +66,7 @@ class FormActionModelContext( ApplicationActionModelContext ):
         :return: the object currently displayed in the form, None if no object
             is displayed yet
         """
-        if self.current_row:
+        if self.current_row != None:
             return self._model._get_object( self.current_row )
     
     def get_collection( self, yield_per = None ):
@@ -100,10 +100,24 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         context = super( FormActionGuiContext, self ).create_model_context()
         context._model = self.widget_mapper.model()
         context.collection_count = context._model.rowCount()
-        self.current_row = self.widget_mapper.currentIndex()
+        context.current_row = self.widget_mapper.currentIndex()
         return context
         
     def copy( self ):
         new_context = super( FormActionGuiContext, self ).copy()
         new_context.widget_mapper = self.widget_mapper
         return new_context
+
+def structure_to_form_actions( structure ):
+    """Convert a list of python objects to a list of form actions.  If the python
+    object is a tuple, a CallMethod is constructed with this tuple as arguments.  If
+    the python object is an instance of as Action, it is kept as is.
+    """
+    from list_action import CallMethod
+    
+    def object_to_action( o ):
+        if isinstance( o, Action ):
+            return o
+        return CallMethod( o[0], o[1] )
+
+    return [object_to_action( o ) for o in structure]

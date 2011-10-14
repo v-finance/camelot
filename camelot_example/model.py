@@ -13,6 +13,7 @@ import camelot.types
 from camelot.model import metadata
 from elixir import Entity, Field, ManyToOne, OneToMany, \
                    ManyToMany, using_options
+from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
 from camelot.view.controls import delegates
@@ -40,9 +41,19 @@ def genre_choices(entity_instance):
     (('thriller'),('Thriller')),
     (('family'),('Family')) ]
 
-def burn_to_disk(o_getter):
-    print 'burn burn burn'
+class BurnToDisk( Action ):
+    
+    verbose_name = _('Burn to disk')
+    
+    def model_run( self, model_context ):
+        print u'burn %s'%( model_context.get_object() )
 
+    def get_state( self, model_context ):
+        obj = model_context.get_object()
+        if obj and obj.title:
+            return 'enabled'
+        return 'disabled'
+    
 # begin short movie definition
 class Movie(Entity):
     using_options(tablename='movies')
@@ -135,7 +146,7 @@ class Movie(Entity):
         # create a list of actions available for the user on the form view
         # those actions will be executed within the model thread
         #
-        form_actions = [('Burn DVD', burn_to_disk)]
+        form_actions = [BurnToDisk()]
         #
         # additional attributes for a field can be specified in the
         # field_attributes dictionary

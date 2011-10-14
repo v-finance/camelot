@@ -33,6 +33,7 @@ import functools
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
+from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.view.model_thread import post
 
 class AbstractActionWidget( object ):
@@ -44,7 +45,9 @@ class AbstractActionWidget( object ):
         self.action = action
         self.gui_context = gui_context
         self.state = None
-        post( action.get_state, self.set_state, args = (None,) )
+        if isinstance( gui_context, FormActionGuiContext ):
+            gui_context.widget_mapper.model().dataChanged.connect( self.data_changed )
+        post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
     def set_state( self, state ):
         self.state = state
@@ -56,6 +59,11 @@ class AbstractActionWidget( object ):
         else:
             self.show()
             self.setEnabled( True )
+        
+    def data_changed( self, index1, index2 ):
+        post( self.action.get_state, 
+              self.set_state, 
+              args = (self.gui_context.create_model_context(),) )
         
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
@@ -354,6 +362,10 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
     @QtCore.pyqtSlot()
     def triggered(self):
         self.run_action( None )
+        
+    @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
+    def data_changed( self, index1, index2 ):
+        AbstractActionWidget.data_changed( self, index1, index2 )
             
 class ActionWidget(QtGui.QPushButton):
     """A button that can be pushed to trigger an action"""

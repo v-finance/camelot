@@ -40,7 +40,7 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.model import metadata
 from camelot.view import filters
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin import form_action
+from camelot.admin.action import Action
 from camelot.core.document import documented_entity
 import camelot.types
 
@@ -76,11 +76,13 @@ def hostname():
     import socket
     return socket.gethostname()
     
-class CancelBatchJob(form_action.FormActionFromModelFunction):
+class CancelBatchJob( Action ):
     
-    def model_run( self, batch_job, options ):
+    def model_run( self, model_context ):
+        from camelot.view.action_steps import FlushSession
         batch_job.status = 'canceled'
-        
+        yield FlushSession( model_context.session )
+
 class BatchJob(Entity):
     """Information the batch job that is planned, running or has run"""
     using_options( tablename = 'batch_job', order_by=['-date'] )
@@ -130,7 +132,7 @@ class BatchJob(Entity):
         list_display = ['date', 'host', 'type', 'status']
         list_filter = ['status', filters.ComboBoxFilter('host')]
         form_display = list_display + ['message']
-        form_actions = [ CancelBatchJob( _('Cancel'), flush=True ) ]
+        form_actions = [ CancelBatchJob() ]
         
 BatchJob = documented_entity()( BatchJob )
 

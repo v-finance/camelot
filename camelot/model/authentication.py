@@ -53,7 +53,6 @@ from camelot.core.utils import ugettext_lazy as _
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm
-from camelot.admin.form_action import FormActionFromModelFunction
 import datetime
 import threading
 
@@ -694,7 +693,7 @@ class Address( Entity ):
         list_display = ['street1', 'street2', 'city']
         form_size = ( 700, 150 )
         field_attributes = {'street1':{'minimal_column_width':30}}
-        form_actions = [FormActionFromModelFunction( 'Show on map', lambda address:address.showMap() )]
+        form_actions = [( 'Show on map', lambda address:address.showMap() )]
 
 Address = documented_entity()( Address )
 
@@ -767,7 +766,7 @@ class PartyAddress( Entity ):
         list_display = ['party_name', 'address_name', 'comment']
         form_display = ['party', 'address', 'comment', 'from_date', 'thru_date']
         form_size = ( 700, 200 )
-        form_actions = [FormActionFromModelFunction( 'Show on map', lambda address:address.showMap() )]
+        form_actions = [( 'Show on map', lambda address:address.showMap() )]
         field_attributes = dict(address=dict(embedded=True),
                                 party_name=dict(editable=False, name='Party', minimal_column_width=30),
                                 address_name=dict(editable=False, name='Address', minimal_column_width=30))

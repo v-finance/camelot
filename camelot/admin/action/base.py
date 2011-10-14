@@ -291,6 +291,7 @@ direct manipulations of the user interface without a need to access the model.
     def gui_run( self, gui_context ):
         """This method is called inside the GUI thread, by default it
         executes the :meth:`model_run` in the Model thread.
+        
         :param gui_context: the context available in the *GUI thread*,
             of type :class:`GuiContext`
         """

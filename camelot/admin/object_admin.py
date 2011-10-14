@@ -313,8 +313,8 @@ be specified using the verbose_name attribute.
         """
         :return: a list of FormAction objects
         """
-        from camelot.admin.form_action import structure_to_form_actions
-        return structure_to_form_actions(self.form_actions)
+        from camelot.admin.action.form_action import structure_to_form_actions
+        return structure_to_form_actions( self.form_actions )
 
     @model_function
     def get_list_actions(self):
