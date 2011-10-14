@@ -51,7 +51,7 @@ strictly to the :class:`ModelContext`
 
 .. attribute:: progress_dialog
 
-    an instance of :class:`QtGui.QProgressDialog` or :keyword:`None'
+    an instance of :class:`QtGui.QProgressDialog` or :keyword:`None`
     
 .. attribute:: mode_name
 

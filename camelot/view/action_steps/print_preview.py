@@ -45,7 +45,7 @@ class PrintPreview( ActionStep ):
     
         the page size, by default :class:`QtGui.QPrinter.A4` is used
     
-    .. attribute:: PageOrientation
+    .. attribute:: page_orientation
     
         the page orientation, by default :class:`QtGui.QPrinter.Portrait`
         is used.
