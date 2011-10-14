@@ -86,11 +86,17 @@ class Filter(object):
         from elixir import session
         filter_names = []
         joins = []
-        table = admin.mapper.mapped_table
+        #
+        # in case of inheritance, use the local table to be able to join,
+        # otherwise use the mapped table, to be able to filter on views
+        #
+        if admin.mapper!=admin.mapper.base_mapper:
+            table = admin.mapper.local_table
+        else:
+            table = admin.mapper.mapped_table
         path = self.attribute.split('.')
         for field_name in path:
             attributes = admin.get_field_attributes(field_name)
-            
             filter_names.append(attributes['name'])
             # @todo: if the filter is not on an attribute of the relation, but on the relation itselves
             if 'target' in attributes:
