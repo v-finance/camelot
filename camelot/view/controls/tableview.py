@@ -33,6 +33,7 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QSizePolicy
 
+from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
@@ -553,7 +554,7 @@ class TableView( AbstractView  ):
     @QtCore.pyqtSlot(int)
     def sectionClicked( self, section ):
         """emits a row_selected signal"""
-        self.row_selected_signal.emit( section )
+        self.admin.list_action.gui_run( self.gui_context )
 
     def copy_selected_rows( self ):
         """Copy the selected rows in this tableview"""
@@ -599,6 +600,9 @@ class TableView( AbstractView  ):
         self.table.model().layoutChanged.connect( self.tableLayoutChanged )
         self.tableLayoutChanged()
         self.table_layout.insertWidget( 1, self.table )
+        self.gui_context = ListActionGuiContext()
+        self.gui_context.admin = self.admin
+        self.gui_context.item_view = self.table
 
         def get_filters_and_actions():
             return ( admin.get_filters(), admin.get_list_actions() )
@@ -607,7 +611,7 @@ class TableView( AbstractView  ):
 
     @QtCore.pyqtSlot()
     def on_keyboard_selection_signal(self):
-        self.table.verticalHeader().sectionClicked.emit(self.table.currentIndex().row())
+        self.sectionClicked( self.table.currentIndex().row() )
 
     @QtCore.pyqtSlot()
     @gui_function
@@ -774,7 +778,6 @@ class TableView( AbstractView  ):
     def set_filters_and_actions( self, filters_and_actions ):
         """sets filters for the tableview"""
         filters, actions = filters_and_actions
-        from camelot.admin.action import ListActionGuiContext
         from camelot.view.controls.filterlist import FilterList
         from camelot.view.controls.actionsbox import ActionsBox
         logger.debug( 'setting filters for tableview' )
@@ -798,11 +801,8 @@ class TableView( AbstractView  ):
         #
         self.rebuild_query()
         if actions:
-            gui_context = ListActionGuiContext()
-            gui_context.admin = self.admin
-            gui_context.item_view = self.table
             actions_widget = ActionsBox( parent = self,
-                                         gui_context = gui_context )
+                                         gui_context = self.gui_context )
             actions_widget.setObjectName( 'actions' )
             actions_widget.setActions( actions )
             self.filters_layout.addWidget( actions_widget )

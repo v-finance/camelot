@@ -25,6 +25,7 @@
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
+from camelot.admin.action.list_action import OpenForm
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function, gui_function
 from camelot.core.utils import ugettext_lazy, ugettext
@@ -37,6 +38,15 @@ This allows for much more introspection than the standard
     
 It has additional class attributes that customise its behaviour.
 
+**Basic**
+
+.. attribute:: list_action
+
+   The :class:`camelot.admin.action.Action` that will be triggered when the
+   user selects an item in a list of objects.  This defaults to 
+   :class:`camelot.admin.action.list_action.OpenForm`, which opens a form
+   for the current object.
+   
 **Filtering**
 
 .. attribute:: list_filter
@@ -100,6 +110,7 @@ It has additional class attributes that customise its behaviour.
  
     """
 
+    list_action = OpenForm()
     list_search = []
     expanded_list_search = None
     copy_deep = {}
@@ -491,44 +502,10 @@ It has additional class attributes that customise its behaviour.
         return widget
 
     @gui_function
-    def create_table_view(self, query_getter=None, parent=None):
-        """Returns a Qt widget containing a table view, for a certain query,
-        using this Admin class; the table widget contains a model
-        QueryTableModel
-
-        :param query_getter: sqlalchemy query object
-        :param parent: the widget that will contain the table view
+    def create_table_view( self ):
+        """Returns a QWidget containing a table view
         """
-        from camelot.view.workspace import show_top_level
-
-        from camelot.view.proxy.queryproxy import QueryTableProxy
-        tableview = self.TableView(self)
-
-        def createOpenForm(self, tableview):
-
-            def openForm(index):
-                model = QueryTableProxy(
-                    tableview.admin,
-                    tableview.table.model().get_query_getter(),
-                    tableview.admin.get_fields,
-                    max_number_of_rows=1,
-                    cache_collection_proxy=tableview.table.model()
-                )
-                title = ''
-                formview = tableview.admin.create_form_view(
-                    title, model, index, parent=None
-                )
-                show_top_level( formview, tableview )
-                # @todo: dirty trick to keep reference
-                #self.__form = formview
-
-            return openForm
-
-        tableview.row_selected_signal.connect(
-            createOpenForm(self, tableview)
-        )
-
-        return tableview
+        return self.TableView( self )
 
     @model_function
     def delete(self, entity_instance):

@@ -49,6 +49,10 @@ class ListActionModelContext( ApplicationActionModelContext ):
         an ordered list with tuples of selected row ranges.  the range is
         inclusive.
         
+    .. attribute:: current_row
+    
+        the current row in the list
+        
     .. attribute:: session
     
         The session to which the objects in the list belong.
@@ -59,6 +63,7 @@ class ListActionModelContext( ApplicationActionModelContext ):
         super( ListActionModelContext, self ).__init__()
         self._model = None
         self.admin = None
+        self.current_row = None
         self.selection_count = 0
         self.collection_count = 0
         self.selected_rows = []
@@ -90,28 +95,37 @@ class ListActionModelContext( ApplicationActionModelContext ):
         """
         for obj in self._model.get_collection():
             yield obj
+            
+    def get_object( self ):
+        """
+        :return: the object displayed in the current row or None
+        """
+        if self.current_row != None:
+            return self._model._get_object( self.current_row )
         
 class ListActionGuiContext( ApplicationActionGuiContext ):
+    """The context for an :class:`Action` on a table view.  On top of the attributes of the 
+    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
+    this context contains :
+
+    .. attribute:: item_view
     
+       the :class:`QtGui.QAbstractItemView` class that relates to the table 
+       view on which the widget will be placed.
+       
+    """
+        
     model_context = ListActionModelContext
     
     def __init__( self ):
-        """The context for an :class:`Action` on a table view.  On top of the attributes of the 
-        :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
-        this context contains :
-    
-        .. attribute:: item_view
-        
-           the :class:`QtGui.QAbstractItemView` class that relates to the table 
-           view on which the widget will be placed.
-           
-        """
+
         super( ListActionGuiContext, self ).__init__()
         self.item_view = None
 
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
         context._model = self.item_view.model()
+        context.current_row = self.item_view.currentIndex().row()
         context.collection_count = context._model.rowCount()
         selection_count = 0
         selected_rows = []
@@ -153,3 +167,28 @@ class CallMethod( Action ):
                     yield UpdateProgress( i, model_context.selection_count )
                 self.method( obj )
             yield FlushSession( model_context.session )
+            
+class OpenForm( Action ):
+    """Open a form view for the current row of a list."""
+    
+    def gui_run( self, gui_context ):
+        from camelot.view.workspace import show_top_level
+        from camelot.view.proxy.queryproxy import QueryTableProxy
+        model = QueryTableProxy(
+            gui_context.admin,
+            gui_context.item_view.model().get_query_getter(),
+            gui_context.admin.get_fields,
+            max_number_of_rows = 1,
+            cache_collection_proxy = gui_context.item_view.model()
+        )
+        row = gui_context.item_view.currentIndex().row()
+        formview = gui_context.admin.create_form_view(
+            u'', 
+            model, 
+            row, 
+            parent=None
+        )
+        # make sure there is no 'pythonw' window title in windows for a
+        # second
+        formview.setWindowTitle( u'' )
+        show_top_level( formview, gui_context.item_view )
