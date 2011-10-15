@@ -91,6 +91,59 @@ strictly to the :class:`ModelContext`
         new_context.mode_name = self.mode_name
         return new_context
                     
+class State( object ):
+    """A state represents the appearance and behavior of the widget that
+triggers the action.  When the objects in the model change, the 
+:meth:`Action.get_state` method will be called, which should return the
+updated state for the widget.
+
+.. attribute:: verbose_name
+
+    The name of the action as it will appear in the button, this defaults to
+    the verbose_name of the action.
+    
+.. attribute:: icon
+
+    The icon that represents the action, of type 
+    :class:`camelot.view.art.Icon`, this defaults to the icon of the action.
+
+.. attribute:: tooltip
+
+    The tooltip as displayed to the user, this should be of type 
+    :class:`camelot.core.utils.ugettext_lazy`, this defaults to the tooltip
+    op the action.
+
+.. attribute:: enabled
+
+    :keyword:`True` if the widget should be enabled (the default), 
+    :keyword:`False` otherwise
+    
+.. attribute:: visible
+
+    :keyword:`True` if the widget should be visible (the default), 
+    :keyword:`False` otherwise
+    
+.. attribute:: down
+
+    :keyword:`True` if the buttons should appear pressed down, defaults to
+    :keyword:`False`.
+
+.. attribute:: notification
+
+    :keyword:`True` if the buttons should attract the attention of the user, 
+    defaults to :keyword:`False`.
+
+    """
+    
+    def __init__( self ):
+        self.verbose_name = None
+        self.icon = None
+        self.tooltip = None
+        self.enabled = True
+        self.visible = True
+        self.down = False
+        self.notification = False
+
 class Mode( object ):
     """A mode is a way in which an action can be triggered, a print action could
 be triggered as 'Export to PDF' or 'Export to Word'.  None always represents
@@ -237,27 +290,6 @@ direct manipulations of the user interface without a need to access the model.
         """
         return self.name
     
-    def get_verbose_name( self ):
-        """
-        :return: a :class:`camelot.core.utils.ugettext_lazy` string, by default 
-            the :attr:`verbose_name` attribute
-        """
-        return self.verbose_name
-    
-    def get_icon( self ):
-        """
-        :return: a :class:`camelot.view.art.Icon`, by default the :attr:`icon` 
-            attribute
-        """
-        return self.icon
-    
-    def get_tooltip( self ):
-        """
-        :return: a :class:`camelot.core.utils.ugettext_lazy`, by default the 
-            :attr:`tooltip` attribute
-        """
-        return self.tooltip
-    
     def get_shortcut( self ):
         """
         :return: a :class:`camelot.core.utils.ugettext_lazy`, by default the 
@@ -271,6 +303,15 @@ direct manipulations of the user interface without a need to access the model.
             by default the :attr:`modes` attribute
         """
         return self.modes
+    
+    def get_icon( self ):
+        return self.icon
+    
+    def get_verbose_name( self ):
+        return self.verbose_name
+    
+    def get_tooltip():
+        return self.tooltip
     
     def render( self, gui_context, parent ):
         """Create a widget to trigger the action.  Depending on the type of
@@ -308,6 +349,9 @@ direct manipulations of the user interface without a need to access the model.
         the state of the action widget visible to the current user.
         
         :param model_context: the context available in the *Model thread*
-        :return: a :keyword:`str` such as 'enabled', 'disabled' or 'hidden'
+        :return: an instance of :class:`camelot.action.base.State`
         """
-        return 'enabled'
+        state = State()
+        state.verbose_name = self.get_verbose_name()
+        state.icon = self.get_icon()
+        return state

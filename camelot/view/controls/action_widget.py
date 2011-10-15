@@ -42,23 +42,17 @@ class AbstractActionWidget( object ):
         """Helper class to construct widget that when triggered run an action.
         This class exists as a base class for custom ActionButton implementations.
         """
+        from camelot.admin.action import State
         self.action = action
         self.gui_context = gui_context
-        self.state = None
+        self.state = State()
         if isinstance( gui_context, FormActionGuiContext ):
             gui_context.widget_mapper.model().dataChanged.connect( self.data_changed )
         post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
     def set_state( self, state ):
-        self.state = state
-        if state in ('disabled', 'forbidden'):
-            self.show()
-            self.setEnabled( False )
-        elif state in ('hidden', None):
-            self.hide()
-        else:
-            self.show()
-            self.setEnabled( True )
+        self.setEnabled( state.enabled )
+        self.setVisible( state.visible )
         
     def data_changed( self, index1, index2 ):
         post( self.action.get_state, 
@@ -102,9 +96,6 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         # the increasing amount of performAction() invocations), this variable is 
         # used to continuously store the state of that animation.
         self.selectionAnimationState = QtCore.QAbstractAnimation.Stopped
-
-        self.setPixmap(action.get_icon().getQPixmap())
-        self.resize(self.pixmap().width(), self.pixmap().height())
         self.setMaximumHeight(160)
         
         opacityEffect = QtGui.QGraphicsOpacityEffect(parent = self)
@@ -158,7 +149,9 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
 
     def set_state( self, state ):
         AbstractActionWidget.set_state( self, state )
-        if state == 'notification':
+        self.setPixmap( state.icon.getQPixmap() )
+        self.resize( self.pixmap().width(), self.pixmap().height() )
+        if state.notification:
             # Shake animation #
             notificationAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')
             notificationAnimationPart1.setObjectName('notificationAnimationPart1')
@@ -215,7 +208,7 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         self.resetLayout()
 
     def startSelectionAnimation(self):
-        if self.state == 'notification':
+        if self.state.notification:
             notificationAnimation = self.findChild(QtCore.QSequentialAnimationGroup, 'notificationAnimation')            
             if notificationAnimation is not None:
                 notificationAnimation.stop()
@@ -255,17 +248,18 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
             self.resetLayout()
 
     def resetLayout(self):
-        if self.state == 'notification':
+        if self.state.notification:
             self.stopNotificationAnimation()
         
         if self.sender() and self.originalPosition:
             self.move(self.originalPosition)
 
         self.setScaledContents(False)
-        self.resize(self.pixmap().width(), self.pixmap().height())
+        if self.pixmap():
+            self.resize(self.pixmap().width(), self.pixmap().height())
         self.graphicsEffect().setOpacity(1.0)
         
-        if self.state == 'notification' and self.originalPosition:
+        if self.state.notification and self.originalPosition:
             self.startNotificationAnimation()
         
     def setInteractive(self, interactive):
@@ -273,12 +267,12 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         
         self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0))# + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, HOVER_ANIMATION_DISTANCE)
         
-        if self.state == 'notification':
+        if self.state.notification:
             self.startNotificationAnimation()
 
     def enterEvent(self, event):
         if self.interactive:
-            if self.state == 'notification':
+            if self.state.notification:
                 self.stopNotificationAnimation()
                 
             self.startHoverAnimation()
@@ -291,7 +285,7 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         if self.interactive:
             self.stopHoverAnimation()
             
-            if self.state == 'notification':
+            if self.state.notification:
                 self.startNotificationAnimation()
             
             self.left.emit()

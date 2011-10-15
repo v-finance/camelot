@@ -3,6 +3,7 @@
 # to get started quickly
 #
 
+import time
 import datetime
 
 from sqlalchemy import sql
@@ -15,6 +16,7 @@ from elixir import Entity, Field, ManyToOne, OneToMany, \
                    ManyToMany, using_options
 from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.view import action_steps
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
 from camelot.view.controls import delegates
 from camelot.view.filters import ComboBoxFilter
@@ -46,13 +48,23 @@ class BurnToDisk( Action ):
     verbose_name = _('Burn to disk')
     
     def model_run( self, model_context ):
-        print u'burn %s'%( model_context.get_object() )
+        yield action_steps.UpdateProgress( 0, 3, _('Formatting disk') )
+        time.sleep( 0.7 )
+        yield action_steps.UpdateProgress( 1, 3, _('Burning movie') )
+        time.sleep( 0.7 )
+        yield action_steps.UpdateProgress( 2, 3, _('Finishing') )
+        time.sleep( 0.5 )
 
     def get_state( self, model_context ):
+        """Turn the burn to disk button on, only if the title of the
+        movie is entered"""
+        state = super( BurnToDisk, self ).get_state( model_context )
         obj = model_context.get_object()
         if obj and obj.title:
-            return 'enabled'
-        return 'disabled'
+            state.enabled = True
+        else:
+            state.enabled = False
+        return state
     
 # begin short movie definition
 class Movie(Entity):

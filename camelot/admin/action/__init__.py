@@ -26,7 +26,7 @@ from application_action import ( ApplicationActionGuiContext,
                                  NewViewAction, TableViewAction)
 from list_action import ListActionGuiContext, CallMethod
 
-from base import Action, ActionStep, GuiContext, Mode
+from base import Action, ActionStep, GuiContext, Mode, State
 
 __all__ = [
     Action.__name__,
@@ -38,4 +38,5 @@ __all__ = [
     TableViewAction.__name__,
     GuiContext.__name__,
     Mode.__name__,
+    State.__name__,
     ]
