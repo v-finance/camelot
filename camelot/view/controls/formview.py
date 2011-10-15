@@ -384,6 +384,7 @@ class FormView(AbstractView):
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
             gui_context = FormActionGuiContext()
+            gui_context.desktop = self
             gui_context.admin = self.admin
             gui_context.widget_mapper = widget_mapper
             actions_widget = ActionsBox( parent=self, gui_context=gui_context )

@@ -28,6 +28,39 @@ Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 
 from camelot.admin.action.base import ActionStep
 
+class OpenFormView( ActionStep ):
+    """Open the form view for a list of objects, in a non blocking way"""
+    
+    blocking = False
+    
+    def __init__( self, objects, admin ):
+        """
+        :param objects: the list of objects to display in the form view
+        :param admin: the admin class to use to display the form
+        """
+        self.objects = objects
+        self.admin = admin
+        
+        
+    def gui_run( self, gui_context ):
+        from camelot.view.proxy.collection_proxy import CollectionProxy
+        from camelot.view.workspace import show_top_level
+
+        def create_collection_getter( objects ):
+            return lambda:objects
+        
+        model = CollectionProxy(
+            self.admin,
+            create_collection_getter(self.objects),
+            self.admin.get_fields,
+            max_number_of_rows=10
+        )
+        title = ''
+        formview = self.admin.create_form_view(
+            title, model, 0
+        )
+        show_top_level( formview, gui_context.workspace )    
+    
 class Refresh( ActionStep ):
     """Refresh all the open screens on the desktop, this will reload queries
     from the database"""

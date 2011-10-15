@@ -23,7 +23,7 @@
 #  ============================================================================
 
 from change_object import ChangeObject, ChangeObjects
-from gui import Refresh, ShowChart, ShowPixmap
+from gui import OpenFormView, Refresh, ShowChart, ShowPixmap
 from open_file import OpenFile, OpenStream, OpenString, OpenJinjaTemplate
 from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
 from print_preview import PrintPreview, PrintJinjaTemplate
@@ -37,6 +37,7 @@ __all__ = [
     DeleteObject.__name__,
     FlushSession.__name__,
     OpenFile.__name__,
+    OpenFormView.__name__,
     OpenJinjaTemplate.__name__,
     OpenStream.__name__,
     OpenString.__name__,
