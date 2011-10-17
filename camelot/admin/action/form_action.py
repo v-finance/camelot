@@ -43,6 +43,10 @@ class FormActionModelContext( ApplicationActionModelContext ):
     .. attribute:: collection_count
     
         the number of objects that can be reached in the form.
+        
+    .. attribute:: selection_count
+    
+        the number of objects displayed in the form, at most 1.
                 
     .. attribute:: session
     
@@ -56,10 +60,11 @@ class FormActionModelContext( ApplicationActionModelContext ):
         self.admin = None
         self.current_row = None
         self.collection_count = 0
+        self.selection_count = 1
         
     @property
     def session( self ):
-        return self._model.get_query_getter()().session
+        return self._model.admin.get_query().session
         
     def get_object( self ):
         """
