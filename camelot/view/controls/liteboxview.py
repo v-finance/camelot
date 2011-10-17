@@ -51,7 +51,6 @@ def fit_to_screen(pixmap):
         return pixmap.scaled(dw * fit, dh * fit, Qt.KeepAspectRatio)
     return pixmap
 
-
 class CloseMark(QGraphicsPixmapItem):
 
     def __init__(self, pixmap=None, hover_pixmap=None, parent=None):
@@ -147,5 +146,3 @@ class LiteBoxView(QGraphicsView):
         CloseMark(parent=item)
         self.showFullScreen()
         self.setFocus()
-
-
