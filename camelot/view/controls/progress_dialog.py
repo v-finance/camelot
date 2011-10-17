@@ -50,11 +50,12 @@ to display a progress dialog until my_function has finished::
     progress_icon = Icon('tango/32x32/actions/appointment-new.png')
     
     def __init__(self, name, icon=progress_icon):
-        QtGui.QProgressDialog.__init__( self, QtCore.QString(), QtCore.QString(), 0, 0 )
-        label = QtGui.QLabel(unicode(name))
+        QtGui.QProgressDialog.__init__( self, QtCore.QString(), _('Cancel'), 0, 0 )
+        label = QtGui.QLabel( unicode(name) )
         #label.setPixmap(icon.getQPixmap())
-        self.setLabel(label)
+        self.setLabel( label )
         self.setWindowTitle( _('Please wait') )
+        self.setMinimumDuration( 1 )
 
     @QtCore.pyqtSlot(bool)
     @QtCore.pyqtSlot()
