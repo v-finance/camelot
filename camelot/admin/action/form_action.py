@@ -77,6 +77,21 @@ class FormActionModelContext( ApplicationActionModelContext ):
         """
         for obj in self._model.get_collection():
             yield obj
+            
+    def get_selection( self, yield_per = None ):
+        """
+        Method to be compatible with a 
+        :class:`camelot.admin.action.list_action.ListActionModelContext`, this
+        allows creating a single Action to be used on a form and on list.
+        
+        :param yield_per: this parameter has no effect, it's here only for
+            compatibility with :meth:`camelot.admin.action.list_action.ListActionModelContext.get_selection`
+        :return: a generator that yields the current object displayed in the 
+            form and does not yield anything if no object is displayed yet
+            in the form.
+        """
+        if self.current_row != None:
+            yield self._model._get_object( self.current_row )
         
 class FormActionGuiContext( ApplicationActionGuiContext ):
     
