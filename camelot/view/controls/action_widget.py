@@ -48,16 +48,20 @@ class AbstractActionWidget( object ):
         self.state = State()
         if isinstance( gui_context, FormActionGuiContext ):
             gui_context.widget_mapper.model().dataChanged.connect( self.data_changed )
+            gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
         post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
     def set_state( self, state ):
         self.setEnabled( state.enabled )
         self.setVisible( state.visible )
         
-    def data_changed( self, index1, index2 ):
+    def current_row_changed( self, current_row ):
         post( self.action.get_state, 
               self.set_state, 
               args = (self.gui_context.create_model_context(),) )
+        
+    def data_changed( self, index1, index2 ):
+        self.current_row_changed( index1.row() )
         
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
