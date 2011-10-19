@@ -146,7 +146,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
 
 class CallMethod( Action ):
     
-    def __init__( self, verbose_name, method ):
+    def __init__( self, verbose_name, method, enabled=None ):
         """
         Call a method on all objects in a selection, and flush the
         session.
@@ -154,9 +154,12 @@ class CallMethod( Action ):
         :param verbose_name: the name of the action, as it should appear
             to the user
         :param method: the method to call on the objects
+        :param enabled: method to call on objects to verify if the action is
+            enabled, by default the action is always enabled
         """
         self.verbose_name = verbose_name
         self.method = method
+        self.enabled = enabled
         
     def model_run( self, model_context ):
         from camelot.view.action_steps import UpdateProgress, FlushSession
@@ -166,6 +169,15 @@ class CallMethod( Action ):
                 yield UpdateProgress( i, model_context.selection_count )
             self.method( obj )
         yield FlushSession( model_context.session )
+        
+    def get_state( self, model_context ):
+        state = super( CallMethod, self ).get_state( model_context )
+        if self.enabled != None:
+            for obj in model_context.get_selection():
+                if not self.enabled( obj ):
+                    state.enabled = False
+                    break
+        return state
             
 class OpenForm( Action ):
     """Open a form view for the current row of a list."""

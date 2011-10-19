@@ -38,8 +38,6 @@ from camelot.model import metadata
 from camelot.model.authentication import getCurrentAuthentication, PartyCategory
 from camelot.model.type_and_status import type_3_status, create_type_3_status_mixin, get_status_type_class, get_status_class
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin.form_action import FormActionFromModelFunction, ProcessFilesFormAction
-from camelot.admin.list_action import ListActionFromModelFunction
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.document import documented_entity
 from camelot.view import forms
@@ -61,16 +59,6 @@ task_status_type_features_enumeration = [(f[0], f[1]) for f in task_status_type_
 task_status_type_feature_descriptions = dict((f[1], f[2]) for f in task_status_type_features)
 task_status_type_feature_values = dict((f[1], f[3]) for f in task_status_type_features)
 
-class AttachFilesAction(ProcessFilesFormAction):
-    
-    def process_files( self, obj, file_names, _options=None ):
-        document_property = TaskDocument.mapper.get_property('document')
-        storage = document_property.columns[0].type.storage
-        authentication = getCurrentAuthentication()
-        for file_name in file_names:
-            stored_file = storage.checkin( file_name )
-            TaskDocument( of = obj, document=stored_file, created_by=authentication )
-            
 class TaskType( Entity ):
     using_options(tablename='task_type', order_by=['rank', 'description'])
     description = Field( sqlalchemy.types.Unicode(48), required=True, index=True )
@@ -152,27 +140,6 @@ class TaskDocument( Entity ):
         field_attributes = {'type':{'delegate':delegates.ManyToOneChoicesDelegate},
                             'created_by':{'default':getCurrentAuthentication}}
 
-class AssignRolesFormAction(FormActionFromModelFunction):
-    
-    class Options(object):
-        
-        def __init__(self):
-            self.role = None
-            self.assignee = None
-            
-        class Admin(ObjectAdmin):
-    
-            form_display = forms.Form(['role', 'assignee'])
-            
-            field_attributes = {'role': {'editable': True,
-                                         'required': True,
-                                         'delegate': delegates.One2ManyDelegate,
-                                         'target': TaskRole},
-                                'assignee': {'required': True,
-                                             'editable': True,
-                                             'delegate': delegates.Many2OneDelegate,
-                                             'target': camelot.model.authentication.Person}
-                                }
 
 class Task( Entity, create_type_3_status_mixin('status') ):
     using_options(tablename='task', order_by=['-creation_date', 'id'] )
@@ -256,86 +223,7 @@ class Task( Entity, create_type_3_status_mixin('status') ):
  
     note = property( _get_first_note, _set_first_note )
                                 
-class AssignRolesListAction(ListActionFromModelFunction): 
-    class Options(object):
-        
-        def __init__(self):
-            self.role = None
-            self.assignee = None
             
-        class Admin(ObjectAdmin):
-    
-            form_display = forms.Form(['role', 'assignee'])
-            
-            field_attributes = {'role': {'editable': True,
-                                         'required': True,
-                                         'delegate': delegates.ManyToOneChoicesDelegate,
-                                         'target': TaskRoleType},
-                                'assignee': {'required': True,
-                                             'editable': True,
-                                             'delegate': delegates.Many2OneDelegate,
-                                             'target': camelot.model.authentication.Person}
-                                }
-                                
-    def model_run(self, collection, selection, options):
-        # Ignore if either no tasks were selected or no role or assignee was specified.
-        if not selection or not options.role or not options.assignee:
-            return
-            
-        for selectedTask in selection:
-            taskRole = TaskRole()
-            taskRole.described_by = options.role
-            taskRole.party = options.assignee
-            selectedTask.roles.append(taskRole)
-            
-class AssignCategoriesListAction(ListActionFromModelFunction):
-    class Options(object):
-        
-        def __init__(self):
-            self.category = None
-            
-        class Admin(ObjectAdmin):
-    
-            form_display = forms.Form(['category'])
-            
-            field_attributes = {'category': {'editable': True,
-                                             'required': True,
-                                             'delegate': delegates.ManyToOneChoicesDelegate,
-                                             'target': PartyCategory}
-                                }
-                                
-    def model_run(self, collection, selection, options):
-        # Ignore if either no tasks were selected or no category was specified.
-        if not selection or not options.category:
-            return
-            
-        for selectedTask in selection:
-            selectedTask.categories.append(options.category)
-            
-class AssignStatusesListAction(ListActionFromModelFunction):
-    class Options(object):
-        
-        def __init__(self):
-            self.status = None
-            
-        class Admin(ObjectAdmin):
-    
-            form_display = forms.Form(['status'])
-            
-            field_attributes = {'status': {'editable': True,
-                                           'required': True,
-                                           'delegate': delegates.ManyToOneChoicesDelegate,
-                                           'target': get_status_type_class( 'Task' )}
-                                }
-                                
-    def model_run(self, collection, selection, options):
-        # Ignore if either no tasks were selected or no category was specified.
-        if not selection or not options.status:
-            return
-            
-        for selectedTask in selection:
-            selectedTask.change_status(options.status)
-
 TaskStatusType = get_status_type_class( 'Task' )
 Task = documented_entity()( Task )
 
@@ -354,12 +242,7 @@ class TaskAdmin( EntityAdmin ):
     list_filter  = [ComboBoxFilter('described_by.description'), 
                     ComboBoxFilter('current_status_sql'), 
                     ComboBoxFilter('categories.name'), 'hidden']
-    list_actions = [AssignRolesListAction( _('Assign role'), selection_flush = True),
-                    AssignCategoriesListAction( _('Assign categories'), selection_flush = True),
-                    AssignStatusesListAction( _('Assign status'), selection_flush = True)]
     form_state = 'maximized'
-    form_actions = [AttachFilesAction( _('Attach Documents'),
-                                       enabled = task_has_id, flush = True)]
     form_display = forms.TabForm( [ ( _('Task'), ['description', 'described_by', 'current_status', 
                                                   'creation_date', 'due_date',  'note',]),
                                     ( _('Category'), ['categories'] ),
@@ -383,26 +266,6 @@ class TaskAdmin( EntityAdmin ):
             field_attributes['name'] = name or field_attributes['name']
         return field_attributes
 
-    def get_form_actions(self, obj):
-        form_actions = EntityAdmin.get_form_actions(self, obj)
-        status_type_class = get_status_type_class( 'Task' )
-        
-        def status_change_action( status_type ):
-            return FormActionFromModelFunction( status_type.code,
-                                                 lambda o:o.change_status( status_type ),
-                                                 enabled = lambda o:o.current_status != status_type,
-                                                 flush = True )
-        
-        if obj:
-            current_status = obj.current_status
-        else:
-            current_status = None
-            
-        for status_type in status_type_class.query.all():
-            if status_type != current_status:
-                form_actions.append( status_change_action( status_type ) )
-        return form_actions
-        
     def flush(self, obj):
         """Set the status of the agreement to draft if it has no status yet"""
         #if not len(obj.status):
