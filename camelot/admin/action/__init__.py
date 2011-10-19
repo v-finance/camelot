@@ -26,7 +26,7 @@ from application_action import ( ApplicationActionGuiContext,
                                  NewViewAction, TableViewAction)
 from list_action import ListActionGuiContext, CallMethod
 
-from base import Action, ActionStep, GuiContext, Mode, State
+from base import Action, ActionStep, GuiContext, MockModelContext, Mode, State
 
 __all__ = [
     Action.__name__,
@@ -34,6 +34,7 @@ __all__ = [
     ApplicationActionGuiContext.__name__,
     CallMethod.__name__,
     ListActionGuiContext.__init__,
+    MockModelContext.__init__,
     NewViewAction.__name__,
     TableViewAction.__name__,
     GuiContext.__name__,
