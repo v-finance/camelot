@@ -162,12 +162,17 @@ class CallMethod( Action ):
         self.enabled = enabled
         
     def model_run( self, model_context ):
-        from camelot.view.action_steps import UpdateProgress, FlushSession
+        from camelot.view.action_steps import ( UpdateProgress, 
+                                                FlushSession,
+                                                UpdateObject )
         step = max( 1, model_context.selection_count / 100 )
         for i, obj in enumerate( model_context.get_selection() ):
             if i%step == 0:
                 yield UpdateProgress( i, model_context.selection_count )
             self.method( obj )
+            # the object might have changed without the need to be flushed
+            # to the database
+            yield UpdateObject( obj )
         yield FlushSession( model_context.session )
         
     def get_state( self, model_context ):
