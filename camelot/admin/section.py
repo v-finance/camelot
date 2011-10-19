@@ -64,17 +64,21 @@ class SectionItem(object):
                   application_admin,
                   verbose_name = None ):
         from camelot.admin.action.application_action import structure_to_application_action
-        self.action = structure_to_application_action(action, application_admin)
         self.verbose_name = verbose_name
+        self.action = structure_to_application_action(action, application_admin)
+        self.state = self.action.get_state( None )
 
     def get_verbose_name(self):
-        return self.verbose_name or self.action.get_verbose_name()
+        return self.verbose_name or self.state.verbose_name
 
     def get_action(self):
         return self.action
         
     def get_icon(self):
-        return self.action.get_icon()
+        return self.state.icon
+    
+    def get_tooltip(self):
+        return self.state.tooltip
 
     def get_modes(self):
         return self.action.get_modes()

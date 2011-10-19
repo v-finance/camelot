@@ -113,7 +113,11 @@ class DesktopBackground(QtGui.QWidget):
         actionButton = self.sender()
         actionButtonInfoWidget = self.findChild(QtGui.QWidget, 'actionButtonInfoWidget')
         if actionButtonInfoWidget is not None:
-            actionButtonInfoWidget.setInfoFromAction( actionButton.action )
+            # @todo : get state should be called with a model context as first
+            #         argument
+            post( actionButton.action.get_state,
+                  actionButtonInfoWidget.setInfoFromState,
+                  args = (None,) )
        
     @QtCore.pyqtSlot()
     def onActionButtonLeft(self):
@@ -187,15 +191,15 @@ class ActionButtonInfoWidget(QtGui.QWidget):
 
         self.setLayout(mainLayout)
 
-    @QtCore.pyqtSlot()
-    def setInfoFromAction(self, action):
+    @QtCore.pyqtSlot( object )
+    def setInfoFromState(self, state):
         actionNameLabel = self.findChild(QtGui.QLabel, 'actionNameLabel')
         if actionNameLabel is not None:
-            actionNameLabel.setText( unicode( action.get_verbose_name() ) )
+            actionNameLabel.setText( unicode( state.verbose_name ) )
         
         actionDescriptionLabel = self.findChild(QtGui.QLabel, 'actionDescriptionLabel')
         if actionDescriptionLabel is not None:
-            tooltip = unicode( action.get_tooltip() or '' )
+            tooltip = unicode( state.tooltip or '' )
             actionDescriptionLabel.setText(tooltip)
             if tooltip:
                 # Do not use show() or hide() in this case, since it will

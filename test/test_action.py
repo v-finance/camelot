@@ -1,9 +1,49 @@
 import os
 
+from PyQt4 import QtGui
+
 from camelot.test import ModelThreadTestCase
 
 from test_view import static_images_path
 
+class ActionWidgetsCase(ModelThreadTestCase):
+    """Test widgets related to actions.
+    """
+
+    images_path = static_images_path
+
+    def setUp(self):
+        from camelot.admin.action import ApplicationActionGuiContext
+        from camelot.admin.application_admin import ApplicationAdmin
+        from camelot_example.importer import ImportCovers
+        ModelThreadTestCase.setUp(self)
+        self.app_admin = ApplicationAdmin()
+        self.action = ImportCovers()
+        self.application_gui_context = ApplicationActionGuiContext()
+        self.parent = QtGui.QWidget()
+        self.states = [ 'enabled', 'disabled', 'forbidden',
+                        'hidden', 'notification' ]
+        
+    def grab_widget_states( self, widget, suffix ):
+        for state in self.states:
+            widget.set_state( state )
+            self.grab_widget( widget, suffix='%s_%s'%( suffix,
+                                                       state ) )
+        
+    def test_action_label( self ):
+        from camelot.view.controls.action_widget import ActionLabel
+        widget = ActionLabel( self.action,
+                              self.application_gui_context,
+                              self.parent )
+        self.grab_widget_states( widget, 'application' )
+
+    def test_action_push_botton( self ):
+        from camelot.view.controls.action_widget import ActionPushButton
+        widget = ActionPushButton( self.action,
+                                   self.application_gui_context,
+                                   self.parent )
+        self.grab_widget_states( widget, 'application' )
+        
 class ActionStepsCase(ModelThreadTestCase):
     """Test the various steps that can be executed during an
     action.

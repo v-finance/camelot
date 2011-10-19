@@ -94,10 +94,12 @@ class TableViewAction( EntityAction ):
     """An application action that opens a TableView of an Entity"""
 
     modes = [ Mode( 'new_tab', _('Open in New Tab') ) ]
-    
-    def get_verbose_name( self ):
-        return self.verbose_name or self._entity_admin.get_verbose_name_plural()
-    
+        
+    def get_state( self, model_context ):
+        state = super( TableViewAction, self ).get_state( model_context )
+        state.verbose_name = self.verbose_name or self._entity_admin.get_verbose_name_plural()
+        return state
+        
     def gui_run( self, gui_context ):
         table_view = self._entity_admin.create_table_view()
         if gui_context.mode_name == 'new_tab':
@@ -108,11 +110,11 @@ class TableViewAction( EntityAction ):
 class NewViewAction( EntityAction ):
     """An application action that opens a new view of an Entity"""
 
-    def get_verbose_name( self ):
-        return self.verbose_name or ugettext('New %s')%(self._entity_admin.get_verbose_name())
-    
-    def get_tooltip(self):
-        return ugettext('Create a new %s')%(self._entity_admin.get_verbose_name())
+    def get_state( self, model_context ):
+        state = super( NewViewAction, self ).get_state( model_context )
+        state.verbose_name = self.verbose_name or ugettext('New %s')%(self._entity_admin.get_verbose_name())
+        state.tooltip = ugettext('Create a new %s')%(self._entity_admin.get_verbose_name())
+        return state
         
     def gui_run( self, gui_context ):
         """:return: a new view"""

@@ -238,15 +238,19 @@ return immediately and the :meth:`model_run` will not be blocked.
 
 class Action( ActionStep ):
     """An action has a set of attributes that define its appearance in the
-GUI.  For each of these attributes there is a corresponding getter method
-which is used by the view.  Subclasses of :class:`Action` that require dynamic
-values for these attributes can reimplement the getter methods.
+GUI.  
     
 .. attribute:: name
 
     The internal name of the action, this can be used to store preferences
     concerning the action in the settings
-    
+
+These attributes are used at the default values for the creation of a
+:class:`camelot.admin.action.base.State` object that defines the appearance
+of the action button.  Subclasses of :class:`Action` that require dynamic
+values for these attributes can reimplement the :class:`Action.get_state`
+method.
+
 .. attribute:: verbose_name
 
     The name as displayed to the user, this should be of type 
@@ -261,6 +265,10 @@ values for these attributes can reimplement the getter methods.
 
     The tooltip as displayed to the user, this should be of type 
     :class:`camelot.core.utils.ugettext_lazy`
+
+For each of these attributes there is a corresponding getter method
+which is used by the view.  Subclasses of :class:`Action` that require dynamic
+values for these attributes can reimplement the getter methods.
 
 .. attribute:: shortcut
 
@@ -303,16 +311,7 @@ direct manipulations of the user interface without a need to access the model.
             by default the :attr:`modes` attribute
         """
         return self.modes
-    
-    def get_icon( self ):
-        return self.icon
-    
-    def get_verbose_name( self ):
-        return self.verbose_name
-    
-    def get_tooltip():
-        return self.tooltip
-    
+        
     def render( self, gui_context, parent ):
         """Create a widget to trigger the action.  Depending on the type of
         gui_context and parent, a different widget type might be returned.
@@ -352,6 +351,7 @@ direct manipulations of the user interface without a need to access the model.
         :return: an instance of :class:`camelot.action.base.State`
         """
         state = State()
-        state.verbose_name = self.get_verbose_name()
-        state.icon = self.get_icon()
+        state.verbose_name = self.verbose_name
+        state.icon = self.icon
+        state.tooltip = self.tooltip
         return state
