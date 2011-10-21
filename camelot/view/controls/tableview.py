@@ -34,6 +34,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QSizePolicy
 
 from camelot.admin.action.list_action import ListActionGuiContext
+from camelot.core.utils import ugettext as _
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
@@ -42,7 +43,6 @@ from camelot.view.model_thread import post
 from camelot.view.model_thread import gui_function
 from camelot.view.model_thread import model_function
 from camelot.view import register
-from camelot.core.utils import ugettext as _
 
 from search import SimpleSearchControl
 

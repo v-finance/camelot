@@ -43,7 +43,7 @@ class ActionRunner( QtCore.QEventLoop ):
     
     non_blocking_action_step_signal = QtCore.pyqtSignal(object)
     
-    def __init__( self, generator_function, gui_context, model_context ):
+    def __init__( self, generator_function, gui_context ):
         """
         :param generator_function: function to be called in the model thread,
             that will return the generator
@@ -110,6 +110,15 @@ class ActionRunner( QtCore.QEventLoop ):
         else:
             self.exit()
         
+    def _was_canceled( self, gui_context ):
+        """raise a :class:`camelot.core.exception.CancelRequest` if the
+        user pressed the cancel button of the progress dialog in the
+        gui_context.
+        """
+        if gui_context.progress_dialog:
+            if gui_context.progress_dialog.wasCanceled():
+                raise CancelRequest()
+            
     @QtCore.pyqtSlot( object )
     def next( self, yielded ):
         """Handle the result of the next call of the generator
@@ -119,7 +128,9 @@ class ActionRunner( QtCore.QEventLoop ):
         """
         if isinstance( yielded, (ActionStep,) ):
             try:
+                self._was_canceled( self._gui_context )
                 to_send = yielded.gui_run( self._gui_context )
+                self._was_canceled( self._gui_context )
                 post( self._iterate_until_blocking, 
                       self.next, 
                       self.exception, 

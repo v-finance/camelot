@@ -217,7 +217,7 @@ return immediately and the :meth:`model_run` will not be blocked.
     """
 
     blocking = True
-        
+            
     def gui_run( self, gui_context ):
         """This method is called in the *GUI thread* upon execution of the
         action step.  The return value of this method is the result of the
@@ -230,9 +230,12 @@ return immediately and the :meth:`model_run` will not be blocked.
             :class:`camelot.admin.action.GuiContext`, which is the context 
             of this action available in the *GUI thread*.  What is in the 
             context depends on how the action was called.
+            
+        this method will raise a :class:`camelot.core.exception.CancelRequest`
+        exception, if the user canceled the operation.
         """
         from camelot.view.action_runner import ActionRunner
-        runner = ActionRunner( self.model_run, gui_context, None )
+        runner = ActionRunner( self.model_run, gui_context )
         runner.exec_()
         
     def model_run( self, model_context = None ):
@@ -344,13 +347,20 @@ direct manipulations of the user interface without a need to access the model.
         
         :param gui_context: the context available in the *GUI thread*,
             of type :class:`GuiContext`
+            
         """
         from camelot.view.controls.progress_dialog import ProgressDialog
-        progress_dialog = ProgressDialog( unicode( self.verbose_name ) )
-        gui_context.progress_dialog = progress_dialog
-        progress_dialog.show()
+        progress_dialog = None
+        # only create a progress dialog if there is none yet
+        if gui_context.progress_dialog == None:
+            progress_dialog = ProgressDialog( unicode( self.verbose_name ) )
+            gui_context.progress_dialog = progress_dialog
+            progress_dialog.show()
         super(Action, self).gui_run( gui_context )
-        progress_dialog.close()
+        # only close the progress dialog if it was created here
+        if progress_dialog != None:
+            progress_dialog.close()
+            gui_context.progress_dialog = None
         
     def get_state( self, model_context ):
         """
