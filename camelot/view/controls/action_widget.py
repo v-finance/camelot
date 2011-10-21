@@ -367,7 +367,5 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
             self.setText( unicode( state.verbose_name ) )
         if state.icon != None:
             self.setIcon( state.icon.getQIcon() )
-        if state == 'down':
-            self.setDown( True )
         else:
-            self.setDown( False )
+            self.setIcon( QtGui.QIcon() )

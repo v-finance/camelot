@@ -132,11 +132,6 @@ updated state for the widget.
 
     :keyword:`True` if the widget should be visible (the default), 
     :keyword:`False` otherwise
-    
-.. attribute:: down
-
-    :keyword:`True` if the buttons should appear pressed down, defaults to
-    :keyword:`False`.
 
 .. attribute:: notification
 
@@ -151,7 +146,6 @@ updated state for the widget.
         self.tooltip = None
         self.enabled = True
         self.visible = True
-        self.down = False
         self.notification = False
 
 class Mode( object ):
