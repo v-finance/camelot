@@ -35,10 +35,9 @@ from sqlalchemy.orm import backref
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import metadata
-from camelot.model.authentication import getCurrentAuthentication, PartyCategory
+from camelot.model.authentication import getCurrentAuthentication
 from camelot.model.type_and_status import type_3_status, create_type_3_status_mixin, get_status_type_class, get_status_class
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.document import documented_entity
 from camelot.view import forms
 from camelot.view.filters import ComboBoxFilter
