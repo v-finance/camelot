@@ -389,7 +389,7 @@ class FormView(AbstractView):
             gui_context.widget_mapper = widget_mapper
             actions_widget = ActionsBox( parent=self, gui_context=gui_context )
             actions_widget.setObjectName('actions')
-            action_widgets = actions_widget.setActions(actions)
+            actions_widget.setActions(actions)
             side_panel_layout.insertWidget(1, actions_widget)
             side_panel_layout.addStretch()
             layout.addLayout(side_panel_layout)

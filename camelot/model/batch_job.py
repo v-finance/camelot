@@ -80,7 +80,8 @@ class CancelBatchJob( Action ):
     
     def model_run( self, model_context ):
         from camelot.view.action_steps import FlushSession
-        batch_job.status = 'canceled'
+        for batch_job in model_context.get_selection():
+            batch_job.status = 'canceled'
         yield FlushSession( model_context.session )
 
 class BatchJob(Entity):

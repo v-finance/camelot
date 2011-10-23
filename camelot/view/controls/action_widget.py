@@ -28,8 +28,6 @@ Created on May 22, 2010
 @author: tw55413
 '''
 
-import functools
-
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
