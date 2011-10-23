@@ -10,27 +10,6 @@ status : approved
   This proposal is being implemented in the trunk, the functionallity described
   here is not yet available in the latest release.
 
-Motivation
-==========
-
-The current action framework in Camelot has worked well for 
-actions with little user interaction.  It however misses some
-functions such as enabling the user to cancel an ongoing action,
-or to decide at run time which questions will be asked to the
-user.
-
-The implementation of the actions within Camelot requires a
-lot of boilerplate code that needs to be written for each 
-type of action.  There are for example 2 print preview actions,
-one for the form view and one for the list view.
-
-This proposal aims to solve these issues, and make it easy 
-to implement more sophisticated actions.
-
-After implementing this proposal it should be possible to
-implement parts of Camelot itself as actions.  This would
-enable more customization.
-
 Introduction
 ============
 
@@ -44,18 +23,21 @@ action button, a predefined function is called.
   
 An action is available to show the address on a map
 
-Camelot comes with a set of standard actions that are easily 
-extended to manipulate data or create reports.  When defining actions,
-a clear distinction should be made between things happening in the
-model thread (the manipulation or querying of data, and things happening
-in the gui thread (pop up windows or reports).  The :ref:`doc-threads`
+Every Action is build up with a set of Action Steps.  An Action Step is a
+reusable part of an Action, such as for example, ask the user to select a
+file.  Camelot comes with a set of standard Actions and Action Steps that are 
+easily  extended to manipulate data or create reports.  
+
+When defining Actions, a clear distinction should be made between things 
+happening in the model thread (the manipulation or querying of data, and things 
+happening in the gui thread (pop up windows or reports).  The :ref:`doc-threads`
 section gives more detail on this.
 
 Summary
 =======
 
 In general, actions are defined by subclassing the standard Camelot
-actions  (:class:`camelot.admin.action.Action`) ::
+Action  (:class:`camelot.admin.action.Action`) ::
 
     from camelot.admin.action import Action
     from camelot.view.action_steps import PrintPreview
@@ -63,6 +45,7 @@ actions  (:class:`camelot.admin.action.Action`) ::
     from camelot.view.art import Icon
     
     class PrintReport( Action ):
+    
         verbose_name = _('Print Report')
         icon = Icon('tango/16x16/actions/document-print.png')
         tooltip = _('Print a report with all the movies')
@@ -70,16 +53,15 @@ actions  (:class:`camelot.admin.action.Action`) ::
         def model_run( self, model_context ):
             yield PrintPreview( 'Hello World' )
             
-Each standard action has two methods, :meth:`gui_run` and 
-:meth:`model_run`, one of
-them should be overloaded in the subclass to either run the action in the
+Each action has two methods, :meth:`gui_run` and  :meth:`model_run`, one of
+them should be reimplemented in the subclass to either run the action in the
 gui thread or to run the action in the model thread.  The default 
 :meth:`Action.gui_run` behavior is to pop-up a 
 :class:`camelot.view.controls.progress_dialog.ProgressDialog` dialog and 
 start the :meth:`model_run` method in the model thread.
 
-:meth:`model_run` in itself is a generator, that can yield 
-object back to the gui, such as a :class:`camelot.view.action_steps.print_preview.PrintPreview`.
+:meth:`model_run` in itself is a generator, that can yield Action Step objects 
+back to the gui, such as a :class:`camelot.view.action_steps.print_preview.PrintPreview`.
             
 The action subclass can than be used a an element of the actions list of an 
 :class:`camelot.admin.application_admin.ApplicationAdmin` subclass::
@@ -100,8 +82,8 @@ But actions need to be able to send their results back to the user, or ask
 the user for additional information.  This is done with the :keyword:`yield` 
 statement.
 
-Through :keyword:`yield`, an object is send to the GUI thread, where it creates
-user action, and sends it result back to the 'model_thread'.  The model_thread
+Through :keyword:`yield`, an Action Step is send to the GUI thread, where it creates
+user interaction, and sends it result back to the 'model_thread'.  The model_thread
 will be blocked while the action in the GUI thread takes place, eg ::
 
     yield PrintPreview( 'Hello World' )
@@ -130,8 +112,8 @@ Possible Action Steps that can be yielded to the GUI include:
 keep the user informed about progress
 -------------------------------------
 
-An :obj:`camelot.view.action_steps.update_progress.UpdateProgress` object can be yielded, to update
-the state of the progress dialog:
+An :obj:`camelot.view.action_steps.update_progress.UpdateProgress` object can be 
+yielded, to update the state of the progress dialog:
 
 .. autoclass:: camelot.view.action_steps.UpdateProgress
    :noindex:
@@ -170,9 +152,8 @@ the GUI about this, so that it can update itself, the easy way of doing so
 is by yielding an instance of :class:`camelot.view.action_steps.orm.FlushSession` 
 such as::
 
-    from sqlalchemy.orm.session import object_session
     movie.rating = 5
-    yield FlushSession( object_session( movie ) )
+    yield FlushSession( model_context.session )
     
 This will flush the session to the database, and at the same time update
 the GUI so that the flushed changes are shown to the user by updating the
@@ -221,8 +202,8 @@ first needs to be defined::
             field_attributes = { 'earliest_releasedate':{'delegate':delegates.DateDelegate},
                                  'latest_releasedate':{'delegate':delegates.DateDelegate}, }
                                  
-Than a :class:`camelot.view.action_steps.change_object.ChangeObject` can be :keyword:`yield` to present
-the options to the user and get the filled in values back:
+Than a :class:`camelot.view.action_steps.change_object.ChangeObject` can be 
+:keyword:`yield` to present the options to the user and get the filled in values back :
 
 .. literalinclude:: ../../../../camelot/bin/meta.py
    :start-after: begin change object
@@ -250,30 +231,13 @@ States and Modes
 States
 ------
 
-The widget that is used to trigger an action can be in different states.  The
-default supported states are :
+The widget that is used to trigger an action can be in different states.  A 
+:class:`camelot.admin.action.base.State` object is returned by the 
+:class:`camelot.admin.action.base.Action` object.  Subclasses of Action can
+reimplement this method to change the State of an action button.
 
-  - *enabled* : this is the default state, where the user is able to trigger
-    the action.
-    
-    .. image:: /_static/actionwidgets/action_push_botton_application_enabled.png
-    
-  - *disabled* : in this state the user is unable to trigger the action
-  
-    .. image:: /_static/actionwidgets/action_push_botton_application_disabled.png
-  
-  - *forbidden* : the user has no permission to trigger the action
-  
-    .. image:: /_static/actionwidgets/action_push_botton_application_forbidden.png
-  
-  - *hidden* : the action widget is not visible
-  
-    .. image:: /_static/actionwidgets/action_push_botton_application_hidden.png
-  
-  - *notification* : the action widget attracts the attention of the user, this
-    implies it is 'enabled'
-    
-    .. image:: /_static/actionwidgets/action_push_botton_application_notification.png
+.. autoclass:: camelot.admin.action.base.State
+   :noindex:
     
 Modes
 -----
@@ -312,8 +276,8 @@ The minimal context available in the *GUI thread* is :
 
 .. _doc-application-action:
 
-ApplicationAction
------------------
+Application Actions
+-------------------
             
 To enable Application Actions for a certain 
 :class:`camelot.admin.application_admin.ApplicationAdmin` either overwrite
@@ -327,7 +291,7 @@ or specify the :attr:`actions` attribute::
     
         verbose_name = _('Generate Reports')
         
-        def model_run( self, mode=None):
+        def model_run( self, model_context):
             print 'generating reports'
             for i in range(10):
                 yield UpdateProgress(i, 10)
@@ -335,60 +299,66 @@ or specify the :attr:`actions` attribute::
     class MyApplicationAdmin( ApplicationAdmin )
     
           actions = [GenerateReports,]
+          
+An action specified here will receive a 
+:class:`camelot.admin.action.application.ApplicationGuiContext`  object as the 
+*gui_context* argument of th the :meth:`camelot.admin.action.Base.gui_run`
+method, and a :class:`camelot.admin.action.application.ApplicationModelContext` 
+object as the *model_context* argument of th the :meth:`camelot.admin.action.Base.model_run`
 
-FormAction
-----------
+.. autoclass:: camelot.admin.action.application.ApplicationGuiContext
+   :noindex:
 
-The API of the :class:`camelot.admin.action.form_action.FormAction`::
+.. autoclass:: camelot.admin.action.application.ApplicationModelContext
+   :noindex:
+   
+Form Actions
+------------
 
-    class FormAction( AbstractAction ):
-    
-        def render( self, parent, view, widget_mapper ):
-            """
-            :param parent: the parent :class:`QtGui.QWidget`
-            :param view: the :class:`camelot.view.controls.AbstractView` object
-                to which this action belongs.
-            :param widget_mapper: the :class:`QtGui.QDataWidgetMapper` class
-                that relates to the form view on which the widget will be
-                placed.
-            :return: a :class:`QtGui.QWidget` which when triggered
-                will execute the run method.
-            """
-            
-        def gui_run( self,
-                     widget,
-                     widget_mapper,
-                     mode ):
-            """This method is called inside the GUI thread, by default it
-            executes the :meth:`model_run` in the Model thread.
-            :param widget: the rendered :class:`QtGui.QWidget` that triggered
-                the method call
-            :param selection_model: the :class:`QtGui.QDataWidgetMapper` class
-            :param mode: the name of the mode in which this action was triggered.
-            """
-            pass
-            
-        def model_run( self,
-                       current_obj,
-                       mode = None ):
-            """This generator method is called inside the Model thread.
-            :param current_obj: the object in the current row
-                current column
-            :param mode: the mode in which the action was triggered.
-            """
-            pass
-            
-        def get_state( self, 
-                        current_obj ):
-            """This method is called inside the Model thread to verify if
-            the state of the action widget visible to the current user.
-            :return: a :keyword:`str`
-            """
-            return 'enabled'
+To enable Form Actions for a certain 
+:class:`camelot.admin.application_admin.ObjectAdmin` or
+:class:`camelot.admin.application_admin.EntityAdmin`, specify the 
+:attr:`form_actions` attribute.
 
-ListAction
-----------
-            
+An action specified here will receive a 
+:class:`camelot.admin.action.form_action.FormActionGuiContext`  object as the 
+*gui_context* argument of th the :meth:`camelot.admin.action.Base.gui_run`
+method, and a :class:`camelot.admin.action.form_action.FormActionModelContext` 
+object as the *model_context* argument of th the :meth:`camelot.admin.action.Base.model_run`
+
+.. autoclass:: camelot.admin.action.form_action.FormActionGuiContext
+   :noindex:
+
+.. autoclass:: camelot.admin.action.form_action.FormActionModelContext
+   :noindex:
+   
+List Actions
+------------
+
+To enable List Actions for a certain 
+:class:`camelot.admin.application_admin.ObjectAdmin` or
+:class:`camelot.admin.application_admin.EntityAdmin`, specify the 
+:attr:`list_actions` attribute.
+
+An action specified here will receive a 
+:class:`camelot.admin.action.list_action.ListActionGuiContext`  object as the 
+*gui_context* argument of th the :meth:`camelot.admin.action.Base.gui_run`
+method, and a :class:`camelot.admin.action.list_action.ListActionModelContext` 
+object as the *model_context* argument of th the :meth:`camelot.admin.action.Base.model_run`
+
+.. autoclass:: camelot.admin.action.list_action.ListActionGuiContext
+   :noindex:
+
+.. autoclass:: camelot.admin.action.list_action.ListActionModelContext
+   :noindex:
+
+Reusing List and Form actions
+-----------------------------
+
+There is no need to define a different action subclass for form and list
+actions, as both their model_context has a **get_selection** method, a single
+action can be used both for the list and the form.
+
 Inspiration
 ===========
 
