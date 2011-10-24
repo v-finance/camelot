@@ -52,6 +52,17 @@ class MockModelContext( object ):
     def get_object( self ):
         return self.obj
         
+    def get_selection( self ):
+        return [self.obj]
+
+    def get_collection( self ):
+        return [self.obj]
+
+    @property
+    def session( self ):
+        from sqlalchemy.orm.session import object_session
+        return object_session( self.obj )
+
 class GuiContext( object ):
     """
 The GUI context in which an action is running.  This object can contain
