@@ -151,8 +151,9 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
 
     def set_state( self, state ):
         AbstractActionWidget.set_state( self, state )
-        self.setPixmap( state.icon.getQPixmap() )
-        self.resize( self.pixmap().width(), self.pixmap().height() )
+        if state.icon:
+            self.setPixmap( state.icon.getQPixmap() )
+            self.resize( self.pixmap().width(), self.pixmap().height() )
         if state.notification:
             # Shake animation #
             notificationAnimationPart1 = QtCore.QPropertyAnimation(self, 'pos')

@@ -38,7 +38,6 @@ from PyQt4 import QtGui, QtCore
 
 from camelot.view.action import ActionFactory
 from camelot.view.controls.navpane2 import NavigationPane
-from camelot.view.controls.printer import Printer
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.model_thread import post
 
@@ -95,9 +94,6 @@ class MainWindow(QtGui.QMainWindow):
 
         logger.debug('reading saved settings')
         self.readSettings()
-
-        logger.debug('setting up printer object')
-        self.printer = Printer()
         
         windowtitle = self.app_admin.get_name()
         logger.debug('setting up window title: %s' % windowtitle)
@@ -176,7 +172,6 @@ class MainWindow(QtGui.QMainWindow):
         self.backupAct = ActionFactory.backup(self, self.backup)
         self.restoreAct = ActionFactory.restore(self, self.restore)
         self.pageSetupAct = ActionFactory.page_setup(self, self.pageSetup)
-        self.printAct = ActionFactory.print_(self, self.printDoc)
         self.previewAct = ActionFactory.print_preview(self, self.previewDoc)
         self.exitAct= ActionFactory.exit(self, slot=self.close)
         self.copyAct = ActionFactory.copy(self, slot=self.copy)
@@ -246,20 +241,18 @@ class MainWindow(QtGui.QMainWindow):
     def select_all(self):
         self.activeMdiChild().select_all_rows()
 
-    def printDoc(self):
-        self.previewDoc()
-
     def previewDoc(self):
         active = self.activeMdiChild()
-        from camelot.admin.form_action import PrintHtmlFormAction
+        from camelot.admin.action import Action, GuiContext
+        from camelot.view.action_steps import PrintPreview
 
-        class PrintPreview(PrintHtmlFormAction):
+        class PrintPreviewAction( Action ):
+            
+            def model_run( self, model_context ):
+                yield PrintPreview( active.to_html() )
 
-            def html(self, entity_getter):
-                return active.to_html()
-
-        action = PrintPreview(_('Print Preview'))
-        action.run(lambda:None)
+        action = PrintPreviewAction()
+        action.gui_run( GuiContext() )
 
     def new(self):
         self.activeMdiChild().newRow()
@@ -342,7 +335,6 @@ class MainWindow(QtGui.QMainWindow):
             None,
             self.pageSetupAct,
             self.previewAct,
-            self.printAct,
             None
         ))
 
@@ -398,7 +390,6 @@ class MainWindow(QtGui.QMainWindow):
 
         self.pageSetupAct.setEnabled(active_view)
         self.previewAct.setEnabled(active_view)
-        self.printAct.setEnabled(active_view)
 
         self.newAct.setEnabled(active_view)
         self.deleteAct.setEnabled(active_view)
@@ -444,7 +435,7 @@ class MainWindow(QtGui.QMainWindow):
             self.exportToMailAct,
         ))
 
-        addActions(self.tool_bar, (self.printAct, self.previewAct))
+        addActions(self.tool_bar, (self.previewAct,))
 
         addActions(self.tool_bar, (self.helpAct,))
 

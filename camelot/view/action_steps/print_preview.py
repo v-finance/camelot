@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
+from PyQt4 import QtCore, QtGui
 
 from camelot.admin.action import ActionStep
 
@@ -55,17 +55,42 @@ class PrintPreview( ActionStep ):
     
     def __init__( self, html ):
         self.html_document = None
+        self.printer = None
         self.page_size = None
         self.page_orientation = None
         self.html = html
 
-    def gui_run( self, gui_context ):
-        from camelot.view.export.printer import open_html_in_print_preview_from_gui_thread
-        open_html_in_print_preview_from_gui_thread( self.html,
-                                                    html_document = self.html_document or QtGui.QTextDocument, 
-                                                    page_size = self.page_size or QtGui.QPrinter.A4, 
-                                                    page_orientation= self.page_orientation or QtGui.QPrinter.Portrait )
+    def render( self ):
+        """create the print preview widget. this method is used to unit test
+        the action step."""
+        if not self.printer:
+            self.printer = QtGui.QPrinter()
+        if not self.printer.isValid():
+            self.printer.setOutputFormat( QtGui.QPrinter.PdfFormat )
+        if self.page_size != None:
+            self.printer.setPageSize( self.page_size )
+        if self.page_orientation != None:
+            self.printer.setOrientation( self.page_orientation )
+        dialog = QtGui.QPrintPreviewDialog( self.printer, flags=QtCore.Qt.Window )
+        dialog.paintRequested.connect( self.paint_on_printer )
+        # show maximized seems to trigger a bug in qt which scrolls the page 
+        # down dialog.showMaximized()
+        desktop = QtGui.QApplication.desktop()
+        available_geometry = desktop.availableGeometry( dialog )
+        # use the size of the screen instead to set the dialog size
+        dialog.resize( available_geometry.width() * 0.75, 
+                       available_geometry.height() * 0.75 )
+        return dialog
 
+    @QtCore.pyqtSlot( QtGui.QPrinter )
+    def paint_on_printer( self, printer ):
+        doc = (self.html_document or QtGui.QTextDocument)()
+        doc.setHtml( self.html )
+        doc.print_( printer )
+     
+    def gui_run( self, gui_context ):
+        dialog = self.render()
+        dialog.exec_()
 
 class PrintJinjaTemplate( PrintPreview ):
     """Render a jinja template into a print preview dialog.

@@ -57,6 +57,8 @@ class SelectOpenFile( ActionStep ):
         self.existing = True
     
     def render( self ):
+        """create the file dialog widget. this method is used to unit test
+        the action step."""
         dialog = QtGui.QFileDialog( filter = self.file_name_filter )
         if self.existing == False:
             file_mode = QtGui.QFileDialog.AnyFile
