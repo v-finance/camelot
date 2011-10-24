@@ -13,7 +13,7 @@ class ActionWidgetsCase(ModelThreadTestCase):
     images_path = static_images_path
 
     def setUp(self):
-        from camelot.admin.action import ApplicationActionGuiContext
+        from camelot.admin.action import ApplicationActionGuiContext, State
         from camelot.admin.application_admin import ApplicationAdmin
         from camelot_example.importer import ImportCovers
         ModelThreadTestCase.setUp(self)
@@ -21,14 +21,20 @@ class ActionWidgetsCase(ModelThreadTestCase):
         self.action = ImportCovers()
         self.application_gui_context = ApplicationActionGuiContext()
         self.parent = QtGui.QWidget()
-        self.states = [ 'enabled', 'disabled', 'forbidden',
-                        'hidden', 'notification' ]
+        enabled = State()
+        disabled = State()
+        disabled.enabled = False
+        notification = State()
+        notification.notification = True
+        self.states = [ ( 'enabled', enabled),
+                        ( 'disabled', disabled),
+                        ( 'notification', notification) ]
         
     def grab_widget_states( self, widget, suffix ):
-        for state in self.states:
+        for state_name, state in self.states:
             widget.set_state( state )
             self.grab_widget( widget, suffix='%s_%s'%( suffix,
-                                                       state ) )
+                                                       state_name ) )
         
     def test_action_label( self ):
         from camelot.view.controls.action_widget import ActionLabel
@@ -91,3 +97,9 @@ class ActionStepsCase(ModelThreadTestCase):
         select_file = SelectOpenFile( 'Image Files (*.png *.jpg);;All Files (*)' )
         dialog = select_file.render()
         self.grab_widget( dialog )
+        
+    def test_print_preview(self):
+        from camelot.view.action_steps import PrintPreview
+        print_preview = PrintPreview( '<h1>Hello World</h1>' )
+        dialog = print_preview.render()
+        self.grab_widget( print_preview.render() )

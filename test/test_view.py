@@ -573,17 +573,6 @@ class FormTest(ModelThreadTestCase):
         person_admin = Admin(self.app_admin, self.person_entity)
         self.grab_widget( person_admin.create_new_view() )
 
-from camelot.admin import form_action
-
-class FormActionTest(ModelThreadTestCase):
-
-    images_path = static_images_path
-
-    def test_print_html_form_action(self):
-        action = form_action.PrintHtmlFormAction('Summary')
-        widget = action.render(None, None)
-        self.grab_widget(widget)
-
 class DelegateTest(ModelThreadTestCase):
     """Test the basic functionallity of the delegates :
   - createEditor
@@ -1012,19 +1001,19 @@ class ControlsTest(ModelThreadTestCase):
         
     def test_desktop_workspace(self):
         from camelot.view.workspace import DesktopWorkspace
-        from camelot.admin.action.application_action import ApplicationAction
+        from camelot.admin.action import Action
         from camelot.view.art import Icon
        
-        action1 = ApplicationAction()
+        action1 = Action()
         action1.icon=Icon('tango/32x32/places/network-server.png')
-        action2 = ApplicationAction()
+        action2 = Action()
         action2.icon=Icon('tango/32x32/places/user-trash.png')
-        action3 = ApplicationAction()
+        action3 = Action()
         action3.icon=Icon('tango/32x32/places/start-here.png')
         desktopWorkspace = DesktopWorkspace(self.app_admin, None)
         actions = [ action1, action2, action3 ]
 
-        desktopWorkspace._background_widget.set_actions(actions)
+        desktopWorkspace._background_widget.set_actions( actions )
         self.grab_widget(desktopWorkspace)
 
     def test_progress_dialog( self ):
