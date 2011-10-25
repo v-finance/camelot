@@ -237,11 +237,12 @@ def write_data_to_excel(filename, title, headerList, data_list):
                         formatStr = '0'
                     elif myDataTypeDict[ column ] == float:
                         formatStr = '0.'
-                        try:
-                            for _j in range( 0 , myPrecisionDict[ column ]):
-                                formatStr += '0'
-                        except TypeError, e: 
-                            raise Exception('Precision was not set for a float field in %s at least on column with index %i: %s' % (title,column,e))
+                        precision = myPrecisionDict[ column ]
+                        if not isinstance( precision, int ):
+                            # this might happen when precision is a callable
+                            precision = 2
+                        for _j in range( 0 , precision ):
+                            formatStr += '0'
                         valueAddedInSize = len(formatStr) # To fit the cell width + 1 (of dot(.))
                     elif myDataTypeDict[ column ] == datetime.date or isinstance(header_delegates[column], delegates.DateDelegate):
                         formatStr = myFormatDict[column]
