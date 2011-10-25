@@ -64,13 +64,13 @@ def update_database_from_model():
     migrate_engine = settings.ENGINE()
     migrate_connection = migrate_engine.connect()
     
+    from sqlalchemy.schema import MetaData 
     from camelot.model import metadata
-    from migrate.versioning.schemadiff import SchemaDiff
+    from migrate.versioning import schemadiff
     from migrate.changeset import create_column
-    schema_diff = SchemaDiff(metadata, migrate_connection)
-    
-    for table_with_diff in schema_diff.tablesWithDiff:
-        missingInDatabase, _missingInModel, _diffDecl = schema_diff.colDiffs[table_with_diff.name]
-        for column in missingInDatabase:
-            LOGGER.warn( 'column %s missing in table %s'%(column, table_with_diff.name) )
-            create_column(column, table_with_diff)
+    schema_diff = schemadiff.SchemaDiff(metadata, MetaData(migrate_connection, reflect=True))
+   
+    for table, difference in schema_diff.tables_different:
+        for column in difference.columns_missing_from_B:
+            LOGGER.warn( 'column %s missing in table %s'%(column, table) )
+            create_column(column, table)
