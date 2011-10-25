@@ -70,7 +70,7 @@ def update_database_from_model():
     from migrate.changeset import create_column
     schema_diff = schemadiff.SchemaDiff(metadata, MetaData(migrate_connection, reflect=True))
    
-    for table, difference in schema_diff.tables_different:
+    for table, difference in schema_diff.tables_different.items():
         for column in difference.columns_missing_from_B:
             LOGGER.warn( 'column %s missing in table %s'%(column, table) )
             create_column(column, table)
