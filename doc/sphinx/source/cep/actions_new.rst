@@ -19,7 +19,7 @@ framework this is done through actions.  Actions appear as buttons
 on the side of a form and a table.  When the user clicks on an
 action button, a predefined function is called.
 
-.. image:: ../_static/entityviews/new_view_address.png
+.. image:: /_static/entityviews/new_view_address.png
   
 An action is available to show the address on a map
 
@@ -29,7 +29,7 @@ file.  Camelot comes with a set of standard Actions and Action Steps that are
 easily  extended to manipulate data or create reports.  
 
 When defining Actions, a clear distinction should be made between things 
-happening in the model thread (the manipulation or querying of data, and things 
+happening in the model thread (the manipulation or querying of data), and things 
 happening in the gui thread (pop up windows or reports).  The :ref:`doc-threads`
 section gives more detail on this.
 
@@ -37,10 +37,10 @@ Summary
 =======
 
 In general, actions are defined by subclassing the standard Camelot
-Action  (:class:`camelot.admin.action.Action`) ::
+:class:`camelot.admin.action.Action` class ::
 
     from camelot.admin.action import Action
-    from camelot.view.action_steps import PrintPreview
+    from camelot.view.action_steps import PrintHtml
     from camelot.core.utils import ugettext_lazy as _
     from camelot.view.art import Icon
     
@@ -51,34 +51,37 @@ Action  (:class:`camelot.admin.action.Action`) ::
         tooltip = _('Print a report with all the movies')
         
         def model_run( self, model_context ):
-            yield PrintPreview( 'Hello World' )
+            yield PrintHtml( 'Hello World' )
             
 Each action has two methods, :meth:`gui_run` and  :meth:`model_run`, one of
 them should be reimplemented in the subclass to either run the action in the
 gui thread or to run the action in the model thread.  The default 
-:meth:`Action.gui_run` behavior is to pop-up a 
-:class:`camelot.view.controls.progress_dialog.ProgressDialog` dialog and 
-start the :meth:`model_run` method in the model thread.
+:meth:`Action.gui_run` behavior is to pop-up a :class:`ProgressDialog` dialog 
+and start the :meth:`model_run` method in the model thread.
 
-:meth:`model_run` in itself is a generator, that can yield Action Step objects 
-back to the gui, such as a :class:`camelot.view.action_steps.print_preview.PrintPreview`.
+:meth:`model_run` in itself is a generator, that can yield :class:`ActionStep` 
+objects back to the gui, such as a :class:`PrintHtml`.
             
-The action subclass can than be used a an element of the actions list of an 
-:class:`camelot.admin.application_admin.ApplicationAdmin` subclass::
+The action objects can than be used a an element of the actions list returned by 
+the :meth:`ApplicationAdmin.get_actions` method:
 
-    from camelot.admin.application_admin import ApplicationAdmin
-    
-    class MyApplicationAdmin( ApplicationAdmin ):
+.. literalinclude:: ../../../../camelot_example/application_admin.py
+   :start-after: begin actions
+   :end-before: end actions
+   
+or be used in the :attr:`ObjectAdmin.list_actions` or 
+:attr:`ObjectAdmin.form_actions` attributes.
 
-        actions = [ PrintReport ]
-            
+The :ref:`tutorial-importer` tutorial has a complete example of creating and
+using and action.
+   
 What can happen inside :meth:`model_run`
 ========================================
 
 :keyword:`yield` events to the GUI
 ----------------------------------
 
-But actions need to be able to send their results back to the user, or ask
+Actions need to be able to send their results back to the user, or ask
 the user for additional information.  This is done with the :keyword:`yield` 
 statement.
 
@@ -86,21 +89,18 @@ Through :keyword:`yield`, an Action Step is send to the GUI thread, where it cre
 user interaction, and sends it result back to the 'model_thread'.  The model_thread
 will be blocked while the action in the GUI thread takes place, eg ::
 
-    yield PrintPreview( 'Hello World' )
+    yield PrintHtml( 'Hello World' )
 
-Will pop up a print preview dialog in the GUI.
+Will pop up a print preview dialog in the GUI, and the model_run method will
+only continue when this dialog is closed.
 
 Events that can be yielded to the GUI should be of type 
 :class:`camelot.admin.action.base.ActionStep`.  Action steps are reusable parts of
-an action:
-
-.. autoclass:: camelot.admin.action.base.ActionStep
-   :noindex:
-
-Possible Action Steps that can be yielded to the GUI include:
+an action.  Possible Action Steps that can be yielded to the GUI include:
 
   * :class:`camelot.view.action_steps.change_object.ChangeObject`
   * :class:`camelot.view.action_steps.print_preview.PrintPreview`
+  * :class:`camelot.view.action_steps.print_preview.PrintHtml`
   * :class:`camelot.view.action_steps.print_preview.PrintJinjaTemplate`
   * :class:`camelot.view.action_steps.open_file.OpenFile`
   * :class:`camelot.view.action_steps.open_file.OpenStream`
@@ -114,9 +114,6 @@ keep the user informed about progress
 
 An :obj:`camelot.view.action_steps.update_progress.UpdateProgress` object can be 
 yielded, to update the state of the progress dialog:
-
-.. autoclass:: camelot.view.action_steps.UpdateProgress
-   :noindex:
         
 This should be done regulary to keep the user informed about the
 progres of the action::
@@ -129,16 +126,11 @@ progres of the action::
         yield UpdateProgress( i, movie_count )
     report += '</table>'
 
-    yield PrintPreview( report )
+    yield PrintHtml( report )
 
 Should the user have pressed the :guilabel:`Cancel` button in the progress 
 dialog, the next yield of an UpdateProgress object will raise a 
 :class:`camelot.core.exception.CancelRequest`.  
-
-In case an unexpected event occurs in the GUI, the :keyword:`yield` statement 
-will raise a :class:`camelot.core.exception.GuiException`.  This exception
-will propagate through the action an will be ignored unless handled by the
-developer.
 
 manipulation of the model
 -------------------------
@@ -182,6 +174,14 @@ When the :meth:`model_run` method raises a :class:`camelot.core.exception.Cancel
 a :class:`GeneratorExit` or a :class:`StopIteration` exception, these are 
 ignored and nothing will be shown to the user.
 
+handle exceptions
+-----------------
+
+In case an unexpected event occurs in the GUI, a :keyword:`yield` statement 
+will raise a :class:`camelot.core.exception.GuiException`.  This exception
+will propagate through the action an will be ignored unless handled by the
+developer.
+
 request information from the user
 ---------------------------------
 
@@ -202,7 +202,7 @@ first needs to be defined::
             field_attributes = { 'earliest_releasedate':{'delegate':delegates.DateDelegate},
                                  'latest_releasedate':{'delegate':delegates.DateDelegate}, }
                                  
-Than a :class:`camelot.view.action_steps.change_object.ChangeObject` can be 
+Than a :class:`camelot.view.action_steps.change_object.ChangeObject` action step can be 
 :keyword:`yield` to present the options to the user and get the filled in values back :
 
 .. literalinclude:: ../../../../camelot/bin/meta.py
@@ -222,7 +222,7 @@ Other ways of requesting information are :
   * :class:`camelot.view.action_steps.NewObject`, to request the user to fill in
     a new form for an object of a specified class.  This will return such
     a new object or None if the user canceled the operation.
-  * :class:`camelot.view.action_steps.select_file.SelectOpenFile`, to request 
+  * :class:`camelot.view.action_steps.select_file.SelectFile`, to request 
     to select an existing file to process or a new file to save information.
 
 States and Modes
@@ -233,37 +233,25 @@ States
 
 The widget that is used to trigger an action can be in different states.  A 
 :class:`camelot.admin.action.base.State` object is returned by the 
-:class:`camelot.admin.action.base.Action` object.  Subclasses of Action can
-reimplement this method to change the State of an action button.
+:class:`camelot.admin.action.base.Action.get_state` method.  Subclasses of 
+Action can reimplement this method to change the State of an action button.
 
-.. autoclass:: camelot.admin.action.base.State
-   :noindex:
+This allows to hide or disable the action button, depending on the objects 
+selected or the current object being displayed.
     
 Modes
 -----
 
 An action widget can be triggered in different modes, for example a print button
-can be triggered as simply 'Print' or 'Export to PDF'.  The different modes of
-an action are specified as a list of :class:`camelot.admin.action.base.Mode` objects:
+can be triggered as *Print* or *Export to PDF*.  The different modes of
+an action are specified as a list of :class:`camelot.admin.action.base.Mode` objects.
 
-.. autoclass:: camelot.admin.action.base.Mode
-   :noindex:        
+To change the modes of an Action, either specify the :attr:`modes` attribute of
+an :class:`Action` or specify the :attr:`modes` attribute of the :class:`State`
+returned by the :meth:`Action.get_state` method.
 
-Actions and Context
-===================
-
-All action classes are based on the :class:`camelot.admin.action.base.Action`
-class.  An Action is in fact a special :class:`camelot.admin.action.base.ActionStep`,
-with some additional methods:
-
-.. autoclass:: camelot.admin.action.base.Action
-   :noindex:
-    
-The :attr:`name` attribute specifies the name of the action as it will be stored
-in the permission and preferences system.
-  
-Context
--------
+Action Context
+==============
 
 Depending on where an action was triggered, a different context will be 
 available during its execution in :meth:`camelot.admin.action.base.Action.gui_run`
@@ -274,15 +262,18 @@ The minimal context available in the *GUI thread* is :
 .. autoclass:: camelot.admin.action.base.GuiContext
    :noindex:
 
+While the minimal contact available in the *Model thread* is:
+
+.. autoclass:: camelot.admin.action.base.ModelContext
+   :noindex:
+
 .. _doc-application-action:
 
 Application Actions
 -------------------
             
-To enable Application Actions for a certain 
-:class:`camelot.admin.application_admin.ApplicationAdmin` either overwrite
-its :meth:`camelot.admin.application_admin.ApplicationAdmin.get_actions`
-or specify the :attr:`actions` attribute::
+To enable Application Actions for a certain :class:`ApplicationAdmin` overwrite 
+its :meth:`ApplicationAdmin.get_actions` method ::
 
     from camelot.admin.application_admin import ApplicationAdmin
     from camelot.admin.action import Action
@@ -292,72 +283,103 @@ or specify the :attr:`actions` attribute::
         verbose_name = _('Generate Reports')
         
         def model_run( self, model_context):
-            print 'generating reports'
             for i in range(10):
                 yield UpdateProgress(i, 10)
     
     class MyApplicationAdmin( ApplicationAdmin )
     
-          actions = [GenerateReports,]
+        def get_actions( self ):
+            return [GenerateReports(),]
           
-An action specified here will receive a 
-:class:`camelot.admin.action.application.ApplicationGuiContext`  object as the 
-*gui_context* argument of th the :meth:`camelot.admin.action.Base.gui_run`
-method, and a :class:`camelot.admin.action.application.ApplicationModelContext` 
-object as the *model_context* argument of th the :meth:`camelot.admin.action.Base.model_run`
+An action specified here will receive an :class:`ApplicationActionGuiContext` 
+object as the *gui_context* argument of the the :meth:`gui_run`
+method, and a :class:`ApplicationActionModelContext` object as the 
+*model_context* argument of the :meth:`model_run` method.
 
-.. autoclass:: camelot.admin.action.application.ApplicationGuiContext
+.. autoclass:: camelot.admin.action.application_action.ApplicationActionGuiContext
    :noindex:
 
-.. autoclass:: camelot.admin.action.application.ApplicationModelContext
+.. autoclass:: camelot.admin.action.application_action.ApplicationActionModelContext
    :noindex:
+   :members:
    
 Form Actions
 ------------
 
-To enable Form Actions for a certain 
-:class:`camelot.admin.application_admin.ObjectAdmin` or
-:class:`camelot.admin.application_admin.EntityAdmin`, specify the 
-:attr:`form_actions` attribute.
+To enable Form Actions for a certain :class:`ObjectAdmin` or :class:`EntityAdmin`, 
+specify the :attr:`form_actions` attribute.
 
-An action specified here will receive a 
-:class:`camelot.admin.action.form_action.FormActionGuiContext`  object as the 
-*gui_context* argument of th the :meth:`camelot.admin.action.Base.gui_run`
-method, and a :class:`camelot.admin.action.form_action.FormActionModelContext` 
-object as the *model_context* argument of th the :meth:`camelot.admin.action.Base.model_run`
+An action specified here will receive a :class:`FormActionGuiContext`  object as the 
+*gui_context* argument of the :meth:`gui_run` method, and a 
+:class:`FormActionModelContext` object as the *model_context* argument of the 
+:meth:`model_run` method.
 
 .. autoclass:: camelot.admin.action.form_action.FormActionGuiContext
    :noindex:
 
 .. autoclass:: camelot.admin.action.form_action.FormActionModelContext
    :noindex:
+   :members:
    
 List Actions
 ------------
 
-To enable List Actions for a certain 
-:class:`camelot.admin.application_admin.ObjectAdmin` or
-:class:`camelot.admin.application_admin.EntityAdmin`, specify the 
-:attr:`list_actions` attribute.
+To enable List Actions for a certain :class:`ObjectAdmin` or
+:class:`EntityAdmin`, specify the :attr:`list_actions` attribute::
 
-An action specified here will receive a 
-:class:`camelot.admin.action.list_action.ListActionGuiContext`  object as the 
-*gui_context* argument of th the :meth:`camelot.admin.action.Base.gui_run`
-method, and a :class:`camelot.admin.action.list_action.ListActionModelContext` 
-object as the *model_context* argument of th the :meth:`camelot.admin.action.Base.model_run`
+   list_actions = [ ChangeRatingAction() ]
+   
+This will result in a button being displayed on the table view.
+
+.. image:: /_static/entityviews/table_view_movie.png
+
+An action specified here will receive a :class:`ListActionGuiContext` object as 
+the *gui_context* argument of th the :meth:`gui_run` method, and a 
+:class:`ListActionModelContext` object as the *model_context* argument of the 
+:meth:`model_run` method.
 
 .. autoclass:: camelot.admin.action.list_action.ListActionGuiContext
    :noindex:
 
 .. autoclass:: camelot.admin.action.list_action.ListActionModelContext
    :noindex:
+   :members:
 
 Reusing List and Form actions
 -----------------------------
 
 There is no need to define a different action subclass for form and list
-actions, as both their model_context has a **get_selection** method, a single
+actions, as both their model_context have a **get_selection** method, a single
 action can be used both for the list and the form.
+
+Generate documents
+==================
+
+Generating reports and documents is an important part of any application.
+Python and Qt provide various ways to generate documents.  Each of them
+with its own advantages and disadvantages.  
+
+  +-----------------------+-------------------------+--------------------------+
+  | Method                | Advantages              | Disadvantages            |
+  +-----------------------+-------------------------+--------------------------+
+  | PDF documents through | * Perfect control over  | * Relatively steep       |
+  | reportlab             |   layout                |   learning curve         |
+  |                       | * Excellent for mass    | * User cannot edit       |
+  |                       |   creation of documents |   document               |
+  +-----------------------+-------------------------+--------------------------+
+  | HTML                  | * Easy to get started   | * Not much layout control|
+  |                       | * Print preview within  | * User cannot edit       |
+  |                       |   Camelot               |   document               |
+  |                       | * No dependencies       |                          |
+  +-----------------------+-------------------------+--------------------------+
+  | Docx Word documents   | * User can edit         | * Proprietary format     |
+  |                       |   document              | * Word processor needed  |
+  +-----------------------+-------------------------+--------------------------+
+  
+Camelot leaves all options open to the developer.
+
+Please have a look at :ref:`tutorial-reporting` to get started with generating
+documents.
 
 Inspiration
 ===========
