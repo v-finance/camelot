@@ -93,13 +93,13 @@ class ActionStepsCase(ModelThreadTestCase):
         self.grab_widget( dialog )
         
     def test_select_file( self ):
-        from camelot.view.action_steps import SelectOpenFile
-        select_file = SelectOpenFile( 'Image Files (*.png *.jpg);;All Files (*)' )
+        from camelot.view.action_steps import SelectFile
+        select_file = SelectFile( 'Image Files (*.png *.jpg);;All Files (*)' )
         dialog = select_file.render()
         self.grab_widget( dialog )
         
     def test_print_preview(self):
-        from camelot.view.action_steps import PrintPreview
-        print_preview = PrintPreview( '<h1>Hello World</h1>' )
+        from camelot.view.action_steps import PrintHtml
+        print_preview = PrintHtml( '<h1>Hello World</h1>' )
         dialog = print_preview.render()
         self.grab_widget( print_preview.render() )

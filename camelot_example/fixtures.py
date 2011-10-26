@@ -8,7 +8,6 @@ def load_movie_fixtures():
     from camelot.model.authentication import Person
     from camelot_example.model import Movie, VisitorReport
     from camelot.core.files.storage import Storage, StoredImage
-    from camelot.core.conf import settings
     from camelot.core.resources import resource_string
 
     storage = Storage(upload_to='covers',
@@ -268,7 +267,7 @@ def load_movie_fixtures():
         rep = visits.get(title, None)
         if rep:
             for city, visitors, date in rep:
-                visit = Fixture.insertOrUpdateFixture(
+                Fixture.insertOrUpdateFixture(
                     VisitorReport,
                     fixture_key = '%s_%s' % (title, city),
                     values = {

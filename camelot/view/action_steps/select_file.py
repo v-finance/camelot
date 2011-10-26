@@ -27,7 +27,7 @@ from PyQt4 import QtGui
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 
-class SelectOpenFile( ActionStep ):
+class SelectFile( ActionStep ):
     """Select one or more files to open or to process.
     
     :param file_name_filter: Filter on the names of the files that can
@@ -35,14 +35,16 @@ class SelectOpenFile( ActionStep ):
         See :class:`QtGui.QFileDialog` for more documentation.
     
     .. attribute:: single
+    
         defaults to :keyword:`True`, set to :keyword:`False` if selection
         of multiple files is allowed
 
     .. attribute:: existing
+    
         defaults to :keyword:`True`, set to :keyword:`False` if non existing
         files are allowed (to save something)
         
-    The :keyword:`yield` statement of :class:`SelectOpenFile` returns a list
+    The :keyword:`yield` statement of :class:`SelectFile` returns a list
     of selected file names.  This list has only one element when single is
     set to :keyword:`True`.  Raises a 
     :class:`camelot.core.exception.CancelRequest` when no file was selected.

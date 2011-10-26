@@ -26,8 +26,8 @@ from change_object import ChangeObject, ChangeObjects
 from gui import OpenFormView, Refresh, ShowChart, ShowPixmap
 from open_file import OpenFile, OpenStream, OpenString, OpenJinjaTemplate
 from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
-from print_preview import PrintPreview, PrintJinjaTemplate
-from select_file import SelectOpenFile
+from print_preview import PrintHtml, PrintPreview, PrintJinjaTemplate
+from select_file import SelectFile
 from update_progress import UpdateProgress
 
 __all__ = [
@@ -41,10 +41,11 @@ __all__ = [
     OpenJinjaTemplate.__name__,
     OpenStream.__name__,
     OpenString.__name__,
+    PrintHtml.__name__,
     PrintJinjaTemplate.__name__,
     PrintPreview.__name__,
     Refresh.__name__,
-    SelectOpenFile.__name__,
+    SelectFile.__name__,
     ShowChart.__name__,
     ShowPixmap.__name__,
     UpdateObject.__name__,

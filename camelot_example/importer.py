@@ -8,9 +8,9 @@ class ImportCovers( Action ):
     
 # begin select files
     def model_run( self, model_context ):
-        from camelot.view.action_steps import SelectOpenFile, UpdateProgress, Refresh
+        from camelot.view.action_steps import SelectFile, UpdateProgress, Refresh
         
-        select_image_files = SelectOpenFile( 'Image Files (*.png *.jpg);;All Files (*)' )
+        select_image_files = SelectFile( 'Image Files (*.png *.jpg);;All Files (*)' )
         select_image_files.single = False
         file_names = yield select_image_files
         file_count = len( file_names )

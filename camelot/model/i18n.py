@@ -30,7 +30,6 @@ from elixir.fields import Field
 from sqlalchemy.types import Unicode, INT
 """Set of classes to enable internationalization of the user interface"""
 
-
 __metadata__ = metadata
 
 from camelot.admin.entity_admin import EntityAdmin
@@ -52,8 +51,8 @@ class ExportAsPO( Action ):
     icon = Icon('tango/16x16/actions/document-save.png')
 
     def model_run( self, model_context ):
-        from camelot.view.action_steps import SelectOpenFile
-        select_file = SelectOpenFile()
+        from camelot.view.action_steps import SelectFile
+        select_file = SelectFile()
         select_file.existing = False
         filenames = yield select_file
         for filename in filenames:

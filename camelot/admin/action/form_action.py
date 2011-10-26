@@ -99,20 +99,20 @@ class FormActionModelContext( ApplicationActionModelContext ):
             yield self._model._get_object( self.current_row )
         
 class FormActionGuiContext( ApplicationActionGuiContext ):
-    
+    """The context for an :class:`Action` on a form.  On top of the attributes of the 
+    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
+    this context contains :
+
+    .. attribute:: widget_mapper
+
+       the :class:`QtGui.QDataWidgetMapper` class that relates the form 
+       widget to the model.
+       
+    """
+        
     model_context = FormActionModelContext
     
     def __init__( self ):
-        """The context for an :class:`Action` on a form.  On top of the attributes of the 
-        :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
-        this context contains :
-    
-        .. attribute:: widget_mapper
-    
-           the :class:`QtGui.QDataWidgetMapper` class that relates to the form 
-           widget
-           
-        """
         super( FormActionGuiContext, self ).__init__()
         self.widget_mapper = None
 

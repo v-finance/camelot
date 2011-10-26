@@ -43,6 +43,7 @@ def genre_choices(entity_instance):
     (('thriller'),('Thriller')),
     (('family'),('Family')) ]
 
+# begin simple action definition
 class BurnToDisk( Action ):
     
     verbose_name = _('Burn to disk')
@@ -54,6 +55,7 @@ class BurnToDisk( Action ):
         time.sleep( 0.7 )
         yield action_steps.UpdateProgress( 2, 3, _('Finishing') )
         time.sleep( 0.5 )
+# end simple action definition
 
     def get_state( self, model_context ):
         """Turn the burn to disk button on, only if the title of the

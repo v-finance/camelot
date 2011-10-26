@@ -1,5 +1,4 @@
 import logging
-import os
 
 FORMAT = '[%(levelname)-7s] [%(name)-35s] - %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)

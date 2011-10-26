@@ -72,7 +72,8 @@ class Refresh( ActionStep ):
 class ShowChart( ActionStep ):
     
     def __init__( self, chart ):
-        """
+        """Show a full screen chart.
+        
         :param chart: a :class:`camelot.core.container.FigureContainer` or
             :class:`camelot.core.container.AxesContainer`
         """
@@ -87,7 +88,8 @@ class ShowChart( ActionStep ):
 class ShowPixmap( ActionStep ):
     
     def __init__( self, pixmap ):
-        """
+        """Show a full screen pixmap
+        
         :param pixmap: a :class:`camelot.view.art.Pixmap` object
         """
         self.pixmap = pixmap

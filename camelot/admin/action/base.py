@@ -80,7 +80,7 @@ strictly to the :class:`ModelContext`
     
 .. attribute:: model_context
 
-    a subclass of :class:`ModelContext` to be used in :method:`create_model_context`
+    a subclass of :class:`ModelContext` to be used in :meth:`create_model_context`
     as the type of object to return.
     """
     
@@ -149,6 +149,11 @@ updated state for the widget.
     :keyword:`True` if the buttons should attract the attention of the user, 
     defaults to :keyword:`False`.
 
+.. attribute:: modes
+
+    The modes in which an action can be triggered, a list of :class:`Mode`
+    objects.
+
     """
     
     def __init__( self ):
@@ -158,6 +163,7 @@ updated state for the widget.
         self.enabled = True
         self.visible = True
         self.notification = False
+        self.modes = []
 
 class Mode( object ):
     """A mode is a way in which an action can be triggered, a print action could
@@ -284,6 +290,11 @@ method.
     The tooltip as displayed to the user, this should be of type 
     :class:`camelot.core.utils.ugettext_lazy`
 
+.. attribute:: modes
+
+    The modes in which an action can be triggered, a list of :class:`Mode`
+    objects.
+    
 For each of these attributes there is a corresponding getter method
 which is used by the view.  Subclasses of :class:`Action` that require dynamic
 values for these attributes can reimplement the getter methods.
@@ -292,11 +303,6 @@ values for these attributes can reimplement the getter methods.
 
     The shortcut that can be used to trigger the action, this should be of 
     type :class:`camelot.core.utils.ugettext_lazy`
-
-.. attribute:: modes
-
-    The modes in which an action can be triggered, a list of :class:`Mode`
-    objects.
     
 An action has two important methods that can be reimplemented.  These are 
 :meth:`model_run` for manipulations of the model and :meth:`gui_run` for
@@ -322,13 +328,6 @@ direct manipulations of the user interface without a need to access the model.
         :attr:`shortcut` attribute
         """
         return self.shortcut
-    
-    def get_modes( self ):
-        """
-        :return: a list of :class:`camelot.admin.action.base.Mode` objects, 
-            by default the :attr:`modes` attribute
-        """
-        return self.modes
         
     def render( self, gui_context, parent ):
         """Create a widget to trigger the action.  Depending on the type of
@@ -379,4 +378,5 @@ direct manipulations of the user interface without a need to access the model.
         state.verbose_name = self.verbose_name
         state.icon = self.icon
         state.tooltip = self.tooltip
+        state.modes = self.modes
         return state

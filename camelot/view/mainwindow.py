@@ -244,12 +244,12 @@ class MainWindow(QtGui.QMainWindow):
     def previewDoc(self):
         active = self.activeMdiChild()
         from camelot.admin.action import Action, GuiContext
-        from camelot.view.action_steps import PrintPreview
+        from camelot.view.action_steps import PrintHtml
 
         class PrintPreviewAction( Action ):
             
             def model_run( self, model_context ):
-                yield PrintPreview( active.to_html() )
+                yield PrintHtml( active.to_html() )
 
         action = PrintPreviewAction()
         action.gui_run( GuiContext() )

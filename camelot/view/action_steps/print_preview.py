@@ -30,17 +30,13 @@ class PrintPreview( ActionStep ):
     """
     Display a print preview dialog box.
     
-    :param html: a string containing the html to render in the print
-        preview.
+    :param document: an instance of :class:`QtGui.QTextDocument` or 
+        :class:`QtWebKit.QWebView` that has a :meth:`print_` method.  The
+        thread affinity of this object will be changed to be able to use it
+        in the GUI.
         
-    the rendering of the html can be customised using these attributes :
-    
-    .. attribute:: html_document
-    
-        the class used to render the html, by default a
-        :class:`QtGui.QTextDocument` is taken, but a :class:`QtWebKit.QWebView` 
-        can be used as well.
-    
+    the print preview can be customised using these attributes :
+        
     .. attribute:: page_size
     
         the page size, by default :class:`QtGui.QPrinter.A4` is used
@@ -53,12 +49,12 @@ class PrintPreview( ActionStep ):
     .. image:: /_static/simple_report.png
         """
     
-    def __init__( self, html ):
-        self.html_document = None
+    def __init__( self, document ):
+        self.document = document
+        self.document.moveToThread( QtGui.QApplication.instance().thread() )
         self.printer = None
         self.page_size = None
         self.page_orientation = None
-        self.html = html
 
     def render( self ):
         """create the print preview widget. this method is used to unit test
@@ -84,13 +80,27 @@ class PrintPreview( ActionStep ):
 
     @QtCore.pyqtSlot( QtGui.QPrinter )
     def paint_on_printer( self, printer ):
-        doc = (self.html_document or QtGui.QTextDocument)()
-        doc.setHtml( self.html )
-        doc.print_( printer )
+        self.document.print_( printer )
      
     def gui_run( self, gui_context ):
         dialog = self.render()
         dialog.exec_()
+
+class PrintHtml( PrintPreview ):
+    """
+    Display a print preview dialog box for an html string.
+    
+    :param html: a string containing the html to render in the print
+        preview.
+        
+    the rendering of the html can be customised using the same attributes
+    as those of the :class:`PrintPreview` class.
+        """
+    
+    def __init__( self, html ):
+        document = QtGui.QTextDocument()
+        document.setHtml( html )
+        super( PrintHtml, self ).__init__( document )
 
 class PrintJinjaTemplate( PrintPreview ):
     """Render a jinja template into a print preview dialog.
