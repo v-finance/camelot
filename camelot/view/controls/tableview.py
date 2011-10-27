@@ -374,13 +374,20 @@ class HeaderWidget( QtGui.QWidget ):
         """
         from camelot.view.controls.filter_operator import FilterOperator
         layout = QtGui.QHBoxLayout()
-        for field, attributes in columns:
+        layout.setSpacing( 2 )
+        layout.setMargin( 2 )
+        for i, (field, attributes) in enumerate(columns):
             if 'operators' in attributes and attributes['operators']:
+                box = QtGui.QGroupBox()
+                box_layout = QtGui.QVBoxLayout()
+                box_layout.setMargin( 2 )
                 widget = FilterOperator( self._admin.entity,
                                          field, attributes,
-                                         self )
+                                         box )
+                box_layout.addWidget( widget )
+                box.setLayout( box_layout )
                 widget.filter_changed_signal.connect( self._filter_changed )
-                layout.addWidget( widget )
+                layout.addWidget( box )
         layout.addStretch()
         self._expanded_search.setLayout( layout )
         self._expanded_filters_created = True
@@ -392,8 +399,11 @@ class HeaderWidget( QtGui.QWidget ):
         """Apply expanded filters on the query"""
         if self._expanded_filters_created:
             for i in range(self._expanded_search.layout().count()):
-                if self._expanded_search.layout().itemAt(i).widget():
-                    query = self._expanded_search.layout().itemAt(i).widget().decorate_query(query)
+                box = self._expanded_search.layout().itemAt(i).widget()
+                if box:
+                    widget = box.layout().itemAt(0).widget()
+                    if widget:
+                        query = widget.decorate_query(query)
         return query
 
     @QtCore.pyqtSlot()
@@ -804,7 +814,7 @@ class TableView( AbstractView  ):
             actions_widget = ActionsBox( parent = self,
                                          gui_context = self.gui_context )
             actions_widget.setObjectName( 'actions' )
-            actions_widget.setActions( actions )
+            actions_widget.set_actions( actions )
             self.filters_layout.addWidget( actions_widget )
 
     def to_html( self ):

@@ -303,7 +303,7 @@ class FormView(AbstractView):
         layout = QtGui.QVBoxLayout()
         form_and_actions_layout = QtGui.QHBoxLayout()
         form_and_actions_layout.setObjectName('form_and_actions_layout')
-        layout.addLayout(form_and_actions_layout)
+        layout.addLayout( form_and_actions_layout )
 
         self.model = model
         self.admin = admin
@@ -380,6 +380,7 @@ class FormView(AbstractView):
         layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
         if actions and form and layout:
             side_panel_layout = QtGui.QVBoxLayout()
+            side_panel_layout.addStretch()
             widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
@@ -389,10 +390,9 @@ class FormView(AbstractView):
             gui_context.widget_mapper = widget_mapper
             actions_widget = ActionsBox( parent=self, gui_context=gui_context )
             actions_widget.setObjectName('actions')
-            actions_widget.setActions(actions)
-            side_panel_layout.insertWidget(1, actions_widget)
-            side_panel_layout.addStretch()
-            layout.addLayout(side_panel_layout)
+            actions_widget.set_actions( actions )
+            side_panel_layout.addWidget( actions_widget )
+            layout.addLayout( side_panel_layout )
 
     def viewFirst(self):
         """select model's first row"""

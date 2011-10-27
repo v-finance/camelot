@@ -25,30 +25,31 @@
 """Actions box"""
 
 import logging
-logger = logging.getLogger('controls.actionsbox')
+LOGGER = logging.getLogger('controls.actionsbox')
 
 from PyQt4 import QtGui
 
 from camelot.core.utils import ugettext as _
 
-class ActionsBox(QtGui.QGroupBox):
-    """A box containing actions to be applied to a view"""
+class ActionsBox( QtGui.QWidget ):
+    """A box containing actions to be applied to a view
 
-    def __init__(self, parent, *args, **kwargs):
-        QtGui.QGroupBox.__init__(self, _('Actions'), parent)
-        logger.debug('create actions box')
-        self.args = args
-        self.kwargs = kwargs
+    :param gui_context: a :class:`camelot.admin.action.base.GuiContext` object
+    :param parent: a :class:`PyQt4.QtGui.QWidget` object
+    
+    """
 
-    def setActions(self, actions):
-        action_widgets = []
-        logger.debug('setting actions')
-        # keep action object alive to allow them to receive signals
-        self.actions = actions
+    def __init__( self, gui_context, parent ):
+        LOGGER.debug( 'create actions box' )
+        super( ActionsBox, self ).__init__( parent )
+        self.gui_context = gui_context
+
+    def set_actions( self, actions ):
+        LOGGER.debug( 'setting actions' )
         layout = QtGui.QVBoxLayout()
+        layout.setMargin( 0 )
+        layout.setSpacing( 2 )
         for action in actions:
-            action_widget = action.render(*self.args, parent=self, **self.kwargs)
-            layout.addWidget(action_widget)
-            action_widgets.append(action_widget)
-        self.setLayout(layout)
-        return action_widgets
+            action_widget = action.render( self.gui_context, self )
+            layout.addWidget( action_widget )
+        self.setLayout( layout )

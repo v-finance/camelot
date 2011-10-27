@@ -42,6 +42,8 @@ class FilterList(QtGui.QScrollArea):
         widget = QtGui.QWidget(self)
         self.setFrameStyle(QtGui.QFrame.NoFrame)
         layout = QtGui.QVBoxLayout()
+        layout.setMargin( 2 )
+        layout.setSpacing( 4 )
         for filter, (name, options) in items:
             filter_widget = filter.render(widget, name, options)
             layout.addWidget(filter_widget)
@@ -64,5 +66,3 @@ class FilterList(QtGui.QScrollArea):
     def emit_filters_changed(self):
         logger.debug('filters changed')
         self.filters_changed_signal.emit()
-
-
