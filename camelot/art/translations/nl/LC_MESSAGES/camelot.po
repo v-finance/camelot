@@ -51,7 +51,7 @@ msgstr "Open in nieuwe tab"
 #: camelot/admin/action/application_action.py:115
 #, python-format
 msgid "New %s"
-msgstr "Nieuw"
+msgstr "Nieuw %s"
 
 #: camelot/admin/action/application_action.py:116
 #, python-format
