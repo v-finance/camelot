@@ -350,7 +350,7 @@ msgstr ""
 
 #: camelot/model/batch_job.py:133 camelot/view/database_selection.py:283
 msgid "Cancel"
-msgstr "Annulleer"
+msgstr "Annuleer"
 
 #: camelot/model/i18n.py:52
 msgid "po export"
