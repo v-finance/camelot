@@ -33,7 +33,6 @@ from PyQt4 import QtCore, QtGui
 from sqlalchemy import sql
 
 from camelot.view.controls.editors import DateEditor
-from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.model_thread import gui_function
 from camelot.core.utils import ugettext_lazy as _
 
@@ -133,23 +132,22 @@ class Filter(object):
         
         return (filter_names[0],[(_('All'), lambda q: q)] + options)
 
-class FilterWidget( QtGui.QWidget ):
+class FilterWidget( QtGui.QGroupBox ):
     """A box containing a filter that can be applied on a table view, this filter is
     based on the distinct values in a certain column"""
   
     filter_changed_signal = QtCore.pyqtSignal()
     
     def __init__(self, name, choices, parent):
-        super( FilterWidget, self ).__init__( parent )
-        layout = QtGui.QVBoxLayout()
+        super( FilterWidget, self ).__init__( unicode( name ), parent )
+        layout = QtGui.QHBoxLayout()
         layout.setSpacing( 2 )
-        layout.addWidget( UserTranslatableLabel( name ) )
         self.setLayout( layout )
         self.group = QtGui.QButtonGroup(self)
         self.item = name
         self.unique_values = []
         self.choices = None
-        self.setChoices(choices)
+        self.setChoices( choices )
          
     @QtCore.pyqtSlot(bool)
     def emit_filter_changed(self, state):
@@ -158,16 +156,17 @@ class FilterWidget( QtGui.QWidget ):
     def setChoices(self, choices):
         self.choices = choices
         layout = self.layout()
+        button_layout = QtGui.QVBoxLayout()
         
         for i, name in enumerate([unicode(c[0]) for c in choices]):
             button = QtGui.QRadioButton(name, self)
-            layout.addWidget(button)
+            button_layout.addWidget(button)
             self.group.addButton(button, i)
             if i==0:
                 button.setChecked(True)
             button.toggled.connect( self.emit_filter_changed )
             
-        layout.addStretch()
+        layout.addLayout( button_layout )
         self.setLayout(layout)
     
     def decorate_query(self, query):
@@ -183,16 +182,15 @@ class GroupBoxFilter(Filter):
     def render(self, parent, name, options):
         return FilterWidget(name, options, parent)
       
-class GroupBoxFilterWidget( QtGui.QWidget ):
+class GroupBoxFilterWidget( QtGui.QGroupBox ):
     """Flter widget based on a QGroupBox"""
   
     filter_changed_signal = QtCore.pyqtSignal()
     
     def __init__(self, name, choices, parent):
-        super( GroupBoxFilterWidget, self ).__init__( parent )
+        super( GroupBoxFilterWidget, self ).__init__( unicode( name ), parent )
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 2 )
-        layout.addWidget( UserTranslatableLabel( name ) )
         self.choices = choices
         combobox = QtGui.QComboBox(self)
         for i,(name,decorator) in enumerate(choices):
@@ -240,16 +238,15 @@ class EditorFilter(Filter):
         name = self._verbose_name or field_attributes['name']
         return name, (admin.entity, self._field_name, field_attributes)
         
-class DateFilterWidget( QtGui.QWidget ):
+class DateFilterWidget( QtGui.QGroupBox ):
     """Filter widget based on a DateEditor"""
   
     filter_changed_signal = QtCore.pyqtSignal()
     
     def __init__(self, name, query_decorator, default, parent):
-        super( DateFilterWidget, self ).__init__( parent )
+        super( DateFilterWidget, self ).__init__( unicode( name ), parent )
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 2 )
-        layout.addWidget( UserTranslatableLabel( name ) )
         self.date_editor = DateEditor(parent=self, nullable=True)
         self.date_editor.set_value(default)
         self.query_decorator = query_decorator

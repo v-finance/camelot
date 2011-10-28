@@ -29,8 +29,6 @@ LOGGER = logging.getLogger('controls.actionsbox')
 
 from PyQt4 import QtGui
 
-from camelot.core.utils import ugettext as _
-
 class ActionsBox( QtGui.QWidget ):
     """A box containing actions to be applied to a view
 

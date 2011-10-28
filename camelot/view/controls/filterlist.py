@@ -29,7 +29,7 @@ logger = logging.getLogger('camelot.view.controls.filter')
 
 from PyQt4 import QtGui, QtCore
 
-class FilterList(QtGui.QScrollArea):
+class FilterList( QtGui.QWidget ):
     """A list with filters that can be applied on a query in the tableview"""
 
     filters_changed_signal = QtCore.pyqtSignal()
@@ -40,26 +40,26 @@ class FilterList(QtGui.QScrollArea):
     """
         super(FilterList, self).__init__(parent)
         widget = QtGui.QWidget(self)
-        self.setFrameStyle(QtGui.QFrame.NoFrame)
+        #self.setFrameStyle(QtGui.QFrame.NoFrame)
         layout = QtGui.QVBoxLayout()
         layout.setMargin( 2 )
         layout.setSpacing( 4 )
         for filter, (name, options) in items:
-            filter_widget = filter.render(widget, name, options)
+            filter_widget = filter.render(self, name, options)
             layout.addWidget(filter_widget)
-            dir( filter_widget )
             filter_widget.filter_changed_signal.connect( self.emit_filters_changed )
-        widget.setLayout(layout)
-        self.setWidget(widget)
+        layout.addStretch()
+        self.setLayout(layout)
         if len(items) == 0:
             self.setMaximumWidth(0)
         else:
-            self.setSizePolicy( QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding )
+            self.setSizePolicy( QtGui.QSizePolicy.MinimumExpanding, 
+                                QtGui.QSizePolicy.Expanding )
 
     def decorate_query(self, query):
-        for i in range(self.widget().layout().count()):
-            if self.widget().layout().itemAt(i).widget():
-                query = self.widget().layout().itemAt(i).widget().decorate_query(query)
+        for i in range(self.layout().count()):
+            if self.layout().itemAt(i).widget():
+                query = self.layout().itemAt(i).widget().decorate_query(query)
         return query
 
     @QtCore.pyqtSlot()
