@@ -39,6 +39,7 @@ from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
 
 from camelot.core.utils import is_deleted
+from camelot.core.files.storage import StoredFile
 from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
 from camelot.view.controls import delegates
@@ -732,9 +733,11 @@ position in the query.
                     #
                     if model_updated and hasattr(o, 'id') and o.id:
                         #
-                        # in case of images or relations, we cannot pickle them
+                        # in case of files or relations, we cannot pickle them
                         #
-                        if ( not 'Imag' in old_value.__class__.__name__ ) and not direction:
+                        if isinstance( old_value, StoredFile ):
+                            old_value = old_value.name
+                        if not direction:
                             from camelot.model.memento import BeforeUpdate
                             # only register the update when the camelot model is active
                             if hasattr(BeforeUpdate, 'query'):
