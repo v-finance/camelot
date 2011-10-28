@@ -81,7 +81,7 @@ class SectionItem(object):
         return self.state.tooltip
 
     def get_modes(self):
-        return self.action.get_modes()
+        return self.state.modes
     
 def structure_to_section_items(structure, application_admin):
 
