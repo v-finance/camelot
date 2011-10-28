@@ -50,6 +50,7 @@ class AbstractActionWidget( object ):
         post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
     def set_state( self, state ):
+        self.state = state
         self.setEnabled( state.enabled )
         self.setVisible( state.visible )
         
@@ -79,8 +80,8 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
     actually an animated label.
     """
     def __init__( self, action, gui_context, parent ):
-        AbstractActionWidget.__init__( self, action, gui_context )
         QtGui.QLabel.__init__( self, parent )
+        AbstractActionWidget.__init__( self, action, gui_context )
         
         self.setObjectName('ActionButton')
         self.setMouseTracking(True)
@@ -184,7 +185,8 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
             notificationAnimationTimer.setInterval(1500)
             notificationAnimationTimer.setSingleShot(True)
             notificationAnimationTimer.timeout.connect(notificationAnimation.start)
-            notificationAnimation.finished.connect(notificationAnimationTimer.start)
+            notificationAnimation.finished.connect( notificationAnimationTimer.start )
+        self.resetLayout()
         
     def startHoverAnimation(self):
         hoverAnimationPart1 = self.findChild(QtCore.QPropertyAnimation, 'hoverAnimationPart1')
