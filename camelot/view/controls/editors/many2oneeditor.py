@@ -122,6 +122,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         self.search_input = DecoratedLineEdit(self)
         self.search_input.set_background_text(_('Search...'))
         self.search_input.textEdited.connect(self.textEdited)
+        self.search_input.set_minimum_width( 20 )
         self.search_input.arrow_down_key_pressed.connect(self.on_arrow_down_key_pressed)
         # suppose garbage was entered, we need to refresh the content
         self.search_input.editingFinished.connect( self.search_input_editing_finished )

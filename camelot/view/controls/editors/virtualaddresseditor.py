@@ -85,6 +85,7 @@ class VirtualAddressEditor(CustomEditor):
         self.layout.addWidget(self.combo)
         self.editor = DecoratedLineEdit( self )
         self.editor.setEnabled(editable)
+        self.editor.set_minimum_width( 30 )
         self.layout.addWidget(self.editor)
         self.setFocusProxy(self.editor)
         self.editable = editable

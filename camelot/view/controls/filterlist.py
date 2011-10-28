@@ -39,7 +39,6 @@ class FilterList( QtGui.QWidget ):
     :param items: list of tuples (filter, (name, choices)) for constructing the different filterboxes
     """
         super(FilterList, self).__init__(parent)
-        widget = QtGui.QWidget(self)
         #self.setFrameStyle(QtGui.QFrame.NoFrame)
         layout = QtGui.QVBoxLayout()
         layout.setMargin( 2 )

@@ -60,30 +60,32 @@ class ImageEditor(FileEditor, WideEditor):
         self.setObjectName( field_name )
 
     def setup_widget(self):
-        self.layout = QtGui.QHBoxLayout()
-        self.layout.setContentsMargins( 0, 0, 0, 0 )
+        layout = QtGui.QVBoxLayout()
+        layout.setSpacing( 0 )
+        label_button_layout = QtGui.QHBoxLayout()
+        label_button_layout.setMargin( 0 )
         #
         # Setup label
         #
         self.label = QtGui.QLabel(self)
         self.label.installEventFilter(self)
-        self.layout.addWidget(self.label)
-        self.label.setAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
+        self.label.setAlignment( Qt.AlignHCenter|Qt.AlignVCenter )
+        label_button_layout.addWidget(self.label)
         #
         # Setup buttons
         #
         button_layout = QtGui.QVBoxLayout()
-        button_layout.setSpacing(0)
+        button_layout.setSpacing( 0 )
         button_layout.setContentsMargins( 0, 0, 0, 0)
 
         self.open_button = QtGui.QToolButton()
-        self.open_button.setIcon(self.open_icon)
+        self.open_button.setIcon(self.open_icon.getQIcon())
         self.open_button.setAutoRaise(True)
         self.open_button.setToolTip(unicode(_('open image')))
         self.open_button.clicked.connect(self.open_button_clicked)
 
         self.clear_button = QtGui.QToolButton()
-        self.clear_button.setIcon(self.clear_icon)
+        self.clear_button.setIcon(self.clear_icon.getQIcon())
         self.clear_button.setToolTip(unicode(_('delete image')))
         self.clear_button.setAutoRaise(True)
         self.clear_button.clicked.connect(self.clear_button_clicked)
@@ -106,9 +108,11 @@ class ImageEditor(FileEditor, WideEditor):
         button_layout.addWidget(copy_button)
         button_layout.addWidget(paste_button)
 
-        self.layout.addLayout(button_layout)
-        self.layout.addStretch()
-        self.setLayout(self.layout)
+        label_button_layout.addLayout(button_layout)
+        label_button_layout.addStretch()
+        layout.addLayout( label_button_layout )
+        layout.addStretch()
+        self.setLayout( layout )
         self.clear_image()
         QtGui.QApplication.clipboard().dataChanged.connect( self.clipboard_data_changed )
         self.clipboard_data_changed()
@@ -170,7 +174,7 @@ class ImageEditor(FileEditor, WideEditor):
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:
-            self.open_button.setIcon(self.open_icon)
+            self.open_button.setIcon(self.open_icon.getQIcon())
             self.open_button.setToolTip(unicode(_('open file')))
             if value!=self.value:
                 post(
@@ -182,7 +186,7 @@ class ImageEditor(FileEditor, WideEditor):
                 )
         else:
             self.clear_image()
-            self.open_button.setIcon(self.new_icon)
+            self.open_button.setIcon(self.new_icon.getQIcon())
             self.open_button.setToolTip(unicode(_('add file')))
         self.value = value
         return value

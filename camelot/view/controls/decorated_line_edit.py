@@ -40,6 +40,7 @@ class DecoratedLineEdit(QtGui.QLineEdit):
     """
       
     arrow_down_key_pressed = QtCore.pyqtSignal()
+    _font_metrics = None
       
     def __init__(self, parent = None):
         QtGui.QLineEdit.__init__(self, parent)
@@ -48,7 +49,17 @@ class DecoratedLineEdit(QtGui.QLineEdit):
         self._showing_background_text = False
         self._background_text = None
         self._valid = True
+        if self._font_metrics == None:
+            self._font_metrics = QtGui.QFontMetrics( QtGui.QApplication.font() )
 
+    def set_minimum_width(self, width):
+        """Set the minimum width of the line edit, measured in number of 
+        characters.
+        :param width: the number of characters that should be visible in the
+            editor
+        """
+        self.setMinimumWidth( self._font_metrics.averageCharWidth() * width )
+        
     def set_valid(self, valid):
         """Set the validity of the current content of the line edit
         :param valid: True or False

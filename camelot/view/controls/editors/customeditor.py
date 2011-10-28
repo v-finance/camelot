@@ -137,8 +137,6 @@ class CustomEditor(QtGui.QWidget, AbstractCustomEditor):
         AbstractCustomEditor.__init__(self)
         
     def paintEvent(self, event):
-        super(CustomEditor, self).paintEvent(event)
-        
+        super(CustomEditor, self).paintEvent(event)        
         if self.toolTip():
             draw_tooltip_visualization(self)
-

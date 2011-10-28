@@ -36,7 +36,12 @@ class FileEditor(CustomEditor):
     """Widget for editing File fields"""
 
     filter = 'All files (*)'
-
+    new_icon = Icon( 'tango/16x16/actions/list-add.png' )
+    open_icon = Icon( 'tango/16x16/actions/document-open.png' )
+    clear_icon = Icon( 'tango/16x16/actions/edit-delete.png' )
+    save_as_icon = Icon( 'tango/16x16/actions/document-save-as.png' )
+    document_pixmap = Icon( 'tango/16x16/mimetypes/x-office-document.png' )
+        
     def __init__(self, parent=None, 
                  storage=None, 
                  field_name='file', 
@@ -46,24 +51,6 @@ class FileEditor(CustomEditor):
         self.setObjectName( field_name )
         self.storage = storage
         self.filename = None # the widget containing the filename
-
-        # i'm a < 80 characters fanatic, i know :)
-        self.new_icon = Icon(
-            'tango/16x16/actions/list-add.png'
-        ).getQIcon()
-        self.open_icon = Icon(
-            'tango/16x16/actions/document-open.png'
-        ).getQIcon()
-        self.clear_icon = Icon(
-            'tango/16x16/actions/edit-delete.png'
-        ).getQIcon()
-        self.save_as_icon = Icon(
-            'tango/16x16/actions/document-save-as.png'
-        ).getQIcon()
-        self.document_pixmap = Icon(
-            'tango/16x16/mimetypes/x-office-document.png'
-        ).getQPixmap()
-
         self.value = None
         self.remove_original = remove_original
         self.setup_widget()
@@ -78,7 +65,7 @@ class FileEditor(CustomEditor):
         # Save As button
         self.save_as_button = QtGui.QToolButton()
         self.save_as_button.setFocusPolicy(Qt.StrongFocus)
-        self.save_as_button.setIcon(self.save_as_icon)
+        self.save_as_button.setIcon(self.save_as_icon.getQIcon())
         self.save_as_button.setToolTip(_('Save file as'))
         self.save_as_button.setAutoRaise(True)
         self.save_as_button.clicked.connect(self.save_as_button_clicked)
@@ -86,7 +73,7 @@ class FileEditor(CustomEditor):
         # Clear button
         self.clear_button = QtGui.QToolButton()
         self.clear_button.setFocusPolicy(Qt.StrongFocus)
-        self.clear_button.setIcon(self.clear_icon)
+        self.clear_button.setIcon(self.clear_icon.getQIcon())
         self.clear_button.setToolTip(_('delete file'))
         self.clear_button.setAutoRaise(True)
         self.clear_button.clicked.connect(self.clear_button_clicked)
@@ -94,13 +81,14 @@ class FileEditor(CustomEditor):
         # Open button
         self.open_button = QtGui.QToolButton()
         self.open_button.setFocusPolicy(Qt.StrongFocus)
-        self.open_button.setIcon(self.new_icon)
+        self.open_button.setIcon(self.new_icon.getQIcon())
         self.open_button.setToolTip(_('add file'))
         self.open_button.clicked.connect(self.open_button_clicked)
         self.open_button.setAutoRaise(True)
 
         # Filename
         self.filename = DecoratedLineEdit(self)
+        self.filename.set_minimum_width( 20 )
 
         # Search Completer
         #
@@ -128,7 +116,7 @@ class FileEditor(CustomEditor):
 
         # Setup layout
         self.document_label = QtGui.QLabel(self)
-        self.document_label.setPixmap(self.document_pixmap)
+        self.document_label.setPixmap(self.document_pixmap.getQPixmap())
         self.layout.addWidget(self.document_label)
         self.layout.addWidget(self.filename)
         self.layout.addWidget(self.clear_button)
@@ -163,12 +151,12 @@ class FileEditor(CustomEditor):
         if value:
             self.save_as_button.setVisible(True)
             self.filename.setText(value.verbose_name)
-            self.open_button.setIcon(self.open_icon)
+            self.open_button.setIcon(self.open_icon.getQIcon())
             self.open_button.setToolTip(_('open file'))
         else:
             self.save_as_button.setVisible(False)
             self.filename.setText('')
-            self.open_button.setIcon(self.new_icon)
+            self.open_button.setIcon(self.new_icon.getQIcon())
             self.open_button.setToolTip(_('add file'))
         self.set_tab_order()
         return value
