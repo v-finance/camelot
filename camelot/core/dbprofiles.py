@@ -67,7 +67,13 @@ def selected_profile_info():
     """
     profiles = fetch_profiles()
     profilename = last_used_profile()
-    return profiles[profilename]
+    try:
+        return profiles[profilename]
+    except KeyError:
+        logger.error( u'no profile named %s, available profiles are '%profilename )
+        for key in profiles.keys():
+            logger.error( u' - %s'%key )
+        raise
 
 def engine_from_profile():
     from sqlalchemy import create_engine
@@ -87,6 +93,11 @@ def engine_from_profile():
 def media_root_from_profile():
     profile = selected_profile_info()
     return profile['media_location']
+
+def stylesheet_from_profile():
+    profile = selected_profile_info()
+    from camelot.view import art
+    return art.read( 'stylesheet/office2007_' + profile.get('stylesheet', 'blue') + '.qss' )
 
 def last_used_profile():
     settings = QtCore.QSettings()
