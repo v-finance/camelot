@@ -82,15 +82,15 @@ _sqlalchemy_to_python_type_ = {
     },
 
     sqlalchemy.types.Time : lambda f: {
-            'python_type': datetime.time,
-            'editable': True,
-            'nullable': True,
-            'widget': 'time',
-            'delegate': delegates.TimeDelegate,
-            'format': constants.camelot_time_format,
-            'nullable': True,
-            'from_string': time_from_string,
-            'operators': _numerical_operators,
+        'python_type': datetime.time,
+        'editable': True,
+        'nullable': True,
+        'widget': 'time',
+        'delegate': delegates.TimeDelegate,
+        'format': constants.camelot_time_format,
+        'nullable': True,
+        'from_string': time_from_string,
+        'operators': _numerical_operators,
     },
 
     sqlalchemy.types.DateTime : lambda f: {
