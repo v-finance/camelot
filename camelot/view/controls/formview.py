@@ -380,7 +380,6 @@ class FormView(AbstractView):
         layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
         if actions and form and layout:
             side_panel_layout = QtGui.QVBoxLayout()
-            side_panel_layout.addStretch()
             widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
@@ -392,6 +391,7 @@ class FormView(AbstractView):
             actions_widget.setObjectName('actions')
             actions_widget.set_actions( actions )
             side_panel_layout.addWidget( actions_widget )
+            side_panel_layout.addStretch()
             layout.addLayout( side_panel_layout )
 
     def viewFirst(self):
