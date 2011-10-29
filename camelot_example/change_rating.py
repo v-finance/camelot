@@ -33,7 +33,6 @@ class ChangeRatingAction( Action ):
     """Action to print a list of movies"""
     
     verbose_name = _('Change Rating')
-    modes = [Mode('increase'), Mode('decrease')]
     
     def model_run( self, model_context ):
         #
