@@ -38,7 +38,7 @@ setup(
     platforms = 'Linux, Windows, OS X',
     install_requires = ['SQLAlchemy>=0.6.4, <0.7.0',
                         'Elixir>=0.7.1',
-                        'sqlalchemy-migrate>=0.6.0',
+                        'sqlalchemy-migrate>=0.7.1',
                         'Jinja2>=2.5.5',
                         'chardet>=1.0.1', 
                         'xlwt==0.7.2', 
