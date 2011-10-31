@@ -22,11 +22,6 @@
 #
 #  ============================================================================
 
-"""
-This is part of a test implementation of the new actions draft, it is not
-intended for production use
-"""
-
 from camelot.admin.action.base import Action
 from application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
@@ -56,7 +51,12 @@ class ListActionModelContext( ApplicationActionModelContext ):
     .. attribute:: session
     
         The session to which the objects in the list belong.
-        
+       
+    The :attr:`collection_count` and :attr:`selection_count` attributes allow the 
+    :meth:`model_run` to quickly evaluate the size of the collection or the
+    selection without calling the potentially time consuming methods
+    :meth:`get_collection` and :meth:`get_selection`.
+
     """
     
     def __init__( self ):
@@ -145,18 +145,21 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         return new_context
 
 class CallMethod( Action ):
+    """
+    Call a method on all objects in a selection, and flush the
+    session.
     
-    def __init__( self, verbose_name, method, enabled=None ):
-        """
-        Call a method on all objects in a selection, and flush the
-        session.
+    :param verbose_name: the name of the action, as it should appear
+        to the user
+    :param method: the method to call on the objects
+    :param enabled: method to call on objects to verify if the action is
+        enabled, by default the action is always enabled
         
-        :param verbose_name: the name of the action, as it should appear
-            to the user
-        :param method: the method to call on the objects
-        :param enabled: method to call on objects to verify if the action is
-            enabled, by default the action is always enabled
-        """
+    This action can be used either within :attr:`list_actions` or within
+    :attr:`form_actions`.
+    """
+        
+    def __init__( self, verbose_name, method, enabled=None ):
         self.verbose_name = verbose_name
         self.method = method
         self.enabled = enabled

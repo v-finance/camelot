@@ -22,11 +22,6 @@
 #
 #  ============================================================================
 
-"""
-This is part of a test implementation of the new actions draft, it is not
-intended for production use
-"""
-
 from camelot.admin.action.base import Action
 from application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
@@ -52,6 +47,9 @@ class FormActionModelContext( ApplicationActionModelContext ):
     
         The session to which the objects in the list belong.
         
+    The :attr:`selection_count` attribute allows the 
+    :meth:`model_run` to quickly evaluate the size of the collection without 
+    calling the potetially time consuming method :meth:`get_collection`.
     """
     
     def __init__( self ):

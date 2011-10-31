@@ -31,13 +31,13 @@ from camelot.admin.action.base import ActionStep
 from camelot.view.remote_signals import get_signal_handler
 
 class FlushSession( ActionStep ):
+    """Flushes the session and informs the GUI about the
+    changes.
     
+    :param session: an instance of :class:`sqlalchemy.orm.Session`
+    """
+        
     def __init__( self, session ):
-        """Flushes the session and informs the GUI about the
-        changes.
-    
-        :param session: an instance of :class:`sqlalchemy.orm.Session`
-        """
         #
         # @todo : deleting of objects should be moved from the collection_proxy
         #         to here, once deleting rows is reimplemented as an action
@@ -54,12 +54,12 @@ class FlushSession( ActionStep ):
         pass
     
 class UpdateObject( ActionStep ):
+    """Inform the GUI that obj has changed.
+
+    :param obj: the object that has changed
+    """
     
     def __init__( self, obj ):
-        """Inform the GUI that obj has changed.
-    
-        :param obj: the object that has changed
-        """
         signal_handler = get_signal_handler()
         if obj != None:
             signal_handler.sendEntityUpdate( self, obj )
@@ -68,12 +68,12 @@ class UpdateObject( ActionStep ):
         pass
 
 class DeleteObject( ActionStep ):
+    """Inform the GUI that obj is going to be deleted.
+
+    :param obj: the object that is going to be deleted
+    """
     
     def __init__( self, obj ):
-        """Inform the GUI that obj is going to be deleted.
-    
-        :param obj: the object that is going to be deleted
-        """
         signal_handler = get_signal_handler()
         if obj != None:
             signal_handler.sendEntityDelete( self, obj )
@@ -82,12 +82,12 @@ class DeleteObject( ActionStep ):
         pass
     
 class CreateObject( ActionStep ):
+    """Inform the GUI that obj was created.
+
+    :param obj: the object that was created
+    """
     
     def __init__( self, obj ):
-        """Inform the GUI that obj was created.
-    
-        :param obj: the object that was created
-        """
         signal_handler = get_signal_handler()
         if obj != None:
             signal_handler.sendEntityCreate( self, obj )

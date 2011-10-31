@@ -139,8 +139,12 @@ class Movie(Entity):
         # if the search function needs to look in related object attributes,
         # those should be specified within list_search
         list_search = ['director.full_name']
+        # begin list_actions
+        #
         # the action buttons that should be available in the list view
+        #
         list_actions = [ChangeRatingAction()]
+        # end list_actions
         # the form_display attribute specifies which entity attributes should be
         # visible in the form view
         form_display = TabForm([
@@ -157,10 +161,12 @@ class Movie(Entity):
           ('Tags', WidgetOnlyForm('tags'))
         ])
 
+        # begin form_actions
+        #
         # create a list of actions available for the user on the form view
-        # those actions will be executed within the model thread
         #
         form_actions = [BurnToDisk()]
+        # end form_actions
         #
         # additional attributes for a field can be specified in the
         # field_attributes dictionary

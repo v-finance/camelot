@@ -31,8 +31,8 @@ application.
 
 class ApplicationActionModelContext( ModelContext ):
     """The Model context for an :class:`camelot.admin.action.Action`.  On top 
-    of the attributes of the :class:`camelot.admin.action.ModelContext`, this 
-    context contains :
+    of the attributes of the :class:`camelot.admin.action.base.ModelContext`, 
+    this context contains :
         
     .. attribute:: admin
     
@@ -45,8 +45,8 @@ class ApplicationActionModelContext( ModelContext ):
         
 class ApplicationActionGuiContext( GuiContext ):
     """The GUI context for an :class:`camelot.admin.action.Action`.  On top of 
-    the attributes of the :class:`camelot.admin.action.GuiContext`, this context
-    contains :
+    the attributes of the :class:`camelot.admin.action.base.GuiContext`, this 
+    context contains :
     
     .. attribute:: workspace
     
@@ -91,7 +91,13 @@ class EntityAction( Action ):
         self._entity_admin = entity_admin
         
 class TableViewAction( EntityAction ):
-    """An application action that opens a TableView of an Entity"""
+    """An application action that opens a TableView of an Entity
+
+    :param entity_admin: an instance of 
+        :class:`camelot.admin.entity_admin.EntityAdmin` to be used to
+        visualize the entities
+    
+    """
 
     modes = [ Mode( 'new_tab', _('Open in New Tab') ) ]
         
@@ -108,7 +114,13 @@ class TableViewAction( EntityAction ):
             gui_context.workspace.set_view( table_view )
         
 class NewViewAction( EntityAction ):
-    """An application action that opens a new view of an Entity"""
+    """An application action that opens a new view of an Entity
+    
+    :param entity_admin: an instance of 
+        :class:`camelot.admin.entity_admin.EntityAdmin` to be used to
+        visualize the entities
+    
+    """
 
     def get_state( self, model_context ):
         state = super( NewViewAction, self ).get_state( model_context )

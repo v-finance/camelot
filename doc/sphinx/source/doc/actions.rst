@@ -4,12 +4,6 @@
  Actions
 #########
 
-status : approved
-
-.. note::
-  This proposal is being implemented in the trunk, the functionallity described
-  here is not yet available in the latest release.
-
 Introduction
 ============
 
@@ -104,8 +98,9 @@ an action.  Possible Action Steps that can be yielded to the GUI include:
   * :class:`camelot.view.action_steps.print_preview.PrintJinjaTemplate`
   * :class:`camelot.view.action_steps.open_file.OpenFile`
   * :class:`camelot.view.action_steps.open_file.OpenStream`
-  * :class:`camelot.view.action_steps.open_file.OpenJinjaTemplate`
+  * :class:`camelot.view.action_steps.open_file.OpenJinjaTemplate`  
   * :class:`camelot.view.action_steps.gui.Refresh`
+  * :class:`camelot.view.action_steps.gui.OpenFormView`
   * :class:`camelot.view.action_steps.gui.ShowPixmap`
   * :class:`camelot.view.action_steps.gui.ShowChart`
 
@@ -153,7 +148,7 @@ visualisation of the changed movie on every screen in the application that
 displays this object.  Alternative updates that can be generated are :
 
   * :class:`camelot.view.action_steps.orm.UpdateObject`, if one wants to inform
-    the GUI an object is going to be updated.
+    the GUI an object has been updated.
   * :class:`camelot.view.action_steps.orm.DeleteObject`, if one wants to inform
     the GUI an object is going to be deleted.
   * :class:`camelot.view.action_steps.orm.CreateObject`, if one wants to inform
@@ -219,9 +214,6 @@ When the user presses :guilabel:`Cancel` button of the dialog, the
 
 Other ways of requesting information are :
 
-  * :class:`camelot.view.action_steps.NewObject`, to request the user to fill in
-    a new form for an object of a specified class.  This will return such
-    a new object or None if the user canceled the operation.
   * :class:`camelot.view.action_steps.select_file.SelectFile`, to request 
     to select an existing file to process or a new file to save information.
 
@@ -257,12 +249,14 @@ Depending on where an action was triggered, a different context will be
 available during its execution in :meth:`camelot.admin.action.base.Action.gui_run`
 and :meth:`camelot.admin.action.base.Action.model_run`.
 
-The minimal context available in the *GUI thread* is :
+The minimal context available in the *GUI thread* when :meth:`gui_run` is
+called :
 
 .. autoclass:: camelot.admin.action.base.GuiContext
    :noindex:
 
-While the minimal contact available in the *Model thread* is:
+While the minimal contact available in the *Model thread* when :meth:`model_run`
+is called :
 
 .. autoclass:: camelot.admin.action.base.ModelContext
    :noindex:
@@ -309,6 +303,12 @@ Form Actions
 To enable Form Actions for a certain :class:`ObjectAdmin` or :class:`EntityAdmin`, 
 specify the :attr:`form_actions` attribute.
 
+.. literalinclude:: ../../../../camelot_example/model.py
+   :start-after: begin form_actions
+   :end-before: end form_actions
+
+.. image:: /_static/entityviews/new_view_movie.png
+
 An action specified here will receive a :class:`FormActionGuiContext`  object as the 
 *gui_context* argument of the :meth:`gui_run` method, and a 
 :class:`FormActionModelContext` object as the *model_context* argument of the 
@@ -325,9 +325,11 @@ List Actions
 ------------
 
 To enable List Actions for a certain :class:`ObjectAdmin` or
-:class:`EntityAdmin`, specify the :attr:`list_actions` attribute::
+:class:`EntityAdmin`, specify the :attr:`list_actions` attribute:
 
-   list_actions = [ ChangeRatingAction() ]
+.. literalinclude:: ../../../../camelot_example/model.py
+   :start-after: begin list_actions
+   :end-before: end list_actions
    
 This will result in a button being displayed on the table view.
 
@@ -380,6 +382,19 @@ Camelot leaves all options open to the developer.
 
 Please have a look at :ref:`tutorial-reporting` to get started with generating
 documents.
+
+Available actions
+=================
+
+Camelot comes with a set of available actions that combine the various 
+:class:`ActionStep` subclasses.  Those actions can be used directly or as an
+inspiration to build new actions:
+
+  * :class:`camelot.admin.action.application_action.NewViewAction`
+  * :class:`camelot.admin.action.application_action.TableViewAction`
+  * :class:`camelot.admin.action.list_action.CallMethod`
+  * :class:`camelot.admin.action.list_action.OpenForm`
+ 
 
 Inspiration
 ===========

@@ -29,15 +29,14 @@ Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 from camelot.admin.action.base import ActionStep
 
 class OpenFormView( ActionStep ):
-    """Open the form view for a list of objects, in a non blocking way"""
+    """Open the form view for a list of objects, in a non blocking way
+    :param objects: the list of objects to display in the form view
+    :param admin: the admin class to use to display the form    
+    """
     
     blocking = False
     
     def __init__( self, objects, admin ):
-        """
-        :param objects: the list of objects to display in the form view
-        :param admin: the admin class to use to display the form
-        """
         self.objects = objects
         self.admin = admin
         
@@ -70,13 +69,13 @@ class Refresh( ActionStep ):
 
 
 class ShowChart( ActionStep ):
+    """Show a full screen chart.
     
-    def __init__( self, chart ):
-        """Show a full screen chart.
+    :param chart: a :class:`camelot.core.container.FigureContainer` or
+        :class:`camelot.core.container.AxesContainer`
+    """
         
-        :param chart: a :class:`camelot.core.container.FigureContainer` or
-            :class:`camelot.core.container.AxesContainer`
-        """
+    def __init__( self, chart ):
         self.chart = chart
         
     def gui_run( self, gui_context ):
@@ -86,12 +85,12 @@ class ShowChart( ActionStep ):
 
     
 class ShowPixmap( ActionStep ):
+    """Show a full screen pixmap
+    
+    :param pixmap: a :class:`camelot.view.art.Pixmap` object
+    """
     
     def __init__( self, pixmap ):
-        """Show a full screen pixmap
-        
-        :param pixmap: a :class:`camelot.view.art.Pixmap` object
-        """
         self.pixmap = pixmap
         
     def gui_run( self, gui_context ):
