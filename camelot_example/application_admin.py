@@ -46,10 +46,10 @@ class MyApplicationAdmin(ApplicationAdmin):
 
 # begin actions
     def get_actions(self):
-        from camelot.admin.action.application_action import NewViewAction
+        from camelot.admin.action import OpenNewView
         from camelot_example.model import Movie
         
-        new_movie_action = NewViewAction( self.get_related_admin(Movie) )
+        new_movie_action = OpenNewView( self.get_related_admin(Movie) )
         new_movie_action.icon = Icon('tango/22x22/mimetypes/x-office-presentation.png')
 
         return [new_movie_action]

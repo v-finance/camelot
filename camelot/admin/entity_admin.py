@@ -25,7 +25,7 @@
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
-from camelot.admin.action.list_action import OpenForm
+from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function, gui_function
 from camelot.core.utils import ugettext_lazy, ugettext
@@ -44,7 +44,7 @@ It has additional class attributes that customise its behaviour.
 
    The :class:`camelot.admin.action.Action` that will be triggered when the
    user selects an item in a list of objects.  This defaults to 
-   :class:`camelot.admin.action.list_action.OpenForm`, which opens a form
+   :class:`camelot.admin.action.list_action.OpenFormView`, which opens a form
    for the current object.
    
 **Filtering**
@@ -110,7 +110,7 @@ It has additional class attributes that customise its behaviour.
  
     """
 
-    list_action = OpenForm()
+    list_action = OpenFormView()
     list_search = []
     expanded_list_search = None
     copy_deep = {}

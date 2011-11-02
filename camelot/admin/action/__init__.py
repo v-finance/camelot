@@ -23,8 +23,8 @@
 #  ============================================================================
 
 from application_action import ( ApplicationActionGuiContext,
-                                 NewViewAction, TableViewAction)
-from list_action import ListActionGuiContext, CallMethod
+                                 OpenNewView, OpenTableView)
+from list_action import ListActionGuiContext, CallMethod, OpenFormView
 
 from base import Action, ActionStep, GuiContext, MockModelContext, Mode, State
 
@@ -35,8 +35,9 @@ __all__ = [
     CallMethod.__name__,
     ListActionGuiContext.__init__,
     MockModelContext.__init__,
-    NewViewAction.__name__,
-    TableViewAction.__name__,
+    OpenFormView.__init__,
+    OpenNewView.__name__,
+    OpenTableView.__name__,
     GuiContext.__name__,
     Mode.__name__,
     State.__name__,

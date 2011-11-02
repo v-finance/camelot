@@ -187,7 +187,7 @@ class CallMethod( Action ):
                     break
         return state
             
-class OpenForm( Action ):
+class OpenFormView( Action ):
     """Open a form view for the current row of a list."""
     
     def gui_run( self, gui_context ):

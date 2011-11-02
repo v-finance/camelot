@@ -386,15 +386,14 @@ documents.
 Available actions
 =================
 
-Camelot comes with a set of available actions that combine the various 
+Camelot has a set of available actions that combine the various 
 :class:`ActionStep` subclasses.  Those actions can be used directly or as an
 inspiration to build new actions:
 
-  * :class:`camelot.admin.action.application_action.NewViewAction`
-  * :class:`camelot.admin.action.application_action.TableViewAction`
+  * :class:`camelot.admin.action.application_action.OpenNewView`
+  * :class:`camelot.admin.action.application_action.OpenTableView`
   * :class:`camelot.admin.action.list_action.CallMethod`
-  * :class:`camelot.admin.action.list_action.OpenForm`
- 
+  * :class:`camelot.admin.action.list_action.OpenFormView`
 
 Inspiration
 ===========

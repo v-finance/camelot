@@ -90,7 +90,7 @@ class EntityAction( Action ):
         assert isinstance( entity_admin, (EntityAdmin,) )
         self._entity_admin = entity_admin
         
-class TableViewAction( EntityAction ):
+class OpenTableView( EntityAction ):
     """An application action that opens a TableView of an Entity
 
     :param entity_admin: an instance of 
@@ -102,7 +102,7 @@ class TableViewAction( EntityAction ):
     modes = [ Mode( 'new_tab', _('Open in New Tab') ) ]
         
     def get_state( self, model_context ):
-        state = super( TableViewAction, self ).get_state( model_context )
+        state = super( OpenTableView, self ).get_state( model_context )
         state.verbose_name = self.verbose_name or self._entity_admin.get_verbose_name_plural()
         return state
         
@@ -113,7 +113,7 @@ class TableViewAction( EntityAction ):
         else:
             gui_context.workspace.set_view( table_view )
         
-class NewViewAction( EntityAction ):
+class OpenNewView( EntityAction ):
     """An application action that opens a new view of an Entity
     
     :param entity_admin: an instance of 
@@ -123,7 +123,7 @@ class NewViewAction( EntityAction ):
     """
 
     def get_state( self, model_context ):
-        state = super( NewViewAction, self ).get_state( model_context )
+        state = super( OpenNewView, self ).get_state( model_context )
         state.verbose_name = self.verbose_name or ugettext('New %s')%(self._entity_admin.get_verbose_name())
         state.tooltip = ugettext('Create a new %s')%(self._entity_admin.get_verbose_name())
         return state
@@ -144,4 +144,4 @@ def structure_to_application_action(structure, application_admin):
     if isinstance(structure, (Action,)):
         return structure
     admin = application_admin.get_related_admin( structure )
-    return TableViewAction( admin )
+    return OpenTableView( admin )
