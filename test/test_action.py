@@ -2,7 +2,7 @@ import os
 
 from PyQt4 import QtGui
 
-from camelot.admin.action import Action
+from camelot.admin.action import Action, MockModelContext
 from camelot.test import ModelThreadTestCase
 
 from test_view import static_images_path
@@ -59,9 +59,12 @@ class ActionStepsCase(ModelThreadTestCase):
     images_path = static_images_path
     
     def setUp(self):
+        from camelot_example.model import Movie
         from camelot.admin.application_admin import ApplicationAdmin
         ModelThreadTestCase.setUp(self)
         self.app_admin = ApplicationAdmin()
+        self.context = MockModelContext()
+        self.context.obj = Movie.query.first()
 
 # begin test application action
     def test_example_application_action( self ):
@@ -115,11 +118,20 @@ class ActionStepsCase(ModelThreadTestCase):
         # end webkit print
                 
         action = WebkitPrint()
-        steps = list( action.model_run( None ) )
+        steps = list( action.model_run( self.context ) )
         self.grab_widget( steps[0].render() )
         
     def test_print_html( self ):
-        from camelot.view.action_steps import PrintHtml
-        print_preview = PrintHtml( '<h1>Hello World</h1>' )
-        dialog = print_preview.render()
-        self.grab_widget( print_preview.render() )
+        
+        # begin html print
+        class MovieSummary( Action ):
+            
+            def model_run(self, model_context):
+                from camelot.view.action_steps import PrintHtml
+                obj = model_context.get_object()
+                yield PrintHtml( "<h1>This will become the movie report of %s!</h1>" % obj.title )
+        # end html print
+ 
+        action = MovieSummary()
+        steps = list( action.model_run( self.context ) )
+        self.grab_widget( steps[0].render() )

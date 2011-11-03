@@ -33,9 +33,16 @@ Camelot leaves all options open to the developer.
 Please have a look at :ref:`tutorial-reporting` to get started with generating
 documents.
 
+Generating a document or report is nothing more than yielding the appropriate
+action step during the :meth:`model_run` method of an :class:`Action`.
+
 HTML based documents
 ====================
 
+.. literalinclude:: ../../../../test/test_action.py
+   :start-after: begin html print
+   :end-before: end html print
+   
 The supported html subset is documented here :
 
 http://doc.qt.nokia.com/stable/richtext-html-subset.html
