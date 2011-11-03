@@ -111,15 +111,19 @@ class ActionStepsCase(ModelThreadTestCase):
                 from PyQt4.QtWebKit import QWebView
                 from camelot.view.action_steps import PrintPreview
                 
+                movie = model_context.get_object()
+                
                 document = QWebView()
-                document.setHtml( '<h2>Hello World</h2>' )
+                document.setHtml( '<h2>%s</h2>' % movie.title )
                 
                 yield PrintPreview( document )
         # end webkit print
                 
         action = WebkitPrint()
         steps = list( action.model_run( self.context ) )
-        self.grab_widget( steps[0].render() )
+        dialog = steps[0].render()
+        dialog.show()
+        self.grab_widget( dialog )
         
     def test_print_html( self ):
         
@@ -128,10 +132,12 @@ class ActionStepsCase(ModelThreadTestCase):
             
             def model_run(self, model_context):
                 from camelot.view.action_steps import PrintHtml
-                obj = model_context.get_object()
-                yield PrintHtml( "<h1>This will become the movie report of %s!</h1>" % obj.title )
+                movie = model_context.get_object()
+                yield PrintHtml( "<h1>This will become the movie report of %s!</h1>" % movie.title )
         # end html print
  
         action = MovieSummary()
         steps = list( action.model_run( self.context ) )
-        self.grab_widget( steps[0].render() )
+        dialog = steps[0].render()
+        dialog.show()
+        self.grab_widget( dialog )

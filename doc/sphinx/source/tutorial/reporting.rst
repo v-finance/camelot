@@ -52,10 +52,9 @@ In the MovieSummary class, which is a child class of camelot.admin.form_action.P
 the html method, which takes the Movie object as its argument. This makes accessing its members very easy as we'll see in a minute.
 The html method will return ..., have a guess.... Exactly, html. This will be displayed in a print preview::
 
-	from camelot.admin.form_action import PrintHtmlFormAction
-	class MovieSummary(PrintHtmlFormAction):
-		def html(self, o):
-			return "<h1>This will become the movie report of %s!</h1>" % o.title
+.. literalinclude:: ../../../../test/test_action.py
+   :start-after: begin html print
+   :end-before: end html print
 
 You can already test this. You should see a button in the "Actions" section, on the right of the Movie detail page. Click this and a print preview should open with the text you let the html method return.
 
