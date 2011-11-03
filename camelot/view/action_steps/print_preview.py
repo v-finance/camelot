@@ -102,7 +102,7 @@ class PrintHtml( PrintPreview ):
         document.setHtml( html )
         super( PrintHtml, self ).__init__( document )
 
-class PrintJinjaTemplate( PrintPreview ):
+class PrintJinjaTemplate( PrintHtml ):
     """Render a jinja template into a print preview dialog.
     
     :param environment: a :class:`jinja2.Environment` object to be used

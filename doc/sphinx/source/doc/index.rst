@@ -21,6 +21,7 @@ All other sections can be read on an as needed base.
    application_admin.rst
    forms.rst
    actions.rst
+   reports.rst
    delegates.rst
    charts.rst
    documents.rst

@@ -2,6 +2,7 @@ import os
 
 from PyQt4 import QtGui
 
+from camelot.admin.action import Action
 from camelot.test import ModelThreadTestCase
 
 from test_view import static_images_path
@@ -98,7 +99,26 @@ class ActionStepsCase(ModelThreadTestCase):
         dialog = select_file.render()
         self.grab_widget( dialog )
         
-    def test_print_preview(self):
+    def test_print_preview( self ):
+        
+        # begin webkit print
+        class WebkitPrint( Action ):
+            
+            def model_run( self, model_context ):
+                from PyQt4.QtWebKit import QWebView
+                from camelot.view.action_steps import PrintPreview
+                
+                document = QWebView()
+                document.setHtml( '<h2>Hello World</h2>' )
+                
+                yield PrintPreview( document )
+        # end webkit print
+                
+        action = WebkitPrint()
+        steps = list( action.model_run( None ) )
+        self.grab_widget( steps[0].render() )
+        
+    def test_print_html( self ):
         from camelot.view.action_steps import PrintHtml
         print_preview = PrintHtml( '<h1>Hello World</h1>' )
         dialog = print_preview.render()

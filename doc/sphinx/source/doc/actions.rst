@@ -354,35 +354,6 @@ There is no need to define a different action subclass for form and list
 actions, as both their model_context have a **get_selection** method, a single
 action can be used both for the list and the form.
 
-Generate documents
-==================
-
-Generating reports and documents is an important part of any application.
-Python and Qt provide various ways to generate documents.  Each of them
-with its own advantages and disadvantages.  
-
-  +-----------------------+-------------------------+--------------------------+
-  | Method                | Advantages              | Disadvantages            |
-  +-----------------------+-------------------------+--------------------------+
-  | PDF documents through | * Perfect control over  | * Relatively steep       |
-  | reportlab             |   layout                |   learning curve         |
-  |                       | * Excellent for mass    | * User cannot edit       |
-  |                       |   creation of documents |   document               |
-  +-----------------------+-------------------------+--------------------------+
-  | HTML                  | * Easy to get started   | * Not much layout control|
-  |                       | * Print preview within  | * User cannot edit       |
-  |                       |   Camelot               |   document               |
-  |                       | * No dependencies       |                          |
-  +-----------------------+-------------------------+--------------------------+
-  | Docx Word documents   | * User can edit         | * Proprietary format     |
-  |                       |   document              | * Word processor needed  |
-  +-----------------------+-------------------------+--------------------------+
-  
-Camelot leaves all options open to the developer.
-
-Please have a look at :ref:`tutorial-reporting` to get started with generating
-documents.
-
 Available actions
 =================
 
