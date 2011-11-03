@@ -140,7 +140,6 @@ class QueryTableProxy(CollectionProxy):
             try:
                 property = mapper.get_property(
                     field_name,
-                    resolve_synonyms=True
                 )
             except InvalidRequestError:
                 #
@@ -153,7 +152,7 @@ class QueryTableProxy(CollectionProxy):
             #  If it specifies an order_by option we have to join the related table, 
             #  else we use the foreing key as sort field, without joining
             if property and isinstance(property, orm.properties.PropertyLoader):
-                target = property._get_target()
+                target = property.mapper
                 if target:
                     if target.order_by:
                         join = field_name

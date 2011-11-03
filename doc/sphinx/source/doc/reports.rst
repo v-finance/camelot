@@ -36,6 +36,15 @@ documents.
 Generating a document or report is nothing more than yielding the appropriate
 action step during the :meth:`model_run` method of an :class:`Action`.
 
+Action steps usable for reporting are :
+
+  * :class:`camelot.view.action_steps.print_preview.PrintPreview`
+  * :class:`camelot.view.action_steps.print_preview.PrintHtml`
+  * :class:`camelot.view.action_steps.print_preview.PrintJinjaTemplate`
+  * :class:`camelot.view.action_steps.open_file.OpenFile`
+  * :class:`camelot.view.action_steps.open_file.OpenStream`
+  * :class:`camelot.view.action_steps.open_file.OpenJinjaTemplate`
+
 HTML based documents
 ====================
 
@@ -52,7 +61,8 @@ Alternative rendering
 
 Instead of :class:`QtGui.QTextDocument` another html renderer such as 
 :class:`QtWebKit.QWebView` can be used in combination with the 
-:class:`camelot.view.action_steps.print_preview.PrintPreview` action step.
+:class:`camelot.view.action_steps.print_preview.PrintPreview` action step.  The
+:class:`QWebView` class has complete support for html and css.
 
 .. literalinclude:: ../../../../test/test_action.py
    :start-after: begin webkit print
