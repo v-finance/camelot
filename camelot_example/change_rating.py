@@ -29,6 +29,7 @@ class Options(object):
                                       'editable':True},
                             }
 
+# begin change rating action definition
 class ChangeRatingAction( Action ):
     """Action to print a list of movies"""
     
@@ -52,3 +53,4 @@ class ChangeRatingAction( Action ):
         # the GUI
         #
         yield FlushSession( model_context.session )
+# end change rating action definition

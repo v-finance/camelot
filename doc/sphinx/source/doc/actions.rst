@@ -300,6 +300,12 @@ method, and a :class:`ApplicationActionModelContext` object as the
 Form Actions
 ------------
 
+A form action has access to the object currently visible on the form.
+
+.. literalinclude:: ../../../../camelot_example/model.py
+   :start-after: begin simple action definition
+   :end-before: end simple action definition
+   
 To enable Form Actions for a certain :class:`ObjectAdmin` or :class:`EntityAdmin`, 
 specify the :attr:`form_actions` attribute.
 
@@ -324,6 +330,14 @@ An action specified here will receive a :class:`FormActionGuiContext`  object as
 List Actions
 ------------
 
+A list action has access to both all the rows displayed in the table
+(called the collection) and the rows selected by the user (called the
+selection) :
+
+.. literalinclude:: ../../../../camelot_example/change_rating.py
+   :start-after: begin change rating action definition
+   :end-before: end change rating action definition
+   
 To enable List Actions for a certain :class:`ObjectAdmin` or
 :class:`EntityAdmin`, specify the :attr:`list_actions` attribute:
 
