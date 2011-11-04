@@ -25,6 +25,10 @@
 from camelot.admin.action.base import Action
 from application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
+from camelot.core.utils import ugettext_lazy as _
+from camelot.view.art import Icon
+
+from PyQt4 import QtGui
 
 class ListActionModelContext( ApplicationActionModelContext ):
     """On top of the attributes of the 
@@ -211,3 +215,69 @@ class OpenFormView( Action ):
         # second
         formview.setWindowTitle( u' ' )
         show_top_level( formview, gui_context.item_view )
+        
+class DuplicateSelection( Action ):
+    """Duplicate the selected rows in a table"""
+    
+    shortcut = QtGui.QKeySequence.Copy
+    icon = Icon('tango/16x16/actions/edit-copy.png')
+    tooltip = _('Duplicate')
+
+class DeleteSelection( Action ):
+    """Delete the selected rows in a table"""
+    
+    shortcut = QtGui.QKeySequence.Delete
+    icon = Icon('tango/16x16/places/user-trash.png')
+    tooltip = _('Delete')
+
+class ToFirstRow( Action ):
+    """Move to the first row in a table"""
+    
+    shortcut = QtGui.QKeySequence.MoveToStartOfDocument
+    icon = Icon('tango/16x16/actions/go-first.png')
+    tooltip = _('First')
+
+class ToPreviousRow( Action ):
+    """Move to the previous row in a table"""
+    
+    shortcut = QtGui.QKeySequence.MoveToPreviousPage
+    icon = Icon('tango/16x16/actions/go-previous.png')
+    tooltip = _('Previous')
+
+class ToNextRow( Action ):
+    """Move to the next row in a table"""
+    
+    shortcut = QtGui.QKeySequence.MoveToNextPage
+    icon = Icon('tango/16x16/actions/go-next.png')
+    tooltip = _('Next')
+
+class ToLastRow( Action ):
+    """Move to the last row in a table"""
+    
+    shortcut = QtGui.QKeySequence.MoveToEndOfDocument
+    icon = Icon('tango/16x16/actions/go-last.png')
+    tooltip = _('Last')
+
+class ExportSpreadsheet( Action ):
+    """Export all rows in a table to a spreadsheet"""
+    
+    icon = Icon('tango/16x16/mimetypes/x-office-spreadsheet.png')
+    tooltip = _('Export to MS Excel')
+    
+class ExportDocument( Action ):
+    """Export all rows in a table to a word document"""
+    
+    icon = Icon('tango/16x16/mimetypes/x-office-document.png')
+    tooltip = _('Export to MS Word')
+    
+class SendEmail( Action ):
+    """Send all rows in a table by mail"""
+    
+    icon = Icon('tango/16x16/actions/mail-message-new.png')
+    tooltip = _('Send by e-mail')
+    
+class PrintPreview( Action ):
+    """Print all rows in a table"""
+    
+    icon = Icon('tango/16x16/actions/document-print-preview.png')
+    tooltip = _('Print Preview')

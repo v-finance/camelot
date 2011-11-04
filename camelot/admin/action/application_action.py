@@ -22,8 +22,11 @@
 #
 #  ============================================================================
 
+from PyQt4 import QtGui
+
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.utils import ugettext, ugettext_lazy as _
+from camelot.view.art import Icon
 
 """ModelContex, GuiContext and Actions that run in the context of an 
 application.
@@ -133,6 +136,13 @@ class OpenNewView( EntityAction ):
         from camelot.view.workspace import show_top_level
         form = self._entity_admin.create_new_view(parent=None)
         show_top_level( form, gui_context.workspace )
+        
+class ShowHelp( Action ):
+    """Display the help window"""
+    
+    shortcut = QtGui.QKeySequence.HelpContents
+    icon = Icon('tango/16x16/apps/help-browser.png')
+    tooltip = _('Help')
         
 def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction
