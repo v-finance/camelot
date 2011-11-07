@@ -3,11 +3,12 @@ import os
 from PyQt4 import QtGui
 
 from camelot.admin.action import Action, MockModelContext
+from camelot.admin.action import list_action
 from camelot.test import ModelThreadTestCase
 
 from test_view import static_images_path
 
-class ActionWidgetsCase(ModelThreadTestCase):
+class ActionWidgetsCase( ModelThreadTestCase ):
     """Test widgets related to actions.
     """
 
@@ -51,7 +52,7 @@ class ActionWidgetsCase(ModelThreadTestCase):
                                    self.parent )
         self.grab_widget_states( widget, 'application' )
         
-class ActionStepsCase(ModelThreadTestCase):
+class ActionStepsCase( ModelThreadTestCase ):
     """Test the various steps that can be executed during an
     action.
     """
@@ -141,3 +142,32 @@ class ActionStepsCase(ModelThreadTestCase):
         dialog = steps[0].render()
         dialog.show()
         self.grab_widget( dialog )
+
+class ListActionsCase( ModelThreadTestCase ):
+    """Test the standard list actions.
+    """
+
+    images_path = static_images_path
+    
+    def test_change_row_actions( self ):
+        from camelot.test.action import MockListActionGuiContext
+        
+        gui_context = MockListActionGuiContext()
+        get_state = lambda action:action.get_state( gui_context.create_model_context() )
+        to_first = list_action.ToFirstRow()
+        to_previous = list_action.ToPreviousRow()
+        to_next = list_action.ToNextRow()
+        to_last = list_action.ToLastRow()
+        
+        to_last.gui_run( gui_context )
+        self.assertFalse( get_state( to_last ).enabled )
+        self.assertFalse( get_state( to_next ).enabled )
+        to_previous.gui_run( gui_context )
+        self.assertTrue( get_state( to_last ).enabled )
+        self.assertTrue( get_state( to_next ).enabled )
+        to_first.gui_run( gui_context )
+        self.assertFalse( get_state( to_first ).enabled )
+        self.assertFalse( get_state( to_previous ).enabled )
+        to_next.gui_run( gui_context )
+        self.assertTrue( get_state( to_first ).enabled )
+        self.assertTrue( get_state( to_previous ).enabled )

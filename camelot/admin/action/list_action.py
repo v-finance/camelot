@@ -122,7 +122,6 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
     model_context = ListActionModelContext
     
     def __init__( self ):
-
         super( ListActionGuiContext, self ).__init__()
         self.item_view = None
 
@@ -230,19 +229,33 @@ class DeleteSelection( Action ):
     icon = Icon('tango/16x16/places/user-trash.png')
     tooltip = _('Delete')
 
-class ToFirstRow( Action ):
-    """Move to the first row in a table"""
-    
-    shortcut = QtGui.QKeySequence.MoveToStartOfDocument
-    icon = Icon('tango/16x16/actions/go-first.png')
-    tooltip = _('First')
-
 class ToPreviousRow( Action ):
     """Move to the previous row in a table"""
     
     shortcut = QtGui.QKeySequence.MoveToPreviousPage
     icon = Icon('tango/16x16/actions/go-previous.png')
     tooltip = _('Previous')
+
+    def gui_run( self, gui_context ):
+        item_view = gui_context.item_view
+        current_row = item_view.selectedIndexes()[0].row()
+        previous_row = ( current_row - 1 ) % item_view.model().rowCount()
+        item_view.selectRow( previous_row )
+
+    def get_state( self, model_context ):
+        state = super( ToPreviousRow, self ).get_state( model_context )
+        state.enabled = ( model_context.current_row > 0 )
+        return state
+    
+class ToFirstRow( ToPreviousRow ):
+    """Move to the first row in a table"""
+    
+    shortcut = QtGui.QKeySequence.MoveToStartOfDocument
+    icon = Icon('tango/16x16/actions/go-first.png')
+    tooltip = _('First')
+    
+    def gui_run( self, gui_context ):
+        gui_context.item_view.selectRow( 0 )
 
 class ToNextRow( Action ):
     """Move to the next row in a table"""
@@ -251,12 +264,28 @@ class ToNextRow( Action ):
     icon = Icon('tango/16x16/actions/go-next.png')
     tooltip = _('Next')
 
-class ToLastRow( Action ):
+    def gui_run( self, gui_context ):
+        item_view = gui_context.item_view
+        current_row = item_view.selectedIndexes()[0].row()
+        next_row = ( current_row + 1 ) % item_view.model().rowCount()
+        item_view.selectRow( next_row )
+
+    def get_state( self, model_context ):
+        state = super( ToNextRow, self ).get_state( model_context )
+        max_row = model_context.collection_count - 1
+        state.enabled = ( model_context.current_row < max_row )
+        return state
+    
+class ToLastRow( ToNextRow ):
     """Move to the last row in a table"""
     
     shortcut = QtGui.QKeySequence.MoveToEndOfDocument
     icon = Icon('tango/16x16/actions/go-last.png')
     tooltip = _('Last')
+
+    def gui_run( self, gui_context ):
+        item_view = gui_context.item_view
+        item_view.selectRow( item_view.model().rowCount() - 1 )
 
 class ExportSpreadsheet( Action ):
     """Export all rows in a table to a spreadsheet"""

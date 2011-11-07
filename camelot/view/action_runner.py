@@ -50,6 +50,7 @@ class ActionRunner( QtCore.QEventLoop ):
         :param gui_context: the GUI context of the generator
         """
         super( ActionRunner, self ).__init__()
+        self._return_code = None
         self._generator_function = generator_function
         self._generator = None
         self._gui_context = gui_context
@@ -57,6 +58,21 @@ class ActionRunner( QtCore.QEventLoop ):
         self.non_blocking_action_step_signal.connect( self.non_blocking_action_step )
         post( self._initiate_generator, self.generator, self.exception )
     
+    def exit( self, return_code = 0 ):
+        """Reimplementation of exit to store the return code"""
+        self._return_code = return_code
+        return super( ActionRunner, self ).exit( return_code )
+    
+    def exec_( self, flags = QtCore.QEventLoop.AllEvents ):
+        """Reimplementation of exec_ to prevent the event loop being started
+        when exit has been called prior to calling exec_.
+        
+        This can be the case when running in single threaded mode.
+        """
+        if self._return_code == None:
+            return super( ActionRunner, self ).exec_( flags )
+        return self._return_code
+        
     def _initiate_generator( self ):
         """Create the model context and start the generator"""
         return self._generator_function( self._model_context )
@@ -70,18 +86,19 @@ class ActionRunner( QtCore.QEventLoop ):
         :param generator_method: the method of the generator to be called
         :param *args: the arguments to use when calling the generator method.
         """
-        result = None
         try:
             result = generator_method( *args )
-        except CancelRequest:
-            pass
-        while True:
-            if isinstance( result, (ActionStep,)):
-                if result.blocking:
-                    return result
-                else:
-                    self.non_blocking_action_step_signal.emit( result )
-            result = self._generator.next()
+            while True:
+                if isinstance( result, (ActionStep,)):
+                    if result.blocking:
+                        return result
+                    else:
+                        self.non_blocking_action_step_signal.emit( result )
+                result = self._generator.next()
+        except CancelRequest, e:
+            return e
+        except StopIteration, e:
+            return e
 
     @QtCore.pyqtSlot( object )
     def non_blocking_action_step( self, action_step ):
@@ -154,11 +171,13 @@ class ActionRunner( QtCore.QEventLoop ):
                       self.exception,
                       args = ( self._generator.throw, GuiException(), ) )
         elif isinstance( yielded, (StopIteration,) ):
-             #
-             # Process the events before exiting, as there might be exceptions
-             # left in the signal slot queue
-             #
+            #
+            # Process the events before exiting, as there might be exceptions
+            # left in the signal slot queue
+            #
             self.processEvents()
             self.exit()
         else:
+            LOGGER.error( 'next call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
+            LOGGER.error( unicode( yielded ) )
             raise Exception( 'this should not happen' )
