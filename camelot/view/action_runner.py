@@ -170,7 +170,7 @@ class ActionRunner( QtCore.QEventLoop ):
                       self.next,
                       self.exception,
                       args = ( self._generator.throw, GuiException(), ) )
-        elif isinstance( yielded, (StopIteration,) ):
+        elif isinstance( yielded, (StopIteration, CancelRequest) ):
             #
             # Process the events before exiting, as there might be exceptions
             # left in the signal slot queue
