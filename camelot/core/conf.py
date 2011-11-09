@@ -29,6 +29,16 @@ class LazyProxy(list):
     is queried again.
     """
             
+    def get( self, name, default ):
+        """Get an attribute of the proxy, and when not found return default
+        as value.  This function behaves the same as the get function of a
+        dictionary.
+        """
+        try:
+            return getattr( self, name )
+        except AttributeError:
+            return default
+        
     def __getattr__(self, name):
         if not len(self):
             self.append_settings_module()
