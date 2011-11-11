@@ -25,6 +25,7 @@
 from PyQt4 import QtCore, QtGui
 
 from camelot.admin.action import ActionStep
+from camelot.core.templates import environment
 
 class PrintPreview( ActionStep ):
     """
@@ -104,21 +105,22 @@ class PrintHtml( PrintPreview ):
 
 class PrintJinjaTemplate( PrintHtml ):
     """Render a jinja template into a print preview dialog.
-    
-    :param environment: a :class:`jinja2.Environment` object to be used
-        to load templates from.
-        
+            
     :param template: the name of the template as it can be fetched from
         the Jinja environment.
         
     :param context: a dictionary with objects to be used when rendering
         the template
+        
+    :param environment: a :class:`jinja2.Environment` object to be used
+        to load templates from.  This defaults to the `environment` object
+        available in :mod:`camelot.core.templates`
     """
         
     def __init__( self,
-                  environment,
                   template, 
-                  context={}, ):
+                  context={},
+                  environment = environment ):
         template = environment.get_template( template )
         html = template.render( context )
         super( PrintJinjaTemplate, self).__init__( html )

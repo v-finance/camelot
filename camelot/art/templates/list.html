@@ -1,0 +1,16 @@
+<b>{{title}}</b>
+
+<table width="100%">
+  <tr>
+    {% for col in columns %}
+      <th>{{col}}</th>
+    {% endfor %}
+  </tr>
+{% for row in table %}
+  <tr>
+  {% for col in row %}
+    <td>{{col}}</td>
+  {% endfor %}
+  </tr>
+{% endfor %}
+</table>

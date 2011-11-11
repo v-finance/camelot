@@ -22,22 +22,29 @@
 #
 #  ============================================================================
 
-from application_action import ( ApplicationActionGuiContext,
-                                 OpenNewView, OpenTableView)
-from list_action import ListActionGuiContext, CallMethod, OpenFormView
+"""
+A default Jinja2 environment for the rendering of html in print previews
+and others.
 
-from base import Action, ActionStep, GuiContext, Mode, State
+The `loader` loads its templates from the camelot/art/templates
+folder.  As it is a :class:`jinja2.loaders.ChoiceLoader` object, other
+loaders can be appended or prepended to it :attr:`loaders` attribute, to
+customize the look of the print previews or reuse the existing style
 
-__all__ = [
-    Action.__name__,
-    ActionStep.__name__,
-    ApplicationActionGuiContext.__name__,
-    CallMethod.__name__,
-    ListActionGuiContext.__init__,
-    OpenFormView.__init__,
-    OpenNewView.__name__,
-    OpenTableView.__name__,
-    GuiContext.__name__,
-    Mode.__name__,
-    State.__name__,
-    ]
+The `environment` is a :class:`jinja2.environment.Environment` which uses
+the `loader` and that can be used with
+the :class:`camelot.view.action_steps.print_preview.PrintJinjaTemplate` action
+step.
+"""
+
+from jinja2.environment import Environment
+from jinja2.loaders import ChoiceLoader, PackageLoader
+
+loader = ChoiceLoader( [ PackageLoader( 'camelot.art' ) ] )
+
+class DefaultEnvironment( Environment ):
+    
+    def __repr__( self ):
+        return '<camelot.core.templates.environment>'
+    
+environment = DefaultEnvironment( loader = loader )

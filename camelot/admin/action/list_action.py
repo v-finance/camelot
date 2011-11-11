@@ -310,3 +310,18 @@ class PrintPreview( Action ):
     
     icon = Icon('tango/16x16/actions/document-print-preview.png')
     tooltip = _('Print Preview')
+
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        columns = model_context.admin.get_columns()
+        
+        table = []
+        for obj in model_context.get_collection():
+            table.append( [getattr( obj, col[0] ) for col in columns] )
+        context = {
+          'title': model_context.admin.get_verbose_name_plural(),
+          'table': table,
+          'columns': [field_attributes['name'] for _field, field_attributes in columns],
+        }
+        yield action_steps.PrintJinjaTemplate( template = 'list.html',
+                                               context = context )

@@ -28,6 +28,28 @@ from PyQt4 import QtGui
 
 from camelot.admin.action.list_action import ListActionGuiContext
 
+class MockModelContext( object ):
+    """Model Context to be used in unit tests
+    """
+    
+    def __init__( self ):
+        self.obj = None
+        self.admin = None
+        
+    def get_object( self ):
+        return self.obj
+        
+    def get_selection( self ):
+        return [self.obj]
+
+    def get_collection( self ):
+        return [self.obj]
+
+    @property
+    def session( self ):
+        from sqlalchemy.orm.session import object_session
+        return object_session( self.obj )
+
 class MockListActionGuiContext( ListActionGuiContext ):
     
     def __init__( self ):
