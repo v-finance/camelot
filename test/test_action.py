@@ -2,9 +2,11 @@ import os
 
 from PyQt4 import QtGui
 
-from camelot.admin.action import Action, MockModelContext
+from camelot.admin.action import Action
 from camelot.admin.action import list_action
+from camelot.core.utils import ugettext_lazy as _
 from camelot.test import ModelThreadTestCase
+from camelot.test.action import MockModelContext
 
 from test_view import static_images_path
 
@@ -131,6 +133,8 @@ class ActionStepsCase( ModelThreadTestCase ):
         # begin html print
         class MovieSummary( Action ):
             
+            verbose_name = _('Summary')
+            
             def model_run(self, model_context):
                 from camelot.view.action_steps import PrintHtml
                 movie = model_context.get_object()
@@ -148,7 +152,16 @@ class ListActionsCase( ModelThreadTestCase ):
     """
 
     images_path = static_images_path
-    
+
+    def setUp( self ):
+        from camelot_example.model import Movie
+        from camelot.admin.application_admin import ApplicationAdmin
+        ModelThreadTestCase.setUp(self)
+        self.app_admin = ApplicationAdmin()
+        self.context = MockModelContext()
+        self.context.obj = Movie.query.first()
+        self.context.admin = self.app_admin.get_related_admin( Movie )
+        
     def test_change_row_actions( self ):
         from camelot.test.action import MockListActionGuiContext
         
@@ -171,3 +184,10 @@ class ListActionsCase( ModelThreadTestCase ):
         to_next.gui_run( gui_context )
         self.assertTrue( get_state( to_first ).enabled )
         self.assertTrue( get_state( to_previous ).enabled )
+        
+    def test_print_preview( self ):
+        print_preview = list_action.PrintPreview()
+        for step in print_preview.model_run( self.context ):
+            dialog = step.render()
+            dialog.show()
+            self.grab_widget( dialog )
