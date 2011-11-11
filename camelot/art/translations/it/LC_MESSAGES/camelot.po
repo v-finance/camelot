@@ -1,0 +1,1290 @@
+# Italian translations for Camelot.
+# Copyright (C) 2011 ORGANIZATION
+# This file is distributed under the same license as the Camelot project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Camelot trunk\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2011-10-28 12:24+0200\n"
+"PO-Revision-Date: 2011-11-10 17:25+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: it <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+"X-Language: it_IT\n"
+"X-Source-Language: C\n"
+
+#: camelot/admin/application_admin.py:155
+msgid "Relations"
+msgstr "Relazioni"
+
+#: camelot/admin/application_admin.py:156
+msgid "Configuration"
+msgstr "Configurazione"
+
+#: camelot/admin/entity_admin.py:352
+msgid "Please complete the form first"
+msgstr "Prima completare il form"
+
+#: camelot/admin/entity_admin.py:459
+#: camelot/view/controls/editors/abstractmanytooneeditor.py:49
+#, python-format
+msgid "Select %s"
+msgstr "Seleziona %s"
+
+#: camelot/admin/object_admin.py:309
+msgid "Are you sure you want to delete this"
+msgstr "Sei sicuro di voler cancellare questa voce"
+
+#: camelot/admin/object_admin.py:755 camelot/view/action.py:341
+#: camelot/view/action.py:345
+#: camelot/view/controls/editors/manytomanyeditor.py:69
+#: camelot/view/controls/editors/one2manyeditor.py:115
+#: camelot/view/controls/editors/one2manyeditor.py:194
+msgid "New"
+msgstr "Nuovo"
+
+#: camelot/admin/action/application_action.py:96 camelot/view/action.py:449
+msgid "Open in New Tab"
+msgstr "Apri in un nuovo pannello"
+
+#: camelot/admin/action/application_action.py:115
+#, python-format
+msgid "New %s"
+msgstr "Nuovo %s"
+
+#: camelot/admin/action/application_action.py:116
+#, python-format
+msgid "Create a new %s"
+msgstr "Crea un nuovo %s"
+
+#: camelot/admin/validator/object_validator.py:131
+#, python-format
+msgid "%s is a required field"
+msgstr "%s è un campo obbligatorio"
+
+#: camelot/admin/validator/object_validator.py:184
+msgid "Invalid form"
+msgstr "Form non valido"
+
+#: camelot/bin/meta.py:243
+msgid "New project"
+msgstr "Nuovo progetto"
+
+#: camelot/core/backup.py:133 camelot/core/backup.py:237
+msgid "Analyzing database structure"
+msgstr "Analisi struttura del database"
+
+#: camelot/core/backup.py:139
+msgid "Preparing backup file"
+msgstr "Preparo file di backup"
+
+#: camelot/core/backup.py:183
+#, python-format
+msgid "Copy data of table %s"
+msgstr "Copia dati della tabella %s"
+
+#: camelot/core/backup.py:185
+msgid "Store backup at requested location"
+msgstr "Salva il backup nella directory specificata"
+
+#: camelot/core/backup.py:195
+msgid "Backup completed"
+msgstr "Backup completato"
+
+#: camelot/core/backup.py:216
+msgid "Open backup file"
+msgstr "Apri file di backup"
+
+#: camelot/core/backup.py:228
+msgid "Prepare database for restore"
+msgstr "Preparo il database per il ripristino"
+
+#: camelot/core/backup.py:232
+msgid "Analyzing backup structure"
+msgstr "Analisi struttura backup"
+
+#: camelot/core/backup.py:246
+#, python-format
+msgid "Delete data from table %s"
+msgstr "Eliminazione dati dalla tabella %s"
+
+#: camelot/core/backup.py:251
+#, python-format
+msgid "Copy data from table %s"
+msgstr "Copia dati dalla tabella %s"
+
+#: camelot/core/backup.py:254
+msgid "Update schema after restore"
+msgstr "Aggiorno schema dopo il ripristino"
+
+#: camelot/core/backup.py:260
+msgid "Load new data"
+msgstr "Carica nuovi dati"
+
+#: camelot/core/backup.py:265
+msgid "Restore completed"
+msgstr "Rispristino completato"
+
+#: camelot/core/exception.py:50
+msgid "Could not proceed"
+msgstr "Impossibile procedere"
+
+#: camelot/model/authentication.py:114
+msgid "Country"
+msgstr "Paese"
+
+#: camelot/model/authentication.py:115
+msgid "Countries"
+msgstr "Paesi"
+
+#: camelot/model/authentication.py:137 camelot/model/authentication.py:296
+msgid "City"
+msgstr "Città"
+
+#: camelot/model/authentication.py:138
+msgid "Cities"
+msgstr "Città"
+
+#: camelot/model/authentication.py:152
+msgid "Relationship"
+msgstr "Relazione"
+
+#: camelot/model/authentication.py:153
+msgid "Relationships"
+msgstr "Relazioni"
+
+#: camelot/model/authentication.py:175
+msgid "Employed by"
+msgstr ""
+
+#: camelot/model/authentication.py:178
+msgid "Employment relation"
+msgstr ""
+
+#: camelot/model/authentication.py:179
+msgid "Employment relations"
+msgstr ""
+
+#: camelot/model/authentication.py:184
+msgid "Employee"
+msgstr ""
+
+#: camelot/model/authentication.py:187 camelot/model/authentication.py:193
+#: camelot/model/authentication.py:234 camelot/model/authentication.py:250
+#: camelot/model/authentication.py:256
+msgid "Name"
+msgstr "Nome"
+
+#: camelot/model/authentication.py:190
+msgid "Employer"
+msgstr ""
+
+#: camelot/model/authentication.py:204
+msgid "Direction structure"
+msgstr ""
+
+#: camelot/model/authentication.py:205
+msgid "Direction structures"
+msgstr ""
+
+#: camelot/model/authentication.py:208 camelot/model/authentication.py:270
+#: camelot/model/authentication.py:555
+msgid "Organization"
+msgstr ""
+
+#: camelot/model/authentication.py:209 camelot/model/authentication.py:212
+msgid "Director"
+msgstr ""
+
+#: camelot/model/authentication.py:217
+msgid "Directed organization"
+msgstr ""
+
+#: camelot/model/authentication.py:231
+msgid "Represented by"
+msgstr ""
+
+#: camelot/model/authentication.py:243
+msgid "Supplier - Customer"
+msgstr ""
+
+#: camelot/model/authentication.py:247
+msgid "Customer"
+msgstr ""
+
+#: camelot/model/authentication.py:253
+msgid "Supplier"
+msgstr ""
+
+#: camelot/model/authentication.py:266
+msgid "Shareholder structure"
+msgstr ""
+
+#: camelot/model/authentication.py:267
+msgid "Shareholder structures"
+msgstr ""
+
+#: camelot/model/authentication.py:271 camelot/model/authentication.py:274
+msgid "Shareholder"
+msgstr ""
+
+#: camelot/model/authentication.py:280 camelot/model/authentication.py:281
+msgid "Shares"
+msgstr ""
+
+#: camelot/model/authentication.py:288 camelot/model/authentication.py:691
+#: camelot/model/authentication.py:763
+msgid "Address"
+msgstr ""
+
+#: camelot/model/authentication.py:291
+msgid "Street"
+msgstr ""
+
+#: camelot/model/authentication.py:294
+msgid "Street Extra"
+msgstr ""
+
+#: camelot/model/authentication.py:315 camelot/model/authentication.py:802
+msgid "Contact mechanism"
+msgstr ""
+
+#: camelot/model/authentication.py:316
+msgid "Contact mechanisms"
+msgstr ""
+
+#: camelot/model/authentication.py:325
+msgid "Mechanism"
+msgstr ""
+
+#: camelot/model/authentication.py:462
+msgid "Party"
+msgstr ""
+
+#: camelot/model/authentication.py:463
+msgid "Parties"
+msgstr ""
+
+#: camelot/model/authentication.py:478
+msgid "male"
+msgstr "maschio"
+
+#: camelot/model/authentication.py:478
+msgid "female"
+msgstr "femmina"
+
+#: camelot/model/authentication.py:483
+msgid "Email"
+msgstr ""
+
+#: camelot/model/authentication.py:489
+msgid "Phone"
+msgstr "Telefono"
+
+#: camelot/model/authentication.py:495
+msgid "Fax"
+msgstr ""
+
+#: camelot/model/authentication.py:556
+msgid "Organizations"
+msgstr "Organizzazioni"
+
+#: camelot/model/authentication.py:558 camelot/model/authentication.py:641
+msgid "Basic"
+msgstr ""
+
+#: camelot/model/authentication.py:559
+msgid "Employment"
+msgstr ""
+
+#: camelot/model/authentication.py:560
+msgid "Customers"
+msgstr ""
+
+#: camelot/model/authentication.py:561
+msgid "Suppliers"
+msgstr ""
+
+#: camelot/model/authentication.py:562
+msgid "Corporate"
+msgstr ""
+
+#: camelot/model/authentication.py:563
+msgid "Branding"
+msgstr ""
+
+#: camelot/model/authentication.py:564
+msgid "Category and Status"
+msgstr ""
+
+#: camelot/model/authentication.py:575 camelot/model/authentication.py:596
+msgid "Authentication mechanism"
+msgstr "Meccanismo di autenticazione"
+
+#: camelot/model/authentication.py:626
+msgid "A person with the same name already exists"
+msgstr ""
+
+#: camelot/model/authentication.py:638
+msgid "Person"
+msgstr ""
+
+#: camelot/model/authentication.py:639
+msgid "Persons"
+msgstr ""
+
+#: camelot/model/authentication.py:651
+msgid "Official"
+msgstr ""
+
+#: camelot/model/authentication.py:653
+msgid "Work"
+msgstr ""
+
+#: camelot/model/authentication.py:654 camelot/model/authentication.py:896
+#: camelot/model/task.py:247
+msgid "Category"
+msgstr ""
+
+#: camelot/model/authentication.py:692 camelot/model/authentication.py:764
+msgid "Addresses"
+msgstr ""
+
+#: camelot/model/authentication.py:780
+msgid "Address role type"
+msgstr ""
+
+#: camelot/model/authentication.py:897
+msgid "Categories"
+msgstr ""
+
+#: camelot/model/batch_job.py:70
+msgid "Batch job type"
+msgstr ""
+
+#: camelot/model/batch_job.py:132
+msgid "Batch job"
+msgstr ""
+
+#: camelot/model/i18n.py:50
+msgid "PO Export"
+msgstr "Esporta file PO"
+
+#: camelot/model/i18n.py:79
+msgid "Translations"
+msgstr "Traduzioni"
+
+#: camelot/model/memento.py:58 camelot/model/memento.py:59
+msgid "History"
+msgstr ""
+
+#: camelot/model/memento.py:81
+msgid "Update"
+msgstr "Aggiorna"
+
+#: camelot/model/memento.py:82
+msgid "Updates"
+msgstr "Aggiornamenti"
+
+#: camelot/model/memento.py:94 camelot/view/action.py:354
+#: camelot/view/action.py:358
+#: camelot/view/controls/editors/one2manyeditor.py:109
+msgid "Delete"
+msgstr "Elimina"
+
+#: camelot/model/memento.py:95
+msgid "Deletes"
+msgstr "Eliminazioni"
+
+#: camelot/model/memento.py:106
+msgid "Create"
+msgstr "Crea"
+
+#: camelot/model/memento.py:107
+msgid "Creates"
+msgstr "Creati"
+
+#: camelot/model/task.py:70
+msgid "Task Type"
+msgstr ""
+
+#: camelot/model/task.py:82
+msgid "Task Role Type"
+msgstr ""
+
+#: camelot/model/task.py:95
+msgid "Role within task"
+msgstr ""
+
+#: camelot/model/task.py:97 camelot/model/task.py:253
+msgid "Type"
+msgstr ""
+
+#: camelot/model/task.py:109
+msgid "Note"
+msgstr ""
+
+#: camelot/model/task.py:122
+msgid "Document Type"
+msgstr ""
+
+#: camelot/model/task.py:136
+msgid "Document"
+msgstr ""
+
+#: camelot/model/task.py:231
+msgid ""
+"All tasks that are related to this status will be effected by this removal.\n"
+"\n"
+"Are you sure you want to remove this status?"
+msgstr ""
+
+#: camelot/model/task.py:238 camelot/model/task.py:245
+msgid "Task"
+msgstr ""
+
+#: camelot/model/task.py:239
+msgid "Tasks"
+msgstr ""
+
+#: camelot/model/task.py:248
+msgid "Roles"
+msgstr ""
+
+#: camelot/model/task.py:249
+msgid "Documents"
+msgstr ""
+
+#: camelot/model/task.py:250
+msgid "Status"
+msgstr ""
+
+#: camelot/model/task.py:287
+msgid "TaskStatusTypeFeature"
+msgstr ""
+
+#: camelot/model/task.py:290
+msgid "Feature"
+msgstr ""
+
+#: camelot/view/action.py:90 camelot/view/controls/editors/one2manyeditor.py:120
+msgid "Copy"
+msgstr "Copia"
+
+#: camelot/view/action.py:95
+msgid "Duplicate"
+msgstr "Duplica"
+
+#: camelot/view/action.py:103
+msgid "Paste"
+msgstr "Incolla"
+
+#: camelot/view/action.py:108
+msgid "Paste content from clipboard"
+msgstr "Incolla contenuto dagli appunti"
+
+#: camelot/view/action.py:116 camelot/view/action.py:121
+msgid "First"
+msgstr "Primo"
+
+#: camelot/view/action.py:129 camelot/view/action.py:134
+msgid "Last"
+msgstr "Ultimo"
+
+#: camelot/view/action.py:142 camelot/view/action.py:147
+msgid "Next"
+msgstr "Successivo"
+
+#: camelot/view/action.py:155 camelot/view/action.py:160
+msgid "Previous"
+msgstr "Precedente"
+
+#: camelot/view/action.py:168
+msgid "To Word Processor"
+msgstr ""
+
+#: camelot/view/action.py:172
+msgid "Open using MS Word or Open Office"
+msgstr "Apri con MS Word o OpenOffice/LibreOffice"
+
+#: camelot/view/action.py:181
+msgid "&Backup"
+msgstr ""
+
+#: camelot/view/action.py:184
+msgid "Backup the database"
+msgstr "Crea backup del database"
+
+#: camelot/view/action.py:193
+msgid "&Restore"
+msgstr "&Ripristina"
+
+#: camelot/view/action.py:196
+msgid "Restore the database from a backup"
+msgstr "Ripristina il database da file di backup"
+
+#: camelot/view/action.py:205 camelot/view/action.py:208
+msgid "Page Setup..."
+msgstr "Impostazioni pagina..."
+
+#: camelot/view/action.py:217 camelot/view/action.py:221
+msgid "Print..."
+msgstr "Stampa..."
+
+#: camelot/view/action.py:230 camelot/view/action.py:233
+#: camelot/view/controls/editors/charteditor.py:86
+msgid "Print Preview"
+msgstr "Anteprima di stampa"
+
+#: camelot/view/action.py:242
+msgid "E&xit"
+msgstr "E&sci"
+
+#: camelot/view/action.py:246
+msgid "Exit the application"
+msgstr "Esci dall'applicazione"
+
+#: camelot/view/action.py:255
+msgid "&Copy"
+msgstr "&Copia"
+
+#: camelot/view/action.py:259
+msgid "Duplicate the selected rows"
+msgstr "Duplica le righe selezionate"
+
+#: camelot/view/action.py:268
+msgid "Select &All"
+msgstr "Selezion&a tutto"
+
+#: camelot/view/action.py:271
+msgid "Select all rows in the table"
+msgstr "Seleziona tutte le righe nella tabella"
+
+#: camelot/view/action.py:280
+msgid "&About"
+msgstr "Inform&azioni"
+
+#: camelot/view/action.py:283
+msgid "Show the application's About box"
+msgstr "Mostra la finestra Informazioni dell'applicazione"
+
+#: camelot/view/action.py:292
+msgid "&What's new"
+msgstr "&Cosa c'è di nuo&vo"
+
+#: camelot/view/action.py:295
+msgid "Show the What's New box"
+msgstr "Mostra la finestra Cosa c'è di nuovo dell'applicazione"
+
+#: camelot/view/action.py:304
+msgid "Affiliated website"
+msgstr "Sito affiliato"
+
+#: camelot/view/action.py:307
+msgid "Go to the affiliated website"
+msgstr "Vai al sito affiliato"
+
+#: camelot/view/action.py:316
+msgid "Remote support"
+msgstr "Supporto remoto"
+
+#: camelot/view/action.py:319
+msgid "Let the support agent take over your desktop"
+msgstr "Lascia che il tecnico prenda il controllo del tuo desktop"
+
+#: camelot/view/action.py:328
+msgid "Help"
+msgstr ""
+
+#: camelot/view/action.py:332
+msgid "Help content"
+msgstr ""
+
+#: camelot/view/action.py:367 camelot/view/wizard/update_value.py:47
+#: camelot/view/wizard/update_value.py:137
+msgid "Replace field contents"
+msgstr "Modifica contenuti campo"
+
+#: camelot/view/action.py:369
+msgid "Replace the content of a field for all rows in a selection"
+msgstr "Modifica i contenuti di un campo per tutte le righe selezionate"
+
+#: camelot/view/action.py:378
+msgid "Merge document"
+msgstr "Unisci documenti"
+
+#: camelot/view/action.py:380
+msgid "Merge a template document with all rows in a selection"
+msgstr "Unisci template con tutte le righe selezionate"
+
+#: camelot/view/action.py:389 camelot/view/action.py:392
+msgid "Export to MS Excel"
+msgstr "Esporta in MS Excel"
+
+#: camelot/view/action.py:401 camelot/view/action.py:404
+msgid "Export to MS Word"
+msgstr "Esporta in MS Word"
+
+#: camelot/view/action.py:413 camelot/view/action.py:416
+msgid "Send by e-mail"
+msgstr "Spedisci per E-mail"
+
+#: camelot/view/action.py:425 camelot/view/action.py:428
+msgid "Import from file"
+msgstr "Importa da file"
+
+#: camelot/view/action.py:437
+msgid "Refresh"
+msgstr "Aggiorna"
+
+#: camelot/view/database_selection.py:56
+msgid "new/edit profile"
+msgstr "nuovo/modifica profilo"
+
+#: camelot/view/database_selection.py:72
+msgid "Profile Selection"
+msgstr ""
+
+#: camelot/view/database_selection.py:73
+msgid "Select a stored profile:"
+msgstr ""
+
+#: camelot/view/database_selection.py:74 camelot/view/database_selection.py:285
+#: camelot/view/action_steps/change_object.py:75
+#: camelot/view/action_steps/change_object.py:154
+msgid "OK"
+msgstr ""
+
+#: camelot/view/database_selection.py:75
+msgid "Quit"
+msgstr "Esci"
+
+#: camelot/view/database_selection.py:135
+msgid "Profile Wizard"
+msgstr ""
+
+#: camelot/view/database_selection.py:137
+msgid "Create New/Edit Profile"
+msgstr ""
+
+#: camelot/view/database_selection.py:138
+msgid "Please enter the database settings"
+msgstr ""
+
+#: camelot/view/database_selection.py:163
+msgid "Profile Name:"
+msgstr ""
+
+#: camelot/view/database_selection.py:164
+msgid "Driver:"
+msgstr ""
+
+#: camelot/view/database_selection.py:165
+msgid "Server Host:"
+msgstr "Server:"
+
+#: camelot/view/database_selection.py:166 camelot/view/database_selection.py:173
+msgid "Port:"
+msgstr "Porta:"
+
+#: camelot/view/database_selection.py:167
+msgid "Database Name:"
+msgstr "Nome Database:"
+
+#: camelot/view/database_selection.py:168
+msgid "Username:"
+msgstr ""
+
+#: camelot/view/database_selection.py:169
+msgid "Password:"
+msgstr ""
+
+#: camelot/view/database_selection.py:170
+msgid "Media Location:"
+msgstr ""
+
+#: camelot/view/database_selection.py:171
+msgid "Language:"
+msgstr ""
+
+#: camelot/view/database_selection.py:172
+msgid "Proxy Host:"
+msgstr ""
+
+#: camelot/view/database_selection.py:174
+msgid "Proxy Username:"
+msgstr ""
+
+#: camelot/view/database_selection.py:175
+msgid "Proxy Password:"
+msgstr ""
+
+#: camelot/view/database_selection.py:178
+msgid "Media location path is not accessible."
+msgstr ""
+
+#: camelot/view/database_selection.py:181
+msgid "Media location path is not writable."
+msgstr ""
+
+#: camelot/view/database_selection.py:281
+msgid "More"
+msgstr "Di più"
+
+#: camelot/view/database_selection.py:284
+#: camelot/view/action_steps/change_object.py:74
+#: camelot/view/action_steps/change_object.py:153
+#: camelot/view/controls/progress_dialog.py:53
+msgid "Cancel"
+msgstr "Annulla"
+
+#: camelot/view/database_selection.py:297
+#: camelot/view/controls/editors/localfileeditor.py:66
+msgid "Browse"
+msgstr "Esplora"
+
+#: camelot/view/database_selection.py:305
+msgid "Load profiles"
+msgstr ""
+
+#: camelot/view/database_selection.py:306
+msgid "Save profiles"
+msgstr ""
+
+#: camelot/view/database_selection.py:361
+msgid "Verifying database settings"
+msgstr "Verifico impostazioni database"
+
+#: camelot/view/database_selection.py:380
+msgid "Could not connect to database, please check host and port"
+msgstr "Impossibile connettersi al database, controllare server e porta"
+
+#: camelot/view/database_selection.py:381
+msgid "Verify driver, host and port or contact your system administrator"
+msgstr ""
+"Verifica driver, server e porta oppure contatta l'amministratore di sistema"
+
+#: camelot/view/database_selection.py:430
+msgid "Internet available."
+msgstr "Internet disponibile."
+
+#: camelot/view/database_selection.py:433
+#, python-format
+msgid ""
+"Internet not available.\n"
+"%s."
+msgstr "Internet non disponibile. %s."
+
+#: camelot/view/database_selection.py:476
+msgid "Select media location"
+msgstr ""
+
+#: camelot/view/database_selection.py:496
+msgid "Save Profiles To a File"
+msgstr ""
+
+#: camelot/view/database_selection.py:497 camelot/view/database_selection.py:506
+msgid "Profiles file (*.ini)"
+msgstr ""
+
+#: camelot/view/database_selection.py:505
+msgid "Load Profiles From a File"
+msgstr ""
+
+#: camelot/view/filters.py:133 camelot/view/controls/filter_operator.py:44
+msgid "All"
+msgstr "Tutti"
+
+#: camelot/view/filters.py:273
+msgid "Valid at"
+msgstr ""
+
+#: camelot/view/main.py:175
+msgid "Initialize application"
+msgstr ""
+
+#: camelot/view/main.py:196
+msgid "Setup database"
+msgstr "Configuro database"
+
+#: camelot/view/main.py:206
+msgid "Load translations"
+msgstr "Carico traduzioni"
+
+#: camelot/view/main.py:209
+msgid "Create translator"
+msgstr "Crea traduttore"
+
+#: camelot/view/main.py:212
+msgid "Install translator"
+msgstr "Installa traduttore"
+
+#: camelot/view/main.py:220
+msgid "Create main window"
+msgstr ""
+
+#: camelot/view/mainwindow.py:109
+msgid "About"
+msgstr ""
+
+#: camelot/view/mainwindow.py:162 camelot/view/mainwindow.py:306
+#: camelot/view/mainwindow.py:314 camelot/view/mainwindow.py:320
+#: camelot/view/storage.py:41 camelot/view/storage.py:72
+#: camelot/view/controls/progress_dialog.py:57
+msgid "Please wait"
+msgstr "Attendere"
+
+#: camelot/view/mainwindow.py:225
+msgid "Help Browser"
+msgstr ""
+
+#: camelot/view/mainwindow.py:329
+msgid "&File"
+msgstr ""
+
+#: camelot/view/mainwindow.py:341
+msgid "Export To"
+msgstr "Esporta"
+
+#: camelot/view/mainwindow.py:349
+msgid "Import From"
+msgstr "Importa"
+
+#: camelot/view/mainwindow.py:355
+msgid "&Edit"
+msgstr "&Modifica"
+
+#: camelot/view/mainwindow.py:362
+msgid "View"
+msgstr ""
+
+#: camelot/view/mainwindow.py:364
+msgid "Go To"
+msgstr "Vai a"
+
+#: camelot/view/mainwindow.py:374
+msgid "&Help"
+msgstr ""
+
+#: camelot/view/mainwindow.py:418
+msgid "Toolbar"
+msgstr ""
+
+#: camelot/view/mainwindow.py:459
+msgid "Ready"
+msgstr "Pronto"
+
+#: camelot/view/storage.py:43
+msgid "Open file"
+msgstr "Apri file"
+
+#: camelot/view/storage.py:50
+msgid "Could not open file"
+msgstr "Impossibile aprire file"
+
+#: camelot/view/storage.py:51
+#, python-format
+msgid "%s does not exist"
+msgstr "%s non esiste"
+
+#: camelot/view/storage.py:74
+msgid "Save file"
+msgstr "Salva file"
+
+#: camelot/view/storage.py:101
+msgid "Save as"
+msgstr "Salva file come"
+
+#: camelot/view/storage.py:140
+msgid "The file will be stored."
+msgstr "Il file verrà salvato."
+
+#: camelot/view/storage.py:141
+msgid "Do you want to remove the original file?"
+msgstr "Vuoi eliminare il file originale?"
+
+#: camelot/view/utils.py:222
+msgid "="
+msgstr ""
+
+#: camelot/view/utils.py:223
+msgid "!="
+msgstr ""
+
+#: camelot/view/utils.py:224
+msgid "<"
+msgstr ""
+
+#: camelot/view/utils.py:225
+msgid "<="
+msgstr ""
+
+#: camelot/view/utils.py:226
+msgid ">"
+msgstr ""
+
+#: camelot/view/utils.py:227
+msgid ">="
+msgstr ""
+
+#: camelot/view/utils.py:228
+msgid "like"
+msgstr "come"
+
+#: camelot/view/utils.py:229
+msgid "between"
+msgstr "tra"
+
+#: camelot/view/workspace.py:269
+msgid "Double click to (un)maximize"
+msgstr "Doppio click per (ridurre)espandere la finestra"
+
+#: camelot/view/workspace.py:283
+msgid "Home"
+msgstr ""
+
+#: camelot/view/action_steps/change_object.py:49
+#: camelot/view/wizard/pages/form_page.py:107
+msgid "Please complete"
+msgstr "Completare prego"
+
+#: camelot/view/action_steps/change_object.py:50
+msgid "Complete the form and press the OK button"
+msgstr "Completare il form e premere OK"
+
+#: camelot/view/action_steps/change_object.py:128
+#: camelot/view/wizard/importwizard.py:270
+msgid "Data Preview"
+msgstr "Anteprima dati"
+
+#: camelot/view/action_steps/change_object.py:129
+#: camelot/view/wizard/importwizard.py:271
+msgid "Please review the data below."
+msgstr ""
+
+#: camelot/view/action_steps/change_object.py:184
+#: camelot/view/wizard/importwizard.py:316
+msgid ""
+"Please correct the data above before proceeding with the "
+"import.<br/>Incorrect cells have a pink background."
+msgstr ""
+
+#: camelot/view/controls/calculator.py:43
+msgid "Calculator"
+msgstr ""
+
+#: camelot/view/controls/exception.py:53
+msgid "Exception"
+msgstr ""
+
+#: camelot/view/controls/exception.py:54
+msgid "An unexpected event occurred"
+msgstr ""
+
+#: camelot/view/controls/field_label.py:62
+msgid "View attributes"
+msgstr ""
+
+#: camelot/view/controls/field_label.py:97
+msgid "Field Attributes"
+msgstr ""
+
+#: camelot/view/controls/filter_operator.py:44
+msgid "None"
+msgstr ""
+
+#: camelot/view/controls/modeltree.py:47
+msgid "Right click to open in New Tab"
+msgstr ""
+
+#: camelot/view/controls/search.py:61
+msgid "Expand or collapse search options"
+msgstr ""
+
+#: camelot/view/controls/search.py:67
+#: camelot/view/controls/editors/many2oneeditor.py:123
+msgid "Search..."
+msgstr "Cerca..."
+
+#: camelot/view/controls/tableview.py:294
+msgid "Please confirm"
+msgstr "Confermare prego"
+
+#: camelot/view/controls/tableview.py:305
+msgid "Removing"
+msgstr "Sto eliminando"
+
+#: camelot/view/controls/tableview.py:328
+#, python-format
+msgid "(%i rows)"
+msgstr "(%i righe)"
+
+#: camelot/view/controls/user_translatable_label.py:37
+#: camelot/view/controls/user_translatable_label.py:64
+msgid "Change translation"
+msgstr "Cambia traduzione"
+
+#: camelot/view/controls/user_translatable_label.py:65
+msgid "Translation"
+msgstr "Traduzione"
+
+#: camelot/view/controls/delegates/monthsdelegate.py:61
+msgid "Forever"
+msgstr "Per sempre"
+
+#: camelot/view/controls/delegates/monthsdelegate.py:65
+#, python-format
+msgid "%i years "
+msgstr ""
+
+#: camelot/view/controls/delegates/monthsdelegate.py:67
+#, python-format
+msgid "%i months"
+msgstr "%i mesi"
+
+#: camelot/view/controls/editors/charteditor.py:94
+msgid "Copy to clipboard"
+msgstr "Copia negli appunti"
+
+#: camelot/view/controls/editors/dateeditor.py:68
+#: camelot/view/controls/editors/dateeditor.py:165
+msgid "Today"
+msgstr "Oggi"
+
+#: camelot/view/controls/editors/dateeditor.py:69
+#: camelot/view/controls/editors/dateeditor.py:167
+msgid "Far future"
+msgstr "Futuro lontano"
+
+#: camelot/view/controls/editors/dateeditor.py:73
+msgid "Calendar and special dates"
+msgstr "Calendario e appuntamenti importanti"
+
+#: camelot/view/controls/editors/dateeditor.py:81
+#: camelot/view/controls/editors/dateeditor.py:169
+msgid "Clear"
+msgstr "Pulisci"
+
+#: camelot/view/controls/editors/fileeditor.py:82
+msgid "Save file as"
+msgstr "Salva file come"
+
+#: camelot/view/controls/editors/fileeditor.py:90
+msgid "delete file"
+msgstr "cancella file"
+
+#: camelot/view/controls/editors/fileeditor.py:98
+#: camelot/view/controls/editors/fileeditor.py:172
+#: camelot/view/controls/editors/imageeditor.py:186
+msgid "add file"
+msgstr "aggiungi file"
+
+#: camelot/view/controls/editors/fileeditor.py:167
+#: camelot/view/controls/editors/imageeditor.py:174
+msgid "open file"
+msgstr "apri file"
+
+#: camelot/view/controls/editors/imageeditor.py:82
+msgid "open image"
+msgstr "apri immagine"
+
+#: camelot/view/controls/editors/imageeditor.py:87
+msgid "delete image"
+msgstr "cancella immagine"
+
+#: camelot/view/controls/editors/many2oneeditor.py:110
+#: camelot/view/controls/editors/many2oneeditor.py:338
+msgid "clear"
+msgstr "pulisci"
+
+#: camelot/view/controls/editors/many2oneeditor.py:119
+#: camelot/view/controls/editors/many2oneeditor.py:342
+msgid "new"
+msgstr "nuovo"
+
+#: camelot/view/controls/editors/many2oneeditor.py:247
+msgid "select"
+msgstr "seleziona"
+
+#: camelot/view/controls/editors/many2oneeditor.py:332
+msgid "open"
+msgstr "apri"
+
+#: camelot/view/controls/editors/many2oneeditor.py:346
+msgid "Search"
+msgstr "Cerca"
+
+#: camelot/view/controls/editors/manytomanyeditor.py:46
+msgid "Remove"
+msgstr "Elimina"
+
+#: camelot/view/controls/editors/manytomanyeditor.py:53
+msgid "Add"
+msgstr "Aggiungi"
+
+#: camelot/view/controls/editors/manytomanyeditor.py:82
+#: camelot/view/controls/editors/one2manyeditor.py:125
+msgid "Export as spreadsheet"
+msgstr "Esporta come foglio elettronico"
+
+#: camelot/view/controls/editors/monthseditor.py:50
+msgid " years"
+msgstr "anni"
+
+#: camelot/view/controls/editors/monthseditor.py:51
+msgid " months"
+msgstr "mesi"
+
+#: camelot/view/wizard/backup.py:32
+msgid "Backup in progress"
+msgstr "Backup in corso"
+
+#: camelot/view/wizard/backup.py:49
+msgid "Backup"
+msgstr ""
+
+#: camelot/view/wizard/backup.py:62
+msgid "Restore in progress"
+msgstr "Ripristino in corso"
+
+#: camelot/view/wizard/backup.py:79
+msgid "Restore"
+msgstr "Ripristino"
+
+#: camelot/view/wizard/importwizard.py:298
+msgid "Import"
+msgstr "Importa"
+
+#: camelot/view/wizard/importwizard.py:333
+msgid "Proceed with import"
+msgstr "Procedo con l'importazione"
+
+#: camelot/view/wizard/importwizard.py:334
+msgid ""
+"Importing data cannot be undone,\n"
+"are you sure you want to continue"
+msgstr ""
+"L'importazione dei dati non può essere annullata,\n"
+"sei sicuro di voler continuare"
+
+#: camelot/view/wizard/importwizard.py:350
+msgid "Import Progress"
+msgstr "Importazione"
+
+#: camelot/view/wizard/importwizard.py:351
+msgid "Please wait while data is being imported."
+msgstr "Attendere finchè i dati non saranno importati."
+
+#: camelot/view/wizard/importwizard.py:363
+msgid "Close"
+msgstr "Chiudi"
+
+#: camelot/view/wizard/importwizard.py:385
+#, python-format
+msgid "Row %i of %i imported"
+msgstr "Riga %i di %i importate"
+
+#: camelot/view/wizard/importwizard.py:406
+msgid "Import CSV data"
+msgstr "Importa dati CSV"
+
+#: camelot/view/wizard/merge_document.py:42
+msgid "Merge a template document"
+msgstr "Unisci un template"
+
+#: camelot/view/wizard/merge_document.py:43
+msgid "Click 'Browse' to select a template file, then click 'Next'."
+msgstr "Clicca 'Esplora' per selezionare il template, quindi su 'Avanti'."
+
+#: camelot/view/wizard/merge_document.py:50
+msgid "Merge in progress"
+msgstr "Unione in corso"
+
+#: camelot/view/wizard/merge_document.py:85
+msgid "Merge Document"
+msgstr "Unisci Documento"
+
+#: camelot/view/wizard/update_value.py:48
+msgid "Select the field to update and enter its new value"
+msgstr "Seleziona il campo da aggiornare e inserisci il nuovo valore"
+
+#: camelot/view/wizard/update_value.py:154
+msgid "Replace"
+msgstr "Sostituisci"
+
+#: camelot/view/wizard/pages/backup_page.py:80
+msgid "Select backup file"
+msgstr "Seleziona file di backup"
+
+#: camelot/view/wizard/pages/backup_page.py:81
+msgid "Please select a backup file. All data in this file will be overwritten."
+msgstr ""
+"Selezionare file di backup. Tutti i dati del file saranno sovrascritti."
+
+#: camelot/view/wizard/pages/backup_page.py:83
+#: camelot/view/wizard/pages/select.py:41
+msgid "Select file"
+msgstr "Seleziona file"
+
+#: camelot/view/wizard/pages/backup_page.py:107
+msgid "Default Location"
+msgstr "Posizione predefinita"
+
+#: camelot/view/wizard/pages/backup_page.py:108
+msgid "Custom Location"
+msgstr "Posizione personalizzata"
+
+#: camelot/view/wizard/pages/backup_page.py:110
+#: camelot/view/wizard/pages/select.py:53
+msgid "Browse..."
+msgstr "Esplora..."
+
+#: camelot/view/wizard/pages/backup_page.py:152
+msgid "Select restore file"
+msgstr "Seleziona file di ripristino"
+
+#: camelot/view/wizard/pages/backup_page.py:153
+msgid ""
+"Please select a backup file from which to restore the database. All data in "
+"the database will be overwritten with data from this file"
+msgstr ""
+"Selezionare file di backup da cui ripristinare il database. Tutti i dati nel "
+"database saranno sovrascritti con quelli del file"
+
+#: camelot/view/wizard/pages/backup_page.py:188
+#: camelot/view/wizard/pages/backup_page.py:250
+#, python-format
+msgid "Database files (*%s);;All files (*.*)"
+msgstr "File database (*%s);;Tutti i files (*.*)"
+
+#: camelot/view/wizard/pages/backup_page.py:200
+msgid "Label:"
+msgstr "Etichetta:"
+
+#: camelot/view/wizard/pages/progress_page.py:54
+msgid "Action in progress"
+msgstr "Azione in corso"
+
+#: camelot/view/wizard/pages/progress_page.py:55
+msgid "Please wait for completion"
+msgstr "Attendere il completamento"
+
+#: camelot/view/wizard/pages/select.py:36
+msgid "Import data from a file"
+msgstr "Importa dati da file"
+
+#: camelot/view/wizard/pages/select.py:37
+msgid "To import data, click 'Browse' to select a file then click 'Next'."
+msgstr ""
+"Per importare i dati, cliccare su 'Esplora' per selezionare il file quindi "
+"su 'Avanti'."
+
+#: camelot/view/wizard/pages/select.py:50
+msgid "Select file:"
+msgstr "Seleziona file:"
