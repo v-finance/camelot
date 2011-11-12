@@ -36,6 +36,7 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
     def __init__(self, option = None, parent = None):
         super(CustomDoubleSpinBox, self).__init__(parent)
         self._option = option
+        self._locale = QtCore.QLocale()
     
     def wheelEvent(self, wheel_event):
         wheel_event.ignore()
@@ -66,7 +67,9 @@ class CustomDoubleSpinBox(QtGui.QDoubleSpinBox):
                 super(CustomDoubleSpinBox, self).keyPressEvent(key_event)
 
     def textFromValue(self, value):
-        text = unicode( QtCore.QString("%L1").arg(float(value), 0, 'f', self.decimals()) )
+        text = unicode( self._locale.toString( float(value), 
+                                               'f', 
+                                               self.decimals() ) )
         return text
         
     def paintEvent(self, event):
@@ -95,7 +98,7 @@ class FloatEditor(CustomEditor):
         self._decimal = decimal
         self._calculator = calculator
         action = QtGui.QAction(self)
-        action.setShortcut(Qt.Key_F4)
+        action.setShortcut( QtGui.QKeySequence( Qt.Key_F4 ) )
         self.setFocusPolicy(Qt.StrongFocus)
         self.spinBox = CustomDoubleSpinBox(option, parent)
 

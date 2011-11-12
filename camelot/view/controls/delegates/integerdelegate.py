@@ -38,16 +38,13 @@ class IntegerDelegate(CustomDelegate):
     editor = editors.IntegerEditor
   
     def __init__(self,
-                 minimum=constants.camelot_minint,
-                 maximum=constants.camelot_maxint,
                  parent=None,
                  unicode_format = None,
                  **kwargs):
   
-        CustomDelegate.__init__(self, parent=parent, minimum=minimum, maximum=maximum, **kwargs)
-        self.minimum = minimum
-        self.maximum = maximum
+        CustomDelegate.__init__(self, parent=parent, **kwargs)
         self.unicode_format = unicode_format
+        self.locale = QtCore.QLocale()
         
     def paint(self, painter, option, index):
         painter.save()
@@ -57,14 +54,10 @@ class IntegerDelegate(CustomDelegate):
         if value in (None, ValueLoading):
             value_str = ''
         else:
-            value_str = QtCore.QString("%L1").arg( int(value) )
+            value_str = self.locale.toString( long(value) )
 
         if self.unicode_format is not None:
             value_str = self.unicode_format(value)
         
         self.paint_text( painter, option, index, value_str, horizontal_align=Qt.AlignRight )
         painter.restore()
-    
-
-
-

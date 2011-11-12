@@ -45,7 +45,6 @@ class ActionsBox( QtGui.QWidget ):
     def set_actions( self, actions ):
         LOGGER.debug( 'setting actions' )
         layout = QtGui.QVBoxLayout()
-        layout.setMargin( 0 )
         layout.setSpacing( 2 )
         for action in actions:
             action_widget = action.render( self.gui_context, self )

@@ -203,17 +203,17 @@ methods :
         from camelot.view.mainwindow import MainWindow
         mainwindow = MainWindow(self)
         shortcut_versions = QtGui.QShortcut(
-            QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_V,
+            QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_V ),
             mainwindow
         )
         shortcut_versions.activated.connect( self.show_versions )
         shortcut_dump_state = QtGui.QShortcut(
-            QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_D,
+            QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_D ),
             mainwindow
         )
         shortcut_dump_state.activated.connect( self.dump_state )
         shortcut_read_null = QtGui.QShortcut(
-            QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_0,
+            QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_0 ),
             mainwindow
         )
         shortcut_read_null.activated.connect( self.read_null )
@@ -354,6 +354,9 @@ methods :
         if translations:
             _translations_data_.append( translations ) # keep the data alive
             translator = QtCore.QTranslator()
+            # PySide workaround for missing loadFromData method
+            if not hasattr( translator, 'loadFromData' ):
+                return
             if translator.loadFromData( translations ):
                 logger.info("add translation %s" % (directory + file_name))
                 return translator

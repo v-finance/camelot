@@ -63,7 +63,8 @@ class IntervalsDelegate(CustomDelegate):
             xoffset = intervals_container.min * xscale + rect.x()
             yoffset = rect.y() + rect.height()/2
             for interval in intervals_container.intervals:
-                pen = QtGui.QPen(interval.color or color)
+                qcolor = QtGui.QColor( interval.color or color )
+                pen = QtGui.QPen( qcolor )
                 pen.setWidth(3)
                 painter.setPen(pen)
                 xscale_interval = xscale

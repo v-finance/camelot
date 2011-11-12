@@ -41,7 +41,6 @@ class FilterList( QtGui.QWidget ):
         super(FilterList, self).__init__(parent)
         #self.setFrameStyle(QtGui.QFrame.NoFrame)
         layout = QtGui.QVBoxLayout()
-        layout.setMargin( 2 )
         layout.setSpacing( 4 )
         for filter, (name, options) in items:
             filter_widget = filter.render(self, name, options)

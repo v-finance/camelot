@@ -63,7 +63,6 @@ class ImageEditor(FileEditor, WideEditor):
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 0 )
         label_button_layout = QtGui.QHBoxLayout()
-        label_button_layout.setMargin( 0 )
         #
         # Setup label
         #

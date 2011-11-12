@@ -9,6 +9,7 @@ import time
 from camelot.test import ModelThreadTestCase, EntityViewsTest, SchemaTest
 from camelot.view.art import ColorScheme
 
+from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
@@ -599,9 +600,9 @@ class DelegateTest(ModelThreadTestCase):
 
         model = QStandardItemModel(1, 1)
         index = model.index(0, 0, QModelIndex())
-        model.setData(index, QVariant(data))
-        model.setData(index, QVariant(QtGui.QColor('white')), Qt.BackgroundRole)
-        model.setData(index, QVariant(dict(editable=True)), Qt.UserRole)
+        model.setData( index, QtCore.QVariant( data ) )
+        model.setData( index, QtCore.QVariant( QtGui.QColor('white') ), Qt.BackgroundRole )
+        model.setData( index, QtCore.QVariant( dict(editable=True) ), Qt.UserRole )
 
         option = QtGui.QStyleOptionViewItem()
 
@@ -781,7 +782,7 @@ class DelegateTest(ModelThreadTestCase):
 
     def testIntervalsDelegate(self):
         from camelot.container import IntervalsContainer, Interval
-        intervals = IntervalsContainer(0, 24, [Interval(8, 18, 'work', (255,0,0,255)), Interval(19, 21, 'play', (0,255,0,255))])
+        intervals = IntervalsContainer(0, 24, [Interval(8, 18, 'work', QtGui.QColor(255,0,0,255)), Interval(19, 21, 'play', QtGui.QColor(0,255,0,255))])
         delegate = self.delegates.IntervalsDelegate(parent=None, editable=True)
         self.grab_delegate(delegate, intervals)
         delegate = self.delegates.IntervalsDelegate(parent=None, editable=False)

@@ -436,7 +436,7 @@ class ActionFactory(object):
             parent = parent,
             text = _('Refresh'),
             slot = slot,
-            shortcut = Qt.Key_F9,
+            shortcut = QtGui.QKeySequence( Qt.Key_F9 ),
             icond = Icon('tango/16x16/actions/view-refresh.png'),
         )
         default.update(kwargs)

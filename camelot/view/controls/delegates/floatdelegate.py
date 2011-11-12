@@ -50,6 +50,7 @@ class FloatDelegate( CustomDelegate ):
         self.minimum = minimum
         self.maximum = maximum
         self.unicode_format = unicode_format
+        self._locale = QtCore.QLocale()
 
     def paint( self, painter, option, index ):
         painter.save()
@@ -67,7 +68,9 @@ class FloatDelegate( CustomDelegate ):
         elif self.unicode_format:
             value_str = self.unicode_format(value)
         else:
-            value_str = QtCore.QString("%L1").arg(float(value),0,'f',precision)
+            value_str = unicode( self._locale.toString( float(value), 
+                                                        'f', 
+                                                        precision ) )
 
         self.paint_text( painter, option, index, value_str, horizontal_align=Qt.AlignRight )
         painter.restore()

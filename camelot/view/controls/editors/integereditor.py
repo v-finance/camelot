@@ -84,7 +84,7 @@ an unneeded update of the db.
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
         action = QtGui.QAction(self)
-        action.setShortcut(Qt.Key_F4)
+        action.setShortcut( QtGui.QKeySequence( Qt.Key_F4 ) )
         self.setFocusPolicy(Qt.StrongFocus)
         
         self.spinBox = CustomDoubleSpinBox(option, parent)

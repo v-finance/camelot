@@ -48,20 +48,19 @@ class ColoredFloatDelegate(CustomDelegate):
         0:'tango/16x16/actions/zero.png'
     }
 
-    def __init__(self, parent=None, minimum=-1e15, maximum=1e15,
+    def __init__(self, parent=None,
         precision=2, reverse=False, neutral=False,
         unicode_format=None, **kwargs
     ):
         CustomDelegate.__init__(self, parent=parent,
-            minimum=minimum, maximum=maximum, reverse=reverse, neutral=neutral,
+            reverse=reverse, neutral=neutral,
             precision=precision, unicode_format=unicode_format, **kwargs
         )
-        self.minimum = minimum
-        self.maximum = maximum
         self.precision = precision
         self.reverse = reverse
         self.neutral = neutral
         self.unicode_format = unicode_format
+        self._locale = QtCore.QLocale()
 
     def paint(self, painter, option, index):
         painter.save()
@@ -106,7 +105,9 @@ class ColoredFloatDelegate(CustomDelegate):
             if self.unicode_format != None:
                 value_str = self.unicode_format(value)
             else:
-                value_str = QtCore.QString("%L1").arg(float(value),0,'f',self.precision)
+                value_str = unicode( self._locale.toString( float(value), 
+                                                            'f', 
+                                                            self.precision ) )
         value_str = unicode(prefix) + u' ' + unicode(value_str) + u' ' + unicode(suffix)
 
         fontColor = fontColor.darker()
