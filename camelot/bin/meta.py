@@ -247,6 +247,7 @@ class NewProjectOptions(object):
                            'delegate':feature[2],
                            'nullable':False,
                            'tooltip':feature[3]   } ) for feature in features)
+        field_attributes['source']['directory'] = True
             
 class CreateNewProject( Action ):
     """Action to create a new project, based on a form with

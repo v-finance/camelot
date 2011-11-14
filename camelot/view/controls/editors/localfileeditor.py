@@ -34,7 +34,7 @@ from camelot.core.utils import ugettext as _
 
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
-class LocalFileEditor(CustomEditor):
+class LocalFileEditor( CustomEditor ):
     """Widget for browsing local files and directories"""
 
     browse_icon =  Icon( 'tango/16x16/places/folder-saved-search.png' )
