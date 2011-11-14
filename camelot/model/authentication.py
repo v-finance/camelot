@@ -360,7 +360,9 @@ class Party( Entity ):
 
     is_synchronized( 'synchronized', lazy = True )
     addresses = OneToMany( 'PartyAddress', lazy = True, cascade="all, delete, delete-orphan" )
-    contact_mechanisms = OneToMany( 'PartyContactMechanism', lazy = True, cascade='all, delete, delete-orphan' )
+    contact_mechanisms = OneToMany( 'PartyContactMechanism', 
+                                    lazy = True, 
+                                    cascade='all, delete, delete-orphan' )
     shares = OneToMany( 'SharedShareholder', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     status = OneToMany( type_3_status( 'Party', metadata, entities ), cascade='all, delete, delete-orphan' )
@@ -525,10 +527,11 @@ class Party( Entity ):
                 # then clear the temporary store to make sure they are not created
                 # a second time
                 #
+                
+                #for party_contact_mechanism in party.contact_mechanisms:
+                #    objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
+                session.flush()
                 party._contact_mechanisms.clear()
-                for party_contact_mechanism in party.contact_mechanisms:
-                    objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
-                session.flush( objects )
                 party.expire( ['phone', 'email', 'fax'] )
                 
 class Organization( Party ):

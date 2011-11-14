@@ -7,6 +7,12 @@ class ViewUtilsCase(unittest.TestCase):
     
     def setUp(self):
         from PyQt4 import QtCore
+        from camelot.view import utils
+        # clear the date and time format cache to prevent different
+        # locales to be used
+        utils._local_date_format = None
+        utils._local_datetime_format = None
+        utils._local_time_format = None
         QtCore.QLocale.setDefault( QtCore.QLocale('en_US') )
         
     def test_date_from_string(self):
