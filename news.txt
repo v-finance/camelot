@@ -1,12 +1,19 @@
 Trunk
 -----
 
- * Implementation of the new actions proposal (:ref:`doc-actions`)
+ * Implementation of the new actions proposal (:ref:`doc-actions`), please
+   consult the documentation and the tutorial (:ref:`tutorial-importer`) of the 
+   actions to ease the migration.  Most old style actions can be replaced with 
+   the new style action :class:`camelot.admin.action.list_action.CallMethod`
 
  * Delayed creation of widgets on tabs to improve performance for
    screens with lots of fields
 
  * Move to migrate 7.1
+ 
+ * New splashscreen
+ 
+ * Italian translations
 
 Release 11.09.10
 ----------------
