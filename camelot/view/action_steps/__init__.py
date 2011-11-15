@@ -24,7 +24,8 @@
 
 from change_object import ChangeObject, ChangeObjects
 from gui import OpenFormView, Refresh, ShowChart, ShowPixmap
-from open_file import OpenFile, OpenStream, OpenString, OpenJinjaTemplate
+from open_file import ( OpenFile, OpenStream, 
+                        OpenString, OpenJinjaTemplate, WordJinjaTemplate )
 from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
 from print_preview import PrintHtml, PrintPreview, PrintJinjaTemplate
 from select_file import SelectFile
