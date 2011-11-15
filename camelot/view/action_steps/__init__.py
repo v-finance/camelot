@@ -51,4 +51,5 @@ __all__ = [
     ShowPixmap.__name__,
     UpdateObject.__name__,
     UpdateProgress.__name__,
+    WordJinjaTemplate.__name__,
     ]
