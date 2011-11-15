@@ -505,7 +505,6 @@ class Party( Entity ):
             from sqlalchemy.orm.session import Session
             session = Session.object_session( party )
             if session:
-                objects = [ party ]
                 #
                 # make sure the temporary contact mechanisms are added
                 # relational
