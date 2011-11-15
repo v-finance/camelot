@@ -25,6 +25,7 @@
 from PyQt4 import QtGui, QtCore
   
 from camelot.admin.action import ActionStep
+from camelot.core.templates import environment
 
 class OpenFile( ActionStep ):
     """
@@ -136,3 +137,40 @@ class OpenJinjaTemplate( OpenStream ):
         template_stream.dump( output_stream, encoding='utf-8' )
         output_stream.seek( 0 )
         super( OpenJinjaTemplate, self).__init__( output_stream, suffix=suffix )
+
+class WordJinjaTemplate( OpenFile ):
+    """Render a jinja template into a temporary file and open that
+    file with microsoft word through the use of COM objects.
+    
+    :param environment: a :class:`jinja2.Environment` object to be used
+        to load templates from.
+        
+    :param template: the name of the template as it can be fetched from
+        the Jinja environment.
+    
+    :param suffix: the suffix of the temporary file to create, this will
+        determine the application used to open the file.
+        
+    :param context: a dictionary with objects to be used when rendering
+        the template
+    """
+   
+    def __init__( self,
+                  template, 
+                  context={},
+                  environment = environment,
+                  suffix='.xml' ):
+        self.file_name = self.create_temporary_file( suffix )
+        template = environment.get_template( template )
+        template_stream = template.stream( context )
+        template_stream.dump( open( self._file_name, 'wb' ), encoding='utf-8' )
+        
+    def gui_run( self, gui_context ):
+        import pythoncom
+        import win32com.client
+        pythoncom.CoInitialize()
+        word_app = win32com.client.Dispatch("Word.Application")
+        word_app.Visible = True
+        doc = word_app.Documents.Open( self.file_name )
+        doc.Activate()
+        word_app.Activate()
