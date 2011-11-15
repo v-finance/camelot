@@ -163,7 +163,7 @@ class WordJinjaTemplate( OpenFile ):
         self.file_name = self.create_temporary_file( suffix )
         template = environment.get_template( template )
         template_stream = template.stream( context )
-        template_stream.dump( open( self._file_name, 'wb' ), encoding='utf-8' )
+        template_stream.dump( open( self.file_name, 'wb' ), encoding='utf-8' )
         
     def gui_run( self, gui_context ):
         import pythoncom
