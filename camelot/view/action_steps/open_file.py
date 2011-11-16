@@ -126,10 +126,10 @@ class OpenJinjaTemplate( OpenStream ):
     """
     
     def __init__( self,
-                  environment,
                   template, 
-                  suffix='.txt', 
-                  context={}, ):
+                  context={},
+                  environment = environment,
+                  suffix='.txt' ):
         from cStringIO import StringIO
         template = environment.get_template( template )
         template_stream = template.stream( context )
