@@ -78,6 +78,8 @@ def hostname():
     
 class CancelBatchJob( Action ):
     
+    verbose_name = _('Cancel')
+    
     def model_run( self, model_context ):
         from camelot.view.action_steps import FlushSession
         for batch_job in model_context.get_selection():
