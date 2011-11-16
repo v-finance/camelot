@@ -36,7 +36,7 @@ class FileEditor(CustomEditor):
     """Widget for editing File fields"""
 
     filter = 'All files (*)'
-    new_icon = Icon( 'tango/16x16/actions/list-add.png' )
+    add_icon = Icon( 'tango/16x16/actions/list-add.png' )
     open_icon = Icon( 'tango/16x16/actions/document-open.png' )
     clear_icon = Icon( 'tango/16x16/actions/edit-delete.png' )
     save_as_icon = Icon( 'tango/16x16/actions/document-save-as.png' )
@@ -64,7 +64,7 @@ class FileEditor(CustomEditor):
 
         # Save As button
         self.save_as_button = QtGui.QToolButton()
-        self.save_as_button.setFocusPolicy(Qt.StrongFocus)
+        self.save_as_button.setFocusPolicy( Qt.ClickFocus )
         self.save_as_button.setIcon(self.save_as_icon.getQIcon())
         self.save_as_button.setToolTip(_('Save file as'))
         self.save_as_button.setAutoRaise(True)
@@ -72,23 +72,32 @@ class FileEditor(CustomEditor):
 
         # Clear button
         self.clear_button = QtGui.QToolButton()
-        self.clear_button.setFocusPolicy(Qt.StrongFocus)
+        self.clear_button.setFocusPolicy( Qt.ClickFocus )
         self.clear_button.setIcon(self.clear_icon.getQIcon())
-        self.clear_button.setToolTip(_('delete file'))
+        self.clear_button.setToolTip(_('Delete file'))
         self.clear_button.setAutoRaise(True)
         self.clear_button.clicked.connect(self.clear_button_clicked)
 
         # Open button
         self.open_button = QtGui.QToolButton()
-        self.open_button.setFocusPolicy(Qt.StrongFocus)
-        self.open_button.setIcon(self.new_icon.getQIcon())
-        self.open_button.setToolTip(_('add file'))
+        self.clear_button.setFocusPolicy( Qt.ClickFocus )
+        self.open_button.setIcon(self.open_icon.getQIcon())
+        self.open_button.setToolTip(_('Open file'))
         self.open_button.clicked.connect(self.open_button_clicked)
         self.open_button.setAutoRaise(True)
+        
+        # Add button
+        self.add_button = QtGui.QToolButton()
+        self.clear_button.setFocusPolicy( Qt.StrongFocus )
+        self.add_button.setIcon(self.add_icon.getQIcon())
+        self.add_button.setToolTip(_('Attach file'))
+        self.add_button.clicked.connect(self.add_button_clicked)
+        self.add_button.setAutoRaise(True)
 
         # Filename
-        self.filename = DecoratedLineEdit(self)
+        self.filename = DecoratedLineEdit( self )
         self.filename.set_minimum_width( 20 )
+        self.filename.setFocusPolicy( Qt.ClickFocus )
 
         # Search Completer
         #
@@ -121,6 +130,7 @@ class FileEditor(CustomEditor):
         self.layout.addWidget(self.filename)
         self.layout.addWidget(self.clear_button)
         self.layout.addWidget(self.open_button)
+        self.layout.addWidget(self.add_button)
         self.layout.addWidget(self.save_as_button)
         self.setLayout(self.layout)
 
@@ -137,28 +147,22 @@ class FileEditor(CustomEditor):
                 remove_original=self.remove_original,
                 filename = path,
             )
-            
-    def set_tab_order(self):
-        if self.filename.text() != '':
-            self.setTabOrder(self.clear_button, self.filename)
-        else:
-            self.setTabOrder(self.clear_button, self.filename)
-            self.setTabOrder(self.open_button, self.clear_button)
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         self.value = value
         if value:
+            self.clear_button.setVisible(True)
             self.save_as_button.setVisible(True)
+            self.open_button.setVisible(True)
+            self.add_button.setVisible(False)
             self.filename.setText(value.verbose_name)
-            self.open_button.setIcon(self.open_icon.getQIcon())
-            self.open_button.setToolTip(_('open file'))
         else:
+            self.clear_button.setVisible(False)
             self.save_as_button.setVisible(False)
+            self.open_button.setVisible(False)
+            self.add_button.setVisible(True)
             self.filename.setText('')
-            self.open_button.setIcon(self.new_icon.getQIcon())
-            self.open_button.setToolTip(_('add file'))
-        self.set_tab_order()
         return value
 
     def get_value(self):
@@ -176,7 +180,7 @@ class FileEditor(CustomEditor):
 
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)
-        self.open_button.setEnabled(editable)
+        self.add_button.setEnabled(editable)
         self.filename.setEnabled(editable)
         self.filename.setReadOnly(not editable)
         self.document_label.setEnabled(editable)
@@ -194,19 +198,18 @@ class FileEditor(CustomEditor):
         if value:
             save_stored_file(self, value)
 
+    def add_button_clicked(self):
+        from camelot.view.storage import create_stored_file
+        create_stored_file(
+            self,
+            self.storage,
+            self.stored_file_ready,
+            filter=self.filter,
+            remove_original=self.remove_original,
+        )        
     def open_button_clicked(self):
         from camelot.view.storage import open_stored_file
-        from camelot.view.storage import create_stored_file
-        if not self.value:
-            create_stored_file(
-                self,
-                self.storage,
-                self.stored_file_ready,
-                filter=self.filter,
-                remove_original=self.remove_original,
-            )
-        else:
-            open_stored_file(self, self.value)
+        open_stored_file(self, self.value)
 
     def clear_button_clicked(self):
         self.value = None
