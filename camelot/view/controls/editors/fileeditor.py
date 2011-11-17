@@ -80,7 +80,7 @@ class FileEditor(CustomEditor):
 
         # Open button
         self.open_button = QtGui.QToolButton()
-        self.clear_button.setFocusPolicy( Qt.ClickFocus )
+        self.open_button.setFocusPolicy( Qt.ClickFocus )
         self.open_button.setIcon(self.open_icon.getQIcon())
         self.open_button.setToolTip(_('Open file'))
         self.open_button.clicked.connect(self.open_button_clicked)
@@ -88,7 +88,7 @@ class FileEditor(CustomEditor):
         
         # Add button
         self.add_button = QtGui.QToolButton()
-        self.clear_button.setFocusPolicy( Qt.StrongFocus )
+        self.add_button.setFocusPolicy( Qt.StrongFocus )
         self.add_button.setIcon(self.add_icon.getQIcon())
         self.add_button.setToolTip(_('Attach file'))
         self.add_button.clicked.connect(self.add_button_clicked)

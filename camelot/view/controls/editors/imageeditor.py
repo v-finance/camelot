@@ -27,7 +27,7 @@ from fileeditor import CustomEditor
 from wideeditor import WideEditor
 
 from camelot.view.art import Icon
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext as _
 from camelot.view.controls.liteboxview import LiteBoxView
 from camelot.view.model_thread import post
 from camelot.view.action import ActionFactory
@@ -35,6 +35,8 @@ from camelot.view.action import ActionFactory
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
+
+from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
 class ImageEditor(FileEditor, WideEditor):
     """Editor to view and edit image files, this is a customized
@@ -70,6 +72,9 @@ class ImageEditor(FileEditor, WideEditor):
         self.label.installEventFilter(self)
         self.label.setAlignment( Qt.AlignHCenter|Qt.AlignVCenter )
         label_button_layout.addWidget(self.label)
+        
+        self.filename = DecoratedLineEdit( self )
+        self.filename.setVisible( False )
         #
         # Setup buttons
         #
@@ -77,12 +82,26 @@ class ImageEditor(FileEditor, WideEditor):
         button_layout.setSpacing( 0 )
         button_layout.setContentsMargins( 0, 0, 0, 0)
 
+        self.save_as_button = QtGui.QToolButton()
+        self.save_as_button.setFocusPolicy( Qt.ClickFocus )
+        self.save_as_button.setIcon(self.save_as_icon.getQIcon())
+        self.save_as_button.setToolTip(_('Save file as'))
+        self.save_as_button.setAutoRaise(True)
+        self.save_as_button.clicked.connect(self.save_as_button_clicked)
+        
         self.open_button = QtGui.QToolButton()
         self.open_button.setIcon(self.open_icon.getQIcon())
         self.open_button.setAutoRaise(True)
         self.open_button.setToolTip(unicode(_('open image')))
         self.open_button.clicked.connect(self.open_button_clicked)
 
+        self.add_button = QtGui.QToolButton()
+        self.add_button.setFocusPolicy( Qt.StrongFocus )
+        self.add_button.setIcon(self.add_icon.getQIcon())
+        self.add_button.setToolTip(_('Attach file'))
+        self.add_button.clicked.connect(self.add_button_clicked)
+        self.add_button.setAutoRaise(True)
+        
         self.clear_button = QtGui.QToolButton()
         self.clear_button.setIcon(self.clear_icon.getQIcon())
         self.clear_button.setToolTip(unicode(_('delete image')))
@@ -103,6 +122,8 @@ class ImageEditor(FileEditor, WideEditor):
         
         button_layout.addStretch()
         button_layout.addWidget(self.open_button)
+        button_layout.addWidget(self.save_as_button)
+        button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.clear_button)
         button_layout.addWidget(copy_button)
         button_layout.addWidget(paste_button)
@@ -147,6 +168,7 @@ class ImageEditor(FileEditor, WideEditor):
     def set_enabled(self, editable=True):
         self.clear_button.setEnabled(editable)
         self.open_button.setEnabled(editable)
+        self.add_button.setEnabled(editable)
         self.label.setEnabled(editable)
 
     def set_pixmap(self, pixmap):
@@ -171,11 +193,10 @@ class ImageEditor(FileEditor, WideEditor):
         self.set_pixmap(dummy_image.getQPixmap())
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
+        old_value = self.value
+        value = super( ImageEditor, self ).set_value( value )
         if value:
-            self.open_button.setIcon(self.open_icon.getQIcon())
-            self.open_button.setToolTip(unicode(_('open file')))
-            if value!=self.value:
+            if value != old_value:
                 post(
                     lambda:value.checkout_thumbnail(
                         self.preview_width,
@@ -185,9 +206,6 @@ class ImageEditor(FileEditor, WideEditor):
                 )
         else:
             self.clear_image()
-            self.open_button.setIcon(self.new_icon.getQIcon())
-            self.open_button.setToolTip(unicode(_('add file')))
-        self.value = value
         return value
 
     def draw_border(self):
