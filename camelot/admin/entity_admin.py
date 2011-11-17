@@ -245,8 +245,7 @@ It has additional class attributes that customise its behaviour.
 
             try:
                 property = self.mapper.get_property(
-                    field_name,
-                    resolve_synonyms=True
+                    field_name
                 )
                 if isinstance(property, orm.properties.ColumnProperty):
                     column_type = property.columns[0].type
@@ -261,7 +260,7 @@ It has additional class attributes that customise its behaviour.
                         attributes['default'] = property.columns[0].default
                 elif isinstance(property, orm.properties.PropertyLoader):
                     target = forced_attributes.get( 'target', 
-                                                    property._get_target().class_ )
+                                                    property.mapper.class_ )
                     
                     #
                     # _foreign_keys is for sqla pre 0.6.4
@@ -639,7 +638,7 @@ It has additional class attributes that customise its behaviour.
         for property in self.mapper.iterate_properties:
             if isinstance(property, orm.properties.PropertyLoader):
                 if property.direction == orm.interfaces.ONETOMANY:
-                    target = property._get_target().class_
+                    target = property.mapper.class_
                     for relation in serialized.get(property.key, []):
                         relation_mapper = orm.class_mapper(target)
                         for primary_key_field in relation_mapper.primary_key:

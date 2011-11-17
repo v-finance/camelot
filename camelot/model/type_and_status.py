@@ -86,7 +86,7 @@ def create_type_3_status_mixin(status_attribute):
                 status_from_date = datetime.date.today()
             mapper = orm.class_mapper(self.__class__)
             status_property = mapper.get_property('status')
-            status_type = status_property._get_target().class_
+            status_type = status_property.mapper.class_
             old_status = status_type.query.filter( and_( status_type.status_for == self,
                                                          status_type.status_from_date <= status_from_date,
                                                          status_type.status_thru_date >= status_from_date ) ).first()
