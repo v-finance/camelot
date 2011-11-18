@@ -7,6 +7,7 @@ from camelot.admin.action import list_action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
+from camelot.view import action_steps
 
 from test_view import static_images_path
 
@@ -191,3 +192,12 @@ class ListActionsCase( ModelThreadTestCase ):
             dialog = step.render()
             dialog.show()
             self.grab_widget( dialog )
+            
+    def test_export_spreadsheet( self ):
+        import xlrd
+        export_spreadsheet = list_action.ExportSpreadsheet()
+        for step in export_spreadsheet.model_run( self.context ):
+            if isinstance( step, action_steps.OpenFile ):
+                # see if the generated file can be parsed
+                filename = step.get_path()
+                xlrd.open_workbook( filename )

@@ -35,14 +35,16 @@ class MockModelContext( object ):
     def __init__( self ):
         self.obj = None
         self.admin = None
+        self.collection_count = 1
+        self.selection_count = 1
         
     def get_object( self ):
         return self.obj
         
-    def get_selection( self ):
+    def get_selection( self, yield_per = None ):
         return [self.obj]
 
-    def get_collection( self ):
+    def get_collection( self, yield_per = None ):
         return [self.obj]
 
     @property

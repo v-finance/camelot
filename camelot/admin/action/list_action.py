@@ -22,6 +22,8 @@
 #
 #  ============================================================================
 
+import datetime
+
 from camelot.admin.action.base import Action
 from application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
@@ -292,18 +294,121 @@ class ExportSpreadsheet( Action ):
     
     icon = Icon('tango/16x16/mimetypes/x-office-spreadsheet.png')
     tooltip = _('Export to MS Excel')
+    font_name = 'Arial'
     
-class ExportDocument( Action ):
-    """Export all rows in a table to a word document"""
-    
-    icon = Icon('tango/16x16/mimetypes/x-office-document.png')
-    tooltip = _('Export to MS Word')
-    
-class SendEmail( Action ):
-    """Send all rows in a table by mail"""
-    
-    icon = Icon('tango/16x16/actions/mail-message-new.png')
-    tooltip = _('Send by e-mail')
+    def model_run( self, model_context ):
+        from decimal import Decimal
+        from xlwt import Font, Borders, XFStyle, Pattern, Workbook, ExcelFormula
+        from camelot.view.utils import ( local_date_format, 
+                                         local_datetime_format,
+                                         local_time_format )
+        from camelot.view import action_steps
+        #
+        # setup worksheet
+        #
+        yield action_steps.UpdateProgress( text = _('Create worksheet') )
+        admin = model_context.admin
+        workbook = Workbook()
+        worksheet = workbook.add_sheet('Sheet1')
+        #
+        # write title
+        #
+        style = XFStyle()
+        style.font = Font()
+        style.font.name = self.font_name
+        style.font.bold = True
+        style.font.height = 240
+        worksheet.write( 0, 0, admin.get_verbose_name_plural(), style )
+        #
+        # create some styles
+        #
+        date_format = local_date_format()
+        datetime_format = local_datetime_format()
+        time_format = local_time_format()
+        header_pattern = Pattern()
+        header_pattern.pattern = Pattern.SOLID_PATTERN
+        header_pattern.pattern_fore_colour = 0x16
+        #
+        # write headers
+        #
+        columns = admin.get_columns()
+        field_names = []
+        for i, (name, _field_attributes) in enumerate( columns ):
+            field_names.append( name )
+            style = XFStyle()
+            style.font = Font()
+            style.font.name = self.font_name
+            style.font.bold = True
+            style.font.height = 200
+            style.borders = Borders()
+            style.borders.top = 0x01
+            style.pattern = header_pattern
+
+            name = unicode( name )
+            if i == 0:
+                style.borders.left = 0x01                
+            elif i == len( columns ) - 1:
+                style.borders.right = 0x01                
+            worksheet.write( 2, i, name, style)
+                
+            if len( name ) < 8:
+                worksheet.col( i ).width = 8 *  375
+            else:
+                worksheet.col( i ).width = len( name ) *  375
+        #
+        # write data
+        #
+        offset = 3
+        for j, obj in enumerate( model_context.get_collection( yield_per = 100 ) ):
+            dynamic_attributes = admin.get_dynamic_field_attributes( obj, 
+                                                                     field_names )
+            row = offset + j
+            for i, ((_name, attributes), delta_attributes)  in enumerate( zip( columns, dynamic_attributes ) ):
+                attributes.update( delta_attributes )
+                value = attributes['getter']( obj )
+                if value != None:
+                    format_string = '0'
+                    if isinstance( value, Decimal ):
+                        value = float( str( value ) )
+                    if isinstance( value, (unicode, str) ):
+                        if attributes.get( 'translate_content', False ) == True:
+                            value = ugettext( value )
+                    # handle fields of type code
+                    elif isinstance( value, list ):
+                        value = u'.'.join(value)
+                    elif isinstance( value, float ):
+                        precision = attributes.get( 'precision', 2 )
+                        format_string = '0.' + '0'*precision
+                    elif isinstance( value, datetime.date ):
+                        format_string = date_format
+                    elif isinstance( value, datetime.datetime ):
+                        format_string = datetime_format
+                    elif isinstance( value, datetime.time ):
+                        format_string = time
+                    else:
+                        value = unicode( value )
+                        
+                    style = XFStyle()
+                    style.font = Font()
+                    style.font.name = self.font_name
+                    style.font.height = 200
+                    style.num_format_str = format_string
+                    style.borders = Borders()
+                    if i == 0:
+                        style.borders.left = 0x01                
+                    elif i == len( columns ) - 1:
+                        style.borders.right = 0x01  
+                    if (row - offset + 1) == model_context.collection_count:
+                        style.borders.bottom = 0x01
+                    worksheet.write( row, i, value, style )
+                    min_width = len( unicode( value ) ) * 300
+                    worksheet.col( i ).width = max( min_width, worksheet.col( i ).width )
+        
+        yield action_steps.UpdateProgress( text = _('Saving file') )
+        filename = action_steps.OpenFile.create_temporary_file( '.xls' )
+        workbook.save( filename )
+        yield action_steps.UpdateProgress( text = _('Opening file') )
+        yield action_steps.OpenFile( filename )
     
 class PrintPreview( Action ):
     """Print all rows in a table"""

@@ -114,3 +114,8 @@ http://blogs.msdn.com/b/tess/
 Setup Qt Creator 
 
 http://doc.qt.nokia.com/qtcreator-snapshot/creator-debugger-engines.html
+
+ * Install Windows Sysinternals process utilities from MSDN
+
+http://technet.microsoft.com/en-us/sysinternals/bb795533
+ 
