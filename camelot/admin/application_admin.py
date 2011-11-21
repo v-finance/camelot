@@ -254,7 +254,14 @@ methods :
     def get_splashscreen(self):
         """:return: a :class:`PyQt4.QtGui.QPixmap` to be used as splash screen"""
         from camelot.view.art import Pixmap
-        return Pixmap('splashscreen.png').getQPixmap()
+        qpm = Pixmap('splashscreen.png').getQPixmap()
+        img = qpm.toImage()
+        # support transparency
+        if not qpm.mask(): 
+            if img.hasAlphaBuffer(): bm = img.createAlphaMask() 
+            else: bm = img.createHeuristicMask() 
+            qpm.setMask(bm) 
+        return qpm
 
     def get_organization_name(self):
         return self.author

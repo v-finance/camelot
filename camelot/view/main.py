@@ -44,7 +44,7 @@ class Application(QtCore.QObject):
         customized to your app"""
         super(Application, self).__init__()
         self.application_admin = application_admin
-        self._splash_window = None
+        self._splashscreen = None
 
     def show_splashscreen(self):
         """:return: the splash window"""
@@ -54,16 +54,18 @@ class Application(QtCore.QObject):
         # registration wizards or others that wait for user input
         # while camelot is starting up
         # flag = QtCore.Qt.WindowStaysOnTopHint
-        splash_window = QtGui.QSplashScreen(pixmap) #, flag)
-        splash_window.show()
-        self._splash_window = splash_window
-        return splash_window
+        splashscreen = QtGui.QSplashScreen(pixmap) #, flag)
+        # transparency support
+        if pixmap.mask(): splashscreen.setMask(pixmap.mask()) 
+        self._splashscreen = splashscreen
+        splashscreen.show()
+        return splashscreen
 
     def show_splash_message(self, splash_window, message):
         """:param message: displays a message on the splash screen, informing
         the user of the status of the application"""
         from PyQt4 import QtCore
-        msgalign = QtCore.Qt.AlignBottom #| QtCore.Qt.AlignRight
+        msgalign = QtCore.Qt.AlignTop #| QtCore.Qt.AlignRight
         msgcolor = QtCore.Qt.white
         splash_window.showMessage(message, msgalign, msgcolor)
 
@@ -153,8 +155,8 @@ class Application(QtCore.QObject):
         :param exception_info: a serialized form of the exception
         """
         from camelot.view.controls import exception
-        if self._splash_window:
-            self._splash_window.hide()
+        if self._splashscreen:
+            self._splashscreen.hide()
         exception.model_thread_exception_message_box(exception_info)
         
     def main(self):
