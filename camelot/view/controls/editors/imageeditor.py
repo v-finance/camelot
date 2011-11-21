@@ -23,7 +23,6 @@
 #  ============================================================================
 
 from fileeditor import FileEditor
-from fileeditor import CustomEditor
 from wideeditor import WideEditor
 
 from camelot.view.art import Icon

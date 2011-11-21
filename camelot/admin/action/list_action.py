@@ -27,7 +27,7 @@ import datetime
 from camelot.admin.action.base import Action
 from application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view.art import Icon
 
 from PyQt4 import QtGui
@@ -298,7 +298,7 @@ class ExportSpreadsheet( Action ):
     
     def model_run( self, model_context ):
         from decimal import Decimal
-        from xlwt import Font, Borders, XFStyle, Pattern, Workbook, ExcelFormula
+        from xlwt import Font, Borders, XFStyle, Pattern, Workbook
         from camelot.view.utils import ( local_date_format, 
                                          local_datetime_format,
                                          local_time_format )
@@ -384,7 +384,7 @@ class ExportSpreadsheet( Action ):
                     elif isinstance( value, datetime.datetime ):
                         format_string = datetime_format
                     elif isinstance( value, datetime.time ):
-                        format_string = time
+                        format_string = time_format
                     else:
                         value = unicode( value )
                         
