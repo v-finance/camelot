@@ -564,16 +564,6 @@ class TableView( AbstractView  ):
         """emits a row_selected signal"""
         self.admin.list_action.gui_run( self.gui_context )
 
-    def copy_selected_rows( self ):
-        """Copy the selected rows in this tableview"""
-        logger.debug( 'delete selected rows called' )
-        if self.table and self.table.model():
-            for row in set( map( lambda x: x.row(), self.table.selectedIndexes() ) ):
-                self.table.model().copy_row( row )
-
-    def select_all_rows( self ):
-        self.table.selectAll()
-
     def create_table_model( self, admin ):
         """Create a table model for the given admin interface"""
         return self.table_model( admin,
@@ -633,18 +623,6 @@ class TableView( AbstractView  ):
             self.table.setItemDelegate( item_delegate )
         for i in range( model.columnCount() ):
             self.table.setColumnWidth( i, model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width() )
-
-    def deleteSelectedRows( self ):
-        """delete the selected rows in this tableview"""
-        self.table.delete_selected_rows()
-
-    @gui_function
-    def newRow( self ):
-        """Create a new row in the tableview"""
-        from camelot.view.workspace import show_top_level
-        form = self.admin.create_new_view( related_collection_proxy=self.get_model(),
-                                           parent = None )
-        show_top_level( form, self )
 
     def closeEvent( self, event ):
         """reimplements close event"""
@@ -831,13 +809,6 @@ class TableView( AbstractView  ):
             env = Environment( loader = loader )
             tp = env.get_template( 'table_view.html' )
             return tp.render( context )
-
-    def importFromFile( self ):
-        """"import data : the data will be imported in the activeMdiChild """
-        logger.info( 'call import method' )
-        from camelot.view.wizard.importwizard import ImportWizard
-        wizard = ImportWizard(self, self.admin)
-        wizard.exec_()
 
     @QtCore.pyqtSlot()
     def focusTable(self):

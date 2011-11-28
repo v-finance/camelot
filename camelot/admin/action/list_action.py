@@ -192,7 +192,20 @@ class CallMethod( Action ):
                     break
         return state
             
-class OpenFormView( Action ):
+class ListContextAction( Action ):
+    """An base class for actions that should only be enabled in the
+    gui_context is a :class:`ListActionModelContext`
+    """
+    
+    def get_state( self, model_context ):
+        state = super( ListContextAction, self ).get_state( model_context )
+        if isinstance( model_context, ListActionModelContext ):
+            state.enabled = True
+        else:
+            state.enabled = False
+        return state
+    
+class OpenFormView( ListContextAction ):
     """Open a form view for the current row of a list."""
     
     def gui_run( self, gui_context ):
@@ -217,36 +230,72 @@ class OpenFormView( Action ):
         formview.setWindowTitle( u' ' )
         show_top_level( formview, gui_context.item_view )
         
-class DuplicateSelection( Action ):
+class OpenNewView( ListContextAction ):
+    """Opens a new view of an Entity related to a table view.
+    """
+    
+    shortcut = QtGui.QKeySequence.New
+    icon = Icon('tango/16x16/actions/document-new.png')
+    tooltip = _('New')
+    verbose_name = _('New')
+    
+    def gui_run( self, gui_context ):
+        from camelot.view.workspace import show_top_level
+        admin = gui_context.admin
+        model = gui_context.item_view.model()
+        form = admin.create_new_view( related_collection_proxy=model,
+                                      parent = None )
+        show_top_level( form, gui_context.item_view )
+    
+class DuplicateSelection( ListContextAction ):
     """Duplicate the selected rows in a table"""
     
     shortcut = QtGui.QKeySequence.Copy
     icon = Icon('tango/16x16/actions/edit-copy.png')
     tooltip = _('Duplicate')
+    verbose_name = _('Duplicate')
+    
+    def gui_run( self, gui_context ):
+        model = gui_context.item_view.model()
+        for row in set( map( lambda x: x.row(), gui_context.item_view.selectedIndexes() ) ):
+            model.copy_row( row )
 
-class DeleteSelection( Action ):
+class DeleteSelection( ListContextAction ):
     """Delete the selected rows in a table"""
     
     shortcut = QtGui.QKeySequence.Delete
     icon = Icon('tango/16x16/places/user-trash.png')
     tooltip = _('Delete')
+    verbose_name = _('Delete')
+    
+    def gui_run( self, gui_context):
+        gui_context.item_view.delete_selected_rows()
 
-class ToPreviousRow( Action ):
+class ToPreviousRow( ListContextAction ):
     """Move to the previous row in a table"""
     
     shortcut = QtGui.QKeySequence.MoveToPreviousPage
     icon = Icon('tango/16x16/actions/go-previous.png')
     tooltip = _('Previous')
+    verbose_name = _('Previous')
 
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
-        current_row = item_view.selectedIndexes()[0].row()
-        previous_row = ( current_row - 1 ) % item_view.model().rowCount()
+        selection = item_view.selectedIndexes()
+        rows = item_view.model().rowCount()
+        if rows <= 0:
+            return
+        if selection:
+            current_row = selection[0].row()
+            previous_row = ( current_row - 1 ) % rows
+        else:
+            previous_row = 0
         item_view.selectRow( previous_row )
 
     def get_state( self, model_context ):
         state = super( ToPreviousRow, self ).get_state( model_context )
-        state.enabled = ( model_context.current_row > 0 )
+        #if state.enabled:
+        #    state.enabled = ( model_context.current_row > 0 )
         return state
     
 class ToFirstRow( ToPreviousRow ):
@@ -255,27 +304,37 @@ class ToFirstRow( ToPreviousRow ):
     shortcut = QtGui.QKeySequence.MoveToStartOfDocument
     icon = Icon('tango/16x16/actions/go-first.png')
     tooltip = _('First')
+    verbose_name = _('First')
     
     def gui_run( self, gui_context ):
         gui_context.item_view.selectRow( 0 )
 
-class ToNextRow( Action ):
+class ToNextRow( ListContextAction ):
     """Move to the next row in a table"""
     
     shortcut = QtGui.QKeySequence.MoveToNextPage
     icon = Icon('tango/16x16/actions/go-next.png')
     tooltip = _('Next')
+    verbose_name = _('Next')
 
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
-        current_row = item_view.selectedIndexes()[0].row()
-        next_row = ( current_row + 1 ) % item_view.model().rowCount()
+        selection = item_view.selectedIndexes()
+        rows = item_view.model().rowCount()
+        if rows <= 0:
+            return
+        if selection:
+            current_row = selection[0].row()
+            next_row = ( current_row + 1 ) % rows
+        else:
+            next_row = 0
         item_view.selectRow( next_row )
 
     def get_state( self, model_context ):
         state = super( ToNextRow, self ).get_state( model_context )
-        max_row = model_context.collection_count - 1
-        state.enabled = ( model_context.current_row < max_row )
+        #if state.enabled:
+        #    max_row = model_context.collection_count - 1
+        #    state.enabled = ( model_context.current_row < max_row )
         return state
     
 class ToLastRow( ToNextRow ):
@@ -284,16 +343,18 @@ class ToLastRow( ToNextRow ):
     shortcut = QtGui.QKeySequence.MoveToEndOfDocument
     icon = Icon('tango/16x16/actions/go-last.png')
     tooltip = _('Last')
+    verbose_name = _('Last')
 
     def gui_run( self, gui_context ):
         item_view = gui_context.item_view
         item_view.selectRow( item_view.model().rowCount() - 1 )
 
-class ExportSpreadsheet( Action ):
+class ExportSpreadsheet( ListContextAction ):
     """Export all rows in a table to a spreadsheet"""
     
     icon = Icon('tango/16x16/mimetypes/x-office-spreadsheet.png')
     tooltip = _('Export to MS Excel')
+    verbose_name = _('Export to MS Excel')
     font_name = 'Arial'
     
     def model_run( self, model_context ):
@@ -410,11 +471,12 @@ class ExportSpreadsheet( Action ):
         yield action_steps.UpdateProgress( text = _('Opening file') )
         yield action_steps.OpenFile( filename )
     
-class PrintPreview( Action ):
+class PrintPreview( ListContextAction ):
     """Print all rows in a table"""
     
     icon = Icon('tango/16x16/actions/document-print-preview.png')
     tooltip = _('Print Preview')
+    verbose_name = _('Print Preview')
 
     def model_run( self, model_context ):
         from camelot.view import action_steps
@@ -430,3 +492,37 @@ class PrintPreview( Action ):
         }
         yield action_steps.PrintJinjaTemplate( template = 'list.html',
                                                context = context )
+
+class SelectAll( ListContextAction ):
+    """Select all rows in a table"""
+    
+    verbose_name = _('Select &All')
+    shortcut = QtGui.QKeySequence.SelectAll
+    tooltip = _('Select all rows in the table')
+
+    def gui_run( self, gui_context ):
+        gui_context.item_view.selectAll()
+        
+class ImportFromFile( ListContextAction ):
+    """Import a csv file in the current table"""
+    
+    verbose_name = _('Import from file')
+    icon = Icon('tango/16x16/mimetypes/text-x-generic.png')
+    tooltip = _('Import from file')
+
+    def gui_run( self, gui_context ):
+        from camelot.view.wizard.importwizard import ImportWizard
+        wizard = ImportWizard(gui_context.item_view, gui_context.admin)
+        wizard.exec_()
+
+class ReplaceFieldContents( ListContextAction ):
+    """Import a csv file in the current table"""
+    
+    verbose_name = _('Replace field contents')
+    tooltip = _('Replace the content of a field for all rows in a selection')
+    
+    def gui_run( self, gui_context ):
+        from camelot.view.wizard.update_value import UpdateValueWizard
+        selection_getter = gui_context.item_view.get_selection_getter()
+        wizard = UpdateValueWizard(admin=admin, selection_getter=selection_getter)
+        wizard.exec_()

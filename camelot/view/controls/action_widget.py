@@ -32,6 +32,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 from camelot.admin.action.form_action import FormActionGuiContext
+from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.view.model_thread import post
 
 class AbstractActionWidget( object ):
@@ -333,7 +334,35 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
         if notificationAnimation is not None and notificationAnimationTimer is not None:
             notificationAnimationTimer.stop()
             notificationAnimation.stop()
+        
+class ActionAction( QtGui.QAction ):
+    
+    def __init__( self, action, gui_context, parent ):
+        super( ActionAction, self ).__init__( parent )
+        self.action = action
+        if action.shortcut != None:
+            self.setShortcut( action.shortcut )
+        post( action.get_state, 
+              self.set_state, 
+              args = (gui_context.create_model_context(),) )
 
+    @QtCore.pyqtSlot( object )
+    def set_state( self, state ):
+        if state.verbose_name != None:
+            self.setText( unicode( state.verbose_name ) )
+        else:
+            self.setText( '' )
+        if state.icon != None:
+            self.setIcon( state.icon.getQIcon() )
+        else:
+            self.setIcon( QtGui.QIcon() )
+        if state.tooltip != None:
+            self.setToolTip( unicode( state.tooltip ) )
+        else:
+            self.setToolTip( '' )
+        self.setEnabled( state.enabled )
+        self.setVisible( state.visible )
+        
 class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
     
     def __init__( self, action, gui_context, parent ):
@@ -343,8 +372,7 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
         .. image:: /_static/actionwidgets/action_push_botton_application_enabled.png
         
         """
-        QtGui.QPushButton.__init__( self,
-                                    parent )
+        QtGui.QPushButton.__init__( self, parent )
         AbstractActionWidget.__init__( self, action, gui_context )
         self.clicked.connect( self.triggered )
 

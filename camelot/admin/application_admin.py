@@ -26,6 +26,7 @@ import os
 import logging
 logger = logging.getLogger('camelot.admin.application_admin')
 
+from PyQt4.QtCore import Qt
 from PyQt4 import QtCore, QtGui
 
 from camelot.view.model_thread import model_function
@@ -156,6 +157,14 @@ methods :
                  Section( _('Configuration'), self ),
                  ]
         
+    def get_application_admin( self ):
+        """Get the :class:`ApplicationAdmin` class of this application, this
+        method is here for compatibility with the :class:`ObjectAdmin`
+        
+        :return: this object itself
+        """
+        return self
+    
     def get_related_admin(self, cls):
         """Get the default :class:`camelot.admin.object_admin.ObjectAdmin` class
         for a specific class, return None, if not known.  The ObjectAdmin
@@ -200,8 +209,11 @@ methods :
          
         :return: a :class:`PyQt4.QtGui.QWidget`
         """
+        from camelot.admin.action.application_action import ApplicationActionGuiContext
         from camelot.view.mainwindow import MainWindow
-        mainwindow = MainWindow(self)
+        gui_context = ApplicationActionGuiContext()
+        gui_context.admin = self
+        mainwindow = MainWindow( gui_context )
         shortcut_versions = QtGui.QShortcut(
             QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_V ),
             mainwindow
@@ -230,11 +242,71 @@ methods :
 
     def get_actions(self):
         """
-        :return: a list of :class:`camelot.admin.application_action.ApplicationAction` objects
-            that should be added to the menu and the icon bar for this application
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the desktop of the user.
         """
         return []
+    
+    def get_main_menu( self ):
+        """
+        :return: a list of Menu objects, or None if there should be no main
+            menu
+        """
+        from camelot.admin.action import list_action, application_action
+        from camelot.admin.menu import Menu
 
+        return [ Menu( _('&File'),
+                       [ application_action.Backup(),
+                         application_action.Restore(),
+                         None,
+                         list_action.PrintPreview(),
+                         list_action.ExportSpreadsheet(),
+                         list_action.ImportFromFile(),
+                         None,
+                         application_action.Exit(),
+                         ] ),
+                 Menu( _('&Edit'),
+                       [ list_action.OpenNewView(),
+                         list_action.SelectAll(),
+                         list_action.DuplicateSelection(),
+                         list_action.DeleteSelection(),
+                         list_action.ReplaceFieldContents(), 
+                         ]),
+                 Menu( _('View'),
+                       [ application_action.Refresh(),
+                         Menu( _('Go To'), [ list_action.ToFirstRow(),
+                                             list_action.ToPreviousRow(),
+                                             list_action.ToNextRow(),
+                                             list_action.ToLastRow(), ]) ] ),
+                 Menu( _('&Help'),
+                       [ application_action.ShowHelp(),
+                         application_action.ShowAbout() ] )
+                 ]
+    
+    def get_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned
+            
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        from camelot.admin.action import list_action, application_action
+        if toolbar_area == Qt.TopToolBarArea:
+            return [
+                list_action.OpenNewView(),
+                list_action.DuplicateSelection(),
+                list_action.DeleteSelection(),
+                list_action.ToFirstRow(),
+                list_action.ToPreviousRow(),
+                list_action.ToNextRow(),
+                list_action.ToLastRow(),
+                list_action.ExportSpreadsheet(),
+                list_action.PrintPreview(),
+                application_action.ShowHelp(),
+            ]
+    
     def get_name(self):
         """
         :return: the name of the application, by default this is the class
@@ -275,40 +347,10 @@ methods :
         if self.help_url:
             return QUrl( self.help_url )
 
-    def get_whats_new(self):
-        """:return: a widget that has a show() method """
-        return None
-
-    def get_affiliated_url(self):
-        """:return: a :class:`PyQt4.QtCore.QUrl` pointing to an affiliated webpage
-
-        When this method returns a QUrl, an additional item will be available
-        in the 'Help' menu, when clicked the system browser will be opened
-        an pointing to this url.
-
-        This can be used to connect the user to a website that is used a lot
-        in the organization, but hard to remember.
-        """
-        from PyQt4.QtCore import QUrl
-        if self.application_url:
-            return QUrl( self.application_url )
-
-    def get_remote_support_url(self):
-        """:return: a :class:`PyQt4.QtCore.QUrl` pointing to a page to get remote support
-
-        When this method returns a QUrl, an additional item will be available
-        in the 'Help' menu, when clicked the system browser will be opened
-        an pointing to this url.
-
-        This can be used to connect the user to services like logmein.com, an
-        online ticketing system or others.
-        """
-        return None
-
     def get_stylesheet(self):
         """
-        :return: a string with the qt stylesheet to be used for this application as a string
-        or None if no stylesheet needed.
+        :return: a string with the content of a qt stylesheet to be used for 
+        this application as a string or None if no stylesheet needed.
 
         Camelot comes with a couple of default stylesheets :
 

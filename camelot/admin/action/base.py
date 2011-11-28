@@ -318,10 +318,14 @@ direct manipulations of the user interface without a need to access the model.
         :return: a :class:`QtGui.QWidget` which when triggered
             will execute the :meth:`gui_run` method.
         """
-        from camelot.view.controls.action_widget import ActionLabel, ActionPushButton
+        from camelot.view.controls.action_widget import ( ActionLabel, 
+                                                          ActionPushButton,
+                                                          ActionAction )
         from camelot.view.workspace import DesktopBackground
         if isinstance( parent, DesktopBackground ):
             return ActionLabel( self, gui_context, parent )
+        if isinstance( parent, (QtGui.QToolBar, QtGui.QMenu) ):
+            return ActionAction( self, gui_context, parent )
         return ActionPushButton( self, gui_context, parent )
         
     def gui_run( self, gui_context ):

@@ -22,7 +22,8 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.utils import ugettext, ugettext_lazy as _
@@ -125,6 +126,11 @@ class OpenNewView( EntityAction ):
     
     """
 
+    verbose_name = _('New')
+    shortcut = QtGui.QKeySequence.New
+    icon = Icon('tango/16x16/actions/document-new.png')
+    tooltip = _('New')
+            
     def get_state( self, model_context ):
         state = super( OpenNewView, self ).get_state( model_context )
         state.verbose_name = self.verbose_name or ugettext('New %s')%(self._entity_admin.get_verbose_name())
@@ -138,11 +144,88 @@ class OpenNewView( EntityAction ):
         show_top_level( form, gui_context.workspace )
         
 class ShowHelp( Action ):
-    """Display the help window"""
+    """Open the help"""
     
     shortcut = QtGui.QKeySequence.HelpContents
     icon = Icon('tango/16x16/apps/help-browser.png')
-    tooltip = _('Help')
+    tooltip = _('Help content')
+    verbose_name = _('Help')
+    
+    def gui_run( self, gui_context ):
+        #
+        # Import QtWebKit as late as possible, since it's the largest
+        # part of the QT Library (15 meg on Ubuntu linux)
+        #
+        from PyQt4 import QtWebKit
+        self.view = QtWebKit.QWebView( None )
+        self.view.load( gui_context.admin.get_application_admin().get_help_url() )
+        self.view.setWindowTitle( ugettext('Help Browser') )
+        self.view.setWindowIcon( self.icon.getQIcon() )
+        self.view.show()
+     
+class ShowAbout( Action ):
+    """Show the about dialog with the content returned by the
+    :meth:`ApplicationAdmin.get_about` method
+    """
+    
+    verbose_name = _('&About')
+    icon = Icon('tango/16x16/mimetypes/application-certificate.png')
+    tooltip = _("Show the application's About box")
+    
+    def gui_run( self, gui_context ):
+        abtmsg = gui_context.admin.get_application_admin().get_about()
+        QtGui.QMessageBox.about( gui_context.workspace, 
+                                 ugettext('About'), 
+                                 unicode( abtmsg ) )
+        
+class Backup( Action ):
+    """Backup the database to disk"""
+    
+    verbose_name = _('&Backup')
+    tooltip = _('Backup the database')
+    icon = Icon('tango/16x16/actions/document-save.png')
+    
+    def gui_run( self, gui_context ):
+        gui_context.admin.get_application_admin().backup( gui_context.workspace )
+
+class Restore( Action ):
+    """Restore the database to disk"""
+    
+    verbose_name = _('&Restore')
+    tooltip = _('Restore the database from a backup')
+    icon = Icon('tango/16x16/devices/drive-harddisk.png')
+    
+    def gui_run( self, gui_context ):
+        gui_context.admin.get_application_admin().restore( gui_context.workspace )
+        
+class Refresh( Action ):
+    """Refresh all views in the application"""
+    
+    verbose_name = _('Refresh')
+    shortcut = QtGui.QKeySequence( Qt.Key_F9 )
+    icon = Icon('tango/16x16/actions/view-refresh.png')
+    
+    def model_run( self, model_context ):
+        from elixir import session
+        from camelot.core.orm import refresh_session
+        from camelot.view.action_steps import Refresh
+        refresh_session( session )
+        yield Refresh()
+
+class Exit( Action ):
+    """Exit the application"""
+    
+    verbose_name = _('E&xit')
+    shortcut = QtGui.QKeySequence.Quit
+    icon = Icon('tango/16x16/actions/system-shutdown.png')
+    tooltip = _('Exit the application')
+    
+    def gui_run( self, gui_context ):
+        from camelot.view.model_thread import get_model_thread
+        model_thread = get_model_thread()
+        gui_context.workspace.close_all_views()
+        model_thread.stop()
+        QtCore.QCoreApplication.exit(0)
         
 def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction
