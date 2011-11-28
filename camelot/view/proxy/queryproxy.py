@@ -228,7 +228,35 @@ class QueryTableProxy(CollectionProxy):
         :return: an iterator over the objects in the collection, starting at 
         offset, until limit
         """
+        from sqlalchemy import orm
+        from sqlalchemy.exc import InvalidRequestError
+        
         query = self.get_query_getter()().offset(offset).limit(limit)
+        #
+        # undefer all columns displayed in the list, to reduce the number
+        # of queries
+        #
+        columns_to_undefer = []
+        for field_name, _field_attributes in self.getColumns():
+            
+            property = None
+            try:
+                property = self.admin.mapper.get_property(
+                    field_name,
+                )
+            except InvalidRequestError:
+                #
+                # If the field name is not a property of the mapper
+                #
+                pass
+
+            if property and isinstance(property, orm.properties.ColumnProperty):
+                columns_to_undefer.append( field_name )
+                
+        if columns_to_undefer:
+            options = [ orm.undefer( field_name ) for field_name in columns_to_undefer ]
+            query = query.options( *options )
+                
         return query.all()
                     
     @model_function
