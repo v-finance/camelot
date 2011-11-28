@@ -524,5 +524,5 @@ class ReplaceFieldContents( ListContextAction ):
     def gui_run( self, gui_context ):
         from camelot.view.wizard.update_value import UpdateValueWizard
         selection_getter = gui_context.item_view.get_selection_getter()
-        wizard = UpdateValueWizard(admin=admin, selection_getter=selection_getter)
+        wizard = UpdateValueWizard( admin=gui_context.admin, selection_getter=selection_getter)
         wizard.exec_()

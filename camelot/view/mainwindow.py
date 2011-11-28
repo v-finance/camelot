@@ -22,16 +22,13 @@
 #
 #  ============================================================================
 
-import functools
 import logging
 logger = logging.getLogger('camelot.view.mainwindow')
 
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
-from camelot.view.action import ActionFactory
 from camelot.view.controls.navpane2 import NavigationPane
-from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.model_thread import post
 
 from camelot.core.utils import ugettext as _
@@ -46,7 +43,6 @@ class MainWindow(QtGui.QMainWindow):
 
     def __init__(self, gui_context, parent=None):
         from workspace import DesktopWorkspace
-        from camelot.view.model_thread import post
         logger.debug('initializing main window')
         QtGui.QMainWindow.__init__(self, parent)
 

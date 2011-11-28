@@ -173,18 +173,20 @@ class ListActionsCase( ModelThreadTestCase ):
         to_next = list_action.ToNextRow()
         to_last = list_action.ToLastRow()
         
+        # the state does not change when the current row changes,
+        # to make the actions usable in the main window toolbar
         to_last.gui_run( gui_context )
-        self.assertFalse( get_state( to_last ).enabled )
-        self.assertFalse( get_state( to_next ).enabled )
+        #self.assertFalse( get_state( to_last ).enabled )
+        #self.assertFalse( get_state( to_next ).enabled )
         to_previous.gui_run( gui_context )
-        self.assertTrue( get_state( to_last ).enabled )
-        self.assertTrue( get_state( to_next ).enabled )
+        #self.assertTrue( get_state( to_last ).enabled )
+        #self.assertTrue( get_state( to_next ).enabled )
         to_first.gui_run( gui_context )
-        self.assertFalse( get_state( to_first ).enabled )
-        self.assertFalse( get_state( to_previous ).enabled )
+        #self.assertFalse( get_state( to_first ).enabled )
+        #self.assertFalse( get_state( to_previous ).enabled )
         to_next.gui_run( gui_context )
-        self.assertTrue( get_state( to_first ).enabled )
-        self.assertTrue( get_state( to_previous ).enabled )
+        #self.assertTrue( get_state( to_first ).enabled )
+        #self.assertTrue( get_state( to_previous ).enabled )
         
     def test_print_preview( self ):
         print_preview = list_action.PrintPreview()

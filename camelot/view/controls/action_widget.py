@@ -32,7 +32,6 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 from camelot.admin.action.form_action import FormActionGuiContext
-from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.view.model_thread import post
 
 class AbstractActionWidget( object ):

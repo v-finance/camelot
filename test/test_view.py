@@ -952,7 +952,10 @@ class ControlsTest(ModelThreadTestCase):
     def setUp(self):
         super(ControlsTest, self).setUp()
         from camelot_example.application_admin import MyApplicationAdmin
+        from camelot.admin.action.application_action import ApplicationActionGuiContext
         self.app_admin = MyApplicationAdmin()
+        self.gui_context = ApplicationActionGuiContext()
+        self.gui_context.admin = self.app_admin
 
     def wait_for_animation( self ):
         # wait a while to make sure all animations are finished
@@ -977,7 +980,7 @@ class ControlsTest(ModelThreadTestCase):
 
     def test_main_window(self):
         from camelot.view.mainwindow import MainWindow
-        widget = MainWindow(self.app_admin)
+        widget = MainWindow( self.gui_context ) 
         self.wait_for_animation()
         self.grab_widget(widget)
 
