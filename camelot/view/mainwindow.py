@@ -36,11 +36,6 @@ from camelot.view.model_thread import post
 
 from camelot.core.utils import ugettext as _
 
-toolbar_areas = [ Qt.LeftToolBarArea,
-                  Qt.RightToolBarArea,
-                  Qt.TopToolBarArea,
-                  Qt.BottomToolBarArea ]
-
 class MainWindow(QtGui.QMainWindow):
     """Main window of a Desktop Camelot application
     
@@ -51,6 +46,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def __init__(self, gui_context, parent=None):
         from workspace import DesktopWorkspace
+        from camelot.view.model_thread import post
         logger.debug('initializing main window')
         QtGui.QMainWindow.__init__(self, parent)
 
@@ -65,20 +61,31 @@ class MainWindow(QtGui.QMainWindow):
         logger.debug('setting child windows dictionary')
 
         logger.debug('setting central widget to our workspace')
-        self.setCentralWidget(self.workspace)
+        self.setCentralWidget( self.workspace )
 
         self.workspace.change_view_mode_signal.connect( self.change_view_mode )
         self.workspace.last_view_closed_signal.connect( self.unmaximize_view )
         self.workspace.view_activated_signal.connect( self.view_activated )
 
         logger.debug('creating navigation pane')
-        self.create_navigation_pane()
+        post( self.app_admin.get_sections, self.set_sections )
         
         logger.debug('creating the menus')
-        self.create_main_menu()
+        post( self.app_admin.get_main_menu, self.set_main_menu )
 
         logger.debug('creating the toolbars')
-        self.create_toolbars()
+        post( self.app_admin.get_toolbar_actions, 
+              self.set_left_toolbar_actions,
+              args = (Qt.LeftToolBarArea,) )
+        post( self.app_admin.get_toolbar_actions, 
+              self.set_right_toolbar_actions,
+              args = (Qt.RightToolBarArea,) )
+        post( self.app_admin.get_toolbar_actions, 
+              self.set_top_toolbar_actions,
+              args = (Qt.TopToolBarArea,) )
+        post( self.app_admin.get_toolbar_actions, 
+              self.set_bottom_toolbar_actions,
+              args = (Qt.BottomToolBarArea,) )
 
         logger.debug('creating status bar')
         self.create_status_bar()
@@ -94,14 +101,14 @@ class MainWindow(QtGui.QMainWindow):
         logger.debug('initialization complete')
 
     @QtCore.pyqtSlot()
-    def unmaximize_view(self):
+    def unmaximize_view( self ):
         if self.navpane:
             self.navpane.show()
         if self.menuBar():
             self.menuBar().show()
 
     @QtCore.pyqtSlot()
-    def change_view_mode(self):
+    def change_view_mode( self ):
         if self.menuBar().isHidden():
             if self.navpane:
                 self.navpane.show()
@@ -111,7 +118,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.navpane.hide()
             self.menuBar().hide()
 
-    def read_settings(self):
+    def read_settings( self ):
         settings = QtCore.QSettings()
         self.restoreGeometry(settings.value('geometry').toByteArray())
 
@@ -121,9 +128,9 @@ class MainWindow(QtGui.QMainWindow):
         settings.setValue('geometry', QtCore.QVariant(self.saveGeometry()))
         logger.debug('settings written')
 
-    def create_main_menu(self):
+    @QtCore.pyqtSlot( object )
+    def set_main_menu( self, main_menu ):
         from camelot.view.controls.action_widget import ActionAction
-        main_menu = self.app_admin.get_main_menu()
         if main_menu == None:
             return
         menu_bar = self.menuBar()
@@ -131,9 +138,6 @@ class MainWindow(QtGui.QMainWindow):
             menu_bar.addMenu( menu.render( self.gui_context, menu_bar ) )
         for qaction in menu_bar.findChildren( ActionAction ):
             qaction.triggered.connect( self.action_triggered )
-
-    def get_tool_bar(self):
-        return self.tool_bar
 
     def get_gui_context( self ):
         """Get the :class:`GuiContext` of the active view in the mainwindow,
@@ -146,20 +150,35 @@ class MainWindow(QtGui.QMainWindow):
             return active_view.gui_context
         return self.gui_context
         
-    def create_toolbars(self):                
-        for toolbar_area in toolbar_areas:
-            toolbar_actions = self.app_admin.get_toolbar_actions( toolbar_area )
-            if toolbar_actions != None:
-                toolbar = QtGui.QToolBar( _('Toolbar') )
-                self.addToolBar( toolbar_area, toolbar )
-                toolbar.setObjectName( 'MainWindowToolBar_%i'%toolbar_area )
-                toolbar.setMovable( False )
-                toolbar.setFloatable( False )
-                for action in toolbar_actions:
-                    qaction = action.render( self.gui_context, toolbar )
-                    qaction.triggered.connect( self.action_triggered )
-                    toolbar.addAction( qaction )
-                self.toolbars.append( toolbar )
+    @QtCore.pyqtSlot( object, object )
+    def set_toolbar_actions( self, toolbar_area, toolbar_actions ):
+        if toolbar_actions != None:
+            toolbar = QtGui.QToolBar( _('Toolbar') )
+            self.addToolBar( toolbar_area, toolbar )
+            toolbar.setObjectName( 'MainWindowToolBar_%i'%toolbar_area )
+            toolbar.setMovable( False )
+            toolbar.setFloatable( False )
+            for action in toolbar_actions:
+                qaction = action.render( self.gui_context, toolbar )
+                qaction.triggered.connect( self.action_triggered )
+                toolbar.addAction( qaction )
+            self.toolbars.append( toolbar )
+                
+    @QtCore.pyqtSlot( object )
+    def set_left_toolbar_actions( self, toolbar_actions ):
+        self.set_toolbar_actions( Qt.LeftToolBarArea, toolbar_actions )
+    
+    @QtCore.pyqtSlot( object )
+    def set_right_toolbar_actions( self, toolbar_actions ):
+        self.set_toolbar_actions( Qt.RightToolBarArea, toolbar_actions )
+        
+    @QtCore.pyqtSlot( object )
+    def set_top_toolbar_actions( self, toolbar_actions ):
+        self.set_toolbar_actions( Qt.TopToolBarArea, toolbar_actions )
+        
+    @QtCore.pyqtSlot( object )
+    def set_bottom_toolbar_actions( self, toolbar_actions ):
+        self.set_toolbar_actions( Qt.BottomToolBarArea, toolbar_actions )
 
     @QtCore.pyqtSlot()
     def view_activated( self ):
@@ -184,8 +203,8 @@ class MainWindow(QtGui.QMainWindow):
         gui_context = self.get_gui_context()
         action_action.action.gui_run( gui_context )
         
-    def create_navigation_pane(self):
-        sections = self.app_admin.get_sections()
+    @QtCore.pyqtSlot( object )
+    def set_sections( self, sections ):
         if sections != None:
             self.navpane = NavigationPane(
                 self.app_admin,
@@ -196,13 +215,13 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.navpane = None
 
-    def create_status_bar(self):
+    def create_status_bar( self ):
         from controls.statusbar import StatusBar
         statusbar = StatusBar(self)
         self.setStatusBar(statusbar)
         statusbar.showMessage(_('Ready'), 5000)
 
-    def closeEvent(self, event):
+    def closeEvent( self, event ):
         from camelot.view.model_thread import get_model_thread
         model_thread = get_model_thread()
         self.workspace.close_all_views()
