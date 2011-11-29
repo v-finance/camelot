@@ -82,11 +82,15 @@ strictly to the :class:`ModelContext`
         context.mode_name = self.mode_name
         return context
         
-    def copy( self ):
+    def copy( self, base_class = None ):
         """Create a copy of the GuiContext, this function is used
         to create new GuiContext's that are more specialized without
-        modifying the original one."""
-        new_context = self.__class__()
+        modifying the original one.
+
+        :param base_class: the type of the new context to be created, None
+            if the new context should be of the same type as the copied context.
+        """
+        new_context = (base_class or self.__class__)()
         new_context.progress_dialog = self.progress_dialog
         new_context.mode_name = self.mode_name
         return new_context

@@ -440,7 +440,14 @@ class Splitter(QtGui.QSplitter):
         return SplitterHandle( self.orientation(), self, self._widget_to_hide )
     
 class TableView( AbstractView  ):
-    """A generic tableview widget that puts together some other widgets.  The behaviour of this class and
+    """
+  :param gui_context: a :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`
+      object.
+  :param admin: an :class:`camelot.admin.entity_admin.EntityAdmin` object
+  :param search_text: a predefined search text to put in the search widget
+  :param parent: a :class:`QtGui.QWidget` object
+  
+  A generic tableview widget that puts together some other widgets.  The behaviour of this class and
   the resulting interface can be tuned by specifying specific class attributes which define the underlying
   widgets used ::
 
@@ -490,9 +497,15 @@ class TableView( AbstractView  ):
 
     row_selected_signal = QtCore.pyqtSignal(int)
 
-    def __init__( self, admin, search_text = None, parent = None ):
+    def __init__( self, 
+                  gui_context, 
+                  admin, 
+                  search_text = None, 
+                  parent = None ):
         super(TableView, self).__init__( parent )
         self.admin = admin
+        self.application_gui_context = gui_context
+        self.gui_context = gui_context
         post( self.get_title, self.change_title )
         widget_layout = QtGui.QVBoxLayout()
         if self.header_widget:
@@ -598,7 +611,7 @@ class TableView( AbstractView  ):
         self.table.model().layoutChanged.connect( self.tableLayoutChanged )
         self.tableLayoutChanged()
         self.table_layout.insertWidget( 1, self.table )
-        self.gui_context = ListActionGuiContext()
+        self.gui_context = self.application_gui_context.copy( ListActionGuiContext )
         self.gui_context.admin = self.admin
         self.gui_context.item_view = self.table
 
@@ -667,26 +680,6 @@ class TableView( AbstractView  ):
     def getTitle( self ):
         """return the name of the entity managed by the admin attribute"""
         return self.admin.get_verbose_name()
-
-    def viewFirst( self ):
-        """selects first row"""
-        self.selectTableRow( 0 )
-
-    def viewLast( self ):
-        """selects last row"""
-        self.selectTableRow( self.table.model().rowCount() - 1 )
-
-    def viewNext( self ):
-        """selects next row"""
-        first = self.selectedTableIndexes()[0]
-        next = ( first.row() + 1 ) % self.table.model().rowCount()
-        self.selectTableRow( next )
-
-    def viewPrevious( self ):
-        """selects previous row"""
-        first = self.selectedTableIndexes()[0]
-        prev = ( first.row() - 1 ) % self.table.model().rowCount()
-        self.selectTableRow( prev )
 
     @QtCore.pyqtSlot(object)
     def _set_query(self, query_getter):

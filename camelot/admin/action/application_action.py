@@ -74,8 +74,8 @@ class ApplicationActionGuiContext( GuiContext ):
         context.admin = self.admin
         return context
         
-    def copy( self ):
-        new_context = super( ApplicationActionGuiContext, self ).copy()
+    def copy( self, base_class=None ):
+        new_context = super( ApplicationActionGuiContext, self ).copy( base_class )
         new_context.workspace = self.workspace
         new_context.admin = self.admin
         return new_context
@@ -111,7 +111,7 @@ class OpenTableView( EntityAction ):
         return state
         
     def gui_run( self, gui_context ):
-        table_view = self._entity_admin.create_table_view()
+        table_view = self._entity_admin.create_table_view( gui_context )
         if gui_context.mode_name == 'new_tab':
             gui_context.workspace.add_view( table_view )
         else:

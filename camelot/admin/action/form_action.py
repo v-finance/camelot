@@ -121,8 +121,8 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         context.current_row = self.widget_mapper.currentIndex()
         return context
         
-    def copy( self ):
-        new_context = super( FormActionGuiContext, self ).copy()
+    def copy( self, base_class = None ):
+        new_context = super( FormActionGuiContext, self ).copy( base_class )
         new_context.widget_mapper = self.widget_mapper
         return new_context
 

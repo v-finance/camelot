@@ -144,8 +144,8 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         context.selected_rows = selected_rows
         return context
         
-    def copy( self ):
-        new_context = super( ListActionGuiContext, self ).copy()
+    def copy( self, base_class = None ):
+        new_context = super( ListActionGuiContext, self ).copy( base_class )
         new_context.item_view = self.item_view
         return new_context
 

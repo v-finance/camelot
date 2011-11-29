@@ -249,8 +249,8 @@ methods :
     
     def get_main_menu( self ):
         """
-        :return: a list of Menu objects, or None if there should be no main
-            menu
+        :return: a list of :class:`camelot.admin.menu.Menu` objects, or None if 
+            there should be no main menu
         """
         from camelot.admin.action import list_action, application_action
         from camelot.admin.menu import Menu
@@ -260,17 +260,21 @@ methods :
                          application_action.Restore(),
                          None,
                          list_action.PrintPreview(),
-                         list_action.ExportSpreadsheet(),
-                         list_action.ImportFromFile(),
+                         Menu( _('Export To'),
+                               [list_action.ExportSpreadsheet()] ),
+                         Menu( _('Import From'),
+                               [list_action.ImportFromFile()] ),
                          None,
                          application_action.Exit(),
                          ] ),
                  Menu( _('&Edit'),
                        [ list_action.OpenNewView(),
-                         list_action.SelectAll(),
-                         list_action.DuplicateSelection(),
                          list_action.DeleteSelection(),
-                         list_action.ReplaceFieldContents(), 
+                         list_action.DuplicateSelection(),
+                         None,
+                         list_action.SelectAll(),
+                         None,
+                         list_action.ReplaceFieldContents(),   
                          ]),
                  Menu( _('View'),
                        [ application_action.Refresh(),

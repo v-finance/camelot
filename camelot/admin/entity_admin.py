@@ -501,10 +501,10 @@ It has additional class attributes that customise its behaviour.
         return widget
 
     @gui_function
-    def create_table_view( self ):
+    def create_table_view( self, gui_context ):
         """Returns a QWidget containing a table view
         """
-        return self.TableView( self )
+        return self.TableView( gui_context, self )
 
     @model_function
     def delete(self, entity_instance):

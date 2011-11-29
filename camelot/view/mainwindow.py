@@ -98,6 +98,7 @@ class MainWindow(QtGui.QMainWindow):
 
     @QtCore.pyqtSlot()
     def unmaximize_view( self ):
+        """Show the navigation pane and the menu bar if they exist """
         if self.navpane:
             self.navpane.show()
         if self.menuBar():
@@ -105,6 +106,7 @@ class MainWindow(QtGui.QMainWindow):
 
     @QtCore.pyqtSlot()
     def change_view_mode( self ):
+        """Switch between hidden or shown menubar and navigation pane"""
         if self.menuBar().isHidden():
             if self.navpane:
                 self.navpane.show()
@@ -115,10 +117,12 @@ class MainWindow(QtGui.QMainWindow):
             self.menuBar().hide()
 
     def read_settings( self ):
+        """Restore the geometry of the main window to its last saved state"""
         settings = QtCore.QSettings()
         self.restoreGeometry(settings.value('geometry').toByteArray())
 
     def write_settings(self):
+        """Store the current geometry of the main window"""
         logger.debug('writing application settings')
         settings = QtCore.QSettings()
         settings.setValue('geometry', QtCore.QVariant(self.saveGeometry()))
@@ -126,6 +130,11 @@ class MainWindow(QtGui.QMainWindow):
 
     @QtCore.pyqtSlot( object )
     def set_main_menu( self, main_menu ):
+        """Set the main menu
+        :param main_menu: a list of :class:`camelot.admin.menu.Menu` objects,
+            as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_main_menu`
+            method.
+        """
         from camelot.view.controls.action_widget import ActionAction
         if main_menu == None:
             return
@@ -148,6 +157,13 @@ class MainWindow(QtGui.QMainWindow):
         
     @QtCore.pyqtSlot( object, object )
     def set_toolbar_actions( self, toolbar_area, toolbar_actions ):
+        """Set the toolbar for a specific area
+        :param toolbar_area: the area on which to put the toolbar, from
+            :class:`Qt.LeftToolBarArea` through :class:`Qt.BottomToolBarArea`
+        :param toolbar_actions: a list of :class:`camelot.admin.action..base.Action` objects,
+            as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_toolbar_actions`
+            method.
+        """
         if toolbar_actions != None:
             toolbar = QtGui.QToolBar( _('Toolbar') )
             self.addToolBar( toolbar_area, toolbar )
@@ -178,6 +194,8 @@ class MainWindow(QtGui.QMainWindow):
 
     @QtCore.pyqtSlot()
     def view_activated( self ):
+        """Update the state of the actions when the active tab in the
+        desktop widget has changed"""
         from camelot.view.controls.action_widget import ActionAction
         gui_context = self.get_gui_context()
         model_context = gui_context.create_model_context()
@@ -195,12 +213,19 @@ class MainWindow(QtGui.QMainWindow):
         
     @QtCore.pyqtSlot( bool )
     def action_triggered( self, _checked ):
+        """Execute an action that was triggered somewhere in the main window,
+        such as the toolbar or the main menu"""
         action_action = self.sender()
         gui_context = self.get_gui_context()
         action_action.action.gui_run( gui_context )
         
     @QtCore.pyqtSlot( object )
     def set_sections( self, sections ):
+        """Set the sections of the navigation pane
+        :param main_menu: a list of :class:`camelot.admin.section.Section` objects,
+            as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_sections`
+            method.
+        """
         if sections != None:
             self.navpane = NavigationPane(
                 self.app_admin,
@@ -213,9 +238,9 @@ class MainWindow(QtGui.QMainWindow):
 
     def create_status_bar( self ):
         from controls.statusbar import StatusBar
-        statusbar = StatusBar(self)
-        self.setStatusBar(statusbar)
-        statusbar.showMessage(_('Ready'), 5000)
+        statusbar = StatusBar( self )
+        self.setStatusBar( statusbar )
+        statusbar.showMessage( _('Ready'), 5000 )
 
     def closeEvent( self, event ):
         from camelot.view.model_thread import get_model_thread
