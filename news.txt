@@ -1,3 +1,16 @@
+Trunk
+-----
+
+ * Main menu and toolbars are configurable in the :class:`ApplicationAdmin` 
+   through the use of actions
+   
+ * Rewrite of Camelot functions behind toolbars and menus to actions
+   
+ * Move to SQLAlchemy 7.x
+ 
+ * Undefer all fields that are going to be used in a view when querying the
+   database
+
 Release 11.11.16
 ----------------
 

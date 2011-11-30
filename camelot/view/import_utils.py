@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-"""Module for managing imports"""
+"""Utility classes to import files into Camelot"""
 
 import csv
 import codecs
@@ -30,7 +30,6 @@ import codecs
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from camelot.core.utils import xls2list
 from camelot.core.utils import ugettext as _
 from camelot.core.utils import ugettext_lazy
 
@@ -94,52 +93,6 @@ class UnicodeReader:
 
     def __iter__(self):
         return self
-
-
-class CsvCollectionGetter(object):
-    """Returns data from csv file as a list of RowData objects"""
-
-    def __init__(self, filename):
-        self.filename = filename
-        self._data = None
-
-    def __call__(self):
-        if self._data==None:
-            self._data = []
-            import chardet
-
-            detected = chardet.detect(open(self.filename).read())['encoding']
-            enc = detected or 'utf-8'
-
-            items = UnicodeReader(open(self.filename), encoding=enc)
-
-            self._data = [
-                RowData(i, row_data)
-                for i, row_data in enumerate(items)
-            ]
-
-        return self._data
-
-
-class XlsCollectionGetter(object):
-    """Returns the data from excel file as a list of RowData objects"""
-
-    def __init__(self, filename, encoding='utf-8'):
-        self.filename = filename
-        self.encoding = encoding
-        self._data = None
-
-    def __call__(self):
-        if self._data == None:
-            rows = xls2list(self.filename)[1:] # we skip the first row :)
-
-            self._data = [
-                RowData(i, row_data)
-                for i, row_data in enumerate(rows)
-            ]
-
-        return self._data
-
 
 class RowDataAdminDecorator(object):
     """Decorator that transforms the Admin of the class to be imported to an
@@ -342,111 +295,3 @@ class DataPreviewPage(QtGui.QWizardPage):
 
     def isComplete(self):
         return self._complete
-
-
-class FinalPage(ProgressPage):
-    """FinalPage is the final page in the import process"""
-
-    title = ugettext_lazy('Import Progress')
-    sub_title = ugettext_lazy('Please wait while data is being imported.')
-
-    def __init__(self, parent=None, model=None, admin=None):
-        """
-        :model: the source model from which to import data
-        :admin: the admin class of the target data
-        """
-        super(FinalPage, self).__init__(parent)
-        self.model = model
-        self.admin = admin
-        icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
-        self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
-        self.setButtonText(QtGui.QWizard.FinishButton, _('Close'))
-        self.progressbar = QtGui.QProgressBar()
-
-    def run(self):
-        collection = self.model.get_collection()
-        self.update_maximum_signal.emit( len(collection) )
-        for i,row in enumerate(collection):
-            new_entity_instance = self.admin.entity()
-            for field_name, attributes in self.model.get_admin().get_columns():
-                try:
-                    from_string = attributes['from_string']
-                except KeyError:
-                    logger.warn( 'field %s has no from_string field attribute, dont know how to import it properly'%attributes['original_field'] )
-                    from_string = lambda _a:None
-                setattr(
-                    new_entity_instance,
-                    attributes['original_field'],
-                    from_string(getattr(row, field_name))
-                )
-            self.admin.add(new_entity_instance)
-            self.admin.flush(new_entity_instance)
-            self.update_progress_signal.emit(
-                i, _('Row %i of %i imported') % (i+1, len(collection))
-            )
-
-
-class DataPreviewCollectionProxy(CollectionProxy):
-    header_icon = None
-
-
-class ImportWizard(QtGui.QWizard):
-    """ImportWizard provides a two-step wizard for importing data as objects
-    into Camelot.  To create a custom wizard, subclass this ImportWizard and
-    overwrite its class attributes.
-
-    To import a different file format, you probably need a custom
-    collection_getter for this file type.
-    """
-
-    select_file_page = SelectFilePage
-    data_preview_page = DataPreviewPage
-    final_page = FinalPage
-    collection_getter = CsvCollectionGetter
-    window_title = _('Import CSV data')
-    rowdata_admin_decorator = RowDataAdminDecorator
-
-    def __init__(self, parent=None, admin=None):
-        """:param admin: camelot model admin of the destination data"""
-        super(ImportWizard, self).__init__(parent)
-        assert admin
-        #
-        # Set the size of the wizard to 2/3rd of the screen, since we want to
-        # get some work done here, the user needs to verify and possibly
-        # correct its data
-        #
-        desktop = QtCore.QCoreApplication.instance().desktop()
-        self.setMinimumSize(desktop.width()*2/3, desktop.height()*2/3)
-
-        row_data_admin = self.rowdata_admin_decorator(admin)
-        model = DataPreviewCollectionProxy(
-            row_data_admin,
-            lambda:[],
-            row_data_admin.get_columns
-        )
-        self.setWindowTitle(self.window_title)
-        self.add_pages(model, admin)
-        self.setOption(QtGui.QWizard.NoCancelButton)
-
-    def add_pages(self, model, admin):
-        """
-        Add all pages to the import wizard, reimplement this method to add
-        custom pages to the wizard.  This method is called in the __init__
-        method, to add all pages to the wizard.
-
-        :param model: the CollectionProxy that will be used to display the to
-        be imported data
-        :param admin: the admin of the destination data
-        """
-        self.addPage(SelectFilePage(parent=self))
-        self.addPage(
-            DataPreviewPage(
-                parent=self,
-                model=model,
-                collection_getter=self.collection_getter
-            )
-        )
-        self.addPage(FinalPage(parent=self, model=model, admin=admin))
-
-
-

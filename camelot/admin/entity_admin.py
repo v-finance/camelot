@@ -445,6 +445,7 @@ It has additional class attributes that customise its behaviour.
         returned widget has an entity_selected_signal signal that will be fired
         when a entity has been selected.
         """
+        from camelot.admin.action.base import GuiContext
         from camelot.view.art import Icon
         from camelot.view.proxy.queryproxy import QueryTableProxy
         from PyQt4 import QtCore, QtGui
@@ -458,7 +459,9 @@ It has additional class attributes that customise its behaviour.
             title_format = ugettext('Select %s')
 
             def __init__(self, admin, parent):
+                gui_context = GuiContext()
                 super(SelectView, self).__init__(
+                    gui_context,
                     admin,
                     search_text=search_text, parent=parent
                 )

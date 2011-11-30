@@ -29,11 +29,12 @@ logger = logging.getLogger('camelot.admin.application_admin')
 from PyQt4.QtCore import Qt
 from PyQt4 import QtCore, QtGui
 
-from camelot.view.model_thread import model_function
+from camelot.admin.action import list_action, application_action
 from camelot.core.backup import BackupMechanism
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
 from camelot.view import database_selection
+from camelot.view.model_thread import model_function
 
 _application_admin_ = []
 
@@ -97,6 +98,10 @@ methods :
 
     if this is set to True, present the user with a database selection
     wizard prior to starting the application.  Defaults to :keyword:`False`.
+    
+When the same action is returned in the :meth:`get_toolbar_actions` and 
+:meth:`get_main_menu` method, it should be exactly the same object, to avoid
+shortcut confusion and reduce the number of status updates.
     """
 
     backup_mechanism = BackupMechanism
@@ -122,6 +127,20 @@ methods :
 
     database_selection = False
 
+    #
+    # actions that will be shared between the toolbar and the main menu
+    #
+    change_row_actions = [ list_action.ToFirstRow(),
+                           list_action.ToPreviousRow(),
+                           list_action.ToNextRow(),
+                           list_action.ToLastRow(), ]
+    edit_actions = [ list_action.OpenNewView(),
+                     list_action.DeleteSelection(),
+                     list_action.DuplicateSelection(),]
+    help_actions = [ application_action.ShowHelp(), ]
+    export_actions = [ list_action.PrintPreview(),
+                       list_action.ExportSpreadsheet() ]
+    
     def __init__(self):
         """Construct an ApplicationAdmin object and register it as the 
         prefered ApplicationAdmin to use througout the application"""
@@ -252,38 +271,31 @@ methods :
         :return: a list of :class:`camelot.admin.menu.Menu` objects, or None if 
             there should be no main menu
         """
-        from camelot.admin.action import list_action, application_action
         from camelot.admin.menu import Menu
 
         return [ Menu( _('&File'),
                        [ application_action.Backup(),
                          application_action.Restore(),
                          None,
-                         list_action.PrintPreview(),
                          Menu( _('Export To'),
-                               [list_action.ExportSpreadsheet()] ),
+                               self.export_actions ),
                          Menu( _('Import From'),
                                [list_action.ImportFromFile()] ),
                          None,
                          application_action.Exit(),
                          ] ),
                  Menu( _('&Edit'),
-                       [ list_action.OpenNewView(),
-                         list_action.DeleteSelection(),
-                         list_action.DuplicateSelection(),
-                         None,
-                         list_action.SelectAll(),
-                         None,
-                         list_action.ReplaceFieldContents(),   
-                         ]),
+                       self.edit_actions + [
+                        None,
+                        list_action.SelectAll(),
+                        None,
+                        list_action.ReplaceFieldContents(),   
+                        ]),
                  Menu( _('View'),
                        [ application_action.Refresh(),
-                         Menu( _('Go To'), [ list_action.ToFirstRow(),
-                                             list_action.ToPreviousRow(),
-                                             list_action.ToNextRow(),
-                                             list_action.ToLastRow(), ]) ] ),
+                         Menu( _('Go To'), self.change_row_actions) ] ),
                  Menu( _('&Help'),
-                       [ application_action.ShowHelp(),
+                       self.help_actions + [
                          application_action.ShowAbout() ] )
                  ]
     
@@ -298,18 +310,8 @@ methods :
         """
         from camelot.admin.action import list_action, application_action
         if toolbar_area == Qt.TopToolBarArea:
-            return [
-                list_action.OpenNewView(),
-                list_action.DuplicateSelection(),
-                list_action.DeleteSelection(),
-                list_action.ToFirstRow(),
-                list_action.ToPreviousRow(),
-                list_action.ToNextRow(),
-                list_action.ToLastRow(),
-                list_action.ExportSpreadsheet(),
-                list_action.PrintPreview(),
-                application_action.ShowHelp(),
-            ]
+            return self.edit_actions + self.change_row_actions + \
+                   self.export_actions + self.help_actions
     
     def get_name(self):
         """

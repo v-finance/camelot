@@ -510,10 +510,55 @@ class ImportFromFile( ListContextAction ):
     icon = Icon('tango/16x16/mimetypes/text-x-generic.png')
     tooltip = _('Import from file')
 
-    def gui_run( self, gui_context ):
-        from camelot.view.wizard.importwizard import ImportWizard
-        wizard = ImportWizard(gui_context.item_view, gui_context.admin)
-        wizard.exec_()
+    def model_run( self, model_context ):
+        import chardet
+        from camelot.view import action_steps
+        from camelot.view.import_utils import ( UnicodeReader, 
+                                                RowData, 
+                                                RowDataAdminDecorator )
+        file_names = yield action_steps.SelectFile()
+        if not len( file_names ):
+            return
+        file_name = file_names[0]
+        yield action_steps.UpdateProgress( text = _('Reading data') )
+        #
+        # read the data into temporary row_data objects
+        #
+        detected = chardet.detect( open( file_name ).read() )['encoding']
+        enc = detected or 'utf-8'
+        items = UnicodeReader( open( file_name ), encoding = enc )
+        collection = [ RowData(i, row_data) for i, row_data in enumerate( items ) ]
+        #
+        # validate the temporary data
+        #
+        admin = model_context.admin
+        row_data_admin = RowDataAdminDecorator( admin )
+        yield action_steps.ChangeObjects( collection, row_data_admin )
+        #
+        # Ask confirmation
+        #
+        
+        #
+        # import the temporary objects into real objects
+        #
+        for i,row in enumerate( collection ):
+            new_entity_instance = admin.entity()
+            for field_name, attributes in row_data_admin.get_columns():
+                try:
+                    from_string = attributes['from_string']
+                except KeyError:
+                    logger.warn( 'field %s has no from_string field attribute, dont know how to import it properly'%attributes['original_field'] )
+                    from_string = lambda _a:None
+                setattr(
+                    new_entity_instance,
+                    attributes['original_field'],
+                    from_string(getattr(row, field_name))
+                )
+            admin.add( new_entity_instance )
+            yield action_steps.UpdateProgress( i, len( collection ), _('Importing data') )
+        yield action_steps.FlushSession( model_context.session )
+        yield action_steps.Refresh()
+        
 
 class ReplaceFieldContents( ListContextAction ):
     """Import a csv file in the current table"""

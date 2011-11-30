@@ -164,15 +164,26 @@ class MainWindow(QtGui.QMainWindow):
             as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_toolbar_actions`
             method.
         """
+        from camelot.view.controls.action_widget import ActionAction
         if toolbar_actions != None:
+            #
+            # gather menu bar actions to prevent duplication of QActions
+            #
+            qactions = dict()
+            menu_bar = self.menuBar()
+            if menu_bar:
+                for qaction in menu_bar.findChildren( ActionAction ):
+                    qactions[qaction.action] = qaction
             toolbar = QtGui.QToolBar( _('Toolbar') )
             self.addToolBar( toolbar_area, toolbar )
             toolbar.setObjectName( 'MainWindowToolBar_%i'%toolbar_area )
             toolbar.setMovable( False )
             toolbar.setFloatable( False )
             for action in toolbar_actions:
-                qaction = action.render( self.gui_context, toolbar )
-                qaction.triggered.connect( self.action_triggered )
+                qaction = qactions.get( action, None )
+                if qaction == None:
+                    qaction = action.render( self.gui_context, toolbar )
+                    qaction.triggered.connect( self.action_triggered )
                 toolbar.addAction( qaction )
             self.toolbars.append( toolbar )
                 
