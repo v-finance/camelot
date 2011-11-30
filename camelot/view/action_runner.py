@@ -55,6 +55,7 @@ class ActionRunner( QtCore.QEventLoop ):
         self._generator = None
         self._gui_context = gui_context
         self._model_context = gui_context.create_model_context()
+        self._non_blocking_cancel_request = False
         self.non_blocking_action_step_signal.connect( self.non_blocking_action_step )
         post( self._initiate_generator, self.generator, self.exception )
     
@@ -94,7 +95,14 @@ class ActionRunner( QtCore.QEventLoop ):
                         return result
                     else:
                         self.non_blocking_action_step_signal.emit( result )
-                result = self._generator.next()
+                #
+                # Cancel requests can arrive asynchronously through non 
+                # blocking ActionSteps such as UpdateProgress
+                #
+                if self._non_blocking_cancel_request == True:
+                    result = self._generator.throw( CancelRequest() )
+                else:
+                    result = self._generator.next()
         except CancelRequest, e:
             return e
         except StopIteration, e:
@@ -102,7 +110,11 @@ class ActionRunner( QtCore.QEventLoop ):
 
     @QtCore.pyqtSlot( object )
     def non_blocking_action_step( self, action_step ):
-        action_step.gui_run( self._gui_context )
+        try:
+            self._was_canceled( self._gui_context )
+            action_step.gui_run( self._gui_context )
+        except CancelRequest, e:
+            self._non_blocking_cancel_request = True
         
     @QtCore.pyqtSlot( object )
     def exception( self, exception_info ):
