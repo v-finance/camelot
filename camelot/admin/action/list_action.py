@@ -23,6 +23,7 @@
 #  ============================================================================
 
 import datetime
+import logging
 
 from camelot.admin.action.base import Action
 from application_action import ( ApplicationActionGuiContext,
@@ -31,6 +32,8 @@ from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view.art import Icon
 
 from PyQt4 import QtGui
+
+LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
 
 class ListActionModelContext( ApplicationActionModelContext ):
     """On top of the attributes of the 
@@ -547,7 +550,7 @@ class ImportFromFile( ListContextAction ):
                 try:
                     from_string = attributes['from_string']
                 except KeyError:
-                    logger.warn( 'field %s has no from_string field attribute, dont know how to import it properly'%attributes['original_field'] )
+                    LOGGER.warn( 'field %s has no from_string field attribute, dont know how to import it properly'%attributes['original_field'] )
                     from_string = lambda _a:None
                 setattr(
                     new_entity_instance,

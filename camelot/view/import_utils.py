@@ -31,17 +31,13 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 from camelot.core.utils import ugettext as _
-from camelot.core.utils import ugettext_lazy
 
 from camelot.view.art import Pixmap, ColorScheme
 from camelot.view.model_thread import post
-from camelot.view.wizard.pages.select import SelectFilePage
-from camelot.view.wizard.pages.progress_page import ProgressPage
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
-from camelot.view.proxy.collection_proxy import CollectionProxy
 
 import logging
-logger = logging.getLogger('camelot.view.wizard.importwizard')
+logger = logging.getLogger('camelot.view.import_utils')
 
 class RowData(object):
     """Class representing the data in a single row of the imported file as an

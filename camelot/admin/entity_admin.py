@@ -360,17 +360,17 @@ It has additional class attributes that customise its behaviour.
         return self.list_charts
 
     @model_function
-    def get_filters(self):
+    def get_filters( self ):
         """Returns the filters applicable for these entities each filter is
 
-        :return: [(filter_name, [(option_name, query_decorator), ...), ... ]
+        :return: [(filter, filter_data)]
         """
         from camelot.view.filters import structure_to_filter
 
         def filter_generator():
             for structure in self.list_filter:
                 filter = structure_to_filter(structure)
-                yield (filter, filter.get_name_and_options(self))
+                yield (filter, filter.get_filter_data(self))
 
         return list(filter_generator())
 

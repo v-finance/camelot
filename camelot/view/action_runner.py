@@ -113,7 +113,7 @@ class ActionRunner( QtCore.QEventLoop ):
         try:
             self._was_canceled( self._gui_context )
             action_step.gui_run( self._gui_context )
-        except CancelRequest, e:
+        except CancelRequest:
             self._non_blocking_cancel_request = True
         
     @QtCore.pyqtSlot( object )

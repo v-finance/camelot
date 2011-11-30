@@ -51,6 +51,8 @@ class SelectFile( ActionStep ):
     
     .. image:: /_static/actionsteps/select_file.png
     
+    This action step stores its last location into the :class:`QtCore.QSettings` 
+    and uses it as the initial location the next time it is invoked.
     """
     
     def __init__( self, file_name_filter = '' ):

@@ -308,7 +308,6 @@ shortcut confusion and reduce the number of status updates.
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
-        from camelot.admin.action import list_action, application_action
         if toolbar_area == Qt.TopToolBarArea:
             return self.edit_actions + self.change_row_actions + \
                    self.export_actions + self.help_actions

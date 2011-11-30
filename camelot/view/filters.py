@@ -27,6 +27,7 @@ Python structures to represent filters.
 These structures can be transformed to QT forms.
 """
 
+import collections
 import datetime
 
 from PyQt4 import QtCore, QtGui
@@ -35,6 +36,15 @@ from sqlalchemy import sql
 from camelot.view.controls.editors import DateEditor
 from camelot.view.model_thread import gui_function
 from camelot.core.utils import ugettext_lazy as _
+
+#
+# data structures to feed the filter widgets
+# 
+filter_data = collections.namedtuple( 'filter_data',
+                                      ['name', 'options', 'default'] )
+
+filter_option = collections.namedtuple( 'filter_option',
+                                        ['name', 'value', 'decorator'] )
 
 def structure_to_filter(structure):
     """Convert a python data structure to a filter, using the following rules :
@@ -61,7 +71,7 @@ class Filter(object):
             defaults to showing all records.
         """
         self.attribute = attribute
-        self._default = default
+        self.default = default
         
     @gui_function
     def render(self, parent, name, options):
@@ -74,11 +84,9 @@ class Filter(object):
         The name and the list of options can be fetched with get_name_and_options"""
         raise NotImplementedError()
         
-    def get_name_and_options(self, admin):
-        """return a tuple of the name of the filter and a list of options that can be selected. 
-        Each option is a tuple of the name of the option, and a filter function to
-        decorate a query
-        @return:  (filter_name, [(option_name, query_decorator), ...)
+    def get_filter_data(self, admin):
+        """
+        :return:  a :class:`filter_data` object
         """
         from sqlalchemy.sql import select
         #from sqlalchemy.sql.expression import alias
@@ -121,16 +129,23 @@ class Filter(object):
               
             return decorator
 
-        options = []
+        options = [ filter_option( name = _('All'),
+                                   value = Filter.All,
+                                   decorator = lambda q:q ) ]
+        
         for value in session.execute(query):
             if 'to_string' in attributes:
                 option_name = attributes['to_string'](value[0])
             else:
                 option_name = value[0]
         
-            options.append((_(option_name), create_decorator(col, attributes, value[0], joins)))
+            options.append( filter_option( name = _(option_name),
+                                           value = value[0],
+                                           decorator = create_decorator(col, attributes, value[0], joins) ) )
         
-        return (filter_names[0],[(_('All'), lambda q: q)] + options)
+        return filter_data( name = filter_names[0],
+                            options = options,
+                            default = self.default )
 
 class FilterWidget( QtGui.QGroupBox ):
     """A box containing a filter that can be applied on a table view, this filter is
@@ -138,66 +153,66 @@ class FilterWidget( QtGui.QGroupBox ):
   
     filter_changed_signal = QtCore.pyqtSignal()
     
-    def __init__(self, name, choices, parent):
-        super( FilterWidget, self ).__init__( unicode( name ), parent )
+    def __init__(self, filter_data, parent):
+        super( FilterWidget, self ).__init__( unicode( filter_data.name ), parent )
         layout = QtGui.QHBoxLayout()
         layout.setSpacing( 2 )
         self.setLayout( layout )
         self.group = QtGui.QButtonGroup(self)
-        self.item = name
-        self.unique_values = []
-        self.choices = None
-        self.setChoices( choices )
+        self.set_filter_data( filter_data )
          
     @QtCore.pyqtSlot(bool)
-    def emit_filter_changed(self, state):
+    def emit_filter_changed( self, state) :
         self.filter_changed_signal.emit()
     
-    def setChoices(self, choices):
-        self.choices = choices
+    def set_filter_data( self, filter_data ):
+        self.filter_data = filter_data
         layout = self.layout()
         button_layout = QtGui.QVBoxLayout()
         
-        for i, name in enumerate([unicode(c[0]) for c in choices]):
-            button = QtGui.QRadioButton(name, self)
-            button_layout.addWidget(button)
+        for i, choice in enumerate( filter_data.options ):
+            button = QtGui.QRadioButton( unicode( choice.name ), self)
+            button_layout.addWidget( button )
             self.group.addButton(button, i)
-            if i==0:
+            if choice.value == filter_data.default:
                 button.setChecked(True)
             button.toggled.connect( self.emit_filter_changed )
             
         layout.addLayout( button_layout )
         self.setLayout(layout)
     
-    def decorate_query(self, query):
+    def decorate_query( self, query ):
         checked = self.group.checkedId()
         if checked>=0:
-            return self.choices[checked][1](query)
+            return self.filter_data.options[checked].decorator( query )
         return query
                     
 class GroupBoxFilter(Filter):
     """Filter where the items are displayed in a QGroupBox"""
     
     @gui_function
-    def render(self, parent, name, options):
-        return FilterWidget(name, options, parent)
+    def render( self, filter_data, parent ):
+        return FilterWidget( filter_data, parent )
       
 class GroupBoxFilterWidget( QtGui.QGroupBox ):
     """Flter widget based on a QGroupBox"""
   
     filter_changed_signal = QtCore.pyqtSignal()
     
-    def __init__(self, name, choices, parent):
-        super( GroupBoxFilterWidget, self ).__init__( unicode( name ), parent )
+    def __init__(self, filter_data, parent):
+        super( GroupBoxFilterWidget, self ).__init__( unicode( filter_data.name ), parent )
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 2 )
-        self.choices = choices
+        self.filter_data = filter_data
         combobox = QtGui.QComboBox(self)
-        for i,(name,decorator) in enumerate(choices):
-            combobox.insertItem(i, unicode(name), QtCore.QVariant(decorator))
+        self.current_index = 0
+        for i, choice in enumerate( filter_data.options ):
+            if choice.value == filter_data.default:
+                self.current_index = i
+            combobox.insertItem(i, unicode( choice.name ) )
+        combobox.setCurrentIndex( self.current_index )
         layout.addWidget( combobox )
         self.setLayout(layout)
-        self.current_index = 0
         combobox.currentIndexChanged.connect( self.emit_filter_changed )
             
     @QtCore.pyqtSlot(int)
@@ -207,15 +222,15 @@ class GroupBoxFilterWidget( QtGui.QGroupBox ):
         
     def decorate_query(self, query):
         if self.current_index>=0:
-            return self.choices[self.current_index][1](query)
+            return self.filter_data.options[self.current_index].decorator( query )
         return query
 
 class ComboBoxFilter(Filter):
     """Filter where the items are displayed in a QComboBox"""
     
     @gui_function
-    def render(self, parent, name, options):
-        return GroupBoxFilterWidget(name, options, parent)
+    def render(self, filter_data, parent):
+        return GroupBoxFilterWidget(filter_data, parent)
     
 class EditorFilter(Filter):
     """Filter that presents the user with an editor, allowing the user to enter
@@ -228,12 +243,12 @@ class EditorFilter(Filter):
         self._field_name = field_name
         self._verbose_name = verbose_name
         
-    def render(self, parent, name, options):
+    def render(self, filter_data, parent):
         from camelot.view.controls.filter_operator import FilterOperator
-        entity, field_name, field_attributes = options
+        _name, (entity, field_name, field_attributes) = filter_data
         return FilterOperator(entity, field_name, field_attributes, parent)
     
-    def get_name_and_options(self, admin):
+    def get_filter_data(self, admin):
         field_attributes = admin.get_field_attributes(self._field_name)
         name = self._verbose_name or field_attributes['name']
         return name, (admin.entity, self._field_name, field_attributes)
@@ -243,13 +258,14 @@ class DateFilterWidget( QtGui.QGroupBox ):
   
     filter_changed_signal = QtCore.pyqtSignal()
     
-    def __init__(self, name, query_decorator, default, parent):
-        super( DateFilterWidget, self ).__init__( unicode( name ), parent )
+    def __init__( self, filter_data, parent ):
+        super( DateFilterWidget, self ).__init__( unicode( filter_data.name ), parent )
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 2 )
         self.date_editor = DateEditor(parent=self, nullable=True)
-        self.date_editor.set_value(default)
-        self.query_decorator = query_decorator
+        self.date_editor.set_value( filter_data.default )
+        for option in filter_data.options:
+            self.query_decorator = option.decorator
         layout.addWidget( self.date_editor )
         self.setLayout( layout )
         self.date_editor.editingFinished.connect(self.emit_filter_changed)
@@ -283,11 +299,10 @@ class ValidDateFilter(Filter):
         self._thru_attribute = thru_attribute
         self._verbose_name = verbose_name
         
-    def render(self, parent, name, options):
-        query_decorator, default = options
-        return DateFilterWidget(name, query_decorator, default, parent)
+    def render( self, filter_data, parent ):
+        return DateFilterWidget(filter_data, parent)
         
-    def get_name_and_options(self, admin):
+    def get_filter_data(self, admin):
         from sqlalchemy.sql import and_
         
         def query_decorator(query, date):
@@ -297,6 +312,10 @@ class ValidDateFilter(Filter):
                                          getattr(e, self._thru_attribute)>=date))
             return query
         
-        return (self._verbose_name, (query_decorator, self._default()))
-
-
+        options = filter_option( name = None,
+                                 value = None,
+                                 decorator = query_decorator )
+        
+        return filter_data( name = self._verbose_name,
+                            options = options,
+                            default = self._default() )
