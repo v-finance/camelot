@@ -24,43 +24,36 @@
 
 from PyQt4 import QtGui
 
-class Menu( object ):
-    """A menu is a part of the main menu shown on the main window.  Each Menu
-contains a list of items the user select.  Such a menu item is either a Menu
-itself, an Action object or None to insert a separator.
+class ColumnGroup( object ):
+    """A group of columns to be displayed in a table view
+    :param verbose_name: the text to be displayed in the tab widget of the
+        column group
+    :param columns: a list of fields to display within this column group
+    :param icon: a :class:`camelot.view.art.Icon` object
     """
-        
+    
     def __init__( self, 
                   verbose_name,
-                  items,
-                  icon=None ):
+                  columns,
+                  icon = None ):
         self.verbose_name = verbose_name
         self.icon = icon
-        self.items = items
-
-    def get_verbose_name( self ):
-        return self.verbose_name
-
-    def get_icon( self ):
-        return self.icon
-
-    def get_items( self ):
-        return self.items
+        self.columns = columns
+        
+class ColumnGroups( object ):
+    """A list of column groups
+    :param groups: a list of column groups
+    """
     
-    def render( self, gui_context, parent ):
+    def __init__( self,
+                  groups ):
+        self.groups = groups
+        
+    def render( self, item_view, parent = None ):
         """
-        :return: a :class:`QtGui.QMenu` object
+        Create a tab widget that allows the user to switch between column 
+        groups.
+        :param item_view: a :class:`QtGui.QAbstractItemView` object.
+        :param parent: a :class:`QtGui.QWidget` object
         """
-        menu = QtGui.QMenu( unicode( self.get_verbose_name() ), parent )
-        for item in self.get_items():
-            if item == None:
-                menu.addSeparator()
-                continue
-            rendered_item = item.render( gui_context, menu )
-            if isinstance( rendered_item, QtGui.QMenu ):
-                menu.addMenu( rendered_item )
-            elif isinstance( rendered_item, QtGui.QAction ):
-                menu.addAction( rendered_item )
-            else:
-                raise Exception( 'Cannot handle menu items of type %s'%type( rendered_item ) )
-        return menu
+        pass

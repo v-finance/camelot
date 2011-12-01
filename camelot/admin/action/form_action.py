@@ -126,6 +126,17 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         new_context.widget_mapper = self.widget_mapper
         return new_context
 
+class CloseForm( Action ):
+    
+    def gui_run( self, gui_context ):
+        gui_context.widget_mapper.submit()
+        super( CloseForm, self ).gui_run( gui_context )
+        
+    def model_run( self, model_context ):
+        # validate
+        pass
+        
+    
 def structure_to_form_actions( structure ):
     """Convert a list of python objects to a list of form actions.  If the python
     object is a tuple, a CallMethod is constructed with this tuple as arguments.  If

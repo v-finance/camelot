@@ -27,6 +27,7 @@
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
+from camelot.admin.action.form_action import CloseForm
 from camelot.view.model_thread import gui_function, model_function
 from camelot.view.controls.tableview import TableView
 from camelot.core.utils import ugettext as _
@@ -126,6 +127,12 @@ be specified using the verbose_name attribute.
 
 **Behaviour**
 
+.. attribute:: form_close_action
+
+    The action triggered when the form window is closed.  By default this is the
+    :class:`camelot.admin.action.form_action.CloseForm` action, which validates
+    the form and allows the user to discard the changes when the form is invalid.
+    
 .. attribute:: save_mode
 
     Specifies when the data should be send from the view to the model and flushed
@@ -206,6 +213,7 @@ be specified using the verbose_name attribute.
 
     The QWidget class to be used when a table view is needed
     """
+    
     verbose_name = None
     verbose_name_plural = None
     list_display = []
@@ -215,6 +223,7 @@ be specified using the verbose_name attribute.
     model = CollectionProxy
     fields = []
     form_display = []
+    form_close_action = CloseForm()
     list_filter = []
     list_charts = []
     list_actions = []
