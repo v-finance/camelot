@@ -38,6 +38,7 @@ class FilterOperator( QtGui.QWidget ):
         self._entity, self._field_name, self._field_attributes = entity, field_name, field_attributes
         self._field_attributes['editable'] = True
         layout = QtGui.QVBoxLayout()
+        layout.setContentsMargins( 2, 2, 2, 2 )
         layout.setSpacing( 2 )
         layout.addWidget( UserTranslatableLabel( field_attributes['name'] ) )
         self._operators = field_attributes.get('operators', [])

@@ -47,6 +47,7 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self, parent)
 
         self.toolbars = []
+        self.nav_pane = None
         self.app_admin = gui_context.admin.get_application_admin()
         
         logger.debug('setting up workspace')

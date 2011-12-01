@@ -375,10 +375,12 @@ class HeaderWidget( QtGui.QWidget ):
         from camelot.view.controls.filter_operator import FilterOperator
         layout = QtGui.QHBoxLayout()
         layout.setSpacing( 2 )
+        layout.setContentsMargins( 0, 0, 0, 0 )
         for i, (field, attributes) in enumerate(columns):
             if 'operators' in attributes and attributes['operators']:
                 box = QtGui.QGroupBox()
                 box_layout = QtGui.QVBoxLayout()
+                box_layout.setContentsMargins( 1, 1, 1, 1 )
                 widget = FilterOperator( self._admin.entity,
                                          field, attributes,
                                          box )

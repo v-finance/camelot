@@ -268,7 +268,7 @@ class DateFilterWidget( QtGui.QGroupBox ):
             self.query_decorator = option.decorator
         layout.addWidget( self.date_editor )
         self.setLayout( layout )
-        self.date_editor.editingFinished.connect(self.emit_filter_changed)
+        self.date_editor.editingFinished.connect( self.emit_filter_changed )
             
     @QtCore.pyqtSlot()
     def emit_filter_changed(self):
@@ -312,10 +312,10 @@ class ValidDateFilter(Filter):
                                          getattr(e, self._thru_attribute)>=date))
             return query
         
-        options = filter_option( name = None,
-                                 value = None,
-                                 decorator = query_decorator )
+        option = filter_option( name = None,
+                                value = None,
+                                decorator = query_decorator )
         
         return filter_data( name = self._verbose_name,
-                            options = options,
-                            default = self._default() )
+                            options = [ option ],
+                            default = self.default() )
