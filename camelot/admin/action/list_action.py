@@ -430,8 +430,8 @@ class ExportSpreadsheet( ListContextAction ):
             for i, ((_name, attributes), delta_attributes)  in enumerate( zip( columns, dynamic_attributes ) ):
                 attributes.update( delta_attributes )
                 value = attributes['getter']( obj )
+                format_string = '0'
                 if value != None:
-                    format_string = '0'
                     if isinstance( value, Decimal ):
                         value = float( str( value ) )
                     if isinstance( value, (unicode, str) ):
@@ -451,22 +451,26 @@ class ExportSpreadsheet( ListContextAction ):
                         format_string = time_format
                     else:
                         value = unicode( value )
+                else:
+                    # empty cells should be filled as well, to get the
+                    # borders right
+                    value = ''
                         
-                    style = XFStyle()
-                    style.font = Font()
-                    style.font.name = self.font_name
-                    style.font.height = 200
-                    style.num_format_str = format_string
-                    style.borders = Borders()
-                    if i == 0:
-                        style.borders.left = 0x01                
-                    elif i == len( columns ) - 1:
-                        style.borders.right = 0x01  
-                    if (row - offset + 1) == model_context.collection_count:
-                        style.borders.bottom = 0x01
-                    worksheet.write( row, i, value, style )
-                    min_width = len( unicode( value ) ) * 300
-                    worksheet.col( i ).width = max( min_width, worksheet.col( i ).width )
+                style = XFStyle()
+                style.font = Font()
+                style.font.name = self.font_name
+                style.font.height = 200
+                style.num_format_str = format_string
+                style.borders = Borders()
+                if i == 0:
+                    style.borders.left = 0x01                
+                elif i == len( columns ) - 1:
+                    style.borders.right = 0x01  
+                if (row - offset + 1) == model_context.collection_count:
+                    style.borders.bottom = 0x01
+                worksheet.write( row, i, value, style )
+                min_width = len( unicode( value ) ) * 300
+                worksheet.col( i ).width = max( min_width, worksheet.col( i ).width )
         
         yield action_steps.UpdateProgress( text = _('Saving file') )
         filename = action_steps.OpenFile.create_temporary_file( '.xls' )
