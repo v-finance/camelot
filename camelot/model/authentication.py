@@ -375,7 +375,6 @@ class Party( Entity ):
     def name( self ):
         return ''
 
-    @ColumnProperty
     def email( self ):
 
         cm = ContactMechanism
@@ -385,8 +384,9 @@ class Party( Entity ):
                           whereclause = and_( pcm.table.c.party_id == self.id,
                                               cm.table.c.mechanism.like( ( u'email', u'%' ) ) ),
                           from_obj = [cm.table.join( pcm.table )] ).limit(1)
+    
+    email = ColumnProperty( email, deferred = True )
 
-    @ColumnProperty
     def phone( self ):
 
         cm = ContactMechanism
@@ -396,8 +396,9 @@ class Party( Entity ):
                           whereclause = and_( pcm.table.c.party_id == self.id,
                                               cm.table.c.mechanism.like( ( u'phone', u'%' ) ) ),
                           from_obj = [cm.table.join( pcm.table )] ).limit(1)
+    
+    phone = ColumnProperty( phone, deferred = True )
 
-    @ColumnProperty
     def fax( self ):
 
         cm = ContactMechanism
@@ -407,6 +408,8 @@ class Party( Entity ):
                           whereclause = and_( pcm.table.c.party_id == self.id,
                                               cm.table.c.mechanism.like( ( u'fax', u'%' ) ) ),
                           from_obj = [cm.table.join( pcm.table )] ).limit(1)
+    
+    fax = ColumnProperty( fax, deferred = True )
     
     #
     # Create virtual properties for email and phone that can
@@ -448,7 +451,6 @@ class Party( Entity ):
     contact_mechanisms_fax = property(_get_contact_mechanisms_fax,
                                       _set_contact_mechanism_fax)
 
-    @ColumnProperty
     def full_name( self ):
         aliased_organisation = Organization.table.alias( 'organisation_alias' )
         aliased_person = Person.table.alias( 'person_alias' )
@@ -459,6 +461,8 @@ class Party( Entity ):
                                       sql.select( [aliased_organisation.c.name],
                                                  whereclause = and_( aliased_party.c.id == self.id ),
                                                  from_obj = [aliased_party.join( aliased_organisation, aliased_organisation.c.party_id == aliased_party.c.id )] ).limit( 1 ).as_scalar() )
+    
+    full_name = ColumnProperty( full_name, deferred=True )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Party')
