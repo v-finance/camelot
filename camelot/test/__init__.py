@@ -235,8 +235,10 @@ class EntityViewsTest(ModelThreadTestCase):
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
             
     def test_table_view(self):
+        from camelot.admin.action.base import GuiContext
+        gui_context = GuiContext()
         for admin in self.get_admins():
-            widget = admin.create_table_view()
+            widget = admin.create_table_view( gui_context )
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
 
     def test_new_view(self):

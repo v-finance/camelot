@@ -6,6 +6,7 @@ import unittest
 import os
 import time
 
+from camelot.core.utils import ugettext_lazy as _
 from camelot.test import ModelThreadTestCase, EntityViewsTest, SchemaTest
 from camelot.view.art import ColorScheme
 
@@ -918,31 +919,40 @@ class FilterTest(ModelThreadTestCase):
 
     group_box_filter = filters.GroupBoxFilter('state')
     combo_box_filter = filters.ComboBoxFilter('state')
-    name_and_options = ('Organization', [('Nokia',None), ('Apple',None)])
+    test_data = filters.filter_data( name = _('Organization'),
+                                    default = 1,
+                                    options = [ filters.filter_option( name = 'Nokia',
+                                                                       value = 1,
+                                                                       decorator = None ),
+                                                filters.filter_option( name = 'Apple',
+                                                                       value = 2,
+                                                                       decorator = None ) ] )
 
     def test_group_box_filter(self):
-        self.grab_widget(self.group_box_filter.render(None, *self.name_and_options))
+        self.grab_widget( self.group_box_filter.render( self.test_data, None ) )
 
     def test_combo_box_filter(self):
-        self.grab_widget(self.combo_box_filter.render(None, *self.name_and_options))
+        self.grab_widget( self.combo_box_filter.render( self.test_data, None ) )
 
     def test_filter_list(self):
         from camelot.view.controls.filterlist import FilterList
-        items = [(self.group_box_filter, self.name_and_options),
-                 (self.combo_box_filter, self.name_and_options)]
-        filter_list = FilterList(items, parent=None)
-        self.grab_widget(filter_list)
+        items = [ ( self.group_box_filter, self.test_data ),
+                  ( self.combo_box_filter, self.test_data ) ]
+        filter_list = FilterList( items, parent=None)
+        self.grab_widget( filter_list )
 
     def test_filter_list_in_table_view(self):
         from camelot.view.controls.tableview import TableView
         from camelot.model.authentication import Person
         from camelot.admin.application_admin import ApplicationAdmin
+        from camelot.admin.action.base import GuiContext
+        gui_context = GuiContext()
         app_admin = ApplicationAdmin()
         person_admin = Person.Admin(app_admin, Person)
-        table_view = TableView(person_admin)
-        items = [(self.group_box_filter, self.name_and_options),
-                 (self.combo_box_filter, self.name_and_options)]
-        table_view.set_filters_and_actions((items, None))
+        table_view = TableView( gui_context, person_admin )
+        items = [ (self.group_box_filter, self.test_data ),
+                  (self.combo_box_filter, self.test_data ) ]
+        table_view.set_filters_and_actions( (items, None) )
 
 class ControlsTest(ModelThreadTestCase):
     """Test some basic controls"""
@@ -966,7 +976,10 @@ class ControlsTest(ModelThreadTestCase):
     def test_table_view(self):
         from camelot.view.controls.tableview import TableView
         from camelot.model.authentication import Person
-        widget = TableView(self.app_admin.get_entity_admin(Person))
+        from camelot.admin.action.base import GuiContext
+        gui_context = GuiContext()
+        widget = TableView( gui_context, 
+                            self.app_admin.get_entity_admin(Person) )
         self.grab_widget(widget)
 
     def test_navigation_pane(self):

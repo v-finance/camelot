@@ -505,7 +505,9 @@ It has additional class attributes that customise its behaviour.
 
     @gui_function
     def create_table_view( self, gui_context ):
-        """Returns a QWidget containing a table view
+        """Returns a :class:`QtGui.QWidget` containing a table view
+        :param gui_context: a :class:`camelot.admin.action.base.GuiContext`
+            object.
         """
         return self.TableView( gui_context, self )
 
