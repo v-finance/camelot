@@ -218,6 +218,11 @@ class ListContextAction( Action ):
 class OpenFormView( ListContextAction ):
     """Open a form view for the current row of a list."""
     
+    shortcut = QtGui.QKeySequence.Open
+    icon = Icon('tango/16x16/places/folder.png')
+    tooltip = _('Open')
+    verbose_name = _('Open')
+    
     def gui_run( self, gui_context ):
         from camelot.view.workspace import show_top_level
         from camelot.view.proxy.queryproxy import QueryTableProxy

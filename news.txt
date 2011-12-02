@@ -1,10 +1,13 @@
 Trunk
 -----
 
+ * Possibility to add a close button to a form and to customize the form
+   close action  
+
  * Filters can have a default value
  
  * Main menu and toolbars are configurable in the :class:`ApplicationAdmin` 
-   through the use of actions
+   through the use of actions, which allows creation of reduced main windows
    
  * Rewrite of Camelot functions behind toolbars and menus to actions
    

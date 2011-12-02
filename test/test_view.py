@@ -996,6 +996,17 @@ class ControlsTest(ModelThreadTestCase):
         widget = MainWindow( self.gui_context ) 
         self.wait_for_animation()
         self.grab_widget(widget)
+        
+    def test_reduced_main_window(self):
+        from camelot.view.mainwindow import MainWindow
+        from camelot_example.application_admin import MiniApplicationAdmin
+        from camelot.admin.action.application_action import ApplicationActionGuiContext
+        app_admin = MiniApplicationAdmin()
+        gui_context = ApplicationActionGuiContext()
+        gui_context.admin = app_admin
+        widget = MainWindow( gui_context ) 
+        self.wait_for_animation()
+        self.grab_widget( widget )     
 
     def test_status_bar(self):
         from camelot.view.controls.statusbar import StatusBar

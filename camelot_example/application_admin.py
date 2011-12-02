@@ -3,6 +3,7 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.section import Section
 from camelot.core.utils import ugettext_lazy as _
 
+# begin application admin
 class MyApplicationAdmin(ApplicationAdmin):
 
     name = 'Camelot Video Store'
@@ -54,3 +55,43 @@ class MyApplicationAdmin(ApplicationAdmin):
 
         return [new_movie_action]
 # end actions
+
+# end application admin
+
+class MiniApplicationAdmin( MyApplicationAdmin ):
+    """An application admin for an application with a reduced number of
+    widgets on the main window.
+    """
+
+# begin mini admin
+
+    def get_toolbar_actions( self, toolbar_area ):
+        from PyQt4.QtCore import Qt
+        from camelot.model.authentication import Person
+        from camelot.admin.action import application_action, list_action
+        from model import Movie
+        
+        movies_action = application_action.OpenTableView( self.get_related_admin( Movie ) )
+        movies_action.icon = Icon('tango/22x22/mimetypes/x-office-presentation.png')
+        persons_action = application_action.OpenTableView( self.get_related_admin( Person ) )
+        persons_action.icon = Icon('tango/22x22/apps/system-users.png')
+        
+        if toolbar_area == Qt.LeftToolBarArea:
+            return [ movies_action,
+                     persons_action,
+                     list_action.OpenNewView(),
+                     list_action.OpenFormView(),
+                     list_action.DeleteSelection(),
+                     application_action.Exit(),]
+            
+    def get_actions( self ):
+        return []
+    
+    def get_sections( self ):
+        return None
+    
+    def get_main_menu( self ):
+        return None
+    
+    
+# end mini admin
