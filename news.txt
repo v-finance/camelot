@@ -1,6 +1,8 @@
 Trunk
 -----
 
+ * Filters can have a default value
+ 
  * Main menu and toolbars are configurable in the :class:`ApplicationAdmin` 
    through the use of actions
    

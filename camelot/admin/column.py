@@ -22,8 +22,6 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
-
 class ColumnGroup( object ):
     """A group of columns to be displayed in a table view
     :param verbose_name: the text to be displayed in the tab widget of the

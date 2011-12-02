@@ -547,7 +547,15 @@ be specified using the verbose_name attribute.
         return [(field, self.get_field_attributes(field))
                 for field in self.list_display]
 
+    def get_validator( self ):
+        """Get a validator object
+        
+        :return: a :class:`camelot.admin.validator.object_validator.Validator`
+        """
+        return self.validator( self )
+        
     def create_validator(self, model):
+        """deprecated"""
         return self.validator(self, model)
 
     @model_function
@@ -719,7 +727,7 @@ be specified using the verbose_name attribute.
         discarding.
         """
         from PyQt4 import QtGui, QtCore
-        from camelot.view.controls.view import AbstractView
+        from camelot.view.controls.formview import FormView
         from camelot.view.model_thread import post
 
         class NewObjectCollectionProxy( CollectionProxy ):
@@ -769,28 +777,21 @@ be specified using the verbose_name attribute.
 
         validator = admin.create_validator(model)
 
-        class NewForm(AbstractView):
+        class NewView( FormView ):
 
             entity_created_signal = QtCore.pyqtSignal(object)
 
             def __init__(self, parent):
-                AbstractView.__init__(self, parent)
-                self.widget_layout = QtGui.QVBoxLayout()
-                self.widget_layout.setContentsMargins(0, 0, 0, 0)
-                title = _('New')
-                index = 0
-                self.form_view = admin.create_form_view(
-                    title, model, index, parent
-                )
-                self.widget_layout.insertWidget(0, self.form_view)
-                self.setLayout(self.widget_layout)
-                self.validate_before_close = True
+                super( NewView, self).__init__( title = _('New'), 
+                                                admin = admin, 
+                                                model = model, 
+                                                index = 0)
+
                 #
                 # every time data has been changed, it could become valid,
                 # when this is the case, it should be propagated
                 #
                 model.dataChanged.connect( self.dataChanged )
-                self.form_view.title_changed_signal.connect( self.change_title )
 
             def emit_if_valid(self, valid):
                 if valid:
@@ -808,56 +809,7 @@ be specified using the verbose_name attribute.
 
                 post(validate, self.emit_if_valid)
 
-            def showMessage(self, valid):
-                self.emit_if_valid(valid)
-                form = self.form_view.findChild(QtGui.QWidget, 'form' )
-                if not valid and form:
-                    row = 0
-                    reply = validator.validityDialog(row, self).exec_()
-                    if reply == QtGui.QMessageBox.Discard:
-                        # clear mapping to prevent data being written again to
-                        # the model, after we reverted the row
-                        form.clear_mapping()
-                        model.expunge()
-                        self.validate_before_close = False
-                        self.close()
-                else:
-                    self.validate_before_close = False
-                    self.close()
-
-            def validateClose(self):
-                logger.debug(
-                    'validate before close : %s' %
-                    self.validate_before_close
-                )
-                form = self.form_view.findChild(QtGui.QWidget, 'form' )
-                if self.validate_before_close:
-                    form.submit()
-                    logger.debug(
-                        'unflushed rows : %s' %
-                        str(model.hasUnflushedRows())
-                    )
-                    if model.hasUnflushedRows():
-
-                        def validate_and_flush():
-                            valid = validator.isValid(0)
-                            if valid:
-                                admin.flush( model.get_new_object() )
-                            return valid
-
-                        post(validate_and_flush, self.showMessage)
-                        return False
-                    else:
-                        return True
-                return True
-
-            def closeEvent(self, event):
-                if self.validateClose():
-                    event.accept()
-                else:
-                    event.ignore()
-
-        form = NewForm(parent)
+        form = NewView( parent )
         admin._apply_form_state( form )
         if hasattr(admin, 'form_size'):
             form.setMinimumSize(admin.form_size[0], admin.form_size[1])

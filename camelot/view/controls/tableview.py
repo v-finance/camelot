@@ -24,7 +24,6 @@
 
 """Tableview"""
 
-import functools
 import logging
 logger = logging.getLogger( 'camelot.view.controls.tableview' )
 
@@ -614,6 +613,7 @@ class TableView( AbstractView  ):
         self.tableLayoutChanged()
         self.table_layout.insertWidget( 1, self.table )
         self.gui_context = self.application_gui_context.copy( ListActionGuiContext )
+        self.gui_context.view = self
         self.gui_context.admin = self.admin
         self.gui_context.item_view = self.table
 
@@ -648,36 +648,9 @@ class TableView( AbstractView  ):
         """selects the specified row"""
         self.table.selectRow( row )
 
-    def makeImport(self):
-        pass
-#        for row in data:
-#            o = self.admin.entity()
-#            #For example, setattr(x, 'foobar', 123) is equivalent to x.foobar = 123
-#            # if you want to import all attributes, you must link them to other objects
-#            #for example: a movie has a director, this isn't a primitive like a string
-#            # but a object fetched from the db
-#            setattr(o, object_attributes[0], row[0])
-#            name = row[2].split( ' ' ) #director
-#            o.short_description = "korte beschrijving"
-#            o.genre = ""
-#            from sqlalchemy.orm.session import Session
-#            Session.object_session(o).flush([o])
-#
-#    post( makeImport )
-
-    @gui_function
-    def selectedTableIndexes( self ):
-        """returns a list of selected rows indexes"""
-        return self.table.selectedIndexes()
-
     def getColumns( self ):
         """return the columns to be displayed in the table view"""
         return self.admin.get_columns()
-
-    def getData( self ):
-        """generator for data queried by table model"""
-        for d in self.table.model().getData():
-            yield d
 
     def getTitle( self ):
         """return the name of the entity managed by the admin attribute"""
@@ -729,31 +702,6 @@ class TableView( AbstractView  ):
         self.search_filter = lambda q: q
         self.rebuild_query()
 
-    @gui_function
-    def get_selection_getter(self):
-        """:return: a function that when called return an iterable with all the 
-        objects corresponding to the selected rows in the table."""
-        selected_rows = set( map( lambda x: x.row(), self.table.selectedIndexes() ) )
-        
-        def selection_getter(table, selected_rows):
-            selection = []
-            model = table.model()
-            for row in selected_rows:
-                selection.append( model._get_object(row) )
-            return selection
-        
-        return functools.partial( selection_getter, self.table, selected_rows )
-
-    @gui_function
-    def get_collection_getter(self):
-        """:return: a list with all the objects corresponding to the rows in the table
-        """
-        
-        def get_collection(table):
-            return table.model().get_collection()
-        
-        return functools.partial( get_collection, self.table )
-
     @QtCore.pyqtSlot(object)
     @gui_function
     def set_filters_and_actions( self, filters_and_actions ):
@@ -787,23 +735,6 @@ class TableView( AbstractView  ):
             actions_widget.setObjectName( 'actions' )
             actions_widget.set_actions( actions )
             self.filters_layout.addWidget( actions_widget )
-
-    def to_html( self ):
-        """generates html of the table"""
-        if self.table and self.table.model():
-            query_getter = self.table.model().get_query_getter()
-            table = [[getattr( row, col[0] ) for col in self.admin.get_columns()]
-                     for row in query_getter().all()]
-            context = {
-              'title': self.admin.get_verbose_name_plural(),
-              'table': table,
-              'columns': [field_attributes['name'] for _field, field_attributes in self.admin.get_columns()],
-            }
-            from camelot.view.templates import loader
-            from jinja2 import Environment
-            env = Environment( loader = loader )
-            tp = env.get_template( 'table_view.html' )
-            return tp.render( context )
 
     @QtCore.pyqtSlot()
     def focusTable(self):

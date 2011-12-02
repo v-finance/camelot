@@ -41,7 +41,7 @@ class ObjectValidator(QtCore.QObject):
 
     validity_changed_signal = QtCore.pyqtSignal(int)
 
-    def __init__(self, admin, model, initial_validation=False):
+    def __init__(self, admin, model = None, initial_validation = False):
         """
         :param mode: a collection proxy the validator should inspect, or None if only the objectValidity method is going
         to get used.

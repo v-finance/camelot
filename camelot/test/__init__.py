@@ -245,5 +245,3 @@ class EntityViewsTest(ModelThreadTestCase):
         for admin in self.get_admins():
             widget = admin.create_new_view()
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
-
-

@@ -251,8 +251,6 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         if selected:
             form = admin.create_new_view()
             form.entity_created_signal.connect(self.selectEntity)
-            # @todo: dirty trick to keep reference
-            #self.__new_form = form
             show_top_level( form, self )
 
     def createFormView(self):

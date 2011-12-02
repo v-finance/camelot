@@ -122,6 +122,11 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
        the :class:`QtGui.QAbstractItemView` class that relates to the table 
        view on which the widget will be placed.
        
+    .. attribute:: view
+    
+       a :class:`camelot.view.controls.view.AbstractView` class that represents
+       the view in which the action is triggered.
+       
     """
         
     model_context = ListActionModelContext
@@ -223,7 +228,7 @@ class OpenFormView( ListContextAction ):
         )
         row = gui_context.item_view.currentIndex().row()
         formview = gui_context.admin.create_form_view(
-            u'', 
+            u' ', 
             model, 
             row, 
             parent=None

@@ -23,7 +23,8 @@
 #  ============================================================================
 
 from change_object import ChangeObject, ChangeObjects
-from gui import OpenFormView, Refresh, ShowChart, ShowPixmap
+from gui import ( CloseView, MessageBox, OpenFormView, Refresh, ShowChart, 
+                  ShowPixmap )
 from open_file import ( OpenFile, OpenStream, 
                         OpenString, OpenJinjaTemplate, WordJinjaTemplate )
 from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
@@ -34,9 +35,11 @@ from update_progress import UpdateProgress
 __all__ = [
     ChangeObject.__name__,
     ChangeObjects.__name__,
+    CloseView.__name__,
     CreateObject.__name__,
     DeleteObject.__name__,
     FlushSession.__name__,
+    MessageBox.__name__,
     OpenFile.__name__,
     OpenFormView.__name__,
     OpenJinjaTemplate.__name__,

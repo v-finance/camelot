@@ -98,7 +98,9 @@ an action.  Possible Action Steps that can be yielded to the GUI include:
   * :class:`camelot.view.action_steps.print_preview.PrintJinjaTemplate`
   * :class:`camelot.view.action_steps.open_file.OpenFile`
   * :class:`camelot.view.action_steps.open_file.OpenStream`
-  * :class:`camelot.view.action_steps.open_file.OpenJinjaTemplate`  
+  * :class:`camelot.view.action_steps.open_file.OpenJinjaTemplate`
+  * :class:`camelot.view.action_steps.gui.CloseView`
+  * :class:`camelot.view.action_steps.gui.MessageBox`
   * :class:`camelot.view.action_steps.gui.Refresh`
   * :class:`camelot.view.action_steps.gui.OpenFormView`
   * :class:`camelot.view.action_steps.gui.ShowPixmap`

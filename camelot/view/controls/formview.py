@@ -35,7 +35,6 @@ from PyQt4.QtCore import Qt
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
-from camelot.view.model_thread import model_function
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.statusbar import StatusBar
 from camelot.view import register
@@ -123,7 +122,8 @@ class FormEditors( object ):
         return widget_label
     
 class FormWidget(QtGui.QWidget):
-    """A form widget comes inside a form view or inside an embedded manytoone editor"""
+    """A form widget comes inside a form view or inside an embedded manytoone 
+    editor"""
 
     changed_signal = QtCore.pyqtSignal( int )
 
@@ -232,25 +232,6 @@ class FormWidget(QtGui.QWidget):
         if widget_mapper:
             widget_mapper.toPrevious()
             self.changed_signal.emit( widget_mapper.currentIndex() )
-
-    def export_ooxml(self):
-        from camelot.view.export.word import open_stream_in_word
-
-        def create_ooxml_export(row):
-            # print self._columns
-            def ooxml_export():
-                # TODO insert delegates
-                fields = self._admin.get_all_fields_and_attributes()
-                delegates = {}
-                for field_name, attributes in fields.items():
-                    delegates[field_name] = attributes['delegate'](**attributes)
-                obj = self._model._get_object(row)
-                document = self._form.render_ooxml(obj, delegates)
-                open_stream_in_word( document )
-
-            return ooxml_export
-
-        post(create_ooxml_export(self.get_index()))
         
     @QtCore.pyqtSlot(tuple)
     def _set_columns_and_form(self, columns_and_form ):
@@ -297,14 +278,14 @@ class FormView(AbstractView):
 
     form_widget = FormWidget
 
-    def __init__(self, title, admin, model, index):
-        AbstractView.__init__(self)
+    def __init__(self, title, admin, model, index, parent = None):
+        AbstractView.__init__( self, parent )
 
         layout = QtGui.QVBoxLayout()
         form_and_actions_layout = QtGui.QHBoxLayout()
         form_and_actions_layout.setObjectName('form_and_actions_layout')
         layout.addLayout( form_and_actions_layout )
-
+            
         self.model = model
         self.admin = admin
         self.title_prefix = title
@@ -316,6 +297,13 @@ class FormView(AbstractView):
         form.set_index(index)
         form_and_actions_layout.addWidget(form)
 
+        self.gui_context = FormActionGuiContext()
+        self.gui_context.workspace = self
+        self.gui_context.admin = admin
+        self.gui_context.view = self
+        self.gui_context.widget_mapper = self.findChild( QtGui.QDataWidgetMapper, 
+                                                         'widget_mapper' )
+        
         statusbar = StatusBar(self)
         statusbar.setObjectName('statusbar')
         statusbar.setSizeGripEnabled(False)
@@ -328,8 +316,7 @@ class FormView(AbstractView):
         if hasattr(admin, 'form_size') and admin.form_size:
             self.setMinimumSize(admin.form_size[0], admin.form_size[1])
 
-        self.validator = admin.create_validator(model)
-        self.validate_before_close = True
+        self.accept_close_event = False
 
         def get_actions():
             return admin.get_form_actions(None)
@@ -344,8 +331,6 @@ class FormView(AbstractView):
         self.addAction( ActionFactory.view_next(self, self.viewNext) )
         self.addAction( ActionFactory.view_previous(self, self.viewPrevious) )
         self.addAction( ActionFactory.refresh(self, self.refresh_session) )
-        # Disabled the export to Word feature until it's finish
-        # self.addAction( ActionFactory.export_ooxml(self, form.export_ooxml) )
 
     @QtCore.pyqtSlot()
     def refresh_session(self):
@@ -369,25 +354,16 @@ class FormView(AbstractView):
     def update_title(self, current_index ):
         post( self._get_title, self.change_title, args=(current_index,) )
 
-    #def getEntity(self):
-        #form = self.findChild(QtGui.QWidget, 'form' )
-        #if form:
-            #return self.model._get_object(form.get_index())
-
     @QtCore.pyqtSlot(list)
     def setActions(self, actions):
         form = self.findChild(QtGui.QWidget, 'form' )
         layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
         if actions and form and layout:
             side_panel_layout = QtGui.QVBoxLayout()
-            widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
             from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
-            gui_context = FormActionGuiContext()
-            gui_context.workspace = self
-            gui_context.admin = self.admin
-            gui_context.widget_mapper = widget_mapper
-            actions_widget = ActionsBox( parent=self, gui_context=gui_context )
+            actions_widget = ActionsBox( parent = self, 
+                                         gui_context = self.gui_context )
             actions_widget.setObjectName('actions')
             actions_widget.set_actions( actions )
             side_panel_layout.addWidget( actions_widget )
@@ -428,84 +404,25 @@ class FormView(AbstractView):
             form.submit()
             form.to_previous()
 
-    @QtCore.pyqtSlot(bool)
-    def showMessage(self, valid):
-        form = self.findChild(QtGui.QWidget, 'form' )
-        if not valid and form:
-            reply = self.validator.validityDialog(
-                form.get_index(), self
-            ).exec_()
-            if reply == QtGui.QMessageBox.Discard:
+    @QtCore.pyqtSlot()
+    def validate_close( self ):
+        self.admin.form_close_action.gui_run( self.gui_context )
+        
+    def close_view( self, accept ):
+        self.accept_close_event = accept
+        if accept == True:
             # clear mapping to prevent data being written again to the model,
-            # then we reverted the row
-                form.clear_mapping()
-                self.model.revertRow(form.get_index())
-                self.validate_before_close = False
-                self.close()
-        else:
-            self.validate_before_close = False
-            self.close()
-
-    def validateClose(self):
-        LOGGER.debug('validate before close : %s' % self.validate_before_close)
-        form = self.findChild(QtGui.QWidget, 'form' )
-        if self.validate_before_close and form:
-            # submit should not happen a second time, since then we don't
-            # want the widgets data to be written to the model
-            form.submit()
-
-            def validate():
-                return self.validator.isValid(form.get_index())
-
-            post(validate, self.showMessage)
-            return False
-
-        return True
+            # when the underlying object would be reverted
+            form = self.findChild( QtGui.QWidget, 'form' )
+            if form != None:
+                form.clear_mapping()            
+        self.close()
 
     def closeEvent(self, event):
-        #print 'close event'
-        LOGGER.debug('formview closed')
-        if self.validateClose():
+        if self.accept_close_event == True:
             event.accept()
         else:
+            # make sure the next closeEvent is sent after this one
+            # is processed
+            QtCore.QTimer.singleShot( 0, self.validate_close )
             event.ignore()
-        
-    @model_function
-    def toHtml(self):
-        """generates html of the form"""
-        from jinja2 import Environment
-
-        def to_html(d = u''):
-            """Jinja 1 filter to convert field values to their default html
-            representation
-            """
-
-            def wrapped_in_table(env, context, value):
-                if isinstance(value, list):
-                    return u'<table><tr><td>' + \
-                           u'</td></tr><tr><td>'.join(
-                                [unicode(e) for e in value]
-                           ) + u'</td></tr></table>'
-                return unicode(value)
-
-            return wrapped_in_table
-
-        entity = self.getEntity()
-        fields = self.admin.get_fields()
-        table = [dict( field_attributes = field_attributes,
-                      value = getattr(entity, name ))
-                      for name, field_attributes in fields]
-
-        context = {
-          'title': self.admin.get_verbose_name(),
-          'table': table,
-        }
-
-        from camelot.view.templates import loader
-        env = Environment(loader = loader)
-        env.filters['to_html'] = to_html
-        tp = env.get_template('form_view.html')
-
-        return tp.render(context)
-
-

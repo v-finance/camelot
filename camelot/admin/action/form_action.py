@@ -23,6 +23,7 @@
 #  ============================================================================
 
 from camelot.admin.action.base import Action
+from camelot.core.utils import ugettext as _
 from application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 
@@ -133,9 +134,39 @@ class CloseForm( Action ):
         super( CloseForm, self ).gui_run( gui_context )
         
     def model_run( self, model_context ):
-        # validate
-        pass
-        
+        from PyQt4 import QtGui
+        from camelot.view import action_steps
+        yield action_steps.UpdateProgress( text = _('Closing form') )
+        validator = model_context.admin.get_validator()
+        obj = model_context.get_object()
+        admin  = model_context.admin
+        if obj == None:
+            yield action_steps.CloseView()
+        #
+        # validate the object, and if the object is valid, simply close
+        # the view
+        #
+        messages = validator.objectValidity( obj )
+        valid = ( len( messages ) == 0 )
+        if valid:
+            yield action_steps.CloseView()
+        else:
+            #
+            # if the object is not valid, request the user what to do
+            #
+            message = action_steps.MessageBox( QtGui.QMessageBox.Warning,
+                                               _('Invalid form'),
+                                               '\n'.join( messages ),
+                                               QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard )
+            reply = yield message
+            if reply == QtGui.QMessageBox.Discard:
+                yield action_steps.CloseView()
+                if admin.is_persistent( obj ):
+                    admin.refresh( obj )
+                    yield action_steps.UpdateObject( obj )
+                else:
+                    yield action_steps.DeleteObject( obj )
+                    admin.expunge( obj )
     
 def structure_to_form_actions( structure ):
     """Convert a list of python objects to a list of form actions.  If the python

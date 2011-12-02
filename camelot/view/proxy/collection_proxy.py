@@ -320,27 +320,6 @@ position in the query.
         return rows
 
     @gui_function
-    def revertRow( self, row ):
-        def create_refresh_entity( row ):
-
-            @model_function
-            def refresh_entity():
-                o = self._get_object( row )
-                self.admin.refresh( o )
-                return row, o
-
-            return refresh_entity
-
-        post( create_refresh_entity( row ), self._revert_row )
-
-    @QtCore.pyqtSlot(tuple)
-    @gui_function
-    def _revert_row(self, row_and_entity ):
-        row, entity = row_and_entity
-        self.handleRowUpdate( row )
-        self.rsh.sendEntityUpdate( self, entity )
-
-    @gui_function
     def refresh( self ):
         post( self.getRowCount, self._refresh_content )
 
@@ -409,12 +388,13 @@ position in the query.
         """Handles the entity signal, indicating that the model is out of
         date"""
         self.logger.debug( 'received entity delete signal' )
-        #
-        # simply removing the entity from the collection might have
-        # undesirable effects.  eg when a form is pointing to this entity, 
-        # so instead update the entity
-        #
-        self.handle_entity_update( sender, entity )
+        if sender != self:
+            try:
+                row = self.display_cache.get_row_by_entity(entity)
+            except KeyError:
+                self.logger.debug( 'entity not in cache' )
+                return
+            self.remove_rows( [row], delete = False )
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_create( self, sender, entity ):

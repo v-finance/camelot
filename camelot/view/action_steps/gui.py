@@ -26,6 +26,8 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 
+from PyQt4 import QtGui
+
 from camelot.admin.action.base import ActionStep
 
 class OpenFormView( ActionStep ):
@@ -97,3 +99,54 @@ class ShowPixmap( ActionStep ):
         from camelot.view.controls.liteboxview import LiteBoxView
         litebox = LiteBoxView( parent = gui_context.workspace )
         litebox.show_fullscreen_pixmap( self.pixmap.getQPixmap() )
+        
+class CloseView( ActionStep ):
+    """
+    Close the view that triggered the action, if such a view is available.
+    
+    :param accept: a boolean indicating if the view's widget should accept the
+        close event.  This defaults to :keyword:`True`, when this is set to 
+        :keyword:`False`, the view will trigger it's corresponding close action
+        instead of accepting the close event.  The close action might involve
+        validating if the view can be closed, or requesting confirmation from
+        the user.
+    """
+
+    def __init__( self, accept = True ):
+        self.accept = accept
+        
+    def gui_run( self, gui_context ):
+        view = gui_context.view
+        if view != None:
+            view.close_view( self.accept )
+
+class MessageBox( ActionStep ):
+    """
+    Popup a :class:`QtGui.QMessageBox` and send it result back.  The arguments
+    of this action are the same as those of the :class:`QtGui.QMessageBox`
+    constructor.
+    
+    :param icon: one of the :class:`QtGui.QMessageBox.Icon` constants
+    :param title: the window title of the message box
+    :param text: the text to be displayed within the message box
+    :param standard_buttons: the buttons to be displayed on the message box,
+        out of the :class:`QtGui.QMessageBox.StandardButton` enumeration. by 
+        default only an :label:`Ok` button will be shown.
+    """
+    
+    def __init__( self,
+                  icon, 
+                  title, 
+                  text, 
+                  standard_buttons =  QtGui.QMessageBox.Ok ):
+        self.icon = icon
+        self.title = unicode( title )
+        self.text = unicode( text )
+        self.standard_buttons = standard_buttons
+        
+    def gui_run( self, gui_context ):
+        message_box = QtGui.QMessageBox( self.icon,
+                                         self.title,
+                                         self.text,
+                                         self.standard_buttons )
+        return message_box.exec_()
