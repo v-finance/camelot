@@ -224,7 +224,7 @@ class MainWindow(QtGui.QMainWindow):
                       args = ( model_context, ) )
         
     @QtCore.pyqtSlot( bool )
-    def action_triggered( self, _checked ):
+    def action_triggered( self, _checked = False ):
         """Execute an action that was triggered somewhere in the main window,
         such as the toolbar or the main menu"""
         action_action = self.sender()
