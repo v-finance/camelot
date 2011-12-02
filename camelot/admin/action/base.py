@@ -346,7 +346,7 @@ direct manipulations of the user interface without a need to access the model.
         if gui_context.progress_dialog == None:
             progress_dialog = ProgressDialog( unicode( self.verbose_name ) )
             gui_context.progress_dialog = progress_dialog
-            progress_dialog.show()
+            #progress_dialog.show()
         super(Action, self).gui_run( gui_context )
         # only close the progress dialog if it was created here
         if progress_dialog != None:

@@ -726,7 +726,7 @@ be specified using the verbose_name attribute.
         its underlying collection upon creation and removed from it upon
         discarding.
         """
-        from PyQt4 import QtGui, QtCore
+        from PyQt4 import QtCore
         from camelot.view.controls.formview import FormView
         from camelot.view.model_thread import post
 

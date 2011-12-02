@@ -22,8 +22,12 @@
 #
 #  ============================================================================
 
+from PyQt4 import QtGui
+
 from camelot.admin.action.base import Action
 from camelot.core.utils import ugettext as _
+from camelot.view.art import Icon
+
 from application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 
@@ -107,6 +111,11 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
        the :class:`QtGui.QDataWidgetMapper` class that relates the form 
        widget to the model.
        
+    .. attribute:: view
+    
+       a :class:`camelot.view.controls.view.AbstractView` class that represents
+       the view in which the action is triggered.
+       
     """
         
     model_context = FormActionModelContext
@@ -114,6 +123,7 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
     def __init__( self ):
         super( FormActionGuiContext, self ).__init__()
         self.widget_mapper = None
+        self.view = None
 
     def create_model_context( self ):
         context = super( FormActionGuiContext, self ).create_model_context()
@@ -125,9 +135,15 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
     def copy( self, base_class = None ):
         new_context = super( FormActionGuiContext, self ).copy( base_class )
         new_context.widget_mapper = self.widget_mapper
+        new_context.view = self.view
         return new_context
 
 class CloseForm( Action ):
+    
+    shortcut = QtGui.QKeySequence.Close
+    icon = Icon('tango/16x16/actions/system-log-out.png')
+    verbose_name = _('Close')
+    tooltip = _('Close this form')
     
     def gui_run( self, gui_context ):
         gui_context.widget_mapper.submit()

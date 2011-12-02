@@ -134,6 +134,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
     def __init__( self ):
         super( ListActionGuiContext, self ).__init__()
         self.item_view = None
+        self.view = None
 
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
@@ -155,6 +156,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
     def copy( self, base_class = None ):
         new_context = super( ListActionGuiContext, self ).copy( base_class )
         new_context.item_view = self.item_view
+        new_context.view = self.view
         return new_context
 
 class CallMethod( Action ):

@@ -55,7 +55,7 @@ to display a progress dialog until my_function has finished::
         #label.setPixmap(icon.getQPixmap())
         self.setLabel( label )
         self.setWindowTitle( _('Please wait') )
-        self.setMinimumDuration( 1 )
+        self.setMinimumDuration( 3 )
 
     @QtCore.pyqtSlot(bool)
     @QtCore.pyqtSlot()
@@ -67,22 +67,6 @@ to display a progress dialog until my_function has finished::
         from camelot.view.controls.exception import model_thread_exception_message_box
         model_thread_exception_message_box(exception_info)
         self.finished(False)
-        
-    @QtCore.pyqtSlot(object)
-    def display_chart(self, chart ):
-        from camelot.view.controls.editors import ChartEditor
-        litebox = ChartEditor.show_fullscreen_chart(chart, self)
-        litebox.closed_signal.connect( self.close )
-
-    @QtCore.pyqtSlot(object)
-    def display_pixmap(self, pixmap):
-        """
-        :param image: a camelot.view.art.Pixmap object
-        """
-        from camelot.view.controls.liteboxview import LiteBoxView
-        litebox = LiteBoxView(parent=self)
-        litebox.closed_signal.connect( self.close )
-        litebox.show_fullscreen_pixmap( pixmap.getQPixmap() )
         
     @QtCore.pyqtSlot(object)
     def exit(self, return_code):
