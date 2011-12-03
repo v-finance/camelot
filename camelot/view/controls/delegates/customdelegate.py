@@ -237,8 +237,7 @@ class CustomDelegate(QItemDelegate):
         else:
             if editable:
                 painter.fillRect(rect, background_color or option.palette.base() )
-                fontColor = QtGui.QColor()
-                fontColor.setRgb(0,0,0)
+                fontColor = option.palette.windowText().color()
             else:
                 painter.fillRect(rect, background_color or option.palette.window() )
                 fontColor = QtGui.QColor()
@@ -260,16 +259,4 @@ class CustomDelegate(QItemDelegate):
                          rect.height() - 4, # not -10, because the row might not be high enough for this
                          vertical_align | horizontal_align,
                          text)
-
-    def render_ooxml( self, value ):
-        """Generator for label text in Office Open XML representing this form"""
-        yield '<w:r>'
-        yield '  <w:t>%s</w:t>' % unicode(value)
-        yield '</w:r>'
-
-    def render_html( self, index ):
-        """Generator that renders a value to html"""
-        value = variant_to_pyobject(index.model().data(index, Qt.DisplayRole))
-        yield unicode( value )
-
 

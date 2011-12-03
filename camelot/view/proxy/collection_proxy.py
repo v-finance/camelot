@@ -592,7 +592,7 @@ position in the query.
         elif role == Qt.ToolTipRole:
             return QtCore.QVariant(self._get_field_attribute_value(index, 'tooltip'))
         elif role == Qt.BackgroundRole:
-            return QtCore.QVariant(self._get_field_attribute_value(index, 'background_color') or QtGui.QColor('White'))
+            return QtCore.QVariant(self._get_field_attribute_value(index, 'background_color') or QtCore.QVariant())
         elif role == Qt.UserRole:
             field_attributes = ProxyDict(self._static_field_attributes[index.column()])
             dynamic_field_attributes = self._get_row_data( index.row(), self.attributes_cache )[index.column()]

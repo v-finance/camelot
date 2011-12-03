@@ -61,8 +61,6 @@ class StarDelegate(CustomDelegate):
         else:
             if not self.editable:
                 painter.fillRect(option.rect, option.palette.window())
-            else:
-                painter.fillRect(option.rect, background_color)
           
         for i in range(5):
             if i+1<=stars:
@@ -70,5 +68,3 @@ class StarDelegate(CustomDelegate):
                 QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
                 rect = QtCore.QRect(rect.left()+20, rect.top(), rect.width(), rect.height())
         painter.restore()
-
-
