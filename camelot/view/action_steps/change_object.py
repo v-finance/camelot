@@ -125,6 +125,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
         
+        self.setWindowTitle( admin.get_verbose_name_plural() )
         self.set_banner_title( _('Data Preview') )
         self.set_banner_subtitle( _('Please review the data below.') )
         self.banner_widget().setStyleSheet('background-color: white;')
@@ -221,6 +222,9 @@ class ChangeObjects( ActionStep ):
     
     :param objects: a list of objects to change
     :param admin: an instance of an admin class to use to edit the objects.
+    
+    .. image:: /_static/listactions/import_from_file_preview.png
+    
     """
     
     def __init__( self, objects, admin ):
@@ -234,8 +238,14 @@ class ChangeObjects( ActionStep ):
         """
         return self.objects        
     
+    def render( self ):
+        """create the dialog. this method is used to unit test
+        the action step."""
+        return ChangeObjectsDialog( self.objects, 
+                                    self.admin )
+        
     def gui_run( self, gui_context ):
-        dialog = ChangeObjectsDialog( self.objects, self.admin )
+        dialog = self.render()
         result = dialog.exec_()
         if result == QtGui.QDialog.Rejected:
             raise CancelRequest()

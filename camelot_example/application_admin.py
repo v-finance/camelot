@@ -93,5 +93,8 @@ class MiniApplicationAdmin( MyApplicationAdmin ):
     def get_main_menu( self ):
         return None
     
+    def get_stylesheet(self):
+        from camelot.view import art
+        return art.read('stylesheet/black.qss')
     
 # end mini admin

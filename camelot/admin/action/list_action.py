@@ -556,7 +556,10 @@ class ImportFromFile( ListContextAction ):
         #
         # Ask confirmation
         #
-        
+        yield action_steps.MessageBox( QtGui.QMessageBox.Warning, 
+                                       _('Proceed with import'), 
+                                       _('Importing data cannot be undone,\n'
+                                         'are you sure you want to continue') )
         #
         # import the temporary objects into real objects
         #

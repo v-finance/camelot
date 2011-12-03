@@ -203,3 +203,23 @@ class ListActionsCase( ModelThreadTestCase ):
                 # see if the generated file can be parsed
                 filename = step.get_path()
                 xlrd.open_workbook( filename )
+
+    def test_import_from_file( self ):
+        from camelot.model.authentication import Person
+        self.context = MockModelContext()
+        self.context.obj = Person.query.first() # need an object, to have a
+                                                # session
+        self.context.admin = self.app_admin.get_related_admin( Person )
+        import_from_file = list_action.ImportFromFile()
+        generator = import_from_file.model_run( self.context )
+        for step in generator:
+            if isinstance( step, action_steps.SelectFile ):
+                generator.send( [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'import_example.csv' )] )
+            if isinstance( step, action_steps.ChangeObjects ):
+                dialog = step.render()
+                dialog.show()
+                self.grab_widget( dialog, suffix = 'preview' ) 
+            if isinstance( step, action_steps.MessageBox ):
+                dialog = step.render()
+                dialog.show()
+                self.grab_widget( dialog, suffix = 'confirmation' )      

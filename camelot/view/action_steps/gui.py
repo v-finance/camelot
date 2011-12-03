@@ -29,6 +29,7 @@ Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 from PyQt4 import QtGui
 
 from camelot.admin.action.base import ActionStep
+from camelot.core.exception import CancelRequest
 
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way
@@ -131,22 +132,38 @@ class MessageBox( ActionStep ):
     :param text: the text to be displayed within the message box
     :param standard_buttons: the buttons to be displayed on the message box,
         out of the :class:`QtGui.QMessageBox.StandardButton` enumeration. by 
-        default only an :label:`Ok` button will be shown.
+        default an :label:`Ok` and a button :label:`Cancel` will be shown.
+        
+    When the :label:`Cancel` button is pressed, this action step will raise
+    a `CancelException`
+        
+    .. image:: /_static/listactions/import_from_file_confirmation.png
+    
     """
+    
+    default_buttons = QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel
     
     def __init__( self,
                   icon, 
                   title, 
                   text, 
-                  standard_buttons =  QtGui.QMessageBox.Ok ):
+                  standard_buttons = default_buttons ):
         self.icon = icon
         self.title = unicode( title )
         self.text = unicode( text )
         self.standard_buttons = standard_buttons
         
+    def render( self ):
+        """create the message box. this method is used to unit test
+        the action step."""
+        return QtGui.QMessageBox( self.icon,
+                                  self.title,
+                                  self.text,
+                                  self.standard_buttons )
+        
     def gui_run( self, gui_context ):
-        message_box = QtGui.QMessageBox( self.icon,
-                                         self.title,
-                                         self.text,
-                                         self.standard_buttons )
-        return message_box.exec_()
+        message_box = self.render()
+        result = message_box.exec_()
+        if result == QtGui.QMessageBox.Cancel:
+            raise CancelRequest()
+        return result
