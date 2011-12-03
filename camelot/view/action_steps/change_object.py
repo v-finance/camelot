@@ -29,8 +29,10 @@ from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
 from camelot.view.art import Icon
+from camelot.view.controls import delegates
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.model_thread import post
+from camelot.view.proxy import ValueLoading
 
 class ChangeObjectDialog( StandaloneWizardPage ):
     """A dialog to change an object.  This differs from a FormView in that
@@ -250,3 +252,128 @@ class ChangeObjects( ActionStep ):
         if result == QtGui.QDialog.Rejected:
             raise CancelRequest()
         return self.objects
+
+class ChangeFieldDialog( StandaloneWizardPage ):
+    """A dialog to change a field of  an object. 
+    """
+
+    def __init__( self,
+                  admin,
+                  field_attributes, 
+                  parent = None, 
+                  flags=QtCore.Qt.WindowFlags(0) ):
+        super(ChangeFieldDialog, self).__init__( '', parent, flags )
+        from camelot.view.controls.editors import ChoicesEditor
+        self.field_attributes = field_attributes
+        self.field = None
+        self.value = None
+        self.setWindowTitle( admin.get_verbose_name_plural() )
+        self.set_banner_title( _('Replace field contents') )
+        self.set_banner_subtitle( _('Select the field to update and enter its new value') )
+        self.banner_widget().setStyleSheet('background-color: white;')
+        editor = ChoicesEditor( parent=self )
+        editor.setObjectName( 'field_choice' )
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget( editor )
+        self.main_widget().setLayout( layout )
+        
+        def filter(attributes):
+            if not attributes['editable']:
+                return False
+            if attributes['delegate'] in (delegates.One2ManyDelegate, delegates.ManyToManyDelegate):
+                return False
+            return True
+        
+        choices = [(field, attributes['name']) for field, attributes in field_attributes.items() if filter(attributes)]
+        editor.set_choices( choices )
+        editor.set_value( ( choices+[(None,None)] )[1][0] )
+        self.field_changed( 0 )  
+        editor.currentIndexChanged.connect( self.field_changed )
+        
+        cancel_button = QtGui.QPushButton( ugettext('Cancel') )
+        ok_button = QtGui.QPushButton( ugettext('OK') )
+        ok_button.setObjectName( 'ok' )
+        layout = QtGui.QHBoxLayout()
+        layout.setDirection( QtGui.QBoxLayout.RightToLeft )
+        layout.addWidget( ok_button )
+        layout.addWidget( cancel_button )
+        layout.addStretch()
+        self.buttons_widget().setLayout( layout )
+        cancel_button.pressed.connect( self.reject )
+        ok_button.pressed.connect( self.accept )
+        
+    @QtCore.pyqtSlot(int)
+    def field_changed(self, index):
+        import sqlalchemy.schema
+        selected_field = ValueLoading
+        editor = self.findChild( QtGui.QWidget, 'field_choice' )
+        value_editor = self.findChild( QtGui.QWidget, 'value_editor' )
+        if editor != None:
+            selected_field = editor.get_value()
+        if value_editor != None:
+            value_editor.deleteLater()
+        if selected_field != ValueLoading:
+            self.field = selected_field
+            self.value = None
+            field_attributes = self.field_attributes[selected_field]
+            static_field_attributes = dict( (k,v) for k,v in field_attributes.items() if not callable(v) )
+            delegate = field_attributes['delegate']( parent = self,
+                                                     **static_field_attributes)
+            option = QtGui.QStyleOptionViewItem()
+            option.version = 5
+            value_editor = delegate.createEditor( self, option, None )
+            value_editor.setObjectName( 'value_editor' )
+            value_editor.set_field_attributes( **static_field_attributes )
+            self.main_widget().layout().addWidget( value_editor )
+            value_editor.editingFinished.connect( self.value_changed )
+            # try to set sensible defaults for value
+            if isinstance(delegate, delegates.Many2OneDelegate):
+                value_editor.set_value(lambda:None)
+            else:
+                default = static_field_attributes.get('default', None)
+                choices = static_field_attributes.get('choices', None)
+                if default != None and not isinstance(default, sqlalchemy.schema.ColumnDefault):
+                    value_editor.set_value( default )
+                elif choices and len(choices):
+                    value_editor.set_value( choices[0][0] )
+                else:
+                    value_editor.set_value( None )
+            # force the value editor, since the previous one is still around
+            self.value_changed( value_editor )
+            
+    def value_changed(self, value_editor=None):
+        if not value_editor:
+            value_editor = self.findChild( QtGui.QWidget, 'value_editor' )
+        if value_editor != None:
+            delegate = self.field_attributes[self.field]['delegate']
+            value = value_editor.get_value()
+            # make sure a value is always callable
+            if issubclass(delegate, delegates.Many2OneDelegate):
+                value_getter = value
+            else:
+                value_getter = lambda:value
+            self.value = value_getter
+            
+class ChangeField( ActionStep ):
+    """
+    Pop up a list of fields from an object a user can change
+    
+    """
+    
+    def __init__(self, admin ):
+        super( ChangeField, self ).__init__()
+        self.admin = admin
+        self.field_attributes = admin.get_all_fields_and_attributes()
+        
+    def render( self ):
+        """create the dialog. this method is used to unit test
+        the action step."""
+        return ChangeFieldDialog( self.admin, 
+                                  self.field_attributes )
+    
+    def gui_run( self, gui_context ):
+        dialog = self.render()
+        result = dialog.exec_()
+        if result == QtGui.QDialog.Rejected:
+            raise CancelRequest()
+        return (dialog.field, dialog.value)

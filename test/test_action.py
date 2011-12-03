@@ -222,4 +222,14 @@ class ListActionsCase( ModelThreadTestCase ):
             if isinstance( step, action_steps.MessageBox ):
                 dialog = step.render()
                 dialog.show()
-                self.grab_widget( dialog, suffix = 'confirmation' )      
+                self.grab_widget( dialog, suffix = 'confirmation' )
+                
+    def test_replace_field_contents( self ):
+        replace = list_action.ReplaceFieldContents()
+        generator = replace.model_run( self.context )
+        for step in generator:
+            if isinstance( step, action_steps.ChangeField ):
+                dialog = step.render()
+                dialog.show()
+                self.grab_widget( dialog ) 
+                generator.send( ('rating', lambda:3) )

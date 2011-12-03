@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from change_object import ChangeObject, ChangeObjects
+from change_object import ChangeField, ChangeObject, ChangeObjects
 from gui import ( CloseView, MessageBox, OpenFormView, Refresh, ShowChart, 
                   ShowPixmap )
 from open_file import ( OpenFile, OpenStream, 
@@ -33,6 +33,7 @@ from select_file import SelectFile
 from update_progress import UpdateProgress
 
 __all__ = [
+    ChangeField.__name__,
     ChangeObject.__name__,
     ChangeObjects.__name__,
     CloseView.__name__,

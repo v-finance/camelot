@@ -587,9 +587,12 @@ class ReplaceFieldContents( ListContextAction ):
     
     verbose_name = _('Replace field contents')
     tooltip = _('Replace the content of a field for all rows in a selection')
-    
-    def gui_run( self, gui_context ):
-        from camelot.view.wizard.update_value import UpdateValueWizard
-        selection_getter = gui_context.item_view.get_selection_getter()
-        wizard = UpdateValueWizard( admin=gui_context.admin, selection_getter=selection_getter)
-        wizard.exec_()
+
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        field_name, value_getter = yield action_steps.ChangeField( model_context.admin )
+        yield action_steps.UpdateProgress( text = _('Replacing field') )
+        value = value_getter()
+        for obj in model_context.get_selection():
+            setattr( obj, field_name, value )
+        yield action_steps.FlushSession( model_context.session )

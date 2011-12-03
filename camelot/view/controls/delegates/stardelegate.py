@@ -51,8 +51,6 @@ class StarDelegate(CustomDelegate):
         self.drawBackground(painter, option, index)
         stars = variant_to_pyobject( index.model().data(index, Qt.EditRole) )
         
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
-        
         rect = option.rect
         rect = QtCore.QRect(rect.left()+3, rect.top()+6, rect.width()-5, rect.height())
         
