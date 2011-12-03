@@ -1004,7 +1004,9 @@ class ControlsTest(ModelThreadTestCase):
         app_admin = MiniApplicationAdmin()
         gui_context = ApplicationActionGuiContext()
         gui_context.admin = app_admin
-        widget = MainWindow( gui_context ) 
+        widget = MainWindow( gui_context )
+        widget.setStyleSheet( app_admin.get_stylesheet() )
+        widget.show()
         self.wait_for_animation()
         self.grab_widget( widget )     
 
