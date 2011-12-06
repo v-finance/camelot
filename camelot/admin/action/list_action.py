@@ -387,16 +387,48 @@ class ExportSpreadsheet( ListContextAction ):
         workbook = Workbook()
         worksheet = workbook.add_sheet('Sheet1')
         #
-        # write title
+        # keep a global cache of styles, since the number of styles that
+        # can be used is limited.
         #
-        style = XFStyle()
-        style.font = Font()
-        style.font.name = self.font_name
-        style.font.bold = True
-        style.font.height = 240
-        worksheet.write( 0, 0, admin.get_verbose_name_plural(), style )
+        styles = dict()
+        freeze = lambda d:tuple(sorted(d.iteritems()))
+        
+        def get_style( font_specs=dict(), 
+                       border_specs = dict(), 
+                       pattern = None,
+                       num_format_str = None, ):
+            
+            style_key = ( freeze(font_specs), 
+                          freeze(border_specs), 
+                          pattern, 
+                          num_format_str )
+            
+            try:
+                return styles[style_key]
+            except KeyError:
+                style = XFStyle()
+                style.font = Font()
+                for key, value in font_specs.items():
+                    setattr( style.font, key, value )
+                style.borders = Borders()
+                for key, value in border_specs.items():
+                    setattr( style.borders, key, value )
+                if pattern:
+                    style.pattern = pattern
+                if num_format_str:
+                    style.num_format_str = num_format_str
+                styles[ style_key ] = style
+                return style
+        
         #
-        # create some styles
+        # write style
+        #
+        title_style = get_style( dict( font_name = self.font_name,
+                                       bold = True,
+                                       height = 240 ) )
+        worksheet.write( 0, 0, admin.get_verbose_name_plural(), title_style )
+        #
+        # create some patterns and formats
         #
         date_format = local_date_format()
         datetime_format = local_datetime_format()
@@ -409,28 +441,25 @@ class ExportSpreadsheet( ListContextAction ):
         #
         columns = admin.get_columns()
         field_names = []
-        for i, (name, _field_attributes) in enumerate( columns ):
+        for i, (name, field_attributes) in enumerate( columns ):
+            verbose_name = unicode( field_attributes.get( 'name', name ) )
             field_names.append( name )
-            style = XFStyle()
-            style.font = Font()
-            style.font.name = self.font_name
-            style.font.bold = True
-            style.font.height = 200
-            style.borders = Borders()
-            style.borders.top = 0x01
-            style.pattern = header_pattern
-
+            font_specs = dict( font_name = self.font_name, 
+                               bold = True, 
+                               height = 200 )
+            border_specs = dict( top = 0x01 )
             name = unicode( name )
             if i == 0:
-                style.borders.left = 0x01                
+                border_specs[ 'left' ] = 0x01                
             elif i == len( columns ) - 1:
-                style.borders.right = 0x01                
-            worksheet.write( 2, i, name, style)
+                border_specs[ 'right' ] = 0x01 
+            header_style = get_style( font_specs, border_specs, header_pattern )
+            worksheet.write( 2, i, verbose_name, header_style)
                 
             if len( name ) < 8:
                 worksheet.col( i ).width = 8 *  375
             else:
-                worksheet.col( i ).width = len( name ) *  375
+                worksheet.col( i ).width = len( verbose_name ) *  375
         #
         # write data
         #
@@ -439,6 +468,8 @@ class ExportSpreadsheet( ListContextAction ):
             dynamic_attributes = admin.get_dynamic_field_attributes( obj, 
                                                                      field_names )
             row = offset + j
+            if j % 100 == 0:
+                yield action_steps.UpdateProgress( j, model_context.collection_count )
             for i, ((_name, attributes), delta_attributes)  in enumerate( zip( columns, dynamic_attributes ) ):
                 attributes.update( delta_attributes )
                 value = attributes['getter']( obj )
@@ -468,18 +499,18 @@ class ExportSpreadsheet( ListContextAction ):
                     # borders right
                     value = ''
                         
-                style = XFStyle()
-                style.font = Font()
-                style.font.name = self.font_name
-                style.font.height = 200
-                style.num_format_str = format_string
-                style.borders = Borders()
+                font_specs = dict( font_name = self.font_name, height = 200 )
+                border_specs = dict()
                 if i == 0:
-                    style.borders.left = 0x01                
+                    border_specs[ 'left' ] = 0x01                
                 elif i == len( columns ) - 1:
-                    style.borders.right = 0x01  
+                    border_specs[ 'right' ] = 0x01  
                 if (row - offset + 1) == model_context.collection_count:
-                    style.borders.bottom = 0x01
+                    border_specs[ 'bottom' ] = 0x01
+                style = get_style( font_specs, 
+                                   border_specs, 
+                                   None, 
+                                   format_string )
                 worksheet.write( row, i, value, style )
                 min_width = len( unicode( value ) ) * 300
                 worksheet.col( i ).width = max( min_width, worksheet.col( i ).width )
