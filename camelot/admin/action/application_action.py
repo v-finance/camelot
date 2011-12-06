@@ -27,6 +27,7 @@ from PyQt4.QtCore import Qt
 
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.utils import ugettext, ugettext_lazy as _
+from camelot.core.backup import BackupMechanism
 from camelot.view.art import Icon
 
 """ModelContex, GuiContext and Actions that run in the context of an 
@@ -179,25 +180,57 @@ class ShowAbout( Action ):
                                  unicode( abtmsg ) )
         
 class Backup( Action ):
-    """Backup the database to disk"""
+    """
+Backup the database to disk
+
+.. attribute:: backup_mechanism
+
+    A subclass of :class:`camelot.core.backup.BackupMechanism` that enables 
+    the application to perform backups an restores.    
+    """
     
     verbose_name = _('&Backup')
     tooltip = _('Backup the database')
     icon = Icon('tango/16x16/actions/document-save.png')
-    
-    def gui_run( self, gui_context ):
-        gui_context.admin.get_application_admin().backup( gui_context.workspace )
+    backup_mechanism = BackupMechanism
+
+    def model_run( self, model_context ):
+        from camelot.view.action_steps import UpdateProgress, SelectBackup
+        label, storage = yield SelectBackup( self.backup_mechanism )
+        yield UpdateProgress( text = _('Backup in progress') )
+        backup_mechanism = self.backup_mechanism( label, 
+                                                  storage )
+        for completed, total, description in backup_mechanism.backup():
+            yield UpdateProgress( completed,
+                                  total,
+                                  text = description )
 
 class Restore( Action ):
-    """Restore the database to disk"""
+    """
+Restore the database to disk
+
+.. attribute:: backup_mechanism
+
+    A subclass of :class:`camelot.core.backup.BackupMechanism` that enables 
+    the application to perform backups an restores.
+"""
     
     verbose_name = _('&Restore')
     tooltip = _('Restore the database from a backup')
     icon = Icon('tango/16x16/devices/drive-harddisk.png')
-    
-    def gui_run( self, gui_context ):
-        gui_context.admin.get_application_admin().restore( gui_context.workspace )
-        
+    backup_mechanism = BackupMechanism
+            
+    def model_run( self, model_context ):
+        from camelot.view.action_steps import UpdateProgress, SelectRestore
+        label, storage = yield SelectRestore( self.backup_mechanism )
+        yield UpdateProgress( text = _('Restore in progress') )
+        backup_mechanism = self.backup_mechanism( label,
+                                                  storage )
+        for completed, total, description in backup_mechanism.restore():
+            yield UpdateProgress( completed,
+                                  total,
+                                  text = description )
+
 class Refresh( Action ):
     """Refresh all views in the application"""
     

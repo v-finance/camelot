@@ -58,12 +58,12 @@ class BackupMechanism(object):
         """
         :return: a string with the prefix for the default name of the backup file
         
-        By default this method returns an empty string, overwrite this method to
+        By default this method returns 'backup', overwrite this method to
         return a custom string, like the name of the company or such.
         
         This method will be called inside the model thread.
         """
-        return u''
+        return u'backup'
     
     @classmethod
     def get_default_storage(cls):

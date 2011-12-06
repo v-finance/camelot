@@ -22,6 +22,7 @@
 #
 #  ============================================================================
 
+from backup import SelectBackup, SelectRestore
 from change_object import ChangeField, ChangeObject, ChangeObjects
 from gui import ( CloseView, MessageBox, OpenFormView, Refresh, ShowChart, 
                   ShowPixmap )
@@ -50,7 +51,9 @@ __all__ = [
     PrintJinjaTemplate.__name__,
     PrintPreview.__name__,
     Refresh.__name__,
+    SelectBackup.__name__,
     SelectFile.__name__,
+    SelectRestore.__name__,
     ShowChart.__name__,
     ShowPixmap.__name__,
     UpdateObject.__name__,

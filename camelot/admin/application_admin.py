@@ -30,7 +30,6 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtCore, QtGui
 
 from camelot.admin.action import list_action, application_action
-from camelot.core.backup import BackupMechanism
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
 from camelot.view import database_selection
@@ -83,11 +82,6 @@ methods :
 .. attribute:: version
     
     A string with the version of the application
-
-.. attribute:: backup_mechanism
-
-    A subclass of :class:`camelot.core.backup.BackupMechanism` that enables 
-    the application to perform backups an restores.
     
 .. attribute:: database_profile_wizard
     
@@ -104,7 +98,6 @@ When the same action is returned in the :meth:`get_toolbar_actions` and
 shortcut confusion and reduce the number of status updates.
     """
 
-    backup_mechanism = BackupMechanism
     database_profile_wizard = database_selection.ProfileWizard
 
     name = 'Camelot'
@@ -548,13 +541,3 @@ shortcut confusion and reduce the number of status updates.
         from camelot.core.view.field_attributes import \
             _sqlalchemy_to_python_type_
         return _sqlalchemy_to_python_type_[type_](field)
-
-    def backup(self, main_window):
-        from camelot.view.wizard.backup import BackupWizard
-        wizard = BackupWizard(self.backup_mechanism, main_window)
-        wizard.exec_()
-
-    def restore(self, main_window):
-        from camelot.view.wizard.backup import RestoreWizard
-        wizard = RestoreWizard(self.backup_mechanism, main_window)
-        wizard.exec_()
