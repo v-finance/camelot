@@ -55,8 +55,11 @@ to display a progress dialog until my_function has finished::
         #label.setPixmap(icon.getQPixmap())
         self.setLabel( label )
         self.setWindowTitle( _('Please wait') )
-        QtCore.QTimer.singleShot( 1000, self.show )
-
+        # show immediately, to prevent a pop up before another window
+        # opened in an action_step
+        self.show() 
+        #QtCore.QTimer.singleShot( 1000, self.show )
+            
     @QtCore.pyqtSlot(bool)
     @QtCore.pyqtSlot()
     def finished(self, success=True):
