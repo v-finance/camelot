@@ -39,10 +39,8 @@ class BoolDelegate(CustomDelegate):
   
     def paint(self, painter, option, index):
         painter.save()
-        self.drawBackground(painter, option, index)
+        self.drawBackground( painter, option, index )
         checked = index.model().data(index, Qt.EditRole).toBool()
-        
-        background_color = QtGui.QColor(index.model().data(index, Qt.BackgroundRole))
         
         check_option = QtGui.QStyleOptionButton()
         
@@ -57,21 +55,17 @@ class BoolDelegate(CustomDelegate):
             painter.fillRect(option.rect, option.palette.highlight())
         elif not self.editable:
             painter.fillRect(option.rect, option.palette.window())
-        else:
-            painter.fillRect(option.rect, background_color)
             
         if checked:
             check_option.state = option.state | QtGui.QStyle.State_On
         else:
             check_option.state = option.state | QtGui.QStyle.State_Off
             
-            
-            
+
         QtGui.QApplication.style().drawControl(QtGui.QStyle.CE_CheckBox,
                                                check_option,
                                                painter)
-        
-        
+                
         painter.restore()
     
 class TextBoolDelegate(CustomDelegate):
