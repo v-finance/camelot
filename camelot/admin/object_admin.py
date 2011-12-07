@@ -318,12 +318,16 @@ be specified using the verbose_name attribute.
         return _('Are you sure you want to delete this')
 
     @model_function
-    def get_form_actions(self, entity):
+    def get_form_actions( self, obj ):
+        """Specify the list of action buttons that should appear on the side
+        of the form view.
+        
+        :param obj: the object displayed in the form
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
-        :return: a list of FormAction objects
-        """
+        app_admin = self.get_application_admin()
         from camelot.admin.action.form_action import structure_to_form_actions
-        return structure_to_form_actions( self.form_actions )
+        return app_admin.get_form_actions() + structure_to_form_actions( self.form_actions )
 
     @model_function
     def get_list_actions(self):

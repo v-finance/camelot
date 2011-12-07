@@ -259,6 +259,17 @@ shortcut confusion and reduce the number of status updates.
         """
         return []
     
+    def get_form_actions( self ):
+        """Specify the action buttons that should appear on each form in the
+        application.  
+        The :meth:`camelot.admin.object_admin.ObjectAdmin.get_form_actions`
+        method will call this method and prepend the result to the actions
+        of that specific form.
+        
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+        """
+        return []
+    
     def get_main_menu( self ):
         """
         :return: a list of :class:`camelot.admin.menu.Menu` objects, or None if 
