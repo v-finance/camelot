@@ -138,8 +138,10 @@ class Filter(object):
                 option_name = attributes['to_string'](value[0])
             else:
                 option_name = value[0]
+            if attributes.get( 'translate_content', False ):
+                option_name = _( option_name )
         
-            options.append( filter_option( name = _(option_name),
+            options.append( filter_option( name = option_name,
                                            value = value[0],
                                            decorator = create_decorator(col, attributes, value[0], joins) ) )
         
