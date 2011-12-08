@@ -50,6 +50,10 @@ class Fifo(object):
     def __str__(self):
         return 'Fifo cache of %s rows'%(len(self.entities))
     
+    def __len__(self):
+        """The number of rows in the cache"""
+        return len( self.entities )
+    
     def rows(self):
         """
         :return: a interator of the row numbers for which this fifo
@@ -60,7 +64,6 @@ class Fifo(object):
     def shallow_copy(self, max_entries):
         """Copy the cache without the actual data but with the references
         to which object is stored in which row"""
-        
         new_fifo = Fifo(max_entries)
         new_fifo.entities = copy( self.entities )
         # None is to distinguish between a list of data and no data
@@ -113,7 +116,7 @@ class Fifo(object):
         there isn't"""
         try:
             data = self.get_data_at_row( row )
-            if data is not None:
+            if data != None:
                 return True
         except KeyError:
             pass

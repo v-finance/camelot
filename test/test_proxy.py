@@ -22,15 +22,20 @@ class QueryProxyCase( ModelThreadTestCase ):
                                              query_getter = lambda:Person.query, 
                                              columns_getter = self.person_admin.get_columns )
   
-    def _load_data( self ):
+    def _load_data( self, proxy = None ):
         """Trigger the loading of data by the proxy"""
-        for row in range( self.person_proxy.rowCount() ):
-            self._data( row, 0 )
+        if proxy == None:
+            proxy = self.person_proxy
+        for row in range( proxy.rowCount() ):
+            self._data( row, 0, proxy )
+        self.process()
         
-    def _data( self, row, column ):
+    def _data( self, row, column, proxy = None ):
         """Get data from the proxy"""
-        index = self.person_proxy.index( row, column )
-        return variant_to_pyobject( self.person_proxy.data( index ) )
+        if proxy == None:
+            proxy = self.person_proxy
+        index = proxy.index( row, column )
+        return variant_to_pyobject( proxy.data( index ) )
     
     def _set_data( self, row, column, value ):
         """Set data to the proxy"""
@@ -66,7 +71,6 @@ class QueryProxyCase( ModelThreadTestCase ):
         self.assertFalse( self.person_admin.is_persistent( person ) )
         self._set_data( new_row, 0, 'Foo' )
         self._set_data( new_row, 1, 'Bar' )
-        self.process()
         self.assertEqual( person.first_name, 'Foo' )
         self.assertEqual( person.last_name, 'Bar' )
         self._load_data()
@@ -77,7 +81,10 @@ class QueryProxyCase( ModelThreadTestCase ):
         related_proxy = QueryTableProxy(
             self.person_admin,
             self.person_proxy.get_query_getter(),
-            self.person_admin.get_fields,
+            self.person_admin.get_columns,
             max_number_of_rows = 1,
-            cache_collection_proxy = self.person_model
+            cache_collection_proxy = self.person_proxy
         )
+        self.assertEqual( new_rowcount, related_proxy.rowCount() )
+        self._load_data( related_proxy )
+        self.assertEqual( self._data( new_row, 0, related_proxy ), 'Foo' )

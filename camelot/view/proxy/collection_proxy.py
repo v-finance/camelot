@@ -248,14 +248,17 @@ position in the query.
         self._columns = []
         self._static_field_attributes = []
         self._max_number_of_rows = max_number_of_rows
+        max_cache = 10 * self.max_number_of_rows
         if cache_collection_proxy:
-            self.display_cache = cache_collection_proxy.display_cache.shallow_copy( 10 * self.max_number_of_rows )
-            self.edit_cache = cache_collection_proxy.edit_cache.shallow_copy( 10 * self.max_number_of_rows )
-            self.attributes_cache = cache_collection_proxy.attributes_cache.shallow_copy( 10 * self.max_number_of_rows )
+            cached_entries = len( cache_collection_proxy.display_cache )
+            max_cache = max( cached_entries, max_cache )
+            self.display_cache = cache_collection_proxy.display_cache.shallow_copy( max_cache )
+            self.edit_cache = cache_collection_proxy.edit_cache.shallow_copy( max_cache )
+            self.attributes_cache = cache_collection_proxy.attributes_cache.shallow_copy( max_cache )
         else:        
-            self.display_cache = Fifo( 10 * self.max_number_of_rows )
-            self.edit_cache = Fifo( 10 * self.max_number_of_rows )
-            self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
+            self.display_cache = Fifo( max_cache )
+            self.edit_cache = Fifo( max_cache )
+            self.attributes_cache = Fifo( max_cache )
         # The rows in the table for which a cache refill is under request
         self.rows_under_request = set()
         self._update_requests = list()

@@ -276,7 +276,7 @@ class QueryTableProxy(CollectionProxy):
                 # since the previous query.
                 #
                 rows_in_cache = 0
-                for row in range(offset, limit + 1):
+                for row in range(offset, offset + limit):
                     try:
                         cached_obj =  self.edit_cache.get_entity_at_row(row)                        
                         self._add_data( columns, row, cached_obj)
