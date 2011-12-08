@@ -95,7 +95,7 @@ class Fixture( Entity ):
             obj = entity()
             store_fixture = True
         obj.from_dict( values )
-        Session.object_session( obj ).flush( [obj] )
+        Session.object_session( obj ).flush()
         if store_fixture:
             #
             # The fixture itself might have been deleted, but the reference might be intact,
@@ -106,7 +106,7 @@ class Fixture( Entity ):
                 reference = cls( model = unicode( entity.__name__ ), primary_key = obj.id, fixture_key = fixture_key, fixture_class = fixture_class )
             else:
                 reference.primary_key = obj.id
-            Session.object_session( reference ).flush( [reference] )
+            Session.object_session( reference ).flush()
         return obj
     
     @classmethod
@@ -120,13 +120,12 @@ class Fixture( Entity ):
         # remove the object itself
         from sqlalchemy.orm.session import Session
         obj = cls.findFixture( entity, fixture_key, fixture_class)
-        print 'remove', unicode(obj)
         obj.delete()
-        Session.object_session( obj ).flush( [obj] )
+        Session.object_session( obj ).flush()
         # if this succeeeds, remove the reference
         reference = cls.findFixtureReference(entity, fixture_key, fixture_class)
         reference.delete()
-        Session.object_session( reference ).flush( [reference] )
+        Session.object_session( reference ).flush()
         
 
 class FixtureVersion( Entity ):
@@ -164,5 +163,5 @@ class FixtureVersion( Entity ):
         if not obj:
             obj = FixtureVersion( fixture_class = fixture_class )
         obj.fixture_version = fixture_version
-        Session.object_session( obj ).flush( [obj] ) 
+        Session.object_session( obj ).flush() 
 
