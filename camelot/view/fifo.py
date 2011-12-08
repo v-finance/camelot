@@ -66,7 +66,6 @@ class Fifo(object):
         # None is to distinguish between a list of data and no data
         new_fifo.data_by_rows = dict( (row, (entity,None)) for (row, (entity, value)) in self.data_by_rows.items() )
         new_fifo.rows_by_entity = copy( self.rows_by_entity )
-        
         return new_fifo
         
     def add_data(self, row, entity, value):

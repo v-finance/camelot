@@ -550,7 +550,7 @@ position in the query.
         post(create_sort(column, order), self._refresh_content)
 
     @gui_function
-    def data( self, index, role ):
+    def data( self, index, role = Qt.DisplayRole):
         """:return: the data at index for the specified role
         This function will return ValueLoading when the data has not
         yet been fetched from the underlying model.  It will then send
@@ -747,7 +747,6 @@ position in the query.
                     pass
                 locker.unlock()
         return return_list
-
 
     def setData( self, index, value, role = Qt.EditRole ):
         """Value should be a function taking no arguments that returns the data to
@@ -1089,6 +1088,11 @@ position in the query.
 #      elixir.session.flush([history])
 #      self.rsh.sendEntityCreate(self, o)
         self._rows = rows + 1
+        #
+        # update the cache, so the object can be retrieved
+        #
+        columns = self.getColumns()
+        self._add_data( columns, rows, obj )
         self.endInsertRows()
         return self._rows
 

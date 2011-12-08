@@ -3,7 +3,7 @@ import os
 from PyQt4 import QtGui
 
 from camelot.admin.action import Action
-from camelot.admin.action import list_action
+from camelot.admin.action import list_action, application_action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
@@ -233,3 +233,39 @@ class ListActionsCase( ModelThreadTestCase ):
                 dialog.show()
                 self.grab_widget( dialog ) 
                 generator.send( ('rating', lambda:3) )
+
+class ApplicationActionsCase( ModelThreadTestCase ):
+    """Test application actions.
+    """
+
+    images_path = static_images_path
+    
+    def setUp(self):
+        from camelot.admin.application_admin import ApplicationAdmin
+        from camelot.core.files.storage import Storage
+        ModelThreadTestCase.setUp(self)
+        self.app_admin = ApplicationAdmin()
+        self.context = MockModelContext()
+        self.storage = Storage()
+
+    def test_refresh( self ):
+        refresh_action = application_action.Refresh()
+        list( refresh_action.model_run( self.context ) )
+        
+    def test_backup_and_restore( self ):
+        backup_action = application_action.Backup()
+        generator = backup_action.model_run( self.context )
+        for step in generator:
+            if isinstance( step, action_steps.SelectBackup ):
+                dialog = step.render()
+                dialog.show()
+                self.grab_widget( dialog, suffix = 'backup' ) 
+                generator.send( ('unittest', self.storage) )
+        restore_action = application_action.Restore()
+        generator = restore_action.model_run( self.context )
+        for step in generator:
+            if isinstance( step, action_steps.SelectRestore ):
+                dialog = step.render()
+                dialog.show()
+                self.grab_widget( dialog, suffix = 'restore' ) 
+                generator.send( ('unittest', self.storage) )
