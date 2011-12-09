@@ -31,6 +31,7 @@ from PyQt4.QtCore import Qt
 from wideeditor import WideEditor
 from customeditor import CustomEditor
 
+from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.art import Icon
 from camelot.view.model_thread import gui_function, model_function, post
 from camelot.core.utils import ugettext as _
@@ -44,12 +45,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
     spreadsheet_icon = Icon( 'tango/16x16/mimetypes/x-office-spreadsheet.png' )
 
     def __init__( self,
-                 admin = None,
-                 parent = None,
-                 create_inline = False,
-                 vertical_header_clickable = True,
-                 field_name = 'onetomany',
-                 **kw ):
+                  admin = None,
+                  parent = None,
+                  create_inline = False,
+                  field_name = 'onetomany',
+                  **kw ):
         """
     :param admin: the Admin interface for the objects on the one side of the
     relation
@@ -57,12 +57,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
     :param create_inline: if False, then a new entity will be created within a
     new window, if True, it will be created inline
 
-    :param vertical_header_clickable: True if the vertical header is clickable by the user, False if not.
-
     after creating the editor, set_value needs to be called to set the
     actual data to the editor
     """
-
         CustomEditor.__init__( self, parent )
         self.setObjectName( field_name )
         layout = QtGui.QHBoxLayout()
@@ -79,10 +76,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.setSizePolicy( QtGui.QSizePolicy.Expanding,
                             QtGui.QSizePolicy.Expanding )
         self.setMinimumHeight( rowHeight*5 )
-        if vertical_header_clickable:
-            table.verticalHeader().sectionClicked.connect(
-                self.createFormForIndex
-            )
+        table.verticalHeader().sectionClicked.connect(
+            self.trigger_list_action
+        )
         self.admin = admin
         self.create_inline = create_inline
         self.add_button = None
@@ -93,8 +89,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.setLayout( layout )
         self.model = None
         self._new_message = None
+        self.gui_context = ListActionGuiContext()
+        self.gui_context.view = self
+        self.gui_context.admin = self.admin
+        self.gui_context.item_view = table
 
-    def set_field_attributes(self, editable=True, new_message=None, **kwargs):
+    def set_field_attributes( self, editable=True, new_message=None, **kwargs ):
         self.add_button.setEnabled(editable)
         self.copy_button.setEnabled(editable)
         self.delete_button.setEnabled(editable)
@@ -113,7 +113,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.add_button.setIcon( icon )
         self.add_button.setAutoRaise( True )
         self.add_button.setToolTip(_('New'))
-        self.add_button.clicked.connect(self.newRow)
+        self.add_button.clicked.connect( self.newRow )
         self.copy_button = QtGui.QToolButton()
         self.copy_button.setIcon( self.copy_icon.getQIcon() )
         self.copy_button.setAutoRaise( True )
@@ -206,14 +206,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             form = self.admin.create_new_view( related_collection_proxy=self.model, parent = None )
             show_top_level( form, self )
 
-    def createFormForIndex( self, index ):
-        from camelot.view.workspace import show_top_level
-        from camelot.view.proxy.collection_proxy import CollectionProxy
-        model = CollectionProxy( self.admin,
-                                 self.model.get_collection,
-                                 self.admin.get_fields,
-                                 max_number_of_rows = 1,
-                                 edits = None )
-        form = self.admin.create_form_view( u'', model, self.model.map_to_source(index) )
-        show_top_level( form, self )
-
+    @QtCore.pyqtSlot( int )
+    def trigger_list_action( self, index ):
+        if self.admin.list_action:
+            self.admin.list_action.gui_run( self.gui_context )

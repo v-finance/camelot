@@ -141,7 +141,6 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             admin = admin,
             parent = self,
             create_inline = True,
-            vertical_header_clickable = False,
         )
         table_widget.set_value( model )
         table_widget.setObjectName( 'table_widget' )

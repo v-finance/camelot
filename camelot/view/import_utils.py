@@ -99,6 +99,8 @@ class RowDataAdminDecorator(object):
     background color pink if the data is invalid for being imported.
     """
 
+    list_action = None
+    
     def __init__(self, object_admin):
         """:param object_admin: the object_admin object that will be
         decorated"""
@@ -233,7 +235,6 @@ class DataPreviewPage(QtGui.QWizardPage):
             admin = model.get_admin(),
             parent = self,
             create_inline = True,
-            vertical_header_clickable = False,
         )
         self._note = NoteEditor()
         self._note.set_value(None)

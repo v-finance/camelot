@@ -198,7 +198,6 @@ class CollectionProxy( QtCore.QAbstractTableModel ):
                   collection_getter, 
                   columns_getter,
                   max_number_of_rows = 10, 
-                  edits = None, 
                   flush_changes = True,
                   cache_collection_proxy = None
                   ):
@@ -265,8 +264,6 @@ position in the query.
         # The rows that have unflushed changes
         self.unflushed_rows = set()
         self._sort_and_filter = SortingRowMapper()
-        # Set edits
-        self.edits = edits or []
         self.row_changed_signal.connect( self._emit_changes )
         self.rsh = get_signal_handler()
         self.rsh.connect_signals( self )

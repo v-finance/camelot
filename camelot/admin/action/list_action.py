@@ -226,19 +226,34 @@ class OpenFormView( ListContextAction ):
     def gui_run( self, gui_context ):
         from camelot.view.workspace import show_top_level
         from camelot.view.proxy.queryproxy import QueryTableProxy
-        model = QueryTableProxy(
-            gui_context.admin,
-            gui_context.item_view.model().get_query_getter(),
-            gui_context.admin.get_fields,
-            max_number_of_rows = 1,
-            cache_collection_proxy = gui_context.item_view.model()
-        )
+        from camelot.view.proxy.collection_proxy import CollectionProxy
+        related_model = gui_context.item_view.model()
+        #
+        # depending on the type of related model, create a new model
+        #
         row = gui_context.item_view.currentIndex().row()
+        if isinstance( related_model, QueryTableProxy ):
+            model = QueryTableProxy(
+                gui_context.admin,
+                related_model.get_query_getter(),
+                gui_context.admin.get_fields,
+                max_number_of_rows = 1,
+                cache_collection_proxy = related_model,
+            ) 
+        else:
+            # no cache or sorting information is transferred
+            model = CollectionProxy( 
+                gui_context.admin,
+                related_model.get_collection,
+                gui_context.admin.get_fields,
+                max_number_of_rows = 1,
+            )
+            # get the unsorted row
+            row = related_model.map_to_source( row )
         formview = gui_context.admin.create_form_view(
             u' ', 
             model, 
             row, 
-            parent=None
         )
         # make sure there is no 'pythonw' window title in windows for a
         # second

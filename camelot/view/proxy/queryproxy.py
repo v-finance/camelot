@@ -39,7 +39,7 @@ class QueryTableProxy(CollectionProxy):
     """
 
     def __init__(self, admin, query_getter, columns_getter,
-                 max_number_of_rows=10, edits=None,
+                 max_number_of_rows=10,
                  cache_collection_proxy=None):
         """@param query_getter: a model_thread function that returns a query, can be None at construction time and set later"""
         logger.debug('initialize query table')
@@ -52,7 +52,6 @@ class QueryTableProxy(CollectionProxy):
         super(QueryTableProxy, self).__init__(admin, lambda: [],
                                               columns_getter, 
                                               max_number_of_rows=max_number_of_rows, 
-                                              edits=None,
                                               cache_collection_proxy=cache_collection_proxy)     
         
     def get_query_getter(self):
