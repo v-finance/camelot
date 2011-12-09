@@ -164,6 +164,10 @@ be specified using the verbose_name attribute.
 
         class Admin(EntityAdmin):
             form_actions = [('Foo', lamda o_getter:print 'foo')]
+            
+.. attribute:: related_toolbar_actions
+
+    list of actions that appear in the toolbar of a OneToMany editor.
 
 **Field attributes**
 
@@ -227,13 +231,12 @@ be specified using the verbose_name attribute.
     list_filter = []
     list_charts = []
     list_actions = []
-    list_size = (600, 400)
+    list_size = (600, 600)
     form_size = (700, 500)
     form_actions = []
     field_attributes = {}
     form_state = None
     icon = None # Default
-    
     #
     # Behavioral attributes
     # 
@@ -329,6 +332,18 @@ be specified using the verbose_name attribute.
         from camelot.admin.action.form_action import structure_to_form_actions
         return app_admin.get_form_actions() + structure_to_form_actions( self.form_actions )
 
+    def get_related_toolbar_actions( self, toolbar_area, direction ):
+        """Specify the toolbar actions that should appear in a OneToMany editor.
+        
+        :param toolbar_area: the position of the toolbar
+        :param direction: the direction of the relation : 'onetomany' or 
+            'manytomany'
+            
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+        """
+        app_admin = self.get_application_admin()
+        return app_admin.get_related_toolbar_actions( toolbar_area, direction )
+    
     @model_function
     def get_list_actions(self):
         return self.list_actions

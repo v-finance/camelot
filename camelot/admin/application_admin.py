@@ -259,6 +259,23 @@ shortcut confusion and reduce the number of status updates.
         """
         return []
     
+    def get_related_toolbar_actions( self, toolbar_area, direction ):
+        """Specify the toolbar actions that should appear by default on every
+        OneToMany editor in the application.
+        
+        :param toolbar_area: the position of the toolbar
+        :param direction: the direction of the relation : 'onetomany' or 
+            'manytomany'
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+        """
+        if toolbar_area == Qt.RightToolBarArea and direction == 'onetomany':
+            return [ list_action.OpenNewView(),
+                     list_action.DeleteSelection(),
+                     list_action.DuplicateSelection(),
+                     list_action.ExportSpreadsheet(), ]
+        if toolbar_area == Qt.RightToolBarArea and direction == 'manytomany':
+            return [ list_action.ExportSpreadsheet(), ]
+        
     def get_form_actions( self ):
         """Specify the action buttons that should appear on each form in the
         application.  

@@ -39,11 +39,8 @@ from camelot.view import register
 
 class One2ManyEditor(CustomEditor, WideEditor):
 
-    new_icon = Icon('tango/16x16/actions/document-new.png')
-    delete_icon = Icon( 'tango/16x16/places/user-trash.png' )
-    copy_icon = Icon( 'tango/16x16/actions/edit-copy.png' )
-    spreadsheet_icon = Icon( 'tango/16x16/mimetypes/x-office-spreadsheet.png' )
-
+    direction = 'onetomany'
+    
     def __init__( self,
                   admin = None,
                   parent = None,
@@ -81,11 +78,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         )
         self.admin = admin
         self.create_inline = create_inline
-        self.add_button = None
-        self.copy_button = None
-        self.delete_button = None
         layout.addWidget( table )
-        self.setupButtons( layout, table )
         self.setLayout( layout )
         self.model = None
         self._new_message = None
@@ -93,65 +86,27 @@ class One2ManyEditor(CustomEditor, WideEditor):
         self.gui_context.view = self
         self.gui_context.admin = self.admin
         self.gui_context.item_view = table
+        post( self.admin.get_related_toolbar_actions, 
+              self.set_right_toolbar_actions,
+              args = (Qt.RightToolBarArea, self.direction ) )
 
-    def set_field_attributes( self, editable=True, new_message=None, **kwargs ):
-        self.add_button.setEnabled(editable)
-        self.copy_button.setEnabled(editable)
-        self.delete_button.setEnabled(editable)
-        self._new_message = new_message
+    @QtCore.pyqtSlot( object )
+    def set_right_toolbar_actions( self, toolbar_actions ):
+        if toolbar_actions != None:
+            toolbar = QtGui.QToolBar()
+            toolbar.setOrientation( Qt.Vertical )
+            for action in toolbar_actions:
+                qaction = action.render( self.gui_context, toolbar )
+                qaction.triggered.connect( self.action_triggered )
+                toolbar.addAction( qaction )
+            self.layout().addWidget( toolbar )
 
-    def setupButtons( self, layout, table ):
-        button_layout = QtGui.QVBoxLayout()
-        button_layout.setSpacing( 0 )
-        self.delete_button = QtGui.QToolButton()
-        self.delete_button.setIcon( self.delete_icon.getQIcon() )
-        self.delete_button.setAutoRaise( True )
-        self.delete_button.setToolTip(_('Delete'))
-        self.delete_button.clicked.connect( table.delete_selected_rows )
-        self.add_button = QtGui.QToolButton()
-        icon = self.new_icon.getQIcon()
-        self.add_button.setIcon( icon )
-        self.add_button.setAutoRaise( True )
-        self.add_button.setToolTip(_('New'))
-        self.add_button.clicked.connect( self.newRow )
-        self.copy_button = QtGui.QToolButton()
-        self.copy_button.setIcon( self.copy_icon.getQIcon() )
-        self.copy_button.setAutoRaise( True )
-        self.copy_button.setToolTip(_('Copy'))
-        self.copy_button.clicked.connect( table.copy_selected_rows )
-        export_button = QtGui.QToolButton()
-        export_button.setIcon( self.spreadsheet_icon.getQIcon() )
-        export_button.setAutoRaise( True )
-        export_button.setToolTip(_('Export as spreadsheet'))
-        export_button.clicked.connect(self.exportToExcel)
-        button_layout.addStretch()
-        button_layout.addWidget( self.add_button )
-        button_layout.addWidget( self.copy_button )
-        button_layout.addWidget( self.delete_button )
-        button_layout.addWidget( export_button )
-        layout.addLayout( button_layout )
+    @QtCore.pyqtSlot( bool )
+    def action_triggered( self, _checked = False ):
+        action_action = self.sender()
+        action_action.action.gui_run( self.gui_context )
 
-    def exportToExcel( self ):
-        from camelot.view.export.excel import open_data_with_excel
-
-        def export():
-            title = self.admin.get_verbose_name_plural()
-            columns = self.admin.get_columns()
-            if self.model:
-                data = list(self.model.getData())
-                for i, row in enumerate(data):
-                    for j, column in enumerate(row):
-                        if isinstance(column, basestring):
-                            row[j] = _(column)
-                    data[i] = row
-                open_data_with_excel(title, columns, data)
-
-        post( export )
-
-    def getModel( self ):
-        return self.model
-
-    @QtCore.pyqtSlot(object)
+    @QtCore.pyqtSlot( object )
     def update_delegates( self, *args ):
         table = self.findChild(QtGui.QWidget, 'table')
         if self.model and table:
@@ -170,6 +125,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
             self.model = model
             table.setModel( model )
             register.register( self.model, table )
+            model_context = self.gui_context.create_model_context()
+            for toolbar in self.findChildren( QtGui.QToolBar ):
+                for qaction in self.toolbar.actions():
+                    post( qaction.action.get_state,
+                          qaction.set_state,
+                          args = ( model_context, ) )
             post( model._extend_cache, self.update_delegates )
 
     @gui_function
