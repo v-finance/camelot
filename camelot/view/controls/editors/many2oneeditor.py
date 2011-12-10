@@ -368,7 +368,7 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
 
         post(get_instance_representation, self.set_instance_representation)
 
-    def selectEntity(self, entity_instance_getter):
+    def select_object( self, entity_instance_getter ):
         self.setEntity(entity_instance_getter)
 
 

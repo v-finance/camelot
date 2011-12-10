@@ -644,7 +644,8 @@ class ReplaceFieldContents( ListContextAction ):
         yield action_steps.FlushSession( model_context.session )
         
 class AddObject( ListContextAction ):
-    """Add an existing object to a list"""
+    """Add an existing object to a list if it is not yet in the
+    list"""
     
     tooltip = _('Add')
     verbose_name = _('Add')
@@ -654,19 +655,25 @@ class AddObject( ListContextAction ):
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
         obj_getter = yield action_steps.SelectObject( model_context.admin )
-        obj = obj_getter()
-        model_context._model.append_object( obj )
-        yield action_steps.FlushSession( object_session( obj ) )
+        obj_to_add = obj_getter()
+        for obj in model_context.get_collection():
+            if obj_to_add == obj:
+                raise StopIteration()
+        model_context._model.append_object( obj_to_add )
+        yield action_steps.FlushSession( object_session( obj_to_add ) )
     
 class RemoveSelection( ListContextAction ):
     """Remove the selected objects from a list without deleting them"""
     
     tooltip = _('Remove')
-    verbose_name = _('Add')
+    verbose_name = _('Remove')
     icon = Icon( 'tango/16x16/actions/list-remove.png' )
 
-    def gui_run( self, gui_context ):
-        model = gui_context.item_view.model()
-        model.remove_rows( set( map( lambda x: x.row(), 
-                                     gui_context.item_view.selectedIndexes() ) ), 
-                           delete=False )
+    def model_run( self, model_context ):
+        from sqlalchemy.orm import object_session
+        from camelot.view import action_steps
+        objects_to_remove = list( model_context.get_selection() )
+        if len( objects_to_remove ):
+            session = object_session( objects_to_remove[0] )
+        model_context._model.remove_objects( objects_to_remove, delete = False )
+        yield action_steps.FlushSession( session )

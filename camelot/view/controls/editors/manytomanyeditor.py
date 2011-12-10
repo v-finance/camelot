@@ -34,10 +34,3 @@ from camelot.core.utils import ugettext as _
 class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
 
     direction = 'manytomany'
-
-    def removeSelectedRows( self ):
-        """Remove the selected rows in this tableview, but don't delete them"""
-        table = self.findChild(QtGui.QWidget, 'table')
-        if table:
-            self.model.remove_rows( set( map( lambda x: x.row(), table.selectedIndexes() ) ), delete=False)
-            self.editingFinished.emit()
