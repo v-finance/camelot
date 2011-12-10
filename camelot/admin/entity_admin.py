@@ -279,7 +279,7 @@ It has additional class attributes that customise its behaviour.
                             delegate = delegates.One2ManyDelegate,
                             target = target,
                             create_inline = False,
-                            direction = property.direction,
+                            direction = 'onetomany',
                             admin = get_entity_admin(target)
                         )
                     elif property.direction == orm.interfaces.MANYTOONE:
@@ -293,7 +293,7 @@ It has additional class attributes that customise its behaviour.
                             # of only the first one
                             #
                             nullable = foreign_keys[0].nullable,
-                            direction = property.direction,
+                            direction = 'manytoone',
                             admin = get_entity_admin(target)
                         )
                     elif property.direction == orm.interfaces.MANYTOMANY:
@@ -303,7 +303,7 @@ It has additional class attributes that customise its behaviour.
                             target = target,
                             nullable = True,
                             create_inline = False,
-                            direction = property.direction,
+                            direction = 'manytomany',
                             delegate = delegates.ManyToManyDelegate,
                             admin = get_entity_admin(target)
                         )

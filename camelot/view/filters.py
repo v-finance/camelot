@@ -110,7 +110,7 @@ class Filter(object):
             if 'target' in attributes:
                 admin = attributes['admin']
                 joins.append(field_name)
-                if attributes['direction'] == orm.interfaces.MANYTOONE:
+                if attributes['direction'] == 'manytoone':
                     table = admin.entity.table.join( table )
                 else:
                     table = admin.entity.table
