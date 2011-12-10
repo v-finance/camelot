@@ -34,59 +34,6 @@ from camelot.core.utils import ugettext as _
 class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
 
     direction = 'manytomany'
-    
-    remove_icon = Icon( 'tango/16x16/actions/list-remove.png' )
-    add_icon = Icon( 'tango/16x16/actions/list-add.png' )
-    
-    def setupButtons( self, layout, _table ):
-        button_layout = QtGui.QVBoxLayout()
-        button_layout.setSpacing( 0 )
-        
-        self.remove_button = QtGui.QToolButton()
-        self.remove_button.setIcon( self.remove_icon.getQIcon() )
-        self.remove_button.setAutoRaise( True )
-        self.remove_button.setToolTip(_('Remove'))
-        self.remove_button.setFixedHeight( self.get_height() )
-        self.remove_button.clicked.connect(self.removeSelectedRows)
-
-        self.add_button = QtGui.QToolButton()
-        self.add_button.setIcon( self.add_icon.getQIcon() )
-        self.add_button.setAutoRaise( True )
-        self.add_button.setToolTip(_('Add'))
-        self.add_button.setFixedHeight( self.get_height() )
-        self.add_button.clicked.connect(self.createSelectView)
-        
-        self.new_button = QtGui.QToolButton()
-        self.new_button.setIcon( self.new_icon.getQIcon() )
-        self.new_button.setAutoRaise( True )
-        self.new_button.setToolTip(_('New'))
-        self.new_button.clicked.connect(self.newRow)
-
-        export_button = QtGui.QToolButton()
-        export_button.setIcon( self.spreadsheet_icon.getQIcon() )
-        export_button.setAutoRaise( True )
-        export_button.setToolTip(_('Export as spreadsheet'))
-        export_button.clicked.connect(self.exportToExcel)
-        
-        button_layout.addStretch()
-        button_layout.addWidget( self.add_button )
-        button_layout.addWidget( self.remove_button )
-        button_layout.addSpacing( 8 )
-        button_layout.addWidget( self.new_button )
-        button_layout.addWidget( export_button )
-        layout.addLayout( button_layout )
-
-    def selectEntity( self, entity_instance_getter ):
-
-        @model_function
-        def insert():
-            o = entity_instance_getter()
-            self.model.append_object( o )
-
-        post( insert, self.emit_editing_finished )
-
-    def emit_editing_finished(self, *args):
-        self.editingFinished.emit()
 
     def removeSelectedRows( self ):
         """Remove the selected rows in this tableview, but don't delete them"""

@@ -31,6 +31,7 @@ from open_file import ( OpenFile, OpenStream,
 from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
 from print_preview import PrintHtml, PrintPreview, PrintJinjaTemplate
 from select_file import SelectFile
+from select_object import SelectObject
 from update_progress import UpdateProgress
 
 __all__ = [
@@ -53,6 +54,7 @@ __all__ = [
     Refresh.__name__,
     SelectBackup.__name__,
     SelectFile.__name__,
+    SelectObject.__name__,
     SelectRestore.__name__,
     ShowChart.__name__,
     ShowPixmap.__name__,

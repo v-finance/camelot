@@ -127,7 +127,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             register.register( self.model, table )
             model_context = self.gui_context.create_model_context()
             for toolbar in self.findChildren( QtGui.QToolBar ):
-                for qaction in self.toolbar.actions():
+                for qaction in toolbar.actions():
                     post( qaction.action.get_state,
                           qaction.set_state,
                           args = ( model_context, ) )

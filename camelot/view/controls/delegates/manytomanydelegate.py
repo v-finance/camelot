@@ -42,9 +42,3 @@ class ManyToManyDelegate(One2ManyDelegate):
     def commitAndCloseEditor(self):
         editor = self.sender()
         self.commitData.emit(editor)
-
-    def setModelData(self, editor, model, index):
-        if editor.getModel():
-            model.setData(index, editor.getModel().get_collection)
-
-
