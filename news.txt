@@ -1,5 +1,7 @@
 Trunk
 -----
+
+ * Move the repository to gitorious
  
  * The toolbar in the one-to-many and many-to-many editor are configurable
    using the :meth:`ObjectAdmin.get_related_toolbar_actions` method.

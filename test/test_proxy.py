@@ -45,7 +45,7 @@ class QueryProxyCase( ModelThreadTestCase ):
     def test_insert_after_sort( self ):
         from camelot.view.proxy.queryproxy import QueryTableProxy
         from camelot.model.authentication import Person
-        self.person_proxy.sort( 0, Qt.AscendingOrder )
+        self.person_proxy.sort( 1, Qt.AscendingOrder )
         # check the query
         self.assertTrue( self.person_proxy.columnCount() > 0 )
         rowcount = self.person_proxy.rowCount()
@@ -55,7 +55,7 @@ class QueryProxyCase( ModelThreadTestCase ):
         data0 = self._data( 0, 1 )
         data1 = self._data( 1, 1 )
         self.assertTrue( data1 > data0 )
-        self.person_proxy.sort( 0, Qt.DescendingOrder )
+        self.person_proxy.sort( 1, Qt.DescendingOrder )
         self._load_data()
         data0 = self._data( 0, 1 )
         data1 = self._data( 1, 1 )

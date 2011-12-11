@@ -634,7 +634,6 @@ position in the query.
             attribute, field_attributes = self.getColumns()[column]
 
             from sqlalchemy.exc import DatabaseError
-            from sqlalchemy import orm
             new_value = value()
             self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
 

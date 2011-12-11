@@ -89,8 +89,6 @@ class Filter(object):
         :return:  a :class:`filter_data` object
         """
         from sqlalchemy.sql import select
-        #from sqlalchemy.sql.expression import alias
-        from sqlalchemy import orm
         from elixir import session
         filter_names = []
         joins = []
