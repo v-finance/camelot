@@ -25,49 +25,13 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from camelot.core.utils import ugettext as _
-
 class AbstractManyToOneEditor(object):
     """Helper functions for implementing a `ManyToOneEditor`, to be used in the
     `ManyToOneEditor` and in the `ManyToManyEditor`"""
 
     def createSelectView(self):
-        #search_text = unicode(self.search_input.text())
-        search_text = ''
-        admin = self.admin
-        query = self.admin.entity.query
-
-        class SelectDialog(QtGui.QDialog):
-            
-            entity_selected_signal = QtCore.pyqtSignal(object)
-            
-            def __init__(self, parent):
-                super(SelectDialog, self).__init__(None)
-                layout = QtGui.QVBoxLayout()
-                layout.setContentsMargins( 0, 0, 0, 0)
-                layout.setSpacing(0)
-                self.setWindowTitle( _('Select %s') % admin.get_verbose_name())
-                self.select = admin.create_select_view(
-                    query,
-                    parent=parent,
-                    search_text=search_text
-                )
-                layout.addWidget(self.select)
-                self.setLayout(layout)
-                self.select.entity_selected_signal.connect( self.selectEntity )
-                
-            @QtCore.pyqtSlot(object)
-            def selectEntity(self, entity_instance_getter):
-                self.entity_selected_signal.emit( entity_instance_getter )
-                self.close()
-
-        self.selectDialog = SelectDialog(self)
-        self.selectDialog.entity_selected_signal.connect( self.selectEntity )
-        #self.selectDialog.show()
-        self.selectDialog.exec_()
-
-    def selectEntity(self, entity_instance_getter):
-        #raise Exception('Not implemented')
-        raise NotImplementedError
-
-
+        from camelot.view.action_steps.select_object import SelectDialog
+        select_dialog = SelectDialog( self.admin, self )
+        select_dialog.exec_()
+        if select_dialog.object_getter != None:
+            self.select_object( select_dialog.object_getter )

@@ -642,3 +642,31 @@ class ReplaceFieldContents( ListContextAction ):
         for obj in model_context.get_selection():
             setattr( obj, field_name, value )
         yield action_steps.FlushSession( model_context.session )
+        
+class AddObject( ListContextAction ):
+    """Add an existing object to a list"""
+    
+    tooltip = _('Add')
+    verbose_name = _('Add')
+    icon = Icon( 'tango/16x16/actions/list-add.png' )
+    
+    def model_run( self, model_context ):
+        from sqlalchemy.orm import object_session
+        from camelot.view import action_steps
+        obj_getter = yield action_steps.SelectObject( model_context.admin )
+        obj = obj_getter()
+        model_context._model.append_object( obj )
+        yield action_steps.FlushSession( object_session( obj ) )
+    
+class RemoveSelection( ListContextAction ):
+    """Remove the selected objects from a list without deleting them"""
+    
+    tooltip = _('Remove')
+    verbose_name = _('Add')
+    icon = Icon( 'tango/16x16/actions/list-remove.png' )
+
+    def gui_run( self, gui_context ):
+        model = gui_context.item_view.model()
+        model.remove_rows( set( map( lambda x: x.row(), 
+                                     gui_context.item_view.selectedIndexes() ) ), 
+                           delete=False )

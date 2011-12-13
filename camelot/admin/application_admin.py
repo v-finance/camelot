@@ -274,7 +274,9 @@ shortcut confusion and reduce the number of status updates.
                      list_action.DuplicateSelection(),
                      list_action.ExportSpreadsheet(), ]
         if toolbar_area == Qt.RightToolBarArea and direction == 'manytomany':
-            return [ list_action.ExportSpreadsheet(), ]
+            return [ list_action.AddObject(),
+                     list_action.RemoveSelection(),
+                     list_action.ExportSpreadsheet(), ]
         
     def get_form_actions( self ):
         """Specify the action buttons that should appear on each form in the
