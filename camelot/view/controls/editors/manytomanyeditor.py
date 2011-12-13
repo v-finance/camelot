@@ -22,14 +22,8 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
-
 from one2manyeditor import One2ManyEditor
 from abstractmanytooneeditor import AbstractManyToOneEditor
-
-from camelot.view.art import Icon
-from camelot.view.model_thread import model_function, post
-from camelot.core.utils import ugettext as _
 
 class ManyToManyEditor( One2ManyEditor, AbstractManyToOneEditor ):
 
