@@ -661,7 +661,7 @@ class ImportFromFile( EditAction ):
         
 
 class ReplaceFieldContents( EditAction ):
-    """Import a csv file in the current table"""
+    """Select a field an change the content for a whole selection"""
     
     verbose_name = _('Replace field contents')
     tooltip = _('Replace the content of a field for all rows in a selection')

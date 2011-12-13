@@ -8,19 +8,16 @@ Introduction
 ============
 
 Besides displaying and editing data, every application needs the
-functions to manipulate data or create reports.  In the Camelot
-framework this is done through actions.  Actions appear as buttons
-on the side of a form and a table.  When the user clicks on an
-action button, a predefined function is called.
+functions to manipulate data or create reports.  In Camelot this is done through 
+actions.  Actions can appear as buttons on the side of a form or a table, as
+icons in a toolbar or as icons in the home workspace.
 
 .. image:: /_static/entityviews/new_view_address.png
   
-An action is available to show the address on a map
-
 Every Action is build up with a set of Action Steps.  An Action Step is a
 reusable part of an Action, such as for example, ask the user to select a
 file.  Camelot comes with a set of standard Actions and Action Steps that are 
-easily  extended to manipulate data or create reports.  
+easily extended to manipulate data or create reports.  
 
 When defining Actions, a clear distinction should be made between things 
 happening in the model thread (the manipulation or querying of data), and things 
@@ -93,6 +90,7 @@ Events that can be yielded to the GUI should be of type
 an action.  Possible Action Steps that can be yielded to the GUI include:
 
   * :class:`camelot.view.action_steps.change_object.ChangeObject`
+  * :class:`camelot.view.action_steps.change_object.ChangeObjects`
   * :class:`camelot.view.action_steps.print_preview.PrintPreview`
   * :class:`camelot.view.action_steps.print_preview.PrintHtml`
   * :class:`camelot.view.action_steps.print_preview.PrintJinjaTemplate`
@@ -105,6 +103,8 @@ an action.  Possible Action Steps that can be yielded to the GUI include:
   * :class:`camelot.view.action_steps.gui.OpenFormView`
   * :class:`camelot.view.action_steps.gui.ShowPixmap`
   * :class:`camelot.view.action_steps.gui.ShowChart`
+  * :class:`camelot.view.action_steps.select_file.SelectFile`
+  * :class:`camelot.view.action_steps.select_object.SelectObject`
 
 keep the user informed about progress
 -------------------------------------
@@ -379,9 +379,25 @@ inspiration to build new actions:
 
   * :class:`camelot.admin.action.application_action.OpenNewView`
   * :class:`camelot.admin.action.application_action.OpenTableView`
+  * :class:`camelot.admin.action.application_action.ShowHelp`
+  * :class:`camelot.admin.action.application_action.ShowAbout`
+  * :class:`camelot.admin.action.application_action.Backup`
+  * :class:`camelot.admin.action.application_action.Restore`
+  * :class:`camelot.admin.action.application_action.Refresh`
+  * :class:`camelot.admin.action.form_action.CloseForm`
   * :class:`camelot.admin.action.list_action.CallMethod`
   * :class:`camelot.admin.action.list_action.OpenFormView`
-
+  * :class:`camelot.admin.action.list_action.OpenNewView`
+  * :class:`camelot.admin.action.list_action.ToPreviousRow`
+  * :class:`camelot.admin.action.list_action.ToNextRow`
+  * :class:`camelot.admin.action.list_action.ToFirstRow`
+  * :class:`camelot.admin.action.list_action.ToLastRow`
+  * :class:`camelot.admin.action.list_action.ExportSpreadsheet`
+  * :class:`camelot.admin.action.list_action.PrintPreview`
+  * :class:`camelot.admin.action.list_action.SelectAll`
+  * :class:`camelot.admin.action.list_action.ImportFromFile`  
+  * :class:`camelot.admin.action.list_action.ReplaceFieldContents`
+  
 Inspiration
 ===========
 

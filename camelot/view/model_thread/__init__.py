@@ -60,7 +60,6 @@ def model_function(original_function):
 
     return wrapper
 
-
 def gui_function(original_function):
     """Decorator to ensure a function is only called from within the gui
     thread. If this function is called in another thread, an exception will be

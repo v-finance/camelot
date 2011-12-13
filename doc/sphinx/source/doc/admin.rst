@@ -4,9 +4,6 @@
   Customizing the Admin classes
 ###############################
 
-:Release: |version|
-:Date: |today|
-
 The Admin classes are the classes that specify how objects should be visualized,
 they define the look, feel and behaviour of the Application.  Most of the behaviour
 of the Admin classes can be tuned by changing their class attributes.  This makes
