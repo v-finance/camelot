@@ -151,7 +151,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         super( ListActionGuiContext, self ).__init__()
         self.item_view = None
         self.view = None
-        self.field_attributes = dict
+        self.field_attributes = dict()
 
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
@@ -233,6 +233,20 @@ class ListContextAction( Action ):
             state.enabled = False
         return state
     
+class EditAction( ListContextAction ):
+    """A base class for an action that will modify the model, it will be
+    disabled when the field_attributes for the relation field are set to 
+    not-editable.
+    """    
+
+    def get_state( self, model_context ):
+        state = super( EditAction, self ).get_state( model_context )
+        if isinstance( model_context, ListActionModelContext ):
+            editable = model_context.field_attributes.get( 'editable', True )
+            if editable == False:
+                state.enabled = False
+        return state
+
 class OpenFormView( ListContextAction ):
     """Open a form view for the current row of a list."""
     
@@ -278,7 +292,7 @@ class OpenFormView( ListContextAction ):
         formview.setWindowTitle( u' ' )
         show_top_level( formview, gui_context.item_view )
         
-class OpenNewView( ListContextAction ):
+class OpenNewView( EditAction ):
     """Opens a new view of an Entity related to a table view.
     """
     
@@ -295,7 +309,7 @@ class OpenNewView( ListContextAction ):
                                       parent = None )
         show_top_level( form, gui_context.item_view )
     
-class DuplicateSelection( ListContextAction ):
+class DuplicateSelection( EditAction ):
     """Duplicate the selected rows in a table"""
     
     shortcut = QtGui.QKeySequence.Copy
@@ -308,7 +322,7 @@ class DuplicateSelection( ListContextAction ):
         for row in set( map( lambda x: x.row(), gui_context.item_view.selectedIndexes() ) ):
             model.copy_row( row )
 
-class DeleteSelection( ListContextAction ):
+class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
     
     shortcut = QtGui.QKeySequence.Delete
@@ -586,7 +600,7 @@ class SelectAll( ListContextAction ):
     def gui_run( self, gui_context ):
         gui_context.item_view.selectAll()
         
-class ImportFromFile( ListContextAction ):
+class ImportFromFile( EditAction ):
     """Import a csv file in the current table"""
     
     verbose_name = _('Import from file')
@@ -646,7 +660,7 @@ class ImportFromFile( ListContextAction ):
         yield action_steps.Refresh()
         
 
-class ReplaceFieldContents( ListContextAction ):
+class ReplaceFieldContents( EditAction ):
     """Import a csv file in the current table"""
     
     verbose_name = _('Replace field contents')
@@ -661,7 +675,7 @@ class ReplaceFieldContents( ListContextAction ):
             setattr( obj, field_name, value )
         yield action_steps.FlushSession( model_context.session )
         
-class AddExistingObject( ListContextAction ):
+class AddExistingObject( EditAction ):
     """Add an existing object to a list if it is not yet in the
     list"""
     
@@ -680,7 +694,7 @@ class AddExistingObject( ListContextAction ):
         model_context._model.append_object( obj_to_add )
         yield action_steps.FlushSession( object_session( obj_to_add ) )
         
-class AddNewObject( ListContextAction ):
+class AddNewObject( EditAction ):
     """Add a new object to a collection"""
     
     shortcut = QtGui.QKeySequence.New
@@ -692,7 +706,7 @@ class AddNewObject( ListContextAction ):
         admin = model_context.admin
         model_context._model.append_object( admin.entity() )
     
-class RemoveSelection( ListContextAction ):
+class RemoveSelection( EditAction ):
     """Remove the selected objects from a list without deleting them"""
     
     tooltip = _('Remove')

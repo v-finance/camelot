@@ -164,24 +164,6 @@ class One2ManyEditor(CustomEditor, WideEditor):
             table.setCurrentIndex( index )
             table.edit( index )
 
-    def newRow( self ):
-        from camelot.view.workspace import show_top_level
-        if self._new_message:
-            QtGui.QMessageBox.information(self, _('New'), self._new_message)
-            return
-
-        if self.create_inline:
-
-            @model_function
-            def create():
-                return self.model.append_object( self.admin.entity() )
-
-            post( create, self.activate_editor )
-
-        else:
-            form = self.admin.create_new_view( related_collection_proxy=self.model, parent = None )
-            show_top_level( form, self )
-
     @QtCore.pyqtSlot( int )
     def trigger_list_action( self, index ):
         if self.admin.list_action:
