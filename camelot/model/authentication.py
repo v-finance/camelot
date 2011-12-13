@@ -471,6 +471,7 @@ class Party( Entity ):
         list_search = ['full_name']
         list_filter = ['categories.name']
         form_display = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
+        form_size = (700, 700)
         field_attributes = dict(addresses = {'admin':AddressAdmin},
                                 contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin},
                                 suppliers = {'admin':SupplierCustomer.SupplierAdmin},
