@@ -694,14 +694,18 @@ class AddExistingObject( EditAction ):
         model_context._model.append_object( obj_to_add )
         yield action_steps.FlushSession( object_session( obj_to_add ) )
         
-class AddNewObject( EditAction ):
-    """Add a new object to a collection"""
+class AddNewObject( OpenNewView ):
+    """Add a new object to a collection. Depending on the
+    'create_inline' field attribute, a new form is opened or not"""
     
-    shortcut = QtGui.QKeySequence.New
-    icon = Icon('tango/16x16/actions/document-new.png')
-    tooltip = _('New')
-    verbose_name = _('New')
-    
+    def gui_run( self, gui_context ):
+        create_inline = gui_context.field_attributes.get( 'create_inline',
+                                                          False )                                                            
+        if create_inline == True:
+            super( OpenNewView, self ).gui_run( gui_context )
+        else:
+            super( AddNewObject, self ).gui_run( gui_context )
+        
     def model_run( self, model_context ):
         admin = model_context.admin
         model_context._model.append_object( admin.entity() )
