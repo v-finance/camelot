@@ -35,10 +35,3 @@ class ManyToManyDelegate(One2ManyDelegate):
         self.setEditorData(editor, index)
         editor.editingFinished.connect( self.commitAndCloseEditor )
         return editor
-
-    #@QtCore.pyqtSlot()
-    # not yet converted to new style sig slot because sender doesn't work
-    # in certain versions of pyqt
-    def commitAndCloseEditor(self):
-        editor = self.sender()
-        self.commitData.emit(editor)
