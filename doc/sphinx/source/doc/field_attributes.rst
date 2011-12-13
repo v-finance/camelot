@@ -133,6 +133,7 @@ characters that should fit in the column::
   field_attributes = {'name':{'minimal_column_width':50}}
   
 will make the column wide enough to display at least 50 characters.
+The user will still be able to reduce the column size manually.
 
 .. _field-attribute-prefix:
 
