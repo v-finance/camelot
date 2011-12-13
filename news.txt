@@ -1,6 +1,11 @@
 Trunk
 -----
-
+ 
+ * The toolbar in the one-to-many and many-to-many editor are configurable
+   using the :meth:`ObjectAdmin.get_related_toolbar_actions` method.
+   
+ * Spanish translations
+ 
  * Possibility to add a close button to a form and to customize the form
    close action  
 

@@ -274,7 +274,7 @@ shortcut confusion and reduce the number of status updates.
                      list_action.DuplicateSelection(),
                      list_action.ExportSpreadsheet(), ]
         if toolbar_area == Qt.RightToolBarArea and direction == 'manytomany':
-            return [ list_action.AddObject(),
+            return [ list_action.AddExistingObject(),
                      list_action.RemoveSelection(),
                      list_action.ExportSpreadsheet(), ]
         

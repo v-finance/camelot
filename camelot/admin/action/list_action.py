@@ -643,7 +643,7 @@ class ReplaceFieldContents( ListContextAction ):
             setattr( obj, field_name, value )
         yield action_steps.FlushSession( model_context.session )
         
-class AddObject( ListContextAction ):
+class AddExistingObject( ListContextAction ):
     """Add an existing object to a list if it is not yet in the
     list"""
     
@@ -661,6 +661,18 @@ class AddObject( ListContextAction ):
                 raise StopIteration()
         model_context._model.append_object( obj_to_add )
         yield action_steps.FlushSession( object_session( obj_to_add ) )
+        
+class AddNewObject( ListContextAction ):
+    """Add a new object to a collection"""
+    
+    shortcut = QtGui.QKeySequence.New
+    icon = Icon('tango/16x16/actions/document-new.png')
+    tooltip = _('New')
+    verbose_name = _('New')
+    
+    def model_run( self, model_context ):
+        admin = model_context.admin
+        model_context._model.append_object( admin.entity() )
     
 class RemoveSelection( ListContextAction ):
     """Remove the selected objects from a list without deleting them"""
