@@ -457,6 +457,9 @@ be specified using the verbose_name attribute.
                         logger.error(u'error in field_attribute function of %s'%name, exc_info=exc)
                     finally:
                         dynamic_field_attributes[name] = return_value
+            #
+            # set editable to false in case of a relational field
+            #
             yield dynamic_field_attributes
 
     def get_field_attributes(self, field_name):

@@ -676,7 +676,7 @@ position in the query.
             # consider it changed anyway
             #
             direction = field_attributes.get( 'direction', None )
-            if direction in ( orm.interfaces.MANYTOMANY, orm.interfaces.ONETOMANY ):
+            if direction in ( 'manytomany', 'onetomany' ):
                 changed = True
             if changed:
                 # update the model

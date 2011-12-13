@@ -22,6 +22,7 @@
 #
 #  ============================================================================
 
+import copy
 import datetime
 import logging
 
@@ -60,6 +61,12 @@ class ListActionModelContext( ApplicationActionModelContext ):
     .. attribute:: session
     
         The session to which the objects in the list belong.
+        
+    .. attribute:: field_attributes
+    
+        The field attributes of the field to which the list relates, for example
+        the attributes of Person.addresses if the list is the list of addresses
+        of the Person.
        
     The :attr:`collection_count` and :attr:`selection_count` attributes allow the 
     :meth:`model_run` to quickly evaluate the size of the collection or the
@@ -76,6 +83,7 @@ class ListActionModelContext( ApplicationActionModelContext ):
         self.selection_count = 0
         self.collection_count = 0
         self.selected_rows = []
+        self.field_attributes = dict()
         
     @property
     def session( self ):
@@ -127,6 +135,14 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
        a :class:`camelot.view.controls.view.AbstractView` class that represents
        the view in which the action is triggered.
        
+    .. attribute:: field_attributes
+    
+       a dictionary with the field attributes of the list.  This dictionary will
+       be filled in case if the list displayed is related to a field on another
+       object.  For example, the list of addresses of Person will have the field
+       attributes of the Person.addresses field when displayed on the Person 
+       form.
+       
     """
         
     model_context = ListActionModelContext
@@ -135,10 +151,12 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         super( ListActionGuiContext, self ).__init__()
         self.item_view = None
         self.view = None
+        self.field_attributes = dict
 
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
         context._model = self.item_view.model()
+        context.field_attributes = copy.copy( self.field_attributes )
         context.current_row = self.item_view.currentIndex().row()
         context.collection_count = context._model.rowCount()
         selection_count = 0
