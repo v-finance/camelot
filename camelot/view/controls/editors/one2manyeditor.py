@@ -92,19 +92,35 @@ class One2ManyEditor(CustomEditor, WideEditor):
     @QtCore.pyqtSlot( object )
     def set_right_toolbar_actions( self, toolbar_actions ):
         if toolbar_actions != None:
-            toolbar = QtGui.QToolBar()
+            toolbar = QtGui.QToolBar( self )
             toolbar.setOrientation( Qt.Vertical )
             for action in toolbar_actions:
                 qaction = action.render( self.gui_context, toolbar )
                 qaction.triggered.connect( self.action_triggered )
                 toolbar.addAction( qaction )
             self.layout().addWidget( toolbar )
+            # set field attributes might have been called before the
+            # toolbar was created
+            self.update_action_status()
 
     @QtCore.pyqtSlot( bool )
     def action_triggered( self, _checked = False ):
         action_action = self.sender()
         action_action.action.gui_run( self.gui_context )
 
+    def set_field_attributes( self, **kwargs ):
+        self.gui_context.field_attributes = kwargs
+        self.update_action_status()
+        
+    def update_action_status( self ):
+        toolbar = self.findChild( QtGui.QToolBar )
+        if toolbar:
+            model_context = self.gui_context.create_model_context()
+            for qaction in toolbar.actions():
+                post( qaction.action.get_state,
+                      qaction.set_state,
+                      args = ( model_context, ) )
+                
     @QtCore.pyqtSlot( object )
     def update_delegates( self, *args ):
         table = self.findChild(QtGui.QWidget, 'table')

@@ -22,6 +22,7 @@
 #
 #  ============================================================================
 
+import itertools
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
@@ -341,18 +342,18 @@ It has additional class attributes that customise its behaviour.
 
     def get_dynamic_field_attributes(self, obj, field_names):
         """Takes the dynamic field attributes from through the ObjectAdmin its
-        get_dynamic_field_attributes and add the new_message attributes for
-        One2Many fields where the object was not flushed yet
+        get_dynamic_field_attributes and make relational fields not editable
+        in case the object is not yet persisted.
         """
-        from sqlalchemy.orm.session import Session
-        session = Session.object_session( obj )
-        # when a previous flush failed, obj might have no session
-        if session and obj in session.new:
-            new_message = ugettext('Please complete the form first')
-        else:
-            new_message = None
-        for attributes in super(EntityAdmin, self).get_dynamic_field_attributes(obj, field_names):
-            attributes['new_message'] = new_message
+        directions = ('onetomany', 'manytomany' )
+        persistent = self.is_persistent( obj )
+        iter1, iter2 = itertools.tee( field_names )
+        attributes_iterator = super(EntityAdmin, self).get_dynamic_field_attributes( obj, iter1 )
+        for attributes, field_name in zip( attributes_iterator, iter2 ):
+            if not persistent:
+                all_attributes = self.get_field_attributes( field_name )
+                if all_attributes.get('direction', False) in directions:
+                    attributes['editable'] = False
             yield attributes
             
     @model_function
