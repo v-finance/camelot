@@ -269,7 +269,7 @@ shortcut confusion and reduce the number of status updates.
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         if toolbar_area == Qt.RightToolBarArea and direction == 'onetomany':
-            return [ list_action.OpenNewView(),
+            return [ list_action.AddNewObject(),
                      list_action.DeleteSelection(),
                      list_action.DuplicateSelection(),
                      list_action.ExportSpreadsheet(), ]
