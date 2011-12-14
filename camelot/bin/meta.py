@@ -204,8 +204,11 @@ def setup_model():
     ('setup.py', '''
 
 import datetime
+import logging
 
 from setuptools import setup, find_packages
+
+logging.basicConfig( level=logging.INFO )
 
 setup(
     name = '{{options.name}}',
@@ -220,7 +223,7 @@ setup(
                     ],},
     options = {
         'bdist_cloud':{'revision':'0',
-                       'branch':'trunk',
+                       'branch':'master',
                        'update_before_launch':False,
                        'default_entry_point':('gui_scripts','main'),
                        'changes':[],
