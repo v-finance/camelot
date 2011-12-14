@@ -519,7 +519,7 @@ position in the query.
                 return QtCore.QVariant( QtCore.QSize( size, self._horizontal_header_height ) )
         else:
             if role == Qt.SizeHintRole:
-                if self.header_icon:
+                if self.header_icon != None:
                     return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 10,
                                                           self._vertical_header_height ) )
                 else:
@@ -527,8 +527,9 @@ position in the query.
                     return QtCore.QVariant( QtCore.QSize( QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, str(self._rows) ).width() + 10, self._vertical_header_height ) )
             if role == Qt.DecorationRole:
                 return self.form_icon
-#      elif role == Qt.DisplayRole:
-#        return QtCore.QVariant()
+            elif role == Qt.DisplayRole:
+                if self.header_icon != None:
+                    return QtCore.QVariant( '' )
         return QtCore.QAbstractTableModel.headerData( self, section, orientation, role )
 
     @gui_function
