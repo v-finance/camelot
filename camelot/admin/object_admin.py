@@ -51,7 +51,7 @@ class FieldAttributesList(list):
 DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip', 'color', 'background_color',
                                                 'editable', 'choices',
                                                 'prefix', 'suffix', 'arrow',
-                                                'new_message', 'default',
+                                                'new_message',
                                                 'precision'])
 
 
@@ -449,6 +449,11 @@ be specified using the verbose_name attribute.
             for name, value in field_attributes.items():
                 if name not in DYNAMIC_FIELD_ATTRIBUTES:
                     continue
+                if name in ('default',):
+                    # the default value of a field is not needed in the GUI,
+                    # and the continuous evaluation of it might be expensive,
+                    # as it might be the max of a column
+                    continue
                 if callable(value):
                     return_value = None
                     try:
@@ -646,7 +651,6 @@ be specified using the verbose_name attribute.
         self._apply_form_state( form )
         return form
 
-    # simply copied from EntityAdmin
     def set_defaults(self, object_instance, include_nullable_fields=True):
         """Set the defaults of an object
         :param include_nullable_fields: also set defaults for nullable fields, depending
@@ -654,6 +658,10 @@ be specified using the verbose_name attribute.
         to None
         """
         from sqlalchemy.schema import ColumnDefault
+        
+        if self.is_deleted( object_instance ):
+            return False
+        
         for field, attributes in self.get_fields():
             has_default = False
             try:
@@ -667,7 +675,9 @@ be specified using the verbose_name attribute.
                 # set already
                 #
                 value = attributes['getter'](object_instance)
-                if value!=None: # False is a legitimate value for Booleans
+                if value not in (None, []):
+                    # False is a legitimate value for Booleans, but a 
+                    # one-to-many field might have a default value as well
                     continue
                 if isinstance(default, ColumnDefault):
                     default_value = default.execute()
