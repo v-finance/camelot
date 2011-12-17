@@ -8,7 +8,7 @@
 :Date: |today|
 
 After developing a Camelot application comes the need to deploy the
-application, eather at a central location or in a distributed setup.
+application, either at a central location or in a distributed setup.
 
 Building .egg files
 ===================
