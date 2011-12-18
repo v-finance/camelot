@@ -1,7 +1,7 @@
 .. _doc-data_model:
 
 ########################
-  Build in data models
+  Built in data models
 ########################
 
 :Release: |version|
