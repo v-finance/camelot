@@ -364,9 +364,19 @@ shortcut confusion and reduce the number of status updates.
         return qpm
 
     def get_organization_name(self):
+        """
+        :return: a string with the name of the organization that wrote the
+            application. By default returns the :attr:`ApplicationAdmin.author`
+            attribute.
+        """
         return self.author
 
     def get_organization_domain(self):
+        """
+        :return: a string with the domain name of the organization that wrote the
+            application. By default returns the :attr:`ApplicationAdmin.domain`
+            attribute.
+        """
         return self.domain
 
     def get_help_url(self):
