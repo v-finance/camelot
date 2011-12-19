@@ -305,7 +305,7 @@ It has additional class attributes that customise its behaviour.
                             nullable = True,
                             create_inline = False,
                             direction = 'manytomany',
-                            delegate = delegates.ManyToManyDelegate,
+                            delegate = delegates.One2ManyDelegate,
                             admin = get_entity_admin(target)
                         )
                     else:

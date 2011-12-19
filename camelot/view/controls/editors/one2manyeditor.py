@@ -37,13 +37,12 @@ from camelot.core.utils import ugettext as _
 from camelot.view import register
 
 class One2ManyEditor(CustomEditor, WideEditor):
-
-    direction = 'onetomany'
     
     def __init__( self,
                   admin = None,
                   parent = None,
                   create_inline = False,
+                  direction = 'onetomany',
                   field_name = 'onetomany',
                   **kw ):
         """
@@ -76,6 +75,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             self.trigger_list_action
         )
         self.admin = admin
+        self.direction = direction
         self.create_inline = create_inline
         layout.addWidget( table )
         self.setLayout( layout )

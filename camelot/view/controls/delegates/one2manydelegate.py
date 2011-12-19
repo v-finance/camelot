@@ -47,6 +47,7 @@ class One2ManyDelegate( CustomDelegate ):
         logger.debug( 'create a one2many editor' )
         editor = editors.One2ManyEditor( parent = parent, **self.kwargs )
         self.setEditorData( editor, index )
+        editor.editingFinished.connect( self.commitAndCloseEditor )
         return editor
 
     def setEditorData( self, editor, index ):

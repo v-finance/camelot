@@ -24,7 +24,7 @@
 
 class AbstractManyToOneEditor(object):
     """Helper functions for implementing a `ManyToOneEditor`, to be used in the
-    `ManyToOneEditor` and in the `ManyToManyEditor`"""
+    `ManyToOneEditor` """
 
     def createSelectView(self):
         from camelot.view.action_steps.select_object import SelectDialog

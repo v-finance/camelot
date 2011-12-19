@@ -279,7 +279,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         def filter(attributes):
             if not attributes['editable']:
                 return False
-            if attributes['delegate'] in (delegates.One2ManyDelegate, delegates.ManyToManyDelegate):
+            if attributes['delegate'] in (delegates.One2ManyDelegate,):
                 return False
             return True
         
