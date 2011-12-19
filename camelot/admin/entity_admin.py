@@ -375,66 +375,6 @@ It has additional class attributes that customise its behaviour.
 
         return list(filter_generator())
 
-    @model_function
-    def set_defaults(self, entity_instance, include_nullable_fields=True):
-        """Set the fields of an object to their default state.
-        
-        :param include_nullable_fields: also set defaults for nullable fields, 
-            depending on the context, this should be set to False to allow 
-            the user to set the field to None
-        """
-        from sqlalchemy.schema import ColumnDefault
-        
-        if self.is_deleted( entity_instance ):
-            return False
-
-        for field, attributes in self.get_fields():
-            has_default = False
-            try:
-                default = attributes['default']
-                has_default = True
-            except KeyError:
-                pass
-            if has_default:
-                #
-                # prevent the setting of a default value when one has been
-                # set already
-                #
-                value = attributes['getter'](entity_instance)
-                if value!=None: # False is a legitimate value for Booleans
-                    continue
-                if isinstance(default, ColumnDefault):
-                    default_value = default.execute()
-                elif callable(default):
-                    import inspect
-                    args, _varargs, _kwargs, _defs = \
-                        inspect.getargspec(default)
-                    if len(args):
-                        default_value = default(entity_instance)
-                    else:
-                        default_value = default()
-                else:
-                    default_value = default
-                logger.debug(
-                    'set default for %s to %s' % (
-                        field,
-                        unicode(default_value)
-                    )
-                )
-                try:
-                    setattr(entity_instance, field, default_value)
-                except AttributeError, exc:
-                    logger.error(
-                        'Programming Error : could not set'
-                        ' attribute %s to %s on %s' % (
-                            field,
-                            default_value,
-                            entity_instance.__class__.__name__
-                        ),
-                        exc_info=exc
-                    )
-
-
     @gui_function
     def create_select_view(admin, query=None, search_text=None, parent=None):
         """Returns a Qt widget that can be used to select an element from a
