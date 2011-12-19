@@ -32,8 +32,7 @@ from wideeditor import WideEditor
 from customeditor import CustomEditor
 
 from camelot.admin.action.list_action import ListActionGuiContext
-from camelot.view.model_thread import gui_function, model_function, post
-from camelot.core.utils import ugettext as _
+from camelot.view.model_thread import gui_function, post
 from camelot.view import register
 
 class One2ManyEditor(CustomEditor, WideEditor):
