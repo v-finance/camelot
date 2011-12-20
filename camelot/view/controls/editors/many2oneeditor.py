@@ -38,13 +38,12 @@ from camelot.core.utils import variant_to_pyobject
 from camelot.core.utils import create_constant_function
 
 from customeditor import CustomEditor, set_background_color_palette
-from abstractmanytooneeditor import AbstractManyToOneEditor
 
 import logging
 logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
 
 
-class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
+class Many2OneEditor( CustomEditor ):
     """Widget for editing many 2 one relations"""
 
     new_icon = Icon('tango/16x16/actions/document-new.png')
@@ -215,6 +214,13 @@ class Many2OneEditor(CustomEditor, AbstractManyToOneEditor):
         else:
             return self.createNew()
 
+    def createSelectView(self):
+        from camelot.view.action_steps.select_object import SelectDialog
+        select_dialog = SelectDialog( self.admin, self )
+        select_dialog.exec_()
+        if select_dialog.object_getter != None:
+            self.select_object( select_dialog.object_getter )
+            
     def returnPressed(self):
         if not self.entity_set:
             self.createSelectView()
