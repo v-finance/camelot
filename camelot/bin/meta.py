@@ -265,6 +265,9 @@ class CreateNewProject( Action ):
         # end change object
         yield action_steps.UpdateProgress( text = 'Creating new project' )
         self.start_project( options )
+        project_path = os.path.abspath( options.source )
+        yield action_steps.MessageBox( 'All files for the new project<br/>' \
+                                       'were created in <b>%s</b>'%project_path )
         
     def start_project( self, options ):
         from jinja2 import Template
@@ -278,4 +281,3 @@ class CreateNewProject( Action ):
                        'w' )
             fp.write( code )
             fp.close()
-

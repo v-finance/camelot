@@ -30,6 +30,7 @@ from PyQt4 import QtGui
 
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
+from camelot.core.utils import ugettext_lazy as _
 
 class OpenFormView( ActionStep ):
     """Open the form view for a list of objects, in a non blocking way
@@ -127,9 +128,9 @@ class MessageBox( ActionStep ):
     of this action are the same as those of the :class:`QtGui.QMessageBox`
     constructor.
     
+    :param text: the text to be displayed within the message box
     :param icon: one of the :class:`QtGui.QMessageBox.Icon` constants
     :param title: the window title of the message box
-    :param text: the text to be displayed within the message box
     :param standard_buttons: the buttons to be displayed on the message box,
         out of the :class:`QtGui.QMessageBox.StandardButton` enumeration. by 
         default an :label:`Ok` and a button :label:`Cancel` will be shown.
@@ -144,9 +145,9 @@ class MessageBox( ActionStep ):
     default_buttons = QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel
     
     def __init__( self,
-                  icon, 
-                  title, 
                   text, 
+                  icon = QtGui.QMessageBox.Information, 
+                  title = _('Message'), 
                   standard_buttons = default_buttons ):
         self.icon = icon
         self.title = unicode( title )

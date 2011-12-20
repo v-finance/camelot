@@ -608,11 +608,13 @@ class ImportFromFile( EditAction ):
     tooltip = _('Import from file')
 
     def model_run( self, model_context ):
+        import os.path
         import chardet
         from camelot.view import action_steps
         from camelot.view.import_utils import ( UnicodeReader, 
                                                 RowData, 
-                                                RowDataAdminDecorator )
+                                                RowDataAdminDecorator,
+                                                XlsReader )
         file_names = yield action_steps.SelectFile()
         if not len( file_names ):
             return
@@ -621,9 +623,12 @@ class ImportFromFile( EditAction ):
         #
         # read the data into temporary row_data objects
         #
-        detected = chardet.detect( open( file_name ).read() )['encoding']
-        enc = detected or 'utf-8'
-        items = UnicodeReader( open( file_name ), encoding = enc )
+        if os.path.splitext( file_name )[-1] == '.xls':
+            items = XlsReader( file_name )
+        else:
+            detected = chardet.detect( open( file_name ).read() )['encoding']
+            enc = detected or 'utf-8'
+            items = UnicodeReader( open( file_name ), encoding = enc )
         collection = [ RowData(i, row_data) for i, row_data in enumerate( items ) ]
         #
         # validate the temporary data
@@ -634,10 +639,10 @@ class ImportFromFile( EditAction ):
         #
         # Ask confirmation
         #
-        yield action_steps.MessageBox( QtGui.QMessageBox.Warning, 
-                                       _('Proceed with import'), 
-                                       _('Importing data cannot be undone,\n'
-                                         'are you sure you want to continue') )
+        yield action_steps.MessageBox( icon = QtGui.QMessageBox.Warning, 
+                                       title = _('Proceed with import'), 
+                                       text = _('Importing data cannot be undone,\n'
+                                                'are you sure you want to continue') )
         #
         # import the temporary objects into real objects
         #

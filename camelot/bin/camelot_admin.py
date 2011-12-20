@@ -25,9 +25,8 @@
 import logging
 from optparse import OptionParser
 
-from camelot.core.conf import settings
-
-logging.basicConfig()
+logging.basicConfig( level = logging.INFO )
+LOGGER = logging.getLogger( 'camelot.bin.camelot_admin' )
 
 #
 # Description of the application, out of which the help text as well as the
@@ -143,7 +142,7 @@ def apidoc(source, destination):
                    lines.extend( toclines )
                index.writelines( '%s\n'%line for line in lines )
                     
-            print dirname, destination, targetdir
+            LOGGER.info( '%s : %s -> %s'%(dirname, destination, targetdir) )
         
     os.path.walk(source, document_directory, None)
     
@@ -156,7 +155,7 @@ def license_update(project, license_file):
     def translate_file(dirname, name):
         """translate a single file"""
         filename = os.path.join(dirname, name)
-        print 'converting', filename
+        LOGGER.info( 'converting %s'%filename )
         source = open(filename).read()
         output = open(filename, 'w')
         output.write(new_license)
@@ -177,8 +176,6 @@ def license_update(project, license_file):
     os.path.walk(project, translate_directory, None)
     
 def to_pyside(project):
-    print 'EXPERIMENTAL !'
-    
     import os.path
     import shutil
     output = os.path.join('to_pyside', os.path.basename(project))
@@ -193,7 +190,7 @@ def to_pyside(project):
     def translate_file(dirname, name):
         """translate a single file"""
         filename = os.path.join(dirname, name)
-        print 'converting', filename
+        LOGGER.info( 'converting %s'%filename )
         source = open(filename).read()
         output = open(filename, 'w')
         source = replace_word( source, 'PyQt4', 'PySide' )
@@ -233,26 +230,32 @@ def startproject(module):
     action.start_project( options )
 
 def makemessages():
-    print 'Not yet implemented'
+    from camelot.core.conf import settings
+    LOGGER.error( 'Not yet implemented' )
     settings.setup_model()
     
+def meta():
+    """launch meta camelot, in a separate function to make sure camelot_admin
+    does not depend on PyQt, otherwise it is imposible to run to_pyside without
+    having PyQt installed"""
+    from camelot.bin.meta import launch_meta_camelot
+    launch_meta_camelot()
     
 commands = locals()
 
 def main():
-    import camelot
-    from camelot.bin.meta import launch_meta_camelot
-    parser = CommandOptionParser(description=description,
-                                 usage=usage,
-                                 version=camelot.__version__,)
-    (_options, args) = parser.parse_args()
-    if not len(args):
-        launch_meta_camelot()
-    elif not len(args)>=2:
+    import camelot    
+    parser = CommandOptionParser( description = description,
+                                  usage = usage,
+                                  version = camelot.__version__, )
+    ( _options, args ) = parser.parse_args()
+    if not len( args ):
+        meta()
+    elif not len( args )>=2:
         parser.print_help()
     else:
         command, command_args = args[0], args[1:] 
-        commands[command](*command_args)
-    
+        commands[command]( *command_args )
+
 if __name__ == '__main__':
     main()

@@ -204,8 +204,12 @@ class ListActionsCase( ModelThreadTestCase ):
                 filename = step.get_path()
                 xlrd.open_workbook( filename )
 
-    def test_import_from_file( self ):
+    def test_import_from_xls_file( self ):
+        self.test_import_from_file( 'import_example.xls' )
+
+    def test_import_from_file( self, filename = 'import_example.csv' ):
         from camelot.model.authentication import Person
+        example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
         self.context = MockModelContext()
         self.context.obj = Person.query.first() # need an object, to have a
                                                 # session
@@ -214,7 +218,7 @@ class ListActionsCase( ModelThreadTestCase ):
         generator = import_from_file.model_run( self.context )
         for step in generator:
             if isinstance( step, action_steps.SelectFile ):
-                generator.send( [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'import_example.csv' )] )
+                generator.send( [ os.path.join( example_folder, filename ) ] )
             if isinstance( step, action_steps.ChangeObjects ):
                 dialog = step.render()
                 dialog.show()

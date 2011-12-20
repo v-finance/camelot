@@ -26,17 +26,10 @@
 
 import csv
 import codecs
-
-from PyQt4 import QtGui
-from PyQt4 import QtCore
-
-from camelot.core.utils import ugettext as _
-
-from camelot.view.art import Pixmap, ColorScheme
-from camelot.view.model_thread import post
-from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
-
 import logging
+
+from camelot.view.art import ColorScheme
+
 logger = logging.getLogger('camelot.view.import_utils')
 
 class RowData(object):
@@ -58,9 +51,8 @@ class RowData(object):
     def __getattr__(self, attr_name):
         return None
 
-
 # see http://docs.python.org/library/csv.html
-class UTF8Recoder:
+class UTF8Recoder( object ):
     """Iterator that reads an encoded stream and reencodes the input to
     UTF-8."""
 
@@ -73,9 +65,8 @@ class UTF8Recoder:
     def next(self):
         return self.reader.next().encode('utf-8')
 
-
 # see http://docs.python.org/library/csv.html
-class UnicodeReader:
+class UnicodeReader( object ):
     """A CSV reader which will iterate over lines in the CSV file "f", which is
     encoded in the given encoding."""
 
@@ -83,13 +74,43 @@ class UnicodeReader:
         f = UTF8Recoder(f, encoding)
         self.reader = csv.reader(f, dialect=dialect, **kwds)
 
-    def next(self):
+    def next( self ):
         row = self.reader.next()
         return [unicode(s, 'utf-8') for s in row]
 
-    def __iter__(self):
+    def __iter__( self ):
         return self
+    
+class XlsReader( object ):
+    """Read an XLS file and iterator over its lines
+    """
+    
+    def __init__( self, filename ):
+        import xlrd
+        # assume a single sheet xls doc
+        self.sheet = xlrd.open_workbook( filename ).sheets()[0]
+        self.current_row = 0
+        self.rows = self.sheet.nrows
+        
+    def next( self ):
+        if self.current_row < self.rows:
+            vector = []    
+            for column in range( self.sheet.ncols ):
+                cell = self.sheet.cell( self.current_row, column )
+                value = unicode( cell.value )
+                #type = xlrd.sheet.ctype_text[cell.ctype]
+                #if type == 'xldate':
+                #    t = xlrd.xldate_as_tuple(cell.value, datemode=0)
+                #    value = '%02d/%02d/%d' % (t[2], t[1], t[0])
+                vector.append( value )
+            self.current_row += 1
+            return vector
+        else:
+            raise StopIteration()
 
+    def __iter__( self ):
+        return self
+    
 class RowDataAdminDecorator(object):
     """Decorator that transforms the Admin of the class to be imported to an
     Admin of the RowData objects to be used when previewing and validating the
@@ -208,87 +229,3 @@ class RowDataAdminDecorator(object):
         self._columns = new_columns
 
         return new_columns
-
-
-class DataPreviewPage(QtGui.QWizardPage):
-    """DataPreviewPage is the previewing page for the import wizard"""
-
-    def __init__(self, parent=None, model=None, collection_getter=None):
-        from camelot.view.controls.editors import NoteEditor
-        super(DataPreviewPage, self).__init__(parent)
-        assert model
-        assert collection_getter
-        self.setTitle(_('Data Preview'))
-        self.setSubTitle(_('Please review the data below.'))
-        self._complete = False
-        self.model = model
-        validator = self.model.get_validator()
-        validator.validity_changed_signal.connect(self.update_complete)
-        model.layoutChanged.connect(self.validate_all_rows)
-        post(validator.validate_all_rows)
-        self.collection_getter = collection_getter
-
-        icon = 'tango/32x32/mimetypes/x-office-spreadsheet.png'
-        self.setPixmap(QtGui.QWizard.LogoPixmap, Pixmap(icon).getQPixmap())
-
-        self.previewtable = One2ManyEditor(
-            admin = model.get_admin(),
-            parent = self,
-            create_inline = True,
-        )
-        self._note = NoteEditor()
-        self._note.set_value(None)
-
-        ly = QtGui.QVBoxLayout()
-        ly.addWidget(self.previewtable)
-        ly.addWidget(self._note)
-        self.setLayout(ly)
-
-        self.setCommitPage(True)
-        self.setButtonText(QtGui.QWizard.CommitButton, _('Import'))
-        self.update_complete()
-
-    @QtCore.pyqtSlot()
-    def validate_all_rows(self):
-        validator = self.model.get_validator()
-        post(validator.validate_all_rows, self._all_rows_validated)
-
-    def _all_rows_validated(self, *args):
-        self.update_complete(0)
-
-    @QtCore.pyqtSlot(int)
-    def update_complete(self, row=0):
-        self._complete = (self.model.get_validator().number_of_invalid_rows()==0)
-        self.completeChanged.emit()
-        if self._complete:
-            self._note.set_value(None)
-        else:
-            self._note.set_value(_(
-                'Please correct the data above before proceeding with the '
-                'import.<br/>Incorrect cells have a pink background.'
-            ))
-
-    def initializePage(self):
-        """Gets all info needed from SelectFilePage and feeds table"""
-        filename = self.field('datasource').toString()
-        self._complete = False
-        self.completeChanged.emit()
-        self.model.set_collection_getter(self.collection_getter(filename))
-        self.previewtable.set_value(self.model)
-        self.validate_all_rows()
-
-    def validatePage(self):
-        answer = QtGui.QMessageBox.question(
-            self,
-            _('Proceed with import'),
-            _('Importing data cannot be undone,\n'
-              'are you sure you want to continue'),
-            QtGui.QMessageBox.Cancel,
-            QtGui.QMessageBox.Ok,
-        )
-        if answer == QtGui.QMessageBox.Ok:
-            return True
-        return False
-
-    def isComplete(self):
-        return self._complete
