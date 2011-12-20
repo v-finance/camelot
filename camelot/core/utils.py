@@ -168,7 +168,6 @@ def load_translations():
     for source, value in Translation.query.session.execute(query):
         _translations_[source] = value
 
-
 def _qtranslate(string_to_translate):
     """Translate a string using the QCoreApplication translation framework
     :param string_to_translate: a unicode string
@@ -197,7 +196,6 @@ def ugettext(string_to_translate):
 
     return result
 
-
 def dgettext(domain, message):
     """Like ugettext but look the message up in the specified domain.
     This uses the Translation table.
@@ -211,7 +209,6 @@ def dgettext(domain, message):
     for translation in Translation.query.session.execute(query):
         return translation[0]
     return message
-
 
 class ugettext_lazy(object):
     """Like :function:`ugettext`, but delays the translation until the string
@@ -242,26 +239,5 @@ class ugettext_lazy(object):
     def __repr__(self):
         return u"_('%s')"%self._string_to_translate
 
-def xls2list(xf):
-    import xlrd
-    matrix = []
-    s = xlrd.open_workbook(xf).sheets()[0] # assume a single sheet xls doc
-    for r in range(s.nrows):
-        vector = []
-        for c in range(s.ncols):
-            cell = s.cell(r, c)
-            type = xlrd.sheet.ctype_text[cell.ctype]
-            if type == 'xldate':
-                t = xlrd.xldate_as_tuple(cell.value, datemode=0)
-                value = '%02d/%02d/%d' % (t[2], t[1], t[0])
-            else:
-                value = cell.value
-            #vector.append((type, value))
-            vector.append(value)
-        matrix.append(vector)
-    return matrix
-
-
 def format_float(value, precision=3):
     return QtCore.QString("%L1").arg(float(value), 0, 'f', precision)
-

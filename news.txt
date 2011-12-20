@@ -1,6 +1,16 @@
 Trunk
 -----
 
+ * Import from file wizard supports importing excel files
+ 
+ * A number of new :class:`ActionStep` classes that can be used in custom 
+   :class:`Action` classes or serve as an example :
+   
+      * :class:`camelot.view.action_steps.change_object.ChangeObjects`
+      * :class:`camelot.view.action_steps.gui.CloseView`
+      * :class:`camelot.view.action_steps.gui.MessageBox`
+      * :class:`camelot.view.action_steps.select_object.SelectObject`
+  
  * Move the repository to gitorious
  
  * The toolbar in the one-to-many and many-to-many editor are configurable
@@ -16,7 +26,24 @@ Trunk
  * Main menu and toolbars are configurable in the :class:`ApplicationAdmin` 
    through the use of actions, which allows creation of reduced main windows
    
- * Rewrite of Camelot functions behind toolbars and menus to actions
+ * Rewrite of Camelot functions behind toolbars and menus to actions, resulting
+   in a number of :class:`Action` classes with sample code :
+   
+      * :class:`camelot.admin.action.application_action.ShowHelp`
+      * :class:`camelot.admin.action.application_action.ShowAbout`
+      * :class:`camelot.admin.action.application_action.Backup`
+      * :class:`camelot.admin.action.application_action.Restore`
+      * :class:`camelot.admin.action.form_action.CloseForm`
+      * :class:`camelot.admin.action.list_action.OpenNewView`
+      * :class:`camelot.admin.action.list_action.ToPreviousRow`
+      * :class:`camelot.admin.action.list_action.ToNextRow`
+      * :class:`camelot.admin.action.list_action.ToFirstRow`
+      * :class:`camelot.admin.action.list_action.ToLastRow`
+      * :class:`camelot.admin.action.list_action.ExportSpreadsheet`
+      * :class:`camelot.admin.action.list_action.PrintPreview`
+      * :class:`camelot.admin.action.list_action.SelectAll`
+      * :class:`camelot.admin.action.list_action.ImportFromFile`  
+      * :class:`camelot.admin.action.list_action.ReplaceFieldContents`
    
  * Move to SQLAlchemy 7.x
  
