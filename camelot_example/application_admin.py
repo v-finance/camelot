@@ -12,7 +12,8 @@ class MyApplicationAdmin(ApplicationAdmin):
     def get_sections(self):
         
         from camelot.model.memento import Memento
-        from camelot.model.authentication import Person, Organization
+        from camelot.model.authentication import ( Person, Organization, 
+                                                   PartyCategory )
         from camelot.model.i18n import Translation
         
         from camelot_example.model import Movie, Tag, VisitorReport
@@ -36,7 +37,8 @@ class MyApplicationAdmin(ApplicationAdmin):
                          self,
                          Icon('tango/22x22/apps/system-users.png'),
                          items = [ Person, 
-                                   Organization ]),
+                                   Organization,
+                                   PartyCategory ]),
                 Section( _('Configuration'),
                          self,
                          Icon('tango/22x22/categories/preferences-system.png'),
