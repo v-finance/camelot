@@ -634,10 +634,10 @@ class ImportFromFile( EditAction ):
         #
         # Ask confirmation
         #
-        yield action_steps.MessageBox( QtGui.QMessageBox.Warning, 
-                                       _('Proceed with import'), 
-                                       _('Importing data cannot be undone,\n'
-                                         'are you sure you want to continue') )
+        yield action_steps.MessageBox( icon = QtGui.QMessageBox.Warning, 
+                                       title = _('Proceed with import'), 
+                                       text = _('Importing data cannot be undone,\n'
+                                                'are you sure you want to continue') )
         #
         # import the temporary objects into real objects
         #
