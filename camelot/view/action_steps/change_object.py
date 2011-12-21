@@ -242,8 +242,16 @@ class ChangeObjects( ActionStep ):
     def render( self ):
         """create the dialog. this method is used to unit test
         the action step."""
-        return ChangeObjectsDialog( self.objects, 
-                                    self.admin )
+        dialog = ChangeObjectsDialog( self.objects, 
+                                      self.admin )
+        #
+        # the dialog cannot estimate its size, so use 75% of screen estate
+        #
+        desktop = QtGui.QApplication.desktop()
+        available_geometry = desktop.availableGeometry( dialog )
+        dialog.resize( available_geometry.width() * 0.75, 
+                       available_geometry.height() * 0.75 )
+        return dialog
         
     def gui_run( self, gui_context ):
         dialog = self.render()

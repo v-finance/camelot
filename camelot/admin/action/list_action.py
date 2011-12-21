@@ -87,7 +87,7 @@ class ListActionModelContext( ApplicationActionModelContext ):
         
     @property
     def session( self ):
-        return self._model.get_query_getter()().session
+        return self.admin.get_query().session
         
     def get_selection( self, yield_per = None ):
         """
@@ -660,6 +660,9 @@ class ImportFromFile( EditAction ):
                     from_string(getattr(row, field_name))
                 )
             admin.add( new_entity_instance )
+            # in case the model is a collection proxy, the new objects should
+            # be appended
+            model_context._model.append( new_entity_instance )
             yield action_steps.UpdateProgress( i, len( collection ), _('Importing data') )
         yield action_steps.FlushSession( model_context.session )
         yield action_steps.Refresh()

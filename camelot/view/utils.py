@@ -181,7 +181,9 @@ def int_from_string(s):
     if len(s) == 0: return int()
 
     try:
-        i = int(s)
+	# Convert to float first, to be able to convert a string like '1.0'
+	# to 1
+        i = int( float( s ) )
     except ValueError:
         raise ParsingError()
     return i

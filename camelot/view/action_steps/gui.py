@@ -69,7 +69,8 @@ class Refresh( ActionStep ):
     from the database"""
     
     def gui_run( self, gui_context ):
-        gui_context.workspace.refresh()
+        if gui_context.workspace:
+            gui_context.workspace.refresh()
 
 
 class ShowChart( ActionStep ):
