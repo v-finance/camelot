@@ -32,7 +32,6 @@ from currencydelegate import CurrencyDelegate
 from customdelegate import CustomDelegate
 from datedelegate import DateDelegate
 from datetimedelegate import DateTimeDelegate
-from enumerationdelegate import EnumerationDelegate
 from filedelegate import FileDelegate
 from floatdelegate import FloatDelegate
 from imagedelegate import ImageDelegate
@@ -67,7 +66,6 @@ __all__ = [
     CustomDelegate.__name__,
     DateDelegate.__name__,
     DateTimeDelegate.__name__,
-    EnumerationDelegate.__name__,
     FileDelegate.__name__,
     FloatDelegate.__name__,
     ImageDelegate.__name__,

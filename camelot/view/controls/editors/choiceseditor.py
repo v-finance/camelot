@@ -27,14 +27,18 @@ from PyQt4 import QtCore
 
 from customeditor import AbstractCustomEditor
 
-class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
+class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
     """A ComboBox aka Drop Down box that can be assigned a list of
     keys and values"""
 
     editingFinished = QtCore.pyqtSignal()
     valueChanged = QtCore.pyqtSignal()
     
-    def __init__(self, parent=None, nullable=True, field_name='choices', **kwargs):
+    def __init__( self, 
+                  parent = None, 
+                  nullable = True, 
+                  field_name = 'choices', 
+                  **kwargs ):
         QtGui.QComboBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
@@ -47,7 +51,7 @@ class ChoicesEditor(QtGui.QComboBox, AbstractCustomEditor):
         self.valueChanged.emit()
         self.editingFinished.emit()
 
-    def set_choices(self, choices):
+    def set_choices( self, choices ):
         """
     :param choices: a list of (value,name) tuples.  name will be displayed in the combobox,
     while value will be used within get_value and set_value.  This method changes the items

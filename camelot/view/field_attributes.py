@@ -258,7 +258,7 @@ _sqlalchemy_to_python_type_ = {
     },
 
     camelot.types.Enumeration: lambda f: {
-        'delegate': delegates.EnumerationDelegate,
+        'delegate': delegates.ComboBoxDelegate,
         'python_type': str,
         'choices': [(v, enumeration_to_string(v)) for v in f.choices],
         'from_string': lambda s:dict((enumeration_to_string(v), v) for v in f.choices)[s],
