@@ -715,13 +715,6 @@ class DelegateTest(ModelThreadTestCase):
         self.assertTrue(isinstance(editor, self.editors.DateTimeEditor))
         self.grab_delegate(delegate, DateTime, 'disabled')
 
-    def testEnumerationDelegate(self):
-        choices = [('a','A'), ('b','B')]
-        delegate = self.delegates.EnumerationDelegate(parent=None, choices=choices)
-        self.grab_delegate(delegate, 'a')
-        delegate = self.delegates.EnumerationDelegate(parent=None, choices=choices, editable=False)
-        self.grab_delegate(delegate, 'a', 'disabled')
-
     def testLocalFileDelegate(self):
         delegate = self.delegates.LocalFileDelegate(parent=None)
         self.grab_delegate(delegate, '/home/lancelot/quests.txt')
