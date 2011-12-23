@@ -72,6 +72,12 @@ class Task(QtCore.QObject):
             sys.exc_clear()
         except:
             logger.error( 'unhandled exception in model thread' )
+            exc_info = ( 'Unhandled exception', 
+                         sys.exc_info()[0], 
+                         None, 
+                         'Please contact the application developer', '')
+            # still emit the exception signal, to allow the gui to clean up things (such as closing dialogs)
+            self.exception.emit( exc_info )
             sys.exc_clear()
 
 class TaskHandler(QtCore.QObject):

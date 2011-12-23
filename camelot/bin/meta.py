@@ -99,14 +99,7 @@ features = [
                                                                                                      '''be used to store settings in the registry'''),
    ('application_url',       'http://www.python-camelot.com',           delegates.PlainTextDelegate, '''Website of the application'''),
    ('help_url',              'http://www.python-camelot.com/docs.html', delegates.PlainTextDelegate, '''Part of the website with online help'''),
-   #('default_models',        True,                                      delegates.BoolDelegate,      '''Use the default Camelot model for Organizations,<br/>'''
-   #                                                                                                  '''Persons, etc.'''),
-   #('integrate_cloudlaunch', False,                                     delegates.BoolDelegate,      '''Integrate updates, logging and online backups<br/>'''
-                                                                                                     #'''This requires CloudLaunch to be installed<br/>'''
-                                                                                                     #'''as well as credentials'''),
-   #('shortcut',              True,                                      delegates.BoolDelegate,      '''Put a shortcut on the desktop to<br/>'''
-                                                                                                     #'''start the application'''),
-   #('author_email',          '',                                      delegates.PlainTextDelegate,   '''E-mail address of the author'''),                                 
+   ('installer',             False,                                     delegates.BoolDelegate,      '''Build a windows installer'''),
 ]
 
 #
@@ -166,6 +159,29 @@ from camelot.model import metadata
 __metadata__ = metadata
     '''),
     
+    ('excludes.txt', '''
+vtk*
+test*
+sphinx*
+
+Lib\site-packages\cvxopt*
+Lib\site-packages\IPython*
+Lib\site-packages\logilab*
+Lib\site-packages\nose*
+Lib\site-packages\PIL*
+Lib\site-packages\py2exe*
+Lib\site-packages\pyflakes*
+Lib\site-packages\pylint*
+Lib\site-packages\pytz\zoneinfo\*
+Lib\site-packages\rope*
+Lib\site-packages\Sphinx*
+Lib\site-packages\spyder*
+Lib\site-packages\unittest*
+Lib\site-packages\virtualenv*
+Lib\site-packages\VTK*
+Lib\site-packages\docutils*
+Lib\site-packages\pyreadline*
+    '''),
     ('settings.py', '''
 import logging
 import os
@@ -203,6 +219,16 @@ def setup_model():
     '''),
     ('setup.py', '''
 
+#
+# Default setup file for a Camelot application
+#
+# To build a windows installer, execute this file with :
+#
+#     python setup.py egg_info bdist_cloud wininst_cloud
+#
+# Running from the Python SDK command line
+#
+
 import datetime
 import logging
 
@@ -229,6 +255,7 @@ setup(
                        'changes':[],
                        'timestamp':datetime.datetime.now(),
                        },
+        'wininst_cloud':{ 'excludes':'excludes.txt'},
     }, 
 
   )
@@ -258,6 +285,7 @@ class CreateNewProject( Action ):
             
     def model_run(self, context = None):
         # begin change object
+        from PyQt4 import QtGui
         from camelot.view import action_steps
         options = NewProjectOptions()
         yield action_steps.UpdateProgress( text = 'Request information' )
@@ -266,8 +294,36 @@ class CreateNewProject( Action ):
         yield action_steps.UpdateProgress( text = 'Creating new project' )
         self.start_project( options )
         project_path = os.path.abspath( options.source )
+        if options.installer:
+            cloudlaunch_found = False
+            try:
+                import cloudlaunch
+                cloudlaunch_found = True
+            except Exception, e:
+                yield action_steps.MessageBox( 'To build a Windows installer, you need to be using<br/>' \
+                                               'the Conceptive Python SDK, please visit<br/>' \
+                                               '<a href="http://www.conceptive.be/python-sdk.html">www.conceptive.be/python-sdk.html</a><br/>' \
+                                               'for more information' )
+            if cloudlaunch_found:
+                yield action_steps.UpdateProgress( text = 'Building windows installer' )
+                import distutils.core
+                current_dir = os.getcwd()
+                # change to the app directory for setuptools to do its job
+                os.chdir( project_path )
+                setup_path = os.path.join( 'setup.py' )
+                distribution = distutils.core.run_setup( setup_path, 
+                                                         script_args = ['egg_info', 'bdist_cloud', 'wininst_cloud'] )
+                os.chdir( current_dir )
+                for command, _python_version, filename in  distribution.dist_files:
+                    if command == 'wininst_cloud':
+                        yield action_steps.MessageBox( 'Use Inno Setup to process the file<br/>' \
+                                                       '<b>%s</b><br/> to build the installer executable'% os.path.join( project_path, filename ),
+                                                       standard_buttons = QtGui.QMessageBox.Ok )
+
         yield action_steps.MessageBox( 'All files for the new project<br/>' \
-                                       'were created in <b>%s</b>'%project_path )
+                                       'were created in <b>%s</b>'%project_path,
+                                       standard_buttons = QtGui.QMessageBox.Ok )
+        yield action_steps.OpenFile( project_path )
         
     def start_project( self, options ):
         from jinja2 import Template
