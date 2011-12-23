@@ -1,13 +1,13 @@
 .. _doc-data_model:
 
 ########################
-  Build in data models
+  Built in data models
 ########################
 
 :Release: |version|
 :Date: |today|
 
-Camelot comes with a number of build in data models.  To avoid boiler plate
+Camelot comes with a number of built in data models.  To avoid boiler plate
 models needed in almost any application (like Persons, Addresses, etc.), the
 developer is encouraged to use these data models as a start for developing
 custom applications.
