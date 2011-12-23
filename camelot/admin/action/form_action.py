@@ -170,9 +170,9 @@ class CloseForm( Action ):
             #
             # if the object is not valid, request the user what to do
             #
-            message = action_steps.MessageBox( QtGui.QMessageBox.Warning,
+            message = action_steps.MessageBox( '\n'.join( messages ),
+                                               QtGui.QMessageBox.Warning,
                                                _('Invalid form'),
-                                               '\n'.join( messages ),
                                                QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard )
             reply = yield message
             if reply == QtGui.QMessageBox.Discard:
