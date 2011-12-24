@@ -33,6 +33,7 @@ class MockModelContext( object ):
     """
     
     def __init__( self ):
+        self._model = []
         self.obj = None
         self.admin = None
         self.collection_count = 1
