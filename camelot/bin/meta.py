@@ -27,6 +27,7 @@ could be the start of MetaCamelot
 """
 
 import os
+import logging
 
 from camelot.core.conf import settings
 from camelot.core.utils import ugettext_lazy as _
@@ -36,6 +37,8 @@ from camelot.admin.action import Action
 from camelot.view.controls import delegates
 
 from camelot.view.main import Application
+
+LOGGER = logging.getLogger( 'camelot.bin.meta' )
 
 class MetaSettings(object):
     """settings target to be used within MetaCamelot, when no real
@@ -319,12 +322,13 @@ class CreateNewProject( Action ):
             try:
                 import cloudlaunch
                 cloudlaunch_found = True
-            except Exception, e:
+            except Exception:
                 yield action_steps.MessageBox( 'To build a Windows installer, you need to be using<br/>' \
                                                'the Conceptive Python SDK, please visit<br/>' \
                                                '<a href="http://www.conceptive.be/python-sdk.html">www.conceptive.be/python-sdk.html</a><br/>' \
                                                'for more information' )
             if cloudlaunch_found:
+                LOGGER.debug( '%s imported'%( cloudlaunch.__name__ ) )
                 yield action_steps.UpdateProgress( text = 'Building windows installer' )
                 import distutils.core
                 current_dir = os.getcwd()

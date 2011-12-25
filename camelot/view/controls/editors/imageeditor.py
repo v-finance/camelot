@@ -23,7 +23,6 @@
 #  ============================================================================
 
 from fileeditor import FileEditor
-from wideeditor import WideEditor
 
 from camelot.view.art import Icon
 from camelot.core.utils import ugettext as _
@@ -37,26 +36,25 @@ from PyQt4.QtCore import Qt
 
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
-class ImageEditor(FileEditor, WideEditor):
+class ImageEditor( FileEditor ):
     """Editor to view and edit image files, this is a customized
     implementation of a FileEditor"""
 
     filter = """Image files (*.bmp *.jpg *.jpeg *.mng *.png *.pbm *.pgm *.ppm
 *.tiff *.xbm *.xpm) All files (*)"""
 
-    def __init__(
-            self,
-            parent=None,
-            storage=None,
-            preview_width=100,
-            preview_height=100,
-            field_name = 'image',
-            **kwargs
-        ):
+    def __init__( self,
+                  parent=None,
+                  storage=None,
+                  preview_width=100,
+                  preview_height=100,
+                  field_name = 'image',
+                  **kwargs ):
         self.preview_width = preview_width
         self.preview_height = preview_height
         FileEditor.__init__(
-            self, parent=parent, storage=storage, **kwargs
+            self, parent=parent, storage=storage,
+            **kwargs
         )
         self.setObjectName( field_name )
 
@@ -119,7 +117,7 @@ class ImageEditor(FileEditor, WideEditor):
         paste_button.setObjectName('paste')
         paste_button.setFocusPolicy(Qt.ClickFocus)
         
-        button_layout.addStretch()
+        #button_layout.addStretch()
         button_layout.addWidget(self.open_button)
         button_layout.addWidget(self.save_as_button)
         button_layout.addWidget(self.add_button)
@@ -130,7 +128,7 @@ class ImageEditor(FileEditor, WideEditor):
         label_button_layout.addLayout(button_layout)
         label_button_layout.addStretch()
         layout.addLayout( label_button_layout )
-        layout.addStretch()
+        #layout.addStretch()
         self.setLayout( layout )
         self.clear_image()
         QtGui.QApplication.clipboard().dataChanged.connect( self.clipboard_data_changed )

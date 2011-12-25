@@ -562,7 +562,10 @@ class Organization( Party ):
         verbose_name = _( 'Organization' )
         verbose_name_plural = _( 'Organizations' )
         list_display = ['name', 'tax_id', 'contact_mechanisms_email', 'contact_mechanisms_phone']
-        form_display = TabForm( [( _('Basic'), Form( ['name', 'tax_id', 'addresses', 'contact_mechanisms'] ) ),
+        form_display = TabForm( [( _('Basic'), Form( [ 'name', 'contact_mechanisms_email', 
+                                                       'contact_mechanisms_phone', 
+                                                       'contact_mechanisms_fax', 'tax_id', 
+                                                       'addresses', 'contact_mechanisms'] ) ),
                                 ( _('Employment'), Form( ['employees'] ) ),
                                 ( _('Customers'), Form( ['customers'] ) ),
                                 ( _('Suppliers'), Form( ['suppliers'] ) ),
@@ -570,6 +573,7 @@ class Organization( Party ):
                                 ( _('Branding'), Form( ['logo'] ) ),
                                 ( _('Category and Status'), Form( ['categories', 'status'] ) ),
                                 ] )
+        field_attributes = dict( Party.Admin.field_attributes )
 
 Organization = documented_entity()( Organization )
 
@@ -652,7 +656,7 @@ class Person( Party ):
                                                                   'contact_mechanisms_email',
                                                                   'contact_mechanisms_phone',
                                                                   'contact_mechanisms_fax'] ),
-                                                          Form( ['picture', ] ),
+                                                                [WidgetOnlyForm('picture'), ],
                                                          ] ),
                                                          'comment', ], scrollbars = False ) ),
                                 ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
