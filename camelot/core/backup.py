@@ -245,7 +245,7 @@ class BackupMechanism(object):
         for i,to_table in enumerate(reversed(to_tables)):
             yield (i, steps, _('Delete data from table %s')%to_table.name)
             self.delete_table_data(to_table)
-        
+
         for i,to_table in enumerate(to_tables):
             if to_table.name in from_meta_data.tables:
                 yield (number_of_tables+i, steps, _('Copy data from table %s')%to_table.name)

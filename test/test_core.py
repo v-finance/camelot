@@ -40,4 +40,4 @@ class ConfCase(unittest.TestCase):
     def test_import_settings(self):
         from camelot.core.conf import settings
         self.assertRaises( AttributeError, lambda:settings.FOO )
-        self.assertEqual( settings.CAMELOT_MEDIA_ROOT, 'media' )
+        self.assertTrue( settings.CAMELOT_MEDIA_ROOT.endswith( 'media' ) )

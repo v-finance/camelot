@@ -213,6 +213,7 @@ class ListActionsCase( ModelThreadTestCase ):
         self.context = MockModelContext()
         self.context.obj = Person.query.first() # need an object, to have a
                                                 # session
+        #self.assertTrue( self.context.obj != None )
         self.context.admin = self.app_admin.get_related_admin( Person )
         import_from_file = list_action.ImportFromFile()
         generator = import_from_file.model_run( self.context )

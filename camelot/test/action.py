@@ -50,8 +50,7 @@ class MockModelContext( object ):
 
     @property
     def session( self ):
-        from sqlalchemy.orm.session import object_session
-        return object_session( self.obj )
+        return self.admin.get_query().session
 
 class MockListActionGuiContext( ListActionGuiContext ):
     
