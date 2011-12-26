@@ -18,7 +18,8 @@ class BinCase(unittest.TestCase):
         for filename, _template in templates:
             code = open( os.path.join( options.source, 
                                        filename.replace('{{options.module}}', options.module) ) ).read()
-            compile( code, 
-                     filename,
-                     'exec' )
+            if filename.endswith('.py'):
+                compile( code, 
+                         filename,
+                         'exec' )
         
