@@ -100,7 +100,9 @@ features = [
                                                                                                      '''will contain the application'''),
    ('domain',                'mydomain.com',                            delegates.PlainTextDelegate, '''The domain name of the author, this will<br/>'''
                                                                                                      '''be used to store settings in the registry'''),
-   ('application_url',       'http://www.python-camelot.com',           delegates.PlainTextDelegate, '''Website of the application'''),
+   ('application_url',       'http://www.python-camelot.com',           delegates.PlainTextDelegate, '''Url of the application, this url should be<br/>'''
+                                                                                                     '''unique for the application, as it will be used<br/>'''
+                                                                                                     '''to uniquely identify the application in Windows'''),
    ('help_url',              'http://www.python-camelot.com/docs.html', delegates.PlainTextDelegate, '''Part of the website with online help'''),
    ('installer',             False,                                     delegates.BoolDelegate,      '''Build a windows installer'''),
 ]

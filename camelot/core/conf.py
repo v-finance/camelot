@@ -89,9 +89,12 @@ class SimpleSettings( object ):
         """        
         if ('win' in sys.platform) and ('darwin' not in sys.platform):
             import winpaths
-            self._local_folder = os.path.join(winpaths.get_local_appdata(), author, name )
+            self._local_folder = os.path.join( winpaths.get_local_appdata(), 
+                                               author, 
+                                               name )
         else:
-            self._local_folder = os.path.join( os.path.expanduser('~'), u'.%s'%author, name )
+            self._local_folder = os.path.join( os.path.expanduser('~'), 
+                                               u'.%s'%author, name )
         if not os.path.exists( self._local_folder ):
             os.makedirs( self._local_folder )
             

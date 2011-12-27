@@ -43,7 +43,7 @@ settings.append( ExampleSettings('camelot', 'videostore') )
 def main():
     from camelot.view.main import main
     from camelot_example.application_admin import MyApplicationAdmin
-    main(MyApplicationAdmin())
+    main( MyApplicationAdmin() )
     
 if __name__ == '__main__':
     main()
