@@ -231,13 +231,3 @@ class SignalSlotModelThread( AbstractModelThread ):
         app = QtCore.QCoreApplication.instance()
         while self.busy():
             app.processEvents()
-
-#    app = QCoreApplication.instance()
-#    waiting = True
-#    while waiting:
-#      waiting = False
-#      if app.hasPendingEvents():
-#        app.processEvents()
-#        waiting = True
-
-
