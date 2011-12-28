@@ -26,6 +26,6 @@
 the Django admin interface.  Start building applications at warp speed, simply
 by adding some additional information to you Elixir model."""
 
-__version__ = 'trunk'
+__version__ = '11.12.29'
 
 
