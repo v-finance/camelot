@@ -1,5 +1,10 @@
-Trunk
------
+Release 11.12.30
+----------------
+
+ * Fix inclusion of stylesheets and templates in the egg
+
+Release 11.12.29
+----------------
 
  * Import from file wizard supports importing excel files
  
@@ -49,6 +54,8 @@ Trunk
  
  * Undefer all fields that are going to be used in a view when querying the
    database
+ 
+ * Reduction of the lines of code with 4%
 
 Release 11.11.16
 ----------------
