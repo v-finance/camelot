@@ -1,3 +1,8 @@
+Release 11.12.30
+----------------
+
+ * Fix inclusion of stylesheets and templates in the egg
+
 Release 11.12.29
 ----------------
 
