@@ -8,5 +8,6 @@ include thanks.txt
 include install.txt
 include todo.txt
 recursive-include camelot *.png *.doc *.qss *.html *.qm
+recursive-include camelot_example *.jpg *.png *.doc *.qss *.html *.qm
 recursive-include doc *.rst *.html *.png
 
