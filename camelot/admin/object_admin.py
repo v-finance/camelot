@@ -252,17 +252,13 @@ be specified using the verbose_name attribute.
         :param entity: the entity class for which this admin instance is to be
             used
         """
-        from camelot.view.remote_signals import get_signal_handler
         if not app_admin:
             from camelot.admin.application_admin import get_application_admin
             self.app_admin = get_application_admin()
         else:
             self.app_admin = app_admin
-        self.rsh = get_signal_handler()
         if entity:
-            from camelot.view.model_thread import get_model_thread
             self.entity = entity
-            self.mt = get_model_thread()
         #
         # caches to prevent recalculation of things
         #
