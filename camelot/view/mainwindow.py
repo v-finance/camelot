@@ -39,6 +39,10 @@ class MainWindow(QtGui.QMainWindow):
     :param gui_context: an :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`
         object
     :param parent: a :class:`QtGui.QWidget` object or :class:`None` 
+    
+    .. attribute:: splash_screen 
+        a :class:`QtGui.QWidget` that needs to be closed when
+        the main window is shown.
     """
 
     def __init__(self, gui_context, parent=None):
@@ -46,6 +50,7 @@ class MainWindow(QtGui.QMainWindow):
         logger.debug('initializing main window')
         QtGui.QMainWindow.__init__(self, parent)
 
+        self.splash_screen = None
         self.toolbars = []
         self.nav_pane = None
         self.app_admin = gui_context.admin.get_application_admin()
@@ -97,6 +102,25 @@ class MainWindow(QtGui.QMainWindow):
 
         logger.debug('initialization complete')
 
+    @QtCore.pyqtSlot()
+    def show( self ):
+        """This method wait until the main window is completely set up, and
+        only then shows it.  This is a workaround for a bug in Qt on OS X
+        
+        https://bugreports.qt.nokia.com/browse/QTBUG-18567
+        
+        """
+        post( lambda:None, self._delayed_show )
+        
+    @QtCore.pyqtSlot(object)
+    def _delayed_show( self, _o ):
+        """Call to the underlying :meth:`QMainWindow.show`, to be used in
+        :meth:`MainWindow.show`
+        """
+        super( MainWindow, self ).show()
+        if self.splash_screen:
+            self.splash_screen.close()
+        
     @QtCore.pyqtSlot()
     def unmaximize_view( self ):
         """Show the navigation pane and the menu bar if they exist """
