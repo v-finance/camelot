@@ -24,20 +24,15 @@
 """Most applications need to perform some scheduled jobs to process information.
 Users need to be able to monitor the functioning of those scheduled jobs.
 
-These classes provide the means to store the result of batch jobs to enable the user to
-review or plan them.
+These classes provide the means to store the result of batch jobs to enable the 
+user to review or plan them.
 """
 
 import sqlalchemy.types
-from sqlalchemy import orm, sql
+from sqlalchemy import orm, sql, schema
 
-from elixir.entity import Entity
-from elixir.options import using_options
-from elixir.fields import Field
-from elixir.relationships import ManyToOne
-
+from camelot.core.orm import Entity, Field, ManyToOne, using_options
 from camelot.core.utils import ugettext_lazy as _
-from camelot.model import metadata
 from camelot.view import filters
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action import Action
@@ -46,14 +41,12 @@ import camelot.types
 
 import datetime
 
-__metadata__ = metadata
-
-class BatchJobType(Entity):
+class BatchJobType( Entity ):
     """The type of batch job, the user will be able to filter his
     jobs based on their type.  A type might be 'Create management reports' """
     using_options( tablename = 'batch_job_type' )
-    name   = Field(sqlalchemy.types.Unicode(256), required=True)
-    parent = ManyToOne('BatchJobType')
+    name   = Field( sqlalchemy.types.Unicode(256), required=True )
+    parent = ManyToOne( 'BatchJobType' )
     
     def __unicode__(self):
         return self.name
@@ -91,7 +84,7 @@ class BatchJob(Entity):
     using_options( tablename = 'batch_job', order_by=['-date'] )
     date    = Field(sqlalchemy.types.DateTime, required=True, default=datetime.datetime.now)
     host    = Field(sqlalchemy.types.Unicode(256), required=True, default=hostname)
-    type    = ManyToOne('BatchJobType', required=True, ondelete = 'restrict', onupdate = 'cascade')
+    type    = ManyToOne('BatchJobType', required=True, ondelete = 'restrict', onupdate = 'cascade' )
     status  = Field(camelot.types.Enumeration([ (-2, 'planned'), 
                                                 (-1, 'running'), 
                                                 (0,  'success'), 
@@ -138,4 +131,3 @@ class BatchJob(Entity):
         form_actions = [ CancelBatchJob() ]
         
 BatchJob = documented_entity()( BatchJob )
-

@@ -22,12 +22,206 @@
 #
 #  ============================================================================
 
-"""Helper functions related to the connection between the SQLAlchemy
-ORM and the Camelot Views.
+"""Helper functions related to use the SQLAlchemy ORM and Declarative 
+extension.  Most of the classes in this module mimic the behavior of Elixir.
 """
 
 import logging
 logger = logging.getLogger('camelot.core.orm')
+
+import sqlalchemy.types
+from sqlalchemy import schema, orm, ForeignKey, types
+from sqlalchemy.ext.declarative import ( declared_attr, declarative_base, 
+                                         DeclarativeMeta )
+
+from camelot.model import metadata
+
+# format constants
+FKCOL_NAMEFORMAT = "%(relname)s_%(key)s"
+CONSTRAINT_NAMEFORMAT = "%(tablename)s_%(colnames)s_fk"
+MULTIINHERITANCECOL_NAMEFORMAT = "%(entity)s_%(key)s"
+
+# other global constants
+DEFAULT_AUTO_PRIMARYKEY_NAME = "id"
+DEFAULT_AUTO_PRIMARYKEY_TYPE = types.Integer
+DEFAULT_VERSION_ID_COL_NAME = "row_version"
+DEFAULT_POLYMORPHIC_COL_NAME = "row_type"
+POLYMORPHIC_COL_SIZE = 40
+POLYMORPHIC_COL_TYPE = types.String( POLYMORPHIC_COL_SIZE )
+
+class Field( schema.Column ):
+    """Subclass of :class:`sqlalchemy.schema.Column`
+    """
+    
+    def __init__( self, type, *args, **kwargs ):
+        if 'required' in kwargs:
+            kwargs['nullable'] = not kwargs.pop( 'required' )
+        super( Field, self ).__init__( type, *args, **kwargs )
+        
+class Property( object ):
+    """
+    Abstract base class for all properties of an Entity that are not handled
+    by Declarative but should be handled by EntityMeta
+    """
+    pass
+    
+class ManyToOne( Property ):
+    """An Entity property that creates a :class:`sqlalchemy.orm.relationship`
+    and a :class:`sqlalchemy.schema.Column` property.
+    """
+    
+    def __init__( self, argument=None, secondary = None, **kwargs ):
+        self.argument = argument
+        self.secondary = secondary
+        self.kwargs = kwargs
+        target_table_name = argument.lower()
+        self.column = Field( sqlalchemy.types.Integer(),
+                             ForeignKey( '%s.id'%target_table_name ) )
+        
+    def attach( self, dict_, name ):
+        dict_[ name + '_id' ] = self.column
+        dict_[ name ] = orm.relationship( self.argument )
+        
+class ClassMutator( object ):
+    """Class to create DSL statements such as `using_options`.  This is used
+    to transform Elixir like DSL statements in Declarative class attributes.
+    The use of these statements is discouraged in any new code, and exists for
+    compatibility with Elixir model definitions"""
+    
+    def __call__( self, *args, **kwargs ):
+        pass
+
+using_options = ClassMutator()
+
+class EntityMeta( DeclarativeMeta ):
+    """Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.  This
+    metaclass processes the Property and ClassMutator objects.
+    """
+    
+    def __new__( cls, classname, bases, dict_ ):
+        #
+        # add a primary key
+        #
+        primary_key_column = schema.Column( DEFAULT_AUTO_PRIMARYKEY_TYPE,
+                                            primary_key = True )
+        dict_[ DEFAULT_AUTO_PRIMARYKEY_NAME ] = primary_key_column
+        #
+        # handle the Properties
+        #
+        for key, value in dict_.items():
+            if isinstance( value, Property ):
+                value.attach( dict_, key )
+        return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
+        
+class Entity( object ):
+    """A declarative base class that adds some methods that used to be
+    available in Elixir"""
+    
+    @declared_attr
+    def __tablename__(cls):
+        return cls.__name__.lower()
+                    
+    #
+    # methods below were copied from Elixir to mimic the Elixir Entity
+    # behavior
+    #
+    def from_dict(self, data):
+        """
+        Update a mapped class with data from a JSON-style nested dict/list
+        structure.
+        """
+        # surrogate can be guessed from autoincrement/sequence but I guess
+        # that's not 100% reliable, so we'll need an override
+
+        mapper = sqlalchemy.orm.object_mapper(self)
+
+        for key, value in data.iteritems():
+            if isinstance(value, dict):
+                dbvalue = getattr(self, key)
+                rel_class = mapper.get_property(key).mapper.class_
+                pk_props = rel_class._descriptor.primary_key_properties
+
+                # If the data doesn't contain any pk, and the relationship
+                # already has a value, update that record.
+                if not [1 for p in pk_props if p.key in data] and \
+                   dbvalue is not None:
+                    dbvalue.from_dict(value)
+                else:
+                    record = rel_class.update_or_create(value)
+                    setattr(self, key, record)
+            elif isinstance(value, list) and \
+                 value and isinstance(value[0], dict):
+
+                rel_class = mapper.get_property(key).mapper.class_
+                new_attr_value = []
+                for row in value:
+                    if not isinstance(row, dict):
+                        raise Exception(
+                                'Cannot send mixed (dict/non dict) data '
+                                'to list relationships in from_dict data.')
+                    record = rel_class.update_or_create(row)
+                    new_attr_value.append(record)
+                setattr(self, key, new_attr_value)
+            else:
+                setattr(self, key, value)
+
+    def to_dict(self, deep={}, exclude=[]):
+        """Generate a JSON-style nested dict/list structure from an object."""
+        col_prop_names = [p.key for p in self.mapper.iterate_properties \
+                                      if isinstance(p, ColumnProperty)]
+        data = dict([(name, getattr(self, name))
+                     for name in col_prop_names if name not in exclude])
+        for rname, rdeep in deep.iteritems():
+            dbdata = getattr(self, rname)
+            #FIXME: use attribute names (ie coltoprop) instead of column names
+            fks = self.mapper.get_property(rname).remote_side
+            exclude = [c.name for c in fks]
+            if dbdata is None:
+                data[rname] = None
+            elif isinstance(dbdata, list):
+                data[rname] = [o.to_dict(rdeep, exclude) for o in dbdata]
+            else:
+                data[rname] = dbdata.to_dict(rdeep, exclude)
+        return data
+
+    # session methods
+    def flush(self, *args, **kwargs):
+        return object_session(self).flush([self], *args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        return object_session(self).delete(self, *args, **kwargs)
+
+    def expire(self, *args, **kwargs):
+        return object_session(self).expire(self, *args, **kwargs)
+
+    def refresh(self, *args, **kwargs):
+        return object_session(self).refresh(self, *args, **kwargs)
+
+    def expunge(self, *args, **kwargs):
+        return object_session(self).expunge(self, *args, **kwargs)
+    
+    # query methods
+    @classmethod
+    def get_by(cls, *args, **kwargs):
+        """
+        Returns the first instance of this class matching the given criteria.
+        This is equivalent to:
+        session.query(MyClass).filter_by(...).first()
+        """
+        return cls.query.filter_by(*args, **kwargs).first()
+
+    @classmethod
+    def get(cls, *args, **kwargs):
+        """
+        Return the instance of this class based on the given identifier,
+        or None if not found. This is equivalent to:
+        session.query(MyClass).get(...)
+        """
+        return cls.query.get(*args, **kwargs)
+
+Entity = declarative_base( cls = Entity, 
+                           metadata = metadata,
+                           metaclass = EntityMeta )
 
 def refresh_session(session):
     """Session refresh expires all objects in the current session and sends

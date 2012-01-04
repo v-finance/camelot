@@ -778,6 +778,7 @@ be specified using the verbose_name attribute.
                 if not self._new_object:
                     self._new_object = admin.entity()
                     # Give the default fields their value
+                    admin.add( self._new_object )
                     admin.set_defaults(self._new_object)
                     if self._related_collection_proxy:
                         self._related_collection_proxy.append_object( self._new_object )

@@ -26,6 +26,8 @@ import itertools
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
+from sqlalchemy.orm.session import Session
+
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function, gui_function
@@ -453,9 +455,17 @@ It has additional class attributes that customise its behaviour.
         return self.TableView( gui_context, self )
 
     @model_function
+    def add( self, obj ):
+        """Adds the entity instance to the default session, if it is not
+        yet attached to a session"""
+        import elixir
+        session = Session.object_session( obj )
+        if session == None:
+            elixir.session.add( obj )
+    
+    @model_function
     def delete(self, entity_instance):
         """Delete an entity instance"""
-        from sqlalchemy.orm.session import Session
         session = Session.object_session( entity_instance )
         #
         # new and deleted instances cannot be deleted

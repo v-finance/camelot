@@ -58,5 +58,4 @@ __model__ = [authentication,
              memento, 
              synchronization, 
              type_and_status,
-             batch_job]
-
+             batch_job ]
