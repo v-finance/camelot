@@ -22,7 +22,10 @@
 #
 #  ============================================================================
 """
-Camelot unittest framework
+Camelot unittest framework.  This module contains helper classes and functions
+to write unittests for Camelot applications.  These are not the unittests for
+Camelot itself.  Those can be found in the /test folder, at the same position 
+as /camelot.
 """
 
 import unittest
