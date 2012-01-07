@@ -22,8 +22,10 @@
 #
 #  ============================================================================
 
-import os
+import itertools
 import logging
+import os
+
 logger = logging.getLogger('camelot.admin.application_admin')
 
 from PyQt4.QtCore import Qt
@@ -420,20 +422,52 @@ shortcut confusion and reduce the number of status updates.
         :param directory: the directory, relative to the module in which
             to look for translation files
         :param suffix: the suffix of the filename
+        :param search_delimiters: list of characters by which to split the file
+            name to search for variations of the file name
         :return: :keyword:None if unable to load the file, otherwise a
             :obj:`QtCore.QTranslator` object.
+            
+        This method tries to load all file names with or without suffix, and
+        with or without the part after the search delimiter.
         """
         from camelot.core.resources import resource_string
+
+        #
+        # split the directory names and file name
+        #
+        file_name_parts = [ file_name ]
+        head, tail = os.path.split( file_name_parts[0] )
+        while tail:
+            file_name_parts[0] = tail
+            file_name_parts = [ head ] + file_name_parts
+            head, tail = os.path.split( file_name_parts[0] )
+        #
+        # for each directory and file name, generate all possibilities
+        #
+        file_name_parts_possibilities = []
+        for file_name_part in file_name_parts:
+            part_possibilities = []
+            for search_delimiter in search_delimiters:
+                delimited_parts = file_name_part.split( search_delimiter )
+                for i in range( len( delimited_parts ) ):
+                    part_possibility = search_delimiter.join( delimited_parts[:len(delimited_parts)-i] )
+                    part_possibilities.append( part_possibility )
+            file_name_parts_possibilities.append( part_possibilities )
+        #
+        # make the combination of all those possibilities
+        #
         file_names = []
-        for search_delimiter in search_delimiters:
-            file_name_parts = file_name.split( search_delimiter )
-            for i in range( len(file_name_parts) ):
-                partial_file_name = search_delimiter.join( file_name_parts[:len(file_name_parts)-i] )
-                file_names.append( partial_file_name + suffix )
-                file_names.append( partial_file_name )
+        for parts_possibility in itertools.product( *file_name_parts_possibilities ):
+            file_name = os.path.join( *parts_possibility )
+            file_names.append( file_name )
+            file_names.append( file_name + suffix )
+        #
+        # now try all file names
+        #
         translations = None
         for file_name in file_names:
             try:
+                logger.debug( u'try %s'%file_name )
                 translations = resource_string( module_name, os.path.join(directory,file_name) )
                 break
             except IOError:
@@ -467,8 +501,8 @@ shortcut confusion and reduce the number of status updates.
                               QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
             translators.append( qt_translator )
         camelot_translator = self._load_translator_from_file( 'camelot', 
-                                                              'camelot',
-                                                              'art/translations/%s/LC_MESSAGES/'%language_name )
+                                                              os.path.join( '%s/LC_MESSAGES/'%language_name, 'camelot' ),
+                                                              'art/translations/' )
         if camelot_translator:
             translators.append( camelot_translator )
         else:
