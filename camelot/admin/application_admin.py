@@ -495,13 +495,12 @@ shortcut confusion and reduce the number of status updates.
         translators = []
         qt_translator = QtCore.QTranslator()
         locale_name = QtCore.QLocale().name()
-        language_name = locale_name
         logger.info( u'using locale %s'%locale_name )
         if qt_translator.load( "qt_" + locale_name,
-                              QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
+                               QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
             translators.append( qt_translator )
         camelot_translator = self._load_translator_from_file( 'camelot', 
-                                                              os.path.join( '%s/LC_MESSAGES/'%language_name, 'camelot' ),
+                                                              os.path.join( '%s/LC_MESSAGES/'%locale_name, 'camelot' ),
                                                               'art/translations/' )
         if camelot_translator:
             translators.append( camelot_translator )
