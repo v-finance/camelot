@@ -1,26 +1,11 @@
 # Setup.py
 *.egg
 *egg-info
+
 # Documentation
-_build
 build
+dist
 .Python
-
-# Virtual environment
-bin/
-lib/
-lib64
-include/
-src/
-dist/
-man/
-
-# Certificates
-certs/
-
-# Production server
-logs/
-pip-log.txt
 
 # Testing
 .coverage
@@ -34,18 +19,14 @@ pip-log.txt
 
 #Rope project temps
 .ropeproject/
-project/.ropeproject/
-
-#personal stuffs
-todo
 
 #db
 *.db
 *.sqlite
-project/*.db
-project/*.sqlite
 
-#public output of media and static assets
-project/public/static
-project/public/media
+# OS generated files 
+.DS_Store*
+ehthumbs.db
+Icon?
+Thumbs.db
 
