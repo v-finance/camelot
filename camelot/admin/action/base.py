@@ -342,8 +342,13 @@ direct manipulations of the user interface without a need to access the model.
         """
         from camelot.view.controls.progress_dialog import ProgressDialog
         progress_dialog = None
-        # only create a progress dialog if there is none yet
+        # only create a progress dialog if there is none yet, or if the
+        # existing dialog was canceled
+        LOGGER.debug( 'action gui run started' )
+        if gui_context.progress_dialog and gui_context.progress_dialog.wasCanceled():
+            gui_context.progress_dialog = None
         if gui_context.progress_dialog == None:
+            LOGGER.debug( 'create new progress dialog' )
             progress_dialog = ProgressDialog( unicode( self.verbose_name ) )
             gui_context.progress_dialog = progress_dialog
             #progress_dialog.show()
@@ -352,6 +357,7 @@ direct manipulations of the user interface without a need to access the model.
         if progress_dialog != None:
             progress_dialog.close()
             gui_context.progress_dialog = None
+        LOGGER.debug( 'gui run finished' )
         
     def get_state( self, model_context ):
         """
