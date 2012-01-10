@@ -461,7 +461,7 @@ shortcut confusion and reduce the number of status updates.
         translators = []
         qt_translator = QtCore.QTranslator()
         locale_name = QtCore.QLocale().name()
-        language_name = locale_name.split('_')[0]
+        language_name = locale_name
         logger.info( u'using locale %s'%locale_name )
         if qt_translator.load( "qt_" + locale_name,
                               QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
