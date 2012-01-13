@@ -4,7 +4,6 @@
  Fixtures : handling static data in the database
 #################################################
 
-:Release: |version|
 :Date: |today|
 
 Some tables need to be filled with default data when users start
@@ -91,3 +90,16 @@ update_fixtures function::
 	  Fixture.insertOrUpdateFixture(MovieType,
 	                                fixture_key = 'scifi',
 	                                values = dict(name='Science Fiction', icon='light_saber.png'))	  
+
+The fixture version
+-------------------
+
+In case lots of data needs to be read into the database (like a list of 
+postal codeds), it might make no sense to create a new fixture for each code,
+instead a fixture version number can be set to indicate a list has been read
+into the database.  The :class:`camelot.model.fixture.FixtureVersion` exists
+to facilitate this.
+
+.. literalinclude:: ../../../../test/test_model.py
+   :start-after: begin load csv if fixture version
+   :end-before: end  load csv if fixture version
