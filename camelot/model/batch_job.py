@@ -46,7 +46,7 @@ class BatchJobType( Entity ):
     jobs based on their type.  A type might be 'Create management reports' """
     using_options( tablename = 'batch_job_type' )
     name   = Field( sqlalchemy.types.Unicode(256), required=True )
-    parent = ManyToOne( 'BatchJobType' )
+    parent = ManyToOne( BatchJobType )
     
     def __unicode__(self):
         return self.name

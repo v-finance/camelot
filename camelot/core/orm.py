@@ -27,6 +27,8 @@ extension.  Most of the classes in this module mimic the behavior of Elixir.
 """
 
 import logging
+import sys
+
 logger = logging.getLogger('camelot.core.orm')
 
 import sqlalchemy.types
@@ -48,6 +50,8 @@ DEFAULT_VERSION_ID_COL_NAME = "row_version"
 DEFAULT_POLYMORPHIC_COL_NAME = "row_type"
 POLYMORPHIC_COL_SIZE = 40
 POLYMORPHIC_COL_TYPE = types.String( POLYMORPHIC_COL_SIZE )
+
+MUTATORS = '__mutators__'
 
 class Field( schema.Column ):
     """Subclass of :class:`sqlalchemy.schema.Column`
@@ -88,10 +92,26 @@ class ClassMutator( object ):
     The use of these statements is discouraged in any new code, and exists for
     compatibility with Elixir model definitions"""
     
-    def __call__( self, *args, **kwargs ):
+    def __init__( self, *args, **kwargs ):
+        # jam this mutator into the class's mutator list
+        class_locals = sys._getframe(1).f_locals
+        mutators = class_locals.setdefault(MUTATORS, [])
+        mutators.append( (self, args, kwargs) )
+        
+    def process( self, entity_dict, *args, **kwargs ):
+        """
+        Process one mutator.  This methed should be overwritten in a subclass
+        """
         pass
 
-using_options = ClassMutator()
+class using_options( ClassMutator ):
+    
+    def process( self, entity_dict, tablename = None, order_by = None ):
+        if tablename:
+            entity_dict['__tablename__'] = tablename
+        if order_by:
+            mapper_args = entity_dict.get('__mapper_args__', {} )
+            mapper_args['order_by'] = order_by
 
 class EntityMeta( DeclarativeMeta ):
     """Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.  This
@@ -99,6 +119,16 @@ class EntityMeta( DeclarativeMeta ):
     """
     
     def __new__( cls, classname, bases, dict_ ):
+        #
+        # process the mutators
+        #
+        for mutator, args, kwargs in dict_.get( MUTATORS, [] ):
+            mutator.process( dict_, *args, **kwargs )
+        #
+        # use default tablename if none set
+        #
+        if '__tablename__' not in dict_:
+            dict_['__tablename__'] = classname.lower()     
         #
         # add a primary key
         #
