@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -89,3 +89,4 @@ class SelectFile( ActionStep ):
         if file_names:
             settings.setValue( 'datasource', QtCore.QVariant( file_names[0] ) )
         return file_names
+

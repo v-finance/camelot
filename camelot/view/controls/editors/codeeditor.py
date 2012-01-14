@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -130,3 +130,4 @@ class CodeEditor(CustomEditor):
         self.set_enabled(editable)
         self.set_background_color(background_color)
         self.layout().itemAt(0).widget().setToolTip(unicode(tooltip or ''))
+

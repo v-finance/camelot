@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -167,3 +167,4 @@ class One2ManyEditor(CustomEditor, WideEditor):
     def trigger_list_action( self, index ):
         if self.admin.list_action:
             self.admin.list_action.gui_run( self.gui_context )
+

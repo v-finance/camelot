@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -75,3 +75,4 @@ def update_database_from_model():
             LOGGER.warn( 'column %s missing in table %s'%(column, table_name) )
             table = metadata.tables[table_name]
             create_column(column, table)
+

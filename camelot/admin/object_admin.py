@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -883,4 +883,5 @@ be specified using the verbose_name attribute.
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()
         return new_entity_instance
+
 

@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -50,3 +50,4 @@ class ActionsBox( QtGui.QWidget ):
             action_widget = action.render( self.gui_context, self )
             layout.addWidget( action_widget )
         self.setLayout( layout )
+

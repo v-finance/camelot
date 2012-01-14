@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -97,3 +97,4 @@ class SmileyEditor(CustomEditor):
     def set_value(self, value):
         name = CustomEditor.set_value(self, value)
         self.box.setCurrentIndex( self.position_by_name[name] )
+
