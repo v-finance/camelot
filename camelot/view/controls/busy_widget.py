@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -90,3 +90,4 @@ class BusyWidget(QtGui.QWidget):
         self.highlighted_orb -= 1
         if self.highlighted_orb < 0:
             self.highlighted_orb = self.orbs
+

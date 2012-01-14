@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -42,5 +42,6 @@ class StatusBar(QtGui.QStatusBar):
         mt.thread_busy_signal.connect( self.busy_widget.set_busy )
         # the model thread might already be busy before we connected to it
         self.busy_widget.set_busy(mt.busy())
+
 
 

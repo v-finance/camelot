@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -733,3 +733,4 @@ class RemoveSelection( EditAction ):
             session = object_session( objects_to_remove[0] )
         model_context._model.remove_objects( objects_to_remove, delete = False )
         yield action_steps.FlushSession( session )
+

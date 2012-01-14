@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -173,3 +173,4 @@ def post(request, response=None, exception=None, args=()):
     """Post a request and a response to the default model thread"""
     mt = get_model_thread()
     mt.post(request, response, exception, args)
+

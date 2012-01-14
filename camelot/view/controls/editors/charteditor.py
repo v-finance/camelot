@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -231,6 +231,7 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
 #        #self.fig.subplots_adjust(bottom=0.3, right=0.9, top=0.9, left=0.1)
 #        self.tight_borders(self.fig)
 #        self.canvas.draw()
+
 
 
 

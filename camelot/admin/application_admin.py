@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -614,3 +614,4 @@ shortcut confusion and reduce the number of status updates.
         from camelot.core.view.field_attributes import \
             _sqlalchemy_to_python_type_
         return _sqlalchemy_to_python_type_[type_](field)
+

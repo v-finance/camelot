@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -50,5 +50,6 @@ def resource_filename(module_name, filename):
 def resource_string(module_name, filename):
     """load a file as a string using pkg_resources"""
     return pkg_resources.resource_string(module_name, filename.encode('utf-8'))
+
 
 
