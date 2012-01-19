@@ -22,35 +22,46 @@
 #
 #  ============================================================================
 
-"""Class decorator to make all fields visualized with the Admin into read-only
-fields"""
-
 from copy import copy
 from itertools import tee
 
-def notEditableAdmin(original_admin, actions=False, editable_fields=None):
+def not_editable_admin( original_admin, 
+                        actions = False, 
+                        editable_fields = [],
+                        deep = True ):
+    """Class decorator to make all fields read-only.
 
-    """Turn all fields visualized with original_admin into read only fields
-  :param original_admin: an implementation of ObjectAdmin
-  :param actions: True if the notEditableAdmin should have its actions enabled, default to False
-  :param editable_fields: list of fields that should remain editable
+    :param original_admin: an :class:`camelot.admin.object_admin.ObjectAdmin` 
+        class (not an instance)
+    :param actions: :keyword:`True` if the new admin should have its actions 
+        enabled, defaults to :keyword:`False`
+    :param editable_fields: list of fields that should remain editable, if they
+        are editable in the original admin.
+    :param deep: indicates if Admin classes related to this admin should become
+        read-only as well.  This makes other objects pointed to by OneToMany and
+        ManyToOne fields read only.
+    :return: a new admin class, with read only fields.  The new admin class
+        is a subclass of the original class.
 
-  usage ::
+    usage ::
 
-    class Movie(Entity):
-      name = Field(Unicode(50))
-      contributions = Field(Unicode(255))
+        class Movie(Entity):
+            name = Field(Unicode(50))
+            contributions = Field(Unicode(255))
 
-      class Admin(EntityAdmin):
-        list_display = ['name', 'contributions]
+            class Admin(EntityAdmin):
+                list_display = ['name', 'contributions]
 
-      Admin = notEditableAdmin(Admin, editable_fields=['contributions'])
+            Admin = not_editable_admin( Admin, 
+                                        editable_fields=['contributions'] )
     """
     
-    class NewAdmin(original_admin):
+    class NewAdmin( original_admin ):
 
-        def get_related_entity_admin(self, entity):
-            admin = original_admin.get_related_entity_admin(self, entity)
+        def get_related_admin( self, cls ):
+            admin = super( NewAdmin, self ).get_related_admin( cls )
+            if not deep:
+                return admin
             
             class AdminReadOnlyDecorator(object):
 
@@ -106,21 +117,20 @@ def notEditableAdmin(original_admin, actions=False, editable_fields=None):
                      
             return AdminReadOnlyDecorator(admin, editable_fields)
 
-        def get_field_attributes(self, field_name):
-            attribs = original_admin.get_field_attributes(self, field_name)
-            if editable_fields and field_name in editable_fields:
-                attribs['editable'] = True
-            else:
+        def get_field_attributes( self, field_name ):
+            attribs = super( NewAdmin, self ).get_field_attributes( field_name )
+            if field_name not in editable_fields:
                 attribs['editable'] = False
             return attribs
         
-        def get_form_actions(self, *a, **kwa):
+        def get_form_actions( self, obj ):
+            if actions == True:
+                return super( NewAdmin, self ).get_form_actions( obj )
             return []
         
-        def get_list_actions(self, *a, **kwa):
+        def get_list_actions( self ):
+            if actions == True:
+                return super( NewAdmin, self ).get_list_actions()
             return []
 
     return NewAdmin
-
-
-
