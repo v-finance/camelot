@@ -46,7 +46,6 @@ MULTIINHERITANCECOL_NAMEFORMAT = "%(entity)s_%(key)s"
 # other global constants
 DEFAULT_AUTO_PRIMARYKEY_NAME = "id"
 DEFAULT_AUTO_PRIMARYKEY_TYPE = types.Integer
-DEFAULT_VERSION_ID_COL_NAME = "row_version"
 DEFAULT_POLYMORPHIC_COL_NAME = "row_type"
 POLYMORPHIC_COL_SIZE = 40
 POLYMORPHIC_COL_TYPE = types.String( POLYMORPHIC_COL_SIZE )
@@ -147,10 +146,6 @@ class Entity( object ):
     """A declarative base class that adds some methods that used to be
     available in Elixir"""
     
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-                    
     #
     # methods below were copied from Elixir to mimic the Elixir Entity
     # behavior
