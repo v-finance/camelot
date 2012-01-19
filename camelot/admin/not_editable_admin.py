@@ -102,8 +102,8 @@ def not_editable_admin( original_admin,
                     static_fa = self._original_admin.get_static_field_attributes(fn1)
                     return [self._process_field_attributes(name, attributes) for name,attributes in zip(fn2, static_fa)]
                     
-                def get_related_entity_admin(self, entity):
-                    return AdminReadOnlyDecorator(self._original_admin.get_related_entity_admin(entity), self._editable_fields)
+                def get_related_admin(self, entity):
+                    return AdminReadOnlyDecorator(self._original_admin.get_related_admin(entity), self._editable_fields)
                 
                 def get_form_actions(self, *a, **kwa):
                     return []

@@ -103,7 +103,7 @@ class ObjectValidator(QtCore.QObject):
                 if attributes.get('embedded', False) and attributes.get('target', False):
                     value = getattr(entity_instance, field)
                     if value:
-                        target_admin = self.admin.get_related_entity_admin(attributes['target'])
+                        target_admin = self.admin.get_related_admin(attributes['target'])
                         target_validator = target_admin.create_validator(None)
                         messages.extend( target_validator.objectValidity(value) )
                         continue

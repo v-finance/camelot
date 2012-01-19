@@ -88,7 +88,7 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
             if entity:
                 if entity!=ValueLoading:
                     self.entity_instance_getter = create_instance_getter( entity )
-                    current_entity_admin = self.admin.get_related_entity_admin( entity.__class__ )
+                    current_entity_admin = self.admin.get_related_admin( entity.__class__ )
                 else:
                     return False, False, current_entity_admin
             else:
