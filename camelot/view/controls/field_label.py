@@ -85,7 +85,7 @@ class FieldLabel(UserTranslatableLabel):
     def show_field_attributes(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
                     
-        admin = self._admin.get_related_entity_admin(Attribute)
+        admin = self._admin.get_related_admin( Attribute )
         attributes_collection = CollectionProxy(admin=admin, 
                                                 collection_getter=self.get_attributes,
                                                 columns_getter=admin.get_columns)

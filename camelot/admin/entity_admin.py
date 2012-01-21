@@ -235,7 +235,7 @@ It has additional class attributes that customise its behaviour.
                     admin_class = forced_attributes['admin']
                     return admin_class(self.app_admin, target)
                 except KeyError:
-                    return self.get_related_entity_admin(target)
+                    return self.get_related_admin(target)
             #
             # Get the default field_attributes trough introspection if the
             # field is a mapped field

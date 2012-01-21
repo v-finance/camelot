@@ -364,7 +364,7 @@ be specified using the verbose_name attribute.
         """
         subclasses = []
         for subclass in self.entity.__subclasses__():
-            subclass_admin = self.get_related_entity_admin(subclass)
+            subclass_admin = self.get_related_admin( subclass )
             if subclass_admin!=self:
                 subclasses.append((
                     subclass_admin,
@@ -391,10 +391,6 @@ be specified using the verbose_name attribute.
             logger.warn('no related admin found for %s' % (cls.__name__))
         return related_admin
         
-    def get_related_entity_admin(self, entity):
-        """deprecated : use get_related_admin"""
-        return self.get_related_admin(entity)
-
     def get_static_field_attributes(self, field_names):
         """
         Convenience function to get all the field attributes
@@ -541,7 +537,7 @@ be specified using the verbose_name attribute.
                     admin_class = fa['admin']
                     return admin_class(self.app_admin, target)
                 except KeyError:
-                    return self.get_related_entity_admin(target)
+                    return self.get_related_admin(target)
 
             if 'target' in attributes:
                 attributes['admin'] = get_entity_admin(attributes['target'])
