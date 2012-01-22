@@ -73,7 +73,7 @@ As CloudLaunch is build on top of setuptools, it works with .egg files,
 CloudLaunch works cross platform, so it's perfectly possible to build a
 Windows installer, or update a Windows application from Linux.
 
-To build a .egg file that can be deployed through ClaudLaunch, use the
+To build a .egg file that can be deployed through CloudLaunch, use the
 command::
 
     python.exe setup.py bdist_cloud
