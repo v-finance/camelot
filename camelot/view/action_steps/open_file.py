@@ -92,14 +92,14 @@ class OpenStream( OpenFile ):
         super( OpenStream, self ).__init__( file_name )
 
 class OpenString( OpenFile ):
-    
-    def __init__( self, string, suffix='.txt' ):
-        """Write a string to a temporary file and open that file with the
-        preferred application of the user.
+    """Write a string to a temporary file and open that file with the
+    preferred application of the user.
         
-        :param string: the string to write to a file
-        :param suffix: the suffix of the temporary file
-        """
+    :param string: the string to write to a file
+    :param suffix: the suffix of the temporary file
+    """
+
+    def __init__( self, string, suffix='.txt' ):
         import os
         import tempfile
         file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
