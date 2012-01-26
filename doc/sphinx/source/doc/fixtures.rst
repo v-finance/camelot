@@ -4,22 +4,23 @@
  Fixtures : handling static data in the database
 #################################################
 
-:Date: |today|
-
 Some tables need to be filled with default data when users start
-to work with the application.  The Camelot fixture module assist
-in handling this kind of data.
-
-This module is located and documented in :
-
-	camelot/model/fixture.py
+to work with the application.  The Camelot fixture module 
+:mod:`camelot.model.fixture` assist in handling this kind of data.
 	
-	
-suppose we have an Entity specifying movie types::
+Suppose we have an entity `PartyCategory` to divide Persons and Organizations
+into certain groups.  
 
-	class MovieType(Entity):
-	  name = Field(Unicode(60), required=True)
-	  icon = Field(camelot.types.Image(upload_to='movie_types'))
+.. literalinclude:: ../../../../camelot/model/authentication.py
+   :start-after: begin category definition
+   :end-before: end category definition
+   
+The complete definition of such an entity can be found in 
+:class:`camelot.model.authentication.PartyCategory`.
+
+To make things easier for the first time user, some prefab categories should
+be available when the user starts the application.  Such as `Suspect`, 
+`Prospect`, `VIP`.
 	  
 When to update fixtures
 -----------------------

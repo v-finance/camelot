@@ -23,8 +23,8 @@ class ExampleSettings( SimpleSettings ):
         import camelot_example.model
         from elixir import setup_all
         setup_all(create_tables=True)
-        from camelot.model.authentication import updateLastLogin
-        updateLastLogin()
+        from camelot.model.authentication import update_last_login
+        update_last_login()
         # 
         # Load sample data with the fixure mechanism
         #

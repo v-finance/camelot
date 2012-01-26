@@ -105,6 +105,3 @@ class Create( Memento ):
     class Admin( Memento.Admin ):
         verbose_name = _('Create')
         verbose_name_plural = _('Creates')
-
-
-

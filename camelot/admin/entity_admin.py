@@ -481,11 +481,11 @@ It has additional class attributes that customise its behaviour.
                     from camelot.model.memento import BeforeDelete
                     # only register the delete when the camelot model is active
                     if hasattr(BeforeDelete, 'query'):
-                        from camelot.model.authentication import getCurrentAuthentication
+                        from camelot.model.authentication import get_current_authentication
                         history = BeforeDelete( model = unicode( self.entity.__name__ ),
                                                 primary_key = pk,
                                                 previous_attributes = {},
-                                                authentication = getCurrentAuthentication() )
+                                                authentication = get_current_authentication() )
                 entity_instance.delete()
                 session.flush( [entity_instance] )
                 if history:

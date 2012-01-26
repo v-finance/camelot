@@ -236,13 +236,13 @@ def load_movie_fixtures():
     }
 
     for title, short_description, releasedate, (director_first_name, director_last_name), cast, tags, genre, rating, cover, description in movies:
-        director = Fixture.insertOrUpdateFixture(
+        director = Fixture.insert_or_update_fixture(
             Person,
             fixture_key = u'%s_%s'%(director_first_name, director_last_name),
             values = {'first_name':director_first_name,
                       'last_name':director_last_name}
         )
-        movie = Fixture.findFixture( Movie, title )
+        movie = Fixture.find_fixture( Movie, title )
         if not movie:
             image = resource_string( 'camelot_example', os.path.join( 'media', 'covers', cover ) )
             stream = StringIO.StringIO()
@@ -250,7 +250,7 @@ def load_movie_fixtures():
             stream.seek( 0 )
             prefix, suffix = os.path.splitext( cover )
             stored_image = storage.checkin_stream( prefix, suffix, stream )
-            movie = Fixture.insertOrUpdateFixture(
+            movie = Fixture.insert_or_update_fixture(
                 Movie,
                 fixture_key = title,
                 values = {
@@ -267,7 +267,7 @@ def load_movie_fixtures():
         rep = visits.get(title, None)
         if rep:
             for city, visitors, date in rep:
-                Fixture.insertOrUpdateFixture(
+                Fixture.insert_or_update_fixture(
                     VisitorReport,
                     fixture_key = '%s_%s' % (title, city),
                     values = {
