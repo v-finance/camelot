@@ -125,30 +125,36 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
 
     for field_data, static_attributes, dynamic_attributes in zip( stripped_data, static_field_attributes, dynamic_field_attributes ):
         unicode_data = u''
-        choices = dynamic_attributes.get( 'choices', static_attributes.get('choices', None))
-        if 'unicode_format' in static_attributes:
-            unicode_format = static_attributes['unicode_format']
-            if field_data != None:
-                unicode_data = unicode_format( field_data )
-        elif choices:
-            unicode_data = field_data
-            for key, value in choices:
-                if key == field_data:
-                    unicode_data = value
-        elif isinstance( field_data, list ):
-            unicode_data = u'.'.join( [unicode( e ) for e in field_data] )
-        elif isinstance( field_data, datetime.datetime ):
-            # datetime should come before date since datetime is a subtype of date
-            if field_data.year >= 1900:
-                unicode_data = field_data.strftime( '%d/%m/%Y %H:%M' )
-        elif isinstance( field_data, datetime.date ):
-            if field_data.year >= 1900:
-                unicode_data = field_data.strftime( '%d/%m/%Y' )
-        elif isinstance( field_data, StoredImage):
-            unicode_data = field_data.checkout_thumbnail(100, 100)
-        elif field_data != None:
-            unicode_data = unicode( field_data )
-        row_data.append( unicode_data )
+        try:
+            choices = dynamic_attributes.get( 'choices', static_attributes.get('choices', None))
+            if 'unicode_format' in static_attributes:
+                unicode_format = static_attributes['unicode_format']
+                if field_data != None:
+                    unicode_data = unicode_format( field_data )
+            elif choices:
+                unicode_data = field_data
+                for key, value in choices:
+                    if key == field_data:
+                        unicode_data = value
+            elif isinstance( field_data, list ):
+                unicode_data = u'.'.join( [unicode( e ) for e in field_data] )
+            elif isinstance( field_data, datetime.datetime ):
+                # datetime should come before date since datetime is a subtype of date
+                if field_data.year >= 1900:
+                    unicode_data = field_data.strftime( '%d/%m/%Y %H:%M' )
+            elif isinstance( field_data, datetime.date ):
+                if field_data.year >= 1900:
+                    unicode_data = field_data.strftime( '%d/%m/%Y' )
+            elif isinstance( field_data, StoredImage):
+                unicode_data = field_data.checkout_thumbnail(100, 100)
+            elif field_data != None:
+                unicode_data = unicode( field_data )
+        except (Exception, RuntimeError, TypeError, NameError), e:
+            logger.error('ProgrammingError : could not get view data for field %s with of object of type %s'%( static_attributes['name'],
+                                                                                                               obj.__class__.__name__),
+                         exc_info=e)
+        finally:
+            row_data.append( unicode_data )
 
     return row_data
 
