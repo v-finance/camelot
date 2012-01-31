@@ -155,20 +155,29 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
 
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
-        context._model = self.item_view.model()
         context.field_attributes = copy.copy( self.field_attributes )
-        context.current_row = self.item_view.currentIndex().row()
-        context.collection_count = context._model.rowCount()
+        current_row = None
+        model = None
+        collection_count = 0
         selection_count = 0
         selected_rows = []
-        selection = self.item_view.selectionModel().selection()
-        for i in range( len( selection ) ):
-            selection_range = selection[i]
-            rows_range = ( selection_range.top(), selection_range.bottom() )
-            selected_rows.append( rows_range )
-            selection_count += ( rows_range[1] - rows_range[0] ) + 1
+        if self.item_view != None:
+            current_row = self.item_view.currentIndex().row()
+            model = self.item_view.model()
+            if model != None:
+                collection_count = model.rowCount()
+            if self.item_view.selectionModel() != None:
+                selection = self.item_view.selectionModel().selection()
+                for i in range( len( selection ) ):
+                    selection_range = selection[i]
+                    rows_range = ( selection_range.top(), selection_range.bottom() )
+                    selected_rows.append( rows_range )
+                    selection_count += ( rows_range[1] - rows_range[0] ) + 1
         context.selection_count = selection_count
+        context.collection_count = collection_count
         context.selected_rows = selected_rows
+        context.current_row = current_row
+        context._model = model
         return context
         
     def copy( self, base_class = None ):
