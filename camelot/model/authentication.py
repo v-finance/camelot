@@ -47,7 +47,6 @@ import camelot.types
 
 __metadata__ = metadata
 
-from camelot.model.synchronization import is_synchronized
 from camelot.core.document import documented_entity
 from camelot.core.utils import ugettext_lazy as _
 
@@ -63,21 +62,21 @@ def end_of_times():
 
 from camelot.model.type_and_status import type_3_status
 
-def getCurrentAuthentication(_obj=None):
+def get_current_authentication(_obj=None):
     """Get the currently logged in person"""
     global _current_authentication_
     if not hasattr( _current_authentication_, 'mechanism' ) or not _current_authentication_.mechanism:
         import getpass
-        _current_authentication_.mechanism = UsernameAuthenticationMechanism.getOrCreateAuthentication( unicode( getpass.getuser(), encoding='utf-8', errors='ignore' ) )
+        _current_authentication_.mechanism = UsernameAuthenticationMechanism.get_or_create( unicode( getpass.getuser(), encoding='utf-8', errors='ignore' ) )
     return _current_authentication_.mechanism
 
 def clear_current_authentication():
     _current_authentication_.mechanism = None
 
-def updateLastLogin():
+def update_last_login():
     """Update the last login of the current person to now"""
     from elixir import session
-    authentication = getCurrentAuthentication()
+    authentication = get_current_authentication()
     authentication.last_login = datetime.datetime.now()
     session.flush( [authentication] )
 
@@ -101,7 +100,7 @@ class Country( GeographicBoundary ):
     using_options( tablename = 'geographic_boundary_country', inheritance = 'multi' )
 
     @classmethod
-    def getOrCreate( cls, code, name ):
+    def get_or_create( cls, code, name ):
         country = Country.query.filter_by( code = code ).first()
         if not country:
             from elixir import session
@@ -125,7 +124,7 @@ class City( GeographicBoundary ):
     country = ManyToOne( 'Country', required = True, ondelete = 'cascade', onupdate = 'cascade' )
 
     @classmethod
-    def getOrCreate( cls, country, code, name ):
+    def get_or_create( cls, country, code, name ):
         city = City.query.filter_by( code = code, country = country ).first()
         if not city:
             from elixir import session
@@ -146,7 +145,6 @@ class PartyRelationship( Entity ):
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     thru_date = Field( Date(), default = end_of_times, required = True, index = True )
     comment = Field( camelot.types.RichText() )
-    is_synchronized( 'synchronized', lazy = True )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Relationship')
@@ -358,7 +356,6 @@ class Party( Entity ):
         setattr(party, '_contact_mechanisms', collections.defaultdict(lambda:None))
         return party
 
-    is_synchronized( 'synchronized', lazy = True )
     addresses = OneToMany( 'PartyAddress', lazy = True, cascade="all, delete, delete-orphan" )
     contact_mechanisms = OneToMany( 'PartyContactMechanism', 
                                     lazy = True, 
@@ -592,7 +589,7 @@ class UsernameAuthenticationMechanism( AuthenticationMechanism ):
     password = Field( Unicode( 200 ), required = False, index = False, default = None )
 
     @classmethod
-    def getOrCreateAuthentication( cls, username ):
+    def get_or_create( cls, username ):
         authentication = cls.query.filter_by( username = username ).first()
         if not authentication:
             authentication = cls( username = username )
@@ -675,7 +672,6 @@ class Address( Entity ):
     street1 = Field( Unicode( 128 ), required = True )
     street2 = Field( Unicode( 128 ) )
     city = ManyToOne( 'City', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    is_synchronized( 'synchronized', lazy = True )
 
     @ColumnProperty
     def name( self ):
@@ -683,7 +679,7 @@ class Address( Entity ):
                            whereclause = (GeographicBoundary.id==self.city_geographicboundary_id))
 
     @classmethod
-    def getOrCreate( cls, street1, street2, city ):
+    def get_or_create( cls, street1, street2, city ):
         address = cls.query.filter_by( street1 = street1, street2 = street2, city = city ).first()
         if not address:
             from elixir import session
@@ -876,11 +872,13 @@ class PartyContactMechanism( Entity ):
 
     Admin = PartyContactMechanismAdmin
 
+# begin category definition
 class PartyCategory( Entity ):
     using_options( tablename = 'party_category' )
     name = Field( Unicode(40), index=True, required=True )
     color = Field( camelot.types.Color() )
     parent = ManyToOne( 'PartyCategory' )
+# end category definition
     parties = ManyToMany( 'Party', lazy = True,
                           tablename='party_category_party', 
                           remote_colname='party_id',
@@ -907,5 +905,3 @@ class PartyCategory( Entity ):
         verbose_name = _('Category')
         verbose_name_plural = _('Categories')
         list_display = ['name', 'color']
-
-

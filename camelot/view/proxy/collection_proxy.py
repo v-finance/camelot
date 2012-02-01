@@ -727,11 +727,11 @@ position in the query.
                             from camelot.model.memento import BeforeUpdate
                             # only register the update when the camelot model is active
                             if hasattr(BeforeUpdate, 'query'):
-                                from camelot.model.authentication import getCurrentAuthentication
+                                from camelot.model.authentication import get_current_authentication
                                 history = BeforeUpdate( model = unicode( self.admin.entity.__name__ ),
                                                        primary_key = o.id,
                                                        previous_attributes = {attribute:old_value},
-                                                       authentication = getCurrentAuthentication() )
+                                                       authentication = get_current_authentication() )
 
                                 try:
                                     history.flush()
@@ -1087,10 +1087,10 @@ position in the query.
 # TODO : it's not because an object is added to this list, that it was created
 # it might as well exist already, eg. manytomany relation
 #      from camelot.model.memento import Create
-#      from camelot.model.authentication import getCurrentAuthentication
+#      from camelot.model.authentication import get_current_authentication
 #      history = Create(model=unicode(self.admin.entity.__name__),
 #                       primary_key=o.id,
-#                       authentication = getCurrentAuthentication())
+#                       authentication = get_current_authentication())
 #      elixir.session.flush([history])
 #      self.rsh.sendEntityCreate(self, o)
         self._rows = rows + 1

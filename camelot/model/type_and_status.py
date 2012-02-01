@@ -21,13 +21,11 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-'''
+"""
+Convenience classes to give entities a status, and create the needed status
+tables for each entity.
 
-Created on Sep 25, 2009
-
-@author: Erik De Rijcke
-
-'''
+"""
 import datetime
 
 from elixir.entity import Entity, EntityMeta
@@ -227,6 +225,3 @@ def entity_type( typable_entity, metadata, collection, verbose_entity_name = Non
             return u'Type: %s' % ( self.description )
 
     return type_name
-
-
-

@@ -9,11 +9,11 @@ def setup_model():
     from camelot_example.view import setup_views
     from camelot_example.fixtures import load_movie_fixtures
     from elixir import setup_all
-    from camelot.model.authentication import updateLastLogin
+    from camelot.model.authentication import update_last_login
     setup_all(create_tables=True)
     setup_views()
     load_movie_fixtures()
-    updateLastLogin()
+    update_last_login()
 
 CAMELOT_MEDIA_ROOT = 'media'
 

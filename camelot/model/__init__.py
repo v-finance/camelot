@@ -47,7 +47,6 @@ import authentication
 import fixture
 import i18n
 import memento
-import synchronization
 import type_and_status
 import batch_job
 
@@ -56,7 +55,6 @@ __model__ = [authentication,
              fixture, 
              i18n, 
              memento, 
-             synchronization, 
              type_and_status,
              batch_job]
 

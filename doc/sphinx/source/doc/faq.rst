@@ -4,8 +4,8 @@
  Frequently Asked Questions
 ###########################
 
-How to the PySide bindings instead of PyQt ?
---------------------------------------------
+How to use the PySide bindings instead of PyQt ?
+------------------------------------------------
 
 The Camelot sources as well as the example videostore application can be
 converted from PyQt applications to PySide with the `camelot_admin` tool.
@@ -30,7 +30,7 @@ to have a :guilabel:`Save` button in Camelot. Why was that ?
     is an unneeded click.  The application knows when the state of a form is
     valid for persisting it to the database, and can do so without user
     involvement.  We also want to take the the 'saving' issue out of the mind
-    of the user, he should not bother wether is work is 'saved', it simply is.
+    of the user, he should not bother wether his work is 'saved', it simply is.
     
   - Technical.  Once you decide to use a :guilabel:`Save` button, you need to
     ask yourself where you will put that button and what its effect will be. 
@@ -72,7 +72,7 @@ Some couter arguments for this decision are :
     to 'Complete').  A good example of this is when entering a booking into 
     an accounting package.  When a booking is entered, it can only be used when
     debit equals credit.  What would happen when this validation is done at the
-    moment the vorm is 'saved'.  Suppose a user has been working for the better
+    moment the form is 'saved'.  Suppose a user has been working for the better
     part of the day on a complex booking, but is not done yet at the end of
     the day.  Since he cannot yet save his work he has two options, discard it
     and restart the next day, or enter some bogus data to be able to save it.
@@ -95,27 +95,3 @@ probably have to do with expections users have from using other applications,
 as for those simply ask the users to try to work for a week without a 
 :guilabel:`Save` button and get back to you if after that week, they still
 have issues with it.  Please let us know when they do !
-
-After editing a record, it suddenly moves in or disappears from the table view ?
----------------------------------------------------------------------------------
- 
-It's all about sorting.  Camelot, nor SQLAlchemy or Elixir force a default
-order on the objects displayed in the table view.  This means a simple
-select query will be sent to the database::
-
-    SELECT id, first_name, last_name FROM person
-    
-Notice that such a query doesn't tell the database in which order to return
-the rows.  Most databases will return the dataset in the order it was inserted,
-but this is not required !  Postgres for example will return the rows that have
-been edited last as the last rows.  Thus editing a record moves the record in the
-table view.
-
-To prevent this behavior, a default sorting can be forced upon an Entity, for example,
-by its primary key::
-
-	class Person(Entity):
-		using_options(tablename='person', order_by=['id'])
-		
-.. note:: In the current Camelot trunk, Camelot always enforces sorting by
-    primary key, so this effect should be gone.
