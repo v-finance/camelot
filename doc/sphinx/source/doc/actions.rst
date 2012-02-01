@@ -218,6 +218,18 @@ Other ways of requesting information are :
 
   * :class:`camelot.view.action_steps.select_file.SelectFile`, to request 
     to select an existing file to process or a new file to save information.
+    
+Issue SQLAlchemy statements
+---------------------------
+
+Camelot itself only manipulates the database through objects of the
+ORM for the sake of make no difference between objects mapped to the database
+and plain old python objects.  But for performance reasons, it is often desired
+to do manipulations directly through SQLAlchemy ORM or Core queries :
+
+.. literalinclude:: ../../../../test/test_action.py
+   :start-after: begin issue a query through the model_context
+   :end-before: end issue a query through the model_context
 
 States and Modes
 ================
