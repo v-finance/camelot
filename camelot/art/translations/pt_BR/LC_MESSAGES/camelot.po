@@ -970,7 +970,7 @@ msgstr "Duplo clique para (des)maximizar"
 
 #: camelot/view/workspace.py:283
 msgid "Home"
-msgstr "Páginia inicial"
+msgstr "Página inicial"
 
 #: camelot/view/action_steps/backup.py:86
 #: camelot/view/action_steps/backup.py:176
