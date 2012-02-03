@@ -26,7 +26,7 @@
 
 import sqlalchemy.types
 import camelot.types
-from camelot.core.sql import  like_op
+from camelot.core.sql import like_op
 from sqlalchemy.sql.operators import between_op
 import datetime
 import operator

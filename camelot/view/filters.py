@@ -235,18 +235,39 @@ class ComboBoxFilter(Filter):
 class EditorFilter(Filter):
     """Filter that presents the user with an editor, allowing the user to enter
     a value on which to filter, and at the same time to show 'All' or 'None'
+    
+    :param field_name: the name fo the field on the class on which to filter
+    :param default_operator: a default operator to be used, on of the attributes
+        of the python module :mod:`operator`, such as `operator.eq`
+    :param default_value_1: a default value for the first editor (in case the
+        default operator in unary or binary
+    :param default_value_2: a default value for the second editor (in case the
+        default operator is binary)
     """
     
-    def __init__(self, field_name, verbose_name=None):
-        """:param field: the name of the field on which to filter"""
+    def __init__( self, 
+                  field_name, 
+                  verbose_name = None,
+                  default_operator = None,
+                  default_value_1 = None,
+                  default_value_2 = None ):
         super(EditorFilter, self).__init__(field_name)
         self._field_name = field_name
         self._verbose_name = verbose_name
+        self._default_operator = default_operator
+        self._default_value_1 = default_value_1
+        self._default_value_2 = default_value_2
         
     def render(self, filter_data, parent):
         from camelot.view.controls.filter_operator import FilterOperator
         _name, (entity, field_name, field_attributes) = filter_data
-        return FilterOperator(entity, field_name, field_attributes, parent)
+        return FilterOperator( entity, 
+                               field_name, 
+                               field_attributes, 
+                               self._default_operator,
+                               self._default_value_1,
+                               self._default_value_2,
+                               parent )
     
     def get_filter_data(self, admin):
         field_attributes = admin.get_field_attributes(self._field_name)
