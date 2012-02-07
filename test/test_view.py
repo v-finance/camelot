@@ -337,9 +337,20 @@ class EditorsTest(ModelThreadTestCase):
         # now change the choices
         choices2 = [(4,u'D'), (5,u'E'), (6,u'F')]
         editor.set_choices( choices2 )
-        self.assertEqual(editor.get_choices(), choices2 + [(2,u'B')])
+        self.assertEqual( editor.get_choices(), choices2 + [(2,u'B')] )
+        # set a value that is not in the list, the value should become
+        # ValueLoading, to prevent damage to the actual data
+        editor.set_value( 33 )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        # try strings as keys
+        editor = self.editors.ChoicesEditor(parent=None, editable=True)
+        editor.set_choices( [] )
         editor.set_value( self.ValueLoading )
         self.assertEqual( editor.get_value(), self.ValueLoading )
+        editor.set_choices( [('a',u'A'), ('b',u'B'), ('c',u'C')] )
+        editor.set_value( 'c' )
+        self.assertEqual( editor.get_value(), 'c' )
+        
 
     def test_FileEditor(self):
         editor = self.editors.FileEditor(parent=None, editable=True)
