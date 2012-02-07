@@ -4,9 +4,6 @@
   The Two Threads
 ##################
 
-:Release: |version|
-:Date: |today|
-
 Most users of Camelot won't need the information in this Chapter
 and can simply enjoy building applications that don't freeze.  However,
 if you start customizing your application beyond developing custom
