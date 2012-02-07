@@ -110,7 +110,6 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
             LOGGER.error( u'Could not set value %s because it is not in the list of choices'%unicode(value) )
             LOGGER.error( u'Valid choices include : ' )
             for i in range(self.count()):
-                print variant_to_pyobject(self.itemData(i))
                 LOGGER.error( ' - %s'%unicode(variant_to_pyobject(self.itemData(i))) )
 
     def get_value(self):
