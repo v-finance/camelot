@@ -71,7 +71,7 @@ It has additional class attributes that customise its behaviour.
 .. attribute:: copy_deep
 
    A dictionary of fields that will be deep copied when the user presses the copy
-   button.  This is usefull for OneToMany fields.  The key in the dictionary should
+   button.  This is useful for OneToMany fields.  The key in the dictionary should
    be the name of the field, and the value is a new dictionary that can contain other
    fields that need to be copied::
 
