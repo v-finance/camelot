@@ -35,9 +35,13 @@ class FlushSession( ActionStep ):
     changes.
     
     :param session: an instance of :class:`sqlalchemy.orm.Session`
+    :param update_depending_objects: set to `False` if the objects that depend
+        on an object that has been modified need not to be updated in the GUI.
+        This will make the flushing faster, but the GUI might become
+        inconsistent.
     """
         
-    def __init__( self, session ):
+    def __init__( self, session, update_depending_objects = True ):
         #
         # @todo : deleting of objects should be moved from the collection_proxy
         #         to here, once deleting rows is reimplemented as an action
@@ -45,7 +49,29 @@ class FlushSession( ActionStep ):
         # @todo : handle the creation of new objects
         #
         signal_handler = get_signal_handler()
-        dirty_objects = list( session.dirty )
+        # list of objects that need to receive an update signal
+        dirty_objects = set( session.dirty )
+        
+        #for dirty_object in session.dirty:
+        #    obj_admin = admin.get_related_admin( type( dirty_object ) )
+        #    if obj_admin:
+        #        dirty_objects.update( obj_admin.get_depending_objects( dirty_object ) )            
+        
+        for obj_to_delete in session.deleted:
+        #    obj_admin = admin.get_related_admin( type( obj_to_delete ) )
+        #    if obj_admin:
+        #        dirty_objects.update( obj_admin.get_depending_objects( obj_to_delete ) )
+            signal_handler.sendEntityDelete( self, obj_to_delete )
+        #
+        # Only now is the full list of dirty objects available, so the deleted
+        # can be removed from them
+        #
+        for obj_to_delete in session.deleted:
+            try:
+                dirty_objects.remove( obj_to_delete )
+            except KeyError:
+                pass
+        
         session.flush()
         for obj in dirty_objects:
             signal_handler.sendEntityUpdate( self, obj )
