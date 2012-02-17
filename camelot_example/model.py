@@ -34,6 +34,7 @@ from camelot_example.change_rating import ChangeRatingAction
 def genre_choices(entity_instance):
     """Choices for the possible movie genres"""
     return [
+    ((None),('')),
     (('action'),('Action')),
     (('animation'),('Animation')),
     (('comedy'),('Comedy')),
