@@ -17,7 +17,7 @@ QAbstractButton {
 				       stop: 0.6 #434343, stop:1 #656565); */
     border-width: 2px;
     padding: 2px;
-    border-color: green;
+    border-color: #ccc;
     border-style: solid;
     border-radius: 5;
 }
@@ -36,7 +36,7 @@ QAbstractButton:hover {
 QAbstractButton:pressed {
     padding-left: 5px;
     padding-top: 5px;
-    background-color: green;
+    background-color: #ccc;
 }
 
 QLabel, QAbstractButton {
@@ -57,7 +57,7 @@ QComboBox, QLineEdit, QSpinBox, QTextEdit, QListView {
     background-color: #343434;
     selection-color: #343434; 
     selection-background-color: grey;
-    border-color: green;
+    border-color: #ccc;
 }
 
 
@@ -73,7 +73,7 @@ QLineEdit {
     border-width: 2px;
     padding: 2px;
     border-style: solid;
-    border-color: green;
+    border-color: #ccc;
     border-radius: 5px;
 }
 
