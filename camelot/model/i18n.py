@@ -82,7 +82,6 @@ class Translation( Entity ):
     class Admin( EntityAdmin ):
         verbose_name_plural = _( 'Translations' )
         form_size = ( 700, 150 )
-        section = 'configuration'
         list_display = ['source', 'language', 'value', 'uid']
         list_filter = ['language']
         list_actions = [ExportAsPO()]
