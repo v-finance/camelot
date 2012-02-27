@@ -102,6 +102,3 @@ class DelegateManager(QtGui.QItemDelegate):
         option = QtGui.QStyleOptionViewItem()
         delegate = self.get_column_delegate(index.column())
         return delegate.sizeHint(option, index)
-
-
-

@@ -36,21 +36,24 @@ from camelot.core.utils import variant_to_pyobject
 from camelot.view.controls import editors
 from camelot.view.proxy import ValueLoading
 
-class PlainTextDelegate(CustomDelegate):
+DEFAULT_COLUMN_WIDTH = 20
+
+class PlainTextDelegate( CustomDelegate ):
     """Custom delegate for simple string values"""
 
     __metaclass__ = DocumentationMetaclass
 
     editor = editors.TextLineEditor
 
-    def __init__(
-        self, parent=None, length=20,
-        editable=True, translate_content=False, **kw
-    ):
-        CustomDelegate.__init__(self, parent, editable, length=length, **kw)
-        self.length = length
-        self.editable = editable
+    def __init__( self, 
+                  parent = None, 
+                  length = DEFAULT_COLUMN_WIDTH,
+                  translate_content=False, 
+                  **kw ):
+        CustomDelegate.__init__( self, parent, length = length, **kw )
         self._translate_content = translate_content
+        char_width = self._font_metrics.averageCharWidth()
+        self._width = char_width * min( DEFAULT_COLUMN_WIDTH, length or DEFAULT_COLUMN_WIDTH )
 
     def paint(self, painter, option, index):
         painter.save()
@@ -66,5 +69,3 @@ class PlainTextDelegate(CustomDelegate):
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()
-
-

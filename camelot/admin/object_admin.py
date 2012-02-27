@@ -492,7 +492,7 @@ be specified using the verbose_name attribute.
                 length=None,
                 tooltip=None,
                 background_color=None,
-                minimal_column_width=12,
+                #minimal_column_width=12,
                 editable=False,
                 nullable=True,
                 widget='str',

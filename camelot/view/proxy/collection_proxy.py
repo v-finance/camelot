@@ -445,7 +445,7 @@ position in the query.
         delegate_manager.set_columns_desc( columns )
 
         # set a delegate for the vertical header
-        delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate(parent = delegate_manager) )
+        delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate( parent = delegate_manager ) )
 
         #
         # this loop can take a while to complete, so processEvents is called regulary
@@ -506,23 +506,18 @@ position in the query.
                     return QtCore.QVariant( self._header_font )
 
             elif role == Qt.SizeHintRole:
-                option = QtGui.QStyleOptionViewItem()
-                if self.delegate_manager:
-                    editor_size = self.delegate_manager.sizeHint( option, self.index( 0, section ) )
-                else:
-                    editor_size = QtCore.QSize(0, 0)
+                label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, unicode(c[1]['name']) + u' ' )
+                minimal_widths = [ label_size.width() + 10 ]
                 if 'minimal_column_width' in c[1]:
-                    minimal_column_width = QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, 'A' ).width()*c[1]['minimal_column_width']
-                else:
-                    minimal_column_width = 100
-                editable = True
-                if 'editable' in c[1]:
-                    editable = c[1]['editable']
-                label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, unicode(c[1]['name']) + ' ' )
-                size = max( minimal_column_width, label_size.width() + 10 )
-                if editable:
-                    size = max( size, editor_size.width() )
-                return QtCore.QVariant( QtCore.QSize( size, self._horizontal_header_height ) )
+                    minimal_widths.append( QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, 'A' ).width() * c[1]['minimal_column_width'] )
+                if c[1].get('editable', True) != False:
+                    option = QtGui.QStyleOptionViewItem()
+                    if self.delegate_manager:
+                        # use createIndex(), because index() will return an invalid 
+                        # index when there are no rows in the table
+                        index = self.createIndex( -1, section )
+                        minimal_widths.append( self.delegate_manager.sizeHint( option, index ).width() )
+                return QtCore.QVariant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) )
         else:
             if role == Qt.SizeHintRole:
                 if self.header_icon != None:

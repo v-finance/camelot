@@ -668,6 +668,11 @@ class DelegateTest(ModelThreadTestCase):
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, self.editors.TextLineEditor))
         self.grab_delegate(delegate, 'Plain Text', 'disabled')
+        small_text_delegate = self.delegates.PlainTextDelegate( length = 3 )
+        wide_text_delegate = self.delegates.PlainTextDelegate( length = 30 )
+        small_size = small_text_delegate.sizeHint( None, 0 ).width()
+        wide_size = wide_text_delegate.sizeHint( None, 0 ).width()
+        self.assertTrue( small_size < wide_size )
 
     def testTextEditDelegate(self):
         from PyQt4.QtGui import QTextEdit
@@ -985,7 +990,27 @@ class ControlsTest(ModelThreadTestCase):
         widget = TableView( gui_context, 
                             self.app_admin.get_entity_admin(Person) )
         self.grab_widget(widget)
+        
+    def test_small_column( self ):
+        #create a table view for an Admin interface with small columns
+        from camelot.view.controls.tableview import TableView
+        from camelot.model.authentication import Person
+        
+        class SmallColumnsAdmin( Person.Admin ):
+            list_display = ['first_name', 'suffix']
+            
+        admin = SmallColumnsAdmin( self.app_admin, Person )
+        widget = TableView( self.gui_context, 
+                            admin )
+        self.grab_widget( widget )
+        model = widget.table.model()
+        header = widget.table.horizontalHeader()
 
+        first_name_width = model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
+        suffix_width = model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
+        
+        self.assertTrue( first_name_width > suffix_width )
+        
     def test_navigation_pane(self):
         from camelot.view.controls import navpane2
         self.wait_for_animation()

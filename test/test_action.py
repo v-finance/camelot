@@ -172,8 +172,8 @@ class ListActionsCase( ModelThreadTestCase ):
         model_context.session.add( bt )
         bt.flush()
         # begin issue a query through the model_context
-        query = model_context.session.query( BatchJobType ).update( values = {'name':'accounting audit'},
-                                                                    synchronize_session = 'evaluate' )
+        model_context.session.query( BatchJobType ).update( values = {'name':'accounting audit'},
+                                                            synchronize_session = 'evaluate' )
         # end issue a query through the model_context
         #
         # the batch job should have changed
