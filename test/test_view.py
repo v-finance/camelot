@@ -1011,6 +1011,30 @@ class ControlsTest(ModelThreadTestCase):
         
         self.assertTrue( first_name_width > suffix_width )
         
+    def test_column_width( self ):
+        #create a table view for an Admin interface with small columns
+        from camelot.view.controls.tableview import TableView
+        from camelot.model.authentication import Person
+        
+        class ColumnWidthAdmin( Person.Admin ):
+            list_display = ['first_name', 'suffix']
+            # begin column width
+            field_attributes = { 'first_name':{'column_width':8},
+                                 'suffix':{'column_width':8},}
+            # end column width
+            
+        admin = ColumnWidthAdmin( self.app_admin, Person )
+        widget = TableView( self.gui_context, 
+                            admin )
+        self.grab_widget( widget )
+        model = widget.table.model()
+        header = widget.table.horizontalHeader()
+
+        first_name_width = model.headerData( 0, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
+        suffix_width = model.headerData( 1, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
+        
+        self.assertEqual( first_name_width, suffix_width )
+        
     def test_navigation_pane(self):
         from camelot.view.controls import navpane2
         self.wait_for_animation()

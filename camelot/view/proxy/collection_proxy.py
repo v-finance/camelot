@@ -234,6 +234,7 @@ position in the query.
         self._mutex = QtCore.QMutex()
         self.admin = admin
         self._horizontal_header_height = QtGui.QFontMetrics( self._header_font_required ).height() + 10
+        self._header_font_metrics = QtGui.QFontMetrics( self._header_font )
         vertical_header_font_height = QtGui.QFontMetrics( self._header_font ).height()
         self._vertical_header_height = vertical_header_font_height * self.admin.lines_per_row + 10
         self.iconSize = QtCore.QSize( vertical_header_font_height,
@@ -509,7 +510,7 @@ position in the query.
                 label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, unicode(c[1]['name']) + u' ' )
                 minimal_widths = [ label_size.width() + 10 ]
                 if 'minimal_column_width' in c[1]:
-                    minimal_widths.append( QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, 'A' ).width() * c[1]['minimal_column_width'] )
+                    minimal_widths.append( self._header_font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
                 if c[1].get('editable', True) != False:
                     option = QtGui.QStyleOptionViewItem()
                     if self.delegate_manager:
@@ -517,6 +518,9 @@ position in the query.
                         # index when there are no rows in the table
                         index = self.createIndex( -1, section )
                         minimal_widths.append( self.delegate_manager.sizeHint( option, index ).width() )
+                column_width = c[1].get( 'column_width', None )
+                if column_width != None:
+                    minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
                 return QtCore.QVariant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) )
         else:
             if role == Qt.SizeHintRole:
