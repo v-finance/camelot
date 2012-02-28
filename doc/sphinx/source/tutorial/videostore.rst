@@ -64,9 +64,7 @@ an `entity` represents a single table in a database.)
 Notice that the application disables most of the menus and the toolbar
 buttons. When we click on an entity, more options become available.
 So let's click on the entity ``Persons`` of the section ``Relations``.
-
-A child window appears in the previously empty area and is maximized by
-default: this is the table view of the entity.
+The table view of the entity appears.
 
 .. image:: ../_static/picture3.png
 

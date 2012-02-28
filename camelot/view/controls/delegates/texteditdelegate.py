@@ -35,8 +35,10 @@ class TextEditDelegate(CustomDelegate):
   
     editor = editors.TextEditEditor
       
-    def __init__(self, parent=None, **kwargs):
-        CustomDelegate.__init__(self, parent, **kwargs)
+    def __init__( self, 
+                  parent = None,
+                  **kwargs ):
+        CustomDelegate.__init__( self, parent, **kwargs )
     
     def paint(self, painter, option, index):
         painter.save()
@@ -49,6 +51,3 @@ class TextEditDelegate(CustomDelegate):
 
         self.paint_text(painter, option, index, value_str)
         painter.restore()
-
-
-
