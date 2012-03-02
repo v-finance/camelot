@@ -231,8 +231,9 @@ operator_names = {
     between_op: _( u'between' ),
 }
 
-def text_from_richtext(unstripped_text):
-    """funciton that returns a list of lines with escaped data, to be used in templates for example
+def text_from_richtext( unstripped_text ):
+    """function that returns a list of lines with escaped data, to be used in 
+    templates for example
     :arg unstripped_text: string
     :return: list of strings
     """

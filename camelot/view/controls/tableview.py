@@ -33,7 +33,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QSizePolicy
 
 from camelot.admin.action.list_action import ListActionGuiContext
-from camelot.core.utils import ugettext as _
+from camelot.core.utils import variant_to_pyobject, ugettext as _
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
@@ -108,6 +108,7 @@ and above the text.
         self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
         self.horizontalHeader().sectionClicked.connect(
             self.horizontal_section_clicked )
+        self.horizontalHeader().sectionResized.connect( self._save_section_width )
         if columns_frozen:
             frozen_table_view = FrozenTableWidget(self, columns_frozen)
             frozen_table_view.setObjectName( 'frozen_table_view' )
@@ -128,11 +129,25 @@ and above the text.
             frozen_table_view.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
 
     @QtCore.pyqtSlot(int, int, int)
-    def _update_section_width(self, logical_index, _int, new_size):
+    def _update_section_width(self, logical_index, _old_size, new_size):
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
-        if logical_index<self._columns_frozen and frozen_table_view:
+        if logical_index < self._columns_frozen and frozen_table_view:
             frozen_table_view.setColumnWidth( logical_index, new_size)
             self._update_frozen_table()
+            
+    @QtCore.pyqtSlot(int, int, int)
+    def _save_section_width(self, logical_index, _old_size, new_width ):
+        old_size = variant_to_pyobject( self.model().headerData( logical_index, 
+                                                                 Qt.Horizontal, 
+                                                                 Qt.SizeHintRole ) )
+        # when the size is different from the one from the model, the
+        # user changed it
+        if old_size.width() != new_width:
+            new_size = QtCore.QSize( new_width, old_size.height() )
+            self.model().setHeaderData( logical_index, 
+                                        Qt.Horizontal,
+                                        new_size,
+                                        Qt.SizeHintRole )
 
     @QtCore.pyqtSlot(int, int, int)
     def _update_section_height(self, logical_index, _int, new_size):
