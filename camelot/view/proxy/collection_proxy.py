@@ -176,7 +176,7 @@ class SortingRowMapper( dict ):
         except KeyError:
             return row
 
-class CollectionProxy( QtCore.QAbstractTableModel ):
+class CollectionProxy( QtGui.QProxyModel ):
     """The CollectionProxy contains a limited copy of the data in the actual
     collection, usable for fast visualisation in a QTableView
 
@@ -229,6 +229,13 @@ position in the query.
 """
         super(CollectionProxy, self).__init__()
         from camelot.view.model_thread import get_model_thread
+        #
+        # The source model will contain the actual data stripped from the
+        # objects in the collection.
+        #
+        self.source_model = QtGui.QStandardItemModel()
+        self.setModel( self.source_model )
+        
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
         self._mutex = QtCore.QMutex()
@@ -290,6 +297,11 @@ position in the query.
             post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
 
+    def index( self, row, col, parent = QtCore.QModelIndex() ):
+        if self.hasIndex( row, col, parent): 
+            return self.createIndex( row, col, parent )
+        return QtCore.QModelIndex()
+    
     @property
     def max_number_of_rows(self):
         """The maximum number of rows to be displayed at once"""
@@ -452,29 +464,49 @@ position in the query.
         # this loop can take a while to complete, so processEvents is called regulary
         #
         for i, c in enumerate( columns ):
-#            if i%10==0:
-#                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ExcludeSocketNotifiers, 100)
+            #
+            # Construct the delegate
+            #
             field_name = c[0]
             self.logger.debug( 'creating delegate for %s' % field_name )
-            if 'delegate' in c[1]:
-                try:
-                    delegate = c[1]['delegate']( parent = delegate_manager, **c[1] )
-                except Exception, e:
-                    logger.error('ProgrammingError : could not create delegate for field %s'%field_name, exc_info=e)
-                    delegate = delegates.PlainTextDelegate( parent = delegate_manager, **c[1] )
-                delegate_manager.insertColumnDelegate( i, delegate )
-                continue
-            elif c[1]['python_type'] == str:
-                if c[1]['length']:
-                    delegate = delegates.PlainTextDelegate( parent = delegate_manager, maxlength = c[1]['length'] )
-                    delegate_manager.insertColumnDelegate( i, delegate )
-                else:
-                    delegate = delegates.TextEditDelegate( parent = delegate_manager, **c[1] )
-                    delegate_manager.insertColumnDelegate( i, delegate )
+            try:
+                delegate = c[1]['delegate']( parent = delegate_manager, **c[1] )
+            except Exception, e:
+                logger.error('ProgrammingError : could not create delegate for field %s'%field_name, exc_info=e)
+                delegate = delegates.PlainTextDelegate( parent = delegate_manager, **c[1] )
+            delegate_manager.insertColumnDelegate( i, delegate )
+            #
+            # Set the header data
+            #
+            header_item = QtGui.QStandardItem()
+            header_item.setData( QtCore.QVariant( unicode(c[1]['name']) ),
+                                 Qt.DisplayRole )
+            if c[1].get( 'nullable', True ) == False:
+                header_item.setData( self._header_font_required,
+                                     Qt.FontRole )
             else:
-                delegate = delegates.PlainTextDelegate(parent = delegate_manager)
-                delegate_manager.insertColumnDelegate( i, delegate )
+                header_item.setData( self._header_font,
+                                     Qt.FontRole )
 
+            label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, unicode(c[1]['name']) + u' ' )
+            minimal_widths = [ label_size.width() + 10 ]
+            if 'minimal_column_width' in c[1]:
+                minimal_widths.append( self._header_font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
+            if c[1].get('editable', True) != False:
+                option = QtGui.QStyleOptionViewItem()
+                # use createIndex(), because index() will return an invalid 
+                # index when there are no rows in the table
+                index = self.createIndex( -1, i )
+                minimal_widths.append( delegate_manager.sizeHint( option, index ).width() )
+            column_width = c[1].get( 'column_width', None )
+            if column_width != None:
+                minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
+                    
+            header_item.setData( QtCore.QVariant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
+                                 Qt.SizeHintRole )
+             
+            self.source_model.setHorizontalHeaderItem( i, header_item )
+        
         # Only set the delegate manager when it is fully set up
         self.delegate_manager = delegate_manager
         self.item_delegate_changed_signal.emit()
@@ -485,44 +517,13 @@ position in the query.
 
     def columnCount( self, index = None ):
         return self.column_count
-
+            
     @gui_function
     def headerData( self, section, orientation, role ):
         """In case the columns have not been set yet, don't even try to get
         information out of them
         """
-        if orientation == Qt.Horizontal:
-            if section >= self.column_count:
-                return QtCore.QAbstractTableModel.headerData( self, section, orientation, role )
-            c = self.getColumns()[section]
-
-            if role == Qt.DisplayRole:
-                return QtCore.QVariant( unicode(c[1]['name']) )
-
-            elif role == Qt.FontRole:
-                if ( 'nullable' in c[1] ) and \
-                   ( c[1]['nullable'] == False ):
-                    return QtCore.QVariant( self._header_font_required )
-                else:
-                    return QtCore.QVariant( self._header_font )
-
-            elif role == Qt.SizeHintRole:
-                label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, unicode(c[1]['name']) + u' ' )
-                minimal_widths = [ label_size.width() + 10 ]
-                if 'minimal_column_width' in c[1]:
-                    minimal_widths.append( self._header_font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
-                if c[1].get('editable', True) != False:
-                    option = QtGui.QStyleOptionViewItem()
-                    if self.delegate_manager:
-                        # use createIndex(), because index() will return an invalid 
-                        # index when there are no rows in the table
-                        index = self.createIndex( -1, section )
-                        minimal_widths.append( self.delegate_manager.sizeHint( option, index ).width() )
-                column_width = c[1].get( 'column_width', None )
-                if column_width != None:
-                    minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
-                return QtCore.QVariant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) )
-        else:
+        if orientation == Qt.Vertical:
             if role == Qt.SizeHintRole:
                 if self.header_icon != None:
                     return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 10,
@@ -535,7 +536,7 @@ position in the query.
             elif role == Qt.DisplayRole:
                 if self.header_icon != None:
                     return QtCore.QVariant( '' )
-        return QtCore.QAbstractTableModel.headerData( self, section, orientation, role )
+        return super( CollectionProxy, self ).headerData( section, orientation, role )
 
     @gui_function
     def sort( self, column, order ):
