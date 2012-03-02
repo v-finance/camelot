@@ -110,8 +110,8 @@ def strip_data_from_object( obj, columns ):
             else:
                 field_value = getter( obj )
         except (Exception, RuntimeError, TypeError, NameError), e:
-            logger.error('ProgrammingError : could not get field %s of object of type %s'%(col[0], obj.__class__.__name__),
-                         exc_info=e)
+            logger.error( "ProgrammingError : could not get field '%s' of object of type %s"%(col[0], obj.__class__.__name__),
+                          exc_info = e )
         finally:
             row_data.append( field_value )
     return row_data
@@ -150,9 +150,9 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
             elif field_data != None:
                 unicode_data = unicode( field_data )
         except (Exception, RuntimeError, TypeError, NameError), e:
-            logger.error('ProgrammingError : could not get view data for field %s with of object of type %s'%( static_attributes['name'],
-                                                                                                               obj.__class__.__name__),
-                         exc_info=e)
+            logger.error( "ProgrammingError : could not get view data for field '%s' with of object of type %s"%( static_attributes['name'],
+                                                                                                                  obj.__class__.__name__),
+                          exc_info = e)
         finally:
             row_data.append( unicode_data )
 
