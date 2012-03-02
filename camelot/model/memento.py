@@ -27,7 +27,7 @@ from elixir.fields import Field
 from sqlalchemy.types import Unicode, INT, DateTime, PickleType
 from elixir.relationships import ManyToOne
 
-from camelot.model import metadata
+from camelot.core.orm import metadata
 from camelot.view import filters
 
 """Set of classes to keep track of changes to objects and

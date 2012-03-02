@@ -29,7 +29,7 @@ the `Translation` table.  This table can be exported to PO files for inclusion
 in the development cycle.
 """
 
-from camelot.model import metadata
+from camelot.core.orm import metadata
 from camelot.admin.action import Action
 import camelot.types
 from elixir.entity import Entity

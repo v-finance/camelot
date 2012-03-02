@@ -24,22 +24,9 @@
 
 # begin session setup
 import elixir
+from camelot.core.orm import Session
 
-from sqlalchemy import MetaData
-
-from sqlalchemy.orm import scoped_session, create_session
-
-elixir.session = scoped_session( create_session )
-
-from camelot.core.conf import settings
-
-metadata = MetaData()
-
-__metadata__ = metadata
-
-__metadata__.bind = settings.ENGINE()
-__metadata__.autoflush = False
-__metadata__.transactional = False
+elixir.session = Session
 
 # end session setup
 
@@ -57,5 +44,3 @@ __model__ = [authentication,
              memento, 
              type_and_status,
              batch_job]
-
-

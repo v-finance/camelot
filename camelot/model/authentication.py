@@ -24,7 +24,7 @@
 
 import collections
 
-from camelot.model import metadata
+from camelot.core.orm import metadata
 from elixir import entities
 from camelot.view.controls import delegates
 
@@ -46,6 +46,11 @@ import camelot.types
 #from camelot.model import *
 
 __metadata__ = metadata
+
+print metadata
+print metadata.bind
+print 'metadata', __metadata__
+print 'bind', __metadata__.bind
 
 from camelot.core.document import documented_entity
 from camelot.core.utils import ugettext_lazy as _
