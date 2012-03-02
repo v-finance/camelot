@@ -27,20 +27,4 @@ import elixir
 from camelot.core.orm import Session
 
 elixir.session = Session
-
 # end session setup
-
-import authentication
-import fixture
-import i18n
-import memento
-import type_and_status
-import batch_job
-
-# dummy variable to prevent pycheckers warnings on unused imports
-__model__ = [authentication, 
-             fixture, 
-             i18n, 
-             memento, 
-             type_and_status,
-             batch_job]
