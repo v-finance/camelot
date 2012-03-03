@@ -730,14 +730,15 @@ position in the query.
                         if isinstance( old_value, StoredFile ):
                             old_value = old_value.name
                         if not direction:
-                            from camelot.model.memento import BeforeUpdate
+                            from camelot.model.memento import Memento
                             # only register the update when the camelot model is active
-                            if hasattr(BeforeUpdate, 'query'):
+                            if hasattr(Memento, 'query'):
                                 from camelot.model.authentication import get_current_authentication
-                                history = BeforeUpdate( model = unicode( self.admin.entity.__name__ ),
-                                                       primary_key = o.id,
-                                                       previous_attributes = {attribute:old_value},
-                                                       authentication = get_current_authentication() )
+                                history = Memento( model = unicode( self.admin.entity.__name__ ),
+                                                   memento_type = 'before_update',
+                                                   primary_key = o.id,
+                                                   previous_attributes = {attribute:old_value},
+                                                   authentication = get_current_authentication() )
 
                                 try:
                                     history.flush()

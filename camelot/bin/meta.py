@@ -365,4 +365,3 @@ class CreateNewProject( Action ):
                        'w' )
             fp.write( code )
             fp.close()
-

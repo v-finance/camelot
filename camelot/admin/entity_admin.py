@@ -478,14 +478,15 @@ It has additional class attributes that customise its behaviour.
                 if not None in primary_key and len(primary_key)==1:
                     pk = primary_key[0]
                     # save the state before the update
-                    from camelot.model.memento import BeforeDelete
+                    from camelot.model.memento import Memento
                     # only register the delete when the camelot model is active
-                    if hasattr(BeforeDelete, 'query'):
+                    if hasattr(Memento, 'query'):
                         from camelot.model.authentication import get_current_authentication
-                        history = BeforeDelete( model = unicode( self.entity.__name__ ),
-                                                primary_key = pk,
-                                                previous_attributes = {},
-                                                authentication = get_current_authentication() )
+                        history = Memento( model = unicode( self.entity.__name__ ),
+                                           memento_type = 'before_delete',
+                                           primary_key = pk,
+                                           previous_attributes = {},
+                                           authentication = get_current_authentication() )
                 entity_instance.delete()
                 session.flush( [entity_instance] )
                 if history:
