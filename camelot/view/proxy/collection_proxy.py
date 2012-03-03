@@ -296,10 +296,27 @@ position in the query.
             post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
 
+    #
+    # Reimplementation of methods of QProxyModel, because for now, we only
+    # use the proxy to store header data
+    # 
     def index( self, row, col, parent = QtCore.QModelIndex() ):
         if self.hasIndex( row, col, parent): 
             return self.createIndex( row, col, parent )
         return QtCore.QModelIndex()
+    
+    def parent( self, child ):
+        return QtCore.QModelIndex()
+    
+    def rowCount( self, index = None ):
+        return self._rows
+    
+    def hasChildren( self, parent ):
+        return False
+    
+    #
+    # end or reimplementation
+    #
     
     @property
     def max_number_of_rows(self):
@@ -457,6 +474,8 @@ position in the query.
 
         # set a delegate for the vertical header
         delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate( parent = delegate_manager ) )
+        index = QtCore.QModelIndex()
+        option = QtGui.QStyleOptionViewItem()
 
         #
         # this loop can take a while to complete, so processEvents is called regulary
@@ -491,11 +510,7 @@ position in the query.
             if 'minimal_column_width' in c[1]:
                 minimal_widths.append( self._header_font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
             if c[1].get('editable', True) != False:
-                option = QtGui.QStyleOptionViewItem()
-                # use createIndex(), because index() will return an invalid 
-                # index when there are no rows in the table
-                index = self.createIndex( -1, i )
-                minimal_widths.append( delegate_manager.sizeHint( option, index ).width() )
+                minimal_widths.append( delegate.sizeHint( option, index ).width() )
             column_width = c[1].get( 'column_width', None )
             if column_width != None:
                 minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
@@ -508,7 +523,6 @@ position in the query.
         # Only set the delegate manager when it is fully set up
         self.delegate_manager = delegate_manager
         self.item_delegate_changed_signal.emit()
-        self.layoutChanged.emit()
 
     def rowCount( self, index = None ):
         return self._rows
