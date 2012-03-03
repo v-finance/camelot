@@ -208,6 +208,11 @@ be specified using the verbose_name attribute.
 
 **Varia**
 
+.. attribute:: name
+
+    The name of the group in settings in which user dependent settings will
+    be stored, defaults to the class name for which this Admin class is used.
+    
 .. attribute:: model
 
     The QAbstractItemModel class to be used to display collections of this object,
@@ -218,6 +223,7 @@ be specified using the verbose_name attribute.
     The QWidget class to be used when a table view is needed
     """
     
+    name = None
     verbose_name = None
     verbose_name_plural = None
     list_display = []
@@ -245,7 +251,7 @@ be specified using the verbose_name attribute.
 
     TableView = TableView
 
-    def __init__(self, app_admin, entity):
+    def __init__( self, app_admin, entity ):
         """
         :param app_admin: the application admin object for this application, 
             if None, then the default application_admin is taken
@@ -272,7 +278,13 @@ be specified using the verbose_name attribute.
         return 'ObjectAdmin(%s)' % str(self.entity.__name__)
 
     def get_name(self):
-        return self.get_verbose_name()
+        """ The name of the group in settings in which user dependent settings 
+        will be stored, this is either the `name` attribute of this class or, 
+        the class name of the class for which this Admin class is used.
+        
+        :return: a string with the name of the settings group        
+        """
+        return self.name or self.entity.__name__
 
     def get_verbose_name(self):
         
@@ -309,6 +321,16 @@ be specified using the verbose_name attribute.
 
     def get_save_mode(self):
         return self.save_mode
+    
+    def get_settings( self ):
+        """A settings object in which settings related to this admin can be
+        stored.
+        
+        :return: a :class:`QtCore.QSettings` object
+        """
+        settings = self.app_admin.get_settings()
+        settings.beginGroup( self.get_name()[:255] )
+        return settings
 
     def get_delete_mode(self):
         return self.delete_mode
@@ -879,5 +901,3 @@ be specified using the verbose_name attribute.
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()
         return new_entity_instance
-
-

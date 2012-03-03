@@ -159,7 +159,7 @@ shortcut confusion and reduce the number of status updates.
         self.admins[entity] = admin_class
 
     @model_function
-    def get_sections(self):
+    def get_sections( self ):
         """A list of :class:`camelot.admin.section.Section` objects,
         these are the sections to be displayed in the left panel.
         
@@ -170,6 +170,17 @@ shortcut confusion and reduce the number of status updates.
         return [ Section( _('Relations'), self ),
                  Section( _('Configuration'), self ),
                  ]
+    
+    def get_settings( self ):
+        """A :class:`QtCore.QSettings` object in which Camelot related settings
+        can be stored.  This object is inteded for Camelot internal use.  If an
+        application specific settings object is needed, simply construct one.
+        
+        :return: a :class:`QtCore.QSettings` object
+        """
+        settings = QtCore.QSettings()
+        settings.beginGroup( 'Camelot' )
+        return settings
         
     def get_application_admin( self ):
         """Get the :class:`ApplicationAdmin` class of this application, this

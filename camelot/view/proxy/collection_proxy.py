@@ -38,7 +38,7 @@ import itertools
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
 
-from camelot.core.utils import is_deleted
+from camelot.core.utils import is_deleted, variant_to_pyobject
 from camelot.core.files.storage import StoredFile
 from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
@@ -240,6 +240,7 @@ position in the query.
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
         self._mutex = QtCore.QMutex()
         self.admin = admin
+        self.settings = self.admin.get_settings()
         self._horizontal_header_height = QtGui.QFontMetrics( self._header_font_required ).height() + 10
         self._header_font_metrics = QtGui.QFontMetrics( self._header_font )
         vertical_header_font_height = QtGui.QFontMetrics( self._header_font ).height()
@@ -476,6 +477,8 @@ position in the query.
         delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate( parent = delegate_manager ) )
         index = QtCore.QModelIndex()
         option = QtGui.QStyleOptionViewItem()
+        self.settings.beginGroup( 'column_width' )
+        self.settings.beginGroup( '0' )
 
         #
         # this loop can take a while to complete, so processEvents is called regulary
@@ -505,6 +508,7 @@ position in the query.
                 header_item.setData( self._header_font,
                                      Qt.FontRole )
 
+            settings_width = int( variant_to_pyobject( self.settings.value( field_name, 0 ) ) )
             label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, unicode(c[1]['name']) + u' ' )
             minimal_widths = [ label_size.width() + 10 ]
             if 'minimal_column_width' in c[1]:
@@ -515,15 +519,36 @@ position in the query.
             if column_width != None:
                 minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
                     
-            header_item.setData( QtCore.QVariant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
-                                 Qt.SizeHintRole )
+            if settings_width:
+                header_item.setData( QtCore.QVariant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
+                                     Qt.SizeHintRole )
+            else:
+                header_item.setData( QtCore.QVariant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
+                                     Qt.SizeHintRole )
              
             self.source_model.setHorizontalHeaderItem( i, header_item )
         
+        self.settings.endGroup()
+        self.settings.endGroup()
         # Only set the delegate manager when it is fully set up
         self.delegate_manager = delegate_manager
         self.item_delegate_changed_signal.emit()
             
+    def setHeaderData( self, section, orientation, value, role ):
+        if orientation == Qt.Horizontal:
+            if role == Qt.SizeHintRole:
+                width = value.width()
+                self.settings.beginGroup( 'column_width' )
+                self.settings.beginGroup( '0' )
+                self.settings.setValue( self._columns[section][1]['field_name'], 
+                                        width )
+                self.settings.endGroup()
+                self.settings.endGroup()
+        return super( CollectionProxy, self ).setHeaderData( section,
+                                                             orientation,
+                                                             value,
+                                                             role )
+    
     @gui_function
     def headerData( self, section, orientation, role ):
         """In case the columns have not been set yet, don't even try to get
