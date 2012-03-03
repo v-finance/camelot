@@ -45,9 +45,6 @@ import camelot.types
 
 __metadata__ = metadata
 
-print metadata
-print metadata.bind
-
 from camelot.core.document import documented_entity
 from camelot.core.utils import ugettext_lazy as _
 

@@ -252,7 +252,6 @@ position in the query.
             self.form_icon = QtCore.QVariant()
         self.validator = admin.create_validator( self )
         self._collection_getter = collection_getter
-        self.column_count = 0
         self.flush_changes = flush_changes
         self.delegate_manager = None
         self.mt = get_model_thread()
@@ -370,7 +369,7 @@ position in the query.
         self.edit_cache.delete_by_row( row )
         self.attributes_cache.delete_by_row( row )
         self.dataChanged.emit( self.index( row, 0 ),
-                               self.index( row, self.column_count ) )
+                               self.index( row, self.columnCount() ) )
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_update( self, sender, entity ):
@@ -451,7 +450,6 @@ position in the query.
         returned by the getColumns method of the ElixirAdmin class
         """
         self.logger.debug( 'setColumns' )
-        self.column_count = len( columns )
         self._columns = columns
 
         delegate_manager = delegates.DelegateManager()
@@ -514,9 +512,6 @@ position in the query.
 
     def rowCount( self, index = None ):
         return self._rows
-
-    def columnCount( self, index = None ):
-        return self.column_count
             
     @gui_function
     def headerData( self, section, orientation, role ):
@@ -573,7 +568,7 @@ position in the query.
         """
         if not index.isValid() or \
            not ( 0 <= index.row() <= self.rowCount( index ) ) or \
-           not ( 0 <= index.column() <= self.columnCount( index ) ):
+           not ( 0 <= index.column() <= self.columnCount() ):
             return QtCore.QVariant()
         if role in (Qt.EditRole, Qt.DisplayRole):
             if role == Qt.EditRole:
@@ -788,7 +783,7 @@ position in the query.
     def _emit_changes( self, row ):
         if row!=None:
             self.dataChanged.emit( self.index( row, 0 ),
-                                   self.index( row, self.column_count ) )
+                                   self.index( row, self.columnCount() ) )
 
     def flags( self, index ):
         """Returns the item flags for the given index"""
