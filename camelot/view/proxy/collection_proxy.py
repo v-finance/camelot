@@ -523,9 +523,6 @@ position in the query.
         # Only set the delegate manager when it is fully set up
         self.delegate_manager = delegate_manager
         self.item_delegate_changed_signal.emit()
-
-    def rowCount( self, index = None ):
-        return self._rows
             
     @gui_function
     def headerData( self, section, orientation, role ):

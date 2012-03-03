@@ -19,6 +19,7 @@ class ExampleSettings( SimpleSettings ):
     
     @staticmethod
     def setup_model():
+        import camelot.model.party
         import camelot.model.authentication
         import camelot.model.i18n
         import camelot.model.fixture

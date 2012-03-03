@@ -5,7 +5,7 @@ import os
 def load_movie_fixtures():
 
     from camelot.model.fixture import Fixture
-    from camelot.model.authentication import Person
+    from camelot.model.party import Person
     from camelot_example.model import Movie, VisitorReport
     from camelot.core.files.storage import Storage, StoredImage
     from camelot.core.resources import resource_string

@@ -127,7 +127,7 @@ class MyApplicationAdmin(ApplicationAdmin):
     
     def get_sections(self):
         from camelot.model.memento import Memento
-        from camelot.model.authentication import Person, Organization
+        from camelot.model.party import Person, Organization
         from camelot.model.i18n import Translation
         return [ Section( 'relation',
                           self,
@@ -236,6 +236,7 @@ def setup_model():
     """This function will be called at application startup, it is used to setup
     the model"""
     import camelot.model.authentication
+    import camelot.model.party
     import camelot.model.i18n
     import camelot.model.memento
     import camelot.model.fixture
