@@ -29,7 +29,7 @@ to have a :guilabel:`Save` button in Camelot. Why was that ?
     a user has to do before achieving something.  We believe the 'Save' click
     is an unneeded click.  The application knows when the state of a form is
     valid for persisting it to the database, and can do so without user
-    involvement.  We also want to take the the 'saving' issue out of the mind
+    involvement.  We also want to take the 'saving' issue out of the mind
     of the user, he should not bother wether his work is 'saved', it simply is.
     
   - Technical.  Once you decide to use a :guilabel:`Save` button, you need to

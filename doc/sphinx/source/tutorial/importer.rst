@@ -77,7 +77,7 @@ application.
 Select the files
 ================
 
-To make the action do something usefull, we will implement its ``model_run``
+To make the action do something useful, we will implement its ``model_run``
 method.  Inside the ``model_run`` method, we can :keyword:`yield` various 
 :class:`camelot.admin.action.base.ActionStep` objects to the GUI.  An ``ActionStep`` 
 is a part of the action that requires user interaction (the user answering 
