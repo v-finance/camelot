@@ -37,7 +37,7 @@ from elixir.fields import Field
 from elixir.relationships import ManyToOne
 
 from camelot.core.utils import ugettext_lazy as _
-from camelot.model import metadata
+from camelot.core.orm import metadata
 from camelot.view import filters
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action import Action

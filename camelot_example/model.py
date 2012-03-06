@@ -11,7 +11,7 @@ from sqlalchemy import sql
 from elixir import ColumnProperty
 
 import camelot.types
-from camelot.model import metadata
+from camelot.core.orm import metadata
 from elixir import Entity, Field, ManyToOne, OneToMany, \
                    ManyToMany, using_options
 from camelot.admin.action import Action

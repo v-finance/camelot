@@ -24,38 +24,7 @@
 
 # begin session setup
 import elixir
+from camelot.core.orm import Session
 
-from sqlalchemy import MetaData
-
-from sqlalchemy.orm import scoped_session, create_session
-
-elixir.session = scoped_session( create_session )
-
-from camelot.core.conf import settings
-
-metadata = MetaData()
-
-__metadata__ = metadata
-
-__metadata__.bind = settings.ENGINE()
-__metadata__.autoflush = False
-__metadata__.transactional = False
-
+elixir.session = Session
 # end session setup
-
-import authentication
-import fixture
-import i18n
-import memento
-import type_and_status
-import batch_job
-
-# dummy variable to prevent pycheckers warnings on unused imports
-__model__ = [authentication, 
-             fixture, 
-             i18n, 
-             memento, 
-             type_and_status,
-             batch_job]
-
-

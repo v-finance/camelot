@@ -32,6 +32,44 @@ the setup_all function.
 .. literalinclude:: ../../../../camelot/empty_project/settings.py
    :pyobject: setup_model
    
+Upgrading from Camelot 11.12.30 to master
+=========================================
+
+There were some changes in the data model of Camelot, in the parts that track
+change history and handle authentication.  Run this SQL script against your 
+database to do the upgrade, after taking a backup.
+
+On postgresql ::
+
+    ALTER TABLE memento ADD memento_type INT;
+    ALTER TABLE memento ADD COLUMN previous_attributes bytea;
+    UPDATE memento SET
+        memento_type = 1,
+        previous_attributes = memento_update.previous_attributes
+    FROM memento_update WHERE memento.id = memento_update.memento_id;
+    UPDATE memento SET
+        memento_type = 2,
+        previous_attributes = memento_delete.previous_attributes
+    FROM memento_delete WHERE memento.id = memento_delete.memento_id;
+    UPDATE memento SET
+        memento_type = 3
+    FROM memento_create WHERE memento.id = memento_create.memento_id;
+    ALTER TABLE memento ALTER COLUMN memento_type SET NOT NULL;
+    ALTER TABLE memento DROP COLUMN row_type;
+    DROP TABLE memento_update;
+    DROP TABLE memento_delete;
+    DROP TABLE memento_create;
+    
+Or simply drop these tables and have them recreated by Camelot and loose the
+history information ::
+
+    DROP TABLE memento_update;
+    DROP TABLE memento_delete;
+    DROP TABLE memento_create;
+    DROP TABLE memento;
+    
+    
+   
 Use schema revisions
 ====================
 

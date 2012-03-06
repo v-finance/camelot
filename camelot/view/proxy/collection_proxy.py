@@ -38,7 +38,7 @@ import itertools
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
 
-from camelot.core.utils import is_deleted
+from camelot.core.utils import is_deleted, variant_to_pyobject
 from camelot.core.files.storage import StoredFile
 from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
@@ -240,6 +240,7 @@ position in the query.
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
         self._mutex = QtCore.QMutex()
         self.admin = admin
+        self.settings = self.admin.get_settings()
         self._horizontal_header_height = QtGui.QFontMetrics( self._header_font_required ).height() + 10
         self._header_font_metrics = QtGui.QFontMetrics( self._header_font )
         vertical_header_font_height = QtGui.QFontMetrics( self._header_font ).height()
@@ -252,7 +253,6 @@ position in the query.
             self.form_icon = QtCore.QVariant()
         self.validator = admin.create_validator( self )
         self._collection_getter = collection_getter
-        self.column_count = 0
         self.flush_changes = flush_changes
         self.delegate_manager = None
         self.mt = get_model_thread()
@@ -297,10 +297,27 @@ position in the query.
             post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
 
+    #
+    # Reimplementation of methods of QProxyModel, because for now, we only
+    # use the proxy to store header data
+    # 
     def index( self, row, col, parent = QtCore.QModelIndex() ):
         if self.hasIndex( row, col, parent): 
             return self.createIndex( row, col, parent )
         return QtCore.QModelIndex()
+    
+    def parent( self, child ):
+        return QtCore.QModelIndex()
+    
+    def rowCount( self, index = None ):
+        return self._rows
+    
+    def hasChildren( self, parent ):
+        return False
+    
+    #
+    # end or reimplementation
+    #
     
     @property
     def max_number_of_rows(self):
@@ -370,7 +387,7 @@ position in the query.
         self.edit_cache.delete_by_row( row )
         self.attributes_cache.delete_by_row( row )
         self.dataChanged.emit( self.index( row, 0 ),
-                               self.index( row, self.column_count ) )
+                               self.index( row, self.columnCount() ) )
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_update( self, sender, entity ):
@@ -451,7 +468,6 @@ position in the query.
         returned by the getColumns method of the ElixirAdmin class
         """
         self.logger.debug( 'setColumns' )
-        self.column_count = len( columns )
         self._columns = columns
 
         delegate_manager = delegates.DelegateManager()
@@ -459,6 +475,10 @@ position in the query.
 
         # set a delegate for the vertical header
         delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate( parent = delegate_manager ) )
+        index = QtCore.QModelIndex()
+        option = QtGui.QStyleOptionViewItem()
+        self.settings.beginGroup( 'column_width' )
+        self.settings.beginGroup( '0' )
 
         #
         # this loop can take a while to complete, so processEvents is called regulary
@@ -488,36 +508,47 @@ position in the query.
                 header_item.setData( self._header_font,
                                      Qt.FontRole )
 
+            settings_width = int( variant_to_pyobject( self.settings.value( field_name, 0 ) ) )
             label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, unicode(c[1]['name']) + u' ' )
             minimal_widths = [ label_size.width() + 10 ]
             if 'minimal_column_width' in c[1]:
                 minimal_widths.append( self._header_font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
             if c[1].get('editable', True) != False:
-                option = QtGui.QStyleOptionViewItem()
-                # use createIndex(), because index() will return an invalid 
-                # index when there are no rows in the table
-                index = self.createIndex( -1, i )
-                minimal_widths.append( delegate_manager.sizeHint( option, index ).width() )
+                minimal_widths.append( delegate.sizeHint( option, index ).width() )
             column_width = c[1].get( 'column_width', None )
             if column_width != None:
                 minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
                     
-            header_item.setData( QtCore.QVariant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
-                                 Qt.SizeHintRole )
+            if settings_width:
+                header_item.setData( QtCore.QVariant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
+                                     Qt.SizeHintRole )
+            else:
+                header_item.setData( QtCore.QVariant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
+                                     Qt.SizeHintRole )
              
             self.source_model.setHorizontalHeaderItem( i, header_item )
         
+        self.settings.endGroup()
+        self.settings.endGroup()
         # Only set the delegate manager when it is fully set up
         self.delegate_manager = delegate_manager
         self.item_delegate_changed_signal.emit()
-        self.layoutChanged.emit()
-
-    def rowCount( self, index = None ):
-        return self._rows
-
-    def columnCount( self, index = None ):
-        return self.column_count
             
+    def setHeaderData( self, section, orientation, value, role ):
+        if orientation == Qt.Horizontal:
+            if role == Qt.SizeHintRole:
+                width = value.width()
+                self.settings.beginGroup( 'column_width' )
+                self.settings.beginGroup( '0' )
+                self.settings.setValue( self._columns[section][1]['field_name'], 
+                                        width )
+                self.settings.endGroup()
+                self.settings.endGroup()
+        return super( CollectionProxy, self ).setHeaderData( section,
+                                                             orientation,
+                                                             value,
+                                                             role )
+    
     @gui_function
     def headerData( self, section, orientation, role ):
         """In case the columns have not been set yet, don't even try to get
@@ -573,7 +604,7 @@ position in the query.
         """
         if not index.isValid() or \
            not ( 0 <= index.row() <= self.rowCount( index ) ) or \
-           not ( 0 <= index.column() <= self.columnCount( index ) ):
+           not ( 0 <= index.column() <= self.columnCount() ):
             return QtCore.QVariant()
         if role in (Qt.EditRole, Qt.DisplayRole):
             if role == Qt.EditRole:
@@ -724,14 +755,15 @@ position in the query.
                         if isinstance( old_value, StoredFile ):
                             old_value = old_value.name
                         if not direction:
-                            from camelot.model.memento import BeforeUpdate
+                            from camelot.model.memento import Memento
                             # only register the update when the camelot model is active
-                            if hasattr(BeforeUpdate, 'query'):
+                            if hasattr(Memento, 'query'):
                                 from camelot.model.authentication import get_current_authentication
-                                history = BeforeUpdate( model = unicode( self.admin.entity.__name__ ),
-                                                       primary_key = o.id,
-                                                       previous_attributes = {attribute:old_value},
-                                                       authentication = get_current_authentication() )
+                                history = Memento( model = unicode( self.admin.entity.__name__ ),
+                                                   memento_type = 'before_update',
+                                                   primary_key = o.id,
+                                                   previous_attributes = {attribute:old_value},
+                                                   authentication = get_current_authentication() )
 
                                 try:
                                     history.flush()
@@ -788,7 +820,7 @@ position in the query.
     def _emit_changes( self, row ):
         if row!=None:
             self.dataChanged.emit( self.index( row, 0 ),
-                                   self.index( row, self.column_count ) )
+                                   self.index( row, self.columnCount() ) )
 
     def flags( self, index ):
         """Returns the item flags for the given index"""
