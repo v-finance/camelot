@@ -77,9 +77,12 @@ class DelegateManager(QtGui.QItemDelegate):
 
     def createEditor(self, parent, option, index):
         """Use a custom delegate createEditor method if it exists"""
-        delegate = self.get_column_delegate(index.column())
-        editor = delegate.createEditor(parent, option, index)
-        assert editor != None
+        try:
+            delegate = self.get_column_delegate(index.column())
+            editor = delegate.createEditor(parent, option, index)
+        except Exception, e:
+            logger.error('Programming Error : could not createEditor editor data for editor at column %s'%(index.column()), exc_info=e)
+            return QtGui.QWidget( parent = parent ) 
         return editor
 
     def setEditorData(self, editor, index):

@@ -65,7 +65,7 @@ def update_database_from_model():
     migrate_connection = migrate_engine.connect()
     
     from sqlalchemy.schema import MetaData 
-    from camelot.model import metadata
+    from camelot.core.orm import metadata
     from migrate.versioning import schemadiff
     from migrate.changeset import create_column
     schema_diff = schemadiff.SchemaDiff(metadata, MetaData(migrate_connection, reflect=True))
