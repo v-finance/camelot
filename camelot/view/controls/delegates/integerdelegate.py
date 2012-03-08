@@ -60,4 +60,3 @@ class IntegerDelegate(CustomDelegate):
         
         self.paint_text( painter, option, index, value_str, horizontal_align=Qt.AlignRight )
         painter.restore()
-
