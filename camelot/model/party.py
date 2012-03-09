@@ -31,7 +31,7 @@ by Len Silverston, Chapter 2
 
 import collections
 
-from camelot.core.orm import metadata
+from camelot.core.sql import metadata
 from elixir import entities
 from camelot.view.controls import delegates
 
@@ -428,15 +428,15 @@ class Party( Entity ):
                                       _set_contact_mechanism_fax)
 
     def full_name( self ):
-        aliased_organisation = Organization.table.alias( 'organisation_alias' )
-        aliased_person = Person.table.alias( 'person_alias' )
-        aliased_party = Party.table.alias( 'party_alias' )
+        aliased_organisation = sql.alias( Organization.table )
+        aliased_person = sql.alias( Person.table )
+        aliased_party = sql.alias( Party.table )
         return sql.functions.coalesce( sql.select( [sql.functions.coalesce(aliased_person.c.first_name,'') + ' ' + sql.functions.coalesce(aliased_person.c.last_name, '')],
-                                                  whereclause = and_( aliased_party.c.id == self.id ),
-                                                  from_obj = [aliased_party.join( aliased_person, aliased_person.c.party_id == aliased_party.c.id )] ).limit( 1 ).as_scalar(),
-                                      sql.select( [aliased_organisation.c.name],
-                                                 whereclause = and_( aliased_party.c.id == self.id ),
-                                                 from_obj = [aliased_party.join( aliased_organisation, aliased_organisation.c.party_id == aliased_party.c.id )] ).limit( 1 ).as_scalar() )
+                                                   whereclause = and_( aliased_party.c.id == self.id ),
+                                                   from_obj = [aliased_party.join( aliased_person, aliased_person.c.party_id == aliased_party.c.id )] ).limit( 1 ).as_scalar(),
+                                       sql.select( [aliased_organisation.c.name],
+                                                   whereclause = and_( aliased_party.c.id == self.id ),
+                                                   from_obj = [aliased_party.join( aliased_organisation, aliased_organisation.c.party_id == aliased_party.c.id )] ).limit( 1 ).as_scalar() )
     
     full_name = ColumnProperty( full_name, deferred=True )
 

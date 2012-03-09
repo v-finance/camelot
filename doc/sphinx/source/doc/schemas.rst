@@ -35,6 +35,25 @@ the setup_all function.
 Upgrading from Camelot 11.12.30 to master
 =========================================
 
+Changes in the code ::
+
+    from camelot.model import metadata
+    
+Should become ::
+
+    from camelot.core.sql import metadata
+    
+All Camelot models that you wish to use should be explicitely imported in the
+`setup_model` method in `settings.py` ::
+
+    def setup_model():
+        from camelot.model import authentication
+        from camelot.model import party
+        from camelot.model import i18n
+        from camelot.model import memento
+        from camelot.model import fixture
+        setup_model( True )
+
 There were some changes in the data model of Camelot, in the parts that track
 change history and handle authentication.  Run this SQL script against your 
 database to do the upgrade, after taking a backup.
@@ -59,16 +78,44 @@ On postgresql ::
     DROP TABLE memento_update;
     DROP TABLE memento_delete;
     DROP TABLE memento_create;
+    CREATE INDEX ix_memento_memento_type
+        ON memento (memento_type);
+    ALTER TABLE authentication_mechanism ADD COLUMN authentication_type INT;
+    ALTER TABLE authentication_mechanism ADD COLUMN username VARCHAR(40);
+    ALTER TABLE authentication_mechanism ADD COLUMN password VARCHAR(200);
+    ALTER TABLE authentication_mechanism ADD COLUMN from_date DATE;
+    ALTER TABLE authentication_mechanism ADD COLUMN thru_date DATE;
+    ALTER TABLE authentication_mechanism DROP COLUMN row_type;
+    ALTER TABLE authentication_mechanism DROP COLUMN is_active;
+    UPDATE authentication_mechanism SET
+        authentication_type = 1,
+        from_date = '2000-01-01',
+        thru_date = '2400-12-31',
+        username = authentication_mechanism_username.username,
+        password = authentication_mechanism_username.password
+    FROM authentication_mechanism_username WHERE authentication_mechanism.id = authentication_mechanism_username.authenticationmechanism_id;
+    ALTER TABLE authentication_mechanism ALTER COLUMN authentication_type SET NOT NULL;
+    ALTER TABLE authentication_mechanism ALTER COLUMN from_date SET NOT NULL;
+    ALTER TABLE authentication_mechanism ALTER COLUMN thru_date SET NOT NULL;
+    DROP TABLE authentication_mechanism_username;
+    CREATE INDEX ix_authentication_mechanism_from_date
+        ON authentication_mechanism (from_date);
+    CREATE INDEX ix_authentication_mechanism_thru_date
+        ON authentication_mechanism (thru_date);
+    CREATE INDEX ix_authentication_mechanism_username
+        ON authentication_mechanism (username);
+    CREATE INDEX ix_authentication_mechanism_authentication_type
+        ON authentication_mechanism (authentication_type);
     
-Or simply drop these tables and have them recreated by Camelot and loose the
+Or simply drop these tables and have them recreated by Camelot and lose the
 history information ::
 
     DROP TABLE memento_update;
     DROP TABLE memento_delete;
     DROP TABLE memento_create;
     DROP TABLE memento;
-    
-    
+    DROP TABLE authentication_mechanism_username;
+    DROP TABLE authentication_mechanism;
    
 Use schema revisions
 ====================

@@ -22,41 +22,24 @@
 #
 #  ============================================================================
 
-"""Singleton objects and helper functions related to the connection between the 
-SQLAlchemy ORM and the Camelot Views.
-
-This module contains two important global variables :
-
-  * `metadata` : is the :class:`Metadata` object to which all tables of the
-    application can be added.
+"""This module complements the sqlalchemy orm module, it contains the global
+`Session` factory to create `session` objects.  Whenever a `session`
+is needed it can be constructed with a call of `Session` ::
     
-  * `Session` : is a factory class for `session` objects, whenever a `session`
-    is needed it can be constructed with a call of `Session` ::
-    
-        session = Session
+    session = Session
         
-    when using Elixir, Elixir needs to be told to use this session factory ::
+when using Elixir, Elixir needs to be told to use this session factory ::
     
-        elixir.session = Session
-        
+    elixir.session = Session
 """
 
 import logging
 logger = logging.getLogger('camelot.core.orm')
 
-from sqlalchemy import MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from camelot.core.conf import settings
 
-#
-# Singleton metadata object, to be used together with elixir or in SQLAlchemy
-# setups with only a single database
-#
-metadata = MetaData()
-metadata.bind = settings.ENGINE()
-metadata.autoflush = False
-metadata.transactional = False
 #
 # Singleton session factory, to be used when a session is needed
 #
@@ -64,7 +47,7 @@ Session = scoped_session( sessionmaker( autoflush = False,
                                         autocommit = True,
                                         expire_on_commit = False ) )
 
-def refresh_session(session):
+def refresh_session( session ):
     """Session refresh expires all objects in the current session and sends
     a local entity update signal via the remote_signals mechanism
 

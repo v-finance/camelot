@@ -179,7 +179,7 @@ if __name__ == '__main__':
     '''),
     
     ('{{options.module}}/model.py', '''
-from camelot.model import metadata
+from camelot.sql import metadata
 
 __metadata__ = metadata
     '''),
