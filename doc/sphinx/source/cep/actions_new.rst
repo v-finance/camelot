@@ -23,7 +23,7 @@ action button, a predefined function is called.
   
 An action is available to show the address on a map
 
-Every Action is build up with a set of Action Steps.  An Action Step is a
+Every Action is built up with a set of Action Steps.  An Action Step is a
 reusable part of an Action, such as for example, ask the user to select a
 file.  Camelot comes with a set of standard Actions and Action Steps that are 
 easily  extended to manipulate data or create reports.  
@@ -62,7 +62,7 @@ and start the :meth:`model_run` method in the model thread.
 :meth:`model_run` in itself is a generator, that can yield :class:`ActionStep` 
 objects back to the gui, such as a :class:`PrintHtml`.
             
-The action objects can than be used a an element of the actions list returned by 
+The action objects can then be used as an element of the actions list returned by 
 the :meth:`ApplicationAdmin.get_actions` method:
 
 .. literalinclude:: ../../../../camelot_example/application_admin.py
@@ -73,7 +73,7 @@ or be used in the :attr:`ObjectAdmin.list_actions` or
 :attr:`ObjectAdmin.form_actions` attributes.
 
 The :ref:`tutorial-importer` tutorial has a complete example of creating and
-using and action.
+using an action.
    
 What can happen inside :meth:`model_run`
 ========================================
@@ -85,8 +85,8 @@ Actions need to be able to send their results back to the user, or ask
 the user for additional information.  This is done with the :keyword:`yield` 
 statement.
 
-Through :keyword:`yield`, an Action Step is send to the GUI thread, where it creates
-user interaction, and sends it result back to the 'model_thread'.  The model_thread
+Through :keyword:`yield`, an Action Step is sent to the GUI thread, where it creates
+user interaction, and sends it's result back to the 'model_thread'.  The model_thread
 will be blocked while the action in the GUI thread takes place, eg ::
 
     yield PrintHtml( 'Hello World' )
