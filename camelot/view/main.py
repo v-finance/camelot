@@ -105,6 +105,9 @@ class Application(QtCore.QObject):
         """Launch the second thread where the model lives"""
         from camelot.view.model_thread import get_model_thread, construct_model_thread
         from camelot.view.remote_signals import construct_signal_handler
+        from camelot.core.conf import settings
+        from camelot.core.sql import metadata
+        metadata.bind = settings.ENGINE()
         construct_model_thread()
         construct_signal_handler()
         mt = get_model_thread()

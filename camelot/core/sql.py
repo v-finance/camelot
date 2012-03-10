@@ -44,7 +44,6 @@ LOGGER = logging.getLogger('camelot.core.sql')
 # setups with only a single database
 #
 metadata = MetaData()
-metadata.bind = settings.ENGINE()
 metadata.autoflush = False
 metadata.transactional = False
 
