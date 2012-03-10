@@ -60,7 +60,9 @@ def update_last_login():
     """Update the last login of the current person to now"""
     authentication = get_current_authentication()
     authentication.last_login = datetime.datetime.now()
-    orm.object_session( authentication ).flush()
+    session = orm.object_session( authentication )
+    if session:
+        session.flush()
 
 class AuthenticationMechanism( Entity ):
     using_options( tablename = 'authentication_mechanism' )
