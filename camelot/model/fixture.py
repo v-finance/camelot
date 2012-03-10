@@ -21,7 +21,8 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-from camelot.core.orm import metadata
+
+from camelot.core.sql import metadata
 from elixir.entity import Entity
 from elixir.options import using_options
 from elixir.fields import Field

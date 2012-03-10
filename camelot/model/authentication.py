@@ -34,7 +34,7 @@ from sqlalchemy import orm
 from elixir import Entity, using_options, Field
 
 import camelot.types
-from camelot.core.orm import metadata
+from camelot.core.sql import metadata
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.entity_admin import EntityAdmin
 
@@ -67,7 +67,10 @@ def update_last_login():
 class AuthenticationMechanism( Entity ):
     using_options( tablename = 'authentication_mechanism' )
     authentication_type = Field( camelot.types.Enumeration( [ (1, 'operating_system'),
-                                                              (2, 'database') ] ) )
+                                                              (2, 'database') ] ),
+                                 required = True, 
+                                 index = True , 
+                                 default = 'operating_system' )
     username = Field( Unicode( 40 ), required = True, index = True, unique = True )
     password = Field( Unicode( 200 ), required = False, index = False, default = None )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )

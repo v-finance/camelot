@@ -33,7 +33,7 @@ from sqlalchemy.types import Unicode, INT, DateTime, PickleType
 from elixir import Entity, using_options, Field, ManyToOne
 
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import metadata
+from camelot.core.sql import metadata
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view import filters
