@@ -45,7 +45,7 @@ contain references to widgets as those belong strictly to the :class:`GuiContext
 class GuiContext( object ):
     """
 The GUI context in which an action is running.  This object can contain
-references to widgets and other usefull information.  This object cannot
+references to widgets and other useful information.  This object cannot
 contain reference to anything database or model related, as those belong
 strictly to the :class:`ModelContext`
 
