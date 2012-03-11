@@ -987,11 +987,16 @@ class SnippetsTest(ModelThreadTestCase):
 
     images_path = static_images_path
 
+    def setUp( self ):
+        super( SnippetsTest, self ).setUp()
+        from camelot.admin.application_admin import ApplicationAdmin
+        self.app_admin = ApplicationAdmin()
+        
     def test_simple_plot(self):
         from snippet.chart.simple_plot import Wave
         from camelot.view.proxy.collection_proxy import CollectionProxy
         wave = Wave()
-        admin = Wave.Admin(None, Wave)
+        admin = Wave.Admin( self.app_admin, Wave )
         proxy = CollectionProxy(admin, lambda:[wave], admin.get_fields )
         form = admin.create_form_view('Wave', proxy, 0, None)
         form.setMaximumSize( 400, 200 )
@@ -1002,7 +1007,7 @@ class SnippetsTest(ModelThreadTestCase):
         from camelot.view.proxy.collection_proxy import CollectionProxy
         wave = Wave()
         #wave.phase = '2.89'
-        admin = Wave.Admin(object(), Wave)
+        admin = Wave.Admin( self.app_admin, Wave )
         proxy = CollectionProxy(admin, lambda:[wave], admin.get_fields )
         form = admin.create_form_view('Wave', proxy, 0, None)
         form.setMaximumSize( 400, 200 )
@@ -1012,7 +1017,7 @@ class SnippetsTest(ModelThreadTestCase):
         from snippet.fields_with_actions import Coordinate
         from camelot.view.proxy.collection_proxy import CollectionProxy
         coordinate = Coordinate()
-        admin = Coordinate.Admin(None, Coordinate)
+        admin = Coordinate.Admin( self.app_admin, Coordinate )
         proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
         form = admin.create_form_view('Coordinate', proxy, 0, None)
         self.grab_widget(form)
@@ -1021,7 +1026,7 @@ class SnippetsTest(ModelThreadTestCase):
         from snippet.fields_with_tooltips import Coordinate
         from camelot.view.proxy.collection_proxy import CollectionProxy
         coordinate = Coordinate()
-        admin = Coordinate.Admin(None, Coordinate)
+        admin = Coordinate.Admin( self.app_admin, Coordinate )
         proxy = CollectionProxy(admin, lambda:[coordinate], admin.get_fields )
         form = admin.create_form_view('Coordinate', proxy, 0, None)
         self.grab_widget(form)
@@ -1029,10 +1034,8 @@ class SnippetsTest(ModelThreadTestCase):
     def test_entity_validator(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.model.party import Person
-        from camelot.admin.application_admin import ApplicationAdmin
         from snippet.entity_validator import PersonValidator, Admin
-        app_admin = ApplicationAdmin()
-        person_admin = Admin(app_admin, Person)
+        person_admin = Admin( self.app_admin, Person)
         proxy = CollectionProxy(person_admin, lambda:[Person()], person_admin.get_columns)
         validator = PersonValidator(person_admin, proxy)
         self.mt.post(lambda:validator.isValid(0))
@@ -1043,10 +1046,8 @@ class SnippetsTest(ModelThreadTestCase):
     def test_background_color(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.model.party import Person
-        from camelot.admin.application_admin import ApplicationAdmin
         from snippet.background_color import Admin
-        app_admin = ApplicationAdmin()
-        person_admin = Admin(app_admin, Person)
+        person_admin = Admin( self.app_admin, Person )
         proxy = CollectionProxy(person_admin, lambda:[Person(first_name='John', last_name='Cleese'),
                                                       Person(first_name='eric', last_name='Idle')],
                                                        person_admin.get_columns)
@@ -1059,4 +1060,3 @@ class SnippetsTest(ModelThreadTestCase):
 class CamelotSchemaTest(SchemaTest):
 
     images_path = static_images_path
-
