@@ -301,9 +301,15 @@ position in the query.
     # Reimplementation of methods of QProxyModel, because for now, we only
     # use the proxy to store header data
     # 
+    # Subsequent calls to this function should return the same index
+    #
     def index( self, row, col, parent = QtCore.QModelIndex() ):
-        if self.hasIndex( row, col, parent): 
-            return self.createIndex( row, col, parent )
+        if self.hasIndex( row, col, parent):
+            #
+            # indexes are considered equal when their row, column and internal
+            # pointer are equal.  therefor set the internal pointer always to 0.
+            #
+            return self.createIndex( row, col, 0 )
         return QtCore.QModelIndex()
     
     def parent( self, child ):
