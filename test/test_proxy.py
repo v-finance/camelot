@@ -11,7 +11,7 @@ class QueryProxyCase( ModelThreadTestCase ):
     def setUp(self):
         super( QueryProxyCase, self ).setUp()
         from camelot_example.fixtures import load_movie_fixtures
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         from camelot.view.proxy.queryproxy import QueryTableProxy
         from camelot.admin.application_admin import ApplicationAdmin
         load_movie_fixtures()

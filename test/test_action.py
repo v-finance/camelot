@@ -64,9 +64,9 @@ class ActionStepsCase( ModelThreadTestCase ):
     images_path = static_images_path
     
     def setUp(self):
+        ModelThreadTestCase.setUp(self)
         from camelot_example.model import Movie
         from camelot.admin.application_admin import ApplicationAdmin
-        ModelThreadTestCase.setUp(self)
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.context.obj = Movie.query.first()
