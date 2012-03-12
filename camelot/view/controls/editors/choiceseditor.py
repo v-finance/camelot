@@ -76,7 +76,10 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
                 current_value_available = True
         if not current_value_available and current_index > 0:
             self.insertItem(i+1, current_name, QtCore.QVariant(current_value))
-        self.set_value(current_value)
+        # to prevent loops in the onetomanychoices editor, only set the value
+        # again when it's not valueloading
+        if current_value != ValueLoading:
+            self.set_value( current_value )
 
     def set_field_attributes(self, editable=True, choices=None, **kwargs):
         if choices != None:
@@ -121,4 +124,3 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
         else:
             value = ValueLoading
         return AbstractCustomEditor.get_value(self) or value
-

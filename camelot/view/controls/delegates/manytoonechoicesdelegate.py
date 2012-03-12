@@ -36,6 +36,3 @@ class ManyToOneChoicesDelegate( CustomDelegate ):
   """
   
     editor = editors.OneToManyChoicesEditor
-
-
-

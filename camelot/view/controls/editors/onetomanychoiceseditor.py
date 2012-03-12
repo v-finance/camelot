@@ -49,5 +49,7 @@ class OneToManyChoicesEditor(ChoicesEditor):
         """Makes sure choices are not reset when changing the
         field attributes"""
         self.setEnabled(editable!=False)
-
-
+        
+    def set_value(self, value):
+        # post to make sure the set value occurs after the set choices
+        post( lambda:value, super( OneToManyChoicesEditor, self ).set_value )
