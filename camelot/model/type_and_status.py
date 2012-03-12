@@ -40,6 +40,7 @@ from elixir.relationships import ManyToOne, OneToMany
 from camelot.model.authentication import end_of_times
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration
+from camelot.core.utils import ugettext_lazy as _
 
 #
 # Global dict keeping track of which status class is used for which class
@@ -248,6 +249,7 @@ def change_status_action( new_status, verbose_name = None ):
     """
     from camelot.admin.action import Action
     from camelot.view import action_steps
+
     action_verbose_name = verbose_name or _(new_status)
     
     class ChangeStatus( Action ):
