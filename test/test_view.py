@@ -25,148 +25,6 @@ def create_getter(getable):
 
     return getter
 
-#class ProxyEntityTest(ModelThreadTestCase):
-#  """Test the functionality of the proxies to perform CRUD operations on stand
-#  alone data"""
-#  def setUp(self):
-#    ModelThreadTestCase.setUp(self)
-#    from camelot.model.authentication import Person, PartyAddressRoleType
-#    from camelot.view.proxy.queryproxy import QueryTableProxy
-#    from camelot.view.application_admin import ApplicationAdmin
-#    self.app_admin = ApplicationAdmin()
-#    self.block = self.mt.post_and_block
-#    person_admin = self.app_admin.getEntityAdmin(Person)
-#    party_address_role_type_admin = self.app_admin.getEntityAdmin(PartyAddressRoleType)
-#    self.person_proxy = QueryTableProxy(person_admin, lambda:Person.query, person_admin.get_fields)
-#    self.party_address_role_type_proxy = QueryTableProxy(party_address_role_type_admin, lambda:PartyAddressRoleType.query, party_address_role_type_admin.get_fields)
-#    # get the columns of the proxy
-#    self.person_columns = dict((c[0],i) for i,c in enumerate(self.block(lambda:self.person_proxy.getColumns())))
-#    self.rows_before_insert = 0
-#    self.rows_after_insert = 0
-#    self.rows_after_delete = 0
-#    self.new_person = None
-#    # make sure nothing is running in the model thread any more
-#    self.block(lambda:None)
-#  def listPersons(self):
-#    from camelot.model.authentication import Person
-#
-#    def create_list():
-#      print '<persons>'
-#      for p in Person.query.all():
-#        print p.id, unicode(p)
-#      print '</persons>'
-#
-#    self.block(create_list)
-#  def numberOfPersons(self):
-#    return self.block(lambda:self.person_proxy.getRowCount())
-#  def insertNewPerson(self, valid):
-#    from camelot.model.authentication import Person
-#    self.rows_before_insert = self.numberOfPersons()
-#    self.new_person = self.block(lambda:Person(first_name={True:u'test', False:None}[valid], last_name='test'))
-#    self.person_proxy.insertRow(0, create_getter(self.new_person))
-#    self.rows_after_insert = self.numberOfPersons()
-#    self.assertTrue( self.rows_after_insert > self.rows_before_insert)
-#  def updateNewPerson(self):
-#    rows_before_update = self.numberOfPersons()
-#    self.assertNotEqual( self.block(lambda:self.new_person.last_name), u'Testers')
-#    index = self.person_proxy.index(self.rows_before_insert, self.person_columns['last_name'])
-#    self.person_proxy.setData(index, lambda:u'Testers')
-#    self.assertEqual( self.block(lambda:self.new_person.last_name), u'Testers')
-#    self.assertEqual(rows_before_update, self.numberOfPersons())
-#  def updateNewPersonToValid(self):
-#    index = self.person_proxy.index(self.rows_before_insert, self.person_columns['first_name'])
-#    self.person_proxy.setData(index, lambda:u'test')
-#    index = self.person_proxy.index(self.rows_before_insert, self.person_columns['last_name'])
-#    self.person_proxy.setData(index, lambda:u'test')
-#  def updateNewPersonToInvalid(self):
-#    index = self.person_proxy.index(self.rows_before_insert, self.person_columns['first_name'])
-#    self.person_proxy.setData(index, lambda:None)
-#    index = self.person_proxy.index(self.rows_before_insert, self.person_columns['last_name'])
-#    self.person_proxy.setData(index, lambda:None)
-#  def deleteNewPerson(self):
-#    self.person_proxy.removeRow(self.rows_before_insert)
-#    self.rows_after_delete = self.numberOfPersons()
-#    self.assertTrue( self.rows_after_delete < self.rows_after_insert )
-#  def testCreateDataWithoutRequiredFields(self):
-#    """Create a record that has no required fields, so the creation
-#    should be instantaneous as opposed to delayed until all required fields are filled"""
-#    from camelot.model.authentication import PartyAddressRoleType
-#    rows_before_insert = self.block(lambda:self.party_address_role_type_proxy.getRowCount())
-#    new_party_address_role_type_proxy = self.block(lambda:PartyAddressRoleType())
-#    self.party_address_role_type_proxy.insertRow(0, create_getter(new_party_address_role_type_proxy))
-#    self.assertNotEqual( self.block(lambda:new_party_address_role_type_proxy.id), None )
-#    rows_after_insert = self.block(lambda:self.party_address_role_type_proxy.getRowCount())
-#    self.assertTrue( rows_after_insert > rows_before_insert)
-#  def testCreateUpdateDeleteValidData(self):
-#    self.insertNewPerson(valid=True)
-#    self.assertTrue( self.block(lambda:self.new_person.id) != None )
-#    self.updateNewPerson()
-#    self.deleteNewPerson()
-#  def testCreateUpdateDeleteInvalidData(self):
-#    self.insertNewPerson(valid=False)
-#    self.assertTrue( self.block(lambda:self.new_person.id) == None )
-#    self.updateNewPerson()
-#    self.deleteNewPerson()
-#  def testCreateInvalidDataUpdateToValidAndDelete(self):
-#    self.insertNewPerson(valid=False)
-#    self.assertTrue( self.block(lambda:self.new_person.id) == None )
-#    self.updateNewPersonToValid()
-#    self.assertTrue( self.block(lambda:self.new_person.id) != None )
-#    self.deleteNewPerson()
-#  def testCreateValidDataUpdateToInvalidAndDelete(self):
-#    self.insertNewPerson(valid=False)
-#    self.updateNewPersonToInvalid()
-#    self.deleteNewPerson()
-
-
-#class ProxyOneToManyTest(ProxyEntityTest):
-#  """Test the functionality of the proxies to perform CRUD operations on related
-#  data"""
-#  def setUp(self):
-#    super(ProxyOneToManyTest, self).setUp()
-#    from elixir import session
-#    from camelot.view.proxy.queryproxy import QueryTableProxy
-#    from camelot.model.authentication import Country, City, Address, PartyAddress
-#    party_address_admin = self.app_admin.getEntityAdmin(PartyAddress)
-#    self.party_address_proxy = QueryTableProxy(party_address_admin, PartyAddress.query, party_address_admin.get_fields)
-#    self.party_address_columns = dict((c[0],i) for i,c in enumerate(self.block(lambda:self.party_address_proxy.getColumns())))
-#    self.country = self.block(lambda:Country(code=u'BE', name=u'Belgium'))
-#    self.city = self.block(lambda:City(code=u'2000', name=u'Antwerp', country=self.country))
-#    self.address = self.block(lambda:Address(street1=u'Teststreet', city=self.city))
-#    self.block(lambda:session.flush([self.country, self.city, self.address]))
-#  def insertRelatedPartyAddress(self, valid):
-#    from camelot.model.authentication import PartyAddress
-#    index = self.person_proxy.index(self.rows_before_insert, self.person_columns['addresses'])
-#    self.block(lambda:None)
-#    self.related_party_address_proxy = self.person_proxy.data(index, Qt.EditRole).toPyObject()
-#    self.block(lambda:None)
-#    self.related_party_address_proxy = self.person_proxy.data(index, Qt.EditRole).toPyObject()
-#    self.assertNotEqual(self.related_party_address_proxy, None)
-#    self.party_address = self.block({True:lambda:PartyAddress(address=self.address), False:lambda:PartyAddress()}[valid])
-#    self.related_party_address_proxy.insertRow(0, create_getter(self.party_address))
-#    self.block(lambda:None)
-#  def testCreateBothValidDataUpdateDelete(self):
-#    self.insertNewPerson(valid=True)
-#    self.insertRelatedPartyAddress(valid=True)
-#    self.assertNotEqual(self.party_address.id, None)
-#    self.deleteNewPerson()
-#  def testCreateValidPersonInvalidPartyAddressUpdateDelete(self):
-#    self.insertNewPerson(valid=True)
-#    self.insertRelatedPartyAddress(valid=False)
-#    self.assertEqual(self.party_address.id, None)
-#    self.deleteNewPerson()
-#  def testCreateInvalidPersonValidPartyAddressUpdateDelete(self):
-#    self.insertNewPerson(valid=False)
-#    self.insertRelatedPartyAddress(valid=False)
-#    self.assertEqual(self.party_address.id, None)
-#    self.deleteNewPerson()
-#  def tearDown(self):
-#    from elixir import session
-#    self.block(lambda:self.address.delete())
-#    self.block(lambda:self.city.delete())
-#    self.block(lambda:self.country.delete())
-#    self.block(lambda:session.flush([self.country, self.city, self.address]))
-
 class EditorsTest(ModelThreadTestCase):
     """
   Test the basic functionality of the editors :
@@ -517,7 +375,7 @@ class FormTest(ModelThreadTestCase):
         self.entities = [e for e in entities]
         from camelot.admin.application_admin import ApplicationAdmin
         from camelot.view.proxy.queryproxy import QueryTableProxy
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         from camelot_example.model import Movie
         self.app_admin = ApplicationAdmin()
         self.movie_admin = self.app_admin.get_related_admin( Movie )
@@ -952,7 +810,7 @@ class FilterTest(ModelThreadTestCase):
 
     def test_filter_list_in_table_view(self):
         from camelot.view.controls.tableview import TableView
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         from camelot.admin.application_admin import ApplicationAdmin
         from camelot.admin.action.base import GuiContext
         gui_context = GuiContext()
@@ -984,7 +842,7 @@ class ControlsTest(ModelThreadTestCase):
         
     def test_table_view(self):
         from camelot.view.controls.tableview import TableView
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         from camelot.admin.action.base import GuiContext
         gui_context = GuiContext()
         widget = TableView( gui_context, 
@@ -994,7 +852,7 @@ class ControlsTest(ModelThreadTestCase):
     def test_small_column( self ):
         #create a table view for an Admin interface with small columns
         from camelot.view.controls.tableview import TableView
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         
         class SmallColumnsAdmin( Person.Admin ):
             list_display = ['first_name', 'suffix']
@@ -1014,7 +872,7 @@ class ControlsTest(ModelThreadTestCase):
     def test_column_width( self ):
         #create a table view for an Admin interface with small columns
         from camelot.view.controls.tableview import TableView
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         
         class ColumnWidthAdmin( Person.Admin ):
             list_display = ['first_name', 'suffix']
@@ -1075,7 +933,7 @@ class ControlsTest(ModelThreadTestCase):
         self.grab_widget(search)
 
     def test_header_widget(self):
-        from camelot.model.authentication import City
+        from camelot.model.party import City
         from camelot.view.controls.tableview import HeaderWidget
         person_admin = self.app_admin.get_entity_admin(City)
         header = HeaderWidget(parent=None, admin=person_admin)
@@ -1170,7 +1028,7 @@ class SnippetsTest(ModelThreadTestCase):
 
     def test_entity_validator(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         from camelot.admin.application_admin import ApplicationAdmin
         from snippet.entity_validator import PersonValidator, Admin
         app_admin = ApplicationAdmin()
@@ -1184,7 +1042,7 @@ class SnippetsTest(ModelThreadTestCase):
 
     def test_background_color(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         from camelot.admin.application_admin import ApplicationAdmin
         from snippet.background_color import Admin
         app_admin = ApplicationAdmin()

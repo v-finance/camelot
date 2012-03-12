@@ -3,7 +3,7 @@ name pink if its first name doesn't start with a capital"""
 
 from PyQt4.QtGui import QColor
 
-from camelot.model.authentication import Person
+from camelot.model.party import Person
 
 def first_name_background_color(person):
     import string

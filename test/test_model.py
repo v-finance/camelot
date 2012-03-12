@@ -7,14 +7,14 @@ class ModelCase( ModelThreadTestCase ):
   
     def setUp(self):
         super( ModelCase, self ).setUp()
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         from camelot.view.proxy.queryproxy import QueryTableProxy
         from camelot.admin.application_admin import ApplicationAdmin
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin( Person )
     
     def test_person_contact_mechanism( self ):
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         person = Person( first_name = u'Robin',
                          last_name = u'The brave' )
         self.assertEqual( person.contact_mechanisms_email, None )
@@ -29,7 +29,7 @@ class ModelCase( ModelThreadTestCase ):
         self.assertEqual( person.contact_mechanisms_email[1], u'' )
       
     def test_fixture_version( self ):
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         from camelot.model.fixture import FixtureVersion
         FixtureVersion.set_current_version( 'demo_data', 0 )
         self.assertEqual( FixtureVersion.get_current_version( 'demo_data' ),

@@ -224,7 +224,7 @@ class ListActionsCase( ModelThreadTestCase ):
         self.test_import_from_file( 'import_example.xls' )
 
     def test_import_from_file( self, filename = 'import_example.csv' ):
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
         self.context = MockModelContext()
         self.context.obj = Person.query.first() # need an object, to have a
