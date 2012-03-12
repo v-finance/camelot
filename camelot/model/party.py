@@ -428,15 +428,16 @@ class Party( Entity ):
                                       _set_contact_mechanism_fax)
 
     def full_name( self ):
+
         aliased_organisation = sql.alias( Organization.table )
         aliased_person = sql.alias( Person.table )
-        aliased_party = sql.alias( Party.table )
+        
         return sql.functions.coalesce( sql.select( [sql.functions.coalesce(aliased_person.c.first_name,'') + ' ' + sql.functions.coalesce(aliased_person.c.last_name, '')],
-                                                   whereclause = and_( aliased_party.c.id == self.id ),
-                                                   from_obj = [aliased_party.join( aliased_person, aliased_person.c.party_id == aliased_party.c.id )] ).limit( 1 ).as_scalar(),
+                                                   whereclause = and_( aliased_person.c.party_id == self.id ),
+                                                   ).limit( 1 ).as_scalar(),
                                        sql.select( [aliased_organisation.c.name],
-                                                   whereclause = and_( aliased_party.c.id == self.id ),
-                                                   from_obj = [aliased_party.join( aliased_organisation, aliased_organisation.c.party_id == aliased_party.c.id )] ).limit( 1 ).as_scalar() )
+                                                   whereclause = and_( aliased_organisation.c.party_id == self.id ), 
+                                                   ).limit( 1 ).as_scalar() )
     
     full_name = ColumnProperty( full_name, deferred=True )
 
