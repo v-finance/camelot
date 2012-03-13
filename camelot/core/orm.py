@@ -38,8 +38,6 @@ logger = logging.getLogger('camelot.core.orm')
 
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from camelot.core.conf import settings
-
 #
 # Singleton session factory, to be used when a session is needed
 #
