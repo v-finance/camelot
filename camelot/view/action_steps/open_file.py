@@ -33,21 +33,21 @@ class OpenFile( ActionStep ):
     path is preferred, as this is most likely to work when running from an
     egg and in all kinds of setups.
     
-    :param path: the absolute path to the file to open
+    :param file_name: the absolute path to the file to open
     
     The :keyword:`yield` statement will return :keyword:`True` if the file was
     opend successfull.
     """
         
     def __init__( self, path ):
-        self._path = path
+        self.path = path
 
     def get_path( self ):
         """
         :return: the path to the file that will be opened, use this method
         to verify the content of the file in unit tests
         """
-        return self._path
+        return self.path
 
     @classmethod
     def create_temporary_file( self, suffix ):
@@ -68,10 +68,10 @@ class OpenFile( ActionStep ):
         #
         # support for windows shares
         #
-        if not self._path.startswith(r'\\'):
-            url = QtCore.QUrl.fromLocalFile( self._path )
+        if not self.path.startswith(r'\\'):
+            url = QtCore.QUrl.fromLocalFile( self.path )
         else:
-            url = QtCore.QUrl( self._path, QtCore.QUrl.TolerantMode )
+            url = QtCore.QUrl( self.path, QtCore.QUrl.TolerantMode )
         return QtGui.QDesktopServices.openUrl( url )
     
 class OpenStream( OpenFile ):
@@ -160,18 +160,23 @@ class WordJinjaTemplate( OpenFile ):
                   context={},
                   environment = environment,
                   suffix='.xml' ):
-        self.file_name = self.create_temporary_file( suffix )
+        path = self.create_temporary_file( suffix )
         template = environment.get_template( template )
         template_stream = template.stream( context )
-        template_stream.dump( open( self.file_name, 'wb' ), encoding='utf-8' )
+        template_stream.dump( open( path, 'wb' ), encoding='utf-8' )
+        super( WordJinjaTemplate, self ).__init__( path )
         
     def gui_run( self, gui_context ):
-        import pythoncom
-        import win32com.client
-        pythoncom.CoInitialize()
-        word_app = win32com.client.Dispatch("Word.Application")
-        word_app.Visible = True
-        doc = word_app.Documents.Open( self.file_name )
-        doc.Activate()
-        word_app.Activate()
+        try:
+            import pythoncom
+            import win32com.client
+            pythoncom.CoInitialize()
+            word_app = win32com.client.Dispatch("Word.Application")
+            word_app.Visible = True
+            doc = word_app.Documents.Open( self.file_name )
+            doc.Activate()
+            word_app.Activate()
+        # fallback in case of not on windows
+        except ImportError, e:
+            super( WordJinjaTemplate, self ).gui_run( gui_context )
 

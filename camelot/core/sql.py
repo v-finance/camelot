@@ -23,7 +23,7 @@
 #  ============================================================================
 
 """
-This module complements the sqlalchemy sql module, and contains the  `metadata` 
+This module complements the sqlalchemy sql module, and contains the `metadata` 
 variable, which is a global :class:`sqlalchemy.Metadata` object to which all 
 tables of the application can be added.
 """
