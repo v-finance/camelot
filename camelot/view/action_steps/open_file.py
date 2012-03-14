@@ -173,7 +173,7 @@ class WordJinjaTemplate( OpenFile ):
             pythoncom.CoInitialize()
             word_app = win32com.client.Dispatch("Word.Application")
             word_app.Visible = True
-            doc = word_app.Documents.Open( self.file_name )
+            doc = word_app.Documents.Open( self.path )
             doc.Activate()
             word_app.Activate()
         # fallback in case of not on windows
