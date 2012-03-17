@@ -29,11 +29,10 @@ user to review or plan them.
 """
 
 import sqlalchemy.types
-from sqlalchemy import orm, sql, schema
+from sqlalchemy import orm, sql
 
 from camelot.core.orm import Entity, Field, ManyToOne, using_options
 from camelot.core.utils import ugettext_lazy as _
-from camelot.core.sql import metadata
 from camelot.view import filters
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action import Action
@@ -47,7 +46,7 @@ class BatchJobType( Entity ):
     jobs based on their type.  A type might be 'Create management reports' """
     using_options( tablename = 'batch_job_type' )
     name   = Field( sqlalchemy.types.Unicode(256), required=True )
-    parent = ManyToOne( BatchJobType )
+    parent = ManyToOne( 'BatchJobType' )
     
     def __unicode__(self):
         return self.name

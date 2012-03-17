@@ -45,7 +45,7 @@ logger = logging.getLogger('camelot.core.orm')
 import sqlalchemy.types
 from camelot.core.sql import metadata
 from sqlalchemy import schema, orm, ForeignKey, types
-from sqlalchemy.ext.declarative import ( declared_attr, declarative_base, 
+from sqlalchemy.ext.declarative import ( declarative_base, 
                                          DeclarativeMeta )
 from sqlalchemy.orm import scoped_session, sessionmaker
 
@@ -212,7 +212,7 @@ class Entity( object ):
     def to_dict(self, deep={}, exclude=[]):
         """Generate a JSON-style nested dict/list structure from an object."""
         col_prop_names = [p.key for p in self.mapper.iterate_properties \
-                                      if isinstance(p, ColumnProperty)]
+                                      if isinstance(p, orm.properties.ColumnProperty)]
         data = dict([(name, getattr(self, name))
                      for name in col_prop_names if name not in exclude])
         for rname, rdeep in deep.iteritems():
@@ -230,19 +230,19 @@ class Entity( object ):
 
     # session methods
     def flush(self, *args, **kwargs):
-        return object_session(self).flush([self], *args, **kwargs)
+        return orm.object_session(self).flush([self], *args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        return object_session(self).delete(self, *args, **kwargs)
+        return orm.object_session(self).delete(self, *args, **kwargs)
 
     def expire(self, *args, **kwargs):
-        return object_session(self).expire(self, *args, **kwargs)
+        return orm.object_session(self).expire(self, *args, **kwargs)
 
     def refresh(self, *args, **kwargs):
-        return object_session(self).refresh(self, *args, **kwargs)
+        return orm.object_session(self).refresh(self, *args, **kwargs)
 
     def expunge(self, *args, **kwargs):
-        return object_session(self).expunge(self, *args, **kwargs)
+        return orm.object_session(self).expunge(self, *args, **kwargs)
     
     # query methods
     @classmethod
