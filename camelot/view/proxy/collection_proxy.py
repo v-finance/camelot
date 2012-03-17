@@ -821,12 +821,17 @@ position in the query.
 
         return True
 
+    #
+    # try not to use gui_function in combination with pyqtslot
+    #
     @QtCore.pyqtSlot(int)
-    @gui_function
     def _emit_changes( self, row ):
+        assert QtCore.QThread.currentThread() == self.thread()
         if row!=None:
-            self.dataChanged.emit( self.index( row, 0 ),
-                                   self.index( row, self.columnCount() ) )
+            column_count = self.columnCount()
+            top_left = self.index( row, 0 )
+            bottom_right = self.index( row, column_count )
+            self.dataChanged.emit( top_left, bottom_right )
 
     def flags( self, index ):
         """Returns the item flags for the given index"""
