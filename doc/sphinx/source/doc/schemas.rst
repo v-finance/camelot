@@ -47,6 +47,8 @@ All Camelot models that you wish to use should be explicitely imported in the
 `setup_model` method in `settings.py` ::
 
     def setup_model():
+        from camelot.core.sql import metadata
+        metadata.bind = ENGINE()
         from camelot.model import authentication
         from camelot.model import party
         from camelot.model import i18n
@@ -58,7 +60,7 @@ There were some changes in the data model of Camelot, in the parts that track
 change history and handle authentication.  Run this SQL script against your 
 database to do the upgrade, after taking a backup.
 
-On postgresql ::
+On Postgresql ::
 
     ALTER TABLE memento ADD memento_type INT;
     ALTER TABLE memento ADD COLUMN previous_attributes bytea;
@@ -106,7 +108,56 @@ On postgresql ::
         ON authentication_mechanism (username);
     CREATE INDEX ix_authentication_mechanism_authentication_type
         ON authentication_mechanism (authentication_type);
+        
+On MySQL ::
     
+    ALTER TABLE memento ADD memento_type INT;
+    ALTER TABLE memento ADD COLUMN previous_attributes blob;
+    UPDATE memento, memento_update SET
+        memento.memento_type = 1,
+        memento.previous_attributes = memento_update.previous_attributes
+    WHERE memento.id = memento_update.memento_id;
+    UPDATE memento, memento_delete SET
+        memento.memento_type = 2,
+        memento.previous_attributes = memento_delete.previous_attributes
+    WHERE memento.id = memento_delete.memento_id;
+    UPDATE memento, memento_create SET
+        memento.memento_type = 3
+    WHERE memento.id = memento_create.memento_id;
+    ALTER TABLE memento ALTER COLUMN memento_type SET NOT NULL;
+    ALTER TABLE memento DROP COLUMN row_type;
+    DROP TABLE memento_update;
+    DROP TABLE memento_delete;
+    DROP TABLE memento_create;
+    CREATE INDEX ix_memento_memento_type
+        ON memento (memento_type);
+    ALTER TABLE authentication_mechanism ADD COLUMN authentication_type INT;
+    ALTER TABLE authentication_mechanism ADD COLUMN username VARCHAR(40);
+    ALTER TABLE authentication_mechanism ADD COLUMN password VARCHAR(200);
+    ALTER TABLE authentication_mechanism ADD COLUMN from_date DATE;
+    ALTER TABLE authentication_mechanism ADD COLUMN thru_date DATE;
+    ALTER TABLE authentication_mechanism DROP COLUMN row_type;
+    ALTER TABLE authentication_mechanism DROP COLUMN is_active;
+    UPDATE authentication_mechanism, authentication_mechanism_username SET
+        authentication_mechanism.authentication_type = 1,
+        authentication_mechanism.from_date = '2000-01-01',
+        authentication_mechanism.thru_date = '2400-12-31',
+        authentication_mechanism.username = authentication_mechanism_username.username,
+        authentication_mechanism.password = authentication_mechanism_username.password
+    WHERE authentication_mechanism.id = authentication_mechanism_username.authenticationmechanism_id;
+    ALTER TABLE authentication_mechanism ALTER COLUMN authentication_type SET NOT NULL;
+    ALTER TABLE authentication_mechanism ALTER COLUMN from_date SET NOT NULL;
+    ALTER TABLE authentication_mechanism ALTER COLUMN thru_date SET NOT NULL;
+    DROP TABLE authentication_mechanism_username;
+    CREATE INDEX ix_authentication_mechanism_from_date
+        ON authentication_mechanism (from_date);
+    CREATE INDEX ix_authentication_mechanism_thru_date
+        ON authentication_mechanism (thru_date);
+    CREATE INDEX ix_authentication_mechanism_username
+        ON authentication_mechanism (username);
+    CREATE INDEX ix_authentication_mechanism_authentication_type
+        ON authentication_mechanism (authentication_type);
+        
 Or simply drop these tables and have them recreated by Camelot and lose the
 history information ::
 
