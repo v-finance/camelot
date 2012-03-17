@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -38,7 +38,7 @@ import itertools
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
 
-from camelot.core.utils import is_deleted
+from camelot.core.utils import is_deleted, variant_to_pyobject
 from camelot.core.files.storage import StoredFile
 from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
@@ -110,8 +110,8 @@ def strip_data_from_object( obj, columns ):
             else:
                 field_value = getter( obj )
         except (Exception, RuntimeError, TypeError, NameError), e:
-            logger.error('ProgrammingError : could not get field %s of object of type %s'%(col[0], obj.__class__.__name__),
-                         exc_info=e)
+            logger.error( "ProgrammingError : could not get field '%s' of object of type %s"%(col[0], obj.__class__.__name__),
+                          exc_info = e )
         finally:
             row_data.append( field_value )
     return row_data
@@ -125,30 +125,36 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
 
     for field_data, static_attributes, dynamic_attributes in zip( stripped_data, static_field_attributes, dynamic_field_attributes ):
         unicode_data = u''
-        choices = dynamic_attributes.get( 'choices', static_attributes.get('choices', None))
-        if 'unicode_format' in static_attributes:
-            unicode_format = static_attributes['unicode_format']
-            if field_data != None:
-                unicode_data = unicode_format( field_data )
-        elif choices:
-            unicode_data = field_data
-            for key, value in choices:
-                if key == field_data:
-                    unicode_data = value
-        elif isinstance( field_data, list ):
-            unicode_data = u'.'.join( [unicode( e ) for e in field_data] )
-        elif isinstance( field_data, datetime.datetime ):
-            # datetime should come before date since datetime is a subtype of date
-            if field_data.year >= 1900:
-                unicode_data = field_data.strftime( '%d/%m/%Y %H:%M' )
-        elif isinstance( field_data, datetime.date ):
-            if field_data.year >= 1900:
-                unicode_data = field_data.strftime( '%d/%m/%Y' )
-        elif isinstance( field_data, StoredImage):
-            unicode_data = field_data.checkout_thumbnail(100, 100)
-        elif field_data != None:
-            unicode_data = unicode( field_data )
-        row_data.append( unicode_data )
+        try:
+            choices = dynamic_attributes.get( 'choices', static_attributes.get('choices', None))
+            if 'unicode_format' in static_attributes:
+                unicode_format = static_attributes['unicode_format']
+                if field_data != None:
+                    unicode_data = unicode_format( field_data )
+            elif choices:
+                unicode_data = field_data
+                for key, value in choices:
+                    if key == field_data:
+                        unicode_data = value
+            elif isinstance( field_data, list ):
+                unicode_data = u'.'.join( [unicode( e ) for e in field_data] )
+            elif isinstance( field_data, datetime.datetime ):
+                # datetime should come before date since datetime is a subtype of date
+                if field_data.year >= 1900:
+                    unicode_data = field_data.strftime( '%d/%m/%Y %H:%M' )
+            elif isinstance( field_data, datetime.date ):
+                if field_data.year >= 1900:
+                    unicode_data = field_data.strftime( '%d/%m/%Y' )
+            elif isinstance( field_data, StoredImage):
+                unicode_data = field_data.checkout_thumbnail(100, 100)
+            elif field_data != None:
+                unicode_data = unicode( field_data )
+        except (Exception, RuntimeError, TypeError, NameError), e:
+            logger.error( "ProgrammingError : could not get view data for field '%s' with of object of type %s"%( static_attributes['name'],
+                                                                                                                  obj.__class__.__name__),
+                          exc_info = e)
+        finally:
+            row_data.append( unicode_data )
 
     return row_data
 
@@ -170,7 +176,7 @@ class SortingRowMapper( dict ):
         except KeyError:
             return row
 
-class CollectionProxy( QtCore.QAbstractTableModel ):
+class CollectionProxy( QtGui.QProxyModel ):
     """The CollectionProxy contains a limited copy of the data in the actual
     collection, usable for fast visualisation in a QTableView
 
@@ -223,11 +229,20 @@ position in the query.
 """
         super(CollectionProxy, self).__init__()
         from camelot.view.model_thread import get_model_thread
+        #
+        # The source model will contain the actual data stripped from the
+        # objects in the collection.
+        #
+        self.source_model = QtGui.QStandardItemModel()
+        self.setModel( self.source_model )
+        
         self.logger = logging.getLogger(logger.name + '.%s'%id(self))
         self.logger.debug('initialize query table for %s' % (admin.get_verbose_name()))
         self._mutex = QtCore.QMutex()
         self.admin = admin
+        self.settings = self.admin.get_settings()
         self._horizontal_header_height = QtGui.QFontMetrics( self._header_font_required ).height() + 10
+        self._header_font_metrics = QtGui.QFontMetrics( self._header_font )
         vertical_header_font_height = QtGui.QFontMetrics( self._header_font ).height()
         self._vertical_header_height = vertical_header_font_height * self.admin.lines_per_row + 10
         self.iconSize = QtCore.QSize( vertical_header_font_height,
@@ -238,7 +253,6 @@ position in the query.
             self.form_icon = QtCore.QVariant()
         self.validator = admin.create_validator( self )
         self._collection_getter = collection_getter
-        self.column_count = 0
         self.flush_changes = flush_changes
         self.delegate_manager = None
         self.mt = get_model_thread()
@@ -283,6 +297,34 @@ position in the query.
             post( self.getRowCount, self.setRowCount )
         self.logger.debug( 'initialization finished' )
 
+    #
+    # Reimplementation of methods of QProxyModel, because for now, we only
+    # use the proxy to store header data
+    # 
+    # Subsequent calls to this function should return the same index
+    #
+    def index( self, row, col, parent = QtCore.QModelIndex() ):
+        if self.hasIndex( row, col, parent):
+            #
+            # indexes are considered equal when their row, column and internal
+            # pointer are equal.  therefor set the internal pointer always to 0.
+            #
+            return self.createIndex( row, col, 0 )
+        return QtCore.QModelIndex()
+    
+    def parent( self, child ):
+        return QtCore.QModelIndex()
+    
+    def rowCount( self, index = None ):
+        return self._rows
+    
+    def hasChildren( self, parent ):
+        return False
+    
+    #
+    # end or reimplementation
+    #
+    
     @property
     def max_number_of_rows(self):
         """The maximum number of rows to be displayed at once"""
@@ -351,7 +393,7 @@ position in the query.
         self.edit_cache.delete_by_row( row )
         self.attributes_cache.delete_by_row( row )
         self.dataChanged.emit( self.index( row, 0 ),
-                               self.index( row, self.column_count ) )
+                               self.index( row, self.columnCount() ) )
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_update( self, sender, entity ):
@@ -432,92 +474,93 @@ position in the query.
         returned by the getColumns method of the ElixirAdmin class
         """
         self.logger.debug( 'setColumns' )
-        self.column_count = len( columns )
         self._columns = columns
 
         delegate_manager = delegates.DelegateManager()
         delegate_manager.set_columns_desc( columns )
 
         # set a delegate for the vertical header
-        delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate(parent = delegate_manager) )
+        delegate_manager.insertColumnDelegate( -1, delegates.PlainTextDelegate( parent = delegate_manager ) )
+        index = QtCore.QModelIndex()
+        option = QtGui.QStyleOptionViewItem()
+        self.settings.beginGroup( 'column_width' )
+        self.settings.beginGroup( '0' )
 
         #
         # this loop can take a while to complete, so processEvents is called regulary
         #
         for i, c in enumerate( columns ):
-#            if i%10==0:
-#                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ExcludeSocketNotifiers, 100)
+            #
+            # Construct the delegate
+            #
             field_name = c[0]
             self.logger.debug( 'creating delegate for %s' % field_name )
-            if 'delegate' in c[1]:
-                try:
-                    delegate = c[1]['delegate']( parent = delegate_manager, **c[1] )
-                except Exception, e:
-                    logger.error('ProgrammingError : could not create delegate for field %s'%field_name, exc_info=e)
-                    delegate = delegates.PlainTextDelegate( parent = delegate_manager, **c[1] )
-                delegate_manager.insertColumnDelegate( i, delegate )
-                continue
-            elif c[1]['python_type'] == str:
-                if c[1]['length']:
-                    delegate = delegates.PlainTextDelegate( parent = delegate_manager, maxlength = c[1]['length'] )
-                    delegate_manager.insertColumnDelegate( i, delegate )
-                else:
-                    delegate = delegates.TextEditDelegate( parent = delegate_manager, **c[1] )
-                    delegate_manager.insertColumnDelegate( i, delegate )
+            try:
+                delegate = c[1]['delegate']( parent = delegate_manager, **c[1] )
+            except Exception, e:
+                logger.error('ProgrammingError : could not create delegate for field %s'%field_name, exc_info=e)
+                delegate = delegates.PlainTextDelegate( parent = delegate_manager, **c[1] )
+            delegate_manager.insertColumnDelegate( i, delegate )
+            #
+            # Set the header data
+            #
+            header_item = QtGui.QStandardItem()
+            header_item.setData( QtCore.QVariant( unicode(c[1]['name']) ),
+                                 Qt.DisplayRole )
+            if c[1].get( 'nullable', True ) == False:
+                header_item.setData( self._header_font_required,
+                                     Qt.FontRole )
             else:
-                delegate = delegates.PlainTextDelegate(parent = delegate_manager)
-                delegate_manager.insertColumnDelegate( i, delegate )
+                header_item.setData( self._header_font,
+                                     Qt.FontRole )
 
+            settings_width = int( variant_to_pyobject( self.settings.value( field_name, 0 ) ) )
+            label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, unicode(c[1]['name']) + u' ' )
+            minimal_widths = [ label_size.width() + 10 ]
+            if 'minimal_column_width' in c[1]:
+                minimal_widths.append( self._header_font_metrics.averageCharWidth() * c[1]['minimal_column_width'] )
+            if c[1].get('editable', True) != False:
+                minimal_widths.append( delegate.sizeHint( option, index ).width() )
+            column_width = c[1].get( 'column_width', None )
+            if column_width != None:
+                minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
+                    
+            if settings_width:
+                header_item.setData( QtCore.QVariant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
+                                     Qt.SizeHintRole )
+            else:
+                header_item.setData( QtCore.QVariant( QtCore.QSize( max( minimal_widths ), self._horizontal_header_height ) ),
+                                     Qt.SizeHintRole )
+             
+            self.source_model.setHorizontalHeaderItem( i, header_item )
+        
+        self.settings.endGroup()
+        self.settings.endGroup()
         # Only set the delegate manager when it is fully set up
         self.delegate_manager = delegate_manager
         self.item_delegate_changed_signal.emit()
-        self.layoutChanged.emit()
-
-    def rowCount( self, index = None ):
-        return self._rows
-
-    def columnCount( self, index = None ):
-        return self.column_count
-
+            
+    def setHeaderData( self, section, orientation, value, role ):
+        if orientation == Qt.Horizontal:
+            if role == Qt.SizeHintRole:
+                width = value.width()
+                self.settings.beginGroup( 'column_width' )
+                self.settings.beginGroup( '0' )
+                self.settings.setValue( self._columns[section][1]['field_name'], 
+                                        width )
+                self.settings.endGroup()
+                self.settings.endGroup()
+        return super( CollectionProxy, self ).setHeaderData( section,
+                                                             orientation,
+                                                             value,
+                                                             role )
+    
     @gui_function
     def headerData( self, section, orientation, role ):
         """In case the columns have not been set yet, don't even try to get
         information out of them
         """
-        if orientation == Qt.Horizontal:
-            if section >= self.column_count:
-                return QtCore.QAbstractTableModel.headerData( self, section, orientation, role )
-            c = self.getColumns()[section]
-
-            if role == Qt.DisplayRole:
-                return QtCore.QVariant( unicode(c[1]['name']) )
-
-            elif role == Qt.FontRole:
-                if ( 'nullable' in c[1] ) and \
-                   ( c[1]['nullable'] == False ):
-                    return QtCore.QVariant( self._header_font_required )
-                else:
-                    return QtCore.QVariant( self._header_font )
-
-            elif role == Qt.SizeHintRole:
-                option = QtGui.QStyleOptionViewItem()
-                if self.delegate_manager:
-                    editor_size = self.delegate_manager.sizeHint( option, self.index( 0, section ) )
-                else:
-                    editor_size = QtCore.QSize(0, 0)
-                if 'minimal_column_width' in c[1]:
-                    minimal_column_width = QtGui.QFontMetrics( self._header_font ).size( Qt.TextSingleLine, 'A' ).width()*c[1]['minimal_column_width']
-                else:
-                    minimal_column_width = 100
-                editable = True
-                if 'editable' in c[1]:
-                    editable = c[1]['editable']
-                label_size = QtGui.QFontMetrics( self._header_font_required ).size( Qt.TextSingleLine, unicode(c[1]['name']) + ' ' )
-                size = max( minimal_column_width, label_size.width() + 10 )
-                if editable:
-                    size = max( size, editor_size.width() )
-                return QtCore.QVariant( QtCore.QSize( size, self._horizontal_header_height ) )
-        else:
+        if orientation == Qt.Vertical:
             if role == Qt.SizeHintRole:
                 if self.header_icon != None:
                     return QtCore.QVariant( QtCore.QSize( self.iconSize.width() + 10,
@@ -530,7 +573,7 @@ position in the query.
             elif role == Qt.DisplayRole:
                 if self.header_icon != None:
                     return QtCore.QVariant( '' )
-        return QtCore.QAbstractTableModel.headerData( self, section, orientation, role )
+        return super( CollectionProxy, self ).headerData( section, orientation, role )
 
     @gui_function
     def sort( self, column, order ):
@@ -567,7 +610,7 @@ position in the query.
         """
         if not index.isValid() or \
            not ( 0 <= index.row() <= self.rowCount( index ) ) or \
-           not ( 0 <= index.column() <= self.columnCount( index ) ):
+           not ( 0 <= index.column() <= self.columnCount() ):
             return QtCore.QVariant()
         if role in (Qt.EditRole, Qt.DisplayRole):
             if role == Qt.EditRole:
@@ -718,14 +761,15 @@ position in the query.
                         if isinstance( old_value, StoredFile ):
                             old_value = old_value.name
                         if not direction:
-                            from camelot.model.memento import BeforeUpdate
+                            from camelot.model.memento import Memento
                             # only register the update when the camelot model is active
-                            if hasattr(BeforeUpdate, 'query'):
-                                from camelot.model.authentication import getCurrentAuthentication
-                                history = BeforeUpdate( model = unicode( self.admin.entity.__name__ ),
-                                                       primary_key = o.id,
-                                                       previous_attributes = {attribute:old_value},
-                                                       authentication = getCurrentAuthentication() )
+                            if hasattr(Memento, 'query'):
+                                from camelot.model.authentication import get_current_authentication
+                                history = Memento( model = unicode( self.admin.entity.__name__ ),
+                                                   memento_type = 'before_update',
+                                                   primary_key = o.id,
+                                                   previous_attributes = {attribute:old_value},
+                                                   authentication = get_current_authentication() )
 
                                 try:
                                     history.flush()
@@ -777,12 +821,17 @@ position in the query.
 
         return True
 
+    #
+    # try not to use gui_function in combination with pyqtslot
+    #
     @QtCore.pyqtSlot(int)
-    @gui_function
     def _emit_changes( self, row ):
+        assert QtCore.QThread.currentThread() == self.thread()
         if row!=None:
-            self.dataChanged.emit( self.index( row, 0 ),
-                                   self.index( row, self.column_count ) )
+            column_count = self.columnCount()
+            top_left = self.index( row, 0 )
+            bottom_right = self.index( row, column_count )
+            self.dataChanged.emit( top_left, bottom_right )
 
     def flags( self, index ):
         """Returns the item flags for the given index"""
@@ -1081,10 +1130,10 @@ position in the query.
 # TODO : it's not because an object is added to this list, that it was created
 # it might as well exist already, eg. manytomany relation
 #      from camelot.model.memento import Create
-#      from camelot.model.authentication import getCurrentAuthentication
+#      from camelot.model.authentication import get_current_authentication
 #      history = Create(model=unicode(self.admin.entity.__name__),
 #                       primary_key=o.id,
-#                       authentication = getCurrentAuthentication())
+#                       authentication = get_current_authentication())
 #      elixir.session.flush([history])
 #      self.rsh.sendEntityCreate(self, o)
         self._rows = rows + 1
@@ -1122,4 +1171,5 @@ position in the query.
     def get_admin( self ):
         """Get the admin object associated with this model"""
         return self.admin
+
 

@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -21,19 +21,17 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-'''
+"""
+Convenience classes to give entities a status, and create the needed status
+tables for each entity.
 
-Created on Sep 25, 2009
-
-@author: Erik De Rijcke
-
-'''
+"""
 import datetime
 
 from elixir.entity import Entity, EntityMeta
 
 from sqlalchemy.types import Date, Unicode
-from sqlalchemy.sql import and_
+from sqlalchemy import sql
 
 from elixir.fields import Field
 from elixir.options import using_options
@@ -42,6 +40,7 @@ from elixir.relationships import ManyToOne, OneToMany
 from camelot.model.authentication import end_of_times
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration
+from camelot.core.utils import ugettext_lazy as _
 
 #
 # Global dict keeping track of which status class is used for which class
@@ -79,6 +78,18 @@ def create_type_3_status_mixin(status_attribute):
                 if status_history.status_from_date<=today and status_history.status_thru_date>=today:
                     classified_by = status_history.classified_by
             return classified_by
+	
+	@staticmethod
+	def current_status_query( status_type, columns ):
+	    """
+	    :param status_type: the Entity class that represents the statuses, as returned by get_status_class
+	    :param columns: the columns of the table for which to query the status
+	    """
+	    return sql.select( [status_type.classified_by],
+		              whereclause = sql.and_( status_type.status_for_id == columns.id,
+		                                      status_type.status_from_date <= sql.functions.current_date(),
+		                                      status_type.status_thru_date >= sql.functions.current_date() ),
+		              from_obj = [status_type.table] ).order_by(status_type.id.desc()).limit(1)
     
         def change_status(self, new_status, status_from_date=None, status_thru_date=end_of_times()):
             from sqlalchemy import orm
@@ -87,9 +98,9 @@ def create_type_3_status_mixin(status_attribute):
             mapper = orm.class_mapper(self.__class__)
             status_property = mapper.get_property('status')
             status_type = status_property.mapper.class_
-            old_status = status_type.query.filter( and_( status_type.status_for == self,
-                                                         status_type.status_from_date <= status_from_date,
-                                                         status_type.status_thru_date >= status_from_date ) ).first()
+            old_status = status_type.query.filter( sql.and_( status_type.status_for == self,
+                                                             status_type.status_from_date <= status_from_date,
+                                                             status_type.status_thru_date >= status_from_date ) ).first()
             if old_status != None:
                 old_status.thru_date = datetime.date.today() - datetime.timedelta( days = 1 )
                 old_status.status_thru_date = status_from_date - datetime.timedelta( days = 1 )
@@ -228,4 +239,26 @@ def entity_type( typable_entity, metadata, collection, verbose_entity_name = Non
 
     return type_name
 
+def change_status_action( new_status, verbose_name = None ):
+    """
+    Creat an action that changes the status of an object
+    :param new_status: the new status of the object
+    :param verbose_name: the name of the action
+    :return: a :class:`camelot.admin.action.Action` object that changes
+        the status of a selection to the new status
+    """
+    from camelot.admin.action import Action
+    from camelot.view import action_steps
 
+    action_verbose_name = verbose_name or _(new_status)
+    
+    class ChangeStatus( Action ):
+        
+        verbose_name = action_verbose_name
+            
+        def model_run(self, model_context):
+            for work_effort in model_context.get_selection():
+                work_effort.change_status( new_status )
+            yield action_steps.FlushSession( model_context.session )
+            
+    return ChangeStatus()

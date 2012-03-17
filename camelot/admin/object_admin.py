@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -208,6 +208,11 @@ be specified using the verbose_name attribute.
 
 **Varia**
 
+.. attribute:: name
+
+    The name of the group in settings in which user dependent settings will
+    be stored, defaults to the class name for which this Admin class is used.
+    
 .. attribute:: model
 
     The QAbstractItemModel class to be used to display collections of this object,
@@ -218,6 +223,7 @@ be specified using the verbose_name attribute.
     The QWidget class to be used when a table view is needed
     """
     
+    name = None
     verbose_name = None
     verbose_name_plural = None
     list_display = []
@@ -245,24 +251,20 @@ be specified using the verbose_name attribute.
 
     TableView = TableView
 
-    def __init__(self, app_admin, entity):
+    def __init__( self, app_admin, entity ):
         """
         :param app_admin: the application admin object for this application, 
             if None, then the default application_admin is taken
         :param entity: the entity class for which this admin instance is to be
             used
         """
-        from camelot.view.remote_signals import get_signal_handler
         if not app_admin:
             from camelot.admin.application_admin import get_application_admin
             self.app_admin = get_application_admin()
         else:
             self.app_admin = app_admin
-        self.rsh = get_signal_handler()
         if entity:
-            from camelot.view.model_thread import get_model_thread
             self.entity = entity
-            self.mt = get_model_thread()
         #
         # caches to prevent recalculation of things
         #
@@ -276,7 +278,13 @@ be specified using the verbose_name attribute.
         return 'ObjectAdmin(%s)' % str(self.entity.__name__)
 
     def get_name(self):
-        return self.get_verbose_name()
+        """ The name of the group in settings in which user dependent settings 
+        will be stored, this is either the `name` attribute of this class or, 
+        the class name of the class for which this Admin class is used.
+        
+        :return: a string with the name of the settings group        
+        """
+        return self.name or self.entity.__name__
 
     def get_verbose_name(self):
         
@@ -313,6 +321,16 @@ be specified using the verbose_name attribute.
 
     def get_save_mode(self):
         return self.save_mode
+    
+    def get_settings( self ):
+        """A settings object in which settings related to this admin can be
+        stored.
+        
+        :return: a :class:`QtCore.QSettings` object
+        """
+        settings = self.app_admin.get_settings()
+        settings.beginGroup( self.get_name()[:255] )
+        return settings
 
     def get_delete_mode(self):
         return self.delete_mode
@@ -368,7 +386,7 @@ be specified using the verbose_name attribute.
         """
         subclasses = []
         for subclass in self.entity.__subclasses__():
-            subclass_admin = self.get_related_entity_admin(subclass)
+            subclass_admin = self.get_related_admin( subclass )
             if subclass_admin!=self:
                 subclasses.append((
                     subclass_admin,
@@ -395,10 +413,6 @@ be specified using the verbose_name attribute.
             logger.warn('no related admin found for %s' % (cls.__name__))
         return related_admin
         
-    def get_related_entity_admin(self, entity):
-        """deprecated : use get_related_admin"""
-        return self.get_related_admin(entity)
-
     def get_static_field_attributes(self, field_names):
         """
         Convenience function to get all the field attributes
@@ -500,7 +514,7 @@ be specified using the verbose_name attribute.
                 length=None,
                 tooltip=None,
                 background_color=None,
-                minimal_column_width=12,
+                #minimal_column_width=12,
                 editable=False,
                 nullable=True,
                 widget='str',
@@ -545,7 +559,7 @@ be specified using the verbose_name attribute.
                     admin_class = fa['admin']
                     return admin_class(self.app_admin, target)
                 except KeyError:
-                    return self.get_related_entity_admin(target)
+                    return self.get_related_admin(target)
 
             if 'target' in attributes:
                 attributes['admin'] = get_entity_admin(attributes['target'])
@@ -888,4 +902,3 @@ be specified using the verbose_name attribute.
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()
         return new_entity_instance
-

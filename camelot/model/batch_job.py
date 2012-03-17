@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -33,6 +33,7 @@ from sqlalchemy import orm, sql, schema
 
 from camelot.core.orm import Entity, Field, ManyToOne, using_options
 from camelot.core.utils import ugettext_lazy as _
+from camelot.core.sql import metadata
 from camelot.view import filters
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action import Action

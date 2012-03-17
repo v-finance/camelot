@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -256,7 +256,7 @@ class DesktopWorkspace(QtGui.QWidget):
         super(DesktopWorkspace, self).__init__(parent)
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin = app_admin
-        self.gui_context.desktop = self
+        self.gui_context.workspace = self
         self._app_admin = app_admin
         
         layout = QtGui.QHBoxLayout()
@@ -462,3 +462,4 @@ def show_top_level(view, parent):
 
     #view.setWindowModality(QtCore.Qt.WindowModal)
     view.show()
+

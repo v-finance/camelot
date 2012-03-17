@@ -66,6 +66,24 @@ calculator
 
 :const:`True` or :const:`False` Indicates whether a calculator should be available when editing this field.
 
+.. _field-attribute-column_width:
+
+column_width
+------------
+
+An integer forcing the column width of a field in a table view.  The use of this
+field attribute is not recommended, since in most cases Camelot will figure out
+how wide a column should be.  The use of :ref:`minimal_column_width` is advised
+to make sure a column has a certain width.  But the `column_width` field attribute
+can be used to shrink the column width to arbitrary sizes, even if this might
+make the header unreadeable.
+
+.. literalinclude:: ../../../../test/test_view.py
+   :start-after: begin column width
+   :end-before: end column width
+   
+.. image:: /_static/controls/column_width.png
+
 .. _field-attribute-directory:
 
 directory 

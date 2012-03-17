@@ -7,7 +7,7 @@ class CoreCase(ModelThreadTestCase):
             
     def test_session_refresh(self):
         from camelot.core.conf import settings
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         session = Person.query.session
         #
         # create objects in various states

@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -27,6 +27,8 @@ import logging
 logger = logging.getLogger( 'camelot.core.files.storage' )
 
 from camelot.core.conf import settings
+from camelot.core.exception import UserException
+from camelot.core.utils import ugettext
 from camelot.view.model_thread import model_function
 
 class StoredFile( object ):
@@ -183,6 +185,27 @@ class Storage( object ):
         import os
         return os.path.join( self.upload_to, name )
 
+    def _create_tempfile( self, suffix, prefix ):
+        import tempfile
+        # @todo suffix and prefix should be cleaned, because the user might be
+        #       able to get directory separators in here or something related
+        try:
+            return tempfile.mkstemp( suffix = suffix, prefix = prefix, dir = self.upload_to, text = 'b' )
+        except EnvironmentError, e:
+            if not self.available():
+                raise UserException( text = ugettext('The directory %s does not exist')%(self.upload_to),
+                                     resolution = ugettext( 'Contact your system administrator' ) )
+            if not self.writeable():
+                raise UserException( text = ugettext('You have no write permissions for %s')%(self.upload_to),
+                                     resolution = ugettext( 'Contact your system administrator' ) )
+            
+            raise UserException( text = ugettext('Unable to write file to %s')%(self.upload_to),
+                                 resolution = ugettext( 'Contact your system administrator' ),
+                                 detail = ugettext('OS Error number : %s \nError : %s \nPrefix : %s \nSuffix : %s')%( e.errno,
+                                                                                                                      e.strerror,
+                                                                                                                      prefix,
+                                                                                                                      suffix ) )
+        
     def checkin( self, local_path, filename=None ):
         """Check the file pointed to by local_path into the storage, and
         return a StoredFile
@@ -196,14 +219,13 @@ class Storage( object ):
         like that.  In each case the storage will choose the filename.
         """
         self.available()
-        import tempfile
         import shutil
         import os
         to_path = os.path.join( self.upload_to, filename or os.path.basename( local_path ) )
         if os.path.exists(to_path):
             # only if the default to_path exists, we'll give it a new name
             root, extension = os.path.splitext( filename or os.path.basename( local_path ) )
-            ( handle, to_path ) = tempfile.mkstemp( suffix = extension, prefix = root, dir = self.upload_to, text = 'b' )
+            ( handle, to_path ) = self._create_tempfile( extension, root )
             os.close( handle )
         logger.debug( u'copy file from %s to %s', local_path, to_path )
         shutil.copy( local_path, to_path )
@@ -229,9 +251,8 @@ class Storage( object ):
             
         """
         self.available()
-        import tempfile
         import os
-        ( handle, to_path ) = tempfile.mkstemp( suffix = suffix, prefix = prefix, dir = self.upload_to, text = 'b' )
+        ( handle, to_path ) = self._create_tempfile( suffix, prefix )
         logger.debug(u'checkin stream to %s'%to_path)
         file = os.fdopen( handle, 'wb' )
         file.write( stream.read() )
@@ -286,5 +307,6 @@ class S3Storage( object ):
             pass
         else:
             conn.create_located_bucket( settings.AWS_BUCKET_NAME, settings.AWS_LOCATION ).message
+
 
 

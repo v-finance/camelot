@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -29,25 +29,49 @@ from camelot.view.utils import operator_names
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 
 class FilterOperator( QtGui.QWidget ):
-    """Widget that allows applying various filter operators on a field"""
+    """Widget that allows applying various filter operators on a field
+
+    :param cls: the class on which the filter will be applied
+    :param field_name: the name fo the field on the class on which to filter
+    :param field_attributes: a dictionary of field attributes for this filter
+    :param default_operator: a default operator to be used, on of the attributes
+        of the python module :mod:`operator`, such as `operator.eq`
+    :param default_value_1: a default value for the first editor (in case the
+        default operator in unary or binary
+    :param default_value_2: a default value for the second editor (in case the
+        default operator is binary)
+    :param parent: the parent :obj:`QtGui.QWidget`
+    """
     
     filter_changed_signal = QtCore.pyqtSignal()
         
-    def __init__(self, entity, field_name, field_attributes, parent):
+    def __init__( self, 
+                  cls, 
+                  field_name, 
+                  field_attributes, 
+                  default_operator = None,
+                  default_value_1 = None,
+                  default_value_2 = None,
+                  parent = None ):
         super( FilterOperator, self ).__init__( parent )        
-        self._entity, self._field_name, self._field_attributes = entity, field_name, field_attributes
+        self._entity, self._field_name, self._field_attributes = cls, field_name, field_attributes
         self._field_attributes['editable'] = True
         layout = QtGui.QVBoxLayout()
         layout.setContentsMargins( 2, 2, 2, 2 )
         layout.setSpacing( 2 )
         layout.addWidget( UserTranslatableLabel( field_attributes['name'] ) )
         self._operators = field_attributes.get('operators', [])
-        self._choices = [(0, ugettext('All')), (1, ugettext('None'))] + \
-                        [(i+2, unicode(operator_names[operator])) for i, operator in enumerate(self._operators)]
+        default_index = 0
+        self._choices = [(0, ugettext('All')), (1, ugettext('None'))]
+        for i, operator in enumerate(self._operators):
+            self._choices.append( (i+2, unicode(operator_names[operator])) )
+            if operator == default_operator:
+                default_index = i + 2
         combobox = QtGui.QComboBox(self)
         layout.addWidget(combobox)
         for i, name in self._choices:
             combobox.insertItem(i, unicode(name))
+        combobox.setCurrentIndex( default_index )
         combobox.currentIndexChanged.connect( self.combobox_changed )
         delegate = self._field_attributes['delegate'](**self._field_attributes)
         option = QtGui.QStyleOptionViewItem()
@@ -56,8 +80,8 @@ class FilterOperator( QtGui.QWidget ):
         self._editor2 = delegate.createEditor( self, option, None )
         # explicitely set a value, otherways the current value remains 
         # ValueLoading
-        self._editor.set_value(None)
-        self._editor2.set_value(None)
+        self._editor.set_value( default_value_1 )
+        self._editor2.set_value( default_value_2 )
         editing_finished_slot = self.editor_editing_finished
         self._editor.editingFinished.connect( editing_finished_slot )
         self._editor2.editingFinished.connect( editing_finished_slot )
@@ -69,16 +93,15 @@ class FilterOperator( QtGui.QWidget ):
         self._editor2.setEnabled(False)
         self._editor.hide()
         self._editor2.hide()
-        self._index = 0
-        self._value = None
-        self._value2 = None
+        self._index = default_index
+        self._value = default_value_1
+        self._value2 = default_value_2
+        self.update_editors()
         
-    @QtCore.pyqtSlot(int)
-    def combobox_changed(self, index):
-        """Whenever the combobox changes, show or hide the
-        appropriate editors and emit the filter_changed signal """
-        self._index = index
-        if index >= 2:
+    def update_editors( self ):
+        """Show or hide the editors according to the operator
+        arity"""
+        if self._index >= 2:
             _, arity = self.get_operator_and_arity()
             self._editor.setEnabled(True)
             if arity > 0:
@@ -98,6 +121,13 @@ class FilterOperator( QtGui.QWidget ):
             self._editor.hide()
             self._editor2.setEnabled(False)
             self._editor2.hide()
+        
+    @QtCore.pyqtSlot(int)
+    def combobox_changed(self, index):
+        """Whenever the combobox changes, show or hide the
+        appropriate editors and emit the filter_changed signal """
+        self._index = index
+        self.update_editors()
         self.filter_changed_signal.emit()
         
     def editor_editing_finished(self):
@@ -137,5 +167,6 @@ class FilterOperator( QtGui.QWidget ):
         else:
             arity = func_code.co_argcount - 1
         return operator, arity
+
 
 

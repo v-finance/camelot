@@ -11,7 +11,7 @@ class QueryProxyCase( ModelThreadTestCase ):
     def setUp(self):
         super( QueryProxyCase, self ).setUp()
         from camelot_example.fixtures import load_movie_fixtures
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         from camelot.view.proxy.queryproxy import QueryTableProxy
         from camelot.admin.application_admin import ApplicationAdmin
         load_movie_fixtures()
@@ -44,7 +44,7 @@ class QueryProxyCase( ModelThreadTestCase ):
       
     def test_insert_after_sort( self ):
         from camelot.view.proxy.queryproxy import QueryTableProxy
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         self.person_proxy.sort( 1, Qt.AscendingOrder )
         # check the query
         self.assertTrue( self.person_proxy.columnCount() > 0 )

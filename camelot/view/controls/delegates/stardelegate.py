@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -66,3 +66,4 @@ class StarDelegate(CustomDelegate):
                 QtGui.QApplication.style().drawItemPixmap(painter, rect, 1, icon)
                 rect = QtCore.QRect(rect.left()+20, rect.top(), rect.width(), rect.height())
         painter.restore()
+

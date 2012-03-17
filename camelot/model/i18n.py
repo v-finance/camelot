@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -21,14 +21,21 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-from camelot.model import metadata
+
+"""Set of classes to store internationalization data in the database.  Camelot
+applications can be translated by the developer using regular PO files, or by
+the user.  In case the user makes a translation, this translation is stored into
+the `Translation` table.  This table can be exported to PO files for inclusion
+in the development cycle.
+"""
+
+from camelot.core.sql import metadata
 from camelot.admin.action import Action
 import camelot.types
 from elixir.entity import Entity
 from elixir.options import using_options
 from elixir.fields import Field
 from sqlalchemy.types import Unicode, INT
-"""Set of classes to enable internationalization of the user interface"""
 
 __metadata__ = metadata
 
@@ -39,11 +46,6 @@ from camelot.view.utils import default_language
 
 import logging
 logger = logging.getLogger( 'camelot.model.i18n' )
-
-def tr( source ):
-    from PyQt4 import QtCore
-    language = unicode( QtCore.QLocale().name() )
-    return Translation.translate_or_register( source, language )
 
 class ExportAsPO( Action ):
 
@@ -63,6 +65,8 @@ class ExportAsPO( Action ):
                 
         
 class Translation( Entity ):
+    """Table to store user generated translations or customization.
+    """
     using_options( tablename = 'translation' )
     language = Field( camelot.types.Language, index = True )
     source = Field( Unicode( 500 ), index = True )
@@ -78,7 +82,6 @@ class Translation( Entity ):
     class Admin( EntityAdmin ):
         verbose_name_plural = _( 'Translations' )
         form_size = ( 700, 150 )
-        section = 'configuration'
         list_display = ['source', 'language', 'value', 'uid']
         list_filter = ['language']
         list_actions = [ExportAsPO()]
@@ -116,5 +119,3 @@ class Translation( Entity ):
                 return source
             return translation
         return ''
-
-

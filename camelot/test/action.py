@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -57,4 +57,5 @@ class MockListActionGuiContext( ListActionGuiContext ):
     def __init__( self ):
         super(MockListActionGuiContext, self).__init__()
         self.item_view = QtGui.QTableWidget( 4, 4 )
+
 

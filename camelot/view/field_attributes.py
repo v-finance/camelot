@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -26,7 +26,7 @@
 
 import sqlalchemy.types
 import camelot.types
-from camelot.core.sql import  like_op
+from camelot.core.sql import like_op
 from sqlalchemy.sql.operators import between_op
 import datetime
 import operator
@@ -330,5 +330,6 @@ doc += """
 """
 
 __doc__ = doc
+
 
 

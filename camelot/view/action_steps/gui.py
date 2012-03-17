@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -134,9 +134,9 @@ class MessageBox( ActionStep ):
     :param title: the window title of the message box
     :param standard_buttons: the buttons to be displayed on the message box,
         out of the :class:`QtGui.QMessageBox.StandardButton` enumeration. by 
-        default an :label:`Ok` and a button :label:`Cancel` will be shown.
+        default an :guilabel:`Ok` and a button :guilabel:`Cancel` will be shown.
         
-    When the :label:`Cancel` button is pressed, this action step will raise
+    When the :guilabel:`Cancel` button is pressed, this action step will raise
     a `CancelException`
         
     .. image:: /_static/listactions/import_from_file_confirmation.png
@@ -169,3 +169,4 @@ class MessageBox( ActionStep ):
         if result == QtGui.QMessageBox.Cancel:
             raise CancelRequest()
         return result
+

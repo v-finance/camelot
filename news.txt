@@ -1,3 +1,30 @@
+Master
+------
+
+ * See :ref:`migrate-11.12.30` for documentation on how to upgrade an 
+   existing Camelot project.
+ 
+ * Cleanup of the default Camelot models :
+ 
+     * they can be used independently of each other
+     
+     * Persons, Organizations, etc. have been moved to `camelot.model.party`
+     
+     * Simplification of the underlying tables
+     
+     * The default metadata was moved `camelot.model.sql`
+
+ * Store user changed column width in settings and `column_width` field 
+   attribute
+
+ * not_editable_admin has an `actions` argument
+ 
+ * Reworked searching for translation files
+ 
+ * Portuguese (Brazil) translations
+ 
+ * Workaround for mainwindow bug on OS X 
+
 Release 11.12.30
 ----------------
 

@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -29,6 +29,8 @@ import codecs
 import logging
 
 from camelot.view.art import ColorScheme
+from camelot.core.exception import UserException
+from camelot.core.utils import ugettext
 
 logger = logging.getLogger('camelot.view.import_utils')
 
@@ -72,11 +74,19 @@ class UnicodeReader( object ):
 
     def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwds):
         f = UTF8Recoder(f, encoding)
+        self.encoding = encoding
         self.reader = csv.reader(f, dialect=dialect, **kwds)
+        self.line = 0
 
     def next( self ):
-        row = self.reader.next()
-        return [unicode(s, 'utf-8') for s in row]
+        self.line += 1
+        try:
+            row = self.reader.next()
+            return [unicode(s, 'utf-8') for s in row]
+        except UnicodeError, exception:
+            raise UserException( text = ugettext('This file contains unexpected characters'),
+                                 resolution = ugettext('Recreate the file with %s encoding') % self.encoding,
+                                 detail = ugettext('Exception occured at line %s : ') % self.line + unicode( exception ) )
 
     def __iter__( self ):
         return self
@@ -229,3 +239,4 @@ class RowDataAdminDecorator(object):
         self._columns = new_columns
 
         return new_columns
+

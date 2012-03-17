@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -22,10 +22,15 @@
 #
 #  ============================================================================
 
+import logging
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
+from camelot.view.proxy import ValueLoading
 from customeditor import AbstractCustomEditor
+
+LOGGER = logging.getLogger('camelot.view.controls.editors.ChoicesEditor')
 
 class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
     """A ComboBox aka Drop Down box that can be assigned a list of
@@ -71,7 +76,10 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
                 current_value_available = True
         if not current_value_available and current_index > 0:
             self.insertItem(i+1, current_name, QtCore.QVariant(current_value))
-        self.set_value(current_value)
+        # to prevent loops in the onetomanychoices editor, only set the value
+        # again when it's not valueloading
+        if current_value != ValueLoading:
+            self.set_value( current_value )
 
     def set_field_attributes(self, editable=True, choices=None, **kwargs):
         if choices != None:
@@ -99,13 +107,13 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
                     self.setCurrentIndex(i)
                     return
             # it might happen, that when we set the editor data, the set_choices
-            # method has not happened yet, therefore, we temporary set ... in the
-            # text while setting the correct data to the editor
-            # (Nick G.): On some occasions, value can be None or any 
-            # other non-insertable value like the databases default value.
-            if value != None:
-                self.insertItem(self.count(), '...', QtCore.QVariant(value))
-                self.setCurrentIndex(self.count()-1)
+            # method has not happened yet or the choices don't contain the value
+            # set
+            self.setCurrentIndex( -1 )
+            LOGGER.error( u'Could not set value %s because it is not in the list of choices'%unicode(value) )
+            LOGGER.error( u'Valid choices include : ' )
+            for i in range(self.count()):
+                LOGGER.error( ' - %s'%unicode(variant_to_pyobject(self.itemData(i))) )
 
     def get_value(self):
         """Get the current value of the combobox"""
@@ -114,5 +122,5 @@ class ChoicesEditor( QtGui.QComboBox, AbstractCustomEditor ):
         if current_index >= 0:
             value = variant_to_pyobject(self.itemData(self.currentIndex()))
         else:
-            value = None
+            value = ValueLoading
         return AbstractCustomEditor.get_value(self) or value

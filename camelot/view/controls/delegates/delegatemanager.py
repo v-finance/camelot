@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -77,9 +77,12 @@ class DelegateManager(QtGui.QItemDelegate):
 
     def createEditor(self, parent, option, index):
         """Use a custom delegate createEditor method if it exists"""
-        delegate = self.get_column_delegate(index.column())
-        editor = delegate.createEditor(parent, option, index)
-        assert editor != None
+        try:
+            delegate = self.get_column_delegate(index.column())
+            editor = delegate.createEditor(parent, option, index)
+        except Exception, e:
+            logger.error('Programming Error : could not createEditor editor data for editor at column %s'%(index.column()), exc_info=e)
+            return QtGui.QWidget( parent = parent ) 
         return editor
 
     def setEditorData(self, editor, index):
@@ -102,5 +105,3 @@ class DelegateManager(QtGui.QItemDelegate):
         option = QtGui.QStyleOptionViewItem()
         delegate = self.get_column_delegate(index.column())
         return delegate.sizeHint(option, index)
-
-

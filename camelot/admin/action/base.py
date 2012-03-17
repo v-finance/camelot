@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -45,7 +45,7 @@ contain references to widgets as those belong strictly to the :class:`GuiContext
 class GuiContext( object ):
     """
 The GUI context in which an action is running.  This object can contain
-references to widgets and other usefull information.  This object cannot
+references to widgets and other useful information.  This object cannot
 contain reference to anything database or model related, as those belong
 strictly to the :class:`ModelContext`
 
@@ -342,8 +342,13 @@ direct manipulations of the user interface without a need to access the model.
         """
         from camelot.view.controls.progress_dialog import ProgressDialog
         progress_dialog = None
-        # only create a progress dialog if there is none yet
+        # only create a progress dialog if there is none yet, or if the
+        # existing dialog was canceled
+        LOGGER.debug( 'action gui run started' )
+        if gui_context.progress_dialog and gui_context.progress_dialog.wasCanceled():
+            gui_context.progress_dialog = None
         if gui_context.progress_dialog == None:
+            LOGGER.debug( 'create new progress dialog' )
             progress_dialog = ProgressDialog( unicode( self.verbose_name ) )
             gui_context.progress_dialog = progress_dialog
             #progress_dialog.show()
@@ -352,6 +357,7 @@ direct manipulations of the user interface without a need to access the model.
         if progress_dialog != None:
             progress_dialog.close()
             gui_context.progress_dialog = None
+        LOGGER.debug( 'gui run finished' )
         
     def get_state( self, model_context ):
         """
@@ -367,3 +373,4 @@ direct manipulations of the user interface without a need to access the model.
         state.tooltip = self.tooltip
         state.modes = self.modes
         return state
+

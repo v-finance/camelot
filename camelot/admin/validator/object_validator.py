@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -103,7 +103,7 @@ class ObjectValidator(QtCore.QObject):
                 if attributes.get('embedded', False) and attributes.get('target', False):
                     value = getattr(entity_instance, field)
                     if value:
-                        target_admin = self.admin.get_related_entity_admin(attributes['target'])
+                        target_admin = self.admin.get_related_admin(attributes['target'])
                         target_validator = target_admin.create_validator(None)
                         messages.extend( target_validator.objectValidity(value) )
                         continue
@@ -186,3 +186,4 @@ class ObjectValidator(QtCore.QObject):
             QtGui.QMessageBox.Ok | QtGui.QMessageBox.Discard,
             parent
         )
+

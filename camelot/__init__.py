@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -26,6 +26,7 @@
 the Django admin interface.  Start building applications at warp speed, simply
 by adding some additional information to you Elixir model."""
 
-__version__ = '11.12.30'
+__version__ = 'master'
+
 
 

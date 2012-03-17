@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -21,15 +21,31 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
+
+"""
+This module complements the sqlalchemy sql module, and contains the `metadata` 
+variable, which is a global :class:`sqlalchemy.Metadata` object to which all 
+tables of the application can be added.
+"""
+
 import logging
 from functools import wraps
 
+from sqlalchemy import MetaData
 import sqlalchemy.sql.operators
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
 
 LOGGER = logging.getLogger('camelot.core.sql')
+
+#
+# Singleton metadata object, to be used together with elixir or in SQLAlchemy
+# setups with only a single database
+#
+metadata = MetaData()
+metadata.autoflush = False
+metadata.transactional = False
 
 def like_op(column, string):
     return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)
@@ -65,7 +81,6 @@ def update_database_from_model():
     migrate_connection = migrate_engine.connect()
     
     from sqlalchemy.schema import MetaData 
-    from camelot.model import metadata
     from migrate.versioning import schemadiff
     from migrate.changeset import create_column
     schema_diff = schemadiff.SchemaDiff(metadata, MetaData(migrate_connection, reflect=True))
@@ -75,3 +90,4 @@ def update_database_from_model():
             LOGGER.warn( 'column %s missing in table %s'%(column, table_name) )
             table = metadata.tables[table_name]
             create_column(column, table)
+

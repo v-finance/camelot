@@ -12,7 +12,7 @@ def setup_views():
     from sqlalchemy.sql import select, func, and_
     from sqlalchemy.orm import mapper
  
-    from camelot.model.authentication import Person
+    from camelot.model.party import Person
     from camelot_example.model import Movie, VisitorReport
     
     s = select([Person.party_id,

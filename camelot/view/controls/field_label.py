@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -85,7 +85,7 @@ class FieldLabel(UserTranslatableLabel):
     def show_field_attributes(self):
         from camelot.view.proxy.collection_proxy import CollectionProxy
                     
-        admin = self._admin.get_related_entity_admin(Attribute)
+        admin = self._admin.get_related_admin( Attribute )
         attributes_collection = CollectionProxy(admin=admin, 
                                                 collection_getter=self.get_attributes,
                                                 columns_getter=admin.get_columns)
@@ -105,4 +105,5 @@ class FieldLabel(UserTranslatableLabel):
         
         dialog = FieldAttributesDialog(self._field_name, self)
         dialog.exec_()
+
 

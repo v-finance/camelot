@@ -31,7 +31,7 @@ the setup_all function.
 
 .. literalinclude:: ../../../../camelot/empty_project/settings.py
    :pyobject: setup_model
-   
+      
 Use schema revisions
 ====================
 

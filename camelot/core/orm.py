@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -22,8 +22,19 @@
 #
 #  ============================================================================
 
-"""Helper functions related to use the SQLAlchemy ORM and Declarative 
-extension.  Most of the classes in this module mimic the behavior of Elixir.
+"""This module complements the sqlalchemy orm module, it contains the global
+`Session` factory to create `session` objects.  Whenever a `session`
+is needed it can be constructed with a call of `Session` ::
+    
+    session = Session
+        
+when using Elixir, Elixir needs to be told to use this session factory ::
+    
+    elixir.session = Session
+
+when using Declarative, this module contains an `Entity` class that can
+be used as a `declarative_base` and has some classes that mimic Elixir
+behavior
 """
 
 import logging
@@ -32,11 +43,11 @@ import sys
 logger = logging.getLogger('camelot.core.orm')
 
 import sqlalchemy.types
+from camelot.core.sql import metadata
 from sqlalchemy import schema, orm, ForeignKey, types
 from sqlalchemy.ext.declarative import ( declared_attr, declarative_base, 
                                          DeclarativeMeta )
-
-from camelot.model import metadata
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 # format constants
 FKCOL_NAMEFORMAT = "%(relname)s_%(key)s"
@@ -51,6 +62,14 @@ POLYMORPHIC_COL_SIZE = 40
 POLYMORPHIC_COL_TYPE = types.String( POLYMORPHIC_COL_SIZE )
 
 MUTATORS = '__mutators__'
+
+
+#
+# Singleton session factory, to be used when a session is needed
+#
+Session = scoped_session( sessionmaker( autoflush = False,
+                                        autocommit = True,
+                                        expire_on_commit = False ) )
 
 class Field( schema.Column ):
     """Subclass of :class:`sqlalchemy.schema.Column`
@@ -248,7 +267,7 @@ Entity = declarative_base( cls = Entity,
                            metadata = metadata,
                            metaclass = EntityMeta )
 
-def refresh_session(session):
+def refresh_session( session ):
     """Session refresh expires all objects in the current session and sends
     a local entity update signal via the remote_signals mechanism
 

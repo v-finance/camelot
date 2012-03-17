@@ -3,7 +3,7 @@
 ##########
 
 A python GUI framework on top of  Sqlalchemy  and PyQt, inspired by the Django admin interface. 
-Start building desktop applications at warp speed, simply by adding some additional information to you 
+Start building desktop applications at warp speed, simply by adding some additional information to your 
 model definition::
 
   class Movie(Entity):

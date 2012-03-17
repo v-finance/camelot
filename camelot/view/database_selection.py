@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -512,3 +512,4 @@ allow all languages
         if self.profiles:
             store_profiles(self.profiles)
             os.execv(sys.executable, [sys.executable] + sys.argv)
+

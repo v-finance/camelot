@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -231,8 +231,9 @@ operator_names = {
     between_op: _( u'between' ),
 }
 
-def text_from_richtext(unstripped_text):
-    """funciton that returns a list of lines with escaped data, to be used in templates for example
+def text_from_richtext( unstripped_text ):
+    """function that returns a list of lines with escaped data, to be used in 
+    templates for example
     :arg unstripped_text: string
     :return: list of strings
     """
@@ -255,3 +256,4 @@ def text_from_richtext(unstripped_text):
     parser.feed(unstripped_text.strip())
 
     return strings
+

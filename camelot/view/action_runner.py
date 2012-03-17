@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -92,20 +92,26 @@ class ActionRunner( QtCore.QEventLoop ):
             while True:
                 if isinstance( result, (ActionStep,)):
                     if result.blocking:
+                        LOGGER.debug( 'blocking step, yield it' )
                         return result
                     else:
+                        LOGGER.debug( 'non blocking step, use signal slot' )
                         self.non_blocking_action_step_signal.emit( result )
                 #
                 # Cancel requests can arrive asynchronously through non 
                 # blocking ActionSteps such as UpdateProgress
                 #
                 if self._non_blocking_cancel_request == True:
+                    LOGGER.debug( 'asynchronous cancel, raise request' )
                     result = self._generator.throw( CancelRequest() )
                 else:
+                    LOGGER.debug( 'move iterator forward' )
                     result = self._generator.next()
         except CancelRequest, e:
+            LOGGER.debug( 'iterator raised cancel request, pass it' )
             return e
         except StopIteration, e:
+            LOGGER.debug( 'iterator raised stop, pass it' )
             return e
 
     @QtCore.pyqtSlot( object )
@@ -114,6 +120,7 @@ class ActionRunner( QtCore.QEventLoop ):
             self._was_canceled( self._gui_context )
             action_step.gui_run( self._gui_context )
         except CancelRequest:
+            LOGGER.debug( 'non blocking action step requests cancel, set flag' )
             self._non_blocking_cancel_request = True
         
     @QtCore.pyqtSlot( object )
@@ -146,6 +153,7 @@ class ActionRunner( QtCore.QEventLoop ):
         """
         if gui_context.progress_dialog:
             if gui_context.progress_dialog.wasCanceled():
+                LOGGER.debug( 'progress dialog was canceled, raise request' )
                 raise CancelRequest()
             
     @QtCore.pyqtSlot( object )
@@ -193,3 +201,4 @@ class ActionRunner( QtCore.QEventLoop ):
             LOGGER.error( 'next call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
             LOGGER.error( unicode( yielded ) )
             raise Exception( 'this should not happen' )
+

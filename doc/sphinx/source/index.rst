@@ -23,6 +23,7 @@ Contents:
 
    tutorial/index.rst
    doc/index.rst
+   migrate/index.rst
    api/index.rst
    advanced/index.rst
    cep/index.rst

@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -73,7 +73,7 @@ It has additional class attributes that customise its behaviour.
 .. attribute:: copy_deep
 
    A dictionary of fields that will be deep copied when the user presses the copy
-   button.  This is usefull for OneToMany fields.  The key in the dictionary should
+   button.  This is useful for OneToMany fields.  The key in the dictionary should
    be the name of the field, and the value is a new dictionary that can contain other
    fields that need to be copied::
 
@@ -195,7 +195,7 @@ It has additional class attributes that customise its behaviour.
                 length = None,
                 tooltip = None,
                 background_color = None,
-                minimal_column_width = 12,
+                #minimal_column_width = 12,
                 editable = False,
                 nullable = True,
                 widget = 'str',
@@ -237,7 +237,7 @@ It has additional class attributes that customise its behaviour.
                     admin_class = forced_attributes['admin']
                     return admin_class(self.app_admin, target)
                 except KeyError:
-                    return self.get_related_entity_admin(target)
+                    return self.get_related_admin(target)
             #
             # Get the default field_attributes trough introspection if the
             # field is a mapped field
@@ -488,14 +488,15 @@ It has additional class attributes that customise its behaviour.
                 if not None in primary_key and len(primary_key)==1:
                     pk = primary_key[0]
                     # save the state before the update
-                    from camelot.model.memento import BeforeDelete
+                    from camelot.model.memento import Memento
                     # only register the delete when the camelot model is active
-                    if hasattr(BeforeDelete, 'query'):
-                        from camelot.model.authentication import getCurrentAuthentication
-                        history = BeforeDelete( model = unicode( self.entity.__name__ ),
-                                                primary_key = pk,
-                                                previous_attributes = {},
-                                                authentication = getCurrentAuthentication() )
+                    if hasattr(Memento, 'query'):
+                        from camelot.model.authentication import get_current_authentication
+                        history = Memento( model = unicode( self.entity.__name__ ),
+                                           memento_type = 'before_delete',
+                                           primary_key = pk,
+                                           previous_attributes = {},
+                                           authentication = get_current_authentication() )
                 entity_instance.delete()
                 session.flush( [entity_instance] )
                 if history:
@@ -615,3 +616,4 @@ It has additional class attributes that customise its behaviour.
                              property.key,
                              getattr( obj, property.key ) )
         return new_obj
+

@@ -1,3 +1,4 @@
+import datetime
 import os
 
 from PyQt4 import QtGui
@@ -63,9 +64,9 @@ class ActionStepsCase( ModelThreadTestCase ):
     images_path = static_images_path
     
     def setUp(self):
+        ModelThreadTestCase.setUp(self)
         from camelot_example.model import Movie
         from camelot.admin.application_admin import ApplicationAdmin
-        ModelThreadTestCase.setUp(self)
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.context.obj = Movie.query.first()
@@ -163,6 +164,21 @@ class ListActionsCase( ModelThreadTestCase ):
         self.context.obj = Movie.query.first()
         self.context.admin = self.app_admin.get_related_admin( Movie )
         
+    def test_sqlalchemy_command( self ):
+        model_context = self.context
+        from camelot.model.batch_job import BatchJobType
+        # create a batch job to test with
+        bt = BatchJobType( name = 'audit' )
+        model_context.session.add( bt )
+        bt.flush()
+        # begin issue a query through the model_context
+        model_context.session.query( BatchJobType ).update( values = {'name':'accounting audit'},
+                                                            synchronize_session = 'evaluate' )
+        # end issue a query through the model_context
+        #
+        # the batch job should have changed
+        self.assertEqual( bt.name, 'accounting audit' )
+        
     def test_change_row_actions( self ):
         from camelot.test.action import MockListActionGuiContext
         
@@ -208,7 +224,7 @@ class ListActionsCase( ModelThreadTestCase ):
         self.test_import_from_file( 'import_example.xls' )
 
     def test_import_from_file( self, filename = 'import_example.csv' ):
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
         self.context = MockModelContext()
         self.context.obj = Person.query.first() # need an object, to have a

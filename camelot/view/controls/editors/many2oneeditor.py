@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -264,7 +264,7 @@ class Many2OneEditor( CustomEditor ):
 
             def get_admin_and_title():
                 obj = self.entity_instance_getter()
-                admin = self.admin.get_related_entity_admin(obj.__class__)
+                admin = self.admin.get_related_admin(obj.__class__)
                 return admin, ''
 
             post(get_admin_and_title, self.show_form_view)
@@ -376,5 +376,6 @@ class Many2OneEditor( CustomEditor ):
 
     def select_object( self, entity_instance_getter ):
         self.setEntity(entity_instance_getter)
+
 
 

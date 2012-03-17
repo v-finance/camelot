@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -21,25 +21,24 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-from elixir.entity import Entity
-from elixir.options import using_options
-from elixir.fields import Field
-from sqlalchemy.types import Unicode, INT, DateTime, PickleType
-from elixir.relationships import ManyToOne
 
-from camelot.model import metadata
-from camelot.view import filters
-
-"""Set of classes to keep track of changes to objects and
-be able to restore their state
+"""Set of classes to keep track of changes to objects and be able to restore 
+their state
 """
 
-__metadata__ = metadata
-
-from camelot.core.utils import ugettext_lazy as _
-from camelot.admin.entity_admin import EntityAdmin
 import datetime
 
+from sqlalchemy.types import Unicode, INT, DateTime, PickleType
+
+from elixir import Entity, using_options, Field, ManyToOne
+
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.sql import metadata
+from camelot.core.utils import ugettext_lazy as _
+import camelot.types
+from camelot.view import filters
+
+__metadata__ = metadata
 
 class Memento( Entity ):
     """Keeps information on the previous state of objects, to keep track
@@ -49,61 +48,26 @@ class Memento( Entity ):
     primary_key = Field( INT(), index = True, required = True )
     creation_date = Field( DateTime(), default = datetime.datetime.now )
     authentication = ManyToOne( 'AuthenticationMechanism',
-                               required = True,
-                               ondelete = 'restrict',
-                               onupdate = 'cascade' )
-    description = property( lambda self:'Change' )
+                                required = True,
+                                ondelete = 'restrict',
+                                onupdate = 'cascade' )
+    memento_type = Field( camelot.types.Enumeration( [ (1, 'before_update'),
+                                                       (2, 'before_delete'),
+                                                       (3, 'create') ], 
+                                                     required = True,
+                                                     index = True ) )
+    previous_attributes = Field( PickleType(), deferred = True )
+    
+    @property
+    def description( self ):
+        if self.memento_type in ('before_update', 'before_delete'):
+            return u', '.join( [ u'%s : %s'%( key, unicode( value ) ) for key, value in  self.previous_attributes.items() ] )
 
     class Admin( EntityAdmin ):
         verbose_name = _( 'History' )
         verbose_name_plural = _( 'History' )
-        list_display = ['creation_date',
-                        'authentication',
-                        'model',
-                        'primary_key',
-                        'description']
-        list_filter = [filters.ComboBoxFilter('model')]
-
-
-class BeforeUpdate( Memento ):
-    """The state of the object before an update took place"""
-    using_options( inheritance = 'multi', tablename = 'memento_update', )
-    previous_attributes = Field( PickleType() )
-
-    @property
-    def description( self ):
-        if self.previous_attributes:
-            return u'Update %s when previous value was %s' % ( 
-                ','.join( self.previous_attributes.keys() ),
-                ','.join( unicode( v ) for v in self.previous_attributes.values() ) )
-
-    class Admin( Memento.Admin ):
-        verbose_name = _('Update')
-        verbose_name_plural = _('Updates')
-
-class BeforeDelete( Memento ):
-    """The state of the object before it is deleted"""
-    using_options( inheritance = 'multi', tablename = 'memento_delete', )
-    previous_attributes = Field( PickleType() )
-
-    @property
-    def description( self ):
-        return 'Delete'
-
-    class Admin( Memento.Admin ):
-        verbose_name = _('Delete')
-        verbose_name_plural = _('Deletes')
-
-class Create( Memento ):
-    """Marks the creation of an object"""
-    using_options( inheritance = 'multi', tablename = 'memento_create', )
-
-    @property
-    def description( self ):
-        return 'Create'
-
-    class Admin( Memento.Admin ):
-        verbose_name = _('Create')
-        verbose_name_plural = _('Creates')
-
-
+        list_display = ['creation_date', 'authentication', 'model',
+                        'primary_key', 'memento_type',]
+        form_display = list_display + ['description']
+        list_filter = [filters.ComboBoxFilter('model'),
+                       'memento_type']

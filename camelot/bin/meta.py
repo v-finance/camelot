@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -127,7 +127,7 @@ class MyApplicationAdmin(ApplicationAdmin):
     
     def get_sections(self):
         from camelot.model.memento import Memento
-        from camelot.model.authentication import Person, Organization
+        from camelot.model.party import Person, Organization
         from camelot.model.i18n import Translation
         return [ Section( 'relation',
                           self,
@@ -179,7 +179,7 @@ if __name__ == '__main__':
     '''),
     
     ('{{options.module}}/model.py', '''
-from camelot.model import metadata
+from camelot.core.sql import metadata
 
 __metadata__ = metadata
     '''),
@@ -228,19 +228,21 @@ CAMELOT_BACKUP_FILENAME_TEMPLATE = 'default-backup-%(text)s.' + CAMELOT_BACKUP_E
 
 
 def ENGINE():
-    """This function should return a connection to the database"""
+    """This function should return a database engine"""
     from sqlalchemy import create_engine
     return create_engine('sqlite:///model-data.sqlite')
 
 def setup_model():
     """This function will be called at application startup, it is used to setup
     the model"""
-    import camelot.model
-    from elixir import setup_all
+    import camelot.model.authentication
+    import camelot.model.party
+    import camelot.model.i18n
+    import camelot.model.memento
+    import camelot.model.fixture
     import {{options.module}}.model
+    from elixir import setup_all
     setup_all(create_tables=True)
-    from camelot.model.authentication import updateLastLogin
-    updateLastLogin()
     '''),
     ('setup.py', '''
 

@@ -19,12 +19,16 @@ class ExampleSettings( SimpleSettings ):
     
     @staticmethod
     def setup_model():
-        import camelot.model
+        import camelot.model.party
+        import camelot.model.authentication
+        import camelot.model.i18n
+        import camelot.model.fixture
+        import camelot.model.memento
         import camelot_example.model
         from elixir import setup_all
         setup_all(create_tables=True)
-        from camelot.model.authentication import updateLastLogin
-        updateLastLogin()
+        from camelot.model.authentication import update_last_login
+        update_last_login()
         # 
         # Load sample data with the fixure mechanism
         #

@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -22,7 +22,10 @@
 #
 #  ============================================================================
 """
-Camelot unittest framework
+Camelot unittest framework.  This module contains helper classes and functions
+to write unittests for Camelot applications.  These are not the unittests for
+Camelot itself.  Those can be found in the /test folder, at the same position 
+as /camelot.
 """
 
 import unittest
@@ -245,3 +248,4 @@ class EntityViewsTest(ModelThreadTestCase):
         for admin in self.get_admins():
             widget = admin.create_new_view()
             self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
+

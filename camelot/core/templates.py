@@ -1,6 +1,6 @@
 #  ============================================================================
 #
-#  Copyright (C) 2007-2011 Conceptive Engineering bvba. All rights reserved.
+#  Copyright (C) 2007-2012 Conceptive Engineering bvba. All rights reserved.
 #  www.conceptive.be / project-camelot@conceptive.be
 #
 #  This file is part of the Camelot Library.
@@ -48,3 +48,4 @@ class DefaultEnvironment( Environment ):
         return '<camelot.core.templates.environment>'
     
 environment = DefaultEnvironment( loader = loader )
+

@@ -12,8 +12,8 @@ class MyApplicationAdmin(ApplicationAdmin):
     def get_sections(self):
         
         from camelot.model.memento import Memento
-        from camelot.model.authentication import ( Person, Organization, 
-                                                   PartyCategory )
+        from camelot.model.party import ( Person, Organization, 
+                                          PartyCategory )
         from camelot.model.i18n import Translation
         from camelot.model.batch_job import BatchJob, BatchJobType
         
