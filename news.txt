@@ -1,6 +1,9 @@
 Master
 ------
 
+ * See :ref:`migrate-11.12.30` for documentation on how to upgrade an 
+   existing Camelot project.
+ 
  * Cleanup of the default Camelot models :
  
      * they can be used independently of each other
