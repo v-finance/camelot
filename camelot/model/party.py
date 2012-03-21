@@ -128,7 +128,7 @@ class PartyRelationship( Entity ):
     class Admin( EntityAdmin ):
         verbose_name = _('Relationship')
         verbose_name_plural = _('Relationships')
-        list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
+        list_display = ['from_date', 'thru_date']
 
 class EmployerEmployee( PartyRelationship ):
     """Relation from employer to employee"""
