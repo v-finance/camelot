@@ -38,6 +38,7 @@ import itertools
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
 
+from camelot.core.exception import log_programming_error
 from camelot.core.utils import is_deleted, variant_to_pyobject
 from camelot.core.files.storage import StoredFile
 from camelot.view.art import Icon
@@ -110,8 +111,10 @@ def strip_data_from_object( obj, columns ):
             else:
                 field_value = getter( obj )
         except (Exception, RuntimeError, TypeError, NameError), e:
-            logger.error( "ProgrammingError : could not get field '%s' of object of type %s"%(col[0], obj.__class__.__name__),
-                          exc_info = e )
+            message = "could not get field '%s' of object of type %s"%(col[0], obj.__class__.__name__)
+            log_programming_error( logger, 
+                                   message,
+                                   exc_info = e )
         finally:
             row_data.append( field_value )
     return row_data
@@ -150,9 +153,9 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
             elif field_data != None:
                 unicode_data = unicode( field_data )
         except (Exception, RuntimeError, TypeError, NameError), e:
-            logger.error( "ProgrammingError : could not get view data for field '%s' with of object of type %s"%( static_attributes['name'],
-                                                                                                                  obj.__class__.__name__),
-                          exc_info = e)
+            log_programming_error( "Could not get view data for field '%s' with of object of type %s"%( static_attributes['name'],
+                                                                                                        obj.__class__.__name__),
+                                   exc_info = e )
         finally:
             row_data.append( unicode_data )
 
@@ -498,7 +501,9 @@ position in the query.
             try:
                 delegate = c[1]['delegate']( parent = delegate_manager, **c[1] )
             except Exception, e:
-                logger.error('ProgrammingError : could not create delegate for field %s'%field_name, exc_info=e)
+                log_programming_error( logger, 
+                                       'Could not create delegate for field %s'%field_name,
+                                       exc_info = e )
                 delegate = delegates.PlainTextDelegate( parent = delegate_manager, **c[1] )
             delegate_manager.insertColumnDelegate( i, delegate )
             #

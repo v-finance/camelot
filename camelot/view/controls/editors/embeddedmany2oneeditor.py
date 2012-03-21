@@ -31,6 +31,7 @@ from customeditor import CustomEditor, QtGui
 from wideeditor import WideEditor
 from camelot.view.model_thread import post
 from camelot.view.proxy import ValueLoading
+from camelot.core.exception import log_programming_error
 from camelot.core.utils import CollectionGetterFromObjectGetter
 
 class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
@@ -96,7 +97,9 @@ class EmbeddedMany2OneEditor( CustomEditor, WideEditor ):
                 try:
                     new_entity = self.admin.entity()
                 except Exception, e:
-                    logger.error('ProgrammingError : could not create a new entity of type %s'%(self.admin.entity.__name__), exc_info=e)
+                    log_programming_error( logger, 
+                                           'Could not create a new entity of type %s'%(self.admin.entity.__name__), 
+                                           exc_info = e )
                 self.entity_instance_getter = create_instance_getter( new_entity )
                 current_entity_admin = self.admin
             return True, propagate, current_entity_admin

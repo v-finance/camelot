@@ -32,6 +32,7 @@ logger = logging.getLogger( 'camelot.view.forms' )
 
 from PyQt4 import QtCore, QtGui
 
+from camelot.core.exception import log_programming_error
 from camelot.view.model_thread import gui_function
 
 class Form( list ):
@@ -262,7 +263,7 @@ to render a form::
                         c.next_col()
                     size_policy = editor.sizePolicy()
                 else:
-                    logger.warning('ProgrammingError : widgets should contain a widget for field %s'%unicode(field))
+                    log_programming_error( logger, 'widgets should contain a widget for field %s'%unicode(field) )
             if size_policy and size_policy.verticalPolicy() == QtGui.QSizePolicy.Expanding:
                 has_vertical_expanding_row = True
 
