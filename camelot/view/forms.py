@@ -32,6 +32,7 @@ logger = logging.getLogger( 'camelot.view.forms' )
 
 from PyQt4 import QtCore, QtGui
 
+from camelot.core.exception import log_programming_error
 from camelot.view.model_thread import gui_function
 
 class Form( list ):
@@ -235,6 +236,8 @@ to render a form::
                         if layout_item_widget and layout_item_widget.sizePolicy().verticalPolicy() == QtGui.QSizePolicy.Expanding:
                             has_vertical_expanding_row = True
                     form_layout.addLayout( f, c.row, c.col, row_span, col_span )
+                elif isinstance( f, QtGui.QLayoutItem ):
+                    form_layout.addItem( f )
                 else:
                     form_layout.addWidget( f, c.row, c.col, row_span, col_span )
                     size_policy = f.sizePolicy()
@@ -260,7 +263,7 @@ to render a form::
                         c.next_col()
                     size_policy = editor.sizePolicy()
                 else:
-                    logger.warning('ProgrammingError : widgets should contain a widget for field %s'%unicode(field))
+                    log_programming_error( logger, 'widgets should contain a widget for field %s'%unicode(field) )
             if size_policy and size_policy.verticalPolicy() == QtGui.QSizePolicy.Expanding:
                 has_vertical_expanding_row = True
 
@@ -648,6 +651,17 @@ class WidgetOnlyForm( Form ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         editor = widgets.create_editor( self.get_fields()[0], parent )
         return editor
+    
+class Stretch( Form ):
+    """A stretchable space with zero minimum size, this is able to fill a gap
+    in the form if there are no other items to fill this space.
+    """
+    
+    def __init__( self ):
+        super( Stretch, self ).__init__( [] )
+        
+    def render( self, widgets, parent = None, toplevel = False ):
+        return QtGui.QSpacerItem( 0, 0, vPolicy = QtGui.QSizePolicy.Expanding )
 
 class GroupBoxForm( Form ):
     """
