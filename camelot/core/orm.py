@@ -104,6 +104,15 @@ class ManyToOne( Property ):
         dict_[ name + '_id' ] = self.column
         dict_[ name ] = orm.relationship( self.argument )
         
+class ManyToMany( object ):
+    pass
+
+class OneToMany( object ):
+    pass
+
+def ColumnProperty( method ):
+    pass
+
 class ClassMutator( object ):
     """Class to create DSL statements such as `using_options`.  This is used
     to transform Elixir like DSL statements in Declarative class attributes.
@@ -122,6 +131,12 @@ class ClassMutator( object ):
         """
         pass
 
+def setup_all( create_tables=False, *args, **kwargs ):
+    """Create all tables that are registered in the metadata
+    """
+    if create_tables:
+        metadata.create_all( *args, **kwargs )
+        
 class using_options( ClassMutator ):
     
     def process( self, entity_dict, tablename = None, order_by = None ):
@@ -136,6 +151,7 @@ class EntityMeta( DeclarativeMeta ):
     metaclass processes the Property and ClassMutator objects.
     """
     
+    # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
         #
         # process the mutators
@@ -160,6 +176,15 @@ class EntityMeta( DeclarativeMeta ):
             if isinstance( value, Property ):
                 value.attach( dict_, key )
         return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
+    
+    # init is called after the creation of the new Entity class, and can be
+    # used to initialize it
+    def __init__( cls, classname, bases, dict_ ):
+        super( EntityMeta, cls ).__init__( classname, bases, dict_ )
+        # only set the query attribute if the class is actually mapped,
+        # eg the Entity class itself is not mapped, and as such has no query
+        if '__mapper__' in cls.__dict__:
+            cls.query = Session().query( cls )
         
 class Entity( object ):
     """A declarative base class that adds some methods that used to be
@@ -244,7 +269,6 @@ class Entity( object ):
     def expunge(self, *args, **kwargs):
         return orm.object_session(self).expunge(self, *args, **kwargs)
     
-    # query methods
     @classmethod
     def get_by(cls, *args, **kwargs):
         """

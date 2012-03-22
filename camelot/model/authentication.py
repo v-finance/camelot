@@ -31,14 +31,10 @@ import threading
 from sqlalchemy.types import Date, Unicode, DateTime
 from sqlalchemy import orm
 
-from elixir import Entity, using_options, Field
-
 import camelot.types
-from camelot.core.sql import metadata
+from camelot.core.orm import Entity, using_options, Field
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.entity_admin import EntityAdmin
-
-__metadata__ = metadata
 
 def end_of_times():
     return datetime.date( year = 2400, month = 12, day = 31 )

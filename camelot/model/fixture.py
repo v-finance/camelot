@@ -22,17 +22,12 @@
 #
 #  ============================================================================
 
-from camelot.core.sql import metadata
-from elixir.entity import Entity
-from elixir.options import using_options
-from elixir.fields import Field
+from camelot.core.sql import Entity, using_options, Field
 from sqlalchemy.types import Unicode, INT
 
 """Classes to support the loading and updating of required datasets into the 
 database.  The use of this classes is documented in the reference
 documentation : :ref:`doc-fixtures`"""
-
-__metadata__ = metadata
 
 class Fixture( Entity ):
     """Keep track of static data loaded into the database.  This class keeps

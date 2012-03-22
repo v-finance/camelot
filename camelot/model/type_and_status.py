@@ -28,14 +28,11 @@ tables for each entity.
 """
 import datetime
 
-from elixir.entity import Entity, EntityMeta
-
 from sqlalchemy.types import Date, Unicode
 from sqlalchemy import sql
 
-from elixir.fields import Field
-from elixir.options import using_options
-from elixir.relationships import ManyToOne, OneToMany
+from camelot.core.orm import ( Field, using_options, ManyToOne, OneToMany,
+                               Entity, EntityMeta )
 
 from camelot.model.authentication import end_of_times
 from camelot.admin.entity_admin import EntityAdmin

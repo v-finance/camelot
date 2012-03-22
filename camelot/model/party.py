@@ -32,22 +32,18 @@ by Len Silverston, Chapter 2
 import collections
 
 from camelot.core.sql import metadata
-from elixir import entities
 from camelot.view.controls import delegates
 
-from elixir import Entity, using_options, Field, ManyToMany
 from sqlalchemy.types import Date, Unicode, Integer, Boolean
-from elixir.relationships import ManyToOne, OneToMany
-from elixir.properties import ColumnProperty
 from sqlalchemy.sql.expression import and_
 
 from sqlalchemy import sql
 
 import camelot.types
 
-__metadata__ = metadata
-
 from camelot.core.document import documented_entity
+from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,  
+                               ManyToOne, OneToMany, ColumnProperty )
 from camelot.core.utils import ugettext_lazy as _
 
 from camelot.admin.entity_admin import EntityAdmin

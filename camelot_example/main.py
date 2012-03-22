@@ -25,7 +25,7 @@ class ExampleSettings( SimpleSettings ):
         import camelot.model.fixture
         import camelot.model.memento
         import camelot_example.model
-        from elixir import setup_all
+        from camelot.core.orm import setup_all
         setup_all(create_tables=True)
         from camelot.model.authentication import update_last_login
         update_last_login()

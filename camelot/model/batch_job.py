@@ -46,7 +46,7 @@ class BatchJobType( Entity ):
     jobs based on their type.  A type might be 'Create management reports' """
     using_options( tablename = 'batch_job_type' )
     name   = Field( sqlalchemy.types.Unicode(256), required=True )
-    parent = ManyToOne( 'BatchJobType' )
+    #parent = ManyToOne( 'BatchJobType' )
     
     def __unicode__(self):
         return self.name
@@ -84,7 +84,7 @@ class BatchJob(Entity):
     using_options( tablename = 'batch_job', order_by=['-date'] )
     date    = Field(sqlalchemy.types.DateTime, required=True, default=datetime.datetime.now)
     host    = Field(sqlalchemy.types.Unicode(256), required=True, default=hostname)
-    type    = ManyToOne('BatchJobType', required=True, ondelete = 'restrict', onupdate = 'cascade' )
+    #type    = ManyToOne('BatchJobType', required=True, ondelete = 'restrict', onupdate = 'cascade' )
     status  = Field(camelot.types.Enumeration([ (-2, 'planned'), 
                                                 (-1, 'running'), 
                                                 (0,  'success'), 

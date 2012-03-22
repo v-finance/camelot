@@ -21,10 +21,3 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-
-# begin session setup
-import elixir
-from camelot.core.orm import Session
-
-elixir.session = Session
-# end session setup

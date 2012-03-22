@@ -29,15 +29,10 @@ the `Translation` table.  This table can be exported to PO files for inclusion
 in the development cycle.
 """
 
-from camelot.core.sql import metadata
 from camelot.admin.action import Action
 import camelot.types
-from elixir.entity import Entity
-from elixir.options import using_options
-from elixir.fields import Field
+from camelot.core.orm import Entity, using_options, Field
 from sqlalchemy.types import Unicode, INT
-
-__metadata__ = metadata
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.view.art import Icon

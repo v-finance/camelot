@@ -30,15 +30,11 @@ import datetime
 
 from sqlalchemy.types import Unicode, INT, DateTime, PickleType
 
-from elixir import Entity, using_options, Field, ManyToOne
-
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.sql import metadata
+from camelot.core.orm import Entity, using_options, Field, ManyToOne
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view import filters
-
-__metadata__ = metadata
 
 class Memento( Entity ):
     """Keeps information on the previous state of objects, to keep track
