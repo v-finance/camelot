@@ -47,7 +47,7 @@ from camelot.core.sql import metadata
 from sqlalchemy import schema, orm, ForeignKey, types
 from sqlalchemy.ext.declarative import ( declarative_base, 
                                          DeclarativeMeta )
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker, deferred
 
 # format constants
 FKCOL_NAMEFORMAT = "%(relname)s_%(key)s"
@@ -70,15 +70,6 @@ MUTATORS = '__mutators__'
 Session = scoped_session( sessionmaker( autoflush = False,
                                         autocommit = True,
                                         expire_on_commit = False ) )
-
-class Field( schema.Column ):
-    """Subclass of :class:`sqlalchemy.schema.Column`
-    """
-    
-    def __init__( self, type, *args, **kwargs ):
-        if 'required' in kwargs:
-            kwargs['nullable'] = not kwargs.pop( 'required' )
-        super( Field, self ).__init__( type, *args, **kwargs )
         
 class Property( object ):
     """
@@ -86,7 +77,23 @@ class Property( object ):
     by Declarative but should be handled by EntityMeta
     """
     pass
+
+class Field( schema.Column, Property ):
+    """Subclass of :class:`sqlalchemy.schema.Column`
+    """
     
+    def __init__( self, type, *args, **kwargs ):
+        self.colname = kwargs.pop( 'colname', None )
+        self.deferred = kwargs.pop( 'deferred', False )
+        if 'required' in kwargs:
+            kwargs['nullable'] = not kwargs.pop( 'required' )
+        super( Field, self ).__init__( type, *args, **kwargs )
+
+    def attach( self, dict_, name ):
+        if self.deferred:
+            dict_[ name ] = deferred( self )
+        dict_[ name ] = self
+
 class ManyToOne( Property ):
     """An Entity property that creates a :class:`sqlalchemy.orm.relationship`
     and a :class:`sqlalchemy.schema.Column` property.
