@@ -37,7 +37,7 @@ from camelot.view.controls import delegates
 from sqlalchemy.types import Date, Unicode, Integer, Boolean
 from sqlalchemy.sql.expression import and_
 
-from sqlalchemy import sql
+from sqlalchemy import sql, ForeignKey
 
 import camelot.types
 
@@ -62,6 +62,9 @@ class GeographicBoundary( Entity ):
     using_options( tablename = 'geographic_boundary' )
     code = Field( Unicode( 10 ) )
     name = Field( Unicode( 40 ), required = True )
+    row_type = Field( Unicode(40) )
+    
+    __mapper_args__ = { 'polymorphic_on' : row_type }
 
     @ColumnProperty
     def full_name( self ):
@@ -73,7 +76,12 @@ class GeographicBoundary( Entity ):
 class Country( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name and the
     ISO code of a country"""
-    using_options( tablename = 'geographic_boundary_country', inheritance = 'multi' )
+    using_options( tablename = 'geographic_boundary_country' )
+    geographicboundary_id = Field( Integer, 
+                                   ForeignKey('geographic_boundary.id'), 
+                                   primary_key = True )
+
+    __mapper_args__ = {'polymorphic_identity': 'country'}
 
     @classmethod
     def get_or_create( cls, code, name ):
@@ -95,9 +103,14 @@ Country = documented_entity()(Country)
 class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
-    using_options( tablename = 'geographic_boundary_city', inheritance = 'multi' )
+    using_options( tablename = 'geographic_boundary_city' )
     country = ManyToOne( 'Country', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    geographicboundary_id = Field( Integer, 
+                                   ForeignKey('geographic_boundary.id'), 
+                                   primary_key = True )
 
+    __mapper_args__ = {'polymorphic_identity': 'city'}
+    
     @classmethod
     def get_or_create( cls, country, code, name ):
         city = City.query.filter_by( code = code, country = country ).first()
@@ -120,6 +133,9 @@ class PartyRelationship( Entity ):
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     thru_date = Field( Date(), default = end_of_times, required = True, index = True )
     comment = Field( camelot.types.RichText() )
+    row_type = Field( Unicode(40) )
+    
+    __mapper_args__ = { 'polymorphic_on' : row_type }
 
     class Admin( EntityAdmin ):
         verbose_name = _('Relationship')
@@ -128,9 +144,14 @@ class PartyRelationship( Entity ):
 
 class EmployerEmployee( PartyRelationship ):
     """Relation from employer to employee"""
-    using_options( tablename = 'party_relationship_empl', inheritance = 'multi' )
+    using_options( tablename = 'party_relationship_empl' )
     established_from = ManyToOne( 'Organization', required = True, ondelete = 'cascade', onupdate = 'cascade' )    # the employer
     established_to = ManyToOne( 'Person', required = True, ondelete = 'cascade', onupdate = 'cascade' )            # the employee
+    partyrelationship_id = Field( Integer,
+                                  ForeignKey('party_relationship.id'), 
+                                  primary_key = True )
+
+    __mapper_args__ = {'polymorphic_identity': 'employeremployee'}
 
     @ColumnProperty
     def first_name( self ):
@@ -167,11 +188,17 @@ class EmployerEmployee( PartyRelationship ):
 
 class DirectedDirector( PartyRelationship ):
     """Relation from a directed organization to a director"""
-    using_options( tablename = 'party_relationship_dir', inheritance = 'multi' )
+    using_options( tablename = 'party_relationship_dir' )
     established_from = ManyToOne( 'Organization', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     established_to = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     title = Field( Unicode( 256 ) )
     represented_by = OneToMany( 'RepresentedRepresentor', inverse = 'established_to' )
+
+    partyrelationship_id = Field( Integer,
+                                  ForeignKey('party_relationship.id'), 
+                                  primary_key = True )
+
+    __mapper_args__ = {'polymorphic_identity': 'directeddirector'}
 
     class Admin( PartyRelationship.Admin ):
         verbose_name = _('Direction structure')
@@ -208,9 +235,14 @@ class RepresentedRepresentor( Entity ):
 
 class SupplierCustomer( PartyRelationship ):
     """Relation from supplier to customer"""
-    using_options( tablename = 'party_relationship_suppl', inheritance = 'multi' )
+    using_options( tablename = 'party_relationship_suppl' )
     established_from = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     established_to = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    partyrelationship_id = Field( Integer,
+                                  ForeignKey('party_relationship.id'), 
+                                  primary_key = True )
+
+    __mapper_args__ = {'polymorphic_identity': 'suppliercustomer'}
 
     class Admin( PartyRelationship.Admin ):
         verbose_name = _('Supplier - Customer')
@@ -230,10 +262,15 @@ class SupplierCustomer( PartyRelationship ):
 
 class SharedShareholder( PartyRelationship ):
     """Relation from a shared organization to a shareholder"""
-    using_options( tablename = 'party_relationship_shares', inheritance = 'multi' )
+    using_options( tablename = 'party_relationship_shares' )
     established_from = ManyToOne( 'Organization', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     established_to = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     shares = Field( Integer() )
+    partyrelationship_id = Field( Integer,
+                                  ForeignKey('party_relationship.id'), 
+                                  primary_key = True )
+
+    __mapper_args__ = {'polymorphic_identity': 'sharedshareholder'}
 
     class Admin( PartyRelationship.Admin ):
         verbose_name = _('Shareholder structure')
