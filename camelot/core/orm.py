@@ -47,7 +47,7 @@ from camelot.core.sql import metadata
 from sqlalchemy import schema, orm, ForeignKey, types
 from sqlalchemy.ext.declarative import ( declarative_base, 
                                          DeclarativeMeta )
-from sqlalchemy.orm import scoped_session, sessionmaker, deferred
+from sqlalchemy.orm import scoped_session, sessionmaker, deferred, column_property
 
 # format constants
 FKCOL_NAMEFORMAT = "%(relname)s_%(key)s"
@@ -94,31 +94,65 @@ class Field( schema.Column, Property ):
             dict_[ name ] = deferred( self )
         dict_[ name ] = self
 
-class ManyToOne( Property ):
+class Relationship( Property ):
+    """
+    Base class for relationships.
+    """
+
+    def __init__( self, of_kind, inverse = None, *args, **kwargs ):
+        super(Relationship, self).__init__()
+        self.of_kind = of_kind
+        self.inverse_name = inverse
+        
+class ManyToOne( Relationship ):
     """An Entity property that creates a :class:`sqlalchemy.orm.relationship`
     and a :class:`sqlalchemy.schema.Column` property.
     """
     
-    def __init__( self, argument=None, secondary = None, **kwargs ):
-        self.argument = argument
-        self.secondary = secondary
-        self.kwargs = kwargs
-        target_table_name = argument.lower()
+    def __init__( self, of_kind=None, inverse = None, *args, **kwargs ):
+        super( ManyToOne, self ).__init__( of_kind, inverse = inverse, *args, **kwargs )
+        target_table_name = of_kind.lower()
         self.column = Field( sqlalchemy.types.Integer(),
                              ForeignKey( '%s.id'%target_table_name ) )
         
     def attach( self, dict_, name ):
+        return
         dict_[ name + '_id' ] = self.column
-        dict_[ name ] = orm.relationship( self.argument )
+        dict_[ name ] = orm.relationship( self.of_kind )
         
-class ManyToMany( object ):
-    pass
+class ManyToMany( Relationship ):
 
-class OneToMany( object ):
-    pass
+    def attach( self, dict_, name ):
+        pass
 
-def ColumnProperty( method ):
-    pass
+class OneToMany( Relationship ):
+    """Describes the parent's side of a parent-child relationship when there can be
+    several children.  
+    
+    Note that a ``OneToMany`` relationship **cannot exist** without a
+    corresponding ``ManyToOne`` relationship in the other way. This is because the
+    ``OneToMany`` relationship needs the foreign key created by the ``ManyToOne``
+    relationship."""
+
+    def __init__( self, of_kind=None, inverse = None, *args, **kwargs ):
+        super( OneToMany, self ).__init__( of_kind, inverse = inverse, *args, **kwargs )
+    
+    def attach( self, dict_, name ):
+        pass
+    
+class ColumnProperty( Property ):
+
+    def __init__( self, prop, *args, **kwargs ):
+        super( Property, self ).__init__()
+        self.prop = prop
+        self.args = args
+        self.kwargs = kwargs
+        
+    def attach( self, dict_, name ):
+        return
+        dict_[ name ] = column_property( self.prop.label(None), 
+                                         *self.args, 
+                                         **self.kwargs )
 
 class ClassMutator( object ):
     """Class to create DSL statements such as `using_options`.  This is used
@@ -190,8 +224,8 @@ class EntityMeta( DeclarativeMeta ):
         super( EntityMeta, cls ).__init__( classname, bases, dict_ )
         # only set the query attribute if the class is actually mapped,
         # eg the Entity class itself is not mapped, and as such has no query
-        if '__mapper__' in cls.__dict__:
-            cls.query = Session().query( cls )
+        #if '__mapper__' in cls.__dict__:
+        #    cls.query = Session().query( cls )
         
 class Entity( object ):
     """A declarative base class that adds some methods that used to be

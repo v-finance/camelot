@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from camelot.core.sql import Entity, using_options, Field
+from camelot.core.orm import Entity, using_options, Field
 from sqlalchemy.types import Unicode, INT
 
 """Classes to support the loading and updating of required datasets into the 

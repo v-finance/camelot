@@ -12,8 +12,8 @@ from elixir import ColumnProperty
 
 import camelot.types
 from camelot.core.sql import metadata
-from elixir import Entity, Field, ManyToOne, OneToMany, \
-                   ManyToMany, using_options
+from camelot.core.orm import Entity, Field, ManyToOne, OneToMany, \
+                             ManyToMany, using_options
 from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.view import action_steps
@@ -23,8 +23,6 @@ from camelot.view.filters import ComboBoxFilter
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import ColorScheme
 from sqlalchemy.types import Unicode, Date, Integer
-
-__metadata__ = metadata
 
 from camelot_example.change_rating import ChangeRatingAction
 

@@ -5,7 +5,7 @@
 #
 #  This file is part of the Camelot Library.
 #
-#  This file may be used under the terms of the GNU General Public
+#  This file may be used under the terms of the GNU General Publicf
 #  License version 2.0 as published by the Free Software Foundation
 #  and appearing in the file license.txt included in the packaging of
 #  this file.  Please review this information to ensure GNU
@@ -374,11 +374,14 @@ class Party( Entity ):
                                     cascade='all, delete, delete-orphan' )
     shares = OneToMany( 'SharedShareholder', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to', cascade='all, delete, delete-orphan' )
-    status = OneToMany( type_3_status( 'Party', metadata, entities ), cascade='all, delete, delete-orphan' )
+    #status = OneToMany( type_3_status( 'Party', metadata, entities ), cascade='all, delete, delete-orphan' )
     categories = ManyToMany( 'PartyCategory', 
                             tablename='party_category_party', 
                             remote_colname='party_category_id',
                             local_colname='party_id')
+    
+    row_type = Field( Unicode(40) )
+    __mapper_args__ = { 'polymorphic_on' : row_type }
 
     @property
     def name( self ):
@@ -551,7 +554,11 @@ class Party( Entity ):
 class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
     businesses and groups of individuals"""
-    using_options( tablename = 'organization', inheritance = 'multi' )
+    using_options( tablename = 'organization' )
+    party_id = Field( Integer, 
+                      ForeignKey('party.id'), 
+                      primary_key = True )
+    __mapper_args__ = {'polymorphic_identity': 'organization'}
     name = Field( Unicode( 50 ), required = True, index = True )
     logo = Field( camelot.types.Image( upload_to = 'organization-logo' ), deferred = True )
     tax_id = Field( Unicode( 20 ) )
@@ -591,7 +598,11 @@ Organization = documented_entity()( Organization )
 class Person( Party ):
     """Person represents natural persons
     """
-    using_options( tablename = 'person', inheritance = 'multi' )
+    using_options( tablename = 'person' )
+    party_id = Field( Integer, 
+                      ForeignKey('party.id'), 
+                      primary_key = True )
+    __mapper_args__ = {'polymorphic_identity': 'person'}
     first_name = Field( Unicode( 40 ), required = True )
     last_name = Field( Unicode( 40 ), required = True )
 # end short person definition
@@ -853,7 +864,7 @@ class PartyCategory( Entity ):
     using_options( tablename = 'party_category' )
     name = Field( Unicode(40), index=True, required=True )
     color = Field( camelot.types.Color() )
-    parent = ManyToOne( 'PartyCategory' )
+#    parent = ManyToOne( 'PartyCategory' )
 # end category definition
     parties = ManyToMany( 'Party', lazy = True,
                           tablename='party_category_party', 

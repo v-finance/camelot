@@ -31,7 +31,7 @@ class MyApplicationAdmin(ApplicationAdmin):
                          items = [ Movie, 
                                    Tag, 
                                    VisitorReport, 
-                                   VisitorsPerDirector,
+#                                   VisitorsPerDirector,
                                    ImportCovers() ]),
 # end section with action
                 Section( _('Relation'),
