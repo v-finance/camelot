@@ -177,6 +177,6 @@ class WordJinjaTemplate( OpenFile ):
             doc.Activate()
             word_app.Activate()
         # fallback in case of not on windows
-        except ImportError, e:
+        except ImportError, _e:
             super( WordJinjaTemplate, self ).gui_run( gui_context )
 
