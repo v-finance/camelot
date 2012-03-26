@@ -111,7 +111,7 @@ class ManyToOne( Relationship ):
     
     def __init__( self, of_kind=None, inverse = None, *args, **kwargs ):
         super( ManyToOne, self ).__init__( of_kind, inverse = inverse, *args, **kwargs )
-        target_table_name = of_kind.lower()
+        target_table_name = of_kind.__table__.name
         self.column = Field( sqlalchemy.types.Integer(),
                              ForeignKey( '%s.id'%target_table_name ) )
         

@@ -104,7 +104,7 @@ class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
     using_options( tablename = 'geographic_boundary_city' )
-    country = ManyToOne( 'Country', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    country = ManyToOne( Country, required = True, ondelete = 'cascade', onupdate = 'cascade' )
     geographicboundary_id = Field( Integer, 
                                    ForeignKey('geographic_boundary.id'), 
                                    primary_key = True )
@@ -127,171 +127,6 @@ class City( GeographicBoundary ):
         list_display = ['code', 'name', 'country']
 
 City = documented_entity()(City)
-
-class PartyRelationship( Entity ):
-    using_options( tablename = 'party_relationship' )
-    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
-    thru_date = Field( Date(), default = end_of_times, required = True, index = True )
-    comment = Field( camelot.types.RichText() )
-    row_type = Field( Unicode(40) )
-    
-    __mapper_args__ = { 'polymorphic_on' : row_type }
-
-    class Admin( EntityAdmin ):
-        verbose_name = _('Relationship')
-        verbose_name_plural = _('Relationships')
-        list_display = ['from_date', 'thru_date']
-
-class EmployerEmployee( PartyRelationship ):
-    """Relation from employer to employee"""
-    using_options( tablename = 'party_relationship_empl' )
-    established_from = ManyToOne( 'Organization', required = True, ondelete = 'cascade', onupdate = 'cascade' )    # the employer
-    established_to = ManyToOne( 'Person', required = True, ondelete = 'cascade', onupdate = 'cascade' )            # the employee
-    partyrelationship_id = Field( Integer,
-                                  ForeignKey('party_relationship.id'), 
-                                  primary_key = True )
-
-    __mapper_args__ = {'polymorphic_identity': 'employeremployee'}
-
-    @ColumnProperty
-    def first_name( self ):
-        return sql.select( [Person.first_name], Person.party_id == self.established_to_party_id )
-
-    @ColumnProperty
-    def last_name( self ):
-        return sql.select( [Person.last_name], Person.party_id == self.established_to_party_id )
-
-    @ColumnProperty
-    def social_security_number( self ):
-        return sql.select( [Person.social_security_number], Person.party_id == self.established_to_party_id )
-
-    def __unicode__( self ):
-        return u'%s %s %s' % ( unicode( self.established_to ), _('Employed by'),unicode( self.established_from ) )
-
-    class Admin( PartyRelationship.Admin ):
-        verbose_name = _('Employment relation')
-        verbose_name_plural = _('Employment relations')
-        list_filter = ['established_from.name']
-        list_search = ['established_from.name', 'established_to.first_name', 'established_to.last_name']
-
-    class EmployeeAdmin( EntityAdmin ):
-        verbose_name = _('Employee')
-        list_display = ['established_to', 'from_date', 'thru_date']
-        form_display = ['established_to', 'comment', 'from_date', 'thru_date']
-        field_attributes = {'established_to':{'name':_( 'Name' )}}
-
-    class EmployerAdmin( EntityAdmin ):
-        verbose_name = _('Employer')
-        list_display = ['established_from', 'from_date', 'thru_date']
-        form_display = ['established_from', 'comment', 'from_date', 'thru_date']
-        field_attributes = {'established_from':{'name':_( 'Name' )}}
-
-class DirectedDirector( PartyRelationship ):
-    """Relation from a directed organization to a director"""
-    using_options( tablename = 'party_relationship_dir' )
-    established_from = ManyToOne( 'Organization', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    established_to = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    title = Field( Unicode( 256 ) )
-    represented_by = OneToMany( 'RepresentedRepresentor', inverse = 'established_to' )
-
-    partyrelationship_id = Field( Integer,
-                                  ForeignKey('party_relationship.id'), 
-                                  primary_key = True )
-
-    __mapper_args__ = {'polymorphic_identity': 'directeddirector'}
-
-    class Admin( PartyRelationship.Admin ):
-        verbose_name = _('Direction structure')
-        verbose_name_plural = _('Direction structures')
-        list_display = ['established_from', 'established_to', 'title', 'represented_by']
-        list_search = ['established_from.full_name', 'established_to.full_name']
-        field_attributes = {'established_from':{'name':_('Organization')},
-                            'established_to':{'name':_('Director')}}
-
-    class DirectorAdmin( Admin ):
-        verbose_name = _('Director')
-        list_display = ['established_to', 'title', 'from_date', 'thru_date']
-        form_display = ['established_to', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
-
-    class DirectedAdmin( Admin ):
-        verbose_name = _('Directed organization')
-        list_display = ['established_from', 'title', 'from_date', 'thru_date']
-        form_display = ['established_from', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
-
-class RepresentedRepresentor( Entity ):
-    """Relation from a representing party to the person representing the party"""
-    using_options( tablename = 'party_representor' )
-    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
-    thru_date = Field( Date(), default = end_of_times, required = True, index = True )
-    comment = Field( camelot.types.RichText() )
-    established_from = ManyToOne( 'Person', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    established_to = ManyToOne( 'DirectedDirector', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-
-    class Admin( EntityAdmin ):
-        verbose_name = _('Represented by')
-        list_display = ['established_from', 'from_date', 'thru_date']
-        form_display = ['established_from', 'from_date', 'thru_date', 'comment']
-        field_attributes = {'established_from':{'name':_( 'Name' )}}
-
-class SupplierCustomer( PartyRelationship ):
-    """Relation from supplier to customer"""
-    using_options( tablename = 'party_relationship_suppl' )
-    established_from = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    established_to = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    partyrelationship_id = Field( Integer,
-                                  ForeignKey('party_relationship.id'), 
-                                  primary_key = True )
-
-    __mapper_args__ = {'polymorphic_identity': 'suppliercustomer'}
-
-    class Admin( PartyRelationship.Admin ):
-        verbose_name = _('Supplier - Customer')
-        list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
-
-    class CustomerAdmin( EntityAdmin ):
-        verbose_name = _('Customer')
-        list_display = ['established_to', ]
-        form_display = ['established_to', 'comment', 'from_date', 'thru_date']
-        field_attributes = {'established_to':{'name':_( 'Name' )}}
-
-    class SupplierAdmin( EntityAdmin ):
-        verbose_name = _('Supplier')
-        list_display = ['established_from', ]
-        form_display = ['established_from', 'comment', 'from_date', 'thru_date']
-        field_attributes = {'established_from':{'name':_( 'Name' )}}
-
-class SharedShareholder( PartyRelationship ):
-    """Relation from a shared organization to a shareholder"""
-    using_options( tablename = 'party_relationship_shares' )
-    established_from = ManyToOne( 'Organization', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    established_to = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    shares = Field( Integer() )
-    partyrelationship_id = Field( Integer,
-                                  ForeignKey('party_relationship.id'), 
-                                  primary_key = True )
-
-    __mapper_args__ = {'polymorphic_identity': 'sharedshareholder'}
-
-    class Admin( PartyRelationship.Admin ):
-        verbose_name = _('Shareholder structure')
-        verbose_name_plural = _('Shareholder structures')
-        list_display = ['established_from', 'established_to', 'shares',]
-        list_search = ['established_from.full_name', 'established_to.full_name']
-        field_attributes = {'established_from':{'name':_('Organization')},
-                            'established_to':{'name':_('Shareholder')}}
-
-    class ShareholderAdmin( Admin ):
-        verbose_name = _('Shareholder')
-        list_display = ['established_to', 'shares', 'from_date', 'thru_date']
-        form_display = ['established_to', 'shares', 'from_date', 'thru_date', 'comment']
-        form_size = (500, 300)
-
-    class SharedAdmin( Admin ):
-        verbose_name = _('Shares')
-        verbose_name_plural = _('Shares')
-        list_display = ['established_from', 'shares', 'from_date', 'thru_date']
-        form_display = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
-        form_size = (500, 300)
 
 class AddressAdmin( EntityAdmin ):
     """Admin with only the Address information and not the Party information"""
@@ -660,12 +495,177 @@ class Person( Party ):
 
 Person = documented_entity()( Person )
 
+class PartyRelationship( Entity ):
+    using_options( tablename = 'party_relationship' )
+    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
+    thru_date = Field( Date(), default = end_of_times, required = True, index = True )
+    comment = Field( camelot.types.RichText() )
+    row_type = Field( Unicode(40) )
+    
+    __mapper_args__ = { 'polymorphic_on' : row_type }
+
+    class Admin( EntityAdmin ):
+        verbose_name = _('Relationship')
+        verbose_name_plural = _('Relationships')
+        list_display = ['from_date', 'thru_date']
+
+class EmployerEmployee( PartyRelationship ):
+    """Relation from employer to employee"""
+    using_options( tablename = 'party_relationship_empl' )
+    established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade' )    # the employer
+    established_to = ManyToOne( Person, required = True, ondelete = 'cascade', onupdate = 'cascade' )            # the employee
+    partyrelationship_id = Field( Integer,
+                                  ForeignKey('party_relationship.id'), 
+                                  primary_key = True )
+
+    __mapper_args__ = {'polymorphic_identity': 'employeremployee'}
+
+    @ColumnProperty
+    def first_name( self ):
+        return sql.select( [Person.first_name], Person.party_id == self.established_to_party_id )
+
+    @ColumnProperty
+    def last_name( self ):
+        return sql.select( [Person.last_name], Person.party_id == self.established_to_party_id )
+
+    @ColumnProperty
+    def social_security_number( self ):
+        return sql.select( [Person.social_security_number], Person.party_id == self.established_to_party_id )
+
+    def __unicode__( self ):
+        return u'%s %s %s' % ( unicode( self.established_to ), _('Employed by'),unicode( self.established_from ) )
+
+    class Admin( PartyRelationship.Admin ):
+        verbose_name = _('Employment relation')
+        verbose_name_plural = _('Employment relations')
+        list_filter = ['established_from.name']
+        list_search = ['established_from.name', 'established_to.first_name', 'established_to.last_name']
+
+    class EmployeeAdmin( EntityAdmin ):
+        verbose_name = _('Employee')
+        list_display = ['established_to', 'from_date', 'thru_date']
+        form_display = ['established_to', 'comment', 'from_date', 'thru_date']
+        field_attributes = {'established_to':{'name':_( 'Name' )}}
+
+    class EmployerAdmin( EntityAdmin ):
+        verbose_name = _('Employer')
+        list_display = ['established_from', 'from_date', 'thru_date']
+        form_display = ['established_from', 'comment', 'from_date', 'thru_date']
+        field_attributes = {'established_from':{'name':_( 'Name' )}}
+
+class DirectedDirector( PartyRelationship ):
+    """Relation from a directed organization to a director"""
+    using_options( tablename = 'party_relationship_dir' )
+    established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    title = Field( Unicode( 256 ) )
+    represented_by = OneToMany( 'RepresentedRepresentor', inverse = 'established_to' )
+
+    partyrelationship_id = Field( Integer,
+                                  ForeignKey('party_relationship.id'), 
+                                  primary_key = True )
+
+    __mapper_args__ = {'polymorphic_identity': 'directeddirector'}
+
+    class Admin( PartyRelationship.Admin ):
+        verbose_name = _('Direction structure')
+        verbose_name_plural = _('Direction structures')
+        list_display = ['established_from', 'established_to', 'title', 'represented_by']
+        list_search = ['established_from.full_name', 'established_to.full_name']
+        field_attributes = {'established_from':{'name':_('Organization')},
+                            'established_to':{'name':_('Director')}}
+
+    class DirectorAdmin( Admin ):
+        verbose_name = _('Director')
+        list_display = ['established_to', 'title', 'from_date', 'thru_date']
+        form_display = ['established_to', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
+
+    class DirectedAdmin( Admin ):
+        verbose_name = _('Directed organization')
+        list_display = ['established_from', 'title', 'from_date', 'thru_date']
+        form_display = ['established_from', 'title', 'from_date', 'thru_date', 'represented_by', 'comment']
+
+class RepresentedRepresentor( Entity ):
+    """Relation from a representing party to the person representing the party"""
+    using_options( tablename = 'party_representor' )
+    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
+    thru_date = Field( Date(), default = end_of_times, required = True, index = True )
+    comment = Field( camelot.types.RichText() )
+    established_from = ManyToOne( Person, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    established_to = ManyToOne( DirectedDirector, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+
+    class Admin( EntityAdmin ):
+        verbose_name = _('Represented by')
+        list_display = ['established_from', 'from_date', 'thru_date']
+        form_display = ['established_from', 'from_date', 'thru_date', 'comment']
+        field_attributes = {'established_from':{'name':_( 'Name' )}}
+
+class SupplierCustomer( PartyRelationship ):
+    """Relation from supplier to customer"""
+    using_options( tablename = 'party_relationship_suppl' )
+    established_from = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    partyrelationship_id = Field( Integer,
+                                  ForeignKey('party_relationship.id'), 
+                                  primary_key = True )
+
+    __mapper_args__ = {'polymorphic_identity': 'suppliercustomer'}
+
+    class Admin( PartyRelationship.Admin ):
+        verbose_name = _('Supplier - Customer')
+        list_display = ['established_from', 'established_to', 'from_date', 'thru_date']
+
+    class CustomerAdmin( EntityAdmin ):
+        verbose_name = _('Customer')
+        list_display = ['established_to', ]
+        form_display = ['established_to', 'comment', 'from_date', 'thru_date']
+        field_attributes = {'established_to':{'name':_( 'Name' )}}
+
+    class SupplierAdmin( EntityAdmin ):
+        verbose_name = _('Supplier')
+        list_display = ['established_from', ]
+        form_display = ['established_from', 'comment', 'from_date', 'thru_date']
+        field_attributes = {'established_from':{'name':_( 'Name' )}}
+
+class SharedShareholder( PartyRelationship ):
+    """Relation from a shared organization to a shareholder"""
+    using_options( tablename = 'party_relationship_shares' )
+    established_from = ManyToOne( Organization, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    established_to = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    shares = Field( Integer() )
+    partyrelationship_id = Field( Integer,
+                                  ForeignKey('party_relationship.id'), 
+                                  primary_key = True )
+
+    __mapper_args__ = {'polymorphic_identity': 'sharedshareholder'}
+
+    class Admin( PartyRelationship.Admin ):
+        verbose_name = _('Shareholder structure')
+        verbose_name_plural = _('Shareholder structures')
+        list_display = ['established_from', 'established_to', 'shares',]
+        list_search = ['established_from.full_name', 'established_to.full_name']
+        field_attributes = {'established_from':{'name':_('Organization')},
+                            'established_to':{'name':_('Shareholder')}}
+
+    class ShareholderAdmin( Admin ):
+        verbose_name = _('Shareholder')
+        list_display = ['established_to', 'shares', 'from_date', 'thru_date']
+        form_display = ['established_to', 'shares', 'from_date', 'thru_date', 'comment']
+        form_size = (500, 300)
+
+    class SharedAdmin( Admin ):
+        verbose_name = _('Shares')
+        verbose_name_plural = _('Shares')
+        list_display = ['established_from', 'shares', 'from_date', 'thru_date']
+        form_display = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
+        form_size = (500, 300)
+
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
     using_options( tablename = 'address' )
     street1 = Field( Unicode( 128 ), required = True )
     street2 = Field( Unicode( 128 ) )
-    city = ManyToOne( 'City', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    city = ManyToOne( City, required = True, ondelete = 'cascade', onupdate = 'cascade' )
 
     @ColumnProperty
     def name( self ):
@@ -708,8 +708,8 @@ class PartyAddress( Entity ):
         setattr(party_address, '_address_city', None)
         return party_address
 
-    party = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    address = ManyToOne( 'Address', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    address = ManyToOne( Address, required = True, ondelete = 'cascade', onupdate = 'cascade' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     thru_date = Field( Date(), default = end_of_times, required = True, index = True )
     comment = Field( Unicode( 256 ) )
@@ -784,7 +784,7 @@ class PartyAddressRoleType( Entity ):
 class ContactMechanism( Entity ):
     using_options( tablename = 'contact_mechanism' )
     mechanism = Field( camelot.types.VirtualAddress( 256 ), required = True )
-    party_address = ManyToOne( 'PartyAddress', ondelete = 'set null', onupdate = 'cascade' )
+    party_address = ManyToOne( PartyAddress, ondelete = 'set null', onupdate = 'cascade' )
     party_contact_mechanisms = OneToMany( 'PartyContactMechanism' )
 
     def __unicode__( self ):
@@ -818,8 +818,8 @@ class PartyContactMechanism( Entity ):
         setattr(party_contact_mechanism, '_contact_mechanism_mechanism', None)
         return party_contact_mechanism
 
-    party = ManyToOne( 'Party', required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    contact_mechanism = ManyToOne( 'ContactMechanism', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    contact_mechanism = ManyToOne( ContactMechanism, required = True, ondelete = 'cascade', onupdate = 'cascade' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     thru_date = Field( Date(), default = end_of_times, index = True )
     comment = Field( Unicode( 256 ) )
