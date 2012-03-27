@@ -74,6 +74,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.main_widget().setLayout(layout)
     
         cancel_button = QtGui.QPushButton( ugettext('Cancel') )
+        cancel_button.setObjectName( 'cancel' )
         ok_button = QtGui.QPushButton( ugettext('OK') )
         ok_button.setObjectName( 'ok' )
         ok_button.setEnabled( False )
@@ -103,8 +104,12 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         
     def _change_complete(self, complete):
         ok_button = self.findChild( QtGui.QPushButton, 'ok' )
-        if ok_button:
+        cancel_button = self.findChild( QtGui.QPushButton, 'cancel' )
+        if ok_button != None:
             ok_button.setEnabled( complete )
+            ok_button.setDefault( complete )
+        if cancel_button != None:
+            ok_button.setDefault( not complete )
 
 class ChangeObjectsDialog( StandaloneWizardPage ):
     """A dialog to change a list of objects.  This differs from a ListView in 
