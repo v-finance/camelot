@@ -153,7 +153,8 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
             elif field_data != None:
                 unicode_data = unicode( field_data )
         except (Exception, RuntimeError, TypeError, NameError), e:
-            log_programming_error( "Could not get view data for field '%s' with of object of type %s"%( static_attributes['name'],
+            log_programming_error( logger,
+                                   "Could not get view data for field '%s' with of object of type %s"%( static_attributes['name'],
                                                                                                         obj.__class__.__name__),
                                    exc_info = e )
         finally:
@@ -328,6 +329,13 @@ position in the query.
     # end or reimplementation
     #
     
+    #def supportedDropActions( self ):
+        #print 'supported drop actions called'
+        #return Qt.CopyAction | Qt.MoveAction | Qt.LinkAction
+    
+    #def dropMimeData( self, mime_data, action, row, column, parent ):
+        #print mime_data, mime_data.formats()
+        
     @property
     def max_number_of_rows(self):
         """The maximum number of rows to be displayed at once"""
@@ -843,6 +851,8 @@ position in the query.
         flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
         if self._get_field_attribute_value(index, 'editable'):
             flags = flags | Qt.ItemIsEditable
+        if self.admin.drop_action != None:
+            flags = flags | Qt.ItemIsDropEnabled
         return flags
 
     def _add_data(self, columns, row, obj):
