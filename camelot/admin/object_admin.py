@@ -169,6 +169,11 @@ be specified using the verbose_name attribute.
 
     list of actions that appear in the toolbar of a OneToMany editor.
 
+.. attribute:: drop_action
+
+    the action that is triggered when a drag and drop occured on the table
+    view 
+    
 **Field attributes**
 
 .. attribute:: field_attributes
@@ -246,6 +251,7 @@ be specified using the verbose_name attribute.
     #
     # Behavioral attributes
     # 
+    drop_action = None
     save_mode = 'on_edit'
     delete_mode = 'on_request'
 
