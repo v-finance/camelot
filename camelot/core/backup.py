@@ -284,4 +284,3 @@ class BackupMechanism(object):
                 seq_name = table_name + "_id_seq"
                 to_connection.execute("select setval('%s', max(id)) from %s" % (seq_name, table_name))
             to_connection.close()
-
