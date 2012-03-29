@@ -27,6 +27,7 @@ from sqlalchemy.types import Unicode, Date, Integer
 __metadata__ = metadata
 
 from camelot_example.change_rating import ChangeRatingAction
+from camelot_example.drag_and_drop import DropAction
 
 # Some helper functions that will be used later on
 #
@@ -146,6 +147,7 @@ class Movie(Entity):
         #
         list_actions = [ChangeRatingAction()]
         # end list_actions
+        drop_action = DropAction()
         # the form_display attribute specifies which entity attributes should be
         # visible in the form view
         form_display = TabForm([
