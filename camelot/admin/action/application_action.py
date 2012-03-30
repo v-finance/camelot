@@ -22,6 +22,8 @@
 #
 #  ============================================================================
 
+import logging
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
@@ -30,7 +32,7 @@ from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
 from camelot.view.art import Icon
 
-"""ModelContex, GuiContext and Actions that run in the context of an 
+"""ModelContext, GuiContext and Actions that run in the context of an 
 application.
 """
 
@@ -260,6 +262,37 @@ class Exit( Action ):
         model_thread.stop()
         QtCore.QCoreApplication.exit(0)
         
+class ChangeLogging( Action ):
+    """Allow the user to change the logging configuration"""
+    
+    verbose_name = _('Change logging')
+    icon = Icon('tango/16x16/emblems/emblem-photos.png')
+    tooltip = _('Change the logging configuration of the application')
+    
+    def model_run( self, model_context ):
+        from camelot.view.controls import delegates
+        from camelot.view import action_steps
+        from camelot.admin.object_admin import ObjectAdmin
+        
+        class Options( object ):
+            
+            def __init__( self ):
+                self.level = logging.INFO
+                
+            class Admin( ObjectAdmin ):
+                list_display = ['level']
+                field_attributes = { 'level':{ 'delegate':delegates.ComboBoxDelegate,
+                                               'editable':True,
+                                               'choices':[(l,logging.getLevelName(l)) for l in [logging.DEBUG, 
+                                                                                                logging.INFO, 
+                                                                                                logging.WARNING,
+                                                                                                logging.ERROR,
+                                                                                                logging.CRITICAL]]} }
+                
+        options = Options()
+        yield action_steps.ChangeObject( options )
+        logging.getLogger().setLevel( options.level )
+    
 def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction
 
