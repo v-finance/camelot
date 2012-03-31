@@ -940,6 +940,27 @@ class ControlsTest(ModelThreadTestCase):
         header.expand_search_options()
         self.grab_widget(header)
         
+    def test_column_groups_widget(self):
+        from camelot.view.controls.tableview import ColumnGroupsWidget
+        from camelot_example.view import VisitorsPerDirector
+        table = VisitorsPerDirector.Admin.list_display
+        widget = QtGui.QWidget()
+        layout = QtGui.QVBoxLayout()
+        table_widget = QtGui.QTableWidget( 3, 6 )
+        table_widget.setHorizontalHeaderLabels( table.get_fields() )
+        column_groups = ColumnGroupsWidget( table,
+                                            table_widget )
+        layout.addWidget( column_groups )
+        layout.addWidget( table_widget )
+        widget.setLayout( layout )
+        self.assertFalse( table_widget.isColumnHidden( 0 ) )
+        self.assertTrue( table_widget.isColumnHidden( 3 ) )
+        self.grab_widget( widget, 'first_tab' )
+        column_groups.setCurrentIndex( 1 )
+        self.assertTrue( table_widget.isColumnHidden( 0 ) )
+        self.assertFalse( table_widget.isColumnHidden( 3 ) )
+        self.grab_widget( widget, 'second_tab' )
+        
     def test_desktop_workspace(self):
         from camelot.view.workspace import DesktopWorkspace
         from camelot.admin.action import Action

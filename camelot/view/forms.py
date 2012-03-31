@@ -243,14 +243,14 @@ to render a form::
         
         return form_widget
 
-
 class Label( Form ):
     """Render a label with a QLabel"""
 
     def __init__( self, label, alignment='left', style=None):
         """
         :param label : string to be displayed in the label
-        :param alignment : alignment of text in the label. values that make sense 'left', 'right' or 'center'
+        :param alignment : alignment of text in the label. values that make 
+            sense 'left', 'right' or 'center'
         :param style : string of cascading stylesheet instructions
         """
         super( Label, self ).__init__( [] )
