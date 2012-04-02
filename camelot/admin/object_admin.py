@@ -573,6 +573,14 @@ be specified using the verbose_name attribute.
             self._field_attributes[field_name] = attributes
             return attributes
 
+    def get_table( self ):
+        """The definition of the table to be used in a list view
+        :return: a `camelot.admin.table.Table` object
+        """
+        from camelot.admin.table import structure_to_table
+        table = structure_to_table( self.list_display )
+        return table
+    
     @model_function
     def get_columns(self):
         """
@@ -588,8 +596,7 @@ be specified using the verbose_name attribute.
                    'name':'Field name'}),
                  ...]
         """
-        from camelot.admin.table import structure_to_table
-        table = structure_to_table( self.list_display )
+        table = self.get_table()
         return [(field, self.get_field_attributes(field))
                 for field in table.get_fields() ]
 
@@ -608,10 +615,8 @@ be specified using the verbose_name attribute.
     def get_fields(self):
         if self.form_display:
             fields = self.get_form_display().get_fields()
-        elif self.fields:
-            fields = self.fields
         else:
-            fields = self.list_display
+            fields = self.get_table().get_fields()
         fields_and_attributes =  [
                 (field, self.get_field_attributes(field))
                 for field in fields
@@ -642,7 +647,7 @@ be specified using the verbose_name attribute.
         if self.form_display:
             return structure_to_form(self.form_display)
         if self.list_display:
-            return Form(self.list_display)
+            return Form( self.get_table().get_fields() )
         return Form([])
 
     def _apply_form_state(self, widget):
