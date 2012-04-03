@@ -63,10 +63,10 @@ def transaction(original_function):
             result = original_function(cls, *args, **kwargs)
             session.commit()
         except Exception, e:
-            if not isinstance( e, (UserException,) ):
-                logger.error('Unhandled exception, rolling back transaction', 
-                             exc_info=e)
             session.rollback()
+            if not isinstance( e, (UserException,) ):
+                logger.error( 'Unhandled exception, rolling back transaction', 
+                              exc_info=e)
             raise e
         return result
     
