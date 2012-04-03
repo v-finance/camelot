@@ -548,7 +548,7 @@ It has additional class attributes that customise its behaviour.
         :return: a list of tuples of type [(field_name, field_attributes)]
         """
         if self.expanded_list_search == None:
-            field_list = self.list_display
+            field_list = self.get_table().get_fields()
         else:
             field_list = self.expanded_list_search
         return [(field, self.get_field_attributes(field))
