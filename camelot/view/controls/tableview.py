@@ -97,15 +97,19 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
             else:
                 column_index += 1
         self.currentChanged.connect( self._current_index_changed )
-        if tab_index > 0:
-            self._current_index_changed( 0 )
-
+        
+    @QtCore.pyqtSlot( QtCore.QModelIndex, int, int )
+    def columns_changed( self, index, first_column, last_column ):
+        self._current_index_changed( self.currentIndex() )
+        
+    @QtCore.pyqtSlot()
+    def model_reset( self ):
+        self._current_index_changed( self.currentIndex() )
+        
     @QtCore.pyqtSlot( int )
     def _current_index_changed( self, current_index ):
-        print 'change tab', current_index
         for tab_index, (first_column, last_column) in self.groups.items():
             for column_index in range( first_column, last_column ):
-                print column_index, tab_index != current_index
                 self.table_widget.setColumnHidden( column_index,
                                                    tab_index != current_index )
 
@@ -124,7 +128,6 @@ and above the text.
 """
 
     margin = 5
-    
     keyboard_selection_signal = QtCore.pyqtSignal()
 
     def __init__( self, parent = None, columns_frozen = 0, lines_per_row = 1 ):
@@ -135,6 +138,7 @@ and above the text.
         QtGui.QTableView.__init__( self, parent )
         logger.debug( 'create TableWidget' )
         self._columns_frozen = columns_frozen
+        self._columns_changed = dict()
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
         self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked |
                               QtGui.QAbstractItemView.DoubleClicked |
@@ -177,19 +181,39 @@ and above the text.
             frozen_table_view.setColumnWidth( logical_index, new_size)
             self._update_frozen_table()
             
+    def timerEvent( self, event ):
+        """On timer event, save changed column widths to the model
+        """
+        for logical_index, new_width in self._columns_changed.items():
+            if self.horizontalHeader().isSectionHidden( logical_index ):
+                # don't save the width of a hidden section, since this will
+                # result in setting the width to 0
+                continue
+            old_size = variant_to_pyobject( self.model().headerData( logical_index, 
+                                                                     Qt.Horizontal, 
+                                                                     Qt.SizeHintRole ) )
+            # when the size is different from the one from the model, the
+            # user changed it
+            if old_size.width() != new_width:
+                new_size = QtCore.QSize( new_width, old_size.height() )
+                self.model().setHeaderData( logical_index, 
+                                            Qt.Horizontal,
+                                            new_size,
+                                            Qt.SizeHintRole )
+        self._columns_changed = dict()
+        super( TableWidget, self ).timerEvent( event )
+        
     @QtCore.pyqtSlot(int, int, int)
     def _save_section_width(self, logical_index, _old_size, new_width ):
-        old_size = variant_to_pyobject( self.model().headerData( logical_index, 
-                                                                 Qt.Horizontal, 
-                                                                 Qt.SizeHintRole ) )
-        # when the size is different from the one from the model, the
-        # user changed it
-        if old_size.width() != new_width:
-            new_size = QtCore.QSize( new_width, old_size.height() )
-            self.model().setHeaderData( logical_index, 
-                                        Qt.Horizontal,
-                                        new_size,
-                                        Qt.SizeHintRole )
+        # instead of storing the width immediately, a timer is started to store
+        # the width when all event processing is done.  because at this time
+        # we cannot yet determine if the section at logical_index is hidden
+        # or not
+        #
+        # there is no need to start the timer, since this is done by the 
+        # QAbstractItemView itself for doing the layout, here we only store
+        # which column needs to be saved.
+        self._columns_changed[ logical_index ] = new_width
 
     @QtCore.pyqtSlot(int, int, int)
     def _update_section_height(self, logical_index, _int, new_size):
@@ -328,19 +352,45 @@ and above the text.
         else:
             super(TableWidget, self).keyPressEvent(e) 
 
-class AdminTableWidget( TableWidget ):
+class AdminTableWidget( QtGui.QWidget ):
     """A table widget that inspects the admin class and changes the behavior
     of the table as specified in the admin class"""
     
     def __init__(self, admin, parent=None):
+        super( AdminTableWidget, self ).__init__( parent )
         self._admin = admin
-        super(AdminTableWidget, self).__init__( columns_frozen = admin.list_columns_frozen,
-                                                lines_per_row = admin.lines_per_row,
-                                                parent=parent )
+        table_widget = TableWidget( columns_frozen = admin.list_columns_frozen,
+                                    lines_per_row = admin.lines_per_row,
+                                    parent = self )
+        table_widget.setObjectName( 'table_widget' )
+        column_groups = ColumnGroupsWidget( admin.get_table(), table_widget )
+        column_groups.setObjectName( 'column_groups' )
+        layout = QtGui.QVBoxLayout()
+        layout.setSpacing( 0 )
+        layout.setMargin( 0 )
+        layout.addWidget( column_groups )
+        layout.addWidget( table_widget )
+        self.setLayout( layout )
         if admin.drop_action != None:
-            self.setDragDropMode( QtGui.QAbstractItemView.DragDrop )
-            self.setDropIndicatorShown( True )
+            table_widget.setDragDropMode( QtGui.QAbstractItemView.DragDrop )
+            table_widget.setDropIndicatorShown( True )
                         
+    def __getattr__( self, name ):
+        table_widget = self.findChild( QtGui.QWidget, 'table_widget' )
+        if table_widget != None:
+            return getattr( table_widget, name )
+        
+    def setModel( self, model ):
+        table_widget = self.findChild( QtGui.QWidget, 'table_widget' )
+        column_groups = self.findChild( QtGui.QWidget, 'column_groups' )
+        if table_widget != None:
+            model.columnsInserted.connect( column_groups.columns_changed )
+            model.columnsRemoved.connect( column_groups.columns_changed )
+            model.layoutChanged.connect( column_groups.model_reset )
+            model.modelReset.connect( column_groups.model_reset )
+            table_widget.setModel( model )
+            column_groups.model_reset()
+            
     @QtCore.pyqtSlot()
     def delete_selected_rows(self):
         logger.debug( 'delete selected rows called' )
@@ -491,7 +541,6 @@ class SplitterHandle( QtGui.QSplitterHandle ):
         
     def mousePressEvent(self, event):
         splitter = self.splitter()
-        print splitter.count()
         splitter.widget( splitter.count() - 1 ).hide()
         
 class Splitter(QtGui.QSplitter):
