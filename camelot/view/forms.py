@@ -121,54 +121,6 @@ to render a form::
     def __unicode__( self ):
         return 'Form(%s)' % ( u','.join( unicode( c ) for c in self ) )
 
-    def render_ooxml( self, obj, delegates ):
-        """Generator for lines of text in Office Open XML representing this form, using tables
-        :param obj: the object or entity that will be rendered
-        :param delegates: a dictionary mapping field names to their delegate
-        """
-        yield '<w:tbl>'
-        yield '    <w:tblPr>'
-        yield '      <w:tblW w:w="0" w:type="auto"/>'
-        yield '      <w:tblBorders>'
-        yield '          <w:top w:val="single" w:sz="4" wx:bdrwidth="10" w:space="0" w:color="auto"/>'
-        yield '          <w:left w:val="single" w:sz="4" wx:bdrwidth="10" w:space="0" w:color="auto"/>'
-        yield '          <w:bottom w:val="single" w:sz="4" wx:bdrwidth="10" w:space="0" w:color="auto"/>'
-        yield '          <w:right w:val="single" w:sz="4" wx:bdrwidth="10" w:space="0" w:color="auto"/>'
-        yield '          <w:insideH w:val="single" w:sz="4" wx:bdrwidth="10" w:space="0" w:color="auto"/>'
-        yield '          <w:insideV w:val="single" w:sz="4" wx:bdrwidth="10" w:space="0" w:color="auto"/>'
-        yield '        </w:tblBorders>'
-        yield '      <w:tblLook w:val="04A0"/>'
-        yield '    </w:tblPr>'
-        yield '    <w:tblGrid>'
-        yield '      <w:gridCol w:w="4811"/>'
-        yield '      <w:gridCol w:w="4811"/>'
-        yield '    </w:tblGrid>'
-        yield '    <w:tr>'
-        for index, field in enumerate(self):
-            if index % self._columns == 0 and index != 0:
-                yield '    </w:tr><w:tr>'
-            yield '<w:tc>'
-            yield '  <w:tcPr>'
-            yield '    <w:tcW w:w="4811" w:type="dxa"/>'
-            yield '    <w:shd w:val="clear" w:color="auto" w:fill="auto"/>'
-            yield '  </w:tcPr>'
-            yield '<w:p>'
-            lines = []
-            if isinstance(field, Label):
-                lines = field.render_ooxml()
-            elif isinstance(field, Form):
-                lines = field.render_ooxml( obj, delegates )
-            elif isinstance(field, basestring):
-                delegate = delegates[field]
-                value = getattr(obj, field)
-                lines = delegate.render_ooxml(value)
-            for line in lines:
-                yield line
-            yield '</w:p>'
-            yield '</w:tc>'
-        yield '</w:tr>'
-        yield '</w:tbl>'
-
     @gui_function
     def render( self, widgets, parent = None, toplevel = False):
         """
@@ -305,13 +257,6 @@ class Label( Form ):
         self.label = label
         self.alignment = alignment
         self.style = style
-
-    def render_ooxml( self ):
-        """Generator for label text in Office Open XML representing this form"""
-        yield '<w:r>'
-        yield '  <w:t>%s</w:t>' % self.label
-        yield '</w:r>'
-
 
     @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
