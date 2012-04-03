@@ -329,13 +329,27 @@ position in the query.
     # end or reimplementation
     #
     
-    #def supportedDropActions( self ):
-        #print 'supported drop actions called'
-        #return Qt.CopyAction | Qt.MoveAction | Qt.LinkAction
+    #
+    # begin functions related to drag and drop
+    #
     
-    #def dropMimeData( self, mime_data, action, row, column, parent ):
-        #print mime_data, mime_data.formats()
+    def mimeTypes( self ):
+        if self.admin.drop_action != None:
+            return self.admin.drop_action.drop_mime_types
         
+    def supportedDropActions( self ):
+        if self.admin.drop_action != None:
+            return Qt.CopyAction | Qt.MoveAction | Qt.LinkAction
+        return None
+    
+    def dropMimeData( self, mime_data, action, row, column, parent ):
+        #print mime_data, [unicode(f) for f in mime_data.formats()]
+        return True
+    
+    #
+    # end of drag and drop related functions
+    #
+    
     @property
     def max_number_of_rows(self):
         """The maximum number of rows to be displayed at once"""
