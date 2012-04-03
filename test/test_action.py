@@ -257,14 +257,16 @@ class ListActionsCase( ModelThreadTestCase ):
                 generator.send( ('rating', lambda:3) )
                 
     def test_drag_and_drop( self ):
+        from camelot.view.proxy.queryproxy import QueryTableProxy
         
         class DropAction( Action ):
             pass
+                
         
-        admin.drop_action = DropAction()
-        from camelot.view.proxy.queryproxy import QueryTableProxy
         mime_data = QtCore.QMimeData()
         admin = self.context.admin
+        admin.drop_action = DropAction()
+        
         proxy = QueryTableProxy( admin, admin.get_query, admin.get_columns )
         proxy.dropMimeData( mime_data, 
                             Qt.MoveAction, 

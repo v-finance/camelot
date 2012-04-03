@@ -588,8 +588,10 @@ be specified using the verbose_name attribute.
                    'name':'Field name'}),
                  ...]
         """
+        from camelot.admin.table import structure_to_table
+        table = structure_to_table( self.list_display )
         return [(field, self.get_field_attributes(field))
-                for field in self.list_display]
+                for field in table.get_fields() ]
 
     def get_validator( self ):
         """Get a validator object

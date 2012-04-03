@@ -24,6 +24,7 @@
 
 """Tableview"""
 
+from collections import defaultdict
 import logging
 logger = logging.getLogger( 'camelot.view.controls.tableview' )
 
@@ -66,6 +67,47 @@ class FrozenTableWidget( QtGui.QTableView ):
         if previous.column() >= self._columns_frozen:
             previous = self.model().index( previous.row(), -1 )
         super(FrozenTableWidget, self).currentChanged(current, previous)
+        
+class ColumnGroupsWidget( QtGui.QTabBar ):
+    """A tabbar the user can use to select a group of columns within an
+    item view.
+    
+    :param table: a :class:`camelot.admin.table.Table` object, describing the 
+       column groups.
+    :param table_widget: a :class:`QtGui.QTableView` widget of which columns will
+       be hidden and shown depending on the selected tab.
+    :param parent: a :class:`QtGui.QWidget`
+    """
+    
+    def __init__( self, table, table_widget, parent = None ):
+        from camelot.admin.table import ColumnGroup
+        super( ColumnGroupsWidget, self ).__init__( parent )
+        self.groups = dict()
+        self.table_widget = table_widget
+        column_index = 0
+        tab_index = 0
+        for column in table.columns:
+            if isinstance( column, ColumnGroup ):
+                self.addTab( unicode( column.verbose_name ) )
+                previous_column_index = column_index
+                column_index = column_index + len( column.get_fields() )
+                self.groups[ tab_index ] = ( previous_column_index,
+                                             column_index )
+                tab_index += 1
+            else:
+                column_index += 1
+        self.currentChanged.connect( self._current_index_changed )
+        if tab_index > 0:
+            self._current_index_changed( 0 )
+
+    @QtCore.pyqtSlot( int )
+    def _current_index_changed( self, current_index ):
+        print 'change tab', current_index
+        for tab_index, (first_column, last_column) in self.groups.items():
+            for column_index in range( first_column, last_column ):
+                print column_index, tab_index != current_index
+                self.table_widget.setColumnHidden( column_index,
+                                                   tab_index != current_index )
 
 class TableWidget( QtGui.QTableView ):
     """A widget displaying a table, to be used within a TableView.  This is a
@@ -286,7 +328,7 @@ and above the text.
         else:
             super(TableWidget, self).keyPressEvent(e) 
 
-class AdminTableWidget(TableWidget):
+class AdminTableWidget( TableWidget ):
     """A table widget that inspects the admin class and changes the behavior
     of the table as specified in the admin class"""
     
