@@ -82,6 +82,7 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
     def __init__( self, table, table_widget, parent = None ):
         from camelot.admin.table import ColumnGroup
         super( ColumnGroupsWidget, self ).__init__( parent )
+        self.setShape( QtGui.QTabBar.RoundedSouth )
         self.groups = dict()
         self.table_widget = table_widget
         column_index = 0
@@ -368,8 +369,8 @@ class AdminTableWidget( QtGui.QWidget ):
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 0 )
         layout.setMargin( 0 )
-        layout.addWidget( column_groups )
         layout.addWidget( table_widget )
+        layout.addWidget( column_groups )
         self.setLayout( layout )
         if admin.drop_action != None:
             table_widget.setDragDropMode( QtGui.QAbstractItemView.DragDrop )
