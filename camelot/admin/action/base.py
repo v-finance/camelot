@@ -287,6 +287,13 @@ values for these attributes can reimplement the getter methods.
     The shortcut that can be used to trigger the action, this should be of 
     type :class:`camelot.core.utils.ugettext_lazy`
     
+.. attribute:: drop_mime_types
+
+    A list of strings with the mime types that can be used to trigger this
+    action by dropping objects on the related widget.  Example ::
+    
+        drop_mime_types = ['text/plain']
+    
 An action has two important methods that can be reimplemented.  These are 
 :meth:`model_run` for manipulations of the model and :meth:`gui_run` for
 direct manipulations of the user interface without a need to access the model.
@@ -298,6 +305,7 @@ direct manipulations of the user interface without a need to access the model.
     tooltip = None
     shortcut = None 
     modes = []
+    drop_mime_types = []
     
     def get_name( self ):
         """

@@ -295,7 +295,10 @@ class AdminTableWidget(TableWidget):
         super(AdminTableWidget, self).__init__( columns_frozen = admin.list_columns_frozen,
                                                 lines_per_row = admin.lines_per_row,
                                                 parent=parent )
-                                   
+        if admin.drop_action != None:
+            self.setDragDropMode( QtGui.QAbstractItemView.DragDrop )
+            self.setDropIndicatorShown( True )
+                        
     @QtCore.pyqtSlot()
     def delete_selected_rows(self):
         logger.debug( 'delete selected rows called' )
