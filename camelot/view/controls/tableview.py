@@ -24,7 +24,6 @@
 
 """Tableview"""
 
-from collections import defaultdict
 import logging
 logger = logging.getLogger( 'camelot.view.controls.tableview' )
 
