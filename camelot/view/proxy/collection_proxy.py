@@ -418,7 +418,7 @@ position in the query.
         self.edit_cache.delete_by_row( row )
         self.attributes_cache.delete_by_row( row )
         self.dataChanged.emit( self.index( row, 0 ),
-                               self.index( row, self.columnCount() ) )
+                               self.index( row, self.columnCount() - 1 ) )
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_update( self, sender, entity ):
