@@ -465,6 +465,8 @@ class HBoxForm( Form ):
             f = form.render( widgets, widget, False )
             if isinstance( f, QtGui.QLayout ):
                 form_layout.addLayout( f )
+            elif isinstance( f, QtGui.QLayoutItem ):
+                form_layout.addItem( f )
             else:
                 form_layout.addWidget( f )
         widget.setLayout( form_layout )
@@ -510,6 +512,8 @@ class VBoxForm( Form ):
             f = form.render( widgets, widget, False )
             if isinstance( f, QtGui.QLayout ):
                 form_layout.addLayout( f )
+            elif isinstance( f, QtGui.QLayoutItem ):
+                form_layout.addItem( f )
             else:
                 form_layout.addWidget( f )
         widget.setLayout( form_layout )

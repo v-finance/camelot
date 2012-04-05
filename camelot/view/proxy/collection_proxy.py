@@ -857,7 +857,7 @@ position in the query.
         if row!=None:
             column_count = self.columnCount()
             top_left = self.index( row, 0 )
-            bottom_right = self.index( row, column_count )
+            bottom_right = self.index( row, column_count - 1 )
             self.dataChanged.emit( top_left, bottom_right )
 
     def flags( self, index ):
