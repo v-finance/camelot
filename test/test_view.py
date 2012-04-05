@@ -950,9 +950,15 @@ class ControlsTest(ModelThreadTestCase):
         table_widget.setHorizontalHeaderLabels( table.get_fields() )
         column_groups = ColumnGroupsWidget( table,
                                             table_widget )
-        layout.addWidget( column_groups )
         layout.addWidget( table_widget )
+        layout.addWidget( column_groups )
         widget.setLayout( layout )
+        #
+        # set the tab to 1 and then back to 0, to force a change
+        # signal
+        #
+        column_groups.setCurrentIndex( 1 )
+        column_groups.setCurrentIndex( 0 )
         self.assertFalse( table_widget.isColumnHidden( 0 ) )
         self.assertTrue( table_widget.isColumnHidden( 3 ) )
         self.grab_widget( widget, 'first_tab' )

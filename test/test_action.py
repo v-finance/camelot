@@ -84,7 +84,7 @@ class ActionStepsCase( ModelThreadTestCase ):
         select_file = generator.next()
         self.assertFalse( select_file.single )
         # pretend the user selected a file
-        generator.send( [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.jpg') ] )
+        generator.send( [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ] )
         # continue the action till the end
         list( generator )
         # a movie should be inserted
