@@ -57,5 +57,3 @@ class MockListActionGuiContext( ListActionGuiContext ):
     def __init__( self ):
         super(MockListActionGuiContext, self).__init__()
         self.item_view = QtGui.QTableWidget( 4, 4 )
-
-
