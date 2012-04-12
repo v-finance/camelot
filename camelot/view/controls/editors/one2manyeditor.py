@@ -36,14 +36,6 @@ from camelot.view.model_thread import gui_function, post
 from camelot.view import register
 
 class One2ManyEditor(CustomEditor, WideEditor):
-    
-    def __init__( self,
-                  admin = None,
-                  parent = None,
-                  create_inline = False,
-                  direction = 'onetomany',
-                  field_name = 'onetomany',
-                  **kw ):
         """
     :param admin: the Admin interface for the objects on the one side of the
     relation
@@ -54,6 +46,14 @@ class One2ManyEditor(CustomEditor, WideEditor):
     after creating the editor, set_value needs to be called to set the
     actual data to the editor
     """
+        
+    def __init__( self,
+                  admin = None,
+                  parent = None,
+                  create_inline = False,
+                  direction = 'onetomany',
+                  field_name = 'onetomany',
+                  **kw ):
         CustomEditor.__init__( self, parent )
         self.setObjectName( field_name )
         layout = QtGui.QHBoxLayout()
