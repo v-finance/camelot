@@ -36,7 +36,7 @@ from camelot.view.model_thread import gui_function, post
 from camelot.view import register
 
 class One2ManyEditor(CustomEditor, WideEditor):
-        """
+    """
     :param admin: the Admin interface for the objects on the one side of the
     relation
 
