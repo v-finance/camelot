@@ -66,6 +66,15 @@ calculator
 
 :const:`True` or :const:`False` Indicates whether a calculator should be available when editing this field.
 
+.. _field-attribute-create_inline:
+
+create_inline 
+-------------
+
+used in a one to many relation, if :const:`False`, then a new entity will be 
+created within a new window, if :const:`True`, it will be created as a new line
+in the table.
+
 .. _field-attribute-column_width:
 
 column_width
