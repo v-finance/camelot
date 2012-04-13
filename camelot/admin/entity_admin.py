@@ -452,6 +452,50 @@ It has additional class attributes that customise its behaviour.
         """
         return self.TableView( gui_context, self )
 
+    def primary_key( self, obj ):
+        """Get the primary key of an object
+        :param obj: the object to get the primary key from
+        :return: a tuple with with components of the primary key, or none
+            if the object has no primary key yet or any more.
+        """
+        if not self.is_persistent( obj ):
+            return None
+        return self.mapper.primary_key_from_instance( obj )
+    
+    def get_modifications( self, obj ):
+        """Get the modifications on an object since the last flush.
+        :param obj: the object for which to get the modifications
+        :return: a dictionary with the changed attributes and their old
+           value
+        """
+        from sqlalchemy import orm
+        from sqlalchemy.orm.exc import UnmappedClassError
+        from sqlalchemy.orm.session import Session
+        session = Session.object_session( obj )
+        state = orm.attributes.instance_state( obj )
+        dict_ = state.dict
+        modifications = dict()
+        for attr in state.manager.attributes:
+            if not hasattr( attr.impl, 'get_history' ):
+                continue
+            (added, unchanged, deleted) = \
+                    attr.impl.get_history( state, dict_ )
+            if added or deleted:
+                old_value = None
+                if deleted:
+                    old_value = deleted[0]
+                    #
+                    # in case of relations, get the primary key of the object
+                    # instead of the object itself
+                    #
+                    try:
+                        mapper = orm.class_mapper( type( old_value ) )
+                        old_value = mapper.primary_key_from_instance( old_value )
+                    except UnmappedClassError:
+                        pass
+                modifications[ attr.key ] = old_value
+        return modifications
+        
     @model_function
     def delete(self, entity_instance):
         """Delete an entity instance"""

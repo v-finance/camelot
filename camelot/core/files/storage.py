@@ -49,6 +49,12 @@ class StoredFile( object ):
         """The name of the file, as it is to be displayed in the GUI"""
         return self.name
 
+    def __getstate__( self ):
+        """Returns the key of the file.  To support pickling stored files
+        in the database in a :class:`camelot.model.memento.Memento`
+        object"""
+        return dict( name = self.name )
+    
     def __unicode__( self ):
         return self.verbose_name
 

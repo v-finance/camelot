@@ -393,12 +393,14 @@ position in the query.
     @QtCore.pyqtSlot(int)
     @gui_function
     def _refresh_content(self, rows ):
+        locker = QtCore.QMutexLocker(self._mutex)
         self.display_cache = Fifo( 10 * self.max_number_of_rows )
         self.edit_cache = Fifo( 10 * self.max_number_of_rows )
         self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
-        locker = QtCore.QMutexLocker(self._mutex)
         self.rows_under_request = set()
         self.unflushed_rows = set()
+        # once the cache has been cleared, no updates ought to be accepted
+        self._update_requests = list()
         locker.unlock()
         self.setRowCount( rows )
 
@@ -765,6 +767,7 @@ position in the query.
                     # type error can be raised in case we try to set to a collection
                     pass
                 if self.flush_changes and self.validator.isValid( row ):
+                    modifications = self.admin.get_modifications( o )
                     # save the state before the update
                     try:
                         self.admin.flush( o )
@@ -781,21 +784,17 @@ position in the query.
                     # we can only track history if the model was updated, and it was
                     # flushed before, otherwise it has no primary key yet
                     #
-                    if model_updated and hasattr(o, 'id') and o.id:
-                        #
-                        # in case of files or relations, we cannot pickle them
-                        #
-                        if isinstance( old_value, StoredFile ):
-                            old_value = old_value.name
-                        if not direction:
+                    primary_key = self.admin.primary_key( o )
+                    if model_updated and (primary_key != None) and len(primary_key)==1 and modifications:
+                        if direction not in ( 'manytomany', 'onetomany' ):
                             from camelot.model.memento import Memento
                             # only register the update when the camelot model is active
                             if hasattr(Memento, 'query'):
                                 from camelot.model.authentication import get_current_authentication
                                 history = Memento( model = unicode( self.admin.entity.__name__ ),
                                                    memento_type = 'before_update',
-                                                   primary_key = o.id,
-                                                   previous_attributes = {attribute:old_value},
+                                                   primary_key = primary_key[0],
+                                                   previous_attributes = modifications,
                                                    authentication = get_current_authentication() )
 
                                 try:
@@ -828,7 +827,7 @@ position in the query.
         #
         # prevent data of being set in rows not actually in this model
         #
-        if not index.isValid():
+        if (not index.isValid()) or (index.model()!=self):
             return False
         
         if role == Qt.EditRole:

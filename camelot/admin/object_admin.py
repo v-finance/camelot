@@ -871,6 +871,22 @@ be specified using the verbose_name attribute.
             form.setMinimumSize(admin.form_size[0], admin.form_size[1])
         return form
 
+    def primary_key( self, obj ):
+        """Get the primary key of an object
+        :param obj: the object to get the primary key from
+        :return: a tuple with with components of the primary key, or none
+            if the object has no primary key yet or any more.
+        """
+        return False
+    
+    def get_modifications( self, obj ):
+        """Get the modifications on an object since the last flush.
+        :param obj: the object for which to get the modifications
+        :return: a dictionary with the changed attributes and their old
+           value
+        """
+        return dict()
+    
     @model_function
     def delete(self, entity_instance):
         """Delete an entity instance"""
