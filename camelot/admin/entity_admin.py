@@ -470,8 +470,6 @@ It has additional class attributes that customise its behaviour.
         """
         from sqlalchemy import orm
         from sqlalchemy.orm.exc import UnmappedClassError
-        from sqlalchemy.orm.session import Session
-        session = Session.object_session( obj )
         state = orm.attributes.instance_state( obj )
         dict_ = state.dict
         modifications = dict()
