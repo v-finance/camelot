@@ -165,6 +165,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     @QtCore.pyqtSlot( int )
     def trigger_list_action( self, index ):
+        table = self.findChild(QtGui.QWidget, 'table')
+        # close the editor to prevent certain Qt crashes
+        table.close_editor()
         if self.admin.list_action:
             self.admin.list_action.gui_run( self.gui_context )
 

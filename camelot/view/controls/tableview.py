@@ -685,6 +685,14 @@ class TableView( AbstractView  ):
     @QtCore.pyqtSlot(int)
     def sectionClicked( self, section ):
         """emits a row_selected signal"""
+        #
+        # close the table editor before opening a form or such
+        #
+        # Qt seems to crash in certain cases when the editor is open and the
+        # underlying model is changed
+        #
+        if self.table:
+            self.table.close_editor()
         self.admin.list_action.gui_run( self.gui_context )
 
     def create_table_model( self, admin ):
