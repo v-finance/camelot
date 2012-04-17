@@ -22,6 +22,8 @@
 #
 #  ============================================================================
 
+from functools import update_wrapper, partial
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
@@ -355,27 +357,26 @@ class Many2OneEditor( CustomEditor ):
             self.editingFinished.emit()
 
     def setEntity(self, entity_instance_getter, propagate=True):
-
-        def create_instance_getter(entity_instance):
-            return lambda:entity_instance
-
-        def get_instance_representation():
+        self.entity_instance_getter = entity_instance_getter
+        
+        def get_instance_representation( entity_instance_getter, propagate ):
             """Get a representation of the instance
 
             :return: (unicode, pk) its unicode representation and its primary
             key or ('', False) if the instance was None"""
+            
             entity = entity_instance_getter()
-            self.entity_instance_getter = create_instance_getter(entity)
             if entity and hasattr(entity, 'id'):
                 return ((unicode(entity), entity.id), propagate)
             elif entity:
                 return ((unicode(entity), False), propagate)
             return ((None, False), propagate)
 
-        post(get_instance_representation, self.set_instance_representation)
+        post( update_wrapper( partial( get_instance_representation,
+                                       entity_instance_getter,
+                                       propagate ),
+                              get_instance_representation ), 
+              self.set_instance_representation)
 
     def select_object( self, entity_instance_getter ):
         self.setEntity(entity_instance_getter)
-
-
-
