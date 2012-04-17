@@ -40,7 +40,6 @@ from PyQt4 import QtGui, QtCore
 
 from camelot.core.exception import log_programming_error
 from camelot.core.utils import is_deleted, variant_to_pyobject
-from camelot.core.files.storage import StoredFile
 from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
 from camelot.view.controls import delegates
