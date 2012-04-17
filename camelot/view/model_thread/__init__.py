@@ -38,6 +38,24 @@ verify_threads = True
 class ModelThreadException(Exception):
     pass
 
+def object_thread( self ):
+    """Funtion to verify if a call to an object is made in the thread of this
+    object, to be used in assert statements.  Example ::
+    
+        class FooObject( QtCore.QObject ):
+        
+            def do_something( self ):
+                assert object_thread( self )
+                print 'safe method call'
+    
+    :param self: a :class:`QtCore.QObject` instance.
+    :return True: if the thread of self is the current thread 
+    
+    The approach with assert statements is prefered over decorators,
+    since decorators hide part of the method signature from the sphinx
+    documentation.
+    """
+    return self.thread() == QtCore.QThread.currentThread()
 
 def model_function(original_function):
     """Decorator to ensure a function is only called from within the model
