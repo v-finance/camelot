@@ -39,7 +39,7 @@ from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.model_thread import post
-from camelot.view.model_thread import gui_function
+from camelot.view.model_thread import object_thread
 from camelot.view.model_thread import model_function
 from camelot.view import register
 
@@ -51,6 +51,7 @@ class FrozenTableWidget( QtGui.QTableView ):
 
     def __init__(self, parent, columns_frozen):
         super(FrozenTableWidget, self).__init__(parent)
+        assert object_thread( self )
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
         self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked |
                               QtGui.QAbstractItemView.DoubleClicked |
@@ -61,6 +62,7 @@ class FrozenTableWidget( QtGui.QTableView ):
     def currentChanged(self, current, previous):
         """When the current index has changed, prevent it to jump to
         a column that is not frozen"""
+        assert object_thread( self )
         if current.column() >= self._columns_frozen:
             current = self.model().index( current.row(), -1 )
         if previous.column() >= self._columns_frozen:
@@ -81,6 +83,7 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
     def __init__( self, table, table_widget, parent = None ):
         from camelot.admin.table import ColumnGroup
         super( ColumnGroupsWidget, self ).__init__( parent )
+        assert object_thread( self )
         self.setShape( QtGui.QTabBar.RoundedSouth )
         self.groups = dict()
         self.table_widget = table_widget
@@ -100,14 +103,17 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
         
     @QtCore.pyqtSlot( QtCore.QModelIndex, int, int )
     def columns_changed( self, index, first_column, last_column ):
+        assert object_thread( self )
         self._current_index_changed( self.currentIndex() )
         
     @QtCore.pyqtSlot()
     def model_reset( self ):
+        assert object_thread( self )
         self._current_index_changed( self.currentIndex() )
         
     @QtCore.pyqtSlot( int )
     def _current_index_changed( self, current_index ):
+        assert object_thread( self )
         for tab_index, (first_column, last_column) in self.groups.items():
             for column_index in range( first_column, last_column ):
                 self.table_widget.setColumnHidden( column_index,
@@ -137,6 +143,7 @@ and above the text.
         """
         QtGui.QTableView.__init__( self, parent )
         logger.debug( 'create TableWidget' )
+        assert object_thread( self )
         self._columns_frozen = columns_frozen
         self._columns_changed = dict()
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
@@ -176,6 +183,7 @@ and above the text.
 
     @QtCore.pyqtSlot(int, int, int)
     def _update_section_width(self, logical_index, _old_size, new_size):
+        assert object_thread( self )
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
         if logical_index < self._columns_frozen and frozen_table_view:
             frozen_table_view.setColumnWidth( logical_index, new_size)
@@ -184,6 +192,7 @@ and above the text.
     def timerEvent( self, event ):
         """On timer event, save changed column widths to the model
         """
+        assert object_thread( self )
         for logical_index, new_width in self._columns_changed.items():
             if self.horizontalHeader().isSectionHidden( logical_index ):
                 # don't save the width of a hidden section, since this will
@@ -213,25 +222,30 @@ and above the text.
         # there is no need to start the timer, since this is done by the 
         # QAbstractItemView itself for doing the layout, here we only store
         # which column needs to be saved.
+        assert object_thread( self )
         self._columns_changed[ logical_index ] = new_width
 
     @QtCore.pyqtSlot(int, int, int)
     def _update_section_height(self, logical_index, _int, new_size):
+        assert object_thread( self )
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
         if frozen_table_view:
             frozen_table_view.setRowHeight(logical_index, new_size)
 
     def setItemDelegate(self, item_delegate):
+        assert object_thread( self )
         super(TableWidget, self).setItemDelegate(item_delegate)
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
         if frozen_table_view:
             frozen_table_view.setItemDelegate(item_delegate)
 
     def resizeEvent(self, event):
+        assert object_thread( self )
         super(TableWidget, self).resizeEvent(event)
         self._update_frozen_table()
 
     def moveCursor(self, cursorAction, modifiers):
+        assert object_thread( self )
         current = super(TableWidget, self).moveCursor(cursorAction, modifiers)
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
         if frozen_table_view:
@@ -246,10 +260,12 @@ and above the text.
         return current
 
     def scrollTo(self, index, hint):
+        assert object_thread( self )
         if(index.column()>=self._columns_frozen):
             super(TableWidget, self).scrollTo(index, hint)
 
     def edit(self, index, trigger=None, event=None):
+        assert object_thread( self )
         #
         # columns in the frozen part should never be edited, because this might result
         # in an editor opening below the frozen column that contains the old value
@@ -263,6 +279,7 @@ and above the text.
 
     @QtCore.pyqtSlot()
     def _update_frozen_table(self):
+        assert object_thread( self )
         frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
         if frozen_table_view:
             selection_model = self.selectionModel()
@@ -287,6 +304,7 @@ and above the text.
     @QtCore.pyqtSlot( int )
     def horizontal_section_clicked( self, logical_index ):
         """Update the sorting of the model and the header"""
+        assert object_thread( self )
         header = self.horizontalHeader()
         order = Qt.AscendingOrder
         if not header.isSortIndicatorShown():
@@ -305,6 +323,7 @@ and above the text.
         
         those assertion failures only exist in QT debug builds.
         """
+        assert object_thread( self )
         current_index = self.currentIndex()
         if not current_index:
             return
@@ -316,6 +335,7 @@ and above the text.
             table_widget.closePersistentEditor( current_index )
                 
     def setModel( self, model ):
+        assert object_thread( self )
         #
         # An editor might be open that is no longer available for the new
         # model.  Not closing this editor, results in assertion failures
@@ -336,6 +356,7 @@ and above the text.
         
     @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)
     def activated( self, selectedIndex, previousSelectedIndex ):
+        assert object_thread( self )
         option = QtGui.QStyleOptionViewItem()
         new_size = self.itemDelegate( selectedIndex ).sizeHint( option,
                                                                 selectedIndex )
@@ -347,6 +368,7 @@ and above the text.
                                      self._minimal_row_height ) )
                                      
     def keyPressEvent(self, e):
+        assert object_thread( self )
         if self.hasFocus() and e.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return):
             self.keyboard_selection_signal.emit()
         else:
@@ -358,6 +380,7 @@ class AdminTableWidget( QtGui.QWidget ):
     
     def __init__(self, admin, parent=None):
         super( AdminTableWidget, self ).__init__( parent )
+        assert object_thread( self )
         self._admin = admin
         table_widget = TableWidget( columns_frozen = admin.list_columns_frozen,
                                     lines_per_row = admin.lines_per_row,
@@ -381,6 +404,7 @@ class AdminTableWidget( QtGui.QWidget ):
             return getattr( table_widget, name )
         
     def setModel( self, model ):
+        assert object_thread( self )
         table_widget = self.findChild( QtGui.QWidget, 'table_widget' )
         column_groups = self.findChild( QtGui.QWidget, 'column_groups' )
         if table_widget != None:
@@ -393,6 +417,7 @@ class AdminTableWidget( QtGui.QWidget ):
             
     @QtCore.pyqtSlot()
     def delete_selected_rows(self):
+        assert object_thread( self )
         logger.debug( 'delete selected rows called' )
         confirmed = True
         rows = set( index.row() for index in self.selectedIndexes() )
@@ -419,7 +444,8 @@ class AdminTableWidget( QtGui.QWidget ):
             progress_dialog.exec_()
 
     @QtCore.pyqtSlot()
-    def copy_selected_rows(self):            
+    def copy_selected_rows(self):
+        assert object_thread( self )
         for row in set( map( lambda x: x.row(), self.selectedIndexes() ) ):
             self.model().copy_row( row )
         
@@ -431,9 +457,11 @@ class RowsWidget( QtGui.QLabel ):
 
     def __init__( self, parent ):
         QtGui.QLabel.__init__( self, parent )
+        assert object_thread( self )
         self.setFont( self._number_of_rows_font )
 
     def setNumberOfRows( self, rows ):
+        assert object_thread( self )
         self.setText( _('(%i rows)')%rows )
 
 class HeaderWidget( QtGui.QWidget ):
@@ -450,6 +478,7 @@ class HeaderWidget( QtGui.QWidget ):
 
     def __init__( self, parent, admin ):
         QtGui.QWidget.__init__( self, parent )
+        assert object_thread( self )
         self._admin = admin
         layout = QtGui.QVBoxLayout()
         widget_layout = QtGui.QHBoxLayout()
@@ -481,6 +510,7 @@ class HeaderWidget( QtGui.QWidget ):
         with more options to filter rows in the table
         :param columns: a list of tuples with field names and attributes
         """
+        assert object_thread( self )
         from camelot.view.controls.filter_operator import FilterOperator
         layout = QtGui.QHBoxLayout()
         layout.setSpacing( 2 )
@@ -502,6 +532,7 @@ class HeaderWidget( QtGui.QWidget ):
         self._expanded_filters_created = True
 
     def _filter_changed(self):
+        assert object_thread( self )
         self.filters_changed_signal.emit()
 
     def decorate_query(self, query):
@@ -517,6 +548,7 @@ class HeaderWidget( QtGui.QWidget ):
 
     @QtCore.pyqtSlot()
     def expand_search_options(self):
+        assert object_thread( self )
         if self._expanded_search.isHidden():
             if not self._expanded_filters_created:
                 post( self._admin.get_expanded_search_fields, 
@@ -525,8 +557,8 @@ class HeaderWidget( QtGui.QWidget ):
         else:
             self._expanded_search.hide()
 
-    @gui_function
     def setNumberOfRows( self, rows ):
+        assert object_thread( self )
         if self.number_of_rows:
             self.number_of_rows.setNumberOfRows( rows )
 
@@ -536,10 +568,12 @@ class SplitterHandle( QtGui.QSplitterHandle ):
     
     def __init__ (self, orientation, splitter, widget_to_hide = None):
         super(SplitterHandle, self).__init__ (orientation, splitter)
+        assert object_thread( self )
         self.setToolTip('Click to close')
         self._widget_to_hide = widget_to_hide
         
     def mousePressEvent(self, event):
+        assert object_thread( self )
         splitter = self.splitter()
         splitter.widget( splitter.count() - 1 ).hide()
         
@@ -547,6 +581,7 @@ class Splitter(QtGui.QSplitter):
     """Custom implementation of QSplitter to use the custom SplitterHandle"""
     
     def createHandle(self):
+        assert object_thread( self )
         return SplitterHandle( self.orientation(), self, self._widget_to_hide )
     
 class TableView( AbstractView  ):
@@ -613,6 +648,7 @@ class TableView( AbstractView  ):
                   search_text = None, 
                   parent = None ):
         super(TableView, self).__init__( parent )
+        assert object_thread( self )
         self.admin = admin
         self.application_gui_context = gui_context
         self.gui_context = gui_context
@@ -666,6 +702,7 @@ class TableView( AbstractView  ):
 
     @QtCore.pyqtSlot()
     def activate_search(self):
+        assert object_thread( self )
         self.header.search.setFocus(QtCore.Qt.ShortcutFocusReason)
 
     @model_function
@@ -673,8 +710,8 @@ class TableView( AbstractView  ):
         return self.title_format % {'verbose_name_plural':self.admin.get_verbose_name_plural()}
 
     @QtCore.pyqtSlot(object)
-    @gui_function
     def setSubclassTree( self, subclasses ):
+        assert object_thread( self )
         if len( subclasses ) > 0:
             from inheritance import SubclassTree
             splitter = self.findChild(QtGui.QWidget, 'splitter' )
@@ -685,6 +722,7 @@ class TableView( AbstractView  ):
     @QtCore.pyqtSlot(int)
     def sectionClicked( self, section ):
         """emits a row_selected signal"""
+        assert object_thread( self )
         #
         # close the table editor before opening a form or such
         #
@@ -708,10 +746,10 @@ class TableView( AbstractView  ):
         return self.table.model()
 
     @QtCore.pyqtSlot( object )
-    @gui_function
     def set_admin( self, admin ):
         """Switch to a different subclass, where admin is the admin object of the
         subclass"""
+        assert object_thread( self )
         logger.debug('set_admin called')
         self.admin = admin
         if self.table:
@@ -741,11 +779,12 @@ class TableView( AbstractView  ):
 
     @QtCore.pyqtSlot()
     def on_keyboard_selection_signal(self):
+        assert object_thread( self )
         self.sectionClicked( self.table.currentIndex().row() )
 
     @QtCore.pyqtSlot()
-    @gui_function
     def tableLayoutChanged( self ):
+        assert object_thread( self )
         logger.debug('tableLayoutChanged')
         model = self.table.model()
         if self.header:
@@ -758,15 +797,18 @@ class TableView( AbstractView  ):
 
     def closeEvent( self, event ):
         """reimplements close event"""
+        assert object_thread( self )
         logger.debug( 'tableview closed' )
         event.accept()
 
     def selectTableRow( self, row ):
         """selects the specified row"""
+        assert object_thread( self )
         self.table.selectRow( row )
 
     def getColumns( self ):
         """return the columns to be displayed in the table view"""
+        assert object_thread( self )
         return self.admin.get_columns()
 
     def getTitle( self ):
@@ -775,6 +817,7 @@ class TableView( AbstractView  ):
 
     @QtCore.pyqtSlot(object)
     def _set_query(self, query_getter):
+        assert object_thread( self )
         if isinstance(self.table.model(), QueryTableProxy):
             self.table.model().setQuery(query_getter)
         self.table.clearSelection()
@@ -782,6 +825,7 @@ class TableView( AbstractView  ):
     @QtCore.pyqtSlot()
     def refresh(self):
         """Refresh the whole view"""
+        assert object_thread( self )
         post( self.get_admin, self.set_admin )
 
     @QtCore.pyqtSlot()
@@ -807,6 +851,7 @@ class TableView( AbstractView  ):
     @QtCore.pyqtSlot(str)
     def startSearch( self, text ):
         """rebuilds query based on filtering text"""
+        assert object_thread( self )
         from camelot.view.search import create_entity_search_query_decorator
         logger.debug( 'search %s' % text )
         self.search_filter = create_entity_search_query_decorator( self.admin, unicode(text) )
@@ -815,14 +860,15 @@ class TableView( AbstractView  ):
     @QtCore.pyqtSlot()
     def cancelSearch( self ):
         """resets search filtering to default"""
+        assert object_thread( self )
         logger.debug( 'cancel search' )
         self.search_filter = lambda q: q
         self.rebuild_query()
 
     @QtCore.pyqtSlot(object)
-    @gui_function
     def set_filters_and_actions( self, filters_and_actions ):
         """sets filters for the tableview"""
+        assert object_thread( self )
         filters, actions = filters_and_actions
         from camelot.view.controls.filterlist import FilterList
         from camelot.view.controls.actionsbox import ActionsBox
@@ -855,6 +901,7 @@ class TableView( AbstractView  ):
 
     @QtCore.pyqtSlot()
     def focusTable(self):
+        assert object_thread( self )
         if self.table and self.table.model().rowCount() > 0:
             self.table.setFocus()
             self.table.selectRow(0)

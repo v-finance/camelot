@@ -29,7 +29,7 @@ import logging
 logger = logging.getLogger('camelot.view.proxy.queryproxy')
 
 from collection_proxy import CollectionProxy, strip_data_from_object
-from camelot.view.model_thread import model_function, gui_function, post
+from camelot.view.model_thread import model_function, object_thread, post
 
 
 class QueryTableProxy(CollectionProxy):
@@ -89,9 +89,9 @@ class QueryTableProxy(CollectionProxy):
             return 0
         return self.get_query_getter()().count() + len(self._appended_rows)
 
-    @gui_function
     def setQuery(self, query_getter):
         """Set the query and refresh the view"""
+        assert object_thread( self )
         self._query_getter = query_getter
         self.refresh()
         
@@ -195,10 +195,10 @@ class QueryTableProxy(CollectionProxy):
                                                   join )
         return self._rows
         
-    @gui_function
     def sort( self, column, order ):
         """Overwrites the :meth:`QAbstractItemModel.sort` method
         """
+        assert object_thread( self )
         post( functools.update_wrapper( functools.partial( self._set_sort_decorator, column, order ), self._set_sort_decorator ), 
               self._refresh_content )
 
@@ -219,7 +219,7 @@ class QueryTableProxy(CollectionProxy):
         """Generator for all the data queried by this proxy"""
         if self._query_getter:
             for _i,o in enumerate(self.get_query_getter()().all()):
-                yield strip_data_from_object(o, self.getColumns())
+                yield strip_data_from_object(o, self._columns)
 
     @model_function
     def _get_collection_range( self, offset, limit ):
@@ -236,7 +236,7 @@ class QueryTableProxy(CollectionProxy):
         # of queries
         #
         columns_to_undefer = []
-        for field_name, _field_attributes in self.getColumns():
+        for field_name, _field_attributes in self._columns:
             
             property = None
             try:
@@ -264,7 +264,7 @@ class QueryTableProxy(CollectionProxy):
         if self._query_getter:
             offset, limit = self._offset_and_limit_rows_to_get()
             if limit:
-                columns = self.getColumns()
+                columns = self._columns
                 #
                 # try to move the offset further by looking if the
                 # objects are already in the cache.
@@ -333,4 +333,3 @@ class QueryTableProxy(CollectionProxy):
                     return res.limit(1).first()
                 except:
                     pass
-
