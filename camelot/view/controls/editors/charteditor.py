@@ -187,6 +187,9 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
         from camelot.container.chartcontainer import structure_to_figure_container
         self._value = structure_to_figure_container( super(ChartEditor, self).set_value(value) )
         self.on_draw()
+        
+    def get_value(self):
+        return self._value
 
 #    def _get_tightbbox(self, fig, pad_inches):
 #        renderer = fig.canvas.get_renderer()
@@ -231,7 +234,3 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
 #        #self.fig.subplots_adjust(bottom=0.3, right=0.9, top=0.9, left=0.1)
 #        self.tight_borders(self.fig)
 #        self.canvas.draw()
-
-
-
-
