@@ -83,8 +83,8 @@ class DateTimeEditor(CustomEditor):
                         for i in range(0,24)))]
         self.timeedit.addItems(time_entries)
         self.timeedit.setValidator(TimeValidator(self, nullable))
-        self.timeedit.currentIndexChanged.connect( self.editing_finished )
-        self.timeedit.editTextChanged.connect( self.editing_finished )
+        self.timeedit.activated.connect( self.editing_finished )
+        self.timeedit.lineEdit().editingFinished.connect( self.editing_finished )
         self.timeedit.setFocusPolicy( Qt.StrongFocus )
 
         layout.addWidget(self.timeedit, 1)

@@ -22,7 +22,6 @@
 #
 #  ============================================================================
 
-
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
@@ -30,7 +29,6 @@ from PyQt4.QtCore import Qt
 from customeditor import AbstractCustomEditor
 from camelot.core import constants
 from camelot.core.utils import ugettext
-
 
 class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
     """Widget for editing a boolean field"""
@@ -48,16 +46,12 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
         self._nullable = nullable
-        #if self._nullable:
-        #    self.setTristate( True )
-        self.stateChanged.connect(self._state_changed)
+        self.clicked.connect( self._state_changed )
 
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
         if value:
             self.setCheckState(Qt.Checked)
-        #elif value==None and self._nullable:
-        #    self.setCheckState(Qt.PartiallyChecked)
         else:
             self.setCheckState(Qt.Unchecked)
 
@@ -66,12 +60,11 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
         if value_loading is not None:
             return value_loading
         state = self.checkState()
-        #if state==Qt.PartiallyChecked:
-        #    return None
         if state==Qt.Unchecked:
             return False
         return True
 
+    @QtCore.pyqtSlot( bool )
     def _state_changed(self, value=None):
         self.editingFinished.emit()
 
@@ -83,7 +76,6 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
     def sizeHint(self):
         size = QtGui.QComboBox().sizeHint()
         return size
-
 
 class TextBoolEditor(QtGui.QLabel, AbstractCustomEditor):
     """
@@ -124,5 +116,3 @@ class TextBoolEditor(QtGui.QLabel, AbstractCustomEditor):
                 selfpalette = self.palette()
                 selfpalette.setColor(QtGui.QPalette.WindowText, self.color_no)
                 self.setPalette(selfpalette)
-
-

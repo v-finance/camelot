@@ -27,6 +27,16 @@ def create_getter(getable):
 
     return getter
 
+class SignalCounter( QtCore.QObject ):
+    
+    def __init__( self ):
+        super( SignalCounter, self ).__init__()
+        self.counter = 0
+        
+    @QtCore.pyqtSlot()
+    def signal_caught( self ):
+        self.counter += 1
+        
 class EditorsTest(ModelThreadTestCase):
     """
   Test the basic functionality of the editors :
@@ -45,8 +55,18 @@ class EditorsTest(ModelThreadTestCase):
         """Test the basic functions of an editor that are needed to integrate
         well with Camelot and Qt
         """
+        #
+        # The editor should remember its when its value is ValueLoading
+        #
         editor.set_value( self.ValueLoading )
         self.assertEqual( editor.get_value(), self.ValueLoading )
+        #
+        # When a value is set, no editingFinished should be called
+        #
+        signal_counter = SignalCounter()
+        editor.editingFinished.connect( signal_counter.signal_caught )
+        editor.set_value( value )
+        self.assertEqual( signal_counter.counter, 0 )
         
     def test_ChartEditor(self):
         import math
