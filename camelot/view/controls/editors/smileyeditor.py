@@ -22,7 +22,7 @@
 #
 #  ============================================================================
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from customeditor import CustomEditor
@@ -79,7 +79,7 @@ class SmileyEditor(CustomEditor):
         else:
             self.box.setEnabled(True)
 
-        self.box.currentIndexChanged.connect(self.smiley_changed)
+        self.box.activated.connect( self.smiley_changed )
         layout.addWidget(self.box)
         layout.addStretch()
         self.setLayout(layout)
@@ -91,10 +91,10 @@ class SmileyEditor(CustomEditor):
     def set_enabled(self, editable=True):
         self.box.setEnabled(editable)
 
-    def smiley_changed(self):
+    @QtCore.pyqtSlot( int )
+    def smiley_changed(self, _index ):
         self.editingFinished.emit()
 
     def set_value(self, value):
         name = CustomEditor.set_value(self, value)
         self.box.setCurrentIndex( self.position_by_name[name] )
-
