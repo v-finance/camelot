@@ -26,7 +26,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QDialog, QFrame, QGridLayout, QLabel, QVBoxLayout, \
     QWidget, QLayout
 
-from camelot.view.model_thread import gui_function
+from camelot.view.model_thread import object_thread
 
 class HSeparator(QFrame):
 
@@ -43,8 +43,8 @@ class StandaloneWizardPage(QDialog):
         self.setWindowTitle(window_title or '')
         self.set_layouts()
 
-    @gui_function
     def set_layouts(self):
+        assert object_thread( self )
         self._vlayout = QVBoxLayout()
         self._vlayout.setSpacing(0)
         self._vlayout.setContentsMargins(0,0,0,0)

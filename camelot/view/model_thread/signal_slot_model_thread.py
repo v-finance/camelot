@@ -32,7 +32,8 @@ logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 from PyQt4 import QtCore
 
-from camelot.view.model_thread import AbstractModelThread, gui_function, setup_model
+from camelot.view.model_thread import ( AbstractModelThread, object_thread, 
+                                        setup_model )
 from camelot.core.threading import synchronized
 from camelot.view.controls.exception import register_exception
 
@@ -223,11 +224,11 @@ class SignalSlotModelThread( AbstractModelThread ):
         app = QtCore.QCoreApplication.instance()
         return app.hasPendingEvents() or len(self._request_queue) or self._task_handler.busy() or self._setup_busy
 
-    @gui_function
     def wait_on_work(self):
         """Wait for all work to be finished, this function should only be used
         to do unit testing and such, since it will block the calling thread until
         all work is done"""
+        assert object_thread( self )
         app = QtCore.QCoreApplication.instance()
         while self.busy():
             app.processEvents()

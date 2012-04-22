@@ -46,7 +46,7 @@ from camelot.view.controls.combobox_input_dialog import ComboBoxInputDialog
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext as _
 from camelot.view.model_thread.signal_slot_model_thread import SignalSlotModelThread
-from camelot.view.model_thread import gui_function
+from camelot.view.model_thread import object_thread
 from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, \
     store_profiles, get_network_proxy, last_used_profile
 
@@ -158,8 +158,8 @@ allow all languages
         timer.start()
         self.new_network_request()
 
-    @gui_function
     def create_labels_and_widgets(self):
+        assert object_thread( self )
         self.profile_label = QLabel(_('Profile Name:'))
         self.dialect_label = QLabel(_('Driver:'))
         self.host_label = QLabel(_('Server Host:'))

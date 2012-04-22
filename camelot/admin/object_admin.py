@@ -28,7 +28,7 @@ import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
 from camelot.admin.action.form_action import CloseForm
-from camelot.view.model_thread import gui_function, model_function
+from camelot.view.model_thread import model_function
 from camelot.view.controls.tableview import TableView
 from camelot.core.utils import ugettext as _
 from camelot.core.utils import ugettext_lazy
@@ -660,7 +660,6 @@ be specified using the verbose_name attribute.
             if self.form_state == constants.MINIMIZED:
                 widget.setWindowState(QtCore.Qt.WindowMinimized)
         
-    @gui_function
     def create_form_view(self, title, model, index, parent=None):
         """Creates a Qt widget containing a form view, for a specific index in
         a model.  Use this method to create a form view for a collection of objects,
@@ -737,7 +736,6 @@ be specified using the verbose_name attribute.
                         exc_info=exc
                     )
 
-    @gui_function
     def create_object_form_view(self, title, object_getter, parent=None):
         """Create a form view for a single object, :kbd:`PgUp`/:kbd:`PgDown` 
         will do nothing.
@@ -770,7 +768,6 @@ be specified using the verbose_name attribute.
                             self.get_fields )
         return self.create_form_view(title, model, 0, parent)
 
-    @gui_function
     def create_new_view(admin, related_collection_proxy=None, parent=None):
         """Create a Qt widget containing a form to create a new instance of the
         entity related to this admin class

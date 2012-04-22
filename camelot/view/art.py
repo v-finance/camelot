@@ -28,15 +28,12 @@ import os
 import logging
 logger = logging.getLogger('camelot.view.art')
 
-from camelot.view.model_thread import gui_function
 from PyQt4 import QtGui
-
 
 def file_(name):
     from camelot.core.resources import resource_filename
     import camelot
     return resource_filename(camelot.__name__, 'art/%s'%name)
-
 
 def read(fname):
     import camelot
@@ -45,7 +42,6 @@ def read(fname):
         camelot.__name__,
         'art/%s' % fname,
     )
-
 
 class Pixmap(object):
     """Load pixmaps from the camelot art library"""
@@ -80,7 +76,6 @@ class Pixmap(object):
         else:
             return ''
 
-    @gui_function
     def getQPixmap(self):
         """QPixmaps can only be used in the gui thread"""
         if self._cached_pixmap:
@@ -103,7 +98,6 @@ class Pixmap(object):
 class Icon(Pixmap):
     """Manages paths to the icons images"""
 
-    @gui_function
     def getQIcon(self):
         """QPixmaps can only be used in the gui thread"""
         from PyQt4.QtGui import QIcon
@@ -178,6 +172,3 @@ class ColorScheme(object):
     Qt::color0	0	0 pixel value (for bitmaps)
     Qt::color1	1	1 pixel value (for bitmaps)
     """
-
-
-

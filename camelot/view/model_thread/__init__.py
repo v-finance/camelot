@@ -78,25 +78,6 @@ def model_function(original_function):
 
     return wrapper
 
-def gui_function(original_function):
-    """Decorator to ensure a function is only called from within the gui
-    thread. If this function is called in another thread, an exception will be
-    thrown"""
-
-    def in_gui_thread():
-        """return wether current thread is gui thread"""
-        gui_thread = QtGui.QApplication.instance().thread()
-        current_thread = QtCore.QThread.currentThread()
-        return gui_thread == current_thread
-
-    @wraps(original_function)
-    def wrapper(*args, **kwargs):
-        assert (not verify_threads) or in_gui_thread()
-        return original_function(*args, **kwargs)
-
-    return wrapper
-
-
 def setup_model():
     """Call the setup_model function in the settings"""
     from camelot.core.conf import settings

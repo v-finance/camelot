@@ -158,7 +158,7 @@ class CustomDelegate(QItemDelegate):
         # * Closing the editor results in the calculator not working
         # * not closing the editor results in the virtualaddresseditor not
         #   getting closed always
-        #self.closeEditor.emit(editor, QtGui.QAbstractItemDelegate.NoHint)
+        #self.closeEditor.emit( editor, QtGui.QAbstractItemDelegate.NoHint )
 
     def setEditorData(self, editor, index):
         if not index.model():

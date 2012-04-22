@@ -32,7 +32,7 @@ from wideeditor import WideEditor
 from customeditor import CustomEditor
 
 from camelot.admin.action.list_action import ListActionGuiContext
-from camelot.view.model_thread import gui_function, post
+from camelot.view.model_thread import object_thread, post
 from camelot.view import register
 
 class One2ManyEditor(CustomEditor, WideEditor):
@@ -147,8 +147,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
                           args = ( model_context, ) )
             post( model._extend_cache, self.update_delegates )
 
-    @gui_function
     def activate_editor( self, number_of_rows ):
+        assert object_thread( self )
 #        return
 # Activating this code can cause segfaults
 # see ticket 765 in web issues
