@@ -33,7 +33,6 @@ logger = logging.getLogger( 'camelot.view.forms' )
 from PyQt4 import QtCore, QtGui
 
 from camelot.core.exception import log_programming_error
-from camelot.view.model_thread import gui_function
 
 class Form( list ):
     """Base Form class to put fields on a form.  The base class of a form is
@@ -121,7 +120,6 @@ to render a form::
     def __unicode__( self ):
         return 'Form(%s)' % ( u','.join( unicode( c ) for c in self ) )
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False):
         """
         :param widgets: a :class:`camelot.view.controls.formview.FormEditors` object
@@ -258,7 +256,6 @@ class Label( Form ):
         self.alignment = alignment
         self.style = style
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         from PyQt4 import QtGui
         if self.style:
@@ -417,7 +414,6 @@ Render forms within a QTabWidget::
             for field in form._get_fields_from_form():
                 yield field
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         widget = DelayedTabWidget( widgets, self.tabs, parent )
@@ -456,7 +452,6 @@ class HBoxForm( Form ):
             for field in form._get_fields_from_form():
                 yield field
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         widget = QtGui.QWidget( parent )
@@ -503,7 +498,6 @@ class VBoxForm( Form ):
     def __unicode__( self ):
         return 'VBoxForm [ %s\n         ]' % ( '         \n'.join( [unicode( form ) for form in self.rows] ) )
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         widget = QtGui.QWidget( parent )
@@ -562,7 +556,6 @@ class GridForm( Form ):
         for row, additional_field in zip(self._grid, column):
             row.append(additional_field)
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         widget = QtGui.QWidget( parent )
         grid_layout = QtGui.QGridLayout()
@@ -595,7 +588,6 @@ class WidgetOnlyForm( Form ):
         assert isinstance( field, ( str, unicode ) )
         super( WidgetOnlyForm, self ).__init__( [field] )
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         editor = widgets.create_editor( self.get_fields()[0], parent )
@@ -630,7 +622,6 @@ class GroupBoxForm( Form ):
             content = [content]
         Form.__init__( self, content, scrollbars, columns=columns )
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         widget = QtGui.QGroupBox( unicode(self.title), parent )
         layout = QtGui.QVBoxLayout()

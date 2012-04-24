@@ -28,7 +28,7 @@ logger = logging.getLogger('camelot.admin.entity_admin')
 
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.view.model_thread import post, model_function, gui_function
+from camelot.view.model_thread import post, model_function
 from camelot.core.utils import ugettext_lazy, ugettext
 from camelot.admin.validator.entity_validator import EntityValidator
 
@@ -375,7 +375,6 @@ It has additional class attributes that customise its behaviour.
 
         return list(filter_generator())
 
-    @gui_function
     def create_select_view(admin, query=None, search_text=None, parent=None):
         """Returns a Qt widget that can be used to select an element from a
         query
@@ -444,7 +443,6 @@ It has additional class attributes that customise its behaviour.
         widget.update()
         return widget
 
-    @gui_function
     def create_table_view( self, gui_context ):
         """Returns a :class:`QtGui.QWidget` containing a table view
         :param gui_context: a :class:`camelot.admin.action.base.GuiContext`
