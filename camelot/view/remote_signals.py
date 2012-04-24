@@ -38,9 +38,6 @@ LOGGER = logging.getLogger('remote_signals')
 
 from PyQt4 import QtCore
 
-#from camelot.core.threading import synchronized
-from camelot.core.conf import settings
-
 class SignalHandler(QtCore.QObject):
     """The signal handler connects multiple collection proxy classes to
     inform each other when they have changed an object.

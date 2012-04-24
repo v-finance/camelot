@@ -1150,7 +1150,7 @@ position in the query.
         :param obj: the object to be added to the collection
         :return: the new number of rows in the collection
         """
-        rows = self.rowCount()
+        rows = self._rows
         row = max( rows - 1, 0 )
         self.beginInsertRows( QtCore.QModelIndex(), row, row )
         self.append( obj )
