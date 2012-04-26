@@ -874,7 +874,7 @@ be specified using the verbose_name attribute.
         :return: a tuple with with components of the primary key, or none
             if the object has no primary key yet or any more.
         """
-        return False
+        return None
     
     def get_modifications( self, obj ):
         """Get the modifications on an object since the last flush.
