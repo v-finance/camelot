@@ -44,10 +44,11 @@ logger = logging.getLogger('camelot.core.orm')
 
 import sqlalchemy.types
 from camelot.core.sql import metadata
-from sqlalchemy import schema, orm, ForeignKey, types
+from sqlalchemy import schema, orm, ForeignKey, types, event
 from sqlalchemy.ext.declarative import ( declarative_base, 
                                          DeclarativeMeta )
-from sqlalchemy.orm import scoped_session, sessionmaker, deferred, column_property
+from sqlalchemy.orm import ( scoped_session, sessionmaker, deferred, 
+                             column_property, mapper, relationship )
 
 # format constants
 FKCOL_NAMEFORMAT = "%(relname)s_%(key)s"
@@ -70,89 +71,15 @@ MUTATORS = '__mutators__'
 Session = scoped_session( sessionmaker( autoflush = False,
                                         autocommit = True,
                                         expire_on_commit = False ) )
-        
-class Property( object ):
-    """
-    Abstract base class for all properties of an Entity that are not handled
-    by Declarative but should be handled by EntityMeta
-    """
-    pass
 
-class Field( schema.Column, Property ):
-    """Subclass of :class:`sqlalchemy.schema.Column`
-    """
-    
-    def __init__( self, type, *args, **kwargs ):
-        self.colname = kwargs.pop( 'colname', None )
-        self.deferred = kwargs.pop( 'deferred', False )
-        if 'required' in kwargs:
-            kwargs['nullable'] = not kwargs.pop( 'required' )
-        super( Field, self ).__init__( type, *args, **kwargs )
-
-    def attach( self, dict_, name ):
-        if self.deferred:
-            dict_[ name ] = deferred( self )
-        dict_[ name ] = self
-
-class Relationship( Property ):
-    """
-    Base class for relationships.
-    """
-
-    def __init__( self, of_kind, inverse = None, *args, **kwargs ):
-        super(Relationship, self).__init__()
-        self.of_kind = of_kind
-        self.inverse_name = inverse
-        
-class ManyToOne( Relationship ):
-    """An Entity property that creates a :class:`sqlalchemy.orm.relationship`
-    and a :class:`sqlalchemy.schema.Column` property.
-    """
-    
-    def __init__( self, of_kind=None, inverse = None, *args, **kwargs ):
-        super( ManyToOne, self ).__init__( of_kind, inverse = inverse, *args, **kwargs )
-        target_table_name = of_kind.__table__.name
-        self.column = Field( sqlalchemy.types.Integer(),
-                             ForeignKey( '%s.id'%target_table_name ) )
-        
-    def attach( self, dict_, name ):
-        return
-        dict_[ name + '_id' ] = self.column
-        dict_[ name ] = orm.relationship( self.of_kind )
-        
-class ManyToMany( Relationship ):
-
-    def attach( self, dict_, name ):
-        pass
-
-class OneToMany( Relationship ):
-    """Describes the parent's side of a parent-child relationship when there can be
-    several children.  
-    
-    Note that a ``OneToMany`` relationship **cannot exist** without a
-    corresponding ``ManyToOne`` relationship in the other way. This is because the
-    ``OneToMany`` relationship needs the foreign key created by the ``ManyToOne``
-    relationship."""
-
-    def __init__( self, of_kind=None, inverse = None, *args, **kwargs ):
-        super( OneToMany, self ).__init__( of_kind, inverse = inverse, *args, **kwargs )
-    
-    def attach( self, dict_, name ):
-        pass
-    
-class ColumnProperty( Property ):
-
-    def __init__( self, prop, *args, **kwargs ):
-        super( Property, self ).__init__()
-        self.prop = prop
-        self.args = args
-        self.kwargs = kwargs
-        
-    def attach( self, dict_, name ):
-        return
-        dict_[ name ] = column_property( self.prop.label(None), 
-                                         *self.args, 
-                                         **self.kwargs )
+#
+# There are 3 base classes that each act in a different way
+#
+# * ClassMutator : DSL like statements that modify the Entity at definition
+#   time
+# * Property : modify an Entity at construction time
+# * DeferredProperty : modify an Entity after the mapping has been configured
+#
 
 class ClassMutator( object ):
     """Class to create DSL statements such as `using_options`.  This is used
@@ -171,6 +98,146 @@ class ClassMutator( object ):
         Process one mutator.  This methed should be overwritten in a subclass
         """
         pass
+
+class Property( object ):
+    """
+    Abstract base class for all properties of an Entity that are not handled
+    by Declarative but should be handled by EntityMeta before a new Entity
+    subclass is constructed
+    """
+    pass
+
+class DeferredProperty( object ):
+    """    Abstract base class for all properties of an Entity that are not 
+    handled by Declarative but should be handled after a mapper was
+    configured"""
+
+    def _setup_reverse( self, key, rel, target_cls ):
+        """Setup bidirectional behavior between two relationships."""
+
+        reverse = self.kw.get( 'reverse' )
+        if reverse:
+            reverse_attr = getattr( target_cls, reverse )
+            if not isinstance( reverse_attr, DeferredProp ):
+                reverse_attr.property._add_reverse_property( key )
+                rel._add_reverse_property( reverse )
+
+@event.listens_for( mapper, 'mapper_configured' )
+def _setup_deferred_properties( mapper, class_ ):
+    """Listen for finished mappers and apply DeferredPropoperty
+    configurations."""
+
+    for key, value in class_.__dict__.items():
+        if isinstance( value, DeferredProperty ):
+            value._config( class_, mapper, key )
+
+class Field( schema.Column, Property ):
+    """Subclass of :class:`sqlalchemy.schema.Column`
+    """
+    
+    def __init__( self, type, *args, **kwargs ):
+        self.colname = kwargs.pop( 'colname', None )
+        self.deferred = kwargs.pop( 'deferred', False )
+        if 'required' in kwargs:
+            kwargs['nullable'] = not kwargs.pop( 'required' )
+        super( Field, self ).__init__( type, *args, **kwargs )
+
+    def attach( self, dict_, name ):
+        if self.deferred:
+            dict_[ name ] = deferred( self )
+        dict_[ name ] = self
+
+class Relationship( DeferredProperty ):
+    """Generates a one to many or many to one relationship."""
+
+    def __init__(self, target, **kw):
+        self.target = target
+        self.kw = kw
+
+    def _config(self, cls, mapper, key):
+        """Create a Column with ForeignKey as well as a relationship()."""
+
+        if isinstance( self.target, basestring ):
+            target_cls = cls._decl_class_registry[self.target]
+        else:
+            target_cls = self.target
+
+        pk_target, fk_target = self._get_pk_fk(cls, target_cls)
+        pk_table = pk_target.__table__
+        pk_col = list(pk_table.primary_key)[0]
+        
+        fk_colname = '%s_id'%key
+        
+        if hasattr(fk_target, fk_colname):
+            fk_col = getattr(fk_target, self.fk_col)
+        else:
+            fk_col = schema.Column(fk_colname, pk_col.type, ForeignKey(pk_col))
+            setattr(fk_target, fk_colname, fk_col)
+
+        rel = relationship(target_cls,
+                primaryjoin=fk_col==pk_col,
+                collection_class=self.kw.get('collection_class', set)
+            )
+        setattr(cls, key, rel)
+        self._setup_reverse(key, rel, target_cls)
+
+class OneToMany( Relationship ):
+    """Generates a one to many relationship."""
+
+    def _get_pk_fk( self, cls, target_cls ):
+        return cls, target_cls
+
+class ManyToOne( Relationship ):
+    """Generates a many to one relationship."""
+
+    def _get_pk_fk( self, cls, target_cls ):
+        return target_cls, cls
+
+class ManyToMany( DeferredProperty ):
+    """Generates a many to many relationship."""
+
+    def __init__( self, target, tablename, local_colname, remote_colname, **kw ):
+        self.target = target
+        self.tablename = tablename
+        self.local = local_colname
+        self.remote = remote_colname
+        self.kw = kw
+
+    def _config(self, cls, mapper, key):
+        """Create an association table between parent/target
+        as well as a relationship()."""
+
+        target_cls = cls._decl_class_registry[self.target]
+        local_pk = list(cls.__table__.primary_key)[0]
+        target_pk = list(target_cls.__table__.primary_key)[0]
+
+        t = schema.Table(
+                self.tablename,
+                cls.metadata,
+                schema.Column(self.local, ForeignKey(local_pk), primary_key=True),
+                schema.Column(self.remote, ForeignKey(target_pk), primary_key=True),
+                keep_existing=True
+            )
+        rel = relationship(target_cls,
+                secondary=t,
+                collection_class=self.kw.get('collection_class', set)
+            )
+        setattr(cls, key, rel)
+        self._setup_reverse(key, rel, target_cls)
+                    
+class ColumnProperty( Property ):
+
+    def __init__( self, prop, *args, **kwargs ):
+        super( Property, self ).__init__()
+        self.prop = prop
+        self.args = args
+        self.kwargs = kwargs
+        
+    def attach( self, dict_, name ):
+        return
+        dict_[ name ] = column_property( self.prop.label(None), 
+                                         *self.args, 
+                                         **self.kwargs )
 
 def setup_all( create_tables=False, *args, **kwargs ):
     """Create all tables that are registered in the metadata

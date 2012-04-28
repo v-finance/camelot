@@ -311,80 +311,6 @@ class Party( Entity ):
                                                    ).limit( 1 ).as_scalar() )
     
     full_name = ColumnProperty( full_name, deferred=True )
-
-    class Admin( EntityAdmin ):
-        verbose_name = _('Party')
-        verbose_name_plural = _('Parties')
-        list_display = ['name', 'contact_mechanisms_email', 'contact_mechanisms_phone'] # don't use full name, since it might be None for new objects
-        list_search = ['full_name']
-        list_filter = ['categories.name']
-        form_display = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
-        form_size = (700, 700)
-        field_attributes = dict(addresses = {'admin':AddressAdmin},
-                                contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin},
-                                suppliers = {'admin':SupplierCustomer.SupplierAdmin},
-                                customers = {'admin':SupplierCustomer.CustomerAdmin},
-                                employers = {'admin':EmployerEmployee.EmployerAdmin},
-                                employees = {'admin':EmployerEmployee.EmployeeAdmin},
-                                directed_organizations = {'admin':DirectedDirector.DirectedAdmin},
-                                directors = {'admin':DirectedDirector.DirectorAdmin},
-                                shares = {'admin':SharedShareholder.SharedAdmin},
-                                shareholders = {'admin':SharedShareholder.ShareholderAdmin},
-                                sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )] ),
-                                name = dict( minimal_column_width = 50 ),
-                                email = dict( editable = False, minimal_column_width = 20 ),
-                                phone = dict( editable = False, minimal_column_width = 20 ),
-                                contact_mechanisms_email = dict( editable = True,
-                                                                 name = _('Email'),
-                                                                 address_type = 'email',
-                                                                 minimal_column_width = 20,
-                                                                 from_string = lambda s:('email', s),
-                                                                 delegate = delegates.VirtualAddressDelegate ),
-                                contact_mechanisms_phone = dict( editable = True,
-                                                                 name = _('Phone'),
-                                                                 address_type = 'phone',
-                                                                 minimal_column_width = 20,
-                                                                 from_string = lambda s:('phone', s),
-                                                                 delegate = delegates.VirtualAddressDelegate ),
-                                contact_mechanisms_fax = dict( editable = True,
-                                                               name = _('Fax'),
-                                                               address_type = 'fax',
-                                                               minimal_column_width = 20,
-                                                               from_string = lambda s:('fax', s),
-                                                               delegate = delegates.VirtualAddressDelegate ),
-                                )
-
-        def flush(self, party):
-            from sqlalchemy.orm.session import Session
-            session = Session.object_session( party )
-            if session:
-                #
-                # make sure the temporary contact mechanisms are added
-                # relational
-                #
-                for cm in party._contact_mechanisms.values():
-                    if not cm:
-                        break
-                    found = False
-                    for party_contact_mechanism in party.contact_mechanisms:
-                        mechanism = party_contact_mechanism.contact_mechanism_mechanism
-                        if mechanism and mechanism[0] == cm[0]:
-                            party_contact_mechanism.contact_mechanism_mechanism = cm
-                            found = True
-                            break
-                    if not found:
-                        contact_mechanism = ContactMechanism( mechanism = cm )
-                        party.contact_mechanisms.append( PartyContactMechanism(contact_mechanism=contact_mechanism) )
-                #
-                # then clear the temporary store to make sure they are not created
-                # a second time
-                #
-                
-                #for party_contact_mechanism in party.contact_mechanisms:
-                #    objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
-                session.flush()
-                party._contact_mechanisms.clear()
-                party.expire( ['phone', 'email', 'fax'] )
                 
 class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
@@ -409,23 +335,6 @@ class Organization( Party ):
     @property
     def number_of_shares_issued( self ):
         return sum( ( shareholder.shares for shareholder in self.shareholders ), 0 )
-
-    class Admin( Party.Admin ):
-        verbose_name = _( 'Organization' )
-        verbose_name_plural = _( 'Organizations' )
-        list_display = ['name', 'tax_id', 'contact_mechanisms_email', 'contact_mechanisms_phone']
-        form_display = TabForm( [( _('Basic'), Form( [ 'name', 'contact_mechanisms_email', 
-                                                       'contact_mechanisms_phone', 
-                                                       'contact_mechanisms_fax', 'tax_id', 
-                                                       'addresses', 'contact_mechanisms'] ) ),
-                                ( _('Employment'), Form( ['employees'] ) ),
-                                ( _('Customers'), Form( ['customers'] ) ),
-                                ( _('Suppliers'), Form( ['suppliers'] ) ),
-                                ( _('Corporate'), Form( ['directors', 'shareholders', 'shares'] ) ),
-                                ( _('Branding'), Form( ['logo'] ) ),
-                                ( _('Category and Status'), Form( ['categories', 'status'] ) ),
-                                ] )
-        field_attributes = dict( Party.Admin.field_attributes )
 
 Organization = documented_entity()( Organization )
 
@@ -470,28 +379,6 @@ class Person( Party ):
 
     def __unicode__( self ):
         return self.name or ''
-
-    class Admin( Party.Admin ):
-        verbose_name = _( 'Person' )
-        verbose_name_plural = _( 'Persons' )
-        list_display = ['first_name', 'last_name', 'contact_mechanisms_email', 'contact_mechanisms_phone']
-        form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [ Form( [WidgetOnlyForm('note'), 
-                                                                  'first_name', 
-                                                                  'last_name', 
-                                                                  'sex',
-                                                                  'contact_mechanisms_email',
-                                                                  'contact_mechanisms_phone',
-                                                                  'contact_mechanisms_fax'] ),
-                                                                [WidgetOnlyForm('picture'), ],
-                                                         ] ),
-                                                         'comment', ], scrollbars = False ) ),
-                                ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
-                                                        'passport_expiry_date', 'addresses', 'contact_mechanisms',], scrollbars = False ) ),
-                                ( _('Work'), Form( ['employers', 'directed_organizations', 'shares'], scrollbars = False ) ),
-                                ( _('Category'), Form( ['categories',] ) ),
-                                ] )
-        field_attributes = dict( Party.Admin.field_attributes )
-        field_attributes['note'] = {'delegate':delegates.NoteDelegate}
 
 Person = documented_entity()( Person )
 
@@ -892,3 +779,122 @@ class PartyCategory( Entity ):
         verbose_name = _('Category')
         verbose_name_plural = _('Categories')
         list_display = ['name', 'color']
+
+class PartyAdmin( EntityAdmin ):
+    verbose_name = _('Party')
+    verbose_name_plural = _('Parties')
+    list_display = ['name', 'contact_mechanisms_email', 'contact_mechanisms_phone'] # don't use full name, since it might be None for new objects
+    list_search = ['full_name']
+    list_filter = ['categories.name']
+    form_display = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
+    form_size = (700, 700)
+    field_attributes = dict(addresses = {'admin':AddressAdmin},
+                            contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin},
+                            suppliers = {'admin':SupplierCustomer.SupplierAdmin},
+                            customers = {'admin':SupplierCustomer.CustomerAdmin},
+                            employers = {'admin':EmployerEmployee.EmployerAdmin},
+                            employees = {'admin':EmployerEmployee.EmployeeAdmin},
+                            directed_organizations = {'admin':DirectedDirector.DirectedAdmin},
+                            directors = {'admin':DirectedDirector.DirectorAdmin},
+                            shares = {'admin':SharedShareholder.SharedAdmin},
+                            shareholders = {'admin':SharedShareholder.ShareholderAdmin},
+                            sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )] ),
+                            name = dict( minimal_column_width = 50 ),
+                            email = dict( editable = False, minimal_column_width = 20 ),
+                            phone = dict( editable = False, minimal_column_width = 20 ),
+                            contact_mechanisms_email = dict( editable = True,
+                                                             name = _('Email'),
+                                                             address_type = 'email',
+                                                             minimal_column_width = 20,
+                                                             from_string = lambda s:('email', s),
+                                                             delegate = delegates.VirtualAddressDelegate ),
+                            contact_mechanisms_phone = dict( editable = True,
+                                                             name = _('Phone'),
+                                                             address_type = 'phone',
+                                                             minimal_column_width = 20,
+                                                             from_string = lambda s:('phone', s),
+                                                             delegate = delegates.VirtualAddressDelegate ),
+                            contact_mechanisms_fax = dict( editable = True,
+                                                           name = _('Fax'),
+                                                           address_type = 'fax',
+                                                           minimal_column_width = 20,
+                                                           from_string = lambda s:('fax', s),
+                                                           delegate = delegates.VirtualAddressDelegate ),
+                            )
+
+    def flush(self, party):
+        from sqlalchemy.orm.session import Session
+        session = Session.object_session( party )
+        if session:
+            #
+            # make sure the temporary contact mechanisms are added
+            # relational
+            #
+            for cm in party._contact_mechanisms.values():
+                if not cm:
+                    break
+                found = False
+                for party_contact_mechanism in party.contact_mechanisms:
+                    mechanism = party_contact_mechanism.contact_mechanism_mechanism
+                    if mechanism and mechanism[0] == cm[0]:
+                        party_contact_mechanism.contact_mechanism_mechanism = cm
+                        found = True
+                        break
+                if not found:
+                    contact_mechanism = ContactMechanism( mechanism = cm )
+                    party.contact_mechanisms.append( PartyContactMechanism(contact_mechanism=contact_mechanism) )
+            #
+            # then clear the temporary store to make sure they are not created
+            # a second time
+            #
+            
+            #for party_contact_mechanism in party.contact_mechanisms:
+            #    objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
+            session.flush()
+            party._contact_mechanisms.clear()
+            party.expire( ['phone', 'email', 'fax'] )
+
+Party.Admin = PartyAdmin
+
+class OrganizationAdmin( Party.Admin ):
+    verbose_name = _( 'Organization' )
+    verbose_name_plural = _( 'Organizations' )
+    list_display = ['name', 'tax_id', 'contact_mechanisms_email', 'contact_mechanisms_phone']
+    form_display = TabForm( [( _('Basic'), Form( [ 'name', 'contact_mechanisms_email', 
+                                                   'contact_mechanisms_phone', 
+                                                   'contact_mechanisms_fax', 'tax_id', 
+                                                   'addresses', 'contact_mechanisms'] ) ),
+                            ( _('Employment'), Form( ['employees'] ) ),
+                            ( _('Customers'), Form( ['customers'] ) ),
+                            ( _('Suppliers'), Form( ['suppliers'] ) ),
+                            ( _('Corporate'), Form( ['directors', 'shareholders', 'shares'] ) ),
+                            ( _('Branding'), Form( ['logo'] ) ),
+                            ( _('Category and Status'), Form( ['categories', 'status'] ) ),
+                            ] )
+    field_attributes = dict( Party.Admin.field_attributes )
+
+Organization.Admin = OrganizationAdmin
+
+class PersonAdmin( Party.Admin ):
+    verbose_name = _( 'Person' )
+    verbose_name_plural = _( 'Persons' )
+    list_display = ['first_name', 'last_name', 'contact_mechanisms_email', 'contact_mechanisms_phone']
+    form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [ Form( [WidgetOnlyForm('note'), 
+                                                              'first_name', 
+                                                              'last_name', 
+                                                              'sex',
+                                                              'contact_mechanisms_email',
+                                                              'contact_mechanisms_phone',
+                                                              'contact_mechanisms_fax'] ),
+                                                            [WidgetOnlyForm('picture'), ],
+                                                     ] ),
+                                                     'comment', ], scrollbars = False ) ),
+                            ( _('Official'), Form( ['birthdate', 'social_security_number', 'passport_number',
+                                                    'passport_expiry_date', 'addresses', 'contact_mechanisms',], scrollbars = False ) ),
+                            ( _('Work'), Form( ['employers', 'directed_organizations', 'shares'], scrollbars = False ) ),
+                            ( _('Category'), Form( ['categories',] ) ),
+                            ] )
+    field_attributes = dict( Party.Admin.field_attributes )
+    field_attributes['note'] = {'delegate':delegates.NoteDelegate}
+    
+Person.Admin = PersonAdmin

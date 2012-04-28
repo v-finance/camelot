@@ -80,7 +80,10 @@ class Movie(Entity):
     director = ManyToOne('Person')
     cast = OneToMany('Cast')
     visitor_reports = OneToMany('VisitorReport')
-    tags = ManyToMany('Tag')
+    tags = ManyToMany('Tag',
+                      tablename = 'tags_movies__movies_tags',
+                      local_colname = 'tags_id',
+                      remote_colname = 'movies_id' )
     genre = Field(Unicode(15))
     rating = Field(camelot.types.Rating())
 # end short movie definition
@@ -208,7 +211,10 @@ class Cast(Entity):
 class Tag(Entity):
     using_options(tablename='tags')
     name = Field(Unicode(60), required=True)
-    movies = ManyToMany('Movie')
+    movies = ManyToMany( 'Movie',
+                         tablename = 'tags_movies__movies_tags',
+                         local_colname = 'movies_id',
+                         remote_colname = 'tags_id' )
 
     def __unicode__(self):
         return self.name
