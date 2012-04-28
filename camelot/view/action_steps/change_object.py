@@ -74,6 +74,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.main_widget().setLayout(layout)
     
         cancel_button = QtGui.QPushButton( ugettext('Cancel') )
+        cancel_button.setObjectName( 'cancel' )
         ok_button = QtGui.QPushButton( ugettext('OK') )
         ok_button.setObjectName( 'ok' )
         ok_button.setEnabled( False )
@@ -103,8 +104,12 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         
     def _change_complete(self, complete):
         ok_button = self.findChild( QtGui.QPushButton, 'ok' )
-        if ok_button:
+        cancel_button = self.findChild( QtGui.QPushButton, 'cancel' )
+        if ok_button != None:
             ok_button.setEnabled( complete )
+            ok_button.setDefault( complete )
+        if cancel_button != None:
+            ok_button.setDefault( not complete )
 
 class ChangeObjectsDialog( StandaloneWizardPage ):
     """A dialog to change a list of objects.  This differs from a ListView in 
@@ -292,6 +297,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
             return True
         
         choices = [(field, attributes['name']) for field, attributes in field_attributes.items() if filter(attributes)]
+        choices.sort( key = lambda choice:choice[1] )
         editor.set_choices( choices )
         editor.set_value( ( choices+[(None,None)] )[1][0] )
         self.field_changed( 0 )  
@@ -363,14 +369,24 @@ class ChangeFieldDialog( StandaloneWizardPage ):
             
 class ChangeField( ActionStep ):
     """
-    Pop up a list of fields from an object a user can change
+    Pop up a list of fields from an object a user can change.  When the
+    user selects a field, an appropriate widget is shown to change the
+    value of that field.
     
+    :param admin: the admin of the object of which to change the field
+    :param field_attributes: a list of field attributes of the fields that
+        can be changed.  If `None` is given, all fields are shown.
+        
+    This action step returns a tuple with the name of the selected field, and
+    its new value.
     """
     
-    def __init__(self, admin ):
+    def __init__(self, admin, field_attributes = None ):
         super( ChangeField, self ).__init__()
         self.admin = admin
-        self.field_attributes = admin.get_all_fields_and_attributes()
+        if field_attributes == None:
+            field_attributes = admin.get_all_fields_and_attributes()
+        self.field_attributes = field_attributes
         
     def render( self ):
         """create the dialog. this method is used to unit test

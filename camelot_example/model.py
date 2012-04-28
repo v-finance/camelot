@@ -17,7 +17,7 @@ from camelot.core.orm import Entity, Field, ManyToOne, OneToMany, \
 from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.view import action_steps
-from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm
+from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm, Stretch
 from camelot.view.controls import delegates
 from camelot.view.filters import ComboBoxFilter
 from camelot.core.utils import ugettext_lazy as _
@@ -25,6 +25,7 @@ from camelot.view.art import ColorScheme
 from sqlalchemy.types import Unicode, Date, Integer
 
 from camelot_example.change_rating import ChangeRatingAction
+from camelot_example.drag_and_drop import DropAction
 
 # Some helper functions that will be used later on
 #
@@ -144,11 +145,12 @@ class Movie(Entity):
         #
         list_actions = [ChangeRatingAction()]
         # end list_actions
+        drop_action = DropAction()
         # the form_display attribute specifies which entity attributes should be
         # visible in the form view
         form_display = TabForm([
           ('Movie', Form([
-            HBoxForm([WidgetOnlyForm('cover'), ['title', 'rating']]),
+            HBoxForm([WidgetOnlyForm('cover'), ['title', 'rating', Stretch()]]),
             'short_description',
             'releasedate',
             'director',

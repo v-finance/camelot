@@ -33,7 +33,6 @@ logger = logging.getLogger( 'camelot.view.forms' )
 from PyQt4 import QtCore, QtGui
 
 from camelot.core.exception import log_programming_error
-from camelot.view.model_thread import gui_function
 
 class Form( list ):
     """Base Form class to put fields on a form.  The base class of a form is
@@ -121,55 +120,6 @@ to render a form::
     def __unicode__( self ):
         return 'Form(%s)' % ( u','.join( unicode( c ) for c in self ) )
 
-    def render_ooxml( self, obj, delegates ):
-        """Generator for lines of text in Office Open XML representing this form, using tables
-        :param obj: the object or entity that will be rendered
-        :param delegates: a dictionary mapping field names to their delegate
-        """
-        yield '<w:tbl>'
-        yield '    <w:tblPr>'
-        yield '      <w:tblW w:w="0" w:type="auto"/>'
-        yield '      <w:tblBorders>'
-        yield '          <w:top w:val="single" w:sz="4" wx:bdrwidth="10" w:space="0" w:color="auto"/>'
-        yield '          <w:left w:val="single" w:sz="4" wx:bdrwidth="10" w:space="0" w:color="auto"/>'
-        yield '          <w:bottom w:val="single" w:sz="4" wx:bdrwidth="10" w:space="0" w:color="auto"/>'
-        yield '          <w:right w:val="single" w:sz="4" wx:bdrwidth="10" w:space="0" w:color="auto"/>'
-        yield '          <w:insideH w:val="single" w:sz="4" wx:bdrwidth="10" w:space="0" w:color="auto"/>'
-        yield '          <w:insideV w:val="single" w:sz="4" wx:bdrwidth="10" w:space="0" w:color="auto"/>'
-        yield '        </w:tblBorders>'
-        yield '      <w:tblLook w:val="04A0"/>'
-        yield '    </w:tblPr>'
-        yield '    <w:tblGrid>'
-        yield '      <w:gridCol w:w="4811"/>'
-        yield '      <w:gridCol w:w="4811"/>'
-        yield '    </w:tblGrid>'
-        yield '    <w:tr>'
-        for index, field in enumerate(self):
-            if index % self._columns == 0 and index != 0:
-                yield '    </w:tr><w:tr>'
-            yield '<w:tc>'
-            yield '  <w:tcPr>'
-            yield '    <w:tcW w:w="4811" w:type="dxa"/>'
-            yield '    <w:shd w:val="clear" w:color="auto" w:fill="auto"/>'
-            yield '  </w:tcPr>'
-            yield '<w:p>'
-            lines = []
-            if isinstance(field, Label):
-                lines = field.render_ooxml()
-            elif isinstance(field, Form):
-                lines = field.render_ooxml( obj, delegates )
-            elif isinstance(field, basestring):
-                delegate = delegates[field]
-                value = getattr(obj, field)
-                lines = delegate.render_ooxml(value)
-            for line in lines:
-                yield line
-            yield '</w:p>'
-            yield '</w:tc>'
-        yield '</w:tr>'
-        yield '</w:tbl>'
-
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False):
         """
         :param widgets: a :class:`camelot.view.controls.formview.FormEditors` object
@@ -291,14 +241,14 @@ to render a form::
         
         return form_widget
 
-
 class Label( Form ):
     """Render a label with a QLabel"""
 
     def __init__( self, label, alignment='left', style=None):
         """
         :param label : string to be displayed in the label
-        :param alignment : alignment of text in the label. values that make sense 'left', 'right' or 'center'
+        :param alignment : alignment of text in the label. values that make 
+            sense 'left', 'right' or 'center'
         :param style : string of cascading stylesheet instructions
         """
         super( Label, self ).__init__( [] )
@@ -306,14 +256,6 @@ class Label( Form ):
         self.alignment = alignment
         self.style = style
 
-    def render_ooxml( self ):
-        """Generator for label text in Office Open XML representing this form"""
-        yield '<w:r>'
-        yield '  <w:t>%s</w:t>' % self.label
-        yield '</w:r>'
-
-
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         from PyQt4 import QtGui
         if self.style:
@@ -472,7 +414,6 @@ Render forms within a QTabWidget::
             for field in form._get_fields_from_form():
                 yield field
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         widget = DelayedTabWidget( widgets, self.tabs, parent )
@@ -511,7 +452,6 @@ class HBoxForm( Form ):
             for field in form._get_fields_from_form():
                 yield field
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         widget = QtGui.QWidget( parent )
@@ -520,6 +460,8 @@ class HBoxForm( Form ):
             f = form.render( widgets, widget, False )
             if isinstance( f, QtGui.QLayout ):
                 form_layout.addLayout( f )
+            elif isinstance( f, QtGui.QLayoutItem ):
+                form_layout.addItem( f )
             else:
                 form_layout.addWidget( f )
         widget.setLayout( form_layout )
@@ -556,7 +498,6 @@ class VBoxForm( Form ):
     def __unicode__( self ):
         return 'VBoxForm [ %s\n         ]' % ( '         \n'.join( [unicode( form ) for form in self.rows] ) )
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         widget = QtGui.QWidget( parent )
@@ -565,6 +506,8 @@ class VBoxForm( Form ):
             f = form.render( widgets, widget, False )
             if isinstance( f, QtGui.QLayout ):
                 form_layout.addLayout( f )
+            elif isinstance( f, QtGui.QLayoutItem ):
+                form_layout.addItem( f )
             else:
                 form_layout.addWidget( f )
         widget.setLayout( form_layout )
@@ -613,7 +556,6 @@ class GridForm( Form ):
         for row, additional_field in zip(self._grid, column):
             row.append(additional_field)
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         widget = QtGui.QWidget( parent )
         grid_layout = QtGui.QGridLayout()
@@ -646,7 +588,6 @@ class WidgetOnlyForm( Form ):
         assert isinstance( field, ( str, unicode ) )
         super( WidgetOnlyForm, self ).__init__( [field] )
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         logger.debug( 'rendering %s' % self.__class__.__name__ )
         editor = widgets.create_editor( self.get_fields()[0], parent )
@@ -681,7 +622,6 @@ class GroupBoxForm( Form ):
             content = [content]
         Form.__init__( self, content, scrollbars, columns=columns )
 
-    @gui_function
     def render( self, widgets, parent = None, toplevel = False ):
         widget = QtGui.QGroupBox( unicode(self.title), parent )
         layout = QtGui.QVBoxLayout()

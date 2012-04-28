@@ -33,7 +33,7 @@ logger = logging.getLogger('camelot.view.workspace')
 
 from camelot.admin.action import ApplicationActionGuiContext
 from camelot.core.utils import ugettext as _
-from camelot.view.model_thread import gui_function, post
+from camelot.view.model_thread import object_thread, post
 from camelot.view.controls.action_widget import ( ActionLabel, 
                                                   HOVER_ANIMATION_DISTANCE,
                                                   NOTIFICATION_ANIMATION_DISTANCE )
@@ -251,7 +251,6 @@ class DesktopWorkspace(QtGui.QWidget):
     change_view_mode_signal = QtCore.pyqtSignal()
     last_view_closed_signal = QtCore.pyqtSignal()
 
-    @gui_function
     def __init__(self, app_admin, parent):
         super(DesktopWorkspace, self).__init__(parent)
         self.gui_context = ApplicationActionGuiContext()
@@ -386,11 +385,11 @@ class DesktopWorkspace(QtGui.QWidget):
                 index = self._tab_widget.insertTab(index, view, title)
             self._tab_widget.setCurrentIndex(index)
 
-    @gui_function
     def add_view(self, view, icon = None, title = '...'):
         """
         Add a Widget implementing AbstractView to the workspace.
         """
+        assert object_thread( self )
         view.title_changed_signal.connect(self.change_title)
         view.icon_changed_signal.connect(self.change_icon)
         if icon:

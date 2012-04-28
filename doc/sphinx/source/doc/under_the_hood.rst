@@ -68,6 +68,26 @@ You might want to turn this off, here's how to do so :
    :start-after: begin session setup
    :end-before: end session setup
 
+Transactions
+============
+
+Transactions in Camelot can be used just as in normal SQLAlchemy.  
+This means that inside a :meth:`camelot.admin.action.Action.model_run` method a transaction can be started and committed ::
+
+    model_context.session.begin()
+    ...do some modifications...
+    model_context.session.commit()
+    
+More information on the transactional behavior of the session can be found in the `SQLAlchemy documentation <http://docs.sqlalchemy.org/en/latest/orm/session.html#committing>`_
+
+Camelot contains a method decorator (:func:`camelot.core.sql.transaction` to decorate methods on the model definition to be executed within a transaction ::
+
+    class Person( Entity ):
+ 
+         @transaction
+         def merge_with( self, other_person ):
+             ...
+
 Using Camelot without the GUI
 =============================
 

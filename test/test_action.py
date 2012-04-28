@@ -1,7 +1,8 @@
 import datetime
 import os
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import Qt
 
 from camelot.admin.action import Action
 from camelot.admin.action import list_action, application_action
@@ -83,7 +84,7 @@ class ActionStepsCase( ModelThreadTestCase ):
         select_file = generator.next()
         self.assertFalse( select_file.single )
         # pretend the user selected a file
-        generator.send( [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.jpg') ] )
+        generator.send( [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ] )
         # continue the action till the end
         list( generator )
         # a movie should be inserted
@@ -156,9 +157,9 @@ class ListActionsCase( ModelThreadTestCase ):
     images_path = static_images_path
 
     def setUp( self ):
+        ModelThreadTestCase.setUp(self)
         from camelot_example.model import Movie
         from camelot.admin.application_admin import ApplicationAdmin
-        ModelThreadTestCase.setUp(self)
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.context.obj = Movie.query.first()
@@ -254,7 +255,25 @@ class ListActionsCase( ModelThreadTestCase ):
                 dialog.show()
                 self.grab_widget( dialog ) 
                 generator.send( ('rating', lambda:3) )
-
+                
+    def test_drag_and_drop( self ):
+        from camelot.view.proxy.queryproxy import QueryTableProxy
+        
+        class DropAction( Action ):
+            pass
+                
+        
+        mime_data = QtCore.QMimeData()
+        admin = self.context.admin
+        admin.drop_action = DropAction()
+        
+        proxy = QueryTableProxy( admin, admin.get_query, admin.get_columns )
+        proxy.dropMimeData( mime_data, 
+                            Qt.MoveAction, 
+                            -1, 
+                            -1, 
+                            QtCore.QModelIndex() )
+        
 class ApplicationActionsCase( ModelThreadTestCase ):
     """Test application actions.
     """

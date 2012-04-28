@@ -34,7 +34,6 @@ from PyQt4 import QtCore, QtGui
 from sqlalchemy import sql
 
 from camelot.view.controls.editors import DateEditor
-from camelot.view.model_thread import gui_function
 from camelot.core.utils import ugettext_lazy as _
 
 #
@@ -73,7 +72,6 @@ class Filter(object):
         self.attribute = attribute
         self.default = default
         
-    @gui_function
     def render(self, parent, name, options):
         """Render this filter as a qt object
         @param parent: its parent widget
@@ -190,7 +188,6 @@ class FilterWidget( QtGui.QGroupBox ):
 class GroupBoxFilter(Filter):
     """Filter where the items are displayed in a QGroupBox"""
     
-    @gui_function
     def render( self, filter_data, parent ):
         return FilterWidget( filter_data, parent )
       
@@ -228,7 +225,6 @@ class GroupBoxFilterWidget( QtGui.QGroupBox ):
 class ComboBoxFilter(Filter):
     """Filter where the items are displayed in a QComboBox"""
     
-    @gui_function
     def render(self, filter_data, parent):
         return GroupBoxFilterWidget(filter_data, parent)
     

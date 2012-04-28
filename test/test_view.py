@@ -7,6 +7,7 @@ import os
 import time
 
 from camelot.core.utils import ugettext_lazy as _
+from camelot.core.files.storage import StoredFile, StoredImage, Storage
 from camelot.test import ModelThreadTestCase, EntityViewsTest, SchemaTest
 from camelot.view.art import ColorScheme
 
@@ -17,6 +18,7 @@ from PyQt4.QtCore import *
 logger = logging.getLogger('view.unittests')
 
 static_images_path = os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinx', 'source', '_static')
+storage = Storage()
 
 def create_getter(getable):
 
@@ -25,6 +27,16 @@ def create_getter(getable):
 
     return getter
 
+class SignalCounter( QtCore.QObject ):
+    
+    def __init__( self ):
+        super( SignalCounter, self ).__init__()
+        self.counter = 0
+        
+    @QtCore.pyqtSlot()
+    def signal_caught( self ):
+        self.counter += 1
+        
 class EditorsTest(ModelThreadTestCase):
     """
   Test the basic functionality of the editors :
@@ -39,6 +51,33 @@ class EditorsTest(ModelThreadTestCase):
     from camelot.view.controls import editors
     from camelot.view.proxy import ValueLoading
 
+    def assert_valid_editor( self, editor, value ):
+        """Test the basic functions of an editor that are needed to integrate
+        well with Camelot and Qt
+        """
+        #
+        # The editor should remember its when its value is ValueLoading
+        #
+        editor.set_value( self.ValueLoading )
+        self.assertEqual( editor.get_value(), self.ValueLoading )
+        #
+        # When a value is set, no editingFinished should be called
+        #
+        signal_counter = SignalCounter()
+        editor.editingFinished.connect( signal_counter.signal_caught )
+        editor.set_value( value )
+        self.assertEqual( signal_counter.counter, 0 )
+        #
+        # when the up or down arrow is pressed, the event should be ignored
+        # by the editor, to allow the table view to move to the row above or
+        # below
+        #
+        #up_event = QtGui.QKeyEvent( QtCore.QEvent.KeyPress, 
+        #                            Qt.Key_Up,
+        #                            Qt.NoModifier )
+        #editor.keyPressEvent( up_event )
+        #self.assertFalse( up_event.isAccepted() )
+        
     def test_ChartEditor(self):
         import math
         from camelot.container import chartcontainer
@@ -51,6 +90,7 @@ class EditorsTest(ModelThreadTestCase):
         self.grab_widget( editor, 'editable' )
         editor.set_field_attributes(editable=False)
         self.grab_widget( editor, 'disabled' )
+        self.assert_valid_editor( editor, plot )
         
     def test_DateEditor(self):
         import datetime
@@ -61,8 +101,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( datetime.date(1980, 12, 31) )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, datetime.date(1980, 12, 31) )
 
     def test_TextLineEditor(self):
         editor = self.editors.TextLineEditor(parent=None, length=10)
@@ -77,13 +116,12 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( u'za coś tam' )
         self.assertEqual( editor.get_value(), u'za coś tam' )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
         # pretend the user has entered some text
         editor.setText( u'foo' )
         self.assertTrue( editor.get_value() != None )
+        self.assert_valid_editor( editor, u'za coś tam' )
         
     def grab_default_states( self, editor ):
         editor.set_field_attributes( editable = True, background_color=ColorScheme.green )
@@ -110,8 +148,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( '/home/lancelot/quests.txt' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), '/home/lancelot/quests.txt' )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, '/home/lancelot/quests.txt' )
         
     def test_StarEditor(self):
         editor = self.editors.StarEditor(parent=None, maximum=5)
@@ -119,8 +156,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 4 )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 4 )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, 4 )
 
     def test_SmileyEditor(self):
         editor = self.editors.SmileyEditor(parent=None)
@@ -128,8 +164,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 'face-kiss' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'face-kiss' )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, 'face-kiss' )
         
     def test_BoolEditor(self):
         editor = self.editors.BoolEditor(parent=None, editable=False, nullable=True)
@@ -147,10 +182,9 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), True )
         editor.set_value( False )
         self.assertEqual( editor.get_value(), False )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( True )
         editor.set_enabled( True )
+        self.assert_valid_editor( editor, True )
 
     def test_CodeEditor(self):
         editor = self.editors.CodeEditor(parent=None, parts=['AAA', '999'])
@@ -158,10 +192,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( ['XYZ', '123'] )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), ['XYZ', '123'] )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, ['XYZ', '123'] )
 
     def test_ColorEditor(self):
         editor = self.editors.ColorEditor(parent=None, editable=True)
@@ -169,8 +200,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( (255, 200, 255, 255) )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), (255, 200, 255, 255) )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, (255, 200, 255, 255) )
 
     def test_ColoredFloatEditor(self):
         editor = self.editors.ColoredFloatEditor(parent=None, editable=True)
@@ -180,8 +210,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 3.14 )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, 3.14 )
 
     def test_ChoicesEditor(self):
         editor = self.editors.ChoicesEditor(parent=None, editable=True)
@@ -202,20 +231,16 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), self.ValueLoading )
         # try strings as keys
         editor = self.editors.ChoicesEditor(parent=None, editable=True)
-        editor.set_choices( [] )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_choices( [('a',u'A'), ('b',u'B'), ('c',u'C')] )
         editor.set_value( 'c' )
         self.assertEqual( editor.get_value(), 'c' )
-        
+        self.assert_valid_editor( editor, 'c' )
 
     def test_FileEditor(self):
         editor = self.editors.FileEditor(parent=None, editable=True)
         self.assertEqual( editor.get_value(), self.ValueLoading )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
         self.grab_default_states( editor )
+        self.assert_valid_editor( editor, StoredFile( storage, 'test.txt') )
 
     def test_DateTimeEditor(self):
         import datetime
@@ -224,8 +249,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( datetime.datetime(2009, 7, 19, 21, 5, 10, 0) )
         self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
         self.grab_default_states( editor )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
 
     def test_FloatEditor(self):
         editor = self.editors.FloatEditor(parent=None, 
@@ -236,8 +260,6 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 3.14 )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
         editor = self.editors.FloatEditor(parent=None,  
                                           suffix='suffix')
         self.assertEqual( editor.get_value(), self.ValueLoading )
@@ -245,8 +267,6 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), 0.0 )
         editor.set_value( 3.14 )
         self.assertEqual( editor.get_value(), 3.14 )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( 5.45 )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
@@ -260,13 +280,13 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 3.14 )
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )
+        self.assert_valid_editor( editor, 3.14 )
         
     def test_ImageEditor(self):
         editor = self.editors.ImageEditor(parent=None, editable=True)
         self.assertEqual( editor.get_value(), self.ValueLoading )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
         self.grab_default_states( editor )
+        self.assert_valid_editor( editor, StoredImage( storage, 'test.png') )
 
     def test_IntegerEditor(self):
         editor = self.editors.IntegerEditor(parent=None, editable=True)
@@ -276,8 +296,6 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 3 )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3 )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
         editor.set_value( None )
         # pretend the user changed the value
         editor.spinBox.setValue( 0 )
@@ -288,15 +306,17 @@ class EditorsTest(ModelThreadTestCase):
         editor = self.editors.IntegerEditor(parent=None, 
                                             calculator=False)
         editor.set_field_attributes( editable=True )
-        editor.set_value( 3.14 )
+        editor.set_value( 3 )
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )
+        self.assert_valid_editor( editor, 3 )
         
     def test_NoteEditor(self):
         editor = self.editors.NoteEditor(parent=None)
         editor.set_value('A person with this name already exists')
         self.grab_widget( editor )
         self.grab_default_states( editor )
+        self.assert_valid_editor( editor, 'A person with this name already exists' )
 
     def test_LabelEditor(self):
         editor = self.editors.LabelEditor(parent=None)
@@ -309,12 +329,12 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 'en_US' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'en_US' )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, 'en_US' )
 
     def test_Many2OneEditor(self):
         editor = self.editors.Many2OneEditor(parent=None)
         self.grab_default_states( editor )
+        self.assert_valid_editor( editor, lambda:object )
         
     def test_RichTextEditor(self):
         editor = self.editors.RichTextEditor(parent=None)
@@ -322,8 +342,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( u'<h1>Rich Text Editor</h1>' )
         self.grab_default_states( editor )
         self.assertTrue( u'Rich Text Editor' in editor.get_value() )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, u'<h1>Rich Text Editor</h1>' )
 
     def test_TimeEditor(self):
         import datetime
@@ -332,8 +351,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( datetime.time(21, 5, 0) )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), datetime.time(21, 5, 0) )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, datetime.time(21, 5, 0) )
 
     def test_TextEditEditor(self):
         editor = self.editors.TextEditEditor(parent=None, editable=True)
@@ -341,8 +359,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( 'Plain text' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'Plain text' )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, 'Plain text' )
         
     def test_VirtualAddressEditor(self):
         editor = self.editors.VirtualAddressEditor(parent=None)
@@ -350,8 +367,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( ('im','test') )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(),  ('im','test') )
-        editor.set_value( self.ValueLoading )
-        self.assertEqual( editor.get_value(), self.ValueLoading )
+        self.assert_valid_editor( editor, ('im','test') )
 
     def test_MonthsEditor(self):
         editor = self.editors.MonthsEditor(parent=None)
@@ -359,8 +375,7 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value(12)
         self.grab_default_states( editor )
         self.assertEqual(editor.get_value(),  12)
-        editor.set_value(self.ValueLoading)
-        self.assertEqual(editor.get_value(), self.ValueLoading)
+        self.assert_valid_editor( editor, 12 )
 
 from camelot.view import forms
 
@@ -939,6 +954,33 @@ class ControlsTest(ModelThreadTestCase):
         header = HeaderWidget(parent=None, admin=person_admin)
         header.expand_search_options()
         self.grab_widget(header)
+        
+    def test_column_groups_widget(self):
+        from camelot.view.controls.tableview import ColumnGroupsWidget
+        from camelot_example.view import VisitorsPerDirector
+        table = VisitorsPerDirector.Admin.list_display
+        widget = QtGui.QWidget()
+        layout = QtGui.QVBoxLayout()
+        table_widget = QtGui.QTableWidget( 3, 6 )
+        table_widget.setHorizontalHeaderLabels( table.get_fields() )
+        column_groups = ColumnGroupsWidget( table,
+                                            table_widget )
+        layout.addWidget( table_widget )
+        layout.addWidget( column_groups )
+        widget.setLayout( layout )
+        #
+        # set the tab to 1 and then back to 0, to force a change
+        # signal
+        #
+        column_groups.setCurrentIndex( 1 )
+        column_groups.setCurrentIndex( 0 )
+        self.assertFalse( table_widget.isColumnHidden( 0 ) )
+        self.assertTrue( table_widget.isColumnHidden( 3 ) )
+        self.grab_widget( widget, 'first_tab' )
+        column_groups.setCurrentIndex( 1 )
+        self.assertTrue( table_widget.isColumnHidden( 0 ) )
+        self.assertFalse( table_widget.isColumnHidden( 3 ) )
+        self.grab_widget( widget, 'second_tab' )
         
     def test_desktop_workspace(self):
         from camelot.view.workspace import DesktopWorkspace

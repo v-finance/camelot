@@ -28,7 +28,7 @@ import logging
 logger = logging.getLogger('camelot.view.object_admin')
 
 from camelot.admin.action.form_action import CloseForm
-from camelot.view.model_thread import gui_function, model_function
+from camelot.view.model_thread import model_function
 from camelot.view.controls.tableview import TableView
 from camelot.core.utils import ugettext as _
 from camelot.core.utils import ugettext_lazy
@@ -169,6 +169,11 @@ be specified using the verbose_name attribute.
 
     list of actions that appear in the toolbar of a OneToMany editor.
 
+.. attribute:: drop_action
+
+    the action that is triggered when a drag and drop occured on the table
+    view 
+    
 **Field attributes**
 
 .. attribute:: field_attributes
@@ -246,6 +251,7 @@ be specified using the verbose_name attribute.
     #
     # Behavioral attributes
     # 
+    drop_action = None
     save_mode = 'on_edit'
     delete_mode = 'on_request'
 
@@ -567,6 +573,14 @@ be specified using the verbose_name attribute.
             self._field_attributes[field_name] = attributes
             return attributes
 
+    def get_table( self ):
+        """The definition of the table to be used in a list view
+        :return: a `camelot.admin.table.Table` object
+        """
+        from camelot.admin.table import structure_to_table
+        table = structure_to_table( self.list_display )
+        return table
+    
     @model_function
     def get_columns(self):
         """
@@ -582,8 +596,9 @@ be specified using the verbose_name attribute.
                    'name':'Field name'}),
                  ...]
         """
+        table = self.get_table()
         return [(field, self.get_field_attributes(field))
-                for field in self.list_display]
+                for field in table.get_fields() ]
 
     def get_validator( self ):
         """Get a validator object
@@ -600,10 +615,8 @@ be specified using the verbose_name attribute.
     def get_fields(self):
         if self.form_display:
             fields = self.get_form_display().get_fields()
-        elif self.fields:
-            fields = self.fields
         else:
-            fields = self.list_display
+            fields = self.get_table().get_fields()
         fields_and_attributes =  [
                 (field, self.get_field_attributes(field))
                 for field in fields
@@ -634,7 +647,7 @@ be specified using the verbose_name attribute.
         if self.form_display:
             return structure_to_form(self.form_display)
         if self.list_display:
-            return Form(self.list_display)
+            return Form( self.get_table().get_fields() )
         return Form([])
 
     def _apply_form_state(self, widget):
@@ -647,7 +660,6 @@ be specified using the verbose_name attribute.
             if self.form_state == constants.MINIMIZED:
                 widget.setWindowState(QtCore.Qt.WindowMinimized)
         
-    @gui_function
     def create_form_view(self, title, model, index, parent=None):
         """Creates a Qt widget containing a form view, for a specific index in
         a model.  Use this method to create a form view for a collection of objects,
@@ -724,7 +736,6 @@ be specified using the verbose_name attribute.
                         exc_info=exc
                     )
 
-    @gui_function
     def create_object_form_view(self, title, object_getter, parent=None):
         """Create a form view for a single object, :kbd:`PgUp`/:kbd:`PgDown` 
         will do nothing.
@@ -757,7 +768,6 @@ be specified using the verbose_name attribute.
                             self.get_fields )
         return self.create_form_view(title, model, 0, parent)
 
-    @gui_function
     def create_new_view(admin, related_collection_proxy=None, parent=None):
         """Create a Qt widget containing a form to create a new instance of the
         entity related to this admin class
@@ -859,6 +869,22 @@ be specified using the verbose_name attribute.
             form.setMinimumSize(admin.form_size[0], admin.form_size[1])
         return form
 
+    def primary_key( self, obj ):
+        """Get the primary key of an object
+        :param obj: the object to get the primary key from
+        :return: a tuple with with components of the primary key, or none
+            if the object has no primary key yet or any more.
+        """
+        return None
+    
+    def get_modifications( self, obj ):
+        """Get the modifications on an object since the last flush.
+        :param obj: the object for which to get the modifications
+        :return: a dictionary with the changed attributes and their old
+           value
+        """
+        return dict()
+    
     @model_function
     def delete(self, entity_instance):
         """Delete an entity instance"""

@@ -32,19 +32,11 @@ from wideeditor import WideEditor
 from customeditor import CustomEditor
 
 from camelot.admin.action.list_action import ListActionGuiContext
-from camelot.view.model_thread import gui_function, post
+from camelot.view.model_thread import object_thread, post
 from camelot.view import register
 
 class One2ManyEditor(CustomEditor, WideEditor):
-    
-    def __init__( self,
-                  admin = None,
-                  parent = None,
-                  create_inline = False,
-                  direction = 'onetomany',
-                  field_name = 'onetomany',
-                  **kw ):
-        """
+    """
     :param admin: the Admin interface for the objects on the one side of the
     relation
 
@@ -54,6 +46,14 @@ class One2ManyEditor(CustomEditor, WideEditor):
     after creating the editor, set_value needs to be called to set the
     actual data to the editor
     """
+        
+    def __init__( self,
+                  admin = None,
+                  parent = None,
+                  create_inline = False,
+                  direction = 'onetomany',
+                  field_name = 'onetomany',
+                  **kw ):
         CustomEditor.__init__( self, parent )
         self.setObjectName( field_name )
         layout = QtGui.QHBoxLayout()
@@ -147,8 +147,8 @@ class One2ManyEditor(CustomEditor, WideEditor):
                           args = ( model_context, ) )
             post( model._extend_cache, self.update_delegates )
 
-    @gui_function
     def activate_editor( self, number_of_rows ):
+        assert object_thread( self )
 #        return
 # Activating this code can cause segfaults
 # see ticket 765 in web issues
@@ -165,6 +165,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     @QtCore.pyqtSlot( int )
     def trigger_list_action( self, index ):
+        table = self.findChild(QtGui.QWidget, 'table')
+        # close the editor to prevent certain Qt crashes
+        table.close_editor()
         if self.admin.list_action:
             self.admin.list_action.gui_run( self.gui_context )
 

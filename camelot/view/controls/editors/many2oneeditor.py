@@ -22,14 +22,14 @@
 #
 #  ============================================================================
 
+from functools import update_wrapper, partial
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
 from camelot.view.art import Icon
-from camelot.view.model_thread import post
-from camelot.view.model_thread import gui_function
-from camelot.view.model_thread import model_function
+from camelot.view.model_thread import post, object_thread, model_function
 from camelot.view.search import create_entity_search_query_decorator
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
 
@@ -192,8 +192,8 @@ class Many2OneEditor( CustomEditor ):
             return text, sresult
         return text, []
 
-    @gui_function
     def display_search_completions(self, prefix_and_completions):
+        assert object_thread( self )
         prefix, completions = prefix_and_completions
         self.completions_model.setCompletions(completions)
         self.completer.setCompletionPrefix(prefix)
@@ -234,8 +234,8 @@ class Many2OneEditor( CustomEditor ):
     def trashButtonClicked(self):
         self.setEntity(lambda:None)
 
-    @gui_function
     def createNew(self):
+        assert object_thread( self )
 
         @model_function
         def get_has_subclasses():
@@ -243,8 +243,8 @@ class Many2OneEditor( CustomEditor ):
 
         post(get_has_subclasses, self.show_new_view)
 
-    @gui_function
     def show_new_view(self, has_subclasses):
+        assert object_thread( self )
         from camelot.view.workspace import show_top_level
         selected = QtGui.QDialog.Accepted
         admin = self.admin
@@ -355,27 +355,26 @@ class Many2OneEditor( CustomEditor ):
             self.editingFinished.emit()
 
     def setEntity(self, entity_instance_getter, propagate=True):
-
-        def create_instance_getter(entity_instance):
-            return lambda:entity_instance
-
-        def get_instance_representation():
+        self.entity_instance_getter = entity_instance_getter
+        
+        def get_instance_representation( entity_instance_getter, propagate ):
             """Get a representation of the instance
 
             :return: (unicode, pk) its unicode representation and its primary
             key or ('', False) if the instance was None"""
+            
             entity = entity_instance_getter()
-            self.entity_instance_getter = create_instance_getter(entity)
             if entity and hasattr(entity, 'id'):
                 return ((unicode(entity), entity.id), propagate)
             elif entity:
                 return ((unicode(entity), False), propagate)
             return ((None, False), propagate)
 
-        post(get_instance_representation, self.set_instance_representation)
+        post( update_wrapper( partial( get_instance_representation,
+                                       entity_instance_getter,
+                                       propagate ),
+                              get_instance_representation ), 
+              self.set_instance_representation)
 
     def select_object( self, entity_instance_getter ):
         self.setEntity(entity_instance_getter)
-
-
-

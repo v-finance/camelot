@@ -40,13 +40,12 @@ from PyQt4 import QtGui, QtCore
 
 from camelot.core.exception import log_programming_error
 from camelot.core.utils import is_deleted, variant_to_pyobject
-from camelot.core.files.storage import StoredFile
 from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
 from camelot.view.controls import delegates
 from camelot.view.controls.exception import register_exception
 from camelot.view.remote_signals import get_signal_handler
-from camelot.view.model_thread import gui_function, \
+from camelot.view.model_thread import object_thread, \
                                       model_function, post
 
 from camelot.core.files.storage import StoredImage
@@ -70,7 +69,6 @@ class DelayedProxy( object ):
         self._collection_getter = collection_getter
         self._columns_getter = columns_getter
 
-    @gui_function
     def __call__( self ):
         return CollectionProxy( self._admin,
                                 self._collection_getter,
@@ -153,7 +151,8 @@ def stripped_data_to_unicode( stripped_data, obj, static_field_attributes, dynam
             elif field_data != None:
                 unicode_data = unicode( field_data )
         except (Exception, RuntimeError, TypeError, NameError), e:
-            log_programming_error( "Could not get view data for field '%s' with of object of type %s"%( static_attributes['name'],
+            log_programming_error( logger,
+                                   "Could not get view data for field '%s' with of object of type %s"%( static_attributes['name'],
                                                                                                         obj.__class__.__name__),
                                    exc_info = e )
         finally:
@@ -201,7 +200,6 @@ class CollectionProxy( QtGui.QProxyModel ):
     exception_signal = QtCore.pyqtSignal(object)
     rows_removed_signal = QtCore.pyqtSignal()
 
-    @gui_function
     def __init__( self, 
                   admin, 
                   collection_getter, 
@@ -231,6 +229,7 @@ query of the tableview, and the first of the form, the object might have changed
 position in the query.
 """
         super(CollectionProxy, self).__init__()
+        assert object_thread( self )
         from camelot.view.model_thread import get_model_thread
         #
         # The source model will contain the actual data stripped from the
@@ -307,6 +306,7 @@ position in the query.
     # Subsequent calls to this function should return the same index
     #
     def index( self, row, col, parent = QtCore.QModelIndex() ):
+        assert object_thread( self )
         if self.hasIndex( row, col, parent):
             #
             # indexes are considered equal when their row, column and internal
@@ -316,16 +316,43 @@ position in the query.
         return QtCore.QModelIndex()
     
     def parent( self, child ):
+        assert object_thread( self )
         return QtCore.QModelIndex()
     
     def rowCount( self, index = None ):
+        assert object_thread( self )
         return self._rows
     
     def hasChildren( self, parent ):
+        assert object_thread( self )
         return False
     
     #
     # end or reimplementation
+    #
+    
+    #
+    # begin functions related to drag and drop
+    #
+    
+    def mimeTypes( self ):
+        assert object_thread( self )
+        if self.admin.drop_action != None:
+            return self.admin.drop_action.drop_mime_types
+        
+    def supportedDropActions( self ):
+        assert object_thread( self )
+        if self.admin.drop_action != None:
+            return Qt.CopyAction | Qt.MoveAction | Qt.LinkAction
+        return None
+    
+    def dropMimeData( self, mime_data, action, row, column, parent ):
+        assert object_thread( self )
+        #print mime_data, [unicode(f) for f in mime_data.formats()]
+        return True
+    
+    #
+    # end of drag and drop related functions
     #
     
     @property
@@ -364,19 +391,21 @@ position in the query.
         rows = len( set( self.get_collection() ) )
         return rows
 
-    @gui_function
     def refresh( self ):
+        assert object_thread( self )
         post( self.getRowCount, self._refresh_content )
 
     @QtCore.pyqtSlot(int)
-    @gui_function
     def _refresh_content(self, rows ):
+        assert object_thread( self )
+        locker = QtCore.QMutexLocker(self._mutex)
         self.display_cache = Fifo( 10 * self.max_number_of_rows )
         self.edit_cache = Fifo( 10 * self.max_number_of_rows )
         self.attributes_cache = Fifo( 10 * self.max_number_of_rows )
-        locker = QtCore.QMutexLocker(self._mutex)
         self.rows_under_request = set()
         self.unflushed_rows = set()
+        # once the cache has been cleared, no updates ought to be accepted
+        self._update_requests = list()
         locker.unlock()
         self.setRowCount( rows )
 
@@ -389,19 +418,20 @@ position in the query.
     def get_collection( self ):
         return self._collection_getter()
 
-    @gui_function
     def handleRowUpdate( self, row ):
         """Handles the update of a row when this row might be out of date"""
+        assert object_thread( self )
         self.display_cache.delete_by_row( row )
         self.edit_cache.delete_by_row( row )
         self.attributes_cache.delete_by_row( row )
         self.dataChanged.emit( self.index( row, 0 ),
-                               self.index( row, self.columnCount() ) )
+                               self.index( row, self.columnCount() - 1 ) )
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_update( self, sender, entity ):
         """Handles the entity signal, indicating that the model is out of
         date"""
+        assert object_thread( self )
         self.logger.debug( '%s %s received entity update signal' % \
                      ( self.__class__.__name__, self.admin.get_verbose_name() ) )
         if sender != self:
@@ -418,7 +448,7 @@ position in the query.
             def create_entity_update(row, entity):
 
                 def entity_update():
-                    columns = self.getColumns()
+                    columns = self._columns
                     self._add_data(columns, row, entity)
                     return row
 
@@ -432,6 +462,7 @@ position in the query.
     def handle_entity_delete( self, sender, entity ):
         """Handles the entity signal, indicating that the model is out of
         date"""
+        assert object_thread( self )
         self.logger.debug( 'received entity delete signal' )
         if sender != self:
             try:
@@ -445,6 +476,7 @@ position in the query.
     def handle_entity_create( self, sender, entity ):
         """Handles the entity signal, indicating that the model is out of
         date"""
+        assert object_thread( self )
         self.logger.debug( 'received entity create signal' )
         # @todo : decide what to do when a new entity has been created,
         #         probably do nothing
@@ -455,12 +487,14 @@ position in the query.
         """Callback method to set the number of rows
         @param rows the new number of rows
         """
+        assert object_thread( self )
         self._rows = rows
         self.layoutChanged.emit()
 
     def getItemDelegate( self ):
         """:return: a DelegateManager for this model, or None if no DelegateManager yet available
         a DelegateManager will be available once the item_delegate_changed signal has been emitted"""
+        assert object_thread( self )
         self.logger.debug( 'getItemDelegate' )
         return self.delegate_manager
 
@@ -469,13 +503,13 @@ position in the query.
         return self._columns
 
     @QtCore.pyqtSlot(object)
-    @gui_function
     def setColumns( self, columns ):
         """Callback method to set the columns
 
         :param columns: a list with fields to be displayed of the form [('field_name', field_attributes), ...] as
         returned by the getColumns method of the ElixirAdmin class
         """
+        assert object_thread( self )
         self.logger.debug( 'setColumns' )
         self._columns = columns
 
@@ -546,6 +580,7 @@ position in the query.
         self.item_delegate_changed_signal.emit()
             
     def setHeaderData( self, section, orientation, value, role ):
+        assert object_thread( self )
         if orientation == Qt.Horizontal:
             if role == Qt.SizeHintRole:
                 width = value.width()
@@ -560,11 +595,11 @@ position in the query.
                                                              value,
                                                              role )
     
-    @gui_function
     def headerData( self, section, orientation, role ):
         """In case the columns have not been set yet, don't even try to get
         information out of them
         """
+        assert object_thread( self )
         if orientation == Qt.Vertical:
             if role == Qt.SizeHintRole:
                 if self.header_icon != None:
@@ -580,9 +615,9 @@ position in the query.
                     return QtCore.QVariant( '' )
         return super( CollectionProxy, self ).headerData( section, orientation, role )
 
-    @gui_function
     def sort( self, column, order ):
         """reimplementation of the QAbstractItemModel its sort function"""
+        assert object_thread( self )
 
         def create_sort(column, order):
 
@@ -598,7 +633,6 @@ position in the query.
 
         post(create_sort(column, order), self._refresh_content)
 
-    @gui_function
     def data( self, index, role = Qt.DisplayRole):
         """:return: the data at index for the specified role
         This function will return ValueLoading when the data has not
@@ -613,6 +647,7 @@ position in the query.
         is displayed in that specific cell
         
         """
+        assert object_thread( self )
         if not index.isValid() or \
            not ( 0 <= index.row() <= self.rowCount( index ) ) or \
            not ( 0 <= index.column() <= self.columnCount() ):
@@ -680,7 +715,7 @@ position in the query.
         #
         return_list = []
         for flushed, row, column, value in update_requests:
-            attribute, field_attributes = self.getColumns()[column]
+            attribute, field_attributes = self._columns[column]
 
             from sqlalchemy.exc import DatabaseError
             new_value = value()
@@ -743,6 +778,7 @@ position in the query.
                     # type error can be raised in case we try to set to a collection
                     pass
                 if self.flush_changes and self.validator.isValid( row ):
+                    modifications = self.admin.get_modifications( o )
                     # save the state before the update
                     try:
                         self.admin.flush( o )
@@ -759,21 +795,17 @@ position in the query.
                     # we can only track history if the model was updated, and it was
                     # flushed before, otherwise it has no primary key yet
                     #
-                    if model_updated and hasattr(o, 'id') and o.id:
-                        #
-                        # in case of files or relations, we cannot pickle them
-                        #
-                        if isinstance( old_value, StoredFile ):
-                            old_value = old_value.name
-                        if not direction:
+                    primary_key = self.admin.primary_key( o )
+                    if model_updated and (primary_key != None) and len(primary_key)==1 and modifications:
+                        if direction not in ( 'manytomany', 'onetomany' ):
                             from camelot.model.memento import Memento
                             # only register the update when the camelot model is active
                             if hasattr(Memento, 'query'):
                                 from camelot.model.authentication import get_current_authentication
                                 history = Memento( model = unicode( self.admin.entity.__name__ ),
                                                    memento_type = 'before_update',
-                                                   primary_key = o.id,
-                                                   previous_attributes = {attribute:old_value},
+                                                   primary_key = primary_key[0],
+                                                   previous_attributes = modifications,
                                                    authentication = get_current_authentication() )
 
                                 try:
@@ -781,12 +813,12 @@ position in the query.
                                 except DatabaseError, e:
                                     self.logger.error( 'Programming Error, could not flush history', exc_info = e )
                 # update the cache
-                self._add_data(self.getColumns(), row, o)
+                self._add_data(self._columns, row, o)
                 #@todo: update should only be sent remotely when flush was done
                 self.rsh.sendEntityUpdate( self, o )
                 for depending_obj in self.admin.get_depending_objects( o ):
                     self.rsh.sendEntityUpdate( self, depending_obj )
-                return_list.append(( ( row, 0 ), ( row, len( self.getColumns() ) ) ))
+                return_list.append(( ( row, 0 ), ( row, len( self._columns ) ) ))
             elif flushed:
                 locker.relock()
                 self.logger.debug( 'old value equals new value, no need to flush this object' )
@@ -803,10 +835,11 @@ position in the query.
 
         This function will then be called in the model_thread
         """
+        assert object_thread( self )
         #
         # prevent data of being set in rows not actually in this model
         #
-        if not index.isValid():
+        if (not index.isValid()) or (index.model()!=self):
             return False
         
         if role == Qt.EditRole:
@@ -826,23 +859,23 @@ position in the query.
 
         return True
 
-    #
-    # try not to use gui_function in combination with pyqtslot
-    #
     @QtCore.pyqtSlot(int)
     def _emit_changes( self, row ):
-        assert QtCore.QThread.currentThread() == self.thread()
+        assert object_thread( self )
         if row!=None:
             column_count = self.columnCount()
             top_left = self.index( row, 0 )
-            bottom_right = self.index( row, column_count )
+            bottom_right = self.index( row, column_count - 1 )
             self.dataChanged.emit( top_left, bottom_right )
 
     def flags( self, index ):
         """Returns the item flags for the given index"""
+        assert object_thread( self )
         flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
         if self._get_field_attribute_value(index, 'editable'):
             flags = flags | Qt.ItemIsEditable
+        if self.admin.drop_action != None:
+            flags = flags | Qt.ItemIsDropEnabled
         return flags
 
     def _add_data(self, columns, row, obj):
@@ -936,7 +969,7 @@ position in the query.
         """Extend the cache around the rows under request"""
         offset, limit = self._offset_and_limit_rows_to_get()
         if limit:
-            columns = self.getColumns()
+            columns = self._columns
             collection = self.get_collection()
             skipped_rows = 0
             for i in range(offset, min(offset + limit + 1, self._rows)):
@@ -1060,7 +1093,6 @@ position in the query.
             self.rsh.sendEntityUpdate( self, depending_obj )
         post( self.getRowCount, self._refresh_content )
 
-    @gui_function
     def remove_rows( self, rows, delete = True ):
         """Remove the entity associated with this row from this collection
         @param rows: a list with the numbers of the rows to remove
@@ -1069,6 +1101,7 @@ position in the query.
         The rows_removed signal will be emitted when the removal was 
         successful, otherwise the exception_signal will be emitted.
         """
+        assert object_thread( self )
         self.logger.debug( 'remove rows' )
 
         def create_delete_function( rows ):
@@ -1091,12 +1124,12 @@ position in the query.
         post( create_delete_function(rows) )
         return True
 
-    @gui_function
     def copy_row( self, row ):
         """Copy the entity associated with this row to the end of the collection
         :param row: the row number
         """
-
+        assert object_thread( self )
+        
         def create_copy_function( row ):
 
             def copy_function():
@@ -1117,7 +1150,7 @@ position in the query.
         :param obj: the object to be added to the collection
         :return: the new number of rows in the collection
         """
-        rows = self.rowCount()
+        rows = self._rows
         row = max( rows - 1, 0 )
         self.beginInsertRows( QtCore.QModelIndex(), row, row )
         self.append( obj )
@@ -1145,18 +1178,18 @@ position in the query.
         #
         # update the cache, so the object can be retrieved
         #
-        columns = self.getColumns()
+        columns = self._columns
         self._add_data( columns, rows, obj )
         self.endInsertRows()
         return self._rows
 
     @QtCore.pyqtSlot(object)
-    @gui_function
     def append_row( self, object_getter ):
         """
         :param object_getter: a function that returns the object to be put in the
         appended row.
         """
+        assert object_thread( self )
 
         def create_append_function( getter ):
 
@@ -1171,10 +1204,8 @@ position in the query.
     def getData( self ):
         """Generator for all the data queried by this proxy"""
         for _i, o in enumerate( self.get_collection() ):
-            yield strip_data_from_object( o, self.getColumns() )
+            yield strip_data_from_object( o, self._columns )
 
     def get_admin( self ):
         """Get the admin object associated with this model"""
         return self.admin
-
-

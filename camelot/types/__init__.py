@@ -274,8 +274,10 @@ class Enumeration(types.TypeDecorator):
     
     def __init__(self, choices=[], **kwargs):
         """
-        @param param: choices is a list of tuples.  each tuple contains an integer and its
-        associated string.  eg. : choices = [(1,'draft'), (2,'approved')]
+        :param choices: is a list of tuples.  each tuple contains an integer and its
+        associated string.  such as :: 
+        
+            choices = [(1,'draft'), (2,'approved')]
         """
         types.TypeDecorator.__init__(self, **kwargs)
         self._int_to_string = dict(choices)

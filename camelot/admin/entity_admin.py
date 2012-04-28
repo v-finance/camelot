@@ -30,7 +30,7 @@ from sqlalchemy.orm.session import Session
 
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.view.model_thread import post, model_function, gui_function
+from camelot.view.model_thread import post, model_function
 from camelot.core.utils import ugettext_lazy, ugettext
 from camelot.admin.validator.entity_validator import EntityValidator
 
@@ -377,7 +377,6 @@ It has additional class attributes that customise its behaviour.
 
         return list(filter_generator())
 
-    @gui_function
     def create_select_view(admin, query=None, search_text=None, parent=None):
         """Returns a Qt widget that can be used to select an element from a
         query
@@ -446,7 +445,6 @@ It has additional class attributes that customise its behaviour.
         widget.update()
         return widget
 
-    @gui_function
     def create_table_view( self, gui_context ):
         """Returns a :class:`QtGui.QWidget` containing a table view
         :param gui_context: a :class:`camelot.admin.action.base.GuiContext`
@@ -454,6 +452,48 @@ It has additional class attributes that customise its behaviour.
         """
         return self.TableView( gui_context, self )
 
+    def primary_key( self, obj ):
+        """Get the primary key of an object
+        :param obj: the object to get the primary key from
+        :return: a tuple with with components of the primary key, or none
+            if the object has no primary key yet or any more.
+        """
+        if not self.is_persistent( obj ):
+            return None
+        return self.mapper.primary_key_from_instance( obj )
+    
+    def get_modifications( self, obj ):
+        """Get the modifications on an object since the last flush.
+        :param obj: the object for which to get the modifications
+        :return: a dictionary with the changed attributes and their old
+           value
+        """
+        from sqlalchemy import orm
+        from sqlalchemy.orm.exc import UnmappedClassError
+        state = orm.attributes.instance_state( obj )
+        dict_ = state.dict
+        modifications = dict()
+        for attr in state.manager.attributes:
+            if not hasattr( attr.impl, 'get_history' ):
+                continue
+            (added, unchanged, deleted) = \
+                    attr.impl.get_history( state, dict_ )
+            if added or deleted:
+                old_value = None
+                if deleted:
+                    old_value = deleted[0]
+                    #
+                    # in case of relations, get the primary key of the object
+                    # instead of the object itself
+                    #
+                    try:
+                        mapper = orm.class_mapper( type( old_value ) )
+                        old_value = mapper.primary_key_from_instance( old_value )
+                    except UnmappedClassError:
+                        pass
+                modifications[ attr.key ] = old_value
+        return modifications
+        
     @model_function
     def add( self, obj ):
         """Adds the entity instance to the default session, if it is not
@@ -558,7 +598,7 @@ It has additional class attributes that customise its behaviour.
         :return: a list of tuples of type [(field_name, field_attributes)]
         """
         if self.expanded_list_search == None:
-            field_list = self.list_display
+            field_list = self.get_table().get_fields()
         else:
             field_list = self.expanded_list_search
         return [(field, self.get_field_attributes(field))

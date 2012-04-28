@@ -116,6 +116,7 @@ templates = [
 from camelot.view.art import Icon
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.section import Section
+from camelot.core.utils import ugettext_lazy as _
 
 class MyApplicationAdmin(ApplicationAdmin):
   
@@ -129,11 +130,11 @@ class MyApplicationAdmin(ApplicationAdmin):
         from camelot.model.memento import Memento
         from camelot.model.party import Person, Organization
         from camelot.model.i18n import Translation
-        return [ Section( 'relation',
+        return [ Section( _('Relations'),
                           self,
                           Icon('tango/22x22/apps/system-users.png'),
                           items = [Person, Organization]),
-                 Section( 'configuration',
+                 Section( _('Configuration'),
                           self,
                           Icon('tango/22x22/categories/preferences-system.png'),
                           items = [Memento, Translation])
@@ -184,9 +185,8 @@ from camelot.core.sql import metadata
 __metadata__ = metadata
     '''),
     
-    ('excludes.txt', '''
+    ('excludes.txt', r'''
 vtk*
-test*
 sphinx*
 
 Lib\site-packages\cvxopt*
@@ -201,11 +201,22 @@ Lib\site-packages\pytz\zoneinfo\*
 Lib\site-packages\rope*
 Lib\site-packages\Sphinx*
 Lib\site-packages\spyder*
-Lib\site-packages\unittest*
 Lib\site-packages\virtualenv*
 Lib\site-packages\VTK*
 Lib\site-packages\docutils*
 Lib\site-packages\pyreadline*
+Lib\site-packages\Bio*
+Lib\site-packages\vitables*
+Lib\site-packages\sympy*
+Lib\site-packages\Cython*
+Lib\site-packages\sympy*
+Lib\site-packages\PyOpenGL*
+Lib\site-packages\tables*
+Lib\site-packages\zmq*
+
+include
+license
+libs   
     '''),
     ('settings.py', '''
 import logging
@@ -235,6 +246,8 @@ def ENGINE():
 def setup_model():
     """This function will be called at application startup, it is used to setup
     the model"""
+    from camelot.core.sql import metadata
+    metadata.bind = ENGINE()
     import camelot.model.authentication
     import camelot.model.party
     import camelot.model.i18n
@@ -277,12 +290,14 @@ setup(
     options = {
         'bdist_cloud':{'revision':'0',
                        'branch':'master',
+                       'uuid':'{{uuid}}',
                        'update_before_launch':False,
                        'default_entry_point':('gui_scripts','main'),
                        'changes':[],
                        'timestamp':datetime.datetime.now(),
                        },
-        'wininst_cloud':{ 'excludes':'excludes.txt'},
+        'wininst_cloud':{ 'excludes':'excludes.txt',
+                          'uuid':'{{uuid}}', },
     }, 
 
   )
@@ -355,7 +370,8 @@ class CreateNewProject( Action ):
         
     def start_project( self, options ):
         from jinja2 import Template
-        context = {'options':options}
+        import uuid
+        context = {'options':options, 'uuid':str(uuid.uuid4())}
         if not os.path.exists( os.path.join( options.source, options.module ) ):
             os.makedirs( os.path.join( options.source, options.module ) )
         for filename_template, code_template in templates:
