@@ -245,6 +245,7 @@ be specified using the verbose_name attribute.
     list_size = (600, 600)
     form_size = (700, 500)
     form_actions = []
+    related_toolbar_actions = []
     field_attributes = {}
     form_state = None
     icon = None # Default
@@ -366,7 +367,8 @@ be specified using the verbose_name attribute.
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         app_admin = self.get_application_admin()
-        return app_admin.get_related_toolbar_actions( toolbar_area, direction )
+        return self.related_toolbar_actions or \
+               app_admin.get_related_toolbar_actions( toolbar_area, direction )
     
     @model_function
     def get_list_actions(self):
