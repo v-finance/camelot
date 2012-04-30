@@ -38,7 +38,7 @@ class HSeparator(QFrame):
 class StandaloneWizardPage(QDialog):
     """A Standalone Wizard Page Dialog for quick configuration windows"""
 
-    def __init__(self, window_title=None, parent=None, flags=Qt.WindowFlags(0)):
+    def __init__(self, window_title=None, parent=None, flags=Qt.Dialog):
         super(StandaloneWizardPage, self).__init__(parent, flags)
         self.setWindowTitle(window_title or '')
         self.set_layouts()
@@ -51,7 +51,9 @@ class StandaloneWizardPage(QDialog):
 
         # needed in case we have a widget that changes the size
         # of the widget and can be hidden
-        self._vlayout.setSizeConstraint(QLayout.SetFixedSize)
+        # this prevents the ChangeObjects dialog from being scaleable,
+        # therefor commented out
+        #self._vlayout.setSizeConstraint(QLayout.SetFixedSize)
 
         banner_layout = QGridLayout()
         banner_layout.setColumnStretch(0, 1)
