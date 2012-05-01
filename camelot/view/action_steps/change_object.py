@@ -52,7 +52,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   subtitle = _('Complete the form and press the OK button'),
                   icon = Icon('tango/22x22/categories/preferences-system.png'),
                   parent=None, 
-                  flags=QtCore.Qt.WindowFlags(0) ):
+                  flags=QtCore.Qt.Dialog ):
         from camelot.view.controls.formview import FormWidget
         from camelot.view.proxy.collection_proxy import CollectionProxy
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
@@ -126,7 +126,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   objects, 
                   admin, 
                   parent = None, 
-                  flags=QtCore.Qt.WindowFlags(0) ):
+                  flags = QtCore.Qt.Window ):
         from camelot.view.controls import editors
         from camelot.view.proxy.collection_proxy import CollectionProxy
         
@@ -273,7 +273,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
                   admin,
                   field_attributes, 
                   parent = None, 
-                  flags=QtCore.Qt.WindowFlags(0) ):
+                  flags=QtCore.Qt.Dialog ):
         super(ChangeFieldDialog, self).__init__( '', parent, flags )
         from camelot.view.controls.editors import ChoicesEditor
         self.field_attributes = field_attributes

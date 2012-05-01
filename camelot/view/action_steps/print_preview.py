@@ -26,6 +26,7 @@ from PyQt4 import QtCore, QtGui
 
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
+from camelot.view.action_steps.open_file import OpenFile
 
 class PrintPreview( ActionStep ):
     """
@@ -78,7 +79,7 @@ class PrintPreview( ActionStep ):
         dialog.resize( available_geometry.width() * 0.75, 
                        available_geometry.height() * 0.75 )
         return dialog
-
+    
     @QtCore.pyqtSlot( QtGui.QPrinter )
     def paint_on_printer( self, printer ):
         self.document.print_( printer )
@@ -121,7 +122,17 @@ class PrintJinjaTemplate( PrintHtml ):
                   template, 
                   context={},
                   environment = environment ):
-        template = environment.get_template( template )
-        html = template.render( context )
-        super( PrintJinjaTemplate, self).__init__( html )
-
+        self.template = environment.get_template( template )
+        self.html = self.template.render( context )
+        self.context = context
+        super( PrintJinjaTemplate, self).__init__( self.html )
+    
+    def get_pdf( self ):
+        doc = QtGui.QTextDocument() 
+        doc.setHtml(self.template.render( self.context ))
+        printer = QtGui.QPrinter()
+        printer.setOutputFormat( QtGui.QPrinter.PdfFormat )
+        filepath = OpenFile.create_temporary_file('.pdf')
+        printer.setOutputFileName(filepath)
+        doc.print_(printer)
+        return filepath
