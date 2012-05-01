@@ -124,7 +124,7 @@ class DeferredProperty( object ):
         reverse = self.kw.get( 'reverse' )
         if reverse:
             reverse_attr = getattr( target_cls, reverse )
-            if not isinstance( reverse_attr, DeferredProp ):
+            if not isinstance( reverse_attr, DeferredProperty ):
                 reverse_attr.property._add_reverse_property( key )
                 rel._add_reverse_property( reverse )
 

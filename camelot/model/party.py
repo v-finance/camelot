@@ -31,7 +31,6 @@ by Len Silverston, Chapter 2
 
 import collections
 
-from camelot.core.sql import metadata
 from camelot.view.controls import delegates
 
 from sqlalchemy.types import Date, Unicode, Integer, Boolean
