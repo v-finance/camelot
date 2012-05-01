@@ -73,6 +73,12 @@ Session = scoped_session( sessionmaker( autoflush = False,
                                         expire_on_commit = False ) )
 
 #
+# Singleton registry for subclasses of entity that have been mapped
+#
+
+class_registry = dict()
+
+#
 # There are 3 base classes that each act in a different way
 #
 # * ClassMutator : DSL like statements that modify the Entity at definition
@@ -122,14 +128,23 @@ class DeferredProperty( object ):
                 reverse_attr.property._add_reverse_property( key )
                 rel._add_reverse_property( reverse )
 
-@event.listens_for( mapper, 'mapper_configured' )
-def _setup_deferred_properties( mapper, class_ ):
+@event.listens_for( mapper, 'after_configured' )
+def _process_deferred_properties():
     """Listen for finished mappers and apply DeferredPropoperty
     configurations."""
-
-    for key, value in class_.__dict__.items():
-        if isinstance( value, DeferredProperty ):
-            value._config( class_, mapper, key )
+    deferred_properties = []
+    for cls in class_registry.values():
+        mapper = orm.class_mapper( cls )
+        # set some convenience attributes to the Entity
+        setattr( cls, 'table', mapper.local_table )
+        setattr( cls, 'query', Session().query( cls ) )
+        # loop over the properties to process the defered properties
+        for key, value in cls.__dict__.items():
+            if isinstance( value, DeferredProperty ):
+                deferred_properties.append( ( value.process_order, key, value, cls, mapper ) )
+    deferred_properties.sort( key = lambda dp:dp[0] )
+    for _order, key, value, cls, mapper in deferred_properties:
+        value._config( cls, mapper, key )
 
 class Field( schema.Column, Property ):
     """Subclass of :class:`sqlalchemy.schema.Column`
@@ -150,6 +165,8 @@ class Field( schema.Column, Property ):
 class Relationship( DeferredProperty ):
     """Generates a one to many or many to one relationship."""
 
+    process_order = 0
+    
     def __init__(self, target, **kw):
         self.target = target
         self.kw = kw
@@ -166,10 +183,10 @@ class Relationship( DeferredProperty ):
         pk_table = pk_target.__table__
         pk_col = list(pk_table.primary_key)[0]
         
-        fk_colname = '%s_id'%key
+        fk_colname = '%s_%s'%(key, pk_col.key)
         
         if hasattr(fk_target, fk_colname):
-            fk_col = getattr(fk_target, self.fk_col)
+            fk_col = getattr(fk_target, fk_colname)
         else:
             fk_col = schema.Column(fk_colname, pk_col.type, ForeignKey(pk_col))
             setattr(fk_target, fk_colname, fk_col)
@@ -184,18 +201,24 @@ class Relationship( DeferredProperty ):
 class OneToMany( Relationship ):
     """Generates a one to many relationship."""
 
+    process_order = 2
+    
     def _get_pk_fk( self, cls, target_cls ):
         return cls, target_cls
 
 class ManyToOne( Relationship ):
     """Generates a many to one relationship."""
 
+    process_order = 1
+    
     def _get_pk_fk( self, cls, target_cls ):
         return target_cls, cls
 
 class ManyToMany( DeferredProperty ):
     """Generates a many to many relationship."""
 
+    process_order = 3
+    
     def __init__( self, target, tablename, local_colname, remote_colname, **kw ):
         self.target = target
         self.tablename = tablename
@@ -225,19 +248,20 @@ class ManyToMany( DeferredProperty ):
         setattr(cls, key, rel)
         self._setup_reverse(key, rel, target_cls)
                     
-class ColumnProperty( Property ):
+class ColumnProperty( DeferredProperty ):
 
+    process_order = 4
+    
     def __init__( self, prop, *args, **kwargs ):
-        super( Property, self ).__init__()
+        super( ColumnProperty, self ).__init__()
         self.prop = prop
         self.args = args
         self.kwargs = kwargs
         
-    def attach( self, dict_, name ):
-        return
-        dict_[ name ] = column_property( self.prop.label(None), 
-                                         *self.args, 
-                                         **self.kwargs )
+    def _config(self, cls, mapper, key):
+        setattr( cls, key, column_property( self.prop( mapper.local_table.c ).label(None), 
+                                            *self.args, 
+                                            **self.kwargs ) )
 
 def setup_all( create_tables=False, *args, **kwargs ):
     """Create all tables that are registered in the metadata
@@ -289,6 +313,8 @@ class EntityMeta( DeclarativeMeta ):
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
         super( EntityMeta, cls ).__init__( classname, bases, dict_ )
+        if '__table__' in cls.__dict__:
+            setattr( cls, 'table', cls.__dict__['__table__'] )
         # only set the query attribute if the class is actually mapped,
         # eg the Entity class itself is not mapped, and as such has no query
         #if '__mapper__' in cls.__dict__:
@@ -397,7 +423,8 @@ class Entity( object ):
 
 Entity = declarative_base( cls = Entity, 
                            metadata = metadata,
-                           metaclass = EntityMeta )
+                           metaclass = EntityMeta,
+                           class_registry = class_registry )
 
 def refresh_session( session ):
     """Session refresh expires all objects in the current session and sends

@@ -230,7 +230,7 @@ class Party( Entity ):
         return sql.select( [cm.mechanism],
                           whereclause = and_( pcm.table.c.party_id == self.id,
                                               cm.table.c.mechanism.like( ( u'email', u'%' ) ) ),
-                          from_obj = [cm.table.join( pcm.table )] ).limit(1)
+                          from_obj = [cm.table.join( pcm.table, cm.id == pcm.contact_mechanism_id )] ).limit(1)
     
     email = ColumnProperty( email, deferred = True )
 
@@ -242,7 +242,7 @@ class Party( Entity ):
         return sql.select( [cm.mechanism],
                           whereclause = and_( pcm.table.c.party_id == self.id,
                                               cm.table.c.mechanism.like( ( u'phone', u'%' ) ) ),
-                          from_obj = [cm.table.join( pcm.table )] ).limit(1)
+                          from_obj = [cm.table.join( pcm.table, cm.id == pcm.contact_mechanism_id )] ).limit(1)
     
     phone = ColumnProperty( phone, deferred = True )
 
@@ -254,7 +254,7 @@ class Party( Entity ):
         return sql.select( [cm.mechanism],
                           whereclause = and_( pcm.table.c.party_id == self.id,
                                               cm.table.c.mechanism.like( ( u'fax', u'%' ) ) ),
-                          from_obj = [cm.table.join( pcm.table )] ).limit(1)
+                          from_obj = [cm.table.join( pcm.table, cm.id == pcm.contact_mechanism_id )] ).limit(1)
     
     fax = ColumnProperty( fax, deferred = True )
     

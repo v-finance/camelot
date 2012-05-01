@@ -107,9 +107,9 @@ class Filter(object):
                 admin = attributes['admin']
                 joins.append(field_name)
                 if attributes['direction'] == 'manytoone':
-                    table = admin.entity.table.join( table )
+                    table = admin.mapper.mapped_table.join( table )
                 else:
-                    table = admin.entity.table
+                    table = admin.mapper.mapped_table
 
         col = getattr( admin.entity, field_name )
         query = select([col], distinct=True, order_by=col.asc()).select_from(table)
