@@ -290,12 +290,14 @@ setup(
     options = {
         'bdist_cloud':{'revision':'0',
                        'branch':'master',
+                       'uuid':'{{uuid}}',
                        'update_before_launch':False,
                        'default_entry_point':('gui_scripts','main'),
                        'changes':[],
                        'timestamp':datetime.datetime.now(),
                        },
-        'wininst_cloud':{ 'excludes':'excludes.txt'},
+        'wininst_cloud':{ 'excludes':'excludes.txt',
+                          'uuid':'{{uuid}}', },
     }, 
 
   )
@@ -368,7 +370,8 @@ class CreateNewProject( Action ):
         
     def start_project( self, options ):
         from jinja2 import Template
-        context = {'options':options}
+        import uuid
+        context = {'options':options, 'uuid':str(uuid.uuid4())}
         if not os.path.exists( os.path.join( options.source, options.module ) ):
             os.makedirs( os.path.join( options.source, options.module ) )
         for filename_template, code_template in templates:
