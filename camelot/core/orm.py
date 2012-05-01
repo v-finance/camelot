@@ -40,7 +40,7 @@ behavior
 import logging
 import sys
 
-logger = logging.getLogger('camelot.core.orm')
+LOGGER = logging.getLogger('camelot.core.orm')
 
 import sqlalchemy.types
 from camelot.core.sql import metadata
@@ -130,8 +130,9 @@ class DeferredProperty( object ):
 
 @event.listens_for( mapper, 'after_configured' )
 def _process_deferred_properties():
-    """Listen for finished mappers and apply DeferredPropoperty
-    configurations."""
+    """After all mappers have been configured, process the Deferred Propoperties
+    """
+    LOGGER.debug( 'process deferred properties' )
     deferred_properties = []
     for cls in class_registry.values():
         mapper = orm.class_mapper( cls )
@@ -144,10 +145,17 @@ def _process_deferred_properties():
                 deferred_properties.append( ( value.process_order, key, value, cls, mapper ) )
     deferred_properties.sort( key = lambda dp:dp[0] )
     for _order, key, value, cls, mapper in deferred_properties:
-        value._config( cls, mapper, key )
+        try:
+            value._config( cls, mapper, key )
+        except Exception, e:
+            LOGGER.fatal( 'Could not process DeferredProperty %s of class %s'%( key, cls.__name__ ),
+                          exc_info = e )
+            raise
 
 class Field( schema.Column, Property ):
-    """Subclass of :class:`sqlalchemy.schema.Column`
+    """Subclass of :class:`sqlalchemy.schema.Column` with behavior compatible
+    with :class:`elixir.Field` and only exists for porting Elixir code to 
+    Declarative.  It's use in new code is discouraged.
     """
     
     def __init__( self, type, *args, **kwargs ):
@@ -286,27 +294,36 @@ class EntityMeta( DeclarativeMeta ):
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
         #
-        # process the mutators
+        # don't modify the Entity class itself
         #
-        for mutator, args, kwargs in dict_.get( MUTATORS, [] ):
-            mutator.process( dict_, *args, **kwargs )
-        #
-        # use default tablename if none set
-        #
-        if '__tablename__' not in dict_:
-            dict_['__tablename__'] = classname.lower()     
-        #
-        # add a primary key
-        #
-        primary_key_column = schema.Column( DEFAULT_AUTO_PRIMARYKEY_TYPE,
-                                            primary_key = True )
-        dict_[ DEFAULT_AUTO_PRIMARYKEY_NAME ] = primary_key_column
-        #
-        # handle the Properties
-        #
-        for key, value in dict_.items():
-            if isinstance( value, Property ):
-                value.attach( dict_, key )
+        if classname != 'Entity':
+            #
+            # process the mutators
+            #
+            for mutator, args, kwargs in dict_.get( MUTATORS, [] ):
+                mutator.process( dict_, *args, **kwargs )
+            #
+            # use default tablename if none set
+            #
+            if '__tablename__' not in dict_:
+                dict_['__tablename__'] = classname.lower()     
+            #
+            # handle the Properties
+            #
+            has_primary_key = False
+            for key, value in dict_.items():
+                if isinstance( value, schema.Column ):
+                    if value.primary_key:
+                        has_primary_key = True
+                if isinstance( value, Property ):
+                    value.attach( dict_, key )
+            if has_primary_key == False:
+                #
+                # add a primary key
+                #
+                primary_key_column = schema.Column( DEFAULT_AUTO_PRIMARYKEY_TYPE,
+                                                    primary_key = True )
+                dict_[ DEFAULT_AUTO_PRIMARYKEY_NAME ] = primary_key_column            
         return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
     
     # init is called after the creation of the new Entity class, and can be
@@ -315,10 +332,6 @@ class EntityMeta( DeclarativeMeta ):
         super( EntityMeta, cls ).__init__( classname, bases, dict_ )
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
-        # only set the query attribute if the class is actually mapped,
-        # eg the Entity class itself is not mapped, and as such has no query
-        #if '__mapper__' in cls.__dict__:
-        #    cls.query = Session().query( cls )
         
 class Entity( object ):
     """A declarative base class that adds some methods that used to be
@@ -424,7 +437,8 @@ class Entity( object ):
 Entity = declarative_base( cls = Entity, 
                            metadata = metadata,
                            metaclass = EntityMeta,
-                           class_registry = class_registry )
+                           class_registry = class_registry,
+                           name = 'Entity' )
 
 def refresh_session( session ):
     """Session refresh expires all objects in the current session and sends
@@ -434,7 +448,7 @@ def refresh_session( session ):
     """
     from camelot.view.remote_signals import get_signal_handler
     import sqlalchemy.exc as sa_exc
-    logger.debug('session refresh requested')
+    LOGGER.debug('session refresh requested')
     signal_handler = get_signal_handler()
     refreshed_objects = []
     expunged_objects = []

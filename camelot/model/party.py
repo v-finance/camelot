@@ -557,7 +557,7 @@ class Address( Entity ):
     @ColumnProperty
     def name( self ):
         return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
-                           whereclause = (GeographicBoundary.id==self.city_geographicboundary_id))
+                           whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
 
     @classmethod
     def get_or_create( cls, street1, street2, city ):
