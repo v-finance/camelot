@@ -138,8 +138,8 @@ It has additional class attributes that customise its behaviour.
         displayed in the table or the selection view.  Overwrite this method to
         change the default query, which selects all rows in the database.
         """
-        from elixir import session
-        return session.query( self.entity )
+        from camelot.core.orm import Session
+        return Session().query( self.entity )
 
     @model_function
     def get_verbose_identifier(self, obj):
@@ -614,7 +614,6 @@ It has additional class attributes that customise its behaviour.
         #
         # serialize the object to be copied
         #
-        # @todo: this code depends on elixir
         serialized = obj.to_dict(deep=self.copy_deep, exclude=[c.name for c in self.mapper.primary_key]+self.copy_exclude)
         #
         # make sure we don't move duplicated OneToMany relations from the

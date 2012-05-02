@@ -182,9 +182,8 @@ class Application(QtCore.QObject):
                              (QtCore.QT_VERSION_STR, QtCore.PYQT_VERSION_STR))
                 logger.debug('qt major version %f' % QT_MAJOR_VERSION)
             app.processEvents()
-            import sqlalchemy, elixir
+            import sqlalchemy
             logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)
-            logger.debug('elixir version %s'%elixir.__version__)
             app.processEvents()
             self.set_application_attributes(app)
             self.pre_initialization()

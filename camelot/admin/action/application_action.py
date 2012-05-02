@@ -241,10 +241,9 @@ class Refresh( Action ):
     icon = Icon('tango/16x16/actions/view-refresh.png')
     
     def model_run( self, model_context ):
-        from elixir import session
-        from camelot.core.orm import refresh_session
+        from camelot.core.orm import refresh_session, Session
         from camelot.view.action_steps import Refresh
-        refresh_session( session )
+        refresh_session( Session() )
         yield Refresh()
 
 class Exit( Action ):

@@ -195,16 +195,7 @@ class EntityViewsTest(ModelThreadTestCase):
     """Test the views of all the Entity subclasses, subclass this class to test all views
     in your application.  This is done by calling the create_table_view and create_new_view
     on a set of admin objects.  To tell the test case which admin objects should be tested,
-    overwrite the get_admins method ::
-
-    class MyEntityViewsTest(EntityViewsTest):
-
-        def get_admins(self):
-          from elixir import entities
-          application_admin import MyApplicationAdmin
-          self.app_admin = MyApplicationAdmin()
-          return [self.app_admin.get_entity_admin(e) for e in entities if self.app_admin.get_entity_admin(e)]
-
+    overwrite the get_admins method.
     """
 
     def setUp(self):

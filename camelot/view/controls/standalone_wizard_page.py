@@ -24,7 +24,7 @@
 
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QDialog, QFrame, QGridLayout, QLabel, QVBoxLayout, \
-    QWidget, QLayout
+    QWidget
 
 from camelot.view.model_thread import object_thread
 

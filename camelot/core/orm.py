@@ -46,6 +46,7 @@ import sqlalchemy.types
 from camelot.core.sql import metadata
 from sqlalchemy import schema, orm, ForeignKey, types, event
 from sqlalchemy.ext.declarative import ( declarative_base, 
+                                         _declarative_constructor,
                                          DeclarativeMeta )
 from sqlalchemy.orm import ( scoped_session, sessionmaker, deferred, 
                              column_property, mapper, relationship )
@@ -337,6 +338,10 @@ class Entity( object ):
     """A declarative base class that adds some methods that used to be
     available in Elixir"""
     
+    def __init__( self, *args, **kwargs ): 
+        _declarative_constructor( self, *args, **kwargs ) 
+        Session().add( self ) 
+                        
     #
     # methods below were copied from Elixir to mimic the Elixir Entity
     # behavior
@@ -438,6 +443,7 @@ Entity = declarative_base( cls = Entity,
                            metadata = metadata,
                            metaclass = EntityMeta,
                            class_registry = class_registry,
+                           constructor = None,
                            name = 'Entity' )
 
 def refresh_session( session ):
