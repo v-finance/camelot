@@ -546,7 +546,27 @@ It has additional class attributes that customise its behaviour.
         from sqlalchemy.orm.session import Session
         session = Session.object_session( entity_instance )
         if session:
+            modifications = self.get_modifications( entity_instance )
             session.flush( [entity_instance] )
+            #
+            # If needed, track the changes
+            #
+            primary_key = self.primary_key( entity_instance )
+            if modifications and (primary_key != None) and len(primary_key)==1:
+                from camelot.model.memento import Memento
+                # only register the update when the camelot model is active
+                if hasattr(Memento, 'query'):
+                    from camelot.model.authentication import get_current_authentication
+                    history = Memento( model = unicode( self.entity.__name__ ),
+                                       memento_type = 'before_update',
+                                       primary_key = primary_key[0],
+                                       previous_attributes = modifications,
+                                       authentication = get_current_authentication() )
+
+                    try:
+                        history.flush()
+                    except DatabaseError, e:
+                        self.logger.error( 'Programming Error, could not flush history', exc_info = e )
 
     @model_function
     def refresh(self, entity_instance):
