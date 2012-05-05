@@ -111,53 +111,56 @@ The aforementioned specifications translate into the following Python code,
 that we add to our model.py module::
 
   from sqlalchemy import Unicode, Date
-  from elixir import Entity, Field, using_options
+  from sqlalchemy.schema import Column
+  from camelot.core.orm import Entity
   from camelot.admin.entity_admin import EntityAdmin
   
-  class Movie(Entity):
-    using_options(tablename='movie')
-    title = Field(Unicode(60), required=True)
-    short_description = Field(Unicode(512))
-    release_date = Field(Date)
-    genre = Field(Unicode(15))
+  class Movie( Entity ):
+    
+      __tablename__ = 'movie'
+    
+      title = Column( Unicode(60), nullable = False )
+      short_description = Column( Unicode(512) )
+      release_date = Column( Date() )
+      genre = Column( Unicode(15) )
 
 .. note::
 
    The complete source code of this tutorial can be found in the
-   example folder of the Camelot source code.
+   :file:`camelot_example` folder of the Camelot source code.
    
-``Movie`` inherits ``Entity`` from the `Elixir <http://elixir.ematia.de/trac/wiki>`_
-library. We use ``using_options()`` to name the table ourselves. Elixir would
-have used the location of our module to generate a name in the form
-*package_model_entity*, as described `in Elixir documentation
-<http://elixir.ematia.de/apidocs/elixir.options.html>`_.
+``Movie`` inherits ``Entity``.  ``Entity`` is the base class for all objects
+that should be stored in the database.  We use the ``__tablename`` attribute to
+to name the table ourselves in which the data will be stored, otherwise a 
+default tablename would have been used.
 
-Our entity holds four fields.
-
-::
-
-  title = Field(Unicode(60), required=True)
-
-``title`` holds up to 60 unicode characters, and is required:
+Our entity holds four fields that are stored in columns in the table.
 
 ::
 
-  short_description = Field(Unicode(512))
+  title = Column( Unicode(60), nullable = False )
+
+``title`` holds up to 60 unicode characters, and cannot be left empty:
+
+::
+
+  short_description = Column( Unicode(512) )
 
 ``short_description`` can hold up to 512 characters:
 
 ::
 
-  release_date = Field(Date)
-  genre = Field(Unicode(15))
+  release_date = Column( Date() )
+  genre = Column( Unicode(15) )
 
 ``release_date`` holds a date, and ``genre`` up to 15 unicode characters:
 
-For more information about defining fields, refer to
-`this page <http://elixir.ematia.de/apidocs/elixir.fields.html>`_. The
-different `SQLAlchemy <http://www.sqlalchemy.org>`_ types used by Elixir
-are described `here <http://www.sqlalchemy.org/docs/04/types.html>`_.
-Finally, Camelot fields are documented in the API.
+For more information about defining models, refer to the
+`SQLAlchemy Declarative extension <http://docs.sqlalchemy.org/en/rel_0_7/orm/extensions/declarative.html>`_. 
+
+The different `SQLAlchemy <http://www.sqlalchemy.org>`_ column types used 
+are described `here <http://docs.sqlalchemy.org/en/rel_0_7/core/types.html>`_.
+Finally, custom Camelot fields are documented in the API.
 
 Let's now create an ``EntityAdmin`` subclass
 
@@ -169,20 +172,22 @@ We have to tell Camelot about our entities, so they show up in the :abbr:`GUI`.
 This is one of the purposes of ``EntityAdmin`` subclasses. After adding the
 ``EntityAdmin`` subclass, our ``Movie`` class now looks like this::
 
-  class Movie(Entity):
-    using_options(tablename='movie')
+  class Movie( Entity ):
+    
+      __tablename__ = 'movie'
+    
+      title = Column( Unicode(60), nullable = False )
+      short_description = Column( Unicode(512) )
+      release_date = Column( Date() )
+      genre = Column( Unicode(15) )
 
-    title = Field(Unicode(60), required=True)
-    short_description = Field(Unicode(512))
-    release_date = Field(Date)
-    genre = Field(Unicode(15))
+      def __unicode__( self ):
+          return self.title or 'Untitled movie'
 
-    class Admin(EntityAdmin):
-      verbose_name = 'Movie'
-      list_display = ['title', 'short_description', 'release_date', 'genre']
+      class Admin( EntityAdmin ):
+          verbose_name = 'Movie'
+          list_display = ['title', 'short_description', 'release_date', 'genre']
 
-    def __unicode__(self):
-      return self.title or 'untitled movie'
 
 We made ``Admin`` an inner class to strengthen the link between it and the
 ``Entity`` subclass. Camelot does not force us. ``Admin`` holds three
@@ -192,15 +197,16 @@ attributes.
 
 The last attribute is interesting; it holds a list containing the fields we
 have defined above. As the name suggests, ``list_display`` tells Camelot to
-only show the fields specified in the list. ``list_display`` does not affect
-forms.
+only show the fields specified in the list. ``list_display`` fields are also
+taken as the default fields to show on a form.
 
 In our case we want to display four fields: ``title``, ``short_description``,
 ``release_date``, and ``genre`` (that is, all of them.)
 
 We also add a ``__unicode__()`` method that will return either the title of the
-movie entity or ``'untitled movie'`` if title is empty. This is a good
-programming practice.
+movie entity or ``'Untitled movie'`` if title is empty.  The ``__unicode__()``
+method will be called in case Camelot needs a textual representation of an 
+object, such as in a window title.
 
 Let's move onto the last piece of the puzzle.
 
