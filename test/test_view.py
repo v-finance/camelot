@@ -67,6 +67,16 @@ class EditorsTest(ModelThreadTestCase):
         editor.editingFinished.connect( signal_counter.signal_caught )
         editor.set_value( value )
         self.assertEqual( signal_counter.counter, 0 )
+        #
+        # when the up or down arrow is pressed, the event should be ignored
+        # by the editor, to allow the table view to move to the row above or
+        # below
+        #
+        #up_event = QtGui.QKeyEvent( QtCore.QEvent.KeyPress, 
+        #                            Qt.Key_Up,
+        #                            Qt.NoModifier )
+        #editor.keyPressEvent( up_event )
+        #self.assertFalse( up_event.isAccepted() )
         
     def test_ChartEditor(self):
         import math
