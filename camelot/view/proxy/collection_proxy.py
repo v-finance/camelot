@@ -778,7 +778,6 @@ position in the query.
                     # type error can be raised in case we try to set to a collection
                     pass
                 if self.flush_changes and self.validator.isValid( row ):
-                    modifications = self.admin.get_modifications( o )
                     # save the state before the update
                     try:
                         self.admin.flush( o )
@@ -791,27 +790,6 @@ position in the query.
                     except KeyError:
                         pass
                     locker.unlock()
-                    #
-                    # we can only track history if the model was updated, and it was
-                    # flushed before, otherwise it has no primary key yet
-                    #
-                    primary_key = self.admin.primary_key( o )
-                    if model_updated and (primary_key != None) and len(primary_key)==1 and modifications:
-                        if direction not in ( 'manytomany', 'onetomany' ):
-                            from camelot.model.memento import Memento
-                            # only register the update when the camelot model is active
-                            if hasattr(Memento, 'query'):
-                                from camelot.model.authentication import get_current_authentication
-                                history = Memento( model = unicode( self.admin.entity.__name__ ),
-                                                   memento_type = 'before_update',
-                                                   primary_key = primary_key[0],
-                                                   previous_attributes = modifications,
-                                                   authentication = get_current_authentication() )
-
-                                try:
-                                    history.flush()
-                                except DatabaseError, e:
-                                    self.logger.error( 'Programming Error, could not flush history', exc_info = e )
                 # update the cache
                 self._add_data(self._columns, row, o)
                 #@todo: update should only be sent remotely when flush was done
