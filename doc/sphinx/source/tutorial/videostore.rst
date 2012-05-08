@@ -296,110 +296,127 @@ Camelot. Next we look at relationships between entities.
 Relationships
 =============
 
-We will be using Elixir's special fields ``ManyToOne`` and ``OneToMany`` to
-specify relationships between entities. But first we need a ``Director``
-entity. We define it as follows::
-
-  from elixir import ManyToOne, OneToMany
+We will be using SQLAlchemy's :object:`sqlalchemy.orm.relationship` API.  We'll
+relate a director to each movie.  So first we need a ``Director`` entity. We 
+define it as follows::
                    
-  class Director(Entity):
-    using_options(tablename='director')
+    class Director( Entity ):
+    
+        __tablename__ = 'director'
+  
+        name = Column( Unicode( 60 ) )
 
-    name = Field(Unicode(60))
-    movies = OneToMany('Movie')
+Even if we define only the ``name`` column, Camelot adds an ``id`` column
+containing the primary key of the ``Director`` Entity.  It does so because we
+did not define a primary key ourselves.  This primary key is an integer number,
+unique for each row in the ``director`` table, and as such unique for each 
+``Director`` object.
 
-Once again, we name the table ourselves. What's new here is ``OneToMany``.
+Next, we add a reference to this primary key in the movie table, this is called
+the foreign key.  This foreign key column, called ``director_id`` will be an 
+integer number as well, with the added constraint that it can only contain
+values that are present in the ``director`` table its ``id`` column.
 
-In Elixir, ``OneToMany`` is a relationship; it takes as parameter the related
-class's name. Behind the scenes, Elixir creates a director id column in the
-table represented by the entity ``Movie`` and set a foreign key constraint on
-this column.
+Because the ``director_id`` column is only an integer, we need to add the
+``director`` attribute of type ``relationship``.  This will allow us to use
+the ``director`` property as a ``Director`` object related to a ``Movie``
+object.  The ``relationship`` attribute will find out about the ``director_id``
+column and use it to attach a ``Director`` object to a ``Movie`` object ::
 
-Elixir requires that we add an inverse relationship ``ManyToOne`` to our
-``Movie`` entity. It ends up looking as follows::
-
-  class Movie(Entity):
-    using_options(tablename='movie')
-
-    title = Field(Unicode(60), required=True)
-    short_description = Field(Unicode(512))
-    release_date = Field(Date)
-    genre = Field(Unicode(15))
-    director = ManyToOne('Director')
-
-    class Admin(EntityAdmin):
-      verbose_name = 'Movie'
-      list_display = ['title',
-                      'short_description',
-                      'release_date',
-                      'genre',
-                      'director']
-
-    def __unicode__(self):
-      return self.title or 'untitled movie'
+    from sqlalchemy.schema import ForeignKey
+    from sqlalchemy.orm import relationship
+  
+    class Movie( Entity ):
+	
+	__tablename__ = 'movie'
+	
+	title = Column( Unicode( 60 ), required=True )
+	short_description = Column( Unicode( 512 ) )
+	release_date = Column( Date() )
+	genre = Column( Unicode( 15 ) )
+	
+	director_id = Column( Integer, ForeignKey('director.id') )
+	director = relationship( 'Director' )
+      
+	class Admin( EntityAdmin ):
+	    verbose_name =  'Movie'
+	    list_display = [ 'title',
+			     'short_description',
+			     'release_date',
+			     'genre',
+			     'director' ]
+      
+	def __unicode__( self ):
+	    return self.title or 'untitled movie'
 
 We also inserted ``'director'`` in ``list_display``.
 
-Our ``Director`` entity needs an administration class, which will adds the
-entity to the section ``'movies'``. We will also add ``__unicode__()`` method
-as suggested above. The entity now looks as follows::
+To be able to have the movies accessible from a director, a ``relationship`` is
+defined on the ``Director`` entity as well.  This will result in a ``movies``
+attribute for each director, containing a list of movie objects.
 
-  class Director(Entity):
-    using_options(tablename='director')
+Our ``Director`` entity needs an administration class as well. We will also 
+add ``__unicode__()`` method as suggested above. The entity now looks as 
+follows::
 
-    name = Field(Unicode(60))
-    movies = OneToMany('Movie')
-
-    class Admin(EntityAdmin):
-      verbose_name = 'Director'
-      list_display = ['name']
-
-    def __unicode__(self):
-      return self.name or 'unknown director'
+    class Director( Entity ):
+	__tablename__ = 'director'
+    
+	name = Column( Unicode(60) )
+	movies = relationship( 'Movie' )
+    
+	class Admin( EntityAdmin ):
+	    verbose_name = 'Director'
+	    list_display = [ 'name' ]
+    
+	def __unicode__(self):
+	    return self.name or 'unknown director'
 
 For completeness the two entities are once again listed below::
 
-  class Movie(Entity):
-    using_options(tablename='movie')
+    class Movie( Entity ):
+	
+	__tablename__ = 'movie'
+	
+	title = Column( Unicode( 60 ), required=True )
+	short_description = Column( Unicode( 512 ) )
+	release_date = Column( Date() )
+	genre = Column( Unicode( 15 ) )
+	
+	director_id = Column( Integer, ForeignKey('director.id') )
+	director = relationship( 'Director' )
+      
+	class Admin( EntityAdmin ):
+	    verbose_name =  'Movie'
+	    list_display = [ 'title',
+			     'short_description',
+			     'release_date',
+			     'genre',
+			     'director' ]
+      
+	def __unicode__( self ):
+	    return self.title or 'untitled movie'
 
-    title = Field(Unicode(60), required=True)
-    short_description = Field(Unicode(512))
-    release_date = Field(Date)
-    genre = Field(Unicode(15))
-    director = ManyToOne('Director')
-
-    class Admin(EntityAdmin):
-      verbose_name = 'Movie'
-      list_display = ['title',
-                      'short_description',
-                      'release_date',
-                      'genre',
-                      'director']
-
-    def __unicode__(self):
-      return self.title or 'untitled movie'
-
-
-  class Director(Entity):
-    using_options(tablename='director')
-
-    name = Field(Unicode(60))
-    movies = OneToMany('Movie')
-
-    class Admin(EntityAdmin):
-      verbose_name = 'Director'
-      list_display = ['name']
-
-    def __unicode__(self):
-      return self.name or 'unknown director'
+    class Director( Entity ):
+	__tablename__ = 'director'
+    
+	name = Column( Unicode(60) )
+	movies = relationship( 'Movie' )
+    
+	class Admin( EntityAdmin ):
+	    verbose_name = 'Director'
+	    list_display = [ 'name' ]
+    
+	def __unicode__(self):
+	    return self.name or 'unknown director'
 
 The last step is to fix :file:`application_admin.py` by adding the following
 lines to the Director entity to the Movie section::
 
-	Section('Movies', 
-		self,
-                Icon('tango/22x22/mimetypes/x-office-presentation.png'),
-                items = [Movie, Director])
+	Section( 'Movies', 
+		 self,
+                 Icon( 'tango/22x22/mimetypes/x-office-presentation.png' ),
+                 items = [ Movie, Director ])
 
 This takes care of the relationship between our two entities. Below is the new
 look of our video store application.

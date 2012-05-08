@@ -48,7 +48,7 @@ copyright = u'2009 - 2012, Conceptive Engineering'
 # built documents.
 #
 # The short X.Y version.
-version = 'trunk'
+version = 'master'
 # The full version, including alpha/beta/rc tags.
 release = ''
 
