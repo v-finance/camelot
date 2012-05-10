@@ -873,10 +873,10 @@ be specified using the verbose_name attribute.
     def primary_key( self, obj ):
         """Get the primary key of an object
         :param obj: the object to get the primary key from
-        :return: a tuple with with components of the primary key, or none
-            if the object has no primary key yet or any more.
+        :return: a tuple with with components of the primary key, or an
+            emtpy list if the object has no primary key yet or any more.
         """
-        return None
+        return []
     
     def get_modifications( self, obj ):
         """Get the modifications on an object since the last flush.
