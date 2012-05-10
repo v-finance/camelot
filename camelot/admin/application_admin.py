@@ -546,7 +546,6 @@ shortcut confusion and reduce the number of status updates.
         """
         import sys
         import sqlalchemy
-        import elixir
         import chardet
         import jinja2
         import xlrd
@@ -556,7 +555,6 @@ shortcut confusion and reduce the number of status updates.
                   <em>Qt:</em> <b>%s</b><br>
                   <em>PyQt:</em> <b>%s</b><br>
                   <em>SQLAlchemy:</em> <b>%s</b><br>
-                  <em>Elixir:</em> <b>%s</b><br>
                   <em>Chardet:</em> <b>%s</b><br>
                   <em>Jinja:</em> <b>%s</b><br>
                   <em>xlrd:</em> <b>%s</b><br>
@@ -565,7 +563,6 @@ shortcut confusion and reduce the number of status updates.
                                               float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])),
                                               QtCore.PYQT_VERSION_STR,
                                               sqlalchemy.__version__,
-                                              elixir.__version__,
                                               chardet.__version__,
                                               jinja2.__version__,
                                               xlrd.__VERSION__,

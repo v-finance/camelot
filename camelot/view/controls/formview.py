@@ -334,9 +334,9 @@ class FormView(AbstractView):
 
     @QtCore.pyqtSlot()
     def refresh_session(self):
-        from elixir import session
-        from camelot.core.orm import refresh_session
-        post( functools.update_wrapper( functools.partial( refresh_session, session ), refresh_session ) )
+        from camelot.core.orm import refresh_session, Session
+        post( functools.update_wrapper( functools.partial( refresh_session, 
+                                                           Session() ), refresh_session ) )
                 
     @QtCore.pyqtSlot()
     def refresh(self):

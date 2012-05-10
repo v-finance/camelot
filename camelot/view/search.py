@@ -42,7 +42,6 @@ def create_entity_search_query_decorator(admin, text):
     only the objects related to the requested text or None if no such decorator
     could be build
     """
-    from elixir import entities
     from sqlalchemy import orm, sql
     from camelot.view import utils
 
@@ -101,9 +100,9 @@ def create_entity_search_query_decorator(admin, text):
 
         if admin.search_all_fields:
             search_tables = set([admin.entity.table])
-            for entity in entities:
-                if issubclass(admin.entity, entity):
-                    search_tables.add(entity.table)
+            # @todo: should this be recursive ?
+            for entity in admin.entity.__subclasses__():
+                search_tables.add(entity.table)
             for table in search_tables:
                 for column in table._columns:
                     append_column(column)

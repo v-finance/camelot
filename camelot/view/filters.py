@@ -87,7 +87,8 @@ class Filter(object):
         :return:  a :class:`filter_data` object
         """
         from sqlalchemy.sql import select
-        from elixir import session
+        from camelot.core.orm import Session
+        session = Session()
         filter_names = []
         joins = []
         #

@@ -1,6 +1,8 @@
 Master
 ------
 
+ * Port the ``camelot_example`` application to `Declarative`
+
  * See :ref:`migrate-11.12.30` for documentation on how to upgrade an 
    existing Camelot project.
  

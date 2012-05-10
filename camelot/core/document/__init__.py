@@ -91,5 +91,3 @@ def documented_type():
 
     return document_type
 
-
-

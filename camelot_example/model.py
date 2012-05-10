@@ -7,24 +7,23 @@ import time
 import datetime
 
 from sqlalchemy import sql
-
-from elixir import ColumnProperty
+from sqlalchemy.schema import Column, ForeignKey
+from sqlalchemy.orm import relationship, column_property
+import sqlalchemy.types
 
 import camelot.types
-from camelot.core.sql import metadata
-from elixir import Entity, Field, ManyToOne, OneToMany, \
-                   ManyToMany, using_options
+
 from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.orm import Entity, ManyToMany
+from camelot.core.sql import metadata
+from camelot.core.utils import ugettext_lazy as _
+from camelot.model.party import Person
 from camelot.view import action_steps
 from camelot.view.forms import Form, TabForm, WidgetOnlyForm, HBoxForm, Stretch
 from camelot.view.controls import delegates
 from camelot.view.filters import ComboBoxFilter
-from camelot.core.utils import ugettext_lazy as _
 from camelot.view.art import ColorScheme
-from sqlalchemy.types import Unicode, Date, Integer
-
-__metadata__ = metadata
 
 from camelot_example.change_rating import ChangeRatingAction
 from camelot_example.drag_and_drop import DropAction
@@ -32,7 +31,7 @@ from camelot_example.drag_and_drop import DropAction
 # Some helper functions that will be used later on
 #
 
-def genre_choices(entity_instance):
+def genre_choices( entity_instance ):
     """Choices for the possible movie genres"""
     return [
     ((None),('')),
@@ -71,56 +70,54 @@ class BurnToDisk( Action ):
         return state
     
 # begin short movie definition
-class Movie(Entity):
-    using_options(tablename='movies')
-    title = Field(Unicode(60), required=True)
-    short_description = Field(Unicode(512))
-    releasedate = Field(Date)
+class Movie( Entity ):
+
+    __tablename__ = 'movies'
+    
+    title = Column( sqlalchemy.types.Unicode(60), nullable = False )
+    short_description = Column( sqlalchemy.types.Unicode(512) )
+    releasedate = Column( sqlalchemy.types.Date )
+    genre = Column( sqlalchemy.types.Unicode(15) )
+    rating = Column( camelot.types.Rating() )
     #
     # All relation types are covered with their own editor
     #
-    director = ManyToOne('Person')
-    cast = OneToMany('Cast')
-    visitor_reports = OneToMany('VisitorReport')
-    tags = ManyToMany('Tag')
-    genre = Field(Unicode(15))
-    rating = Field(camelot.types.Rating())
+    director_party_id = Column( sqlalchemy.types.Integer, 
+                                ForeignKey( 'person.party_id' ) )
+    director = relationship( Person )
+    cast = relationship( 'Cast' )
+    visitor_reports = relationship( 'VisitorReport' )
+    tags = ManyToMany( 'Tag', 
+                       tablename = 'tags_movies__movies_tags', 
+                       local_colname = 'movies_id', 
+                       remote_colname = 'tags_id' )
 # end short movie definition
     #
     # Camelot includes custom sqlalchemy types, like Image, which stores an
     # image on disk and keeps the reference to it in the database.
     #
 # begin image definition
-    cover = Field(camelot.types.Image(upload_to='covers'))
+    cover = Column( camelot.types.Image( upload_to = 'covers' ) )
 # end image definition
     #
     # Or File, which stores a file in the upload_to directory and stores a
     # reference to it in the database
     #
-    script = Field(camelot.types.File(upload_to='script'))
-    description = Field(camelot.types.RichText)
-
-    #
-    # Using a ColumnProperty, an sql query can be assigned to a field
-    #
-    @ColumnProperty
-    def total_visitors(self):
-        return sql.select([sql.func.sum(VisitorReport.visitors)],
-                               VisitorReport.movie_id==self.id)
-
+    script = Column( camelot.types.File( upload_to = 'script' ) )
+    description = Column( camelot.types.RichText )
     #
     # Normal python properties can be used as well, but then the
-    # delegate needs be specified
+    # delegate needs be specified in the Admin.field_attributes
     #
     @property
     def visitors_chart(self):
         #
         # Container classes are used to transport chunks of data between
-        # the model thread and the gui thread, in this case a chart
+        # the model the gui, in this case a chart
         #
         from camelot.container.chartcontainer import BarContainer
-        return BarContainer(range(len(self.visitor_reports)),
-                            [vr.visitors for vr in self.visitor_reports])
+        return BarContainer( range(len(self.visitor_reports)),
+                             [vr.visitors for vr in self.visitor_reports] )
 
     #
     # Each Entity subclass can have a subclass of EntityAdmin as
@@ -191,26 +188,38 @@ class Movie(Entity):
     def __unicode__(self):
         return self.title or ''
 
-class Cast(Entity):
-    using_options(tablename='cast')
-    movie = ManyToOne('Movie')
-    actor = ManyToOne('Person', required=True)
-    role = Field(Unicode(60))
+class Cast( Entity ):
+    
+    __tablename__ = 'cast'
 
-    class Admin(EntityAdmin):
+    role = Column( sqlalchemy.types.Unicode(60) )
+    movie_id = Column( sqlalchemy.types.Integer, 
+                       ForeignKey( 'movies.id' ),
+                       nullable = False )
+    actor_party_id = Column( sqlalchemy.types.Integer, 
+                             ForeignKey( 'person.party_id' ),
+                             nullable = False )
+    movie = relationship( 'Movie' )
+    actor = relationship( Person )
+
+    class Admin( EntityAdmin ):
         verbose_name = 'Actor'
         list_display = ['actor', 'role']
-        form_display = ['actor', 'role']
 
     def __unicode__(self):
         if self.actor:
             return self.actor.name
         return ''
 
-class Tag(Entity):
-    using_options(tablename='tags')
-    name = Field(Unicode(60), required=True)
-    movies = ManyToMany('Movie')
+class Tag( Entity ):
+    
+    __tablename__ = 'tags'
+    
+    name = Column( sqlalchemy.types.Unicode(60), nullable = False )
+    movies = ManyToMany( 'Movie', 
+                         tablename = 'tags_movies__movies_tags', 
+                         local_colname = 'tags_id', 
+                         remote_colname = 'movies_id' )
 
     def __unicode__(self):
         return self.name
@@ -223,14 +232,28 @@ class Tag(Entity):
 
 # begin visitor report definition
 class VisitorReport(Entity):
-    using_options(tablename='visitor_report')
-    movie = ManyToOne('Movie', required=True)
-    date = Field(Date, required=True, default=datetime.date.today)
-    visitors = Field(Integer, required=True, default=0)
+    
+    __tablename__ = 'visitor_report'
+    
+    date = Column( sqlalchemy.types.Date, 
+                   nullable = False, 
+                   default = datetime.date.today )
+    visitors = Column( sqlalchemy.types.Integer, 
+                       nullable = False, 
+                       default = 0 )
+    movie_id = Column( sqlalchemy.types.Integer, 
+                       ForeignKey( 'movies.id' ),
+                       nullable = False )
+    movie = relationship( 'Movie' )
 # end visitor report definition
 
     class Admin(EntityAdmin):
         verbose_name = _('Visitor Report')
-        #list_display = ['movie', 'city', 'date', 'visitors']
         list_display = ['movie', 'date', 'visitors']
         field_attributes = {'visitors':{'minimum':0}}
+        
+#
+# Using a column_property, an sql query can be assigned to a field
+#
+Movie.total_visitors = column_property( sql.select( [sql.func.sum( VisitorReport.visitors) ],
+                                                    VisitorReport.movie_id == Movie.id ) )

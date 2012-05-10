@@ -1143,15 +1143,6 @@ position in the query.
                 pass
         for depending_obj in self.admin.get_depending_objects( obj ):
             self.rsh.sendEntityUpdate( self, depending_obj )
-# TODO : it's not because an object is added to this list, that it was created
-# it might as well exist already, eg. manytomany relation
-#      from camelot.model.memento import Create
-#      from camelot.model.authentication import get_current_authentication
-#      history = Create(model=unicode(self.admin.entity.__name__),
-#                       primary_key=o.id,
-#                       authentication = get_current_authentication())
-#      elixir.session.flush([history])
-#      self.rsh.sendEntityCreate(self, o)
         self._rows = rows + 1
         #
         # update the cache, so the object can be retrieved

@@ -62,9 +62,6 @@ the following to print a list of all movie titles to the screen::
     ('upgrade', """Upgrade or downgrade the database to the specified version, use upgrade version_number."""),
 
     ('version_control', """Put the database under version control"""),
-   
-    ('schema_display', """Generate a graph of the database schema.  The result is stored in schema.png.  This
-option requires pydot to be installed."""),
 ]
 
 #
@@ -131,17 +128,6 @@ class Shell(InteractiveConsole):
         # output = filter(output)
         print output # or do something else with it
         return 
-    
-def schema_display(image_path='schema.png'):
-    from camelot.core.schema_display import create_uml_graph
-    from sqlalchemy import orm
-    from elixir import entities
-    mappers = [orm.class_mapper(e) for e in entities]
-    graph = create_uml_graph(mappers,
-        show_operations=False, # not necessary in this case
-        show_multiplicity_one=False # some people like to see the ones, some don't
-    )
-    graph.write_png(image_path)
      
 def setup_model():
     settings.setup_model()
@@ -161,9 +147,6 @@ def main():
         setup_model()
         sh = Shell()
         sh.interact()
-    elif args[0]=='schema_display':
-        setup_model()
-        schema_display()
     elif args[0] in ('version_control', 'db_version', 'version', 'upgrade'):
         from migrate.versioning.repository import Repository
         from migrate.versioning.schema import ControlledSchema
@@ -229,6 +212,3 @@ def main():
              
 if __name__ == '__main__':
     main()
-
-
-

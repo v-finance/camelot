@@ -21,6 +21,9 @@ will be no introspection to find out how to display the property.  Therefore the
 
 By default, python properties are read-only.  They have to be set to editable through
 the field attributes to make them writeable by the user.
+
+Properties are also used to summarize information from multiple attributes and
+put them in a single field.
   
 Attach actions to field changes
 ===============================
