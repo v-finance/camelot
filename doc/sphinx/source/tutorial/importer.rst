@@ -131,7 +131,8 @@ directory to a directory managed by Camelot.
 **Write to the database**
 
 In the last line, the ``session`` is flushed and thus all changes are
-written to the database.
+written to the database.  The ``FlushSession`` action step flushes the session
+and propagetes the changes to the GUI.
 
 **Keep the user informed**
 

@@ -138,20 +138,6 @@ class ModelThreadTestCase(unittest.TestCase):
         #self.mt.exit(0)
         #self.mt.wait()
 
-class SchemaTest(ModelThreadTestCase):
-    """Test the database schema"""
-
-    def test_schema_display(self):
-      
-        def schema_display_task():
-            import os
-            from camelot.bin.camelot_manage import schema_display
-            schema_display(os.path.join(self.images_path, 'schema.png'))
-            
-        from camelot.view.model_thread import get_model_thread, post
-        post( schema_display_task )
-        get_model_thread().wait_on_work()
-
 class ApplicationViewsTest(ModelThreadTestCase):
     """Test various application level views, like the main window, the
     sidepanel"""
