@@ -44,7 +44,6 @@ to crash, so newer versions of those libraries are required.
  * QT 4.7
  * PyQt 4.8 `PyQt Website <http://www.riverbankcomputing.co.uk/>`_
  * SQLAlchemy 0.7.2 `SQLAlchemy Website <http://www.sqlalchemy.org>`_
- * Elixir 0.7.1 `Elixir Website <http://elixir.ematia.de/>`_
  * sqlalchemy-migrate 0.7.1
  * Jinja2 2.5.5
  * chardet 1.0.1 
@@ -91,8 +90,6 @@ and issue these commands::
   >>> print camelot.__version__
   >>> import sqlalchemy
   >>> print sqlalchemy.__version__
-  >>> import elixir
-  >>> print elixir.__version__
   >>> import PyQt4
   
 None of them should raise an ImportError.

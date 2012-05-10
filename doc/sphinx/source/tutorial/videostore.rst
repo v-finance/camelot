@@ -130,7 +130,7 @@ that we add to our model.py module::
    :file:`camelot_example` folder of the Camelot source code.
    
 ``Movie`` inherits ``Entity``.  ``Entity`` is the base class for all objects
-that should be stored in the database.  We use the ``__tablename`` attribute to
+that should be stored in the database.  We use the ``__tablename__`` attribute to
 to name the table ourselves in which the data will be stored, otherwise a 
 default tablename would have been used.
 
@@ -169,8 +169,9 @@ The EntityAdmin Subclass
 ========================
 
 We have to tell Camelot about our entities, so they show up in the :abbr:`GUI`.
-This is one of the purposes of ``EntityAdmin`` subclasses. After adding the
-``EntityAdmin`` subclass, our ``Movie`` class now looks like this::
+This is one of the purposes of :class:`camelot.admin.entity_admin.EntityAdmin` 
+subclasses. After adding the ``EntityAdmin`` subclass, our ``Movie`` class now 
+looks like this::
 
   class Movie( Entity ):
     
@@ -218,8 +219,8 @@ the tasks of :file:`application_admin.py` is to specify the sections in
 the left pane of the main window.
 
 Camelot defined a class, ``MyApplicationAdmin``, for us. This class is a
-subclass of ``ApplicationAdmin``, which is used to control the overall look
-and feel of every Camelot application.
+subclass of class:`camelot.admin.application_admin.ApplicationAdmin`, which is 
+used to control the overall look and feel of every Camelot application.
 
 To change sections in the left pane of the main window, simply overwrite the
 ``get_sections`` method, to return a list of the desired sections.  By default
@@ -227,7 +228,7 @@ this method contains::
 
   def get_sections(self):
     from camelot.model.memento import Memento
-    from camelot.model.authentication import Person, Organization
+    from camelot.model.party import Person, Organization
     from camelot.model.i18n import Translation
     return [Section('Relation',
 		    self,
@@ -296,7 +297,7 @@ Camelot. Next we look at relationships between entities.
 Relationships
 =============
 
-We will be using SQLAlchemy's :object:`sqlalchemy.orm.relationship` API.  We'll
+We will be using SQLAlchemy's :class:`sqlalchemy.orm.relationship` API.  We'll
 relate a director to each movie.  So first we need a ``Director`` entity. We 
 define it as follows::
                    

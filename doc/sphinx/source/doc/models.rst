@@ -4,23 +4,22 @@
  Creating models
 #################
 
-*Camelot* makes it easy to create views for any type of *Python* objects.  An important part of Camelot
-is introspection on Python objects mapped to a database with *SQLAlchemy*.  This allows a developer to
-only define his SQLAlchemy model and the views will reflect all properties defined in the model, such
-as field types and relations.
+*Camelot* makes it easy to create views for any type of *Python* objects.  
 
 .. index:: SQLALchemy
 
 SQLAlchemy is a very powerful Object Relational Mapper (ORM) with lots of possibilities for handling
-complex and large datastructures. The `SQLAlchemy website <http://www.sqlalchemy.org>`_ has extensive
-documentation on all these features.
+simple or sophisticated datastructures. The `SQLAlchemy website <http://www.sqlalchemy.org>`_ has extensive
+documentation on all these features.  An important part of Camelot is providing an easy way to
+create views for objects mapped through SQLAlchemy.
+
+SQLAlchemy comes with the *Declarative* extension to make it easy to define an ORM mapping using
+the Active Record Pattern.  This is used through the documentation and in the example code.
 
 .. index:: Elixir
 
-To facilitate the use of SQLAlchemy in less advanced use cases, like the Active Record Pattern, layers
-exist on top SQLAlchemy to make those things easy and the complex things still possible.  One such
-layer is *Elixir*.  Most of the code samples in the documentation make use of Elixir, an Elixir model
-definition is very simple:
+An alternative to *Declarative* is `Elixir <http://elixir.ematia.de/trac/wiki/TutorialDivingIn>`_, 
+which was used in previous *Camelot* versions, and is still supported.
 
 .. literalinclude:: ../../../../camelot/model/authentication.py
    :pyobject: GeographicBoundary
@@ -44,9 +43,6 @@ model of Camelot.  This code has some things to notice :
    
  * The `__unicode__` method is implemented, this method will be called within Camelot whenever a textual
    representation of the object is needed, eg in a window title or a many to one widget
-
-The `Elixir website <http://elixir.ematia.de/trac/wiki/TutorialDivingIn>`_ provides a complete overview of 
-the creation of models with elixir.
 
 When a new Camelot project is created, the :ref:`camelot-admin` tool creates an empty ``models.py`` file that
 can be used as a place to start the model definition.

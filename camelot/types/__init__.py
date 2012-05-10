@@ -23,7 +23,7 @@
 #  ============================================================================
 
 """
-Camelot extends the SQLAlchemy field types with a number of its own field
+Camelot extends the SQLAlchemy column types with a number of its own column
 types. Those field types are automatically mapped to a specific delegate taking
 care of the visualisation.
 
@@ -103,16 +103,15 @@ class Code(types.TypeDecorator):
     eg: ``['08', 'AB']`` is stored as ``08.AB``
     
     .. image:: /_static/editors/CodeEditor_editable.png
+    
+    :param parts: a list of input masks specifying the mask for each part,
+    eg ``['99', 'AA']``. For valid input masks, see
+    `QLineEdit <http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/qlineedit.html>`_    
     """
     
     impl = types.Unicode
           
     def __init__(self, parts, separator=u'.', **kwargs):
-        """
-        :param parts: a list of input masks specifying the mask for each part,
-        eg ``['99', 'AA']``. For valid input masks, see
-        `QLineEdit <http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/qlineedit.html>`_
-        """
         import string
         translator = string.maketrans('', '')
         self.parts = parts
@@ -158,9 +157,9 @@ class Rating(types.TypeDecorator):
     """The rating field is an integer field that is visualized as a number of stars that
   can be selected::
   
-    class Movie(Entity):
-      title = Field(Unicode(60), required=True)
-      rating = Field(camelot.types.Rating())
+    class Movie( Entity ):
+      title = Column( Unicode(60), nullable = False )
+      rating = Column( camelot.types.Rating() )
       
   .. image:: /_static/editors/StarEditor_editable.png
 """
@@ -168,7 +167,7 @@ class Rating(types.TypeDecorator):
     impl = types.Integer
        
 class RichText(types.TypeDecorator):
-    """RichText fields are unlimited text fields which contain html.  The html will be
+    """RichText fields are unlimited text fields which contain html. The html will be
   rendered in a rich text editor.  
   
     .. image:: /_static/editors/RichTextEditor_editable.png
@@ -178,10 +177,10 @@ class RichText(types.TypeDecorator):
      
 class Language(types.TypeDecorator):
     """The languages are stored as a string in the database of 
-the form language[_country], where :
+the form *language*(_*country*), where :
 
- * language is a lowercase, two-letter, ISO 639 language code,
- * territory is an uppercase, two-letter, ISO 3166 country code
+ * *language* is a lowercase, two-letter, ISO 639 language code,
+ * *territory* is an uppercase, two-letter, ISO 3166 country code
  
 This used to be implemented using babel, but this was too slow and
 used too much memory, so now it's implemented using QT.
@@ -198,8 +197,8 @@ r,g,b,a are integers between 0 and 255. The color is stored as an hexadecimal
 string of the form AARRGGBB into the database, where AA is the transparency, 
 RR is red, GG is green BB is blue::
   
-    class MovieType(Entity):
-        color = Field(camelot.types.Color())
+    class MovieType( Entity ):
+        color = Column( camelot.types.Color() )
 
 .. image:: /_static/editors/ColorEditor_editable.png  
   
@@ -260,25 +259,24 @@ class Enumeration(types.TypeDecorator):
   box are the capitalized strings::
   
     class Movie(Entity):
-      title = Field(Unicode(60), required=True)
-      state = Field(camelot.types.Enumeration([(1,'planned'), (2,'recording'), (3,'finished'), (4,'canceled')]), 
-                                              index=True, required=True, default='planning')
+      title = Column( Unicode(60), nullable = False )
+      state = Column( camelot.types.Enumeration([(1,'planned'), (2,'recording'), (3,'finished'), (4,'canceled')]), 
+                      index = True, nullable = False, default = 'planning' )
   
   .. image:: /_static/editors/ChoicesEditor_editable.png  
   
   If None should be a possible value of the enumeration, add (None, None) to the list of
   possible enumerations.  None will be presented as empty in the GUI.
+  
+  :param choices: is a list of tuples.  each tuple contains an integer and its
+  associated string.  such as :: 
+  
+      choices = [(1,'draft'), (2,'approved')]
   """
     
     impl = types.Integer
     
     def __init__(self, choices=[], **kwargs):
-        """
-        :param choices: is a list of tuples.  each tuple contains an integer and its
-        associated string.  such as :: 
-        
-            choices = [(1,'draft'), (2,'approved')]
-        """
         types.TypeDecorator.__init__(self, **kwargs)
         self._int_to_string = dict(choices)
         self._string_to_int = dict((v,k) for (k,v) in choices)
@@ -329,8 +327,8 @@ class File(types.TypeDecorator):
   This column type accepts and returns a StoredFile. The name of the file is 
   stored as a string in the database.  A subdirectory upload_to can be specified::
   
-    class Movie(Entity):
-      script = Field(camelot.types.File(upload_to='script'))
+    class Movie( Entity ):
+      script = Column( camelot.types.File( upload_to = 'script' ) )
       
   .. image:: /_static/editors/FileEditor_editable.png
   
@@ -348,22 +346,21 @@ class File(types.TypeDecorator):
       task_mapper = orm.object_mapper( task )
       document_property = task_mapper.get_property('document')
       storage = document_property.columns[0].type.storage
-      
+
+  :param max_length: the maximum length of the name of the file that will
+  be saved in the database.
+
+  :param upload_to: a subdirectory in the Storage, in which the the file
+  should be stored.
+
+  :param storage: an alternative storage to use for this field.
+
     """
     
     impl = types.Unicode
     stored_file_implementation = StoredFile
     
     def __init__(self, max_length=100, upload_to='', storage=Storage, **kwargs):
-        """
-        :param max_length: the maximum length of the name of the file that will
-        be saved in the database.
-        
-        :param upload_to: a subdirectory in the Storage, in which the the file
-        should be stored.
-        
-        :param storage: an alternative storage to use for this field.
-        """
         self.max_length = max_length
         self.storage = storage(upload_to, self.stored_file_implementation)
         types.TypeDecorator.__init__(self, length=max_length, **kwargs)
@@ -413,6 +410,3 @@ class Image(File):
     """
   
     stored_file_implementation = StoredImage
-
-
-
