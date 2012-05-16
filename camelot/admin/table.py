@@ -35,11 +35,13 @@ are more complex.
 """
 
 class ColumnGroup( object ):
-    """A group of columns to be displayed in a table view
-    :param verbose_name: the text to be displayed in the tab widget of the
-        column group
-    :param columns: a list of fields to display within this column group
-    :param icon: a :class:`camelot.view.art.Icon` object
+    """
+    A group of columns to be displayed in a table view
+    
+        :param verbose_name: the text to be displayed in the tab widget of the
+            column group
+        :param columns: a list of fields to display within this column group
+        :param icon: a :class:`camelot.view.art.Icon` object
     """
     
     def __init__( self, 
@@ -57,9 +59,11 @@ class ColumnGroup( object ):
         return self.columns
         
 class Table( object ):
-    """Represents the columns that should be displayed in a table view.
-    :param columns: a list of strings with the fields to be displayed, or a 
-        list of :class:`ColumnGroup` objects
+    """
+    Represents the columns that should be displayed in a table view.
+    
+        :param columns: a list of strings with the fields to be displayed, or a 
+            list of :class:`ColumnGroup` objects
     """
     
     def __init__( self,
@@ -82,8 +86,9 @@ class Table( object ):
         """
         Create a tab widget that allows the user to switch between column 
         groups.
-        :param item_view: a :class:`QtGui.QAbstractItemView` object.
-        :param parent: a :class:`QtGui.QWidget` object
+        
+            :param item_view: a :class:`QtGui.QAbstractItemView` object.
+            :param parent: a :class:`QtGui.QWidget` object
         """
         pass
 

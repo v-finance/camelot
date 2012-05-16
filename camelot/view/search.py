@@ -118,7 +118,6 @@ def create_entity_search_query_decorator(admin, text):
                     target = property.mapper.class_
                 else:
                     append_column(property.columns[0])
-                    #args.append(property.columns[0].like('%'+text+'%'))
 
         def create_query_decorator(joins, args):
             """Bind the join and args to a query decorator function"""
