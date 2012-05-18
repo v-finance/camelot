@@ -69,7 +69,9 @@ def launch_meta_camelot():
     settings.append( MetaSettings() )
     new_project = CreateNewProject()
     gui_context = GuiContext()
-    gui_context.admin = MetaCamelotAdmin()
+    admin = MetaCamelotAdmin()
+    admin.get_stylesheet()
+    gui_context.admin = admin
     new_project.gui_run( gui_context )
     # keep app alive during running of app
     return app
@@ -180,9 +182,12 @@ if __name__ == '__main__':
     '''),
     
     ('{{options.module}}/model.py', '''
-from camelot.core.sql import metadata
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.orm import Entity
 
-__metadata__ = metadata
+from sqlalchemy.schema import Column
+import sqlalchemy.types
+
     '''),
     
     ('excludes.txt', r'''
