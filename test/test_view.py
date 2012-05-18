@@ -8,7 +8,7 @@ import time
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, StoredImage, Storage
-from camelot.test import ModelThreadTestCase, EntityViewsTest, SchemaTest
+from camelot.test import ModelThreadTestCase, EntityViewsTest
 from camelot.view.art import ColorScheme
 
 from PyQt4 import QtGui, QtCore
@@ -1098,7 +1098,3 @@ class SnippetsTest(ModelThreadTestCase):
         editor.set_value(proxy)
         self.process()
         self.grab_widget(editor)
-
-class CamelotSchemaTest(SchemaTest):
-
-    images_path = static_images_path

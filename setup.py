@@ -36,7 +36,7 @@ setup(
     },  
     license = 'GPL, Commercial',
     platforms = 'Linux, Windows, OS X',
-    install_requires = ['SQLAlchemy>=0.7.3, <0.8.0',
+    install_requires = ['SQLAlchemy>=0.7.7, <0.8.0',
                         'Elixir>=0.7.1',
                         'sqlalchemy-migrate>=0.7.1',
                         'Jinja2>=2.5.5',
