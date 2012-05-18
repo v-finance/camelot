@@ -411,6 +411,16 @@ shortcut confusion and reduce the number of status updates.
 
         Have a look at the default implementation to use another stylesheet.
         """
+        #
+        # Try to load a custom QStyle, if that fails use a stylesheet from
+        # a file
+        #
+        try:
+            import officestyle
+            officestyle.set_style( officestyle.Windows7Scenic )
+            return None
+        except:
+            pass
         return art.read('stylesheet/office2007_blue.qss')
 
     def _load_translator_from_file( self, 
