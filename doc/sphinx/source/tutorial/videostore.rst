@@ -46,12 +46,9 @@ picture below:
 .. image:: ../_static/picture1.png
 
 The application has menus, a toolbar, a left navigation pane, and a central
-area on which nothing is currently displayed.
+area, where default the `Home` tab is opened, on which nothing is currently displayed.
 
-The navigation pane has its first button selected. Select any other button by
-clicking on it, and see the nagivation tree fill itself with new entries.
-These are `entities`, and we will talk about them later.  (Generally speaking,
-an `entity` represents a single table in a database.)
+The navigation pane has its first `section` expanded. 
 
 .. image:: ../_static/picture2.png
 
@@ -61,27 +58,36 @@ an `entity` represents a single table in a database.)
    pane represents a `section`, and each entry of the navigation tree is part
    of this section.
 
+Select any other section-button by clicking on it, and see this section expand, 
+minimizing the previous section.
+The links in a section are `entities`, and we will talk about them later.  (Generally speaking,
+an `entity` represents a single table in a database.)
+
 Notice that the application disables most of the menus and the toolbar
 buttons. When we click on an entity, more options become available.
 So let's click on the entity ``Persons`` of the section ``Relations``.
-The table view of the entity appears.
+The table view of the entity appears in a tab next to the `Home` tab.
+Entities are opened in the active tab, unless
+they are opened by selecting `Open in New Tab` from the context menu (right click) 
+of the entity link, which will obviously open a new tab to right.
+Tabs can be closed by clicking the `X` in the tab itself.
 
 .. image:: ../_static/picture3.png
 
 Each row is a record with some fields that we can edit (others might not be
-editable). Let's now add a new row by clicking on the new icon (next to the
-trash bin icon; which removes a row).
+editable). Let's now add a new row by clicking on the new icon (icon farthest the 
+the left in the toolbar above the navigation pane).
 
 .. image:: ../_static/picture4.png
 
-We now see a form view with additional fields. Forms are not maximized by
-default. Forms label **required** fields in bold.
+We now see a new window, containing a form view with additional fields. 
+Forms label **required** fields in bold.
 
 .. image:: ../_static/picture5.png
 
 Fill in a first and last name, and close the form. Camelot will automatically
 validate and echo the changes to the database. We can reopen the form by
-clicking on the blue icon in the first column of each row of the table. Notice
+clicking on the blue folder icon in the first column of each row of the table. Notice
 also that there is now an entry in our table.
 
 .. image:: ../_static/picture6.png
@@ -94,13 +100,19 @@ Creating the Movie Model
 ========================
 
 Let's first take a look at the :file:`settings.py` in our project directory.
-There is an attribute, ``ENGINE``, an anonymous function, which returns a
-:abbr:`Uniform Resource Identifier URI`. That's the database your Camelot
-application will be connecting too. Camelot provides a default ``sqlite`` URI
-scheme. But you can set your own.
+There is a function, ``ENGINE``, which returns a call to the `create_engine 
+<http://docs.sqlalchemy.org/en/latest/core/engines.html#sqlalchemy.create_engine>`_ 
+SQLAlchemy function, containing a :abbr:`Uniform Resource Identifier URI`. 
+That's the database your Camelot application will be connecting too. 
+Camelot provides a default ``sqlite`` URI scheme. But you can set your own.
 
 If you set a database file that does not exist it will be created in the
-directory from which the application is *launched*.
+directory from which the application is *launched*. Keep this in mind
+if you plan to deploy your application by means of an installer on
+Microsoft Windows Vista or newer, because the Program Files folder is not
+writable. Choose a location that is writable to the application, such
+as the user's AppData folder, or a shared folder in case of multiple users
+needing to access the same data.
 
 Now we can look at :file:`model.py`. Camelot has already imported some classes
 for us. They are used to create our entities. Let's say we want a movie entity
@@ -168,7 +180,8 @@ Let's now create an ``EntityAdmin`` subclass
 The EntityAdmin Subclass
 ========================
 
-We have to tell Camelot about our entities, so they show up in the :abbr:`GUI`.
+We have to tell Camelot about our entities, so they show up in the 
+:abbr:`GUI (Graphical User Interface)`.
 This is one of the purposes of :class:`camelot.admin.entity_admin.EntityAdmin` 
 subclasses. After adding the ``EntityAdmin`` subclass, our ``Movie`` class now 
 looks like this::
@@ -191,8 +204,8 @@ looks like this::
 
 
 We made ``Admin`` an inner class to strengthen the link between it and the
-``Entity`` subclass. Camelot does not force us. ``Admin`` holds three
-attributes.
+``Entity`` subclass. Camelot does not force us. Assign your ``EntityAdmin``
+class to the ``Admin`` ``Entity`` member to put it somewhere else. 
 
 ``verbose_name`` will be the label used in navigation trees.
 
@@ -203,6 +216,9 @@ taken as the default fields to show on a form.
 
 In our case we want to display four fields: ``title``, ``short_description``,
 ``release_date``, and ``genre`` (that is, all of them.)
+
+The fields displayed on the form can optionally be specified too in the ``form_display``
+attribute.
 
 We also add a ``__unicode__()`` method that will return either the title of the
 movie entity or ``'Untitled movie'`` if title is empty.  The ``__unicode__()``
