@@ -38,6 +38,7 @@ class LocalFileEditor( CustomEditor ):
     """Widget for browsing local files and directories"""
 
     browse_icon =  Icon( 'tango/16x16/places/folder-saved-search.png' )
+    valueChanged = QtCore.pyqtSignal()
 
     def __init__(self, 
                  parent = None, 
@@ -77,6 +78,7 @@ class LocalFileEditor( CustomEditor ):
 
     @QtCore.pyqtSlot()
     def filename_editing_finished(self):
+        self.valueChanged.emit()
         self.editingFinished.emit()
 
     @QtCore.pyqtSlot()
@@ -91,6 +93,7 @@ class LocalFileEditor( CustomEditor ):
                                                        filter = self._file_filter )
         value = os.path.abspath( unicode( value ) )
         self.filename.setText( value )
+        self.valueChanged.emit()
         self.editingFinished.emit()
 
     def set_value(self, value):
@@ -99,10 +102,13 @@ class LocalFileEditor( CustomEditor ):
             self.filename.setText( value )
         else:
             self.filename.setText( '' )
+        self.valueChanged.emit()
         return value
 
     def get_value(self):
         return CustomEditor.get_value(self) or unicode( self.filename.text() )
+    
+    value = QtCore.pyqtProperty( str, get_value, set_value )
 
     def set_field_attributes( self, 
                               editable = True,
@@ -113,6 +119,3 @@ class LocalFileEditor( CustomEditor ):
         if self.filename:
             set_background_color_palette( self.filename, background_color )
             self.filename.setToolTip(unicode(tooltip or ''))
-
-
-
