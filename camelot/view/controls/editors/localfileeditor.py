@@ -38,7 +38,6 @@ class LocalFileEditor( CustomEditor ):
     """Widget for browsing local files and directories"""
 
     browse_icon =  Icon( 'tango/16x16/places/folder-saved-search.png' )
-    valueChanged = QtCore.pyqtSignal()
 
     def __init__(self, 
                  parent = None, 
@@ -83,14 +82,18 @@ class LocalFileEditor( CustomEditor ):
 
     @QtCore.pyqtSlot()
     def browse_button_clicked(self):
+        current_directory = os.path.dirname( self.get_value() )
         if self._directory:
-            value = QtGui.QFileDialog.getExistingDirectory( self )
+            value = QtGui.QFileDialog.getExistingDirectory( self,
+                                                            directory = current_directory )
         elif self._save_as:
             value = QtGui.QFileDialog.getSaveFileName( self,
-                                                       filter = self._file_filter )
+                                                       filter = self._file_filter,
+                                                       directory = current_directory )
         else:
             value = QtGui.QFileDialog.getOpenFileName( self,
-                                                       filter = self._file_filter )
+                                                       filter = self._file_filter,
+                                                       directory = current_directory )
         value = os.path.abspath( unicode( value ) )
         self.filename.setText( value )
         self.valueChanged.emit()
