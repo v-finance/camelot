@@ -763,7 +763,6 @@ position in the query.
                 changed = True
             if changed:
                 # update the model
-                model_updated = False
                 try:
                     setattr( o, attribute, new_value )
                     #
@@ -771,7 +770,6 @@ position in the query.
                     # that was not returned before
                     #
                     self.admin.set_defaults( o, include_nullable_fields=False )
-                    model_updated = True
                 except AttributeError, e:
                     self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
                 except TypeError:
