@@ -1,16 +1,21 @@
-<b>{{title}}</b>
+{% extends "base.html" %}
 
-<table width="100%">
-  <tr>
-    {% for col in columns %}
-      <th>{{col}}</th>
-    {% endfor %}
-  </tr>
-{% for row in table %}
-  <tr>
-  {% for col in row %}
-    <td>{{col}}</td>
-  {% endfor %}
-  </tr>
-{% endfor %}
-</table>
+{% block body %}
+
+    <h1>{{title}}</h1>
+    
+    <table width="100%">
+        <tr>
+          {% for col in columns %}
+            <th class="header">{{col}}</th>
+          {% endfor %}
+        </tr>
+      {% for row in table %}
+          <tr>
+            {% for col in row %}
+              <td>{{col}}</td>
+            {% endfor %}
+          </tr>
+      {% endfor %}
+    </table>
+{% endblock %}
