@@ -30,8 +30,8 @@ logger = logging.getLogger('camelot.view.object_admin')
 from camelot.admin.action.form_action import CloseForm
 from camelot.view.model_thread import model_function
 from camelot.view.controls.tableview import TableView
-from camelot.core.utils import ugettext as _
-from camelot.core.utils import ugettext_lazy
+from camelot.view.utils import to_string
+from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from validator.object_validator import ObjectValidator
 from PyQt4 import QtCore
@@ -517,6 +517,7 @@ be specified using the verbose_name attribute.
             #
             attributes = dict(
                 getter=create_default_getter(field_name),
+                to_string = to_string,
                 field_name=field_name,
                 python_type=str,
                 length=None,
