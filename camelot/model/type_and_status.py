@@ -61,58 +61,73 @@ def get_status_type_class(cls_name):
     :return: the status type class used for this entity
     """
     return __status_type_classes__[cls_name]
+    
+class AbstractStatusMixin( object ):
+    
+    def get_status_history_at( self, status_date = None ):
+	"""
+	Get the StatusHistory valid at status_date
+	
+	:param status_date: the date at which the status history should
+	    be valid.  Use today if None was given.
+	:return: a StatusHistory object or None if no valid status was
+	    found
+	"""
+	if status_date == None:
+	    status_date = datetime.date.today()
+	for status_history in self.status:
+	    if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:	
+		return status_history
+	    
+    @property
+    def current_status(self):
+	status_history = self.get_status_history_at()
+	if status_history != None:
+	    return status_history.classified_by
+    
+    @staticmethod
+    def current_status_query( status_type, columns ):
+	"""
+	:param status_type: the Entity class that represents the statuses, as returned by get_status_class
+	:param columns: the columns of the table for which to query the status
+	"""
+	return sql.select( [status_type.classified_by],
+                          whereclause = sql.and_( status_type.status_for_id == columns.id,
+                                                  status_type.status_from_date <= sql.functions.current_date(),
+                                                  status_type.status_thru_date >= sql.functions.current_date() ),
+                          from_obj = [status_type.table] ).order_by(status_type.id.desc()).limit(1)
 
+    def change_status(self, new_status, status_from_date=None, status_thru_date=end_of_times()):
+	from sqlalchemy import orm
+	if not status_from_date:
+	    status_from_date = datetime.date.today()
+	mapper = orm.class_mapper(self.__class__)
+	status_property = mapper.get_property('status')
+	status_type = status_property.mapper.class_
+	old_status = status_type.query.filter( sql.and_( status_type.status_for == self,
+                                                         status_type.status_from_date <= status_from_date,
+                                                         status_type.status_thru_date >= status_from_date ) ).first()
+	if old_status != None:
+	    old_status.thru_date = datetime.date.today() - datetime.timedelta( days = 1 )
+	    old_status.status_thru_date = status_from_date - datetime.timedelta( days = 1 )
+	new_status = status_type(    status_for = self,
+                                     classified_by = new_status,
+                                     status_from_date = status_from_date,
+                                     status_thru_date = status_thru_date,
+                                     from_date = datetime.date.today(),
+                                     thru_date = end_of_times() )
+	if old_status:
+	    self.query.session.flush( [old_status] )
+	self.query.session.flush( [new_status] )        
+	    
 def create_type_3_status_mixin(status_attribute):
     """Create a class that can be subclassed to provide a class that
     has a type 3 status with methods to manipulate and review its status
     :param status_attribute: the name of the type 3 status attribute
     """
     
-    class Type3StatusMixin(object):
-
-        @property
-        def current_status(self):
-            classified_by = None
-            today = datetime.date.today()
-            for status_history in self.status:
-                if status_history.status_from_date<=today and status_history.status_thru_date>=today:
-                    classified_by = status_history.classified_by
-            return classified_by
-	
-	@staticmethod
-	def current_status_query( status_type, columns ):
-	    """
-	    :param status_type: the Entity class that represents the statuses, as returned by get_status_class
-	    :param columns: the columns of the table for which to query the status
-	    """
-	    return sql.select( [status_type.classified_by],
-		              whereclause = sql.and_( status_type.status_for_id == columns.id,
-		                                      status_type.status_from_date <= sql.functions.current_date(),
-		                                      status_type.status_thru_date >= sql.functions.current_date() ),
-		              from_obj = [status_type.table] ).order_by(status_type.id.desc()).limit(1)
-    
-        def change_status(self, new_status, status_from_date=None, status_thru_date=end_of_times()):
-            from sqlalchemy import orm
-            if not status_from_date:
-                status_from_date = datetime.date.today()
-            mapper = orm.class_mapper(self.__class__)
-            status_property = mapper.get_property('status')
-            status_type = status_property.mapper.class_
-            old_status = status_type.query.filter( sql.and_( status_type.status_for == self,
-                                                             status_type.status_from_date <= status_from_date,
-                                                             status_type.status_thru_date >= status_from_date ) ).first()
-            if old_status != None:
-                old_status.thru_date = datetime.date.today() - datetime.timedelta( days = 1 )
-                old_status.status_thru_date = status_from_date - datetime.timedelta( days = 1 )
-            new_status = status_type(    status_for = self,
-                                         classified_by = new_status,
-                                         status_from_date = status_from_date,
-                                         status_thru_date = status_thru_date,
-                                         from_date = datetime.date.today(),
-                                         thru_date = end_of_times() )
-            if old_status:
-                self.query.session.flush( [old_status] )
-            self.query.session.flush( [new_status] )        
+    class Type3StatusMixin( AbstractStatusMixin ):
+	pass
         
     return Type3StatusMixin
     
