@@ -58,10 +58,10 @@ extracted::
 
   tar xzvf Camelot-10.07.02.tar.gz
 
-**Trunk**
+**Master branch**
 
 The latest and greatest version of the source can be checked out
-from the subversion repository::
+from the gitorious repository::
 
   git clone git@gitorious.org:camelot/camelot.git
   

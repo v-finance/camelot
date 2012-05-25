@@ -19,14 +19,15 @@ class ExampleSettings( SimpleSettings ):
     
     @staticmethod
     def setup_model():
+        from camelot.core.sql import metadata
+        metadata.bind = settings.ENGINE()
         import camelot.model.party
         import camelot.model.authentication
         import camelot.model.i18n
         import camelot.model.fixture
         import camelot.model.memento
         import camelot_example.model
-        from elixir import setup_all
-        setup_all(create_tables=True)
+        metadata.create_all()
         from camelot.model.authentication import update_last_login
         update_last_login()
         # 
@@ -34,8 +35,6 @@ class ExampleSettings( SimpleSettings ):
         #
         from camelot_example.fixtures import load_movie_fixtures
         load_movie_fixtures()
-        from camelot.core.sql import update_database_from_model
-        #update_database_from_model()
         #
         # setup the views
         #
