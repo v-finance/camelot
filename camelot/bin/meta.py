@@ -130,16 +130,15 @@ class MyApplicationAdmin(ApplicationAdmin):
     
     def get_sections(self):
         from camelot.model.memento import Memento
-        from camelot.model.party import Person, Organization
         from camelot.model.i18n import Translation
-        return [ Section( _('Relations'),
+        return [ Section( _('My classes'),
                           self,
                           Icon('tango/22x22/apps/system-users.png'),
-                          items = [Person, Organization]),
+                          items = [] ),
                  Section( _('Configuration'),
                           self,
                           Icon('tango/22x22/categories/preferences-system.png'),
-                          items = [Memento, Translation])
+                          items = [Memento, Translation] )
                 ]
     '''),
     
@@ -254,10 +253,8 @@ def setup_model():
     from camelot.core.sql import metadata
     metadata.bind = ENGINE()
     import camelot.model.authentication
-    import camelot.model.party
     import camelot.model.i18n
     import camelot.model.memento
-    import camelot.model.fixture
     import {{options.module}}.model
     metadata.create_all()
     '''),
