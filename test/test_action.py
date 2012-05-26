@@ -289,8 +289,34 @@ class ApplicationActionsCase( ModelThreadTestCase ):
         self.storage = Storage()
 
     def test_refresh( self ):
+        from camelot.core.orm import Session
+        from camelot.model.party import Person
         refresh_action = application_action.Refresh()
+        session = Session()
+        #
+        # create objects in various states
+        #
+        p1 = Person(first_name = 'p1', last_name = 'persistent' )
+        p2 = Person(first_name = 'p2', last_name = 'dirty' )
+        p3 = Person(first_name = 'p3', last_name = 'deleted' )
+        p4 = Person(first_name = 'p4', last_name = 'to be deleted' )
+        p5 = Person(first_name = 'p5', last_name = 'detached' )
+        p6 = Person(first_name = 'p6', last_name = 'deleted outside session' )
+        session.flush()
+        p3.delete()
+        session.flush()
+        p4.delete()
+        p2.last_name = 'clean'
+        #
+        # delete p6 without the session being aware
+        #
+        person_table = Person.table
+        session.execute( person_table.delete().where( person_table.c.party_id == p6.id ) )
+        #
+        # refresh the session through the action
+        #
         list( refresh_action.model_run( self.context ) )
+        self.assertEqual( p2.last_name, 'dirty' )
         
     def test_backup_and_restore( self ):
         backup_action = application_action.Backup()
