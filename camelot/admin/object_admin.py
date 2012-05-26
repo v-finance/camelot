@@ -157,17 +157,17 @@ be specified using the verbose_name attribute.
 
 .. attribute:: form_actions
 
-    Actions to be accessible by pushbuttons on the side of a form,
-    a list of tuples (button_label, action_function) where action_function
-    takes as its single argument, a method that returns the the object that
-    was displayed by the form when the button was pressed::
+    Actions to be accessible by pushbuttons on the side of a form, a list of :class:`camelot.admin.action.base.Action` objects. ::
 
-        class Admin(EntityAdmin):
-            form_actions = [('Foo', lamda o_getter:print 'foo')]
+        class Admin( EntityAdmin ):
+            form_actions = [CloseForm()]
+            
+    These actions will be triggered with a :class:`camelot.admin.action.form_action.FormActionModelContext` as the `model_context` parameter
+    in the :meth:`camelot.admin.action.base.Action.model_run` method.
             
 .. attribute:: related_toolbar_actions
 
-    list of actions that appear in the toolbar of a OneToMany editor.
+    list of actions that appear in the toolbar of a `OneToMany` editor.
 
 .. attribute:: drop_action
 
@@ -182,12 +182,13 @@ be specified using the verbose_name attribute.
     attributes on how they should be displayed.  All of these attributes
     are propagated to the constructor of the delegate of this field::
 
-        class Movie(Entity):
-            title = Field(Unicode(50))
+        class Movie( Entity ):
+        
+            title = Column( Unicode(50) )
     
-            class Admin(EntityAdmin):
+            class Admin( EntityAdmin ):
                 list_display = ['title']
-                field_attributes = dict(title=dict(editable=False))
+                field_attributes = { 'title' : {'editable':False} }
 
     The :ref:`doc-admin-field_attributes` documentation describes the various keys
     that can be used in the field attributes class attribute of an ObjectAdmin 
@@ -197,19 +198,15 @@ be specified using the verbose_name attribute.
 
 .. attribute:: form_state
 
-    Set this attribute to 'maximized' or 'minimized' for respective behaviour. These are the only two defined at the moment.
-    Please use the constants defined in camelot.core.constants (MINIMIZE and MAXIMIZE).
-    Note that this attr needs to be set at the form, highest in the form hierarchy to work. Setting this on embedded forms
-    will not influence the window state. Example::
+    Set this attribute to `maximized` or `minimized` for respective behaviour ::
 
-        class Movie(Entity):
-            title = Field(Unicode(50))
+        class Movie( Entity ):
+        
+            title = Column( Unicode(50) )
     
-            class Admin(EntityAdmin):
-                from camelot.core import constants
+            class Admin( EntityAdmin ):
                 list_display = ['title']
-                form_state = constants.MAXIMIZED
-                field_attributes = dict(title=dict(editable=False))
+                form_state = 'maximized'
 
 **Varia**
 
