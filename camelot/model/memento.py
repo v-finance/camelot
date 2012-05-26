@@ -28,36 +28,40 @@ their state
 
 import datetime
 
-from sqlalchemy.types import Unicode, INT, DateTime, PickleType
-
-from elixir import Entity, using_options, Field, ManyToOne
+from sqlalchemy.orm import relationship, deferred
+from sqlalchemy.schema import Column, ForeignKey
+from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.not_editable_admin import not_editable_admin
-from camelot.core.sql import metadata
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view import filters
 
-__metadata__ = metadata
+from authentication import AuthenticationMechanism
 
 class Memento( Entity ):
     """Keeps information on the previous state of objects, to keep track
     of changes and enable restore to that previous state"""
-    using_options( tablename = 'memento' )
-    model = Field( Unicode( 256 ), index = True, required = True )
-    primary_key = Field( INT(), index = True, required = True )
-    creation_date = Field( DateTime(), default = datetime.datetime.now )
-    authentication = ManyToOne( 'AuthenticationMechanism',
-                                required = True,
-                                ondelete = 'restrict',
-                                onupdate = 'cascade' )
-    memento_type = Field( camelot.types.Enumeration( [ (1, 'before_update'),
-                                                       (2, 'before_delete'),
-                                                       (3, 'create') ], 
-                                                     required = True,
-                                                     index = True ) )
-    previous_attributes = Field( PickleType(), deferred = True )
+    
+    __tablename__ = 'memento'
+    
+    model = Column( Unicode( 256 ), index = True, nullable = False )
+    primary_key = Column( Integer(), index = True, nullable = False )
+    creation_date = Column( DateTime(), default = datetime.datetime.now )
+    authentication_id = Column( Integer, 
+                                ForeignKey( 'authentication_mechanism.id',
+                                            ondelete = 'restrict',
+                                            onupdate = 'cascade' ), 
+                                nullable = False )
+    authentication = relationship( AuthenticationMechanism )
+    memento_type = Column( camelot.types.Enumeration( [ (1, 'before_update'),
+                                                        (2, 'before_delete'),
+                                                        (3, 'create') ], 
+                                                      nullable = False,
+                                                      index = True ) )
+    previous_attributes = deferred( Column( PickleType() ) )
     
     @property
     def description( self ):

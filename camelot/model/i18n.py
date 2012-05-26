@@ -29,20 +29,17 @@ the `Translation` table.  This table can be exported to PO files for inclusion
 in the development cycle.
 """
 
-from camelot.core.sql import metadata
+from camelot.core.orm import Entity, Session
+from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.action import Action
-import camelot.types
-from elixir.entity import Entity
-from elixir.options import using_options
-from elixir.fields import Field
-from sqlalchemy.types import Unicode, INT
-
-__metadata__ = metadata
-
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.view.art import Icon
-from camelot.core.utils import ugettext_lazy as _
 from camelot.view.utils import default_language
+import camelot.types
+
+from sqlalchemy import sql
+from sqlalchemy.schema import Column
+from sqlalchemy.types import Unicode, INT
 
 import logging
 logger = logging.getLogger( 'camelot.model.i18n' )
@@ -67,14 +64,16 @@ class ExportAsPO( Action ):
 class Translation( Entity ):
     """Table to store user generated translations or customization.
     """
-    using_options( tablename = 'translation' )
-    language = Field( camelot.types.Language, index = True )
-    source = Field( Unicode( 500 ), index = True )
+    
+    __tablename__ = 'translation'
+    
+    language = Column( camelot.types.Language, index = True, nullable = False )
+    source = Column( Unicode( 500 ), index = True, nullable = False )
     # value needs to be indexed as well, because when starting up we
     # want to load only the translations that have a value specified
-    value = Field( Unicode( 500 ), index = True )
-    cid = Field( INT(), default = 0, index = True )
-    uid = Field( INT(), default = 0, index = True )
+    value = Column( Unicode( 500 ), index = True )
+    cid = Column( INT(), default = 0, index = True )
+    uid = Column( INT(), default = 0, index = True )
 
     # cache, to prevent too much of the same sql queries
     _cache = dict()
@@ -85,7 +84,7 @@ class Translation( Entity ):
         list_display = ['source', 'language', 'value', 'uid']
         list_filter = ['language']
         list_actions = [ExportAsPO()]
-        field_attributes = {'language':{'default':default_language}}
+        field_attributes = { 'language':{ 'default':default_language } }
 
     @classmethod
     def translate( cls, source, language ):
@@ -94,7 +93,11 @@ class Translation( Entity ):
             key = ( source, language )
             if key in cls._cache:
                 return cls._cache[key]
-            translation = cls.query.filter_by( source = unicode( source ), language = language ).filter( Translation.uid != 0 ).first()
+            query = Session().query( cls )
+            query = query.filter( sql.and_( cls.source == unicode( source ),
+                                            cls.language == language,
+                                            cls.uid != 0 ) )
+            translation = query.first()
             if translation:
                 cls._cache[key] = translation.value
                 return translation.value
@@ -109,10 +112,14 @@ class Translation( Entity ):
             source = unicode( source )
             translation = cls.translate( source, language )
             if not translation:
-                if not cls.query.filter_by( source = source, language = language ).first():
+                session = Session()
+                query = session.query( cls )
+                translation = query.filter_by( source = source, 
+                                               language = language ).first()
+                if not translation:
                     if ( source, language ) not in cls._cache:
-                        from elixir import session
-                        registered_translation = Translation( source = source, language = language )
+                        registered_translation = Translation( source = source, 
+                                                              language = language )
                         cls._cache[( source, language )] = source
                         session.flush( [registered_translation] )
                         logger.debug( 'registed %s with id %s' % ( source, registered_translation.id ) )

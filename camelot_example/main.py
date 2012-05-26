@@ -27,6 +27,14 @@ class ExampleSettings( SimpleSettings ):
         import camelot.model.fixture
         import camelot.model.memento
         import camelot_example.model
+        #
+        # setup_all is only needed for those models that rely on elixir
+        #
+        from elixir import setup_all
+        setup_all()
+        #
+        # create the tables for all models
+        #
         metadata.create_all()
         from camelot.model.authentication import update_last_login
         update_last_login()
