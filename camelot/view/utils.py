@@ -217,6 +217,11 @@ def pyvalue_from_string(pytype, s):
     elif pytype is int:
         return int_from_string(s)
 
+def to_string( value ):
+    if value == None:
+	return u''
+    return unicode( value )
+
 def enumeration_to_string(value):
     return ugettext(unicode(value or u'').replace('_', ' ').capitalize())
 

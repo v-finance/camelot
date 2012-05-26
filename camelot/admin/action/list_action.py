@@ -589,8 +589,11 @@ class PrintPreview( ListContextAction ):
         columns = model_context.admin.get_columns()
         
         table = []
+        getters = [field_attributes['getter'] for _field, field_attributes in columns]
+        to_strings = [field_attributes['to_string'] for _field, field_attributes in columns]
+        column_range = range( len( columns ) )
         for obj in model_context.get_collection():
-            table.append( [getattr( obj, col[0] ) for col in columns] )
+            table.append( [to_strings[i]( getters[i]( obj ) ) for i in column_range] )
         context = {
           'title': model_context.admin.get_verbose_name_plural(),
           'table': table,

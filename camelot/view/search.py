@@ -30,7 +30,7 @@ import logging
 LOGGER = logging.getLogger('camelot.view.search')
 
 import sqlalchemy.types
-from sqlalchemy.sql import operators
+from sqlalchemy import sql, orm, schema
 
 import camelot.types
 
@@ -42,7 +42,6 @@ def create_entity_search_query_decorator(admin, text):
     only the objects related to the requested text or None if no such decorator
     could be build
     """
-    from sqlalchemy import orm, sql
     from camelot.view import utils
 
     if len(text.strip()):
@@ -52,7 +51,7 @@ def create_entity_search_query_decorator(admin, text):
         # join conditions : list of join entities
         joins = []
 
-        def append_column(c):
+        def append_column( c ):
             """add column c to the where clause using a clause that
             is relevant for that type of column"""
             arg = None
@@ -92,20 +91,19 @@ def create_entity_search_query_decorator(admin, text):
                             (hasattr(c.type, 'impl') and \
                              issubclass(c.type.impl.__class__, (Unicode, ))):
                 LOGGER.debug('look in column : %s'%c.name)
-                arg = operators.ilike_op(c, '%'+text+'%')
+                arg = sql.operators.ilike_op(c, '%'+text+'%')
 
             if arg is not None:
                 arg = sql.and_(c != None, arg)
                 args.append(arg)
-
+            
         if admin.search_all_fields:
-            search_tables = set([admin.entity.table])
-            # @todo: should this be recursive ?
-            for entity in admin.entity.__subclasses__():
-                search_tables.add(entity.table)
-            for table in search_tables:
-                for column in table._columns:
-                    append_column(column)
+            mapper = orm.class_mapper( admin.entity )
+            for property in mapper.iterate_properties:
+                if isinstance( property, orm.properties.ColumnProperty ):
+                    for column in property.columns:
+                        if isinstance( column, schema.Column ):
+                            append_column( column )
 
         for column_name in admin.list_search:
             path = column_name.split('.')

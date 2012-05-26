@@ -29,8 +29,11 @@ logger = logging.getLogger('camelot.admin.entity_admin')
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function
+from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext
 from camelot.admin.validator.entity_validator import EntityValidator
+
+from sqlalchemy import orm, exc
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
@@ -121,7 +124,6 @@ It has additional class attributes that customise its behaviour.
 
     def __init__(self, app_admin, entity):
         super(EntityAdmin, self).__init__(app_admin, entity)
-        from sqlalchemy import orm
         from sqlalchemy.orm.exc import UnmappedClassError
         from sqlalchemy.orm.mapper import _mapper_registry
         try:
@@ -187,7 +189,7 @@ It has additional class attributes that customise its behaviour.
             #
             attributes = dict(
                 python_type = str,
-                to_string = unicode,
+                to_string = to_string,
                 field_name = field_name,
                 getter = create_default_getter(field_name),
                 length = None,
@@ -565,7 +567,7 @@ It has additional class attributes that customise its behaviour.
 
                     try:
                         history.flush()
-                    except DatabaseError, e:
+                    except exc.DatabaseError, e:
                         self.logger.error( 'Programming Error, could not flush history', exc_info = e )
 
     @model_function

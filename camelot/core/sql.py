@@ -90,4 +90,3 @@ def update_database_from_model():
             LOGGER.warn( 'column %s missing in table %s'%(column, table_name) )
             table = metadata.tables[table_name]
             create_column(column, table)
-

@@ -77,20 +77,26 @@ class LocalFileEditor( CustomEditor ):
 
     @QtCore.pyqtSlot()
     def filename_editing_finished(self):
+        self.valueChanged.emit()
         self.editingFinished.emit()
 
     @QtCore.pyqtSlot()
     def browse_button_clicked(self):
+        current_directory = os.path.dirname( self.get_value() )
         if self._directory:
-            value = QtGui.QFileDialog.getExistingDirectory( self )
+            value = QtGui.QFileDialog.getExistingDirectory( self,
+                                                            directory = current_directory )
         elif self._save_as:
             value = QtGui.QFileDialog.getSaveFileName( self,
-                                                       filter = self._file_filter )
+                                                       filter = self._file_filter,
+                                                       directory = current_directory )
         else:
             value = QtGui.QFileDialog.getOpenFileName( self,
-                                                       filter = self._file_filter )
+                                                       filter = self._file_filter,
+                                                       directory = current_directory )
         value = os.path.abspath( unicode( value ) )
         self.filename.setText( value )
+        self.valueChanged.emit()
         self.editingFinished.emit()
 
     def set_value(self, value):
@@ -99,10 +105,13 @@ class LocalFileEditor( CustomEditor ):
             self.filename.setText( value )
         else:
             self.filename.setText( '' )
+        self.valueChanged.emit()
         return value
 
     def get_value(self):
         return CustomEditor.get_value(self) or unicode( self.filename.text() )
+    
+    value = QtCore.pyqtProperty( str, get_value, set_value )
 
     def set_field_attributes( self, 
                               editable = True,
@@ -113,6 +122,3 @@ class LocalFileEditor( CustomEditor ):
         if self.filename:
             set_background_color_palette( self.filename, background_color )
             self.filename.setToolTip(unicode(tooltip or ''))
-
-
-
