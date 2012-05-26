@@ -445,33 +445,3 @@ Entity = declarative_base( cls = Entity,
                            class_registry = class_registry,
                            constructor = None,
                            name = 'Entity' )
-
-def refresh_session( session ):
-    """Session refresh expires all objects in the current session and sends
-    a local entity update signal via the remote_signals mechanism
-
-    this method ought to be called in the model thread.
-    """
-    from camelot.view.remote_signals import get_signal_handler
-    import sqlalchemy.exc as sa_exc
-    LOGGER.debug('session refresh requested')
-    signal_handler = get_signal_handler()
-    refreshed_objects = []
-    expunged_objects = []
-    for _key, obj in session.identity_map.items():
-        try:
-            session.refresh( obj )
-            refreshed_objects.append( obj )
-        except sa_exc.InvalidRequestError:
-            #
-            # this object could not be refreshed, it was probably deleted
-            # outside the scope of this session, so assume it is deleted
-            # from the application its point of view
-            #
-            session.expunge( obj )
-            expunged_objects.append( obj )
-    for obj in refreshed_objects:
-        signal_handler.sendEntityUpdate( None, obj )
-    for obj in expunged_objects:
-        signal_handler.sendEntityDelete( None, obj )
-    return refreshed_objects
