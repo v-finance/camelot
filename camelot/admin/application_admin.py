@@ -416,9 +416,8 @@ shortcut confusion and reduce the number of status updates.
         # a file
         #
         try:
-            import officestyle
-            officestyle.set_style( officestyle.Windows7Scenic )
-            return None
+            from PyTitan import QtnOfficeStyle
+            QtnOfficeStyle.setApplicationStyle( QtnOfficeStyle.Windows7Scenic )
         except:
             pass
         return art.read('stylesheet/office2007_blue.qss')
