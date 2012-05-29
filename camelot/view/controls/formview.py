@@ -331,10 +331,10 @@ class FormView(AbstractView):
         self.addAction( ActionFactory.view_last(self, self.viewLast) )
         self.addAction( ActionFactory.view_next(self, self.viewNext) )
         self.addAction( ActionFactory.view_previous(self, self.viewPrevious) )
-        self.addAction( ActionFactory.refresh(self, self.refresh_session) )
+        self.addAction( ActionFactory.refresh(self, self.session_refresh ) )
 
     @QtCore.pyqtSlot()
-    def refresh_session(self):
+    def session_refresh(self):
         self.refresh_action.gui_run( self.gui_context )
                 
     @QtCore.pyqtSlot()
