@@ -55,7 +55,7 @@ def object_thread( self ):
     documentation.
     """
     return self.thread() == QtCore.QThread.currentThread()
-
+    
 def model_function(original_function):
     """Decorator to ensure a function is only called from within the model
     thread. If this function is called in another thread, an exception will be
