@@ -24,7 +24,6 @@
 
 """form view"""
 
-import functools
 import logging
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
@@ -32,6 +31,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4.QtCore import Qt
 
+from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.view.art import Icon
 from camelot.view.model_thread import post
@@ -289,6 +289,7 @@ class FormView(AbstractView):
         self.model = model
         self.admin = admin
         self.title_prefix = title
+        self.refresh_action = Refresh()
 
         form = FormWidget(self, admin)
         form.setObjectName( 'form' )
@@ -334,9 +335,7 @@ class FormView(AbstractView):
 
     @QtCore.pyqtSlot()
     def refresh_session(self):
-        from camelot.core.orm import refresh_session, Session
-        post( functools.update_wrapper( functools.partial( refresh_session, 
-                                                           Session() ), refresh_session ) )
+        self.refresh_action.gui_run( self.gui_context )
                 
     @QtCore.pyqtSlot()
     def refresh(self):
