@@ -189,7 +189,7 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
         self.on_draw()
         
     def get_value(self):
-        return self._value
+        super(ChartEditor, self).get_value() or self._value
 
 #    def _get_tightbbox(self, fig, pad_inches):
 #        renderer = fig.canvas.get_renderer()
