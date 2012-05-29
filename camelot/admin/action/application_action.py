@@ -276,7 +276,7 @@ class Refresh( Action ):
                 yield action_steps.UpdateProgress( i, 
                                                    session_items, 
                                                    progress_db_message )
-        yield action_steps.UpdateProgress( progress_view_message )
+        yield action_steps.UpdateProgress( text = progress_view_message )
         for obj in refreshed_objects:
             signal_handler.sendEntityUpdate( None, obj )
         for obj in expunged_objects:

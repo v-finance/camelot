@@ -37,6 +37,7 @@ from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.view.model_thread import post
 from camelot.view.controls.view import AbstractView
+from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view import register
 
 class FormEditors( object ):
@@ -351,6 +352,7 @@ class FormView(AbstractView):
                 qaction = action.render( self.gui_context, toolbar )
                 qaction.triggered.connect( self.action_triggered )
                 toolbar.addAction( qaction )
+            toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar )
 
     @QtCore.pyqtSlot( bool )
