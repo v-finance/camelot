@@ -46,7 +46,7 @@ It has additional class attributes that customise its behaviour.
 
 .. attribute:: list_action
 
-   The :class:`camelot.admin.action.Action` that will be triggered when the
+   The :class:`camelot.admin.action.base.Action` that will be triggered when the
    user selects an item in a list of objects.  This defaults to 
    :class:`camelot.admin.action.list_action.OpenFormView`, which opens a form
    for the current object.
@@ -59,11 +59,11 @@ It has additional class attributes that customise its behaviour.
     view.  If the field named is a one2many, many2one or many2many field, the
     field name should be followed by a field name of the related entity ::
 
-        class Project(Entity):
-            oranization = OneToMany('Organization')
-            name = Field(Unicode(50))
+        class Project( Entity ):
+            oranization = OneToMany( 'Organization' )
+            name = Column( Unicode(50) )
     
-          class Admin(EntityAdmin):
+          class Admin( EntityAdmin ):
               list_display = ['organization']
               list_filter = ['organization.name']
 
