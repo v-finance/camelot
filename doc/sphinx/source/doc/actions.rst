@@ -281,7 +281,7 @@ Application Actions
 -------------------
             
 To enable Application Actions for a certain :class:`ApplicationAdmin` overwrite 
-its :meth:`ApplicationAdmin.get_actions` method ::
+its :meth:`ApplicationAdmin.get_actions` method::
 
     from camelot.admin.application_admin import ApplicationAdmin
     from camelot.admin.action import Action

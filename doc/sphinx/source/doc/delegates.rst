@@ -34,13 +34,13 @@ be forced to be visualized as stars::
 
   from camelot.view.controls import delegates
   
-  class Movie(Entity):
-    title = Field(Unicode(50))
-    rating = Field(Integer)
+  class Movie( Entity ):
+      title = Column( Unicode(50) )
+      rating = Column( Integer )
   
-    class Admin(EntityAdmin):
-      list_display = ['title', 'rating']
-      field_attributes = {'rating':{'delegate':delegates.StarDelegate}}
+      class Admin( EntityAdmin ):
+          list_display = ['title', 'rating']
+          field_attributes = {'rating':{'delegate':delegates.StarDelegate}}
 	
 The above code will result in:
 
