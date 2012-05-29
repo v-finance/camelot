@@ -45,46 +45,13 @@ summary builds on information in related records, having the database build the 
 reduces the need to transfer additional data from the database to the server.
 
 To display fields in the table and the form view that are the result of a calculation 
-done by the database, a ColumnProperty needs to be defined in the Elixir model.  In this 
-ColumnProperty, the sql query can be defined using SQLAlchemy statements.  Then use the 
-field attributes mechanism to specify which delegate needs to be used to render the field.
+done by the database, a `column_property` needs to be defined in the Declarative model.  In this 
+`column_property`, the sql query can be defined using SQLAlchemy statements.  In this example, the `Movie` class gains the
+`total_visitors` attribute which contains the sum of all visitors that went to a movie.
 
-.. image:: ../_static/budget.png
+.. literalinclude:: ../../../../camelot_example/model.py
+   :start-after: begin column_property
+   :end-before: end column_property
 
-As an example we will create a budget with multiple budget lines, where the total budget 
-is calculated by the database::
-
-  from elixir.properties import ColumnProperty
-  from camelot.view.controls import delegates
-  from sqlalchemy import sql, and_
-	
-  class Budget(Entity):
-      lines = OneToMany('BudgetLine')
-        
-      @ColumnProperty
-      def total(self):
-          return sql.select([sql.func.sum(BudgetLine.amount)], 
-                            and_(BudgetLine.budget_id==self.id))
-	
-      class Admin(EntityAdmin):
-          verbose_name = 'Budgets'
-          list_display = [ 'total', 'lines']
-          field_attributes = {'total':{'delegate':delegates.FloatDelegate}} 
-
-  class BudgetLine(Entity):
-       budget = ManyToOne('Budget', required=True, ondelete='cascade', onupdate='cascade')
-       amount = Field(Float(precision=2), default=0)
-	
-       class Admin(EntityAdmin):
-           verbose_name = 'Budget lines'
-           list_display = ['amount',] 
-	    
-When the user presses F9, all data in the application is refreshed from the database, and thus
-all fields are recalculated.
-
-An explanation of the lambda function inside the ColumnProperty can be found in the ElixirColumnProperty_ and
-the SqlalchemyMappers_ documentation.
-
-.. _ElixirColumnProperty: http://elixir.ematia.de/apidocs/elixir.properties.ColumnProperty.html
-
-.. _SqlalchemyMappers: http://www.sqlalchemy.org/docs/04/mappers.html#advdatamapping_mapper_expressions
+It's important to notice that the value of this field is calculated when the object is fetched from the database. When the user presses F9, 
+all data in the application is refreshed from the database, and thus all column properties are recalculated.

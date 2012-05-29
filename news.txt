@@ -1,10 +1,14 @@
 Master
 ------
 
- * Port the ``camelot_example`` application to `Declarative`
+ * Add ``ColumnGroups`` in the list view. 
+
+ * Port the ``camelot_example`` application and ``tutorial`` to `Declarative`
 
  * See :ref:`migrate-11.12.30` for documentation on how to upgrade an 
    existing Camelot project.
+   
+ * Tracking of changes goes through the ``ObjectAdmin``
  
  * Cleanup of the default Camelot models :
  

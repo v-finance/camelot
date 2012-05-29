@@ -259,8 +259,7 @@ def setup_model():
     import camelot.model.memento
     import camelot.model.fixture
     import {{options.module}}.model
-    from elixir import setup_all
-    setup_all(create_tables=True)
+    metadata.create_all()
     '''),
     ('setup.py', '''
 

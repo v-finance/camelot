@@ -6,17 +6,22 @@
 import time
 import datetime
 
-from sqlalchemy import sql
-from sqlalchemy.schema import Column, ForeignKey
-from sqlalchemy.orm import relationship, column_property
+# begin basic imports
+from camelot.core.orm import Entity
+from camelot.admin.entity_admin import EntityAdmin
+
+from sqlalchemy.schema import Column
 import sqlalchemy.types
+# end basic imports
+
+from sqlalchemy.schema import ForeignKey
+from sqlalchemy.orm import relationship
 
 import camelot.types
 
 from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Entity, ManyToMany
-from camelot.core.sql import metadata
+from camelot.core.orm import ManyToMany
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
 from camelot.view import action_steps
@@ -28,6 +33,7 @@ from camelot.view.art import ColorScheme
 from camelot_example.change_rating import ChangeRatingAction
 from camelot_example.drag_and_drop import DropAction
 
+#
 # Some helper functions that will be used later on
 #
 
@@ -216,19 +222,13 @@ class Tag( Entity ):
     __tablename__ = 'tags'
     
     name = Column( sqlalchemy.types.Unicode(60), nullable = False )
-    movies = ManyToMany( 'Movie', 
-                         tablename = 'tags_movies__movies_tags', 
-                         local_colname = 'tags_id', 
-                         remote_colname = 'movies_id' )
 
-    def __unicode__(self):
+    def __unicode__( self ):
         return self.name
 
-    class Admin(EntityAdmin):
+    class Admin( EntityAdmin ):
         form_size = (400,200)
         list_display = ['name']
-        form_display = ['name', 'movies']
-        lines_per_row = 2
 
 # begin visitor report definition
 class VisitorReport(Entity):
@@ -255,5 +255,13 @@ class VisitorReport(Entity):
 #
 # Using a column_property, an sql query can be assigned to a field
 #
+
+# begin column_property
+
+from sqlalchemy.orm import column_property
+from sqlalchemy import sql
+
 Movie.total_visitors = column_property( sql.select( [sql.func.sum( VisitorReport.visitors) ],
                                                     VisitorReport.movie_id == Movie.id ) )
+
+# end column_property

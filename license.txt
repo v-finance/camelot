@@ -1,4 +1,4 @@
- Camelot is Copyright (C) 2007-2011 Conceptive Engineering bvba.
+ Camelot is Copyright (C) 2007-2012 Conceptive Engineering bvba.
  www.conceptive.be / project-camelot@conceptive.be
 
  You may use, distribute and copy Camelot under the terms of GNU General

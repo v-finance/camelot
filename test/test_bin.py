@@ -10,7 +10,7 @@ class BinCase(unittest.TestCase):
         from camelot.bin.meta import CreateNewProject, templates, NewProjectOptions
         new_project_action = CreateNewProject()
         options = NewProjectOptions()
-        options.source = tempfile.mkdtemp()
+        options.source = 'new_project' 
         new_project_action.start_project( options )
         #
         # validate the generated files
