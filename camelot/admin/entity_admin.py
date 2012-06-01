@@ -548,7 +548,13 @@ It has additional class attributes that customise its behaviour.
         from sqlalchemy.orm.session import Session
         session = Session.object_session( entity_instance )
         if session:
-            modifications = self.get_modifications( entity_instance )
+            modifications = {}
+            try:
+                modifications = self.get_modifications( entity_instance )
+            except Exception, e:
+                # todo : there seems to be a bug in sqlalchemy that causes the
+                #        get history to fail in some cases
+                logger.error( 'could not get modifications from object', exc_info = e )
             session.flush( [entity_instance] )
             #
             # If needed, track the changes
