@@ -9,7 +9,7 @@ long_description = open(README).read() + '\n\n'
 setup(
     name = 'Camelot',
     version = camelot.__version__,
-    description = 'A python GUI framework on top of Sqlalchemy, Elixir and PyQt, inspired by the Django admin interface. Start building desktop applications at warp speed, simply by adding some additional information to you model definition.',
+    description = 'A python GUI framework on top of Sqlalchemy and Qt, inspired by the Django admin interface. Start building desktop applications at warp speed, simply by adding some additional information to you model definition.',
     long_description = long_description,
     keywords = 'qt pyqt sqlalchemy elixir desktop gui framework',
     author = 'Conceptive Engineering',
@@ -69,4 +69,3 @@ setup(
               'Topic :: Software Development :: Libraries :: Application Frameworks',
               ],         
     packages = find_packages() + ['doc',] )
-

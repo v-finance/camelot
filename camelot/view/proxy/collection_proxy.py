@@ -320,7 +320,6 @@ position in the query.
         return QtCore.QModelIndex()
     
     def rowCount( self, index = None ):
-        assert object_thread( self )
         return self._rows
     
     def hasChildren( self, parent ):
