@@ -2,22 +2,34 @@
  Camelot
 ##########
 
-A python GUI framework on top of  Sqlalchemy  and PyQt, inspired by the Django admin interface. 
-Start building desktop applications at warp speed, simply by adding some additional information to your 
-model definition::
+Camelot provides components for building business applications on top
+*SQLAlchemy* and *Qt*.  It is inspired by the Django admin interface.  A simple
+piece of code as this::
 
-  class Movie(Entity):
-    title = Field(Unicode(60), required=True)
-    short_description = Field(Unicode(512))
-    release_date = Field(Date)
-    genre = Field(Unicode(15))
-
-    class Admin(EntityAdmin):
-      verbose_name = 'Movie'
-      list_display = ['title', 'short_description', 'release_date', 'genre']
+  class Movie( Entity ):
+      title = Column( Unicode( 60 ), nullable = False )
+      short_description = Column( Unicode( 512 ) )
+      release_date = Column( Date() )
+  
+      class Admin(EntityAdmin):
+          list_display = ['title', 'short_description', 'release_date']
       
-This piece of code is enough to define your database schema and to create a user friendly 
-desktop GUI.
+Is enough to define your database schema, define the mapping between the
+database and objects, and to create a user friendly desktop GUI.
+
+Building applications with Camelot has these advantages :
+
+  *  Use high quality editors together with the *Qt* Model-View framework
+  
+  *  Editors are bound to the model without writing binding code
+  
+  *  User friendliness and performance out of the box
+  
+  *  Tons of built in functions such as data import and export, printing, 
+     backup and restore
+     
+  *  Documentation on creating the various parts of an application like wizards
+     and reports
 
 For more information, refer to :
 
