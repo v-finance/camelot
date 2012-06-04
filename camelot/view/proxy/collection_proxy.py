@@ -436,7 +436,7 @@ position in the query.
                      ( self.__class__.__name__, self.admin.get_verbose_name() ) )
         if sender != self:
             try:
-                row = self.display_cache.get_row_by_entity(entity)
+                row = self.display_cache.get_row_by_entity( entity )
             except KeyError:
                 self.logger.debug( 'entity not in cache' )
                 return
