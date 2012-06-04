@@ -27,7 +27,7 @@ import logging
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from camelot.view.controls.editors.customeditor import CustomEditor
+from camelot.view.controls.editors.customeditor import AbstractCustomEditor
 from camelot.view.controls.editors.wideeditor import WideEditor
 from camelot.view.proxy import ValueLoading
 from camelot.view.art import Icon
@@ -37,7 +37,7 @@ PAD_INCHES = 0.1
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.charteditor')
 
-class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
+class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
     """Editor to display and manipulate matplotlib charts.  The editor
     itself is generic for all kinds of plots,  it simply provides the
     data to be ploted with a set of axes.  The data itself should know
@@ -50,7 +50,8 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
     def __init__(self, parent=None, width=50, height=40, dpi=50, field_name='chart', **kwargs):
         from matplotlib.figure import Figure
         from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-        super(ChartEditor, self).__init__(parent)
+        super(ChartEditor, self).__init__( parent )
+        AbstractCustomEditor.__init__( self )
         self.setObjectName( field_name )
         
         chart_frame = QtGui.QFrame( self )
@@ -185,11 +186,11 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
         """Accepts a camelot.container.chartcontainer.FigureContainer or a 
         camelot.container.chartcontainer.AxesContainer """
         from camelot.container.chartcontainer import structure_to_figure_container
-        self._value = structure_to_figure_container( super(ChartEditor, self).set_value(value) )
+        self._value = structure_to_figure_container( AbstractCustomEditor.set_value( self, value ) )
         self.on_draw()
         
     def get_value(self):
-        super(ChartEditor, self).get_value() or self._value
+        AbstractCustomEditor.get_value( self ) or self._value
 
 #    def _get_tightbbox(self, fig, pad_inches):
 #        renderer = fig.canvas.get_renderer()
