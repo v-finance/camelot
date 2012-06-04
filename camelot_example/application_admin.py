@@ -69,7 +69,7 @@ class MiniApplicationAdmin( MyApplicationAdmin ):
 
     def get_toolbar_actions( self, toolbar_area ):
         from PyQt4.QtCore import Qt
-        from camelot.model.authentication import Person
+        from camelot.model.party import Person
         from camelot.admin.action import application_action, list_action
         from model import Movie
         
