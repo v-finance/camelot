@@ -495,11 +495,11 @@ class HeaderWidget( QtGui.QWidget ):
             widget_layout.addWidget( self.number_of_rows )
         else:
             self.number_of_rows = None
-        layout.addLayout( widget_layout )
+        layout.addLayout( widget_layout, 0 )
         self._expanded_filters_created = False
         self._expanded_search = QtGui.QWidget()
         self._expanded_search.hide()
-        layout.addWidget(self._expanded_search)
+        layout.addWidget( self._expanded_search, 1 )
         self.setLayout( layout )
         self.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
         self.setNumberOfRows( 0 )
@@ -512,7 +512,8 @@ class HeaderWidget( QtGui.QWidget ):
         """
         assert object_thread( self )
         from camelot.view.controls.filter_operator import FilterOperator
-        layout = QtGui.QHBoxLayout()
+        from camelot.view.flowlayout import FlowLayout
+        layout = FlowLayout()
         layout.setSpacing( 2 )
         layout.setContentsMargins( 0, 0, 0, 0 )
         for i, (field, attributes) in enumerate(columns):
@@ -527,7 +528,7 @@ class HeaderWidget( QtGui.QWidget ):
                 box.setLayout( box_layout )
                 widget.filter_changed_signal.connect( self._filter_changed )
                 layout.addWidget( box )
-        layout.addStretch()
+        #layout.addStretch()
         self._expanded_search.setLayout( layout )
         self._expanded_filters_created = True
 
