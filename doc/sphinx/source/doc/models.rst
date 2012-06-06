@@ -62,4 +62,3 @@ can be used as a place to start the model definition.
    fields.rst
    calculated_fields.rst
    views.rst
-   under_the_hood.rst
