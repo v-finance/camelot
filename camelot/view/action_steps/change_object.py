@@ -299,7 +299,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         choices = [(field, attributes['name']) for field, attributes in field_attributes.items() if filter(attributes)]
         choices.sort( key = lambda choice:choice[1] )
         editor.set_choices( choices )
-        editor.set_value( ( choices+[(None,None)] )[1][0] )
+        editor.set_value( ( choices+[(None,None)] )[-1][0] )
         self.field_changed( 0 )  
         editor.currentIndexChanged.connect( self.field_changed )
         
