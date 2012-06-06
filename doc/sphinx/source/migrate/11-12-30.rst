@@ -146,3 +146,5 @@ history information ::
     DROP TABLE memento;
     DROP TABLE authentication_mechanism_username;
     DROP TABLE authentication_mechanism;
+    
+Consider converting your `settings.py` module to a :ref:`settings object<settings>` .

@@ -36,7 +36,6 @@ Main Window and Views
 one called :file:`main.py` which contains the entry point of your Camelot
 application. If you launch it::
 
-  set PYTHONPATH=.
   python main.py
 
 your `PyQt <http://www.riverbankcomputing.co.uk/software/pyqt/intro>`_
@@ -99,20 +98,9 @@ database model.
 Creating the Movie Model
 ========================
 
-Let's first take a look at the :file:`settings.py` in our project directory.
-There is a function, ``ENGINE``, which returns a call to the `create_engine 
-<http://docs.sqlalchemy.org/en/latest/core/engines.html#sqlalchemy.create_engine>`_ 
-SQLAlchemy function, containing a :abbr:`Uniform Resource Identifier URI`. 
-That's the database your Camelot application will be connecting too. 
-Camelot provides a default ``sqlite`` URI scheme. But you can set your own.
-
-If you set a database file that does not exist it will be created in the
-directory from which the application is *launched*. Keep this in mind
-if you plan to deploy your application by means of an installer on
-Microsoft Windows Vista or newer, because the Program Files folder is not
-writable. Choose a location that is writable to the application, such
-as the user's AppData folder, or a shared folder in case of multiple users
-needing to access the same data.
+Let's first take a look at the :file:`main.py` in our project directory.  
+It contains a `my_settings` object which is appended to the global `settings.
+The :ref:`settings object<settings>` contains the global configuration for things such as database and file location.
 
 Now we can look at :file:`model.py`. Camelot has already imported some classes
 for us. They are used to create our entities. Let's say we want a movie entity

@@ -173,10 +173,12 @@ from camelot.core.conf import settings, SimpleSettings
 logging.basicConfig( level = logging.ERROR )
 logger = logging.getLogger( 'main' )
 
-# The settings of this application, implement the ENGINE method of 
-# SimpleSettings to change the database
+# begin custom settings
 class MySettings( SimpleSettings ):
 
+    # add an ENGINE or a CAMELOT_MEDIA_ROOT method here to connect
+    # to another database or change the location where files are stored
+    
     def setup_model( self ):
         """This function will be called at application startup, it is used to 
         setup the model"""
@@ -187,10 +189,10 @@ class MySettings( SimpleSettings ):
         import camelot.model.memento
         import {{options.module}}.model
         metadata.create_all()
-    
-# Append the custom settings of this application to the global
-# Camelot settings
-settings.append( MySettings( '{{options.author}}', '{{options.name}}' ) )
+
+my_settings = MySettings( '{{options.author}}', '{{options.name}}' ) 
+settings.append( my_settings )
+# end custom settings
 
 def start_application():
     from camelot.view.main import main
