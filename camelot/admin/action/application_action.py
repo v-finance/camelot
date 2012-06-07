@@ -28,6 +28,7 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
+from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
 from camelot.view.art import Icon
@@ -44,13 +45,18 @@ class ApplicationActionModelContext( ModelContext ):
     this context contains :
         
     .. attribute:: admin
-    
+   
         the application admin.
+
+    .. attribute:: session
+
+        the active session
     """
     
     def __init__( self ):
         super( ApplicationActionModelContext, self ).__init__()
         self.admin = None
+        self.session = Session()
         
 class ApplicationActionGuiContext( GuiContext ):
     """The GUI context for an :class:`camelot.admin.action.Action`.  On top of 
