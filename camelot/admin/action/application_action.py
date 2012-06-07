@@ -56,7 +56,12 @@ class ApplicationActionModelContext( ModelContext ):
     def __init__( self ):
         super( ApplicationActionModelContext, self ).__init__()
         self.admin = None
-        self.session = Session()
+
+    # Cannot set session in constructor because constructor is called
+    # inside the GUI thread
+    @property
+    def session( self ):
+        return Session()
         
 class ApplicationActionGuiContext( GuiContext ):
     """The GUI context for an :class:`camelot.admin.action.Action`.  On top of 
