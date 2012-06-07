@@ -26,6 +26,7 @@ from backup import SelectBackup, SelectRestore
 from change_object import ChangeField, ChangeObject, ChangeObjects
 from gui import ( CloseView, MessageBox, OpenFormView, Refresh, ShowChart, 
                   ShowPixmap )
+from item_view import Sort
 from open_file import ( OpenFile, OpenStream, 
                         OpenString, OpenJinjaTemplate, WordJinjaTemplate )
 from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
@@ -58,6 +59,7 @@ __all__ = [
     SelectRestore.__name__,
     ShowChart.__name__,
     ShowPixmap.__name__,
+    Sort.__name__,
     UpdateObject.__name__,
     UpdateProgress.__name__,
     WordJinjaTemplate.__name__,

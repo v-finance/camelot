@@ -615,7 +615,7 @@ position in the query.
         return super( CollectionProxy, self ).headerData( section, orientation, role )
 
     def sort( self, column, order ):
-        """reimplementation of the QAbstractItemModel its sort function"""
+        """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
         assert object_thread( self )
 
         def create_sort(column, order):
@@ -625,9 +625,16 @@ position in the query.
                 field_name = self._columns[column][0]
                 
                 # handle the case of one of the values being None
-                def compare_none( obj_1, obj_2 ):
-                    key_1 = getattr( obj_1[1], field_name )
-                    key_2 = getattr( obj_2[1], field_name )
+                def compare_none( line_1, line_2 ):
+                    key_1, key_2 = None, None
+                    try:
+                        key_1 = getattr( line_1[1], field_name )
+                    except Exception, e:
+                        logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
+                    try:
+                        key_2 = getattr( line_2[1], field_name )
+                    except Exception, e:
+                        logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
                     if key_1 == None and key_2 == None:
                         return 0
                     if key_1 == None:

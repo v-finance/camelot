@@ -226,7 +226,7 @@ class CallMethod( Action ):
         return state
             
 class ListContextAction( Action ):
-    """An base class for actions that should only be enabled in the
+    """An base class for actions that should only be enabled if the
     gui_context is a :class:`ListActionModelContext`
     """
     
