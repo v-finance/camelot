@@ -66,10 +66,6 @@ class FormActionModelContext( ApplicationActionModelContext ):
         self.collection_count = 0
         self.selection_count = 1
         
-    @property
-    def session( self ):
-        return self._model.admin.get_query().session
-        
     def get_object( self ):
         """
         :return: the object currently displayed in the form, None if no object

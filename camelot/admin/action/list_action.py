@@ -85,10 +85,6 @@ class ListActionModelContext( ApplicationActionModelContext ):
         self.selected_rows = []
         self.field_attributes = dict()
         
-    @property
-    def session( self ):
-        return self.admin.get_query().session
-        
     def get_selection( self, yield_per = None ):
         """
         :param yield_per: an integer number giving a hint on how many objects
