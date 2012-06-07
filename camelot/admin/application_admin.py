@@ -31,7 +31,7 @@ logger = logging.getLogger('camelot.admin.application_admin')
 from PyQt4.QtCore import Qt
 from PyQt4 import QtCore, QtGui
 
-from camelot.admin.action import list_action, application_action
+from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
 from camelot.view import database_selection
@@ -135,6 +135,12 @@ shortcut confusion and reduce the number of status updates.
     help_actions = [ application_action.ShowHelp(), ]
     export_actions = [ list_action.PrintPreview(),
                        list_action.ExportSpreadsheet() ]
+    form_toolbar_actions = [ form_action.CloseForm(),
+                             form_action.ToFirstForm(),
+                             form_action.ToPreviousForm(),
+                             form_action.ToNextForm(),
+                             form_action.ToLastForm(),
+                             application_action.Refresh() ]
     
     def __init__(self):
         """Construct an ApplicationAdmin object and register it as the 
@@ -302,6 +308,18 @@ shortcut confusion and reduce the number of status updates.
         """
         return []
     
+    def get_form_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned
+            
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of a form view.  return
+            None if no toolbar should be created.
+        """
+        if toolbar_area == Qt.TopToolBarArea:
+            return self.form_toolbar_actions
+        
     def get_main_menu( self ):
         """
         :return: a list of :class:`camelot.admin.menu.Menu` objects, or None if 

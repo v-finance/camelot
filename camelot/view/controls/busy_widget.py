@@ -25,13 +25,15 @@
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
-class BusyWidget(QtGui.QWidget):
+from camelot.view.model_thread import get_model_thread
+
+class BusyWidget( QtGui.QLabel ):
     """A widget indicating the application is performing some background task.
     The widget acts as an overlay of its parent widget and displays animating
     orbs"""
 
     def __init__(self, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        super( BusyWidget, self ).__init__( 'foo', parent )
         palette = QtGui.QPalette(self.palette())
         palette.setColor(palette.Background, Qt.transparent)
         self.setPalette(palette)
@@ -39,6 +41,17 @@ class BusyWidget(QtGui.QWidget):
         self.orbs = 5
         self.highlighted_orb = self.orbs
         self.timer = None
+        #
+        # self.busy is kept, because show and hide don't work for widgets
+        # in a QToolbar.  todo : implement show and hide through the QAction
+        # of the toolbar widget, to save on paint resources
+        #
+        self.busy = False
+        self.setSizePolicy( QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding )
+        mt = get_model_thread()
+        mt.thread_busy_signal.connect( self.set_busy )
+        # the model thread might already be busy before we connected to it
+        self.set_busy( mt.busy() )
 
     @QtCore.pyqtSlot(bool)
     def set_busy(self, busy_state):
@@ -51,6 +64,7 @@ class BusyWidget(QtGui.QWidget):
         # so a check on self.timer is needed to prevent multiple timers
         # from being started
         #
+        self.busy = busy_state
         if busy_state and self.timer==None:
             self.timer = self.startTimer(200)
             self.counter = 0
@@ -60,28 +74,30 @@ class BusyWidget(QtGui.QWidget):
                 self.killTimer(self.timer)
                 self.timer = None
             self.hide()
-
+        self.update()
+    
     def paintEvent(self, event):
         """custom paint, painting the orbs"""
-        painter = QtGui.QPainter()
-        painter.begin(self)
-        painter.setRenderHint(QtGui.QPainter.Antialiasing)
-        painter.setPen(QtGui.QPen(Qt.NoPen))
-        width = self.width()
-        height = self.height()
-        radius = min(width/(3*self.orbs+1), height/4)
-        for i in range(self.orbs):
-            if i!=self.highlighted_orb:
-                painter.setBrush(QtGui.QBrush(QtGui.QColor(180, 180, 180)))
-            else:
-                painter.setBrush(QtGui.QBrush(QtGui.QColor(127, 127, 127)))
-            center_x = width  - (3*i+2)*radius
-            center_y = height / 2
-            painter.drawEllipse(center_x - radius,
-                                center_y - radius,
-                                2*radius,
-                                2*radius)
-        painter.end()
+        if self.busy:
+            painter = QtGui.QPainter()
+            painter.begin(self)
+            painter.setRenderHint(QtGui.QPainter.Antialiasing)
+            painter.setPen(QtGui.QPen(Qt.NoPen))
+            width = self.width()
+            height = self.height()
+            radius = min( width/(3*self.orbs+1), height/4, 4 )
+            for i in range(self.orbs):
+                if i!=self.highlighted_orb:
+                    painter.setBrush(QtGui.QBrush(QtGui.QColor(180, 180, 180)))
+                else:
+                    painter.setBrush(QtGui.QBrush(QtGui.QColor(127, 127, 127)))
+                center_x = width  - (3*i+2)*radius
+                center_y = height / 2
+                painter.drawEllipse(center_x - radius,
+                                    center_y - radius,
+                                    2*radius,
+                                    2*radius)
+            painter.end()
 
     def timerEvent(self, event):
         """custom timer event, updating the animation"""

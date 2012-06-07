@@ -168,8 +168,31 @@ class MyApplicationViewsTest( EntityViewsTest ):
     
     ('main.py', '''
 import logging
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger('main')
+from camelot.core.conf import settings, SimpleSettings
+
+logging.basicConfig( level = logging.ERROR )
+logger = logging.getLogger( 'main' )
+
+# begin custom settings
+class MySettings( SimpleSettings ):
+
+    # add an ENGINE or a CAMELOT_MEDIA_ROOT method here to connect
+    # to another database or change the location where files are stored
+    
+    def setup_model( self ):
+        """This function will be called at application startup, it is used to 
+        setup the model"""
+        from camelot.core.sql import metadata
+        metadata.bind = self.ENGINE()
+        import camelot.model.authentication
+        import camelot.model.i18n
+        import camelot.model.memento
+        import {{options.module}}.model
+        metadata.create_all()
+
+my_settings = MySettings( '{{options.author}}', '{{options.name}}' ) 
+settings.append( my_settings )
+# end custom settings
 
 def start_application():
     from camelot.view.main import main
@@ -222,44 +245,7 @@ include
 license
 libs   
     '''),
-    ('settings.py', '''
-import logging
-import os
-
-logger = logging.getLogger('settings')
-
-# media root needs to be an absolute path for the file open functions
-# to function correctly
-CAMELOT_MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'media')
-
-# backup root is the directory where the default backups are stored
-CAMELOT_BACKUP_ROOT = os.path.join(os.path.dirname(__file__), 'backup')
-
-# default extension for backup files
-CAMELOT_BACKUP_EXTENSION = 'db'
-
-# template used to create and find default backups
-CAMELOT_BACKUP_FILENAME_TEMPLATE = 'default-backup-%(text)s.' + CAMELOT_BACKUP_EXTENSION
-
-
-def ENGINE():
-    """This function should return a database engine"""
-    from sqlalchemy import create_engine
-    return create_engine('sqlite:///model-data.sqlite')
-
-def setup_model():
-    """This function will be called at application startup, it is used to setup
-    the model"""
-    from camelot.core.sql import metadata
-    metadata.bind = ENGINE()
-    import camelot.model.authentication
-    import camelot.model.i18n
-    import camelot.model.memento
-    import {{options.module}}.model
-    metadata.create_all()
-    '''),
     ('setup.py', '''
-
 #
 # Default setup file for a Camelot application
 #

@@ -107,8 +107,10 @@ class SimpleSettings( object ):
         :param author: the name of the writer of the application
         :param name: the name of the application
         
-        these name will be used to create a folder where the local data will 
-        be stored.
+        These names will be used to create a folder where the local data will 
+        be stored.  On Windows this will be in the AppData folder of the user,
+        otherwise it will be in a `.author` folder in the home directory of the
+        user.
         """        
         if ('win' in sys.platform) and ('darwin' not in sys.platform):
             import winpaths

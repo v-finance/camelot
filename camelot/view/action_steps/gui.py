@@ -76,8 +76,8 @@ class Refresh( ActionStep ):
 class ShowChart( ActionStep ):
     """Show a full screen chart.
     
-    :param chart: a :class:`camelot.core.container.FigureContainer` or
-        :class:`camelot.core.container.AxesContainer`
+    :param chart: a :class:`camelot.container.chartcontainer.FigureContainer` or
+        :class:`camelot.container.chartcontainer.AxesContainer`
     """
         
     def __init__( self, chart ):

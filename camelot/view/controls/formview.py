@@ -24,7 +24,9 @@
 
 """form view"""
 
+import functools
 import logging
+
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
 from PyQt4 import QtGui
@@ -33,29 +35,10 @@ from PyQt4.QtCore import Qt
 
 from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
-from camelot.view.art import Icon
 from camelot.view.model_thread import post
 from camelot.view.controls.view import AbstractView
-from camelot.view.controls.statusbar import StatusBar
+from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view import register
-from camelot.view.action import ActionFactory
-
-class ContextMenuAction(QtGui.QAction):
-
-    default_icon = Icon('tango/16x16/categories/applications-system.png')
-
-    def __init__(self, parent, title, icon = None):
-        """
-        :param parent: the widget on which the context menu will be placed
-        :param title: text displayed in the context menu
-        :param icon: camelot.view.art.Icon object
-        """
-        super(ContextMenuAction, self).__init__(title, parent)
-        self.icon = icon
-        if self.icon:
-            self.setIcon(self.icon.getQIcon())
-        else:
-            self.setIcon(self.default_icon.getQIcon())
 
 class FormEditors( object ):
     """A class that holds the editors used on a form
@@ -282,6 +265,9 @@ class FormView(AbstractView):
         AbstractView.__init__( self, parent )
 
         layout = QtGui.QVBoxLayout()
+        layout.setSpacing( 1 )
+        layout.setMargin( 1 )
+        layout.setObjectName( 'layout' )
         form_and_actions_layout = QtGui.QHBoxLayout()
         form_and_actions_layout.setObjectName('form_and_actions_layout')
         layout.addLayout( form_and_actions_layout )
@@ -304,13 +290,7 @@ class FormView(AbstractView):
         self.gui_context.view = self
         self.gui_context.widget_mapper = self.findChild( QtGui.QDataWidgetMapper, 
                                                          'widget_mapper' )
-        
-        statusbar = StatusBar(self)
-        statusbar.setObjectName('statusbar')
-        statusbar.setSizeGripEnabled(False)
-        layout.addWidget(statusbar)
-        layout.setAlignment(statusbar, Qt.AlignBottom)
-        self.setLayout(layout)
+        self.setLayout( layout )
 
         self.change_title(title)
 
@@ -319,23 +299,17 @@ class FormView(AbstractView):
 
         self.accept_close_event = False
 
-        def get_actions():
-            return admin.get_form_actions(None)
+        get_actions = admin.get_form_actions
+        post( functools.update_wrapper( functools.partial( get_actions, 
+                                                           None ),
+                                        get_actions ),
+              self.set_actions )
 
-        post(get_actions, self.setActions)
-        #
-        # Define actions
-        #
-        self.setContextMenuPolicy(Qt.ActionsContextMenu)
-        self.addAction( ActionFactory.view_first(self, self.viewFirst) )
-        self.addAction( ActionFactory.view_last(self, self.viewLast) )
-        self.addAction( ActionFactory.view_next(self, self.viewNext) )
-        self.addAction( ActionFactory.view_previous(self, self.viewPrevious) )
-        self.addAction( ActionFactory.refresh(self, self.session_refresh ) )
-
-    @QtCore.pyqtSlot()
-    def session_refresh(self):
-        self.refresh_action.gui_run( self.gui_context )
+        get_toolbar_actions = admin.get_form_toolbar_actions
+        post( functools.update_wrapper( functools.partial( get_toolbar_actions, 
+                                                           Qt.TopToolBarArea ),
+                                        get_toolbar_actions ),
+              self.set_toolbar_actions )
                 
     @QtCore.pyqtSlot()
     def refresh(self):
@@ -354,7 +328,7 @@ class FormView(AbstractView):
         post( self._get_title, self.change_title, args=(current_index,) )
 
     @QtCore.pyqtSlot(list)
-    def setActions(self, actions):
+    def set_actions(self, actions):
         form = self.findChild(QtGui.QWidget, 'form' )
         layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
         if actions and form and layout:
@@ -368,15 +342,32 @@ class FormView(AbstractView):
             side_panel_layout.addWidget( actions_widget )
             side_panel_layout.addStretch()
             layout.addLayout( side_panel_layout )
+            
+    @QtCore.pyqtSlot(list)
+    def set_toolbar_actions(self, actions):
+        layout = self.findChild( QtGui.QLayout, 'layout' )
+        if layout and actions:
+            toolbar = QtGui.QToolBar()
+            for action in actions:
+                qaction = action.render( self.gui_context, toolbar )
+                qaction.triggered.connect( self.action_triggered )
+                toolbar.addAction( qaction )
+            toolbar.addWidget( BusyWidget() )
+            layout.insertWidget( 0, toolbar )
 
-    def viewFirst(self):
+    @QtCore.pyqtSlot( bool )
+    def action_triggered( self, _checked = False ):
+        action_action = self.sender()
+        action_action.action.gui_run( self.gui_context )
+        
+    def to_first(self):
         """select model's first row"""
         form = self.findChild(QtGui.QWidget, 'form' )
         if form:
             form.submit()
             form.to_first()
 
-    def viewLast(self):
+    def to_last(self):
         """select model's last row"""
         # submit should not happen a second time, since then we don't want
         # the widgets data to be written to the model
@@ -385,7 +376,7 @@ class FormView(AbstractView):
             form.submit()
             form.to_last()
 
-    def viewNext(self):
+    def to_next(self):
         """select model's next row"""
         # submit should not happen a second time, since then we don't want
         # the widgets data to be written to the model
@@ -394,7 +385,7 @@ class FormView(AbstractView):
             form.submit()
             form.to_next()
 
-    def viewPrevious(self):
+    def to_previous(self):
         """select model's previous row"""
         # submit should not happen a second time, since then we don't want
         # the widgets data to be written to the model
@@ -425,4 +416,3 @@ class FormView(AbstractView):
             # is processed
             QtCore.QTimer.singleShot( 0, self.validate_close )
             event.ignore()
-
