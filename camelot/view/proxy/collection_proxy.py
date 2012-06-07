@@ -622,8 +622,21 @@ position in the query.
 
             def sort():
                 unsorted_collection = [(i,o) for i,o in enumerate(self.get_collection())]
-                key = lambda item:getattr(item[1], self._columns[column][0])
-                unsorted_collection.sort(key=key, reverse=order)
+                field_name = self._columns[column][0]
+                
+                # handle the case of one of the values being None
+                def compare_none( obj_1, obj_2 ):
+                    key_1 = getattr( obj_1[1], field_name )
+                    key_2 = getattr( obj_2[1], field_name )
+                    if key_1 == None and key_2 == None:
+                        return 0
+                    if key_1 == None:
+                        return -1
+                    if key_2 == None:
+                        return 1
+                    return cmp( key_1, key_2 )
+                    
+                unsorted_collection.sort( cmp = compare_none, reverse = order )
                 for j,(i,_o) in enumerate(unsorted_collection):
                     self._sort_and_filter[j] = i
                 return len(unsorted_collection)
