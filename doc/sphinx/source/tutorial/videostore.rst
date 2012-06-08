@@ -9,38 +9,67 @@ with Camelot. We assume Camelot is properly :ref:`installed <doc-install>`.
 An all in one installer for Windows is available as an SDK to develop Camelot
 applications `(Python SDK) <http://www.conceptive.be/python-sdk.html>`_.
 
-Starting a New Project
-======================
+Setup Spyder
+============
 
-We begin with the creation of a new project. Open your favourite command prompt
-(or shell) and go to the directory in which the new project should be created.
-Typing the following command::
+In this section, we will explain how to setup the **Spyder IDE** for developing
+a **Camelot** project.  If you are not using **Spyder**, you can skip this section.
 
-  python -m camelot.bin.camelot_admin
+:menuselection:`Start --> All Programs --> Python SDK --> Spyder`
 
-A dialog appears where the basic information of the application can be
-filled in.
+Within **Spyder**, open the *Project Explorer* : 
 
-.. image:: /_static/actionsteps/change_object.png
+:menuselection:`View --> Windows and toolbars --> Project explorer`
+
+In the *Project Explorer* change the workspace directory, to the directory where
+you want to put your **Camelot** Projects. 
+
+.. image:: ../_static/start-spyder.png
+
+Next, still in the *Project Explorer*, right click to create a new project using :
+
+:menuselection:`New Project`
+
+Enter `Videostore` as the project name.
+
+.. image:: ../_static/spyder-new-project.png
+
+Starting a new Camelot project
+==============================
+
+We begin with the creation of a new **Camelot** project, using the `camelot_admin` tool : 
+
+:menuselection:`Start --> All Programs --> Python SDK --> New Camelot Application`
+
+.. note:
+
+    From the command prompt (or shell), go to the directory in which the new project should be created.
+    Type the following command::
+
+        python -m camelot.bin.camelot_admin
+
+A dialog appears where the basic information of the application can be filled in.
+Select the newly created `Videostore` directory as the location of the source code.
+
+.. image:: ../_static/camelot-new-project.png
 
 Press `OK` to generate the source code of the project.
-
-The folder :file:`videostore` should appear in your the directory you are 
-working in. We will be working the Python modules created and put inside this 
-directory.
+The source code should now appear in the selected directory.
 
 Main Window and Views
 =====================
 
-:option:`camelot_admin` created some modules for us. Let's focus on the
-one called :file:`main.py` which contains the entry point of your Camelot
-application. If you launch it::
+To run the application, open the :file:`main.py` file, which contains the entry point of your Camelot application and run this file. 
 
-  python main.py
+:menuselection:`Run --> Run --> Ok`
 
-your `PyQt <http://www.riverbankcomputing.co.uk/software/pyqt/intro>`_
-:abbr:`Graphical User Interface <GUI>` should look like the one we show in the
-picture below:
+.. note:
+
+    From the command prompt, simply start the script ::
+
+        python main.py
+
+your `Qt <http://www.qt-project.org>`_ GUI should look like the one we show in the picture below:
 
 .. image:: ../_static/picture1.png
 
