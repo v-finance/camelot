@@ -242,7 +242,6 @@ class ManyToMany( DeferredProperty ):
         target_cls = cls._decl_class_registry[self.target]
         local_pk = list(cls.__table__.primary_key)[0]
         target_pk = list(target_cls.__table__.primary_key)[0]
-
         t = schema.Table(
                 self.tablename,
                 cls.metadata,
@@ -252,7 +251,9 @@ class ManyToMany( DeferredProperty ):
             )
         rel = relationship(target_cls,
                 secondary=t,
-                collection_class=self.kw.get('collection_class', set)
+                # use list instead of set because collection proxy does not
+                # work with sets
+                collection_class=self.kw.get('collection_class', list)
             )
         setattr(cls, key, rel)
         self._setup_reverse(key, rel, target_cls)

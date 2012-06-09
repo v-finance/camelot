@@ -187,11 +187,13 @@ class MySettings( SimpleSettings ):
         """This function will be called at application startup, it is used to 
         setup the model"""
         from camelot.core.sql import metadata
+        from sqlalchemy.orm import configure_mappers
         metadata.bind = self.ENGINE()
         import camelot.model.authentication
         import camelot.model.i18n
         import camelot.model.memento
         import {{options.module}}.model
+        configure_mappers()
         metadata.create_all()
 
 my_settings = MySettings( '{{options.author}}', '{{options.name}}' ) 
