@@ -13,7 +13,8 @@ Setup Spyder
 ============
 
 In this section, we will explain how to setup the **Spyder IDE** for developing
-a **Camelot** project.  If you are not using **Spyder**, you can skip this section.
+a **Camelot** project.  If you are not using **Spyder**, you can skip this and
+jump to the next :ref:`section <start-project>`.
 
 :menuselection:`Start --> All Programs --> Python SDK --> Spyder`
 
@@ -34,6 +35,8 @@ Enter `Videostore` as the project name.
 
 .. image:: ../_static/spyder-new-project.png
 
+.. _start-project:
+
 Starting a new Camelot project
 ==============================
 
@@ -41,7 +44,7 @@ We begin with the creation of a new **Camelot** project, using the `camelot_admi
 
 :menuselection:`Start --> All Programs --> Python SDK --> New Camelot Application`
 
-.. note:
+.. note::
 
     From the command prompt (or shell), go to the directory in which the new project should be created.
     Type the following command::
@@ -59,11 +62,11 @@ The source code should now appear in the selected directory.
 Main Window and Views
 =====================
 
-To run the application, open the :file:`main.py` file, which contains the entry point of your Camelot application and run this file. 
+To run the application, double click on the :file:`main.py` file in **Spyder**, which contains the entry point of your **Camelot** application and run this file. 
 
 :menuselection:`Run --> Run --> Ok`
 
-.. note:
+.. note::
 
     From the command prompt, simply start the script ::
 
@@ -73,28 +76,20 @@ your `Qt <http://www.qt-project.org>`_ GUI should look like the one we show in t
 
 .. image:: ../_static/picture1.png
 
-The application has menus, a toolbar, a left navigation pane, and a central
+The application has a customizable menu and toolbar, a left navigation pane, and a central
 area, where default the `Home` tab is opened, on which nothing is currently displayed.
 
 The navigation pane has its first `section` expanded. 
 
 .. image:: ../_static/picture2.png
 
-.. note::
-
-   Camelot uses `sections` to group `models`.  Each button in the navigation
-   pane represents a `section`, and each entry of the navigation tree is part
-   of this section.
-
-Select any other section-button by clicking on it, and see this section expand, 
-minimizing the previous section.
-The links in a section are `entities`, and we will talk about them later.  (Generally speaking,
-an `entity` represents a single table in a database.)
+The navigation pane uses `Sections` to group `Actions`.  
+Each button in the navigation pane represents a `Section`, and each entry of the navigation tree is an `Action`.
+Most standard `Actions` open a single table view of an `Entity` in a new tab. 
 
 Notice that the application disables most of the menus and the toolbar
-buttons. When we click on an entity, more options become available.
-So let's click on the entity ``Persons`` of the section ``Relations``.
-The table view of the entity appears in a tab next to the `Home` tab.
+buttons. When we open a table view, more options become available.
+
 Entities are opened in the active tab, unless
 they are opened by selecting `Open in New Tab` from the context menu (right click) 
 of the entity link, which will obviously open a new tab to right.
