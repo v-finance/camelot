@@ -30,6 +30,7 @@ from PyQt4 import QtGui, QtCore
 
 from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.controls.navpane2 import NavigationPane
+from camelot.view.controls.action_widget import ActionAction
 from camelot.view.model_thread import post
 
 from camelot.core.utils import ugettext as _
