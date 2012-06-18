@@ -19,6 +19,7 @@ class ExampleSettings( SimpleSettings ):
     
     @staticmethod
     def setup_model():
+        from sqlalchemy.orm import configure_mappers
         from camelot.core.sql import metadata
         metadata.bind = settings.ENGINE()
         import camelot.model.party
@@ -33,8 +34,11 @@ class ExampleSettings( SimpleSettings ):
         from elixir import setup_all
         setup_all()
         #
-        # create the tables for all models
+        # create the tables for all models, configure mappers first, to make
+        # sure all deferred properties have been handled, as those could
+        # create tables or columns
         #
+        configure_mappers()
         metadata.create_all()
         from camelot.model.authentication import update_last_login
         update_last_login()

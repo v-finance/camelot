@@ -32,8 +32,9 @@ The `settings` object should have a method named ``ENGINE``,  uses the `create_e
 SQLAlchemy function to create a connection to the database. 
 Camelot provides a default ``sqlite`` URI scheme. But you can set your own.
 
-
-
+.. literalinclude:: ../../../../camelot/core/conf.py
+   :pyobject: SimpleSettings.ENGINE
+   
 Older versions of Camelot looked for a `settings` module on `sys.path` to look for the global configuration.
 This approach is still supported.
 

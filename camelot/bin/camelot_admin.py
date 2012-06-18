@@ -52,8 +52,9 @@ with sphinx.
     ('license_update', """Change the license header of a project,
 use license_update project_directory license_file"""),
     ('to_pyside', """Takes a folder with PyQt4 source code and translates it to
-PySide source code.  A directory to_pyside will be created containing the
-output of the translation"""),
+PySide source code.  Usage ::
+   
+   to_pyside source destination"""),
 ]
 
 #
@@ -175,14 +176,14 @@ def license_update(project, license_file):
             
     os.path.walk(project, translate_directory, None)
     
-def to_pyside(project):
+def to_pyside( project, destination ):
     import os.path
     import shutil
-    output = os.path.join('to_pyside', os.path.basename(project))
+    output = os.path.join( destination, os.path.basename( project ) )
     # first take a copy
     if os.path.exists( output ):
         shutil.rmtree( output )
-    shutil.copytree(project, output)
+    shutil.copytree( project, output )
    
     def replace_word(original_str, old_word, new_word):
         return new_word.join((t for t in original_str.split(old_word)))
