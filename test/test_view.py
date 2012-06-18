@@ -182,8 +182,12 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), True )
         editor.set_value( False )
         self.assertEqual( editor.get_value(), False )
+        # changing the editable state should preserve the value
         editor.set_value( True )
-        editor.set_enabled( True )
+        editor.set_field_attributes( editable = False )
+        self.assertEqual( editor.get_value(), True )
+        editor.set_field_attributes( editable = True )
+        self.assertEqual( editor.get_value(), True )        
         self.assert_valid_editor( editor, True )
 
     def test_CodeEditor(self):

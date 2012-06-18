@@ -9,63 +9,87 @@ with Camelot. We assume Camelot is properly :ref:`installed <doc-install>`.
 An all in one installer for Windows is available as an SDK to develop Camelot
 applications `(Python SDK) <http://www.conceptive.be/python-sdk.html>`_.
 
-Starting a New Project
-======================
+Setup Spyder
+============
 
-We begin with the creation of a new project. Open your favourite command prompt
-(or shell) and go to the directory in which the new project should be created.
-Typing the following command::
+In this section, we will explain how to setup the **Spyder IDE** for developing
+a **Camelot** project.  If you are not using **Spyder**, you can skip this and
+jump to the next :ref:`section <start-project>`.
 
-  python -m camelot.bin.camelot_admin
+:menuselection:`Start --> All Programs --> Python SDK --> Spyder`
 
-A dialog appears where the basic information of the application can be
-filled in.
+Within **Spyder**, open the *Project Explorer* : 
 
-.. image:: /_static/actionsteps/change_object.png
+:menuselection:`View --> Windows and toolbars --> Project explorer`
+
+In the *Project Explorer* change the workspace directory, to the directory where
+you want to put your **Camelot** Projects. 
+
+.. image:: ../_static/start-spyder.png
+
+Next, still in the *Project Explorer*, right click to create a new project using :
+
+:menuselection:`New Project`
+
+Enter `Videostore` as the project name.
+
+.. image:: ../_static/spyder-new-project.png
+
+.. _start-project:
+
+Starting a new Camelot project
+==============================
+
+We begin with the creation of a new **Camelot** project, using the `camelot_admin` tool : 
+
+:menuselection:`Start --> All Programs --> Python SDK --> New Camelot Application`
+
+.. note::
+
+    From the command prompt (or shell), go to the directory in which the new project should be created.
+    Type the following command::
+
+        python -m camelot.bin.camelot_admin
+
+A dialog appears where the basic information of the application can be filled in.
+Select the newly created `Videostore` directory as the location of the source code.
+
+.. image:: ../_static/camelot-new-project.png
 
 Press `OK` to generate the source code of the project.
-
-The folder :file:`videostore` should appear in your the directory you are 
-working in. We will be working the Python modules created and put inside this 
-directory.
+The source code should now appear in the selected directory.
 
 Main Window and Views
 =====================
 
-:option:`camelot_admin` created some modules for us. Let's focus on the
-one called :file:`main.py` which contains the entry point of your Camelot
-application. If you launch it::
+To run the application, double click on the :file:`main.py` file in **Spyder**, which contains the entry point of your **Camelot** application and run this file. 
 
-  python main.py
+:menuselection:`Run --> Run --> Ok`
 
-your `PyQt <http://www.riverbankcomputing.co.uk/software/pyqt/intro>`_
-:abbr:`Graphical User Interface <GUI>` should look like the one we show in the
-picture below:
+.. note::
+
+    From the command prompt, simply start the script ::
+
+        python main.py
+
+your `Qt <http://www.qt-project.org>`_ GUI should look like the one we show in the picture below:
 
 .. image:: ../_static/picture1.png
 
-The application has menus, a toolbar, a left navigation pane, and a central
+The application has a customizable menu and toolbar, a left navigation pane, and a central
 area, where default the `Home` tab is opened, on which nothing is currently displayed.
 
 The navigation pane has its first `section` expanded. 
 
 .. image:: ../_static/picture2.png
 
-.. note::
-
-   Camelot uses `sections` to group `models`.  Each button in the navigation
-   pane represents a `section`, and each entry of the navigation tree is part
-   of this section.
-
-Select any other section-button by clicking on it, and see this section expand, 
-minimizing the previous section.
-The links in a section are `entities`, and we will talk about them later.  (Generally speaking,
-an `entity` represents a single table in a database.)
+The navigation pane uses `Sections` to group `Actions`.  
+Each button in the navigation pane represents a `Section`, and each entry of the navigation tree is an `Action`.
+Most standard `Actions` open a single table view of an `Entity` in a new tab. 
 
 Notice that the application disables most of the menus and the toolbar
-buttons. When we click on an entity, more options become available.
-So let's click on the entity ``Persons`` of the section ``Relations``.
-The table view of the entity appears in a tab next to the `Home` tab.
+buttons. When we open a table view, more options become available.
+
 Entities are opened in the active tab, unless
 they are opened by selecting `Open in New Tab` from the context menu (right click) 
 of the entity link, which will obviously open a new tab to right.
