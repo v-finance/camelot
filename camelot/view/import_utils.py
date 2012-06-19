@@ -28,11 +28,13 @@ from PyQt4 import QtCore
 
 import csv
 import codecs
+import datetime
 import logging
 
 from camelot.view.art import ColorScheme
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext
+from camelot.view.utils import local_date_format
 
 logger = logging.getLogger('camelot.view.import_utils')
 
@@ -108,10 +110,12 @@ class XlsReader( object ):
         workbook = xlrd.open_workbook( filename,
                                        formatting_info = True )
         self.xf_list = workbook.xf_list
+        self.datemode = workbook.datemode
         self.format_map = workbook.format_map
         self.sheet = workbook.sheets()[0]
         self.current_row = 0
         self.rows = self.sheet.nrows
+        self.date_format = local_date_format()
         self.locale = QtCore.QLocale()
         
     def get_format_string( self, xf_index ):
@@ -150,13 +154,16 @@ class XlsReader( object ):
                     value = unicode( self.locale.toString( cell.value, 
                                                            format = 'f',
                                                            precision = precision ) )
-                    print format_string, precision, value
                 elif ctype == xlrd.XL_CELL_DATE:
-                    value = xlrd.xldate_as_tuple( cell.value, datemode=0 )
+                    # this only handles dates, no datetime or time
+                    date_tuple = xlrd.xldate_as_tuple( cell.value, 
+                                                       self.datemode )
+                    dt = QtCore.QDate( *date_tuple[:3] )
+                    value = unicode( dt.toString( self.date_format ) )
                 elif ctype == xlrd.XL_CELL_BOOLEAN:
-                    value = False
+                    value = 'false'
                     if cell.value == 1:
-                        value = True
+                        value = 'true'
                 else:
                     logger.error( 'unknown ctype %s when importing excel'%ctype )
                 vector.append( value )
