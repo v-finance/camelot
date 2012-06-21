@@ -188,16 +188,15 @@ def int_from_string(s):
         raise ParsingError()
     return i
 
-
 def float_from_string(s):
     if not s:
         return None
     locale = QtCore.QLocale()
-    f, ok = locale.toFloat(s)
+    # floats in python are implemented as double in C
+    f, ok = locale.toDouble(s)
     if not ok:
         raise ParsingError()
     return f
-
 
 def pyvalue_from_string(pytype, s):
     if pytype is str:
@@ -261,4 +260,3 @@ def text_from_richtext( unstripped_text ):
     parser.feed(unstripped_text.strip())
 
     return strings
-
