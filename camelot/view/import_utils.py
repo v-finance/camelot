@@ -28,7 +28,6 @@ from PyQt4 import QtCore
 
 import csv
 import codecs
-import datetime
 import logging
 
 from camelot.view.art import ColorScheme
