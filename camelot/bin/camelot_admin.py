@@ -196,6 +196,7 @@ def to_pyside( source, destination ):
         source = replace_word( source, 'PyQt4', 'PySide' )
         source = replace_word( source, 'pyqtSlot', 'Slot' )
         source = replace_word( source, 'pyqtSignal', 'Signal' )
+        source = replace_word( source, 'pyqtProperty', 'Property' )
         source = replace_word( source, 'QtCore.QString', 'str' )
         source = replace_word( source, 'QtCore.QVariant.', 'QtCore.Q')
         source = replace_word( source, 'QtCore.QVariant(', '(' )
