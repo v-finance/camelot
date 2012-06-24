@@ -912,6 +912,24 @@ class ControlsTest(ModelThreadTestCase):
         
         self.assertEqual( first_name_width, suffix_width )
         
+    def test_column_group( self ):
+        from camelot.admin.table import ColumnGroup
+        from camelot.view.controls.tableview import TableView
+        from camelot.model.party import Person
+
+        class ColumnWidthAdmin( Person.Admin ):
+            #begin column group
+            list_display = [ ColumnGroup( _('Name'), ['first_name', 'last_name', 'suffix'] ),
+                             ColumnGroup( _('Official'), ['birthdate', 'social_security_number', 'passport_number'] ),
+                             ]
+            #end column group
+            
+        admin = ColumnWidthAdmin( self.app_admin, Person )
+        widget = TableView( self.gui_context, 
+                            admin )
+        widget.setMinimumWidth( 800 )
+        self.grab_widget( widget )
+        
     def test_navigation_pane(self):
         from camelot.view.controls import navpane2
         self.wait_for_animation()
