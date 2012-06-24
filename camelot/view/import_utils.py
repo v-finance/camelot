@@ -119,7 +119,10 @@ class XlsReader( object ):
         
     def get_format_string( self, xf_index ):
         """:return: the string that specifies the format of a cell"""
-        xf = self.xf_list[ xf_index ]
+        try:
+            xf = self.xf_list[ xf_index ]
+        except IndexError:
+            return '0.00'
         if xf._format_flag == 0:
             return self.get_format_string( xf.parent_style_index )
         f = self.format_map[ xf.format_key ]
