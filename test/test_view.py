@@ -958,11 +958,11 @@ class ControlsTest(ModelThreadTestCase):
         self.wait_for_animation()
         self.grab_widget( widget )     
 
-    def test_status_bar(self):
-        from camelot.view.controls.statusbar import StatusBar
-        status_bar = StatusBar(None)
-        status_bar.busy_widget.set_busy(True)
-        self.grab_widget(status_bar)
+    def test_busy_widget(self):
+        from camelot.view.controls.busy_widget import BusyWidget
+        busy_widget = BusyWidget()
+        busy_widget.set_busy( True )
+        self.grab_widget( busy_widget )
 
     def test_search_control(self):
         from camelot.view.controls.search import SimpleSearchControl

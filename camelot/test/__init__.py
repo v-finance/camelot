@@ -50,11 +50,11 @@ def get_application():
             application.setStyleSheet( art.read('stylesheet/office2007_blue.qss') )
             from PyQt4 import QtCore
             QtCore.QLocale.setDefault( QtCore.QLocale('nl_BE') )
-            try:
-                from PyTitan import QtnOfficeStyle
-                QtnOfficeStyle.setApplicationStyle( QtnOfficeStyle.Windows7Scenic )
-            except:
-                pass 
+            #try:
+            #    from PyTitan import QtnOfficeStyle
+            #    QtnOfficeStyle.setApplicationStyle( QtnOfficeStyle.Windows7Scenic )
+            #except:
+            #    pass 
         _application_.append( application )
     return _application_[0]
 
