@@ -2,17 +2,17 @@
  Camelot
 ##########
 
-Camelot provides components for building business applications on top
-*SQLAlchemy* and *Qt*.  It is inspired by the Django admin interface.  A simple
-piece of code as this::
+Camelot provides components for building business applications on top of **Python**, **SQLAlchemy** and **Qt**.  
+It is inspired by the Django admin interface.  
+A simple piece of code as this::
 
-  class Movie( Entity ):
-      title = Column( Unicode( 60 ), nullable = False )
-      short_description = Column( Unicode( 512 ) )
-      release_date = Column( Date() )
+  class Task( Entity ):
+      short_description = Column( Unicode( 60 ), nullable = False )
+      due_date = Column( Date() )
+      long_description = Column( RichText() )
   
-      class Admin(EntityAdmin):
-          list_display = ['title', 'short_description', 'release_date']
+      class Admin( EntityAdmin ):
+          list_display = ['short_description', 'due_date']
       
 Is enough to define your database schema, define the mapping between the
 database and objects, and to create a user friendly desktop GUI.
