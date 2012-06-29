@@ -125,6 +125,8 @@ class SimpleSettings( object ):
         if not os.path.exists( self._local_folder ):
             os.makedirs( self._local_folder )
             
+        LOGGER.info( u'store database and media in %s'%self._local_folder )
+            
     def CAMELOT_MEDIA_ROOT(self):
         return os.path.join( self._local_folder, 'media' )
     
