@@ -53,7 +53,9 @@ class ExampleSettings( SimpleSettings ):
         from camelot_example.view import setup_views
         setup_views()
 
-settings.append( ExampleSettings('camelot', 'videostore') )
+settings.append( ExampleSettings( 'camelot', 
+                                  'videostore',
+                                  data = 'videostore_2.sqlite') )
 
 def main():
     from camelot.view.main import main

@@ -1,27 +1,33 @@
 Master
 ------
 
- * Add ``ColumnGroups`` in the list view. 
-
- * Port the ``camelot_example`` application and ``tutorial`` to `Declarative`
+ * Port the ``camelot_example`` application and :ref:`tutorial-videostore` to `Declarative`
+ 
+ * Add a toolbar to the form view, configurable through
+   the :meth:`camelot.admin.object_admin.ObjectAdmin.get_form_toolbar_actions` method.
+ 
+ * Move the progress widget from the status bar to the toolbar
+ 
+ * Add :class:`camelot.admin.table.ColumnGroup` in the list view. 
+ 
+   .. image:: /_static/controls/column_group.png
 
  * See :ref:`migrate-11.12.30` for documentation on how to upgrade an 
    existing Camelot project.
    
- * Tracking of changes goes through the ``ObjectAdmin``
+ * Tracking of changes goes through the :class:`camelot.admin.object_admin.ObjectAdmin`
  
  * Cleanup of the default Camelot models :
  
      * they can be used independently of each other
      
-     * Persons, Organizations, etc. have been moved to `camelot.model.party`
+     * Persons, Organizations, etc. have been moved to :mod:`camelot.model.party`
      
      * Simplification of the underlying tables
      
-     * The default metadata was moved `camelot.model.sql`
+     * The default `metadata` was moved :mod:`camelot.core.sql`
 
- * Store user changed column width in settings and `column_width` field 
-   attribute
+ * Store user changed column width in settings and :ref:`field-attribute-column_width` field attribute
 
  * not_editable_admin has an `actions` argument
  

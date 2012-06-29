@@ -20,7 +20,7 @@ which was used in previous *Camelot* versions, and is still supported.
 
 To use *Declarative*, threre are some base classes that should be imported:
 
-.. literalinclude:: ../../../../camelot_example/model.py
+.. literalinclude:: /../../../camelot_example/model.py
    :start-after: begin basic imports
    :end-before: end basic imports
    
@@ -36,7 +36,7 @@ Those are :
  
 Next a model can be defined:
    
-.. literalinclude:: ../../../../camelot_example/model.py
+.. literalinclude:: /../../../camelot_example/model.py
    :pyobject: Tag
    
 The code above defines the model for a `Tag` class, an object with only a name that can be related to other

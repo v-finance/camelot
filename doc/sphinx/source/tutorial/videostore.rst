@@ -74,14 +74,14 @@ To run the application, double click on the :file:`main.py` file in **Spyder**, 
 
 your `Qt <http://www.qt-project.org>`_ GUI should look like the one we show in the picture below:
 
-.. image:: ../_static/picture1.png
+.. image:: ../_static/main-window.png
 
 The application has a customizable menu and toolbar, a left navigation pane, and a central
 area, where default the `Home` tab is opened, on which nothing is currently displayed.
 
 The navigation pane has its first `section` expanded. 
 
-.. image:: ../_static/picture2.png
+.. image:: ../_static/navigation-pane.png
 
 The navigation pane uses `Sections` to group `Actions`.  
 Each button in the navigation pane represents a `Section`, and each entry of the navigation tree is an `Action`.
@@ -95,25 +95,25 @@ they are opened by selecting `Open in New Tab` from the context menu (right clic
 of the entity link, which will obviously open a new tab to right.
 Tabs can be closed by clicking the `X` in the tab itself.
 
-.. image:: ../_static/picture3.png
+.. image:: ../_static/table-view.png
 
 Each row is a record with some fields that we can edit (others might not be
 editable). Let's now add a new row by clicking on the new icon (icon farthest the 
 the left in the toolbar above the navigation pane).
 
-.. image:: ../_static/picture4.png
+.. image:: ../_static/toolbar.png
 
 We now see a new window, containing a form view with additional fields. 
 Forms label **required** fields in bold.
 
-.. image:: ../_static/picture5.png
+.. image:: ../_static/new-form.png
 
 Fill in a first and last name, and close the form. Camelot will automatically
 validate and echo the changes to the database. We can reopen the form by
 clicking on the blue folder icon in the first column of each row of the table. Notice
 also that there is now an entry in our table.
 
-.. image:: ../_static/picture6.png
+.. image:: ../_static/new-record.png
 
 That's it for basic usages of the interface. Next we will write code for our
 database model.
@@ -123,8 +123,8 @@ Creating the Movie Model
 ========================
 
 Let's first take a look at the :file:`main.py` in our project directory.  
-It contains a `my_settings` object which is appended to the global `settings.
-The :ref:`settings object<settings>` contains the global configuration for things such as database and file location.
+It contains a `my_settings` object which is appended to the global `settings`.
+The :ref:`settings` object contains the global configuration for things such as database and file location.
 
 Now we can look at :file:`model.py`. Camelot has already imported some classes
 for us. They are used to create our entities. Let's say we want a movie entity
@@ -254,19 +254,18 @@ To change sections in the left pane of the main window, simply overwrite the
 ``get_sections`` method, to return a list of the desired sections.  By default
 this method contains::
 
-  def get_sections(self):
-    from camelot.model.memento import Memento
-    from camelot.model.party import Person, Organization
-    from camelot.model.i18n import Translation
-    return [Section('Relation',
-		    self,
-                    Icon('tango/22x22/apps/system-users.png'),
-                    items = [Person, Organization]),
-            Section('Configuration',
-		    self,
-                    Icon('tango/22x22/categories/preferences-system.png'),
-                    items = [Memento, Translation])
-            ]
+    def get_sections(self):
+        from camelot.model.memento import Memento
+        from camelot.model.i18n import Translation
+        return [ Section( _('My classes'),
+                          self,
+                          Icon('tango/22x22/apps/system-users.png'),
+                          items = [] ),
+                 Section( _('Configuration'),
+                          self,
+                          Icon('tango/22x22/categories/preferences-system.png'),
+                          items = [Memento, Translation] )
+                ]
             
 which will display two buttons in the navigation pane, labelled ``'Relations'``
 and ``'Configurations'``, with the specified icon next to each label. And yes,
@@ -276,10 +275,16 @@ We need to add a new section for our ``Movie`` entity, this is done by
 extending the list of sections returned by the ``get_sections`` method with a
 Movie section::
 
-	Section('Movies',
-		self,
-                Icon('tango/22x22/mimetypes/x-office-presentation.png'),
-                items = [Movie])
+        from videostore.model import Movie
+        return [ Section( _('Movie'),
+                          self,
+                          Icon('tango/22x22/apps/system-users.png'),
+                          items = [Movie] ),
+                 Section( _('Configuration'),
+                          self,
+                          Icon('tango/22x22/categories/preferences-system.png'),
+                          items = [Memento, Translation] )
+                ]
 
 The constructor of a section object takes the name of the section, a reference
 to the application admin object, the icon to be used and the items in the 
@@ -288,27 +293,6 @@ shown.
 
 Camelot comes with the `Tango <http://tango.freedesktop.org/Tango_Icon_Library>`_
 icon collection; we use a suitable icon for our movie section.
-
-The resulting method now becomes::
-
-  def get_sections(self):
-    from camelot.model.memento import Memento
-    from camelot.model.authentication import Person, Organization
-    from camelot.model.i18n import Translation    
-    from model import Movie
-    return [Section('Movies', 
-		    self,
-                    Icon('tango/22x22/mimetypes/x-office-presentation.png'),
-                    items = [Movie]),
-            Section('Relation',
-		    self,
-                    Icon('tango/22x22/apps/system-users.png'),
-                    items = [Person, Organization]),
-            Section('Configuration',
-		    self,
-                    Icon('tango/22x22/categories/preferences-system.png'),
-                    items = [Memento, Translation])
-            ]
     
 We can now try our application.
 
@@ -317,7 +301,7 @@ fills the navigation tree with the only entity in the movies's section.
 Clicking on this tree entry opens the table view. And if we click on the blue
 folder of each record, a form view appears as shown below.
 
-.. image:: ../_static/picture7.png
+.. image:: ../_static/movie-table.png
 
 That's it for the basics of defining an entity and setting it for display in
 Camelot. Next we look at relationships between entities.
@@ -359,7 +343,7 @@ column and use it to attach a ``Director`` object to a ``Movie`` object ::
 	
 	__tablename__ = 'movie'
 	
-	title = Column( Unicode( 60 ), required=True )
+	title = Column( Unicode( 60 ),  nullable = False )
 	short_description = Column( Unicode( 512 ) )
 	release_date = Column( Date() )
 	genre = Column( Unicode( 15 ) )
@@ -401,13 +385,18 @@ follows::
 	def __unicode__(self):
 	    return self.name or 'unknown director'
 
+.. note::
+
+   Whenever the model changes, the database needs to be updated.  This can
+   be done by dropping and recreating the database (or deleting the sqlite file).
+   
 For completeness the two entities are once again listed below::
 
     class Movie( Entity ):
 	
 	__tablename__ = 'movie'
 	
-	title = Column( Unicode( 60 ), required=True )
+	title = Column( Unicode( 60 ), nullable = False )
 	short_description = Column( Unicode( 512 ) )
 	release_date = Column( Date() )
 	genre = Column( Unicode( 15 ) )
@@ -447,10 +436,7 @@ lines to the Director entity to the Movie section::
                  Icon( 'tango/22x22/mimetypes/x-office-presentation.png' ),
                  items = [ Movie, Director ])
 
-This takes care of the relationship between our two entities. Below is the new
-look of our video store application.
-
-.. image:: ../_static/picture8.png
+This takes care of the relationship between our two entities. 
 
 We have just learned the basics of Camelot, and have a nice movie database
 application we can play with. In another tutorial, we will learn more advanced

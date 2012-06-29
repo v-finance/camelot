@@ -37,7 +37,7 @@ PAD_INCHES = 0.1
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.charteditor')
 
-class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
+class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
     """Editor to display and manipulate matplotlib charts.  The editor
     itself is generic for all kinds of plots,  it simply provides the
     data to be ploted with a set of axes.  The data itself should know
@@ -190,7 +190,7 @@ class ChartEditor(QtGui.QFrame, AbstractCustomEditor, WideEditor):
         self.on_draw()
         
     def get_value(self):
-        AbstractCustomEditor.get_value( self ) or self._value
+        return AbstractCustomEditor.get_value( self ) or self._value
 
 #    def _get_tightbbox(self, fig, pad_inches):
 #        renderer = fig.canvas.get_renderer()
