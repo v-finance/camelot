@@ -354,6 +354,7 @@ class FormView(AbstractView):
                 toolbar.addAction( qaction )
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignTop )
+            self.show()
 
     @QtCore.pyqtSlot( bool )
     def action_triggered( self, _checked = False ):
