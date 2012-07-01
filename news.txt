@@ -1,5 +1,5 @@
-Master
-------
+12.06.29
+--------
 
  * Port the ``camelot_example`` application and :ref:`tutorial-videostore` to `Declarative`
  
