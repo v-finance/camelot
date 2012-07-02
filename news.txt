@@ -1,6 +1,9 @@
 12.06.29
 --------
 
+ * ``camelot_manage``has been removed, since it did not contain essential functions
+   for the development of Camelot applications.
+
  * Port the ``camelot_example`` application and :ref:`tutorial-videostore` to `Declarative`
  
  * Add a toolbar to the form view, configurable through
