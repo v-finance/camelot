@@ -266,7 +266,7 @@ class FormView(AbstractView):
 
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 1 )
-        layout.setMargin( 1 )
+        layout.setContentsMargins( 1, 1, 1, 1 )
         layout.setObjectName( 'layout' )
         form_and_actions_layout = QtGui.QHBoxLayout()
         form_and_actions_layout.setObjectName('form_and_actions_layout')
