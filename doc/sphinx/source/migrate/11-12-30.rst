@@ -1,7 +1,7 @@
 .. _migrate-11.12.30:
 
-Migrate from Camelot 11.12.30 to master
-=======================================
+Migrate from Camelot 11.12.30 to 12.06.29
+=========================================
 
 The place of the default `metadata` has changed.  So the top line at the
 model files should change from::
