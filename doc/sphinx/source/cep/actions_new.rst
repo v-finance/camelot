@@ -4,11 +4,7 @@
  New Actions
 #############
 
-status : approved
-
-.. note::
-  This proposal is being implemented in the trunk, the functionallity described
-  here is not yet available in the latest release.
+status : implemented
 
 Introduction
 ============
