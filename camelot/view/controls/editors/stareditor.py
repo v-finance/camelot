@@ -28,7 +28,7 @@ from PyQt4.QtCore import Qt
 from customeditor import CustomEditor
 from camelot.view.art import Icon
 
-class StarEditor(CustomEditor):
+class StarEditor( CustomEditor ):
 
     star_icon = Icon('tango/16x16/status/weather-clear.png')
     no_star_icon = Icon('tango/16x16/status/weather-clear-noStar.png')
@@ -46,9 +46,9 @@ class StarEditor(CustomEditor):
         layout.setContentsMargins( 0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self.starCount = 5
+        self.maximum = maximum
         self.buttons = []
-        for i in range(self.starCount):
+        for i in range(self.maximum):
             button = QtGui.QToolButton(self)
             button.setIcon(self.no_star_icon.getQIcon())
             button.setFocusPolicy(Qt.ClickFocus)
@@ -63,10 +63,10 @@ class StarEditor(CustomEditor):
         def createStarClick(i):
             return lambda:self.starClick(i+1)
 
-        for i in range(self.starCount):
+        for i in range(self.maximum):
             self.buttons[i].clicked.connect(createStarClick(i))
 
-        for i in range(self.starCount):
+        for i in range(self.maximum):
             layout.addWidget(self.buttons[i])
         layout.addStretch()
         self.setLayout(layout)
@@ -85,7 +85,7 @@ class StarEditor(CustomEditor):
             self.stars -= 1
         else:
             self.stars = int(value)
-        for i in range(self.starCount):
+        for i in range(self.maximum):
             if i+1 <= self.stars:
                 self.buttons[i].setIcon(self.star_icon.getQIcon())
             else:
@@ -95,7 +95,7 @@ class StarEditor(CustomEditor):
     def set_value(self, value):
         value = CustomEditor.set_value(self, value) or 0
         self.stars = int(value)
-        for i in range(self.starCount):
+        for i in range(self.maximum):
             if i+1 <= self.stars:
                 self.buttons[i].setIcon(self.star_icon.getQIcon())
             else:
