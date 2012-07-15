@@ -4,9 +4,6 @@
   Deployment
 #############
 
-:Release: |version|
-:Date: |today|
-
 After developing a Camelot application comes the need to deploy the
 application, either at a central location or in a distributed setup.
 
@@ -20,35 +17,14 @@ the lifetime of the application.  Resource files (like icons or templates
 can be included in this .egg file as well).
 
 Building .egg files is a relatively straightforward process using 
-setuptools_ 
+setuptools.
 
-A setup.py file for building an .egg of your application could look
-like this::
+When a new Camelot project was created with `camelot_admin`, a 
+:file:`setup.py` file was made that is able to build eggs using this
+command :: 
 
-	from setuptools import setup, find_packages
-
-	setup(
-	  name = 'movie store',
-	  version = '01.01',
-	  description = 'Movie Store',
-	  author = 'Conceptive Engineering',
-	  author_email = 'project-camelot@conceptive.be',
-	  url = 'www.conceptive.be',
-	  include_package_data = True,
-	  packages = find_packages(),
-	  py_modules =  ['settings'] )
-
-Which is then build using this command::
-	  
 	python -O setup.py bdist_egg --exclude-source-files
 	
-The setup.py script above includes settings.py in the .egg file.  This
-is prefered if the settings.py file is going to be the same for all 
-deployments.  (Eg.: the database is on a central server accessible
-for all)  In some occasions it might be better not to include the settings.py
-file into the .egg file, and only put it in your PYTHONPATH at deployment
-time. 
-
 .. note::
 
 	The advantage of using .egg files comes when updating the application, simply

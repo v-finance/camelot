@@ -30,7 +30,8 @@ from item_view import Sort
 from open_file import ( OpenFile, OpenStream, 
                         OpenString, OpenJinjaTemplate, WordJinjaTemplate )
 from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
-from print_preview import PrintHtml, PrintPreview, PrintJinjaTemplate
+from print_preview import ( PrintChart, PrintHtml, PrintPreview, 
+                            PrintJinjaTemplate )
 from select_file import SelectFile
 from select_object import SelectObject
 from update_progress import UpdateProgress
@@ -49,6 +50,7 @@ __all__ = [
     OpenJinjaTemplate.__name__,
     OpenStream.__name__,
     OpenString.__name__,
+    PrintChart.__name__,
     PrintHtml.__name__,
     PrintJinjaTemplate.__name__,
     PrintPreview.__name__,

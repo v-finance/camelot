@@ -108,6 +108,27 @@ class ActionStepsCase( ModelThreadTestCase ):
         dialog = select_file.render()
         self.grab_widget( dialog )
         
+    def test_print_chart( self ):
+        
+        # begin chart print
+        class ChartPrint( Action ):
+            
+            def model_run( self, model_context ):
+                from camelot.container.chartcontainer import BarContainer
+                from camelot.view.action_steps import PrintChart
+                chart = BarContainer( [1, 2, 3, 4],
+                                      [5, 1, 7, 2] )
+                print_chart_step = PrintChart( chart )
+                print_chart_step.page_orientation = QtGui.QPrinter.Landscape
+                yield print_chart_step
+        # end chart print
+
+        action = ChartPrint()
+        steps = list( action.model_run( self.context ) )
+        dialog = steps[0].render()
+        dialog.show()
+        self.grab_widget( dialog )
+
     def test_print_preview( self ):
         
         # begin webkit print
