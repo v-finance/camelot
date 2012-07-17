@@ -1,5 +1,16 @@
-12.06.29
---------
+Stable
+------
+
+ * Add :class:`camelot.view.action_steps.print_preview.PrintChart` action step.
+ 
+ * Adapt printing of charts to matplotlib 1.0
+ 
+ * Fix `maximum` field attribute of rating fields in editor and delegate.
+ 
+ * Workaround for form window hiding on Mac
+
+Release 12.06.29
+----------------
 
  * ``camelot_manage``has been removed, since it did not contain essential functions
    for the development of Camelot applications.
