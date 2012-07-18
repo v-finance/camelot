@@ -6,7 +6,7 @@ from PyQt4.QtCore import Qt
 
 from camelot.admin.action import Action
 from camelot.admin.action import list_action, application_action
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import pyqt, ugettext_lazy as _
 from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps

@@ -73,9 +73,11 @@ def transaction(original_function):
     return decorated_function
 
 def update_database_from_model():
-    """Introspection the model and add missing columns in the database
+    """Introspection the model and add missing columns in the database.    
+    this function can be ran in setup_model after::
     
-    this function can be ran in setup_model after setup_all(create_tables=True)
+        metadata.create_all()
+        
     """
     migrate_engine = settings.ENGINE()
     migrate_connection = migrate_engine.connect()
