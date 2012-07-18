@@ -110,6 +110,9 @@ class ThreadedAwsHandler(logging.Handler):
         self._connected = True
         self._threaded_timer = ThreadedTimer(1000, self)
         self._threaded_timer.start()
+        # maximum number of logs being cached to prevent
+        # out of memory
+        self._max_cache = 1000
         try:
             if sys.platform.startswith('win'):
                 # on windows getuser() uses the USERNAME env var
@@ -128,6 +131,8 @@ class ThreadedAwsHandler(logging.Handler):
     def emit(self, record):
         # inspired by the code in logging.handlers.SocketHandler
         import json
+        if len( self._records_to_emit ) >= self._max_cache:
+            return
         ei = record.exc_info
         #
         # prevent infinite loops when the boto lib logs something when
