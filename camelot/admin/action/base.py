@@ -373,7 +373,7 @@ direct manipulations of the user interface without a need to access the model.
         the state of the action widget visible to the current user.
         
         :param model_context: the context available in the *Model thread*
-        :return: an instance of :class:`camelot.action.base.State`
+        :return: an instance of :class:`camelot.admin.action.base.State`
         """
         state = State()
         state.verbose_name = self.verbose_name
