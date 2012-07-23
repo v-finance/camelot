@@ -302,18 +302,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
         editor.set_value( ( choices+[(None,None)] )[-1][0] )
         self.field_changed( 0 )  
         editor.currentIndexChanged.connect( self.field_changed )
-        
-        cancel_button = QtGui.QPushButton( ugettext('Cancel') )
-        ok_button = QtGui.QPushButton( ugettext('OK') )
-        ok_button.setObjectName( 'ok' )
-        layout = QtGui.QHBoxLayout()
-        layout.setDirection( QtGui.QBoxLayout.RightToLeft )
-        layout.addWidget( ok_button )
-        layout.addWidget( cancel_button )
-        layout.addStretch()
-        self.buttons_widget().setLayout( layout )
-        cancel_button.pressed.connect( self.reject )
-        ok_button.pressed.connect( self.accept )
+        self.set_default_buttons()
         
     @QtCore.pyqtSlot(int)
     def field_changed(self, index):
