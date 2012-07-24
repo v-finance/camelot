@@ -159,6 +159,8 @@ class ThreadedAwsHandler(logging.Handler):
                                                self._secret_access_key,
                                                **self._connection_kwargs)
                 self._queue = sqs_connection.get_queue( self._queue_name )
+                if self._queue == None:
+                    raise Exception( 'Queue %s does not exist'%self._queue_name )
             except Exception, e:
                 LOGGER.error('Could not connect to logging queue %s'%self._queue_name, exc_info=e)
                 self._connected = False
