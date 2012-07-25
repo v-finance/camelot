@@ -28,8 +28,8 @@ variable, which is a global :class:`sqlalchemy.Metadata` object to which all
 tables of the application can be added.
 """
 
+import functools
 import logging
-from functools import wraps
 
 from sqlalchemy import MetaData
 import sqlalchemy.sql.operators
@@ -48,14 +48,14 @@ metadata.autoflush = False
 metadata.transactional = False
 
 def like_op(column, string):
-    return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)
-
+    return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)    
+        
 def transaction(original_function):
     """Decorator for methods on an entity, to make them transactional"""
 
     logger = logging.getLogger('camelot.core.sql.transaction')
     
-    @wraps( original_function )
+    @functools.wraps( original_function )
     def decorated_function(cls, *args, **kwargs):
         session = cls.query.session
         session.begin()
