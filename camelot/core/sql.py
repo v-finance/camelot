@@ -50,25 +50,16 @@ metadata.transactional = False
 def like_op(column, string):
     return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)    
         
-def transaction(original_function):
-    """Decorator for methods on an entity, to make them transactional"""
-
-    logger = logging.getLogger('camelot.core.sql.transaction')
+def transaction( original_function ):
+    """Decorator to make methods or functions transactional"""
+    
+    from camelot.core.orm import SessionTransaction
     
     @functools.wraps( original_function )
-    def decorated_function(cls, *args, **kwargs):
-        session = cls.query.session
-        session.begin()
-        try:
-            result = original_function(cls, *args, **kwargs)
-            session.commit()
-        except Exception, e:
-            session.rollback()
-            if not isinstance( e, (UserException,) ):
-                logger.error( 'Unhandled exception, rolling back transaction', 
-                              exc_info=e)
-            raise e
-        return result
+    def decorated_function( *args, **kwargs ):
+        
+        with SessionTransaction():
+            return original_function( *args, **kwargs )
     
     return decorated_function
 
