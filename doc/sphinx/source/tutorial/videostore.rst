@@ -126,13 +126,17 @@ Let's first take a look at the :file:`main.py` in our project directory.
 It contains a `my_settings` object which is appended to the global `settings`.
 The :ref:`settings` object contains the global configuration for things such as database and file location.
 
+.. literalinclude:: ../../../../new_project/main.py
+   :start-after: begin custom settings
+   :end-before: end custom settings
+   
 Now we can look at :file:`model.py`. Camelot has already imported some classes
 for us. They are used to create our entities. Let's say we want a movie entity
 with a ``title``, a short ``description``, a ``release date``, and a
 ``genre``.
 
 The aforementioned specifications translate into the following Python code,
-that we add to our model.py module::
+that we add to our :file:`model.py` module::
 
   from sqlalchemy import Unicode, Date
   from sqlalchemy.schema import Column
@@ -153,10 +157,8 @@ that we add to our model.py module::
    The complete source code of this tutorial can be found in the
    :file:`camelot_example` folder of the Camelot source code.
    
-``Movie`` inherits ``Entity``.  ``Entity`` is the base class for all objects
-that should be stored in the database.  We use the ``__tablename__`` attribute to
-to name the table ourselves in which the data will be stored, otherwise a 
-default tablename would have been used.
+:class:`Movie` inherits :class:`Entity`.  :class:`camelot.core.orm.Entity`` is the declarative base class for all objects that should be stored in the database.  
+We use the ``__tablename__`` attribute to to name the table ourselves in which the data will be stored, otherwise a default tablename would have been used.
 
 Our entity holds four fields that are stored in columns in the table.
 
@@ -179,14 +181,12 @@ Our entity holds four fields that are stored in columns in the table.
 
 ``release_date`` holds a date, and ``genre`` up to 15 unicode characters:
 
-For more information about defining models, refer to the
-`SQLAlchemy Declarative extension <http://docs.sqlalchemy.org/en/rel_0_7/orm/extensions/declarative.html>`_. 
+For more information about defining models, refer to the `SQLAlchemy Declarative extension <http://docs.sqlalchemy.org/en/rel_0_7/orm/extensions/declarative.html>`_. 
 
-The different `SQLAlchemy <http://www.sqlalchemy.org>`_ column types used 
-are described `here <http://docs.sqlalchemy.org/en/rel_0_7/core/types.html>`_.
-Finally, custom Camelot fields are documented in the API.
+The different `SQLAlchemy <http://www.sqlalchemy.org>`_ column types used are described `here <http://docs.sqlalchemy.org/en/rel_0_7/core/types.html>`_.
+Finally, custom Camelot fields are documented in the section :ref:`camelot-column-types`.
 
-Let's now create an ``EntityAdmin`` subclass
+Let's now create an :class:`EntityAdmin` subclass
 
 
 The EntityAdmin Subclass
@@ -242,17 +242,14 @@ Let's move onto the last piece of the puzzle.
 Configuring the Application
 ===========================
 
-We are now working with :file:`application_admin.py`.  One of
-the tasks of :file:`application_admin.py` is to specify the sections in
-the left pane of the main window.
+We are now working with :file:`application_admin.py`.  
+One of the tasks of :file:`application_admin.py` is to specify the sections in the left pane of the main window.
 
-Camelot defined a class, ``MyApplicationAdmin``, for us. This class is a
-subclass of class:`camelot.admin.application_admin.ApplicationAdmin`, which is 
-used to control the overall look and feel of every Camelot application.
+Camelot defined a class, ``MyApplicationAdmin``, for us. 
+This class is a subclass of :class:`camelot.admin.application_admin.ApplicationAdmin`, which is used to control the overall look and feel of every Camelot application.
 
-To change sections in the left pane of the main window, simply overwrite the
-``get_sections`` method, to return a list of the desired sections.  By default
-this method contains::
+To change sections in the left pane of the main window, simply overwrite the ``get_sections`` method, to return a list of the desired sections.  
+By default this method contains::
 
     def get_sections(self):
         from camelot.model.memento import Memento
@@ -267,7 +264,7 @@ this method contains::
                           items = [Memento, Translation] )
                 ]
             
-which will display two buttons in the navigation pane, labelled ``'Relations'``
+which will display two buttons in the navigation pane, labelled ``'My classes'``
 and ``'Configurations'``, with the specified icon next to each label. And yes,
 the order matters.
 
@@ -309,7 +306,7 @@ Camelot. Next we look at relationships between entities.
 Relationships
 =============
 
-We will be using SQLAlchemy's :class:`sqlalchemy.orm.relationship` API.  We'll
+We will be using SQLAlchemy's :mod:`sqlalchemy.orm.relationship` API.  We'll
 relate a director to each movie.  So first we need a ``Director`` entity. We 
 define it as follows::
                    
@@ -387,8 +384,15 @@ follows::
 
 .. note::
 
-   Whenever the model changes, the database needs to be updated.  This can
-   be done by dropping and recreating the database (or deleting the sqlite file).
+   Whenever the model changes, the database needs to be updated.  
+   This can be done by hand, or by dropping and recreating the database (or deleting the sqlite file).
+   By default Camelot stores the data in an local directory specified by the operating system.
+   Look in the startup logs to see where they are stored on your system, look for a line like ::
+   
+	[INFO   ] [camelot.core.conf] - store database and media in /home/username/.camelot/videostore
+	
+   To simply add columns and tables, the function :func:`camelot.core.sql.update_database_from_model`
+   can be used.
    
 For completeness the two entities are once again listed below::
 

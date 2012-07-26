@@ -42,6 +42,8 @@ The types used mosed common are :
 .. autoclass:: sqlalchemy.types.Unicode
    :noindex:
    
+.. _camelot-column-types:
+
 Camelot column types
 --------------------
 

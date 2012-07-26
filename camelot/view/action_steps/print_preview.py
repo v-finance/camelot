@@ -27,6 +27,7 @@ from PyQt4 import QtCore, QtGui
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
 from camelot.view.action_steps.open_file import OpenFile
+from camelot.view.utils import resize_widget_to_screen
 
 class PrintPreview( ActionStep ):
     """
@@ -73,11 +74,7 @@ class PrintPreview( ActionStep ):
         dialog.paintRequested.connect( self.paint_on_printer )
         # show maximized seems to trigger a bug in qt which scrolls the page 
         # down dialog.showMaximized()
-        desktop = QtGui.QApplication.desktop()
-        available_geometry = desktop.availableGeometry( dialog )
-        # use the size of the screen instead to set the dialog size
-        dialog.resize( available_geometry.width() * 0.75, 
-                       available_geometry.height() * 0.75 )
+        resize_widget_to_screen( dialog )
         return dialog
     
     @QtCore.pyqtSlot( QtGui.QPrinter )
