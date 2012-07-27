@@ -34,11 +34,11 @@ from sqlalchemy import sql, orm, schema
 
 import camelot.types
 
-def create_entity_search_query_decorator(admin, text):
+def create_entity_search_query_decorator( admin, text ):
     """create a query decorator to search through a collection of entities
-    @param admin: the admin interface of the entity
-    @param text: the text to search for
-    @return: a function that can be applied to a query to make the query filter
+    :param admin: the admin interface of the entity
+    :param text: the text to search for
+    :return: a function that can be applied to a query to make the query filter
     only the objects related to the requested text or None if no such decorator
     could be build
     """
@@ -136,6 +136,3 @@ def create_entity_search_query_decorator(admin, text):
             return query_decorator
 
         return create_query_decorator(joins, args)
-
-
-
