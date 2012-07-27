@@ -199,6 +199,9 @@ class CollectionProxy( QtGui.QProxyModel ):
     row_changed_signal = QtCore.pyqtSignal(int)
     exception_signal = QtCore.pyqtSignal(object)
     rows_removed_signal = QtCore.pyqtSignal()
+    
+    _rows_about_to_be_inserted_signal = QtCore.pyqtSignal( QtCore.QModelIndex, int, int )
+    _rows_inserted_signal = QtCore.pyqtSignal( QtCore.QModelIndex, int, int )
 
     def __init__( self, 
                   admin, 
@@ -281,6 +284,8 @@ position in the query.
         self.unflushed_rows = set()
         self._sort_and_filter = SortingRowMapper()
         self.row_changed_signal.connect( self._emit_changes )
+        self._rows_about_to_be_inserted_signal.connect( self._rows_about_to_be_inserted, Qt.QueuedConnection )
+        self._rows_inserted_signal.connect( self._rows_inserted, Qt.QueuedConnection )
         self.rsh = get_signal_handler()
         self.rsh.connect_signals( self )
 
@@ -1137,6 +1142,14 @@ position in the query.
         post( create_copy_function( row ) )
         return True
 
+    @QtCore.pyqtSlot( QtCore.QModelIndex, int, int )
+    def _rows_about_to_be_inserted( self, parent, first, last ):
+        self.beginInsertRows( parent, first, last )
+        
+    @QtCore.pyqtSlot( QtCore.QModelIndex, int, int )
+    def _rows_inserted( self, _parent, _first, _last ):
+        self.endInsertRows()
+        
     @model_function
     def append_object( self, obj ):
         """Append an object to this collection, set the possible defaults and flush
@@ -1147,7 +1160,8 @@ position in the query.
         """
         rows = self._rows
         row = max( rows - 1, 0 )
-        self.beginInsertRows( QtCore.QModelIndex(), row, row )
+        parent = QtCore.QModelIndex()
+        self._rows_about_to_be_inserted_signal.emit( parent, row, row )
         self.append( obj )
         # defaults might depend on object being part of a collection
         self.admin.set_defaults( obj )
@@ -1166,25 +1180,8 @@ position in the query.
         #
         columns = self._columns
         self._add_data( columns, rows, obj )
-        self.endInsertRows()
+        self._rows_inserted_signal.emit( parent, row, row )
         return self._rows
-
-    @QtCore.pyqtSlot(object)
-    def append_row( self, object_getter ):
-        """
-        :param object_getter: a function that returns the object to be put in the
-        appended row.
-        """
-        assert object_thread( self )
-
-        def create_append_function( getter ):
-
-            def append_function():
-                return self.append_object( getter() )
-
-            return append_function
-
-        post( create_append_function( object_getter ), self._refresh_content )
 
     @model_function
     def getData( self ):
