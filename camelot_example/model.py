@@ -91,8 +91,9 @@ class Movie( Entity ):
     director_party_id = Column( sqlalchemy.types.Integer, 
                                 ForeignKey( 'person.party_id' ) )
     director = relationship( Person )
-    cast = relationship( 'Cast' )
-    visitor_reports = relationship( 'VisitorReport' )
+    # replaced by backref on Cast class
+    #cast = relationship( 'Cast' )
+    visitor_reports = relationship( 'VisitorReport', )
     tags = ManyToMany( 'Tag', 
                        tablename = 'tags_movies__movies_tags', 
                        local_colname = 'movies_id', 
@@ -205,7 +206,7 @@ class Cast( Entity ):
     actor_party_id = Column( sqlalchemy.types.Integer, 
                              ForeignKey( 'person.party_id' ),
                              nullable = False )
-    movie = relationship( 'Movie' )
+    movie = relationship( 'Movie', backref = 'cast' )
     actor = relationship( Person )
 
     class Admin( EntityAdmin ):
