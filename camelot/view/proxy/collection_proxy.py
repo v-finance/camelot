@@ -200,8 +200,10 @@ class CollectionProxy( QtGui.QProxyModel ):
     exception_signal = QtCore.pyqtSignal(object)
     rows_removed_signal = QtCore.pyqtSignal()
     
-    _rows_about_to_be_inserted_signal = QtCore.pyqtSignal( QtCore.QModelIndex, int, int )
-    _rows_inserted_signal = QtCore.pyqtSignal( QtCore.QModelIndex, int, int )
+    # it looks as QtCore.QModelIndex cannot be serialized for cross
+    # thread signals
+    _rows_about_to_be_inserted_signal = QtCore.pyqtSignal( int, int )
+    _rows_inserted_signal = QtCore.pyqtSignal( int, int )
 
     def __init__( self, 
                   admin, 
@@ -1142,12 +1144,12 @@ position in the query.
         post( create_copy_function( row ) )
         return True
 
-    @QtCore.pyqtSlot( QtCore.QModelIndex, int, int )
-    def _rows_about_to_be_inserted( self, parent, first, last ):
-        self.beginInsertRows( parent, first, last )
+    @QtCore.pyqtSlot( int, int )
+    def _rows_about_to_be_inserted( self, first, last ):
+        self.beginInsertRows( QtCore.QModelIndex(), first, last )
         
-    @QtCore.pyqtSlot( QtCore.QModelIndex, int, int )
-    def _rows_inserted( self, _parent, _first, _last ):
+    @QtCore.pyqtSlot( int, int )
+    def _rows_inserted( self, _first, _last ):
         self.endInsertRows()
         
     @model_function
@@ -1160,8 +1162,7 @@ position in the query.
         """
         rows = self._rows
         row = max( rows - 1, 0 )
-        parent = QtCore.QModelIndex()
-        self._rows_about_to_be_inserted_signal.emit( parent, row, row )
+        self._rows_about_to_be_inserted_signal.emit( row, row )
         self.append( obj )
         # defaults might depend on object being part of a collection
         self.admin.set_defaults( obj )
@@ -1180,7 +1181,7 @@ position in the query.
         #
         columns = self._columns
         self._add_data( columns, rows, obj )
-        self._rows_inserted_signal.emit( parent, row, row )
+        self._rows_inserted_signal.emit( row, row )
         return self._rows
 
     @model_function
