@@ -98,7 +98,7 @@ class ClassMutator( object ):
     def __init__( self, *args, **kwargs ):
         # jam this mutator into the class's mutator list
         class_locals = sys._getframe(1).f_locals
-        mutators = class_locals.setdefault(MUTATORS, [])
+        mutators = class_locals.setdefault( MUTATORS, [] )
         mutators.append( (self, args, kwargs) )
         
     def process( self, entity_dict, *args, **kwargs ):
@@ -288,6 +288,11 @@ class using_options( ClassMutator ):
         if order_by:
             mapper_args = entity_dict.get('__mapper_args__', {} )
             mapper_args['order_by'] = order_by
+            
+class has_field( ClassMutator ):
+    
+    def process( self, entity_dict, name, *args, **kwargs ):
+        entity_dict[ name ] = Field( *args, **kwargs )
 
 class EntityMeta( DeclarativeMeta ):
     """Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.  This

@@ -88,9 +88,10 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( plot )
         editor.setMaximumSize( 400, 200 )
         self.grab_widget( editor, 'editable' )
-        editor.set_field_attributes(editable=False)
+        editor.set_field_attributes( editable=False )
         self.grab_widget( editor, 'disabled' )
         self.assert_valid_editor( editor, plot )
+        
         
     def test_DateEditor(self):
         import datetime

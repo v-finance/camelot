@@ -266,7 +266,7 @@ class FormView(AbstractView):
 
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 1 )
-        layout.setMargin( 1 )
+        layout.setContentsMargins( 1, 1, 1, 1 )
         layout.setObjectName( 'layout' )
         form_and_actions_layout = QtGui.QHBoxLayout()
         form_and_actions_layout.setObjectName('form_and_actions_layout')
@@ -354,6 +354,11 @@ class FormView(AbstractView):
                 toolbar.addAction( qaction )
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignTop )
+            # @todo : this show is needed on OSX or the form window
+            # is hidden after the toolbar is added, maybe this can
+            # be solved using windowflags, since this causes some
+            # flicker
+            self.show()
 
     @QtCore.pyqtSlot( bool )
     def action_triggered( self, _checked = False ):

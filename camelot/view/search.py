@@ -34,18 +34,17 @@ from sqlalchemy import sql, orm, schema
 
 import camelot.types
 
-def create_entity_search_query_decorator(admin, text):
+def create_entity_search_query_decorator( admin, text ):
     """create a query decorator to search through a collection of entities
-    @param admin: the admin interface of the entity
-    @param text: the text to search for
-    @return: a function that can be applied to a query to make the query filter
+    :param admin: the admin interface of the entity
+    :param text: the text to search for
+    :return: a function that can be applied to a query to make the query filter
     only the objects related to the requested text or None if no such decorator
     could be build
     """
     from camelot.view import utils
 
     if len(text.strip()):
-        from sqlalchemy import Unicode, or_
         # arguments for the where clause
         args = []
         # join conditions : list of join entities
@@ -70,12 +69,12 @@ def create_entity_search_query_decorator(admin, text):
             elif issubclass(c.type.__class__, sqlalchemy.types.Integer):
                 try:
                     arg = (c==utils.int_from_string(text))
-                except Exception, utils.ParsingError:
+                except ( Exception, utils.ParsingError ):
                     pass
             elif issubclass(c.type.__class__, sqlalchemy.types.Date):
                 try:
                     arg = (c==utils.date_from_string(text))
-                except Exception, utils.ParsingError:
+                except ( Exception, utils.ParsingError ):
                     pass
             elif issubclass(c.type.__class__, sqlalchemy.types.Float):
                 try:
@@ -83,13 +82,13 @@ def create_entity_search_query_decorator(admin, text):
                     precision = c.type.precision
                     if isinstance(precision, (tuple)):
                         precision = precision[1]
-                    delta = 0.1**precision
+                    delta = 0.1**( precision or 0 )
                     arg = sql.and_(c>=float_value-delta, c<=float_value+delta)
-                except Exception, utils.ParsingError:
+                except ( Exception, utils.ParsingError ):
                     pass
-            elif issubclass(c.type.__class__, (Unicode, )) or \
+            elif issubclass(c.type.__class__, (sqlalchemy.types.String, )) or \
                             (hasattr(c.type, 'impl') and \
-                             issubclass(c.type.impl.__class__, (Unicode, ))):
+                             issubclass(c.type.impl.__class__, (sqlalchemy.types.String, ))):
                 LOGGER.debug('look in column : %s'%c.name)
                 arg = sql.operators.ilike_op(c, '%'+text+'%')
 
@@ -128,7 +127,7 @@ def create_entity_search_query_decorator(admin, text):
                     query = query.outerjoin(join)
                 if len(args):
                     if len(args)>1:
-                        query = query.filter(or_(*args))
+                        query = query.filter( sql.or_( *args ) )
                     else:
                         query = query.filter(args[0])
                 return query
@@ -136,6 +135,3 @@ def create_entity_search_query_decorator(admin, text):
             return query_decorator
 
         return create_query_decorator(joins, args)
-
-
-

@@ -85,6 +85,48 @@ class PrintPreview( ActionStep ):
         dialog = self.render()
         dialog.exec_()
 
+class ChartDocument( QtCore.QObject ):
+    """Helper class to print matplotlib charts
+
+    :param chart: a :class:`camelot.container.chartcontainer.FigureContainer` object
+        or a :class:`camelot.container.chartcontainer.AxesContainer` subclass
+
+    """
+    
+    def __init__( self, chart ):
+        from camelot.container.chartcontainer import structure_to_figure_container
+        super( ChartDocument, self ).__init__()
+        self.chart = structure_to_figure_container( chart )
+        
+    def print_( self, printer ):
+        from matplotlib.figure import Figure
+        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+        rect = printer.pageRect( QtGui.QPrinter.Inch )
+        dpi = printer.resolution()
+        fig = Figure( facecolor='#ffffff')
+        fig.set_size_inches( ( rect.width(), rect.height() ) )
+        fig.set_dpi( dpi )
+        self.chart.plot_on_figure( fig )
+        canvas = FigureCanvas( fig )
+        canvas.render( printer )   
+        
+class PrintChart( PrintPreview ):
+    """
+    Display a print preview dialog box for a matplotlib chart.
+    
+    :param chart: a :class:`camelot.container.chartcontainer.FigureContainer` object
+        or a :class:`camelot.container.chartcontainer.AxesContainer` subclass
+        
+    Example use of this action step :
+        
+    .. literalinclude:: ../../../test/test_action.py
+       :start-after: begin chart print
+       :end-before: end chart print
+    """
+
+    def __init__( self, chart ):
+        super( PrintChart, self ).__init__( ChartDocument( chart ) )
+    
 class PrintHtml( PrintPreview ):
     """
     Display a print preview dialog box for an html string.

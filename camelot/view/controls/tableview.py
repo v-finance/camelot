@@ -390,7 +390,7 @@ class AdminTableWidget( QtGui.QWidget ):
         column_groups.setObjectName( 'column_groups' )
         layout = QtGui.QVBoxLayout()
         layout.setSpacing( 0 )
-        layout.setMargin( 0 )
+        layout.setContentsMargins( 0, 0, 0, 0 )
         layout.addWidget( table_widget )
         layout.addWidget( column_groups )
         self.setLayout( layout )

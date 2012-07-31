@@ -43,9 +43,6 @@ usage = "usage: %prog [options] command"
 command_description = [
     ('startproject', """Starts a new project, use startproject project_name.
 """),
-    ('makemessages', """Outputs a message file with all field names of all 
-entities.  This command requires settings.py of the project to be in the 
-PYTHONPATH"""),
     ('apidoc', """Extract API documentation from source code, to be used
 with sphinx.
 """),
@@ -231,11 +228,6 @@ def startproject(module):
     action = CreateNewProject()
     action.start_project( options )
 
-def makemessages():
-    from camelot.core.conf import settings
-    LOGGER.error( 'Not yet implemented' )
-    settings.setup_model()
-    
 def meta():
     """launch meta camelot, in a separate function to make sure camelot_admin
     does not depend on PyQt, otherwise it is imposible to run to_pyside without
