@@ -26,6 +26,8 @@
 
 from PyQt4 import QtGui
 
+from sqlalchemy import orm
+
 from camelot.admin.action.list_action import ListActionGuiContext
 
 class MockModelContext( object ):
@@ -50,7 +52,7 @@ class MockModelContext( object ):
 
     @property
     def session( self ):
-        return self.admin.get_query().session
+        return orm.object_session( self.obj )
 
 class MockListActionGuiContext( ListActionGuiContext ):
     

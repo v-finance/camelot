@@ -37,6 +37,7 @@ be used as a `declarative_base` and has some classes that mimic Elixir
 behavior
 """
 
+import contextlib
 import logging
 import sys
 
@@ -446,3 +447,25 @@ Entity = declarative_base( cls = Entity,
                            class_registry = class_registry,
                            constructor = None,
                            name = 'Entity' )
+
+@contextlib.contextmanager
+def SessionTransaction( session = None, 
+                        subtransactions = False, 
+                        nested = False ):
+    """Context manager to run a block within a transaction and roll back if an 
+    exception is raised.
+    
+    :param session: a :class:`sqlalchemy.orm.session.Session` object, if `None`
+        is given, the default session is used.
+    """
+    from camelot.core.orm import Session
+    if session == None:
+        session = Session()
+    transaction = session.begin( subtransactions = subtransactions, 
+                                 nested = nested )
+    try:
+        yield transaction
+        session.commit()
+    except:
+        session.rollback()
+        raise    

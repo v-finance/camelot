@@ -22,9 +22,10 @@
 #
 #  ============================================================================
 """Helper functions for the view subpackage"""
+
 from HTMLParser import HTMLParser
 
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 
 from datetime import datetime, time, date
 import re
@@ -260,3 +261,15 @@ def text_from_richtext( unstripped_text ):
     parser.feed(unstripped_text.strip())
 
     return strings
+
+def resize_widget_to_screen( widget, fraction = 0.75 ):
+    """Resize a widget to fill a certain fraction of the screen
+    
+    :param widget: the widget to resize
+    :param fraction: the fraction of the screen to fill after the resize
+    """
+    desktop = QtGui.QApplication.desktop()
+    available_geometry = desktop.availableGeometry( widget )
+    # use the size of the screen instead to set the dialog size
+    widget.resize( available_geometry.width() * 0.75, 
+                   available_geometry.height() * 0.75 )    

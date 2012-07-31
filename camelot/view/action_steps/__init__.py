@@ -33,6 +33,7 @@ from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
 from print_preview import PrintHtml, PrintPreview, PrintJinjaTemplate
 from select_file import SelectFile
 from select_object import SelectObject
+from text_edit import EditTextDocument
 from update_progress import UpdateProgress
 
 __all__ = [
@@ -42,6 +43,7 @@ __all__ = [
     CloseView.__name__,
     CreateObject.__name__,
     DeleteObject.__name__,
+    EditTextDocument.__name__,
     FlushSession.__name__,
     MessageBox.__name__,
     OpenFile.__name__,
