@@ -38,13 +38,26 @@ The simpel chart containers map to their respective matplotlib command.  They in
 
 .. autoclass:: camelot.container.chartcontainer.BarContainer
 
+Actions
+=======
+
+The `PlotContainer` and `BarContainer` can be used to print or display charts
+as part of an action through the use of the appropriate action steps :
+
+  * :class:`camelot.view.action_steps.print_preview.PrintChart`
+  * :class:`camelot.view.action_steps.gui.ShowChart`
+  
+.. literalinclude:: ../../../../test/test_action.py
+   :start-after: begin chart print
+   :end-before: end chart print
+
 Advanced Plots
 ==============
 
-For more advanced plots, the **AxesContainer** class can be used.  The AxesContainer class can be
-used as if it were a matplotlib Axes object.  But when a method on the AxesContainer is called it
-will record the method call instead of creating a plot.  These method calls will then be replayed
-by the gui to create the actual plot.
+For more advanced plots, the :class:`camelot.container.chartcontainer.AxesContainer` class can be used.  
+The `AxesContainer` class can be used as if it were a matplotlib `Axes` object.  
+But when a method on the `AxesContainer` is called it will record the method call instead of creating a plot.  
+These method calls will then be replayed by the gui to create the actual plot.
 
 .. literalinclude:: ../../../../test/snippet/chart/advanced_plot.py
 
@@ -53,15 +66,8 @@ by the gui to create the actual plot.
 More
 ====
 
-For more information on the various types of plots that can be created, have a look at the 
-`Matplotlib Gallery <http://matplotlib.sourceforge.net/gallery.html>`_.
+For more information on the various types of plots that can be created, have a look at the `Matplotlib Gallery <http://matplotlib.sourceforge.net/gallery.html>`_.
 
 When the AxesContainer does not provide enough flexibility, for example when the plot needs to
 manipulated through its object structure, more customization is possible by subclassing either
-the AxesContainer or the FigureContainer :
-
-.. autoclass:: camelot.container.chartcontainer.AxesContainer
-  :members:
-
-.. autoclass:: camelot.container.chartcontainer.FigureContainer
-  :members:
+the :class:`camelot.container.chartcontainer.AxesContainer` or the :class:`camelot.container.chartcontainer.FigureContainer` :

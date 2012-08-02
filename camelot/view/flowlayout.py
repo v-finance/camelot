@@ -20,7 +20,7 @@ class FlowLayout( QtGui.QLayout ):
         """
         super(FlowLayout, self).__init__(parent)
         if parent is not None:
-            self.setMargin( 0 )
+            self.setContentsMargins( 0, 0, 0, 0 )
         self.setSpacing( -1 )
         self.item_list = []
 

@@ -346,7 +346,8 @@ column and use it to attach a ``Director`` object to a ``Movie`` object ::
 	genre = Column( Unicode( 15 ) )
 	
 	director_id = Column( Integer, ForeignKey('director.id') )
-	director = relationship( 'Director' )
+	director = relationship( 'Director',
+				 backref = 'movies' )
       
 	class Admin( EntityAdmin ):
 	    verbose_name =  'Movie'
@@ -361,8 +362,8 @@ column and use it to attach a ``Director`` object to a ``Movie`` object ::
 
 We also inserted ``'director'`` in ``list_display``.
 
-To be able to have the movies accessible from a director, a ``relationship`` is
-defined on the ``Director`` entity as well.  This will result in a ``movies``
+To be able to have the movies accessible from a director, a ``backref`` is
+defined in the `director` relationship.  This will result in a ``movies``
 attribute for each director, containing a list of movie objects.
 
 Our ``Director`` entity needs an administration class as well. We will also 
@@ -373,11 +374,11 @@ follows::
 	__tablename__ = 'director'
     
 	name = Column( Unicode(60) )
-	movies = relationship( 'Movie' )
     
 	class Admin( EntityAdmin ):
 	    verbose_name = 'Director'
 	    list_display = [ 'name' ]
+	    form_display = list_display + ['movies']
     
 	def __unicode__(self):
 	    return self.name or 'unknown director'
@@ -406,7 +407,8 @@ For completeness the two entities are once again listed below::
 	genre = Column( Unicode( 15 ) )
 	
 	director_id = Column( Integer, ForeignKey('director.id') )
-	director = relationship( 'Director' )
+	director = relationship( 'Director',
+	                         backref = 'movies' )
       
 	class Admin( EntityAdmin ):
 	    verbose_name =  'Movie'
@@ -423,11 +425,11 @@ For completeness the two entities are once again listed below::
 	__tablename__ = 'director'
     
 	name = Column( Unicode(60) )
-	movies = relationship( 'Movie' )
     
 	class Admin( EntityAdmin ):
 	    verbose_name = 'Director'
 	    list_display = [ 'name' ]
+	    form_display = list_display + ['movies']
     
 	def __unicode__(self):
 	    return self.name or 'unknown director'

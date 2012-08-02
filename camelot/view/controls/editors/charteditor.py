@@ -27,11 +27,12 @@ import logging
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
+from camelot.admin.action.list_action import ListActionGuiContext
+from camelot.core.utils import ugettext as _
 from camelot.view.controls.editors.customeditor import AbstractCustomEditor
 from camelot.view.controls.editors.wideeditor import WideEditor
 from camelot.view.proxy import ValueLoading
 from camelot.view.art import Icon
-from camelot.core.utils import ugettext as _
 
 PAD_INCHES = 0.1
 
@@ -107,6 +108,7 @@ class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
         self.show_fullscreen_signal.connect(self.show_fullscreen)
         self.canvas.updateGeometry()
         self._litebox = None
+        self.gui_context = ListActionGuiContext()
 
     @QtCore.pyqtSlot()
     def copy_to_clipboard(self):
@@ -118,22 +120,9 @@ class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
     @QtCore.pyqtSlot()
     def print_preview(self):
         """Popup a print preview dialog for the Chart"""
-        dialog = QtGui.QPrintPreviewDialog()            
-        dialog.paintRequested.connect( self.on_paint_request )
-        dialog.exec_()
-        
-    @QtCore.pyqtSlot( QtGui.QPrinter )
-    def on_paint_request(self, printer):
-        from matplotlib.figure import Figure
-        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-        rect = printer.pageRect( QtGui.QPrinter.Inch )
-        dpi = printer.resolution()
-        fig = Figure( facecolor='#ffffff')
-        fig.set_figsize_inches( (rect.width(),rect.height()) )
-        fig.set_dpi( dpi )
-        self._value.plot_on_figure( fig )
-        canvas = FigureCanvas(fig)
-        canvas.render( printer )
+        from camelot.view.action_steps import PrintChart
+        print_chart = PrintChart( self._value )
+        print_chart.gui_run( self.gui_context )
     
     def set_field_attributes(self, *args, **kwargs):
         """Overwrite set_field attributes because a ChartEditor cannot be disabled

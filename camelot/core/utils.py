@@ -54,6 +54,13 @@ if hasattr(QtCore, 'PYQT_VERSION_STR'):
 else:
     pyqt = False
     is_deleted = is_deleted_pyside
+    # try to activate the PySide backend of matplotlib
+    # http://www.scipy.org/Cookbook/Matplotlib/PySide
+    try:
+        import matplotlib
+        matplotlib.rcParams['backend.qt4'] = 'PySide'
+    except:
+        pass
     
 def create_constant_function(constant):
     return lambda:constant

@@ -13,3 +13,10 @@ class ConfCase(unittest.TestCase):
         from camelot.core.conf import settings
         self.assertRaises( AttributeError, lambda:settings.FOO )
         self.assertTrue( settings.CAMELOT_MEDIA_ROOT.endswith( 'media' ) )
+        
+class AutoReloadCase( ModelThreadTestCase ):
+    """Test the auto reload functions"""
+    
+    def test_source_changed( self ):
+        from camelot.core.auto_reload import auto_reload
+        auto_reload.source_changed( None )
