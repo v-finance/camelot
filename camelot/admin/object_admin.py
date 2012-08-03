@@ -516,6 +516,11 @@ be specified using the verbose_name attribute.
         of the field attribute, or in the case of dynamic field attributes,
         a function that returns the value of the field attribute.
         """
+        #
+        # @todo : this function should return a frozen dictionary, so no
+        #         other parts of the application can modify the cached field
+        #         attributes
+        #
         try:
             return self._field_attributes[field_name]
         except KeyError:
