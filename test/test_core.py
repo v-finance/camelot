@@ -16,31 +16,26 @@ class MementoCase( ModelThreadTestCase ):
         self.id_counter = memento_id_counter
         self.model = 'TestMemento'
         
-    def test_update( self ):
-        self.memento.register_update( self.model,
-                                      [self.id_counter],
-                                      {'name':'foo'} )
+    def test_lifecycle( self ):
+        from camelot.core.memento import memento_change
+        
+        memento_changes = [
+            memento_change( self.model, 
+                            [self.id_counter], 
+                            None, 'create' ),            
+            memento_change( self.model, 
+                            [self.id_counter], 
+                            {'name':'foo'}, 'before_update' ),
+            memento_change( self.model, 
+                            [self.id_counter], 
+                            {'name':'bar'}, 'before_delete' ),            
+            ]
+        
+        self.memento.register_changes( memento_changes )
         changes = list( self.memento.get_changes( self.model,
                                                   [self.id_counter],
-                                                  {'name':'bar'} ) )
-        self.assertEqual( len(changes), 1 )
-
-    def test_delete( self ):
-        self.memento.register_delete( self.model,
-                                      [self.id_counter],
-                                      {'name':'foo'} )
-        changes = list( self.memento.get_changes( self.model,
-                                                  [self.id_counter],
-                                                  {'name':'foo'} ) )
-        self.assertEqual( len(changes), 1 )
-
-    def test_create( self ):
-        self.memento.register_create( self.model,
-                                      [self.id_counter] )
-        changes = list( self.memento.get_changes( self.model,
-                                                  [self.id_counter],
-                                                  {'name':'foo'} ) )
-        self.assertEqual( len(changes), 1 )
+                                                  {} ) )
+        self.assertEqual( len(changes), 3 )
         
 class ConfCase(unittest.TestCase):
     """Test the global configuration"""

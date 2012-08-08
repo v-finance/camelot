@@ -32,6 +32,21 @@ import datetime
 from sqlalchemy import func, sql, orm
 
 #
+# lightweight data structure to present object changes to the memento
+# system
+#
+# :param model: a string with the name of the model
+# :param primary_key: a tuple with the primary key of the changed object
+# :param previous_attributes: a dict with the names and the values of
+#     the attributes of the object before they were changed.
+# :param memento_type: a string with the type of memento
+#
+memento_change = collections.namedtuple( 'memento_change',
+                                         [ 'model', 
+                                           'primary_key', 
+                                           'previous_attributes', 
+                                           'memento_type' ] )
+#
 # lightweight data structure to present object changes to other parts of 
 # Camelot
 #
@@ -49,69 +64,39 @@ class SqlMemento( object ):
     That means the `primary_key` tuple can only contain a single integer
     value.
     """
-    
+
     def _get_memento_table( self ):
         """:return: the `Table` to which to store the changes"""
         from camelot.model.memento import Memento
         return orm.class_mapper( Memento ).mapped_table
-    
+
     def _get_authentication_id( self ):
         """:return: the id to store in the memento table"""
         from camelot.model.authentication import get_current_authentication
         return get_current_authentication().id
     
-    def _register_memento( self, 
-                           model, 
-                           primary_key, 
-                           previous_attributes,
-                           memento_type ):
-        """create a row in the memento table"""
-        if len(primary_key) == 1:
-            authentication_id = self._get_authentication_id()
+    def register_changes( self, 
+                          memento_changes ):
+        """Create rows in the memento table
+        :param memento_changes: an iterator over `memento_change` tuples that 
+        need to be stored in the memento table.
+        """
+        from camelot.model.memento import Memento
+        rows = list()
+        authentication_id = self._get_authentication_id()
+        for m in memento_changes:
+            if len( m.primary_key ) == 1:
+                rows.append( { 'model':m.model,
+                               'primary_key':m.primary_key[0],
+                               'previous_attributes':m.previous_attributes,
+                               'memento_type':m.memento_type,
+                               'authentication_id':authentication_id,
+                                } )
+        if len( rows ):
             table = self._get_memento_table()
-            values = { 'model':model,
-                       'primary_key':primary_key[0],
-                       'previous_attributes':previous_attributes,
-                       'memento_type':memento_type,
-                       'authentication_id':authentication_id,
-                       'creation_date':func.current_timestamp() }
-            query = sql.insert( table, values )
-            table.bind.execute( query )
+            clause = table.insert( creation_date = func.current_timestamp() )
+            clause.execute( rows )
     
-    def register_update( self, model, primary_key, previous_attributes ):
-        """Register an change of an object.
-        
-        :param model: a string with the name of the model
-        :param primary_key: a tuple with the primary key of the changed object
-        :param previous_attributes: a dict with the names and the values of
-            the attributes of the object before they were changed.
-        """
-        self._register_memento( model, 
-                                primary_key, 
-                                previous_attributes, 'before_update' )
-
-    def register_delete( self, model, primary_key, previous_attributes ):
-        """Register the pending deletion of an object.
-        
-        :param model: a string with the name of the model
-        :param primary_key: a tuple with the primary key of the changed object
-        :param previous_attributes: a dict with the names and the values of
-            the attributes of the object before it is deleted.
-        """
-        self._register_memento( model, 
-                                primary_key, 
-                                previous_attributes, 'before_delete' )
-
-    def register_create( self, model, primary_key ):
-        """Register the creation of an object.
-        
-        :param model: a string with the name of the model
-        :param primary_key: a tuple with the primary key of the changed object
-        """
-        self._register_memento( model, 
-                                primary_key, 
-                                None, 'create' )
-
     def get_changes( self, 
                      model, 
                      primary_key, 
