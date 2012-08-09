@@ -29,11 +29,12 @@ with zero delay.  If the data is not yet present in the proxy, dummy data is
 returned and an update signal is emitted when the correct data is available.
 """
 
-import logging
-logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
-
+import collections
 import datetime
 import itertools
+import logging
+
+logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
@@ -730,9 +731,19 @@ position in the query.
     @model_function
     def _handle_update_requests(self):
         #
+        # wait for a while until the update requests array doesn't change any
+        # more
+        #
+        previous_length = 0
+        locker = QtCore.QMutexLocker(self._mutex)
+        while previous_length != len(self._update_requests):
+            previous_length = len(self._update_requests)
+            locker.unlock()
+            QThread.msleep(5)
+            locker.relock()
+        #
         # Copy the update requests and clear the list of requests
         #
-        locker = QtCore.QMutexLocker(self._mutex)
         update_requests = [u for u in self._update_requests]
         self._update_requests = []
         locker.unlock()
@@ -740,16 +751,10 @@ position in the query.
         # Handle the requests
         #
         return_list = []
+        grouped_requests = collections.defaultdict( list )
         for flushed, row, column, value in update_requests:
-            attribute, field_attributes = self._columns[column]
-
-            from sqlalchemy.exc import DatabaseError
-            new_value = value()
-            self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
-
-            if new_value == ValueLoading:
-                return None
-
+            grouped_requests[row].append( (flushed, column, value) )
+        for row, request_group in grouped_requests.items():
             #
             # don't use _get_object, but only update objects which are in the
             # cache, otherwise it is not sure that the object updated is the
@@ -764,43 +769,54 @@ position in the query.
                     self.unflushed_rows.remove( row )
                 except KeyError:
                     pass
-                return
-            
+                continue
             #
             # the object might have been deleted while an editor was open
             # 
             if self.admin.is_deleted( o ):
-                return
+                continue
+            changed = False
+            for flushed, column, value in request_group:
+                attribute, field_attributes = self._columns[column]
 
-            old_value = getattr( o, attribute )
-            #
-            # When the value is a related object, the related object might have changed
-            #
-            changed = ( new_value != old_value ) or (
-              field_attributes.get('embedded', False) and \
-              field_attributes.get('target', False))
-            #
-            # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
-            # old and new value to know if the object was changed, so we'll
-            # consider it changed anyway
-            #
-            direction = field_attributes.get( 'direction', None )
-            if direction in ( 'manytomany', 'onetomany' ):
-                changed = True
+                from sqlalchemy.exc import DatabaseError
+                new_value = value()
+                self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
+    
+                if new_value == ValueLoading:
+                    continue
+
+                old_value = getattr( o, attribute )
+                #
+                # When the value is a related object, the related object might have changed
+                #
+                value_changed = ( new_value != old_value ) or (
+                  field_attributes.get('embedded', False) and \
+                  field_attributes.get('target', False))
+                #
+                # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
+                # old and new value to know if the object was changed, so we'll
+                # consider it changed anyway
+                #
+                direction = field_attributes.get( 'direction', None )
+                if direction in ( 'manytomany', 'onetomany' ):
+                    value_changed = True
+                if value_changed:
+                    # update the model
+                    try:
+                        setattr( o, attribute, new_value )
+                        #
+                        # setting this attribute, might trigger a default function to return a value,
+                        # that was not returned before
+                        #
+                        self.admin.set_defaults( o, include_nullable_fields=False )
+                    except AttributeError, e:
+                        self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
+                    except TypeError:
+                        # type error can be raised in case we try to set to a collection
+                        pass
+                changed = value_changed or changed
             if changed:
-                # update the model
-                try:
-                    setattr( o, attribute, new_value )
-                    #
-                    # setting this attribute, might trigger a default function to return a value,
-                    # that was not returned before
-                    #
-                    self.admin.set_defaults( o, include_nullable_fields=False )
-                except AttributeError, e:
-                    self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
-                except TypeError:
-                    # type error can be raised in case we try to set to a collection
-                    pass
                 if self.flush_changes and self.validator.isValid( row ):
                     # save the state before the update
                     try:
