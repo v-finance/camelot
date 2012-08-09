@@ -22,6 +22,8 @@
 #
 #  ============================================================================
 
+import copy
+
 from PyQt4 import QtGui, QtCore
 
 from camelot.view.field_attributes import order_operators
@@ -55,7 +57,8 @@ class FilterOperator( QtGui.QWidget ):
                   default_value_2 = None,
                   parent = None ):
         super( FilterOperator, self ).__init__( parent )        
-        self._entity, self._field_name, self._field_attributes = cls, field_name, field_attributes
+        self._entity, self._field_name = cls, field_name
+        self._field_attributes = copy.copy( field_attributes )
         self._field_attributes['editable'] = True
         layout = QtGui.QVBoxLayout()
         layout.setContentsMargins( 2, 2, 2, 2 )
