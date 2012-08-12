@@ -103,7 +103,7 @@ class ClassMutator( object ):
         
     def process( self, entity_dict, *args, **kwargs ):
         """
-        Process one mutator.  This methed should be overwritten in a subclass
+        Process one mutator.  This method should be overwritten in a subclass
         """
         pass
 
@@ -131,8 +131,9 @@ class DeferredProperty( object ):
                 rel._add_reverse_property( reverse )
 
 @event.listens_for( mapper, 'after_configured' )
-def _process_deferred_properties():
-    """After all mappers have been configured, process the Deferred Propoperties
+def process_deferred_properties( class_registry = class_registry ):
+    """After all mappers have been configured, process the Deferred Propoperties.
+    This function is called automatically for the default class_registry.
     """
     LOGGER.debug( 'process deferred properties' )
     deferred_properties = []
@@ -341,7 +342,7 @@ class EntityMeta( DeclarativeMeta ):
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
         
-class Entity( object ):
+class EntityBase( object ):
     """A declarative base class that adds some methods that used to be
     available in Elixir"""
     
@@ -446,7 +447,7 @@ class Entity( object ):
         """
         return cls.query.get(*args, **kwargs)
 
-Entity = declarative_base( cls = Entity, 
+Entity = declarative_base( cls = EntityBase, 
                            metadata = metadata,
                            metaclass = EntityMeta,
                            class_registry = class_registry,
