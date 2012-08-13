@@ -312,7 +312,7 @@ class QueryTableProxy(CollectionProxy):
     def _get_object(self, row):
         """Get the object corresponding to row.  If row is smaller than 0
         (in case of an invalid widget mapper), None is returned as an object"""
-        if self._rows > 0 and row >= 0:
+        if ( self._rows > 0 ) and  ( self._rows > row >= 0 ):
             self._clean_appended_rows()
             rows_in_query = (self._rows - len(self._appended_rows))
             if row >= rows_in_query:
