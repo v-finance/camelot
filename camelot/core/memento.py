@@ -28,8 +28,11 @@ of changes.
 
 import collections
 import datetime
+import logging
 
-from sqlalchemy import func, sql, orm
+from sqlalchemy import func, sql, orm, exc
+
+LOGGER = logging.getLogger( 'camelot.core.memento' )
 
 #
 # lightweight data structure to present object changes to the memento
@@ -95,7 +98,10 @@ class SqlMemento( object ):
         if len( rows ):
             table = self._get_memento_table()
             clause = table.insert( creation_date = func.current_timestamp() )
-            clause.execute( rows )
+            try:
+                clause.execute( rows )
+            except exc.DatabaseError, e:
+                LOGGER.error( 'Programming Error, could not flush history', exc_info = e )                
     
     def get_changes( self, 
                      model, 
