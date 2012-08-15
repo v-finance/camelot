@@ -30,10 +30,11 @@ from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function
 from camelot.view.utils import to_string
+from camelot.core.memento import memento_change
 from camelot.core.utils import ugettext_lazy, ugettext
 from camelot.admin.validator.entity_validator import EntityValidator
 
-from sqlalchemy import orm, exc
+from sqlalchemy import orm
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
@@ -507,32 +508,22 @@ It has additional class attributes that customise its behaviour.
                 session.expunge(entity_instance)
             elif (entity_instance not in session.deleted) and \
                  (entity_instance in session): # if the object is not in the session, it might already be deleted
-                history = None
                 #
                 # only if we know the primary key, we can keep track of its history
                 #
-                primary_key = self.mapper.primary_key_from_instance(entity_instance)
-                #
-                # we can only store history of objects where the primary key has only
-                # 1 element
-                # @todo: store history for compound primary keys
-                #
-                if not None in primary_key and len(primary_key)==1:
-                    pk = primary_key[0]
+                primary_key = self.primary_key( entity_instance )
+                if not None in primary_key:
                     # save the state before the update
-                    from camelot.model.memento import Memento
-                    # only register the delete when the camelot model is active
-                    if hasattr(Memento, 'query'):
-                        from camelot.model.authentication import get_current_authentication
-                        history = Memento( model = unicode( self.entity.__name__ ),
-                                           memento_type = 'before_delete',
-                                           primary_key = pk,
-                                           previous_attributes = {},
-                                           authentication = get_current_authentication() )
-                entity_instance.delete()
+                    memento = self.get_memento()
+                    if memento != None:
+                        modifications = dict()
+                        change = memento_change( model = unicode( self.entity.__name__ ),
+                                                 memento_type = 'before_delete',
+                                                 primary_key = primary_key,
+                                                 previous_attributes = modifications )
+                        memento.register_changes( [change] )
+                session.delete( entity_instance )
                 session.flush( [entity_instance] )
-                if history:
-                    Session.object_session( history ).flush( [history] )
 
     @model_function
     def expunge(self, entity_instance):
@@ -560,21 +551,14 @@ It has additional class attributes that customise its behaviour.
             # If needed, track the changes
             #
             primary_key = self.primary_key( entity_instance )
-            if modifications and (primary_key != None) and len(primary_key)==1:
-                from camelot.model.memento import Memento
-                # only register the update when the camelot model is active
-                if hasattr(Memento, 'query'):
-                    from camelot.model.authentication import get_current_authentication
-                    history = Memento( model = unicode( self.entity.__name__ ),
-                                       memento_type = 'before_update',
-                                       primary_key = primary_key[0],
-                                       previous_attributes = modifications,
-                                       authentication = get_current_authentication() )
-
-                    try:
-                        history.flush()
-                    except exc.DatabaseError, e:
-                        self.logger.error( 'Programming Error, could not flush history', exc_info = e )
+            if modifications and (None not in primary_key):
+                memento = self.get_memento()
+                if memento != None:
+                    change = memento_change( model = unicode( self.entity.__name__ ),
+                                             memento_type = 'before_update',
+                                             primary_key = primary_key,
+                                             previous_attributes = modifications )
+                    memento.register_changes( [change] )
 
     @model_function
     def refresh(self, entity_instance):
