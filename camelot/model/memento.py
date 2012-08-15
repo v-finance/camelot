@@ -22,8 +22,13 @@
 #
 #  ============================================================================
 
-"""Set of classes to keep track of changes to objects and be able to restore 
-their state
+"""The ORM part of the classes that store the change history of objects to
+the database.  The table defined here is used in :mod:`camelot.core.memento` 
+to store the changes.
+
+To prevent this table to be used to store changes, overwrite the 
+:meth:`camelot.admin.application_admin.ApplicationAdmin.get_memento` method
+the custom `ApplicationAdmin`.
 """
 
 import datetime

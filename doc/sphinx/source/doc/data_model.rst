@@ -4,7 +4,7 @@
   Built in data models
 ########################
 
-Camelot comes with a number of built in data models.  To avoid boiler platem odels needed in almost any application (like Persons, Addresses, etc.), 
+Camelot comes with a number of built in data models.  To avoid boiler plate models needed in almost any application (like Persons, Addresses, etc.), 
 the developer is encouraged to use these data models as a start for developing custom applications.
 
 To activate a model, the model should be imported in the `setup_model` method of `settings.py`::
