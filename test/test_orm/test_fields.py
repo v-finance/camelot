@@ -1,37 +1,13 @@
 """
 test the different syntaxes to define fields
 """
-import unittest
+from . import TestMetaData
 
-from camelot.core.sql import metadata
-from camelot.core.orm import EntityBase, EntityMeta, Field, Session, has_field
+from camelot.core.orm import Field, has_field
 
 from sqlalchemy.types import String
 
-class TestFields( unittest.TestCase ):
-
-    def setUp(self):
-        from sqlalchemy import MetaData
-        from sqlalchemy.ext.declarative import declarative_base
-        self.metadata = MetaData()
-        self.class_registry = dict()
-        self.Entity = declarative_base( cls = EntityBase, 
-                                        metadata = self.metadata,
-                                        metaclass = EntityMeta,
-                                        class_registry = self.class_registry,
-                                        constructor = None,
-                                        name = 'Entity' )
-        self.metadata.bind = 'sqlite://'
-        self.session = Session()
-
-    def create_all(self):
-        from camelot.core.orm import process_deferred_properties
-        self.metadata.create_all()
-        process_deferred_properties( self.class_registry )
-        
-    def tearDown(self):
-        self.metadata.drop_all()
-        self.metadata.clear()
+class TestFields( TestMetaData ):
 
     def test_attr_syntax(self):
         
@@ -43,8 +19,8 @@ class TestFields( unittest.TestCase ):
 
         self.session.begin()
         
-        homer = Person(firstname="Homer", surname="Simpson")
-        bart = Person(firstname="Bart", surname="Simpson")
+        Person(firstname="Homer", surname="Simpson")
+        Person(firstname="Bart", surname="Simpson")
 
         self.session.commit()
         self.session.expunge_all()
@@ -63,8 +39,8 @@ class TestFields( unittest.TestCase ):
 
         self.session.begin()
         
-        homer = Person(firstname="Homer", surname="Simpson")
-        bart = Person(firstname="Bart", surname="Simpson")
+        Person(firstname="Homer", surname="Simpson")
+        Person(firstname="Bart", surname="Simpson")
 
         self.session.commit()
         self.session.expunge_all()
