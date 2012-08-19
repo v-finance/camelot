@@ -36,7 +36,6 @@ import sqlalchemy.sql.operators
 
 from camelot.core.auto_reload import auto_reload
 from camelot.core.conf import settings
-from camelot.core.exception import UserException
 
 LOGGER = logging.getLogger('camelot.core.sql')
 

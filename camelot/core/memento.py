@@ -81,7 +81,6 @@ class SqlMemento( object ):
         :param memento_changes: an iterator over `memento_change` tuples that 
         need to be stored in the memento table.
         """
-        from camelot.model.memento import Memento
         rows = list()
         authentication_id = self._get_authentication_id()
         for m in memento_changes:
