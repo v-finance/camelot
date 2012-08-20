@@ -686,10 +686,11 @@ class ReplaceFieldContents( EditAction ):
         from camelot.view import action_steps
         field_name, value_getter = yield action_steps.ChangeField( model_context.admin )
         yield action_steps.UpdateProgress( text = _('Replacing field') )
-        value = value_getter()
-        for obj in model_context.get_selection():
-            setattr( obj, field_name, value )
-        yield action_steps.FlushSession( model_context.session )
+        if value_getter != None:
+            value = value_getter()
+            for obj in model_context.get_selection():
+                setattr( obj, field_name, value )
+            yield action_steps.FlushSession( model_context.session )
         
 class AddExistingObject( EditAction ):
     """Add an existing object to a list if it is not yet in the

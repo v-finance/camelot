@@ -296,10 +296,10 @@ class ChangeFieldDialog( StandaloneWizardPage ):
                 return False
             return True
         
-        choices = [(field, attributes['name']) for field, attributes in field_attributes.items() if filter(attributes)]
+        choices = [(field, unicode(attributes['name'])) for field, attributes in field_attributes.items() if filter(attributes)]
         choices.sort( key = lambda choice:choice[1] )
-        editor.set_choices( choices )
-        editor.set_value( ( choices+[(None,None)] )[-1][0] )
+        editor.set_choices( choices + [(None,'')] )
+        editor.set_value( None )
         self.field_changed( 0 )  
         editor.currentIndexChanged.connect( self.field_changed )
         self.set_default_buttons()
@@ -314,7 +314,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
             selected_field = editor.get_value()
         if value_editor != None:
             value_editor.deleteLater()
-        if selected_field != ValueLoading:
+        if selected_field not in (None, ValueLoading):
             self.field = selected_field
             self.value = None
             field_attributes = self.field_attributes[selected_field]
