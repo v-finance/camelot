@@ -961,13 +961,13 @@ position in the query.
             if self.edit_cache.has_data_at_row(row):
                 rows_already_there.add(row)
         rows_to_get.difference_update( rows_already_there )
+        rows_to_get = list(rows_to_get)
+        locker.unlock()        
         #
         # see if there is anything left to do
         #
         try:
-            if rows_to_get:
-                rows_to_get = list(rows_to_get)
-                locker.unlock()
+            if len(rows_to_get):
                 rows_to_get.sort()
                 offset = rows_to_get[0]
                 #
