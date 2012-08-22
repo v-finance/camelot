@@ -2,29 +2,40 @@ from sqlalchemy import schema
 from sqlalchemy.orm import relationship, backref
 
 from . properties import DeferredProperty
-from . entity import EntityMeta
+from . entity import EntityBase
 
 class Relationship( DeferredProperty ):
     """Generates a one to many or many to one relationship."""
 
     process_order = 0
     
-    def __init__( self, target, inverse = None, **kwargs ):
-        self.target = target
+    def __init__(self, of_kind, inverse=None, *args, **kwargs):
+        super( Relationship, self ).__init__()
+        self.of_kind = of_kind
         self.inverse_name = inverse
-        self.kwargs = kwargs
+        self._target = None
         self.property = None # sqlalchemy property
-        self.backref = None  # sqlalchemy backref        
+        self.backref = None  # sqlalchemy backref
+        self.args = args
+        self.kwargs = kwargs
 
+    @property
+    def target( self ):
+        if not self._target:
+            if isinstance( self.of_kind, basestring ):
+                self._target = self.entity._decl_class_registry[self.of_kind]
+            else:
+                self._target = self.of_kind
+        return self._target
+    
+    def attach( self, entity, name ):
+        super( Relationship, self ).attach( entity, name )
+        entity._descriptor.relationships.append( self )
+        
     def _config(self, cls, mapper, key):
         """Create a Column with ForeignKey as well as a relationship()."""
 
         super( Relationship, self )._config( cls, mapper, key )
-        
-        if isinstance( self.target, basestring ):
-            self.target = cls._decl_class_registry[self.target]
-        else:
-            self.target = self.target
 
         pk_target, fk_target = self._get_pk_fk(cls, self.target)
         pk_table = pk_target.__table__
@@ -59,7 +70,7 @@ class Relationship( DeferredProperty ):
                      self.inverse_name, self.target.__name__)
             else:
                 check_reverse = not self.kwargs.get( 'viewonly', False )
-                if isinstance(self.target, EntityMeta):
+                if issubclass(self.target, EntityBase):
                     inverse = self.target._descriptor.get_inverse_relation(
                         self, check_reverse=check_reverse)
                 else:
@@ -107,7 +118,7 @@ class Relationship( DeferredProperty ):
                 # define backref for use by the inverse
                 self.backref = backref( self.name, **kwargs )
                 return
-            
+        
         self.property = relationship( self.target, **kwargs )
         setattr( self.entity, self.name, self.property )
 

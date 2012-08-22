@@ -16,6 +16,31 @@ class EntityDescriptor(object):
         self.entity = entity
         self.relationships = []
         
+    def get_inverse_relation( self, rel, check_reverse=True ):
+        '''
+        Return the inverse relation of rel, if any, None otherwise.
+        '''
+        matching_rel = None
+        for other_rel in self.relationships:
+            if rel.is_inverse( other_rel ):
+                if matching_rel is None:
+                    matching_rel = other_rel
+                else:
+                    raise Exception(
+                            "Several relations match as inverse of the '%s' "
+                            "relation in entity '%s'. You should specify "
+                            "inverse relations manually by using the inverse "
+                            "keyword."
+                            % (rel.name, rel.entity.__name__))
+        # When a matching inverse is found, we check that it has only
+        # one relation matching as its own inverse. We don't need the result
+        # of the method though. But we do need to be careful not to start an
+        # infinite recursive loop.
+        if matching_rel and check_reverse:
+            rel.entity._descriptor.get_inverse_relation(matching_rel, False)
+
+        return matching_rel
+        
     def add_property( self, prop ):
         pass
         
