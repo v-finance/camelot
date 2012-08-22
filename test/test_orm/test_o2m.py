@@ -6,9 +6,9 @@ import logging
 
 from . import TestMetaData
 
-from camelot.core.orm import Field, OneToMany, ManyToOne
+from camelot.core.orm import Field, OneToMany, ManyToOne, using_options
 
-from sqlalchemy.types import String
+from sqlalchemy.types import String, Unicode
 from sqlalchemy import and_
 
 class TestOneToMany( TestMetaData ):
@@ -40,25 +40,26 @@ class TestOneToMany( TestMetaData ):
         assert b in a.bs
 
     def test_selfref(self):
-        class Person(Entity):
+        
+        class Person( self.Entity ):
             name = Field(String(30))
 
             father = ManyToOne('Person', inverse='children')
             children = OneToMany('Person', inverse='father')
 
-        setup_all(True)
+        self.create_all()
 
-        grampa = Person(name="Abe")
-        homer = Person(name="Homer")
-        bart = Person(name="Bart")
-        lisa = Person(name="Lisa")
+        with self.session.begin():
+            grampa = Person(name="Abe")
+            homer = Person(name="Homer")
+            bart = Person(name="Bart")
+            lisa = Person(name="Lisa")
+    
+            grampa.children.append(homer)
+            homer.children.append(bart)
+            lisa.father = homer
 
-        grampa.children.append(homer)
-        homer.children.append(bart)
-        lisa.father = homer
-
-        session.commit()
-        session.clear()
+        self.session.expunge_all()
 
         p = Person.get_by(name="Homer")
 
@@ -69,7 +70,7 @@ class TestOneToMany( TestMetaData ):
     def test_multiple_selfref(self):
         # define a self-referential table with several relations
 
-        class TreeNode(Entity):
+        class TreeNode( self.Entity ):
             using_options(order_by='name')
             name = Field(String(50), required=True)
 
@@ -77,7 +78,7 @@ class TestOneToMany( TestMetaData ):
             children = OneToMany('TreeNode', inverse='parent')
             root = ManyToOne('TreeNode')
 
-        setup_all(True)
+        self.create_all()
 
         root = TreeNode(name='rootnode')
         root.children.append(TreeNode(name='node1', root=root))
@@ -96,7 +97,8 @@ class TestOneToMany( TestMetaData ):
         assert sub2.root == root
 
     def test_viewonly(self):
-        class User(Entity):
+        
+        class User( self.Entity ):
             name = Field(String(50))
             boston_addresses = OneToMany('Address', primaryjoin=lambda:
                 and_(Address.user_id == User.id, Address.city == u'Boston'),
@@ -104,21 +106,21 @@ class TestOneToMany( TestMetaData ):
             )
             addresses = OneToMany('Address')
 
-        class Address(Entity):
+        class Address( self.Entity ):
             user = ManyToOne('User')
             street = Field(Unicode(255))
             city = Field(Unicode(255))
 
-        setup_all(True)
+        self.create_all()
 
-        user = User(name="u1",
-                    addresses=[Address(street=u"Queen Astrid Avenue, 32",
-                                       city=u"Brussels"),
-                               Address(street=u"Cambridge Street, 5",
-                                       city=u"Boston")])
+        with self.session.begin():
+            user = User(name="u1",
+                        addresses=[Address(street=u"Queen Astrid Avenue, 32",
+                                           city=u"Brussels"),
+                                   Address(street=u"Cambridge Street, 5",
+                                           city=u"Boston")])
 
-        session.commit()
-        session.clear()
+        self.session.expunge_all()
 
         user = User.get(1)
         assert len(user.addresses) == 2
@@ -126,18 +128,19 @@ class TestOneToMany( TestMetaData ):
         assert "Cambridge" in user.boston_addresses[0].street
 
     def test_filter_func(self):
-        class User(Entity):
+        
+        class User( self.Entity ):
             name = Field(String(50))
             boston_addresses = OneToMany('Address', filter=lambda c:
                                          c.city == u'Boston')
             addresses = OneToMany('Address')
 
-        class Address(Entity):
+        class Address( self.Entity ):
             user = ManyToOne('User')
             street = Field(Unicode(255))
             city = Field(Unicode(255))
 
-        setup_all(True)
+        self.create_all()
 
         user = User(name="u1",
                     addresses=[Address(street=u"Queen Astrid Avenue, 32",
@@ -154,15 +157,16 @@ class TestOneToMany( TestMetaData ):
         assert "Cambridge" in user.boston_addresses[0].street
 
     def test_inverse_has_non_pk_target(self):
-        class A(Entity):
+        
+        class A( self.Entity ):
             name = Field(String(60), unique=True)
             bs = OneToMany('B')
 
-        class B(Entity):
+        class B( self.Entity ):
             name = Field(String(60))
             a = ManyToOne('A', target_column='name')
 
-        setup_all(True)
+        self.create_all()
 
         a1 = A(name='a1')
         b1 = B(name='b1', a=a1)
@@ -180,15 +184,16 @@ class TestOneToMany( TestMetaData ):
         assert b in a.bs
 
     def test_has_many_syntax(self):
-        class Person(Entity):
+        
+        class Person( self.Entity ):
             has_field('name', String(30))
             has_many('pets', of_kind='Animal')
 
-        class Animal(Entity):
+        class Animal( self.Entity ):
             has_field('name', String(30))
             belongs_to('owner', of_kind='Person')
 
-        setup_all(True)
+        self.create_all()
 
         santa = Person(name="Santa Claus")
         rudolph = Animal(name="Rudolph", owner=santa)
