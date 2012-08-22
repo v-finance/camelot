@@ -4,9 +4,6 @@ test one to many relationships
 
 import logging
 
-logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] - %(message)s')
-logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
-
 from . import TestMetaData
 
 from camelot.core.orm import Field, OneToMany, ManyToOne
@@ -17,7 +14,7 @@ from sqlalchemy import and_
 class TestOneToMany( TestMetaData ):
     
     def test_simple( self ):
-        
+
         class A( self.Entity ):
             name = Field(String(60))
             bs = OneToMany('B')
@@ -33,8 +30,6 @@ class TestOneToMany( TestMetaData ):
             b1 = B(name='b1', a=a1)
 
             # does it work before a commit? (does the backref work?)
-            print b1.a
-            print a1.bs
             assert b1 in a1.bs
 
         self.session.expunge_all()

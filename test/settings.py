@@ -1,7 +1,7 @@
 import logging
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] - %(message)s')
-logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
+#logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 
 def setup_model():
     from camelot.core.sql import metadata
