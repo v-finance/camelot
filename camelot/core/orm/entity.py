@@ -14,6 +14,7 @@ class EntityDescriptor(object):
 
     def __init__( self, entity ):
         self.entity = entity
+        self.parent = None
         self.relationships = []
         
     def get_inverse_relation( self, rel, check_reverse=True ):
@@ -43,6 +44,15 @@ class EntityDescriptor(object):
         
     def add_property( self, prop ):
         pass
+    
+    def find_relationship(self, name):
+        for rel in self.relationships:
+            if rel.name == name:
+                return rel
+        if self.parent:
+            return self.parent._descriptor.find_relationship(name)
+        else:
+            return None    
         
 class EntityMeta( DeclarativeMeta ):
     """Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.  This

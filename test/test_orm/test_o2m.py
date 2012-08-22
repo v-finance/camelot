@@ -6,7 +6,8 @@ import logging
 
 from . import TestMetaData
 
-from camelot.core.orm import Field, OneToMany, ManyToOne, using_options
+from camelot.core.orm import ( Field, OneToMany, ManyToOne, using_options,
+                               has_field, has_many, belongs_to )
 
 from sqlalchemy.types import String, Unicode
 from sqlalchemy import and_
@@ -195,11 +196,11 @@ class TestOneToMany( TestMetaData ):
 
         self.create_all()
 
-        santa = Person(name="Santa Claus")
-        rudolph = Animal(name="Rudolph", owner=santa)
+        with self.session.begin():
+            santa = Person(name="Santa Claus")
+            rudolph = Animal(name="Rudolph", owner=santa)
 
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         santa = Person.get_by(name="Santa Claus")
 

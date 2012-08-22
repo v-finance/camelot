@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship, backref
 
 from . properties import DeferredProperty
 from . entity import EntityBase
+from . statements import ClassMutator
 
 class Relationship( DeferredProperty ):
     """Generates a one to many or many to one relationship."""
@@ -195,15 +196,22 @@ class ManyToMany( DeferredProperty ):
     def match_type_of(self, other):
         return isinstance(other, ManyToMany) 
     
-# to be defined
-def belongs_to():
-    raise NotImplementedError()
+class belongs_to( ClassMutator ):
 
-def has_one():
-    raise NotImplementedError()
+    def process( self, entity_dict, name, *args, **kwargs ):
+        entity_dict[ name ] = ManyToOne( *args, **kwargs )
 
-def has_many():
-    raise NotImplementedError()
+class has_one( ClassMutator ):
 
-def has_and_belongs_to_many():
-    raise NotImplementedError()
+    def process( self, entity_dict, name, *args, **kwargs ):
+        entity_dict[ name ] = OneToOne( *args, **kwargs )
+
+class has_many( ClassMutator ):
+    
+    def process( self, entity_dict, name, *args, **kwargs ):
+        entity_dict[ name ] = OneToMany( *args, **kwargs )
+
+class has_and_belongs_to_many( ClassMutator ):
+
+    def process( self, entity_dict, name, *args, **kwargs ):
+        entity_dict[ name ] = ManyToMany( *args, **kwargs )
