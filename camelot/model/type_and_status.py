@@ -78,12 +78,24 @@ class AbstractStatusMixin( object ):
 	for status_history in self.status:
 	    if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:	
 		return status_history
-	    
+	
+    def get_status_from_date( self, classified_by ):
+	"""
+	:param classified_by: the status for which to get the last from date
+	:return: the last date at which the status changed to `classified_by`, None if no such
+	    change occured yet
+	"""
+	status_histories = [status_history for status_history in self.status if status_history.classified_by == classified_by]
+	if len( status_histories ):
+	    status_histories.sort( key = lambda status_history:status_history.from_date, reverse = True )
+	    return status_histories[0].from_date
+	
     @property
     def current_status(self):
 	status_history = self.get_status_history_at()
 	if status_history != None:
 	    return status_history.classified_by
+	
     
     @staticmethod
     def current_status_query( status_type, columns ):
