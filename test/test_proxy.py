@@ -88,3 +88,16 @@ class QueryProxyCase( ModelThreadTestCase ):
         self.assertEqual( new_rowcount, related_proxy.rowCount() )
         self._load_data( related_proxy )
         self.assertEqual( self._data( new_row, 0, related_proxy ), 'Foo' )
+        
+    def test_get_object( self ):
+        #
+        # verify that get_object retruns None when the requested row
+        # is out of range
+        #
+        self.assertFalse( self.person_proxy._get_object( -1 ) )
+        rows = self.person_proxy.rowCount()
+        self.assertTrue( rows > 1 )
+        self.assertTrue( self.person_proxy._get_object( 0 ) )
+        self.assertTrue( self.person_proxy._get_object( rows - 1 ) )        
+        self.assertFalse( self.person_proxy._get_object( rows ) )
+        self.assertFalse( self.person_proxy._get_object( rows + 1 ) )
