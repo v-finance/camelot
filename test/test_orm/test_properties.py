@@ -60,54 +60,56 @@ class TestSpecialProperties( TestMetaData ):
         for tag in Tag.query.all():
             assert tag.score == tag.score1 * tag.score2
 
-    # tackle relationship tests before this one
-    #def test_column_property_eagerload_and_reuse(self):
+    def test_column_property_eagerload_and_reuse(self):
         
-        #class Tag(self.Entity):
-            #score1 = Field(Float)
-            #score2 = Field(Float)
+        class Tag(self.Entity):
+            score1 = Field(Float)
+            score2 = Field(Float)
 
-            #user = ManyToOne('User')
+            user = ManyToOne('User')
 
-            #score = ColumnProperty(lambda c: c.score1 * c.score2)
+            score = ColumnProperty(lambda c: c.score1 * c.score2)
 
-        #class User(self.Entity):
-            #name = Field(String(16))
-            #category = ManyToOne('Category')
-            #tags = OneToMany('Tag', lazy=False)
-            #score = ColumnProperty(lambda c:
-                                   #select([func.sum(Tag.score)],
-                                          #Tag.user_id == c.id).as_scalar())
+        class User(self.Entity):
+            name = Field(String(16))
+            category = ManyToOne('Category')
+            tags = OneToMany('Tag', lazy=False)
+            score = ColumnProperty(lambda c:
+                                   select([func.sum(Tag.score)],
+                                          Tag.user_id == c.id).as_scalar())
 
-        #class Category(self.Entity):
-            #name = Field(String(16))
-            #users = OneToMany('User', lazy=False)
+        class Category(self.Entity):
+            name = Field(String(16))
+            users = OneToMany('User', lazy=False)
 
-            #score = ColumnProperty(lambda c:
-                                   #select([func.avg(User.category_id)],
-                                          #User.category_id == c.id
-                                         #).as_scalar())
+            score = ColumnProperty(lambda c:
+                                   select([func.avg(User.score)],
+                                          User.category_id == c.id
+                                         ).as_scalar())
             
-        #self.create_all()
+        self.create_all()
             
-        #with self.session.begin():
-            #u1 = User(name='joe', tags=[Tag(score1=5.0, score2=3.0),
-                                             #Tag(score1=55.0, score2=1.0)] )
+        with self.session.begin():
+            u1 = User(name='joe', tags=[Tag(score1=5.0, score2=3.0),
+                                             Tag(score1=55.0, score2=1.0)] )
     
-            #u2 = User(name='bar', tags=[Tag(score1=5.0, score2=4.0),
-                                             #Tag(score1=50.0, score2=1.0),
-                                             #Tag(score1=15.0, score2=2.0)])
+            u2 = User(name='bar', tags=[Tag(score1=5.0, score2=4.0),
+                                             Tag(score1=50.0, score2=1.0),
+                                             Tag(score1=15.0, score2=2.0)])
     
-            #c1 = Category(name='dummy', users=[u1, u2] )
+            c1 = Category(name='dummy', users=[u1, u2] )
 
-        #self.session.expunge_all()
+        self.session.expunge_all()
 
-        #category = Category.query.one()
-        #assert category.score == 85
-        #for user in category.users:
-            #assert user.score == sum([tag.score for tag in user.tags])
-            #for tag in user.tags:
-                #assert tag.score == tag.score1 * tag.score2
+        category = Category.query.one()
+        assert len( category.users ) == 2 
+        for user in category.users:
+            assert len( user.tags ) > 0
+            assert user.score == sum([tag.score for tag in user.tags])
+            for tag in user.tags:
+                assert tag.score == tag.score1 * tag.score2
+        assert category.score == 85
+
 
     def test_has_property(self):
         
