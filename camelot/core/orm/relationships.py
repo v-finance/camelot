@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship, backref, class_mapper
 from . properties import DeferredProperty
 from . entity import EntityBase
 from . statements import ClassMutator
+from . import options
 
 class Relationship( DeferredProperty ):
     """Generates a one to many or many to one relationship."""
@@ -35,21 +36,8 @@ class Relationship( DeferredProperty ):
         
     def _config(self, cls, mapper, key):
         """Create a Column with ForeignKey as well as a relationship()."""
-
         super( Relationship, self )._config( cls, mapper, key )
-
-        pk_target, fk_target = self._get_pk_fk(cls, self.target)
-        pk_table = pk_target.__table__
-        pk_col = list(pk_table.primary_key)[0]
-        
-        if pk_target == self.target:
-            column_kwargs = self.kwargs.pop( 'column_kwargs', {} )
-            column_kwargs.setdefault( 'index', True )
-            fk_colname = '%s_%s'%(key, pk_col.key)
-            fk_col = schema.Column( fk_colname, pk_col.type, schema.ForeignKey(pk_col), **column_kwargs )
-            setattr(fk_target, fk_colname, fk_col)
-
-        #self.kwargs.setdefault( 'collection_class', set )
+        self.create_keys()
         self.create_properties()
         
     @property
@@ -97,6 +85,12 @@ class Relationship( DeferredProperty ):
                (self.inverse_name == other.name or not self.inverse_name) and \
                (other.inverse_name == self.name or not other.inverse_name)
     
+    def create_keys(self, pk):
+        '''
+        Subclasses (ie. concrete relationships) may override this method to
+        create foreign keys.
+        '''
+        
     def create_properties( self ):
         if self.property or self.backref:
             return
@@ -149,6 +143,19 @@ class OneToOne( Relationship ):
     def match_type_of(self, other):
         return isinstance(other, ManyToOne)
     
+    def create_keys( self ):
+        # make sure an inverse relationship exists
+        if self.inverse is None:
+            raise Exception(
+                      "Couldn't find any relationship in '%s' which "
+                      "match as inverse of the '%s' relationship "
+                      "defined in the '%s' entity. If you are using "
+                      "inheritance you "
+                      "might need to specify inverse relationships "
+                      "manually by using the 'inverse' argument."
+                      % (self.target, self.name,
+                         self.entity))
+        
     def get_prop_kwargs(self):
         kwargs = {'uselist': self.uselist}
 
@@ -201,7 +208,7 @@ class ManyToOne( Relationship ):
         # 1) handle column-related args
 
         # check that the column arguments don't conflict
-        assert not (field and (column_kwargs or colname)), \
+        assert not ( isinstance( field, schema.Column ) and (column_kwargs or colname)), \
                "ManyToOne can accept the 'field' argument or column " \
                "arguments ('colname' or 'column_kwargs') but not both!"
 
@@ -220,9 +227,10 @@ class ManyToOne( Relationship ):
         column_kwargs.setdefault('index', True)
         self.column_kwargs = column_kwargs
 
-        if field and not isinstance(field, list):
-            field = [field]
-        self.field = field or []
+        if isinstance( field, schema.Column ) and not isinstance( field, list ):
+            self.field = [field]
+        else:
+            self.field = []
 
         # 2) handle constraint kwargs
         constraint_kwargs = constraint_kwargs or {}
@@ -247,6 +255,101 @@ class ManyToOne( Relationship ):
     def _get_pk_fk( self, cls, target_cls ):
         return target_cls, cls
     
+    def create_keys( self ):
+        '''
+        Find all primary keys on the target and create foreign keys on the
+        source accordingly.
+        '''
+
+        if self.foreign_key:
+            return
+
+        table = class_mapper( self.entity ).local_table
+        target_table = self.target_table
+
+        fk_refcols = []
+        fk_colnames = []
+
+        if self.target_column is None:
+            target_columns = target_table.primary_key.columns
+        else:
+            target_columns = [target_table.columns[col]
+                              for col in self.target_column]
+
+        if not target_columns:
+            raise Exception("No primary key found in target table ('%s') "
+                            "for the '%s' relationship of the '%s' entity."
+                            % (target_table.name, self.name,
+                               self.entity.__name__))
+        if self.colname and \
+           len(self.colname) != len(target_columns):
+            raise Exception(
+                    "The number of column names provided in the colname "
+                    "keyword argument of the '%s' relationship of the "
+                    "'%s' entity is not the same as the number of columns "
+                    "of the primary key of '%s'."
+                    % (self.name, self.entity.__name__,
+                       self.target.__name__))
+
+        for key_num, target_col in enumerate(target_columns):
+            if self.field:
+                col = self.field[key_num]
+            else:
+                if self.colname:
+                    colname = self.colname[key_num]
+                else:
+                    colname = options.FKCOL_NAMEFORMAT % \
+                              {'relname': self.name,
+                               'key': target_col.key}
+
+                # We can't add the column to the table directly as the
+                # table might not be created yet.
+                col = schema.Column( colname, 
+                                     target_col.type,
+                                     **self.column_kwargs )
+
+                # If the column name was specified, and it is the same as
+                # this property's name, there is going to be a conflict.
+                # Don't allow this to happen.
+                if col.key == self.name:
+                    raise ValueError(
+                             "ManyToOne named '%s' in '%s' conficts "
+                             " with the column of the same name. "
+                             "You should probably define the foreign key "
+                             "field manually and use the 'field' "
+                             "argument on the ManyToOne relationship"
+                             % (self.name, self.entity.__name__))
+                
+                setattr( self.entity, colname, col )
+
+            # Build the list of local columns which will be part of
+            # the foreign key
+            self.foreign_key.append(col)
+
+            # Store the names of those columns
+            fk_colnames.append(col.key)
+
+            # Build the list of column "paths" the foreign key will
+            # point to
+            fk_refcols.append("%s.%s" % \
+                              (target_table.fullname, target_col.key))
+
+            # Build up the primary join. This is needed when you have
+            # several ManyToOne relationships between two objects
+            self.primaryjoin_clauses.append(col == target_col)
+
+            if 'name' not in self.constraint_kwargs:
+                # In some databases (at least MySQL) the constraint name needs
+                # to be unique for the whole database, instead of per table.
+                fk_name = options.CONSTRAINT_NAMEFORMAT % \
+                          {'tablename': table.name,
+                           'colnames': '_'.join(fk_colnames)}
+                self.constraint_kwargs['name'] = fk_name
+
+            constraint =schema.ForeignKeyConstraint( fk_colnames, fk_refcols,
+                                                     **self.constraint_kwargs )
+            table.append_constraint( constraint )
+
     def get_prop_kwargs(self):
         kwargs = {'uselist': False}
 
