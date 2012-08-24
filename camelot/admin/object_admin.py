@@ -335,6 +335,9 @@ be specified using the verbose_name attribute.
         settings = self.app_admin.get_settings()
         settings.beginGroup( self.get_name()[:255] )
         return settings
+    
+    def get_memento( self ):
+        return self.app_admin.get_memento()
 
     def get_delete_mode(self):
         return self.delete_mode

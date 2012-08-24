@@ -1,4 +1,6 @@
 import unittest
+
+from camelot.core.memento import memento_change
 from camelot.test import ModelThreadTestCase
 
 memento_id_counter = 0
@@ -17,7 +19,6 @@ class MementoCase( ModelThreadTestCase ):
         self.model = 'TestMemento'
         
     def test_lifecycle( self ):
-        from camelot.core.memento import memento_change
         
         memento_changes = [
             memento_change( self.model, 
@@ -36,6 +37,14 @@ class MementoCase( ModelThreadTestCase ):
                                                   [self.id_counter],
                                                   {} ) )
         self.assertEqual( len(changes), 3 )
+        
+    def test_no_error( self ):
+        memento_changes = [
+            memento_change( None, 
+                            [self.id_counter], 
+                            None, None ),                     
+            ]
+        self.memento.register_changes( memento_changes )
         
 class ConfCase(unittest.TestCase):
     """Test the global configuration"""

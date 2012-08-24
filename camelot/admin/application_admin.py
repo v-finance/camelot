@@ -151,6 +151,7 @@ shortcut confusion and reduce the number of status updates.
         # Cache created ObjectAdmin objects
         #
         self._object_admin_cache = {}
+        self._memento = None
 
     def register(self, entity, admin_class):
         """Associate a certain ObjectAdmin class with another class.  This
@@ -187,6 +188,19 @@ shortcut confusion and reduce the number of status updates.
         settings = QtCore.QSettings()
         settings.beginGroup( 'Camelot' )
         return settings
+    
+    def get_memento( self ):
+        """Returns an instance of :class:`camelot.core.memento.SqlMemento` that
+        can be used to store changes made to objects.  Overwrite this method to
+        make it return `None` if no changes should be stored to the database, or
+        to return another instance if the changes should be stored elsewhere.
+        
+        :return: `None` or an :class:`camelot.core.memento.SqlMemento` instance
+        """
+        from camelot.core.memento import SqlMemento
+        if self._memento == None:
+            self._memento = SqlMemento()
+        return self._memento
         
     def get_application_admin( self ):
         """Get the :class:`ApplicationAdmin` class of this application, this
