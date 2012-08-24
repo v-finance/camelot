@@ -81,16 +81,16 @@ class TestOneToMany( TestMetaData ):
 
         self.create_all()
 
-        root = TreeNode(name='rootnode')
-        root.children.append(TreeNode(name='node1', root=root))
-        node2 = TreeNode(name='node2', root=root)
-        node2.children.append(TreeNode(name='subnode1', root=root))
-        node2.children.append(TreeNode(name='subnode2', root=root))
-        root.children.append(node2)
-        root.children.append(TreeNode(name='node3', root=root))
+        with self.session.begin():
+            root = TreeNode(name='rootnode')
+            root.children.append(TreeNode(name='node1', root=root))
+            node2 = TreeNode(name='node2', root=root)
+            node2.children.append(TreeNode(name='subnode1', root=root))
+            node2.children.append(TreeNode(name='subnode2', root=root))
+            root.children.append(node2)
+            root.children.append(TreeNode(name='node3', root=root))
 
-        session.commit()
-        session.clear()
+        self.session.expunge_all()
 
         root = TreeNode.get_by(name='rootnode')
         sub2 = TreeNode.get_by(name='subnode2')
@@ -143,14 +143,14 @@ class TestOneToMany( TestMetaData ):
 
         self.create_all()
 
-        user = User(name="u1",
-                    addresses=[Address(street=u"Queen Astrid Avenue, 32",
-                                       city=u"Brussels"),
-                               Address(street=u"Cambridge Street, 5",
-                                       city=u"Boston")])
-
-        session.commit()
-        session.clear()
+        with self.session.begin():
+            user = User(name="u1",
+                        addresses=[Address(street=u"Queen Astrid Avenue, 32",
+                                           city=u"Brussels"),
+                                   Address(street=u"Cambridge Street, 5",
+                                           city=u"Boston")])
+    
+        self.session.expire_all()
 
         user = User.get(1)
         assert len(user.addresses) == 2
@@ -169,14 +169,14 @@ class TestOneToMany( TestMetaData ):
 
         self.create_all()
 
-        a1 = A(name='a1')
-        b1 = B(name='b1', a=a1)
+        with self.session.begin():
+            a1 = A(name='a1')
+            b1 = B(name='b1', a=a1)
 
-        # does it work before a commit? (does the backref work?)
-        assert b1 in a1.bs
+            # does it work before a commit? (does the backref work?)
+            assert b1 in a1.bs
 
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         b = B.query.one()
         a = b.a

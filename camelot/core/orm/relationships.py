@@ -1,5 +1,5 @@
-from sqlalchemy import schema
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import schema, sql
+from sqlalchemy.orm import relationship, backref, class_mapper
 
 from . properties import DeferredProperty
 from . entity import EntityBase
@@ -124,15 +124,57 @@ class Relationship( DeferredProperty ):
         setattr( self.entity, self.name, self.property )
 
 class OneToOne( Relationship ):
+
     uselist = False
     process_order = 2
+    
+    def __init__(self, of_kind, filter=None, *args, **kwargs):
+        self.filter = filter
+        if filter is not None:
+            # We set viewonly to True by default for filtered relationships,
+            # unless manually overridden.
+            # This is not strictly necessary, as SQLAlchemy allows non viewonly
+            # relationships with a custom join/filter. The example at:
+            # SADOCS/05/mappers.html#advdatamapping_relation_customjoin
+            # is not viewonly. Those relationships can be used as if the extra
+            # filter wasn't present when inserting. This can lead to a
+            # confusing behavior (if you insert data which doesn't match the
+            # extra criterion it'll get inserted anyway but you won't see it
+            # when you query back the attribute after a round-trip to the
+            # database).
+            if 'viewonly' not in kwargs:
+                kwargs['viewonly'] = True
+        super(OneToOne, self).__init__(of_kind, *args, **kwargs)
     
     def match_type_of(self, other):
         return isinstance(other, ManyToOne)
     
     def get_prop_kwargs(self):
         kwargs = {'uselist': self.uselist}
-        kwargs.update( self.kwargs )
+
+        #TODO: for now, we don't break any test if we remove those 2 lines.
+        # So, we should either complete the selfref test to prove that they
+        # are indeed useful, or remove them. It might be they are indeed
+        # useless because the remote_side is already setup in the other way
+        # (ManyToOne).
+        if self.entity.table is self.target.table:
+            #FIXME: IF this code is of any use, it will probably break for
+            # autoloaded tables
+            kwargs['remote_side'] = self.inverse.foreign_key
+
+        # Contrary to ManyToMany relationships, we need to specify the join
+        # clauses even if this relationship is not self-referencial because
+        # there could be several ManyToOne from the target class to us.
+        joinclauses = self.inverse.primaryjoin_clauses
+        if self.filter:
+            # We need to make a copy of the joinclauses, to not add the filter
+            # on the backref
+            joinclauses = joinclauses[:] + [self.filter(self.target.table.c)]
+        if joinclauses:
+            kwargs['primaryjoin'] = sql.and_(*joinclauses)
+
+        kwargs.update(self.kwargs)
+
         return kwargs    
     
 class OneToMany( OneToOne ):
@@ -147,16 +189,90 @@ class ManyToOne( Relationship ):
 
     process_order = 1
     
+    def __init__(self, of_kind,
+                 column_kwargs=None,
+                 colname=None, required=None, primary_key=None,
+                 field=None,
+                 constraint_kwargs=None,
+                 use_alter=None, ondelete=None, onupdate=None,
+                 target_column=None,
+                 *args, **kwargs):
+
+        # 1) handle column-related args
+
+        # check that the column arguments don't conflict
+        assert not (field and (column_kwargs or colname)), \
+               "ManyToOne can accept the 'field' argument or column " \
+               "arguments ('colname' or 'column_kwargs') but not both!"
+
+        if colname and not isinstance(colname, list):
+            colname = [colname]
+        self.colname = colname or []
+
+        column_kwargs = column_kwargs or {}
+        # kwargs go by default to the relation(), so we need to manually
+        # extract those targeting the Column
+        if required is not None:
+            column_kwargs['nullable'] = not required
+        if primary_key is not None:
+            column_kwargs['primary_key'] = primary_key
+        # by default, created columns will have an index.
+        column_kwargs.setdefault('index', True)
+        self.column_kwargs = column_kwargs
+
+        if field and not isinstance(field, list):
+            field = [field]
+        self.field = field or []
+
+        # 2) handle constraint kwargs
+        constraint_kwargs = constraint_kwargs or {}
+        if use_alter is not None:
+            constraint_kwargs['use_alter'] = use_alter
+        if ondelete is not None:
+            constraint_kwargs['ondelete'] = ondelete
+        if onupdate is not None:
+            constraint_kwargs['onupdate'] = onupdate
+        self.constraint_kwargs = constraint_kwargs
+
+        # 3) misc arguments
+        if target_column and not isinstance( target_column, list ):
+            target_column = [target_column]
+        self.target_column = target_column
+
+        self.foreign_key = []
+        self.primaryjoin_clauses = []
+
+        super(ManyToOne, self).__init__( of_kind, *args, **kwargs )    
+    
     def _get_pk_fk( self, cls, target_cls ):
         return target_cls, cls
     
-    def get_prop_kwargs( self ):
+    def get_prop_kwargs(self):
         kwargs = {'uselist': False}
-        kwargs.update( self.kwargs )
-        return kwargs    
+
+        if self.entity.table is self.target_table:
+            # this is needed because otherwise SA has no way to know what is
+            # the direction of the relationship since both columns present in
+            # the primaryjoin belong to the same table. In other words, it is
+            # necessary to know if this particular relation
+            # is the many-to-one side, or the one-to-xxx side. The foreignkey
+            # doesn't help in this case.
+            kwargs['remote_side'] = \
+                [col for col in self.target_table.primary_key.columns]
+
+        if self.primaryjoin_clauses:
+            kwargs['primaryjoin'] = sql.and_(*self.primaryjoin_clauses)
+
+        kwargs.update(self.kwargs)
+
+        return kwargs
     
     def match_type_of(self, other):
         return isinstance(other, (OneToMany, OneToOne))    
+    
+    @property
+    def target_table( self ):
+        return class_mapper( self.target ).local_table    
 
 class ManyToMany( DeferredProperty ):
     """Generates a many to many relationship."""
