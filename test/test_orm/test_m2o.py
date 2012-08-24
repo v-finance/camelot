@@ -34,9 +34,6 @@ class TestManyToOne( TestMetaData ):
 
         assert b.a.name == 'a1'
 
-    # this test is in test_o2m.py
-    # def test_selfref(self):
-
     def test_with_key_pk(self):
         
         class A( self.Entity ):
