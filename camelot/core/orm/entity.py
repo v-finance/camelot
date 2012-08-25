@@ -1,9 +1,12 @@
+import sys
+
 from sqlalchemy import orm, schema
 from sqlalchemy.ext.declarative import ( _declarative_constructor,
                                          DeclarativeMeta )
 
 from . statements import MUTATORS
-from . options import DEFAULT_AUTO_PRIMARYKEY_NAME, DEFAULT_AUTO_PRIMARYKEY_TYPE
+from . properties import EntityBuilder, Property
+from . import options
 
 class EntityDescriptor(object):
     """
@@ -16,6 +19,54 @@ class EntityDescriptor(object):
         self.entity = entity
         self.parent = None
         self.relationships = []
+        self.has_pk = False
+        self._pk_col_done = False
+        self.module = sys.modules.get( entity.__module__ )
+        self.builders = []        
+        #
+        # verify if a primary key was set manually
+        #
+        for key, value in entity.__dict__.items():
+            if isinstance( value, schema.Column ):
+                if value.primary_key:
+                    self.has_pk = True
+            if isinstance( value, EntityBuilder ):
+                self.builders.append( value )
+            if isinstance( value, Property ):
+                value.entity = entity
+                value.name = key
+        
+    def create_non_pk_cols(self):
+        self.call_builders( 'create_non_pk_cols' )
+        
+    def create_pk_cols( self ):
+        """
+        Create primary_key columns. That is, call the 'create_pk_cols'
+        builders then add a primary key to the table if it hasn't already got
+        one and needs one.
+
+        This method is "semi-recursive" in some cases: it calls the
+        create_keys method on ManyToOne relationships and those in turn call
+        create_pk_cols on their target. It shouldn't be possible to have an
+        infinite loop since a loop of primary_keys is not a valid situation.
+        """
+        if self._pk_col_done:
+            return
+
+        self.call_builders( 'create_pk_cols' )
+
+        if not self.has_pk:
+            colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
+
+            self.add_column(
+                schema.Column( colname, options.DEFAULT_AUTO_PRIMARYKEY_TYPE,
+                               primary_key = True ) )
+        self._pk_col_done = True
+        
+    def add_column( self, col ):
+        setattr( self.entity, col.name, col )
+        if col.primary_key:
+            self.has_pk = True    
         
     def get_inverse_relation( self, rel, check_reverse=True ):
         '''
@@ -45,6 +96,11 @@ class EntityDescriptor(object):
     def add_property( self, prop ):
         pass
     
+    def call_builders(self, what):
+        for builder in self.builders:
+            if hasattr(builder, what):
+                getattr(builder, what)()
+                
     def find_relationship(self, name):
         for rel in self.relationships:
             if rel.name == name:
@@ -74,30 +130,21 @@ class EntityMeta( DeclarativeMeta ):
             # use default tablename if none set
             #
             if '__tablename__' not in dict_:
-                dict_['__tablename__'] = classname.lower()     
-            #
-            # handle the Properties
-            #
-            has_primary_key = False
-            for key, value in dict_.items():
-                if isinstance( value, schema.Column ):
-                    if value.primary_key:
-                        has_primary_key = True
-            if has_primary_key == False:
-                #
-                # add a primary key
-                #
-                primary_key_column = schema.Column( DEFAULT_AUTO_PRIMARYKEY_TYPE,
-                                                    primary_key = True )
-                dict_[ DEFAULT_AUTO_PRIMARYKEY_NAME ] = primary_key_column            
+                dict_['__tablename__'] = classname.lower()        
         return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
     
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
         from . properties import Property
+        if classname != 'Entity':
+            cls._descriptor = EntityDescriptor( cls )
+            cls._descriptor.create_pk_cols()
+        #
+        # Calling DeclarativeMeta's __init__ creates the mapper for
+        # this class
+        #
         super( EntityMeta, cls ).__init__( classname, bases, dict_ )
-        cls._descriptor = EntityDescriptor( cls )
         for key, value in dict_.items():
             if isinstance( value, Property ):
                 value.attach( cls, key )

@@ -3,7 +3,51 @@ from sqlalchemy.orm import column_property
 
 from . statements import ClassMutator
 
-class Property( object ):
+class EntityBuilder( object ):
+    """
+    Abstract base class for all entity builders. An Entity builder is a class
+    of objects which can be added to an Entity (usually by using special
+    properties or statements) to "build" that entity. Building an entity,
+    meaning to add columns to its "main" table, create other tables, add
+    properties to its mapper, ... To do so an EntityBuilder must override the
+    corresponding method(s). This is to ensure the different operations happen
+    in the correct order (for example, that the table is fully created before
+    the mapper that use it is defined).
+    """
+    
+    def create_pk_cols(self):
+        pass
+
+    def create_non_pk_cols(self):
+        pass
+
+    def before_table(self):
+        pass
+
+    def create_tables(self):
+        '''
+        Subclasses may override this method to create tables.
+        '''
+
+    def after_table(self):
+        pass
+
+    def create_properties(self):
+        '''
+        Subclasses may override this method to add properties to the involved
+        entity.
+        '''
+
+    def before_mapper(self):
+        pass
+
+    def after_mapper(self):
+        pass
+
+    def finalize(self):
+        pass
+        
+class Property( EntityBuilder ):
     """
     Abstract base class for all properties of an Entity that are not handled
     by Declarative but should be handled by EntityMeta before a new Entity

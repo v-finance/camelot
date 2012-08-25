@@ -37,7 +37,6 @@ class Relationship( DeferredProperty ):
     def _config(self, cls, mapper, key):
         """Create a Column with ForeignKey as well as a relationship()."""
         super( Relationship, self )._config( cls, mapper, key )
-        self.create_keys()
         self.create_properties()
         
     @property
@@ -85,11 +84,18 @@ class Relationship( DeferredProperty ):
                (self.inverse_name == other.name or not self.inverse_name) and \
                (other.inverse_name == self.name or not other.inverse_name)
     
-    def create_keys(self, pk):
+    def create_pk_cols( self ):
+        self.create_keys( True )
+
+    def create_non_pk_cols( self ):
+        self.create_keys( False )
+        
+    def create_keys( self, pk ):
         '''
         Subclasses (ie. concrete relationships) may override this method to
         create foreign keys.
         '''
+        pass
         
     def create_properties( self ):
         if self.property or self.backref:
@@ -143,9 +149,9 @@ class OneToOne( Relationship ):
     def match_type_of(self, other):
         return isinstance(other, ManyToOne)
     
-    def create_keys( self ):
+    def create_keys( self, pk ):
         # make sure an inverse relationship exists
-        if self.inverse is None:
+        if pk == False and self.inverse is None:
             raise Exception(
                       "Couldn't find any relationship in '%s' which "
                       "match as inverse of the '%s' relationship "
@@ -255,7 +261,7 @@ class ManyToOne( Relationship ):
     def _get_pk_fk( self, cls, target_cls ):
         return target_cls, cls
     
-    def create_keys( self ):
+    def create_keys( self, pk ):
         '''
         Find all primary keys on the target and create foreign keys on the
         source accordingly.
@@ -263,7 +269,11 @@ class ManyToOne( Relationship ):
 
         if self.foreign_key:
             return
+        
+        if self.column_kwargs.get('primary_key', False) != pk:
+            return        
 
+        source_desc = self.entity._descriptor
         table = class_mapper( self.entity ).local_table
         target_table = self.target_table
 
@@ -319,8 +329,7 @@ class ManyToOne( Relationship ):
                              "field manually and use the 'field' "
                              "argument on the ManyToOne relationship"
                              % (self.name, self.entity.__name__))
-                
-                setattr( self.entity, colname, col )
+                source_desc.add_column( col )
 
             # Build the list of local columns which will be part of
             # the foreign key
