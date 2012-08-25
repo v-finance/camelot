@@ -113,11 +113,39 @@ class EntityBase( object ):
         from . import Session
         _declarative_constructor( self, *args, **kwargs ) 
         Session().add( self ) 
-                        
+                                    
     #
     # methods below were copied from Elixir to mimic the Elixir Entity
     # behavior
     #
+    
+    def set( self, **kwargs ):
+        for key, value in kwargs.iteritems():
+            setattr( self, key, value )
+
+    @classmethod
+    def update_or_create( cls, data, surrogate = True ):
+        
+        mapper = orm.class_mapper( cls )
+        pk_props = mapper.primary_key
+
+        # if all pk are present and not None
+        if not [1 for p in pk_props if data.get( p.key ) is None]:
+            pk_tuple = tuple( [data[prop.key] for prop in pk_props] )
+            record = cls.query.get(pk_tuple)
+            if record is None:
+                if surrogate:
+                    raise Exception("cannot create surrogate with pk")
+                else:
+                    record = cls()
+        else:
+            if surrogate:
+                record = cls()
+            else:
+                raise Exception("cannot create non surrogate without pk")
+        record.from_dict( data )
+        return record
+    
     def from_dict(self, data):
         """
         Update a mapped class with data from a JSON-style nested dict/list
@@ -126,13 +154,13 @@ class EntityBase( object ):
         # surrogate can be guessed from autoincrement/sequence but I guess
         # that's not 100% reliable, so we'll need an override
 
-        mapper = orm.object_mapper(self)
+        mapper = orm.object_mapper( self )
 
         for key, value in data.iteritems():
             if isinstance(value, dict):
                 dbvalue = getattr(self, key)
                 rel_class = mapper.get_property(key).mapper.class_
-                pk_props = rel_class._descriptor.primary_key_properties
+                pk_props = orm.class_mapper( rel_class ).primary_key
 
                 # If the data doesn't contain any pk, and the relationship
                 # already has a value, update that record.
@@ -158,21 +186,24 @@ class EntityBase( object ):
             else:
                 setattr(self, key, value)
 
-    def to_dict(self, deep={}, exclude=[]):
+    def to_dict( self, deep = {}, exclude = [] ):
         """Generate a JSON-style nested dict/list structure from an object."""
-        col_prop_names = [p.key for p in self.mapper.iterate_properties \
+        
+        mapper = orm.object_mapper( self )
+        
+        col_prop_names = [p.key for p in mapper.iterate_properties \
                                       if isinstance(p, orm.properties.ColumnProperty)]
         data = dict([(name, getattr(self, name))
                      for name in col_prop_names if name not in exclude])
         for rname, rdeep in deep.iteritems():
             dbdata = getattr(self, rname)
             #FIXME: use attribute names (ie coltoprop) instead of column names
-            fks = self.mapper.get_property(rname).remote_side
-            exclude = [c.name for c in fks]
+            fks = mapper.get_property( rname ).remote_side
+            exclude = [ c.name for c in fks ]
             if dbdata is None:
                 data[rname] = None
             elif isinstance(dbdata, list):
-                data[rname] = [o.to_dict(rdeep, exclude) for o in dbdata]
+                data[rname] = [ o.to_dict( rdeep, exclude ) for o in dbdata ]
             else:
                 data[rname] = dbdata.to_dict(rdeep, exclude)
         return data
