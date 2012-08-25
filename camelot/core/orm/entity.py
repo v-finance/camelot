@@ -15,6 +15,8 @@ class EntityDescriptor(object):
     defined on an Entity before the relation is passed to Declarative.
     """
 
+    global_counter = 0
+    
     def __init__( self, entity ):
         self.entity = entity
         self.parent = None
@@ -25,6 +27,8 @@ class EntityDescriptor(object):
         self.builders = [] 
         self.constraints = []
         self.tablename = entity.__tablename__
+        self.counter = EntityDescriptor.global_counter
+        EntityDescriptor.global_counter += 1
         #
         # verify if a primary key was set manually
         #

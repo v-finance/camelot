@@ -47,12 +47,28 @@ class EntityBuilder( object ):
     def finalize(self):
         pass
         
+class CounterMeta(type):
+    '''
+    A simple meta class which adds a ``_counter`` attribute to the instances of
+    the classes it is used on. This counter is simply incremented for each new
+    instance.
+    '''
+    counter = 0
+
+    def __call__(self, *args, **kwargs):
+        instance = type.__call__(self, *args, **kwargs)
+        instance._counter = CounterMeta.counter
+        CounterMeta.counter += 1
+        return instance
+    
 class Property( EntityBuilder ):
     """
     Abstract base class for all properties of an Entity that are not handled
     by Declarative but should be handled by EntityMeta before a new Entity
     subclass is constructed
     """
+
+    __metaclass__ = CounterMeta
 
     def __init__(self, *args, **kwargs):
         self.entity = None
@@ -105,7 +121,7 @@ class GenericProperty( DeferredProperty ):
         self.args = args
         self.kwargs = kwargs
         
-    def create_properties(self):
+    def create_properties( self ):
         table = orm.class_mapper( self.entity ).local_table
         if hasattr( self.prop, '__call__' ):
             prop_value = self.prop( table.c )
@@ -114,7 +130,7 @@ class GenericProperty( DeferredProperty ):
         prop_value = self.evaluate_property( prop_value )
         setattr( self.entity, self.name, prop_value )
 
-    def evaluate_property(self, prop):
+    def evaluate_property( self, prop ):
         if self.args or self.kwargs:
             raise Exception('superfluous arguments passed to GenericProperty')
         return prop
@@ -129,7 +145,7 @@ class GenericProperty( DeferredProperty ):
 class ColumnProperty( GenericProperty ):
 
     def evaluate_property( self, prop ):
-        return orm.column_property( prop.label(None), *self.args, **self.kwargs )
+        return orm.column_property( prop.label( None ), *self.args, **self.kwargs )
 
 class has_property( ClassMutator ):
     

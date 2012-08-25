@@ -100,7 +100,10 @@ def process_deferred_properties( class_registry = entities ):
     """
     LOGGER.debug( 'process deferred properties' )
     
-    for cls in class_registry.values():
+    classes = list( class_registry.values() )
+    classes.sort( key = lambda c:c._descriptor.counter )
+    
+    for cls in classes:
         mapper = orm.class_mapper( cls )
         # set some convenience attributes to the Entity
         setattr( cls, 'table', mapper.local_table )
@@ -109,7 +112,7 @@ def process_deferred_properties( class_registry = entities ):
     for method_name in ( 'create_non_pk_cols', 
                          'append_constraints',
                          'create_properties' ):
-        for cls in class_registry.values():
+        for cls in classes:
             method = getattr( cls._descriptor, method_name )
             method()
 
