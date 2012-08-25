@@ -105,7 +105,7 @@ class SignalReceiver(QtCore.QObject):
     
     @QtCore.pyqtSlot(object)
     def my_slot(self, obj):
-        print self.sender()
+        self.sender()
 
 class GarbageCollectionCase( unittest.TestCase ):
     
