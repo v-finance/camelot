@@ -12,6 +12,10 @@ from camelot.core.orm import ( Field, OneToMany, ManyToOne, using_options,
 from sqlalchemy.types import String, Unicode, Integer
 from sqlalchemy import and_
 
+def colnames( columns ):
+    """Get the list of column names from a list of columns"""
+    return [c.name for c in columns]
+
 class TestManyToOne( TestMetaData ):
 
     def test_simple(self):
@@ -37,15 +41,17 @@ class TestManyToOne( TestMetaData ):
     def test_with_key_pk(self):
         
         class A( self.Entity ):
-            test = Field(Integer, primary_key=True, key='testx')
+            test = Field( Integer, primary_key=True, key='testx' )
 
         class B( self.Entity ):
             a = ManyToOne('A')
 
         self.create_all()
 
+        print A.table.c
+        
         with self.session.begin():
-            b1 = B(a=A(testx=1))
+            b1 = B( a = A( testx = 1 ) )
 
         self.session.expunge_all()
 
@@ -66,8 +72,8 @@ class TestManyToOne( TestMetaData ):
 
         self.create_all()
 
-        assert 'id' in A.table.primary_key.columns
-        assert 'a_id' in B.table.columns
+        assert 'id' in colnames( A.table.primary_key.columns )
+        assert 'a_id' in colnames( B.table.columns )
 
         with self.session.begin():
             a = A()
@@ -90,8 +96,8 @@ class TestManyToOne( TestMetaData ):
 
         self.create_all()
 
-        assert 'owner' in Animal.table.c
-        assert 'owner_id' not in Animal.table.c
+        assert 'owner' in colnames( Animal.table.c )
+        assert 'owner_id' not in colnames( Animal.table.c )
 
 
         with self.session.begin():
@@ -117,9 +123,9 @@ class TestManyToOne( TestMetaData ):
 
         self.create_all()
 
-        assert 'name' in A.table.primary_key.columns
-        assert 'a_name' in B.table.primary_key.columns
-        assert 'b_a_name' in C.table.primary_key.columns
+        assert 'name' in colnames( A.table.primary_key.columns )
+        assert 'a_name' in colnames( B.table.primary_key.columns )
+        assert 'b_a_name' in colnames( C.table.primary_key.columns )
 
     def test_m2o_is_only_pk(self):
         
@@ -131,9 +137,9 @@ class TestManyToOne( TestMetaData ):
 
         self.create_all()
 
-        assert 'id' in A.table.primary_key.columns
-        assert 'a_id' in B.table.primary_key.columns
-        assert 'id' not in B.table.primary_key.columns
+        assert 'id' in colnames( A.table.primary_key.columns )
+        assert 'a_id' in colnames( B.table.primary_key.columns )
+        assert 'id' not in colnames( B.table.primary_key.columns )
 
     def test_multi_pk_in_target(self):
         
@@ -151,35 +157,36 @@ class TestManyToOne( TestMetaData ):
 
         self.create_all()
 
-        assert 'key1' in A.table.primary_key.columns
-        assert 'key2' in A.table.primary_key.columns
+        assert 'key1' in colnames( A.table.primary_key.columns )
+        assert 'key2' in colnames( A.table.primary_key.columns )
 
-        assert 'num' in B.table.primary_key.columns
-        assert 'a_key1' in B.table.primary_key.columns
-        assert 'a_key2' in B.table.primary_key.columns
+        assert 'num' in colnames( B.table.primary_key.columns )
+        assert 'a_key1' in colnames( B.table.primary_key.columns )
+        assert 'a_key2' in colnames( B.table.primary_key.columns )
 
-        assert 'num' in C.table.primary_key.columns
-        assert 'b_num' in C.table.primary_key.columns
-        assert 'b_a_key1' in C.table.primary_key.columns
-        assert 'b_a_key2' in C.table.primary_key.columns
+        assert 'num' in colnames( C.table.primary_key.columns )
+        assert 'b_num' in colnames( C.table.primary_key.columns )
+        assert 'b_a_key1' in colnames( C.table.primary_key.columns )
+        assert 'b_a_key2' in colnames( C.table.primary_key.columns )
 
     def test_cycle_but_use_alter(self):
         
         class A( self.Entity ):
-            c = ManyToOne('C', use_alter=True)
+            c = ManyToOne('C', use_alter=True )
 
         class B( self.Entity ):
-            a = ManyToOne('A', primary_key=True)
+            a = ManyToOne('A', primary_key=True )
 
         class C( self.Entity ):
-            b = ManyToOne('B', primary_key=True)
+            b = ManyToOne('B', primary_key=True )
 
         self.create_all()
-
-        assert 'a_id' in B.table.primary_key.columns
-        assert 'b_a_id' in C.table.primary_key.columns
-        assert 'id' in A.table.primary_key.columns
-        assert 'c_b_a_id' in A.table.columns
+        
+        assert 'a_id' in colnames( B.table.primary_key.columns )
+        print colnames( C.table.primary_key.columns )
+        assert 'b_a_id' in colnames( C.table.primary_key.columns )
+        assert 'id' in colnames( A.table.primary_key.columns )
+        assert 'c_b_a_id' in colnames( A.table.columns )
 
     def test_multi(self):
         
