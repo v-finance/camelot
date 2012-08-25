@@ -22,17 +22,14 @@
 #
 #  ============================================================================
 
-from camelot.core.sql import metadata
-from elixir.entity import Entity
-from elixir.options import using_options
-from elixir.fields import Field
-from sqlalchemy.types import Unicode, INT
+from camelot.core.orm import Entity, Session
+
+from sqlalchemy.schema import Column
+from sqlalchemy.types import Unicode, Integer
 
 """Classes to support the loading and updating of required datasets into the 
 database.  The use of this classes is documented in the reference
 documentation : :ref:`doc-fixtures`"""
-
-__metadata__ = metadata
 
 class Fixture( Entity ):
     """Keep track of static data loaded into the database.  This class keeps
@@ -46,11 +43,13 @@ class Fixture( Entity ):
     
     Only classes which have an integer field as their primary key can be 
     tracked."""
-    using_options( tablename = 'fixture' )
-    model = Field( Unicode( 256 ), index = True, required = True )
-    primary_key = Field( INT(), index = True, required = True )
-    fixture_key = Field( Unicode( 256 ), index = True, required = True )
-    fixture_class = Field( Unicode( 256 ), index = True, required = False )
+    
+    __tablename__ = 'fixture'
+    
+    model = Column( Unicode( 256 ), index = True, nullable=False )
+    primary_key = Column( Integer, index = True, nullable=False )
+    fixture_key = Column( Unicode( 256 ), index = True, nullable=False )
+    fixture_class = Column( Unicode( 256 ), index = True, nullable=True )
 
     @classmethod
     def find_fixture_reference( cls, 
@@ -67,9 +66,9 @@ class Fixture( Entity ):
             None of no data was found.
         """
         entity_name = unicode( entity.__name__ )
-        return cls.query.filter_by( model = unicode( entity_name ), 
-                                    fixture_key = fixture_key, 
-                                    fixture_class = fixture_class ).first()
+        return Session().query( cls ).filter_by( model = unicode( entity_name ), 
+                                                 fixture_key = fixture_key, 
+                                                 fixture_class = fixture_class ).first()
 
     @classmethod
     def find_fixture( cls, entity, fixture_key, fixture_class = None ):
@@ -95,8 +94,8 @@ class Fixture( Entity ):
             if no such data is found
         """
         entity_name = unicode( entity.__name__ )
-        fixture = cls.query.filter_by( model = entity_name, 
-                                       primary_key = primary_key ).first()
+        fixture = Session().query( cls ).filter_by( model = entity_name, 
+                                                    primary_key = primary_key ).first()
         if fixture:
             return fixture.fixture_key
         else:
@@ -112,8 +111,8 @@ class Fixture( Entity ):
         through the fixture mechanism, (None, None) otherwise
         """
         entity_name = unicode( obj.__class__.__name__ )
-        fixture = cls.query.filter_by( model = entity_name, 
-                                       primary_key = obj.id ).first()
+        fixture = Session().query( cls ).filter_by( model = entity_name, 
+                                                    primary_key = obj.id ).first()
         if fixture:
             return ( fixture.fixture_key, fixture.fixture_class )
         else:
@@ -128,7 +127,7 @@ class Fixture( Entity ):
             entity to a tuple of type (fixture key, fixture class)
         """
         entity_name = unicode( entity.__name__ )
-        fixtures = cls.query.filter_by( model = entity_name ).all()
+        fixtures = Session().query( cls ).filter_by( model = entity_name ).all()
         return dict( ( f.primary_key, (f.fixture_key, 
                                        f.fixture_class) ) for f in fixtures )
 
@@ -216,9 +215,11 @@ class FixtureVersion( Entity ):
     
     :return: an integer representing the current version, 0 if no version found
     """
-    using_options( tablename = 'fixture_version' )
-    fixture_version = Field( INT(), index = True, required = True, default=0 )
-    fixture_class = Field( Unicode( 256 ), index = True, required = False, 
+    
+    __tablename__ = 'fixture_version'
+    
+    fixture_version = Column( Integer, index = True, nullable=False, default=0 )
+    fixture_class = Column( Unicode( 256 ), index = True, nullable=True,
                            unique=True )    
     
     @classmethod
@@ -228,7 +229,7 @@ class FixtureVersion( Entity ):
         
         :param fixture_class: the fixture class for which to get the version
         """
-        obj = cls.query.filter_by( fixture_class = fixture_class ).first()
+        obj = Session().query( cls ).filter_by( fixture_class = fixture_class ).first()
         if obj:
             return obj.fixture_version
         return 0
@@ -243,7 +244,7 @@ class FixtureVersion( Entity ):
         version
         """
         from sqlalchemy.orm.session import Session
-        obj = cls.query.filter_by( fixture_class = fixture_class ).first()
+        obj = Session().query( cls ).filter_by( fixture_class = fixture_class ).first()
         if not obj:
             obj = FixtureVersion( fixture_class = fixture_class )
         obj.fixture_version = fixture_version
