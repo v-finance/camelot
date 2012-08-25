@@ -47,16 +47,6 @@ from sqlalchemy import orm, types, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker, mapper
 
-# format constants
-FKCOL_NAMEFORMAT = "%(relname)s_%(key)s"
-CONSTRAINT_NAMEFORMAT = "%(tablename)s_%(colnames)s_fk"
-MULTIINHERITANCECOL_NAMEFORMAT = "%(entity)s_%(key)s"
-
-# other global constants
-DEFAULT_POLYMORPHIC_COL_NAME = "row_type"
-POLYMORPHIC_COL_SIZE = 40
-POLYMORPHIC_COL_TYPE = types.String( POLYMORPHIC_COL_SIZE )
-
 from . options import ( using_options, using_table_options,
                         using_mapper_options, options_defaults,
                         using_options_defaults )
