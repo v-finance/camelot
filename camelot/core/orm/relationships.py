@@ -274,7 +274,6 @@ class ManyToOne( Relationship ):
             return        
 
         source_desc = self.entity._descriptor
-        table = class_mapper( self.entity ).local_table
         target_table = self.target_table
 
         fk_refcols = []
@@ -351,13 +350,13 @@ class ManyToOne( Relationship ):
                 # In some databases (at least MySQL) the constraint name needs
                 # to be unique for the whole database, instead of per table.
                 fk_name = options.CONSTRAINT_NAMEFORMAT % \
-                          {'tablename': table.name,
+                          {'tablename': source_desc.tablename,
                            'colnames': '_'.join(fk_colnames)}
                 self.constraint_kwargs['name'] = fk_name
 
             constraint =schema.ForeignKeyConstraint( fk_colnames, fk_refcols,
                                                      **self.constraint_kwargs )
-            table.append_constraint( constraint )
+            source_desc.add_constraint( constraint )
 
     def get_prop_kwargs(self):
         kwargs = {'uselist': False}

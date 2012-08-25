@@ -112,7 +112,7 @@ def process_deferred_properties( class_registry = entities ):
                 deferred_properties.append( ( value.process_order, key, value, cls, mapper ) )
                 cls._descriptor.add_property( value )
                 
-    for method_name in ( 'create_non_pk_cols', ):#'setup_properties', 'finalize'):
+    for method_name in ( 'create_non_pk_cols', 'append_constraints'):#'setup_properties', 'finalize'):
         for cls in class_registry.values():
             method = getattr( cls._descriptor, method_name )
             method()

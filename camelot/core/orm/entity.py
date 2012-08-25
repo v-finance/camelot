@@ -22,7 +22,9 @@ class EntityDescriptor(object):
         self.has_pk = False
         self._pk_col_done = False
         self.module = sys.modules.get( entity.__module__ )
-        self.builders = []        
+        self.builders = [] 
+        self.constraints = []
+        self.tablename = entity.__tablename__
         #
         # verify if a primary key was set manually
         #
@@ -66,8 +68,16 @@ class EntityDescriptor(object):
     def add_column( self, col ):
         setattr( self.entity, col.name, col )
         if col.primary_key:
-            self.has_pk = True    
-        
+            self.has_pk = True   
+            
+    def add_constraint( self, constraint ):
+        self.constraints.append( constraint )            
+    
+    def append_constraints( self ): 
+        table = orm.class_mapper( self.entity ).local_table
+        for constraint in self.constraints:
+            table.append_constraint( constraint )
+            
     def get_inverse_relation( self, rel, check_reverse=True ):
         '''
         Return the inverse relation of rel, if any, None otherwise.
@@ -141,8 +151,8 @@ class EntityMeta( DeclarativeMeta ):
             cls._descriptor = EntityDescriptor( cls )
             cls._descriptor.create_pk_cols()
         #
-        # Calling DeclarativeMeta's __init__ creates the mapper for
-        # this class
+        # Calling DeclarativeMeta's __init__ creates the mapper and
+        # the table for this class
         #
         super( EntityMeta, cls ).__init__( classname, bases, dict_ )
         for key, value in dict_.items():

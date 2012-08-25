@@ -47,8 +47,6 @@ class TestManyToOne( TestMetaData ):
             a = ManyToOne('A')
 
         self.create_all()
-
-        print A.table.c
         
         with self.session.begin():
             b1 = B( a = A( testx = 1 ) )
@@ -183,7 +181,6 @@ class TestManyToOne( TestMetaData ):
         self.create_all()
         
         assert 'a_id' in colnames( B.table.primary_key.columns )
-        print colnames( C.table.primary_key.columns )
         assert 'b_a_id' in colnames( C.table.primary_key.columns )
         assert 'id' in colnames( A.table.primary_key.columns )
         assert 'c_b_a_id' in colnames( A.table.columns )
