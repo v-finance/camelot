@@ -34,11 +34,6 @@ class Relationship( DeferredProperty ):
         super( Relationship, self ).attach( entity, name )
         entity._descriptor.relationships.append( self )
         
-    def _config(self, cls, mapper, key):
-        """Create a Column with ForeignKey as well as a relationship()."""
-        super( Relationship, self )._config( cls, mapper, key )
-        self.create_properties()
-        
     @property
     def inverse(self):
         if not hasattr(self, '_inverse'):

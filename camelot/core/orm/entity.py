@@ -65,6 +65,9 @@ class EntityDescriptor(object):
                                primary_key = True ) )
         self._pk_col_done = True
         
+    def create_properties(self):
+        self.call_builders( 'create_properties' )        
+        
     def add_column( self, col ):
         setattr( self.entity, col.name, col )
         if col.primary_key:

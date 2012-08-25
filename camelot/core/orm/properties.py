@@ -1,5 +1,5 @@
 
-from sqlalchemy.orm import column_property
+from sqlalchemy import orm
 
 from . statements import ClassMutator
 
@@ -111,6 +111,20 @@ class GenericProperty( DeferredProperty ):
         self.args = args
         self.kwargs = kwargs
         
+    def create_properties(self):
+        table = orm.class_mapper( self.entity ).local_table
+        if hasattr( self.prop, '__call__' ):
+            prop_value = self.prop( table.c )
+        else:
+            prop_value = self.prop
+        prop_value = self.evaluate_property( prop_value )
+        setattr( self.entity, self.name, prop_value )
+
+    def evaluate_property(self, prop):
+        if self.args or self.kwargs:
+            raise Exception('superfluous arguments passed to GenericProperty')
+        return prop
+    
     def _config( self, cls, mapper, key ):
         if hasattr(self.prop, '__call__'):
             prop_value = self.prop( mapper.local_table.c )
@@ -120,10 +134,8 @@ class GenericProperty( DeferredProperty ):
         
 class ColumnProperty( GenericProperty ):
 
-    def _config(self, cls, mapper, key):
-        setattr( cls, key, column_property( self.prop( mapper.local_table.c ).label(None), 
-                                            *self.args, 
-                                            **self.kwargs ) )
+    def evaluate_property( self, prop ):
+        return orm.column_property( prop.label(None), *self.args, **self.kwargs )
 
 class has_property( ClassMutator ):
     

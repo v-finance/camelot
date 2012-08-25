@@ -109,22 +109,14 @@ def process_deferred_properties( class_registry = entities ):
         # loop over the properties to process the defered properties
         for key, value in cls.__dict__.items():
             if isinstance( value, DeferredProperty ):
-                deferred_properties.append( ( value.process_order, key, value, cls, mapper ) )
                 cls._descriptor.add_property( value )
                 
-    for method_name in ( 'create_non_pk_cols', 'append_constraints'):#'setup_properties', 'finalize'):
+    for method_name in ( 'create_non_pk_cols', 
+                         'append_constraints',
+                         'create_properties' ):
         for cls in class_registry.values():
             method = getattr( cls._descriptor, method_name )
             method()
-            
-    deferred_properties.sort( key = lambda dp:dp[0] )
-    for _order, key, value, cls, mapper in deferred_properties:
-        try:
-            value._config( cls, mapper, key )
-        except Exception, e:
-            LOGGER.fatal( 'Could not process DeferredProperty %s of class %s'%( key, cls.__name__ ),
-                          exc_info = e )
-            raise
 
 Entity = declarative_base( cls = EntityBase, 
                            metadata = metadata,
