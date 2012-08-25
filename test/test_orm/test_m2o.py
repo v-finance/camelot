@@ -71,7 +71,7 @@ class TestManyToOne( TestMetaData ):
         self.create_all()
 
         assert 'id' in colnames( A.table.primary_key.columns )
-        assert 'a_id' in colnames( B.table.columns )
+        assert 'a_id' not in colnames( B.table.columns )
 
         with self.session.begin():
             a = A()

@@ -327,7 +327,7 @@ class ManyToOne( Relationship ):
                              "field manually and use the 'field' "
                              "argument on the ManyToOne relationship"
                              % (self.name, self.entity.__name__))
-                source_desc.add_column( colname, col )
+                source_desc.add_column( self.column_kwargs.get( 'key', colname ), col )
 
             # Build the list of local columns which will be part of
             # the foreign key

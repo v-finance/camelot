@@ -52,7 +52,7 @@ class Field(Property):
             if isinstance(self.deferred, basestring):
                 group = self.deferred
             self.column = orm.deferred( self.column, group = group )            
-        self.entity._descriptor.add_column( self.name, self.column )
+        self.entity._descriptor.add_column( self.kwargs.get( 'key', self.name ), self.column )
 
     def create_properties(self):
         if self.property is not None:
