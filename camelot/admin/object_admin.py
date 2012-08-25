@@ -129,9 +129,10 @@ be specified using the verbose_name attribute.
 
 .. attribute:: form_close_action
 
-    The action triggered when the form window is closed.  By default this is the
+    The action triggered when the form window is closed by the operating system or the window manager.  By default this is the
     :class:`camelot.admin.action.form_action.CloseForm` action, which validates
-    the form and allows the user to discard the changes when the form is invalid.
+    the form and allows the user to discard the changes when the form is invalid.  To change the form close action in the 
+    toolbar, the :meth:`camelot.admin.object_admin.ObjectAdmin.get_form_actions` method should be overwritten.
     
 .. attribute:: save_mode
 
