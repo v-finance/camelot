@@ -138,25 +138,8 @@ class TestSpecialProperties( TestMetaData ):
         
         class A( self.Entity ):
             name = Field(String(20))
-            stuff = Field(Text, deferred=True)
+            stuff = Field( Text, deferred=True )
 
         self.create_all()
         with self.session.begin():
             A(name='foo')
-
-    def test_setattr(self):
-        
-        class A( self.Entity ):
-            pass
-
-        A.name = Field(String(30))
-        
-        self.create_all()
-        with self.session.begin():    
-            a1 = A(name='a1')
-
-        self.session.expunge_all()
-
-        a = A.query.one()
-        assert a.name == 'a1'
-

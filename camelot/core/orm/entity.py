@@ -61,6 +61,7 @@ class EntityDescriptor(object):
             colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
 
             self.add_column(
+                colname,
                 schema.Column( colname, options.DEFAULT_AUTO_PRIMARYKEY_TYPE,
                                primary_key = True ) )
         self._pk_col_done = True
@@ -68,9 +69,9 @@ class EntityDescriptor(object):
     def create_properties(self):
         self.call_builders( 'create_properties' )        
         
-    def add_column( self, col ):
-        setattr( self.entity, col.name, col )
-        if col.primary_key:
+    def add_column( self, key, col ):
+        setattr( self.entity, key, col )
+        if hasattr( col, 'primary_key' ) and col.primary_key:
             self.has_pk = True   
             
     def add_constraint( self, constraint ):
@@ -165,7 +166,6 @@ class EntityMeta( DeclarativeMeta ):
 
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
-        
         
 class EntityBase( object ):
     """A declarative base class that adds some methods that used to be

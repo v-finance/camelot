@@ -10,7 +10,7 @@ from camelot.core.orm import ( Field, OneToMany, ManyToOne, using_options,
                                has_field, has_many, belongs_to )
 
 from sqlalchemy.types import String, Unicode, Integer
-from sqlalchemy import and_
+from sqlalchemy import orm, and_
 
 def colnames( columns ):
     """Get the list of column names from a list of columns"""
@@ -89,7 +89,7 @@ class TestManyToOne( TestMetaData ):
 
         class Animal( self.Entity ):
             name = Field(String(30))
-            owner_id = Field(Integer, colname='owner')
+            owner_id = Field( Integer, colname = 'owner' )
             owner = ManyToOne('Person', field=owner_id)
 
         self.create_all()
@@ -97,10 +97,16 @@ class TestManyToOne( TestMetaData ):
         assert 'owner' in colnames( Animal.table.c )
         assert 'owner_id' not in colnames( Animal.table.c )
 
-
+        mapper = orm.class_mapper( Animal )
+        properties = list( mapper.iterate_properties )
+        prop_keys = [p.key for p in properties]
+        
+        assert 'owner' in prop_keys
+        assert 'owner_id' in prop_keys
+            
         with self.session.begin():
             homer = Person(name="Homer")
-            slh = Animal(name="Santa's Little Helper", owner=homer)
+            slh = Animal( name="Santa's Little Helper", owner = homer )
 
         self.session.expunge_all()
 

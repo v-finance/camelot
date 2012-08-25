@@ -20,9 +20,9 @@ class Field(Property):
             kwargs['nullable'] = not kwargs.pop('required')
         self.type = type
         self.primary_key = kwargs.get('primary_key', False)
-
-        self.column = None
         self.property = None
+        self.column = None
+        self.column_created = False
 
         self.args = args
         self.kwargs = kwargs
@@ -33,7 +33,7 @@ class Field(Property):
         if self.colname is None:
             self.colname = name
         super(Field, self).attach(entity, name)
-
+        
     def create_pk_cols(self):
         if self.primary_key:
             self.create_col()
@@ -43,21 +43,18 @@ class Field(Property):
             self.create_col()
 
     def create_col( self ):
+        if self.column_created:
+            return
         self.column = schema.Column( self.colname, self.type, *self.args, **self.kwargs )
-        self.entity._descriptor.add_column( self.column )
-
-    def create_properties(self):
+        self.column_created = True
         if self.deferred:
             group = None
             if isinstance(self.deferred, basestring):
                 group = self.deferred
-            self.property = orm.deferred( self.column, group = group )
-        elif self.name != self.colname:
-            # if the property name is different from the column name, we need
-            # to add an explicit property (otherwise nothing is needed as it's
-            # done automatically by SA)
-            self.property = self.column
+            self.column = orm.deferred( self.column, group = group )            
+        self.entity._descriptor.add_column( self.name, self.column )
 
+    def create_properties(self):
         if self.property is not None:
             self.entity._descriptor.add_property( self.name, self.property )
 

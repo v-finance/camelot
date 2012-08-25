@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship, backref, class_mapper
 
 from . properties import DeferredProperty
 from . entity import EntityBase
+from . fields import Field
 from . statements import ClassMutator
 from . import options
 
@@ -209,7 +210,7 @@ class ManyToOne( Relationship ):
         # 1) handle column-related args
 
         # check that the column arguments don't conflict
-        assert not ( isinstance( field, schema.Column ) and (column_kwargs or colname)), \
+        assert not ( isinstance( field, (schema.Column, Field) ) and (column_kwargs or colname)), \
                "ManyToOne can accept the 'field' argument or column " \
                "arguments ('colname' or 'column_kwargs') but not both!"
 
@@ -228,7 +229,7 @@ class ManyToOne( Relationship ):
         column_kwargs.setdefault('index', True)
         self.column_kwargs = column_kwargs
 
-        if isinstance( field, schema.Column ) and not isinstance( field, list ):
+        if isinstance( field, (schema.Column, Field) ) and not isinstance( field, list ):
             self.field = [field]
         else:
             self.field = []
@@ -298,6 +299,9 @@ class ManyToOne( Relationship ):
         for key_num, target_col in enumerate(target_columns):
             if self.field:
                 col = self.field[key_num]
+                if isinstance( col, Field ):
+                    col.create_col()
+                    col = col.column
             else:
                 if self.colname:
                     colname = self.colname[key_num]
@@ -323,7 +327,7 @@ class ManyToOne( Relationship ):
                              "field manually and use the 'field' "
                              "argument on the ManyToOne relationship"
                              % (self.name, self.entity.__name__))
-                source_desc.add_column( col )
+                source_desc.add_column( colname, col )
 
             # Build the list of local columns which will be part of
             # the foreign key
