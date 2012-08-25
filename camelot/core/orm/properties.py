@@ -57,7 +57,7 @@ class CounterMeta(type):
 
     def __call__(self, *args, **kwargs):
         instance = type.__call__(self, *args, **kwargs)
-        instance._counter = CounterMeta.counter
+        instance.counter = CounterMeta.counter
         CounterMeta.counter += 1
         return instance
     

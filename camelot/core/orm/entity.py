@@ -41,6 +41,8 @@ class EntityDescriptor(object):
             if isinstance( value, Property ):
                 value.entity = entity
                 value.name = key
+        # execute the builders in the order they were created
+        self.builders.sort( key = lambda b:b.counter )
         
     def create_non_pk_cols(self):
         self.call_builders( 'create_non_pk_cols' )
