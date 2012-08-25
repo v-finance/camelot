@@ -107,9 +107,9 @@ def process_deferred_properties( class_registry = entities ):
         setattr( cls, 'table', mapper.local_table )
         setattr( cls, 'query', Session().query( cls ) )
         # loop over the properties to process the defered properties
-        for key, value in cls.__dict__.items():
-            if isinstance( value, DeferredProperty ):
-                cls._descriptor.add_property( value )
+        #for key, value in cls.__dict__.items():
+            #if isinstance( value, DeferredProperty ):
+                #cls._descriptor.add_property( value )
                 
     for method_name in ( 'create_non_pk_cols', 
                          'append_constraints',
