@@ -43,7 +43,7 @@ import logging
 LOGGER = logging.getLogger('camelot.core.orm')
 
 from camelot.core.sql import metadata
-from sqlalchemy import orm, types, event
+from sqlalchemy import orm, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker, mapper
 
@@ -80,8 +80,9 @@ entities = EntityCollection()
 #
 # * ClassMutator : DSL like statements that modify the Entity at definition
 #   time
-# * Property : modify an Entity at construction time
-# * DeferredProperty : modify an Entity after the mapping has been configured
+#
+# * Property : modify an Entity at construction time, in several phases, before
+#   and after mapper and table creation.
 #
 
 def setup_all( create_tables=False, *args, **kwargs ):
@@ -91,7 +92,6 @@ def setup_all( create_tables=False, *args, **kwargs ):
         metadata.create_all( *args, **kwargs )
 
 from . entity import EntityBase, EntityMeta
-from . properties import DeferredProperty
 
 @event.listens_for( mapper, 'after_configured' )
 def process_deferred_properties( class_registry = entities ):
@@ -99,7 +99,6 @@ def process_deferred_properties( class_registry = entities ):
     This function is called automatically for the default class_registry.
     """
     LOGGER.debug( 'process deferred properties' )
-    deferred_properties = []
     
     for cls in class_registry.values():
         mapper = orm.class_mapper( cls )

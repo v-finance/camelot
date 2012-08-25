@@ -65,8 +65,6 @@ class Property( EntityBuilder ):
         """
         self.entity = entity
         self.name = name
-        # register this property as a builder
-        entity._descriptor.add_property( self )
 
     def __repr__(self):
         return "Property(%s, %s)" % (self.name, self.entity)

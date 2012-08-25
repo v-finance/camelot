@@ -20,6 +20,10 @@ class TestSpecialProperties( TestMetaData ):
         class A( self.Entity ):
             name = Field( String( 20 ) )
 
+        assert isinstance( A.name, Field )
+        
+        self.create_all()
+        
         assert not isinstance( A.name, Field )
 
     def test_generic_property(self):
@@ -154,6 +158,5 @@ class TestSpecialProperties( TestMetaData ):
         self.session.expunge_all()
 
         a = A.query.one()
-
         assert a.name == 'a1'
 

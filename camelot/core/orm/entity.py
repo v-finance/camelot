@@ -106,8 +106,9 @@ class EntityDescriptor(object):
 
         return matching_rel
         
-    def add_property( self, prop ):
-        pass
+    def add_property( self, name, prop ):
+        mapper = orm.class_mapper( self.entity )
+        mapper.add_property( name, property )
     
     def call_builders(self, what):
         for builder in self.builders:
@@ -152,15 +153,16 @@ class EntityMeta( DeclarativeMeta ):
         from . properties import Property
         if classname != 'Entity':
             cls._descriptor = EntityDescriptor( cls )
+            for key, value in dict_.items():
+                if isinstance( value, Property ):
+                    value.attach( cls, key )
             cls._descriptor.create_pk_cols()
         #
         # Calling DeclarativeMeta's __init__ creates the mapper and
         # the table for this class
         #
         super( EntityMeta, cls ).__init__( classname, bases, dict_ )
-        for key, value in dict_.items():
-            if isinstance( value, Property ):
-                value.attach( cls, key )
+
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
         
