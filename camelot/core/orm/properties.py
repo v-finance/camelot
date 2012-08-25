@@ -76,10 +76,6 @@ class DeferredProperty( Property ):
     handled by Declarative but should be handled after a mapper was
     configured"""
         
-    def _config( self, cls, mapper, key ):
-        self.name = key
-        self.entity = cls
-        
     def _setup_reverse( self, key, rel, target_cls ):
         """Setup bidirectional behavior between two relationships."""
 
