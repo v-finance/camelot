@@ -115,6 +115,36 @@ class BackupMechanism(object):
         """
         pass
         
+    def get_backup_column_type( self, from_type ):
+        """This function converts column types from the source database to
+        to column types in the backup database.  This is needed when backing
+        up from for example MySQL to SQLite, since column types differ between
+        both databases.  Overwrite this method to support different columns 
+        and/or database types.
+        
+        :param from_type: the column type in the database that is backed up
+        :return: the corresponding column type in the back up database
+        """
+        from sqlalchemy.dialects.mysql import base as mysql_dialect
+        from sqlalchemy.dialects import postgresql as postgresql_dialect  
+        #
+        # Postgresql
+        #
+        if isinstance( from_type, postgresql_dialect.DOUBLE_PRECISION ):
+            return sqlalchemy.types.Float()
+        if isinstance( from_type, postgresql_dialect.BYTEA ):
+            return sqlalchemy.types.LargeBinary()        
+        #
+        # MySQL
+        #
+        if isinstance( from_type, mysql_dialect.TINYINT ):
+            return sqlalchemy.types.Boolean()
+        if isinstance( from_type, mysql_dialect._StringType ):
+            return sqlalchemy.types.String()   
+        if isinstance( from_type, mysql_dialect._FloatType ):
+            return sqlalchemy.types.Float()
+        return from_type
+        
     def backup(self):
         """Generator function that yields tuples :
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
@@ -126,8 +156,6 @@ class BackupMechanism(object):
         from sqlalchemy import create_engine
         from sqlalchemy import MetaData, Table, Column
         from sqlalchemy.pool import NullPool
-        from sqlalchemy.dialects import mysql as mysql_dialect
-        from sqlalchemy.dialects import postgresql as postgresql_dialect
         import sqlalchemy.types
         
         yield (0, 0, _('Analyzing database structure'))
@@ -155,26 +183,12 @@ class BackupMechanism(object):
         from_and_to_tables = []
         for from_table in from_meta_data.sorted_tables:
             if self.backup_table_filter(from_table):
-                #print "backing up table:", from_table
-                #to_table = from_table.tometadata(to_meta_data)
                 new_cols = []
                 for col in from_table.columns:
-                    new_cols.append(Column(col.name, col.type))
+                    new_cols.append( Column( col.name, 
+                                             self.get_backup_column_type( col.type ) 
+                                             ) )
                 to_table = Table(from_table.name, to_meta_data, *new_cols)
-                #
-                # Dirty hack : loop over all columns to detect mysql TINYINT
-                # columns and convert them to BOOL
-                #
-                for col in to_table.columns:
-                    if isinstance(col.type, mysql_dialect.TINYINT):
-                        col.type = sqlalchemy.types.Boolean()
-                    if isinstance(col.type, postgresql_dialect.DOUBLE_PRECISION):
-                        col.type = sqlalchemy.types.Float()
-                    if isinstance(col.type, postgresql_dialect.BYTEA):
-                        col.type = sqlalchemy.types.LargeBinary()
-                #
-                # End of dirty hack
-                #
                 to_table.create(to_engine)
                 from_and_to_tables.append((from_table, to_table))
         
