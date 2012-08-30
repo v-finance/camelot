@@ -105,19 +105,25 @@ class Code(types.TypeDecorator):
     .. image:: /_static/editors/CodeEditor_editable.png
     
     :param parts: a list of input masks specifying the mask for each part,
-    eg ``['99', 'AA']``. For valid input masks, see
-    `QLineEdit <http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/qlineedit.html>`_    
+        eg ``['99', 'AA']``. For valid input masks, see
+        `QLineEdit <http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/qlineedit.html>`_    
+        
+    :param separator: a string that will be used to separate the different parts
+        in the GUI and in the database
+        
+    :param length: the size of the underlying string field in the database, if no
+        length is specified, it will be calculated  from the parts
     """
     
     impl = types.Unicode
           
-    def __init__(self, parts, separator=u'.', **kwargs):
+    def __init__(self, parts, separator=u'.', length = None, **kwargs):
         import string
         translator = string.maketrans('', '')
         self.parts = parts
         self.separator = separator
         max_length = sum(len(part.translate(translator, '<>!')) for part in parts) + len(parts)*len(self.separator)
-        types.TypeDecorator.__init__(self, length=max_length, **kwargs)
+        types.TypeDecorator.__init__( self, length = length or max_length, **kwargs )
         
     def bind_processor(self, dialect):
   
