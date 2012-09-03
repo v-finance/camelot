@@ -54,11 +54,17 @@ class DecoratedLineEdit(QtGui.QLineEdit):
 
     def set_minimum_width(self, width):
         """Set the minimum width of the line edit, measured in number of 
-        characters.
+        characters.  Use a number of characters the content of the editor
+        is unknown, but a sample string can be used if the input pattern
+        is known (such as a formatted date or a code) for greater accuracy.
+        
         :param width: the number of characters that should be visible in the
-            editor
+            editor or a string that should fit in the editor
         """
-        self.setMinimumWidth( self._font_metrics.averageCharWidth() * width )
+        if isinstance( width, basestring ):
+            self.setMinimumWidth( self._font_metrics.width( width ) )
+        else:
+            self.setMinimumWidth( self._font_metrics.averageCharWidth() )
         
     def set_valid(self, valid):
         """Set the validity of the current content of the line edit
