@@ -234,6 +234,12 @@ and takes these parameters :
         
         return form_widget
 
+class Break( Form ):
+    """End a line in a multi-column form"""
+    
+    def __init__( self ):
+        super( Break, self ).__init__( [] )
+
 class Label( Form ):
     """Render a label using a :class:`QtGui.QLabel`"""
 
