@@ -43,19 +43,9 @@ import logging
 LOGGER = logging.getLogger('camelot.core.orm')
 
 from camelot.core.sql import metadata
-from sqlalchemy import orm, types, event
+from sqlalchemy import orm, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker, mapper
-
-# format constants
-FKCOL_NAMEFORMAT = "%(relname)s_%(key)s"
-CONSTRAINT_NAMEFORMAT = "%(tablename)s_%(colnames)s_fk"
-MULTIINHERITANCECOL_NAMEFORMAT = "%(entity)s_%(key)s"
-
-# other global constants
-DEFAULT_POLYMORPHIC_COL_NAME = "row_type"
-POLYMORPHIC_COL_SIZE = 40
-POLYMORPHIC_COL_TYPE = types.String( POLYMORPHIC_COL_SIZE )
 
 from . options import ( using_options, using_table_options,
                         using_mapper_options, options_defaults,
@@ -90,8 +80,9 @@ entities = EntityCollection()
 #
 # * ClassMutator : DSL like statements that modify the Entity at definition
 #   time
-# * Property : modify an Entity at construction time
-# * DeferredProperty : modify an Entity after the mapping has been configured
+#
+# * Property : modify an Entity at construction time, in several phases, before
+#   and after mapper and table creation.
 #
 
 def setup_all( create_tables=False, *args, **kwargs ):
@@ -101,7 +92,6 @@ def setup_all( create_tables=False, *args, **kwargs ):
         metadata.create_all( *args, **kwargs )
 
 from . entity import EntityBase, EntityMeta
-from . properties import DeferredProperty
 
 @event.listens_for( mapper, 'after_configured' )
 def process_deferred_properties( class_registry = entities ):
@@ -109,25 +99,22 @@ def process_deferred_properties( class_registry = entities ):
     This function is called automatically for the default class_registry.
     """
     LOGGER.debug( 'process deferred properties' )
-    deferred_properties = []
-    for cls in class_registry.values():
+    
+    classes = list( class_registry.values() )
+    classes.sort( key = lambda c:c._descriptor.counter )
+    
+    for cls in classes:
         mapper = orm.class_mapper( cls )
         # set some convenience attributes to the Entity
         setattr( cls, 'table', mapper.local_table )
         setattr( cls, 'query', Session().query( cls ) )
-        # loop over the properties to process the defered properties
-        for key, value in cls.__dict__.items():
-            if isinstance( value, DeferredProperty ):
-                deferred_properties.append( ( value.process_order, key, value, cls, mapper ) )
-                cls._descriptor.add_property( value )
-    deferred_properties.sort( key = lambda dp:dp[0] )
-    for _order, key, value, cls, mapper in deferred_properties:
-        try:
-            value._config( cls, mapper, key )
-        except Exception, e:
-            LOGGER.fatal( 'Could not process DeferredProperty %s of class %s'%( key, cls.__name__ ),
-                          exc_info = e )
-            raise
+                
+    for method_name in ( 'create_non_pk_cols', 
+                         'append_constraints',
+                         'create_properties' ):
+        for cls in classes:
+            method = getattr( cls._descriptor, method_name )
+            method()
 
 Entity = declarative_base( cls = EntityBase, 
                            metadata = metadata,

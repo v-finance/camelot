@@ -1,14 +1,74 @@
 
-from sqlalchemy.orm import column_property
+from sqlalchemy import orm
 
 from . statements import ClassMutator
 
-class Property( object ):
+class EntityBuilder( object ):
+    """
+    Abstract base class for all entity builders. An Entity builder is a class
+    of objects which can be added to an Entity (usually by using special
+    properties or statements) to "build" that entity. Building an entity,
+    meaning to add columns to its "main" table, create other tables, add
+    properties to its mapper, ... To do so an EntityBuilder must override the
+    corresponding method(s). This is to ensure the different operations happen
+    in the correct order (for example, that the table is fully created before
+    the mapper that use it is defined).
+    """
+    
+    def create_pk_cols(self):
+        pass
+
+    def create_non_pk_cols(self):
+        pass
+
+    def before_table(self):
+        pass
+
+    def create_tables(self):
+        '''
+        Subclasses may override this method to create tables.
+        '''
+
+    def after_table(self):
+        pass
+
+    def create_properties(self):
+        '''
+        Subclasses may override this method to add properties to the involved
+        entity.
+        '''
+
+    def before_mapper(self):
+        pass
+
+    def after_mapper(self):
+        pass
+
+    def finalize(self):
+        pass
+        
+class CounterMeta(type):
+    '''
+    A simple meta class which adds a ``_counter`` attribute to the instances of
+    the classes it is used on. This counter is simply incremented for each new
+    instance.
+    '''
+    counter = 0
+
+    def __call__(self, *args, **kwargs):
+        instance = type.__call__(self, *args, **kwargs)
+        instance.counter = CounterMeta.counter
+        CounterMeta.counter += 1
+        return instance
+    
+class Property( EntityBuilder ):
     """
     Abstract base class for all properties of an Entity that are not handled
     by Declarative but should be handled by EntityMeta before a new Entity
     subclass is constructed
     """
+
+    __metaclass__ = CounterMeta
 
     def __init__(self, *args, **kwargs):
         self.entity = None
@@ -21,8 +81,6 @@ class Property( object ):
         """
         self.entity = entity
         self.name = name
-        # register this property as a builder
-        entity._descriptor.add_property( self )
 
     def __repr__(self):
         return "Property(%s, %s)" % (self.name, self.entity)
@@ -31,10 +89,6 @@ class DeferredProperty( Property ):
     """Abstract base class for all properties of an Entity that are not 
     handled by Declarative but should be handled after a mapper was
     configured"""
-        
-    def _config( self, cls, mapper, key ):
-        self.name = key
-        self.entity = cls
         
     def _setup_reverse( self, key, rel, target_cls ):
         """Setup bidirectional behavior between two relationships."""
@@ -67,6 +121,20 @@ class GenericProperty( DeferredProperty ):
         self.args = args
         self.kwargs = kwargs
         
+    def create_properties( self ):
+        table = orm.class_mapper( self.entity ).local_table
+        if hasattr( self.prop, '__call__' ):
+            prop_value = self.prop( table.c )
+        else:
+            prop_value = self.prop
+        prop_value = self.evaluate_property( prop_value )
+        setattr( self.entity, self.name, prop_value )
+
+    def evaluate_property( self, prop ):
+        if self.args or self.kwargs:
+            raise Exception('superfluous arguments passed to GenericProperty')
+        return prop
+    
     def _config( self, cls, mapper, key ):
         if hasattr(self.prop, '__call__'):
             prop_value = self.prop( mapper.local_table.c )
@@ -76,10 +144,8 @@ class GenericProperty( DeferredProperty ):
         
 class ColumnProperty( GenericProperty ):
 
-    def _config(self, cls, mapper, key):
-        setattr( cls, key, column_property( self.prop( mapper.local_table.c ).label(None), 
-                                            *self.args, 
-                                            **self.kwargs ) )
+    def evaluate_property( self, prop ):
+        return orm.column_property( prop.label( None ), *self.args, **self.kwargs )
 
 class has_property( ClassMutator ):
     

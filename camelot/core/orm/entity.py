@@ -1,9 +1,12 @@
+import sys
+
 from sqlalchemy import orm, schema
 from sqlalchemy.ext.declarative import ( _declarative_constructor,
                                          DeclarativeMeta )
 
 from . statements import MUTATORS
-from . options import DEFAULT_AUTO_PRIMARYKEY_NAME, DEFAULT_AUTO_PRIMARYKEY_TYPE
+from . properties import EntityBuilder, Property
+from . import options
 
 class EntityDescriptor(object):
     """
@@ -12,11 +15,79 @@ class EntityDescriptor(object):
     defined on an Entity before the relation is passed to Declarative.
     """
 
+    global_counter = 0
+    
     def __init__( self, entity ):
         self.entity = entity
         self.parent = None
         self.relationships = []
+        self.has_pk = False
+        self._pk_col_done = False
+        self.module = sys.modules.get( entity.__module__ )
+        self.builders = [] 
+        self.constraints = []
+        self.tablename = entity.__tablename__
+        self.counter = EntityDescriptor.global_counter
+        EntityDescriptor.global_counter += 1
+        #
+        # verify if a primary key was set manually
+        #
+        for key, value in entity.__dict__.items():
+            if isinstance( value, schema.Column ):
+                if value.primary_key:
+                    self.has_pk = True
+            if isinstance( value, EntityBuilder ):
+                self.builders.append( value )
+            if isinstance( value, Property ):
+                value.entity = entity
+                value.name = key
+        # execute the builders in the order they were created
+        self.builders.sort( key = lambda b:b.counter )
         
+    def create_non_pk_cols(self):
+        self.call_builders( 'create_non_pk_cols' )
+        
+    def create_pk_cols( self ):
+        """
+        Create primary_key columns. That is, call the 'create_pk_cols'
+        builders then add a primary key to the table if it hasn't already got
+        one and needs one.
+
+        This method is "semi-recursive" in some cases: it calls the
+        create_keys method on ManyToOne relationships and those in turn call
+        create_pk_cols on their target. It shouldn't be possible to have an
+        infinite loop since a loop of primary_keys is not a valid situation.
+        """
+        if self._pk_col_done:
+            return
+
+        self.call_builders( 'create_pk_cols' )
+
+        if not self.has_pk:
+            colname = options.DEFAULT_AUTO_PRIMARYKEY_NAME
+
+            self.add_column(
+                colname,
+                schema.Column( colname, options.DEFAULT_AUTO_PRIMARYKEY_TYPE,
+                               primary_key = True ) )
+        self._pk_col_done = True
+        
+    def create_properties(self):
+        self.call_builders( 'create_properties' )        
+        
+    def add_column( self, key, col ):
+        setattr( self.entity, key, col )
+        if hasattr( col, 'primary_key' ) and col.primary_key:
+            self.has_pk = True   
+            
+    def add_constraint( self, constraint ):
+        self.constraints.append( constraint )            
+    
+    def append_constraints( self ): 
+        table = orm.class_mapper( self.entity ).local_table
+        for constraint in self.constraints:
+            table.append_constraint( constraint )
+            
     def get_inverse_relation( self, rel, check_reverse=True ):
         '''
         Return the inverse relation of rel, if any, None otherwise.
@@ -42,9 +113,15 @@ class EntityDescriptor(object):
 
         return matching_rel
         
-    def add_property( self, prop ):
-        pass
+    def add_property( self, name, prop ):
+        mapper = orm.class_mapper( self.entity )
+        mapper.add_property( name, property )
     
+    def call_builders(self, what):
+        for builder in self.builders:
+            if hasattr(builder, what):
+                getattr(builder, what)()
+                
     def find_relationship(self, name):
         for rel in self.relationships:
             if rel.name == name:
@@ -74,36 +151,27 @@ class EntityMeta( DeclarativeMeta ):
             # use default tablename if none set
             #
             if '__tablename__' not in dict_:
-                dict_['__tablename__'] = classname.lower()     
-            #
-            # handle the Properties
-            #
-            has_primary_key = False
-            for key, value in dict_.items():
-                if isinstance( value, schema.Column ):
-                    if value.primary_key:
-                        has_primary_key = True
-            if has_primary_key == False:
-                #
-                # add a primary key
-                #
-                primary_key_column = schema.Column( DEFAULT_AUTO_PRIMARYKEY_TYPE,
-                                                    primary_key = True )
-                dict_[ DEFAULT_AUTO_PRIMARYKEY_NAME ] = primary_key_column            
+                dict_['__tablename__'] = classname.lower()        
         return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
     
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
         from . properties import Property
+        if classname != 'Entity':
+            cls._descriptor = EntityDescriptor( cls )
+            for key, value in dict_.items():
+                if isinstance( value, Property ):
+                    value.attach( cls, key )
+            cls._descriptor.create_pk_cols()
+        #
+        # Calling DeclarativeMeta's __init__ creates the mapper and
+        # the table for this class
+        #
         super( EntityMeta, cls ).__init__( classname, bases, dict_ )
-        cls._descriptor = EntityDescriptor( cls )
-        for key, value in dict_.items():
-            if isinstance( value, Property ):
-                value.attach( cls, key )
+
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
-        
         
 class EntityBase( object ):
     """A declarative base class that adds some methods that used to be
@@ -113,11 +181,39 @@ class EntityBase( object ):
         from . import Session
         _declarative_constructor( self, *args, **kwargs ) 
         Session().add( self ) 
-                        
+                                    
     #
     # methods below were copied from Elixir to mimic the Elixir Entity
     # behavior
     #
+    
+    def set( self, **kwargs ):
+        for key, value in kwargs.iteritems():
+            setattr( self, key, value )
+
+    @classmethod
+    def update_or_create( cls, data, surrogate = True ):
+        
+        mapper = orm.class_mapper( cls )
+        pk_props = mapper.primary_key
+
+        # if all pk are present and not None
+        if not [1 for p in pk_props if data.get( p.key ) is None]:
+            pk_tuple = tuple( [data[prop.key] for prop in pk_props] )
+            record = cls.query.get(pk_tuple)
+            if record is None:
+                if surrogate:
+                    raise Exception("cannot create surrogate with pk")
+                else:
+                    record = cls()
+        else:
+            if surrogate:
+                record = cls()
+            else:
+                raise Exception("cannot create non surrogate without pk")
+        record.from_dict( data )
+        return record
+    
     def from_dict(self, data):
         """
         Update a mapped class with data from a JSON-style nested dict/list
@@ -126,13 +222,13 @@ class EntityBase( object ):
         # surrogate can be guessed from autoincrement/sequence but I guess
         # that's not 100% reliable, so we'll need an override
 
-        mapper = orm.object_mapper(self)
+        mapper = orm.object_mapper( self )
 
         for key, value in data.iteritems():
             if isinstance(value, dict):
                 dbvalue = getattr(self, key)
                 rel_class = mapper.get_property(key).mapper.class_
-                pk_props = rel_class._descriptor.primary_key_properties
+                pk_props = orm.class_mapper( rel_class ).primary_key
 
                 # If the data doesn't contain any pk, and the relationship
                 # already has a value, update that record.
@@ -158,21 +254,24 @@ class EntityBase( object ):
             else:
                 setattr(self, key, value)
 
-    def to_dict(self, deep={}, exclude=[]):
+    def to_dict( self, deep = {}, exclude = [] ):
         """Generate a JSON-style nested dict/list structure from an object."""
-        col_prop_names = [p.key for p in self.mapper.iterate_properties \
+        
+        mapper = orm.object_mapper( self )
+        
+        col_prop_names = [p.key for p in mapper.iterate_properties \
                                       if isinstance(p, orm.properties.ColumnProperty)]
         data = dict([(name, getattr(self, name))
                      for name in col_prop_names if name not in exclude])
         for rname, rdeep in deep.iteritems():
             dbdata = getattr(self, rname)
             #FIXME: use attribute names (ie coltoprop) instead of column names
-            fks = self.mapper.get_property(rname).remote_side
-            exclude = [c.name for c in fks]
+            fks = mapper.get_property( rname ).remote_side
+            exclude = [ c.name for c in fks ]
             if dbdata is None:
                 data[rname] = None
             elif isinstance(dbdata, list):
-                data[rname] = [o.to_dict(rdeep, exclude) for o in dbdata]
+                data[rname] = [ o.to_dict( rdeep, exclude ) for o in dbdata ]
             else:
                 data[rname] = dbdata.to_dict(rdeep, exclude)
         return data
