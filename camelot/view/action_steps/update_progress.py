@@ -59,6 +59,9 @@ updated.
         self._detail = detail
         self._clear_details = clear_details
         
+    def __unicode__( self ):
+        return u'Update Progress {0._value:03d}/{0._maximum:03d} {0._text}'.format( self )
+    
     def gui_run( self, gui_context ):
         """This method will update the progress dialog, if such dialog exists
         within the GuiContext
