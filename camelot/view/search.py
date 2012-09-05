@@ -50,7 +50,7 @@ def create_entity_search_query_decorator( admin, text ):
         # join conditions : list of join entities
         joins = []
 
-        def append_column( c ):
+        def append_column( c, text, args ):
             """add column c to the where clause using a clause that
             is relevant for that type of column"""
             arg = None
@@ -95,26 +95,30 @@ def create_entity_search_query_decorator( admin, text ):
             if arg is not None:
                 arg = sql.and_(c != None, arg)
                 args.append(arg)
-            
-        if admin.search_all_fields:
-            mapper = orm.class_mapper( admin.entity )
-            for property in mapper.iterate_properties:
-                if isinstance( property, orm.properties.ColumnProperty ):
-                    for column in property.columns:
-                        if isinstance( column, schema.Column ):
-                            append_column( column )
 
-        for column_name in admin.list_search:
-            path = column_name.split('.')
-            target = admin.entity
-            for path_segment in path:
-                mapper = orm.class_mapper( target )
-                property = mapper.get_property( path_segment )
-                if isinstance(property, orm.properties.PropertyLoader):
-                    joins.append(getattr(target, path_segment))
-                    target = property.mapper.class_
-                else:
-                    append_column(property.columns[0])
+        for t in text.split(' '):
+            subexp = []
+            if admin.search_all_fields:
+                mapper = orm.class_mapper( admin.entity )
+                for property in mapper.iterate_properties:
+                    if isinstance( property, orm.properties.ColumnProperty ):
+                        for column in property.columns:
+                            if isinstance( column, schema.Column ):
+                                append_column( column, t, subexp )
+
+            for column_name in admin.list_search:
+                path = column_name.split('.')
+                target = admin.entity
+                for path_segment in path:
+                    mapper = orm.class_mapper( target )
+                    property = mapper.get_property( path_segment )
+                    if isinstance(property, orm.properties.PropertyLoader):
+                        joins.append(getattr(target, path_segment))
+                        target = property.mapper.class_
+                    else:
+                        append_column(property.columns[0], t, subexp)
+
+            args.append(subexp)
 
         def create_query_decorator(joins, args):
             """Bind the join and args to a query decorator function"""
@@ -125,11 +129,10 @@ def create_entity_search_query_decorator( admin, text ):
                 clause for searching the resultset of the original query"""
                 for join in joins:
                     query = query.outerjoin(join)
-                if len(args):
-                    if len(args)>1:
-                        query = query.filter( sql.or_( *args ) )
-                    else:
-                        query = query.filter(args[0])
+
+                subqueries = (sql.or_(*arg) for arg in args)
+                query = query.filter(sql.and_(*subqueries))
+
                 return query
 
             return query_decorator
