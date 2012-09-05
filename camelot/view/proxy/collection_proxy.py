@@ -1065,11 +1065,12 @@ position in the query.
             collection.append( o )
 
     @model_function
-    def remove_objects( self, objects_to_remove, delete = True ):
+    def remove_objects( self, objects_to_remove, delete = True, flush = True ):
         """
         :param objects_to_remove: a list of objects that need to be removed
         from the collection
         :param delete: True if the objects need to be deleted
+        :param fulsh: True if the flush needs to occur in this method
         """
         #
         # it might be impossible to determine the depending objects once
@@ -1098,7 +1099,7 @@ position in the query.
                 # even if the object is not deleted, it needs to be flushed to make
                 # sure the persisted object is out of the collection as well
                 self.remove( obj )
-                if self.admin.is_persistent( obj ):
+                if self.admin.is_persistent( obj ) and flush:
                     self.admin.flush( obj )
             #
             # remove the entity from the cache, only if the delete and remove
@@ -1169,11 +1170,12 @@ position in the query.
         self.endInsertRows()
         
     @model_function
-    def append_object( self, obj ):
+    def append_object( self, obj, flush = True ):
         """Append an object to this collection, set the possible defaults and flush
         the object if possible/needed
         
         :param obj: the object to be added to the collection
+        :param flush: if this object should be flushed or not
         :return: the new number of rows in the collection
         """
         rows = self._rows
@@ -1182,13 +1184,14 @@ position in the query.
         self.append( obj )
         # defaults might depend on object being part of a collection
         self.admin.set_defaults( obj )
-        self.unflushed_rows.add( row )
-        if self.flush_changes and not len( self.validator.objectValidity( obj ) ):
-            self.admin.flush( obj )
-            try:
-                self.unflushed_rows.remove( row )
-            except KeyError:
-                pass
+        if flush:
+            self.unflushed_rows.add( row )
+            if self.flush_changes and not len( self.validator.objectValidity( obj ) ):
+                self.admin.flush( obj )
+                try:
+                    self.unflushed_rows.remove( row )
+                except KeyError:
+                    pass
         for depending_obj in self.admin.get_depending_objects( obj ):
             self.rsh.sendEntityUpdate( self, depending_obj )
         self._rows = rows + 1

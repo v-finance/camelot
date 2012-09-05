@@ -94,10 +94,7 @@ class Movie( Entity ):
     # replaced by backref on Cast class
     #cast = relationship( 'Cast' )
     visitor_reports = relationship( 'VisitorReport', )
-    tags = ManyToMany( 'Tag', 
-                       tablename = 'tags_movies__movies_tags', 
-                       local_colname = 'movies_id', 
-                       remote_colname = 'tags_id' )
+    tags = ManyToMany( 'Tag' ) 
 # end short movie definition
     #
     # Camelot includes custom sqlalchemy types, like Image, which stores an
@@ -223,6 +220,7 @@ class Tag( Entity ):
     __tablename__ = 'tags'
     
     name = Column( sqlalchemy.types.Unicode(60), nullable = False )
+    movies = ManyToMany( 'Movie' ) 
 
     def __unicode__( self ):
         return self.name
