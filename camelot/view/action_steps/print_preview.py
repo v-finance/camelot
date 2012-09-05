@@ -54,7 +54,7 @@ class PrintPreview( ActionStep ):
     
     def __init__( self, document ):
         self.document = document
-        self.document.moveToThread( QtGui.QApplication.instance().thread() )
+        self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
         self.printer = None
         self.page_size = None
         self.page_orientation = None
