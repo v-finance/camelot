@@ -2,36 +2,37 @@
 test many to many relationships
 """
 
-from elixir import *
-import elixir
+import logging
 
-#-----------
+from . import TestMetaData
 
-class TestManyToMany(object):
-    def setup(self):
-        metadata.bind = 'sqlite://'
+from camelot.core.orm import ( Field, ManyToMany, ManyToOne, using_options,
+                               has_field, has_many, belongs_to, options,
+                               has_and_belongs_to_many )
 
-    def teardown(self):
-        cleanup_all(True)
+from sqlalchemy.types import String, Unicode, Integer
+from sqlalchemy import orm, and_, schema
 
-    def test_simple(self):
-        class A(Entity):
-            using_options(shortnames=True)
+class TestManyToMany( TestMetaData ):
+
+    def test_simple( self ):
+        
+        class A( self.Entity ):
+            using_options( shortnames = True )
             name = Field(String(60))
             as_ = ManyToMany('A')
             bs_ = ManyToMany('B')
 
-        class B(Entity):
-            using_options(shortnames=True)
+        class B( self.Entity ):
+            using_options( shortnames = True )
             name = Field(String(60))
             as_ = ManyToMany('A')
 
-        setup_all(True)
-        A.mapper.compile()
+        self.create_all()
 
         # check m2m table was generated correctly
         m2m_table = A.bs_.property.secondary
-        assert m2m_table.name in metadata.tables
+        assert m2m_table.name in self.metadata.tables
 
         # check column names
         m2m_cols = m2m_table.columns
@@ -44,10 +45,10 @@ class TestManyToMany(object):
         assert 'inverse_id' in m2m_cols
 
         # check the relationships work as expected
-        b1 = B(name='b1', as_=[A(name='a1')])
+        with self.session.begin():
+            b1 = B(name='b1', as_=[A(name='a1')])
 
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         a = A.query.one()
         b = B.query.one()
@@ -56,28 +57,27 @@ class TestManyToMany(object):
         assert b in a.bs_
 
     def test_table_kwargs(self):
-        class A(Entity):
+        
+        class A(self.Entity):
             bs_ = ManyToMany('B', table_kwargs={'info': {'test': True}})
 
-        class B(Entity):
+        class B(self.Entity):
             as_ = ManyToMany('A')
 
-        setup_all(True)
-        A.mapper.compile()
+        self.create_all()
 
         assert A.bs_.property.secondary.info['test'] is True
 
     def test_table_default_kwargs(self):
         options_defaults['table_options'] = {'info': {'test': True}}
 
-        class A(Entity):
+        class A(self.Entity):
             bs_ = ManyToMany('B')
 
-        class B(Entity):
+        class B(self.Entity):
             as_ = ManyToMany('A')
 
-        setup_all(True)
-        A.mapper.compile()
+        self.create_all()
 
         options_defaults['table_options'] = {}
 
@@ -87,23 +87,22 @@ class TestManyToMany(object):
 
     def test_custom_global_column_nameformat(self):
         # this needs to be done before declaring the classes
-        elixir.options.M2MCOL_NAMEFORMAT = elixir.options.OLD_M2MCOL_NAMEFORMAT
+        options.M2MCOL_NAMEFORMAT = options.OLD_M2MCOL_NAMEFORMAT
 
-        class A(Entity):
+        class A(self.Entity):
             bs_ = ManyToMany('B')
 
-        class B(Entity):
+        class B(self.Entity):
             as_ = ManyToMany('A')
 
-        setup_all(True)
+        self.create_all()
 
         # revert to original format
-        elixir.options.M2MCOL_NAMEFORMAT = elixir.options.NEW_M2MCOL_NAMEFORMAT
+        options.M2MCOL_NAMEFORMAT = options.NEW_M2MCOL_NAMEFORMAT
 
         # check m2m table was generated correctly
-        A.mapper.compile()
         m2m_table = A.bs_.property.secondary
-        assert m2m_table.name in metadata.tables
+        assert m2m_table.name in self.metadata.tables
 
         # check column names
         m2m_cols = m2m_table.columns
@@ -112,21 +111,20 @@ class TestManyToMany(object):
 
     def test_alternate_column_formatter(self):
         # this needs to be done before declaring the classes
-        elixir.options.M2MCOL_NAMEFORMAT = \
-            elixir.options.ALTERNATE_M2MCOL_NAMEFORMAT
+        options.M2MCOL_NAMEFORMAT = \
+            options.ALTERNATE_M2MCOL_NAMEFORMAT
 
-        class A(Entity):
+        class A(self.Entity):
             as_ = ManyToMany('A')
             bs_ = ManyToMany('B')
 
-        class B(Entity):
+        class B(self.Entity):
             as_ = ManyToMany('A')
 
-        setup_all(True)
-        A.mapper.compile()
+        self.create_all()
 
         # revert to original format
-        elixir.options.M2MCOL_NAMEFORMAT = elixir.options.NEW_M2MCOL_NAMEFORMAT
+        options.M2MCOL_NAMEFORMAT = options.NEW_M2MCOL_NAMEFORMAT
 
         # check m2m table column names were generated correctly
         m2m_cols = A.bs_.property.secondary.columns
@@ -138,158 +136,29 @@ class TestManyToMany(object):
         assert 'as__id' in m2m_cols
         assert 'inverse_id' in m2m_cols
 
-    def test_upgrade_rename_col(self):
-        elixir.options.M2MCOL_NAMEFORMAT = elixir.options.OLD_M2MCOL_NAMEFORMAT
-
-        class A(Entity):
-            using_options(shortnames=True)
-            name = Field(String(20))
-            links_to = ManyToMany('A')
-            is_linked_from = ManyToMany('A')
-            bs_ = ManyToMany('B')
-
-        class B(Entity):
-            using_options(shortnames=True)
-            name = Field(String(20))
-            as_ = ManyToMany('A')
-
-        setup_all(True)
-
-        a = A(name='a1', links_to=[A(name='a2')])
-
-        session.commit()
-        session.clear()
-
-        del A
-        del B
-
-        # do not drop the tables, that's the whole point!
-        cleanup_all()
-
-        # simulate a renaming of columns (as given by the migration aid)
-        # 'a_id1' to 'is_linked_from_id'.
-        # 'a_id2' to 'links_to_id'.
-        conn = metadata.bind.connect()
-        conn.execute("ALTER TABLE a_links_to__a_is_linked_from RENAME TO temp")
-        conn.execute("CREATE TABLE a_links_to__a_is_linked_from ("
-                        "is_linked_from_id INTEGER NOT NULL, "
-                        "links_to_id INTEGER NOT NULL, "
-                     "PRIMARY KEY (is_linked_from_id, links_to_id), "
-                     "CONSTRAINT a_fk1 FOREIGN KEY(is_linked_from_id) "
-                                      "REFERENCES a (id), "
-                     "CONSTRAINT a_fk2 FOREIGN KEY(links_to_id) "
-                                      "REFERENCES a (id))")
-        conn.execute("INSERT INTO a_links_to__a_is_linked_from "
-                     "(is_linked_from_id, links_to_id) "
-                     "SELECT a_id1, a_id2 FROM temp")
-        conn.close()
-
-        # ...
-        elixir.options.M2MCOL_NAMEFORMAT = elixir.options.NEW_M2MCOL_NAMEFORMAT
-#        elixir.options.MIGRATION_TO_07_AID = True
-
-        class A(Entity):
-            using_options(shortnames=True)
-            name = Field(String(20))
-            links_to = ManyToMany('A')
-            is_linked_from = ManyToMany('A')
-            bs_ = ManyToMany('B')
-
-        class B(Entity):
-            using_options(shortnames=True)
-            name = Field(String(20))
-            as_ = ManyToMany('A')
-
-        setup_all()
-
-        a1 = A.get_by(name='a1')
-        assert len(a1.links_to) == 1
-        assert not a1.is_linked_from
-
-        a2 = a1.links_to[0]
-        assert a2.name == 'a2'
-        assert not a2.links_to
-        assert a2.is_linked_from == [a1]
-
-    def test_upgrade_local_colname(self):
-        elixir.options.M2MCOL_NAMEFORMAT = elixir.options.OLD_M2MCOL_NAMEFORMAT
-
-        class A(Entity):
-            using_options(shortnames=True)
-            name = Field(String(20))
-            links_to = ManyToMany('A')
-            is_linked_from = ManyToMany('A')
-            bs_ = ManyToMany('B')
-
-        class B(Entity):
-            using_options(shortnames=True)
-            name = Field(String(20))
-            as_ = ManyToMany('A')
-
-        setup_all(True)
-
-        a = A(name='a1', links_to=[A(name='a2')])
-
-        session.commit()
-        session.clear()
-
-        del A
-        del B
-
-        # do not drop the tables, that's the whole point!
-        cleanup_all()
-
-        # ...
-        elixir.options.M2MCOL_NAMEFORMAT = elixir.options.NEW_M2MCOL_NAMEFORMAT
-#        elixir.options.MIGRATION_TO_07_AID = True
-
-        class A(Entity):
-            using_options(shortnames=True)
-            name = Field(String(20))
-            links_to = ManyToMany('A', local_colname='a_id1')
-            is_linked_from = ManyToMany('A', local_colname='a_id2')
-            bs_ = ManyToMany('B')
-
-        class B(Entity):
-            using_options(shortnames=True)
-            name = Field(String(20))
-            as_ = ManyToMany('A')
-
-        setup_all()
-
-        a1 = A.get_by(name='a1')
-        assert len(a1.links_to) == 1
-        assert not a1.is_linked_from
-
-        a2 = a1.links_to[0]
-        assert a2.name == 'a2'
-        assert not a2.links_to
-        assert a2.is_linked_from == [a1]
-
     def test_manual_column_format(self):
-        class A(Entity):
+        class A(self.Entity):
             using_options(tablename='aye')
             name = Field(String(60))
             bs_ = ManyToMany('B', column_format='%(entity)s_%(key)s')
 
-        class B(Entity):
+        class B(self.Entity):
             using_options(tablename='bee')
             name = Field(String(60))
             as_ = ManyToMany('A', column_format='%(entity)s_%(key)s')
 
-        setup_all(True)
+        self.create_all()
 
         # check column names were generated correctly
-        A.mapper.compile()
         m2m_cols = A.bs_.property.secondary.columns
         assert 'a_id' in m2m_cols
         assert 'b_id' in m2m_cols
 
         # check the relationships work as expected
-        b1 = B(name='b1', as_=[A(name='a1')])
-
-        session.commit()
-        session.clear()
+        with self.session.begin():
+            b1 = B(name='b1', as_=[A(name='a1')])
+                                   
+        self.session.expire_all()
 
         a = A.query.one()
         b = B.query.one()
@@ -298,22 +167,22 @@ class TestManyToMany(object):
         assert b in a.bs_
 
     def test_multi_pk_in_target(self):
-        class A(Entity):
+        class A(self.Entity):
             key1 = Field(Integer, primary_key=True, autoincrement=False)
             key2 = Field(String(40), primary_key=True)
 
             bs_ = ManyToMany('B')
 
-        class B(Entity):
+        class B(self.Entity):
             name = Field(String(60))
             as_ = ManyToMany('A')
 
-        setup_all(True)
+        self.create_all()
 
-        b1 = B(name='b1', as_=[A(key1=10, key2='a1')])
+        with self.session.begin():
+            b1 = B(name='b1', as_=[A(key1=10, key2='a1')])
 
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         a = A.query.one()
         b = B.query.one()
@@ -322,23 +191,23 @@ class TestManyToMany(object):
         assert b in a.bs_
 
     def test_multi(self):
-        class A(Entity):
+        class A(self.Entity):
             name = Field(String(100))
 
             rel1 = ManyToMany('B')
             rel2 = ManyToMany('B')
 
-        class B(Entity):
+        class B(self.Entity):
             name = Field(String(20), primary_key=True)
 
-        setup_all(True)
+        self.create_all()
 
-        b1 = B(name='b1')
-        a1 = A(name='a1', rel1=[B(name='b2'), b1],
-                          rel2=[B(name='b3'), B(name='b4'), b1])
+        with self.session.begin():
+            b1 = B(name='b1')
+            a1 = A(name='a1', rel1=[B(name='b2'), b1],
+                              rel2=[B(name='b3'), B(name='b4'), b1])
 
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         a1 = A.query.one()
         b1 = B.get_by(name='b1')
@@ -349,20 +218,20 @@ class TestManyToMany(object):
         assert b2 in a1.rel1
 
     def test_selfref(self):
-        class Person(Entity):
+        class Person(self.Entity):
             using_options(shortnames=True)
             name = Field(String(30))
 
             friends = ManyToMany('Person')
 
-        setup_all(True)
+        self.create_all()
 
-        barney = Person(name="Barney")
-        homer = Person(name="Homer", friends=[barney])
-        barney.friends.append(homer)
+        with self.session.begin():
+            barney = Person(name="Barney")
+            homer = Person(name="Homer", friends=[barney])
+            barney.friends.append(homer)
 
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         homer = Person.get_by(name="Homer")
         barney = Person.get_by(name="Barney")
@@ -375,21 +244,21 @@ class TestManyToMany(object):
         assert 'inverse_id' in m2m_cols
 
     def test_bidirectional_selfref(self):
-        class Person(Entity):
+        class Person(self.Entity):
             using_options(shortnames=True)
             name = Field(String(30))
 
             friends = ManyToMany('Person')
             is_friend_of = ManyToMany('Person')
 
-        setup_all(True)
+        self.create_all()
 
-        barney = Person(name="Barney")
-        homer = Person(name="Homer", friends=[barney])
-        barney.friends.append(homer)
+        with self.session.begin():
+            barney = Person(name="Barney")
+            homer = Person(name="Homer", friends=[barney])
+            barney.friends.append(homer)
 
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         homer = Person.get_by(name="Homer")
         barney = Person.get_by(name="Barney")
@@ -402,23 +271,23 @@ class TestManyToMany(object):
         assert 'is_friend_of_id' in m2m_cols
 
     def test_has_and_belongs_to_many(self):
-        class A(Entity):
+        class A(self.Entity):
             has_field('name', String(100))
 
             has_and_belongs_to_many('bs', of_kind='B')
 
-        class B(Entity):
+        class B(self.Entity):
             has_field('name', String(100), primary_key=True)
 
-        setup_all(True)
+        self.create_all()
 
-        b1 = B(name='b1')
-        a1 = A(name='a1', bs=[B(name='b2'), b1])
-        a2 = A(name='a2', bs=[B(name='b3'), b1])
-        a3 = A(name='a3')
+        with self.session.begin():
+            b1 = B(name='b1')
+            a1 = A(name='a1', bs=[B(name='b2'), b1])
+            a2 = A(name='a2', bs=[B(name='b3'), b1])
+            a3 = A(name='a3')
 
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         a1 = A.get_by(name='a1')
         a2 = A.get_by(name='a2')
@@ -432,7 +301,7 @@ class TestManyToMany(object):
         assert not a3.bs
 
     def test_local_and_remote_colnames(self):
-        class A(Entity):
+        class A(self.Entity):
             using_options(shortnames=True)
             key1 = Field(Integer, primary_key=True, autoincrement=False)
             key2 = Field(String(40), primary_key=True)
@@ -440,18 +309,18 @@ class TestManyToMany(object):
             bs_ = ManyToMany('B', local_colname=['foo', 'bar'],
                                   remote_colname="baz")
 
-        class B(Entity):
+        class B(self.Entity):
             using_options(shortnames=True)
             name = Field(String(60))
             as_ = ManyToMany('A', remote_colname=['foo', 'bar'],
                                   local_colname="baz")
 
-        setup_all(True)
+        self.create_all()
 
-        b1 = B(name='b1', as_=[A(key1=10, key2='a1')])
+        with self.session.begin():
+            b1 = B(name='b1', as_=[A(key1=10, key2='a1')])
 
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         a = A.query.one()
         b = B.query.one()
@@ -462,31 +331,31 @@ class TestManyToMany(object):
     def test_manual_table_auto_joins(self):
         from sqlalchemy import Table, Column, ForeignKey, ForeignKeyConstraint
 
-        a_b = Table('a_b', metadata,
-                    Column('a_key1', None),
-                    Column('a_key2', None),
-                    Column('b_id', None, ForeignKey('b.id')),
-                    ForeignKeyConstraint(['a_key1', 'a_key2'],
-                                         ['a.key1', 'a.key2']))
+        a_b = schema.Table('a_b', self.metadata,
+                           schema.Column('a_key1', None),
+                           schema.Column('a_key2', None),
+                           schema.Column('b_id', None, schema.ForeignKey('b.id')),
+                           schema.ForeignKeyConstraint(['a_key1', 'a_key2'],
+                                                       ['a.key1', 'a.key2']))
 
-        class A(Entity):
+        class A(self.Entity):
             using_options(shortnames=True)
             key1 = Field(Integer, primary_key=True, autoincrement=False)
             key2 = Field(String(40), primary_key=True)
 
             bs_ = ManyToMany('B', table=a_b)
 
-        class B(Entity):
+        class B(self.Entity):
             using_options(shortnames=True)
             name = Field(String(60))
             as_ = ManyToMany('A', table=a_b)
 
-        setup_all(True)
+        self.create_all()
 
-        b1 = B(name='b1', as_=[A(key1=10, key2='a1')])
+        with self.session.begin():
+            b1 = B(name='b1', as_=[A(key1=10, key2='a1')])
 
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         a = A.query.one()
         b = B.query.one()
@@ -497,12 +366,12 @@ class TestManyToMany(object):
     def test_manual_table_manual_joins(self):
         from sqlalchemy import Table, Column, and_
 
-        a_b = Table('a_b', metadata,
-                    Column('a_key1', Integer),
-                    Column('a_key2', String(40)),
-                    Column('b_id', String(60)))
+        a_b = schema.Table('a_b', self.metadata,
+                           schema.Column('a_key1', Integer),
+                           schema.Column('a_key2', String(40)),
+                           schema.Column('b_id', String(60)))
 
-        class A(Entity):
+        class A(self.Entity):
             using_options(shortnames=True)
             key1 = Field(Integer, primary_key=True, autoincrement=False)
             key2 = Field(String(40), primary_key=True)
@@ -514,16 +383,16 @@ class TestManyToMany(object):
                              foreign_keys=[a_b.c.a_key1, a_b.c.a_key2,
                                  a_b.c.b_id])
 
-        class B(Entity):
+        class B(self.Entity):
             using_options(shortnames=True)
             name = Field(String(60))
 
-        setup_all(True)
+        self.create_all()
 
-        a1 = A(key1=10, key2='a1', bs_=[B(name='b1')])
+        with self.session.begin():
+            a1 = A(key1=10, key2='a1', bs_=[B(name='b1')])
 
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         a = A.query.one()
         b = B.query.one()

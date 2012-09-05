@@ -17,18 +17,21 @@ class EntityDescriptor(object):
 
     global_counter = 0
     
-    def __init__( self, entity ):
-        self.entity = entity
+    def __init__( self ):
         self.parent = None
         self.relationships = []
         self.has_pk = False
         self._pk_col_done = False
-        self.module = sys.modules.get( entity.__module__ )
         self.builders = [] 
         self.constraints = []
-        self.tablename = entity.__tablename__
         self.counter = EntityDescriptor.global_counter
+        self.table_options = {}
         EntityDescriptor.global_counter += 1
+        
+    def set_entity( self, entity ):
+        self.entity = entity
+        self.module = sys.modules.get( entity.__module__ )
+        self.tablename = entity.__tablename__
         #
         # verify if a primary key was set manually
         #
@@ -44,6 +47,18 @@ class EntityDescriptor(object):
         # execute the builders in the order they were created
         self.builders.sort( key = lambda b:b.counter )
         
+    @property
+    def primary_keys( self ):
+        return self.entity.__table__.primary_key
+    
+    @property
+    def table_fullname( self ):
+        return self.entity.__tablename__
+    
+    @property
+    def metadata( self ):
+        return self.entity.__table__.metadata
+    
     def create_non_pk_cols(self):
         self.call_builders( 'create_non_pk_cols' )
         
@@ -74,6 +89,9 @@ class EntityDescriptor(object):
         
     def create_properties(self):
         self.call_builders( 'create_properties' )        
+
+    def create_tables(self):
+        self.call_builders( 'create_tables' )        
         
     def add_column( self, key, col ):
         setattr( self.entity, key, col )
@@ -142,6 +160,7 @@ class EntityMeta( DeclarativeMeta ):
         # don't modify the Entity class itself
         #
         if classname != 'Entity':
+            dict_['_descriptor'] = EntityDescriptor()
             #
             # process the mutators
             #
@@ -158,8 +177,8 @@ class EntityMeta( DeclarativeMeta ):
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
         from . properties import Property
-        if classname != 'Entity':
-            cls._descriptor = EntityDescriptor( cls )
+        if '_descriptor' in dict_:
+            dict_['_descriptor'].set_entity( cls )
             for key, value in dict_.items():
                 if isinstance( value, Property ):
                     value.attach( cls, key )

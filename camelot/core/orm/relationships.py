@@ -384,43 +384,270 @@ class ManyToOne( Relationship ):
     def target_table( self ):
         return class_mapper( self.target ).local_table    
 
-class ManyToMany( DeferredProperty ):
-    """Generates a many to many relationship."""
+class ManyToMany( Relationship ):
+    uselist = True
 
-    process_order = 3
+    def __init__(self, of_kind, tablename=None,
+                 local_colname=None, remote_colname=None,
+                 ondelete=None, onupdate=None,
+                 table=None, schema=None,
+                 filter=None,
+                 table_kwargs=None,
+                 *args, **kwargs):
+        self.user_tablename = tablename
+
+        if local_colname and not isinstance(local_colname, list):
+            local_colname = [local_colname]
+        self.local_colname = local_colname or []
+        if remote_colname and not isinstance(remote_colname, list):
+            remote_colname = [remote_colname]
+        self.remote_colname = remote_colname or []
+
+        self.ondelete = ondelete
+        self.onupdate = onupdate
+
+        self.table = table
+        self.schema = schema
+
+        self.filter = filter
+        if filter is not None:
+            # We set viewonly to True by default for filtered relationships,
+            # unless manually overridden.
+            if 'viewonly' not in kwargs:
+                kwargs['viewonly'] = True
+
+        self.table_kwargs = table_kwargs or {}
+
+        self.primaryjoin_clauses = []
+        self.secondaryjoin_clauses = []
+
+        super(ManyToMany, self).__init__(of_kind, *args, **kwargs)
+
+    def column_format( self, data ):
+        return options.M2MCOL_NAMEFORMAT( data )
     
-    def __init__( self, target, tablename, local_colname, remote_colname, **kw ):
-        self.target = target
-        self.tablename = tablename
-        self.local = local_colname
-        self.remote = remote_colname
-        self.kw = kw
+    def get_table(self):
+        warnings.warn("The secondary_table attribute on ManyToMany objects is "
+                      "deprecated. You should rather use the table attribute.",
+                      DeprecationWarning, stacklevel=2)
+        return self.table
+    secondary_table = property(get_table)
 
-    def _config(self, cls, mapper, key):
-        """Create an association table between parent/target
-        as well as a relationship()."""
-
-        target_cls = cls._decl_class_registry[self.target]
-        local_pk = list(cls.__table__.primary_key)[0]
-        target_pk = list(target_cls.__table__.primary_key)[0]
-        t = schema.Table(
-                self.tablename,
-                cls.metadata,
-                schema.Column(self.local, schema.ForeignKey(local_pk), primary_key=True),
-                schema.Column(self.remote, schema.ForeignKey(target_pk), primary_key=True),
-                keep_existing=True
-            )
-        rel = relationship(target_cls,
-                secondary=t,
-                # use list instead of set because collection proxy does not
-                # work with sets
-                collection_class=self.kw.get('collection_class', list)
-            )
-        setattr(cls, key, rel)
-        self._setup_reverse(key, rel, target_cls)
-        
     def match_type_of(self, other):
-        return isinstance(other, ManyToMany) 
+        return isinstance(other, ManyToMany)
+
+    def create_tables(self):
+        if self.table is not None:
+            if 'primaryjoin' not in self.kwargs or \
+               'secondaryjoin' not in self.kwargs:
+                self._build_join_clauses()
+            assert self.inverse is None or self.inverse.table is None or \
+                   self.inverse.table is self.table
+            return
+
+        if self.inverse:
+            inverse = self.inverse
+            if inverse.table is not None:
+                self.table = inverse.table
+                self.primaryjoin_clauses = inverse.secondaryjoin_clauses
+                self.secondaryjoin_clauses = inverse.primaryjoin_clauses
+                return
+
+            assert not inverse.user_tablename or not self.user_tablename or \
+                   inverse.user_tablename == self.user_tablename
+            assert not inverse.remote_colname or not self.local_colname or \
+                   inverse.remote_colname == self.local_colname
+            assert not inverse.local_colname or not self.remote_colname or \
+                   inverse.local_colname == self.remote_colname
+            assert not inverse.schema or not self.schema or \
+                   inverse.schema == self.schema
+            assert not inverse.table_kwargs or not self.table_kwargs or \
+                   inverse.table_kwargs == self.table_kwargs
+
+            self.user_tablename = inverse.user_tablename or self.user_tablename
+            self.local_colname = inverse.remote_colname or self.local_colname
+            self.remote_colname = inverse.local_colname or self.remote_colname
+            self.schema = inverse.schema or self.schema
+            self.local_colname = inverse.remote_colname or self.local_colname
+
+        # compute table_kwargs
+        complete_kwargs = options.options_defaults['table_options'].copy()
+        complete_kwargs.update(self.table_kwargs)
+
+        #needs: table_options['schema'], autoload, tablename, primary_keys,
+        #entity.__name__, table_fullname
+        e1_desc = self.entity._descriptor
+        e2_desc = self.target._descriptor
+
+        # First, we compute the name of the table. Note that some of the
+        # intermediary variables are reused later for the constraint
+        # names.
+
+        # We use the name of the relation for the first entity
+        # (instead of the name of its primary key), so that we can
+        # have two many-to-many relations between the same objects
+        # without having a table name collision.
+        source_part = "%s_%s" % (e1_desc.tablename, self.name)
+
+        # And we use only the name of the table of the second entity
+        # when there is no inverse, so that a many-to-many relation
+        # can be defined without an inverse.
+        if self.inverse:
+            target_part = "%s_%s" % (e2_desc.tablename, self.inverse.name)
+        else:
+            target_part = e2_desc.tablename
+
+        if self.user_tablename:
+            tablename = self.user_tablename
+        else:
+            # We need to keep the table name consistent (independant of
+            # whether this relation or its inverse is setup first).
+            if self.inverse and source_part < target_part:
+                #XXX: use a different scheme for selfref (to not include the
+                #     table name twice)?
+                tablename = "%s__%s" % (target_part, source_part)
+            else:
+                tablename = "%s__%s" % (source_part, target_part)
+        # We pre-compute the names of the foreign key constraints
+        # pointing to the source (local) entity's table and to the
+        # target's table
+
+        # In some databases (at least MySQL) the constraint names need
+        # to be unique for the whole database, instead of per table.
+        source_fk_name = "%s_fk" % source_part
+        if self.inverse:
+            target_fk_name = "%s_fk" % target_part
+        else:
+            target_fk_name = "%s_inverse_fk" % source_part
+
+        columns = []
+        constraints = []
+
+        for num, desc, fk_name, rel, inverse, colnames, join_clauses in (
+          (0, e1_desc, source_fk_name, self, self.inverse,
+           self.local_colname, self.primaryjoin_clauses),
+          (1, e2_desc, target_fk_name, self.inverse, self,
+           self.remote_colname, self.secondaryjoin_clauses)):
+
+            fk_colnames = []
+            fk_refcols = []
+            if colnames:
+                assert len(colnames) == len(desc.primary_keys)
+            else:
+                # The data generated here will be fed to the M2M column
+                # formatter to generate the name of the columns of the
+                # intermediate table for *one* side of the relationship,
+                # that is, from the intermediate table to the current
+                # entity, as stored in the "desc" variable.
+                data = {# A) relationships info
+
+                        # the name of the rel going *from* the entity
+                        # we are currently generating a column pointing
+                        # *to*. This is generally *not* what you want to
+                        # use. eg in a "Post" and "Tag" example, with
+                        # relationships named 'tags' and 'posts', when
+                        # creating the columns from the intermediate
+                        # table to the "Post" entity, 'relname' will
+                        # contain 'tags'.
+                        'relname': rel and rel.name or 'inverse',
+
+                        # the name of the inverse relationship. In the
+                        # above example, 'inversename' will contain
+                        # 'posts'.
+                        'inversename': inverse and inverse.name
+                                               or 'inverse',
+                        # is A == B?
+                        'selfref': e1_desc is e2_desc,
+                        # provided for backward compatibility, DO NOT USE!
+                        'num': num,
+                        # provided for backward compatibility, DO NOT USE!
+                        'numifself': e1_desc is e2_desc and str(num + 1)
+                                                        or '',
+                        # B) target information (from the perspective of
+                        #    the intermediate table)
+                        'target': desc.entity,
+                        'entity': desc.entity.__name__.lower(),
+                        'tablename': desc.tablename,
+
+                        # C) current (intermediate) table name
+                        'current_table': tablename
+                       }
+                colnames = []
+                for pk_col in desc.primary_keys:
+                    data.update(key=pk_col.key)
+                    colnames.append(self.column_format(data))
+
+                for pk_col, colname in zip(desc.primary_keys, colnames):
+                    col = schema.Column(colname, pk_col.type, primary_key=True)
+                    columns.append(col)
+
+                    # Build the list of local columns which will be part
+                    # of the foreign key.
+                    fk_colnames.append(colname)
+
+                    # Build the list of column "paths" the foreign key will
+                    # point to
+                    target_path = "%s.%s" % (desc.table_fullname, pk_col.key)
+                    fk_refcols.append(target_path)
+
+                    # Build join clauses (in case we have a self-ref)
+                    if self.entity is self.target:
+                        join_clauses.append(col == pk_col)
+
+                onupdate = rel and rel.onupdate
+                ondelete = rel and rel.ondelete
+
+                #FIXME: fk_name is misleading
+                constraints.append(
+                    schema.ForeignKeyConstraint(fk_colnames, fk_refcols,
+                                                name=fk_name, onupdate=onupdate,
+                                                ondelete=ondelete))
+
+        args = columns + constraints
+
+        self.table = schema.Table( tablename, e1_desc.metadata,
+                                   *args, **complete_kwargs)
+
+    def _build_join_clauses(self):
+        # In the case we have a self-reference, we need to build join clauses
+        if self.entity is self.target:
+            if not self.local_colname and not self.remote_colname:
+                raise Exception(
+                    "Self-referential ManyToMany "
+                    "relationships in autoloaded entities need to have at "
+                    "least one of either 'local_colname' or 'remote_colname' "
+                    "argument specified. The '%s' relationship in the '%s' "
+                    "entity doesn't have either."
+                    % (self.name, self.entity.__name__))
+
+            self.primaryjoin_clauses, self.secondaryjoin_clauses = \
+                _get_join_clauses(self.table,
+                                  self.local_colname, self.remote_colname,
+                                  self.entity.table)
+
+    def get_prop_kwargs(self):
+        kwargs = {'secondary': self.table,
+                  'uselist': self.uselist}
+
+        if self.filter:
+            # we need to make a copy of the joinclauses
+            secondaryjoin_clauses = self.secondaryjoin_clauses[:] + \
+                                    [self.filter(self.target.table.c)]
+        else:
+            secondaryjoin_clauses = self.secondaryjoin_clauses
+
+        if self.target is self.entity or self.filter:
+            kwargs['primaryjoin'] = sql.and_(*self.primaryjoin_clauses)
+            kwargs['secondaryjoin'] = sql.and_(*secondaryjoin_clauses)
+
+        kwargs.update(self.kwargs)
+
+        return kwargs
+
+    def is_inverse(self, other):
+        return super(ManyToMany, self).is_inverse(other) and \
+               (self.user_tablename == other.user_tablename or
+                (not self.user_tablename and not other.user_tablename))
     
 class belongs_to( ClassMutator ):
 

@@ -127,6 +127,7 @@ class BackupMechanism(object):
         """
         from sqlalchemy.dialects.mysql import base as mysql_dialect
         from sqlalchemy.dialects import postgresql as postgresql_dialect  
+        import sqlalchemy.types
         #
         # Postgresql
         #
@@ -156,7 +157,6 @@ class BackupMechanism(object):
         from sqlalchemy import create_engine
         from sqlalchemy import MetaData, Table, Column
         from sqlalchemy.pool import NullPool
-        import sqlalchemy.types
         
         yield (0, 0, _('Analyzing database structure'))
         from_engine = settings.ENGINE()
