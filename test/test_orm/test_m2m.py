@@ -136,36 +136,6 @@ class TestManyToMany( TestMetaData ):
         assert 'as__id' in m2m_cols
         assert 'inverse_id' in m2m_cols
 
-    def test_manual_column_format(self):
-        class A(self.Entity):
-            using_options(tablename='aye')
-            name = Field(String(60))
-            bs_ = ManyToMany('B', column_format='%(entity)s_%(key)s')
-
-        class B(self.Entity):
-            using_options(tablename='bee')
-            name = Field(String(60))
-            as_ = ManyToMany('A', column_format='%(entity)s_%(key)s')
-
-        self.create_all()
-
-        # check column names were generated correctly
-        m2m_cols = A.bs_.property.secondary.columns
-        assert 'a_id' in m2m_cols
-        assert 'b_id' in m2m_cols
-
-        # check the relationships work as expected
-        with self.session.begin():
-            b1 = B(name='b1', as_=[A(name='a1')])
-                                   
-        self.session.expire_all()
-
-        a = A.query.one()
-        b = B.query.one()
-
-        assert a in b.as_
-        assert b in a.bs_
-
     def test_multi_pk_in_target(self):
         class A(self.Entity):
             key1 = Field(Integer, primary_key=True, autoincrement=False)

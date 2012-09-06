@@ -577,34 +577,33 @@ class ManyToMany( Relationship ):
                     data.update(key=pk_col.key)
                     colnames.append(self.column_format(data))
 
-                for pk_col, colname in zip(desc.primary_keys, colnames):
-                    col = schema.Column(colname, pk_col.type, primary_key=True)
-                    columns.append(col)
+            for pk_col, colname in zip(desc.primary_keys, colnames):
+                col = schema.Column(colname, pk_col.type, primary_key=True)
+                columns.append(col)
 
-                    # Build the list of local columns which will be part
-                    # of the foreign key.
-                    fk_colnames.append(colname)
+                # Build the list of local columns which will be part
+                # of the foreign key.
+                fk_colnames.append(colname)
 
-                    # Build the list of column "paths" the foreign key will
-                    # point to
-                    target_path = "%s.%s" % (desc.table_fullname, pk_col.key)
-                    fk_refcols.append(target_path)
+                # Build the list of column "paths" the foreign key will
+                # point to
+                target_path = "%s.%s" % (desc.table_fullname, pk_col.key)
+                fk_refcols.append(target_path)
 
-                    # Build join clauses (in case we have a self-ref)
-                    if self.entity is self.target:
-                        join_clauses.append(col == pk_col)
+                # Build join clauses (in case we have a self-ref)
+                if self.entity is self.target:
+                    join_clauses.append(col == pk_col)
 
-                onupdate = rel and rel.onupdate
-                ondelete = rel and rel.ondelete
+            onupdate = rel and rel.onupdate
+            ondelete = rel and rel.ondelete
 
-                #FIXME: fk_name is misleading
-                constraints.append(
-                    schema.ForeignKeyConstraint(fk_colnames, fk_refcols,
-                                                name=fk_name, onupdate=onupdate,
-                                                ondelete=ondelete))
+            #FIXME: fk_name is misleading
+            constraints.append(
+                schema.ForeignKeyConstraint(fk_colnames, fk_refcols,
+                                            name=fk_name, onupdate=onupdate,
+                                            ondelete=ondelete))
 
         args = columns + constraints
-
         self.table = schema.Table( tablename, e1_desc.metadata,
                                    *args, **complete_kwargs)
 
