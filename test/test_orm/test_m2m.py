@@ -300,9 +300,9 @@ class TestManyToMany( TestMetaData ):
         from sqlalchemy import Table, Column, ForeignKey, ForeignKeyConstraint
 
         a_b = schema.Table('a_b', self.metadata,
-                           schema.Column('a_key1', None),
-                           schema.Column('a_key2', None),
-                           schema.Column('b_id', None, schema.ForeignKey('b.id')),
+                           schema.Column('a_key1', Integer()),
+                           schema.Column('a_key2', String(40) ),
+                           schema.Column('b_id', Integer(), schema.ForeignKey('b.id')),
                            schema.ForeignKeyConstraint(['a_key1', 'a_key2'],
                                                        ['a.key1', 'a.key2']))
 
