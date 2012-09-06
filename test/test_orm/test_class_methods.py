@@ -2,27 +2,25 @@
     simple test case
 """
 
-from elixir import *
+from . import TestMetaData
 
-#-----------
+from camelot.core.orm import Field
 
-class TestOldMethods(object):
-    def setup(self):
-        metadata.bind = 'sqlite://'
+from sqlalchemy.types import String, Unicode, Integer
 
-    def teardown(self):
-        cleanup_all()
+class TestOldMethods( TestMetaData ):
 
-    def test_get(self):
-        class A(Entity):
+    def test_get( self ):
+        
+        class A( self.Entity ):
             name = Field(String(32))
 
-        setup_all(True)
+        self.create_all()
 
-        a1 = A(name="a1")
+        with self.session.begin():
+            a1 = A(name="a1")
 
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         assert A.get(1).name == "a1"
 
