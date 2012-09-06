@@ -8,7 +8,7 @@ from . import TestMetaData
 
 from camelot.core.orm import ( Field, ManyToMany, ManyToOne, using_options,
                                has_field, has_many, belongs_to, options,
-                               has_and_belongs_to_many )
+                               has_and_belongs_to_many, options_defaults )
 
 from sqlalchemy.types import String, Unicode, Integer
 from sqlalchemy import orm, and_, schema
@@ -82,8 +82,6 @@ class TestManyToMany( TestMetaData ):
         options_defaults['table_options'] = {}
 
         assert A.bs_.property.secondary.info['test'] is True
-        assert A.table.info['test'] is True
-        assert B.table.info['test'] is True
 
     def test_custom_global_column_nameformat(self):
         # this needs to be done before declaring the classes

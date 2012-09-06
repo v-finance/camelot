@@ -170,7 +170,7 @@ class EntityMeta( DeclarativeMeta ):
             # use default tablename if none set
             #
             if '__tablename__' not in dict_:
-                dict_['__tablename__'] = classname.lower()        
+                dict_['__tablename__'] = classname.lower()
         return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
     
     # init is called after the creation of the new Entity class, and can be
