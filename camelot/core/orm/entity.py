@@ -1,6 +1,6 @@
 import sys
 
-from sqlalchemy import orm, schema
+from sqlalchemy import orm, schema, sql
 from sqlalchemy.ext.declarative import ( _declarative_constructor,
                                          DeclarativeMeta )
 
@@ -148,6 +148,19 @@ class EntityDescriptor(object):
             return self.parent._descriptor.find_relationship(name)
         else:
             return None    
+        
+    def translate_order_by( self, order_by ):
+        if isinstance( order_by, basestring ):
+            order_by = [order_by]
+
+        order = []
+        mapper = orm.class_mapper( self.entity )
+        for colname in order_by:
+            prop = mapper.columns[ colname.strip('-') ]
+            if colname.startswith('-'):
+                prop = sql.desc( prop )
+            order.append( prop )
+        return order        
         
 class EntityMeta( DeclarativeMeta ):
     """Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.  This

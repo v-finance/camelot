@@ -98,6 +98,10 @@ class Relationship( DeferredProperty ):
             return
 
         kwargs = self.get_prop_kwargs()
+        if 'order_by' in kwargs:
+            kwargs['order_by'] = \
+                self.target._descriptor.translate_order_by( kwargs['order_by'] )
+            
         # viewonly relationships need to create "standalone" relations (ie
         # shouldn't be a backref of another relation).
         if self.inverse and not kwargs.get( 'viewonly', False ):

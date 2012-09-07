@@ -42,7 +42,7 @@ class using_options( ClassMutator ):
         if tablename:
             entity_dict['__tablename__'] = tablename
         if order_by:
-            mapper_args = entity_dict.get('__mapper_args__', {} )
+            mapper_args = entity_dict.setdefault('__mapper_args__', {} )
             mapper_args['order_by'] = order_by
         for kwarg in kwargs:
             if kwarg in valid_options:
