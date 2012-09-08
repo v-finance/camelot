@@ -1,150 +1,107 @@
 """
-test integrating Elixir entities with plain SQLAlchemy defined classes
+test integrating Camelot entities with plain SQLAlchemy defined classes
 """
 
-from sqlalchemy.orm import *
-from sqlalchemy import *
-from elixir import *
+from . import TestMetaData
 
-class TestSQLAlchemyToElixir(object):
-    def setup(self):
-        metadata.bind = "sqlite://"
+from camelot.core.orm import ( Field, ManyToMany, ManyToOne, OneToMany, using_options,
+                               has_field, has_many, belongs_to, options,
+                               has_and_belongs_to_many, options_defaults )
 
-    def teardown(self):
-        cleanup_all(True)
+from sqlalchemy import orm, schema
+from sqlalchemy.types import String, Unicode, Integer
 
-    def test_simple(self):
-        class A(Entity):
+class TestSQLAlchemyToCamelot( TestMetaData ):
+
+    def test_simple( self ):
+        
+        class A( self.Entity ):
             name = Field(String(60))
 
-        # Remember the entity need to be setup before you can refer to it from
-        # SQLAlchemy.
-        setup_all(True)
+        self.create_all()
 
-        b_table = Table('b', metadata,
-            Column('id', Integer, primary_key=True),
-            Column('name', String(60)),
-            Column('a_id', Integer, ForeignKey(A.id))
+        b_table = schema.Table('b', self.metadata,
+            schema.Column('id', Integer, primary_key=True),
+            schema.Column('name', String(60)),
+            schema.Column('a_id', Integer, schema.ForeignKey(A.id))
         )
         b_table.create()
 
         class B(object):
             pass
 
-        mapper(B, b_table, properties={
-            'a': relation(A)
+        orm.mapper(B, b_table, properties={
+            'a': orm.relation(A)
         })
 
-        b1 = B()
-        b1.name = 'b1'
-        b1.a = A(name='a1')
+        with self.session.begin():
+            b1 = B()
+            b1.name = 'b1'
+            b1.a = A(name='a1')
 
-        session.add(b1)
-        session.commit()
-        session.clear()
-
-        b = session.query(B).one()
-
+            self.session.add( b1 )
+            
+        self.session.expire_all()
+        b = self.session.query(B).one()
         assert b.a.name == 'a1'
 
+class TestCamelotToSQLAlchemy( TestMetaData ):
 
-class TestElixirToSQLAlchemy(object):
-    def setup(self):
-        metadata.bind = "sqlite://"
-
-    def teardown(self):
-        cleanup_all(True)
-
-    def test_m2o(self):
-        a_table = Table('a', metadata,
-            Column('id', Integer, primary_key=True),
-            Column('name', String(60)),
+    def test_m2o( self ):
+        
+        a_table = schema.Table('a', self.metadata,
+            schema.Column('id', Integer, primary_key=True),
+            schema.Column('name', String(60)),
         )
         a_table.create()
 
         class A(object):
             pass
 
-        mapper(A, a_table)
+        orm.mapper(A, a_table)
 
-        class B(Entity):
+        class B( self.Entity ):
             name = Field(String(60))
             a = ManyToOne(A)
 
-        setup_all(True)
+        self.create_all()
 
-        a1 = A()
-        a1.name = 'a1'
-        b1 = B(name='b1', a=a1)
-
-        session.add(b1)
-        session.commit()
-        session.clear()
-
+        with self.session.begin():
+            a1 = A()
+            a1.name = 'a1'
+            b1 = B(name='b1', a=a1)
+            self.session.add(b1)
+            
+        self.session.expire_all()
         b = B.query.one()
-
         assert b.a.name == 'a1'
 
-    def test_m2o_non_pk_target(self):
-        a_table = Table('a', metadata,
-            Column('id', Integer, primary_key=True),
-            Column('name', String(60), unique=True)
+    def test_m2o_non_pk_target( self ):
+        
+        a_table = schema.Table('a', self.metadata,
+            schema.Column('id', Integer, primary_key=True),
+            schema.Column('name', String(60), unique=True)
         )
         a_table.create()
 
         class A(object):
             pass
 
-        mapper(A, a_table)
+        orm.mapper(A, a_table)
 
-        class B(Entity):
+        class B( self.Entity ):
             name = Field(String(60))
             a = ManyToOne(A, target_column=['name'])
-# currently fails
-#            c = ManyToOne('C', target_column=['id', 'name'])
 
-#        class C(Entity):
-#            name = Field(String(60), unique=True)
+        self.create_all()
+        
+        with self.session.begin():
+            a1 = A()
+            a1.name = 'a1'
+            b1 = B(name='b1', a=a1)
 
-        setup_all(True)
-
-        a1 = A()
-        a1.name = 'a1'
-        b1 = B(name='b1', a=a1)
-
-        session.commit()
-        session.clear()
+        self.session.expire_all()
 
         b = B.query.one()
 
         assert b.a.name == 'a1'
-
-#    def test_m2m(self):
-#        a_table = Table('a', metadata,
-#            Column('id', Integer, primary_key=True),
-#            Column('name', String(60), unique=True)
-#        )
-#        a_table.create()
-#
-#        class A(object):
-#            pass
-#
-#        mapper(A, a_table)
-#
-#        class B(Entity):
-#            name = Field(String(60))
-#            many_a = ManyToMany(A)
-#
-#        setup_all(True)
-#
-#        a1 = A()
-#        a1.name = 'a1'
-#        b1 = B(name='b1', many_a=[a1])
-#
-#        session.commit()
-#        session.clear()
-#
-#        b = B.query.one()
-#
-#        assert b.many_a[0].name == 'a1'
-
