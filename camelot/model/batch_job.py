@@ -43,7 +43,7 @@ import camelot.types
 
 import datetime
 
-@documented_entity
+@documented_entity()
 class BatchJobType( Entity ):
     """The type of batch job, the user will be able to filter his
     jobs based on their type.  A type might be 'Create management reports' """
@@ -80,7 +80,7 @@ class CancelBatchJob( Action ):
             batch_job.status = 'canceled'
         yield FlushSession( model_context.session )
 
-@documented_entity
+@documented_entity()
 class BatchJob( Entity ):
     """Information the batch job that is planned, running or has run"""
     using_options( tablename = 'batch_job', order_by=['-date'] )
