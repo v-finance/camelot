@@ -570,7 +570,6 @@ position in the query.
             column_width = c[1].get( 'column_width', None )
             if column_width != None:
                 minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
-                    
             if settings_width:
                 header_item.setData( QtCore.QVariant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
                                      Qt.SizeHintRole )
