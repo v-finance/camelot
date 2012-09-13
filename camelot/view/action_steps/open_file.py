@@ -42,6 +42,9 @@ class OpenFile( ActionStep ):
     def __init__( self, path ):
         self.path = path
 
+    def __unicode__( self ):
+        return u'Open file {}'.format( self.path )
+    
     def get_path( self ):
         """
         :return: the path to the file that will be opened, use this method

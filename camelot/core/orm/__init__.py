@@ -47,9 +47,7 @@ from sqlalchemy import orm, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker, mapper
 
-from . options import ( using_options, using_table_options,
-                        using_mapper_options, options_defaults,
-                        using_options_defaults )
+from . options import ( using_options, options_defaults )
 from . fields import has_field, Field
 from . relationships import ( belongs_to, has_one, has_many,
                               has_and_belongs_to_many, 
@@ -110,6 +108,7 @@ def process_deferred_properties( class_registry = entities ):
         setattr( cls, 'query', Session().query( cls ) )
                 
     for method_name in ( 'create_non_pk_cols', 
+                         'create_tables',
                          'append_constraints',
                          'create_properties' ):
         for cls in classes:
@@ -151,7 +150,6 @@ __all__ = [ obj.__name__  for obj in [ Entity, EntityBase, EntityMeta, EntityCol
             has_property, GenericProperty, ColumnProperty,
             belongs_to, has_one, has_many, has_and_belongs_to_many,
             ManyToOne, OneToOne, OneToMany, ManyToMany,
-            using_options, using_table_options, using_mapper_options,
-            options_defaults, using_options_defaults,
+            using_options,
             setup_all
-            ] ] + ['Session']
+            ] ] + ['Session', 'options_defaults']

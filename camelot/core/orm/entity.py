@@ -1,6 +1,6 @@
 import sys
 
-from sqlalchemy import orm, schema
+from sqlalchemy import orm, schema, sql
 from sqlalchemy.ext.declarative import ( _declarative_constructor,
                                          DeclarativeMeta )
 
@@ -17,18 +17,21 @@ class EntityDescriptor(object):
 
     global_counter = 0
     
-    def __init__( self, entity ):
-        self.entity = entity
+    def __init__( self ):
         self.parent = None
         self.relationships = []
         self.has_pk = False
         self._pk_col_done = False
-        self.module = sys.modules.get( entity.__module__ )
         self.builders = [] 
         self.constraints = []
-        self.tablename = entity.__tablename__
         self.counter = EntityDescriptor.global_counter
+        self.table_options = {}
         EntityDescriptor.global_counter += 1
+        
+    def set_entity( self, entity ):
+        self.entity = entity
+        self.module = sys.modules.get( entity.__module__ )
+        self.tablename = entity.__tablename__
         #
         # verify if a primary key was set manually
         #
@@ -44,6 +47,18 @@ class EntityDescriptor(object):
         # execute the builders in the order they were created
         self.builders.sort( key = lambda b:b.counter )
         
+    @property
+    def primary_keys( self ):
+        return self.entity.__table__.primary_key
+    
+    @property
+    def table_fullname( self ):
+        return self.entity.__tablename__
+    
+    @property
+    def metadata( self ):
+        return self.entity.__table__.metadata
+    
     def create_non_pk_cols(self):
         self.call_builders( 'create_non_pk_cols' )
         
@@ -74,6 +89,9 @@ class EntityDescriptor(object):
         
     def create_properties(self):
         self.call_builders( 'create_properties' )        
+
+    def create_tables(self):
+        self.call_builders( 'create_tables' )        
         
     def add_column( self, key, col ):
         setattr( self.entity, key, col )
@@ -131,6 +149,19 @@ class EntityDescriptor(object):
         else:
             return None    
         
+    def translate_order_by( self, order_by ):
+        if isinstance( order_by, basestring ):
+            order_by = [order_by]
+
+        order = []
+        mapper = orm.class_mapper( self.entity )
+        for colname in order_by:
+            prop = mapper.columns[ colname.strip('-') ]
+            if colname.startswith('-'):
+                prop = sql.desc( prop )
+            order.append( prop )
+        return order        
+        
 class EntityMeta( DeclarativeMeta ):
     """Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.  This
     metaclass processes the Property and ClassMutator objects.
@@ -142,6 +173,7 @@ class EntityMeta( DeclarativeMeta ):
         # don't modify the Entity class itself
         #
         if classname != 'Entity':
+            dict_['_descriptor'] = EntityDescriptor()
             #
             # process the mutators
             #
@@ -151,15 +183,15 @@ class EntityMeta( DeclarativeMeta ):
             # use default tablename if none set
             #
             if '__tablename__' not in dict_:
-                dict_['__tablename__'] = classname.lower()        
+                dict_['__tablename__'] = classname.lower()
         return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
     
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
         from . properties import Property
-        if classname != 'Entity':
-            cls._descriptor = EntityDescriptor( cls )
+        if '_descriptor' in dict_:
+            dict_['_descriptor'].set_entity( cls )
             for key, value in dict_.items():
                 if isinstance( value, Property ):
                     value.attach( cls, key )
@@ -172,7 +204,67 @@ class EntityMeta( DeclarativeMeta ):
 
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
+
+def update_or_create_entity( cls, data, surrogate = True ):
+    mapper = orm.class_mapper( cls )
+    pk_props = mapper.primary_key
+
+    # if all pk are present and not None
+    if not [1 for p in pk_props if data.get( p.key ) is None]:
+        pk_tuple = tuple( [data[prop.key] for prop in pk_props] )
+        record = cls.query.get(pk_tuple)
+        if record is None:
+            record = cls()
+    else:
+        if surrogate:
+            record = cls()
+        else:
+            raise Exception("cannot create non surrogate without pk")
+    dict_to_entity( record, data )
+    return record
         
+def dict_to_entity( entity, data ):
+    """Update a mapped object with data from a JSON-style nested dict/list
+    structure.
+    
+    :param entity: the Entity object into which to store the data
+    :param data: a `dict` with data to store into the entity
+    """
+    # surrogate can be guessed from autoincrement/sequence but I guess
+    # that's not 100% reliable, so we'll need an override
+
+    mapper = orm.object_mapper( entity )
+
+    for key, value in data.iteritems():
+        if isinstance( value, dict ):
+            dbvalue = getattr( entity, key )
+            rel_class = mapper.get_property(key).mapper.class_
+            pk_props = orm.class_mapper( rel_class ).primary_key
+
+            # If the data doesn't contain any pk, and the relationship
+            # already has a value, update that record.
+            if not [1 for p in pk_props if p.key in data] and \
+               dbvalue is not None:
+                dict_to_entity( dbvalue, value )
+            else:
+                record = update_or_create_entity( rel_class, value)
+                setattr(entity, key, record)
+        elif isinstance(value, list) and \
+             value and isinstance(value[0], dict):
+
+            rel_class = mapper.get_property(key).mapper.class_
+            new_attr_value = []
+            for row in value:
+                if not isinstance(row, dict):
+                    raise Exception(
+                            'Cannot send mixed (dict/non dict) data '
+                            'to list relationships in from_dict data.')
+                record = update_or_create_entity( rel_class, row)
+                new_attr_value.append(record)
+            setattr(entity, key, new_attr_value)
+        else:
+            setattr(entity, key, value)
+    
 class EntityBase( object ):
     """A declarative base class that adds some methods that used to be
     available in Elixir"""
@@ -193,66 +285,14 @@ class EntityBase( object ):
 
     @classmethod
     def update_or_create( cls, data, surrogate = True ):
-        
-        mapper = orm.class_mapper( cls )
-        pk_props = mapper.primary_key
-
-        # if all pk are present and not None
-        if not [1 for p in pk_props if data.get( p.key ) is None]:
-            pk_tuple = tuple( [data[prop.key] for prop in pk_props] )
-            record = cls.query.get(pk_tuple)
-            if record is None:
-                if surrogate:
-                    raise Exception("cannot create surrogate with pk")
-                else:
-                    record = cls()
-        else:
-            if surrogate:
-                record = cls()
-            else:
-                raise Exception("cannot create non surrogate without pk")
-        record.from_dict( data )
-        return record
+        return update_or_create_entity( cls, data, surrogate )
     
-    def from_dict(self, data):
+    def from_dict( self, data ):
         """
         Update a mapped class with data from a JSON-style nested dict/list
         structure.
         """
-        # surrogate can be guessed from autoincrement/sequence but I guess
-        # that's not 100% reliable, so we'll need an override
-
-        mapper = orm.object_mapper( self )
-
-        for key, value in data.iteritems():
-            if isinstance(value, dict):
-                dbvalue = getattr(self, key)
-                rel_class = mapper.get_property(key).mapper.class_
-                pk_props = orm.class_mapper( rel_class ).primary_key
-
-                # If the data doesn't contain any pk, and the relationship
-                # already has a value, update that record.
-                if not [1 for p in pk_props if p.key in data] and \
-                   dbvalue is not None:
-                    dbvalue.from_dict(value)
-                else:
-                    record = rel_class.update_or_create(value)
-                    setattr(self, key, record)
-            elif isinstance(value, list) and \
-                 value and isinstance(value[0], dict):
-
-                rel_class = mapper.get_property(key).mapper.class_
-                new_attr_value = []
-                for row in value:
-                    if not isinstance(row, dict):
-                        raise Exception(
-                                'Cannot send mixed (dict/non dict) data '
-                                'to list relationships in from_dict data.')
-                    record = rel_class.update_or_create(row)
-                    new_attr_value.append(record)
-                setattr(self, key, new_attr_value)
-            else:
-                setattr(self, key, value)
+        return dict_to_entity( self, data )
 
     def to_dict( self, deep = {}, exclude = [] ):
         """Generate a JSON-style nested dict/list structure from an object."""
