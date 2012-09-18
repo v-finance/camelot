@@ -69,7 +69,9 @@ def launch_meta_camelot():
     settings.append( MetaSettings() )
     new_project = CreateNewProject()
     gui_context = GuiContext()
-    gui_context.admin = MetaCamelotAdmin()
+    admin = MetaCamelotAdmin()
+    admin.get_stylesheet()
+    gui_context.admin = admin
     new_project.gui_run( gui_context )
     # keep app alive during running of app
     return app
@@ -128,16 +130,15 @@ class MyApplicationAdmin(ApplicationAdmin):
     
     def get_sections(self):
         from camelot.model.memento import Memento
-        from camelot.model.party import Person, Organization
         from camelot.model.i18n import Translation
-        return [ Section( _('Relations'),
+        return [ Section( _('My classes'),
                           self,
                           Icon('tango/22x22/apps/system-users.png'),
-                          items = [Person, Organization]),
+                          items = [] ),
                  Section( _('Configuration'),
                           self,
                           Icon('tango/22x22/categories/preferences-system.png'),
-                          items = [Memento, Translation])
+                          items = [Memento, Translation] )
                 ]
     '''),
     
@@ -167,8 +168,37 @@ class MyApplicationViewsTest( EntityViewsTest ):
     
     ('main.py', '''
 import logging
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger('main')
+from camelot.core.conf import settings, SimpleSettings
+
+logging.basicConfig( level = logging.ERROR )
+logger = logging.getLogger( 'main' )
+
+# begin custom settings
+class MySettings( SimpleSettings ):
+
+    # add an ENGINE or a CAMELOT_MEDIA_ROOT method here to connect
+    # to another database or change the location where files are stored
+    #
+    # def ENGINE( self ):
+    #     from sqlalchemy import create_engine
+    #     return create_engine( 'postgresql://user:passwd@127.0.0.1/database' )
+    
+    def setup_model( self ):
+        """This function will be called at application startup, it is used to 
+        setup the model"""
+        from camelot.core.sql import metadata
+        from sqlalchemy.orm import configure_mappers
+        metadata.bind = self.ENGINE()
+        import camelot.model.authentication
+        import camelot.model.i18n
+        import camelot.model.memento
+        import {{options.module}}.model
+        configure_mappers()
+        metadata.create_all()
+
+my_settings = MySettings( '{{options.author}}', '{{options.name}}' ) 
+settings.append( my_settings )
+# end custom settings
 
 def start_application():
     from camelot.view.main import main
@@ -180,9 +210,12 @@ if __name__ == '__main__':
     '''),
     
     ('{{options.module}}/model.py', '''
-from camelot.core.sql import metadata
-
-__metadata__ = metadata
+from sqlalchemy.schema import Column
+import sqlalchemy.types
+    
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.orm import Entity
+import camelot.types
     '''),
     
     ('excludes.txt', r'''
@@ -218,47 +251,7 @@ include
 license
 libs   
     '''),
-    ('settings.py', '''
-import logging
-import os
-
-logger = logging.getLogger('settings')
-
-# media root needs to be an absolute path for the file open functions
-# to function correctly
-CAMELOT_MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'media')
-
-# backup root is the directory where the default backups are stored
-CAMELOT_BACKUP_ROOT = os.path.join(os.path.dirname(__file__), 'backup')
-
-# default extension for backup files
-CAMELOT_BACKUP_EXTENSION = 'db'
-
-# template used to create and find default backups
-CAMELOT_BACKUP_FILENAME_TEMPLATE = 'default-backup-%(text)s.' + CAMELOT_BACKUP_EXTENSION
-
-
-def ENGINE():
-    """This function should return a database engine"""
-    from sqlalchemy import create_engine
-    return create_engine('sqlite:///model-data.sqlite')
-
-def setup_model():
-    """This function will be called at application startup, it is used to setup
-    the model"""
-    from camelot.core.sql import metadata
-    metadata.bind = ENGINE()
-    import camelot.model.authentication
-    import camelot.model.party
-    import camelot.model.i18n
-    import camelot.model.memento
-    import camelot.model.fixture
-    import {{options.module}}.model
-    from elixir import setup_all
-    setup_all(create_tables=True)
-    '''),
     ('setup.py', '''
-
 #
 # Default setup file for a Camelot application
 #

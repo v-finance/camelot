@@ -25,6 +25,7 @@ All other sections can be read on an as needed base.
    delegates.rst
    charts.rst
    documents.rst
+   under_the_hood.rst
    data_model.rst
    fixtures.rst
    manage.rst

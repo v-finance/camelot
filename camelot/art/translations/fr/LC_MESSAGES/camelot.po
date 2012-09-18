@@ -569,7 +569,7 @@ msgstr ""
 #: camelot/view/action.py:193
 #, fuzzy
 msgid "&Restore"
-msgstr "Relancement"
+msgstr "Rétablir"
 
 #: camelot/view/action.py:196
 msgid "Restore the database from a backup"

@@ -22,11 +22,13 @@
 #
 #  ============================================================================
 
+from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QDialog, QFrame, QGridLayout, QLabel, QVBoxLayout, \
-    QWidget, QLayout
+    QWidget
 
 from camelot.view.model_thread import object_thread
+from camelot.core.utils import ugettext
 
 class HSeparator(QFrame):
 
@@ -34,13 +36,12 @@ class HSeparator(QFrame):
         super(HSeparator, self).__init__(parent)
         self.setFrameStyle(QFrame.HLine | QFrame.Sunken)
 
-
 class StandaloneWizardPage(QDialog):
     """A Standalone Wizard Page Dialog for quick configuration windows"""
 
-    def __init__(self, window_title=None, parent=None, flags=Qt.WindowFlags(0)):
+    def __init__(self, window_title=None, parent=None, flags=Qt.Dialog):
         super(StandaloneWizardPage, self).__init__(parent, flags)
-        self.setWindowTitle(window_title or '')
+        self.setWindowTitle(window_title or ' ')
         self.set_layouts()
 
     def set_layouts(self):
@@ -51,7 +52,9 @@ class StandaloneWizardPage(QDialog):
 
         # needed in case we have a widget that changes the size
         # of the widget and can be hidden
-        self._vlayout.setSizeConstraint(QLayout.SetFixedSize)
+        # this prevents the ChangeObjects dialog from being scaleable,
+        # therefor commented out
+        #self._vlayout.setSizeConstraint(QLayout.SetFixedSize)
 
         banner_layout = QGridLayout()
         banner_layout.setColumnStretch(0, 1)
@@ -98,3 +101,17 @@ class StandaloneWizardPage(QDialog):
         subtitle_widget = QLabel('<dd>%s</dd>' % subtitle)
         self.banner_text_layout().insertWidget(1, subtitle_widget)
 
+    def set_default_buttons( self ):
+        """add an :guilabel:`ok` and a :guilabel:`cancel` button.
+        """
+        cancel_button = QtGui.QPushButton( ugettext('Cancel') )
+        ok_button = QtGui.QPushButton( ugettext('OK') )
+        ok_button.setObjectName( 'ok' )
+        layout = QtGui.QHBoxLayout()
+        layout.setDirection( QtGui.QBoxLayout.RightToLeft )
+        layout.addWidget( ok_button )
+        layout.addWidget( cancel_button )
+        layout.addStretch()
+        self.buttons_widget().setLayout( layout )
+        cancel_button.pressed.connect( self.reject )
+        ok_button.pressed.connect( self.accept )   

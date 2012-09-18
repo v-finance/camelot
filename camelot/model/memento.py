@@ -22,38 +22,48 @@
 #
 #  ============================================================================
 
-"""Set of classes to keep track of changes to objects and be able to restore 
-their state
+"""The ORM part of the classes that store the change history of objects to
+the database.  The table defined here is used in :mod:`camelot.core.memento` 
+to store the changes.
+
+To prevent this table to be used to store changes, overwrite the 
+:meth:`camelot.admin.application_admin.ApplicationAdmin.get_memento` method
+the custom `ApplicationAdmin`.
 """
 
 import datetime
 
-from sqlalchemy.types import Unicode, INT, DateTime, PickleType
+from sqlalchemy import schema, orm
+from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Entity, using_options, Field, ManyToOne
+from camelot.core.orm import Entity, ManyToOne
 from camelot.admin.not_editable_admin import not_editable_admin
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view import filters
 
+from authentication import AuthenticationMechanism
+
 class Memento( Entity ):
     """Keeps information on the previous state of objects, to keep track
     of changes and enable restore to that previous state"""
-    using_options( tablename = 'memento' )
-    model = Field( Unicode( 256 ), index = True, required = True )
-    primary_key = Field( INT(), index = True, required = True )
-    creation_date = Field( DateTime(), default = datetime.datetime.now )
-    authentication = ManyToOne( 'AuthenticationMechanism',
+    
+    __tablename__ = 'memento'
+    
+    model = schema.Column( Unicode( 256 ), index = True, nullable = False )
+    primary_key = schema.Column( Integer(), index = True, nullable = False )
+    creation_date = schema.Column( DateTime(), default = datetime.datetime.now )
+    authentication = ManyToOne( AuthenticationMechanism,
                                 required = True,
                                 ondelete = 'restrict',
                                 onupdate = 'cascade' )
-    memento_type = Field( camelot.types.Enumeration( [ (1, 'before_update'),
-                                                       (2, 'before_delete'),
-                                                       (3, 'create') ], 
-                                                     required = True,
-                                                     index = True ) )
-    previous_attributes = Field( PickleType(), deferred = True )
+    memento_type = schema.Column( camelot.types.Enumeration( [ (1, 'before_update'),
+                                                               (2, 'before_delete'),
+                                                               (3, 'create') ], 
+                                                             nullable = False,
+                                                             index = True ) )
+    previous_attributes = orm.deferred( schema.Column( PickleType() ) )
     
     @property
     def description( self ):

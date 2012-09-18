@@ -51,7 +51,7 @@ a new tab is added to the form defined in the previous section.
 Putting notes on forms
 ======================
 
-.. image:: ../_static/editors/NoteEditor.png 
+.. image:: ../_static/editors/NoteEditor.png
 
 A note on a form is nothing more than a property with the NoteDelegate as its
 delegate and where the widget is inside a WidgetOnlyForm.
@@ -59,8 +59,11 @@ delegate and where the widget is inside a WidgetOnlyForm.
 In the case of a Person, we display a note if another person with the same name
 already exists :
 
-.. literalinclude:: ../../../../camelot/model/authentication.py
-   :pyobject: Person
+.. literalinclude:: ../../../../camelot/model/Party.py
+   :pyobject: Person.note
+   
+.. literalinclude:: ../../../../camelot/model/Party.py
+   :pyobject: Person.Admin
 
 Available Form Subclasses
 =========================
@@ -80,56 +83,38 @@ Several options exist for completely customizing the forms of an application.
 Layout
 ------
 
-When the desired layout cannot be achieved with Camelot's form classes, a custom
-Form subclass can be made to lay out the widgets.
+When the desired layout cannot be achieved with Camelot's form classes, a custom :class:`camelot.view.forms.Form` subclass can be made to layout the widgets.
 
-When subclassing the Form class, it's 'render' method should be reimplemented to
-put the labels and the editors in a custom layout.  The 'render' method will be
-called by Camelot each time it needs a form for the related entity.  It should thus
-return a QWidget to be used as the needed form. 
+When subclassing the `Form` class, it's `render` method should be reimplemented to put the labels and the editors in a custom layout.  The `render` method will be
+called by Camelot each time it needs the form.  It should thus return a :class:`QtGui.QWidget` to be used as the needed form. 
 
-The 'render' method its most important argument is widgets which is a dictionary
-containing for each field of the form a widget representing the label of the field
-and a widget for editing the field.  The editor widgets are bound to the
-model.
+The `render` method its first argument is the factory class :class:`camelot.view.controls.formview.FormEditors`, through which editors and labels can be
+constructed. The editor widgets are bound to the data model.
 
 .. literalinclude:: ../../../../test/snippet/form/custom_layout.py
 
-The form defined above puts the widgets into a QFormLayout using a different
-background color, and adds some instructions for the user :
+The form defined above puts the widgets into a :class:`QtGui.QFormLayout` using a different background color, and adds some instructions for the user :
 
 .. image:: ../_static/form/custom_layout.png
 
 Editors
 -------
 
-The editor of a specific field can be changed, by specifying an alternative delegate
-for that field, using the field attributes, see :ref:`specifying-delegates`.
+The editor of a specific field can be changed, by specifying an alternative :class:`QtGui.QItemDelegate` for that field, using the `delegate` field attributes, 
+see :ref:`specifying-delegates`.
 
 Tooltips
 --------
 
-Each field on the form can be given a dynamic tooltip, using the 'tooltip' field
-attribute : :ref:`tooltips`.
+Each field on the form can be given a dynamic tooltip, using the `tooltip` field attribute, see :ref:`tooltips`.
 
 Buttons
 -------
 
-Buttons bound to a specific action can be put on a form, using the 'form_actions' 
-attribute of the Admin class : :ref:`form-actions`.
+Buttons bound to a specific action can be put on a form, using the `form_actions` attribute, attribute of the Admin class : :ref:`form-actions`.
 
 Validation
 ----------
 
-Validation is done at the object level.  Before a form is closed validation of the
-bound object takes place, an invalid object will prevent closing the form.  A custom
-validator can be defined : :ref:`validators`
-
-Behaviour
----------
-
-To change what happens when Camelot requires a form for an object, some methods
-on the Admin class can be overwritten :
-
-  * create_form_view
-  * create_new_view
+Validation is done at the object level.  Before a form is closed validation of the bound object takes place, an invalid object will prevent closing the form.  
+A custom validator can be defined : :ref:`validators`

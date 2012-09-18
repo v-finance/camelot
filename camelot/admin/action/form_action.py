@@ -30,6 +30,7 @@ from camelot.view.art import Icon
 
 from application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
+import list_action
 
 class FormActionModelContext( ApplicationActionModelContext ):
     """On top of the attributes of the 
@@ -64,10 +65,6 @@ class FormActionModelContext( ApplicationActionModelContext ):
         self.current_row = None
         self.collection_count = 0
         self.selection_count = 1
-        
-    @property
-    def session( self ):
-        return self._model.admin.get_query().session
         
     def get_object( self ):
         """
@@ -183,6 +180,42 @@ class CloseForm( Action ):
                 else:
                     yield action_steps.DeleteObject( obj )
                     admin.expunge( obj )
+    
+class ToPreviousForm( list_action.ToPreviousRow ):
+    """Move to the previous form"""
+
+    def gui_run( self, gui_context ):
+        gui_context.view.to_previous()
+        
+    def get_state( self, model_context ):
+        return Action.get_state( self, model_context )
+    
+class ToFirstForm( list_action.ToFirstRow ):
+    """Move to the form"""
+    
+    def gui_run( self, gui_context ):
+        gui_context.view.to_first()
+
+    def get_state( self, model_context ):
+        return Action.get_state( self, model_context )
+    
+class ToNextForm( list_action.ToNextRow ):
+    """Move to the next form"""
+
+    def gui_run( self, gui_context ):
+        gui_context.view.to_next()
+
+    def get_state( self, model_context ):
+        return Action.get_state( self, model_context )
+    
+class ToLastForm( list_action.ToLastRow ):
+    """Move to the last form"""
+
+    def gui_run( self, gui_context ):
+        gui_context.view.to_last()
+
+    def get_state( self, model_context ):
+        return Action.get_state( self, model_context )
     
 def structure_to_form_actions( structure ):
     """Convert a list of python objects to a list of form actions.  If the python

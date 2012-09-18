@@ -206,14 +206,21 @@ class FileEditor(CustomEditor):
             self.stored_file_ready,
             filter=self.filter,
             remove_original=self.remove_original,
-        )        
+        )
+        
     def open_button_clicked(self):
         from camelot.view.storage import open_stored_file
         open_stored_file(self, self.value)
 
     def clear_button_clicked(self):
-        self.value = None
-        self.editingFinished.emit()
+        answer = QtGui.QMessageBox.question( self, 
+                                             _('Remove this file ?'), 
+                                             _('If you continue, you will no longer be able to open this file.'), 
+                                             QtGui.QMessageBox.Yes,
+                                             QtGui.QMessageBox.No )
+        if answer == QtGui.QMessageBox.Yes:
+            self.value = None
+            self.editingFinished.emit()
 
     #
     # Drag & Drop

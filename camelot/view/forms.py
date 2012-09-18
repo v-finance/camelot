@@ -40,31 +40,24 @@ a list.  So the form itself is nothing more than a list of field names or
 sub-forms.  A form can thus be manipulated using the list's method such as
 append or insert.
     
-A form can be converted to a
-QT widget by calling its render method.  The base form uses the QFormLayout
-to render a form::
+A form can be converted to a `Qt` widget by calling its `render` method.
 
-    class Admin(EntityAdmin):
-      form_display = Form(['title', 'short_description', 'director', 'release_date'])
+Forms are defined using the `form_display` attribute of an `Admin` class::
 
-..image:: /_static/form/form.png
+    class Admin( EntityAdmin ):
+        form_display = Form( [ 'title', 'short_description', 
+                               'release_date' ] )
+                               
+and takes these parameters :
+
+    :param content: an iterable with field names or sub-forms to render
+    :param columns: the number of columns in which to order the fields.
+
+.. image:: /_static/form/form.png
+
 """
 
     def __init__( self, content, scrollbars = False, columns = 1  ):
-        """
-        :param content: an iterable with the field names and forms to render
-        :param columns: the number of columns in which to order the fields.
-
-        eg : with 2 columns, the fields ['street', 'city', 'country'] will
-        be ordered as :
-
-        +-------------+--------------+
-        | street      | city         |
-        +-------------+--------------+
-        | country     |              |
-        +-------------+--------------+
-
-        """
         super(Form, self).__init__( content )
         self._scrollbars = scrollbars
         self._columns = columns
@@ -88,7 +81,7 @@ to render a form::
         inherited forms.
 
         :param original_field: the name of the field to be removed
-        :return: True if the field was found and removed
+        :return: `True` if the field was found and removed
         """
         for c in self:
             if isinstance( c, Form ):
@@ -104,7 +97,7 @@ to render a form::
 
         :param original_field : the name of the field to be replace
         :param new_field : the name of the new field
-        :return: True if the original field was found and replaced.
+        :return: `True` if the original field was found and replaced
         """
         for i, c in enumerate( self ):
             if isinstance( c, Form ):
@@ -130,7 +123,7 @@ to render a form::
             while a non toplevel form is only expanding if it contains other
             expanding elements.
 
-        :return: a QWidget into which the form is rendered
+        :return: a :class:`QtGui.QWidget` into which the form is rendered
         """
         logger.debug( 'rendering %s' % (self.__class__.__name__) )
         from camelot.view.controls.editors.wideeditor import WideEditor
@@ -241,8 +234,14 @@ to render a form::
         
         return form_widget
 
+class Break( Form ):
+    """End a line in a multi-column form"""
+    
+    def __init__( self ):
+        super( Break, self ).__init__( [] )
+
 class Label( Form ):
-    """Render a label with a QLabel"""
+    """Render a label using a :class:`QtGui.QLabel`"""
 
     def __init__( self, label, alignment='left', style=None):
         """
@@ -333,7 +332,7 @@ the moment the tab is shown.
 
 class TabForm( Form ):
     """
-Render forms within a QTabWidget::
+Render forms within a :class:`QtGui.QTabWidget`::
 
     from = TabForm([('First tab', ['title', 'short_description']),
                     ('Second tab', ['director', 'release_date'])])
@@ -522,7 +521,7 @@ class ColumnSpan( Form ):
 
 class GridForm( Form ):
     """Put different fields into a grid, without a label.  Row or column labels can be added
-  using the Label form::
+  using the :class:`Label` form::
 
     GridForm([['title', 'short_description'], ['director','release_date']])
 
@@ -563,16 +562,22 @@ class GridForm( Form ):
             skip = 0
             for j, field in enumerate( row ):
                 num = 1
+                col = j + skip
                 if isinstance( field, ColumnSpan ):
                     num = field.num
                     field = field.field
-
                 if isinstance( field, Form ):
-                    grid_layout.addWidget( field.render( widgets, parent ), i, j + skip, 1, num )
+                    form = field.render( widgets, parent )
+                    if isinstance( form, QtGui.QWidget ):
+                        grid_layout.addWidget( form, i, col, 1, num )
+                    elif isinstance( form, QtGui.QLayoutItem ):
+                        grid_layout.addItem( form, i, col, 1, num )
+                    elif isinstance( form, QtGui.QLayout ):
+                        grid_layout.addLayout( form, i, col, 1, num )
                     skip += num - 1
                 else:
                     editor = widgets.create_editor( field, widget )
-                    grid_layout.addWidget( editor, i, j + skip, 1, num )
+                    grid_layout.addWidget( editor, i, col, 1, num )
                     skip += num - 1
 
         widget.setLayout( grid_layout )
@@ -644,6 +649,3 @@ def structure_to_form( structure ):
     if isinstance( structure, Form ):
         return structure
     return Form( structure )
-
-
-

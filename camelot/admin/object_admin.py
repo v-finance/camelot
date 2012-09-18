@@ -30,8 +30,8 @@ logger = logging.getLogger('camelot.view.object_admin')
 from camelot.admin.action.form_action import CloseForm
 from camelot.view.model_thread import model_function
 from camelot.view.controls.tableview import TableView
-from camelot.core.utils import ugettext as _
-from camelot.core.utils import ugettext_lazy
+from camelot.view.utils import to_string
+from camelot.core.utils import ugettext_lazy, ugettext as _
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from validator.object_validator import ObjectValidator
 from PyQt4 import QtCore
@@ -129,9 +129,10 @@ be specified using the verbose_name attribute.
 
 .. attribute:: form_close_action
 
-    The action triggered when the form window is closed.  By default this is the
+    The action triggered when the form window is closed by the operating system or the window manager.  By default this is the
     :class:`camelot.admin.action.form_action.CloseForm` action, which validates
-    the form and allows the user to discard the changes when the form is invalid.
+    the form and allows the user to discard the changes when the form is invalid.  To change the form close action in the 
+    toolbar, the :meth:`camelot.admin.object_admin.ObjectAdmin.get_form_actions` method should be overwritten.
     
 .. attribute:: save_mode
 
@@ -157,17 +158,17 @@ be specified using the verbose_name attribute.
 
 .. attribute:: form_actions
 
-    Actions to be accessible by pushbuttons on the side of a form,
-    a list of tuples (button_label, action_function) where action_function
-    takes as its single argument, a method that returns the the object that
-    was displayed by the form when the button was pressed::
+    Actions to be accessible by pushbuttons on the side of a form, a list of :class:`camelot.admin.action.base.Action` objects. ::
 
-        class Admin(EntityAdmin):
-            form_actions = [('Foo', lamda o_getter:print 'foo')]
+        class Admin( EntityAdmin ):
+            form_actions = [CloseForm()]
+            
+    These actions will be triggered with a :class:`camelot.admin.action.form_action.FormActionModelContext` as the `model_context` parameter
+    in the :meth:`camelot.admin.action.base.Action.model_run` method.
             
 .. attribute:: related_toolbar_actions
 
-    list of actions that appear in the toolbar of a OneToMany editor.
+    list of actions that appear in the toolbar of a `OneToMany` editor.
 
 .. attribute:: drop_action
 
@@ -182,12 +183,13 @@ be specified using the verbose_name attribute.
     attributes on how they should be displayed.  All of these attributes
     are propagated to the constructor of the delegate of this field::
 
-        class Movie(Entity):
-            title = Field(Unicode(50))
+        class Movie( Entity ):
+        
+            title = Column( Unicode(50) )
     
-            class Admin(EntityAdmin):
+            class Admin( EntityAdmin ):
                 list_display = ['title']
-                field_attributes = dict(title=dict(editable=False))
+                field_attributes = { 'title' : {'editable':False} }
 
     The :ref:`doc-admin-field_attributes` documentation describes the various keys
     that can be used in the field attributes class attribute of an ObjectAdmin 
@@ -197,19 +199,15 @@ be specified using the verbose_name attribute.
 
 .. attribute:: form_state
 
-    Set this attribute to 'maximized' or 'minimized' for respective behaviour. These are the only two defined at the moment.
-    Please use the constants defined in camelot.core.constants (MINIMIZE and MAXIMIZE).
-    Note that this attr needs to be set at the form, highest in the form hierarchy to work. Setting this on embedded forms
-    will not influence the window state. Example::
+    Set this attribute to `maximized` or `minimized` for respective behaviour ::
 
-        class Movie(Entity):
-            title = Field(Unicode(50))
+        class Movie( Entity ):
+        
+            title = Column( Unicode(50) )
     
-            class Admin(EntityAdmin):
-                from camelot.core import constants
+            class Admin( EntityAdmin ):
                 list_display = ['title']
-                form_state = constants.MAXIMIZED
-                field_attributes = dict(title=dict(editable=False))
+                form_state = 'maximized'
 
 **Varia**
 
@@ -245,6 +243,7 @@ be specified using the verbose_name attribute.
     list_size = (600, 600)
     form_size = (700, 500)
     form_actions = []
+    related_toolbar_actions = []
     field_attributes = {}
     form_state = None
     icon = None # Default
@@ -337,6 +336,9 @@ be specified using the verbose_name attribute.
         settings = self.app_admin.get_settings()
         settings.beginGroup( self.get_name()[:255] )
         return settings
+    
+    def get_memento( self ):
+        return self.app_admin.get_memento()
 
     def get_delete_mode(self):
         return self.delete_mode
@@ -355,6 +357,21 @@ be specified using the verbose_name attribute.
         app_admin = self.get_application_admin()
         from camelot.admin.action.form_action import structure_to_form_actions
         return app_admin.get_form_actions() + structure_to_form_actions( self.form_actions )
+    
+    @model_function
+    def get_form_toolbar_actions( self, toolbar_area ):
+        """
+        By default this function will return the same as :meth:`camelot.admin.application_admin.ApplicationAdmin.get_form_toolbar_actions`
+        
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned
+            
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of a form view.  return
+            None if no toolbar should be created.
+        """        
+        app_admin = self.get_application_admin()
+        return app_admin.get_form_toolbar_actions( toolbar_area )
 
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
@@ -366,7 +383,8 @@ be specified using the verbose_name attribute.
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         app_admin = self.get_application_admin()
-        return app_admin.get_related_toolbar_actions( toolbar_area, direction )
+        return self.related_toolbar_actions or \
+               app_admin.get_related_toolbar_actions( toolbar_area, direction )
     
     @model_function
     def get_list_actions(self):
@@ -502,6 +520,11 @@ be specified using the verbose_name attribute.
         of the field attribute, or in the case of dynamic field attributes,
         a function that returns the value of the field attribute.
         """
+        #
+        # @todo : this function should return a frozen dictionary, so no
+        #         other parts of the application can modify the cached field
+        #         attributes
+        #
         try:
             return self._field_attributes[field_name]
         except KeyError:
@@ -515,6 +538,7 @@ be specified using the verbose_name attribute.
             #
             attributes = dict(
                 getter=create_default_getter(field_name),
+                to_string = to_string,
                 field_name=field_name,
                 python_type=str,
                 length=None,
@@ -872,10 +896,10 @@ be specified using the verbose_name attribute.
     def primary_key( self, obj ):
         """Get the primary key of an object
         :param obj: the object to get the primary key from
-        :return: a tuple with with components of the primary key, or none
-            if the object has no primary key yet or any more.
+        :return: a tuple with with components of the primary key, or an
+            emtpy list if the object has no primary key yet or any more.
         """
-        return None
+        return []
     
     def get_modifications( self, obj ):
         """Get the modifications on an object since the last flush.

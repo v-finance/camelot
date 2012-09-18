@@ -23,6 +23,7 @@
 #  ============================================================================
 from PyQt4 import QtGui, QtCore
 
+from camelot.view.art import ColorScheme
 from customeditor import AbstractCustomEditor
 
 class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
@@ -31,15 +32,16 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
     
     editingFinished = QtCore.pyqtSignal()
     
-    def __init__(self, 
-                 parent=None,
-                 field_name='note',
-                 **kwargs):
-        QtGui.QLabel.__init__(self, parent)
-        AbstractCustomEditor.__init__(self)
+    def __init__( self, 
+                  parent = None,
+                  field_name = 'note',
+                  **kwargs ):
+        QtGui.QLabel.__init__( self, parent )
+        AbstractCustomEditor.__init__( self )
         self.setObjectName( field_name )
-        self.setTextFormat(QtCore.Qt.RichText)
-        from camelot.view.art import ColorScheme
+        self.setTextFormat( QtCore.Qt.RichText )  
+        self.setSizePolicy( QtGui.QSizePolicy.Expanding,
+                            QtGui.QSizePolicy.Minimum )
         style = """
         QLabel {
           margin: 0px;
@@ -51,11 +53,8 @@ class NoteEditor(QtGui.QLabel, AbstractCustomEditor):
         """%(ColorScheme.yellow_1.name())
         self.setStyleSheet( style );
         
-    def set_value(self, value):
-        value = super(NoteEditor, self).set_value(value)
-        self.setVisible(value!=None)
+    def set_value( self, value ):
+        value = super( NoteEditor, self ).set_value( value )
+        self.setVisible( value != None )
         if value:
-            self.setText(unicode(value))
-
-
-
+            self.setText( unicode( value ) )

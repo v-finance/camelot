@@ -32,6 +32,7 @@ import sqlalchemy.types
 from sqlalchemy import orm, sql
 
 from camelot.core.orm import Entity, Field, ManyToOne, using_options
+
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import filters
 from camelot.admin.entity_admin import EntityAdmin
@@ -41,6 +42,7 @@ import camelot.types
 
 import datetime
 
+@documented_entity()
 class BatchJobType( Entity ):
     """The type of batch job, the user will be able to filter his
     jobs based on their type.  A type might be 'Create management reports' """
@@ -63,8 +65,6 @@ class BatchJobType( Entity ):
         verbose_name = _('Batch job type')
         list_display = ['name', 'parent']
         
-BatchJobType = documented_entity()( BatchJobType )
-
 def hostname():
     import socket
     return socket.gethostname()
@@ -79,19 +79,20 @@ class CancelBatchJob( Action ):
             batch_job.status = 'canceled'
         yield FlushSession( model_context.session )
 
-class BatchJob(Entity):
+@documented_entity()
+class BatchJob( Entity ):
     """Information the batch job that is planned, running or has run"""
     using_options( tablename = 'batch_job', order_by=['-date'] )
-    date    = Field(sqlalchemy.types.DateTime, required=True, default=datetime.datetime.now)
-    host    = Field(sqlalchemy.types.Unicode(256), required=True, default=hostname)
-    type    = ManyToOne('BatchJobType', required=True, ondelete = 'restrict', onupdate = 'cascade' )
-    status  = Field(camelot.types.Enumeration([ (-2, 'planned'), 
-                                                (-1, 'running'), 
-                                                (0,  'success'), 
-                                                (1,  'warnings'), 
-                                                (2,  'errors'),
-                                                (3,  'canceled'), ]), required=True, default='planned' )
-    message = Field(camelot.types.RichText())
+    date    = Field( sqlalchemy.types.DateTime, required=True, default=datetime.datetime.now )
+    host    = Field( sqlalchemy.types.Unicode(256), required=True, default=hostname )
+    type    = ManyToOne( 'BatchJobType', required=True, ondelete = 'restrict', onupdate = 'cascade' )
+    status  = Field( camelot.types.Enumeration([ (-2, 'planned'), 
+                                                 (-1, 'running'), 
+                                                 (0,  'success'), 
+                                                 (1,  'warnings'), 
+                                                 (2,  'errors'),
+                                                 (3,  'canceled'), ]), required=True, default='planned' )
+    message = Field( camelot.types.RichText() )
     
     def is_canceled(self):
         """Verifies if this Batch Job is canceled.  Returns :keyword:`True` if 
@@ -130,4 +131,3 @@ class BatchJob(Entity):
         form_display = list_display + ['message']
         form_actions = [ CancelBatchJob() ]
         
-BatchJob = documented_entity()( BatchJob )

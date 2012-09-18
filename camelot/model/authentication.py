@@ -29,10 +29,11 @@ import datetime
 import threading
 
 from sqlalchemy.types import Date, Unicode, DateTime
+from sqlalchemy.schema import Column
 from sqlalchemy import orm
 
 import camelot.types
-from camelot.core.orm import Entity, using_options, Field
+from camelot.core.orm import Entity, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.admin.entity_admin import EntityAdmin
 
@@ -41,7 +42,7 @@ def end_of_times():
 
 _current_authentication_ = threading.local()
 
-def get_current_authentication(_obj=None):
+def get_current_authentication( _obj = None ):
     """Get the currently logged in :class:'AuthenticationMechanism'"""
     global _current_authentication_
     if not hasattr( _current_authentication_, 'mechanism' ) or not _current_authentication_.mechanism:
@@ -61,24 +62,28 @@ def update_last_login():
         session.flush()
 
 class AuthenticationMechanism( Entity ):
-    using_options( tablename = 'authentication_mechanism' )
-    authentication_type = Field( camelot.types.Enumeration( [ (1, 'operating_system'),
-                                                              (2, 'database') ] ),
-                                 required = True, 
-                                 index = True , 
-                                 default = 'operating_system' )
-    username = Field( Unicode( 40 ), required = True, index = True, unique = True )
-    password = Field( Unicode( 200 ), required = False, index = False, default = None )
-    from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
-    thru_date = Field( Date(), default = end_of_times, required = True, index = True )
-    last_login = Field( DateTime() )
+    
+    __tablename__ = 'authentication_mechanism'
+    
+    authentication_type = Column( camelot.types.Enumeration( [ (1, 'operating_system'),
+                                                               (2, 'database') ] ),
+                                  nullable = False, 
+                                  index = True , 
+                                  default = 'operating_system' )
+    username = Column( Unicode( 40 ), nullable = False, index = True, unique = True )
+    password = Column( Unicode( 200 ), nullable = True, index = False, default = None )
+    from_date = Column( Date(), default = datetime.date.today, nullable = False, index = True )
+    thru_date = Column( Date(), default = end_of_times, nullable = False, index = True )
+    last_login = Column( DateTime() )
 
     @classmethod
     def get_or_create( cls, username ):
-        authentication = cls.query.filter_by( username = username ).first()
+        session = Session()
+        authentication = session.query( cls ).filter_by( username = username ).first()
         if not authentication:
             authentication = cls( username = username )
-            orm.object_session( authentication ).flush()
+            session.add( authentication )
+            session.flush()
         return authentication
 
     def __unicode__( self ):

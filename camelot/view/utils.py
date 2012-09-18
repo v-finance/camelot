@@ -22,9 +22,10 @@
 #
 #  ============================================================================
 """Helper functions for the view subpackage"""
+
 from HTMLParser import HTMLParser
 
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 
 from datetime import datetime, time, date
 import re
@@ -188,16 +189,15 @@ def int_from_string(s):
         raise ParsingError()
     return i
 
-
 def float_from_string(s):
     if not s:
         return None
     locale = QtCore.QLocale()
-    f, ok = locale.toFloat(s)
+    # floats in python are implemented as double in C
+    f, ok = locale.toDouble(s)
     if not ok:
         raise ParsingError()
     return f
-
 
 def pyvalue_from_string(pytype, s):
     if pytype is str:
@@ -216,6 +216,11 @@ def pyvalue_from_string(pytype, s):
         return float_from_string(s)
     elif pytype is int:
         return int_from_string(s)
+
+def to_string( value ):
+    if value == None:
+	return u''
+    return unicode( value )
 
 def enumeration_to_string(value):
     return ugettext(unicode(value or u'').replace('_', ' ').capitalize())
@@ -257,3 +262,14 @@ def text_from_richtext( unstripped_text ):
 
     return strings
 
+def resize_widget_to_screen( widget, fraction = 0.75 ):
+    """Resize a widget to fill a certain fraction of the screen
+    
+    :param widget: the widget to resize
+    :param fraction: the fraction of the screen to fill after the resize
+    """
+    desktop = QtGui.QApplication.desktop()
+    available_geometry = desktop.availableGeometry( widget )
+    # use the size of the screen instead to set the dialog size
+    widget.resize( available_geometry.width() * 0.75, 
+                   available_geometry.height() * 0.75 )    

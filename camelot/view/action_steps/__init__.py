@@ -26,12 +26,15 @@ from backup import SelectBackup, SelectRestore
 from change_object import ChangeField, ChangeObject, ChangeObjects
 from gui import ( CloseView, MessageBox, OpenFormView, Refresh, ShowChart, 
                   ShowPixmap )
+from item_view import Sort
 from open_file import ( OpenFile, OpenStream, 
                         OpenString, OpenJinjaTemplate, WordJinjaTemplate )
 from orm import CreateObject, DeleteObject, FlushSession, UpdateObject
-from print_preview import PrintHtml, PrintPreview, PrintJinjaTemplate
+from print_preview import ( PrintChart, PrintHtml, PrintPreview, 
+                            PrintJinjaTemplate )
 from select_file import SelectFile
 from select_object import SelectObject
+from text_edit import EditTextDocument
 from update_progress import UpdateProgress
 
 __all__ = [
@@ -41,6 +44,7 @@ __all__ = [
     CloseView.__name__,
     CreateObject.__name__,
     DeleteObject.__name__,
+    EditTextDocument.__name__,
     FlushSession.__name__,
     MessageBox.__name__,
     OpenFile.__name__,
@@ -48,6 +52,7 @@ __all__ = [
     OpenJinjaTemplate.__name__,
     OpenStream.__name__,
     OpenString.__name__,
+    PrintChart.__name__,
     PrintHtml.__name__,
     PrintJinjaTemplate.__name__,
     PrintPreview.__name__,
@@ -58,6 +63,7 @@ __all__ = [
     SelectRestore.__name__,
     ShowChart.__name__,
     ShowPixmap.__name__,
+    Sort.__name__,
     UpdateObject.__name__,
     UpdateProgress.__name__,
     WordJinjaTemplate.__name__,

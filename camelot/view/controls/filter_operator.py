@@ -22,8 +22,11 @@
 #
 #  ============================================================================
 
+import copy
+
 from PyQt4 import QtGui, QtCore
 
+from camelot.view.field_attributes import order_operators
 from camelot.core.utils import ugettext
 from camelot.view.utils import operator_names
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
@@ -54,7 +57,8 @@ class FilterOperator( QtGui.QWidget ):
                   default_value_2 = None,
                   parent = None ):
         super( FilterOperator, self ).__init__( parent )        
-        self._entity, self._field_name, self._field_attributes = cls, field_name, field_attributes
+        self._entity, self._field_name = cls, field_name
+        self._field_attributes = copy.copy( field_attributes )
         self._field_attributes['editable'] = True
         layout = QtGui.QVBoxLayout()
         layout.setContentsMargins( 2, 2, 2, 2 )
@@ -149,13 +153,11 @@ class FilterOperator( QtGui.QWidget ):
             return query.filter(getattr(self._entity, self._field_name)==None)
         field = getattr(self._entity, self._field_name)
         operator, arity = self.get_operator_and_arity()
-        if arity == 1:
-            args = field, self._value
-        elif arity == 2:
-            args = field, self._value, self._value2
-        else:
-            assert False, 'Unsupported operator arity: %d' % arity
-        return query.filter(operator(*args))
+        values = [self._value, self._value2][:arity]
+        none_values = sum( v == None for v in values )
+        if ( operator in order_operators ) and none_values > 0:
+            return query
+        return query.filter( operator( field, *values ) )
 
     def get_operator_and_arity(self):
         """:return: the current operator and its arity"""

@@ -6,7 +6,7 @@ from PyQt4.QtCore import Qt
 
 from camelot.admin.action import Action
 from camelot.admin.action import list_action, application_action
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import pyqt, ugettext_lazy as _
 from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps
@@ -108,6 +108,27 @@ class ActionStepsCase( ModelThreadTestCase ):
         dialog = select_file.render()
         self.grab_widget( dialog )
         
+    def test_print_chart( self ):
+        
+        # begin chart print
+        class ChartPrint( Action ):
+            
+            def model_run( self, model_context ):
+                from camelot.container.chartcontainer import BarContainer
+                from camelot.view.action_steps import PrintChart
+                chart = BarContainer( [1, 2, 3, 4],
+                                      [5, 1, 7, 2] )
+                print_chart_step = PrintChart( chart )
+                print_chart_step.page_orientation = QtGui.QPrinter.Landscape
+                yield print_chart_step
+        # end chart print
+
+        action = ChartPrint()
+        steps = list( action.model_run( self.context ) )
+        dialog = steps[0].render()
+        dialog.show()
+        self.grab_widget( dialog )
+
     def test_print_preview( self ):
         
         # begin webkit print
@@ -289,8 +310,34 @@ class ApplicationActionsCase( ModelThreadTestCase ):
         self.storage = Storage()
 
     def test_refresh( self ):
+        from camelot.core.orm import Session
+        from camelot.model.party import Person
         refresh_action = application_action.Refresh()
+        session = Session()
+        #
+        # create objects in various states
+        #
+        p1 = Person(first_name = 'p1', last_name = 'persistent' )
+        p2 = Person(first_name = 'p2', last_name = 'dirty' )
+        p3 = Person(first_name = 'p3', last_name = 'deleted' )
+        p4 = Person(first_name = 'p4', last_name = 'to be deleted' )
+        p5 = Person(first_name = 'p5', last_name = 'detached' )
+        p6 = Person(first_name = 'p6', last_name = 'deleted outside session' )
+        session.flush()
+        p3.delete()
+        session.flush()
+        p4.delete()
+        p2.last_name = 'clean'
+        #
+        # delete p6 without the session being aware
+        #
+        person_table = Person.table
+        session.execute( person_table.delete().where( person_table.c.party_id == p6.id ) )
+        #
+        # refresh the session through the action
+        #
         list( refresh_action.model_run( self.context ) )
+        self.assertEqual( p2.last_name, 'dirty' )
         
     def test_backup_and_restore( self ):
         backup_action = application_action.Backup()

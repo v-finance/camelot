@@ -24,17 +24,14 @@
 
 """Proxy objects for the model that live in the GUI thread and are able to
 respond immediately. They do so by keeping a local copy of the data of the real
-model
+model.
 
-We take copies of the data in the elixir model, because accessing an attribute
+We take copies of the data in the model, because accessing an attribute
 on the model, might cause an sql query which might take a long time, and might
-freeze the gui
+freeze the GUI
 """
 
 class ValueLoading(object):
     """Class indicating that a value was not yet loaded into the
     proxy"""
     pass
-
-
-

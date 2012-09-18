@@ -8,7 +8,7 @@ import time
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.files.storage import StoredFile, StoredImage, Storage
-from camelot.test import ModelThreadTestCase, EntityViewsTest, SchemaTest
+from camelot.test import ModelThreadTestCase, EntityViewsTest
 from camelot.view.art import ColorScheme
 
 from PyQt4 import QtGui, QtCore
@@ -88,9 +88,10 @@ class EditorsTest(ModelThreadTestCase):
         editor.set_value( plot )
         editor.setMaximumSize( 400, 200 )
         self.grab_widget( editor, 'editable' )
-        editor.set_field_attributes(editable=False)
+        editor.set_field_attributes( editable=False )
         self.grab_widget( editor, 'disabled' )
         self.assert_valid_editor( editor, plot )
+        
         
     def test_DateEditor(self):
         import datetime
@@ -182,8 +183,12 @@ class EditorsTest(ModelThreadTestCase):
         self.assertEqual( editor.get_value(), True )
         editor.set_value( False )
         self.assertEqual( editor.get_value(), False )
+        # changing the editable state should preserve the value
         editor.set_value( True )
-        editor.set_enabled( True )
+        editor.set_field_attributes( editable = False )
+        self.assertEqual( editor.get_value(), True )
+        editor.set_field_attributes( editable = True )
+        self.assertEqual( editor.get_value(), True )        
         self.assert_valid_editor( editor, True )
 
     def test_CodeEditor(self):
@@ -908,6 +913,24 @@ class ControlsTest(ModelThreadTestCase):
         
         self.assertEqual( first_name_width, suffix_width )
         
+    def test_column_group( self ):
+        from camelot.admin.table import ColumnGroup
+        from camelot.view.controls.tableview import TableView
+        from camelot.model.party import Person
+
+        class ColumnWidthAdmin( Person.Admin ):
+            #begin column group
+            list_display = [ ColumnGroup( _('Name'), ['first_name', 'last_name', 'suffix'] ),
+                             ColumnGroup( _('Official'), ['birthdate', 'social_security_number', 'passport_number'] ),
+                             ]
+            #end column group
+            
+        admin = ColumnWidthAdmin( self.app_admin, Person )
+        widget = TableView( self.gui_context, 
+                            admin )
+        widget.setMinimumWidth( 800 )
+        self.grab_widget( widget )
+        
     def test_navigation_pane(self):
         from camelot.view.controls import navpane2
         self.wait_for_animation()
@@ -936,11 +959,11 @@ class ControlsTest(ModelThreadTestCase):
         self.wait_for_animation()
         self.grab_widget( widget )     
 
-    def test_status_bar(self):
-        from camelot.view.controls.statusbar import StatusBar
-        status_bar = StatusBar(None)
-        status_bar.busy_widget.set_busy(True)
-        self.grab_widget(status_bar)
+    def test_busy_widget(self):
+        from camelot.view.controls.busy_widget import BusyWidget
+        busy_widget = BusyWidget()
+        busy_widget.set_busy( True )
+        self.grab_widget( busy_widget )
 
     def test_search_control(self):
         from camelot.view.controls.search import SimpleSearchControl
@@ -1098,7 +1121,3 @@ class SnippetsTest(ModelThreadTestCase):
         editor.set_value(proxy)
         self.process()
         self.grab_widget(editor)
-
-class CamelotSchemaTest(SchemaTest):
-
-    images_path = static_images_path

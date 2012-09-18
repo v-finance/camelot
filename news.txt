@@ -1,23 +1,54 @@
 Master
 ------
 
+ * Add SessionTransaction context manager
+
+Stable
+------
+
+ * Add :class:`camelot.view.action_steps.print_preview.PrintChart` action step.
+ 
+ * Adapt printing of charts to matplotlib 1.0
+ 
+ * Fix `maximum` field attribute of rating fields in editor and delegate.
+ 
+ * Workaround for form window hiding on Mac
+
+Release 12.06.29
+----------------
+
+ * ``camelot_manage``has been removed, since it did not contain essential functions
+   for the development of Camelot applications.
+
+ * Port the ``camelot_example`` application and :ref:`tutorial-videostore` to `Declarative`
+ 
+ * Add a toolbar to the form view, configurable through
+   the :meth:`camelot.admin.object_admin.ObjectAdmin.get_form_toolbar_actions` method.
+ 
+ * Move the progress widget from the removed status bar to the toolbar
+ 
+ * Add :class:`camelot.admin.table.ColumnGroup` in the list view. 
+ 
+   .. image:: /_static/controls/column_group.png
+
  * See :ref:`migrate-11.12.30` for documentation on how to upgrade an 
    existing Camelot project.
+   
+ * Tracking of changes goes through the :class:`camelot.admin.object_admin.ObjectAdmin`
  
  * Cleanup of the default Camelot models :
  
      * they can be used independently of each other
      
-     * Persons, Organizations, etc. have been moved to `camelot.model.party`
+     * Persons, Organizations, etc. have been moved to :mod:`camelot.model.party`
      
      * Simplification of the underlying tables
      
-     * The default metadata was moved `camelot.model.sql`
+     * The default `metadata` was moved :mod:`camelot.core.sql`
 
- * Store user changed column width in settings and `column_width` field 
-   attribute
+ * Store user changed column width in settings and :ref:`field-attribute-column_width` field attribute
 
- * not_editable_admin has an `actions` argument
+ * :func:`camelot.admin.not_editable_admin.not_editable_admin` has an `actions` argument
  
  * Reworked searching for translation files
  

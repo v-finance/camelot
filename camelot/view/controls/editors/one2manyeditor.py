@@ -129,8 +129,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
                 table.setItemDelegate( delegate )
                 for i in range( self.model.columnCount() ):
                     txtwidth = self.model.headerData( i, Qt.Horizontal, Qt.SizeHintRole ).toSize().width()
-                    colwidth = table.columnWidth( i )
-                    table.setColumnWidth( i, max( txtwidth, colwidth ) )
+                    table.setColumnWidth( i, txtwidth )
 
     def set_value( self, model ):
         model = CustomEditor.set_value( self, model )

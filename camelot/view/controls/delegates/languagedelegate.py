@@ -25,6 +25,9 @@ from plaintextdelegate import PlainTextDelegate
 from camelot.view.controls.editors import LanguageEditor
 
 class LanguageDelegate( PlainTextDelegate ):
+    """Delegate for :class:`camelot.types.Language` columns.  Expects string
+    values.
+    """
     
     editor = LanguageEditor
 

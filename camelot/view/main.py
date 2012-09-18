@@ -29,7 +29,7 @@ from camelot.core.utils import ugettext as _
 from camelot.art import resources # Required for tooltip visualization
 resources.__name__ # Dodge PyFlakes' attack
 
-class Application(QtCore.QObject):
+class Application( QtCore.QObject ):
     """The camelot application.  This class will take care of the order of
     initialization of various stuff needed to get the application up and
     running, each of its methods will be called in subsequent order,
@@ -113,6 +113,9 @@ class Application(QtCore.QObject):
         mt = get_model_thread()
         mt.setup_exception_signal.connect( self.initialization_exception )
         mt.start()
+        #import os
+        #from camelot.core.auto_reload import auto_reload
+        #auto_reload.addPath( os.getcwd() )
 
     def load_translations(self, application):
         """Fill the QApplication with the needed translations
@@ -182,9 +185,8 @@ class Application(QtCore.QObject):
                              (QtCore.QT_VERSION_STR, QtCore.PYQT_VERSION_STR))
                 logger.debug('qt major version %f' % QT_MAJOR_VERSION)
             app.processEvents()
-            import sqlalchemy, elixir
+            import sqlalchemy
             logger.debug('sqlalchemy version %s'%sqlalchemy.__version__)
-            logger.debug('elixir version %s'%elixir.__version__)
             app.processEvents()
             self.set_application_attributes(app)
             self.pre_initialization()

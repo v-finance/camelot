@@ -49,6 +49,12 @@ from camelot.view.utils import (
 _numerical_operators = (operator.eq, operator.ne, operator.lt, operator.le, operator.gt, operator.ge, between_op)
 _text_operators = (operator.eq, operator.ne, like_op)
 
+#
+# operators assuming an order in the values they operate on.  these operators don't
+# work on None values
+#
+order_operators = (operator.lt, operator.le, operator.gt, operator.ge, between_op, like_op)
+
 _sqlalchemy_to_python_type_ = {
 
     sqlalchemy.types.Boolean: lambda f: {

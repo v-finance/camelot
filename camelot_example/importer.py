@@ -8,7 +8,10 @@ class ImportCovers( Action ):
     
 # begin select files
     def model_run( self, model_context ):
-        from camelot.view.action_steps import SelectFile, UpdateProgress, Refresh
+        from camelot.view.action_steps import ( SelectFile, 
+                                                UpdateProgress, 
+                                                Refresh,
+                                                FlushSession )
         
         select_image_files = SelectFile( 'Image Files (*.png *.jpg);;All Files (*)' )
         select_image_files.single = False
@@ -18,11 +21,13 @@ class ImportCovers( Action ):
 # begin create movies
         import os
         from sqlalchemy import orm
+        from camelot.core.orm import Session
         from camelot_example.model import Movie
               
         movie_mapper = orm.class_mapper( Movie )
         cover_property = movie_mapper.get_property( 'cover' )
         storage = cover_property.columns[0].type.storage
+        session = Session()
 
         for i, file_name in enumerate(file_names):
             yield UpdateProgress( i, file_count )
@@ -31,7 +36,7 @@ class ImportCovers( Action ):
             movie = Movie( title = title )
             movie.cover = stored_file
             
-        Movie.query.session.flush()
+        yield FlushSession( session )
 # end create movies
 # begin refresh
         yield Refresh()

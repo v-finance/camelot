@@ -28,6 +28,7 @@ logger = logging.getLogger('camelot.view.mainwindow')
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui, QtCore
 
+from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.controls.navpane2 import NavigationPane
 from camelot.view.model_thread import post
 
@@ -88,9 +89,6 @@ class MainWindow(QtGui.QMainWindow):
         post( self.app_admin.get_toolbar_actions, 
               self.set_bottom_toolbar_actions,
               args = (Qt.BottomToolBarArea,) )
-
-        logger.debug('creating status bar')
-        self.create_status_bar()
 
         logger.debug('reading saved settings')
         self.read_settings()
@@ -211,6 +209,7 @@ class MainWindow(QtGui.QMainWindow):
                     qaction.triggered.connect( self.action_triggered )
                 toolbar.addAction( qaction )
             self.toolbars.append( toolbar )
+            toolbar.addWidget( BusyWidget() )
                 
     @QtCore.pyqtSlot( object )
     def set_left_toolbar_actions( self, toolbar_actions ):
@@ -237,9 +236,10 @@ class MainWindow(QtGui.QMainWindow):
         model_context = gui_context.create_model_context()
         for toolbar in self.toolbars:
             for qaction in toolbar.actions():
-                post( qaction.action.get_state,
-                      qaction.set_state,
-                      args = ( model_context, ) )
+                if isinstance( qaction, ActionAction ):
+                    post( qaction.action.get_state,
+                          qaction.set_state,
+                          args = ( model_context, ) )
         menu_bar = self.menuBar()
         if menu_bar:
             for qaction in menu_bar.findChildren( ActionAction ):
@@ -271,12 +271,6 @@ class MainWindow(QtGui.QMainWindow):
             self.addDockWidget( Qt.LeftDockWidgetArea, self.navpane )
         else:
             self.navpane = None
-
-    def create_status_bar( self ):
-        from controls.statusbar import StatusBar
-        statusbar = StatusBar( self )
-        self.setStatusBar( statusbar )
-        statusbar.showMessage( _('Ready'), 5000 )
 
     def closeEvent( self, event ):
         from camelot.view.model_thread import get_model_thread

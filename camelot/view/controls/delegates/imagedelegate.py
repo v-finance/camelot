@@ -29,7 +29,9 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 class ImageDelegate(FileDelegate):
-    """
+    """Delegate for :class:`camelot.types.Image` fields.  Expects values of type 
+    :class:`camelot.core.files.storage.StoredImage`.
+
     .. image:: /_static/image.png
     """
     

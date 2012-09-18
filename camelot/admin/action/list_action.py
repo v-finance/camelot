@@ -85,10 +85,6 @@ class ListActionModelContext( ApplicationActionModelContext ):
         self.selected_rows = []
         self.field_attributes = dict()
         
-    @property
-    def session( self ):
-        return self.admin.get_query().session
-        
     def get_selection( self, yield_per = None ):
         """
         :param yield_per: an integer number giving a hint on how many objects
@@ -230,7 +226,7 @@ class CallMethod( Action ):
         return state
             
 class ListContextAction( Action ):
-    """An base class for actions that should only be enabled in the
+    """An base class for actions that should only be enabled if the
     gui_context is a :class:`ListActionModelContext`
     """
     
@@ -589,8 +585,11 @@ class PrintPreview( ListContextAction ):
         columns = model_context.admin.get_columns()
         
         table = []
+        getters = [field_attributes['getter'] for _field, field_attributes in columns]
+        to_strings = [field_attributes['to_string'] for _field, field_attributes in columns]
+        column_range = range( len( columns ) )
         for obj in model_context.get_collection():
-            table.append( [getattr( obj, col[0] ) for col in columns] )
+            table.append( [to_strings[i]( getters[i]( obj ) ) for i in column_range] )
         context = {
           'title': model_context.admin.get_verbose_name_plural(),
           'table': table,
@@ -687,10 +686,11 @@ class ReplaceFieldContents( EditAction ):
         from camelot.view import action_steps
         field_name, value_getter = yield action_steps.ChangeField( model_context.admin )
         yield action_steps.UpdateProgress( text = _('Replacing field') )
-        value = value_getter()
-        for obj in model_context.get_selection():
-            setattr( obj, field_name, value )
-        yield action_steps.FlushSession( model_context.session )
+        if value_getter != None:
+            value = value_getter()
+            for obj in model_context.get_selection():
+                setattr( obj, field_name, value )
+            yield action_steps.FlushSession( model_context.session )
         
 class AddExistingObject( EditAction ):
     """Add an existing object to a list if it is not yet in the
@@ -708,7 +708,7 @@ class AddExistingObject( EditAction ):
         for obj in model_context.get_collection():
             if obj_to_add == obj:
                 raise StopIteration()
-        model_context._model.append_object( obj_to_add )
+        model_context._model.append_object( obj_to_add, flush = False )
         yield action_steps.FlushSession( object_session( obj_to_add ) )
         
 class AddNewObject( OpenNewView ):
@@ -740,6 +740,6 @@ class RemoveSelection( EditAction ):
         objects_to_remove = list( model_context.get_selection() )
         if len( objects_to_remove ):
             session = object_session( objects_to_remove[0] )
-        model_context._model.remove_objects( objects_to_remove, delete = False )
+        model_context._model.remove_objects( objects_to_remove, delete = False, flush = False )
         yield action_steps.FlushSession( session )
 

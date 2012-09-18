@@ -9,7 +9,7 @@ long_description = open(README).read() + '\n\n'
 setup(
     name = 'Camelot',
     version = camelot.__version__,
-    description = 'A python GUI framework on top of Sqlalchemy, Elixir and PyQt, inspired by the Django admin interface. Start building desktop applications at warp speed, simply by adding some additional information to you model definition.',
+    description = 'A python GUI framework on top of Sqlalchemy and Qt, inspired by the Django admin interface. Start building desktop applications at warp speed, simply by adding some additional information to you model definition.',
     long_description = long_description,
     keywords = 'qt pyqt sqlalchemy elixir desktop gui framework',
     author = 'Conceptive Engineering',
@@ -36,7 +36,7 @@ setup(
     },  
     license = 'GPL, Commercial',
     platforms = 'Linux, Windows, OS X',
-    install_requires = ['SQLAlchemy>=0.7.3, <0.8.0',
+    install_requires = ['SQLAlchemy>=0.7.7, <0.8.0',
                         'Elixir>=0.7.1',
                         'sqlalchemy-migrate>=0.7.1',
                         'Jinja2>=2.5.5',
@@ -45,7 +45,6 @@ setup(
                         'xlrd==0.7.1', ],
     entry_points = {'console_scripts':[
                      'camelot_admin = camelot.bin.camelot_admin:main',
-                     'camelot_manage = camelot.bin.camelot_manage:main',
                      'camelot_example = camelot_example.main:main',
                      'camelot_mini_example = camelot_example.mini_main:main',
                     ]
@@ -70,4 +69,3 @@ setup(
               'Topic :: Software Development :: Libraries :: Application Frameworks',
               ],         
     packages = find_packages() + ['doc',] )
-

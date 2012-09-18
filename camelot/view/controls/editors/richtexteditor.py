@@ -106,7 +106,7 @@ class RichTextEditor(CustomEditor, WideEditor):
             self.editingFinished.emit()
 
     def set_editable(self, editable):
-        self.textedit.setReadOnly(not editable)
+        self.textedit.setReadOnly( not editable )
 
     def set_field_attributes(self, editable=True, background_color=None, **kwargs):
         self.set_editable(editable)
@@ -322,7 +322,13 @@ class RichTextEditor(CustomEditor, WideEditor):
         value = u''.join([node.toxml() for node in tree.getElementsByTagName('html')[0].getElementsByTagName('body')[0].childNodes])
         return CustomEditor.get_value(self) or value
 
-    def set_value(self, value):
+    def set_document( self, document ):
+        """
+        :param document: a :class:`QtGui.QTextDocument` object.        
+        """
+        self.textedit.setDocument( document )
+        
+    def set_value( self, value ):
         value = CustomEditor.set_value(self, value)
         if value!=None:
             if unicode(self.textedit.toHtml())!=value:
@@ -331,6 +337,3 @@ class RichTextEditor(CustomEditor, WideEditor):
                 self.update_color()
         else:
             self.textedit.clear()
-
-
-

@@ -71,7 +71,3 @@ settings.py before anything else happens::
         version = repository.latest        
         schema.upgrade(version)
         migrate_connection.close()
-
-Where settings.REPOSITORY is the directory of the sqlalchemy-migrate 
-repository.  For more source code, have a look at the source of 
-:module:`camelot.bin.camelot_manage`.

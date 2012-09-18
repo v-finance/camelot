@@ -51,8 +51,13 @@ Default behavior of the application
 -----------------------------------
 
   * :meth:`camelot.admin.application_admin.ApplicationAdmin.get_related_admin`
+  
+The look of the form views
+--------------------------
+
   * :meth:`camelot.admin.application_admin.ApplicationAdmin.get_related_toolbar_actions`
   * :meth:`camelot.admin.application_admin.ApplicationAdmin.get_form_actions`
+  * :meth:`camelot.admin.application_admin.ApplicationAdmin.get_form_toolbar_actions`
 
 Example
 -------

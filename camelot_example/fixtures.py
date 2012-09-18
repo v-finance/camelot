@@ -8,7 +8,7 @@ def load_movie_fixtures():
     from camelot.model.party import Person
     from camelot_example.model import Movie, VisitorReport
     from camelot.core.files.storage import Storage, StoredImage
-    from camelot.core.resources import resource_string
+    from camelot.core.resources import resource_filename
 
     storage = Storage(upload_to='covers',
                       stored_file_implementation = StoredImage)
@@ -244,12 +244,10 @@ def load_movie_fixtures():
         )
         movie = Fixture.find_fixture( Movie, title )
         if not movie:
-            image = resource_string( 'camelot_example', os.path.join( 'media', 'covers', cover ) )
-            stream = StringIO.StringIO()
-            stream.write( image )
-            stream.seek( 0 )
-            prefix, suffix = os.path.splitext( cover )
-            stored_image = storage.checkin_stream( prefix, suffix, stream )
+            # use resource_filename, since resource_string seems to mess either with encoding
+            # or with line endings, when on windows
+            image = resource_filename( 'camelot_example', os.path.join( 'media', 'covers', cover ) )
+            stored_image = storage.checkin( image )
             movie = Fixture.insert_or_update_fixture(
                 Movie,
                 fixture_key = title,

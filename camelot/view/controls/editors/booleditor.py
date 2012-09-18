@@ -64,14 +64,13 @@ class BoolEditor(QtGui.QCheckBox, AbstractCustomEditor):
             return False
         return True
 
+    def set_field_attributes( self, editable = True, **kwargs ):
+        AbstractCustomEditor.set_field_attributes( self, **kwargs )
+        self.setDisabled( not editable )
+        
     @QtCore.pyqtSlot( bool )
     def _state_changed(self, value=None):
         self.editingFinished.emit()
-
-    def set_enabled(self, editable=True):
-        value = self.get_value()
-        self.setDisabled(not editable)
-        self.set_value(value)
 
     def sizeHint(self):
         size = QtGui.QComboBox().sizeHint()

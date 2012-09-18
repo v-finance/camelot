@@ -4,69 +4,97 @@
 Under the hood
 ==============
 
-Setting up the model
-====================
+A lot of things happen when a Camelot application starts up.  
+In this section we give a brief overview of those which might need to be adapted for more complex applications
 
-A lot of things happen under the hood when a model is defined using Elixir, and
-picked up by Camelot :
+.. _settings:
 
-Metadata
---------
+Global settings
+===============
 
-Each file that contains a part of the model definition should contain these lines :
+Camelot has a global `settings` object of which the attributes are used throughout Camelot whenever a piece
+of global configuration is needed.
+Examples of such global configuration are the location of the database and the location of stored files and
+images.
+To access the global configuration, simply import the object ::
 
-.. literalinclude:: ../../../../camelot/empty_project/model.py
-   :start-after: begin meta data setup
-   :end-before: end meta data setup
+    from camelot.core.conf import settings
+    print settings.CAMELOT_MEDIA_ROOT()
+    
+To manipulate the global configuration, create a class with the needed attributes and methods and append
+it to the global configuration :
+
+.. literalinclude:: ../../../../new_project/main.py
+   :start-after: begin custom settings
+   :end-before: end custom settings
    
-They associate the Entities defined in this file with the default metadata.  The
-metadata is a datastructure that contains information about the database in which
-the tables for the model will be created.
+The `settings` object should have a method named ``ENGINE``,  uses the `create_engine <http://docs.sqlalchemy.org/en/latest/core/engines.html#sqlalchemy.create_engine>`_ 
+SQLAlchemy function to create a connection to the database. 
+Camelot provides a default ``sqlite`` URI scheme. But you can set your own.
+
+.. literalinclude:: ../../../../camelot/core/conf.py
+   :pyobject: SimpleSettings.ENGINE
+   
+Older versions of Camelot looked for a `settings` module on `sys.path` to look for the global configuration.
+This approach is still supported.
+
+Setting up the ORM
+==================
+
+When the application starts up, the `setup_model` method of the `Settings` class is called.  
+In this function, all model files should be imported, to make sure the model has been completely setup.
+The importing of these files is enough to define the mapping between objects and tables.
+
+.. literalinclude:: ../../../../new_project/main.py
+   :pyobject: MySettings.setup_model
+   
+The import of these model definitions should happen before the call to `create_all` to make sure all models are known before the tables are created.
+
+Setting up the Database
+=======================
 
 Engine
 ------
 
-The settings.py file should contain a function named ENGINE that returns a
-connection to the database.  This connection will be associated with the default
-metadata used in the model definition.
+The `Settings` class should contain a method named `ENGINE` that returns a connection to the database.  
+Whenever a connection to the database is needed, this method will be called.
+The :class:`camelot.core.conf.SimpleSettings` has a default `ENGINE` method that returns an SQLite
+database in a user directory.
 
-.. literalinclude:: ../../../../camelot/empty_project/settings.py
-   :pyobject: ENGINE
+.. literalinclude:: ../../../../camelot/core/conf/settings.py
+   :pyobject: SimpleSettings.ENGINE
 
-As such, all defined models are associated with this database.
+Metadata
+--------
 
-Setup model
------------
+*SQLAlchemy* defines the :class:`MetaData` class.  A `MetaData` object contains all the information about a database schema, such
+as Tables, Columns, Foreign keys, etc.  The :mod:`camelot.core.sql` contains the singleton `metadata` object which is the
+default :class:`MetaData` object used by Camelot.
+In the `setup_model` function, this `metadata` object is bound to the database engine.
 
-When the application starts up, the setup_model function in the settings.py file
-is called.  In this function, all model files should be imported, to make sure the
-model has been completely setup.
 
-.. literalinclude:: ../../../../camelot/empty_project/settings.py
-   :pyobject: setup_model
+.. literalinclude:: ../../../../new_project/main.py
+   :pyobject: MySettings
+   
+In case an application works with multiple database schemas in parallel, this step needs to be adapted.
+
+Creating the tables
+-------------------
+
+By simply importing the modules which contain parts of the model definition, the needed table information
+is added to the `metadata` object.  At the end of the `setup_model` function, the `create_all` method is called on the metadata, which
+will create the tables in the database if they don't exist yet.
+
+.. literalinclude:: ../../../../new_project/main.py
+   :pyobject: MySettings
    
 Working without the default model
 =================================
 
 Camelot comes with a default model for Persons, Organizations, History tracking, etc.
 
-You might want to turn this off, here's how to do so :
-
-1. In your settings.py, remove the line 'import camelot.model' and the line
-   'from camelot.model.authentication import updateLastLogin', this will make sure
-   no tables are created for the default Camelot model.  Tables are only created for
-   the models that have been imported before the call to 'setup_all()'
-  
-.. literalinclude:: ../../../../camelot/empty_project/settings.py
-   :pyobject: setup_model
-    
-2. Have a look in 'camelot/model/__init__.py' and copy the lines that do
-   the initialization of the elixir session and metadata to the top of your
-   own model file, imported first in the 'setup_model()' function.
-
-.. literalinclude:: ../../../../camelot/model/__init__.py
-   :start-after: begin session setup
-   :end-before: end session setup
+To turn these on or off, simply add or remove the import statements of those modules from the
+`setup_model` method in the `Settings` class.
 
 Transactions
 ============
@@ -94,19 +122,18 @@ Using Camelot without the GUI
 Often a Camelot application also has a non GUI part, like batch scripts, server side
 scripts, etc.
 
-It is of course perfectly possible to reuse the whole model definition in those non
-GUI parts.  The easiest way to do so is to leave the Camelot GUI application as it
-is and then in the non GUI script, initialize the model first ::
+It is of course perfectly possible to reuse the whole model definition in those non GUI parts.  
+The easiest way to do so is to leave the Camelot GUI application as it is and then in the non GUI script, initialize the model first ::
 
-import settings
-settings.setup_model()
+   from camelot.core.conf import settings
+   settings.setup_model()
 
-From that point, all model manipulations can be done.  Access to the session can
-be obtained via any Entity subclass, such as Person ::
+From that point, all model manipulations can be done.  Access to the single 
+session can be obtained from anywhere through the `Session` factory method ::
 
-session = Person.query.session
+   from camelot.core.orm import Session
+   session = Session()
 
 After the manipulations to the model have been done, they can be flushed to the db ::
 
-session.flush()
-
+   session.flush()

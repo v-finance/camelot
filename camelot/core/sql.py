@@ -28,14 +28,14 @@ variable, which is a global :class:`sqlalchemy.Metadata` object to which all
 tables of the application can be added.
 """
 
+import functools
 import logging
-from functools import wraps
 
-from sqlalchemy import MetaData
+from sqlalchemy import event, MetaData
 import sqlalchemy.sql.operators
 
+from camelot.core.auto_reload import auto_reload
 from camelot.core.conf import settings
-from camelot.core.exception import UserException
 
 LOGGER = logging.getLogger('camelot.core.sql')
 
@@ -47,35 +47,30 @@ metadata = MetaData()
 metadata.autoflush = False
 metadata.transactional = False
 
-def like_op(column, string):
-    return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)
-
-def transaction(original_function):
-    """Decorator for methods on an entity, to make them transactional"""
-
-    logger = logging.getLogger('camelot.core.sql.transaction')
+event.listen( auto_reload, 'before_reload', metadata.clear )
     
-    @wraps( original_function )
-    def decorated_function(cls, *args, **kwargs):
-        session = cls.query.session
-        session.begin()
-        try:
-            result = original_function(cls, *args, **kwargs)
-            session.commit()
-        except Exception, e:
-            session.rollback()
-            if not isinstance( e, (UserException,) ):
-                logger.error( 'Unhandled exception, rolling back transaction', 
-                              exc_info=e)
-            raise e
-        return result
+def like_op(column, string):
+    return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)    
+        
+def transaction( original_function ):
+    """Decorator to make methods or functions transactional"""
+    
+    from camelot.core.orm import SessionTransaction
+    
+    @functools.wraps( original_function )
+    def decorated_function( *args, **kwargs ):
+        
+        with SessionTransaction():
+            return original_function( *args, **kwargs )
     
     return decorated_function
 
 def update_database_from_model():
-    """Introspection the model and add missing columns in the database
+    """Introspection the model and add missing columns in the database.    
+    this function can be ran in setup_model after::
     
-    this function can be ran in setup_model after setup_all(create_tables=True)
+        metadata.create_all()
+        
     """
     migrate_engine = settings.ENGINE()
     migrate_connection = migrate_engine.connect()
@@ -90,4 +85,3 @@ def update_database_from_model():
             LOGGER.warn( 'column %s missing in table %s'%(column, table_name) )
             table = metadata.tables[table_name]
             create_column(column, table)
-

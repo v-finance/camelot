@@ -26,20 +26,25 @@
 A :class:`Table` and a :class:`ColumnGroup` class to define table views that
 are more complex.
 
-.. literalinclude:: ../../camelot_example/view.py
-   :start-after: begin column group
-   :end-before: end column group
-   
-.. image:: /_static/controls/column_groups_widget_first_tab.png
-
 """
 
 class ColumnGroup( object ):
-    """A group of columns to be displayed in a table view
-    :param verbose_name: the text to be displayed in the tab widget of the
-        column group
-    :param columns: a list of fields to display within this column group
-    :param icon: a :class:`camelot.view.art.Icon` object
+    """
+    A group of columns to be displayed in a table view.  By building a Table
+    with multiple column groups, lots of data can be displayed in a limited
+    space.
+    
+        :param verbose_name: the text to be displayed in the tab widget of the
+            column group
+        :param columns: a list of fields to display within this column group
+        :param icon: a :class:`camelot.view.art.Icon` object
+        
+    .. literalinclude:: ../../test/test_view.py
+       :start-after: begin column group
+       :end-before: end column group
+       
+    .. image:: /_static/controls/column_group.png
+
     """
     
     def __init__( self, 
@@ -52,14 +57,16 @@ class ColumnGroup( object ):
         
     def get_fields( self ):
         """
-        :return: a ordered list of field names displayed in the column group
+        :return: an ordered list of field names displayed in the column group
         """
         return self.columns
         
 class Table( object ):
-    """Represents the columns that should be displayed in a table view.
-    :param columns: a list of strings with the fields to be displayed, or a 
-        list of :class:`ColumnGroup` objects
+    """
+    Represents the columns that should be displayed in a table view.
+    
+        :param columns: a list of strings with the fields to be displayed, or a 
+            list of :class:`ColumnGroup` objects
     """
     
     def __init__( self,
@@ -82,8 +89,9 @@ class Table( object ):
         """
         Create a tab widget that allows the user to switch between column 
         groups.
-        :param item_view: a :class:`QtGui.QAbstractItemView` object.
-        :param parent: a :class:`QtGui.QWidget` object
+        
+            :param item_view: a :class:`QtGui.QAbstractItemView` object.
+            :param parent: a :class:`QtGui.QWidget` object
         """
         pass
 

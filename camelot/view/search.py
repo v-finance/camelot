@@ -30,30 +30,27 @@ import logging
 LOGGER = logging.getLogger('camelot.view.search')
 
 import sqlalchemy.types
-from sqlalchemy.sql import operators
+from sqlalchemy import sql, orm, schema
 
 import camelot.types
 
-def create_entity_search_query_decorator(admin, text):
+def create_entity_search_query_decorator( admin, text ):
     """create a query decorator to search through a collection of entities
-    @param admin: the admin interface of the entity
-    @param text: the text to search for
-    @return: a function that can be applied to a query to make the query filter
+    :param admin: the admin interface of the entity
+    :param text: the text to search for
+    :return: a function that can be applied to a query to make the query filter
     only the objects related to the requested text or None if no such decorator
     could be build
     """
-    from elixir import entities
-    from sqlalchemy import orm, sql
     from camelot.view import utils
 
     if len(text.strip()):
-        from sqlalchemy import Unicode, or_
         # arguments for the where clause
         args = []
         # join conditions : list of join entities
         joins = []
 
-        def append_column(c):
+        def append_column( c ):
             """add column c to the where clause using a clause that
             is relevant for that type of column"""
             arg = None
@@ -72,12 +69,12 @@ def create_entity_search_query_decorator(admin, text):
             elif issubclass(c.type.__class__, sqlalchemy.types.Integer):
                 try:
                     arg = (c==utils.int_from_string(text))
-                except Exception, utils.ParsingError:
+                except ( Exception, utils.ParsingError ):
                     pass
             elif issubclass(c.type.__class__, sqlalchemy.types.Date):
                 try:
                     arg = (c==utils.date_from_string(text))
-                except Exception, utils.ParsingError:
+                except ( Exception, utils.ParsingError ):
                     pass
             elif issubclass(c.type.__class__, sqlalchemy.types.Float):
                 try:
@@ -85,28 +82,27 @@ def create_entity_search_query_decorator(admin, text):
                     precision = c.type.precision
                     if isinstance(precision, (tuple)):
                         precision = precision[1]
-                    delta = 0.1**precision
+                    delta = 0.1**( precision or 0 )
                     arg = sql.and_(c>=float_value-delta, c<=float_value+delta)
-                except Exception, utils.ParsingError:
+                except ( Exception, utils.ParsingError ):
                     pass
-            elif issubclass(c.type.__class__, (Unicode, )) or \
+            elif issubclass(c.type.__class__, (sqlalchemy.types.String, )) or \
                             (hasattr(c.type, 'impl') and \
-                             issubclass(c.type.impl.__class__, (Unicode, ))):
+                             issubclass(c.type.impl.__class__, (sqlalchemy.types.String, ))):
                 LOGGER.debug('look in column : %s'%c.name)
-                arg = operators.ilike_op(c, '%'+text+'%')
+                arg = sql.operators.ilike_op(c, '%'+text+'%')
 
             if arg is not None:
                 arg = sql.and_(c != None, arg)
                 args.append(arg)
-
+            
         if admin.search_all_fields:
-            search_tables = set([admin.entity.table])
-            for entity in entities:
-                if issubclass(admin.entity, entity):
-                    search_tables.add(entity.table)
-            for table in search_tables:
-                for column in table._columns:
-                    append_column(column)
+            mapper = orm.class_mapper( admin.entity )
+            for property in mapper.iterate_properties:
+                if isinstance( property, orm.properties.ColumnProperty ):
+                    for column in property.columns:
+                        if isinstance( column, schema.Column ):
+                            append_column( column )
 
         for column_name in admin.list_search:
             path = column_name.split('.')
@@ -119,7 +115,6 @@ def create_entity_search_query_decorator(admin, text):
                     target = property.mapper.class_
                 else:
                     append_column(property.columns[0])
-                    #args.append(property.columns[0].like('%'+text+'%'))
 
         def create_query_decorator(joins, args):
             """Bind the join and args to a query decorator function"""
@@ -132,7 +127,7 @@ def create_entity_search_query_decorator(admin, text):
                     query = query.outerjoin(join)
                 if len(args):
                     if len(args)>1:
-                        query = query.filter(or_(*args))
+                        query = query.filter( sql.or_( *args ) )
                     else:
                         query = query.filter(args[0])
                 return query
@@ -140,6 +135,3 @@ def create_entity_search_query_decorator(admin, text):
             return query_decorator
 
         return create_query_decorator(joins, args)
-
-
-

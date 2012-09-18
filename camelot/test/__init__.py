@@ -41,15 +41,20 @@ def get_application():
         #
         # Uniform style for screenshot generation
         #
-        QApplication.setStyle('cleanlooks')
         application = QApplication.instance()
         if not application:
             import sys
             from camelot.view import art
+            QApplication.setStyle('cleanlooks')
             application = QApplication(sys.argv)
             application.setStyleSheet( art.read('stylesheet/office2007_blue.qss') )
             from PyQt4 import QtCore
             QtCore.QLocale.setDefault( QtCore.QLocale('nl_BE') )
+            #try:
+            #    from PyTitan import QtnOfficeStyle
+            #    QtnOfficeStyle.setApplicationStyle( QtnOfficeStyle.Windows7Scenic )
+            #except:
+            #    pass 
         _application_.append( application )
     return _application_[0]
 
@@ -138,20 +143,6 @@ class ModelThreadTestCase(unittest.TestCase):
         #self.mt.exit(0)
         #self.mt.wait()
 
-class SchemaTest(ModelThreadTestCase):
-    """Test the database schema"""
-
-    def test_schema_display(self):
-      
-        def schema_display_task():
-            import os
-            from camelot.bin.camelot_manage import schema_display
-            schema_display(os.path.join(self.images_path, 'schema.png'))
-            
-        from camelot.view.model_thread import get_model_thread, post
-        post( schema_display_task )
-        get_model_thread().wait_on_work()
-
 class ApplicationViewsTest(ModelThreadTestCase):
     """Test various application level views, like the main window, the
     sidepanel"""
@@ -195,16 +186,7 @@ class EntityViewsTest(ModelThreadTestCase):
     """Test the views of all the Entity subclasses, subclass this class to test all views
     in your application.  This is done by calling the create_table_view and create_new_view
     on a set of admin objects.  To tell the test case which admin objects should be tested,
-    overwrite the get_admins method ::
-
-    class MyEntityViewsTest(EntityViewsTest):
-
-        def get_admins(self):
-          from elixir import entities
-          application_admin import MyApplicationAdmin
-          self.app_admin = MyApplicationAdmin()
-          return [self.app_admin.get_entity_admin(e) for e in entities if self.app_admin.get_entity_admin(e)]
-
+    overwrite the get_admins method.
     """
 
     def setUp(self):

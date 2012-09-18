@@ -102,14 +102,18 @@ class SimpleSettings( object ):
         settings.append( SimpleSettings('myapp') )
     """
 
-    def __init__( self, author, name ):
+    def __init__( self, author, name, data = 'data.sqlite' ):
         """
         :param author: the name of the writer of the application
         :param name: the name of the application
+        :param data: the name of the sqlite database file
         
-        these name will be used to create a folder where the local data will 
-        be stored.
+        These names will be used to create a folder where the local data will 
+        be stored.  On Windows this will be in the AppData folder of the user,
+        otherwise it will be in a `.author` folder in the home directory of the
+        user.
         """        
+        self.data = data
         if ('win' in sys.platform) and ('darwin' not in sys.platform):
             import winpaths
             self._local_folder = os.path.join( winpaths.get_local_appdata(), 
@@ -121,10 +125,12 @@ class SimpleSettings( object ):
         if not os.path.exists( self._local_folder ):
             os.makedirs( self._local_folder )
             
+        LOGGER.info( u'store database and media in %s'%self._local_folder )
+            
     def CAMELOT_MEDIA_ROOT(self):
         return os.path.join( self._local_folder, 'media' )
     
     def ENGINE( self ):
         from sqlalchemy import create_engine
-        return create_engine(u'sqlite:///%s/data.sqlite'%self._local_folder)
-
+        return create_engine(u'sqlite:///%s/%s'%( self._local_folder,
+                                                  self.data ) )

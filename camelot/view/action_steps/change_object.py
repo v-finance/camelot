@@ -52,7 +52,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   subtitle = _('Complete the form and press the OK button'),
                   icon = Icon('tango/22x22/categories/preferences-system.png'),
                   parent=None, 
-                  flags=QtCore.Qt.WindowFlags(0) ):
+                  flags=QtCore.Qt.Dialog ):
         from camelot.view.controls.formview import FormWidget
         from camelot.view.proxy.collection_proxy import CollectionProxy
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
@@ -126,7 +126,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   objects, 
                   admin, 
                   parent = None, 
-                  flags=QtCore.Qt.WindowFlags(0) ):
+                  flags = QtCore.Qt.Window ):
         from camelot.view.controls import editors
         from camelot.view.proxy.collection_proxy import CollectionProxy
         
@@ -273,7 +273,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
                   admin,
                   field_attributes, 
                   parent = None, 
-                  flags=QtCore.Qt.WindowFlags(0) ):
+                  flags=QtCore.Qt.Dialog ):
         super(ChangeFieldDialog, self).__init__( '', parent, flags )
         from camelot.view.controls.editors import ChoicesEditor
         self.field_attributes = field_attributes
@@ -296,24 +296,13 @@ class ChangeFieldDialog( StandaloneWizardPage ):
                 return False
             return True
         
-        choices = [(field, attributes['name']) for field, attributes in field_attributes.items() if filter(attributes)]
+        choices = [(field, unicode(attributes['name'])) for field, attributes in field_attributes.items() if filter(attributes)]
         choices.sort( key = lambda choice:choice[1] )
-        editor.set_choices( choices )
-        editor.set_value( ( choices+[(None,None)] )[1][0] )
+        editor.set_choices( choices + [(None,'')] )
+        editor.set_value( None )
         self.field_changed( 0 )  
         editor.currentIndexChanged.connect( self.field_changed )
-        
-        cancel_button = QtGui.QPushButton( ugettext('Cancel') )
-        ok_button = QtGui.QPushButton( ugettext('OK') )
-        ok_button.setObjectName( 'ok' )
-        layout = QtGui.QHBoxLayout()
-        layout.setDirection( QtGui.QBoxLayout.RightToLeft )
-        layout.addWidget( ok_button )
-        layout.addWidget( cancel_button )
-        layout.addStretch()
-        self.buttons_widget().setLayout( layout )
-        cancel_button.pressed.connect( self.reject )
-        ok_button.pressed.connect( self.accept )
+        self.set_default_buttons()
         
     @QtCore.pyqtSlot(int)
     def field_changed(self, index):
@@ -325,7 +314,7 @@ class ChangeFieldDialog( StandaloneWizardPage ):
             selected_field = editor.get_value()
         if value_editor != None:
             value_editor.deleteLater()
-        if selected_field != ValueLoading:
+        if selected_field not in (None, ValueLoading):
             self.field = selected_field
             self.value = None
             field_attributes = self.field_attributes[selected_field]

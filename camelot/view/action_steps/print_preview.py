@@ -26,6 +26,8 @@ from PyQt4 import QtCore, QtGui
 
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
+from camelot.view.action_steps.open_file import OpenFile
+from camelot.view.utils import resize_widget_to_screen
 
 class PrintPreview( ActionStep ):
     """
@@ -52,7 +54,7 @@ class PrintPreview( ActionStep ):
     
     def __init__( self, document ):
         self.document = document
-        self.document.moveToThread( QtGui.QApplication.instance().thread() )
+        self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
         self.printer = None
         self.page_size = None
         self.page_orientation = None
@@ -72,13 +74,9 @@ class PrintPreview( ActionStep ):
         dialog.paintRequested.connect( self.paint_on_printer )
         # show maximized seems to trigger a bug in qt which scrolls the page 
         # down dialog.showMaximized()
-        desktop = QtGui.QApplication.desktop()
-        available_geometry = desktop.availableGeometry( dialog )
-        # use the size of the screen instead to set the dialog size
-        dialog.resize( available_geometry.width() * 0.75, 
-                       available_geometry.height() * 0.75 )
+        resize_widget_to_screen( dialog )
         return dialog
-
+    
     @QtCore.pyqtSlot( QtGui.QPrinter )
     def paint_on_printer( self, printer ):
         self.document.print_( printer )
@@ -87,6 +85,48 @@ class PrintPreview( ActionStep ):
         dialog = self.render()
         dialog.exec_()
 
+class ChartDocument( QtCore.QObject ):
+    """Helper class to print matplotlib charts
+
+    :param chart: a :class:`camelot.container.chartcontainer.FigureContainer` object
+        or a :class:`camelot.container.chartcontainer.AxesContainer` subclass
+
+    """
+    
+    def __init__( self, chart ):
+        from camelot.container.chartcontainer import structure_to_figure_container
+        super( ChartDocument, self ).__init__()
+        self.chart = structure_to_figure_container( chart )
+        
+    def print_( self, printer ):
+        from matplotlib.figure import Figure
+        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+        rect = printer.pageRect( QtGui.QPrinter.Inch )
+        dpi = printer.resolution()
+        fig = Figure( facecolor='#ffffff')
+        fig.set_size_inches( ( rect.width(), rect.height() ) )
+        fig.set_dpi( dpi )
+        self.chart.plot_on_figure( fig )
+        canvas = FigureCanvas( fig )
+        canvas.render( printer )   
+        
+class PrintChart( PrintPreview ):
+    """
+    Display a print preview dialog box for a matplotlib chart.
+    
+    :param chart: a :class:`camelot.container.chartcontainer.FigureContainer` object
+        or a :class:`camelot.container.chartcontainer.AxesContainer` subclass
+        
+    Example use of this action step :
+        
+    .. literalinclude:: ../../../test/test_action.py
+       :start-after: begin chart print
+       :end-before: end chart print
+    """
+
+    def __init__( self, chart ):
+        super( PrintChart, self ).__init__( ChartDocument( chart ) )
+    
 class PrintHtml( PrintPreview ):
     """
     Display a print preview dialog box for an html string.
@@ -121,7 +161,17 @@ class PrintJinjaTemplate( PrintHtml ):
                   template, 
                   context={},
                   environment = environment ):
-        template = environment.get_template( template )
-        html = template.render( context )
-        super( PrintJinjaTemplate, self).__init__( html )
-
+        self.template = environment.get_template( template )
+        self.html = self.template.render( context )
+        self.context = context
+        super( PrintJinjaTemplate, self).__init__( self.html )
+    
+    def get_pdf( self ):
+        doc = QtGui.QTextDocument() 
+        doc.setHtml(self.template.render( self.context ))
+        printer = QtGui.QPrinter()
+        printer.setOutputFormat( QtGui.QPrinter.PdfFormat )
+        filepath = OpenFile.create_temporary_file('.pdf')
+        printer.setOutputFileName(filepath)
+        doc.print_(printer)
+        return filepath

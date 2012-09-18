@@ -31,7 +31,6 @@ logger = logging.getLogger('camelot.view.proxy.queryproxy')
 from collection_proxy import CollectionProxy, strip_data_from_object
 from camelot.view.model_thread import model_function, object_thread, post
 
-
 class QueryTableProxy(CollectionProxy):
     """The QueryTableProxy contains a limited copy of the data in the SQLAlchemy
     model, which is fetched from the database to be used as the model for a
@@ -87,7 +86,8 @@ class QueryTableProxy(CollectionProxy):
         self._clean_appended_rows()
         if not self._query_getter:
             return 0
-        return self.get_query_getter()().count() + len(self._appended_rows)
+        query = self.get_query_getter()()
+        return query.count() + len(self._appended_rows)
 
     def setQuery(self, query_getter):
         """Set the query and refresh the view"""
@@ -297,7 +297,8 @@ class QueryTableProxy(CollectionProxy):
                                 continue
                         except KeyError:
                             pass
-                        self._add_data(columns, row, obj)
+                        if self._skip_row(row, obj) == False:
+                            self._add_data(columns, row, obj)
                 rows_in_query = (self._rows - len(self._appended_rows))
                 # Verify if rows that have not yet been flushed have been 
                 # requested
@@ -311,7 +312,7 @@ class QueryTableProxy(CollectionProxy):
     def _get_object(self, row):
         """Get the object corresponding to row.  If row is smaller than 0
         (in case of an invalid widget mapper), None is returned as an object"""
-        if self._rows > 0 and row >= 0:
+        if ( self._rows > 0 ) and  ( self._rows > row >= 0 ):
             self._clean_appended_rows()
             rows_in_query = (self._rows - len(self._appended_rows))
             if row >= rows_in_query:

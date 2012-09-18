@@ -30,8 +30,9 @@ from camelot.core.utils import variant_to_pyobject
 from camelot.view.proxy import ValueLoading
 
 class FileDelegate(CustomDelegate):
-    """Delegate for camelot.types.file fields.  Expects values of type camelot.core.files.storage.StoredFile.
-  """
+    """Delegate for :class:`camelot.types.File` columns.  Expects values of type 
+    :class:`camelot.core.files.storage.StoredFile`.
+    """
     
     __metaclass__ = DocumentationMetaclass
     

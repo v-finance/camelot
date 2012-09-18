@@ -28,6 +28,7 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
+from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
 from camelot.view.art import Icon
@@ -36,19 +37,31 @@ from camelot.view.art import Icon
 application.
 """
 
+LOGGER = logging.getLogger( 'camelot.admin.action.application_action' )
+
 class ApplicationActionModelContext( ModelContext ):
     """The Model context for an :class:`camelot.admin.action.Action`.  On top 
     of the attributes of the :class:`camelot.admin.action.base.ModelContext`, 
     this context contains :
         
     .. attribute:: admin
-    
+   
         the application admin.
+
+    .. attribute:: session
+
+        the active session
     """
     
     def __init__( self ):
         super( ApplicationActionModelContext, self ).__init__()
         self.admin = None
+
+    # Cannot set session in constructor because constructor is called
+    # inside the GUI thread
+    @property
+    def session( self ):
+        return Session()
         
 class ApplicationActionGuiContext( GuiContext ):
     """The GUI context for an :class:`camelot.admin.action.Action`.  On top of 
@@ -234,18 +247,52 @@ Restore the database to disk
                                   text = description )
 
 class Refresh( Action ):
-    """Refresh all views in the application"""
+    """Reload all objects from the database and update all views in the
+    application."""
     
     verbose_name = _('Refresh')
     shortcut = QtGui.QKeySequence( Qt.Key_F9 )
     icon = Icon('tango/16x16/actions/view-refresh.png')
     
     def model_run( self, model_context ):
-        from elixir import session
-        from camelot.core.orm import refresh_session
-        from camelot.view.action_steps import Refresh
-        refresh_session( session )
-        yield Refresh()
+        import sqlalchemy.exc as sa_exc
+        from camelot.core.orm import Session
+        from camelot.view import action_steps
+        from camelot.view.remote_signals import get_signal_handler
+        LOGGER.debug('session refresh requested')
+        progress_db_message = ugettext('Reload data from database')
+        progress_view_message = ugettext('Update screens')
+        session = Session()
+        signal_handler = get_signal_handler()
+        refreshed_objects = []
+        expunged_objects = []
+        #
+        # Loop over the objects one by one to be able to detect the deleted
+        # objects
+        #
+        session_items = len( session.identity_map )
+        for i, (_key, obj) in enumerate( session.identity_map.items() ):
+            try:
+                session.refresh( obj )
+                refreshed_objects.append( obj )
+            except sa_exc.InvalidRequestError:
+                #
+                # this object could not be refreshed, it was probably deleted
+                # outside the scope of this session, so assume it is deleted
+                # from the application its point of view
+                #
+                session.expunge( obj )
+                expunged_objects.append( obj )
+            if i%10 == 0:
+                yield action_steps.UpdateProgress( i, 
+                                                   session_items, 
+                                                   progress_db_message )
+        yield action_steps.UpdateProgress( text = progress_view_message )
+        for obj in refreshed_objects:
+            signal_handler.sendEntityUpdate( None, obj )
+        for obj in expunged_objects:
+            signal_handler.sendEntityDelete( None, obj )
+        yield action_steps.Refresh()
 
 class Exit( Action ):
     """Exit the application"""

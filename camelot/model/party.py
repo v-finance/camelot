@@ -36,7 +36,7 @@ from camelot.view.controls import delegates
 from sqlalchemy.types import Date, Unicode, Integer, Boolean
 from sqlalchemy.sql.expression import and_
 
-from sqlalchemy import sql, ForeignKey
+from sqlalchemy import schema, sql, ForeignKey
 
 import camelot.types
 
@@ -61,8 +61,8 @@ class GeographicBoundary( Entity ):
     using_options( tablename = 'geographic_boundary' )
     code = Field( Unicode( 10 ) )
     name = Field( Unicode( 40 ), required = True )
-    row_type = Field( Unicode(40) )
     
+    row_type = schema.Column( Unicode(40), nullable = False )
     __mapper_args__ = { 'polymorphic_on' : row_type }
 
     @ColumnProperty
@@ -214,7 +214,7 @@ class Party( Entity ):
                             remote_colname='party_category_id',
                             local_colname='party_id')
     
-    row_type = Field( Unicode(40) )
+    row_type = schema.Column( Unicode(40), nullable = False )
     __mapper_args__ = { 'polymorphic_on' : row_type }
 
     @property
@@ -386,8 +386,8 @@ class PartyRelationship( Entity ):
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     thru_date = Field( Date(), default = end_of_times, required = True, index = True )
     comment = Field( camelot.types.RichText() )
-    row_type = Field( Unicode(40) )
     
+    row_type = schema.Column( Unicode(40), nullable = False )
     __mapper_args__ = { 'polymorphic_on' : row_type }
 
     class Admin( EntityAdmin ):

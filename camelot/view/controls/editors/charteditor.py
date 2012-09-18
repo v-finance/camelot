@@ -27,17 +27,18 @@ import logging
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-from camelot.view.controls.editors.customeditor import CustomEditor
+from camelot.admin.action.list_action import ListActionGuiContext
+from camelot.core.utils import ugettext as _
+from camelot.view.controls.editors.customeditor import AbstractCustomEditor
 from camelot.view.controls.editors.wideeditor import WideEditor
 from camelot.view.proxy import ValueLoading
 from camelot.view.art import Icon
-from camelot.core.utils import ugettext as _
 
 PAD_INCHES = 0.1
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.charteditor')
 
-class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
+class ChartEditor( QtGui.QFrame, AbstractCustomEditor, WideEditor ):
     """Editor to display and manipulate matplotlib charts.  The editor
     itself is generic for all kinds of plots,  it simply provides the
     data to be ploted with a set of axes.  The data itself should know
@@ -50,7 +51,8 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
     def __init__(self, parent=None, width=50, height=40, dpi=50, field_name='chart', **kwargs):
         from matplotlib.figure import Figure
         from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-        super(ChartEditor, self).__init__(parent)
+        super(ChartEditor, self).__init__( parent )
+        AbstractCustomEditor.__init__( self )
         self.setObjectName( field_name )
         
         chart_frame = QtGui.QFrame( self )
@@ -106,6 +108,7 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
         self.show_fullscreen_signal.connect(self.show_fullscreen)
         self.canvas.updateGeometry()
         self._litebox = None
+        self.gui_context = ListActionGuiContext()
 
     @QtCore.pyqtSlot()
     def copy_to_clipboard(self):
@@ -117,22 +120,9 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
     @QtCore.pyqtSlot()
     def print_preview(self):
         """Popup a print preview dialog for the Chart"""
-        dialog = QtGui.QPrintPreviewDialog()            
-        dialog.paintRequested.connect( self.on_paint_request )
-        dialog.exec_()
-        
-    @QtCore.pyqtSlot( QtGui.QPrinter )
-    def on_paint_request(self, printer):
-        from matplotlib.figure import Figure
-        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-        rect = printer.pageRect( QtGui.QPrinter.Inch )
-        dpi = printer.resolution()
-        fig = Figure( facecolor='#ffffff')
-        fig.set_figsize_inches( (rect.width(),rect.height()) )
-        fig.set_dpi( dpi )
-        self._value.plot_on_figure( fig )
-        canvas = FigureCanvas(fig)
-        canvas.render( printer )
+        from camelot.view.action_steps import PrintChart
+        print_chart = PrintChart( self._value )
+        print_chart.gui_run( self.gui_context )
     
     def set_field_attributes(self, *args, **kwargs):
         """Overwrite set_field attributes because a ChartEditor cannot be disabled
@@ -185,11 +175,11 @@ class ChartEditor(QtGui.QFrame, CustomEditor, WideEditor):
         """Accepts a camelot.container.chartcontainer.FigureContainer or a 
         camelot.container.chartcontainer.AxesContainer """
         from camelot.container.chartcontainer import structure_to_figure_container
-        self._value = structure_to_figure_container( super(ChartEditor, self).set_value(value) )
+        self._value = structure_to_figure_container( AbstractCustomEditor.set_value( self, value ) )
         self.on_draw()
         
     def get_value(self):
-        return self._value
+        return AbstractCustomEditor.get_value( self ) or self._value
 
 #    def _get_tightbbox(self, fig, pad_inches):
 #        renderer = fig.canvas.get_renderer()

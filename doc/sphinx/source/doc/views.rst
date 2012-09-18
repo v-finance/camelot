@@ -20,7 +20,7 @@ The model to start from
 In the example movie project, we can take three parts of the model : Person,
 Movie and VisitorReport:
 
-.. literalinclude:: ../../../../camelot/model/authentication.py
+.. literalinclude:: ../../../../camelot/model/party.py
    :start-after: begin short person definition
    :end-before: end short person definition
 

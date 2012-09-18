@@ -29,11 +29,12 @@ with zero delay.  If the data is not yet present in the proxy, dummy data is
 returned and an update signal is emitted when the correct data is available.
 """
 
-import logging
-logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
-
+import collections
 import datetime
 import itertools
+import logging
+
+logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
 
 from PyQt4.QtCore import Qt, QThread
 from PyQt4 import QtGui, QtCore
@@ -199,6 +200,11 @@ class CollectionProxy( QtGui.QProxyModel ):
     row_changed_signal = QtCore.pyqtSignal(int)
     exception_signal = QtCore.pyqtSignal(object)
     rows_removed_signal = QtCore.pyqtSignal()
+    
+    # it looks as QtCore.QModelIndex cannot be serialized for cross
+    # thread signals
+    _rows_about_to_be_inserted_signal = QtCore.pyqtSignal( int, int )
+    _rows_inserted_signal = QtCore.pyqtSignal( int, int )
 
     def __init__( self, 
                   admin, 
@@ -281,6 +287,8 @@ position in the query.
         self.unflushed_rows = set()
         self._sort_and_filter = SortingRowMapper()
         self.row_changed_signal.connect( self._emit_changes )
+        self._rows_about_to_be_inserted_signal.connect( self._rows_about_to_be_inserted, Qt.QueuedConnection )
+        self._rows_inserted_signal.connect( self._rows_inserted, Qt.QueuedConnection )
         self.rsh = get_signal_handler()
         self.rsh.connect_signals( self )
 
@@ -320,7 +328,6 @@ position in the query.
         return QtCore.QModelIndex()
     
     def rowCount( self, index = None ):
-        assert object_thread( self )
         return self._rows
     
     def hasChildren( self, parent ):
@@ -436,7 +443,7 @@ position in the query.
                      ( self.__class__.__name__, self.admin.get_verbose_name() ) )
         if sender != self:
             try:
-                row = self.display_cache.get_row_by_entity(entity)
+                row = self.display_cache.get_row_by_entity( entity )
             except KeyError:
                 self.logger.debug( 'entity not in cache' )
                 return
@@ -563,7 +570,6 @@ position in the query.
             column_width = c[1].get( 'column_width', None )
             if column_width != None:
                 minimal_widths = [ self._header_font_metrics.averageCharWidth() * column_width ]
-                    
             if settings_width:
                 header_item.setData( QtCore.QVariant( QtCore.QSize( settings_width, self._horizontal_header_height ) ),
                                      Qt.SizeHintRole )
@@ -616,15 +622,35 @@ position in the query.
         return super( CollectionProxy, self ).headerData( section, orientation, role )
 
     def sort( self, column, order ):
-        """reimplementation of the QAbstractItemModel its sort function"""
+        """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
         assert object_thread( self )
 
         def create_sort(column, order):
 
             def sort():
                 unsorted_collection = [(i,o) for i,o in enumerate(self.get_collection())]
-                key = lambda item:getattr(item[1], self._columns[column][0])
-                unsorted_collection.sort(key=key, reverse=order)
+                field_name = self._columns[column][0]
+                
+                # handle the case of one of the values being None
+                def compare_none( line_1, line_2 ):
+                    key_1, key_2 = None, None
+                    try:
+                        key_1 = getattr( line_1[1], field_name )
+                    except Exception, e:
+                        logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
+                    try:
+                        key_2 = getattr( line_2[1], field_name )
+                    except Exception, e:
+                        logger.error( 'could not get attribute %s from object'%field_name, exc_info = e )
+                    if key_1 == None and key_2 == None:
+                        return 0
+                    if key_1 == None:
+                        return -1
+                    if key_2 == None:
+                        return 1
+                    return cmp( key_1, key_2 )
+                    
+                unsorted_collection.sort( cmp = compare_none, reverse = order )
                 for j,(i,_o) in enumerate(unsorted_collection):
                     self._sort_and_filter[j] = i
                 return len(unsorted_collection)
@@ -704,9 +730,19 @@ position in the query.
     @model_function
     def _handle_update_requests(self):
         #
+        # wait for a while until the update requests array doesn't change any
+        # more
+        #
+        previous_length = 0
+        locker = QtCore.QMutexLocker(self._mutex)
+        while previous_length != len(self._update_requests):
+            previous_length = len(self._update_requests)
+            locker.unlock()
+            QThread.msleep(5)
+            locker.relock()
+        #
         # Copy the update requests and clear the list of requests
         #
-        locker = QtCore.QMutexLocker(self._mutex)
         update_requests = [u for u in self._update_requests]
         self._update_requests = []
         locker.unlock()
@@ -714,16 +750,10 @@ position in the query.
         # Handle the requests
         #
         return_list = []
+        grouped_requests = collections.defaultdict( list )
         for flushed, row, column, value in update_requests:
-            attribute, field_attributes = self._columns[column]
-
-            from sqlalchemy.exc import DatabaseError
-            new_value = value()
-            self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
-
-            if new_value == ValueLoading:
-                return None
-
+            grouped_requests[row].append( (flushed, column, value) )
+        for row, request_group in grouped_requests.items():
             #
             # don't use _get_object, but only update objects which are in the
             # cache, otherwise it is not sure that the object updated is the
@@ -738,47 +768,55 @@ position in the query.
                     self.unflushed_rows.remove( row )
                 except KeyError:
                     pass
-                return
-            
+                continue
             #
             # the object might have been deleted while an editor was open
             # 
             if self.admin.is_deleted( o ):
-                return
+                continue
+            changed = False
+            for flushed, column, value in request_group:
+                attribute, field_attributes = self._columns[column]
 
-            old_value = getattr( o, attribute )
-            #
-            # When the value is a related object, the related object might have changed
-            #
-            changed = ( new_value != old_value ) or (
-              field_attributes.get('embedded', False) and \
-              field_attributes.get('target', False))
-            #
-            # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
-            # old and new value to know if the object was changed, so we'll
-            # consider it changed anyway
-            #
-            direction = field_attributes.get( 'direction', None )
-            if direction in ( 'manytomany', 'onetomany' ):
-                changed = True
+                from sqlalchemy.exc import DatabaseError
+                new_value = value()
+                self.logger.debug( 'set data for row %s;col %s' % ( row, column ) )
+    
+                if new_value == ValueLoading:
+                    continue
+
+                old_value = getattr( o, attribute )
+                #
+                # When the value is a related object, the related object might have changed
+                #
+                value_changed = ( new_value != old_value ) or (
+                  field_attributes.get('embedded', False) and \
+                  field_attributes.get('target', False))
+                #
+                # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
+                # old and new value to know if the object was changed, so we'll
+                # consider it changed anyway
+                #
+                direction = field_attributes.get( 'direction', None )
+                if direction in ( 'manytomany', 'onetomany' ):
+                    value_changed = True
+                if value_changed:
+                    # update the model
+                    try:
+                        setattr( o, attribute, new_value )
+                        #
+                        # setting this attribute, might trigger a default function to return a value,
+                        # that was not returned before
+                        #
+                        self.admin.set_defaults( o, include_nullable_fields=False )
+                    except AttributeError, e:
+                        self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
+                    except TypeError:
+                        # type error can be raised in case we try to set to a collection
+                        pass
+                changed = value_changed or changed
             if changed:
-                # update the model
-                model_updated = False
-                try:
-                    setattr( o, attribute, new_value )
-                    #
-                    # setting this attribute, might trigger a default function to return a value,
-                    # that was not returned before
-                    #
-                    self.admin.set_defaults( o, include_nullable_fields=False )
-                    model_updated = True
-                except AttributeError, e:
-                    self.logger.error( u"Can't set attribute %s to %s" % ( attribute, unicode( new_value ) ), exc_info = e )
-                except TypeError:
-                    # type error can be raised in case we try to set to a collection
-                    pass
                 if self.flush_changes and self.validator.isValid( row ):
-                    modifications = self.admin.get_modifications( o )
                     # save the state before the update
                     try:
                         self.admin.flush( o )
@@ -791,27 +829,6 @@ position in the query.
                     except KeyError:
                         pass
                     locker.unlock()
-                    #
-                    # we can only track history if the model was updated, and it was
-                    # flushed before, otherwise it has no primary key yet
-                    #
-                    primary_key = self.admin.primary_key( o )
-                    if model_updated and (primary_key != None) and len(primary_key)==1 and modifications:
-                        if direction not in ( 'manytomany', 'onetomany' ):
-                            from camelot.model.memento import Memento
-                            # only register the update when the camelot model is active
-                            if hasattr(Memento, 'query'):
-                                from camelot.model.authentication import get_current_authentication
-                                history = Memento( model = unicode( self.admin.entity.__name__ ),
-                                                   memento_type = 'before_update',
-                                                   primary_key = primary_key[0],
-                                                   previous_attributes = modifications,
-                                                   authentication = get_current_authentication() )
-
-                                try:
-                                    history.flush()
-                                except DatabaseError, e:
-                                    self.logger.error( 'Programming Error, could not flush history', exc_info = e )
                 # update the cache
                 self._add_data(self._columns, row, o)
                 #@todo: update should only be sent remotely when flush was done
@@ -943,13 +960,13 @@ position in the query.
             if self.edit_cache.has_data_at_row(row):
                 rows_already_there.add(row)
         rows_to_get.difference_update( rows_already_there )
+        rows_to_get = list(rows_to_get)
+        locker.unlock()        
         #
         # see if there is anything left to do
         #
         try:
-            if rows_to_get:
-                rows_to_get = list(rows_to_get)
-                locker.unlock()
+            if len(rows_to_get):
                 rows_to_get.sort()
                 offset = rows_to_get[0]
                 #
@@ -1047,11 +1064,12 @@ position in the query.
             collection.append( o )
 
     @model_function
-    def remove_objects( self, objects_to_remove, delete = True ):
+    def remove_objects( self, objects_to_remove, delete = True, flush = True ):
         """
         :param objects_to_remove: a list of objects that need to be removed
         from the collection
         :param delete: True if the objects need to be deleted
+        :param fulsh: True if the flush needs to occur in this method
         """
         #
         # it might be impossible to determine the depending objects once
@@ -1080,7 +1098,7 @@ position in the query.
                 # even if the object is not deleted, it needs to be flushed to make
                 # sure the persisted object is out of the collection as well
                 self.remove( obj )
-                if self.admin.is_persistent( obj ):
+                if self.admin.is_persistent( obj ) and flush:
                     self.admin.flush( obj )
             #
             # remove the entity from the cache, only if the delete and remove
@@ -1142,63 +1160,47 @@ position in the query.
         post( create_copy_function( row ) )
         return True
 
+    @QtCore.pyqtSlot( int, int )
+    def _rows_about_to_be_inserted( self, first, last ):
+        self.beginInsertRows( QtCore.QModelIndex(), first, last )
+        
+    @QtCore.pyqtSlot( int, int )
+    def _rows_inserted( self, _first, _last ):
+        self.endInsertRows()
+        
     @model_function
-    def append_object( self, obj ):
+    def append_object( self, obj, flush = True ):
         """Append an object to this collection, set the possible defaults and flush
         the object if possible/needed
         
         :param obj: the object to be added to the collection
+        :param flush: if this object should be flushed or not
         :return: the new number of rows in the collection
         """
         rows = self._rows
         row = max( rows - 1, 0 )
-        self.beginInsertRows( QtCore.QModelIndex(), row, row )
+        self._rows_about_to_be_inserted_signal.emit( row, row )
         self.append( obj )
         # defaults might depend on object being part of a collection
         self.admin.set_defaults( obj )
-        self.unflushed_rows.add( row )
-        if self.flush_changes and not len( self.validator.objectValidity( obj ) ):
-            self.admin.flush( obj )
-            try:
-                self.unflushed_rows.remove( row )
-            except KeyError:
-                pass
+        if flush:
+            self.unflushed_rows.add( row )
+            if self.flush_changes and not len( self.validator.objectValidity( obj ) ):
+                self.admin.flush( obj )
+                try:
+                    self.unflushed_rows.remove( row )
+                except KeyError:
+                    pass
         for depending_obj in self.admin.get_depending_objects( obj ):
             self.rsh.sendEntityUpdate( self, depending_obj )
-# TODO : it's not because an object is added to this list, that it was created
-# it might as well exist already, eg. manytomany relation
-#      from camelot.model.memento import Create
-#      from camelot.model.authentication import get_current_authentication
-#      history = Create(model=unicode(self.admin.entity.__name__),
-#                       primary_key=o.id,
-#                       authentication = get_current_authentication())
-#      elixir.session.flush([history])
-#      self.rsh.sendEntityCreate(self, o)
         self._rows = rows + 1
         #
         # update the cache, so the object can be retrieved
         #
         columns = self._columns
         self._add_data( columns, rows, obj )
-        self.endInsertRows()
+        self._rows_inserted_signal.emit( row, row )
         return self._rows
-
-    @QtCore.pyqtSlot(object)
-    def append_row( self, object_getter ):
-        """
-        :param object_getter: a function that returns the object to be put in the
-        appended row.
-        """
-        assert object_thread( self )
-
-        def create_append_function( getter ):
-
-            def append_function():
-                return self.append_object( getter() )
-
-            return append_function
-
-        post( create_append_function( object_getter ), self._refresh_content )
 
     @model_function
     def getData( self ):

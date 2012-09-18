@@ -31,7 +31,7 @@ logger = logging.getLogger('camelot.admin.application_admin')
 from PyQt4.QtCore import Qt
 from PyQt4 import QtCore, QtGui
 
-from camelot.admin.action import list_action, application_action
+from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import art
 from camelot.view import database_selection
@@ -135,6 +135,12 @@ shortcut confusion and reduce the number of status updates.
     help_actions = [ application_action.ShowHelp(), ]
     export_actions = [ list_action.PrintPreview(),
                        list_action.ExportSpreadsheet() ]
+    form_toolbar_actions = [ form_action.CloseForm(),
+                             form_action.ToFirstForm(),
+                             form_action.ToPreviousForm(),
+                             form_action.ToNextForm(),
+                             form_action.ToLastForm(),
+                             application_action.Refresh() ]
     
     def __init__(self):
         """Construct an ApplicationAdmin object and register it as the 
@@ -145,6 +151,7 @@ shortcut confusion and reduce the number of status updates.
         # Cache created ObjectAdmin objects
         #
         self._object_admin_cache = {}
+        self._memento = None
 
     def register(self, entity, admin_class):
         """Associate a certain ObjectAdmin class with another class.  This
@@ -181,6 +188,19 @@ shortcut confusion and reduce the number of status updates.
         settings = QtCore.QSettings()
         settings.beginGroup( 'Camelot' )
         return settings
+    
+    def get_memento( self ):
+        """Returns an instance of :class:`camelot.core.memento.SqlMemento` that
+        can be used to store changes made to objects.  Overwrite this method to
+        make it return `None` if no changes should be stored to the database, or
+        to return another instance if the changes should be stored elsewhere.
+        
+        :return: `None` or an :class:`camelot.core.memento.SqlMemento` instance
+        """
+        from camelot.core.memento import SqlMemento
+        if self._memento == None:
+            self._memento = SqlMemento()
+        return self._memento
         
     def get_application_admin( self ):
         """Get the :class:`ApplicationAdmin` class of this application, this
@@ -302,6 +322,18 @@ shortcut confusion and reduce the number of status updates.
         """
         return []
     
+    def get_form_toolbar_actions( self, toolbar_area ):
+        """
+        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
+            where the toolbar actions will be positioned
+            
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of a form view.  return
+            None if no toolbar should be created.
+        """
+        if toolbar_area == Qt.TopToolBarArea:
+            return self.form_toolbar_actions
+        
     def get_main_menu( self ):
         """
         :return: a list of :class:`camelot.admin.menu.Menu` objects, or None if 
@@ -411,6 +443,15 @@ shortcut confusion and reduce the number of status updates.
 
         Have a look at the default implementation to use another stylesheet.
         """
+        #
+        # Try to load a custom QStyle, if that fails use a stylesheet from
+        # a file
+        #
+        try:
+            from PyTitan import QtnOfficeStyle
+            QtnOfficeStyle.setApplicationStyle( QtnOfficeStyle.Windows7Scenic )
+        except:
+            pass
         return art.read('stylesheet/office2007_blue.qss')
 
     def _load_translator_from_file( self, 
@@ -546,7 +587,6 @@ shortcut confusion and reduce the number of status updates.
         """
         import sys
         import sqlalchemy
-        import elixir
         import chardet
         import jinja2
         import xlrd
@@ -556,7 +596,6 @@ shortcut confusion and reduce the number of status updates.
                   <em>Qt:</em> <b>%s</b><br>
                   <em>PyQt:</em> <b>%s</b><br>
                   <em>SQLAlchemy:</em> <b>%s</b><br>
-                  <em>Elixir:</em> <b>%s</b><br>
                   <em>Chardet:</em> <b>%s</b><br>
                   <em>Jinja:</em> <b>%s</b><br>
                   <em>xlrd:</em> <b>%s</b><br>
@@ -565,7 +604,6 @@ shortcut confusion and reduce the number of status updates.
                                               float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])),
                                               QtCore.PYQT_VERSION_STR,
                                               sqlalchemy.__version__,
-                                              elixir.__version__,
                                               chardet.__version__,
                                               jinja2.__version__,
                                               xlrd.__VERSION__,

@@ -22,26 +22,27 @@
 #
 #  ============================================================================
 
-"""A custom status bar containing a progress indicator"""
+"""
+Various ``ActionStep`` subclasses that manipulate the `item_view` of 
+the `ListActionGuiContext`.
+"""
 
-import logging
-logger = logging.getLogger('camelot.view.controls.statusbar')
+from PyQt4.QtCore import Qt
 
-from PyQt4 import QtGui
-from camelot.view.model_thread import get_model_thread
+from camelot.admin.action.base import ActionStep
 
-class StatusBar(QtGui.QStatusBar):
-  
-    def __init__(self, parent):
-        QtGui.QStatusBar.__init__(self, parent)
-        from camelot.view.controls.busy_widget import BusyWidget
-        self.busy_widget = BusyWidget(self)
-        self.busy_widget.setMinimumWidth(100)
-        self.addPermanentWidget(self.busy_widget, 0)
-        mt = get_model_thread()
-        mt.thread_busy_signal.connect( self.busy_widget.set_busy )
-        # the model thread might already be busy before we connected to it
-        self.busy_widget.set_busy(mt.busy())
-
-
-
+class Sort( ActionStep ):
+    
+    def __init__( self, column, order = Qt.AscendingOrder ):
+        """Sort the items in the item view ( list, table or tree )
+        
+        :param column: the index of the column on which to sort
+        :param order: a :class:`Qt.SortOrder`
+        """
+        self.column = column
+        self.order = order
+        
+    def gui_run( self, gui_context ):
+        if gui_context.item_view != None:
+            model = gui_context.item_view.model()
+            model.sort( self.column, self.order )

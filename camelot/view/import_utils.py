@@ -24,6 +24,8 @@
 
 """Utility classes to import files into Camelot"""
 
+from PyQt4 import QtCore
+
 import csv
 import codecs
 import logging
@@ -31,6 +33,7 @@ import logging
 from camelot.view.art import ColorScheme
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext
+from camelot.view.utils import local_date_format
 
 logger = logging.getLogger('camelot.view.import_utils')
 
@@ -92,26 +95,79 @@ class UnicodeReader( object ):
         return self
     
 class XlsReader( object ):
-    """Read an XLS file and iterator over its lines
+    """Read an XLS file and iterator over its lines.
+    
+    The iterator returns each line of the excel as a list of strings.
+    
+    The to_string field attribute is supposed to be able to interprete those
+    strings and create a valid datatype.
     """
     
     def __init__( self, filename ):
         import xlrd
         # assume a single sheet xls doc
-        self.sheet = xlrd.open_workbook( filename ).sheets()[0]
+        workbook = xlrd.open_workbook( filename,
+                                       formatting_info = True )
+        self.xf_list = workbook.xf_list
+        self.datemode = workbook.datemode
+        self.format_map = workbook.format_map
+        self.sheet = workbook.sheets()[0]
         self.current_row = 0
         self.rows = self.sheet.nrows
+        self.date_format = local_date_format()
+        self.locale = QtCore.QLocale()
+        
+    def get_format_string( self, xf_index ):
+        """:return: the string that specifies the format of a cell"""
+        try:
+            xf = self.xf_list[ xf_index ]
+        except IndexError:
+            return '0.00'
+        if xf._format_flag == 0:
+            return self.get_format_string( xf.parent_style_index )
+        f = self.format_map[ xf.format_key ]
+        return f.format_str
         
     def next( self ):
+        import xlrd
         if self.current_row < self.rows:
             vector = []    
             for column in range( self.sheet.ncols ):
                 cell = self.sheet.cell( self.current_row, column )
-                value = unicode( cell.value )
-                #type = xlrd.sheet.ctype_text[cell.ctype]
-                #if type == 'xldate':
-                #    t = xlrd.xldate_as_tuple(cell.value, datemode=0)
-                #    value = '%02d/%02d/%d' % (t[2], t[1], t[0])
+                ctype = cell.ctype
+                value = ''
+                if ctype in( xlrd.XL_CELL_EMPTY, 
+                             xlrd.XL_CELL_ERROR,
+                             xlrd.XL_CELL_BLANK ):
+                    pass
+                elif ctype == xlrd.XL_CELL_TEXT:
+                    value = unicode( cell.value )
+                elif ctype == xlrd.XL_CELL_NUMBER:
+                    format_string = self.get_format_string( cell.xf_index )
+                    # try to display the number with the same precision as
+                    # it was displayed in excel
+                    precision = max( 0, format_string.count('0') - 1 )
+                    # see the arguments format documentation of QString
+                    # format can be eiter 'f' or 'e', where 'e' is scientific
+                    # so maybe the format string should be parsed further to
+                    # see if it specifies scientific notation.  scientific
+                    # notation is not used because it loses precision when 
+                    # converting to a string
+                    value = unicode( self.locale.toString( cell.value, 
+                                                           format = 'f',
+                                                           precision = precision ) )
+                elif ctype == xlrd.XL_CELL_DATE:
+                    # this only handles dates, no datetime or time
+                    date_tuple = xlrd.xldate_as_tuple( cell.value, 
+                                                       self.datemode )
+                    dt = QtCore.QDate( *date_tuple[:3] )
+                    value = unicode( dt.toString( self.date_format ) )
+                elif ctype == xlrd.XL_CELL_BOOLEAN:
+                    value = 'false'
+                    if cell.value == 1:
+                        value = 'true'
+                else:
+                    logger.error( 'unknown ctype %s when importing excel'%ctype )
                 vector.append( value )
             self.current_row += 1
             return vector

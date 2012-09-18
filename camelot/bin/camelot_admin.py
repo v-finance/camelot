@@ -43,17 +43,15 @@ usage = "usage: %prog [options] command"
 command_description = [
     ('startproject', """Starts a new project, use startproject project_name.
 """),
-    ('makemessages', """Outputs a message file with all field names of all 
-entities.  This command requires settings.py of the project to be in the 
-PYTHONPATH"""),
     ('apidoc', """Extract API documentation from source code, to be used
 with sphinx.
 """),
     ('license_update', """Change the license header of a project,
 use license_update project_directory license_file"""),
     ('to_pyside', """Takes a folder with PyQt4 source code and translates it to
-PySide source code.  A directory to_pyside will be created containing the
-output of the translation"""),
+PySide source code.  Usage ::
+   
+   to_pyside source destination"""),
 ]
 
 #
@@ -175,19 +173,18 @@ def license_update(project, license_file):
             
     os.path.walk(project, translate_directory, None)
     
-def to_pyside(project):
+def to_pyside( source, destination ):
     import os.path
     import shutil
-    output = os.path.join('to_pyside', os.path.basename(project))
     # first take a copy
-    if os.path.exists( output ):
-        shutil.rmtree( output )
-    shutil.copytree(project, output)
+    if os.path.exists( destination ):
+        shutil.rmtree( destination )
+    shutil.copytree( source, destination )
    
     def replace_word(original_str, old_word, new_word):
         return new_word.join((t for t in original_str.split(old_word)))
 
-    def translate_file(dirname, name):
+    def translate_file( dirname, name ):
         """translate a single file"""
         filename = os.path.join(dirname, name)
         LOGGER.info( 'converting %s'%filename )
@@ -196,6 +193,7 @@ def to_pyside(project):
         source = replace_word( source, 'PyQt4', 'PySide' )
         source = replace_word( source, 'pyqtSlot', 'Slot' )
         source = replace_word( source, 'pyqtSignal', 'Signal' )
+        source = replace_word( source, 'pyqtProperty', 'Property' )
         source = replace_word( source, 'QtCore.QString', 'str' )
         source = replace_word( source, 'QtCore.QVariant.', 'QtCore.Q')
         source = replace_word( source, 'QtCore.QVariant(', '(' )
@@ -208,13 +206,14 @@ def to_pyside(project):
         source = replace_word( source, ').isValid()', ')' )
         output.write( source )
         
-    def translate_directory(_arg, dirname, names):
+    def translate_directory( dirname, names ):
         """recursively translate a directory"""
         for name in names:
             if name.endswith('.py'):
                 translate_file(dirname, name)
             
-    os.path.walk(output, translate_directory, None)
+    for ( dirpath, _dirnames, filenames ) in os.walk( destination ):
+        translate_directory( dirpath, filenames )
     
     
 def startproject(module):
@@ -229,11 +228,6 @@ def startproject(module):
     action = CreateNewProject()
     action.start_project( options )
 
-def makemessages():
-    from camelot.core.conf import settings
-    LOGGER.error( 'Not yet implemented' )
-    settings.setup_model()
-    
 def meta():
     """launch meta camelot, in a separate function to make sure camelot_admin
     does not depend on PyQt, otherwise it is imposible to run to_pyside without
