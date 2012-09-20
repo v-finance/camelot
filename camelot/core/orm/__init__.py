@@ -83,12 +83,6 @@ entities = EntityCollection()
 #   and after mapper and table creation.
 #
 
-def setup_all( create_tables=False, *args, **kwargs ):
-    """Create all tables that are registered in the metadata
-    """
-    if create_tables:
-        metadata.create_all( *args, **kwargs )
-
 from . entity import EntityBase, EntityMeta
 
 @event.listens_for( mapper, 'after_configured' )
@@ -97,7 +91,6 @@ def process_deferred_properties( class_registry = entities ):
     This function is called automatically for the default class_registry.
     """
     LOGGER.debug( 'process deferred properties' )
-    
     classes = list( class_registry.values() )
     classes.sort( key = lambda c:c._descriptor.counter )
     
@@ -115,6 +108,13 @@ def process_deferred_properties( class_registry = entities ):
             method = getattr( cls._descriptor, method_name )
             method()
 
+def setup_all( create_tables=False, *args, **kwargs ):
+    """Create all tables that are registered in the metadata
+    """
+    process_deferred_properties()
+    if create_tables:
+        metadata.create_all( *args, **kwargs )
+        
 Entity = declarative_base( cls = EntityBase, 
                            metadata = metadata,
                            metaclass = EntityMeta,

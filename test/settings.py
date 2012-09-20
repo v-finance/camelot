@@ -5,6 +5,7 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] 
 
 def setup_model():
     from camelot.core.sql import metadata
+    from camelot.core.orm import setup_all
     metadata.bind = ENGINE()
     from camelot.model import authentication
     from camelot.model import party
@@ -15,9 +16,8 @@ def setup_model():
     import camelot_example.model
     from camelot_example.view import setup_views
     from camelot_example.fixtures import load_movie_fixtures
-    from elixir import setup_all
     from camelot.model.authentication import update_last_login
-    setup_all(create_tables=True)
+    setup_all( create_tables = True )
     setup_views()
     load_movie_fixtures()
     update_last_login()
