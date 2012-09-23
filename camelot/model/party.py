@@ -54,7 +54,7 @@ _current_authentication_ = threading.local()
 
 from authentication import end_of_times
 
-from camelot.model.type_and_status import type_3_status
+from camelot.model.type_and_status import Status
 
 class GeographicBoundary( Entity ):
     """The base class for Country and City"""
@@ -209,6 +209,7 @@ class Party( Entity ):
     shares = OneToMany( 'SharedShareholder', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     #status = OneToMany( type_3_status( 'Party', metadata, entities ), cascade='all, delete, delete-orphan' )
+    status = Status()
     categories = ManyToMany( 'PartyCategory', 
                             tablename='party_category_party', 
                             remote_colname='party_category_id',

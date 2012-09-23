@@ -13,11 +13,15 @@ class EntityDescriptor(object):
     EntityDescriptor holds information about the Entity before it is
     passed to Declarative.  It is used to search for inverse relations
     defined on an Entity before the relation is passed to Declarative.
+    
+    :param entity_base: The Declarative base class used to subclass the
+        entity
     """
 
     global_counter = 0
     
-    def __init__( self ):
+    def __init__( self, entity_base ):
+        self.entity_base = entity_base
         self.parent = None
         self.relationships = []
         self.has_pk = False
@@ -173,7 +177,12 @@ class EntityMeta( DeclarativeMeta ):
         # don't modify the Entity class itself
         #
         if classname != 'Entity':
-            dict_['_descriptor'] = EntityDescriptor()
+            entity_base = None
+            for base in bases:
+                if hasattr(base, '_decl_class_registry'):
+                    entity_base = base
+                    break
+            dict_['_descriptor'] = EntityDescriptor( entity_base )
             #
             # process the mutators
             #

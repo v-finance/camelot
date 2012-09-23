@@ -29,52 +29,154 @@ tables for each entity.
 import datetime
 
 from sqlalchemy.types import Date, Unicode
-from sqlalchemy import sql
-
-from camelot.core.orm import ( Field, using_options, ManyToOne, OneToMany,
-                               Entity, EntityMeta )
+from sqlalchemy import orm, sql, schema, types
 
 from camelot.model.authentication import end_of_times
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration
+from camelot.core.orm.properties import Property
 from camelot.core.utils import ugettext_lazy as _
 
-#
-# Global dict keeping track of which status class is used for which class
-#
-__status_classes__ = {}
-__status_type_classes__ = {}
+class StatusType( object ):
+    """Mixin class to describe the different statuses an
+    object can have
+    """
 
-def get_status_class(cls_name):
-    """
-    :param cls_name: an Entity class name
-    :return: the status class used for this entity
-    """
-    return __status_classes__[cls_name]
+    code = schema.Column( types.Unicode(10), index = True, nullable = False, unique = True )
+    description = schema.Column( types.Unicode( 40 ), index = True )
 
-def get_status_type_class(cls_name):
+    def __unicode__( self ):
+	return self.code or ''
+
+    class Admin( EntityAdmin ):
+	list_display = ['code', 'description']
+	form_display = ['code', 'description']
+	#verbose_name = statusable_entity + ' Status Type'
+	#if verbose_entity_name is not None:
+	    #verbose_name = verbose_entity_name + ' Status Type'	
+	
+class StatusHistory( object ):
+    """Mixin class to track the history of the status an object
+    has.
+    
+    .. attribute:: status_datetime For statuses that occur at a specific point in time
+    .. attribute:: status_from_date For statuses that require a date range
+    .. attribute:: from_date When a status was enacted or set
     """
-    :param cls_name: an Entity class name
-    :return: the status type class used for this entity
+    
+    status_datetime = schema.Column( types.Date, nullable = True )
+    status_from_date = schema.Column( types.Date, nullable = True )
+    status_thru_date = schema.Column( types.Date, nullable = True )
+    from_date = schema.Column( types.Date, nullable = False, default = datetime.date.today )
+    thru_date = schema.Column( types.Date, nullable = False, default = end_of_times )
+
+    #status_for = ManyToOne( statusable_entity, #required = True,
+                             #ondelete = 'cascade', onupdate = 'cascade' )
+    
+    #if not enumeration:
+	#classified_by = ManyToOne( t3_status_type_name, required = True,
+                                   #ondelete = 'cascade', onupdate = 'cascade' )
+    #else:
+	#classified_by = Field(Enumeration(enumeration), required=True, index=True)
+
+    class Admin( EntityAdmin ):
+	#verbose_name = statusable_entity + ' Status'
+	#verbose_name_plural = statusable_entity + ' Statuses'
+	list_display = ['status_from_date', 'status_thru_date', 'classified_by']
+	#verbose_name = statusable_entity + ' Status'
+	#if verbose_entity_name is not None:
+	    #verbose_name = verbose_entity_name + ' Status'
+
+    def __unicode__( self ):
+	return u'Status'
+
+class Status( Property ):
+    """Property that adds a related status table(s) to an `Entity`.
+    
+    These additional entities are created :
+    
+     * a `StatusType` this is the list of possible statuses an entity can have.
+       If the `enumeration` parameter is used at construction, no such entity is
+       created, and the list of possible statuses is limited to this enumeration.
+       
+     * a `StatusHistory` is the history of statusses an object has had.  The Status
+       History refers to which `StatusType` was valid at a certain point in time.
+       
+    :param enumeration: if this parameter is used, no `StatusType` entity is created, 
+        but the status type is described by the enumeration.  This parameter should
+	be a list of all possible statuses the entity can have ::
+	
+	    enumeration = [(1, 'draft'), (2,'ready')]
     """
-    return __status_type_classes__[cls_name]
+    
+    def __init__( self, enumeration = None ):
+	super( Status, self ).__init__()
+	self.property = None
+	self.enumeration = enumeration
+	    
+    def attach( self, entity, name ):
+	super( Status, self ).attach( entity, name )
+	if self.enumeration == None:
+	    
+	    class EntityStatusType( StatusType, entity._descriptor.entity_base ):
+		pass
+	    
+	    class EntityStatusHistory( StatusHistory, entity._descriptor.entity_base ):
+		classified_by_id = schema.Column( types.Integer(), schema.ForeignKey( EntityStatusType.id,
+		                                                                      ondelete = 'cascade', 
+		                                                                      onupdate = 'cascade'), nullable = False )
+		classified_by = orm.relationship( EntityStatusType )
+	    
+	    self.status_type = EntityStatusType
+	    self.status_history = EntityStatusHistory
+	    
+	setattr( entity, '_%s_type'%name, self.status_type )
+	setattr( entity, '_%s_history'%name, self.status_history )
+	
+    def create_non_pk_cols( self ):
+	table = orm.class_mapper( self.entity ).local_table
+	for col in table.primary_key.columns:
+	    col_name = u'status_for_%s'%col.name
+	    if not hasattr( self.status_history, col_name ):
+		constraint = schema.ForeignKey( col,
+		                                ondelete = 'cascade', 
+		                                onupdate = 'cascade')
+		column = schema.Column( types.Integer(), constraint, nullable = False )
+	        setattr( self.status_history, col_name, column )
+	    
+    def create_properties( self ):
+	if not self.property:
+	    self.property = orm.relationship( self.entity, backref = self.name )
+	    self.status_history.status_for = self.property
+	
+    #def create_properties( self ):
+	#super( Status, self ).create_properties()
+	
+	#def get_status_history_at( self, status_date = None ):
+	    #"""
+	    #Get the StatusHistory valid at status_date
+	    
+	    #:param status_date: the date at which the status history should
+		#be valid.  Use today if None was given.
+	    #:return: a StatusHistory object or None if no valid status was
+		#found
+	    #"""
+	    #if status_date == None:
+		#status_date = datetime.date.today()
+	    #for status_history in self.status:
+		#if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:	
+		    #return status_history    
+		
+	#setattr( self.entity, 'get_status_history_at', property( get_status_history_at ) )
+
+	#def current_status( self ):
+	    #status_history = self.get_status_history_at()
+	    #if status_history != None:
+		#return status_history.classified_by	
+
+	#setattr( self.entity, 'current_status', property( current_status ) )
     
 class AbstractStatusMixin( object ):
-    
-    def get_status_history_at( self, status_date = None ):
-	"""
-	Get the StatusHistory valid at status_date
-	
-	:param status_date: the date at which the status history should
-	    be valid.  Use today if None was given.
-	:return: a StatusHistory object or None if no valid status was
-	    found
-	"""
-	if status_date == None:
-	    status_date = datetime.date.today()
-	for status_history in self.status:
-	    if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:	
-		return status_history
 	
     def get_status_from_date( self, classified_by ):
 	"""
