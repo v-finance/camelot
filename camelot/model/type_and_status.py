@@ -32,10 +32,12 @@ from sqlalchemy.types import Date, Unicode
 from sqlalchemy import orm, sql, schema, types
 
 from camelot.model.authentication import end_of_times
+from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration
 from camelot.core.orm.properties import Property
 from camelot.core.utils import ugettext_lazy as _
+from camelot.view import action_steps
 
 class StatusType( object ):
     """Mixin class to describe the different statuses an
@@ -375,26 +377,20 @@ def entity_type( typable_entity, metadata, collection, verbose_entity_name = Non
 
     return type_name
 
-def change_status_action( new_status, verbose_name = None ):
+class ChangeStatus( Action ):
     """
-    Creat an action that changes the status of an object
+    An action that changes the status of an object
     :param new_status: the new status of the object
     :param verbose_name: the name of the action
     :return: a :class:`camelot.admin.action.Action` object that changes
-        the status of a selection to the new status
-    """
-    from camelot.admin.action import Action
-    from camelot.view import action_steps
-
-    action_verbose_name = verbose_name or _(new_status)
+	the status of a selection to the new status
+    """	
     
-    class ChangeStatus( Action ):
-        
-        verbose_name = action_verbose_name
-            
-        def model_run(self, model_context):
-            for work_effort in model_context.get_selection():
-                work_effort.change_status( new_status )
-            yield action_steps.FlushSession( model_context.session )
-            
-    return ChangeStatus()
+    def __init__( self, new_status, verbose_name = None ):
+	self.verbose_name = verbose_name or _(new_status)
+	self.new_status = new_status
+	
+    def model_run( self, model_context ):
+	for obj in model_context.get_selection():
+	    obj.change_status( self.new_status )
+	yield action_steps.FlushSession( model_context.session )

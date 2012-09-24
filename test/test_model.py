@@ -3,8 +3,10 @@ import os
 
 from sqlalchemy import schema, types
 
+from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import Session
 from camelot.test import ModelThreadTestCase
+from camelot.test.action import MockModelContext
 from .test_orm import TestMetaData
 
 class ModelCase( ModelThreadTestCase ):
@@ -95,6 +97,13 @@ class StatusCase( TestMetaData ):
             book_date = schema.Column( types.Date(), nullable = False )
             status = type_and_status.Status( enumeration = [ (1, 'DRAFT'),
                                                              (2, 'READY') ] )
+            
+            class Admin( EntityAdmin ):
+                list_display = ['book_date', 'current_status']
+                list_actions = [ type_and_status.ChangeStatus( 'DRAFT' ),
+                                 type_and_status.ChangeStatus( 'READY' ) ]
+                form_actions = list_actions
+                
         #end status enumeration definition
         self.create_all()
         self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
@@ -104,4 +113,9 @@ class StatusCase( TestMetaData ):
         invoice.change_status( 'DRAFT', status_from_date = datetime.date.today() )
         self.assertEqual( invoice.current_status, 'DRAFT' )
         self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date.today() )
-        #end status enumeration use        
+        #end status enumeration use
+        ready_action = Invoice.Admin.list_actions[-1]
+        model_context = MockModelContext()
+        model_context.obj = invoice
+        list( ready_action.model_run( model_context ) )
+        self.assertTrue( invoice.current_status, 'READY' )
