@@ -1,6 +1,11 @@
+import datetime
 import os
 
+from sqlalchemy import schema, types
+
+from camelot.core.orm import Session
 from camelot.test import ModelThreadTestCase
+from .test_orm import TestMetaData
 
 class ModelCase( ModelThreadTestCase ):
     """Test the build in camelot model"""
@@ -51,3 +56,50 @@ class ModelCase( ModelThreadTestCase ):
         self.assertTrue( Person.query.count() > person_count_before_import )
         self.assertEqual( FixtureVersion.get_current_version( 'demo_data' ),
                           1 )
+        
+class StatusCase( TestMetaData ):
+    
+    def test_status_type( self ):
+        Entity, session = self.Entity, self.session
+        
+        #begin status type definition
+        from camelot.model import type_and_status
+        
+        class Invoice( Entity ):
+            book_date = schema.Column( types.Date(), nullable = False )
+            status = type_and_status.Status()
+        #end status type definition
+        self.create_all()
+        self.assertTrue( issubclass( Invoice._status_type, type_and_status.StatusType ) )
+        self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
+        #begin status types definition
+        draft = Invoice._status_type( code = 'DRAFT' )
+        ready = Invoice._status_type( code = 'READY' )
+        session.flush()
+        #end status types definition
+        invoice = Invoice( book_date = datetime.date.today() )
+        status_history = Invoice._status_history( status_for = invoice,
+                                                  classified_by = draft )
+        session.flush()
+        
+    def test_status_enumeration( self ):
+        Entity, session = self.Entity, self.session
+        
+        #begin status enumeration definition
+        from camelot.model import type_and_status
+        
+        class Invoice( Entity ):
+            book_date = schema.Column( types.Date(), nullable = False )
+            status = type_and_status.Status( enumeration = [ (1, 'DRAFT'),
+                                                             (2, 'READY') ] )
+        #end status enumeration definition
+        self.create_all()
+        self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
+        
+        #from camelot.model.party import Person
+        
+        #session = Session()
+        #p = Person( first_name = 'Pablo', last_name = 'Picasso' )
+        #session.flush()
+        #self.assertEqual( p.current_status, None )
+        #self.assertEqual( p.current_status_sql, None )

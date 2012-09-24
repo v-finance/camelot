@@ -128,9 +128,15 @@ class Status( Property ):
 		classified_by = orm.relationship( EntityStatusType )
 	    
 	    self.status_type = EntityStatusType
-	    self.status_history = EntityStatusHistory
+	    setattr( entity, '_%s_type'%name, self.status_type )
+
+	else:
 	    
-	setattr( entity, '_%s_type'%name, self.status_type )
+	    class EntityStatusHistory( StatusHistory, entity._descriptor.entity_base ):
+		classified_by = schema.Column( Enumeration( self.enumeration ), 
+		                               nullable=False, index=True )
+	    
+	self.status_history = EntityStatusHistory
 	setattr( entity, '_%s_history'%name, self.status_history )
 	
     def create_non_pk_cols( self ):
