@@ -182,7 +182,7 @@ class Status( Property ):
 
 	#setattr( self.entity, 'current_status', property( current_status ) )
     
-class AbstractStatusMixin( object ):
+class StatusMixin( object ):
 	
     def get_status_from_date( self, classified_by ):
 	"""
@@ -195,6 +195,21 @@ class AbstractStatusMixin( object ):
 	    status_histories.sort( key = lambda status_history:status_history.from_date, reverse = True )
 	    return status_histories[0].from_date
 	
+    def get_status_history_at( self, status_date = None ):
+	"""
+	Get the StatusHistory valid at status_date
+	
+	:param status_date: the date at which the status history should
+	    be valid.  Use today if None was given.
+	:return: a StatusHistory object or None if no valid status was
+	    found
+	"""
+	if status_date == None:
+	    status_date = datetime.date.today()
+	for status_history in self.status:
+	    if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:	
+		return status_history	
+		    
     @property
     def current_status(self):
 	status_history = self.get_status_history_at()
@@ -214,7 +229,7 @@ class AbstractStatusMixin( object ):
                                                   status_type.status_thru_date >= sql.functions.current_date() ),
                           from_obj = [status_type.table] ).order_by(status_type.id.desc()).limit(1)
 
-    def change_status(self, new_status, status_from_date=None, status_thru_date=end_of_times()):
+    def change_status( self, new_status, status_from_date=None, status_thru_date=end_of_times() ):
 	from sqlalchemy import orm
 	if not status_from_date:
 	    status_from_date = datetime.date.today()
@@ -235,19 +250,8 @@ class AbstractStatusMixin( object ):
                                      thru_date = end_of_times() )
 	if old_status:
 	    self.query.session.flush( [old_status] )
-	self.query.session.flush( [new_status] )        
-	    
-def create_type_3_status_mixin(status_attribute):
-    """Create a class that can be subclassed to provide a class that
-    has a type 3 status with methods to manipulate and review its status
-    :param status_attribute: the name of the type 3 status attribute
-    """
-    
-    class Type3StatusMixin( AbstractStatusMixin ):
-	pass
-        
-    return Type3StatusMixin
-    
+	orm.object_session( self ).flush()
+	        
 def type_3_status( statusable_entity, metadata, collection, verbose_entity_name = None, enumeration=None ):
     '''
     Creates a new type 3 status related to the given entity

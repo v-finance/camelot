@@ -65,7 +65,7 @@ class StatusCase( TestMetaData ):
         #begin status type definition
         from camelot.model import type_and_status
         
-        class Invoice( Entity ):
+        class Invoice( Entity, type_and_status.StatusMixin ):
             book_date = schema.Column( types.Date(), nullable = False )
             status = type_and_status.Status()
         #end status type definition
@@ -77,10 +77,13 @@ class StatusCase( TestMetaData ):
         ready = Invoice._status_type( code = 'READY' )
         session.flush()
         #end status types definition
+        #begin status type use
         invoice = Invoice( book_date = datetime.date.today() )
-        status_history = Invoice._status_history( status_for = invoice,
-                                                  classified_by = draft )
-        session.flush()
+        self.assertEqual( invoice.current_status, None )
+        invoice.change_status( draft, status_from_date = datetime.date.today() )
+        self.assertEqual( invoice.current_status, draft )
+        self.assertEqual( invoice.get_status_from_date( draft ), datetime.date.today() )
+        #end status type use
         
     def test_status_enumeration( self ):
         Entity, session = self.Entity, self.session
@@ -88,18 +91,17 @@ class StatusCase( TestMetaData ):
         #begin status enumeration definition
         from camelot.model import type_and_status
         
-        class Invoice( Entity ):
+        class Invoice( Entity, type_and_status.StatusMixin ):
             book_date = schema.Column( types.Date(), nullable = False )
             status = type_and_status.Status( enumeration = [ (1, 'DRAFT'),
                                                              (2, 'READY') ] )
         #end status enumeration definition
         self.create_all()
         self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
-        
-        #from camelot.model.party import Person
-        
-        #session = Session()
-        #p = Person( first_name = 'Pablo', last_name = 'Picasso' )
-        #session.flush()
-        #self.assertEqual( p.current_status, None )
-        #self.assertEqual( p.current_status_sql, None )
+        #begin status enumeration use
+        invoice = Invoice( book_date = datetime.date.today() )
+        self.assertEqual( invoice.current_status, None )
+        invoice.change_status( 'DRAFT', status_from_date = datetime.date.today() )
+        self.assertEqual( invoice.current_status, 'DRAFT' )
+        self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date.today() )
+        #end status enumeration use        
