@@ -47,19 +47,19 @@ from sqlalchemy import orm, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker, mapper
 
-from . options import ( using_options, options_defaults )
-from . fields import has_field, Field
-from . relationships import ( belongs_to, has_one, has_many,
-                              has_and_belongs_to_many, 
-                              ManyToOne, OneToOne, OneToMany, ManyToMany )
-from . properties import has_property, GenericProperty, ColumnProperty
-
 #
 # Singleton session factory, to be used when a session is needed
 #
 Session = scoped_session( sessionmaker( autoflush = False,
                                         autocommit = True,
                                         expire_on_commit = False ) )
+
+from . options import ( using_options, options_defaults )
+from . fields import has_field, Field
+from . relationships import ( belongs_to, has_one, has_many,
+                              has_and_belongs_to_many, 
+                              ManyToOne, OneToOne, OneToMany, ManyToMany )
+from . properties import has_property, GenericProperty, ColumnProperty
 
 #
 # Default registry for subclasses of Entity that have been mapped
