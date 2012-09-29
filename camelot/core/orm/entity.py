@@ -3,6 +3,7 @@ import sys
 from sqlalchemy import orm, schema, sql
 from sqlalchemy.ext.declarative import ( _declarative_constructor,
                                          DeclarativeMeta )
+from sqlalchemy.ext import hybrid
 
 from . statements import MUTATORS
 from . properties import EntityBuilder, Property
@@ -343,6 +344,14 @@ class EntityBase( object ):
     def expunge(self, *args, **kwargs):
         return orm.object_session(self).expunge(self, *args, **kwargs)
     
+    @hybrid.hybrid_property
+    def query( self ):
+        return Session().query( self.__class__ )
+    
+    @query.expression
+    def query_expression( cls ):
+        return Session().query( cls )
+
     @classmethod
     def get_by(cls, *args, **kwargs):
         """

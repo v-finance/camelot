@@ -105,7 +105,6 @@ def process_deferred_properties( class_registry = entities ):
         mapper = orm.class_mapper( cls )
         # set some convenience attributes to the Entity
         setattr( cls, 'table', mapper.local_table )
-        setattr( cls, 'query', Session().query( cls ) )
                 
     for method_name in ( 'create_non_pk_cols', 
                          'create_tables',
