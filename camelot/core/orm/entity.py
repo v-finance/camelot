@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import ( _declarative_constructor,
 
 from . statements import MUTATORS
 from . properties import EntityBuilder, Property
-from . import options
+from . import options, Session
 
 class EntityDescriptor(object):
     """
@@ -205,6 +205,11 @@ class EntityMeta( DeclarativeMeta ):
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
 
+#
+# Keep these functions separated from EntityBase to be able
+# to reuse them in parts unrelated to EntityBase
+#
+
 def update_or_create_entity( cls, data, surrogate = True ):
     mapper = orm.class_mapper( cls )
     pk_props = mapper.primary_key
@@ -265,12 +270,36 @@ def dict_to_entity( entity, data ):
         else:
             setattr(entity, key, value)
     
+def entity_to_dict( entity, deep = {}, exclude = []  ):
+    """Generate a JSON-style nested dict/list structure from an object."""
+    
+    mapper = orm.object_mapper( entity )
+    
+    col_prop_names = [p.key for p in mapper.iterate_properties \
+                                  if isinstance(p, orm.properties.ColumnProperty)]
+    data = dict([(name, getattr(entity, name))
+                 for name in col_prop_names if name not in exclude])
+    
+    for rname, rdeep in deep.iteritems():
+        dbdata = getattr(entity, rname)
+        prop = mapper.get_property( rname )
+        if dbdata is None:
+            data[rname] = None
+        elif isinstance(dbdata, list):
+            fks = prop.remote_side
+            #FIXME: use attribute names (ie coltoprop) instead of column names
+            remote_exclude = exclude + [ c.name for c in fks ]            
+            data[rname] = [ entity_to_dict( o, rdeep, remote_exclude ) for o in dbdata ]
+        else:
+            data[rname] = entity_to_dict( dbdata, rdeep, exclude )
+    
+    return data    
+
 class EntityBase( object ):
     """A declarative base class that adds some methods that used to be
     available in Elixir"""
     
     def __init__( self, *args, **kwargs ): 
-        from . import Session
         _declarative_constructor( self, *args, **kwargs ) 
         Session().add( self ) 
                                     
@@ -296,25 +325,7 @@ class EntityBase( object ):
 
     def to_dict( self, deep = {}, exclude = [] ):
         """Generate a JSON-style nested dict/list structure from an object."""
-        
-        mapper = orm.object_mapper( self )
-        
-        col_prop_names = [p.key for p in mapper.iterate_properties \
-                                      if isinstance(p, orm.properties.ColumnProperty)]
-        data = dict([(name, getattr(self, name))
-                     for name in col_prop_names if name not in exclude])
-        for rname, rdeep in deep.iteritems():
-            dbdata = getattr(self, rname)
-            #FIXME: use attribute names (ie coltoprop) instead of column names
-            fks = mapper.get_property( rname ).remote_side
-            exclude = [ c.name for c in fks ]
-            if dbdata is None:
-                data[rname] = None
-            elif isinstance(dbdata, list):
-                data[rname] = [ o.to_dict( rdeep, exclude ) for o in dbdata ]
-            else:
-                data[rname] = dbdata.to_dict(rdeep, exclude)
-        return data
+        return entity_to_dict( self, deep, exclude )
 
     # session methods
     def flush(self, *args, **kwargs):
@@ -339,7 +350,7 @@ class EntityBase( object ):
         This is equivalent to:
         session.query(MyClass).filter_by(...).first()
         """
-        return cls.query.filter_by(*args, **kwargs).first()
+        return Session().query( cls ).filter_by(*args, **kwargs).first()
 
     @classmethod
     def get(cls, *args, **kwargs):
@@ -348,4 +359,4 @@ class EntityBase( object ):
         or None if not found. This is equivalent to:
         session.query(MyClass).get(...)
         """
-        return cls.query.get(*args, **kwargs)
+        return Session().query( cls ).get(*args, **kwargs)
