@@ -113,7 +113,11 @@ class StatusCase( TestMetaData ):
         invoice.change_status( 'DRAFT', status_from_date = datetime.date.today() )
         self.assertEqual( invoice.current_status, 'DRAFT' )
         self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date.today() )
+        draft_invoices = Invoice.query.filter( Invoice.current_status == 'DRAFT' ).count()
+        ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()        
         #end status enumeration use
+        self.assertEqual( draft_invoices, 1 )
+        self.assertEqual( ready_invoices, 0 )
         ready_action = Invoice.Admin.list_actions[-1]
         model_context = MockModelContext()
         model_context.obj = invoice

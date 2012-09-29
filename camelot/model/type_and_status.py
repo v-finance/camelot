@@ -28,8 +28,8 @@ tables for each entity.
 """
 import datetime
 
-from sqlalchemy.types import Date, Unicode
 from sqlalchemy import orm, sql, schema, types
+from sqlalchemy.ext import hybrid
 
 from camelot.model.authentication import end_of_times
 from camelot.admin.action import Action
@@ -156,33 +156,6 @@ class Status( Property ):
 	if not self.property:
 	    self.property = orm.relationship( self.entity, backref = self.name )
 	    self.status_history.status_for = self.property
-	
-    #def create_properties( self ):
-	#super( Status, self ).create_properties()
-	
-	#def get_status_history_at( self, status_date = None ):
-	    #"""
-	    #Get the StatusHistory valid at status_date
-	    
-	    #:param status_date: the date at which the status history should
-		#be valid.  Use today if None was given.
-	    #:return: a StatusHistory object or None if no valid status was
-		#found
-	    #"""
-	    #if status_date == None:
-		#status_date = datetime.date.today()
-	    #for status_history in self.status:
-		#if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:	
-		    #return status_history    
-		
-	#setattr( self.entity, 'get_status_history_at', property( get_status_history_at ) )
-
-	#def current_status( self ):
-	    #status_history = self.get_status_history_at()
-	    #if status_history != None:
-		#return status_history.classified_by	
-
-	#setattr( self.entity, 'current_status', property( current_status ) )
     
 class StatusMixin( object ):
 	
@@ -211,26 +184,30 @@ class StatusMixin( object ):
 	for status_history in self.status:
 	    if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:	
 		return status_history	
+
+    @staticmethod
+    def current_status_query( status_history, status_class ):
+	"""
+	:param status_history: the class or columns that represents the status history
+	:param status_class: the class or columns of the class that have a status
+	:return: a select statement that looks for the current status of the status_class
+	"""
+	return sql.select( [status_history.classified_by],
+                          whereclause = sql.and_( status_history.status_for_id == status_class.id,
+                                                  status_history.status_from_date <= sql.functions.current_date(),
+                                                  status_history.status_thru_date >= sql.functions.current_date() ),
+                          from_obj = [status_history.table] ).order_by(status_history.id.desc()).limit(1)
 		    
-    @property
-    def current_status(self):
+    @hybrid.hybrid_property
+    def current_status( self ):
 	status_history = self.get_status_history_at()
 	if status_history != None:
 	    return status_history.classified_by
 	
+    @current_status.expression
+    def current_status( cls ):
+	return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status' )
     
-    @staticmethod
-    def current_status_query( status_type, columns ):
-	"""
-	:param status_type: the Entity class that represents the statuses, as returned by get_status_class
-	:param columns: the columns of the table for which to query the status
-	"""
-	return sql.select( [status_type.classified_by],
-                          whereclause = sql.and_( status_type.status_for_id == columns.id,
-                                                  status_type.status_from_date <= sql.functions.current_date(),
-                                                  status_type.status_thru_date >= sql.functions.current_date() ),
-                          from_obj = [status_type.table] ).order_by(status_type.id.desc()).limit(1)
-
     def change_status( self, new_status, status_from_date=None, status_thru_date=end_of_times() ):
 	from sqlalchemy import orm
 	if not status_from_date:
