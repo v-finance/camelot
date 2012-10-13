@@ -4,7 +4,7 @@ MUTATORS = '__mutators__'
 
 class ClassMutator( object ):
     """Class to create DSL statements such as `using_options`.  This is used
-    to transform Elixir like DSL statements in Declarative class attributes.
+    to transform DSL statements in Declarative class attributes.
     The use of these statements is discouraged in any new code, and exists for
     compatibility with Elixir model definitions"""
     

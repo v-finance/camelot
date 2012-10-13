@@ -13,10 +13,9 @@ simple or sophisticated datastructures. The `SQLAlchemy website <http://www.sqla
 documentation on all these features.  An important part of Camelot is providing an easy way to
 create views for objects mapped through SQLAlchemy.
 
-SQLAlchemy comes with the *Declarative* extension to make it easy to define an ORM mapping using
-the Active Record Pattern.  This is used through the documentation and in the example code.
-An alternative to *Declarative* is `Elixir <http://elixir.ematia.de/trac/wiki/TutorialDivingIn>`_, 
-which was used in previous *Camelot* versions, and is still supported.
+SQLAlchemy comes with the `Declarative <http://docs.sqlalchemy.org/en/rel_0_7/orm/extensions/declarative.html>`_ 
+extension to make it easy to define an ORM mapping using the Active Record Pattern.  This is used through the 
+documentation and in the example code.
 
 To use *Declarative*, threre are some base classes that should be imported:
 
@@ -26,7 +25,7 @@ To use *Declarative*, threre are some base classes that should be imported:
    
 Those are :
 
- * :class:`camelot.core.orm.Entity` is the base class for all classes that are mapped to the database
+ * :class:`camelot.core.orm.Entity` is the declarative base class provided by Camelot for all classes that are mapped to the database
  
  * :class:`camelot.admin.entity_admin.EntityAdmin` is the base class that describes how an `Entity` subclass should be represented in the GUI
  
@@ -60,5 +59,6 @@ can be used as a place to start the model definition.
 .. toctree::
 
    fields.rst
+   relations.rst
    calculated_fields.rst
    views.rst

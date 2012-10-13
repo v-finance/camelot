@@ -1,3 +1,403 @@
+'''
+This module provides support for defining relationships between your
+entities.  Two syntaxes are supported to do so: the default
+`Attribute-based syntax`_ which supports the following types of relationships:
+ManyToOne_, OneToMany_, OneToOne_ and ManyToMany_, as well as a
+`DSL-based syntax`_ which provides the following statements: belongs_to_,
+has_many_, has_one_ and has_and_belongs_to_many_.
+
+======================
+Attribute-based syntax
+======================
+
+The first argument to all these "normal" relationship classes is the name of
+the class (entity) you are relating to.
+
+Following that first mandatory argument, any number of additional keyword
+arguments can be specified for advanced behavior. See each relationship type
+for a list of their specific keyword arguments. At this point, we'll just note
+that all the arguments that are not specifically processed, as
+mentioned in the documentation below are passed on to the SQLAlchemy
+``relationship`` function. So, please refer to the `SQLAlchemy relationship function's
+documentation <http://docs.sqlalchemy.org/en/rel_0_7/orm/tutorial.html
+#building-a-relationship>`_ for further detail about which
+keyword arguments are supported.
+
+You should keep in mind that the following
+keyword arguments are automatically generated and should not be used
+unless you want to override the default value provided : ``uselist``,
+``remote_side``, ``secondary``, ``primaryjoin`` and ``secondaryjoin``.
+
+Additionally, if you want a bidirectionnal relationship, you should define the
+inverse relationship on the other entity explicitly (as opposed to how
+SQLAlchemy's backrefs are defined). In non-ambiguous situations, relationships will
+be matched together automatically. If there are several relationships
+of the same type between two entities, you have to disambiguate the
+situation by giving the name of the inverse relationship in the ``inverse``
+keyword argument.
+
+Here is a detailed explanation of each relation type:
+
+`ManyToOne`
+-----------
+
+Describes the child's side of a parent-child relationship.  For example,
+a `Pet` object may belong to its owner, who is a `Person`.  This could be
+expressed like so:
+
+.. sourcecode:: python
+
+    class Pet(Entity):
+        owner = ManyToOne('Person')
+
+Behind the scene, assuming the primary key of the `Person` entity is
+an integer column named `id`, the ``ManyToOne`` relationship will
+automatically add an integer column named `owner_id` to the entity, with a
+foreign key referencing the `id` column of the `Person` entity.
+
+In addition to the keyword arguments inherited from SQLAlchemy's relation
+function, ``ManyToOne`` relationships accept the following optional arguments
+which will be directed to the created column:
+
++----------------------+------------------------------------------------------+
+| Option Name          | Description                                          |
++======================+======================================================+
+| ``colname``          | Specify a custom name for the foreign key column(s). |
+|                      | This argument accepts either a single string or a    |
+|                      | list of strings. The number of strings passed must   |
+|                      | match the number of primary key columns of the target|
+|                      | entity. If this argument is not used, the name of the|
+|                      | column(s) is generated with the pattern              |
+|                      | defined in options.FKCOL_NAMEFORMAT, which is, by    |
+|                      | default: "%(relname)s_%(key)s", where relname is the |
+|                      | name of the ManyToOne relationship, and 'key' is the |
+|                      | name (key) of the primary column in the target       |
+|                      | entity. That's with, in the above Pet/owner example, |
+|                      | the name of the column would be: "owner_id".         |
++----------------------+------------------------------------------------------+
+| ``required``         | Specify whether or not this field can be set to None |
+|                      | (left without a value). Defaults to ``False``,       |
+|                      | unless the field is a primary key.                   |
++----------------------+------------------------------------------------------+
+| ``primary_key``      | Specify whether or not the column(s) created by this |
+|                      | relationship should act as a primary_key.            |
+|                      | Defaults to ``False``.                               |
++----------------------+------------------------------------------------------+
+| ``column_kwargs``    | A dictionary holding any other keyword argument you  |
+|                      | might want to pass to the Column.                    |
++----------------------+------------------------------------------------------+
+| ``target_column``    | Name (or list of names) of the target column(s).     |
+|                      | If this argument is not specified, the target entity |
+|                      | primary key column(s) are used.                      |
++----------------------+------------------------------------------------------+
+
+The following optional arguments are also supported to customize the
+ForeignKeyConstraint that is created:
+
++----------------------+------------------------------------------------------+
+| Option Name          | Description                                          |
++======================+======================================================+
+| ``use_alter``        | If True, SQLAlchemy will add the constraint in a     |
+|                      | second SQL statement (as opposed to within the       |
+|                      | create table statement). This permits to define      |
+|                      | tables with a circular foreign key dependency        |
+|                      | between them.                                        |
++----------------------+------------------------------------------------------+
+| ``ondelete``         | Value for the foreign key constraint ondelete clause.|
+|                      | May be one of: ``cascade``, ``restrict``,            |
+|                      | ``set null``, or ``set default``.                    |
++----------------------+------------------------------------------------------+
+| ``onupdate``         | Value for the foreign key constraint onupdate clause.|
+|                      | May be one of: ``cascade``, ``restrict``,            |
+|                      | ``set null``, or ``set default``.                    |
++----------------------+------------------------------------------------------+
+| ``constraint_kwargs``| A dictionary holding any other keyword argument you  |
+|                      | might want to pass to the Constraint.                |
++----------------------+------------------------------------------------------+
+
+In some cases, you may want to declare the foreign key column explicitly,
+instead of letting it be generated automatically.  There are several reasons to
+that: it could be because you want to declare it with precise arguments and
+using column_kwargs makes your code ugly, or because the name of
+your column conflicts with the property name (in which case an error is
+thrown).  In those cases, you can use the ``field`` argument to specify an
+already-declared field to be used for the foreign key column.
+
+For example, for the Pet example above, if you want the database column
+(holding the foreign key) to be called 'owner', one should use the field
+parameter to specify the field manually.
+
+.. sourcecode:: python
+
+    class Pet(Entity):
+        owner_id = Field(Integer, colname='owner')
+        owner = ManyToOne('Person', field=owner_id)
+
++----------------------+------------------------------------------------------+
+| Option Name          | Description                                          |
++======================+======================================================+
+| ``field``            | Specify the previously-declared field to be used for |
+|                      | the foreign key column. Use of this parameter is     |
+|                      | mutually exclusive with the colname and column_kwargs|
+|                      | arguments.                                           |
++----------------------+------------------------------------------------------+
+
+
+Additionally, the belongs_to_ statement is supported as an alternative,
+DSL-based, syntax to define ManyToOne_ relationships.
+
+
+`OneToMany`
+-----------
+
+Describes the parent's side of a parent-child relationship when there can be
+several children.  For example, a `Person` object has many children, each of
+them being a `Person`. This could be expressed like so:
+
+.. sourcecode:: python
+
+    class Person(Entity):
+        parent = ManyToOne('Person')
+        children = OneToMany('Person')
+
+Note that a ``OneToMany`` relationship **cannot exist** without a
+corresponding ``ManyToOne`` relationship in the other way. This is because the
+``OneToMany`` relationship needs the foreign key created by the ``ManyToOne``
+relationship.
+
+In addition to keyword arguments inherited from SQLAlchemy, ``OneToMany``
+relationships accept the following optional (keyword) arguments:
+
++--------------------+--------------------------------------------------------+
+| Option Name        | Description                                            |
++====================+========================================================+
+| ``order_by``       | Specify which field(s) should be used to sort the      |
+|                    | results given by accessing the relation field.         |
+|                    | Note that this sort order is only applied when loading |
+|                    | objects from the database. Objects appended to the     |
+|                    | collection afterwards are not re-sorted in-memory on   |
+|                    | the fly.                                               |
+|                    | This argument accepts either a string or a list of     |
+|                    | strings, each corresponding to the name of a field in  |
+|                    | the target entity. These field names can optionally be |
+|                    | prefixed by a minus (for descending order).            |
++--------------------+--------------------------------------------------------+
+| ``filter``         | Specify a filter criterion (as a clause element) for   |
+|                    | this relationship. This criterion will be ``and_`` ed  |
+|                    | with the normal join criterion (primaryjoin) generated |
+|                    | by Elixir for the relationship. For example:           |
+|                    | boston_addresses =                                     |
+|                    | OneToMany('Address', filter=Address.city == 'Boston')  |
++--------------------+--------------------------------------------------------+
+
+Additionally, an alternate DSL-based is supported, syntax to define
+OneToMany_ relationships, with the has_many_ statement.
+
+
+`OneToOne`
+----------
+
+Describes the parent's side of a parent-child relationship when there is only
+one child.  For example, a `Car` object has one gear stick, which is
+represented as a `GearStick` object. This could be expressed like so:
+
+.. sourcecode:: python
+
+    class Car(Entity):
+        gear_stick = OneToOne('GearStick', inverse='car')
+
+    class GearStick(Entity):
+        car = ManyToOne('Car')
+
+Note that a ``OneToOne`` relationship **cannot exist** without a corresponding
+``ManyToOne`` relationship in the other way. This is because the ``OneToOne``
+relationship needs the foreign_key created by the ``ManyToOne`` relationship.
+
+Additionally, an alternate DSL-based syntax is supported to define
+OneToOne_ relationships, with the has_one_ statement.
+
+
+`ManyToMany`
+------------
+
+Describes a relationship in which one kind of entity can be related to several
+objects of the other kind but the objects of that other kind can be related to
+several objects of the first kind.  For example, an `Article` can have several
+tags, but the same `Tag` can be used on several articles.
+
+.. sourcecode:: python
+
+    class Article(Entity):
+        tags = ManyToMany('Tag')
+
+    class Tag(Entity):
+        articles = ManyToMany('Article')
+
+Behind the scene, the ``ManyToMany`` relationship will automatically create an
+intermediate table to host its data.
+
+Note that you don't necessarily need to define the inverse relationship.  In
+our example, even though we want tags to be usable on several articles, we
+might not be interested in which articles correspond to a particular tag.  In
+that case, we could have omitted the `Tag` side of the relationship.
+
+If your ``ManyToMany`` relationship is self-referencial, the entity
+containing it is autoloaded (and you don't intend to specify both the
+primaryjoin and secondaryjoin arguments manually), you must specify at least
+one of either the ``remote_colname`` or ``local_colname`` argument.
+
+In addition to keyword arguments inherited from SQLAlchemy, ``ManyToMany``
+relationships accept the following optional (keyword) arguments:
+
++--------------------+--------------------------------------------------------+
+| Option Name        | Description                                            |
++====================+========================================================+
+| ``tablename``      | Specify a custom name for the intermediary table. This |
+|                    | can be used both when the tables needs to be created   |
+|                    | and when the table is autoloaded/reflected from the    |
+|                    | database. If this argument is not used, a name will be |
+|                    | automatically generated by Elixir depending on the name|
+|                    | of the tables of the two entities of the relationship, |
+|                    | the name of the relationship, and, if present, the name|
+|                    | of its inverse. Even though this argument is optional, |
+|                    | it is wise to use it if you are not sure what are the  |
+|                    | exact consequence of using a generated table name.     |
++--------------------+--------------------------------------------------------+
+| ``schema``         | Specify a custom schema for the intermediate table.    |
+|                    | This can be used both when the tables needs to         |
+|                    | be created and when the table is autoloaded/reflected  |
+|                    | from the database.                                     |
++--------------------+--------------------------------------------------------+
+| ``remote_colname`` | A string or list of strings specifying the names of    |
+|                    | the column(s) in the intermediary table which          |
+|                    | reference the "remote"/target entity's table.          |
++--------------------+--------------------------------------------------------+
+| ``local_colname``  | A string or list of strings specifying the names of    |
+|                    | the column(s) in the intermediary table which          |
+|                    | reference the "local"/current entity's table.          |
++--------------------+--------------------------------------------------------+
+| ``table``          | Use a manually created table. If this argument is      |
+|                    | used, Elixir won't generate a table for this           |
+|                    | relationship, and use the one given instead.           |
++--------------------+--------------------------------------------------------+
+| ``order_by``       | Specify which field(s) should be used to sort the      |
+|                    | results given by accessing the relation field.         |
+|                    | Note that this sort order is only applied when loading |
+|                    | objects from the database. Objects appended to the     |
+|                    | collection afterwards are not re-sorted in-memory on   |
+|                    | the fly.                                               |
+|                    | This argument accepts either a string or a list of     |
+|                    | strings, each corresponding to the name of a field in  |
+|                    | the target entity. These field names can optionally be |
+|                    | prefixed by a minus (for descending order).            |
++----------------------+------------------------------------------------------+
+| ``ondelete``       | Value for the foreign key constraint ondelete clause.  |
+|                    | May be one of: ``cascade``, ``restrict``,              |
+|                    | ``set null``, or ``set default``.                      |
++--------------------+--------------------------------------------------------+
+| ``onupdate``       | Value for the foreign key constraint onupdate clause.  |
+|                    | May be one of: ``cascade``, ``restrict``,              |
+|                    | ``set null``, or ``set default``.                      |
++--------------------+--------------------------------------------------------+
+| ``table_kwargs``   | A dictionary holding any other keyword argument you    |
+|                    | might want to pass to the underlying Table object.     |
++--------------------+--------------------------------------------------------+
+
+
+================
+DSL-based syntax
+================
+
+The following DSL statements provide an alternative way to define relationships
+between your entities. The first argument to all those statements is the name
+of the relationship, the second is the 'kind' of object you are relating to
+(it is usually given using the ``of_kind`` keyword).
+
+`belongs_to`
+------------
+
+The ``belongs_to`` statement is the DSL syntax equivalent to the ManyToOne_
+relationship. As such, it supports all the same arguments as ManyToOne_
+relationships.
+
+.. sourcecode:: python
+
+    class Pet(Entity):
+        belongs_to('feeder', of_kind='Person')
+        belongs_to('owner', of_kind='Person', colname="owner_id")
+
+
+`has_many`
+----------
+
+The ``has_many`` statement is the DSL syntax equivalent to the OneToMany_
+relationship. As such, it supports all the same arguments as OneToMany_
+relationships.
+
+.. sourcecode:: python
+
+    class Person(Entity):
+        belongs_to('parent', of_kind='Person')
+        has_many('children', of_kind='Person')
+
+There is also an alternate form of the ``has_many`` relationship that takes
+only two keyword arguments: ``through`` and ``via`` in order to encourage a
+richer form of many-to-many relationship that is an alternative to the
+``has_and_belongs_to_many`` statement.  Here is an example:
+
+.. sourcecode:: python
+
+    class Person(Entity):
+        has_field('name', Unicode)
+        has_many('assignments', of_kind='Assignment')
+        has_many('projects', through='assignments', via='project')
+
+    class Assignment(Entity):
+        has_field('start_date', DateTime)
+        belongs_to('person', of_kind='Person')
+        belongs_to('project', of_kind='Project')
+
+    class Project(Entity):
+        has_field('title', Unicode)
+        has_many('assignments', of_kind='Assignment')
+
+In the above example, a `Person` has many `projects` through the `Assignment`
+relationship object, via a `project` attribute.
+
+
+`has_one`
+---------
+
+The ``has_one`` statement is the DSL syntax equivalent to the OneToOne_
+relationship. As such, it supports all the same arguments as OneToOne_
+relationships.
+
+.. sourcecode:: python
+
+    class Car(Entity):
+        has_one('gear_stick', of_kind='GearStick', inverse='car')
+
+    class GearStick(Entity):
+        belongs_to('car', of_kind='Car')
+
+
+`has_and_belongs_to_many`
+-------------------------
+
+The ``has_and_belongs_to_many`` statement is the DSL syntax equivalent to the
+ManyToMany_ relationship. As such, it supports all the same arguments as
+ManyToMany_ relationships.
+
+.. sourcecode:: python
+
+    class Article(Entity):
+        has_and_belongs_to_many('tags', of_kind='Tag')
+
+    class Tag(Entity):
+        has_and_belongs_to_many('articles', of_kind='Article')
+
+'''
+
 from sqlalchemy import schema, sql
 from sqlalchemy.orm import relationship, backref, class_mapper
 

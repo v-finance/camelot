@@ -1,3 +1,11 @@
+"""
+This module provides the :class:`camelot.core.orm.entity.EntityBase` declarative base class, 
+as well as its metaclass :class:`camelot.core.orm.entity.EntityMeta`.  Those are the building
+blocks for creating the :class:`camelot.core.orm.Entity`.
+
+These classes can be reused if a custom base class is needed.
+"""
+
 import sys
 
 from sqlalchemy import orm, schema, sql
