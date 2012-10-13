@@ -30,6 +30,7 @@ class TestClassMethods( TestMetaData ):
         # The query attribute of a class should return a query bound to
         # the session belonging to the current thread
         #
+        from PyQt4 import QtCore
         
         class A( self.Entity ):
             name = Field(String(32))
@@ -44,7 +45,7 @@ class TestClassMethods( TestMetaData ):
         session_1 = A.query.session
         self.assertEqual( session_1, Session() )
         
-        class QueryThread( threading.Thread ):
+        class QueryThread( QtCore.QThread ):
             
             def run( self ):
                 self.query_session_2 = A.query.session
@@ -52,7 +53,7 @@ class TestClassMethods( TestMetaData ):
         
         thread = QueryThread()
         thread.start()
-        thread.join()
+        thread.wait()
         
         self.assertNotEqual( session_1, thread.orm_session_2 )
         self.assertNotEqual( session_1, thread.query_session_2 )
