@@ -26,14 +26,13 @@ import itertools
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
 
-from sqlalchemy.orm.session import Session
-
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.model_thread import post, model_function
 from camelot.view.utils import to_string
 from camelot.core.memento import memento_change
 from camelot.core.utils import ugettext_lazy, ugettext
+from camelot.core.orm import Session
 from camelot.admin.validator.entity_validator import EntityValidator
 
 from sqlalchemy import orm
