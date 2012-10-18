@@ -135,6 +135,32 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         new_context.view = self.view
         return new_context
 
+class ShowHistory( Action ):
+    
+    icon = Icon('tango/16x16/devices/camera-photo.png')
+    verbose_name = _('History')
+    tooltip = _('Show recent changes on this form')
+    
+    def gui_run( self, gui_context ):
+        #
+        # Add a history widget to the form view, and show or
+        # hide it
+        #
+        form = gui_context.view.findChild( QtGui.QWidget, 'form' )
+        history = gui_context.view.findChild( QtGui.QWidget, 'history' )
+        layout = gui_context.view.findChild( QtGui.QLayout, 'form_and_actions_layout' )
+        if form.isHidden():
+            form.show()
+            history.hide()
+        else:
+            form.hide()
+            if history == None:
+                history = QtGui.QTableView()
+                history.setObjectName( 'history' )
+                layout.insertWidget( 0, history, stretch = 1 )
+            history.show()
+        super( ShowHistory, self ).gui_run( gui_context )
+        
 class CloseForm( Action ):
     
     shortcut = QtGui.QKeySequence.Close
