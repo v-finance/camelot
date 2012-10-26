@@ -169,4 +169,3 @@ class MessageBox( ActionStep ):
         if result == QtGui.QMessageBox.Cancel:
             raise CancelRequest()
         return result
-

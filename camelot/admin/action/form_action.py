@@ -137,29 +137,31 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
 
 class ShowHistory( Action ):
     
-    icon = Icon('tango/16x16/devices/camera-photo.png')
+    icon = Icon('tango/16x16/actions/format-justify-fill.png')
     verbose_name = _('History')
     tooltip = _('Show recent changes on this form')
-    
-    def gui_run( self, gui_context ):
-        #
-        # Add a history widget to the form view, and show or
-        # hide it
-        #
-        form = gui_context.view.findChild( QtGui.QWidget, 'form' )
-        history = gui_context.view.findChild( QtGui.QWidget, 'history' )
-        layout = gui_context.view.findChild( QtGui.QLayout, 'form_and_actions_layout' )
-        if form.isHidden():
-            form.show()
-            history.hide()
-        else:
-            form.hide()
-            if history == None:
-                history = QtGui.QTableView()
-                history.setObjectName( 'history' )
-                layout.insertWidget( 0, history, stretch = 1 )
-            history.show()
-        super( ShowHistory, self ).gui_run( gui_context )
+        
+    def model_run( self, model_context ):
+        from ..object_admin import ObjectAdmin
+        from ...view import action_steps
+        from ...view.controls import delegates
+        
+        class ChangeAdmin( ObjectAdmin ):
+            verbose_name = _('Change')
+            verbose_name_plural = _('Changes')
+            list_display = ['at', 'by', 'changes']
+            field_attributes = {'at':{'delegate':delegates.DateTimeDelegate}}
+            
+        obj = model_context.get_object()
+        if obj != None:
+            primary_key = model_context.admin.primary_key( obj )
+            if None not in primary_key:
+                memento = model_context.admin.get_memento()
+                changes = list( memento.get_changes( model = unicode( model_context.admin.entity.__name__ ),
+                                                     primary_key = primary_key,
+                                                     current_attributes = {} ) )
+                admin = ChangeAdmin( model_context.admin, object )
+                yield action_steps.ChangeObjects( changes, admin )
         
 class CloseForm( Action ):
     
