@@ -249,16 +249,3 @@ class PrintJinjaTemplate( PrintHtml ):
         self.html = self.template.render( context )
         self.context = context
         super( PrintJinjaTemplate, self).__init__( self.html )
-<<<<<<< HEAD
-=======
-    
-    def get_pdf( self ):
-        doc = QtGui.QTextDocument() 
-        doc.setHtml(self.template.render( self.context ))
-        self.config_printer()
-        self.printer.setOutputFormat( QtGui.QPrinter.PdfFormat )
-        filepath = OpenFile.create_temporary_file('.pdf')
-        self.printer.setOutputFileName(filepath)
-        doc.print_(self.printer)
-        return filepath
->>>>>>> added configurable fields concerning margins in print preview
