@@ -140,7 +140,8 @@ shortcut confusion and reduce the number of status updates.
                              form_action.ToPreviousForm(),
                              form_action.ToNextForm(),
                              form_action.ToLastForm(),
-                             application_action.Refresh() ]
+                             application_action.Refresh(),
+                             form_action.ShowHistory() ]
     
     def __init__(self):
         """Construct an ApplicationAdmin object and register it as the 
