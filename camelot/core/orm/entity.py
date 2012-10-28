@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import ( _declarative_constructor,
 
 from . statements import MUTATORS
 from . properties import EntityBuilder, Property
-from . import options
+from . import options, Session
 
 class EntityDescriptor(object):
     """
@@ -300,7 +300,6 @@ class EntityBase( object ):
     available in Elixir"""
     
     def __init__( self, *args, **kwargs ): 
-        from . import Session
         _declarative_constructor( self, *args, **kwargs ) 
         Session().add( self ) 
                                     
@@ -351,7 +350,7 @@ class EntityBase( object ):
         This is equivalent to:
         session.query(MyClass).filter_by(...).first()
         """
-        return cls.query.filter_by(*args, **kwargs).first()
+        return Session().query( cls ).filter_by(*args, **kwargs).first()
 
     @classmethod
     def get(cls, *args, **kwargs):
@@ -360,4 +359,4 @@ class EntityBase( object ):
         or None if not found. This is equivalent to:
         session.query(MyClass).get(...)
         """
-        return cls.query.get(*args, **kwargs)
+        return Session().query( cls ).get(*args, **kwargs)
