@@ -379,7 +379,7 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
     def triggered(self):
         sender = self.sender()
         mode = None
-        if self.sender != None:
+        if isinstance( sender, QtGui.QAction ):
             mode = unicode( sender.data().toString() )
         self.run_action( mode )
         
