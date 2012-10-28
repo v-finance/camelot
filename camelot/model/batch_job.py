@@ -83,7 +83,7 @@ class CancelBatchJob( Action ):
 @documented_entity()
 class BatchJob( Entity ):
     """Information the batch job that is planned, running or has run"""
-    using_options( tablename = 'batch_job', order_by=['-date'] )
+    using_options( tablename = 'batch_job', order_by=['date desc'] )
     date    = Field( sqlalchemy.types.DateTime, required=True, default=datetime.datetime.now )
     host    = Field( sqlalchemy.types.Unicode(256), required=True, default=hostname )
     type    = ManyToOne( 'BatchJobType', required=True, ondelete = 'restrict', onupdate = 'cascade' )
