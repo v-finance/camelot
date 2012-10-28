@@ -19,6 +19,8 @@ dist
 
 #Rope project temps
 .ropeproject/
+*.sublime-project
+*.sublime-workspace
 
 #db
 *.db
