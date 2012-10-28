@@ -22,6 +22,17 @@
 #
 #  ============================================================================
 
+"""
+This module is used to store/retrieve user profiles on the local machine.
+A user profile can contain information such as connection parameters to the
+database or the language the user wants to use in the application.
+
+For this module to function correctly, the `settings` should have an attribute
+named `CAMELOT_DBPROFILES_CIPHER`.  This is a 'secret' per application string
+that is used to encrypt the profile information as it is stored on the local
+machine.
+"""
+
 import base64
 import logging
 
@@ -76,6 +87,9 @@ def selected_profile_info():
         raise
 
 def engine_from_profile():
+    """
+    Create a SQLAlchemy Engine from the selected profile
+    """
     from sqlalchemy import create_engine
     profile = selected_profile_info()
     connect_args = dict()
@@ -91,6 +105,9 @@ def engine_from_profile():
     return create_engine(connection, pool_recycle=True, connect_args=connect_args)
 
 def media_root_from_profile():
+    """
+    Return the media root from the selected profile
+    """    
     profile = selected_profile_info()
     return profile['media_location']
 
