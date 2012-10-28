@@ -68,6 +68,11 @@ class PrintPreview( ActionStep ):
     
         the page orientation, by default :class:`QtGui.QPrinter.Portrait`
         is used.
+        
+    .. attribute:: document
+        
+        the :class:`QtGui.QTextDocument` holding the document that will be shown in the print
+        preview
     
     .. image:: /_static/simple_report.png
         """
@@ -98,7 +103,7 @@ class PrintPreview( ActionStep ):
         if self.page_orientation != None:
             self.printer.setOrientation( self.page_orientation )
         if None not in [self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit]:
-            self.printer.setPageMargins(self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit)
+            self.printer.setPageMargins( self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit )
         return self.printer
 
     def render( self ):
@@ -119,6 +124,14 @@ class PrintPreview( ActionStep ):
     def gui_run( self, gui_context ):
         dialog = self.render()
         dialog.exec_()
+        
+    def get_pdf( self ):
+        self.config_printer()
+        self.printer.setOutputFormat( QtGui.QPrinter.PdfFormat )
+        filepath = OpenFile.create_temporary_file('.pdf')
+        self.printer.setOutputFileName(filepath)
+        self.document.print_(self.printer)
+        return filepath        
 
 class ChartDocument( QtCore.QObject ):
     """Helper class to print matplotlib charts
@@ -200,13 +213,4 @@ class PrintJinjaTemplate( PrintHtml ):
         self.html = self.template.render( context )
         self.context = context
         super( PrintJinjaTemplate, self).__init__( self.html )
-    
-    def get_pdf( self ):
-        doc = QtGui.QTextDocument() 
-        doc.setHtml(self.template.render( self.context ))
-        self.config_printer()
-        self.printer.setOutputFormat( QtGui.QPrinter.PdfFormat )
-        filepath = OpenFile.create_temporary_file('.pdf')
-        self.printer.setOutputFileName(filepath)
-        doc.print_(self.printer)
-        return filepath
+
