@@ -98,7 +98,7 @@ class PrintPreview( ActionStep ):
         if self.page_orientation != None:
             self.printer.setOrientation( self.page_orientation )
         if None not in [self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit]:
-            self.printer.setPageMargins (self, self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit)
+            self.printer.setPageMargins(self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit)
         return self.printer
 
     def render( self ):
