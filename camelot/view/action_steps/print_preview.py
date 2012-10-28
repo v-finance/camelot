@@ -24,10 +24,45 @@
 
 from PyQt4 import QtCore, QtGui
 
-from camelot.admin.action import ActionStep
+from camelot.admin.action import ( ActionStep,
+                                   DocumentActionGuiContext )
 from camelot.core.templates import environment
 from camelot.view.action_steps.open_file import OpenFile
 from camelot.view.utils import resize_widget_to_screen
+
+class PrintPreviewDialog( QtGui.QPrintPreviewDialog ):
+    """A custom :class:`QtGui.QPrintPreviewDialog` that allows additional 
+    actions on the toolbar.
+    
+    :param printer: a :class:`QtGui.QPrinter`
+    :param gui_context: the :class:`camelot.admin.action.base.GuiContext` to 
+        pass to the actions    
+    :param actions: a list of :class:`camelot.admin.action.base.Action` objects
+    :param parent: a :class:`QtGui.QWidget`
+    :param flags: a :class:`Qt.WindowFlags`
+    """
+    
+    def __init__( self, printer, gui_context, 
+                  actions = [], parent = None, flags = 0 ):
+        super( PrintPreviewDialog, self ).__init__( printer, parent, flags )
+        toolbar = self.findChild( QtGui.QToolBar )
+        self.gui_context = gui_context
+        for action in actions:
+            qaction = action.render( self.gui_context, toolbar )
+            qaction.triggered.connect( self.action_triggered )
+            toolbar.addAction( qaction )
+        self.paintRequested.connect( self.paint_on_printer )
+            
+    @QtCore.pyqtSlot( bool )
+    def action_triggered( self, _checked = False ):
+        action_action = self.sender()
+        action_action.action.gui_run( self.gui_context ) 
+        preview_widget = self.findChild( QtGui.QPrintPreviewWidget )
+        preview_widget.updatePreview()
+        
+    @QtCore.pyqtSlot( QtGui.QPrinter )
+    def paint_on_printer( self, printer ):
+        self.gui_context.document.print_( printer )
 
 class PrintPreview( ActionStep ):
     """
@@ -106,23 +141,24 @@ class PrintPreview( ActionStep ):
             self.printer.setPageMargins( self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit )
         return self.printer
 
-    def render( self ):
+    def render( self, gui_context ):
         """create the print preview widget. this method is used to unit test
         the action step."""
         self.config_printer()
-        dialog = QtGui.QPrintPreviewDialog( self.printer, flags=QtCore.Qt.Window )
-        dialog.paintRequested.connect( self.paint_on_printer )
+        gui_context = gui_context.copy( DocumentActionGuiContext )
+        gui_context.document = self.document
+        from camelot.admin.action.document import EditDocument
+        dialog = PrintPreviewDialog( self.printer, 
+                                     gui_context, 
+                                     actions = [EditDocument()],
+                                     flags = QtCore.Qt.Window )
         # show maximized seems to trigger a bug in qt which scrolls the page 
         # down dialog.showMaximized()
         resize_widget_to_screen( dialog )
         return dialog
-    
-    @QtCore.pyqtSlot( QtGui.QPrinter )
-    def paint_on_printer( self, printer ):
-        self.document.print_( printer )
      
     def gui_run( self, gui_context ):
-        dialog = self.render()
+        dialog = self.render( gui_context )
         dialog.exec_()
         
     def get_pdf( self ):
