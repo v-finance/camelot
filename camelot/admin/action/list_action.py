@@ -538,6 +538,8 @@ class ExportSpreadsheet( ListContextAction ):
                     elif isinstance( value, float ):
                         precision = attributes.get( 'precision', 2 )
                         format_string = '0.' + '0'*precision
+                    elif isinstance( value, int ):
+                        format_string = '0'
                     elif isinstance( value, datetime.date ):
                         format_string = date_format
                     elif isinstance( value, datetime.datetime ):
@@ -742,4 +744,3 @@ class RemoveSelection( EditAction ):
             session = object_session( objects_to_remove[0] )
         model_context._model.remove_objects( objects_to_remove, delete = False, flush = False )
         yield action_steps.FlushSession( session )
-
