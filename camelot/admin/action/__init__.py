@@ -24,15 +24,16 @@
 
 from application_action import ( ApplicationActionGuiContext,
                                  OpenNewView, OpenTableView)
-from list_action import ListActionGuiContext, CallMethod, OpenFormView
-
 from base import Action, ActionStep, GuiContext, Mode, State
+from document import DocumentActionGuiContext
+from list_action import ListActionGuiContext, CallMethod, OpenFormView
 
 __all__ = [
     Action.__name__,
     ActionStep.__name__,
     ApplicationActionGuiContext.__name__,
     CallMethod.__name__,
+    DocumentActionGuiContext.__name__,
     ListActionGuiContext.__init__,
     OpenFormView.__init__,
     OpenNewView.__name__,
