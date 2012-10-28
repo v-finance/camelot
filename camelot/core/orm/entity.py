@@ -279,17 +279,20 @@ def entity_to_dict( entity, deep = {}, exclude = []  ):
                                   if isinstance(p, orm.properties.ColumnProperty)]
     data = dict([(name, getattr(entity, name))
                  for name in col_prop_names if name not in exclude])
+    
     for rname, rdeep in deep.iteritems():
         dbdata = getattr(entity, rname)
-        #FIXME: use attribute names (ie coltoprop) instead of column names
-        fks = mapper.get_property( rname ).remote_side
-        exclude = exclude + [ c.name for c in fks ]
+        prop = mapper.get_property( rname )
         if dbdata is None:
             data[rname] = None
         elif isinstance(dbdata, list):
-            data[rname] = [ o.to_dict( rdeep, exclude ) for o in dbdata ]
+            fks = prop.remote_side
+            #FIXME: use attribute names (ie coltoprop) instead of column names
+            remote_exclude = exclude + [ c.name for c in fks ]            
+            data[rname] = [ entity_to_dict( o, rdeep, remote_exclude ) for o in dbdata ]
         else:
-            data[rname] = dbdata.to_dict(rdeep, exclude)
+            data[rname] = entity_to_dict( dbdata, rdeep, exclude )
+    
     return data    
 
 class EntityBase( object ):
