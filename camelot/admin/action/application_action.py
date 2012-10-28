@@ -70,7 +70,7 @@ class ApplicationActionGuiContext( GuiContext ):
     
     .. attribute:: workspace
     
-        the the :class:`camelot.view.workspace.DesktopWorkspace` of the 
+        the :class:`camelot.view.workspace.DesktopWorkspace` of the 
         application in which views can be opened or adapted.
         
     .. attribute:: admin
