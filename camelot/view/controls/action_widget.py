@@ -64,7 +64,7 @@ class AbstractActionWidget( object ):
         
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
-        gui_context.mode = mode
+        gui_context.mode_name = mode
         self.action.gui_run( gui_context )
 
 HOVER_ANIMATION_DISTANCE = 20
@@ -377,7 +377,11 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
 
     @QtCore.pyqtSlot()
     def triggered(self):
-        self.run_action( None )
+        sender = self.sender()
+        mode = None
+        if self.sender != None:
+            mode = unicode( sender.data().toString() )
+        self.run_action( mode )
         
     @QtCore.pyqtSlot( QtCore.QModelIndex, QtCore.QModelIndex )
     def data_changed( self, index1, index2 ):
@@ -394,6 +398,8 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
         if state.modes:
             menu = QtGui.QMenu( self )
             for mode in state.modes:
-                menu.addAction( mode.render( menu ) )
+                mode_action = mode.render( menu )
+                mode_action.triggered.connect( self.triggered )
+                menu.addAction( mode_action )
             self.setMenu( menu )
 
