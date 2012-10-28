@@ -39,7 +39,27 @@ class PrintPreview( ActionStep ):
         in the GUI.
         
     the print preview can be customised using these attributes :
-        
+    
+    .. attribute:: margin_left
+
+        change the left margin of the content to the page border, unit is set by margin_unit
+
+    .. attribute:: margin_top
+
+        change the top margin of the content to the page border, unit is set by margin_unit    
+
+    .. attribute:: margin_right
+
+        change the right margin of the content to the page border, unit is set by margin_unit
+
+    .. attribute:: margin_bottom
+
+        change the bottom margin of the content to the page border, unit is set by margin_unit
+
+    .. attribute:: margin_unit
+
+        defin which unit is used for the defined margins (e.g. margin_left, margin_bottom)
+
     .. attribute:: page_size
     
         the page size, by default :class:`QtGui.QPrinter.A4` is used
@@ -56,20 +76,35 @@ class PrintPreview( ActionStep ):
         self.document = document
         self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
         self.printer = None
+        self.margin_left = None
+        self.margin_top = None
+        self.margin_right = None
+        self.margin_bottom = None
+        self.margin_unit = QtGui.QPrinter.Millimeter
         self.page_size = None
         self.page_orientation = None
 
-    def render( self ):
-        """create the print preview widget. this method is used to unit test
-        the action step."""
+    def get_printer( self ):
         if not self.printer:
             self.printer = QtGui.QPrinter()
         if not self.printer.isValid():
             self.printer.setOutputFormat( QtGui.QPrinter.PdfFormat )
+        return self.printer
+
+    def config_printer( self ):
+        self.printer = self.get_printer()
         if self.page_size != None:
             self.printer.setPageSize( self.page_size )
         if self.page_orientation != None:
             self.printer.setOrientation( self.page_orientation )
+        if None not in []:
+            self.printer.setPageMargins (self, self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit)
+        return self.printer
+
+    def render( self ):
+        """create the print preview widget. this method is used to unit test
+        the action step."""
+        self.config_printer()
         dialog = QtGui.QPrintPreviewDialog( self.printer, flags=QtCore.Qt.Window )
         dialog.paintRequested.connect( self.paint_on_printer )
         # show maximized seems to trigger a bug in qt which scrolls the page 
@@ -169,9 +204,9 @@ class PrintJinjaTemplate( PrintHtml ):
     def get_pdf( self ):
         doc = QtGui.QTextDocument() 
         doc.setHtml(self.template.render( self.context ))
-        printer = QtGui.QPrinter()
-        printer.setOutputFormat( QtGui.QPrinter.PdfFormat )
+        self.config_printer()
+        self.printer.setOutputFormat( QtGui.QPrinter.PdfFormat )
         filepath = OpenFile.create_temporary_file('.pdf')
-        printer.setOutputFileName(filepath)
-        doc.print_(printer)
+        self.printer.setOutputFileName(filepath)
+        doc.print_(self.printer)
         return filepath
