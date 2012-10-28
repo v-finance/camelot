@@ -49,13 +49,16 @@ memento_change = collections.namedtuple( 'memento_change',
                                            'primary_key', 
                                            'previous_attributes', 
                                            'memento_type' ] )
-#
-# lightweight data structure to present object changes to other parts of 
-# Camelot
-#
-object_change = collections.namedtuple( 'object_change',
-                                        ['id', 'type', 'at', 'by', 'changes'] )
 
+class Change( object ):
+    
+    def __init__( self, row ):
+        self.id = row.id
+        self.type = row.memento_type
+        self.at = row.at
+        self.by = row.by
+        self.changes = row.previous_attributes
+        
 class SqlMemento( object ):
     """Default Memento system, which uses :class:`camelot.model.memento.Memento`
     to track changes into a database table.  The tracking of changes happens 
@@ -72,6 +75,12 @@ class SqlMemento( object ):
         """:return: the `Table` to which to store the changes"""
         from camelot.model.memento import Memento
         return orm.class_mapper( Memento ).mapped_table
+    
+    def _get_authentication_table( self ):
+        """:return: the `Table` in which the authentication id and
+        username are stored"""
+        from camelot.model.authentication import AuthenticationMechanism
+        return orm.class_mapper( AuthenticationMechanism ).mapped_table    
 
     def _get_authentication_id( self ):
         """:return: the id to store in the memento table"""
@@ -121,19 +130,18 @@ class SqlMemento( object ):
         :return: generator of `change_object` tuples in reverse order, meaning the
             last change will be first generated.
         """
-        table = self._get_memento_table()
-        c = table.c
-        query = sql.select( [ c.id,
-                              c.creation_date,
-                              c.authentication_id,
-                              c.memento_type,
-                              c.previous_attributes ] )
-        query = query.where( sql.and_( c.model == model,
-                                       c.primary_key == primary_key[0] ) )
-        query = query.order_by( c.creation_date.desc() )
-        for row in table.bind.execute( query ):
-            yield object_change( id = row.id,
-                                 type = row.memento_type,
-                                 at = row.creation_date,
-                                 by = row.authentication_id,
-                                 changes = row.previous_attributes )
+        memento_c = self._get_memento_table().columns
+        authentication_table = self._get_authentication_table()
+        authentication_c = authentication_table.columns
+        authentication_query = sql.select( [authentication_c.username], 
+                                           authentication_c.id == memento_c.authentication_id )
+        query = sql.select( [ memento_c.id.label('id'),
+                              memento_c.creation_date.label('at'),
+                              authentication_query.as_scalar().label('by'),
+                              memento_c.memento_type.label('memento_type'),
+                              memento_c.previous_attributes ] )
+        query = query.where( sql.and_( memento_c.model == model,
+                                       memento_c.primary_key == primary_key[0] ) )
+        query = query.order_by( memento_c.creation_date.desc() )
+        for row in authentication_table.bind.execute( query ):
+            yield Change( row )
