@@ -4,7 +4,7 @@ import os
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
-from camelot.admin.action import Action
+from camelot.admin.action import Action, GuiContext
 from camelot.admin.action import list_action, application_action
 from camelot.core.utils import pyqt, ugettext_lazy as _
 from camelot.test import ModelThreadTestCase
@@ -71,6 +71,7 @@ class ActionStepsCase( ModelThreadTestCase ):
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.context.obj = Movie.query.first()
+        self.gui_context = GuiContext()
 
 # begin test application action
     def test_example_application_action( self ):
@@ -108,6 +109,21 @@ class ActionStepsCase( ModelThreadTestCase ):
         dialog = select_file.render()
         self.grab_widget( dialog )
         
+    def test_text_document( self ):
+        # begin text document
+        class EditDocumentAction( Action ):
+            
+            def model_run( self, model_context ):
+                document = QtGui.QTextDocument()
+                document.setHtml( '<h3>Hello World</h3>')
+                yield action_steps.EditTextDocument( document )
+        # end text document
+        
+        action = EditDocumentAction()
+        for step in action.model_run( self.context ):
+            dialog = step.render()
+            self.grab_widget( dialog )
+        
     def test_print_chart( self ):
         
         # begin chart print
@@ -125,7 +141,7 @@ class ActionStepsCase( ModelThreadTestCase ):
 
         action = ChartPrint()
         steps = list( action.model_run( self.context ) )
-        dialog = steps[0].render()
+        dialog = steps[0].render( self.gui_context )
         dialog.show()
         self.grab_widget( dialog )
 
@@ -167,7 +183,7 @@ class ActionStepsCase( ModelThreadTestCase ):
  
         action = MovieSummary()
         steps = list( action.model_run( self.context ) )
-        dialog = steps[0].render()
+        dialog = steps[0].render( self.gui_context )
         dialog.show()
         self.grab_widget( dialog )
 
@@ -185,6 +201,7 @@ class ListActionsCase( ModelThreadTestCase ):
         self.context = MockModelContext()
         self.context.obj = Movie.query.first()
         self.context.admin = self.app_admin.get_related_admin( Movie )
+        self.gui_context = GuiContext()
         
     def test_sqlalchemy_command( self ):
         model_context = self.context
@@ -229,7 +246,7 @@ class ListActionsCase( ModelThreadTestCase ):
     def test_print_preview( self ):
         print_preview = list_action.PrintPreview()
         for step in print_preview.model_run( self.context ):
-            dialog = step.render()
+            dialog = step.render( self.gui_context )
             dialog.show()
             self.grab_widget( dialog )
             

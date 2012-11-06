@@ -28,7 +28,7 @@ from PyQt4.QtGui import QDialog, QFrame, QGridLayout, QLabel, QVBoxLayout, \
     QWidget
 
 from camelot.view.model_thread import object_thread
-from camelot.core.utils import ugettext
+from camelot.core.utils import ugettext_lazy as _
 
 class HSeparator(QFrame):
 
@@ -41,7 +41,7 @@ class StandaloneWizardPage(QDialog):
 
     def __init__(self, window_title=None, parent=None, flags=Qt.Dialog):
         super(StandaloneWizardPage, self).__init__(parent, flags)
-        self.setWindowTitle(window_title or ' ')
+        self.setWindowTitle( unicode(window_title or ' ') )
         self.set_layouts()
 
     def set_layouts(self):
@@ -101,17 +101,24 @@ class StandaloneWizardPage(QDialog):
         subtitle_widget = QLabel('<dd>%s</dd>' % subtitle)
         self.banner_text_layout().insertWidget(1, subtitle_widget)
 
-    def set_default_buttons( self ):
+    def set_default_buttons( self,
+                             accept = _('OK'),
+                             reject = _('Cancel'),
+                             done = None ):
         """add an :guilabel:`ok` and a :guilabel:`cancel` button.
         """
-        cancel_button = QtGui.QPushButton( ugettext('Cancel') )
-        ok_button = QtGui.QPushButton( ugettext('OK') )
-        ok_button.setObjectName( 'ok' )
         layout = QtGui.QHBoxLayout()
         layout.setDirection( QtGui.QBoxLayout.RightToLeft )
-        layout.addWidget( ok_button )
-        layout.addWidget( cancel_button )
+        if accept != None:
+            ok_button = QtGui.QPushButton( unicode( accept ) )
+            ok_button.setObjectName( 'ok' )            
+            ok_button.pressed.connect( self.accept )   
+            layout.addWidget( ok_button )
+        if reject != None:
+            cancel_button = QtGui.QPushButton( unicode( reject ) )
+            cancel_button.pressed.connect( self.reject )
+            layout.addWidget( cancel_button )
         layout.addStretch()
         self.buttons_widget().setLayout( layout )
-        cancel_button.pressed.connect( self.reject )
-        ok_button.pressed.connect( self.accept )   
+        
+        

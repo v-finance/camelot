@@ -112,8 +112,18 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.set_editable(editable)
         self.set_background_color(background_color)
 
+    def set_toolbar_hidden( self, hidden ):
+        """Show or hide the toolbar, by default the toolbar is hidden until
+        the user starts editing.
+        :param hidden: `True` or `False`
+        """
+        toolbar = self.findChild( QtGui.QToolBar )
+        if toolbar:
+            toolbar.setHidden( hidden )
+        
     def initToolbar(self):
         self.toolbar = QtGui.QToolBar(self)
+        self.toolbar.setObjectName( 'toolbar' )
         self.toolbar.setOrientation(Qt.Horizontal)
         self.toolbar.setContentsMargins(0, 0, 0, 0)
 
