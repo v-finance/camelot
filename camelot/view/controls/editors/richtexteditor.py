@@ -217,6 +217,26 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.alignright_button.setToolTip('Align Right')
         self.alignright_button.clicked.connect(self.set_alignright)
 
+        self.zoomin_button = QtGui.QToolButton(self)
+        icon = Icon('tango/16x16/actions/list-add.png').getQIcon()
+        self.zoomin_button.setIcon(icon)
+        self.zoomin_button.setAutoRaise(True)
+        self.zoomin_button.setCheckable(True)
+        self.zoomin_button.setMaximumSize(QtCore.QSize(20, 20))
+        self.zoomin_button.setFocusPolicy( Qt.ClickFocus )
+        self.zoomin_button.setToolTip('Zoom in')
+        self.zoomin_button.clicked.connect(self.zoomin)
+        
+        self.zoomout_button = QtGui.QToolButton(self)
+        icon = Icon('tango/16x16/actions/list-remove.png').getQIcon()
+        self.zoomout_button.setIcon(icon)
+        self.zoomout_button.setAutoRaise(True)
+        self.zoomout_button.setCheckable(True)
+        self.zoomout_button.setMaximumSize(QtCore.QSize(20, 20))
+        self.zoomout_button.setFocusPolicy( Qt.ClickFocus )
+        self.zoomout_button.setToolTip('Zoom out')
+        self.zoomout_button.clicked.connect(self.zoomout)
+        
         self.color_button = QtGui.QToolButton(self)
         self.color_button.setAutoRaise(True)
         self.color_button.setMaximumSize(QtCore.QSize(20, 20))
@@ -237,6 +257,9 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.toolbar.addWidget(self.alignright_button)
         self.toolbar.addSeparator()
         self.toolbar.addWidget(self.color_button)
+        self.toolbar.addSeparator()
+        self.toolbar.addWidget(self.zoomin_button)
+        self.toolbar.addWidget(self.zoomout_button)
 
     #
     # Button methods
@@ -265,6 +288,13 @@ class RichTextEditor(CustomEditor, WideEditor):
             self.textedit.setFocus(Qt.OtherFocusReason)
             self.textedit.setFontUnderline(False)
 
+    def zoomin( self ):
+        self.textedit.zoomIn()
+        self.textedit.setFocus(Qt.OtherFocusReason)
+
+    def zoomout( self ):
+        self.textedit.zoomOut()
+        self.textedit.setFocus(Qt.OtherFocusReason)
 
     def set_alignleft(self, bool):
         if bool:

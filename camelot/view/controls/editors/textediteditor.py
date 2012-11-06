@@ -59,6 +59,3 @@ class TextEditEditor(QtGui.QTextEdit, AbstractCustomEditor, WideEditor):
 
     def set_enabled(self, editable=True):
         self.setEnabled(editable)
-
-
-
