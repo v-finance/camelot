@@ -249,4 +249,3 @@ class PrintJinjaTemplate( PrintHtml ):
         self.html = self.template.render( context )
         self.context = context
         super( PrintJinjaTemplate, self).__init__( self.html )
-

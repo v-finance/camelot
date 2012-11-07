@@ -52,5 +52,3 @@ class ComboBoxDelegate(CustomDelegate):
             value = ''
         self.paint_text(painter, option, index, unicode(value) )
         painter.restore()
-
-
