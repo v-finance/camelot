@@ -504,14 +504,17 @@ class Party( Entity ):
                     if not found:
                         contact_mechanism = ContactMechanism( mechanism = cm )
                         party.contact_mechanisms.append( PartyContactMechanism(contact_mechanism=contact_mechanism) )
+                # 
+                # flush all contact mechanism related objects
+                #
+                objects = [party]
+                for party_contact_mechanism in party.contact_mechanisms:
+                    objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
+                session.flush( objects )
                 #
                 # then clear the temporary store to make sure they are not created
                 # a second time
-                #
-                
-                #for party_contact_mechanism in party.contact_mechanisms:
-                #    objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
-                session.flush()
+                #                
                 party._contact_mechanisms.clear()
                 party.expire( ['phone', 'email', 'fax'] )
                 
