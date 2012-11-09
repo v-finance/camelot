@@ -118,7 +118,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
     
     :param objects: The object to change
     :param admin: The admin class used to create a form
-    
+            
     .. image:: /_static/actionsteps/change_object.png
     """
 
@@ -129,14 +129,8 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   flags = QtCore.Qt.Window ):
         from camelot.view.controls import editors
         from camelot.view.proxy.collection_proxy import CollectionProxy
-        
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
-        
-        self.setWindowTitle( admin.get_verbose_name_plural() )
-        self.set_banner_title( _('Data Preview') )
-        self.set_banner_subtitle( _('Please review the data below.') )
         self.banner_widget().setStyleSheet('background-color: white;')
-        self.set_banner_logo_pixmap( Icon('tango/32x32/mimetypes/x-office-spreadsheet.png').getQPixmap() )
         model = CollectionProxy( admin, lambda:objects, admin.get_columns)
         self.validator = model.get_validator()
         self.validator.validity_changed_signal.connect( self.update_complete )
@@ -156,19 +150,9 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         layout.addWidget( table_widget )
         layout.addWidget( note )
         self.main_widget().setLayout( layout )
-    
-        cancel_button = QtGui.QPushButton( ugettext('Cancel') )
-        ok_button = QtGui.QPushButton( ugettext('OK') )
-        ok_button.setObjectName( 'ok' )
+        self.set_default_buttons()
+        ok_button = self.buttons_widget().findChild( QtGui.QPushButton, 'accept' )
         ok_button.setEnabled( False )
-        layout = QtGui.QHBoxLayout()
-        layout.setDirection( QtGui.QBoxLayout.RightToLeft )
-        layout.addWidget( ok_button )
-        layout.addWidget( cancel_button )
-        layout.addStretch()
-        self.buttons_widget().setLayout( layout )
-        cancel_button.pressed.connect( self.reject )
-        ok_button.pressed.connect( self.accept )
         self.validate_all_rows()
 
     @QtCore.pyqtSlot()
@@ -182,7 +166,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
     def update_complete(self, row=0):
         complete = (self.validator.number_of_invalid_rows()==0)
         note = self.findChild( QtGui.QWidget, 'note' )
-        ok = self.findChild( QtGui.QWidget, 'ok' )
+        ok = self.findChild( QtGui.QWidget, 'accept' )
         if note != None and ok != None:
             ok.setEnabled( complete )
             if complete:
@@ -231,11 +215,34 @@ class ChangeObjects( ActionStep ):
     
     .. image:: /_static/listactions/import_from_file_preview.png
     
+    This action step can be customised using these attributes :    
+        
+    .. attribute:: window_title
+    
+        the window title of the dialog shown
+        
+    .. attribute:: title
+    
+        the title of the dialog shown
+        
+    .. attribute:: subtitle
+    
+        the subtitle of the dialog shown
+        
+    .. attribute:: icon
+    
+        the :class:`camelot.view.art.Icon` in the top right corner of
+        the dialog
+    
     """
     
     def __init__( self, objects, admin ):
         self.objects = objects
         self.admin = admin
+        self.window_title = admin.get_verbose_name_plural()
+        self.title = _('Data Preview')
+        self.subtitle = _('Please review the data below.')
+        self.icon = Icon('tango/32x32/mimetypes/x-office-spreadsheet.png')
         
     def get_objects( self ):
         """Use this method to get access to the objects to change in unit tests
@@ -249,6 +256,10 @@ class ChangeObjects( ActionStep ):
         the action step."""
         dialog = ChangeObjectsDialog( self.objects, 
                                       self.admin )
+        dialog.setWindowTitle( unicode( self.window_title ) )
+        dialog.set_banner_title( unicode( self.title ) )
+        dialog.set_banner_subtitle( unicode( self.subtitle ) )
+        dialog.set_banner_logo_pixmap( self.icon.getQPixmap() )
         #
         # the dialog cannot estimate its size, so use 75% of screen estate
         #
@@ -389,4 +400,3 @@ class ChangeField( ActionStep ):
         if result == QtGui.QDialog.Rejected:
             raise CancelRequest()
         return (dialog.field, dialog.value)
-
