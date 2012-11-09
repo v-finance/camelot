@@ -32,6 +32,8 @@ import logging
 
 from sqlalchemy import func, sql, orm, exc
 
+from camelot.core.utils import ugettext
+
 LOGGER = logging.getLogger( 'camelot.core.memento' )
 
 #
@@ -57,7 +59,12 @@ class Change( object ):
         self.type = row.memento_type
         self.at = row.at
         self.by = row.by
-        self.changes = row.previous_attributes
+        if self.type == 'create':
+            self.changes = ugettext('Created')
+        elif self.type == 'before_delete':
+            self.changes = ugettext('Deleted')
+        elif self.type == 'before_update':
+            self.changes = u', '.join( ugettext('%s was %s')%(k,unicode(v)) for k,v in row.previous_attributes.items() )
         
 class SqlMemento( object ):
     """Default Memento system, which uses :class:`camelot.model.memento.Memento`
