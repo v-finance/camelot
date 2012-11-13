@@ -152,6 +152,9 @@ class ShowHistory( Action ):
             list_display = ['at', 'by', 'changes']
             field_attributes = {'at':{'delegate':delegates.DateTimeDelegate}}
             
+            def get_related_toolbar_actions( self, toolbar_area, direction ):
+                return []
+            
         obj = model_context.get_object()
         if obj != None:
             primary_key = model_context.admin.primary_key( obj )
@@ -161,7 +164,11 @@ class ShowHistory( Action ):
                                                      primary_key = primary_key,
                                                      current_attributes = {} ) )
                 admin = ChangeAdmin( model_context.admin, object )
-                yield action_steps.ChangeObjects( changes, admin )
+                step = action_steps.ChangeObjects( changes, admin )
+                step.icon = Icon('tango/16x16/actions/format-justify-fill.png')
+                step.title = _('Recent changes')
+                step.subtitle = model_context.admin.get_verbose_identifier( obj )
+                yield step
         
 class CloseForm( Action ):
     
