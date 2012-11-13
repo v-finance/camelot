@@ -61,25 +61,17 @@ class Memento( Entity ):
                                             onupdate = 'cascade' ), 
                                 nullable = False )
     authentication = relationship( AuthenticationMechanism )
-    memento_type = Column( camelot.types.Enumeration( [ (1, 'before_update'),
-                                                        (2, 'before_delete'),
-                                                        (3, 'create') ], 
-                                                      nullable = False,
-                                                      index = True ) )
+    memento_type = Column( Integer, 
+                           nullable = False,
+                           index = True )    
     previous_attributes = deferred( Column( PickleType() ) )
     
-    @property
-    def description( self ):
-        if self.memento_type in ('before_update', 'before_delete'):
-            return u', '.join( [ u'%s : %s'%( key, unicode( value ) ) for key, value in  self.previous_attributes.items() ] )
-
     class Admin( EntityAdmin ):
         verbose_name = _( 'History' )
         verbose_name_plural = _( 'History' )
         list_display = ['creation_date', 'authentication', 'model',
-                        'primary_key', 'memento_type',]
+                        'primary_key', ]
         form_display = list_display + ['description']
-        list_filter = [filters.ComboBoxFilter('model'),
-                       'memento_type']
+        list_filter = [filters.ComboBoxFilter('model')]
         
     Admin = not_editable_admin( Admin )
