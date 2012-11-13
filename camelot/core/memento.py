@@ -24,6 +24,10 @@
 
 """Classes to interface with the Memento model, which tracks modification
 of changes.
+
+This module contains the `memento_types` variable, which is a list of different
+types of changes that can be tracked.  Add elements to this list to add custom
+tracking of changes
 """
 
 import collections
@@ -34,6 +38,11 @@ from sqlalchemy import func, sql, orm, exc
 
 LOGGER = logging.getLogger( 'camelot.core.memento' )
 
+memento_types = [ (1, 'before_update'),
+                  (2, 'before_delete'),
+                  (3, 'create')
+                  ]
+                                                        
 #
 # lightweight data structure to present object changes to the memento
 # system
@@ -69,8 +78,15 @@ class SqlMemento( object ):
     This Memento system can only track objects with an integer primary key.
     That means the `primary_key` tuple can only contain a single integer
     value.
+    
+    :param memento_types: a list with all types of changes that can be tracked
+        and their identifier used to store them
     """
 
+    def __init__( self, memento_types = memento_types ):
+        self.memento_type_by_id = dict( (i,t) for i,t in memento_types )
+        self.memento_id_by_type = dict( (t,i) for i,t in memento_types )
+        
     def _get_memento_table( self ):
         """:return: the `Table` to which to store the changes"""
         from camelot.model.memento import Memento
@@ -100,7 +116,7 @@ class SqlMemento( object ):
                 rows.append( { 'model':m.model,
                                'primary_key':m.primary_key[0],
                                'previous_attributes':m.previous_attributes,
-                               'memento_type':m.memento_type,
+                               'memento_type':self.memento_id_by_type[m.memento_type],
                                'authentication_id':authentication_id,
                                 } )
         if len( rows ):
