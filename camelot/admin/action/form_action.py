@@ -145,21 +145,25 @@ class ShowHistory( Action ):
         from ..object_admin import ObjectAdmin
         from ...view import action_steps
         from ...view.controls import delegates
+            
+        obj = model_context.get_object()
+        memento = model_context.admin.get_memento()
         
         class ChangeAdmin( ObjectAdmin ):
             verbose_name = _('Change')
             verbose_name_plural = _('Changes')
-            list_display = ['at', 'by', 'changes']
-            field_attributes = {'at':{'delegate':delegates.DateTimeDelegate}}
-            
+            list_display = ['at', 'by', 'memento_type', 'changes']
+            field_attributes = {'at':{'delegate':delegates.DateTimeDelegate},
+                                'memento_type':{'delegate':delegates.ComboBoxDelegate,
+                                                'choices':memento.memento_types,
+                                                'name':_('Type')} }
+    
             def get_related_toolbar_actions( self, toolbar_area, direction ):
                 return []
             
-        obj = model_context.get_object()
         if obj != None:
             primary_key = model_context.admin.primary_key( obj )
             if None not in primary_key:
-                memento = model_context.admin.get_memento()
                 changes = list( memento.get_changes( model = unicode( model_context.admin.entity.__name__ ),
                                                      primary_key = primary_key,
                                                      current_attributes = {} ) )

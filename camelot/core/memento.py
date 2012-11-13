@@ -63,7 +63,7 @@ memento_change = collections.namedtuple( 'memento_change',
 
 class Change( object ):
     
-    def __init__( self, row ):
+    def __init__( self, memento, row ):
         self.id = row.id
         self.type = row.memento_type
         self.at = row.at
@@ -74,6 +74,7 @@ class Change( object ):
             self.changes = ugettext('Deleted')
         else:
             self.changes = u', '.join( ugettext('%s was %s')%(k,unicode(v)) for k,v in row.previous_attributes.items() )
+        self.memento_type = row.memento_type
         
 class SqlMemento( object ):
     """Default Memento system, which uses :class:`camelot.model.memento.Memento`
@@ -91,6 +92,7 @@ class SqlMemento( object ):
     """
 
     def __init__( self, memento_types = memento_types ):
+        self.memento_types = memento_types
         self.memento_type_by_id = dict( (i,t) for i,t in memento_types )
         self.memento_id_by_type = dict( (t,i) for i,t in memento_types )
         
@@ -167,4 +169,4 @@ class SqlMemento( object ):
                                        memento_c.primary_key == primary_key[0] ) )
         query = query.order_by( memento_c.creation_date.desc() )
         for row in authentication_table.bind.execute( query ):
-            yield Change( row )
+            yield Change( self, row )
