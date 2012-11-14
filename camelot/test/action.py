@@ -38,6 +38,7 @@ class MockModelContext( object ):
         self._model = []
         self.obj = None
         self.admin = None
+        self.mode_name = None
         self.collection_count = 1
         self.selection_count = 1
         
