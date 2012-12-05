@@ -1,5 +1,7 @@
 import os
 
+from sqlalchemy import orm
+
 from camelot.test import ModelThreadTestCase
 
 class ModelCase( ModelThreadTestCase ):
@@ -13,6 +15,16 @@ class ModelCase( ModelThreadTestCase ):
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin( Person )
     
+    def test_current_authentication( self ):
+        from camelot.model.authentication import get_current_authentication
+        authentication = get_current_authentication()
+        # current authentication cache should survive 
+        # a session expire + expunge
+        orm.object_session( authentication ).expire_all()
+        orm.object_session( authentication ).expunge_all()
+        authentication = get_current_authentication()
+        self.assertTrue( authentication.username )
+        
     def test_person_contact_mechanism( self ):
         from camelot.model.party import Person
         person = Person( first_name = u'Robin',
