@@ -14,6 +14,12 @@ class ModelCase( ModelThreadTestCase ):
         from camelot.admin.application_admin import ApplicationAdmin
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin( Person )
+        
+    def test_batch_job( self ):
+        from camelot.model.batch_job import BatchJob, BatchJobType
+        batch_job_type = BatchJobType.get_or_create( 'Synchronize' )
+        with BatchJob.create( batch_job_type ) as batch_job:
+            batch_job
     
     def test_current_authentication( self ):
         from camelot.model.authentication import get_current_authentication
