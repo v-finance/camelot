@@ -43,6 +43,12 @@ import camelot.types
 
 import datetime
 
+#
+# Run batch jobs in separate session to get out of band writing
+# to the database
+#
+BatchSession = orm.sessionmaker( autoflush = False )
+
 @documented_entity()
 class BatchJobType( Entity ):
     """The type of batch job, the user will be able to filter his
@@ -94,7 +100,27 @@ class BatchJob( Entity ):
                                                  (2,  'errors'),
                                                  (3,  'canceled'), ]), required=True, default='planned' )
     message = Field( camelot.types.RichText() )
-    
+
+    @classmethod
+    def create( cls, batch_job_type = None, status = 'running' ):
+        """Create a new batch job object in a session of its
+        own.  This allows flushing the batch job independent from
+        other objects.
+        
+        :param batch_job_type: an instance of type 
+            :class:`camelot.model.batch_job.BatchJobType`
+        :param status: the status of the batch job
+        :return: a new BatchJob object
+        """
+        batch_session = BatchSession()
+        batch_job = BatchJob(type=batch_job_type, status='running')
+        session = orm.object_session( batch_job )
+        batch_session_batch_job = batch_session.merge( batch_job )
+        if session:
+            session.expunge( batch_job )
+        batch_session.commit()
+        return batch_session_batch_job
+
     def is_canceled(self):
         """Verifies if this Batch Job is canceled.  Returns :keyword:`True` if 
         it is.  This verification is done without using the ORM, so the verification

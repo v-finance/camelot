@@ -45,9 +45,11 @@ _current_authentication_ = threading.local()
 def get_current_authentication( _obj = None ):
     """Get the currently logged in :class:'AuthenticationMechanism'"""
     global _current_authentication_
-    if not hasattr( _current_authentication_, 'mechanism' ) or not _current_authentication_.mechanism:
-        import getpass
-        _current_authentication_.mechanism = AuthenticationMechanism.get_or_create( unicode( getpass.getuser(), encoding='utf-8', errors='ignore' ) )
+    if not hasattr( _current_authentication_, 'mechanism' ) \
+        or not _current_authentication_.mechanism \
+        or not orm.object_session( _current_authentication_.mechanism ):
+            import getpass
+            _current_authentication_.mechanism = AuthenticationMechanism.get_or_create( unicode( getpass.getuser(), encoding='utf-8', errors='ignore' ) )
     return _current_authentication_.mechanism
 
 def clear_current_authentication():
