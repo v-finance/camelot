@@ -19,7 +19,8 @@ class ModelCase( ModelThreadTestCase ):
         from camelot.model.batch_job import BatchJob, BatchJobType
         batch_job_type = BatchJobType.get_or_create( 'Synchronize' )
         with BatchJob.create( batch_job_type ) as batch_job:
-            batch_job
+            batch_job.add_strings_to_message( [ u'Doing something' ] )
+            batch_job.add_strings_to_message( [ u'Done' ], color = 'green' )
     
     def test_current_authentication( self ):
         from camelot.model.authentication import get_current_authentication
