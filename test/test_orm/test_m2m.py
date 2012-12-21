@@ -8,7 +8,7 @@ from . import TestMetaData
 
 from camelot.core.orm import ( Field, ManyToMany, ManyToOne, using_options,
                                has_field, has_many, belongs_to, options,
-                               has_and_belongs_to_many, options_defaults )
+                               has_and_belongs_to_many, options )
 
 from sqlalchemy.types import String, Unicode, Integer
 from sqlalchemy import orm, and_, schema
@@ -69,7 +69,7 @@ class TestManyToMany( TestMetaData ):
         assert A.bs_.property.secondary.info['test'] is True
 
     def test_table_default_kwargs(self):
-        options_defaults['table_options'] = {'info': {'test': True}}
+        options.options_defaults['table_options'] = {'info': {'test': True}}
 
         class A(self.Entity):
             bs_ = ManyToMany('B')
@@ -79,7 +79,7 @@ class TestManyToMany( TestMetaData ):
 
         self.create_all()
 
-        options_defaults['table_options'] = {}
+        options.options_defaults['table_options'] = {}
 
         assert A.bs_.property.secondary.info['test'] is True
 

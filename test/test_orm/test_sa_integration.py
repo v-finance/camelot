@@ -6,7 +6,7 @@ from . import TestMetaData
 
 from camelot.core.orm import ( Field, ManyToMany, ManyToOne, OneToMany, using_options,
                                has_field, has_many, belongs_to, options,
-                               has_and_belongs_to_many, options_defaults )
+                               has_and_belongs_to_many )
 
 from sqlalchemy import orm, schema
 from sqlalchemy.types import String, Unicode, Integer

@@ -33,13 +33,12 @@ the custom `ApplicationAdmin`.
 
 import datetime
 
-from sqlalchemy.orm import relationship, deferred
-from sqlalchemy.schema import Column, ForeignKey
+from sqlalchemy import schema, orm
 from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.orm import Entity, ManyToOne
 from camelot.admin.not_editable_admin import not_editable_admin
-from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.view import filters
@@ -52,19 +51,17 @@ class Memento( Entity ):
     
     __tablename__ = 'memento'
     
-    model = Column( Unicode( 256 ), index = True, nullable = False )
-    primary_key = Column( Integer(), index = True, nullable = False )
-    creation_date = Column( DateTime(), default = datetime.datetime.now )
-    authentication_id = Column( Integer, 
-                                ForeignKey( 'authentication_mechanism.id',
-                                            ondelete = 'restrict',
-                                            onupdate = 'cascade' ), 
-                                nullable = False )
-    authentication = relationship( AuthenticationMechanism )
+    model = schema.Column( Unicode( 256 ), index = True, nullable = False )
+    primary_key = schema.Column( Integer(), index = True, nullable = False )
+    creation_date = schema.Column( DateTime(), default = datetime.datetime.now )
+    authentication = ManyToOne( AuthenticationMechanism,
+                                required = True,
+                                ondelete = 'restrict',
+                                onupdate = 'cascade' )
     memento_type = Column( Integer, 
                            nullable = False,
                            index = True )    
-    previous_attributes = deferred( Column( PickleType() ) )
+    previous_attributes = orm.deferred( schema.Column( PickleType() ) )
     
     class Admin( EntityAdmin ):
         verbose_name = _( 'History' )

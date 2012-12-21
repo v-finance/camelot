@@ -74,7 +74,7 @@ class EntityCollection( dict ):
 entities = EntityCollection()
 
 #
-# There are 3 base classes that each act in a different way
+# There are 2 base classes that each act in a different way
 #
 # * ClassMutator : DSL like statements that modify the Entity at definition
 #   time
@@ -82,12 +82,6 @@ entities = EntityCollection()
 # * Property : modify an Entity at construction time, in several phases, before
 #   and after mapper and table creation.
 #
-
-def setup_all( create_tables=False, *args, **kwargs ):
-    """Create all tables that are registered in the metadata
-    """
-    if create_tables:
-        metadata.create_all( *args, **kwargs )
 
 from . entity import EntityBase, EntityMeta
 
@@ -97,7 +91,6 @@ def process_deferred_properties( class_registry = entities ):
     This function is called automatically for the default class_registry.
     """
     LOGGER.debug( 'process deferred properties' )
-    
     classes = list( class_registry.values() )
     classes.sort( key = lambda c:c._descriptor.counter )
     
@@ -114,6 +107,13 @@ def process_deferred_properties( class_registry = entities ):
             method = getattr( cls._descriptor, method_name )
             method()
 
+def setup_all( create_tables=False, *args, **kwargs ):
+    """Create all tables that are registered in the metadata
+    """
+    process_deferred_properties()
+    if create_tables:
+        metadata.create_all( *args, **kwargs )
+        
 Entity = declarative_base( cls = EntityBase, 
                            metadata = metadata,
                            metaclass = EntityMeta,
@@ -131,7 +131,6 @@ def SessionTransaction( session = None,
     :param session: a :class:`sqlalchemy.orm.session.Session` object, if `None`
         is given, the default session is used.
     """
-    from camelot.core.orm import Session
     if session == None:
         session = Session()
     transaction = session.begin( subtransactions = subtransactions, 
@@ -143,12 +142,11 @@ def SessionTransaction( session = None,
         session.rollback()
         raise    
 
-__all__ = [ obj.__name__  for obj in [ Entity, EntityBase, EntityMeta, EntityCollection,
-            entities,
-            Field, has_field,
+__all__ = [ obj.__name__  for obj in [ Entity, EntityBase, EntityMeta, 
+            EntityCollection, Field, has_field,
             has_property, GenericProperty, ColumnProperty,
             belongs_to, has_one, has_many, has_and_belongs_to_many,
             ManyToOne, OneToOne, OneToMany, ManyToMany,
             using_options,
             setup_all
-            ] ] + ['Session', 'options_defaults']
+            ] ] + ['Session', 'entities']

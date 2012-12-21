@@ -32,6 +32,7 @@ from camelot.view.model_thread import post, model_function
 from camelot.view.utils import to_string
 from camelot.core.memento import memento_change
 from camelot.core.utils import ugettext_lazy, ugettext
+from camelot.core.orm import Session
 from camelot.admin.validator.entity_validator import EntityValidator
 
 from sqlalchemy import orm
@@ -141,7 +142,6 @@ It has additional class attributes that customise its behaviour.
         displayed in the table or the selection view.  Overwrite this method to
         change the default query, which selects all rows in the database.
         """
-        from camelot.core.orm import Session
         return Session().query( self.entity )
 
     @model_function
@@ -496,9 +496,17 @@ It has additional class attributes that customise its behaviour.
         return modifications
         
     @model_function
+    def add( self, obj ):
+        """Adds the entity instance to the default session, if it is not
+        yet attached to a session"""
+        import elixir
+        session = Session.object_session( obj )
+        if session == None:
+            elixir.session.add( obj )
+    
+    @model_function
     def delete(self, entity_instance):
         """Delete an entity instance"""
-        from sqlalchemy.orm.session import Session
         session = Session.object_session( entity_instance )
         #
         # new and deleted instances cannot be deleted

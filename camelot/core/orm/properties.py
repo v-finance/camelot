@@ -1,4 +1,34 @@
+"""
+This module provides support for defining properties on your entities. It both
+provides, the `Property` class which acts as a building block for common
+properties such as fields and relationships (for those, please consult the
+corresponding modules), but also provides some more specialized properties,
+such as `ColumnProperty` and `Synonym`. It also provides the GenericProperty
+class which allows you to wrap any SQLAlchemy property, and its DSL-syntax
+equivalent: has_property_.
 
+`has_property`
+--------------
+The ``has_property`` statement allows you to define properties which rely on
+their entity's table (and columns) being defined before they can be declared
+themselves. The `has_property` statement takes two arguments: first the name of
+the property to be defined and second a function (often given as an anonymous
+lambda) taking one argument and returning the desired SQLAlchemy property. That
+function will be called whenever the entity table is completely defined, and
+will be given the .c attribute of the entity as argument (as a way to access
+the entity columns).
+
+Here is a quick example of how to use ``has_property``.
+
+.. sourcecode:: python
+
+    class OrderLine(Entity):
+        has_field('quantity', Float)
+        has_field('unit_price', Float)
+        has_property('price',
+                     lambda c: column_property(
+                         (c.quantity * c.unit_price).label('price')))
+"""
 from sqlalchemy import orm
 
 from . statements import ClassMutator
@@ -143,6 +173,34 @@ class GenericProperty( DeferredProperty ):
         setattr( cls, key, prop_value )
         
 class ColumnProperty( GenericProperty ):
+    """A specialized form of the GenericProperty to generate SQLAlchemy
+    ``column_property``'s.
+
+    It takes a function (often given as an anonymous lambda) as its first
+    argument. Other arguments and keyword arguments are forwarded to the
+    column_property construct. That first-argument function must accept exactly
+    one argument and must return the desired (scalar-returning) SQLAlchemy
+    ClauseElement.
+
+    The function will be called whenever the entity table is completely
+    defined, and will be given
+    the .c attribute of the table of the entity as argument (as a way to
+    access the entity columns). The ColumnProperty will first wrap your
+    ClauseElement in an
+    "empty" label (ie it will be labelled automatically during queries),
+    then wrap that in a column_property.
+
+    .. sourcecode:: python
+
+        class OrderLine(Entity):
+            quantity = Field(Float)
+            unit_price = Field(Numeric)
+            price = ColumnProperty(lambda c: c.quantity * c.unit_price,
+                                   deferred=True)
+
+    Please look at the `corresponding SQLAlchemy
+    documentation <http://docs.sqlalchemy.org/en/rel_0_7/orm/mapper_config.html#sql-expressions-as-mapped-attributes>`_ 
+    for details."""
 
     def evaluate_property( self, prop ):
         return orm.column_property( prop.label( None ), *self.args, **self.kwargs )

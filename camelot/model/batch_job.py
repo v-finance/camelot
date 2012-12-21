@@ -24,15 +24,14 @@
 """Most applications need to perform some scheduled jobs to process information.
 Users need to be able to monitor the functioning of those scheduled jobs.
 
-These classes provide the means to store the result of batch jobs to enable the user to
-review or plan them.
+These classes provide the means to store the result of batch jobs to enable the 
+user to review or plan them.
 """
 
 import sqlalchemy.types
 from sqlalchemy import orm, sql
 
-from camelot.core.orm import ( Entity, using_options, Field,
-                               ManyToOne )
+from camelot.core.orm import Entity, Field, ManyToOne, using_options
 
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import filters
@@ -54,7 +53,7 @@ class BatchJobType( Entity ):
     """The type of batch job, the user will be able to filter his
     jobs based on their type.  A type might be 'Create management reports' """
     using_options( tablename = 'batch_job_type' )
-    name   = Field( sqlalchemy.types.Unicode(256), required=True)
+    name   = Field( sqlalchemy.types.Unicode(256), required=True )
     parent = ManyToOne( 'BatchJobType' )
     
     def __unicode__(self):
@@ -178,3 +177,4 @@ class BatchJob( Entity ):
         list_filter = ['status', filters.ComboBoxFilter('host')]
         form_display = list_display + ['message']
         form_actions = [ CancelBatchJob() ]
+        

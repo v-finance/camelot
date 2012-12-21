@@ -1,8 +1,14 @@
+import datetime
 import os
 
 from sqlalchemy import orm
+from sqlalchemy import schema, types
 
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.orm import Session
 from camelot.test import ModelThreadTestCase
+from camelot.test.action import MockModelContext
+from .test_orm import TestMetaData
 
 class ModelCase( ModelThreadTestCase ):
     """Test the build in camelot model"""
@@ -70,3 +76,68 @@ class ModelCase( ModelThreadTestCase ):
         self.assertTrue( Person.query.count() > person_count_before_import )
         self.assertEqual( FixtureVersion.get_current_version( 'demo_data' ),
                           1 )
+        
+class StatusCase( TestMetaData ):
+    
+    def test_status_type( self ):
+        Entity, session = self.Entity, self.session
+        
+        #begin status type definition
+        from camelot.model import type_and_status
+        
+        class Invoice( Entity, type_and_status.StatusMixin ):
+            book_date = schema.Column( types.Date(), nullable = False )
+            status = type_and_status.Status()
+        #end status type definition
+        self.create_all()
+        self.assertTrue( issubclass( Invoice._status_type, type_and_status.StatusType ) )
+        self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
+        #begin status types definition
+        draft = Invoice._status_type( code = 'DRAFT' )
+        ready = Invoice._status_type( code = 'READY' )
+        session.flush()
+        #end status types definition
+        #begin status type use
+        invoice = Invoice( book_date = datetime.date.today() )
+        self.assertEqual( invoice.current_status, None )
+        invoice.change_status( draft, status_from_date = datetime.date.today() )
+        self.assertEqual( invoice.current_status, draft )
+        self.assertEqual( invoice.get_status_from_date( draft ), datetime.date.today() )
+        #end status type use
+        
+    def test_status_enumeration( self ):
+        Entity, session = self.Entity, self.session
+        
+        #begin status enumeration definition
+        from camelot.model import type_and_status
+        
+        class Invoice( Entity, type_and_status.StatusMixin ):
+            book_date = schema.Column( types.Date(), nullable = False )
+            status = type_and_status.Status( enumeration = [ (1, 'DRAFT'),
+                                                             (2, 'READY') ] )
+            
+            class Admin( EntityAdmin ):
+                list_display = ['book_date', 'current_status']
+                list_actions = [ type_and_status.ChangeStatus( 'DRAFT' ),
+                                 type_and_status.ChangeStatus( 'READY' ) ]
+                form_actions = list_actions
+                
+        #end status enumeration definition
+        self.create_all()
+        self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
+        #begin status enumeration use
+        invoice = Invoice( book_date = datetime.date.today() )
+        self.assertEqual( invoice.current_status, None )
+        invoice.change_status( 'DRAFT', status_from_date = datetime.date.today() )
+        self.assertEqual( invoice.current_status, 'DRAFT' )
+        self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date.today() )
+        draft_invoices = Invoice.query.filter( Invoice.current_status == 'DRAFT' ).count()
+        ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()        
+        #end status enumeration use
+        self.assertEqual( draft_invoices, 1 )
+        self.assertEqual( ready_invoices, 0 )
+        ready_action = Invoice.Admin.list_actions[-1]
+        model_context = MockModelContext()
+        model_context.obj = invoice
+        list( ready_action.model_run( model_context ) )
+        self.assertTrue( invoice.current_status, 'READY' )

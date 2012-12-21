@@ -29,11 +29,6 @@ class ExampleSettings( SimpleSettings ):
         import camelot.model.memento
         import camelot_example.model
         #
-        # setup_all is only needed for those models that rely on elixir
-        #
-        from elixir import setup_all
-        setup_all()
-        #
         # create the tables for all models, configure mappers first, to make
         # sure all deferred properties have been handled, as those could
         # create tables or columns
@@ -41,7 +36,7 @@ class ExampleSettings( SimpleSettings ):
         configure_mappers()
         metadata.create_all()
         from camelot.model.authentication import update_last_login
-        update_last_login()
+        #update_last_login()
         # 
         # Load sample data with the fixure mechanism
         #

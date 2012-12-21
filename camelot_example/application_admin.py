@@ -16,6 +16,7 @@ class MyApplicationAdmin(ApplicationAdmin):
         from camelot.model.party import ( Person, Organization, 
                                           PartyCategory )
         from camelot.model.i18n import Translation
+        from camelot.model.batch_job import BatchJob, BatchJobType
         
         from camelot_example.model import Movie, Tag, VisitorReport
         from camelot_example.view import VisitorsPerDirector
@@ -31,7 +32,7 @@ class MyApplicationAdmin(ApplicationAdmin):
                          items = [ Movie, 
                                    Tag, 
                                    VisitorReport, 
-                                   VisitorsPerDirector,
+#                                   VisitorsPerDirector,
                                    ImportCovers() ]),
 # end section with action
                 Section( _('Relation'),
@@ -45,7 +46,9 @@ class MyApplicationAdmin(ApplicationAdmin):
                          Icon('tango/22x22/categories/preferences-system.png'),
                          items = [ Memento, 
                                    Translation,
-                                   BatchJob ])
+                                   BatchJobType,
+                                   BatchJob 
+                                   ])
                 ]
 # end sections
 

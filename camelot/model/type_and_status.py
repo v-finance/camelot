@@ -28,42 +28,148 @@ tables for each entity.
 """
 import datetime
 
-from elixir.entity import Entity, EntityMeta
-
-from sqlalchemy.types import Date, Unicode
-from sqlalchemy import sql
-
-from elixir.fields import Field
-from elixir.options import using_options
-from elixir.relationships import ManyToOne, OneToMany
+from sqlalchemy import orm, sql, schema, types
+from sqlalchemy.ext import hybrid
 
 from camelot.model.authentication import end_of_times
+from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration
+from camelot.core.orm.properties import Property
 from camelot.core.utils import ugettext_lazy as _
+from camelot.view import action_steps
 
-#
-# Global dict keeping track of which status class is used for which class
-#
-__status_classes__ = {}
-__status_type_classes__ = {}
+class StatusType( object ):
+    """Mixin class to describe the different statuses an
+    object can have
+    """
 
-def get_status_class(cls_name):
-    """
-    :param cls_name: an Entity class name
-    :return: the status class used for this entity
-    """
-    return __status_classes__[cls_name]
+    code = schema.Column( types.Unicode(10), index = True, nullable = False, unique = True )
+    description = schema.Column( types.Unicode( 40 ), index = True )
 
-def get_status_type_class(cls_name):
-    """
-    :param cls_name: an Entity class name
-    :return: the status type class used for this entity
-    """
-    return __status_type_classes__[cls_name]
+    def __unicode__( self ):
+	return self.code or ''
+
+    class Admin( EntityAdmin ):
+	list_display = ['code', 'description']
+	form_display = ['code', 'description']
+	#verbose_name = statusable_entity + ' Status Type'
+	#if verbose_entity_name is not None:
+	    #verbose_name = verbose_entity_name + ' Status Type'	
+	
+class StatusHistory( object ):
+    """Mixin class to track the history of the status an object
+    has.
     
-class AbstractStatusMixin( object ):
+    .. attribute:: status_datetime For statuses that occur at a specific point in time
+    .. attribute:: status_from_date For statuses that require a date range
+    .. attribute:: from_date When a status was enacted or set
+    """
     
+    status_datetime = schema.Column( types.Date, nullable = True )
+    status_from_date = schema.Column( types.Date, nullable = True )
+    status_thru_date = schema.Column( types.Date, nullable = True )
+    from_date = schema.Column( types.Date, nullable = False, default = datetime.date.today )
+    thru_date = schema.Column( types.Date, nullable = False, default = end_of_times )
+
+    #status_for = ManyToOne( statusable_entity, #required = True,
+                             #ondelete = 'cascade', onupdate = 'cascade' )
+    
+    #if not enumeration:
+	#classified_by = ManyToOne( t3_status_type_name, required = True,
+                                   #ondelete = 'cascade', onupdate = 'cascade' )
+    #else:
+	#classified_by = Field(Enumeration(enumeration), required=True, index=True)
+
+    class Admin( EntityAdmin ):
+	#verbose_name = statusable_entity + ' Status'
+	#verbose_name_plural = statusable_entity + ' Statuses'
+	list_display = ['status_from_date', 'status_thru_date', 'classified_by']
+	#verbose_name = statusable_entity + ' Status'
+	#if verbose_entity_name is not None:
+	    #verbose_name = verbose_entity_name + ' Status'
+
+    def __unicode__( self ):
+	return u'Status'
+
+class Status( Property ):
+    """Property that adds a related status table(s) to an `Entity`.
+    
+    These additional entities are created :
+    
+     * a `StatusType` this is the list of possible statuses an entity can have.
+       If the `enumeration` parameter is used at construction, no such entity is
+       created, and the list of possible statuses is limited to this enumeration.
+       
+     * a `StatusHistory` is the history of statusses an object has had.  The Status
+       History refers to which `StatusType` was valid at a certain point in time.
+       
+    :param enumeration: if this parameter is used, no `StatusType` entity is created, 
+        but the status type is described by the enumeration.  This parameter should
+	be a list of all possible statuses the entity can have ::
+	
+	    enumeration = [(1, 'draft'), (2,'ready')]
+    """
+    
+    def __init__( self, enumeration = None ):
+	super( Status, self ).__init__()
+	self.property = None
+	self.enumeration = enumeration
+	    
+    def attach( self, entity, name ):
+	super( Status, self ).attach( entity, name )
+	if self.enumeration == None:
+	    
+	    class EntityStatusType( StatusType, entity._descriptor.entity_base ):
+		pass
+	    
+	    class EntityStatusHistory( StatusHistory, entity._descriptor.entity_base ):
+		classified_by_id = schema.Column( types.Integer(), schema.ForeignKey( EntityStatusType.id,
+		                                                                      ondelete = 'cascade', 
+		                                                                      onupdate = 'cascade'), nullable = False )
+		classified_by = orm.relationship( EntityStatusType )
+	    
+	    self.status_type = EntityStatusType
+	    setattr( entity, '_%s_type'%name, self.status_type )
+
+	else:
+	    
+	    class EntityStatusHistory( StatusHistory, entity._descriptor.entity_base ):
+		classified_by = schema.Column( Enumeration( self.enumeration ), 
+		                               nullable=False, index=True )
+	    
+	self.status_history = EntityStatusHistory
+	setattr( entity, '_%s_history'%name, self.status_history )
+	
+    def create_non_pk_cols( self ):
+	table = orm.class_mapper( self.entity ).local_table
+	for col in table.primary_key.columns:
+	    col_name = u'status_for_%s'%col.name
+	    if not hasattr( self.status_history, col_name ):
+		constraint = schema.ForeignKey( col,
+		                                ondelete = 'cascade', 
+		                                onupdate = 'cascade')
+		column = schema.Column( types.Integer(), constraint, nullable = False )
+	        setattr( self.status_history, col_name, column )
+	    
+    def create_properties( self ):
+	if not self.property:
+	    self.property = orm.relationship( self.entity, backref = self.name )
+	    self.status_history.status_for = self.property
+    
+class StatusMixin( object ):
+	
+    def get_status_from_date( self, classified_by ):
+	"""
+	:param classified_by: the status for which to get the last from date
+	:return: the last date at which the status changed to `classified_by`, None if no such
+	    change occured yet
+	"""
+	status_histories = [status_history for status_history in self.status if status_history.classified_by == classified_by]
+	if len( status_histories ):
+	    status_histories.sort( key = lambda status_history:status_history.from_date, reverse = True )
+	    return status_histories[0].from_date
+	
     def get_status_history_at( self, status_date = None ):
 	"""
 	Get the StatusHistory valid at status_date
@@ -77,39 +183,32 @@ class AbstractStatusMixin( object ):
 	    status_date = datetime.date.today()
 	for status_history in self.status:
 	    if status_history.status_from_date <= status_date and status_history.status_thru_date >= status_date:	
-		return status_history
-	
-    def get_status_from_date( self, classified_by ):
+		return status_history	
+
+    @staticmethod
+    def current_status_query( status_history, status_class ):
 	"""
-	:param classified_by: the status for which to get the last from date
-	:return: the last date at which the status changed to `classified_by`, None if no such
-	    change occured yet
+	:param status_history: the class or columns that represents the status history
+	:param status_class: the class or columns of the class that have a status
+	:return: a select statement that looks for the current status of the status_class
 	"""
-	status_histories = [status_history for status_history in self.status if status_history.classified_by == classified_by]
-	if len( status_histories ):
-	    status_histories.sort( key = lambda status_history:status_history.from_date, reverse = True )
-	    return status_histories[0].from_date
-	
-    @property
-    def current_status(self):
+	return sql.select( [status_history.classified_by],
+                          whereclause = sql.and_( status_history.status_for_id == status_class.id,
+                                                  status_history.status_from_date <= sql.functions.current_date(),
+                                                  status_history.status_thru_date >= sql.functions.current_date() ),
+                          from_obj = [status_history.table] ).order_by(status_history.id.desc()).limit(1)
+		    
+    @hybrid.hybrid_property
+    def current_status( self ):
 	status_history = self.get_status_history_at()
 	if status_history != None:
 	    return status_history.classified_by
 	
+    @current_status.expression
+    def current_status( cls ):
+	return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status' )
     
-    @staticmethod
-    def current_status_query( status_type, columns ):
-	"""
-	:param status_type: the Entity class that represents the statuses, as returned by get_status_class
-	:param columns: the columns of the table for which to query the status
-	"""
-	return sql.select( [status_type.classified_by],
-                          whereclause = sql.and_( status_type.status_for_id == columns.id,
-                                                  status_type.status_from_date <= sql.functions.current_date(),
-                                                  status_type.status_thru_date >= sql.functions.current_date() ),
-                          from_obj = [status_type.table] ).order_by(status_type.id.desc()).limit(1)
-
-    def change_status(self, new_status, status_from_date=None, status_thru_date=end_of_times()):
+    def change_status( self, new_status, status_from_date=None, status_thru_date=end_of_times() ):
 	from sqlalchemy import orm
 	if not status_from_date:
 	    status_from_date = datetime.date.today()
@@ -130,19 +229,8 @@ class AbstractStatusMixin( object ):
                                      thru_date = end_of_times() )
 	if old_status:
 	    self.query.session.flush( [old_status] )
-	self.query.session.flush( [new_status] )        
-	    
-def create_type_3_status_mixin(status_attribute):
-    """Create a class that can be subclassed to provide a class that
-    has a type 3 status with methods to manipulate and review its status
-    :param status_attribute: the name of the type 3 status attribute
-    """
-    
-    class Type3StatusMixin( AbstractStatusMixin ):
-	pass
-        
-    return Type3StatusMixin
-    
+	orm.object_session( self ).flush()
+	        
 def type_3_status( statusable_entity, metadata, collection, verbose_entity_name = None, enumeration=None ):
     '''
     Creates a new type 3 status related to the given entity
@@ -266,26 +354,20 @@ def entity_type( typable_entity, metadata, collection, verbose_entity_name = Non
 
     return type_name
 
-def change_status_action( new_status, verbose_name = None ):
+class ChangeStatus( Action ):
     """
-    Creat an action that changes the status of an object
+    An action that changes the status of an object
     :param new_status: the new status of the object
     :param verbose_name: the name of the action
     :return: a :class:`camelot.admin.action.Action` object that changes
-        the status of a selection to the new status
-    """
-    from camelot.admin.action import Action
-    from camelot.view import action_steps
-
-    action_verbose_name = verbose_name or _(new_status)
+	the status of a selection to the new status
+    """	
     
-    class ChangeStatus( Action ):
-        
-        verbose_name = action_verbose_name
-            
-        def model_run(self, model_context):
-            for work_effort in model_context.get_selection():
-                work_effort.change_status( new_status )
-            yield action_steps.FlushSession( model_context.session )
-            
-    return ChangeStatus()
+    def __init__( self, new_status, verbose_name = None ):
+	self.verbose_name = verbose_name or _(new_status)
+	self.new_status = new_status
+	
+    def model_run( self, model_context ):
+	for obj in model_context.get_selection():
+	    obj.change_status( self.new_status )
+	yield action_steps.FlushSession( model_context.session )
