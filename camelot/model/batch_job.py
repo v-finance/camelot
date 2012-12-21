@@ -119,11 +119,32 @@ class BatchJob( Entity ):
         traceback.print_exc(file=sio)
         traceback_print = sio.getvalue()
         sio.close()
-        self.message = (self.message or '') + '<br/>' + unicode(exception) + '<br/><font color="grey">' +  traceback_print.replace('\n', '<br/>') + '</font>'
+        self.add_strings_to_message( [ unicode(exception) ], color = 'red' )
+        self.add_strings_to_message( traceback_print.replace('\n', '<br/>'),
+                                     color = 'grey' )
         
-    def add_strings_to_message(self, strings):
-        """:param strings: a list or generator of strings"""
+    def add_strings_to_message( self, strings, color = None ):
+        """Add strings to the message of this batch job.
+        
+        :param strings: a list or generator of strings
+        :param color: the html color to be used for the strings (`'red'`, 
+        `'green'`, ...), None if the color needs no change. 
+        """
+        if color:
+            strings = u'<font color="%s">'%color + strings + u'</font>'
         self.message = (self.message or '') + u'<br/>' + '<br/>'.join(list(strings))
+        
+    def __enter__( self ):
+        self.status = 'running'
+        orm.object_session( self ).flush()
+    
+    def __exit__( self, exc_type, exc_val, exc_tb ):
+        if exc_type != None:
+            self.status = 'errors'
+            self.add_strings_to_message( unicode( exc_type ), color = 'red' )
+        else:
+            self.status = 'success'
+        orm.object_session( self ).flush()
         
     class Admin(EntityAdmin):
         verbose_name = _('Batch job')

@@ -11,6 +11,7 @@ class MyApplicationAdmin(ApplicationAdmin):
 # begin sections
     def get_sections(self):
         
+        from camelot.model.batch_job import BatchJob
         from camelot.model.memento import Memento
         from camelot.model.party import ( Person, Organization, 
                                           PartyCategory )
@@ -43,7 +44,8 @@ class MyApplicationAdmin(ApplicationAdmin):
                          self,
                          Icon('tango/22x22/categories/preferences-system.png'),
                          items = [ Memento, 
-                                   Translation ])
+                                   Translation,
+                                   BatchJob ])
                 ]
 # end sections
 
