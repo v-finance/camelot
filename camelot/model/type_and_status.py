@@ -118,12 +118,17 @@ class Status( Property ):
 	    
     def attach( self, entity, name ):
 	super( Status, self ).attach( entity, name )
+	
+	status_name = entity.__name__.lower() + '_status'
+	status_type_name = entity.__name__.lower() + '_status_type'
+	
 	if self.enumeration == None:
 	    
 	    class EntityStatusType( StatusType, entity._descriptor.entity_base ):
-		pass
+		__tablename__ = status_type_name
 	    
 	    class EntityStatusHistory( StatusHistory, entity._descriptor.entity_base ):
+		__tablename__ = status_name
 		classified_by_id = schema.Column( types.Integer(), schema.ForeignKey( EntityStatusType.id,
 		                                                                      ondelete = 'cascade', 
 		                                                                      onupdate = 'cascade'), nullable = False )
