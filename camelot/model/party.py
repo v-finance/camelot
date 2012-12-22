@@ -555,7 +555,11 @@ class Address( Entity ):
     using_options( tablename = 'address' )
     street1 = Field( Unicode( 128 ), required = True )
     street2 = Field( Unicode( 128 ) )
-    city = ManyToOne( City, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    city = ManyToOne( City, 
+                      required = True, 
+                      ondelete = 'cascade', 
+                      onupdate = 'cascade',
+                      lazy = 'subquery' )
 
     @ColumnProperty
     def name( self ):
@@ -598,8 +602,16 @@ class PartyAddress( Entity ):
         setattr(party_address, '_address_city', None)
         return party_address
 
-    party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    address = ManyToOne( Address, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    party = ManyToOne( Party, 
+                       required = True, 
+                       ondelete = 'cascade', 
+                       onupdate = 'cascade',
+                       lazy = 'subquery')
+    address = ManyToOne( Address, 
+                         required = True, 
+                         ondelete = 'cascade', 
+                         onupdate = 'cascade',
+                         lazy = 'subquery' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     thru_date = Field( Date(), default = end_of_times, required = True, index = True )
     comment = Field( Unicode( 256 ) )
