@@ -146,6 +146,7 @@ class ActionStepsCase( ModelThreadTestCase ):
         self.grab_widget( dialog )
 
     def test_print_preview( self ):
+        from camelot.admin.action import GuiContext
         
         # begin webkit print
         class WebkitPrint( Action ):
@@ -164,7 +165,7 @@ class ActionStepsCase( ModelThreadTestCase ):
                 
         action = WebkitPrint()
         steps = list( action.model_run( self.context ) )
-        dialog = steps[0].render()
+        dialog = steps[0].render( GuiContext() )
         dialog.show()
         self.grab_widget( dialog )
         
@@ -334,17 +335,17 @@ class ApplicationActionsCase( ModelThreadTestCase ):
         #
         # create objects in various states
         #
-        p1 = Person(first_name = 'p1', last_name = 'persistent' )
-        p2 = Person(first_name = 'p2', last_name = 'dirty' )
-        p3 = Person(first_name = 'p3', last_name = 'deleted' )
-        p4 = Person(first_name = 'p4', last_name = 'to be deleted' )
-        p5 = Person(first_name = 'p5', last_name = 'detached' )
-        p6 = Person(first_name = 'p6', last_name = 'deleted outside session' )
+        p1 = Person(first_name = u'p1', last_name = u'persistent' )
+        p2 = Person(first_name = u'p2', last_name = u'dirty' )
+        p3 = Person(first_name = u'p3', last_name = u'deleted' )
+        p4 = Person(first_name = u'p4', last_name = u'to be deleted' )
+        p5 = Person(first_name = u'p5', last_name = u'detached' )
+        p6 = Person(first_name = u'p6', last_name = u'deleted outside session' )
         session.flush()
         p3.delete()
         session.flush()
         p4.delete()
-        p2.last_name = 'clean'
+        p2.last_name = u'clean'
         #
         # delete p6 without the session being aware
         #
@@ -354,7 +355,7 @@ class ApplicationActionsCase( ModelThreadTestCase ):
         # refresh the session through the action
         #
         list( refresh_action.model_run( self.context ) )
-        self.assertEqual( p2.last_name, 'dirty' )
+        self.assertEqual( p2.last_name, u'dirty' )
         
     def test_backup_and_restore( self ):
         backup_action = application_action.Backup()

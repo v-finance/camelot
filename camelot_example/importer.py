@@ -32,8 +32,8 @@ class ImportCovers( Action ):
         for i, file_name in enumerate(file_names):
             yield UpdateProgress( i, file_count )
             title = os.path.splitext( os.path.basename( file_name ) )[0]
-            stored_file = storage.checkin( file_name )
-            movie = Movie( title = title )
+            stored_file = storage.checkin( unicode( file_name ) )
+            movie = Movie( title = unicode( title ) )
             movie.cover = stored_file
             
         yield FlushSession( session )

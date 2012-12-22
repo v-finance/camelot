@@ -11,9 +11,10 @@ class MementoCase( ModelThreadTestCase ):
     
     def setUp( self ):
         super( MementoCase, self ).setUp()
-        from camelot.core.memento import SqlMemento
+        from camelot.core.memento import SqlMemento, memento_types
         global memento_id_counter
-        self.memento = SqlMemento()
+        custom_memento_types = memento_types + [(100, 'custom')]
+        self.memento = SqlMemento( memento_types = custom_memento_types )
         memento_id_counter += 1
         self.id_counter = memento_id_counter
         self.model = 'TestMemento'
@@ -47,7 +48,6 @@ class MementoCase( ModelThreadTestCase ):
         self.memento.register_changes( memento_changes )
         
     def test_custom_memento_type( self ):
-        memento_types.append( (100, 'custom') )
         memento_changes = [
             memento_change( self.model, 
                             [self.id_counter], 

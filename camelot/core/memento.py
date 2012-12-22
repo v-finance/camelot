@@ -68,11 +68,12 @@ class Change( object ):
         self.type = row.memento_type
         self.at = row.at
         self.by = row.by
+        self.changes = None
         if self.type == 'create':
             self.changes = ugettext('Created')
         elif self.type == 'before_delete':
             self.changes = ugettext('Deleted')
-        else:
+        elif row.previous_attributes:
             self.changes = u', '.join( ugettext('%s was %s')%(k,unicode(v)) for k,v in row.previous_attributes.items() )
         self.memento_type = row.memento_type
         
@@ -125,7 +126,7 @@ class SqlMemento( object ):
                 rows.append( { 'model':m.model,
                                'primary_key':m.primary_key[0],
                                'previous_attributes':m.previous_attributes,
-                               'memento_type':self.memento_id_by_type[m.memento_type],
+                               'memento_type':self.memento_id_by_type.get(m.memento_type, None),
                                'authentication_id':authentication_id,
                                 } )
         if len( rows ):

@@ -96,6 +96,7 @@ class StatusCase( TestMetaData ):
         class Invoice( Entity, type_and_status.StatusMixin ):
             book_date = schema.Column( types.Date(), nullable = False )
             status = type_and_status.Status()
+            
         #end status type definition
         self.create_all()
         self.assertTrue( issubclass( Invoice._status_type, type_and_status.StatusType ) )

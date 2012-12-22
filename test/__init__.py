@@ -1,7 +1,7 @@
 import logging
 import warnings
 
-#warnings.filterwarnings( 'error' ) #[, message[, category[, module[, lineno[, append]]]]])
+#warnings.filterwarnings( 'error' )
 
 from camelot.core.conf import settings
 
