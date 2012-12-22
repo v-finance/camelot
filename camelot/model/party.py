@@ -196,7 +196,7 @@ class Party( Entity ):
 
     addresses = OneToMany( 'PartyAddress', lazy = True, cascade="all, delete, delete-orphan" )
     contact_mechanisms = OneToMany( 'PartyContactMechanism', 
-                                    lazy = True, 
+                                    lazy = 'subquery', 
                                     cascade='all, delete, delete-orphan' )
     shares = OneToMany( 'SharedShareholder', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to', cascade='all, delete, delete-orphan' )
@@ -704,7 +704,7 @@ class PartyContactMechanism( Entity ):
     using_options( tablename = 'party_contact_mechanism' )
 
     party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    contact_mechanism = ManyToOne( ContactMechanism, required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    contact_mechanism = ManyToOne( ContactMechanism, lazy='subquery', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     thru_date = Field( Date(), default = end_of_times, index = True )
     comment = Field( Unicode( 256 ) )
