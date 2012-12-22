@@ -33,6 +33,7 @@ import collections
 
 from camelot.view.controls import delegates
 
+from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Date, Unicode, Integer, Boolean
 from sqlalchemy.sql.expression import and_
 
@@ -159,22 +160,21 @@ class PartyContactMechanismAdmin( EntityAdmin ):
     verbose_name = _('Contact mechanism')
     verbose_name_plural = _('Contact mechanisms')
     list_search = ['party_name', 'mechanism']
-    list_display = ['party_name', 'contact_mechanism_mechanism', 'comment', 'from_date', ]
-    form_display = Form( ['contact_mechanism_mechanism', 'comment', 'from_date', 'thru_date', ] )
+    list_display = ['party_name', 'mechanism', 'comment', 'from_date', ]
+    form_display = Form( ['mechanism', 'comment', 'from_date', 'thru_date', ] )
     field_attributes = {'party_name':{'minimal_column_width':25, 'editable':False},
-                        'mechanism':{'minimal_column_width':25,'editable':False},
-                        'contact_mechanism_mechanism':{'minimal_column_width':25,
-                                                       'editable':True,
-                                                       'nullable':False,
-                                                       'name':_('Mechanism'),
-                                                       'delegate':delegates.VirtualAddressDelegate}}
+                        'mechanism':{'minimal_column_width':25,
+                                     'editable':True,
+                                     'nullable':False,
+                                     'name':_('Mechanism'),
+                                     'delegate':delegates.VirtualAddressDelegate}}
 
-    def flush(self, party_contact_mechanism):
+    def flush( self, party_contact_mechanism ):
         if party_contact_mechanism.contact_mechanism:
             super(PartyContactMechanismAdmin, self).flush( party_contact_mechanism.contact_mechanism )
         super(PartyContactMechanismAdmin, self).flush( party_contact_mechanism )
 
-    def refresh(self, party_contact_mechanism):
+    def refresh( self, party_contact_mechanism ):
         if party_contact_mechanism.contact_mechanism:
             super(PartyContactMechanismAdmin, self).refresh( party_contact_mechanism.contact_mechanism )
         super(PartyContactMechanismAdmin, self).refresh( party_contact_mechanism )
@@ -183,24 +183,16 @@ class PartyContactMechanismAdmin( EntityAdmin ):
     def get_depending_objects(self, contact_mechanism ):
         party = contact_mechanism.party
         if party and (party not in Party.query.session.new):
-            party.expire(['email', 'phone'])
             yield party
 
 class PartyPartyContactMechanismAdmin( PartyContactMechanismAdmin ):
     list_search = ['party_name', 'mechanism']
-    list_display = ['contact_mechanism_mechanism', 'comment', 'from_date', ]
+    list_display = ['mechanism', 'comment', 'from_date', ]
 
 class Party( Entity ):
     """Base class for persons and organizations.  Use this base class to refer to either persons or
     organisations in building authentication systems, contact management or CRM"""
     using_options( tablename = 'party' )
-
-    def __new__(cls, *args, **kwargs):
-        party = super(Party, cls).__new__(cls, *args, **kwargs)
-        # store the contact mechanisms as a temp variable before
-        # the party has been flushed to the db
-        setattr(party, '_contact_mechanisms', collections.defaultdict(lambda:None))
-        return party
 
     addresses = OneToMany( 'PartyAddress', lazy = True, cascade="all, delete, delete-orphan" )
     contact_mechanisms = OneToMany( 'PartyContactMechanism', 
@@ -210,9 +202,9 @@ class Party( Entity ):
     directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     status = Status()
     categories = ManyToMany( 'PartyCategory', 
-                            tablename='party_category_party', 
-                            remote_colname='party_category_id',
-                            local_colname='party_id')
+                             tablename='party_category_party', 
+                             remote_colname='party_category_id',
+                             local_colname='party_id')
     
     row_type = schema.Column( Unicode(40), nullable = False )
     __mapper_args__ = { 'polymorphic_on' : row_type }
@@ -221,6 +213,46 @@ class Party( Entity ):
     def name( self ):
         return ''
 
+    def _get_contact_mechanism( self, described_by ):
+        """Get a specific type of contact mechanism
+        """
+        for party_contact_mechanism in self.contact_mechanisms:
+            contact_mechanism = party_contact_mechanism.contact_mechanism
+            if contact_mechanism != None:
+                mechanism = contact_mechanism.mechanism
+                if mechanism != None:
+                    if mechanism[0] == described_by:
+                        return mechanism
+                    
+    def _set_contact_mechanism( self, described_by, value ):
+        """Set a specific type of contact mechanism
+        """
+        for party_contact_mechanism in self.contact_mechanisms:
+            contact_mechanism = party_contact_mechanism.contact_mechanism
+            if contact_mechanism != None:
+                mechanism = contact_mechanism.mechanism
+                if mechanism != None:
+                    if mechanism[0] == described_by:
+                        if value:
+                            contact_mechanism.mechanism = value
+                        else:
+                            self.contact_mechanisms.remove( party_contact_mechanism )
+                        return
+        if value:
+            contact_mechanism = ContactMechanism( mechanism = value )
+            party_contact_mechanism = PartyContactMechanism( contact_mechanism = contact_mechanism )
+            self.contact_mechanisms.append( party_contact_mechanism )
+                    
+            
+    @hybrid.hybrid_property
+    def email( self ):
+        return self._get_contact_mechanism( u'email' )
+    
+    @email.setter
+    def email( self, value ):
+        return self._set_contact_mechanism( u'email', value )
+    
+    @email.expression
     def email( self ):
 
         cm = ContactMechanism
@@ -230,9 +262,16 @@ class Party( Entity ):
                           whereclause = and_( pcm.table.c.party_id == self.id,
                                               cm.table.c.mechanism.like( ( u'email', u'%' ) ) ),
                           from_obj = [cm.table.join( pcm.table, cm.id == pcm.contact_mechanism_id )] ).limit(1)
-    
-    email = ColumnProperty( email, deferred = True )
 
+    @hybrid.hybrid_property
+    def phone( self ):
+        return self._get_contact_mechanism( u'phone' )
+    
+    @phone.setter
+    def phone( self, value ):
+        return self._set_contact_mechanism( u'phone', value )    
+    
+    @phone.expression
     def phone( self ):
 
         cm = ContactMechanism
@@ -242,9 +281,16 @@ class Party( Entity ):
                           whereclause = and_( pcm.table.c.party_id == self.id,
                                               cm.table.c.mechanism.like( ( u'phone', u'%' ) ) ),
                           from_obj = [cm.table.join( pcm.table, cm.id == pcm.contact_mechanism_id )] ).limit(1)
-    
-    phone = ColumnProperty( phone, deferred = True )
 
+    @hybrid.hybrid_property
+    def fax( self ):
+        return self._get_contact_mechanism( u'fax' )
+    
+    @fax.setter
+    def fax( self, value ):
+        return self._set_contact_mechanism( u'fax', value )    
+    
+    @fax.expression
     def fax( self ):
 
         cm = ContactMechanism
@@ -254,48 +300,6 @@ class Party( Entity ):
                           whereclause = and_( pcm.table.c.party_id == self.id,
                                               cm.table.c.mechanism.like( ( u'fax', u'%' ) ) ),
                           from_obj = [cm.table.join( pcm.table, cm.id == pcm.contact_mechanism_id )] ).limit(1)
-    
-    fax = ColumnProperty( fax, deferred = True )
-    
-    #
-    # Create virtual properties for email and phone that can
-    # get and set a contact mechanism for the party
-    #
-    def _get_contact_mechanisms_email(self):
-        return self.email or self._contact_mechanisms['email']
-
-    def _set_contact_mechanism_email(self, value):
-        # todo : if no value, the existing value should be removed
-        if not value or not value[1]:
-            return
-        self._contact_mechanisms['email'] = value
-
-    def _get_contact_mechanisms_phone(self):
-        return self.phone or self._contact_mechanisms['phone']
-
-    def _set_contact_mechanism_phone(self, value):
-        # todo : if no value, the existing value should be removed
-        if not value or not value[1]:
-            return
-        self._contact_mechanisms['phone'] = value
-        
-    def _get_contact_mechanisms_fax(self):
-        return self.fax or self._contact_mechanisms['fax']
-
-    def _set_contact_mechanism_fax(self, value):
-        # todo : if no value, the existing value should be removed
-        if not value or not value[1]:
-            return
-        self._contact_mechanisms['fax'] = value
-        
-    contact_mechanisms_email = property(_get_contact_mechanisms_email,
-                                        _set_contact_mechanism_email)
-
-    contact_mechanisms_phone = property(_get_contact_mechanisms_phone,
-                                        _set_contact_mechanism_phone)
-    
-    contact_mechanisms_fax = property(_get_contact_mechanisms_fax,
-                                      _set_contact_mechanism_fax)
 
     def full_name( self ):
 
@@ -318,7 +322,7 @@ class Organization( Party ):
     party_id = Field( Integer, 
                       ForeignKey('party.id'), 
                       primary_key = True )
-    __mapper_args__ = {'polymorphic_identity': 'organization'}
+    __mapper_args__ = {'polymorphic_identity': u'organization'}
     name = Field( Unicode( 50 ), required = True, index = True )
     logo = Field( camelot.types.Image( upload_to = 'organization-logo' ), deferred = True )
     tax_id = Field( Unicode( 20 ) )
@@ -345,7 +349,7 @@ class Person( Party ):
     party_id = Field( Integer, 
                       ForeignKey('party.id'), 
                       primary_key = True )
-    __mapper_args__ = {'polymorphic_identity': 'person'}
+    __mapper_args__ = {'polymorphic_identity': u'person'}
     first_name = Field( Unicode( 40 ), required = True )
     last_name = Field( Unicode( 40 ), required = True )
 # end short person definition
@@ -699,38 +703,26 @@ ContactMechanism = documented_entity()( ContactMechanism )
 class PartyContactMechanism( Entity ):
     using_options( tablename = 'party_contact_mechanism' )
 
-    def __new__(cls, *args, **kwargs):
-        party_contact_mechanism = super(PartyContactMechanism, cls).__new__(cls, *args, **kwargs)
-        setattr(party_contact_mechanism, '_contact_mechanism_mechanism', None)
-        return party_contact_mechanism
-
     party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
     contact_mechanism = ManyToOne( ContactMechanism, required = True, ondelete = 'cascade', onupdate = 'cascade' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     thru_date = Field( Date(), default = end_of_times, index = True )
     comment = Field( Unicode( 256 ) )
 
-    def _get_contact_mechanism_mechanism(self):
-        if self._contact_mechanism_mechanism != None:
-            return self._contact_mechanism_mechanism
-        return self.mechanism
-
-    def _set_contact_mechanism_mechanism(self, mechanism):
-        self._contact_mechanism_mechanism = mechanism
-        if mechanism != None:
+    @hybrid.hybrid_property
+    def mechanism( self ):
+        if self.contact_mechanism != None:
+            return self.contact_mechanism.mechanism    
+       
+    @mechanism.setter
+    def mechanism( self, value ):
+        if value != None:
             if self.contact_mechanism:
-                self.contact_mechanism.mechanism = mechanism
+                self.contact_mechanism.mechanism = value
             else:
-                self.contact_mechanism = ContactMechanism( mechanism=mechanism )
-
-    #
-    # A property to get and set the mechanism attribute of the
-    # related contact mechanism object
-    #
-    contact_mechanism_mechanism = property( _get_contact_mechanism_mechanism,
-                                            _set_contact_mechanism_mechanism )
-
-    @ColumnProperty
+                self.contact_mechanism = ContactMechanism( mechanism = value )
+                
+    @mechanism.expression 
     def mechanism( self ):
         return sql.select( [ContactMechanism.mechanism],
                            whereclause = (ContactMechanism.id==self.contact_mechanism_id))
@@ -782,7 +774,7 @@ class PartyCategory( Entity ):
 class PartyAdmin( EntityAdmin ):
     verbose_name = _('Party')
     verbose_name_plural = _('Parties')
-    list_display = ['name', 'contact_mechanisms_email', 'contact_mechanisms_phone'] # don't use full name, since it might be None for new objects
+    list_display = ['name', 'email', 'contact_mechanisms_phone'] # don't use full name, since it might be None for new objects
     list_search = ['full_name']
     list_filter = ['categories.name']
     form_display = ['addresses', 'contact_mechanisms', 'shares', 'directed_organizations']
@@ -799,72 +791,48 @@ class PartyAdmin( EntityAdmin ):
                             shareholders = {'admin':SharedShareholder.ShareholderAdmin},
                             sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )] ),
                             name = dict( minimal_column_width = 50 ),
-                            email = dict( editable = False, minimal_column_width = 20 ),
-                            phone = dict( editable = False, minimal_column_width = 20 ),
-                            contact_mechanisms_email = dict( editable = True,
-                                                             name = _('Email'),
-                                                             address_type = 'email',
-                                                             minimal_column_width = 20,
-                                                             from_string = lambda s:('email', s),
-                                                             delegate = delegates.VirtualAddressDelegate ),
-                            contact_mechanisms_phone = dict( editable = True,
-                                                             name = _('Phone'),
-                                                             address_type = 'phone',
-                                                             minimal_column_width = 20,
-                                                             from_string = lambda s:('phone', s),
-                                                             delegate = delegates.VirtualAddressDelegate ),
-                            contact_mechanisms_fax = dict( editable = True,
-                                                           name = _('Fax'),
-                                                           address_type = 'fax',
-                                                           minimal_column_width = 20,
-                                                           from_string = lambda s:('fax', s),
-                                                           delegate = delegates.VirtualAddressDelegate ),
+                            email = dict( editable = True, 
+                                          minimal_column_width = 20,
+                                          address_type = 'email',
+                                          from_string = lambda s:('email', s),
+                                          delegate = delegates.VirtualAddressDelegate),
+                            phone = dict( editable = True, 
+                                          minimal_column_width = 20,
+                                          address_type = 'phone',
+                                          from_string = lambda s:('phone', s),
+                                          delegate = delegates.VirtualAddressDelegate ),
+                            fax = dict( editable = True, 
+                                        minimal_column_width = 20,
+                                        address_type = 'fax',
+                                        from_string = lambda s:('fax', s),
+                                        delegate = delegates.VirtualAddressDelegate ),                            
+
                             )
 
     def flush(self, party):
         from sqlalchemy.orm.session import Session
         session = Session.object_session( party )
         if session:
-            #
-            # make sure the temporary contact mechanisms are added
-            # relational
-            #
-            for cm in party._contact_mechanisms.values():
-                if not cm:
-                    break
-                found = False
-                for party_contact_mechanism in party.contact_mechanisms:
-                    mechanism = party_contact_mechanism.contact_mechanism_mechanism
-                    if mechanism and mechanism[0] == cm[0]:
-                        party_contact_mechanism.contact_mechanism_mechanism = cm
-                        found = True
-                        break
-                if not found:
-                    contact_mechanism = ContactMechanism( mechanism = cm )
-                    party.contact_mechanisms.append( PartyContactMechanism(contact_mechanism=contact_mechanism) )
             # 
             # flush all contact mechanism related objects
             #
             objects = [party]
+            deleted = ( party in session.deleted )
             for party_contact_mechanism in party.contact_mechanisms:
+                if deleted:
+                    session.delete( party_contact_mechanism )
                 objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
             session.flush( objects )
-            #
-            # then clear the temporary store to make sure they are not created
-            # a second time
-            #                
-            party._contact_mechanisms.clear()
-            party.expire( ['phone', 'email', 'fax'] )
 
 Party.Admin = PartyAdmin
 
 class OrganizationAdmin( Party.Admin ):
     verbose_name = _( 'Organization' )
     verbose_name_plural = _( 'Organizations' )
-    list_display = ['name', 'tax_id', 'contact_mechanisms_email', 'contact_mechanisms_phone']
-    form_display = TabForm( [( _('Basic'), Form( [ 'name', 'contact_mechanisms_email', 
-                                                   'contact_mechanisms_phone', 
-                                                   'contact_mechanisms_fax', 'tax_id', 
+    list_display = ['name', 'tax_id', 'email', 'contact_mechanisms_phone']
+    form_display = TabForm( [( _('Basic'), Form( [ 'name', 'email', 
+                                                   'phone', 
+                                                   'fax', 'tax_id', 
                                                    'addresses', 'contact_mechanisms'] ) ),
                             ( _('Employment'), Form( ['employees'] ) ),
                             ( _('Customers'), Form( ['customers'] ) ),
@@ -880,14 +848,14 @@ Organization.Admin = OrganizationAdmin
 class PersonAdmin( Party.Admin ):
     verbose_name = _( 'Person' )
     verbose_name_plural = _( 'Persons' )
-    list_display = ['first_name', 'last_name', 'contact_mechanisms_email', 'contact_mechanisms_phone']
+    list_display = ['first_name', 'last_name', 'email', 'phone']
     form_display = TabForm( [( _('Basic'), Form( [HBoxForm( [ Form( [WidgetOnlyForm('note'), 
                                                               'first_name', 
                                                               'last_name', 
                                                               'sex',
-                                                              'contact_mechanisms_email',
-                                                              'contact_mechanisms_phone',
-                                                              'contact_mechanisms_fax'] ),
+                                                              'email',
+                                                              'phone',
+                                                              'fax'] ),
                                                             [WidgetOnlyForm('picture'), ],
                                                      ] ),
                                                      'comment', ], scrollbars = False ) ),

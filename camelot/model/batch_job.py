@@ -73,7 +73,7 @@ class BatchJobType( Entity ):
         
 def hostname():
     import socket
-    return socket.gethostname()
+    return unicode( socket.gethostname() )
     
 class CancelBatchJob( Action ):
     
@@ -156,12 +156,13 @@ class BatchJob( Entity ):
         `'green'`, ...), None if the color needs no change. 
         """
         if color:
-            strings = u'<font color="%s">'%color + strings + u'</font>'
+            strings = [u'<font color="%s">'%color] + strings + [u'</font>']
         self.message = (self.message or '') + u'<br/>' + '<br/>'.join(list(strings))
         
     def __enter__( self ):
         self.status = 'running'
         orm.object_session( self ).flush()
+        return self
     
     def __exit__( self, exc_type, exc_val, exc_tb ):
         if exc_type != None:
@@ -177,4 +178,3 @@ class BatchJob( Entity ):
         list_filter = ['status', filters.ComboBoxFilter('host')]
         form_display = list_display + ['message']
         form_actions = [ CancelBatchJob() ]
-        

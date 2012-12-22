@@ -58,9 +58,9 @@ class Memento( Entity ):
                                 required = True,
                                 ondelete = 'restrict',
                                 onupdate = 'cascade' )
-    memento_type = Column( Integer, 
-                           nullable = False,
-                           index = True )    
+    memento_type = schema.Column( Integer, 
+                                  nullable = False,
+                                  index = True )    
     previous_attributes = orm.deferred( schema.Column( PickleType() ) )
     
     class Admin( EntityAdmin ):

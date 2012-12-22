@@ -139,7 +139,7 @@ def load_movie_fixtures():
             u"Life's greatest adventure is finding your place in the Circle of"
             " Life.",
             datetime.date(1994, 6, 24),
-            (u'Roger', 'Allers'),
+            (u'Roger', u'Allers'),
             [
                 u'Matthew Broderick',
                 u'Jeremy Irons',
