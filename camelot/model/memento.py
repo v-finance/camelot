@@ -68,7 +68,6 @@ class Memento( Entity ):
         verbose_name_plural = _( 'History' )
         list_display = ['creation_date', 'authentication', 'model',
                         'primary_key', ]
-        form_display = list_display + ['description']
         list_filter = [filters.ComboBoxFilter('model')]
         
     Admin = not_editable_admin( Admin )
