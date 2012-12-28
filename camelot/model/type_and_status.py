@@ -36,7 +36,7 @@ from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration
 from camelot.core.orm.properties import Property
-from camelot.core.orm import Entity
+from camelot.core.orm import Entity, ColumnProperty
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
 
@@ -205,7 +205,7 @@ class StatusMixin( object ):
                                                   status_history.status_from_date <= sql.functions.current_date(),
                                                   status_history.status_thru_date >= sql.functions.current_date() ),
                           from_obj = [status_history.table] ).order_by(status_history.id.desc()).limit(1)
-		    
+    
     @hybrid.hybrid_property
     def current_status( self ):
 	status_history = self.get_status_history_at()
@@ -215,6 +215,16 @@ class StatusMixin( object ):
     @current_status.expression
     def current_status( cls ):
 	return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status' )
+    
+    @hybrid.hybrid_property
+    def current_status_sql( self ):
+	status_history = self.get_status_history_at()
+	if status_history != None:
+	    return status_history.classified_by
+	
+    @current_status.expression
+    def current_status_sql( cls ):
+	return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status_sql' )
     
     def change_status( self, new_status, status_from_date=None, status_thru_date=end_of_times() ):
 	from sqlalchemy import orm
@@ -238,7 +248,7 @@ class StatusMixin( object ):
 	if old_status:
 	    self.query.session.flush( [old_status] )
 	orm.object_session( self ).flush()
-	        
+		        
 def type_3_status( statusable_entity, metadata, collection, verbose_entity_name = None, enumeration=None ):
     '''
     Creates a new type 3 status related to the given entity
