@@ -44,8 +44,8 @@ def documented_entity():
   """
 
     def document_field( key, field ):
-        from elixir import Field
-        from elixir.relationships import Relationship
+        from camelot.core.orm import Field
+        from camelot.core.orm.relationships import Relationship
         if isinstance(field, Field):
             nullable = field.kwargs.get('nullable', True)
             required = {True:'not required', False:'required'}[nullable]
