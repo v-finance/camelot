@@ -36,6 +36,7 @@ from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration
 from camelot.core.orm.properties import Property
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
 
@@ -118,10 +119,12 @@ class Status( Property ):
 	    
     def attach( self, entity, name ):
 	super( Status, self ).attach( entity, name )
+	assert entity != Entity
 	
 	status_name = entity.__name__.lower() + '_status'
 	status_type_name = entity.__name__.lower() + '_status_type'
 	
+	print status_name, status_type_name
 	if self.enumeration == None:
 	    
 	    class EntityStatusType( StatusType, entity._descriptor.entity_base ):
@@ -140,6 +143,7 @@ class Status( Property ):
 	else:
 	    
 	    class EntityStatusHistory( StatusHistory, entity._descriptor.entity_base ):
+		__tablename__ = status_name
 		classified_by = schema.Column( Enumeration( self.enumeration ), 
 		                               nullable=False, index=True )
 	    

@@ -398,6 +398,8 @@ ManyToMany_ relationships.
 
 '''
 
+import logging
+
 from sqlalchemy import schema, sql
 from sqlalchemy.orm import relationship, backref, class_mapper
 
@@ -406,6 +408,8 @@ from . entity import EntityBase
 from . fields import Field
 from . statements import ClassMutator
 from . import options
+
+LOGGER = logging.getLogger( 'camelot.core.orm.relationships' )
 
 class Relationship( DeferredProperty ):
     """Generates a one to many or many to one relationship."""
@@ -426,7 +430,16 @@ class Relationship( DeferredProperty ):
     def target( self ):
         if not self._target:
             if isinstance( self.of_kind, basestring ):
-                self._target = self.entity._decl_class_registry[self.of_kind]
+                try:
+                    # for Elixir compatibility, support full class names,
+                    # including the modules, but only use the last part
+                    # SQLA will issue warnings when multiple classes have the
+                    # same name
+                    self._target = self.entity._decl_class_registry[self.of_kind.split('.')[-1]]
+                except KeyError:
+                    LOGGER.error( 'Error setting up %s of %s'%( self.name,
+                                                                self.entity.__name__ ) )
+                    raise
             else:
                 self._target = self.of_kind
         return self._target
