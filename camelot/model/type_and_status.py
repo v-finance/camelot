@@ -124,7 +124,6 @@ class Status( Property ):
 	status_name = entity.__name__.lower() + '_status'
 	status_type_name = entity.__name__.lower() + '_status_type'
 	
-	print status_name, status_type_name
 	if self.enumeration == None:
 	    
 	    class EntityStatusType( StatusType, entity._descriptor.entity_base ):
