@@ -28,6 +28,9 @@ These classes provide the means to store the result of batch jobs to enable the
 user to review or plan them.
 """
 
+import datetime
+import sys
+
 import sqlalchemy.types
 from sqlalchemy import orm, sql
 
@@ -39,8 +42,6 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action import Action
 from camelot.core.document import documented_entity
 import camelot.types
-
-import datetime
 
 #
 # Run batch jobs in separate session to get out of band writing
@@ -136,16 +137,31 @@ class BatchJob( Entity ):
                 return True
         return False
         
-    def add_exception_to_message(self, exception):
+    def add_exception_to_message( self, 
+                                  exc_type = None, 
+                                  exc_val = None, 
+                                  exc_tb = None ):
         """If an exception occurs in a batch job, this method can be used to add
-        the stack trace of the exception to the message"""
+        the stack trace of an exception to the message.
+        
+        If no arguments are given, `sys.exc_traceback` is used.
+        
+        :param exc_type: type of the exception, such as in `sys.exc_type`
+        :param exc_val: value of the exception, such as in `sys.exc_value`
+        :param exc_tb: a traceback object, such as in `sys.exc_traceback`
+        """
         import traceback, cStringIO
         sio = cStringIO.StringIO()
-        traceback.print_exc(file=sio)
+        traceback.print_exception( exc_type or sys.exc_type, 
+                                   exc_val or sys.exc_value,
+                                   exc_tb or sys.exc_traceback,
+                                   None, 
+                                   sio )
         traceback_print = sio.getvalue()
         sio.close()
-        self.add_strings_to_message( [ unicode(exception) ], color = 'red' )
-        self.add_strings_to_message( traceback_print.replace('\n', '<br/>'),
+        self.add_strings_to_message( [ unicode(exc_type or sys.exc_type) ], 
+                                     color = 'red' )
+        self.add_strings_to_message( traceback_print.split('\n'),
                                      color = 'grey' )
         
     def add_strings_to_message( self, strings, color = None ):
@@ -157,20 +173,29 @@ class BatchJob( Entity ):
         """
         if color:
             strings = [u'<font color="%s">'%color] + strings + [u'</font>']
-        self.message = (self.message or '') + u'<br/>' + '<br/>'.join(list(strings))
+        session = orm.object_session( self )
+        # message might be changed in the orm
+        session.commit()
+        batch_table = self.__table__
+        update = batch_table.update().where( batch_table.c.id == self.id )
+        update = update.values( message = sql.func.coalesce( batch_table.c.message, '' ) + sql.bindparam('line') )
+        for line in strings:
+            session.execute( update, params = {'line':line + '<br/>'} )
+        session.commit()
         
     def __enter__( self ):
         self.status = 'running'
-        orm.object_session( self ).flush()
+        orm.object_session( self ).commit()
         return self
     
     def __exit__( self, exc_type, exc_val, exc_tb ):
         if exc_type != None:
+            self.add_exception_to_message( exc_type, exc_val, exc_tb )
             self.status = 'errors'
-            self.add_strings_to_message( unicode( exc_type ), color = 'red' )
-        else:
+        elif self.status == 'running':
             self.status = 'success'
-        orm.object_session( self ).flush()
+        orm.object_session( self ).commit()
+        return True
         
     class Admin(EntityAdmin):
         verbose_name = _('Batch job')
