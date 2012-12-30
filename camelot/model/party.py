@@ -196,7 +196,7 @@ class Party( Entity ):
 
     addresses = OneToMany( 'PartyAddress', lazy = True, cascade="all, delete, delete-orphan" )
     contact_mechanisms = OneToMany( 'PartyContactMechanism', 
-                                    lazy = 'subquery', 
+                                    lazy = 'select', 
                                     cascade='all, delete, delete-orphan' )
     shares = OneToMany( 'SharedShareholder', inverse = 'established_to', cascade='all, delete, delete-orphan' )
     directed_organizations = OneToMany( 'DirectedDirector', inverse = 'established_to', cascade='all, delete, delete-orphan' )
@@ -718,7 +718,7 @@ class PartyContactMechanism( Entity ):
     using_options( tablename = 'party_contact_mechanism' )
 
     party = ManyToOne( Party, required = True, ondelete = 'cascade', onupdate = 'cascade' )
-    contact_mechanism = ManyToOne( ContactMechanism, lazy='subquery', required = True, ondelete = 'cascade', onupdate = 'cascade' )
+    contact_mechanism = ManyToOne( ContactMechanism, lazy='joined', required = True, ondelete = 'cascade', onupdate = 'cascade' )
     from_date = Field( Date(), default = datetime.date.today, required = True, index = True )
     thru_date = Field( Date(), default = end_of_times, index = True )
     comment = Field( Unicode( 256 ) )
@@ -741,10 +741,11 @@ class PartyContactMechanism( Entity ):
         return sql.select( [ContactMechanism.mechanism],
                            whereclause = (ContactMechanism.id==self.contact_mechanism_id))
 
-    @ColumnProperty
     def party_name( self ):
         return sql.select( [Party.full_name],
                            whereclause = (Party.id==self.party_id))
+    
+    party_name = ColumnProperty( party_name, deferred = True )
 
     def __unicode__( self ):
         return unicode( self.contact_mechanism )
@@ -856,6 +857,11 @@ class OrganizationAdmin( Party.Admin ):
                             ( _('Category and Status'), Form( ['categories', 'status'] ) ),
                             ] )
     field_attributes = dict( Party.Admin.field_attributes )
+    
+    def get_query( self ):
+        query = super( OrganizationAdmin, self ).get_query()
+        query = query.options( orm.joinedload('contact_mechanisms') )
+        return query    
 
 Organization.Admin = OrganizationAdmin
 
@@ -880,5 +886,10 @@ class PersonAdmin( Party.Admin ):
                             ] )
     field_attributes = dict( Party.Admin.field_attributes )
     field_attributes['note'] = {'delegate':delegates.NoteDelegate}
+    
+    def get_query( self ):
+        query = super( PersonAdmin, self ).get_query()
+        query = query.options( orm.joinedload('contact_mechanisms') )
+        return query
     
 Person.Admin = PersonAdmin

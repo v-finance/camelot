@@ -4,6 +4,7 @@ FORMAT = '[%(levelname)-7s] [%(name)-35s] - %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 
 logger = logging.getLogger('videostore.main')
+#logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 
 try:
     import matplotlib
