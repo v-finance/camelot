@@ -248,4 +248,4 @@ class FixtureVersion( Entity ):
         if not obj:
             obj = FixtureVersion( fixture_class = fixture_class )
         obj.fixture_version = fixture_version
-        Session.object_session( obj ).flush() 
+        Session.object_session( obj ).flush()    

@@ -1,0 +1,1 @@
+python -m nose.core --with-coverage --cover-html --cover-package=camelot -v -s  --with-xunit camelot

@@ -12,7 +12,9 @@ class TestSettings( object ):
     
     def setup_model( self ):
         from camelot.core.sql import metadata
-        metadata.bind = self.ENGINE()
+        # bind metadata to a specific connection, when using the in memory
+        # database this is needed or the data is lost
+        metadata.bind = self.ENGINE().connect()
         from camelot.model import authentication
         from camelot.model import party
         from camelot.model import i18n

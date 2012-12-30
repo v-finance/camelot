@@ -37,7 +37,7 @@ from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Date, Unicode, Integer, Boolean
 from sqlalchemy.sql.expression import and_
 
-from sqlalchemy import schema, sql, ForeignKey
+from sqlalchemy import orm, schema, sql, ForeignKey
 
 import camelot.types
 
@@ -233,16 +233,18 @@ class Party( Entity ):
                 mechanism = contact_mechanism.mechanism
                 if mechanism != None:
                     if mechanism[0] == described_by:
-                        if value:
+                        if value and value[1]:
                             contact_mechanism.mechanism = value
                         else:
+                            session = orm.object_session( party_contact_mechanism )
                             self.contact_mechanisms.remove( party_contact_mechanism )
+                            if party_contact_mechanism.id:
+                                session.delete( party_contact_mechanism )
                         return
-        if value:
+        if value and value[1]:
             contact_mechanism = ContactMechanism( mechanism = value )
             party_contact_mechanism = PartyContactMechanism( contact_mechanism = contact_mechanism )
             self.contact_mechanisms.append( party_contact_mechanism )
-                    
             
     @hybrid.hybrid_property
     def email( self ):
