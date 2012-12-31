@@ -843,7 +843,7 @@ Party.Admin = PartyAdmin
 class OrganizationAdmin( Party.Admin ):
     verbose_name = _( 'Organization' )
     verbose_name_plural = _( 'Organizations' )
-    list_display = ['name', 'tax_id', 'email', 'contact_mechanisms_phone']
+    list_display = ['name', 'tax_id', 'email', 'phone', 'fax']
     form_display = TabForm( [( _('Basic'), Form( [ 'name', 'email', 
                                                    'phone', 
                                                    'fax', 'tax_id', 
