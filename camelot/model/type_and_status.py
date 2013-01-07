@@ -152,7 +152,7 @@ class Status( Property ):
 	    status_history = type( entity.__name__ + 'StatusHistory',
 	                           ( StatusHistory, entity._descriptor.entity_base, ),
 	                           {'__tablename__':status_name,
-	                            'classified_by_id':schema.Column( Enumeration( self.enumeration ), 
+	                            'classified_by':schema.Column( Enumeration( self.enumeration ), 
 	                                                              nullable=False, index=True ) } )
 	    
 	self.status_history = status_history
