@@ -275,11 +275,12 @@ class RowDataAdmin(object):
     
     def __init__(self, admin, column_mapping):
         self.admin = admin
+        self.column_mapping = column_mapping
         self._new_field_attributes = {}
         self._columns = None
 
     def __getattr__(self, attr):
-        return getattr(self._object_admin, attr)
+        return getattr(self.admin, attr)
 
     def get_fields(self):
         return self.get_columns()
@@ -341,12 +342,13 @@ class RowDataAdmin(object):
             else:
                 yield {'background_color':ColorScheme.pink_1}
 
-    def new_field_attributes(self, i, original_field_attributes, original_field):
+    def new_field_attributes(self, i, original_field):
         from camelot.view.controls import delegates
 
         def create_getter(i):
             return lambda o:getattr(o, 'column_%i'%i)
 
+        original_field_attributes = self.admin.get_field_attributes( original_field )
         attributes = dict(original_field_attributes)
         attributes['delegate'] = delegates.PlainTextDelegate
         attributes['python_type'] = str
@@ -361,21 +363,19 @@ class RowDataAdmin(object):
 
         return attributes
 
-    def get_columns(self):
+    def get_columns( self ):
         if self._columns:
             return self._columns
 
-        original_columns = self.admin.get_columns()
-        new_columns = [
-            (
-                'column_%i' %i,
-                self.new_field_attributes(i, attributes, original_field)
-            )
-            for i, (original_field, attributes) in enumerate(original_columns)
-            if attributes.get('editable',  True)
-        ]
+        new_columns = []
+        for i in range( self.column_mapping.columns ):
+            field_name = 'column_%i' %i
+            original_field = getattr( self.column_mapping,
+                                      field_name + '_field' )
+            if original_field != None:
+                fa = self.new_field_attributes( i, original_field )
+                new_columns.append( (field_name, fa) )
 
         self._columns = new_columns
-
         return new_columns
 

@@ -657,7 +657,7 @@ class ImportFromFile( EditAction ):
         #
         # validate the temporary data
         #
-        row_data_admin = RowDataAdmin( admin )
+        row_data_admin = RowDataAdmin( admin, column_mapping )
         yield action_steps.ChangeObjects( collection, row_data_admin )
         #
         # Ask confirmation
