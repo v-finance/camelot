@@ -28,11 +28,15 @@ from PyQt4 import QtCore
 
 import csv
 import codecs
+import itertools
 import logging
 
+from camelot.view import forms
+from camelot.view.controls import delegates
+from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.art import ColorScheme
 from camelot.core.exception import UserException
-from camelot.core.utils import ugettext
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view.utils import local_date_format
 
 logger = logging.getLogger('camelot.view.import_utils')
@@ -42,8 +46,8 @@ class RowData(object):
     object with attributes column_1, column_2, ..., each representing the data
     in a single column of that row.
 
-    since the imported file might contain less columns than expected, the
-    RowData object returns None for not existing attributes"""
+    since the imported file might contain less columns than expected in
+    some rows, the RowData object returns None for not existing attributes"""
 
     def __init__(self, row_number, row_data):
         """:param row_data: a list containing the data
@@ -52,9 +56,85 @@ class RowData(object):
         self.id = row_number + 1
         for i, data in enumerate(row_data):
             self.__setattr__('column_%i' % i, data)
+        self.columns = i + 1
 
     def __getattr__(self, attr_name):
         return None
+    
+class ColumnMapping( object ):
+    """
+    Object that maps the columns in the rows to import onto the fields of the 
+    data model.  This object has attributes named `column_1_field`, 
+    `column_2_field`, ...  Each of these attributes should be set to the field
+    name in which the data of the column should be imported.
+    
+    :param columns: the number of columns in the rows
+    :param rows: the list of RowData objects to import, the list should
+        not be empty    
+    :param admin: the admin object of the model in which to import
+    """
+    
+    def __init__( self, columns, rows, admin ):
+        # show row is the row that will be previewed in the column
+        # selection form
+        self.columns = columns
+        self.rows = rows
+        for i in range( self.columns ):
+            setattr( self, 'column_%i_field'%i, None )
+        self.__setattr__( 'show_row', 1 )
+        # by default use the order of the fields as they appear
+        # in the list_display
+        for i, (list_field, fa) in itertools.izip( range( self.columns ), 
+                                                    admin.get_columns() ):
+            if fa.get('editable', False):
+                setattr( self, 'column_%i_field'%i, list_field )        
+    
+    def __setattr__( self, attr, value ):
+        if attr == 'show_row':
+            if value > 0 and value <= len(self.rows):
+                for i in range( self.columns ):
+                    setattr( self, 'column_%i_value'%i, getattr( self.rows[value - 1],
+                                                                 'column_%i'%i ) )
+        super( ColumnMapping, self ).__setattr__( attr, value )        
+            
+class ColumnMappingAdmin( ObjectAdmin ):
+    """Admin class that allows the user to manipulate the column mapping
+    
+    :param columns: the number of columns for which to edit the mapping
+    :param admin: the admin object of the model in which to import
+    :param entity: the class that is used to define the column mapping
+    """
+    
+    verbose_name = _('Select fields')
+    
+    field_attributes = { 'show_row' : { 'editable':True,
+                                        'calculator':False,
+                                        'delegate':delegates.IntegerDelegate }
+                         }
+    
+    def __init__( self, columns, admin, entity = ColumnMapping ):
+        self.columns = columns
+        self.admin = admin
+        super( ColumnMappingAdmin, self ).__init__( admin, entity )
+        
+    def get_field_attributes( self, field_name ):
+        fa = ObjectAdmin.get_field_attributes( self, field_name )
+        if field_name.startswith( 'column' ) and field_name.endswith('field'):
+            field_choices = [(f,entity_fa['name']) for f,entity_fa in 
+                             self.admin.get_all_fields_and_attributes().items() 
+                             if entity_fa.get('editable', True)]
+            fa.update( { 'delegate':delegates.ComboBoxDelegate,
+                         'editable':True,
+                         'choices': [(None,'')] + field_choices } )
+        return fa
+            
+    def get_form_display( self ):
+        columns = self.columns
+        rows = [ [ 'column_%i_value'%i,
+                   'column_%i_field'%i ] for i in range( columns ) 
+                                 ]
+        return forms.Form( [ 'show_row',
+                             forms.GridForm( rows ) ], scrollbars = True )
 
 # see http://docs.python.org/library/csv.html
 class UTF8Recoder( object ):
@@ -177,26 +257,32 @@ class XlsReader( object ):
     def __iter__( self ):
         return self
     
-class RowDataAdminDecorator(object):
+class RowDataAdmin(object):
     """Decorator that transforms the Admin of the class to be imported to an
     Admin of the RowData objects to be used when previewing and validating the
     data to be imported.
 
     based on the field attributes of the original mode, it will turn the
     background color pink if the data is invalid for being imported.
+    
+    :param admin: the `camelot.admin.object_admin.ObjectAdmin` admin object 
+        of the objects that will be imported
+    :param column_mapping: the `ColumnMapping` object that maps the columns
+        in the row data to fields of the objects.
     """
 
     list_action = None
     
-    def __init__(self, object_admin):
-        """:param object_admin: the object_admin object that will be
-        decorated"""
-        self._object_admin = object_admin
+    def __init__(self, admin, column_mapping):
+        self.admin = admin
         self._new_field_attributes = {}
         self._columns = None
 
     def __getattr__(self, attr):
         return getattr(self._object_admin, attr)
+
+    def get_fields(self):
+        return self.get_columns()
 
     def create_validator(self, model):
         """Creates a validator that validates the data to be imported, the
@@ -220,9 +306,6 @@ class RowDataAdminDecorator(object):
                 return []
 
         return NewObjectValidator(self, model)
-
-    def get_fields(self):
-        return self.get_columns()
 
     def flush(self, obj):
         """When flush is called, don't do anything, since we'll only save the
@@ -282,7 +365,7 @@ class RowDataAdminDecorator(object):
         if self._columns:
             return self._columns
 
-        original_columns = self._object_admin.get_columns()
+        original_columns = self.admin.get_columns()
         new_columns = [
             (
                 'column_%i' %i,

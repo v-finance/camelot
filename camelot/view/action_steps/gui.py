@@ -44,7 +44,6 @@ class OpenFormView( ActionStep ):
         self.objects = objects
         self.admin = admin
         
-        
     def gui_run( self, gui_context ):
         from camelot.view.proxy.collection_proxy import CollectionProxy
         from camelot.view.workspace import show_top_level

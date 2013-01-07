@@ -197,10 +197,16 @@ class ChangeObject( ActionStep ):
         """
         return self._obj
 
-    def gui_run( self, gui_context ):
+    def render( self, gui_context ):
+        """create the dialog. this method is used to unit test
+        the action step."""
         cls = self._obj.__class__
         admin = self._admin or gui_context.admin.get_related_admin( cls )
         dialog = ChangeObjectDialog( self._obj, admin )
+        return dialog
+        
+    def gui_run( self, gui_context ):
+        dialog = self.render( gui_context )
         result = dialog.exec_()
         if result == QtGui.QDialog.Rejected:
             raise CancelRequest()

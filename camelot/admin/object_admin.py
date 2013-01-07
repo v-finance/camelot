@@ -637,10 +637,7 @@ be specified using the verbose_name attribute.
 
     @model_function
     def get_fields(self):
-        if self.form_display:
-            fields = self.get_form_display().get_fields()
-        else:
-            fields = self.get_table().get_fields()
+        fields = self.get_form_display().get_fields()
         fields_and_attributes =  [
                 (field, self.get_field_attributes(field))
                 for field in fields

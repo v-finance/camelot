@@ -623,8 +623,10 @@ class ImportFromFile( EditAction ):
         from camelot.view import action_steps
         from camelot.view.import_utils import ( UnicodeReader, 
                                                 RowData, 
-                                                RowDataAdminDecorator,
-                                                XlsReader )
+                                                RowDataAdmin,
+                                                XlsReader,
+                                                ColumnMapping,
+                                                ColumnMappingAdmin )
         file_names = yield action_steps.SelectFile()
         if not len( file_names ):
             return
@@ -640,11 +642,22 @@ class ImportFromFile( EditAction ):
             enc = detected or 'utf-8'
             items = UnicodeReader( open( file_name ), encoding = enc )
         collection = [ RowData(i, row_data) for i, row_data in enumerate( items ) ]
+        if len( collection ) < 1:
+            raise UserException( _('No data in file' ) )
+        #
+        # select columns to import
+        #
+        admin = model_context.admin
+        columns = max( row_data.columns for row_data in collection )
+        column_mapping = ColumnMapping( columns, collection, admin )
+        column_mapping_admin = ColumnMappingAdmin( columns, 
+                                                   admin )
+
+        yield action_steps.ChangeObject( column_mapping, column_mapping_admin )
         #
         # validate the temporary data
         #
-        admin = model_context.admin
-        row_data_admin = RowDataAdminDecorator( admin )
+        row_data_admin = RowDataAdmin( admin )
         yield action_steps.ChangeObjects( collection, row_data_admin )
         #
         # Ask confirmation
