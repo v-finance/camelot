@@ -613,6 +613,18 @@ It has additional class attributes that customise its behaviour.
             field_list = self.expanded_list_search
         return [(field, self.get_field_attributes(field))
                 for field in field_list]
+    
+    def get_all_fields_and_attributes(self):
+        """In addition to all the fields that are defined in the views
+        or through the field_attributes, this method returns all the fields
+        that have been mapped.
+        """
+        fields = super( EntityAdmin, self ).get_all_fields_and_attributes()
+        for mapper_property in self.mapper.iterate_properties:
+            if isinstance(mapper_property, orm.properties.ColumnProperty):
+                field_name = mapper_property.key
+                fields[field_name] = self.get_field_attributes( field_name )
+        return fields
         
     @model_function
     def copy(self, obj, new_obj=None):
