@@ -29,6 +29,7 @@ import logging
 from camelot.admin.action.base import Action
 from application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
+from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.view.art import Icon
 

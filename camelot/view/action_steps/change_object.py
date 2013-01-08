@@ -22,14 +22,18 @@
 #
 #  ============================================================================
 
+import functools
+
 from PyQt4 import QtGui, QtCore
 
 from camelot.admin.action import ActionStep
+from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.core.utils import ugettext
 from camelot.view.art import Icon
 from camelot.view.controls import delegates
+from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.model_thread import post
 from camelot.view.proxy import ValueLoading
@@ -65,7 +69,8 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         
         model = CollectionProxy(admin, lambda:[obj], admin.get_fields)
         validator = model.get_validator()
-        layout = QtGui.QVBoxLayout()
+        layout = QtGui.QHBoxLayout()
+        layout.setObjectName( 'form_and_actions_layout' )
         form_widget = FormWidget( parent=self, admin=admin )
         layout.addWidget( form_widget )
         validator.validity_changed_signal.connect( self._validity_changed )
@@ -73,6 +78,13 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         form_widget.setObjectName( 'form' )
         self.main_widget().setLayout(layout)
     
+        self.gui_context = FormActionGuiContext()
+        self.gui_context.workspace = self
+        self.gui_context.admin = admin
+        self.gui_context.view = self
+        self.gui_context.widget_mapper = self.findChild( QtGui.QDataWidgetMapper, 
+                                                         'widget_mapper' )
+        
         cancel_button = QtGui.QPushButton( ugettext('Cancel') )
         cancel_button.setObjectName( 'cancel' )
         ok_button = QtGui.QPushButton( ugettext('OK') )
@@ -90,6 +102,26 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         # do inital validation, so the validity changed signal is valid
         self._validity_changed( 0 )
         
+        # set the actions in the actions panel
+        get_actions = admin.get_form_actions
+        post( functools.update_wrapper( functools.partial( get_actions, 
+                                                           None ),
+                                        get_actions ),
+              self.set_actions )        
+        
+    @QtCore.pyqtSlot(list)
+    def set_actions(self, actions):
+        layout = self.findChild(QtGui.QLayout, 'form_and_actions_layout' )
+        if actions and layout:
+            side_panel_layout = QtGui.QVBoxLayout()
+            actions_widget = ActionsBox( parent = self, 
+                                         gui_context = self.gui_context )
+            actions_widget.setObjectName('actions')
+            actions_widget.set_actions( actions )
+            side_panel_layout.addWidget( actions_widget )
+            side_panel_layout.addStretch()
+            layout.addLayout( side_panel_layout )
+            
     @QtCore.pyqtSlot(int)
     def _validity_changed(self, row):
         form = self.findChild( QtGui.QWidget, 'form' )

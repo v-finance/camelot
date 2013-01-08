@@ -33,7 +33,9 @@ import logging
 
 from camelot.view import forms
 from camelot.view.controls import delegates
+from camelot.admin.action import CallMethod
 from camelot.admin.object_admin import ObjectAdmin
+from camelot.admin.table import Table
 from camelot.view.art import ColorScheme
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
@@ -43,16 +45,17 @@ logger = logging.getLogger('camelot.view.import_utils')
 
 class RowData(object):
     """Class representing the data in a single row of the imported file as an
-    object with attributes column_1, column_2, ..., each representing the data
+    object with attributes column_0, column_1, ..., each representing the data
     in a single column of that row.
 
     since the imported file might contain less columns than expected in
-    some rows, the RowData object returns None for not existing attributes"""
+    some rows, the RowData object returns None for not existing attributes
+    
+    :param row_data: a list containing the data
+        [column_0_data, column_1_data, ...] for a single row
+    """
 
     def __init__(self, row_number, row_data):
-        """:param row_data: a list containing the data
-        [column_1_data, column_2_data, ...] for a single row
-        """
         self.id = row_number + 1
         for i, data in enumerate(row_data):
             self.__setattr__('column_%i' % i, data)
@@ -64,8 +67,8 @@ class RowData(object):
 class ColumnMapping( object ):
     """
     Object that maps the columns in the rows to import onto the fields of the 
-    data model.  This object has attributes named `column_1_field`, 
-    `column_2_field`, ...  Each of these attributes should be set to the field
+    data model.  This object has attributes named `column_0_field`, 
+    `column_1_field`, ...  Each of these attributes should be set to the field
     name in which the data of the column should be imported.
     
     :param columns: the number of columns in the rows
@@ -79,9 +82,10 @@ class ColumnMapping( object ):
         # selection form
         self.columns = columns
         self.rows = rows
+        self.admin = admin
         for i in range( self.columns ):
             setattr( self, 'column_%i_field'%i, None )
-        self.__setattr__( 'show_row', 1 )
+        self.show_row = 0
         # by default use the order of the fields as they appear
         # in the list_display
         for i, (list_field, fa) in itertools.izip( range( self.columns ), 
@@ -91,11 +95,32 @@ class ColumnMapping( object ):
     
     def __setattr__( self, attr, value ):
         if attr == 'show_row':
-            if value > 0 and value <= len(self.rows):
+            if value >= 0 and value < len(self.rows):
                 for i in range( self.columns ):
-                    setattr( self, 'column_%i_value'%i, getattr( self.rows[value - 1],
-                                                                 'column_%i'%i ) )
-        super( ColumnMapping, self ).__setattr__( attr, value )        
+                    column_value = getattr( self.rows[value], 'column_%i'%i )
+                    setattr( self, 'column_%i_value'%i, column_value )
+        super( ColumnMapping, self ).__setattr__( attr, value )
+        
+    def show_next( self ):
+        self.show_row = self.show_row + 1
+        
+    def show_previous( self ):
+        self.show_row = self.show_row - 1
+        
+    def match_names( self ):
+        """Use the data in the current row to determine field names"""
+        field_choices = [ (f,entity_fa['name']) for f,entity_fa in 
+                          self.admin.get_all_fields_and_attributes().items() 
+                          if entity_fa.get('editable', True) ]
+        # create a dict that  will be used to search field names
+        matches = dict( (unicode(verbose_name).lower(), fn)
+                         for fn, verbose_name in field_choices )
+        matches.update( dict( (fn.lower().replace('_',''), fn)
+                              for fn, _verbose_name in field_choices ) )
+        for i in range( self.columns ):
+            value = getattr( self, 'column_%i_value'%i )
+            field_name = matches.get( value.replace('_','').lower(), None )
+            setattr( self, 'column_%i_field'%i, field_name )
             
 class ColumnMappingAdmin( ObjectAdmin ):
     """Admin class that allows the user to manipulate the column mapping
@@ -111,6 +136,11 @@ class ColumnMappingAdmin( ObjectAdmin ):
                                         'calculator':False,
                                         'delegate':delegates.IntegerDelegate }
                          }
+    
+    form_actions = [ CallMethod( _('Show next'), ColumnMapping.show_next ),
+                     CallMethod( _('Show previous'), ColumnMapping.show_previous ),
+                     CallMethod( _('Match names'), ColumnMapping.match_names ),
+                     ]
     
     def __init__( self, columns, admin, entity = ColumnMapping ):
         self.columns = columns
@@ -133,8 +163,7 @@ class ColumnMappingAdmin( ObjectAdmin ):
         rows = [ [ 'column_%i_value'%i,
                    'column_%i_field'%i ] for i in range( columns ) 
                                  ]
-        return forms.Form( [ 'show_row',
-                             forms.GridForm( rows ) ], scrollbars = True )
+        return forms.Form( [ forms.GridForm( rows ) ], scrollbars = True )
 
 # see http://docs.python.org/library/csv.html
 class UTF8Recoder( object ):
@@ -284,6 +313,9 @@ class RowDataAdmin(object):
 
     def get_fields(self):
         return self.get_columns()
+    
+    def get_table(self):
+        return Table( [fn for fn, _fa in self.get_columns()] )
 
     def create_validator(self, model):
         """Creates a validator that validates the data to be imported, the

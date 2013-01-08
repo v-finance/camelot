@@ -261,6 +261,15 @@ class ListActionsCase( ModelThreadTestCase ):
                 filename = step.get_path()
                 xlrd.open_workbook( filename )
 
+    def test_match_names( self ):
+        from camelot.view.import_utils import RowData, ColumnMapping
+        
+        rows = [ RowData( 0, ['rating', 'name'] ) ]
+        mapping = ColumnMapping( 2, rows, self.context.admin )
+        self.assertNotEqual( mapping.column_0_field, 'rating' )
+        mapping.match_names()
+        self.assertEqual( mapping.column_0_field, 'rating' )
+        
     def test_import_from_xls_file( self ):
         self.test_import_from_file( 'import_example.xls' )
 
