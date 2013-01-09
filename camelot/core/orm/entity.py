@@ -13,9 +13,10 @@ from sqlalchemy.ext.declarative import ( _declarative_constructor,
                                          DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 
+from . fields import Field
 from . statements import MUTATORS
 from . properties import EntityBuilder, Property
-from . import options, Session
+from . import options, options_defaults, Session
 
 class EntityDescriptor(object):
     """
@@ -38,8 +39,12 @@ class EntityDescriptor(object):
         self.builders = [] 
         self.constraints = []
         self.counter = EntityDescriptor.global_counter
-        self.table_options = {}
         EntityDescriptor.global_counter += 1
+        # set default value for other options
+        for key, value in options_defaults.items():
+            if isinstance( value, dict ):
+                value = value.copy()
+            setattr( self, key, value )        
         
     def set_entity( self, entity ):
         self.entity = entity
@@ -167,12 +172,22 @@ class EntityDescriptor(object):
             order_by = [order_by]
 
         order = []
-        mapper = orm.class_mapper( self.entity )
-        for colname in order_by:
-            prop = mapper.columns[ colname.strip('-') ]
-            if colname.startswith('-'):
-                prop = sql.desc( prop )
-            order.append( prop )
+        for key in order_by:
+            prop = getattr( self.entity, key.strip('-') )
+            # this method can be called, before and after declarative
+            # has processed the class attributes
+            if isinstance( prop, Field ):
+                prop.create_col()
+                cols = [prop.column]
+            elif isinstance( prop, schema.Column ):
+                cols = [prop]
+            elif isinstance( prop, orm.attributes.QueryableAttribute ):
+                cols = prop.property.columns
+            else:
+                raise Exception( 'Cannot sort on property %s, consider using __mapper_args__'%key )
+            if key.startswith('-'):
+                cols = [col.desc() for col in cols]
+            order.extend( cols )
         return order        
         
 class EntityMeta( DeclarativeMeta ):
@@ -202,6 +217,10 @@ class EntityMeta( DeclarativeMeta ):
             #
             if '__tablename__' not in dict_:
                 dict_['__tablename__'] = classname.lower()
+            if '__mapper_args__' not in dict_:
+                dict_['__mapper_args__'] = dict()
+
+             
         return super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
     
     # init is called after the creation of the new Entity class, and can be
@@ -209,11 +228,20 @@ class EntityMeta( DeclarativeMeta ):
     def __init__( cls, classname, bases, dict_ ):
         from . properties import Property
         if '_descriptor' in dict_:
-            dict_['_descriptor'].set_entity( cls )
+            descriptor = dict_['_descriptor']
+            descriptor.set_entity( cls )
             for key, value in dict_.items():
                 if isinstance( value, Property ):
                     value.attach( cls, key )
             cls._descriptor.create_pk_cols()
+            #
+            # 
+            #
+            if descriptor.order_by:
+                mapper_args = cls.__mapper_args__
+                if 'order_by' in mapper_args:
+                    raise Exception( 'Either specify order_by in mapper_args or in using_options' )
+                mapper_args['order_by'] = descriptor.translate_order_by( descriptor.order_by )
         #
         # Calling DeclarativeMeta's __init__ creates the mapper and
         # the table for this class
