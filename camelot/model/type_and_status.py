@@ -231,9 +231,13 @@ class StatusMixin( object ):
 	if status_history != None:
 	    return status_history.classified_by
 	
-    @current_status.expression
+    @current_status_sql.expression
     def current_status_sql( cls ):
-	return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status_sql' )
+	return StatusMixin.current_status_query( cls._status_history, cls ) #.label( 'current_status_sql' )
+    
+    @current_status_sql.setter
+    def set_current_status_sql( self, value ):
+	pass
     
     def change_status( self, new_status, status_from_date=None, status_thru_date=end_of_times() ):
 	from sqlalchemy import orm
