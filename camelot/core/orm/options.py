@@ -114,4 +114,3 @@ class using_options( ClassMutator ):
             else:
                 raise Exception("'%s' is not a valid option for entities."
                                 % kwarg)
-    

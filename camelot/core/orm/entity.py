@@ -109,7 +109,13 @@ class EntityDescriptor(object):
         self.call_builders( 'create_properties' )        
 
     def create_tables(self):
-        self.call_builders( 'create_tables' )        
+        self.call_builders( 'create_tables' )
+	
+    def finalize(self):
+        self.call_builders( 'after_mapper' )
+	if self.order_by:
+	    mapper = orm.class_mapper( self.entity )
+	    mapper.order_by = self.translate_order_by( self.order_by )
         
     def add_column( self, key, col ):
         setattr( self.entity, key, col )
@@ -172,22 +178,14 @@ class EntityDescriptor(object):
             order_by = [order_by]
 
         order = []
-        for key in order_by:
-            prop = getattr( self.entity, key.strip('-') )
-            # this method can be called, before and after declarative
-            # has processed the class attributes
-            if isinstance( prop, Field ):
-                prop.create_col()
-                cols = [prop.column]
-            elif isinstance( prop, schema.Column ):
-                cols = [prop]
-            elif isinstance( prop, orm.attributes.QueryableAttribute ):
-                cols = prop.property.columns
-            else:
-                raise Exception( 'Cannot sort on property %s, consider using __mapper_args__'%key )
-            if key.startswith('-'):
-                cols = [col.desc() for col in cols]
-            order.extend( cols )
+        
+	mapper = orm.class_mapper( self.entity )
+	for colname in order_by:
+	    prop = mapper.columns[ colname.strip('-') ]
+	    if colname.startswith('-'):
+	        prop = sql.desc( prop )
+	    order.append( prop )
+	
         return order        
         
 class EntityMeta( DeclarativeMeta ):
@@ -234,14 +232,6 @@ class EntityMeta( DeclarativeMeta ):
                 if isinstance( value, Property ):
                     value.attach( cls, key )
             cls._descriptor.create_pk_cols()
-            #
-            # 
-            #
-            if descriptor.order_by:
-                mapper_args = cls.__mapper_args__
-                if 'order_by' in mapper_args:
-                    raise Exception( 'Either specify order_by in mapper_args or in using_options' )
-                mapper_args['order_by'] = descriptor.translate_order_by( descriptor.order_by )
         #
         # Calling DeclarativeMeta's __init__ creates the mapper and
         # the table for this class

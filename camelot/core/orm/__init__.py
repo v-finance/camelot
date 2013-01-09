@@ -99,10 +99,11 @@ def process_deferred_properties( class_registry = entities ):
         # set some convenience attributes to the Entity
         setattr( cls, 'table', mapper.local_table )
                 
-    for method_name in ( 'create_non_pk_cols', 
+    for method_name in ( 'create_non_pk_cols',                         
                          'create_tables',
                          'append_constraints',
-                         'create_properties' ):
+                         'create_properties',
+                         'finalize', ):
         for cls in classes:
             method = getattr( cls._descriptor, method_name )
             method()
