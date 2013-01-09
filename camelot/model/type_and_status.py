@@ -233,7 +233,7 @@ class StatusMixin( object ):
 	
     @current_status_sql.expression
     def current_status_sql( cls ):
-	return StatusMixin.current_status_query( cls._status_history, cls ) #.label( 'current_status_sql' )
+	return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status_sql' )
     
     @current_status_sql.setter
     def set_current_status_sql( self, value ):
