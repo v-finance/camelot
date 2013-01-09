@@ -112,7 +112,7 @@ class EntityDescriptor(object):
         self.call_builders( 'create_tables' )
 	
     def finalize(self):
-        self.call_builders( 'after_mapper' )
+        self.call_builders( 'finalize' )
 	if self.order_by:
 	    mapper = orm.class_mapper( self.entity )
 	    mapper.order_by = self.translate_order_by( self.order_by )
