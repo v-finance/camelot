@@ -301,15 +301,15 @@ def entity_to_dict( entity, deep = {}, exclude = []  ):
     for rname, rdeep in deep.iteritems():
         dbdata = getattr(entity, rname)
         prop = mapper.get_property( rname )
+        fks = prop.remote_side
+        #FIXME: use attribute names (ie coltoprop) instead of column names
+        remote_exclude = exclude + [ c.name for c in fks ]        
         if dbdata is None:
-            data[rname] = None
-        elif isinstance(dbdata, list):
-            fks = prop.remote_side
-            #FIXME: use attribute names (ie coltoprop) instead of column names
-            remote_exclude = exclude + [ c.name for c in fks ]            
+            data[rname] = None            
+        elif isinstance(dbdata, list):            
             data[rname] = [ entity_to_dict( o, rdeep, remote_exclude ) for o in dbdata ]
         else:
-            data[rname] = entity_to_dict( dbdata, rdeep, exclude )
+            data[rname] = entity_to_dict( dbdata, rdeep, remote_exclude )
     
     return data    
 
