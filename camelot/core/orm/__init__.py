@@ -54,7 +54,7 @@ Session = scoped_session( sessionmaker( autoflush = False,
                                         autocommit = True,
                                         expire_on_commit = False ) )
 
-from . options import ( using_options, options_defaults )
+from . options import using_options
 from . fields import has_field, Field
 from . relationships import ( belongs_to, has_one, has_many,
                               has_and_belongs_to_many, 

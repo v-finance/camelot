@@ -37,10 +37,9 @@ from sqlalchemy import schema, orm
 from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Entity, ManyToOne
 from camelot.admin.not_editable_admin import not_editable_admin
+from camelot.core.orm import Entity, ManyToOne
 from camelot.core.utils import ugettext_lazy as _
-import camelot.types
 from camelot.view import filters
 
 from authentication import AuthenticationMechanism

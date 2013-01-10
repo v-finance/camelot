@@ -36,7 +36,7 @@ from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.types import Enumeration
 from camelot.core.orm.properties import Property
-from camelot.core.orm import Entity, ColumnProperty
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
 
@@ -72,15 +72,6 @@ class StatusHistory( object ):
     status_thru_date = schema.Column( types.Date, nullable = True )
     from_date = schema.Column( types.Date, nullable = False, default = datetime.date.today )
     thru_date = schema.Column( types.Date, nullable = False, default = end_of_times )
-
-    #status_for = ManyToOne( statusable_entity, #required = True,
-                             #ondelete = 'cascade', onupdate = 'cascade' )
-    
-    #if not enumeration:
-	#classified_by = ManyToOne( t3_status_type_name, required = True,
-                                   #ondelete = 'cascade', onupdate = 'cascade' )
-    #else:
-	#classified_by = Field(Enumeration(enumeration), required=True, index=True)
 
     class Admin( EntityAdmin ):
 	#verbose_name = statusable_entity + ' Status'
@@ -213,7 +204,7 @@ class StatusMixin( object ):
 	    return status_history.classified_by
 	
     @current_status.expression
-    def current_status( cls ):
+    def current_status_expression( cls ):
 	return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status' )
     
     @hybrid.hybrid_property
@@ -223,7 +214,7 @@ class StatusMixin( object ):
 	    return status_history.classified_by
 	
     @current_status.expression
-    def current_status_sql( cls ):
+    def current_status_sql_expression( cls ):
 	return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status_sql' )
     
     def change_status( self, new_status, status_from_date=None, status_thru_date=end_of_times() ):
@@ -248,129 +239,6 @@ class StatusMixin( object ):
 	if old_status:
 	    self.query.session.flush( [old_status] )
 	orm.object_session( self ).flush()
-		        
-def type_3_status( statusable_entity, metadata, collection, verbose_entity_name = None, enumeration=None ):
-    '''
-    Creates a new type 3 status related to the given entity
-    :statusable_entity: A string referring to an entity.
-    :enumeration: if this parameter is used, no status type Entity is created, but the status type is
-    described by the enumeration.
-    '''
-    t3_status_name = statusable_entity + '_status'
-    t3_status_type_name = statusable_entity + '_status_type'
-
-
-    if not enumeration:
-        
-        class Type3StatusTypeMeta( EntityMeta ):
-            def __new__( cls, classname, bases, dictionary ):
-                return EntityMeta.__new__( cls, t3_status_type_name,
-                                     bases, dictionary )
-            def __init__( self, classname, bases, dictionary ):
-                EntityMeta.__init__( self, t3_status_type_name,
-                                      bases, dictionary )
-            
-        class Type3StatusType( Entity, ):
-            using_options( tablename = t3_status_type_name.lower(), metadata=metadata, collection=collection )
-            __metaclass__ = Type3StatusTypeMeta
-    
-            code = Field( Unicode(10), index = True,
-                          required = True, unique = True )
-            description = Field( Unicode( 40 ), index = True )
-    
-            def __unicode__( self ):
-                return self.code or ''
-    
-            class Admin( EntityAdmin ):
-                list_display = ['code', 'description']
-                form_display = ['code', 'description']
-                verbose_name = statusable_entity + ' Status Type'
-                if verbose_entity_name is not None:
-                    verbose_name = verbose_entity_name + ' Status Type'
-
-        __status_type_classes__[statusable_entity] = Type3StatusType
-        
-    class Type3StatusMeta( EntityMeta ):
-        def __new__( cls, classname, bases, dictionary ):
-            return EntityMeta.__new__( cls, t3_status_name,
-                                       bases, dictionary )
-        def __init__( self, classname, bases, dictionary ):
-            EntityMeta.__init__( self, t3_status_name,
-                                 bases, dictionary )
-
-    class Type3Status( Entity, ):
-        """
-        Status Pattern
-        .. attribute:: status_datetime For statuses that occur at a specific point in time
-        .. attribute:: status_from_date For statuses that require a date range
-        .. attribute:: from_date When a status was enacted or set
-        """
-        using_options( tablename = t3_status_name.lower(), metadata=metadata, collection=collection )
-        __metaclass__ = Type3StatusMeta
-
-        status_datetime = Field( Date, required = False )
-        status_from_date = Field( Date, required = False )
-        status_thru_date = Field( Date, required = False )
-        from_date = Field( Date, required = True, default = datetime.date.today )
-        thru_date = Field( Date, required = True, default = end_of_times )
-
-        status_for = ManyToOne( statusable_entity, #required = True,
-                                 ondelete = 'cascade', onupdate = 'cascade' )
-        
-        if not enumeration:
-            classified_by = ManyToOne( t3_status_type_name, required = True,
-                                       ondelete = 'cascade', onupdate = 'cascade' )
-        else:
-            classified_by = Field(Enumeration(enumeration), required=True, index=True)
-
-        class Admin( EntityAdmin ):
-            verbose_name = statusable_entity + ' Status'
-            verbose_name_plural = statusable_entity + ' Statuses'
-            list_display = ['status_from_date', 'status_thru_date', 'classified_by']
-            verbose_name = statusable_entity + ' Status'
-            if verbose_entity_name is not None:
-                verbose_name = verbose_entity_name + ' Status'
-
-        def __unicode__( self ):
-            return u'Status'
-
-    __status_classes__[statusable_entity] = Type3Status
-    
-    return t3_status_name
-
-def entity_type( typable_entity, metadata, collection, verbose_entity_name = None ):
-    '''
-    Creates a new type related to the given entity.
-    .. typeable_entity:: A string referring to an entity.
-    '''
-    type_name = typable_entity + '_type'
-
-    class TypeMeta( EntityMeta ):
-        def __new__( cls, classname, bases, dictionary ):
-            return EntityMeta.__new__( cls, type_name,
-                                       bases, dictionary )
-        def __init__( self, classname, bases, dictionary ):
-            EntityMeta.__init__( self, type_name,
-                                 bases, dictionary )
-
-    class Type( Entity ):
-        using_options( tablename = type_name.lower(), metadata=metadata, collection=collection )
-        __metaclass__ = TypeMeta
-
-        type_description_for = OneToMany( typable_entity )
-        description = Field( Unicode( 48 ), required = True )
-
-        class Admin( EntityAdmin ):
-            verbose_name = typable_entity + ' Type'
-            list_display = ['description', ]
-            verbose_name = typable_entity + ' Type'
-            if verbose_entity_name is not None:
-                verbose_name = verbose_entity_name + ' Type'
-
-        def __unicode__( self ):
-            return u'Type: %s' % ( self.description )
-
-    return type_name
 
 class ChangeStatus( Action ):
     """

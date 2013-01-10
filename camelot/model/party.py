@@ -29,9 +29,7 @@ These structures are modeled like described in 'The Data Model Resource Book'
 by Len Silverston, Chapter 2
 """
 
-import collections
-
-from camelot.view.controls import delegates
+import datetime
 
 from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Date, Unicode, Integer, Boolean
@@ -39,23 +37,17 @@ from sqlalchemy.sql.expression import and_
 
 from sqlalchemy import orm, schema, sql, ForeignKey
 
-import camelot.types
-
+from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.document import documented_entity
 from camelot.core.orm import ( Entity, using_options, Field, ManyToMany,  
                                ManyToOne, OneToMany, ColumnProperty )
 from camelot.core.utils import ugettext_lazy as _
-
-from camelot.admin.entity_admin import EntityAdmin
+from camelot.model.type_and_status import Status
+import camelot.types
+from camelot.view.controls import delegates
 from camelot.view.forms import Form, TabForm, HBoxForm, WidgetOnlyForm
-import datetime
-import threading
-
-_current_authentication_ = threading.local()
 
 from authentication import end_of_times
-
-from camelot.model.type_and_status import Status
 
 class GeographicBoundary( Entity ):
     """The base class for Country and City"""
@@ -251,11 +243,11 @@ class Party( Entity ):
         return self._get_contact_mechanism( u'email' )
     
     @email.setter
-    def email( self, value ):
+    def email_setter( self, value ):
         return self._set_contact_mechanism( u'email', value )
     
     @email.expression
-    def email( self ):
+    def email_expression( self ):
 
         cm = ContactMechanism
         pcm = PartyContactMechanism
@@ -270,11 +262,11 @@ class Party( Entity ):
         return self._get_contact_mechanism( u'phone' )
     
     @phone.setter
-    def phone( self, value ):
+    def phone_setter( self, value ):
         return self._set_contact_mechanism( u'phone', value )    
     
     @phone.expression
-    def phone( self ):
+    def phone_expression( self ):
 
         cm = ContactMechanism
         pcm = PartyContactMechanism
@@ -289,11 +281,11 @@ class Party( Entity ):
         return self._get_contact_mechanism( u'fax' )
     
     @fax.setter
-    def fax( self, value ):
+    def fax_setter( self, value ):
         return self._set_contact_mechanism( u'fax', value )    
     
     @fax.expression
-    def fax( self ):
+    def fax_expression( self ):
 
         cm = ContactMechanism
         pcm = PartyContactMechanism
@@ -729,7 +721,7 @@ class PartyContactMechanism( Entity ):
             return self.contact_mechanism.mechanism    
        
     @mechanism.setter
-    def mechanism( self, value ):
+    def mechanism_setter( self, value ):
         if value != None:
             if self.contact_mechanism:
                 self.contact_mechanism.mechanism = value
@@ -737,7 +729,7 @@ class PartyContactMechanism( Entity ):
                 self.contact_mechanism = ContactMechanism( mechanism = value )
                 
     @mechanism.expression 
-    def mechanism( self ):
+    def mechanism_expression( self ):
         return sql.select( [ContactMechanism.mechanism],
                            whereclause = (ContactMechanism.id==self.contact_mechanism_id))
 
