@@ -125,7 +125,7 @@ css. Take a look at the example first::
 	{% block page_header %}{{ header }}{% endblock %}
 	{% block page_header_right %}
 	{% if cover %}
-		<img src="media/covers/{{ cover }}" alt="">
+		<img src="{{ cover }}" alt="">
 	{% else %}
 		(no cover) 
 	{% endif %}	
@@ -145,7 +145,7 @@ We'll define this later. The templating language also allows basic flow
 control::
 
 	{% if cover %}
-		<img src="media/covers/{{ cover }}" alt="">
+		<img src="{{ cover }}" alt="">
 	{% else %}
 		(no cover) 
 	{% endif %}
@@ -161,6 +161,7 @@ First, we import the needed elements::
 	from jinja import Environment, FileSystemLoader
 	from pkg_resources import resource_filename
 	import videostore
+        from camelot.core.conf import settings
 
 We'll be printing a date, so we'll need datetime. The Jinja classes to make use 
 of our templates. And to locate our templates, we'll use the resource module, 
@@ -183,7 +184,7 @@ argument in the html method::
                 <span class="label">Genre:</span> %s<br>\
                 <span class="label">Director:</span> %s'
                 % (o.short_description, o.release_date, o.genre, o.director),
-        'cover': os.path.join( resource_filename(videostore.__name__, 'media'), 'covers', o.cover_image.name ),
+        'cover': os.path.join( settings.CAMELOT_MEDIA_ROOT(), 'covers', o.cover_image.name ),
         'footer':'<br>copyright %s - Camelot' % datetime.datetime.now().year
 	}
 
@@ -210,7 +211,9 @@ So our finished method eventually looks like this::
 	        from jinja import Environment, FileSystemLoader
 	        from pkg_resources import resource_filename
 	        import videostore
-	        fileloader = FileSystemLoader(resource_filename(videostore.__name__, 'templates'))
+        	from camelot.core.conf import settings
+		
+		fileloader = FileSystemLoader(resource_filename(videostore.__name__, 'templates'))
 	        e = Environment(loader=fileloader)
 		movie = model_context.get_object()
 	        context = {
@@ -222,7 +225,7 @@ So our finished method eventually looks like this::
 	                        <span class="label">Genre:</span> %s<br>\
 	                        <span class="label">Director:</span> %s'
 	                        % (movie.short_description, movie.release_date, movie.genre, movie.director),
-	                'cover': os.path.join( resource_filename(videostore.__name__, 'media'), 'covers', movie.cover_image.name ),
+	                'cover': os.path.join( settings.CAMELOT_MEDIA_ROOT(), 'covers', movie.cover_image.name ),
 	                'footer':'<br>copyright %s - Camelot' % datetime.datetime.now().year
 	        }
 	        t = e.get_template('movie_summary.html')
