@@ -124,8 +124,8 @@ css. Take a look at the example first::
 	{% block page_title %}{{ title }}{% endblock %}
 	{% block page_header %}{{ header }}{% endblock %}
 	{% block page_header_right %}
-	{% if header_right %}
-		<img src="media/covers/{{ header_right }}" alt="">
+	{% if cover %}
+		<img src="media/covers/{{ cover }}" alt="">
 	{% else %}
 		(no cover) 
 	{% endif %}	
