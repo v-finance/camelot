@@ -203,6 +203,7 @@ class ListActionsCase( ModelThreadTestCase ):
         self.context.obj = Movie.query.first()
         self.context.admin = self.app_admin.get_related_admin( Movie )
         self.gui_context = GuiContext()
+        self.gui_context.admin = self.app_admin.get_related_admin( Movie )
         
     def test_sqlalchemy_command( self ):
         model_context = self.context
@@ -260,6 +261,15 @@ class ListActionsCase( ModelThreadTestCase ):
                 filename = step.get_path()
                 xlrd.open_workbook( filename )
 
+    def test_match_names( self ):
+        from camelot.view.import_utils import RowData, ColumnMapping
+        
+        rows = [ RowData( 0, ['rating', 'name'] ) ]
+        mapping = ColumnMapping( 2, rows, self.context.admin )
+        self.assertNotEqual( mapping.column_0_field, 'rating' )
+        mapping.match_names()
+        self.assertEqual( mapping.column_0_field, 'rating' )
+        
     def test_import_from_xls_file( self ):
         self.test_import_from_file( 'import_example.xls' )
 
@@ -276,6 +286,10 @@ class ListActionsCase( ModelThreadTestCase ):
         for step in generator:
             if isinstance( step, action_steps.SelectFile ):
                 generator.send( [ os.path.join( example_folder, filename ) ] )
+            if isinstance( step, action_steps.ChangeObject ):
+                dialog = step.render( self.gui_context )
+                dialog.show()
+                self.grab_widget( dialog, suffix = 'column_selection' )
             if isinstance( step, action_steps.ChangeObjects ):
                 dialog = step.render()
                 dialog.show()

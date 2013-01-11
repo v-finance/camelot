@@ -105,16 +105,12 @@ class using_options( ClassMutator ):
     model definitions working.  Do not use it when writing new code, instead
     use Declarative directly."""
     
-    def process( self, entity_dict, tablename = None, order_by = None, **kwargs ):
+    def process( self, entity_dict, tablename = None, **kwargs ):
         if tablename:
             entity_dict['__tablename__'] = tablename
-        if order_by:
-            mapper_args = entity_dict.setdefault('__mapper_args__', {} )
-            mapper_args['order_by'] = order_by
         for kwarg in kwargs:
             if kwarg in valid_options:
                 setattr( entity_dict['_descriptor'], kwarg, kwargs[kwarg])
             else:
                 raise Exception("'%s' is not a valid option for entities."
                                 % kwarg)
-    
