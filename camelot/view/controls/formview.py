@@ -125,7 +125,7 @@ class FormWidget(QtGui.QWidget):
         self._form = None
         self._columns = None
         self._delegate = None
-        self.setLayout(widget_layout)
+        self.setLayout(widget_layout)      
 
     def get_model(self):
         return self._model

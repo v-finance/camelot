@@ -76,6 +76,8 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         validator.validity_changed_signal.connect( self._validity_changed )
         form_widget.set_model( model )
         form_widget.setObjectName( 'form' )
+        if hasattr(admin, 'form_size') and admin.form_size:
+            form_widget.setMinimumSize(admin.form_size[0], admin.form_size[1])          
         self.main_widget().setLayout(layout)
     
         self.gui_context = FormActionGuiContext()
