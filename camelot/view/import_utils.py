@@ -127,6 +127,7 @@ class ColumnMappingAdmin( ObjectAdmin ):
     
     :param columns: the number of columns for which to edit the mapping
     :param admin: the admin object of the model in which to import
+    :param field_choices: the list of fields out of which the user can select
     :param entity: the class that is used to define the column mapping
     """
     
@@ -142,20 +143,18 @@ class ColumnMappingAdmin( ObjectAdmin ):
                      CallMethod( _('Match names'), ColumnMapping.match_names ),
                      ]
     
-    def __init__( self, columns, admin, entity = ColumnMapping ):
+    def __init__( self, columns, admin, field_choices, entity = ColumnMapping ):
         self.columns = columns
         self.admin = admin
+        self.field_choices = field_choices
         super( ColumnMappingAdmin, self ).__init__( admin, entity )
         
     def get_field_attributes( self, field_name ):
         fa = ObjectAdmin.get_field_attributes( self, field_name )
         if field_name.startswith( 'column' ) and field_name.endswith('field'):
-            field_choices = [(f,entity_fa['name']) for f,entity_fa in 
-                             self.admin.get_all_fields_and_attributes().items() 
-                             if entity_fa.get('editable', True)]
             fa.update( { 'delegate':delegates.ComboBoxDelegate,
                          'editable':True,
-                         'choices': [(None,'')] + field_choices } )
+                         'choices': [(None,'')] + self.field_choices } )
         return fa
             
     def get_form_display( self ):
