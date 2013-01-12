@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Camelot master\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2012-09-23 19:40+0400\n"
-"PO-Revision-Date: 2012-09-23 19:56+0300\n"
+"POT-Creation-Date: 2013-01-05 01:40+0400\n"
+"PO-Revision-Date: 2013-01-05 02:02+0300\n"
 "Last-Translator: oldbay <oldbay@mail.ru>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -16,39 +16,39 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: camelot/admin/application_admin.py:177
+#: camelot/admin/application_admin.py:178
 msgid "Relations"
 msgstr "Отношения"
 
-#: camelot/admin/application_admin.py:178
+#: camelot/admin/application_admin.py:179
 msgid "Configuration"
 msgstr "Конфигурация"
 
-#: camelot/admin/application_admin.py:344
+#: camelot/admin/application_admin.py:345
 msgid "&File"
 msgstr "&Файл"
 
-#: camelot/admin/application_admin.py:348
+#: camelot/admin/application_admin.py:349
 msgid "Export To"
 msgstr "Экспорт в"
 
-#: camelot/admin/application_admin.py:350
+#: camelot/admin/application_admin.py:351
 msgid "Import From"
 msgstr "Импорт из"
 
-#: camelot/admin/application_admin.py:355
+#: camelot/admin/application_admin.py:356
 msgid "&Edit"
 msgstr "&Правка"
 
-#: camelot/admin/application_admin.py:362
+#: camelot/admin/application_admin.py:363
 msgid "View"
 msgstr "Просмотр"
 
-#: camelot/admin/application_admin.py:364
+#: camelot/admin/application_admin.py:365
 msgid "Go To"
 msgstr "Перейти"
 
-#: camelot/admin/application_admin.py:365
+#: camelot/admin/application_admin.py:366
 msgid "&Help"
 msgstr "&Помошь"
 
@@ -62,7 +62,7 @@ msgstr "Выбрать %s"
 msgid "Are you sure you want to delete this"
 msgstr "Вы уверены, что хотите удалить это"
 
-#: camelot/admin/object_admin.py:862
+#: camelot/admin/object_admin.py:863
 #: camelot/admin/action/application_action.py:145
 #: camelot/admin/action/application_action.py:148
 #: camelot/admin/action/list_action.py:306
@@ -160,19 +160,52 @@ msgstr "Изменить запись"
 msgid "Change the logging configuration of the application"
 msgstr "Изменить конфигурацию регистрации заявки"
 
+#: camelot/admin/action/document.py:57
+msgid "Edit"
+msgstr "Редактироать"
+
+#: camelot/admin/action/document.py:59
+msgid "Edit this document"
+msgstr "Редактировать этот документ"
+
+#: camelot/admin/action/form_action.py:141 camelot/model/memento.py:67
+#: camelot/model/memento.py:68
+msgid "History"
+msgstr "История"
+
 #: camelot/admin/action/form_action.py:142
+msgid "Show recent changes on this form"
+msgstr "Показать последние изменения в этой форме"
+
+#: camelot/admin/action/form_action.py:153
+msgid "Change"
+msgstr "Изменить"
+
+#: camelot/admin/action/form_action.py:154
+msgid "Changes"
+msgstr "Изменения"
+
+#: camelot/admin/action/form_action.py:159
+msgid "Type"
+msgstr "Тип"
+
+#: camelot/admin/action/form_action.py:173
+msgid "Recent changes"
+msgstr "Недавние изменения"
+
+#: camelot/admin/action/form_action.py:181
 msgid "Close"
 msgstr "Закрыть"
 
-#: camelot/admin/action/form_action.py:143
+#: camelot/admin/action/form_action.py:182
 msgid "Close this form"
 msgstr "Закрыть форму"
 
-#: camelot/admin/action/form_action.py:152
+#: camelot/admin/action/form_action.py:191
 msgid "Closing form"
 msgstr "Закрытие формы"
 
-#: camelot/admin/action/form_action.py:172
+#: camelot/admin/action/form_action.py:211
 #: camelot/admin/validator/object_validator.py:184
 msgid "Invalid form"
 msgstr "Ошибка формы"
@@ -195,7 +228,7 @@ msgstr "Удаление"
 #: camelot/admin/action/list_action.py:346
 #: camelot/admin/action/list_action.py:347
 msgid "Previous"
-msgstr "Предпросмотр"
+msgstr "Предыдущий"
 
 #: camelot/admin/action/list_action.py:373
 #: camelot/admin/action/list_action.py:374
@@ -221,42 +254,42 @@ msgstr "Экспорт в MS Excel"
 msgid "Create worksheet"
 msgstr "Создать рабочий лист"
 
-#: camelot/admin/action/list_action.py:570
+#: camelot/admin/action/list_action.py:572
 msgid "Saving file"
 msgstr "Сохранение файл"
 
-#: camelot/admin/action/list_action.py:573
+#: camelot/admin/action/list_action.py:575
 msgid "Opening file"
 msgstr "Открытие файла"
 
-#: camelot/admin/action/list_action.py:580
-#: camelot/admin/action/list_action.py:581
+#: camelot/admin/action/list_action.py:582
+#: camelot/admin/action/list_action.py:583
 #: camelot/view/controls/editors/charteditor.py:88
 msgid "Print Preview"
 msgstr "Предпросмотр печати"
 
-#: camelot/admin/action/list_action.py:604
+#: camelot/admin/action/list_action.py:606
 msgid "Select &All"
 msgstr "Выбрать &все"
 
-#: camelot/admin/action/list_action.py:606
+#: camelot/admin/action/list_action.py:608
 msgid "Select all rows in the table"
 msgstr "Выбрать все строки в таблице"
 
-#: camelot/admin/action/list_action.py:614
 #: camelot/admin/action/list_action.py:616
+#: camelot/admin/action/list_action.py:618
 msgid "Import from file"
-msgstr "Импортировать в файл"
+msgstr "Импортировать из файла"
 
-#: camelot/admin/action/list_action.py:630
+#: camelot/admin/action/list_action.py:632
 msgid "Reading data"
 msgstr "Редактирование данных"
 
-#: camelot/admin/action/list_action.py:651
+#: camelot/admin/action/list_action.py:653
 msgid "Proceed with import"
 msgstr "Продолжить импорт"
 
-#: camelot/admin/action/list_action.py:652
+#: camelot/admin/action/list_action.py:654
 msgid ""
 "Importing data cannot be undone,\n"
 "are you sure you want to continue"
@@ -264,30 +297,30 @@ msgstr ""
 "Импорт данных не может быть отменен,\n"
 "вы уверены что хотите продолжить"
 
-#: camelot/admin/action/list_action.py:674
+#: camelot/admin/action/list_action.py:676
 msgid "Importing data"
 msgstr "Данные импортироваются"
 
-#: camelot/admin/action/list_action.py:682
-#: camelot/view/action_steps/change_object.py:283
+#: camelot/admin/action/list_action.py:684
+#: camelot/view/action_steps/change_object.py:294
 msgid "Replace field contents"
 msgstr "Замените содержимое поля"
 
-#: camelot/admin/action/list_action.py:683
+#: camelot/admin/action/list_action.py:685
 msgid "Replace the content of a field for all rows in a selection"
 msgstr "Заменить содержимое поля для всех выделенных строк"
 
-#: camelot/admin/action/list_action.py:688
+#: camelot/admin/action/list_action.py:690
 msgid "Replacing field"
 msgstr "Замена поля"
 
-#: camelot/admin/action/list_action.py:699
-#: camelot/admin/action/list_action.py:700
+#: camelot/admin/action/list_action.py:701
+#: camelot/admin/action/list_action.py:702
 msgid "Add"
 msgstr "Добавить"
 
-#: camelot/admin/action/list_action.py:733
-#: camelot/admin/action/list_action.py:734
+#: camelot/admin/action/list_action.py:735
+#: camelot/admin/action/list_action.py:736
 msgid "Remove"
 msgstr "Удалить"
 
@@ -359,6 +392,19 @@ msgstr "Восстановление успешно"
 msgid "Could not proceed"
 msgstr "Не удалось перейти"
 
+#: camelot/core/memento.py:73
+msgid "Created"
+msgstr "Создать"
+
+#: camelot/core/memento.py:75
+msgid "Deleted"
+msgstr "Удалить"
+
+#: camelot/core/memento.py:77
+#, python-format
+msgid "%s was %s"
+msgstr "%s было %s"
+
 #: camelot/core/files/storage.py:202
 #, python-format
 msgid "The directory %s does not exist"
@@ -392,24 +438,23 @@ msgstr ""
 "Префикс : %s \n"
 "Суффикс : %s"
 
-#: camelot/model/authentication.py:93
+#: camelot/model/authentication.py:95
 msgid "Authentication mechanism"
 msgstr "Механизм аутентификации"
 
-#: camelot/model/batch_job.py:66
+#: camelot/model/batch_job.py:72
 msgid "Batch job type"
 msgstr "Тип пакетных заданий"
 
-#: camelot/model/batch_job.py:75 camelot/view/database_selection.py:284
+#: camelot/model/batch_job.py:81 camelot/view/database_selection.py:284
 #: camelot/view/action_steps/backup.py:136
 #: camelot/view/action_steps/change_object.py:76
-#: camelot/view/action_steps/change_object.py:160
 #: camelot/view/controls/progress_dialog.py:53
-#: camelot/view/controls/standalone_wizard_page.py:107
+#: camelot/view/controls/standalone_wizard_page.py:106
 msgid "Cancel"
 msgstr "Отмена"
 
-#: camelot/model/batch_job.py:129
+#: camelot/model/batch_job.py:201
 msgid "Batch job"
 msgstr "Пакетное задание"
 
@@ -421,233 +466,217 @@ msgstr "экспорт PO."
 msgid "Translations"
 msgstr "Переводы"
 
-#: camelot/model/memento.py:77 camelot/model/memento.py:78
-msgid "History"
-msgstr "История"
-
-#: camelot/model/party.py:93
+#: camelot/model/party.py:97
 msgid "Country"
 msgstr "Страна"
 
-#: camelot/model/party.py:94
+#: camelot/model/party.py:98
 msgid "Countries"
 msgstr "Страны"
 
-#: camelot/model/party.py:115 camelot/model/party.py:273
+#: camelot/model/party.py:124 camelot/model/party.py:141
 msgid "City"
 msgstr "Город"
 
-#: camelot/model/party.py:116
+#: camelot/model/party.py:125
 msgid "Cities"
 msgstr "Города"
 
-#: camelot/model/party.py:129
-msgid "Relationship"
-msgstr "Взаимоотношение"
-
-#: camelot/model/party.py:130
-msgid "Relationships"
-msgstr "Взаимоотношения"
-
-#: camelot/model/party.py:152
-msgid "Employed by"
-msgstr "Работающие по"
-
-#: camelot/model/party.py:155
-msgid "Employment relation"
-msgstr "Трудовое отношение"
-
-#: camelot/model/party.py:156
-msgid "Employment relations"
-msgstr "Трудовые отношения"
-
-#: camelot/model/party.py:161
-msgid "Employee"
-msgstr "Сотрудник"
-
-#: camelot/model/party.py:164 camelot/model/party.py:170
-#: camelot/model/party.py:211 camelot/model/party.py:227
-#: camelot/model/party.py:233
-msgid "Name"
-msgstr "Имя"
-
-#: camelot/model/party.py:167
-msgid "Employer"
-msgstr "Работодатель"
-
-#: camelot/model/party.py:181
-msgid "Direction structure"
-msgstr "Руководство структурой"
-
-#: camelot/model/party.py:182
-msgid "Direction structures"
-msgstr "Руководство структурами"
-
-#: camelot/model/party.py:185 camelot/model/party.py:247
-#: camelot/model/party.py:539
-msgid "Organization"
-msgstr "Организация"
-
-#: camelot/model/party.py:186 camelot/model/party.py:189
-msgid "Director"
-msgstr "Руководитель"
-
-#: camelot/model/party.py:194
-msgid "Directed organization"
-msgstr "Руководитель организации"
-
-#: camelot/model/party.py:208
-msgid "Represented by"
-msgstr "Представлен"
-
-#: camelot/model/party.py:220
-msgid "Supplier - Customer"
-msgstr "Поставщик - Заказчик"
-
-#: camelot/model/party.py:224
-msgid "Customer"
-msgstr "Заказчик"
-
-#: camelot/model/party.py:230
-msgid "Supplier"
-msgstr "Постащик"
-
-#: camelot/model/party.py:243
-msgid "Shareholder structure"
-msgstr "Акционируемая структура"
-
-#: camelot/model/party.py:244
-msgid "Shareholder structures"
-msgstr "Акционируемые структуры"
-
-#: camelot/model/party.py:248 camelot/model/party.py:251
-msgid "Shareholder"
-msgstr "Акционер"
-
-#: camelot/model/party.py:257 camelot/model/party.py:258
-msgid "Shares"
-msgstr "Акции"
-
-#: camelot/model/party.py:265 camelot/model/party.py:648
-#: camelot/model/party.py:720
+#: camelot/model/party.py:133 camelot/model/party.py:588
+#: camelot/model/party.py:668
 msgid "Address"
 msgstr "Адрес"
 
-#: camelot/model/party.py:268
+#: camelot/model/party.py:136
 msgid "Street"
 msgstr "Улица"
 
-#: camelot/model/party.py:271
+#: camelot/model/party.py:139
 msgid "Street Extra"
 msgstr "Дополнительная улица"
 
-#: camelot/model/party.py:292 camelot/model/party.py:752
+#: camelot/model/party.py:160 camelot/model/party.py:700
 msgid "Contact mechanism"
 msgstr "Механизм связи"
 
-#: camelot/model/party.py:293
+#: camelot/model/party.py:161
 msgid "Contact mechanisms"
 msgstr "Механизмы связи"
 
-#: camelot/model/party.py:302
+#: camelot/model/party.py:169
 msgid "Mechanism"
 msgstr "Механизм"
 
-#: camelot/model/party.py:445
-msgid "Party"
-msgstr "Пария"
-
-#: camelot/model/party.py:446
-msgid "Parties"
-msgstr "Партии"
-
-#: camelot/model/party.py:462
-msgid "male"
-msgstr "мужчина"
-
-#: camelot/model/party.py:462
-msgid "female"
-msgstr "женьщина"
-
-#: camelot/model/party.py:467
-msgid "Email"
-msgstr "Э. почта"
-
-#: camelot/model/party.py:473
-msgid "Phone"
-msgstr "Телефон"
-
-#: camelot/model/party.py:479
-msgid "Fax"
-msgstr "Факс"
-
-#: camelot/model/party.py:540
-msgid "Organizations"
-msgstr "Организации"
-
-#: camelot/model/party.py:542 camelot/model/party.py:599
-msgid "Basic"
-msgstr "Основной"
-
-#: camelot/model/party.py:546
-msgid "Employment"
-msgstr "Занятость"
-
-#: camelot/model/party.py:547
-msgid "Customers"
-msgstr "Клиенты"
-
-#: camelot/model/party.py:548
-msgid "Suppliers"
-msgstr "Поставщики"
-
-#: camelot/model/party.py:549
-msgid "Corporate"
-msgstr "Корпоративный"
-
-#: camelot/model/party.py:550
-msgid "Branding"
-msgstr "Брендинг"
-
-#: camelot/model/party.py:551
-msgid "Category and Status"
-msgstr "Категория и статус"
-
-#: camelot/model/party.py:584
+#: camelot/model/party.py:377
 msgid "A person with the same name already exists"
 msgstr "Человек с таким именем уже существует"
 
-#: camelot/model/party.py:596
-msgid "Person"
-msgstr "Человек"
+#: camelot/model/party.py:400
+msgid "Relationship"
+msgstr "Взаимоотношение"
 
-#: camelot/model/party.py:597
-msgid "Persons"
-msgstr "Люди"
+#: camelot/model/party.py:401
+msgid "Relationships"
+msgstr "Взаимоотношения"
 
-#: camelot/model/party.py:609
-msgid "Official"
-msgstr "Оффициальный"
+#: camelot/model/party.py:428
+msgid "Employed by"
+msgstr "Работающие по"
 
-#: camelot/model/party.py:611
-msgid "Work"
-msgstr "Работа"
+#: camelot/model/party.py:431
+msgid "Employment relation"
+msgstr "Трудовое отношение"
 
-#: camelot/model/party.py:612 camelot/model/party.py:848
-msgid "Category"
-msgstr "Категория"
+#: camelot/model/party.py:432
+msgid "Employment relations"
+msgstr "Трудовые отношения"
 
-#: camelot/model/party.py:649 camelot/model/party.py:721
+#: camelot/model/party.py:437
+msgid "Employee"
+msgstr "Сотрудник"
+
+#: camelot/model/party.py:440 camelot/model/party.py:446
+#: camelot/model/party.py:493 camelot/model/party.py:514
+#: camelot/model/party.py:520
+msgid "Name"
+msgstr "Имя"
+
+#: camelot/model/party.py:443
+msgid "Employer"
+msgstr "Работодатель"
+
+#: camelot/model/party.py:463
+msgid "Direction structure"
+msgstr "Руководство структурой"
+
+#: camelot/model/party.py:464
+msgid "Direction structures"
+msgstr "Руководство структурами"
+
+#: camelot/model/party.py:467 camelot/model/party.py:539
+#: camelot/model/party.py:844
+msgid "Organization"
+msgstr "Организация"
+
+#: camelot/model/party.py:468 camelot/model/party.py:471
+msgid "Director"
+msgstr "Руководитель"
+
+#: camelot/model/party.py:476
+msgid "Directed organization"
+msgstr "Руководитель организации"
+
+#: camelot/model/party.py:490
+msgid "Represented by"
+msgstr "Представлен"
+
+#: camelot/model/party.py:507
+msgid "Supplier - Customer"
+msgstr "Поставщик - Заказчик"
+
+#: camelot/model/party.py:511
+msgid "Customer"
+msgstr "Заказчик"
+
+#: camelot/model/party.py:517
+msgid "Supplier"
+msgstr "Постащик"
+
+#: camelot/model/party.py:535
+msgid "Shareholder structure"
+msgstr "Акционируемая структура"
+
+#: camelot/model/party.py:536
+msgid "Shareholder structures"
+msgstr "Акционируемые структуры"
+
+#: camelot/model/party.py:540 camelot/model/party.py:543
+msgid "Shareholder"
+msgstr "Акционер"
+
+#: camelot/model/party.py:549 camelot/model/party.py:550
+msgid "Shares"
+msgstr "Акции"
+
+#: camelot/model/party.py:589 camelot/model/party.py:669
 msgid "Addresses"
 msgstr "Адреса"
 
-#: camelot/model/party.py:737
+#: camelot/model/party.py:685
 msgid "Address role type"
 msgstr "Адрес типа роли"
 
-#: camelot/model/party.py:849
+#: camelot/model/party.py:784 camelot/model/party.py:879
+msgid "Category"
+msgstr "Категория"
+
+#: camelot/model/party.py:785
 msgid "Categories"
 msgstr "Категории"
+
+#: camelot/model/party.py:789
+msgid "Party"
+msgstr "Пария"
+
+#: camelot/model/party.py:790
+msgid "Parties"
+msgstr "Партии"
+
+#: camelot/model/party.py:806
+msgid "male"
+msgstr "мужчина"
+
+#: camelot/model/party.py:806
+msgid "female"
+msgstr "женьщина"
+
+#: camelot/model/party.py:845
+msgid "Organizations"
+msgstr "Организации"
+
+#: camelot/model/party.py:847 camelot/model/party.py:866
+msgid "Basic"
+msgstr "Основной"
+
+#: camelot/model/party.py:851
+msgid "Employment"
+msgstr "Занятость"
+
+#: camelot/model/party.py:852
+msgid "Customers"
+msgstr "Клиенты"
+
+#: camelot/model/party.py:853
+msgid "Suppliers"
+msgstr "Поставщики"
+
+#: camelot/model/party.py:854
+msgid "Corporate"
+msgstr "Корпоративный"
+
+#: camelot/model/party.py:855
+msgid "Branding"
+msgstr "Брендинг"
+
+#: camelot/model/party.py:856
+msgid "Category and Status"
+msgstr "Категория и статус"
+
+#: camelot/model/party.py:863
+msgid "Person"
+msgstr "Человек"
+
+#: camelot/model/party.py:864
+msgid "Persons"
+msgstr "Люди"
+
+#: camelot/model/party.py:876
+msgid "Official"
+msgstr "Оффициальный"
+
+#: camelot/model/party.py:878
+msgid "Work"
+msgstr "Работа"
 
 #: camelot/view/action.py:77
 msgid "Copy"
@@ -677,8 +706,7 @@ msgstr "Выберите сохранённый профиль:"
 #: camelot/view/database_selection.py:285
 #: camelot/view/action_steps/backup.py:137
 #: camelot/view/action_steps/change_object.py:78
-#: camelot/view/action_steps/change_object.py:161
-#: camelot/view/controls/standalone_wizard_page.py:108
+#: camelot/view/controls/standalone_wizard_page.py:105
 msgid "OK"
 msgstr "ОК"
 
@@ -996,15 +1024,7 @@ msgstr "Пожалуйста, заполните"
 msgid "Complete the form and press the OK button"
 msgstr "Заполните форму и нажмите кнопку ОК"
 
-#: camelot/view/action_steps/change_object.py:136
-msgid "Data Preview"
-msgstr "Предпросмотр данных"
-
-#: camelot/view/action_steps/change_object.py:137
-msgid "Please review the data below."
-msgstr "Пожалуйста, ознакомьтесь с данным ниже."
-
-#: camelot/view/action_steps/change_object.py:191
+#: camelot/view/action_steps/change_object.py:175
 msgid ""
 "Please correct the data above before proceeding with the import.<br/"
 ">Incorrect cells have a pink background."
@@ -1012,13 +1032,30 @@ msgstr ""
 "Пожалуйста, исправьте перечисленные выше данные, прежде чем приступить к "
 "импорту.<br/>Некорректные ячейки выделены розовым фоном."
 
-#: camelot/view/action_steps/change_object.py:284
+#: camelot/view/action_steps/change_object.py:243
+msgid "Data Preview"
+msgstr "Предпросмотр данных"
+
+#: camelot/view/action_steps/change_object.py:244
+msgid "Please review the data below."
+msgstr "Пожалуйста, ознакомьтесь с данным ниже."
+
+#: camelot/view/action_steps/change_object.py:295
 msgid "Select the field to update and enter its new value"
 msgstr "Выберите поле для обновления и введите его новое значение"
 
 #: camelot/view/action_steps/gui.py:151
 msgid "Message"
 msgstr "Сообщение"
+
+#: camelot/view/action_steps/text_edit.py:68
+#: camelot/view/action_steps/text_edit.py:69
+msgid "Edit text"
+msgstr "Редактировать текст"
+
+#: camelot/view/action_steps/text_edit.py:70
+msgid "Press OK when finished"
+msgstr "Нажмите ОК для завершения"
 
 #: camelot/view/controls/calculator.py:43
 msgid "Calculator"
@@ -1176,14 +1213,20 @@ msgstr "лет"
 msgid " months"
 msgstr "месяцев"
 
+#~ msgid "Email"
+#~ msgstr "Э. почта"
+
+#~ msgid "Phone"
+#~ msgstr "Телефон"
+
+#~ msgid "Fax"
+#~ msgstr "Факс"
+
 #~ msgid "Update"
 #~ msgstr "Обновление"
 
 #~ msgid "Deletes"
 #~ msgstr "Удаления"
-
-#~ msgid "Create"
-#~ msgstr "Создание"
 
 #~ msgid "Creates"
 #~ msgstr "Создания"
