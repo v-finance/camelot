@@ -66,6 +66,20 @@ class AbstractActionWidget( object ):
         gui_context = self.gui_context.copy()
         gui_context.mode_name = mode
         self.action.gui_run( gui_context )
+        
+    def set_menu( self, state ):
+        """This method creates a menu for an object with as its menu items
+        the different modes in which an action can be triggered.
+        
+        :param state: a `camelot.admin.action.State` object
+        """
+        if state.modes:
+            menu = QtGui.QMenu()
+            for mode in state.modes:
+                mode_action = mode.render( menu )
+                mode_action.triggered.connect( self.triggered )
+                menu.addAction( mode_action )
+            self.setMenu( menu )        
 
 HOVER_ANIMATION_DISTANCE = 20
 NOTIFICATION_ANIMATION_DISTANCE = 8
@@ -334,17 +348,14 @@ class ActionLabel( QtGui.QLabel, AbstractActionWidget ):
             notificationAnimationTimer.stop()
             notificationAnimation.stop()
         
-class ActionAction( QtGui.QAction ):
+class ActionAction( QtGui.QAction, AbstractActionWidget ):
     
     def __init__( self, action, gui_context, parent ):
-        super( ActionAction, self ).__init__( parent )
-        self.action = action
+        QtGui.QAction.__init__( self, parent )
+        AbstractActionWidget.__init__( self, action, gui_context )
         if action.shortcut != None:
             self.setShortcut( action.shortcut )
-        post( action.get_state, 
-              self.set_state, 
-              args = (gui_context.create_model_context(),) )
-
+        
     @QtCore.pyqtSlot( object )
     def set_state( self, state ):
         if state.verbose_name != None:
@@ -361,6 +372,7 @@ class ActionAction( QtGui.QAction ):
             self.setToolTip( '' )
         self.setEnabled( state.enabled )
         self.setVisible( state.visible )
+        self.set_menu( state )
         
 class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
     
@@ -395,11 +407,6 @@ class ActionPushButton( QtGui.QPushButton, AbstractActionWidget ):
             self.setIcon( state.icon.getQIcon() )
         else:
             self.setIcon( QtGui.QIcon() )
-        if state.modes:
-            menu = QtGui.QMenu( self )
-            for mode in state.modes:
-                mode_action = mode.render( menu )
-                mode_action.triggered.connect( self.triggered )
-                menu.addAction( mode_action )
-            self.setMenu( menu )
+        self.set_menu( state )
+
 

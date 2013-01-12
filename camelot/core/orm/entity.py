@@ -13,10 +13,9 @@ from sqlalchemy.ext.declarative import ( _declarative_constructor,
                                          DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 
-from . fields import Field
 from . statements import MUTATORS
 from . properties import EntityBuilder, Property
-from . import options, options_defaults, Session
+from . import Session, options
 
 class EntityDescriptor(object):
     """
@@ -41,7 +40,7 @@ class EntityDescriptor(object):
         self.counter = EntityDescriptor.global_counter
         EntityDescriptor.global_counter += 1
         # set default value for other options
-        for key, value in options_defaults.items():
+        for key, value in options.options_defaults.items():
             if isinstance( value, dict ):
                 value = value.copy()
             setattr( self, key, value )        

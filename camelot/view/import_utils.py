@@ -164,6 +164,17 @@ class ColumnMappingAdmin( ObjectAdmin ):
                    'column_%i_field'%i ] for i in range( columns ) 
                                  ]
         return forms.Form( [ forms.GridForm( rows ) ], scrollbars = True )
+    
+class ColumnSelectionAdmin( ColumnMappingAdmin ):
+    """Admin to edit a `ColumnMapping` class without data preview
+    """
+    
+    form_actions = []
+    
+    def get_form_display( self ):
+        columns = self.columns
+        return forms.Form( [ 'column_%i_field'%i for i in range( columns ) ], 
+                           scrollbars = True )    
 
 # see http://docs.python.org/library/csv.html
 class UTF8Recoder( object ):

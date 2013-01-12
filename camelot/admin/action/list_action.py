@@ -26,7 +26,7 @@ import copy
 import datetime
 import logging
 
-from camelot.admin.action.base import Action
+from .base import Action
 from application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
@@ -423,20 +423,37 @@ class ExportSpreadsheet( ListContextAction ):
     icon = Icon('tango/16x16/mimetypes/x-office-spreadsheet.png')
     tooltip = _('Export to MS Excel')
     verbose_name = _('Export to MS Excel')
+    
     font_name = 'Arial'
     
     def model_run( self, model_context ):
         from decimal import Decimal
         from xlwt import Font, Borders, XFStyle, Pattern, Workbook
+        from camelot.view.import_utils import ( RowData, 
+                                                ColumnMapping,
+                                                ColumnSelectionAdmin )        
         from camelot.view.utils import ( local_date_format, 
                                          local_datetime_format,
                                          local_time_format )
         from camelot.view import action_steps
         #
+        # Select the columns that need to be exported
+        # 
+        admin = model_context.admin
+        all_fields = admin.get_all_fields_and_attributes()
+        row_data = RowData( 1, [None] * len( all_fields ) )
+        mapping = ColumnMapping( len( all_fields ), [row_data], admin )
+        mapping_admin = ColumnSelectionAdmin( len( all_fields ), admin )
+        yield action_steps.ChangeObject( mapping, mapping_admin )
+        columns = []
+        for i in range( len( all_fields ) ):
+            field = getattr( mapping, 'column_%i_field'%i )
+            if field != None:
+                columns.append( ( field, all_fields[field] ) )
+        #
         # setup worksheet
         #
         yield action_steps.UpdateProgress( text = _('Create worksheet') )
-        admin = model_context.admin
         workbook = Workbook()
         worksheet = workbook.add_sheet('Sheet1')
         #
@@ -492,7 +509,6 @@ class ExportSpreadsheet( ListContextAction ):
         #
         # write headers
         #
-        columns = admin.get_columns()
         field_names = []
         for i, (name, field_attributes) in enumerate( columns ):
             verbose_name = unicode( field_attributes.get( 'name', name ) )
