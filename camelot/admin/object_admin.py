@@ -238,7 +238,6 @@ be specified using the verbose_name attribute.
     form_display = []
     form_close_action = CloseForm()
     list_filter = []
-    list_charts = []
     list_actions = []
     list_size = (600, 600)
     form_size = (700, 500)

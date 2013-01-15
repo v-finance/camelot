@@ -358,10 +358,6 @@ It has additional class attributes that customise its behaviour.
                 if all_attributes.get('direction', False) in directions:
                     attributes['editable'] = False
             yield attributes
-            
-    @model_function
-    def get_list_charts(self):
-        return self.list_charts
 
     @model_function
     def get_filters( self ):
