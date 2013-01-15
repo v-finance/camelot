@@ -26,6 +26,7 @@ from PyQt4 import QtCore, QtGui
 
 from camelot.admin.action import ( ActionStep,
                                    DocumentActionGuiContext )
+from camelot.admin.action.document_action import EditDocument
 from camelot.core.templates import environment
 from camelot.view.action_steps.open_file import OpenFile
 from camelot.view.utils import resize_widget_to_screen
@@ -147,7 +148,6 @@ class PrintPreview( ActionStep ):
         self.config_printer()
         gui_context = gui_context.copy( DocumentActionGuiContext )
         gui_context.document = self.document
-        from camelot.admin.action.document import EditDocument
         dialog = PrintPreviewDialog( self.printer, 
                                      gui_context, 
                                      actions = [EditDocument()],

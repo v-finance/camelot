@@ -25,7 +25,7 @@
 from application_action import ( ApplicationActionGuiContext,
                                  OpenNewView, OpenTableView)
 from base import Action, ActionStep, GuiContext, Mode, State
-from document import DocumentActionGuiContext
+from document_action import DocumentActionGuiContext
 from list_action import ListActionGuiContext, CallMethod, OpenFormView
 
 __all__ = [
