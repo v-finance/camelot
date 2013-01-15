@@ -562,28 +562,6 @@ class HeaderWidget( QtGui.QWidget ):
         assert object_thread( self )
         if self.number_of_rows:
             self.number_of_rows.setNumberOfRows( rows )
-
-class SplitterHandle( QtGui.QSplitterHandle ):
-    """Custom implementation of QSplitterHandle to provide more functions, 
-    such as hiding a widget by clicking the handle"""
-    
-    def __init__ (self, orientation, splitter, widget_to_hide = None):
-        super(SplitterHandle, self).__init__ (orientation, splitter)
-        assert object_thread( self )
-        self.setToolTip('Click to close')
-        self._widget_to_hide = widget_to_hide
-        
-    def mousePressEvent(self, event):
-        assert object_thread( self )
-        splitter = self.splitter()
-        splitter.widget( splitter.count() - 1 ).hide()
-        
-class Splitter(QtGui.QSplitter):
-    """Custom implementation of QSplitter to use the custom SplitterHandle"""
-    
-    def createHandle(self):
-        assert object_thread( self )
-        return SplitterHandle( self.orientation(), self, self._widget_to_hide )
     
 class TableView( AbstractView  ):
     """
