@@ -71,14 +71,6 @@ class LazyProxy(list):
         LOGGER.warning( u'no such settings attribute : %s'%name )
         raise AttributeError()
         
-    def __hasattr__(self, name):
-        if not len(self):
-            self.append_settings_module()
-        for target in self:
-            if hasattr(target, name):
-                return True
-        return False
-        
     def append_settings_module(self):
         """Import the 'settings' module and append it as a target to
         the list of targets.  This function will be called, if no other

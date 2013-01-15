@@ -64,8 +64,26 @@ class ConfCase(unittest.TestCase):
     
     def test_import_settings(self):
         from camelot.core.conf import settings
+        self.assertEqual( settings.get('FOO', None), None )
         self.assertRaises( AttributeError, lambda:settings.FOO )
         self.assertTrue( settings.CAMELOT_MEDIA_ROOT.endswith( 'media' ) )
+        self.assertFalse( hasattr( settings, 'FOO' ) )
+        
+        class AdditionalSettings( object ):
+            FOO = True
+            
+        settings.append( AdditionalSettings() )
+        self.assertTrue( hasattr( settings, 'FOO' ) )
+        try:
+            settings.append_settings_module()
+        except ImportError:
+            pass
+        
+    def test_simple_settings(self):
+        from camelot.core.conf import SimpleSettings
+        settings = SimpleSettings( 'Conceptive Engineering', 'Camelot Test')
+        self.assertTrue( settings.ENGINE() )
+        self.assertTrue( settings.CAMELOT_MEDIA_ROOT() )
         
 class AutoReloadCase( ModelThreadTestCase ):
     """Test the auto reload functions"""
