@@ -21,6 +21,14 @@ class ModelCase( ModelThreadTestCase ):
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin( Person )
         
+    def test_i18n( self ):
+        from camelot.model.i18n import Translation
+        session = Session()
+        session.execute( Translation.__table__.delete() )
+        self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), None )
+        Translation.translate_or_register( 'bucket', 'nl_BE' )
+        self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'bucket' )
+        
     def test_batch_job( self ):
         from camelot.model.batch_job import BatchJob, BatchJobType
         batch_job_type = BatchJobType.get_or_create( u'Synchronize' )

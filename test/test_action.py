@@ -4,7 +4,7 @@ import os
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
-from camelot.admin.action import Action, GuiContext
+from camelot.admin.action import Action, GuiContext, ActionStep
 from camelot.admin.action import list_action, application_action
 from camelot.core.utils import pyqt, ugettext_lazy as _
 from camelot.test import ModelThreadTestCase
@@ -12,6 +12,26 @@ from camelot.test.action import MockModelContext
 from camelot.view import action_steps
 
 from test_view import static_images_path
+
+class ActionBaseCase( ModelThreadTestCase ):
+
+    def setUp(self):
+        ModelThreadTestCase.setUp(self)
+        self.gui_context = GuiContext()
+        
+    def test_action_step( self ):
+        step = ActionStep()
+        step.gui_run( self.gui_context )
+        
+    def test_action( self ):
+        
+        class CustomAction( Action ):
+            shortcut = QtGui.QKeySequence.New
+        
+        action = CustomAction()
+        action.gui_run( self.gui_context )
+        self.assertTrue( action.get_name() )
+        self.assertTrue( action.get_shortcut() )
 
 class ActionWidgetsCase( ModelThreadTestCase ):
     """Test widgets related to actions.
@@ -336,17 +356,21 @@ class ApplicationActionsCase( ModelThreadTestCase ):
     def setUp(self):
         from camelot.admin.application_admin import ApplicationAdmin
         from camelot.core.files.storage import Storage
+        from camelot.view.workspace import DesktopWorkspace
         ModelThreadTestCase.setUp(self)
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.storage = Storage()
+        self.gui_context = application_action.ApplicationActionGuiContext()
+        self.gui_context.admin = self.app_admin
+        self.gui_context.workspace = DesktopWorkspace( self.app_admin, None )
 
     def test_refresh( self ):
         from camelot.core.orm import Session
         from camelot.model.party import Person
         refresh_action = application_action.Refresh()
         session = Session()
-        #
+        session.expunge_all()
         # create objects in various states
         #
         p1 = Person(first_name = u'p1', last_name = u'persistent' )
@@ -388,3 +412,23 @@ class ApplicationActionsCase( ModelThreadTestCase ):
                 dialog.show()
                 self.grab_widget( dialog, suffix = 'restore' ) 
                 generator.send( ('unittest', self.storage) )
+
+    def test_show_help( self ):
+        show_help_action = application_action.ShowHelp()
+        show_help_action.gui_run( self.gui_context )
+        
+    def test_change_logging( self ):
+        change_logging_action = application_action.ChangeLogging()
+        change_logging_action.model_run( self.context )
+
+    def test_open_table_view( self ):
+        from camelot.model.party import Person
+        person_admin = self.app_admin.get_related_admin( Person )
+        open_table_view_action = application_action.OpenTableView( person_admin )
+        open_table_view_action.gui_run( self.gui_context )
+
+    def test_open_new_view( self ):
+        from camelot.model.party import Person
+        person_admin = self.app_admin.get_related_admin( Person )
+        open_new_view_action = application_action.OpenNewView( person_admin )
+        open_new_view_action.gui_run( self.gui_context )
