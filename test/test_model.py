@@ -37,6 +37,7 @@ class ModelCase( ModelThreadTestCase ):
         orm.object_session( authentication ).expunge_all()
         authentication = get_current_authentication()
         self.assertTrue( authentication.username )
+        self.assertTrue( unicode( authentication ) )
         
     def test_person_contact_mechanism( self ):
         from camelot.model.party import Person

@@ -115,19 +115,6 @@ class GarbageCollectionCase( unittest.TestCase ):
             import sys
             self.application = QtGui.QApplication(sys.argv)
         
-    def test_custom_garbage_collectory( self ):
-        from camelot.view.model_thread.garbage_collector import GarbageCollector
-        initial = count_alive()
-        collector = GarbageCollector(None, debug=True)
-        collector._threshold = [0, 0, 0]
-        self.assertFalse( alive(initial) )
-        cycle = CyclicWidget()
-        self.assertTrue( alive(initial) )
-        del cycle
-        self.assertTrue( alive(initial) )
-        collector._check()
-        self.assertFalse( alive(initial) )
-        
     def test_cyclic_dependency( self ):
         """Create 2 widgets with a cyclic dependency, so that they can
         only be removed by the garbage collector, and then invoke the

@@ -69,11 +69,7 @@ class Change( object ):
         self.at = row.at
         self.by = row.by
         self.changes = None
-        if self.type == 'create':
-            self.changes = ugettext('Created')
-        elif self.type == 'before_delete':
-            self.changes = ugettext('Deleted')
-        elif row.previous_attributes:
+        if row.previous_attributes:
             self.changes = u', '.join( ugettext('%s was %s')%(k,unicode(v)) for k,v in row.previous_attributes.items() )
         self.memento_type = row.memento_type
         
