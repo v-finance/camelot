@@ -727,8 +727,11 @@ be specified using the verbose_name attribute.
                     # one-to-many field might have a default value as well
                     continue
                 if isinstance(default, ColumnDefault):
-                    print field, default
-                    default_value = default.execute()
+                    if default.is_scalar:
+                        # avoid trip to database
+                        default_value = default.arg
+                    else:
+                        default_value = default.execute()
                 elif callable(default):
                     import inspect
                     args, _varargs, _kwargs, _defs = \
