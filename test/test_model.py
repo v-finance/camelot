@@ -115,13 +115,17 @@ class StatusCase( TestMetaData ):
         ready = Invoice._status_type( code = 'READY' )
         session.flush()
         #end status types definition
+        self.assertTrue( unicode( ready ) )
         #begin status type use
         invoice = Invoice( book_date = datetime.date.today() )
         self.assertEqual( invoice.current_status, None )
         invoice.change_status( draft, status_from_date = datetime.date.today() )
+        #end status type use
         self.assertEqual( invoice.current_status, draft )
         self.assertEqual( invoice.get_status_from_date( draft ), datetime.date.today() )
-        #end status type use
+        self.assertTrue( len( invoice.status ) )
+        for history in invoice.status:
+            self.assertTrue( unicode( history ) )
         
     def test_status_enumeration( self ):
         Entity, session = self.Entity, self.session
