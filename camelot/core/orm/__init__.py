@@ -122,27 +122,6 @@ Entity = declarative_base( cls = EntityBase,
                            constructor = None,
                            name = 'Entity' )
 
-@contextlib.contextmanager
-def SessionTransaction( session = None, 
-                        subtransactions = False, 
-                        nested = False ):
-    """Context manager to run a block within a transaction and roll back if an 
-    exception is raised.
-    
-    :param session: a :class:`sqlalchemy.orm.session.Session` object, if `None`
-        is given, the default session is used.
-    """
-    if session == None:
-        session = Session()
-    transaction = session.begin( subtransactions = subtransactions, 
-                                 nested = nested )
-    try:
-        yield transaction
-        session.commit()
-    except:
-        session.rollback()
-        raise    
-
 __all__ = [ obj.__name__  for obj in [ Entity, EntityBase, EntityMeta, 
             EntityCollection, Field, has_field,
             has_property, GenericProperty, ColumnProperty,
