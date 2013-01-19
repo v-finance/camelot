@@ -87,13 +87,7 @@ be specified using the verbose_name attribute.
 .. attribute:: list_display
 
     a list with the fields that should be displayed in a table view
-
-.. attribute:: list_columns_frozen
-
-    the number of columns on the left of the tableview that should be frozen
-    (don't dissapear when the user uses the horizontal scroll bar), defaults
-    to zero
-
+    
 .. attribute:: lines_per_row
 
     An integer number specifying the height of a row in the table view, expressed
@@ -230,7 +224,6 @@ be specified using the verbose_name attribute.
     verbose_name = None
     verbose_name_plural = None
     list_display = []
-    list_columns_frozen = 0
     lines_per_row = 1
     validator = ObjectValidator
     model = CollectionProxy

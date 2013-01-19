@@ -44,30 +44,6 @@ from camelot.view.model_thread import model_function
 from camelot.view import register
 
 from search import SimpleSearchControl
-
-class FrozenTableWidget( QtGui.QTableView ):
-    """A table widget to be used as the frozen table widget inside a table
-    widget."""
-
-    def __init__(self, parent, columns_frozen):
-        super(FrozenTableWidget, self).__init__(parent)
-        assert object_thread( self )
-        self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
-        self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked |
-                              QtGui.QAbstractItemView.DoubleClicked |
-                              QtGui.QAbstractItemView.CurrentChanged )
-        self._columns_frozen = columns_frozen
-
-    @QtCore.pyqtSlot(QtCore.QModelIndex, QtCore.QModelIndex)
-    def currentChanged(self, current, previous):
-        """When the current index has changed, prevent it to jump to
-        a column that is not frozen"""
-        assert object_thread( self )
-        if current.column() >= self._columns_frozen:
-            current = self.model().index( current.row(), -1 )
-        if previous.column() >= self._columns_frozen:
-            previous = self.model().index( previous.row(), -1 )
-        super(FrozenTableWidget, self).currentChanged(current, previous)
         
 class ColumnGroupsWidget( QtGui.QTabBar ):
     """A tabbar the user can use to select a group of columns within an
@@ -120,10 +96,8 @@ class ColumnGroupsWidget( QtGui.QTabBar ):
                                                    tab_index != current_index )
 
 class TableWidget( QtGui.QTableView ):
-    """A widget displaying a table, to be used within a TableView.  This is a
-pumped up version of the QTableView widget providing extra functions such as
-frozen columns.  But it does not rely on the model being Camelot specific, or
-a Collection Proxy.
+    """A widget displaying a table, to be used within a TableView.  But it does 
+not rely on the model being Camelot specific, or a Collection Proxy.
 
 .. attribute:: margin
 
@@ -131,20 +105,17 @@ margin, specified as a number of pixels, used to calculate the height of a row
 in the table, the minimum row height will allow for this number of pixels below
 and above the text.
 
+:param lines_per_row: the number of lines of text that should be viewable in a single row.
+
 """
 
     margin = 5
     keyboard_selection_signal = QtCore.pyqtSignal()
 
-    def __init__( self, parent = None, columns_frozen = 0, lines_per_row = 1 ):
-        """
-:param columns_frozen: the number of columns on the left that don't scroll
-:param lines_per_row: the number of lines of text that should be viewable in a single row.
-        """
+    def __init__( self, lines_per_row = 1, parent = None ):
         QtGui.QTableView.__init__( self, parent )
         logger.debug( 'create TableWidget' )
         assert object_thread( self )
-        self._columns_frozen = columns_frozen
         self._columns_changed = dict()
         self.setSelectionBehavior( QtGui.QAbstractItemView.SelectRows )
         self.setEditTriggers( QtGui.QAbstractItemView.SelectedClicked |
@@ -162,32 +133,6 @@ and above the text.
         self.horizontalHeader().sectionClicked.connect(
             self.horizontal_section_clicked )
         self.horizontalHeader().sectionResized.connect( self._save_section_width )
-        if columns_frozen:
-            frozen_table_view = FrozenTableWidget(self, columns_frozen)
-            frozen_table_view.setObjectName( 'frozen_table_view' )
-            frozen_table_view.verticalHeader().setDefaultSectionSize( self._minimal_row_height )
-            frozen_table_view.verticalHeader().hide()
-            frozen_table_view.horizontalHeader().setResizeMode(QtGui.QHeaderView.Fixed)
-            frozen_table_view.horizontalHeader().sectionClicked.connect(
-                self.horizontal_section_clicked )
-            self.horizontalHeader().sectionResized.connect( self._update_section_width )
-            self.verticalHeader().sectionResized.connect( self._update_section_height )
-            frozen_table_view.verticalScrollBar().valueChanged.connect( self.verticalScrollBar().setValue )
-            self.verticalScrollBar().valueChanged.connect( frozen_table_view.verticalScrollBar().setValue )
-            self.viewport().stackUnder(frozen_table_view)
-            frozen_table_view.setStyleSheet("QTableView { border: none;}")
-            frozen_table_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-            frozen_table_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-            frozen_table_view.show()
-            frozen_table_view.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
-
-    @QtCore.pyqtSlot(int, int, int)
-    def _update_section_width(self, logical_index, _old_size, new_size):
-        assert object_thread( self )
-        frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
-        if logical_index < self._columns_frozen and frozen_table_view:
-            frozen_table_view.setColumnWidth( logical_index, new_size)
-            self._update_frozen_table()
             
     def timerEvent( self, event ):
         """On timer event, save changed column widths to the model
@@ -225,82 +170,6 @@ and above the text.
         assert object_thread( self )
         self._columns_changed[ logical_index ] = new_width
 
-    @QtCore.pyqtSlot(int, int, int)
-    def _update_section_height(self, logical_index, _int, new_size):
-        assert object_thread( self )
-        frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
-        if frozen_table_view:
-            frozen_table_view.setRowHeight(logical_index, new_size)
-
-    def setItemDelegate(self, item_delegate):
-        assert object_thread( self )
-        super(TableWidget, self).setItemDelegate(item_delegate)
-        frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
-        if frozen_table_view:
-            frozen_table_view.setItemDelegate(item_delegate)
-
-    def resizeEvent(self, event):
-        assert object_thread( self )
-        super(TableWidget, self).resizeEvent(event)
-        self._update_frozen_table()
-
-    def moveCursor(self, cursorAction, modifiers):
-        assert object_thread( self )
-        current = super(TableWidget, self).moveCursor(cursorAction, modifiers)
-        frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
-        if frozen_table_view:
-            frozen_width = 0
-            last_frozen =  min(self._columns_frozen, self.model().columnCount())
-            for column in range(0, last_frozen):
-                frozen_width += self.columnWidth(column)
-            if cursorAction == QtGui.QAbstractItemView.MoveLeft and current.column() >= last_frozen and \
-               self.visualRect(current).topLeft().x() < frozen_width:
-                new_value = self.horizontalScrollBar().value() + self.visualRect(current).topLeft().x() - frozen_width
-                self.horizontalScrollBar().setValue(new_value)
-        return current
-
-    def scrollTo(self, index, hint):
-        assert object_thread( self )
-        if(index.column()>=self._columns_frozen):
-            super(TableWidget, self).scrollTo(index, hint)
-
-    def edit(self, index, trigger=None, event=None):
-        assert object_thread( self )
-        #
-        # columns in the frozen part should never be edited, because this might result
-        # in an editor opening below the frozen column that contains the old value
-        # which will be committed again when closed
-        #
-        if index.column() >= self._columns_frozen:
-            if trigger==None and event==None:
-                return super( TableWidget, self ).edit( index )
-            return super( TableWidget, self ).edit( index, trigger, event )
-        return False
-
-    @QtCore.pyqtSlot()
-    def _update_frozen_table(self):
-        assert object_thread( self )
-        frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
-        if frozen_table_view:
-            selection_model = self.selectionModel()
-            if selection_model != None: 
-                # explicitly check if there is a selection model, because
-                # setting the selection model to None will cause an assertion
-                # failure in Qt
-                frozen_table_view.setSelectionModel( selection_model )
-            last_frozen =  min(self._columns_frozen, self.model().columnCount())
-            frozen_width = 0
-            for column in range(0, last_frozen):
-                frozen_width += self.columnWidth( column )
-                frozen_table_view.setColumnWidth( column,
-                                                  self.columnWidth(column) )
-            for column in range(last_frozen, self.model().columnCount()):
-                frozen_table_view.setColumnHidden(column, True)
-            frozen_table_view.setGeometry( self.verticalHeader().width() + self.frameWidth(),
-                                           self.frameWidth(),
-                                           frozen_width,
-                                           self.viewport().height() + self.horizontalHeader().height() )
-
     @QtCore.pyqtSlot( int )
     def horizontal_section_clicked( self, logical_index ):
         """Update the sorting of the model and the header"""
@@ -327,12 +196,7 @@ and above the text.
         current_index = self.currentIndex()
         if not current_index:
             return
-        if(current_index.column()>=self._columns_frozen):
-            table_widget = self
-        else:
-            table_widget = self.findChild(QtGui.QWidget, 'frozen_table_view' )
-        if table_widget:
-            table_widget.closePersistentEditor( current_index )
+        self.closePersistentEditor( current_index )
                 
     def setModel( self, model ):
         assert object_thread( self )
@@ -346,11 +210,6 @@ and above the text.
         # Editor, closed. it should be safe to change the model
         #
         QtGui.QTableView.setModel( self, model )
-        frozen_table_view = self.findChild(QtGui.QWidget, 'frozen_table_view' )
-        if frozen_table_view:
-            model.layoutChanged.connect( self._update_frozen_table )
-            frozen_table_view.setModel( model )
-            self._update_frozen_table()
         register.register( model, self )
         self.selectionModel().currentChanged.connect( self.activated )
         
@@ -382,9 +241,8 @@ class AdminTableWidget( QtGui.QWidget ):
         super( AdminTableWidget, self ).__init__( parent )
         assert object_thread( self )
         self._admin = admin
-        table_widget = TableWidget( columns_frozen = admin.list_columns_frozen,
-                                    lines_per_row = admin.lines_per_row,
-                                    parent = self )
+        table_widget = TableWidget( parent = self,
+                                    lines_per_row = admin.lines_per_row )
         table_widget.setObjectName( 'table_widget' )
         column_groups = ColumnGroupsWidget( admin.get_table(), table_widget )
         column_groups.setObjectName( 'column_groups' )
