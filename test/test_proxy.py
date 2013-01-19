@@ -17,7 +17,6 @@ class QueryProxyCase( ModelThreadTestCase ):
         load_movie_fixtures()
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin( Person )
-        Person.query.count
         self.person_proxy = QueryTableProxy( self.person_admin, 
                                              query_getter = lambda:Person.query, 
                                              columns_getter = self.person_admin.get_columns )

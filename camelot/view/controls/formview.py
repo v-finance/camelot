@@ -176,6 +176,10 @@ class FormWidget(QtGui.QWidget):
         assert isinstance(self._delegate, DelegateManager)
         self._create_widgets()
 
+    @QtCore.pyqtSlot(int)
+    def current_index_changed( self, index ):
+        self.changed_signal.emit( index )
+        
     def set_index(self, index):
         self._index = index
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
@@ -191,30 +195,6 @@ class FormWidget(QtGui.QWidget):
         widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
         if widget_mapper:
             widget_mapper.submit()
-
-    def to_first(self):
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
-        if widget_mapper:
-            widget_mapper.toFirst()
-            self.changed_signal.emit( widget_mapper.currentIndex() )
-
-    def to_last(self):
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
-        if widget_mapper:
-            widget_mapper.toLast()
-            self.changed_signal.emit( widget_mapper.currentIndex() )
-
-    def to_next(self):
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
-        if widget_mapper:
-            widget_mapper.toNext()
-            self.changed_signal.emit( widget_mapper.currentIndex() )
-
-    def to_previous(self):
-        widget_mapper = self.findChild(QtGui.QDataWidgetMapper, 'widget_mapper' )
-        if widget_mapper:
-            widget_mapper.toPrevious()
-            self.changed_signal.emit( widget_mapper.currentIndex() )
         
     @QtCore.pyqtSlot(tuple)
     def _set_columns_and_form(self, columns_and_form ):
@@ -364,40 +344,6 @@ class FormView(AbstractView):
     def action_triggered( self, _checked = False ):
         action_action = self.sender()
         action_action.action.gui_run( self.gui_context )
-        
-    def to_first(self):
-        """select model's first row"""
-        form = self.findChild(QtGui.QWidget, 'form' )
-        if form:
-            form.submit()
-            form.to_first()
-
-    def to_last(self):
-        """select model's last row"""
-        # submit should not happen a second time, since then we don't want
-        # the widgets data to be written to the model
-        form = self.findChild(QtGui.QWidget, 'form' )
-        if form:
-            form.submit()
-            form.to_last()
-
-    def to_next(self):
-        """select model's next row"""
-        # submit should not happen a second time, since then we don't want
-        # the widgets data to be written to the model
-        form = self.findChild(QtGui.QWidget, 'form' )
-        if form:
-            form.submit()
-            form.to_next()
-
-    def to_previous(self):
-        """select model's previous row"""
-        # submit should not happen a second time, since then we don't want
-        # the widgets data to be written to the model
-        form = self.findChild(QtGui.QWidget, 'form' )
-        if form:
-            form.submit()
-            form.to_previous()
 
     @QtCore.pyqtSlot()
     def validate_close( self ):

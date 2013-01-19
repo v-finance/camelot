@@ -1,17 +1,22 @@
 import datetime
+import logging
 import os
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from camelot.admin.action import Action, GuiContext, ActionStep
-from camelot.admin.action import list_action, application_action
+from camelot.admin.action import ( list_action, application_action, 
+                                   document_action, form_action )
 from camelot.core.utils import pyqt, ugettext_lazy as _
+from camelot.core.orm import Session
 from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps
+from camelot.view.controls import tableview
 
 from test_view import static_images_path
+import test_proxy
 
 class ActionBaseCase( ModelThreadTestCase ):
 
@@ -218,12 +223,30 @@ class ListActionsCase( ModelThreadTestCase ):
         ModelThreadTestCase.setUp(self)
         from camelot_example.model import Movie
         from camelot.admin.application_admin import ApplicationAdmin
+        self.query_proxy_case = test_proxy.QueryProxyCase('setUp')
+        self.query_proxy_case.setUp()        
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.context.obj = Movie.query.first()
         self.context.admin = self.app_admin.get_related_admin( Movie )
-        self.gui_context = GuiContext()
+        self.gui_context = list_action.ListActionGuiContext()
         self.gui_context.admin = self.app_admin.get_related_admin( Movie )
+        table_widget = tableview.AdminTableWidget( self.gui_context.admin )
+        table_widget.setModel( self.query_proxy_case.person_proxy )
+        self.gui_context.item_view = table_widget
+        
+    def tearDown( self ):
+        Session().expunge_all()
+        
+    def test_gui_context( self ):
+        self.assertTrue( isinstance( self.gui_context.copy(),
+                                     list_action.ListActionGuiContext ) )
+        model_context = self.gui_context.create_model_context()
+        self.assertTrue( isinstance( model_context,
+                                     list_action.ListActionModelContext ) )
+        list( model_context.get_collection() )
+        list( model_context.get_selection() )
+        model_context.get_object()
         
     def test_sqlalchemy_command( self ):
         model_context = self.context
@@ -347,6 +370,84 @@ class ListActionsCase( ModelThreadTestCase ):
                             -1, 
                             QtCore.QModelIndex() )
         
+    def test_open_form_view( self ):
+        open_form_view_action = list_action.OpenFormView()
+        open_form_view_action.gui_run( self.gui_context )
+        
+    def test_open_new_view( self ):
+        open_new_view_action = list_action.OpenNewView()
+        open_new_view_action.gui_run( self.gui_context )
+        
+    def test_duplicate_selection( self ):
+        duplicate_selection_action = list_action.DuplicateSelection()
+        duplicate_selection_action.gui_run( self.gui_context )   
+        
+    def test_delete_selection( self ):
+        delete_selection_action = list_action.DeleteSelection()
+        delete_selection_action.gui_run( self.gui_context )   
+        
+    def test_add_existing_object( self ):
+        add_existing_object_action = list_action.AddExistingObject()
+        list( add_existing_object_action.model_run( self.context ) )
+        
+    def test_add_new_object( self ):
+        add_new_object_action = list_action.AddNewObject()
+        add_new_object_action.gui_run( self.gui_context )   
+        
+    def test_remove_selection( self ):
+        remove_selection_action = list_action.RemoveSelection()
+        list( remove_selection_action.model_run( self.gui_context.create_model_context() ) )
+        
+    def test_call_method( self ):
+        call_method_action = list_action.CallMethod( 'Call', lambda x:True )
+        list( call_method_action.model_run( self.context ) )
+        
+class FormActionsCase( ModelThreadTestCase ):
+    """Test the standard list actions.
+    """
+
+    images_path = static_images_path
+
+    def setUp( self ):
+        ModelThreadTestCase.setUp(self)
+        from camelot.model.party import Person
+        from camelot.admin.application_admin import ApplicationAdmin
+        self.query_proxy_case = test_proxy.QueryProxyCase('setUp')
+        self.query_proxy_case.setUp()
+        self.app_admin = ApplicationAdmin()
+        self.model_context = MockModelContext()
+        self.model_context.obj = Person.query.first()
+        self.model_context.admin = self.app_admin.get_related_admin( Person )
+        self.gui_context = form_action.FormActionGuiContext()
+        self.gui_context._model = self.query_proxy_case.person_proxy
+        self.gui_context.widget_mapper = QtGui.QDataWidgetMapper()
+        self.gui_context.widget_mapper.setModel( self.query_proxy_case.person_proxy )
+        self.gui_context.admin = self.app_admin.get_related_admin( Person )
+        
+    def test_gui_context( self ):
+        self.assertTrue( isinstance( self.gui_context.copy(),
+                                     form_action.FormActionGuiContext ) )
+        self.assertTrue( isinstance( self.gui_context.create_model_context(),
+                                     form_action.FormActionModelContext ) ) 
+        
+    def test_previous_next( self ):
+        previous_action = form_action.ToPreviousForm()
+        previous_action.gui_run( self.gui_context )
+        next_action = form_action.ToNextForm()
+        next_action.gui_run( self.gui_context )
+        first_action = form_action.ToFirstForm()
+        first_action.gui_run( self.gui_context )
+        last_action = form_action.ToLastForm()
+        last_action.gui_run( self.gui_context )        
+    
+    def test_show_history( self ):
+        show_history_action = form_action.ShowHistory()
+        list( show_history_action.model_run( self.model_context ) )
+        
+    def test_close_form( self ):
+        close_form_action = form_action.CloseForm()
+        list( close_form_action.model_run( self.model_context ) )        
+
 class ApplicationActionsCase( ModelThreadTestCase ):
     """Test application actions.
     """
@@ -432,3 +533,31 @@ class ApplicationActionsCase( ModelThreadTestCase ):
         person_admin = self.app_admin.get_related_admin( Person )
         open_new_view_action = application_action.OpenNewView( person_admin )
         open_new_view_action.gui_run( self.gui_context )
+        
+    def test_change_logging( self ):
+        change_logging_action = application_action.ChangeLogging()
+        for step in change_logging_action.model_run( self.context ):
+            if isinstance( step, action_steps.ChangeObject ):
+                step.get_object().level = logging.INFO
+
+class DocumentActionsCase( ModelThreadTestCase ):
+    """Test the standard document actions.
+    """
+
+    images_path = static_images_path
+
+    def setUp( self ):
+        ModelThreadTestCase.setUp(self)
+        self.gui_context = document_action.DocumentActionGuiContext()
+        self.gui_context.document = QtGui.QTextDocument('Hello world')
+        
+    def test_gui_context( self ):
+        self.assertTrue( isinstance( self.gui_context.copy(),
+                                     document_action.DocumentActionGuiContext ) )
+        self.assertTrue( isinstance( self.gui_context.create_model_context(),
+                                     document_action.DocumentActionModelContext ) )        
+        
+    def test_edit_document( self ):
+        edit_document_action = document_action.EditDocument()
+        model_context = self.gui_context.create_model_context()
+        list( edit_document_action.model_run( model_context ) )

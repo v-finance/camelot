@@ -744,12 +744,13 @@ class AddExistingObject( EditAction ):
         from sqlalchemy.orm import object_session
         from camelot.view import action_steps
         obj_getter = yield action_steps.SelectObject( model_context.admin )
-        obj_to_add = obj_getter()
-        for obj in model_context.get_collection():
-            if obj_to_add == obj:
-                raise StopIteration()
-        model_context._model.append_object( obj_to_add, flush = False )
-        yield action_steps.FlushSession( object_session( obj_to_add ) )
+        if obj_getter != None:
+            obj_to_add = obj_getter()
+            for obj in model_context.get_collection():
+                if obj_to_add == obj:
+                    raise StopIteration()
+            model_context._model.append_object( obj_to_add, flush = False )
+            yield action_steps.FlushSession( object_session( obj_to_add ) )
         
 class AddNewObject( OpenNewView ):
     """Add a new object to a collection. Depending on the
@@ -780,5 +781,5 @@ class RemoveSelection( EditAction ):
         objects_to_remove = list( model_context.get_selection() )
         if len( objects_to_remove ):
             session = object_session( objects_to_remove[0] )
-        model_context._model.remove_objects( objects_to_remove, delete = False, flush = False )
-        yield action_steps.FlushSession( session )
+            model_context._model.remove_objects( objects_to_remove, delete = False, flush = False )
+            yield action_steps.FlushSession( session )

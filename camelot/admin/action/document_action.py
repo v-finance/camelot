@@ -27,10 +27,17 @@ editing a document.
 """
 
 from .base import Action
-from .application_action import ApplicationActionGuiContext
+from .application_action import ( ApplicationActionGuiContext, 
+                                  ApplicationActionModelContext )
 from ...core.utils import ugettext_lazy as _
 from ...view.art import Icon
 
+class DocumentActionModelContext( ApplicationActionModelContext ):
+    
+    def __init__( self ):
+        super( DocumentActionModelContext, self ).__init__()
+        self.document = None
+    
 class DocumentActionGuiContext( ApplicationActionGuiContext ):
     """The GUI context for an :class:`camelot.admin.action.ApplicationActionGuiContext`.
     On top of  the attributes of the 
@@ -43,6 +50,8 @@ class DocumentActionGuiContext( ApplicationActionGuiContext ):
         
     """
     
+    model_context = DocumentActionModelContext
+    
     def __init__( self ):
         super( DocumentActionGuiContext, self ).__init__()
         self.document = None
@@ -52,13 +61,18 @@ class DocumentActionGuiContext( ApplicationActionGuiContext ):
         new_context.document = self.document
         return new_context
     
+    def create_model_context( self ):
+        context = super( DocumentActionGuiContext, self ).create_model_context()
+        context.document = self.document
+        return context
+    
 class EditDocument( Action ):
     
     verbose_name = _('Edit')
     icon = Icon('tango/16x16/apps/accessories-text-editor.png')
     tooltip = _('Edit this document')
     
-    def gui_run( self, gui_context ):
+    def model_run( self, model_context ):
         from ...view import action_steps
-        edit = action_steps.EditTextDocument( gui_context.document )
-        edit.gui_run( gui_context )
+        edit = action_steps.EditTextDocument( model_context.document )
+        yield edit

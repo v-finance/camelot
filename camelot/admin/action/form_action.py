@@ -224,7 +224,8 @@ class ToPreviousForm( list_action.ToPreviousRow ):
     """Move to the previous form"""
 
     def gui_run( self, gui_context ):
-        gui_context.view.to_previous()
+        gui_context.widget_mapper.submit()
+        gui_context.widget_mapper.toPrevious()
         
     def get_state( self, model_context ):
         return Action.get_state( self, model_context )
@@ -233,7 +234,8 @@ class ToFirstForm( list_action.ToFirstRow ):
     """Move to the form"""
     
     def gui_run( self, gui_context ):
-        gui_context.view.to_first()
+        gui_context.widget_mapper.submit()
+        gui_context.widget_mapper.toFirst()
 
     def get_state( self, model_context ):
         return Action.get_state( self, model_context )
@@ -242,7 +244,8 @@ class ToNextForm( list_action.ToNextRow ):
     """Move to the next form"""
 
     def gui_run( self, gui_context ):
-        gui_context.view.to_next()
+        gui_context.widget_mapper.submit()
+        gui_context.widget_mapper.toNext()
 
     def get_state( self, model_context ):
         return Action.get_state( self, model_context )
@@ -251,7 +254,8 @@ class ToLastForm( list_action.ToLastRow ):
     """Move to the last form"""
 
     def gui_run( self, gui_context ):
-        gui_context.view.to_last()
+        gui_context.widget_mapper.submit()
+        gui_context.widget_mapper.toLast()
 
     def get_state( self, model_context ):
         return Action.get_state( self, model_context )
