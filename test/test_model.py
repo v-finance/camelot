@@ -30,11 +30,28 @@ class ModelCase( ModelThreadTestCase ):
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'bucket' )
         
     def test_batch_job( self ):
-        from camelot.model.batch_job import BatchJob, BatchJobType
+        from camelot.model.batch_job import ( BatchJob, BatchJobType, 
+                                              CancelBatchJob )
         batch_job_type = BatchJobType.get_or_create( u'Synchronize' )
-        with BatchJob.create( batch_job_type ) as batch_job:
+        batch_job = BatchJob.create( batch_job_type )
+        self.assertTrue( unicode( batch_job_type ) )
+        self.assertFalse( batch_job.is_canceled() )
+        cancel_action = CancelBatchJob()
+        model_context = MockModelContext()
+        model_context.obj = batch_job
+        list( cancel_action.model_run( model_context ) )
+        self.assertTrue( batch_job.is_canceled() )
+        # run batch job without exception
+        with batch_job:
             batch_job.add_strings_to_message( [ u'Doing something' ] )
             batch_job.add_strings_to_message( [ u'Done' ], color = 'green' )
+        self.assertEqual( batch_job.status, 'success' )
+        # run batch job with exception
+        batch_job = BatchJob.create( batch_job_type )
+        with batch_job:
+            batch_job.add_strings_to_message( [ u'Doing something' ] )
+            raise Exception('Something went wrong')
+        self.assertEqual( batch_job.status, 'errors' )
     
     def test_current_authentication( self ):
         from camelot.model.authentication import get_current_authentication
@@ -69,10 +86,46 @@ class ModelCase( ModelThreadTestCase ):
         self.assertEqual( person.email, None )
         self.person_admin.flush( person )
         self.assertEqual( person.email, None )
+
+class FixtureCase( ModelThreadTestCase ):
+    """Test the build in camelot model for fixtures"""
       
+    def test_fixture( self ):
+        from camelot.model.party import Person
+        from camelot.model.fixture import Fixture
+        session = Session()
+        self.assertEqual( Fixture.find_fixture_key( Person, -1 ), None )
+        p1 = Person()
+        self.assertEqual( Fixture.find_fixture_key_and_class( p1 ), 
+                          (None, None) )
+        session.expunge( p1 )
+        # insert a new Fixture
+        p2 = Fixture.insert_or_update_fixture( Person, 'test',
+                                               {'first_name':'Peter',
+                                                'last_name':'Principle'},
+                                               fixture_class = 'test' )
+        # see if we can find it back
+        self.assertEqual( Fixture.find_fixture_key( Person, p2.id ), 'test' )
+        self.assertEqual( Fixture.find_fixture_key_and_class( p2 ), 
+                          ('test', 'test') )
+        self.assertEqual( Fixture.find_fixture_keys_and_classes( Person )[p2.id],
+                          ('test', 'test') )
+        # delete the person, and insert it back in the same fixture
+        session.delete( p2 )
+        session.flush()
+        p3 = Fixture.insert_or_update_fixture( Person, 'test',
+                                               {'first_name':'Peter',
+                                                'last_name':'Principle'},
+                                               fixture_class = 'test' )
+        self.assertNotEqual( p2, p3 )
+        # remove all fixtures
+        Fixture.remove_all_fixtures( Person )
+        
     def test_fixture_version( self ):
         from camelot.model.party import Person
         from camelot.model.fixture import FixtureVersion
+        self.assertEqual( FixtureVersion.get_current_version( u'unexisting' ),
+                          0 )        
         FixtureVersion.set_current_version( u'demo_data', 0 )
         self.assertEqual( FixtureVersion.get_current_version( u'demo_data' ),
                           0 )
