@@ -38,6 +38,7 @@ behavior
 """
 
 import contextlib
+import functools
 import logging
 
 LOGGER = logging.getLogger('camelot.core.orm')
@@ -122,11 +123,23 @@ Entity = declarative_base( cls = EntityBase,
                            constructor = None,
                            name = 'Entity' )
 
+def transaction( original_function ):
+    """Decorator to make methods transactional with regard to the session
+    of the object on which they are called"""
+    
+    @functools.wraps( original_function )
+    def decorated_function( self, *args, **kwargs ):
+        session = orm.object_session( self )
+        with session.begin():
+            return original_function( self, *args, **kwargs )
+    
+    return decorated_function
+
 __all__ = [ obj.__name__  for obj in [ Entity, EntityBase, EntityMeta, 
             EntityCollection, Field, has_field,
             has_property, GenericProperty, ColumnProperty,
             belongs_to, has_one, has_many, has_and_belongs_to_many,
             ManyToOne, OneToOne, OneToMany, ManyToMany,
             using_options,
-            setup_all
+            setup_all, transaction
             ] ] + ['Session', 'entities']

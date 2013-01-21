@@ -28,7 +28,6 @@ variable, which is a global :class:`sqlalchemy.Metadata` object to which all
 tables of the application can be added.
 """
 
-import functools
 import logging
 
 from sqlalchemy import event, MetaData
@@ -50,20 +49,7 @@ metadata.transactional = False
 event.listen( auto_reload, 'before_reload', metadata.clear )
     
 def like_op(column, string):
-    return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)    
-        
-def transaction( original_function ):
-    """Decorator to make methods or functions transactional"""
-    
-    from camelot.core.orm import SessionTransaction
-    
-    @functools.wraps( original_function )
-    def decorated_function( *args, **kwargs ):
-        
-        with SessionTransaction():
-            return original_function( *args, **kwargs )
-    
-    return decorated_function
+    return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)
 
 def update_database_from_model():
     """Introspection the model and add missing columns in the database.    
