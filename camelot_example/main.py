@@ -28,6 +28,7 @@ class ExampleSettings( SimpleSettings ):
         import camelot.model.i18n
         import camelot.model.fixture
         import camelot.model.memento
+        import camelot.model.batch_job
         import camelot_example.model
         #
         # create the tables for all models, configure mappers first, to make

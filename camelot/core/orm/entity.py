@@ -335,8 +335,11 @@ class EntityBase( object ):
     available in Elixir"""
     
     def __init__( self, *args, **kwargs ): 
-        _declarative_constructor( self, *args, **kwargs ) 
-        Session().add( self ) 
+        _declarative_constructor( self, *args, **kwargs )
+	# due to cascading rules and a constructor argument, the object might
+	# allready be in a session
+	if orm.object_session( self ) == None:
+	    Session().add( self ) 
                                     
     #
     # methods below were copied from Elixir to mimic the Elixir Entity

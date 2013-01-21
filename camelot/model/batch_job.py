@@ -37,11 +37,13 @@ from sqlalchemy import orm, sql
 from camelot.core.orm import Entity, Field, ManyToOne, using_options
 
 from camelot.core.utils import ugettext_lazy as _
-from camelot.view import filters
+from camelot.view import filters, forms
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action import Action
 from camelot.core.document import documented_entity
 import camelot.types
+
+from . import type_and_status
 
 #
 # Run batch jobs in separate session to get out of band writing
@@ -49,6 +51,12 @@ import camelot.types
 #
 BatchSession = orm.sessionmaker( autoflush = False )
 
+batch_job_statusses = [ (-2, 'planned'), 
+                        (-1, 'running'), 
+                        (0,  'success'), 
+                        (1,  'warnings'), 
+                        (2,  'errors'),
+                        (3,  'canceled') ]
 @documented_entity()
 class BatchJobType( Entity ):
     """The type of batch job, the user will be able to filter his
@@ -75,30 +83,14 @@ class BatchJobType( Entity ):
 def hostname():
     import socket
     return unicode( socket.gethostname() )
-    
-class CancelBatchJob( Action ):
-    
-    verbose_name = _('Cancel')
-    
-    def model_run( self, model_context ):
-        from camelot.view.action_steps import FlushSession
-        for batch_job in model_context.get_selection():
-            batch_job.status = 'canceled'
-        yield FlushSession( model_context.session )
 
 @documented_entity()
-class BatchJob( Entity ):
+class BatchJob( Entity, type_and_status.StatusMixin ):
     """Information the batch job that is planned, running or has run"""
-    using_options( tablename = 'batch_job', order_by=['-date'] )
-    date    = Field( sqlalchemy.types.DateTime, required=True, default=datetime.datetime.now )
+    using_options( tablename = 'batch_job', order_by=['-id'] )
     host    = Field( sqlalchemy.types.Unicode(256), required=True, default=hostname )
     type    = ManyToOne( 'BatchJobType', required=True, ondelete = 'restrict', onupdate = 'cascade' )
-    status  = Field( camelot.types.Enumeration([ (-2, 'planned'), 
-                                                 (-1, 'running'), 
-                                                 (0,  'success'), 
-                                                 (1,  'warnings'), 
-                                                 (2,  'errors'),
-                                                 (3,  'canceled'), ]), required=True, default='planned' )
+    status  = type_and_status.Status( batch_job_statusses )
     message = Field( camelot.types.RichText() )
 
     @classmethod
@@ -113,7 +105,8 @@ class BatchJob( Entity ):
         :return: a new BatchJob object
         """
         batch_session = BatchSession()
-        batch_job = BatchJob(type=batch_job_type, status='running')
+        batch_job = BatchJob(type=batch_job_type)
+        batch_job.change_status( 'running' )
         session = orm.object_session( batch_job )
         batch_session_batch_job = batch_session.merge( batch_job )
         if session:
@@ -130,10 +123,9 @@ class BatchJob( Entity ):
         
         :return: :keyword:`True` or :keyword:`False`
         """
-        table = orm.class_mapper( BatchJob ).mapped_table
-        query = sql.select( [table.c.status] ).where( table.c.id == self.id )
-        for row in table.bind.execute( query ):
-            if row['status'] == 'canceled':
+        query = self.current_status_query( self._status_history, self )
+        for row in self.__table__.bind.execute( query ):
+            if row[0] == 'canceled':
                 return True
         return False
         
@@ -184,22 +176,24 @@ class BatchJob( Entity ):
         session.commit()
         
     def __enter__( self ):
-        self.status = 'running'
+        self.change_status( 'running' )
         orm.object_session( self ).commit()
         return self
     
     def __exit__( self, exc_type, exc_val, exc_tb ):
         if exc_type != None:
             self.add_exception_to_message( exc_type, exc_val, exc_tb )
-            self.status = 'errors'
-        elif self.status == 'running':
-            self.status = 'success'
+            self.change_status( 'errors' )
+        elif self.current_status == 'running':
+            self.change_status( 'success' )
         orm.object_session( self ).commit()
         return True
         
     class Admin(EntityAdmin):
         verbose_name = _('Batch job')
-        list_display = ['date', 'host', 'type', 'status']
-        list_filter = ['status', filters.ComboBoxFilter('host')]
-        form_display = list_display + ['message']
-        form_actions = [ CancelBatchJob() ]
+        list_display = ['host', 'type', 'current_status']
+        list_filter = ['current_status', filters.ComboBoxFilter('host')]
+        form_display = forms.TabForm( [ ( _('Job'), list_display + ['message'] ),
+                                        ( _('History'), ['status'] ) ] )
+        form_actions = [ type_and_status.ChangeStatus( 'canceled',
+                                                       _('Cancel') ) ]

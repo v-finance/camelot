@@ -30,28 +30,24 @@ class ModelCase( ModelThreadTestCase ):
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'bucket' )
         
     def test_batch_job( self ):
-        from camelot.model.batch_job import ( BatchJob, BatchJobType, 
-                                              CancelBatchJob )
+        from camelot.model.batch_job import BatchJob, BatchJobType
         batch_job_type = BatchJobType.get_or_create( u'Synchronize' )
         batch_job = BatchJob.create( batch_job_type )
         self.assertTrue( unicode( batch_job_type ) )
         self.assertFalse( batch_job.is_canceled() )
-        cancel_action = CancelBatchJob()
-        model_context = MockModelContext()
-        model_context.obj = batch_job
-        list( cancel_action.model_run( model_context ) )
+        batch_job.change_status( 'canceled' )
         self.assertTrue( batch_job.is_canceled() )
         # run batch job without exception
         with batch_job:
             batch_job.add_strings_to_message( [ u'Doing something' ] )
             batch_job.add_strings_to_message( [ u'Done' ], color = 'green' )
-        self.assertEqual( batch_job.status, 'success' )
+        self.assertEqual( batch_job.current_status, 'success' )
         # run batch job with exception
         batch_job = BatchJob.create( batch_job_type )
         with batch_job:
             batch_job.add_strings_to_message( [ u'Doing something' ] )
             raise Exception('Something went wrong')
-        self.assertEqual( batch_job.status, 'errors' )
+        self.assertEqual( batch_job.current_status, 'errors' )
     
     def test_current_authentication( self ):
         from camelot.model.authentication import get_current_authentication

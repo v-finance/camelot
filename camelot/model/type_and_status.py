@@ -220,24 +220,23 @@ class StatusMixin( object ):
 	from sqlalchemy import orm
 	if not status_from_date:
 	    status_from_date = datetime.date.today()
-	mapper = orm.class_mapper(self.__class__)
-	status_property = mapper.get_property('status')
-	status_type = status_property.mapper.class_
-	old_status = status_type.query.filter( sql.and_( status_type.status_for == self,
-                                                         status_type.status_from_date <= status_from_date,
-                                                         status_type.status_thru_date >= status_from_date ) ).first()
+	history_type = self._status_history
+	session = orm.object_session( self )
+	old_status_filter =  sql.and_( history_type.status_for == self,
+	                               history_type.status_from_date <= status_from_date,
+	                               history_type.status_thru_date >= status_from_date )
+	old_status_query = session.query( history_type )
+	old_status = old_status_query.filter( old_status_filter ).first()
 	if old_status != None:
 	    old_status.thru_date = datetime.date.today() - datetime.timedelta( days = 1 )
 	    old_status.status_thru_date = status_from_date - datetime.timedelta( days = 1 )
-	new_status = status_type(    status_for = self,
-                                     classified_by = new_status,
-                                     status_from_date = status_from_date,
-                                     status_thru_date = status_thru_date,
-                                     from_date = datetime.date.today(),
-                                     thru_date = end_of_times() )
-	if old_status:
-	    self.query.session.flush( [old_status] )
-	orm.object_session( self ).flush()
+	new_status = history_type( status_for = self,
+	                                  classified_by = new_status,
+	                                  status_from_date = status_from_date,
+	                                  status_thru_date = status_thru_date,
+	                                  from_date = datetime.date.today(),
+	                                  thru_date = end_of_times() )	
+	session.flush()
 
 class ChangeStatus( Action ):
     """
