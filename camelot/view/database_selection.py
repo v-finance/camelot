@@ -48,10 +48,9 @@ from camelot.core.utils import ugettext as _
 from camelot.view.model_thread.signal_slot_model_thread import SignalSlotModelThread
 from camelot.view.model_thread import object_thread
 from camelot.core.dbprofiles import fetch_profiles, use_chosen_profile, \
-    store_profiles, get_network_proxy, last_used_profile
+    store_profiles, get_network_proxy, last_used_profile, connection_string_from_profile
 
 logger = logging.getLogger('camelot.view.database_selection')
-
 
 NEW_PROFILE_LABEL = _('new/edit profile')
 
@@ -359,15 +358,14 @@ allow all languages
         mt = SignalSlotModelThread(lambda:None)
         mt.start()
         progress = ProgressDialog(_('Verifying database settings'))
-        mt.post(lambda:self.test_connection(info['dialect'], info['host'],
-            info['port'], info['user'], info['pass'], info['database']),
+        mt.post(lambda:self.test_connection( info ),
             progress.finished, progress.exception)
         progress.exec_()
         return self._connection_valid
 
-    def test_connection(self, dialect, host, port, user, passwd, db):
+    def test_connection(self, profile):
         self._connection_valid = False
-        connection_string = '%s://%s:%s@%s:%s/%s' % (dialect, user, passwd, host, port, db)
+        connection_string = connection_string_from_profile( profile )
         engine = create_engine(connection_string, pool_recycle=True)
         try:
             connection = engine.raw_connection()

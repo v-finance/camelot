@@ -86,6 +86,18 @@ def selected_profile_info():
             logger.error( u' - %s'%key )
         raise
 
+def connection_string_from_profile( profile ):
+    connection_string = '%s://'%profile['dialect']
+    if profile['user'] or profile['pass']:
+        connection_string = connection_string + '%s:%s@'%( profile['user'], 
+                                                           profile['pass'] )
+    if profile['host']:
+        connection_string = connection_string + profile['host']
+    if profile['port']:
+        connection_string = connection_string + ':%s'%profile['port']
+    connection_string = connection_string + '/%s'%profile['database']
+    return connection_string
+
 def engine_from_profile():
     """
     Create a SQLAlchemy Engine from the selected profile
@@ -95,14 +107,8 @@ def engine_from_profile():
     connect_args = dict()
     if profile['dialect'] == 'mysql':
         connect_args['charset'] = 'utf8'
-
-    connection = '%s://%s:%s@%s:%s/%s' % (profile['dialect'],
-                                          profile['user'],
-                                          profile['pass'],
-                                          profile['host'],
-                                          profile['port'],
-                                          profile['database'])
-    return create_engine(connection, pool_recycle=True, connect_args=connect_args)
+    connection_string = connection_string_from_profile( profile )
+    return create_engine(connection_string, pool_recycle=True, connect_args=connect_args)
 
 def media_root_from_profile():
     """
