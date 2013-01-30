@@ -181,7 +181,7 @@ shortcut confusion and reduce the number of status updates.
     
     def get_settings( self ):
         """A :class:`QtCore.QSettings` object in which Camelot related settings
-        can be stored.  This object is inteded for Camelot internal use.  If an
+        can be stored.  This object is intended for Camelot internal use.  If an
         application specific settings object is needed, simply construct one.
         
         :return: a :class:`QtCore.QSettings` object
