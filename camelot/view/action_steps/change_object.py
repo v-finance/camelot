@@ -100,6 +100,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         self.buttons_widget().setLayout( layout )
         cancel_button.pressed.connect( self.reject )
         ok_button.pressed.connect( self.accept )
+        admin._apply_form_state( self )
         
         # do inital validation, so the validity changed signal is valid
         self._validity_changed( 0 )
