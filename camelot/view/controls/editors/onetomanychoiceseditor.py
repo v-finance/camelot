@@ -24,6 +24,8 @@
 from camelot.view.model_thread import post
 from choiceseditor import ChoicesEditor
 
+no_choice = [(None, '')]
+
 class OneToManyChoicesEditor(ChoicesEditor):
   
     def __init__(self, 
@@ -40,10 +42,14 @@ class OneToManyChoicesEditor(ChoicesEditor):
         post(self.get_choices, self.set_choices)
 
     def get_choices(self):
-        additional_choices = []
+        choices = [(o, unicode(o)) for o in self._target.query.all()]
+        # even if the field is required, the editor should be able to 
+        # handle None as a choice, for user convenience, None is put at
+        # the end when required
         if self._nullable:
-            additional_choices = [(None, '')]
-        return additional_choices + [(o, unicode(o)) for o in self._target.query.all()]
+            return no_choice + choices
+        else:
+            return choices + no_choice
         
     def set_field_attributes(self, editable=True, **kwargs):
         """Makes sure choices are not reset when changing the
