@@ -397,8 +397,14 @@ be specified using the verbose_name attribute.
     def get_compounding_objects(self, obj):
         """Overwrite this function to generate a list of objects out of which
         `obj` is build.  These objects will be validated if `obj` is 
-        validated.  So `obj` will only be valid if all its compounding object
-        are valid as well.
+        validated.  The effect of returning compounding objects will be :
+        
+          * `obj` will only be valid if all its compounding object
+            are valid as well.
+            
+          * default values will be set for the attributes of the compounding
+            objects
+            
         """
         return []
 
@@ -699,9 +705,9 @@ be specified using the verbose_name attribute.
 
     def set_defaults(self, object_instance, include_nullable_fields=True):
         """Set the defaults of an object
-        :param include_nullable_fields: also set defaults for nullable fields, depending
-        on the context, this should be set to False to allow the user to set the field
-        to None
+        :param include_nullable_fields: also set defaults for nullable fields, 
+        depending on the context, this should be set to False to allow the user 
+        to set the field to None
         """
         from sqlalchemy.schema import ColumnDefault
         
@@ -759,6 +765,8 @@ be specified using the verbose_name attribute.
                         ),
                         exc_info=exc
                     )
+        for compounding_object in self.get_compounding_objects( object_instance ):
+            self.get_related_admin( type( compounding_object ) ).set_defaults( compounding_object )
 
     def create_object_form_view(self, title, object_getter, parent=None):
         """Create a form view for a single object, :kbd:`PgUp`/:kbd:`PgDown` 
