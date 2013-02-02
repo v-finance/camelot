@@ -125,9 +125,9 @@ class PartyCase( ModelThreadTestCase ):
         party_address.street1 = 'Avenue Louise 5'
         party_address.street2 = 'Boite 4'
         party_address.city = city
-        admin = party.AddressAdmin( self.app_admin, party.PartyAddress )
-        admin.flush( party_address )
-        admin.refresh( party_address )
+        party_address_admin = party.AddressAdmin( self.app_admin, party.PartyAddress )
+        party_address_admin.flush( party_address )
+        party_address_admin.refresh( party_address )
         self.assertEqual( party_address.street1, 'Avenue Louise 5' )
         self.assertEqual( party_address.street2, 'Boite 4' )
         self.assertEqual( party_address.city, city )
@@ -135,6 +135,15 @@ class PartyCase( ModelThreadTestCase ):
         query = self.session.query( party.PartyAddress )
         self.assertTrue( query.filter( party.PartyAddress.street1 == 'Avenue Louise 5' ).first() )
         self.assertTrue( query.filter( party.PartyAddress.street2 == 'Boite 4' ).first() )
+        # if party address changes, party should be updated
+        depending_objects = list( party_address_admin.get_depending_objects( party_address ) )
+        self.assertTrue( org in depending_objects )
+        # if address changes, party address and party should be updated
+        address = party_address.address
+        address_admin = self.app_admin.get_related_admin( party.Address )
+        depending_objects = list( address_admin.get_depending_objects( address ) )
+        self.assertTrue( party_address in depending_objects )
+        self.assertTrue( org in depending_objects )
         
     def test_person( self ):
         person = party.Person( first_name = u'Robin',
@@ -186,11 +195,16 @@ class PartyCase( ModelThreadTestCase ):
         # updated as well
         #
         contact_mechanism_admin = self.app_admin.get_related_admin( party.ContactMechanism )
-        related_objects = list( contact_mechanism_admin.get_depending_objects( contact_mechanism ) )
-        self.assertTrue( person in related_objects )
-        self.assertTrue( party_contact_mechanism in related_objects )
+        depending_objects = list( contact_mechanism_admin.get_depending_objects( contact_mechanism ) )
+        self.assertTrue( person in depending_objects )
+        self.assertTrue( party_contact_mechanism in depending_objects )
+        #
+        # if the party contact mechanism changes, the party should be updated
+        # as well
+        depending_objects = list( admin.get_depending_objects( party_contact_mechanism ) )
+        self.assertTrue( person in depending_objects )
         # delete the person
-        self.person_admin.delete( person )        
+        self.person_admin.delete( person )
         
     def test_organization( self ):
         org = party.Organization( name = 'PSF' )

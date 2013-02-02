@@ -118,21 +118,65 @@ class City( GeographicBoundary ):
 
 City = documented_entity()(City)
 
+class Address( Entity ):
+    """The Address to be given to a Party (a Person or an Organization)"""
+    using_options( tablename = 'address' )
+    street1 = Field( Unicode( 128 ), required = True )
+    street2 = Field( Unicode( 128 ) )
+    city = ManyToOne( City, 
+                      required = True, 
+                      ondelete = 'cascade', 
+                      onupdate = 'cascade',
+                      lazy = 'subquery' )
+    party_addresses = OneToMany( 'PartyAddress' )
+                         
+    def name( self ):
+        return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
+                           whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
+    
+    name = ColumnProperty( name, deferred = True )
+
+    @classmethod
+    def get_or_create( cls, street1, street2, city ):
+        address = cls.query.filter_by( street1 = street1, street2 = street2, city = city ).first()
+        if not address:
+            address = cls( street1 = street1, street2 = street2, city = city )
+            orm.object_session( address ).flush()
+        return address
+
+    def __unicode__( self ):
+        return u'%s, %s' % ( self.street1 or '', self.city or '' )
+
+    class Admin( EntityAdmin ):
+        verbose_name = _('Address')
+        verbose_name_plural = _('Addresses')
+        list_display = ['street1', 'street2', 'city']
+        form_size = ( 700, 150 )
+        field_attributes = {'street1':{'minimal_column_width':30}}
+        
+        def get_depending_objects( self, address ):
+            for party_address in address.party_addresses:
+                yield party_address
+                if party_address.party != None:
+                    yield party_address.party
+            
+Address = documented_entity()( Address )
+
 class AddressAdmin( EntityAdmin ):
     """Admin with only the Address information and not the Party information"""
     verbose_name = _('Address')
-    list_display = ['address_street1', 'address_city', 'comment']
-    form_display = ['address_street1', 'address_street2', 'address_city', 'comment', 'from_date', 'thru_date']
-    field_attributes = dict(address_street1 = dict(name=_('Street'),
-                                                   editable=True,
-                                                   nullable=False),
-                            address_street2 = dict(name=_('Street Extra'),
-                                                   editable=True),
-                            address_city = dict(name=_('City'),
-                                                editable=True,
-                                                nullable=False,
-                                                delegate=delegates.Many2OneDelegate,
-                                                target=City),
+    list_display = ['street1', 'city', 'comment']
+    form_display = ['street1', 'street2', 'city', 'comment', 'from_date', 'thru_date']
+    field_attributes = dict(street1 = dict(name=_('Street'),
+                                           editable=True,
+                                           nullable=False),
+                            street2 = dict(name=_('Street Extra'),
+                                           editable=True),
+                            city = dict(name=_('City'),
+                                        editable=True,
+                                        nullable=False,
+                                        delegate=delegates.Many2OneDelegate,
+                                        target=City),
                             )
 
     def flush(self, party_address):
@@ -144,6 +188,10 @@ class AddressAdmin( EntityAdmin ):
         if party_address.address:
             super( AddressAdmin, self ).refresh( party_address.address )
         super( AddressAdmin, self ).refresh( party_address )
+        
+    def get_depending_objects( self, party_address ):
+        if party_address.party:
+            yield party_address.party        
 
 class PartyContactMechanismAdmin( EntityAdmin ):
     form_size = ( 700, 200 )
@@ -521,43 +569,6 @@ class SharedShareholder( PartyRelationship ):
         list_display = ['established_from', 'shares', 'from_date', 'thru_date']
         form_display = ['established_from', 'shares', 'from_date', 'thru_date', 'comment']
         form_size = (500, 300)
-
-class Address( Entity ):
-    """The Address to be given to a Party (a Person or an Organization)"""
-    using_options( tablename = 'address' )
-    street1 = Field( Unicode( 128 ), required = True )
-    street2 = Field( Unicode( 128 ) )
-    city = ManyToOne( City, 
-                      required = True, 
-                      ondelete = 'cascade', 
-                      onupdate = 'cascade',
-                      lazy = 'subquery' )
-
-    def name( self ):
-        return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
-                           whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
-    
-    name = ColumnProperty( name, deferred = True )
-
-    @classmethod
-    def get_or_create( cls, street1, street2, city ):
-        address = cls.query.filter_by( street1 = street1, street2 = street2, city = city ).first()
-        if not address:
-            address = cls( street1 = street1, street2 = street2, city = city )
-            orm.object_session( address ).flush()
-        return address
-
-    def __unicode__( self ):
-        return u'%s, %s' % ( self.street1 or '', self.city or '' )
-
-    class Admin( EntityAdmin ):
-        verbose_name = _('Address')
-        verbose_name_plural = _('Addresses')
-        list_display = ['street1', 'street2', 'city']
-        form_size = ( 700, 150 )
-        field_attributes = {'street1':{'minimal_column_width':30}}
-
-Address = documented_entity()( Address )
 
 class PartyAddress( Entity ):
     using_options( tablename = 'party_address' )
