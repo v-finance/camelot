@@ -319,8 +319,42 @@ class Party( Entity ):
     
     @fax.expression
     def fax_expression( self ):
-        return Fax.mechanism
+        return Fax.mechanism 
 
+    def _get_address_field( self, name ):
+        for party_address in self.addresses:
+            return getattr( party_address, name )
+        
+    def _set_address_field( self, name, value ):
+        if not self.addresses:
+            self.addresses.append( PartyAddress() )
+        for party_address in self.addresses:
+            return setattr( party_address, name, value )
+        
+    @hybrid.hybrid_property
+    def street1( self ):
+        return self._get_address_field( u'street1' )
+    
+    @street1.setter
+    def street1_setter( self, value ):
+        return self._set_address_field( u'street1', value )
+
+    @hybrid.hybrid_property
+    def street2( self ):
+        return self._get_address_field( u'street2' ) 
+    
+    @street2.setter
+    def street2_setter( self, value ):
+        return self._set_address_field( u'street2', value )    
+    
+    @hybrid.hybrid_property
+    def city( self ):
+        return self._get_address_field( u'city' )
+    
+    @city.setter
+    def city_setter( self, value ):
+        return self._set_address_field( u'city', value )
+    
     def full_name( self ):
 
         aliased_organisation = sql.alias( Organization.table )
@@ -775,6 +809,13 @@ class PartyAdmin( EntityAdmin ):
                             shareholders = {'admin':SharedShareholder.ShareholderAdmin},
                             sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )] ),
                             name = dict( minimal_column_width = 50 ),
+                            street1 = dict( editable = True, 
+                                            minimal_column_width = 50 ),
+                            street2 = dict( editable = True, 
+                                            minimal_column_width = 50 ),
+                            city = dict( editable = True, 
+                                         delegate = delegates.Many2OneDelegate,
+                                         target = City ), 
                             email = dict( editable = True, 
                                           minimal_column_width = 20,
                                           address_type = 'email',
@@ -817,6 +858,9 @@ class OrganizationAdmin( Party.Admin ):
     form_display = TabForm( [( _('Basic'), Form( [ 'name', 'email', 
                                                    'phone', 
                                                    'fax', 'tax_id', 
+                                                   'street1',
+                                                   'street2',
+                                                   'city',
                                                    'addresses', 'contact_mechanisms'] ) ),
                             ( _('Employment'), Form( ['employees'] ) ),
                             ( _('Customers'), Form( ['customers'] ) ),
@@ -844,7 +888,10 @@ class PersonAdmin( Party.Admin ):
                                                               'sex',
                                                               'email',
                                                               'phone',
-                                                              'fax'] ),
+                                                              'fax',
+                                                              'street1',
+                                                              'street2',
+                                                              'city',] ),
                                                             [WidgetOnlyForm('picture'), ],
                                                      ] ),
                                                      'comment', ], scrollbars = False ) ),

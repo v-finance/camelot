@@ -128,9 +128,13 @@ class PartyCase( ModelThreadTestCase ):
         party_address_admin = party.AddressAdmin( self.app_admin, party.PartyAddress )
         party_address_admin.flush( party_address )
         party_address_admin.refresh( party_address )
+        # test hybrid property getters on Party and PartyAddress
         self.assertEqual( party_address.street1, 'Avenue Louise 5' )
         self.assertEqual( party_address.street2, 'Boite 4' )
         self.assertEqual( party_address.city, city )
+        self.assertEqual( org.street1, 'Avenue Louise 5' )
+        self.assertEqual( org.street2, 'Boite 4' )
+        self.assertEqual( org.city, city )        
         self.assertTrue( unicode( party_address ) )
         query = self.session.query( party.PartyAddress )
         self.assertTrue( query.filter( party.PartyAddress.street1 == 'Avenue Louise 5' ).first() )
@@ -144,11 +148,20 @@ class PartyCase( ModelThreadTestCase ):
         depending_objects = list( address_admin.get_depending_objects( address ) )
         self.assertTrue( party_address in depending_objects )
         self.assertTrue( org in depending_objects )
+        # test hybrid property setters on Party
+        org.street1 = 'Rue Belliard 1'
+        org.street2 = 'Second floor'
+        org.city = None
         
     def test_person( self ):
         person = party.Person( first_name = u'Robin',
                                last_name = u'The brave' )
         self.assertEqual( person.email, None )
+        self.assertEqual( person.phone, None )
+        self.assertEqual( person.fax, None )
+        self.assertEqual( person.street1, None )
+        self.assertEqual( person.street2, None )
+        self.assertEqual( person.city, None )
         self.person_admin.flush( person )
         person2 = party.Person( first_name = u'Robin' )
         self.assertFalse( person2.note )
