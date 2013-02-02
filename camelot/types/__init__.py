@@ -33,10 +33,7 @@ Those fields are stored in the :mod:`camelot.types` module.
 import logging
 logger = logging.getLogger('camelot.types')
 
-import sqlalchemy
 from sqlalchemy import types
-
-SQLALCHEMY_MAJOR_VERSION = int(sqlalchemy.__version__.split('.')[1])
 
 from camelot.core.files.storage import StoredFile, StoredImage, Storage
 
@@ -75,10 +72,7 @@ class VirtualAddress(types.TypeDecorator):
     
     def result_processor(self, dialect, coltype=None):
       
-        if SQLALCHEMY_MAJOR_VERSION >= 6:
-            impl_processor = self.impl.result_processor(dialect, coltype)
-        else:
-            impl_processor = self.impl.result_processor(dialect)
+        impl_processor = self.impl.result_processor(dialect, coltype)
         if not impl_processor:
             impl_processor = lambda x:x
       
@@ -139,10 +133,7 @@ class Code(types.TypeDecorator):
     
     def result_processor(self, dialect, coltype=None):
       
-        if SQLALCHEMY_MAJOR_VERSION >= 6:
-            impl_processor = self.impl.result_processor(dialect, coltype)
-        else:
-            impl_processor = self.impl.result_processor(dialect)
+        impl_processor = self.impl.result_processor(dialect, coltype)
         if not impl_processor:
             impl_processor = lambda x:x
       
@@ -240,10 +231,7 @@ to convert a color tuple to a QColor.
       
     def result_processor(self, dialect, coltype=None):
       
-        if SQLALCHEMY_MAJOR_VERSION >= 6:
-            impl_processor = self.impl.result_processor(dialect, coltype)
-        else:
-            impl_processor = self.impl.result_processor(dialect)
+        impl_processor = self.impl.result_processor(dialect, coltype)
         if not impl_processor:
             impl_processor = lambda x:x
             
@@ -308,10 +296,7 @@ class Enumeration(types.TypeDecorator):
     
     def result_processor(self, dialect, coltype=None):
       
-        if SQLALCHEMY_MAJOR_VERSION >= 6:
-            impl_processor = self.impl.result_processor(dialect, coltype)
-        else:
-            impl_processor = self.impl.result_processor(dialect)
+        impl_processor = self.impl.result_processor(dialect, coltype)
         if not impl_processor:
             impl_processor = lambda x:x
             
@@ -386,10 +371,7 @@ class File(types.TypeDecorator):
     
     def result_processor(self, dialect, coltype=None):
       
-        if SQLALCHEMY_MAJOR_VERSION >= 6:
-            impl_processor = self.impl.result_processor(dialect, coltype)
-        else:
-            impl_processor = self.impl.result_processor(dialect)
+        impl_processor = self.impl.result_processor(dialect, coltype)
         if not impl_processor:
             impl_processor = lambda x:x
             
