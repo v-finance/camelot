@@ -232,7 +232,7 @@ class ListActionsCase( ModelThreadTestCase ):
         self.gui_context = list_action.ListActionGuiContext()
         self.gui_context.admin = self.app_admin.get_related_admin( Movie )
         table_widget = tableview.AdminTableWidget( self.gui_context.admin )
-        table_widget.setModel( self.query_proxy_case.person_proxy )
+        table_widget.setModel( self.query_proxy_case.proxy )
         self.gui_context.item_view = table_widget
         
     def tearDown( self ):
@@ -419,9 +419,9 @@ class FormActionsCase( ModelThreadTestCase ):
         self.model_context.obj = Person.query.first()
         self.model_context.admin = self.app_admin.get_related_admin( Person )
         self.gui_context = form_action.FormActionGuiContext()
-        self.gui_context._model = self.query_proxy_case.person_proxy
+        self.gui_context._model = self.query_proxy_case.proxy
         self.gui_context.widget_mapper = QtGui.QDataWidgetMapper()
-        self.gui_context.widget_mapper.setModel( self.query_proxy_case.person_proxy )
+        self.gui_context.widget_mapper.setModel( self.query_proxy_case.proxy )
         self.gui_context.admin = self.app_admin.get_related_admin( Person )
         
     def test_gui_context( self ):

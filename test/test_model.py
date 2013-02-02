@@ -6,28 +6,51 @@ from sqlalchemy import schema, types
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import Session
+from camelot.model import party
 from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
 from .test_orm import TestMetaData
 
 class ModelCase( ModelThreadTestCase ):
     """Test the build in camelot model"""
-  
-    def setUp(self):
-        super( ModelCase, self ).setUp()
-        from camelot.model.party import Person
-        from camelot.view.proxy.queryproxy import QueryTableProxy
-        from camelot.admin.application_admin import ApplicationAdmin
-        self.app_admin = ApplicationAdmin()
-        self.person_admin = self.app_admin.get_related_admin( Person )
+        
+    def test_memento( self ):
+        from camelot.model import memento
+        from camelot.model.authentication import get_current_authentication
+        m = memento.Memento( primary_key = 1,
+                             model = 'TestCase',
+                             authentication = get_current_authentication(),
+                             memento_type = 1,
+                             previous_attributes = {'name':u'memento'} )
+        self.assertTrue( m.previous )
         
     def test_i18n( self ):
-        from camelot.model.i18n import Translation
+        from camelot.model.i18n import Translation, ExportAsPO
         session = Session()
         session.execute( Translation.__table__.delete() )
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), None )
+        # run twice to check all branches in the code
+        Translation.translate_or_register( 'bucket', 'nl_BE' )
         Translation.translate_or_register( 'bucket', 'nl_BE' )
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'bucket' )
+        self.assertEqual( Translation.translate( '', 'nl_BE' ), '' )
+        self.assertEqual( Translation.translate_or_register( '', 'nl_BE' ), '' )
+        # clear the cache
+        Translation._cache.clear()
+        # fill the cache again
+        translation = Translation( language = 'nl_BE', source = 'bucket',
+                                   value = 'emmer', uid=1 )
+        orm.object_session( translation ).flush()
+        self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'emmer' )
+        export_action = ExportAsPO()
+        model_context = MockModelContext()
+        model_context.obj = translation
+        try:
+            generator = export_action.model_run( model_context )
+            file_step = generator.next()
+            generator.send( ['/tmp/test.po'] )
+        except StopIteration:
+            pass
         
     def test_batch_job( self ):
         from camelot.model.batch_job import BatchJob, BatchJobType
@@ -59,29 +82,154 @@ class ModelCase( ModelThreadTestCase ):
         authentication = get_current_authentication()
         self.assertTrue( authentication.username )
         self.assertTrue( unicode( authentication ) )
+
+class PartyCase( ModelThreadTestCase ):
+    """Test the build in party - address - contact mechanism model"""
+  
+    def setUp(self):
+        super( PartyCase, self ).setUp()
+        from camelot.admin.application_admin import ApplicationAdmin
+        self.session = Session()
+        self.app_admin = ApplicationAdmin()
+        self.person_admin = self.app_admin.get_related_admin( party.Person )
+        self.organization_admin = self.app_admin.get_related_admin( party.Organization )
+        
+    def tearDown(self):
+        self.session.expunge_all()
+       
+    def test_party( self ):
+        p = party.Party()
+        self.assertFalse( p.name )
+        
+    def test_geographic_boundary( self ):
+        belgium = party.Country.get_or_create( code = u'BE', 
+                                               name = u'Belgium' )
+        self.assertTrue( unicode( belgium ) )
+        city = party.City.get_or_create( country = belgium,
+                                         code = '1000',
+                                         name = 'Brussels' )
+        return city
+        
+    def test_address( self ):
+        city = self.test_geographic_boundary()
+        address = party.Address.get_or_create( street1 = 'Avenue Louise',
+                                               street2 = None,
+                                               city = city )
+        self.assertTrue( unicode( address ) )
+        return address
+    
+    def test_party_address( self ):
+        city = self.test_geographic_boundary()
+        org = self.test_organization()
+        party_address = party.PartyAddress( party = org )
+        party_address.street1 = 'Avenue Louise 5'
+        party_address.street2 = 'Boite 4'
+        party_address.city = city
+        admin = party.AddressAdmin( self.app_admin, party.PartyAddress )
+        admin.flush( party_address )
+        admin.refresh( party_address )
+        self.assertEqual( party_address.street1, 'Avenue Louise 5' )
+        self.assertEqual( party_address.street2, 'Boite 4' )
+        self.assertEqual( party_address.city, city )
+        self.assertTrue( unicode( party_address ) )
+        query = self.session.query( party.PartyAddress )
+        self.assertTrue( query.filter( party.PartyAddress.street1 == 'Avenue Louise 5' ).first() )
+        self.assertTrue( query.filter( party.PartyAddress.street2 == 'Boite 4' ).first() )
+        
+    def test_person( self ):
+        person = party.Person( first_name = u'Robin',
+                               last_name = u'The brave' )
+        self.assertEqual( person.email, None )
+        self.person_admin.flush( person )
+        person2 = party.Person( first_name = u'Robin' )
+        self.assertFalse( person2.note )
+        person2.last_name = u'The brave'
+        # gui should warn this person exists
+        self.assertTrue( person2.note )
+        return person
+        
+    def test_contact_mechanism( self ):
+        contact_mechanism = party.ContactMechanism( mechanism = (u'email', u'info@test.be') )
+        self.assertTrue( unicode( contact_mechanism ) )
         
     def test_person_contact_mechanism( self ):
-        from camelot.model.party import Person
-        mechanism_1 = (u'email', u'robin@test.org')
-        mechanism_2 = (u'email', u'robin@test.com')
-        person = Person( first_name = u'Robin',
-                         last_name = u'The brave' )
+        # create a new person
+        person = party.Person( first_name = u'Robin',
+                               last_name = u'The brave' )
+        self.person_admin.flush( person )
         self.assertEqual( person.email, None )
+        # set the contact mechanism
+        mechanism_1 = (u'email', u'robin@test.org')
         person.email = mechanism_1
         self.person_admin.flush( person )
         self.assertEqual( person.email, mechanism_1 )
+        # change the contact mechanism, after a flush
+        mechanism_2 = (u'email', u'robin@test.com')
         person.email = mechanism_2
+        self.person_admin.flush( person )
         self.assertEqual( person.email, mechanism_2 )
-        self.person_admin.delete( person )
-        person = Person( first_name = u'Robin',
-                         last_name = u'The brave' )
-        self.person_admin.flush( person )
-        self.assertEqual( person.email, None )
-        person.email = mechanism_2
-        person.email = None
+        # remove the contact mechanism after a flush
+        person.email = ('email', '')
         self.assertEqual( person.email, None )
         self.person_admin.flush( person )
         self.assertEqual( person.email, None )
+        admin = party.PartyContactMechanismAdmin( self.app_admin, 
+                                                  party.PartyContactMechanism )
+        contact_mechanism = party.ContactMechanism( mechanism = mechanism_1 )
+        party_contact_mechanism = party.PartyContactMechanism( party = person,
+                                                               contact_mechanism = contact_mechanism )
+        admin.flush( party_contact_mechanism )
+        admin.refresh( party_contact_mechanism )
+        list( admin.get_depending_objects( party_contact_mechanism ) )
+        #
+        # if the contact mechanism changes, the party person should be 
+        # updated as well
+        #
+        contact_mechanism_admin = self.app_admin.get_related_admin( party.ContactMechanism )
+        related_objects = list( contact_mechanism_admin.get_depending_objects( contact_mechanism ) )
+        self.assertTrue( person in related_objects )
+        self.assertTrue( party_contact_mechanism in related_objects )
+        # delete the person
+        self.person_admin.delete( person )        
+        
+    def test_organization( self ):
+        org = party.Organization( name = 'PSF' )
+        org.email = ('email', 'info@python.org')
+        org.phone = ('phone', '1234')
+        org.fax = ('fax', '4567')
+        self.organization_admin.flush( org )
+        self.assertTrue( unicode( org ) )
+        self.assertEqual( org.number_of_shares_issued, 0 )
+        query = orm.object_session( org ).query( party.Organization )
+        self.assertTrue( query.filter( party.Organization.email == ('email', 'info@python.org') ).first() )
+        self.assertTrue( query.filter( party.Organization.phone == ('phone', '1234') ).first() )
+        self.assertTrue( query.filter( party.Organization.fax == ('fax', '4567') ).first() )
+        return org
+    
+    def test_party_relationship( self ):
+        person = self.test_person()
+        org = self.test_organization()
+        employee = party.EmployerEmployee( established_from = org,
+                                           established_to = person )
+        self.assertTrue( unicode( employee ) )
+        
+    def test_party_contact_mechanism( self ):
+        person = self.test_person()
+        party_contact_mechanism = party.PartyContactMechanism( party = person )
+        party_contact_mechanism.mechanism = (u'email', u'info@test.be')
+        party_contact_mechanism.mechanism = (u'email', u'info2@test.be')
+        self.session.flush()
+        self.assertTrue( unicode( party_contact_mechanism ) )
+        query = self.session.query( party.PartyContactMechanism )
+        self.assertTrue( query.filter( party.PartyContactMechanism.mechanism == (u'email', u'info2@test.be') ).first() )
+        
+    def test_party_category( self ):
+        org = self.test_organization()
+        category = party.PartyCategory( name = u'Imortant' )
+        category.parties.append( org )
+        self.session.flush()
+        self.assertTrue( list( category.get_contact_mechanisms( u'email') ) )
+        self.assertTrue( unicode( category ) )
 
 class FixtureCase( ModelThreadTestCase ):
     """Test the build in camelot model for fixtures"""

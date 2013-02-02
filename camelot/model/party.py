@@ -79,9 +79,8 @@ class Country( GeographicBoundary ):
     def get_or_create( cls, code, name ):
         country = Country.query.filter_by( code = code ).first()
         if not country:
-            from elixir import session
             country = Country( code = code, name = name )
-            session.flush( [country] )
+            orm.object_session( country ).flush()
         return country
 
     class Admin( EntityAdmin ):
@@ -107,9 +106,8 @@ class City( GeographicBoundary ):
     def get_or_create( cls, country, code, name ):
         city = City.query.filter_by( code = code, country = country ).first()
         if not city:
-            from elixir import session
             city = City( code = code, name = name, country = country )
-            session.flush( [city] )
+            orm.object_session( city ).flush()
         return city
 
     class Admin( EntityAdmin ):
@@ -219,6 +217,7 @@ class Party( Entity ):
     def _set_contact_mechanism( self, described_by, value ):
         """Set a specific type of contact mechanism
         """
+        assert value[0] in camelot.types.VirtualAddress.virtual_address_types
         for party_contact_mechanism in self.contact_mechanisms:
             contact_mechanism = party_contact_mechanism.contact_mechanism
             if contact_mechanism != None:
@@ -248,14 +247,7 @@ class Party( Entity ):
     
     @email.expression
     def email_expression( self ):
-
-        cm = ContactMechanism
-        pcm = PartyContactMechanism
-
-        return sql.select( [cm.mechanism],
-                          whereclause = and_( pcm.table.c.party_id == self.id,
-                                              cm.table.c.mechanism.like( ( u'email', u'%' ) ) ),
-                          from_obj = [cm.table.join( pcm.table, cm.id == pcm.contact_mechanism_id )] ).limit(1)
+        return Email.mechanism
 
     @hybrid.hybrid_property
     def phone( self ):
@@ -267,14 +259,7 @@ class Party( Entity ):
     
     @phone.expression
     def phone_expression( self ):
-
-        cm = ContactMechanism
-        pcm = PartyContactMechanism
-
-        return sql.select( [cm.mechanism],
-                          whereclause = and_( pcm.table.c.party_id == self.id,
-                                              cm.table.c.mechanism.like( ( u'phone', u'%' ) ) ),
-                          from_obj = [cm.table.join( pcm.table, cm.id == pcm.contact_mechanism_id )] ).limit(1)
+        return Phone.mechanism
 
     @hybrid.hybrid_property
     def fax( self ):
@@ -286,14 +271,7 @@ class Party( Entity ):
     
     @fax.expression
     def fax_expression( self ):
-
-        cm = ContactMechanism
-        pcm = PartyContactMechanism
-
-        return sql.select( [cm.mechanism],
-                          whereclause = and_( pcm.table.c.party_id == self.id,
-                                              cm.table.c.mechanism.like( ( u'fax', u'%' ) ) ),
-                          from_obj = [cm.table.join( pcm.table, cm.id == pcm.contact_mechanism_id )] ).limit(1)
+        return Fax.mechanism
 
     def full_name( self ):
 
@@ -555,26 +533,22 @@ class Address( Entity ):
                       onupdate = 'cascade',
                       lazy = 'subquery' )
 
-    @ColumnProperty
     def name( self ):
         return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
                            whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
+    
+    name = ColumnProperty( name, deferred = True )
 
     @classmethod
     def get_or_create( cls, street1, street2, city ):
         address = cls.query.filter_by( street1 = street1, street2 = street2, city = city ).first()
         if not address:
-            from elixir import session
             address = cls( street1 = street1, street2 = street2, city = city )
-            session.flush( [address] )
+            orm.object_session( address ).flush()
         return address
 
     def __unicode__( self ):
         return u'%s, %s' % ( self.street1 or '', self.city or '' )
-
-    def showMap( self ):
-        from PyQt4 import QtGui, QtCore
-        QtGui.QDesktopServices.openUrl ( QtCore.QUrl( 'http://www.google.be/maps?f=q&source=s_q&geocode=%s&q=%s+%s' % ( self.city.country.code, self.street1, self.city.name ) ) )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Address')
@@ -582,20 +556,11 @@ class Address( Entity ):
         list_display = ['street1', 'street2', 'city']
         form_size = ( 700, 150 )
         field_attributes = {'street1':{'minimal_column_width':30}}
-        form_actions = [( 'Show on map', lambda address:address.showMap() )]
 
 Address = documented_entity()( Address )
 
 class PartyAddress( Entity ):
     using_options( tablename = 'party_address' )
-
-    def __new__(cls, *args, **kwargs):
-        party_address = super(PartyAddress, cls).__new__(cls, *args, **kwargs)
-        setattr(party_address, '_address_street1', None)
-        setattr(party_address, '_address_street2', None)
-        setattr(party_address, '_address_city', None)
-        return party_address
-
     party = ManyToOne( Party, 
                        required = True, 
                        ondelete = 'cascade', 
@@ -610,63 +575,65 @@ class PartyAddress( Entity ):
     thru_date = Field( Date(), default = end_of_times, required = True, index = True )
     comment = Field( Unicode( 256 ) )
 
-    #
-    # Create 3 'virtual attributes'
-    # * address_street1
-    # * address_street2
-    # * address_city
-    # These attributes refer to the corresponding attributes on the
-    # address relation, if the address relation exists, otherwise, they
-    # refer to a corresponding hidden attribute
-    #
-    def __getattr__(self, attr):
-        if attr.startswith('address_'):
-            if self.address:
-                return getattr(self.address, attr[len('address_'):])
-            else:
-                return getattr(self, '_address_' + attr[len('address_'):] )
-        else:
-            return super(PartyAddress, self).__getattr__(attr)
+    def _get_address_field( self, name ):
+        if self.address:
+            return getattr( self.address, name )
+        
+    def _set_address_field( self, name, value ):
+        if not self.address:
+            self.address = Address()
+        setattr( self.address, name, value )
+        
+    @hybrid.hybrid_property
+    def street1( self ):
+        return self._get_address_field( u'street1' )
+    
+    @street1.setter
+    def street1_setter( self, value ):
+        return self._set_address_field( u'street1', value )
+    
+    @street1.expression
+    def street1_expression( self ):
+        return Address.street1
 
-    def __setattr__(self, attr, value):
-        if attr.startswith('address_'):
-            setattr(self, '_address_' + attr[len('address_'):], value )
-            if self.address:
-                return setattr(self.address, attr[len('address_'):], value )
-            elif self._address_street1 != None and self._address_city != None:
-                self.address = Address( street1 = self._address_street1,
-                                        city = self._address_city )
-        else:
-            super(PartyAddress, self).__setattr__(attr, value)
+    @hybrid.hybrid_property
+    def street2( self ):
+        return self._get_address_field( u'street2' )
+    
+    @street2.expression
+    def street2_expression( self ):
+        return Address.street2    
+    
+    @street2.setter
+    def street2_setter( self, value ):
+        return self._set_address_field( u'street2', value )    
+    
+    @hybrid.hybrid_property
+    def city( self ):
+        return self._get_address_field( u'city' )
+    
+    @city.setter
+    def city_setter( self, value ):
+        return self._set_address_field( u'city', value )
 
-    @ColumnProperty
     def party_name( self ):
         return sql.select( [sql.func.coalesce(Party.full_name, '')],
                            whereclause = (Party.id==self.party_id))
-
-    @ColumnProperty
-    def address_name( self ):
-        return sql.select( [sql.func.coalesce(Address.name, '')],
-                           whereclause = (Address.id==self.address_id))
+    
+    party_name = ColumnProperty( party_name, deferred = True )
 
     def __unicode__( self ):
         return '%s : %s' % ( unicode( self.party ), unicode( self.address ) )
 
-    def showMap( self ):
-        if self.address:
-            self.address.showMap()
-
     class Admin( EntityAdmin ):
         verbose_name = _('Address')
         verbose_name_plural = _('Addresses')
-        list_search = ['party_name', 'address_name']
-        list_display = ['party_name', 'address_name', 'comment']
-        form_display = ['party', 'address', 'comment', 'from_date', 'thru_date']
+        list_search = ['party_name', 'street1', 'street2',]
+        list_display = ['party_name', 'street1', 'street2', 'city', 'comment']
+        form_display = [ 'party', 'street1', 'street2', 'city', 'comment', 
+                         'from_date', 'thru_date']
         form_size = ( 700, 200 )
-        form_actions = [( 'Show on map', lambda address:address.showMap() )]
-        field_attributes = dict(address=dict(embedded=True),
-                                party_name=dict(editable=False, name='Party', minimal_column_width=30),
-                                address_name=dict(editable=False, name='Address', minimal_column_width=30))
+        field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30))
 
 class PartyAddressRoleType( Entity ):
     using_options( tablename = 'party_address_role_type' )
@@ -696,13 +663,10 @@ class ContactMechanism( Entity ):
 
         def get_depending_objects(self, contact_mechanism ):
             for party_contact_mechanism in contact_mechanism.party_contact_mechanisms:
-                if party_contact_mechanism not in PartyContactMechanism.query.session.new:
-                    party_contact_mechanism.expire( ['mechanism'] )
-                    yield party_contact_mechanism
-                    party = party_contact_mechanism.party
-                    if party and party not in Party.query.session.new:
-                        party.expire(['email', 'phone'])
-                        yield party
+                yield party_contact_mechanism
+                party = party_contact_mechanism.party
+                if party:
+                    yield party
 
 ContactMechanism = documented_entity()( ContactMechanism )
 
@@ -730,8 +694,7 @@ class PartyContactMechanism( Entity ):
                 
     @mechanism.expression 
     def mechanism_expression( self ):
-        return sql.select( [ContactMechanism.mechanism],
-                           whereclause = (ContactMechanism.id==self.contact_mechanism_id))
+        return ContactMechanism.mechanism
 
     def party_name( self ):
         return sql.select( [Party.full_name],
@@ -749,7 +712,6 @@ class PartyCategory( Entity ):
     using_options( tablename = 'party_category' )
     name = Field( Unicode(40), index=True, required=True )
     color = Field( camelot.types.Color() )
-#    parent = ManyToOne( 'PartyCategory' )
 # end category definition
     parties = ManyToMany( 'Party', lazy = True,
                           tablename='party_category_party', 
@@ -777,6 +739,10 @@ class PartyCategory( Entity ):
         verbose_name = _('Category')
         verbose_name_plural = _('Categories')
         list_display = ['name', 'color']
+
+Phone = orm.aliased( ContactMechanism )
+Email = orm.aliased( ContactMechanism )
+Fax = orm.aliased( ContactMechanism )
 
 class PartyAdmin( EntityAdmin ):
     verbose_name = _('Party')

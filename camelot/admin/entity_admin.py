@@ -33,6 +33,7 @@ from camelot.view.utils import to_string
 from camelot.core.memento import memento_change
 from camelot.core.utils import ugettext_lazy, ugettext
 from camelot.core.orm import Session
+from camelot.core.orm.entity import entity_to_dict
 from camelot.admin.validator.entity_validator import EntityValidator
 
 from sqlalchemy import orm
@@ -510,8 +511,7 @@ It has additional class attributes that customise its behaviour.
         if session:
             if entity_instance in session.new:
                 session.expunge(entity_instance)
-            elif (entity_instance not in session.deleted) and \
-                 (entity_instance in session): # if the object is not in the session, it might already be deleted
+            elif entity_instance not in session.deleted:
                 #
                 # only if we know the primary key, we can keep track of its history
                 #
@@ -520,14 +520,14 @@ It has additional class attributes that customise its behaviour.
                     # save the state before the update
                     memento = self.get_memento()
                     if memento != None:
-                        modifications = dict()
+                        modifications = entity_to_dict( entity_instance )
                         change = memento_change( model = unicode( self.entity.__name__ ),
                                                  memento_type = 'before_delete',
                                                  primary_key = primary_key,
                                                  previous_attributes = modifications )
                         memento.register_changes( [change] )
                 session.delete( entity_instance )
-                session.flush( [entity_instance] )
+                self.flush( entity_instance )
 
     @model_function
     def expunge(self, entity_instance):

@@ -91,7 +91,6 @@ class VirtualAddress(types.TypeDecorator):
             return (u'phone',u'')
             
         return processor  
-        
     
 class Code(types.TypeDecorator):
     """SQLAlchemy column type to store codes.  Where a code is a list of strings
@@ -366,7 +365,7 @@ class File(types.TypeDecorator):
     impl = types.Unicode
     stored_file_implementation = StoredFile
     
-    def __init__(self, max_length=100, upload_to='', storage=Storage, **kwargs):
+    def __init__(self, max_length=100, upload_to=u'', storage=Storage, **kwargs):
         self.max_length = max_length
         self.storage = storage(upload_to, self.stored_file_implementation)
         types.TypeDecorator.__init__(self, length=max_length, **kwargs)
