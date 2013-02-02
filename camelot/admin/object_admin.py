@@ -392,6 +392,15 @@ be specified using the verbose_name attribute.
         :return: an iterator over objects that depend on obj
         """
         return []
+    
+    @model_function
+    def get_compounding_objects(self, obj):
+        """Overwrite this function to generate a list of objects out of which
+        `obj` is build.  These objects will be validated if `obj` is 
+        validated.  So `obj` will only be valid if all its compounding object
+        are valid as well.
+        """
+        return []
 
     @model_function
     def get_subclass_tree( self ):
@@ -622,10 +631,6 @@ be specified using the verbose_name attribute.
         :return: a :class:`camelot.admin.validator.object_validator.Validator`
         """
         return self.validator( self )
-        
-    def create_validator(self, model):
-        """deprecated"""
-        return self.validator(self, model)
 
     @model_function
     def get_fields(self):

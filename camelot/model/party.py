@@ -222,6 +222,10 @@ class PartyContactMechanismAdmin( EntityAdmin ):
         party = contact_mechanism.party
         if party and (party not in Party.query.session.new):
             yield party
+            
+    def get_compounding_objects( self, contact_mechanism ):
+        if contact_mechanism.contact_mechanism:
+            yield contact_mechanism.contact_mechanism
 
 class PartyPartyContactMechanismAdmin( PartyContactMechanismAdmin ):
     list_search = ['party_name', 'mechanism']
@@ -834,6 +838,10 @@ class PartyAdmin( EntityAdmin ):
 
                             )
 
+    def get_compounding_objects( self, party ):
+        for party_contact_mechanism in party.contact_mechanisms:
+            yield party_contact_mechanism
+        
     def flush(self, party):
         from sqlalchemy.orm.session import Session
         session = Session.object_session( party )

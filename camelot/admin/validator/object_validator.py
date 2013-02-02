@@ -56,10 +56,23 @@ class ObjectValidator(QtCore.QObject):
             model.dataChanged.connect( self.data_changed )
             model.layoutChanged.connect( self.layout_changed )
         self._invalid_rows = set()
+        self._related_validators = dict()
 
         if initial_validation:
             post(self.validate_all_rows)
 
+    def get_related_validator( self, cls ):
+        """Get the validator for another Class
+        :param cls: the `Class` for which to get the validator
+        :return: an `ObjectValidator` instance
+        """
+        try:
+            return self._related_validators[cls]
+        except KeyError:
+            validator = self.admin.get_related_admin( cls ).get_validator()
+            self._related_validators[cls] = validator
+            return validator
+            
     def validate_all_rows(self):
         """Force validation of all rows in the model"""
         for row in range(self.model.getRowCount()):
@@ -87,6 +100,11 @@ class ObjectValidator(QtCore.QObject):
         post(create_validity_updater(from_index.row(), thru_index.row()))
 
     def objectValidity(self, entity_instance):
+        """deprecated, use `validate_object` instead
+        """
+        return self.validate_object( entity_instance )
+    
+    def validate_object( self, obj ):
         """:return: list of messages explaining invalid data
         empty list if object is valid
         """
@@ -101,7 +119,7 @@ class ObjectValidator(QtCore.QObject):
                 # If the field embeds another object, that object should be valid as well
                 #
                 if attributes.get('embedded', False) and attributes.get('target', False):
-                    value = getattr(entity_instance, field)
+                    value = getattr(obj, field)
                     if value:
                         target_admin = self.admin.get_related_admin(attributes['target'])
                         target_validator = target_admin.create_validator(None)
@@ -111,7 +129,7 @@ class ObjectValidator(QtCore.QObject):
                 # @todo: check if field is a primary key instead of checking
                 # whether the name is id, but this should only happen in the entity validator
                 if attributes['nullable']!=True and field!='id':
-                    value = getattr(entity_instance, field)
+                    value = getattr(obj, field)
                     logger.debug('column %s is required'%(field))
                     if 'delegate' not in attributes:
                         raise Exception('no delegate specified for %s'%(field))
@@ -129,7 +147,13 @@ class ObjectValidator(QtCore.QObject):
                         is_null = True
                     if is_null:
                         messages.append(_(u'%s is a required field') % (attributes['name']))
-        logger.debug(u'messages : %s'%(u','.join(messages)))
+        if not len( messages ):
+            # if the object itself is valid, dig deeper within the compounding
+            # objects
+            for compound_obj in self.admin.get_compounding_objects( obj ):
+                related_validator = self.get_related_validator( type( compound_obj ) )
+                messages.extend( related_validator.validate_object( compound_obj ) )
+            logger.debug(u'messages : %s'%(u','.join(messages)))
         return messages
 
     def number_of_invalid_rows(self):

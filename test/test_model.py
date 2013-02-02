@@ -249,6 +249,20 @@ class PartyCase( ModelThreadTestCase ):
         self.assertTrue( unicode( party_contact_mechanism ) )
         query = self.session.query( party.PartyContactMechanism )
         self.assertTrue( query.filter( party.PartyContactMechanism.mechanism == (u'email', u'info2@test.be') ).first() )
+        # party contact mechanism is only valid when contact mechanism is
+        # valid
+        party_contact_mechanism_admin = self.app_admin.get_related_admin( party.PartyContactMechanism )
+        compounding_objects = list( party_contact_mechanism_admin.get_compounding_objects( party_contact_mechanism ) )
+        self.assertTrue( party_contact_mechanism.contact_mechanism in compounding_objects )
+        party_contact_mechanism_validator = party_contact_mechanism_admin.get_validator()
+        self.assertFalse( party_contact_mechanism_validator.validate_object( party_contact_mechanism ) )
+        party_contact_mechanism.contact_mechanism.mechanism = None
+        self.assertTrue( party_contact_mechanism_validator.validate_object( party_contact_mechanism ) )
+        # the party is only valid when the contact mechanism is
+        # valid
+        party_admin = self.app_admin.get_related_admin( party.Person )
+        party_validator = party_admin.get_validator()
+        self.assertTrue( party_validator.validate_object( person ) )
         
     def test_party_category( self ):
         org = self.test_organization()
