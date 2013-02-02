@@ -259,7 +259,7 @@ position in the query.
             self.form_icon = QtCore.QVariant( self.header_icon.getQIcon().pixmap( self.iconSize ) )
         else:
             self.form_icon = QtCore.QVariant()
-        self.validator = admin.create_validator( self )
+        self.validator = admin.get_validator( self )
         self._collection_getter = collection_getter
         self.flush_changes = flush_changes
         self.delegate_manager = None

@@ -43,10 +43,11 @@ class ObjectValidator(QtCore.QObject):
 
     def __init__(self, admin, model = None, initial_validation = False):
         """
-        :param mode: a collection proxy the validator should inspect, or None if only the objectValidity method is going
-        to get used.
-        :param verifiy_initial_validity: do an inital check to see if all rows in a model are valid, defaults to False,
-        since this might take a lot of time on large collections.
+        :param model: a collection proxy the validator should inspect, or None 
+            if only the objectValidity method is going to get used.
+        :param verifiy_initial_validity: do an inital check to see if all rows 
+            in a model are valid, defaults to False,
+            since this might take a lot of time on large collections.
         """
         super(ObjectValidator, self).__init__()
         self.admin = admin
@@ -122,7 +123,7 @@ class ObjectValidator(QtCore.QObject):
                     value = getattr(obj, field)
                     if value:
                         target_admin = self.admin.get_related_admin(attributes['target'])
-                        target_validator = target_admin.create_validator(None)
+                        target_validator = target_admin.get_validator(None)
                         messages.extend( target_validator.objectValidity(value) )
                         continue
                 # if the field, is nullable, don't waste time getting its value

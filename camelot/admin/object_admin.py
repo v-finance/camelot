@@ -625,12 +625,14 @@ be specified using the verbose_name attribute.
         return [(field, self.get_field_attributes(field))
                 for field in table.get_fields() ]
 
-    def get_validator( self ):
+    def get_validator( self, model = None, initial_validation = False ):
         """Get a validator object
         
         :return: a :class:`camelot.admin.validator.object_validator.Validator`
         """
-        return self.validator( self )
+        return self.validator( self, 
+                               model = model, 
+                               initial_validation = initial_validation )
 
     @model_function
     def get_fields(self):
@@ -851,7 +853,7 @@ be specified using the verbose_name attribute.
                                           admin.get_fields,
                                           max_number_of_rows=1 )
 
-        validator = admin.create_validator(model)
+        validator = admin.get_validator(model)
 
         class NewView( FormView ):
 
