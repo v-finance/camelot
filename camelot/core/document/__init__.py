@@ -75,19 +75,3 @@ def documented_entity():
         return model
 
     return document_entity
-
-
-def documented_type():
-    """Class decorator to append an image of the default editor of
-  a field type to the docstring of the type"""
-
-    def document_type(field_type):
-        field_type.__doc__ = (field_type.__doc__ or '') + """
-
-.. image:: /_static/editors/%s_editable.png
-    
-    """
-        return field_type
-
-    return document_type
-

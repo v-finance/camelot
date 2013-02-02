@@ -37,7 +37,6 @@ be used as a `declarative_base` and has some classes that mimic Elixir
 behavior
 """
 
-import contextlib
 import functools
 import logging
 

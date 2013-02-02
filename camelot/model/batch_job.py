@@ -28,7 +28,6 @@ These classes provide the means to store the result of batch jobs to enable the
 user to review or plan them.
 """
 
-import datetime
 import sys
 
 import sqlalchemy.types
@@ -39,7 +38,6 @@ from camelot.core.orm import Entity, Field, ManyToOne, using_options
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import filters, forms
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin.action import Action
 from camelot.core.document import documented_entity
 import camelot.types
 
