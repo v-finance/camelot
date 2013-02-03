@@ -55,8 +55,9 @@ class ModelCase( ModelThreadTestCase ):
     def test_batch_job( self ):
         from camelot.model.batch_job import BatchJob, BatchJobType
         batch_job_type = BatchJobType.get_or_create( u'Synchronize' )
-        batch_job = BatchJob.create( batch_job_type )
         self.assertTrue( unicode( batch_job_type ) )
+        batch_job = BatchJob.create( batch_job_type )
+        self.assertTrue( orm.object_session( batch_job ) )
         self.assertFalse( batch_job.is_canceled() )
         batch_job.change_status( 'canceled' )
         self.assertTrue( batch_job.is_canceled() )
@@ -183,6 +184,10 @@ class PartyCase( ModelThreadTestCase ):
         # set the contact mechanism
         mechanism_1 = (u'email', u'robin@test.org')
         person.email = mechanism_1
+        # the default from and thru dates should be set when
+        # setting the party defaults
+        self.person_admin.set_defaults( person )
+        self.assertTrue( person.contact_mechanisms[0].from_date )
         self.person_admin.flush( person )
         self.assertEqual( person.email, mechanism_1 )
         # change the contact mechanism, after a flush

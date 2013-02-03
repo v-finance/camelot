@@ -222,6 +222,8 @@ class StatusMixin( object ):
 	    status_from_date = datetime.date.today()
 	history_type = self._status_history
 	session = orm.object_session( self )
+	if session == None:
+	    raise Exception( 'Can only change status for objects wihin a session' )
 	old_status_filter =  sql.and_( history_type.status_for == self,
 	                               history_type.status_from_date <= status_from_date,
 	                               history_type.status_thru_date >= status_from_date )
@@ -231,11 +233,11 @@ class StatusMixin( object ):
 	    old_status.thru_date = datetime.date.today() - datetime.timedelta( days = 1 )
 	    old_status.status_thru_date = status_from_date - datetime.timedelta( days = 1 )
 	new_status = history_type( status_for = self,
-	                                  classified_by = new_status,
-	                                  status_from_date = status_from_date,
-	                                  status_thru_date = status_thru_date,
-	                                  from_date = datetime.date.today(),
-	                                  thru_date = end_of_times() )	
+	                           classified_by = new_status,
+	                           status_from_date = status_from_date,
+	                           status_thru_date = status_thru_date,
+	                           from_date = datetime.date.today(),
+	                           thru_date = end_of_times() )	
 	session.flush()
 
 class ChangeStatus( Action ):

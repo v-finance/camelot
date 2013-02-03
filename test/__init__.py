@@ -12,9 +12,7 @@ class TestSettings( object ):
     
     def setup_model( self ):
         from camelot.core.sql import metadata
-        # bind metadata to a specific connection, when using the in memory
-        # database this is needed or the data is lost
-        metadata.bind = self.ENGINE().connect()
+        metadata.bind = self.ENGINE()
         from camelot.model import authentication
         from camelot.model import party
         from camelot.model import i18n
@@ -35,7 +33,9 @@ class TestSettings( object ):
     CAMELOT_MEDIA_ROOT = 'media'
     
     def ENGINE( self ):
+       from sqlalchemy.pool import StaticPool
        from sqlalchemy import create_engine
-       return create_engine( 'sqlite:///' )
+       # static pool to preserve tables and data accross threads
+       return create_engine( 'sqlite:///', poolclass = StaticPool )
    
 settings.append( TestSettings() )

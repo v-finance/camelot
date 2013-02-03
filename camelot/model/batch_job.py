@@ -112,20 +112,17 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         batch_session.commit()
         return batch_session_batch_job
 
-    def is_canceled(self):
+    def is_canceled( self ):
         """Verifies if this Batch Job is canceled.  Returns :keyword:`True` if 
-        it is.  This verification is done without using the ORM, so the verification
-        has no impact on the current session or the objects itself.  This method
-        is thus suited to call inside a running batch job to verifiy if another
-        user has canceled the running job.
+        it is.  This method is thus suiteable to call inside a running batch job 
+        to verifiy if another user has canceled the running job.  Create a
+        batch job object through the :meth:`create` method to make sure
+        requesting the status does not interfer with the normal session.
         
         :return: :keyword:`True` or :keyword:`False`
         """
-        query = self.current_status_query( self._status_history, self )
-        for row in self.__table__.bind.execute( query ):
-            if row[0] == 'canceled':
-                return True
-        return False
+        session = orm.object_session( self ).expire( self, ['status'] )
+        return self.current_status == 'canceled'
         
     def add_exception_to_message( self, 
                                   exc_type = None, 
