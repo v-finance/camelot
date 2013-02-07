@@ -222,8 +222,6 @@ class StatusMixin( object ):
 	    status_from_date = datetime.date.today()
 	history_type = self._status_history
 	session = orm.object_session( self )
-	if session == None:
-	    raise Exception( 'Can only change status for objects wihin a session' )
 	old_status_filter =  sql.and_( history_type.status_for == self,
 	                               history_type.status_from_date <= status_from_date,
 	                               history_type.status_thru_date >= status_from_date )

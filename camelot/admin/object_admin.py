@@ -405,6 +405,9 @@ be specified using the verbose_name attribute.
           * default values will be set for the attributes of the compounding
             objects
             
+          * when an object is expired or refreshed, all its compounding objects
+            will be expired and refreshed as well
+            
         """
         return []
 

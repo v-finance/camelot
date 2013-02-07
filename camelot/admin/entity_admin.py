@@ -496,10 +496,9 @@ It has additional class attributes that customise its behaviour.
     def add( self, obj ):
         """Adds the entity instance to the default session, if it is not
         yet attached to a session"""
-        import elixir
         session = Session.object_session( obj )
         if session == None:
-            elixir.session.add( obj )
+            Session().add( obj )
     
     @model_function
     def delete(self, entity_instance):
@@ -532,47 +531,77 @@ It has additional class attributes that customise its behaviour.
     @model_function
     def expunge(self, entity_instance):
         """Expunge the entity from the session"""
-        from sqlalchemy.orm.session import Session
-        session = Session.object_session( entity_instance )
+        session = orm.object_session( entity_instance )
         if session:
-            session.expunge( entity_instance )
+            objects_to_expunge = set([entity_instance])
+            self._expand_compounding_objects( objects_to_expunge )
+            for obj in objects_to_expunge:
+                if obj in session:
+                    session.expunge( obj )
         
+    def _expand_compounding_objects( self, objs ):
+        """
+        Given a set of objects, expand this set with all compounding objects.
+        :param objs: a `set` of objects
+        """
+        assert isinstance( objs, set )
+        additional_objects = set(objs)
+        while additional_objects:
+            objs.update( additional_objects )
+            additional_objects.clear()
+            for obj_to_flush in objs:
+                related_admin = self.get_related_admin( type(obj_to_flush ) )
+                for compounding_object in related_admin.get_compounding_objects( obj_to_flush ):
+                    if compounding_object not in objs:
+                        additional_objects.add( compounding_object )        
+                        
     @model_function
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
         from sqlalchemy.orm.session import Session
         session = Session.object_session( entity_instance )
         if session:
-            modifications = {}
-            try:
-                modifications = self.get_modifications( entity_instance )
-            except Exception, e:
-                # todo : there seems to be a bug in sqlalchemy that causes the
-                #        get history to fail in some cases
-                logger.error( 'could not get modifications from object', exc_info = e )
-            session.flush( [entity_instance] )
+            objects_to_flush = set([entity_instance])
+            self._expand_compounding_objects( objects_to_flush )
+            #
+            # Create a list of changes
+            #
+            changes = []
+            for obj_to_flush in objects_to_flush:
+                if obj_to_flush in session.dirty:
+                    modifications = {}
+                    try:
+                        modifications = self.get_modifications( obj_to_flush )
+                    except Exception, e:
+                        # todo : there seems to be a bug in sqlalchemy that causes the
+                        #        get history to fail in some cases
+                        logger.error( 'could not get modifications from object', exc_info = e )
+                    primary_key = self.primary_key( obj_to_flush )
+                    if modifications and (None not in primary_key):
+                        change = memento_change( model = unicode( self.entity.__name__ ),
+                                                 memento_type = 'before_update',
+                                                 primary_key = primary_key,
+                                                 previous_attributes = modifications )
+                        changes.append( change )
+            session.flush( objects_to_flush )
             #
             # If needed, track the changes
             #
-            primary_key = self.primary_key( entity_instance )
-            if modifications and (None not in primary_key):
-                memento = self.get_memento()
-                if memento != None:
-                    change = memento_change( model = unicode( self.entity.__name__ ),
-                                             memento_type = 'before_update',
-                                             primary_key = primary_key,
-                                             previous_attributes = modifications )
-                    memento.register_changes( [change] )
+            memento = self.get_memento()
+            if changes and memento != None:
+                memento.register_changes( changes )
 
     @model_function
     def refresh(self, entity_instance):
         """Undo the pending changes to the backend and restore the original
         state"""
-        from sqlalchemy.orm.session import Session
-        session = Session.object_session( entity_instance )
+        session = orm.object_session( entity_instance )
         if session:
-            if not self.is_deleted( entity_instance ):
-                session.refresh( entity_instance )
+            objects_to_refresh = set([entity_instance])
+            self._expand_compounding_objects( objects_to_refresh )
+            for obj in objects_to_refresh:
+                if obj in session:
+                    session.refresh( obj )
        
     @model_function
     def is_persistent(self, obj):

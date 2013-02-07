@@ -162,37 +162,6 @@ class Address( Entity ):
             
 Address = documented_entity()( Address )
 
-class AddressAdmin( EntityAdmin ):
-    """Admin with only the Address information and not the Party information"""
-    verbose_name = _('Address')
-    list_display = ['street1', 'city', 'comment']
-    form_display = ['street1', 'street2', 'city', 'comment', 'from_date', 'thru_date']
-    field_attributes = dict(street1 = dict(name=_('Street'),
-                                           editable=True,
-                                           nullable=False),
-                            street2 = dict(name=_('Street Extra'),
-                                           editable=True),
-                            city = dict(name=_('City'),
-                                        editable=True,
-                                        nullable=False,
-                                        delegate=delegates.Many2OneDelegate,
-                                        target=City),
-                            )
-
-    def flush(self, party_address):
-        if party_address.address:
-            super( AddressAdmin, self ).flush( party_address.address )
-        super( AddressAdmin, self ).flush( party_address )
-
-    def refresh(self, party_address):
-        if party_address.address:
-            super( AddressAdmin, self ).refresh( party_address.address )
-        super( AddressAdmin, self ).refresh( party_address )
-        
-    def get_depending_objects( self, party_address ):
-        if party_address.party:
-            yield party_address.party        
-
 class PartyContactMechanismAdmin( EntityAdmin ):
     form_size = ( 700, 200 )
     verbose_name = _('Contact mechanism')
@@ -206,17 +175,6 @@ class PartyContactMechanismAdmin( EntityAdmin ):
                                      'nullable':False,
                                      'name':_('Mechanism'),
                                      'delegate':delegates.VirtualAddressDelegate}}
-
-    def flush( self, party_contact_mechanism ):
-        if party_contact_mechanism.contact_mechanism:
-            super(PartyContactMechanismAdmin, self).flush( party_contact_mechanism.contact_mechanism )
-        super(PartyContactMechanismAdmin, self).flush( party_contact_mechanism )
-
-    def refresh( self, party_contact_mechanism ):
-        if party_contact_mechanism.contact_mechanism:
-            super(PartyContactMechanismAdmin, self).refresh( party_contact_mechanism.contact_mechanism )
-        super(PartyContactMechanismAdmin, self).refresh( party_contact_mechanism )
-        party_contact_mechanism._contact_mechanism_mechanism = party_contact_mechanism.mechanism
 
     def get_depending_objects(self, contact_mechanism ):
         party = contact_mechanism.party
@@ -683,6 +641,31 @@ class PartyAddress( Entity ):
                          'from_date', 'thru_date']
         form_size = ( 700, 200 )
         field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30))
+        
+        def get_compounding_objects( self, party_address ):
+            if party_address.address:
+                yield party_address.address        
+
+class AddressAdmin( PartyAddress.Admin ):
+    """Admin with only the Address information and not the Party information"""
+    verbose_name = _('Address')
+    list_display = ['street1', 'city', 'comment']
+    form_display = ['street1', 'street2', 'city', 'comment', 'from_date', 'thru_date']
+    field_attributes = dict(street1 = dict(name=_('Street'),
+                                           editable=True,
+                                           nullable=False),
+                            street2 = dict(name=_('Street Extra'),
+                                           editable=True),
+                            city = dict(name=_('City'),
+                                        editable=True,
+                                        nullable=False,
+                                        delegate=delegates.Many2OneDelegate,
+                                        target=City),
+                            )
+        
+    def get_depending_objects( self, party_address ):
+        if party_address.party:
+            yield party_address.party
 
 class PartyAddressRoleType( Entity ):
     using_options( tablename = 'party_address_role_type' )
@@ -841,21 +824,23 @@ class PartyAdmin( EntityAdmin ):
     def get_compounding_objects( self, party ):
         for party_contact_mechanism in party.contact_mechanisms:
             yield party_contact_mechanism
+        for party_address in party.addresses:
+            yield party_address
         
-    def flush(self, party):
-        from sqlalchemy.orm.session import Session
-        session = Session.object_session( party )
-        if session:
-            # 
-            # flush all contact mechanism related objects
-            #
-            objects = [party]
-            deleted = ( party in session.deleted )
-            for party_contact_mechanism in party.contact_mechanisms:
-                if deleted:
-                    session.delete( party_contact_mechanism )
-                objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
-            session.flush( objects )
+    #def flush(self, party):
+        #from sqlalchemy.orm.session import Session
+        #session = Session.object_session( party )
+        #if session:
+            ## 
+            ## flush all contact mechanism related objects
+            ##
+            #objects = [party]
+            #deleted = ( party in session.deleted )
+            #for party_contact_mechanism in party.contact_mechanisms:
+                #if deleted:
+                    #session.delete( party_contact_mechanism )
+                #objects.extend([ party_contact_mechanism, party_contact_mechanism.contact_mechanism ])
+            #session.flush( objects )
 
 Party.Admin = PartyAdmin
 

@@ -121,13 +121,20 @@ class PartyCase( ModelThreadTestCase ):
     
     def test_party_address( self ):
         city = self.test_geographic_boundary()
-        org = self.test_organization()
+        org = party.Organization( name = 'PSF' )
         party_address = party.PartyAddress( party = org )
         party_address.street1 = 'Avenue Louise 5'
         party_address.street2 = 'Boite 4'
         party_address.city = city
         party_address_admin = party.AddressAdmin( self.app_admin, party.PartyAddress )
-        party_address_admin.flush( party_address )
+        self.assertTrue( party_address.address in party_address_admin.get_compounding_objects( party_address ) )
+        self.assertTrue( party_address.address in self.session.new )
+        # everything should be flushed through the party admin
+        org_admin = self.app_admin.get_related_admin( party.Organization )
+        org_validator = org_admin.get_validator()
+        self.assertTrue( party_address in org_admin.get_compounding_objects( org ) )
+        org_admin.flush( org )
+        self.assertFalse( party_address.address in self.session.new )
         party_address_admin.refresh( party_address )
         # test hybrid property getters on Party and PartyAddress
         self.assertEqual( party_address.street1, 'Avenue Louise 5' )
@@ -153,6 +160,26 @@ class PartyCase( ModelThreadTestCase ):
         org.street1 = 'Rue Belliard 1'
         org.street2 = 'Second floor'
         org.city = None
+        # expunge should expunge the related address objects as well, so
+        # after an expunge, the session as a whole can be flushed
+        org_admin.expunge( org )
+        self.session.flush()
+        # test hybrid property setters on a new party
+        org = party.Organization( name = 'PSF' )
+        org.street1 = 'Rue Belliard 1'
+        org.street2 = 'Second floor'
+        org.city = city
+        org_admin.flush( org )
+        self.assertEqual( len( org.addresses ), 1 )
+        self.assertEqual( org.street1, 'Rue Belliard 1' )
+        self.assertEqual( org.street2, 'Second floor' )
+        self.assertEqual( org.city, city )
+        # test invalidation of org object and refresh it
+        self.assertFalse( org_validator.validate_object( org ) )
+        org.city = None
+        self.assertTrue( org_validator.validate_object( org ) )
+        org_admin.refresh( org )
+        self.assertFalse( org_validator.validate_object( org ) )
         
     def test_person( self ):
         person = party.Person( first_name = u'Robin',
@@ -250,7 +277,12 @@ class PartyCase( ModelThreadTestCase ):
         party_contact_mechanism = party.PartyContactMechanism( party = person )
         party_contact_mechanism.mechanism = (u'email', u'info@test.be')
         party_contact_mechanism.mechanism = (u'email', u'info2@test.be')
-        self.session.flush()
+        self.assertTrue( party_contact_mechanism in self.session.new )
+        self.assertTrue( party_contact_mechanism.contact_mechanism in self.session.new )
+        # flushing trough the party should flush the contact mechanism
+        self.person_admin.flush( person )
+        self.assertFalse( party_contact_mechanism in self.session.new )
+        self.assertFalse( party_contact_mechanism.contact_mechanism in self.session.new )        
         self.assertTrue( unicode( party_contact_mechanism ) )
         query = self.session.query( party.PartyContactMechanism )
         self.assertTrue( query.filter( party.PartyContactMechanism.mechanism == (u'email', u'info2@test.be') ).first() )
