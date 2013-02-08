@@ -25,15 +25,21 @@
 import logging
 logger = logging.getLogger('camelot.admin.validator.entity_validator')
 
+from sqlalchemy import orm
 from object_validator import ObjectValidator
-
 
 class EntityValidator(ObjectValidator):
     """A validator class validates an entity before flushing it to the database
     and provides the user with feedback if the entity is not ready to flush
     """
 
-
-
-
-
+    def validate_object( self, obj ):
+        """:return: list of messages explaining invalid data
+        empty list if object is valid
+        """
+        session = orm.object_session( obj )
+        if session == None:
+            return []
+        if obj in session.deleted:
+            return []
+        return super( EntityValidator, self ).validate_object( obj )

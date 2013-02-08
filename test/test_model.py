@@ -180,6 +180,12 @@ class PartyCase( ModelThreadTestCase ):
         self.assertTrue( org_validator.validate_object( org ) )
         org_admin.refresh( org )
         self.assertFalse( org_validator.validate_object( org ) )
+        # removing all the address properties should make the
+        # object valid again
+        org.street1 = None
+        org.street2 = None
+        org.city = None
+        self.assertFalse( org_validator.validate_object( org ) )
         
     def test_person( self ):
         person = party.Person( first_name = u'Robin',

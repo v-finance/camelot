@@ -289,9 +289,16 @@ class Party( Entity ):
         
     def _set_address_field( self, name, value ):
         if not self.addresses:
-            self.addresses.append( PartyAddress() )
-        for party_address in self.addresses:
-            return setattr( party_address, name, value )
+            address = PartyAddress()
+            self.addresses.append( address )
+        address = self.addresses[0]
+        setattr( address, name, value )
+        if address.street1==None and address.street2==None and address.city==None:
+            session = orm.object_session( address )
+            if address in session.new:
+                session.expunge( address )
+            else:
+                session.delete( address )
         
     @hybrid.hybrid_property
     def street1( self ):
