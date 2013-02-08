@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import StringIO
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
@@ -212,6 +213,16 @@ class ActionStepsCase( ModelThreadTestCase ):
         dialog = steps[0].render( self.gui_context )
         dialog.show()
         self.grab_widget( dialog )
+        
+    def test_open_file( self ):
+        stream = StringIO.StringIO('1, 2, 3, 4')
+        open_stream = action_steps.OpenStream( stream, suffix='.csv' )
+        self.assertTrue( unicode( open_stream ) )
+        action_steps.OpenString( '1, 2, 3, 4' )
+        context = { 'columns':['width', 'height'],
+                    'table':[[1,2],[3,4]] }        
+        action_steps.OpenJinjaTemplate( 'list.html', context )
+        action_steps.WordJinjaTemplate( 'list.html', context )
 
 class ListActionsCase( ModelThreadTestCase ):
     """Test the standard list actions.
