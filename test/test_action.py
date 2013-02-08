@@ -9,6 +9,7 @@ from PyQt4.QtCore import Qt
 from camelot.admin.action import Action, GuiContext, ActionStep
 from camelot.admin.action import ( list_action, application_action, 
                                    document_action, form_action )
+from camelot.core.exception import CancelRequest
 from camelot.core.utils import pyqt, ugettext_lazy as _
 from camelot.core.orm import Session
 from camelot.test import ModelThreadTestCase
@@ -190,10 +191,11 @@ class ActionStepsCase( ModelThreadTestCase ):
         # end webkit print
                 
         action = WebkitPrint()
-        steps = list( action.model_run( self.context ) )
-        dialog = steps[0].render( GuiContext() )
+        step = list( action.model_run( self.context ) )[0]
+        dialog = step.render( GuiContext() )
         dialog.show()
         self.grab_widget( dialog )
+        step.get_pdf()
         
     def test_print_html( self ):
         
@@ -223,6 +225,18 @@ class ActionStepsCase( ModelThreadTestCase ):
                     'table':[[1,2],[3,4]] }        
         action_steps.OpenJinjaTemplate( 'list.html', context )
         action_steps.WordJinjaTemplate( 'list.html', context )
+        
+    def test_update_progress( self ):
+        from camelot.view.controls.progress_dialog import ProgressDialog
+        update_progress = action_steps.UpdateProgress( 20, 100, _('Importing data') )
+        self.assertTrue( unicode( update_progress ) )
+        # give the gui context a progress dialog, so it can be updated
+        self.gui_context.progress_dialog = ProgressDialog('Progress')
+        update_progress.gui_run( self.gui_context )
+        # now press the cancel button
+        self.gui_context.progress_dialog.cancel()
+        with self.assertRaises( CancelRequest ):
+            update_progress.gui_run( self.gui_context )
 
 class ListActionsCase( ModelThreadTestCase ):
     """Test the standard list actions.
