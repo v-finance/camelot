@@ -25,6 +25,20 @@
 """
 Various ``ActionStep`` subclasses that inform the GUI of changes
 in the model.
+
+These action steps can be used to update the GUI before changes have been
+saved to the database through the manual updates :
+    
+.. literalinclude:: ../../../test/test_action.py
+   :start-after: begin manual update
+   :end-before: end manual update
+       
+Or use introspection of the SQLAlchemy session to update the GUI :
+
+.. literalinclude:: ../../../test/test_action.py
+   :start-after: begin auto update
+   :end-before: end auto update
+   
 """
 
 from camelot.admin.action.base import ActionStep

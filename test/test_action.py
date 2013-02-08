@@ -12,6 +12,7 @@ from camelot.admin.action import ( list_action, application_action,
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import pyqt, ugettext_lazy as _
 from camelot.core.orm import Session
+from camelot.model import party
 from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps
@@ -225,6 +226,88 @@ class ActionStepsCase( ModelThreadTestCase ):
                     'table':[[1,2],[3,4]] }        
         action_steps.OpenJinjaTemplate( 'list.html', context )
         action_steps.WordJinjaTemplate( 'list.html', context )
+        
+    def test_orm( self ):
+        # prepare the model context
+        contact = party.ContactMechanism( mechanism = ('email', 'info@test.be') )
+        person = party.Person( first_name = u'Living',
+                               last_name = u'Stone',
+                               social_security_number = u'2003030212345' )
+        party.PartyContactMechanism( party = person,
+                                     contact_mechanism = contact )
+        self.context.obj = person
+        self.context.session.flush()
+        
+        # begin manual update
+        
+        class UpdatePerson( Action ):
+            
+            verbose_name = _('Update person')
+            
+            def model_run( self, model_context ):
+                for person in model_context.get_selection():
+                    soc_number = person.social_security_number
+                    if soc_number:
+                        # assume the social sec number contains the birth date
+                        person.birth_date = datetime.date( int(soc_number[0:4]),
+                                                           int(soc_number[4:6]),
+                                                           int(soc_number[6:8])
+                                                           )
+                    # delete the email of the person
+                    for contact_mechanism in person.contact_mechanisms:
+                        model_context.session.delete( contact_mechanism )
+                        yield action_steps.DeleteObject( contact_mechanism )
+                    # add a new email
+                    m = ('email', '%s.%s@example.com'%( person.first_name,
+                                                        person.last_name ) )
+                    cm = party.ContactMechanism( mechanism = m )
+                    pcm = party.PartyContactMechanism( party = person,
+                                                       contact_mechanism = cm )
+                    # immediately update the GUI
+                    yield action_steps.CreateObject( cm )
+                    yield action_steps.CreateObject( pcm )
+                    yield action_steps.UpdateObject( person )                    
+                # flush the session on finish
+                model_context.session.flush()
+                                                               
+        # end manual update
+        
+        update_person = UpdatePerson()
+        for step in update_person.model_run( self.context ):
+            step.gui_run( self.gui_context )
+            
+        # begin auto update
+        
+        class UpdatePerson( Action ):
+            
+            verbose_name = _('Update person')
+            
+            def model_run( self, model_context ):
+                for person in model_context.get_selection():
+                    soc_number = person.social_security_number
+                    if soc_number:
+                        # assume the social sec number contains the birth date
+                        person.birth_date = datetime.date( int(soc_number[0:4]),
+                                                           int(soc_number[4:6]),
+                                                           int(soc_number[6:8])
+                                                           )
+                        # delete the email of the person
+                        for contact_mechanism in person.contact_mechanisms:
+                            model_context.session.delete( contact_mechanism )
+                        # add a new email
+                        m = ('email', '%s.%s@example.com'%( person.first_name,
+                                                            person.last_name ) )
+                        cm = party.ContactMechanism( mechanism = m )
+                        party.PartyContactMechanism( party = person,
+                                                    contact_mechanism = cm )                            
+                # flush the session on finish and update the GUI
+                yield action_steps.FlushSession( model_context.session )
+                                                               
+        # end auto update            
+            
+        update_person = UpdatePerson()
+        for step in update_person.model_run( self.context ):
+            step.gui_run( self.gui_context )            
         
     def test_update_progress( self ):
         from camelot.view.controls.progress_dialog import ProgressDialog
