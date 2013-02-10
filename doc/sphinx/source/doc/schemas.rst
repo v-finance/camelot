@@ -26,7 +26,7 @@ Camelot comes with a function that uses sqlalchemy-migrate to perform such actio
 
 .. function:: camelot.core.sql.update_database_from_model
 
-Call this function in the setup_model function in settings.py, right after
+Call this function in the setup_model function in the settings class in main.py, right after
 the setup_all function.
 
 .. literalinclude:: ../../../../camelot/empty_project/settings.py
