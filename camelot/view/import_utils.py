@@ -91,12 +91,7 @@ class ColumnMapping( object ):
         for i, field in itertools.izip( range( self.columns ),
                                         default_fields ):
             setattr( self, 'column_%i_field'%i, field )
-        ## by default use the order of the fields as they appear
-        ## in the list_display
-        #for i, (list_field, fa) in itertools.izip( range( self.columns ), 
-                                                    #admin.get_columns() ):
-            #if fa.get('editable', False):
-                        
+
     def __setattr__( self, attr, value ):
         if attr == 'show_row':
             if value >= 0 and value < len(self.rows):
