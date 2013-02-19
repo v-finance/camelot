@@ -442,10 +442,12 @@ class ExportSpreadsheet( ListContextAction ):
         admin = model_context.admin
         all_fields = admin.get_all_fields_and_attributes()
         field_choices = [(f,entity_fa['name']) for f,entity_fa in 
-                         all_fields.items() 
-                         if entity_fa.get('editable', True)]          
+                         all_fields.items() ]          
         row_data = RowData( 1, [None] * len( all_fields ) )
-        mapping = ColumnMapping( len( all_fields ), [row_data], admin )
+        mapping = ColumnMapping( len( all_fields ), 
+                                 [row_data], 
+                                 admin,
+                                 [field for field, _fa in admin.get_columns()] )
         mapping_admin = ColumnSelectionAdmin( len( all_fields ), 
                                               admin, field_choices )
         yield action_steps.ChangeObject( mapping, mapping_admin )
@@ -670,7 +672,12 @@ class ImportFromFile( EditAction ):
         #
         admin = model_context.admin
         columns = max( row_data.columns for row_data in collection )
-        column_mapping = ColumnMapping( columns, collection, admin )
+        default_fields = [field for field, fa in admin.get_columns() 
+                          if fa.get('editable', True)]
+        column_mapping = ColumnMapping( columns, 
+                                        collection, 
+                                        admin,
+                                        default_fields )
         field_choices = [(f,entity_fa['name']) for f,entity_fa in 
                          admin.get_all_fields_and_attributes().items() 
                          if entity_fa.get('editable', True)]        
