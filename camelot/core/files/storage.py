@@ -128,7 +128,7 @@ class Storage( object ):
     The actual files will be put in root + upload to.  If None is given as root,
     the settings.CAMELOT_MEDIA_ROOT will be taken as the root directory.
     """
-        self._root = (root or settings.CAMELOT_MEDIA_ROOT)
+        self._root = root
         self._subfolder = upload_to
         self._upload_to = None
         self.stored_file_implementation = stored_file_implementation
@@ -140,11 +140,10 @@ class Storage( object ):
     @property
     def upload_to(self):
         if self._upload_to == None:
+            root = self._root or settings.CAMELOT_MEDIA_ROOT
             import os
-            if callable( self._root ):
-                root = self._root()
-            else:
-                root = self._root
+            if callable( root ):
+                root = root()
             self._upload_to = os.path.join( root, self._subfolder )
         return self._upload_to
         

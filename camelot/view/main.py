@@ -81,7 +81,7 @@ class Application( QtCore.QObject ):
         """Method that is called before the model thread is started, while the app is still
         running single threaded.
 
-        The default implementation verifies if the select_database attribute is set to
+        The default implementation verifies if the database_selection attribute is set to
         True on the ApplicationAdmin, and if this is the case, present the user with a
         database selection wizard.
         """
