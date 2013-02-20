@@ -297,6 +297,7 @@ class Party( Entity ):
             session = orm.object_session( address )
             if address in session.new:
                 session.expunge( address )
+                self.addresses.remove( address )
             else:
                 session.delete( address )
         
