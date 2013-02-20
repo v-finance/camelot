@@ -2,15 +2,34 @@
 Tests for the Admin classes
 """
 
+from camelot.admin.application_admin import ApplicationAdmin
 from camelot.test import ModelThreadTestCase
 
+from PyQt4.QtCore import Qt
+
+class ApplicationAdminCase( ModelThreadTestCase ):
+    
+    def test_application_admin( self ):
+        app_admin = ApplicationAdmin()
+        self.assertTrue( app_admin.get_sections() )
+        self.assertTrue( app_admin.create_main_window() )
+        self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'onetomany' ) )
+        self.assertTrue( app_admin.get_related_toolbar_actions( Qt.RightToolBarArea, 'manytomany' ) )
+        self.assertTrue( app_admin.get_version() )
+        self.assertTrue( app_admin.get_icon() )
+        self.assertTrue( app_admin.get_splashscreen() )
+        self.assertTrue( app_admin.get_organization_name() )
+        self.assertTrue( app_admin.get_organization_domain() )
+        self.assertTrue( app_admin.get_stylesheet() )
+        self.assertTrue( app_admin.get_about() )
+        self.assertTrue( app_admin.get_versions() )
+        
 class ObjectAdminCase( ModelThreadTestCase ):
     """Test the ObjectAdmin
     """
 
     def setUp(self):
         super( ObjectAdminCase, self ).setUp()
-        from camelot.admin.application_admin import ApplicationAdmin
         self.app_admin = ApplicationAdmin()
         
     def test_not_editable_admin_class_decorator( self ):
