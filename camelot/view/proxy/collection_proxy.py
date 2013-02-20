@@ -786,12 +786,7 @@ position in the query.
                     continue
 
                 old_value = getattr( o, attribute )
-                #
-                # When the value is a related object, the related object might have changed
-                #
-                value_changed = ( new_value != old_value ) or (
-                  field_attributes.get('embedded', False) and \
-                  field_attributes.get('target', False))
+                value_changed = ( new_value != old_value )
                 #
                 # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
                 # old and new value to know if the object was changed, so we'll

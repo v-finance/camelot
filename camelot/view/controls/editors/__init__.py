@@ -47,7 +47,6 @@ from coloreditor import ColorEditor
 from customeditor import CustomEditor
 from dateeditor import DateEditor
 from datetimeeditor import DateTimeEditor
-from embeddedmany2oneeditor import EmbeddedMany2OneEditor
 from fileeditor import FileEditor
 from floateditor import FloatEditor
 from imageeditor import ImageEditor
@@ -79,7 +78,6 @@ __all__ = [
     CustomEditor.__name__,
     DateEditor.__name__,
     DateTimeEditor.__name__,
-    EmbeddedMany2OneEditor.__name__,
     FileEditor.__name__,
     FloatEditor.__name__,
     ImageEditor.__name__,

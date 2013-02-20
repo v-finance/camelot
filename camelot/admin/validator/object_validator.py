@@ -116,16 +116,6 @@ class ObjectValidator(QtCore.QObject):
         for field, attributes in fields_and_attributes.items():
             # if the field was not editable, don't waste any time
             if attributes['editable']:
-                #
-                # If the field embeds another object, that object should be valid as well
-                #
-                if attributes.get('embedded', False) and attributes.get('target', False):
-                    value = getattr(obj, field)
-                    if value:
-                        target_admin = self.admin.get_related_admin(attributes['target'])
-                        target_validator = target_admin.get_validator(None)
-                        messages.extend( target_validator.objectValidity(value) )
-                        continue
                 # if the field, is nullable, don't waste time getting its value
                 # @todo: check if field is a primary key instead of checking
                 # whether the name is id, but this should only happen in the entity validator

@@ -105,8 +105,7 @@ class FormEditors( object ):
         return widget_label
     
 class FormWidget(QtGui.QWidget):
-    """A form widget comes inside a form view or inside an embedded manytoone 
-    editor"""
+    """A form widget comes inside a form view"""
 
     changed_signal = QtCore.pyqtSignal( int )
 
