@@ -75,9 +75,11 @@ class ColumnMapping( object ):
     :param rows: the list of RowData objects to import, the list should
         not be empty    
     :param admin: the admin object of the model in which to import
+    :param default_fields: a list of field names that will be used as the
+        default fields to map
     """
     
-    def __init__( self, columns, rows, admin ):
+    def __init__( self, columns, rows, admin, default_fields ):
         # show row is the row that will be previewed in the column
         # selection form
         self.columns = columns
@@ -86,13 +88,10 @@ class ColumnMapping( object ):
         for i in range( self.columns ):
             setattr( self, 'column_%i_field'%i, None )
         self.show_row = 0
-        # by default use the order of the fields as they appear
-        # in the list_display
-        for i, (list_field, fa) in itertools.izip( range( self.columns ), 
-                                                    admin.get_columns() ):
-            if fa.get('editable', False):
-                setattr( self, 'column_%i_field'%i, list_field )        
-    
+        for i, field in itertools.izip( range( self.columns ),
+                                        default_fields ):
+            setattr( self, 'column_%i_field'%i, field )
+
     def __setattr__( self, attr, value ):
         if attr == 'show_row':
             if value >= 0 and value < len(self.rows):

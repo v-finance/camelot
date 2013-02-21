@@ -205,13 +205,19 @@ allow all languages
         # http://doc.qt.nokia.com/latest/qlineedit.html#maxLength-prop
         self.dialect_editor = ChoicesEditor(parent=self)
         self.host_editor = TextLineEditor(self, length=32767)
+        self.host_editor.set_value('')
         self.port_editor = TextLineEditor(self)
         self.port_editor.setFixedWidth(60)
+        self.port_editor.set_value('')
         self.database_name_editor = TextLineEditor(self, length=32767)
+        self.database_name_editor.set_value('')
         self.username_editor = TextLineEditor(self)
+        self.username_editor.set_value('')
         self.password_editor = TextLineEditor(self)
         self.password_editor.setEchoMode(QLineEdit.Password)
+        self.password_editor.set_value('')
         self.media_location_editor = TextLineEditor(self, length=32767)
+        self.media_location_editor.set_value('')
         self.language_editor = LanguageEditor(languages=self.languages,
                                               parent=self)
         #
@@ -227,10 +233,14 @@ allow all languages
             self.language_editor.set_value( system_language )
 
         self.proxy_host_editor = TextLineEditor(self, length=32767)
+        self.proxy_host_editor.set_value('')
         self.proxy_port_editor = TextLineEditor(self)
         self.proxy_port_editor.setFixedWidth(60)
+        self.proxy_port_editor.set_value('')
         self.proxy_username_editor = TextLineEditor(self)
+        self.proxy_username_editor.set_value('')
         self.proxy_password_editor = TextLineEditor(self)
+        self.proxy_password_editor.set_value('')
         self.proxy_password_editor.setEchoMode(QLineEdit.Password)
 
         layout.addWidget(self.profile_editor, 0, 1, 1, 1)
@@ -457,17 +467,17 @@ allow all languages
         info = {}
         profilename = self.current_profile()
         info['dialect'] = self.dialect_editor.get_value()
-        info['host'] = self.host_editor.text()
+        info['host'] = self.host_editor.get_value()
         info['port'] = self.port_editor.text()
-        info['database'] = self.database_name_editor.text()
-        info['user'] = self.username_editor.text()
-        info['pass'] = self.password_editor.text()
-        info['media_location'] = self.media_location_editor.text()
+        info['database'] = self.database_name_editor.get_value()
+        info['user'] = self.username_editor.get_value()
+        info['pass'] = self.password_editor.get_value()
+        info['media_location'] = self.media_location_editor.get_value()
         info['locale_language'] = self.language_editor.get_value()
-        info['proxy_host'] = self.proxy_host_editor.text()
-        info['proxy_port'] = self.proxy_port_editor.text()
-        info['proxy_username'] = self.proxy_username_editor.text()
-        info['proxy_password'] = self.proxy_password_editor.text()
+        info['proxy_host'] = self.proxy_host_editor.get_value()
+        info['proxy_port'] = self.proxy_port_editor.get_value()
+        info['proxy_username'] = self.proxy_username_editor.get_value()
+        info['proxy_password'] = self.proxy_password_editor.get_value()
         return profilename, info
 
     def fill_media_location(self):
