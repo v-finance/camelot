@@ -24,6 +24,10 @@ class ApplicationAdminCase( ModelThreadTestCase ):
         self.assertTrue( app_admin.get_about() )
         self.assertTrue( app_admin.get_versions() )
         
+    def test_admin_for_exising_database( self ):
+        from .snippet.existing_database import app_admin
+        self.assertTrue( app_admin.get_sections() )
+        
 class ObjectAdminCase( ModelThreadTestCase ):
     """Test the ObjectAdmin
     """
