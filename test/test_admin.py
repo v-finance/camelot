@@ -4,8 +4,10 @@ Tests for the Admin classes
 
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.admin.object_admin import ObjectAdmin
 from camelot.test import ModelThreadTestCase
 from camelot.view.controls import delegates
+from camelot.view.art import Icon
 
 from PyQt4.QtCore import Qt
 
@@ -78,6 +80,39 @@ class ObjectAdminCase( ModelThreadTestCase ):
         self.assertFalse( len( new_admin.get_list_actions() ) )
         self.assertTrue( new_admin.get_field_attributes( 'value' )['editable'] )
         self.assertFalse( new_admin.get_field_attributes( 'source' )['editable'] )
+        
+    def test_signature( self ):
+        #
+        # Test a group of methods, required for an ObjectAdmin
+        #
+        
+        class A( object ):
+            
+            def __init__( self ):
+                self.x = 1
+                self.y = 2
+                
+            class Admin( ObjectAdmin ):
+                list_display = ['x', 'y']
+                
+        a = A()
+        a_admin = self.app_admin.get_related_admin( A )
+        self.assertTrue( str( a_admin ) )
+        self.assertTrue( repr( a_admin ) )
+        self.assertFalse( a_admin.primary_key( a ) )
+        self.assertTrue( isinstance( a_admin.get_modifications( a ),
+                                     dict ) )
+        a_admin.get_icon()
+        a_admin.flush( a )
+        a_admin.delete( a )
+        a_admin.expunge( a )
+        a_admin.refresh( a )
+        a_admin.add( a )
+        a_admin.is_deleted( a )
+        a_admin.is_persistent( a )
+        a_admin.copy( a )
+        
+            
         
 class EntityAdminCase( ModelThreadTestCase ):
     """Test the EntityAdmin
