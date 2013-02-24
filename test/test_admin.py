@@ -3,9 +3,13 @@ Tests for the Admin classes
 """
 
 from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.entity_admin import EntityAdmin
 from camelot.test import ModelThreadTestCase
+from camelot.view.controls import delegates
 
 from PyQt4.QtCore import Qt
+
+from sqlalchemy import schema, types
 
 class ApplicationAdminCase( ModelThreadTestCase ):
     
@@ -74,3 +78,37 @@ class ObjectAdminCase( ModelThreadTestCase ):
         self.assertFalse( len( new_admin.get_list_actions() ) )
         self.assertTrue( new_admin.get_field_attributes( 'value' )['editable'] )
         self.assertFalse( new_admin.get_field_attributes( 'source' )['editable'] )
+        
+class EntityAdminCase( ModelThreadTestCase ):
+    """Test the EntityAdmin
+    """
+
+    def setUp( self ):
+        super( EntityAdminCase, self ).setUp()
+        self.app_admin = ApplicationAdmin()
+        
+    def test_sql_field_attributes( self ):
+        #
+        # test a generic SQLA field type
+        #
+        column_1 =  schema.Column( types.Unicode(), nullable = False )
+        fa_1 = EntityAdmin.get_sql_field_attributes( [column_1] )
+        self.assertTrue( fa_1['editable'] )
+        self.assertFalse( fa_1['nullable'] )
+        self.assertEqual( fa_1['delegate'], delegates.PlainTextDelegate )
+        #
+        # test sql standard types
+        #
+        column_2 =  schema.Column( types.FLOAT(), nullable = True )
+        fa_2 = EntityAdmin.get_sql_field_attributes( [column_2] )
+        self.assertTrue( fa_2['editable'] )
+        self.assertTrue( fa_2['nullable'] )
+        self.assertEqual( fa_2['delegate'], delegates.FloatDelegate )
+        #
+        # test a vendor specific field type
+        #
+        from sqlalchemy.dialects import mysql
+        column_3 = schema.Column( mysql.BIGINT(), default = 2 )
+        fa_3 = EntityAdmin.get_sql_field_attributes( [column_3] )
+        self.assertTrue( fa_3['default'] )
+        self.assertEqual( fa_3['delegate'], delegates.IntegerDelegate )

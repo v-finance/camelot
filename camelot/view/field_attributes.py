@@ -183,17 +183,6 @@ _sqlalchemy_to_python_type_ = {
         'operators' : _text_operators,
     },
 
-    sqlalchemy.types.Unicode: lambda f: {
-        'python_type': str,
-        'length': f.length,
-        'delegate': delegates.PlainTextDelegate,
-        'editable': True,
-        'nullable': True,
-        'widget': 'str',
-        'from_string': string_from_string,
-        'operators' : _text_operators,
-    },
-
     camelot.types.Image: lambda f: {
         'python_type': str,
         'editable': True,
