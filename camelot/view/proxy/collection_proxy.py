@@ -466,18 +466,21 @@ position in the query.
             self.logger.debug( 'duplicate update' )
 
     @QtCore.pyqtSlot( object, object )
-    def handle_entity_delete( self, sender, entity ):
+    def handle_entity_delete( self, sender, obj ):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
         self.logger.debug( 'received entity delete signal' )
         if sender != self:
             try:
-                row = self.display_cache.get_row_by_entity(entity)
+                row = self.display_cache.get_row_by_entity( obj )
             except KeyError:
                 self.logger.debug( 'entity not in cache' )
                 return
-            self.remove_rows( [row], delete = False )
+            self.remove( obj )
+            self.display_cache.delete_by_entity( obj )
+            self.attributes_cache.delete_by_entity( obj )
+            self.edit_cache.delete_by_entity( obj )
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_create( self, sender, entity ):
@@ -1057,85 +1060,6 @@ position in the query.
         collection = self.get_collection()
         if o not in collection:
             collection.append( o )
-
-    @model_function
-    def remove_objects( self, objects_to_remove, delete = True, flush = True ):
-        """
-        :param objects_to_remove: a list of objects that need to be removed
-        from the collection
-        :param delete: True if the objects need to be deleted
-        :param fulsh: True if the flush needs to occur in this method
-        """
-        #
-        # it might be impossible to determine the depending objects once
-        # the object has been removed from the collection
-        #
-        depending_objects = set( itertools.chain.from_iterable( self.admin.get_depending_objects( o ) for o in objects_to_remove ) )
-        for obj in objects_to_remove:
-            #
-            # We should not update depending objects that have
-            # been deleted themselves
-            #
-            if delete:
-                try:
-                    depending_objects.remove( obj )
-                except KeyError:
-                    pass
-            #
-            # if needed, delete the objects
-            #
-            if delete:
-                self.rsh.sendEntityDelete( self, obj )
-                self.admin.delete( obj )
-                # remove only when delete took place without exception
-                self.remove( obj )
-            else:
-                # even if the object is not deleted, it needs to be flushed to make
-                # sure the persisted object is out of the collection as well
-                self.remove( obj )
-                if self.admin.is_persistent( obj ) and flush:
-                    self.admin.flush( obj )
-            #
-            # remove the entity from the cache, only if the delete and remove
-            # took place without exception
-            #
-            self.display_cache.delete_by_entity( obj )
-            self.attributes_cache.delete_by_entity( obj )
-            self.edit_cache.delete_by_entity( obj )
-        for depending_obj in depending_objects:
-            self.rsh.sendEntityUpdate( self, depending_obj )
-        post( self.getRowCount, self._refresh_content )
-
-    def remove_rows( self, rows, delete = True ):
-        """Remove the entity associated with this row from this collection
-        @param rows: a list with the numbers of the rows to remove
-        @param delete: delete the entity as well
-        
-        The rows_removed signal will be emitted when the removal was 
-        successful, otherwise the exception_signal will be emitted.
-        """
-        assert object_thread( self )
-        self.logger.debug( 'remove rows' )
-
-        def create_delete_function( rows ):
-
-            def delete_function():
-                """Remove all rows from the underlying collection
-                :return: the number of rows left in the collection"""
-                try:
-                    objects_to_remove = [self._get_object( row ) for row in rows]
-                    self.remove_objects( objects_to_remove, delete )
-                    self.rows_removed_signal.emit()
-                except Exception, exc:
-                    exc_info = register_exception( logger,
-                                                   'exception while removing rows',
-                                                   exc )
-                    self.exception_signal.emit( exc_info )
-
-            return delete_function
-
-        post( create_delete_function(rows) )
-        return True
 
     def copy_row( self, row ):
         """Copy the entity associated with this row to the end of the collection

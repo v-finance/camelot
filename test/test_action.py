@@ -6,6 +6,8 @@ import StringIO
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
+from sqlalchemy import orm
+
 from camelot.admin.action import Action, GuiContext, ActionStep
 from camelot.admin.action import ( list_action, application_action, 
                                    document_action, form_action )
@@ -491,8 +493,12 @@ class ListActionsCase( ModelThreadTestCase ):
         duplicate_selection_action.gui_run( self.gui_context )   
         
     def test_delete_selection( self ):
+        session = orm.object_session( self.context.obj )
+        self.assertTrue( self.context.obj in session )
         delete_selection_action = list_action.DeleteSelection()
-        delete_selection_action.gui_run( self.gui_context )   
+        delete_selection_action.gui_run( self.gui_context ) 
+        list( delete_selection_action.model_run( self.context ) )
+        self.assertFalse( self.context.obj in session )
         
     def test_add_existing_object( self ):
         add_existing_object_action = list_action.AddExistingObject()
