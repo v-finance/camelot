@@ -489,8 +489,12 @@ class ListActionsCase( ModelThreadTestCase ):
         open_new_view_action.gui_run( self.gui_context )
         
     def test_duplicate_selection( self ):
+        query = self.context.admin.entity.query
+        pre_duplication = query.count()
         duplicate_selection_action = list_action.DuplicateSelection()
-        duplicate_selection_action.gui_run( self.gui_context )   
+        duplicate_selection_action.model_run( self.context )   
+        post_duplication = query.count()
+        #self.assertEqual( pre_duplication + 1, post_duplication )
         
     def test_delete_selection( self ):
         session = orm.object_session( self.context.obj )

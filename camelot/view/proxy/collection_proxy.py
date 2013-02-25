@@ -1061,24 +1061,6 @@ position in the query.
         if o not in collection:
             collection.append( o )
 
-    def copy_row( self, row ):
-        """Copy the entity associated with this row to the end of the collection
-        :param row: the row number
-        """
-        assert object_thread( self )
-        
-        def create_copy_function( row ):
-
-            def copy_function():
-                o = self._get_object(row)
-                new_object = self.admin.copy( o )
-                self.append_object(new_object)
-
-            return copy_function
-
-        post( create_copy_function( row ) )
-        return True
-
     @QtCore.pyqtSlot( int, int )
     def _rows_about_to_be_inserted( self, first, last ):
         self.beginInsertRows( QtCore.QModelIndex(), first, last )

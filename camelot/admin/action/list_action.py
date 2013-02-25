@@ -323,11 +323,16 @@ class DuplicateSelection( EditAction ):
     tooltip = _('Duplicate')
     verbose_name = _('Duplicate')
     
-    def gui_run( self, gui_context ):
-        model = gui_context.item_view.model()
-        for row in set( map( lambda x: x.row(), gui_context.item_view.selectedIndexes() ) ):
-            model.copy_row( row )
-
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        for i, obj in enumerate( model_context.get_selection() ):
+            yield action_steps.UpdateProgress( i, 
+                                               model_context.selection_count,
+                                               self.verbose_name )
+            new_object = model_context.admin.copy( obj )
+            model_context._model.append_object( new_object ) 
+        yield action_steps.FlushSession( model_context.session )
+            
 class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
     

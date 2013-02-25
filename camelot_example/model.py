@@ -90,7 +90,7 @@ class Movie( Entity ):
     #
     director = ManyToOne('Person')
     cast = OneToMany('Cast')
-    visitor_reports = OneToMany('VisitorReport')
+    visitor_reports = OneToMany('VisitorReport', cascade='delete')
     tags = ManyToMany('Tag',
                       tablename = 'tags_movies__movies_tags',
                       local_colname = 'tags_id',
