@@ -477,10 +477,15 @@ position in the query.
             except KeyError:
                 self.logger.debug( 'entity not in cache' )
                 return
-            self.remove( obj )
-            self.display_cache.delete_by_entity( obj )
-            self.attributes_cache.delete_by_entity( obj )
-            self.edit_cache.delete_by_entity( obj )
+
+            def entity_remove( obj ):
+                self.remove( obj )
+                self.display_cache.delete_by_entity( obj )
+                self.attributes_cache.delete_by_entity( obj )
+                self.edit_cache.delete_by_entity( obj )
+                return self._rows
+
+            post( entity_remove, self._refresh_content, args=(obj,) )
 
     @QtCore.pyqtSlot( object, object )
     def handle_entity_create( self, sender, entity ):

@@ -845,18 +845,6 @@ be specified using the verbose_name attribute.
                 
             def get_collection(self):
                 return [self.get_new_object()]
-                
-            def _expunge_new_object(self):
-                if self._new_object:
-                    admin.expunge( self._new_object )
-                    if self._related_collection_proxy:
-                        self._related_collection_proxy.remove_objects( [self._new_object],
-                                                                       delete = False )
-                                                                      
-            def expunge(self):
-                """Discontinue the creation of the new object, expunge it
-                from its session and the related_collection proxy"""
-                post( self._expunge_new_object )
 
         model = NewObjectCollectionProxy( related_collection_proxy,
                                           admin,
