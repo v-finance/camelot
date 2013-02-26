@@ -418,7 +418,8 @@ class ListActionsCase( ModelThreadTestCase ):
         from camelot.view.import_utils import RowData, ColumnMapping
         
         rows = [ RowData( 0, ['rating', 'name'] ) ]
-        mapping = ColumnMapping( 2, rows, self.context.admin )
+        fields = [field for field, _fa in self.context.admin.get_columns()]
+        mapping = ColumnMapping( 2, rows, self.context.admin, fields )
         self.assertNotEqual( mapping.column_0_field, 'rating' )
         mapping.match_names()
         self.assertEqual( mapping.column_0_field, 'rating' )
