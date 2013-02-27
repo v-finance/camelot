@@ -125,7 +125,12 @@ class PaneSection(QWidget):
         if section_tree:
             item = section_tree.currentItem()
             index = section_tree.indexFromItem(item)
-            section_item = self._items[index.row()]
+            parent = index.parent()
+            if parent.row() >= 0:
+                section = self._items[parent.row()]
+                section_item = section.items[index.row()]
+            else:
+                section_item = self._items[index.row()]
             if not isinstance( section_item, SectionItem ):
                 return
             gui_context = ApplicationActionGuiContext()
