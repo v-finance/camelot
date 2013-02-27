@@ -845,18 +845,6 @@ be specified using the verbose_name attribute.
                 
             def get_collection(self):
                 return [self.get_new_object()]
-                
-            def _expunge_new_object(self):
-                if self._new_object:
-                    admin.expunge( self._new_object )
-                    if self._related_collection_proxy:
-                        self._related_collection_proxy.remove_objects( [self._new_object],
-                                                                       delete = False )
-                                                                      
-            def expunge(self):
-                """Discontinue the creation of the new object, expunge it
-                from its session and the related_collection proxy"""
-                post( self._expunge_new_object )
 
         model = NewObjectCollectionProxy( related_collection_proxy,
                                           admin,
@@ -920,40 +908,33 @@ be specified using the verbose_name attribute.
         """
         return dict()
     
-    @model_function
     def delete(self, entity_instance):
         """Delete an entity instance"""
         del entity_instance
 
-    @model_function
     def flush(self, entity_instance):
         """Flush the pending changes of this entity instance to the backend"""
         pass
     
-    @model_function
     def expunge(self, entity_instance):
         """Remove this object from the objects being managed"""
         pass
 
-    @model_function
     def refresh(self, entity_instance):
         """Undo the pending changes to the backend and restore the original
         state"""
         pass
 
-    @model_function
     def add(self, entity_instance):
         """Add an entity instance as a managed entity instance"""
         pass
 
-    @model_function
     def is_deleted(self, _obj):
         """
         :return: True if the object has been deleted from the persistent
             state, False otherwise"""
         return False
     
-    @model_function
     def is_persistent(self, _obj):
         """:return: True if the object has a persisted state, False otherwise"""
         return False

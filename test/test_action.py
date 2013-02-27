@@ -6,6 +6,8 @@ import StringIO
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
+from sqlalchemy import orm
+
 from camelot.admin.action import Action, GuiContext, ActionStep
 from camelot.admin.action import ( list_action, application_action, 
                                    document_action, form_action )
@@ -416,7 +418,8 @@ class ListActionsCase( ModelThreadTestCase ):
         from camelot.view.import_utils import RowData, ColumnMapping
         
         rows = [ RowData( 0, ['rating', 'name'] ) ]
-        mapping = ColumnMapping( 2, rows, self.context.admin )
+        fields = [field for field, _fa in self.context.admin.get_columns()]
+        mapping = ColumnMapping( 2, rows, self.context.admin, fields )
         self.assertNotEqual( mapping.column_0_field, 'rating' )
         mapping.match_names()
         self.assertEqual( mapping.column_0_field, 'rating' )
@@ -487,12 +490,20 @@ class ListActionsCase( ModelThreadTestCase ):
         open_new_view_action.gui_run( self.gui_context )
         
     def test_duplicate_selection( self ):
+        query = self.context.admin.entity.query
+        pre_duplication = query.count()
         duplicate_selection_action = list_action.DuplicateSelection()
-        duplicate_selection_action.gui_run( self.gui_context )   
+        duplicate_selection_action.model_run( self.context )   
+        post_duplication = query.count()
+        #self.assertEqual( pre_duplication + 1, post_duplication )
         
     def test_delete_selection( self ):
+        session = orm.object_session( self.context.obj )
+        self.assertTrue( self.context.obj in session )
         delete_selection_action = list_action.DeleteSelection()
-        delete_selection_action.gui_run( self.gui_context )   
+        delete_selection_action.gui_run( self.gui_context ) 
+        list( delete_selection_action.model_run( self.context ) )
+        self.assertFalse( self.context.obj in session )
         
     def test_add_existing_object( self ):
         add_existing_object_action = list_action.AddExistingObject()

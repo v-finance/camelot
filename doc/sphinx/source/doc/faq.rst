@@ -18,6 +18,21 @@ issue these commands::
 This will create a subdirectory 'to_pyside' which contains the converted
 source code.
 
+Can I use Camelot with an existing database ?
+---------------------------------------------
+
+Both Declarative and Camelot can be used with an existing schema.  However,
+since Camelot acts on objects, the classes for those objects still need to
+be defined.
+
+Here's a short example of using camelot with an existing database :
+
+.. literalinclude:: ../../../../test/snippet/existing_database.py
+
+More information on using Declarative with an existing database schema can be found in the 
+`Declarative <http://docs.sqlalchemy.org/en/rel_0_7/orm/extensions/declarative.html#using-reflection-with-declarative>`_
+documentation.
+   
 Why is there no :guilabel:`Save` button ?
 -----------------------------------------
 

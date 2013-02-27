@@ -186,6 +186,15 @@ class PartyCase( ModelThreadTestCase ):
         org.street2 = None
         org.city = None
         self.assertFalse( org_validator.validate_object( org ) )
+        # removing all address properties of a not yet flushed
+        # address should expunge the address
+        org = party.Organization( name = 'PSF' )
+        org.street1 = 'Rue Belliard 1'
+        for address in org.addresses:
+            self.assertTrue( address in self.session.new )
+        org.street1 = None
+        self.assertTrue( address not in self.session )
+        self.assertEqual( len(org.addresses), 0 )
         
     def test_person( self ):
         person = party.Person( first_name = u'Robin',

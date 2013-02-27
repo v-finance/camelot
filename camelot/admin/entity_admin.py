@@ -22,6 +22,7 @@
 #
 #  ============================================================================
 
+import inspect
 import itertools
 import logging
 logger = logging.getLogger('camelot.admin.entity_admin')
@@ -36,7 +37,7 @@ from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
 from camelot.admin.validator.entity_validator import EntityValidator
 
-from sqlalchemy import orm
+from sqlalchemy import orm, schema
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
@@ -137,6 +138,34 @@ It has additional class attributes that customise its behaviour.
                          exc_info=exception)
             raise exception
 
+    @classmethod
+    def get_sql_field_attributes( cls, columns ):
+        """Returns a set of default field attributes based on introspection
+        of the SQLAlchemy columns that form a field
+        
+        :param: columns a list of :class:`sqlalchemy.schema.Column` objects.
+        :return: a dictionary with field attributes
+        
+        By default this method looks at the first column that defines the
+        field and derives a delegate and other field attributes that make
+        sense.
+        """
+        from camelot.view.field_attributes import _sqlalchemy_to_python_type_
+        sql_attributes = dict()
+        for column in columns:
+            column_type = column.type
+            for base_class in inspect.getmro( type( column_type ) ):
+                fa = _sqlalchemy_to_python_type_.get( base_class, 
+                                                      None )
+                if fa != None:
+                    sql_attributes.update( fa( column_type ) )
+                    break
+            if isinstance( column, (schema.Column) ):
+                sql_attributes['nullable'] = column.nullable
+                sql_attributes['default'] = column.default                  
+            break
+        return sql_attributes
+    
     @model_function
     def get_query(self):
         """:return: an sqlalchemy query for all the objects that should be
@@ -163,7 +192,7 @@ It has additional class attributes that customise its behaviour.
                         primary_key_representation
                     )
         return self.get_verbose_name()
-
+    
     @model_function
     def get_field_attributes(self, field_name):
         """Get the attributes needed to visualize the field field_name
@@ -253,16 +282,9 @@ It has additional class attributes that customise its behaviour.
                     field_name
                 )
                 if isinstance(property, orm.properties.ColumnProperty):
-                    column_type = property.columns[0].type
-                    python_type = _sqlalchemy_to_python_type_.get(
-                        column_type.__class__,
-                        None
-                    )
-                    if python_type:
-                        attributes.update(python_type(column_type))
-                    if isinstance( property.columns[0], (schema.Column) ):
-                        attributes['nullable'] = property.columns[0].nullable
-                        attributes['default'] = property.columns[0].default
+                    columns = property.columns
+                    sql_attributes = self.get_sql_field_attributes( columns )
+                    attributes.update( sql_attributes ) 
                 elif isinstance(property, orm.properties.PropertyLoader):
                     target = forced_attributes.get( 'target', 
                                                     property.mapper.class_ )

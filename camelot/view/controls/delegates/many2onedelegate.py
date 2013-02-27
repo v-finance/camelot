@@ -51,14 +51,12 @@ class Many2OneDelegate(CustomDelegate):
     def __init__(self,
                  parent=None,
                  admin=None,
-                 embedded=False,
                  editable=True,
                  **kwargs):
         logger.debug('create many2onecolumn delegate')
         assert admin != None
         CustomDelegate.__init__(self, parent, editable, **kwargs)
         self.admin = admin
-        self._embedded = embedded
         self._kwargs = kwargs
         self._width = self._width * 2
 
@@ -70,16 +68,10 @@ class Many2OneDelegate(CustomDelegate):
         painter.restore()
 
     def createEditor(self, parent, option, index):
-        if self._embedded:
-            editor = editors.EmbeddedMany2OneEditor( self.admin, 
-                                                     parent,
-                                                     editable = self.editable,
-                                                     **self._kwargs )
-        else:
-            editor = editors.Many2OneEditor( self.admin, 
-                                             parent,
-                                             editable=self.editable,
-                                             **self._kwargs )
+        editor = editors.Many2OneEditor( self.admin, 
+                                         parent,
+                                         editable=self.editable,
+                                         **self._kwargs )
         if option.version != 5:
             editor.setAutoFillBackground(True)
         editor.editingFinished.connect( self.commitAndCloseEditor )

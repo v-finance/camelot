@@ -272,40 +272,6 @@ class AdminTableWidget( QtGui.QWidget ):
             model.modelReset.connect( column_groups.model_reset )
             table_widget.setModel( model )
             column_groups.model_reset()
-            
-    @QtCore.pyqtSlot()
-    def delete_selected_rows(self):
-        assert object_thread( self )
-        logger.debug( 'delete selected rows called' )
-        confirmed = True
-        rows = set( index.row() for index in self.selectedIndexes() )
-        if not rows:
-            return
-        if self._admin.get_delete_mode()=='on_confirm':
-            if QtGui.QMessageBox.question(self,
-                                          _('Please confirm'),
-                                          unicode(self._admin.get_delete_message(None)),
-                                          QtGui.QMessageBox.Yes,
-                                          QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
-                confirmed = False
-        if confirmed:
-            #
-            # if there is an open editor on a row that will be deleted, there
-            # might be an assertion failure in QT, or the data of the editor 
-            # might be pushed to the row that replaces the deleted one
-            #
-            progress_dialog = ProgressDialog(_('Removing'))
-            self.model().rows_removed_signal.connect( progress_dialog.finished )
-            self.model().exception_signal.connect( progress_dialog.exception )
-            self.close_editor()
-            self.model().remove_rows( set( rows ) )
-            progress_dialog.exec_()
-
-    @QtCore.pyqtSlot()
-    def copy_selected_rows(self):
-        assert object_thread( self )
-        for row in set( map( lambda x: x.row(), self.selectedIndexes() ) ):
-            self.model().copy_row( row )
         
 class RowsWidget( QtGui.QLabel ):
     """Widget that is part of the header widget, displaying the number of rows

@@ -66,15 +66,6 @@ _sqlalchemy_to_python_type_ = {
         'operators' : (operator.eq,),
     },
 
-    sqlalchemy.types.BOOLEAN: lambda f: {
-        'python_type': bool,
-        'editable': True,
-        'nullable': True,
-        'delegate': delegates.BoolDelegate,
-        'from_string': bool_from_string,
-        'operators' : (operator.eq,),
-    },
-
     sqlalchemy.types.Date: lambda f: {
         'python_type': datetime.date,
         'format': constants.camelot_date_format,
@@ -149,41 +140,7 @@ _sqlalchemy_to_python_type_ = {
         'operators': _numerical_operators,
     },
 
-    sqlalchemy.types.INT: lambda f: {
-        'python_type': int,
-        'editable': True,
-        'minimum': constants.camelot_minint,
-        'maximum': constants.camelot_maxint,
-        'nullable': True,
-        'delegate': delegates.IntegerDelegate,
-        'from_string': int_from_string,
-        'widget': 'int',
-        'operators': _numerical_operators,
-    },
-
     sqlalchemy.types.String: lambda f: {
-        'python_type': str,
-        'length': f.length,
-        'delegate': delegates.PlainTextDelegate,
-        'editable': True,
-        'nullable': True,
-        'widget': 'str',
-        'from_string': string_from_string,
-        'operators' : _text_operators,
-    },
-
-    sqlalchemy.types.TEXT: lambda f: {
-        'python_type': str,
-        'length': f.length,
-        'delegate': delegates.PlainTextDelegate,
-        'editable': True,
-        'nullable': True,
-        'widget': 'str',
-        'from_string': string_from_string,
-        'operators' : _text_operators,
-    },
-
-    sqlalchemy.types.Unicode: lambda f: {
         'python_type': str,
         'length': f.length,
         'delegate': delegates.PlainTextDelegate,

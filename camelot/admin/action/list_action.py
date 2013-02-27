@@ -323,11 +323,16 @@ class DuplicateSelection( EditAction ):
     tooltip = _('Duplicate')
     verbose_name = _('Duplicate')
     
-    def gui_run( self, gui_context ):
-        model = gui_context.item_view.model()
-        for row in set( map( lambda x: x.row(), gui_context.item_view.selectedIndexes() ) ):
-            model.copy_row( row )
-
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        for i, obj in enumerate( model_context.get_selection() ):
+            yield action_steps.UpdateProgress( i, 
+                                               model_context.selection_count,
+                                               self.verbose_name )
+            new_object = model_context.admin.copy( obj )
+            model_context._model.append_object( new_object ) 
+        yield action_steps.FlushSession( model_context.session )
+            
 class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
     
@@ -336,9 +341,62 @@ class DeleteSelection( EditAction ):
     tooltip = _('Delete')
     verbose_name = _('Delete')
     
-    def gui_run( self, gui_context):
-        gui_context.item_view.delete_selected_rows()
+    def gui_run( self, gui_context ):
+        #
+        # if there is an open editor on a row that will be deleted, there
+        # might be an assertion failure in QT, or the data of the editor 
+        # might be pushed to the row that replaces the deleted one
+        #
+        gui_context.item_view.close_editor()
+        super( DeleteSelection, self ).gui_run( gui_context )
+        # this refresh call could be avoided if the removal of an object
+        # in the collection through the DeleteObject action step handled this
+        gui_context.item_view.model().refresh()
 
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        if model_context.selection_count <= 0:
+            raise StopIteration
+        admin = model_context.admin
+        if model_context.admin.get_delete_mode() == 'on_confirm':
+            step = action_steps.MessageBox( _('Please confirm'),
+                                            admin.get_delete_message(None),
+                                            QtGui.QMessageBox.Yes,
+                                            QtGui.QMessageBox.No )
+            response = yield step
+            if response == QtGui.QMessageBox.No:
+                raise StopIteration
+        objects_to_remove = list( model_context.get_selection() )
+        #
+        # it might be impossible to determine the depending objects once
+        # the object has been removed from the collection
+        #
+        depending_objects = set()
+        for o in objects_to_remove:
+            depending_objects.update( set( admin.get_depending_objects( o ) ) )
+        for i, obj in enumerate( objects_to_remove ):
+            yield action_steps.UpdateProgress( i, 
+                                               model_context.selection_count,
+                                               _('Removing') )
+            #
+            # We should not update depending objects that have
+            # been deleted themselves
+            #
+            try:
+                depending_objects.remove( obj )
+            except KeyError:
+                pass
+            for step in self.handle_object( model_context, obj ):
+                yield step
+        for depending_obj in depending_objects:
+            yield action_steps.UpdateObject( depending_obj )
+        yield action_steps.FlushSession( model_context.session )
+        
+    def handle_object( self, model_context, obj ):
+        from camelot.view import action_steps
+        yield action_steps.DeleteObject( obj )
+        model_context.admin.delete( obj )
+        
 class ToPreviousRow( ListContextAction ):
     """Move to the previous row in a table"""
     
@@ -775,18 +833,14 @@ class AddNewObject( OpenNewView ):
         admin = model_context.admin
         model_context._model.append_object( admin.entity() )
     
-class RemoveSelection( EditAction ):
+class RemoveSelection( DeleteSelection ):
     """Remove the selected objects from a list without deleting them"""
     
+    shortcut = None
     tooltip = _('Remove')
     verbose_name = _('Remove')
     icon = Icon( 'tango/16x16/actions/list-remove.png' )
-
-    def model_run( self, model_context ):
-        from sqlalchemy.orm import object_session
-        from camelot.view import action_steps
-        objects_to_remove = list( model_context.get_selection() )
-        if len( objects_to_remove ):
-            session = object_session( objects_to_remove[0] )
-            model_context._model.remove_objects( objects_to_remove, delete = False, flush = False )
-            yield action_steps.FlushSession( session )
+            
+    def handle_object( self, model_context, obj ):
+        model_context._model.remove( obj )
+        raise StopIteration
