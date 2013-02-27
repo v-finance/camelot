@@ -21,7 +21,6 @@
 #  project-camelot@conceptive.be
 #
 #  ============================================================================
-from camelot.view.model_thread import model_function
 
 class Section(object):
     """A Section as displayed in the left pane of the application.  Each Section
@@ -52,7 +51,6 @@ in the definition of the Application admin:
         from camelot.view.art import Icon
         return self.icon or Icon('tango/32x32/apps/system-users.png')
 
-    @model_function
     def get_items(self):
         return self.items
 
@@ -86,7 +84,7 @@ class SectionItem(object):
 def structure_to_section_items(structure, application_admin):
 
     def rule(element):
-        if isinstance(element, (SectionItem,)):
+        if isinstance(element, (SectionItem, Section)):
             return element
         return SectionItem(element, application_admin)
 
