@@ -6,11 +6,29 @@ from sqlalchemy import schema, types
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import Session
+from camelot.core.sql import metadata
+from camelot.core.conf import settings
 from camelot.model import party
 from camelot.test import ModelThreadTestCase
 from camelot.test.action import MockModelContext
 from .test_orm import TestMetaData
 
+class ExampleModelCase( ModelThreadTestCase ):
+    """
+    Test case that makes sure the example tables are available in
+    the Camelot metadata
+    """
+    
+    def setUp( self ):
+        super( ExampleModelCase, self ).setUp()
+        from camelot.model import ( authentication, batch_job, fixture,
+                                    party, i18n, memento )
+        metadata.bind = settings.ENGINE()
+        metadata.create_all()
+        
+    def tearDown( self ):
+        metadata.drop_all()
+        
 class ModelCase( ModelThreadTestCase ):
     """Test the build in camelot model"""
         

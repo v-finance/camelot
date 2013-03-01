@@ -427,27 +427,50 @@ class FormTest(ModelThreadTestCase):
     def test_form(self):
         from snippet.form.simple_form import Movie
         self.grab_widget(Movie.Admin.form_display.render(self.widgets))
+        form = forms.Form( ['title', 'short_description',
+                            'director', 'releasedate'] )
+        form.remove_field( 'releasedate' )
+        form.replace_field( 'director', 'rating' )
+        form.add_field( 'tags' )
+        form.add_field( forms.Break() )
+        form.add_field( forms.Label('End') )
+        self.assertTrue( unicode( form ) )
 
     def test_tab_form(self):
         form = forms.TabForm([('First tab', ['title', 'short_description']),
                               ('Second tab', ['director', 'releasedate'])])
         self.grab_widget(form.render(self.widgets))
-
+        form.add_tab_at_index( 'Main', forms.Form(['rating']), 0 )
+        self.assertTrue( form.get_tab( 'Second tab' ) )
+        form.replace_field( 'short_description', 'script' )
+        form.remove_field( 'director' )
+        self.assertTrue( unicode( form ) )
+        
     def test_group_box_form(self):
         form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
         self.grab_widget(form.render(self.widgets))
 
     def test_grid_form(self):
-        form = forms.GridForm([['title', 'short_description'], ['director','releasedate']])
+        form = forms.GridForm([['title',                      'short_description'], 
+                               ['director',                   'releasedate'],
+                               [forms.ColumnSpan('rating', 2)              ]
+                               ])
         self.grab_widget(form.render(self.widgets))
+        self.assertTrue( unicode( form ) )
+        form.append_row( ['cover', 'script'] )
+        form.append_column( [ forms.Label( str(i) ) for i in range(4) ] )
 
     def test_vbox_form(self):
         form = forms.VBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
+        self.assertTrue( unicode( form ) )
+        form.replace_field( 'releasedate', 'rating' )        
 
     def test_hbox_form(self):
         form = forms.HBoxForm([['title', 'short_description'], ['director', 'releasedate']])
         self.grab_widget(form.render(self.widgets))
+        self.assertTrue( unicode( form ) )
+        form.replace_field( 'releasedate', 'rating' )
 
     def test_nested_form(self):
         from snippet.form.nested_form import Admin

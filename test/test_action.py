@@ -22,6 +22,7 @@ from camelot.view.controls import tableview
 
 from test_view import static_images_path
 import test_proxy
+import test_model
 
 class ActionBaseCase( ModelThreadTestCase ):
 
@@ -323,14 +324,14 @@ class ActionStepsCase( ModelThreadTestCase ):
         with self.assertRaises( CancelRequest ):
             update_progress.gui_run( self.gui_context )
 
-class ListActionsCase( ModelThreadTestCase ):
+class ListActionsCase( test_model.ExampleModelCase ):
     """Test the standard list actions.
     """
 
     images_path = static_images_path
 
     def setUp( self ):
-        ModelThreadTestCase.setUp(self)
+        super( ListActionsCase, self ).setUp()
         from camelot_example.model import Movie
         from camelot.admin.application_admin import ApplicationAdmin
         self.query_proxy_case = test_proxy.QueryProxyCase('setUp')
@@ -521,14 +522,14 @@ class ListActionsCase( ModelThreadTestCase ):
         call_method_action = list_action.CallMethod( 'Call', lambda x:True )
         list( call_method_action.model_run( self.context ) )
         
-class FormActionsCase( ModelThreadTestCase ):
+class FormActionsCase( test_model.ExampleModelCase ):
     """Test the standard list actions.
     """
 
     images_path = static_images_path
 
     def setUp( self ):
-        ModelThreadTestCase.setUp(self)
+        super( FormActionsCase, self ).setUp()
         from camelot.model.party import Person
         from camelot.admin.application_admin import ApplicationAdmin
         self.query_proxy_case = test_proxy.QueryProxyCase('setUp')
@@ -567,17 +568,17 @@ class FormActionsCase( ModelThreadTestCase ):
         close_form_action = form_action.CloseForm()
         list( close_form_action.model_run( self.model_context ) )        
 
-class ApplicationActionsCase( ModelThreadTestCase ):
+class ApplicationActionsCase( test_model.ExampleModelCase ):
     """Test application actions.
     """
 
     images_path = static_images_path
     
     def setUp(self):
+        super( ApplicationActionsCase, self ).setUp()
         from camelot.admin.application_admin import ApplicationAdmin
         from camelot.core.files.storage import Storage
         from camelot.view.workspace import DesktopWorkspace
-        ModelThreadTestCase.setUp(self)
         self.app_admin = ApplicationAdmin()
         self.context = MockModelContext()
         self.storage = Storage()

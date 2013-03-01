@@ -112,8 +112,6 @@ class ObjectAdminCase( ModelThreadTestCase ):
         a_admin.is_persistent( a )
         a_admin.copy( a )
         
-            
-        
 class EntityAdminCase( ModelThreadTestCase ):
     """Test the EntityAdmin
     """

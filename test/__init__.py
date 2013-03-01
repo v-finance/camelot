@@ -10,6 +10,12 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] 
 
 class TestSettings( object ):
     
+    def __init__( self ): 
+        from sqlalchemy.pool import StaticPool
+        from sqlalchemy import create_engine
+        # static pool to preserve tables and data accross threads
+        self.engine = create_engine( 'sqlite:///', poolclass = StaticPool )
+        
     def setup_model( self ):
         from camelot.core.sql import metadata
         metadata.bind = self.ENGINE()
@@ -33,9 +39,6 @@ class TestSettings( object ):
     CAMELOT_MEDIA_ROOT = 'media'
     
     def ENGINE( self ):
-       from sqlalchemy.pool import StaticPool
-       from sqlalchemy import create_engine
-       # static pool to preserve tables and data accross threads
-       return create_engine( 'sqlite:///', poolclass = StaticPool )
+        return self.engine
    
 settings.append( TestSettings() )

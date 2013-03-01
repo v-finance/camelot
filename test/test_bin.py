@@ -9,6 +9,8 @@ class BinCase(unittest.TestCase):
     def test_create_new_project(self):
         from camelot.bin.meta import CreateNewProject, templates, NewProjectOptions
         new_project_action = CreateNewProject()
+        for step in new_project_action.model_run( None ):
+            pass
         options = NewProjectOptions()
         options.source = 'new_project' 
         new_project_action.start_project( options )
