@@ -130,7 +130,7 @@ class ObjectValidator(QtCore.QObject):
                         is_null = True
                     elif (attributes['delegate'] == delegates.PlainTextDelegate) and (len(value) == 0):
                         is_null = True
-                    elif (attributes['delegate'] == delegates.Many2OneDelegate) and (value != None):
+                    elif (attributes['delegate'] == delegates.Many2OneDelegate) and (value == None):
                         is_null = True
                     elif (attributes['delegate'] == delegates.VirtualAddressDelegate) and (not value[1]):
                         is_null = True
