@@ -117,9 +117,7 @@ class ObjectValidator(QtCore.QObject):
             # if the field was not editable, don't waste any time
             if attributes['editable']:
                 # if the field, is nullable, don't waste time getting its value
-                # @todo: check if field is a primary key instead of checking
-                # whether the name is id, but this should only happen in the entity validator
-                if attributes['nullable']!=True and field!='id':
+                if attributes['nullable'] != True:
                     value = getattr(obj, field)
                     logger.debug('column %s is required'%(field))
                     if 'delegate' not in attributes:
@@ -132,7 +130,7 @@ class ObjectValidator(QtCore.QObject):
                         is_null = True
                     elif (attributes['delegate'] == delegates.PlainTextDelegate) and (len(value) == 0):
                         is_null = True
-                    elif (attributes['delegate'] == delegates.Many2OneDelegate) and (not value.id):
+                    elif (attributes['delegate'] == delegates.Many2OneDelegate) and (value != None):
                         is_null = True
                     elif (attributes['delegate'] == delegates.VirtualAddressDelegate) and (not value[1]):
                         is_null = True
