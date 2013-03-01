@@ -37,6 +37,7 @@ from PyQt4.QtGui import QDockWidget
 from PyQt4.QtGui import QVBoxLayout
 
 from camelot.admin.action.application_action import ApplicationActionGuiContext
+from camelot.admin.section import Section, SectionItem
 from camelot.core.utils import variant_to_pyobject
 from camelot.view.model_thread import post
 from camelot.view.controls.modeltree import ModelItem
@@ -66,25 +67,33 @@ class PaneSection(QWidget):
         post( section.get_items, self.set_items )
 
     @QtCore.pyqtSlot(object)
-    def set_items(self, items):
+    def set_items(self, items, parent = None):
         logger.debug('setting items for current navpane section')
         section_tree = self.findChild(QtGui.QWidget, 'SectionTree')
-        self._items = items
         if section_tree:
-            section_tree.clear()
-            section_tree.clear_model_items()
+            if parent == None:
+                # take a copy, so the copy can be extended
+                self._items = list(i for i in items)
+                section_tree.clear()
+                section_tree.clear_model_items()
+                parent = section_tree
     
             if not items: return
     
             for item in items:
                 label = item.get_verbose_name()
                 icon = item.get_icon()
-                model_item = ModelItem( section_tree, 
+                model_item = ModelItem( parent, 
                                         [unicode(label)],
                                         item )
                 if icon:
                     model_item.set_icon(icon.getQIcon())
                 section_tree.modelitems.append( model_item )
+                if isinstance( item, Section ):
+                    child_items = item.get_items()
+                    self.set_items( child_items, parent = model_item )
+                    self._items.extend( child_items )
+                    
             section_tree.resizeColumnToContents( 0 )
 
     def create_context_menu(self, point):
@@ -116,7 +125,14 @@ class PaneSection(QWidget):
         if section_tree:
             item = section_tree.currentItem()
             index = section_tree.indexFromItem(item)
-            section_item = self._items[index.row()]
+            parent = index.parent()
+            if parent.row() >= 0:
+                section = self._items[parent.row()]
+                section_item = section.items[index.row()]
+            else:
+                section_item = self._items[index.row()]
+            if not isinstance( section_item, SectionItem ):
+                return
             gui_context = ApplicationActionGuiContext()
             gui_context.mode_name = mode_name
             gui_context.workspace = self._workspace
