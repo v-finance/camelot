@@ -162,7 +162,9 @@ It has additional class attributes that customise its behaviour.
                     break
             if isinstance( column, (schema.Column) ):
                 sql_attributes['nullable'] = column.nullable
-                sql_attributes['default'] = column.default                  
+                sql_attributes['default'] = column.default
+                if column.primary_key:
+                    sql_attributes['editable'] = False
             break
         return sql_attributes
     
