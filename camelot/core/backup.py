@@ -154,7 +154,7 @@ class BackupMechanism(object):
         import os
         import tempfile
         import shutil
-        from sqlalchemy import create_engine
+        from sqlalchemy import create_engine, types
         from sqlalchemy import MetaData, Table, Column
         from sqlalchemy.pool import NullPool
         
@@ -185,9 +185,11 @@ class BackupMechanism(object):
             if self.backup_table_filter(from_table):
                 new_cols = []
                 for col in from_table.columns:
-                    new_cols.append( Column( col.name, 
-                                             self.get_backup_column_type( col.type ) 
-                                             ) )
+                    new_type = self.get_backup_column_type( col.type )
+                    if not isinstance( new_type, types.NullType ):
+                        new_cols.append( Column( col.name, new_type ) )
+                    else:
+                        logger.warn( 'cannot backup column %s of table %s'%( col.name, from_table.name ) )
                 to_table = Table(from_table.name, to_meta_data, *new_cols)
                 to_table.create(to_engine)
                 from_and_to_tables.append((from_table, to_table))
