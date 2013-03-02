@@ -663,6 +663,10 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
     def test_dump_state( self ):
         dump_state = application_action.DumpState()
         list( dump_state.model_run( self.context ) )
+        
+    def test_runtime_info( self ):
+        runtime_info = application_action.RuntimeInfo()
+        list( runtime_info.model_run( self.context ) )        
 
 class DocumentActionsCase( ModelThreadTestCase ):
     """Test the standard document actions.

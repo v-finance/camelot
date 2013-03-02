@@ -142,7 +142,8 @@ shortcut confusion and reduce the number of status updates.
                              form_action.ToLastForm(),
                              application_action.Refresh(),
                              form_action.ShowHistory() ]
-    hidden_actions = [ application_action.DumpState() ]
+    hidden_actions = [ application_action.DumpState(),
+                       application_action.RuntimeInfo() ]
     
     def __init__(self):
         """Construct an ApplicationAdmin object and register it as the 
@@ -261,31 +262,12 @@ shortcut confusion and reduce the number of status updates.
         gui_context = ApplicationActionGuiContext()
         gui_context.admin = self
         mainwindow = MainWindow( gui_context )
-        shortcut_versions = QtGui.QShortcut(
-            QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_V ),
-            mainwindow
-        )
-        shortcut_versions.activated.connect( self.show_versions )
-        #shortcut_dump_state = QtGui.QShortcut(
-            #QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_D ),
-            #mainwindow
-        #)
-        #shortcut_dump_state.activated.connect( self.dump_state )
         shortcut_read_null = QtGui.QShortcut(
             QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_0 ),
             mainwindow
         )
         shortcut_read_null.activated.connect( self.read_null )
         return mainwindow
-
-    @QtCore.pyqtSlot()
-    def show_versions(self):
-        """Pops up a messagebox showing the version of certain
-        libraries used.  This is for debugging purposes."""
-        logger.debug('showing about message box with versions')
-        abtmsg = self.get_versions()
-        QtGui.QMessageBox.about(None, 'Versions', abtmsg)
-        logger.debug('about message with versions closed')
 
     def get_actions(self):
         """
@@ -590,35 +572,6 @@ shortcut confusion and reduce the number of status updates.
                   http://www.conceptive.be
                   </p>
                   """%(today.year, license.license_type)
-
-    def get_versions(self):
-        """
-        :return: html which displays the versions of used libs for development
-        """
-        import sys
-        import sqlalchemy
-        import chardet
-        import jinja2
-        import xlrd
-        import xlwt
-                
-        return """<em>Python:</em> <b>%s</b><br>
-                  <em>Qt:</em> <b>%s</b><br>
-                  <em>PyQt:</em> <b>%s</b><br>
-                  <em>SQLAlchemy:</em> <b>%s</b><br>
-                  <em>Chardet:</em> <b>%s</b><br>
-                  <em>Jinja:</em> <b>%s</b><br>
-                  <em>xlrd:</em> <b>%s</b><br>
-                  <em>xlwt:</em> <b>%s</b><br><br>
-                  <em>path:<br></em> %s""" % ('.'.join([str(el) for el in sys.version_info]),
-                                              float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])),
-                                              QtCore.PYQT_VERSION_STR,
-                                              sqlalchemy.__version__,
-                                              chardet.__version__,
-                                              jinja2.__version__,
-                                              xlrd.__VERSION__,
-                                              xlwt.__VERSION__,
-                                              unicode(sys.path))
     
     def read_null(self):
         """Create a segmentation fault by reading null, this is to test

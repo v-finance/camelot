@@ -28,7 +28,6 @@ class ApplicationAdminCase( ModelThreadTestCase ):
         self.assertTrue( app_admin.get_organization_domain() )
         self.assertTrue( app_admin.get_stylesheet() )
         self.assertTrue( app_admin.get_about() )
-        self.assertTrue( app_admin.get_versions() )
         
     def test_admin_for_exising_database( self ):
         from .snippet.existing_database import app_admin

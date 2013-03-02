@@ -352,7 +352,6 @@ class DumpState( Action ):
     shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_D )
     
     def model_run( self, model_context ):
-        print 'running'
         import collections
         import gc
         from camelot.core.orm import Session
@@ -389,6 +388,42 @@ class DumpState( Action ):
                         dump_logger.warn( '  ' + type(rr).__name__ )
         dump_logger.warn( '======= end item model dump ===========' )
                         
+class RuntimeInfo( Action ):
+    """Pops up a messagebox showing the version of certain
+    libraries used.  This is for debugging purposes., this action is
+    triggered by pressing :kbd:`Ctrl-Alt-I` in the GUI"""
+    
+    verbose_name = _('Show runtime info')
+    shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_I )
+    
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        import sys
+        import sqlalchemy
+        import chardet
+        import jinja2
+        import xlrd
+        import xlwt
+                
+        html = """<em>Python:</em> <b>%s</b><br>
+                  <em>Qt:</em> <b>%s</b><br>
+                  <em>PyQt:</em> <b>%s</b><br>
+                  <em>SQLAlchemy:</em> <b>%s</b><br>
+                  <em>Chardet:</em> <b>%s</b><br>
+                  <em>Jinja:</em> <b>%s</b><br>
+                  <em>xlrd:</em> <b>%s</b><br>
+                  <em>xlwt:</em> <b>%s</b><br><br>
+                  <em>path:<br></em> %s""" % ('.'.join([str(el) for el in sys.version_info]),
+                                              float('.'.join(str(QtCore.QT_VERSION_STR).split('.')[0:2])),
+                                              QtCore.PYQT_VERSION_STR,
+                                              sqlalchemy.__version__,
+                                              chardet.__version__,
+                                              jinja2.__version__,
+                                              xlrd.__VERSION__,
+                                              xlwt.__VERSION__,
+                                              unicode(sys.path))        
+        yield action_steps.PrintHtml( html )
+        
 def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction
 
