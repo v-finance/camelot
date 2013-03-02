@@ -424,6 +424,22 @@ class RuntimeInfo( Action ):
                                               unicode(sys.path))        
         yield action_steps.PrintHtml( html )
         
+class SegmentationFault( Action ):
+    """Create a segmentation fault by reading null, this is to test
+        the faulthandling functions.  this method is triggered by pressing
+        :kbd:`Ctrl-Alt-0` in the GUI"""
+    
+    verbose_name = _('Segmentation Fault')
+    shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_0 )
+    
+    def model_run( self, model_context ):
+        from camelot.view import action_steps
+        ok = yield action_steps.MessageBox( text =  'Are you sure you want to segfault the application',
+                                            standard_buttons = QtGui.QMessageBox.No | QtGui.QMessageBox.Yes )
+        if ok == QtGui.QMessageBox.Yes:
+            import faulthandler
+            faulthandler._read_null()        
+        
 def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction
 

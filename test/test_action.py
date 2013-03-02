@@ -666,7 +666,11 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
         
     def test_runtime_info( self ):
         runtime_info = application_action.RuntimeInfo()
-        list( runtime_info.model_run( self.context ) )        
+        list( runtime_info.model_run( self.context ) )
+        
+    def test_segmentation_fault( self ):
+        segmentation_fault = application_action.SegmentationFault()
+        list( segmentation_fault.model_run( self.context ) )         
 
 class DocumentActionsCase( ModelThreadTestCase ):
     """Test the standard document actions.

@@ -29,7 +29,7 @@ import os
 logger = logging.getLogger('camelot.admin.application_admin')
 
 from PyQt4.QtCore import Qt
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore
 
 from camelot.admin.action import application_action, form_action, list_action
 from camelot.core.utils import ugettext_lazy as _
@@ -262,11 +262,6 @@ shortcut confusion and reduce the number of status updates.
         gui_context = ApplicationActionGuiContext()
         gui_context.admin = self
         mainwindow = MainWindow( gui_context )
-        shortcut_read_null = QtGui.QShortcut(
-            QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_0 ),
-            mainwindow
-        )
-        shortcut_read_null.activated.connect( self.read_null )
         return mainwindow
 
     def get_actions(self):
@@ -572,15 +567,3 @@ shortcut confusion and reduce the number of status updates.
                   http://www.conceptive.be
                   </p>
                   """%(today.year, license.license_type)
-    
-    def read_null(self):
-        """Create a segmentation fault by reading null, this is to test
-        the faulthandling functions.  this method is triggered by pressing
-        :kbd:`Ctrl-Alt-0` in the GUI"""
-        ok = QtGui.QMessageBox.critical( None, 
-                                         'Experimental segfault',
-                                         'Are you sure you want to segfault the application',
-                                         buttons = QtGui.QMessageBox.No | QtGui.QMessageBox.Yes )
-        if ok == QtGui.QMessageBox.Yes:
-            import faulthandler
-            faulthandler._read_null()
