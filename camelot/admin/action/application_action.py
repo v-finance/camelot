@@ -309,6 +309,10 @@ class Exit( Action ):
         model_thread.stop()
         QtCore.QCoreApplication.exit(0)
         
+#
+# Some actions to assist the debugging process
+#
+
 class ChangeLogging( Action ):
     """Allow the user to change the logging configuration"""
     
@@ -339,7 +343,52 @@ class ChangeLogging( Action ):
         options = Options()
         yield action_steps.ChangeObject( options )
         logging.getLogger().setLevel( options.level )
+        
+class DumpState( Action ):
+    """Dump the state of the application to the output, this method is
+    triggered by pressing :kbd:`Ctrl-Alt-D` in the GUI"""
     
+    verbose_name = _('Dump state')
+    shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_D )
+    
+    def model_run( self, model_context ):
+        print 'running'
+        import collections
+        import gc
+        from camelot.core.orm import Session
+        from camelot.view import action_steps
+        from camelot.view.register import dump_register
+        from camelot.view.proxy.collection_proxy import CollectionProxy
+
+        dump_logger = LOGGER.getChild('dump_state')
+        session = Session()
+        type_counter = collections.defaultdict(int)
+
+        yield action_steps.UpdateProgress( text = _('Dumping session state') )
+        gc.collect()
+        
+        dump_logger.warn( '======= begin register dump =============' )
+        dump_register( dump_logger )
+        dump_logger.warn( '======= end register dump ===============' )
+
+        for o in session:
+            type_counter[type(o).__name__] += 1
+        dump_logger.warn( '======= begin session dump ==============' )
+        for k,v in type_counter.items():
+            dump_logger.warn( '%s : %s'%(k,v) )
+        dump_logger.warn( '======= end session dump ==============' )
+
+        yield action_steps.UpdateProgress( text = _('Dumping item model state') )
+        dump_logger.warn( '======= begin item model dump =========' )
+        for o in gc.get_objects():
+            if isinstance(o, CollectionProxy):
+                dump_logger.warn( '%s is used by :'%unicode( o ) )
+                for r in gc.get_referrers(o):
+                    dump_logger.warn( ' ' + type(r).__name__ )
+                    for rr in gc.get_referrers(r):
+                        dump_logger.warn( '  ' + type(rr).__name__ )
+        dump_logger.warn( '======= end item model dump ===========' )
+                        
 def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction
 

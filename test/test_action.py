@@ -659,6 +659,10 @@ class ApplicationActionsCase( test_model.ExampleModelCase ):
         for step in change_logging_action.model_run( self.context ):
             if isinstance( step, action_steps.ChangeObject ):
                 step.get_object().level = logging.INFO
+                
+    def test_dump_state( self ):
+        dump_state = application_action.DumpState()
+        list( dump_state.model_run( self.context ) )
 
 class DocumentActionsCase( ModelThreadTestCase ):
     """Test the standard document actions.

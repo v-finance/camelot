@@ -142,6 +142,7 @@ shortcut confusion and reduce the number of status updates.
                              form_action.ToLastForm(),
                              application_action.Refresh(),
                              form_action.ShowHistory() ]
+    hidden_actions = [ application_action.DumpState() ]
     
     def __init__(self):
         """Construct an ApplicationAdmin object and register it as the 
@@ -265,11 +266,11 @@ shortcut confusion and reduce the number of status updates.
             mainwindow
         )
         shortcut_versions.activated.connect( self.show_versions )
-        shortcut_dump_state = QtGui.QShortcut(
-            QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_D ),
-            mainwindow
-        )
-        shortcut_dump_state.activated.connect( self.dump_state )
+        #shortcut_dump_state = QtGui.QShortcut(
+            #QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_D ),
+            #mainwindow
+        #)
+        #shortcut_dump_state.activated.connect( self.dump_state )
         shortcut_read_null = QtGui.QShortcut(
             QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_0 ),
             mainwindow
@@ -292,6 +293,14 @@ shortcut confusion and reduce the number of status updates.
             that should be displayed on the desktop of the user.
         """
         return []
+    
+    def get_hidden_actions( self ):
+        """
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that can only be triggered using shortcuts and are not visibile in
+            the UI.
+        """
+        return self.hidden_actions
     
     def get_related_toolbar_actions( self, toolbar_area, direction ):
         """Specify the toolbar actions that should appear by default on every
@@ -622,39 +631,3 @@ shortcut confusion and reduce the number of status updates.
         if ok == QtGui.QMessageBox.Yes:
             import faulthandler
             faulthandler._read_null()
-    
-    def dump_state(self):
-        """Dump the state of the application to the output, this method is
-        triggered by pressing :kbd:`Ctrl-Alt-D` in the GUI"""
-        from camelot.view.model_thread import post
-        from camelot.view.register import dump_register
-        from camelot.view.proxy.collection_proxy import CollectionProxy
-
-        import gc
-        gc.collect()
-
-            
-        dump_register()
-        
-        def dump_session_state():
-            import collections
-            
-            from camelot.model.authentication import Person
-
-            print '======= begin session =============='
-            type_counter = collections.defaultdict(int)
-            for o in Person.query.session:
-                type_counter[type(o).__name__] += 1
-            for k,v in type_counter.items():
-                print k,v
-            print '====== end session =============='
-
-        post( dump_session_state )
-
-        for o in gc.get_objects():
-            if isinstance(o, CollectionProxy):
-                print o
-                for r in gc.get_referrers(o):
-                    print ' ', type(r).__name__
-                    for rr in gc.get_referrers(r):
-                        print  '  ', type(rr).__name__

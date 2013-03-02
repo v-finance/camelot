@@ -89,6 +89,8 @@ class MainWindow(QtGui.QMainWindow):
         post( self.app_admin.get_toolbar_actions, 
               self.set_bottom_toolbar_actions,
               args = (Qt.BottomToolBarArea,) )
+        post( self.app_admin.get_hidden_actions,
+              self.set_hidden_actions )
 
         logger.debug('reading saved settings')
         self.read_settings()
@@ -227,6 +229,14 @@ class MainWindow(QtGui.QMainWindow):
     def set_bottom_toolbar_actions( self, toolbar_actions ):
         self.set_toolbar_actions( Qt.BottomToolBarArea, toolbar_actions )
 
+    @QtCore.pyqtSlot( object )
+    def set_hidden_actions( self, hidden_actions ):
+        from camelot.view.controls.action_widget import ActionAction
+        for action in hidden_actions:
+            action_action = ActionAction( action, self.gui_context, self )
+            action_action.triggered.connect( self.action_triggered )
+            self.addAction( action_action )
+        
     @QtCore.pyqtSlot()
     def view_activated( self ):
         """Update the state of the actions when the active tab in the
