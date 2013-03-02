@@ -37,7 +37,6 @@ from camelot.core.utils import variant_to_pyobject, ugettext as _
 from camelot.view.proxy.queryproxy import QueryTableProxy
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.user_translatable_label import UserTranslatableLabel
-from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.model_thread import post
 from camelot.view.model_thread import object_thread
 from camelot.view.model_thread import model_function

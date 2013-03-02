@@ -275,9 +275,8 @@ It has additional class attributes that customise its behaviour.
             # Get the default field_attributes trough introspection if the
             # field is a mapped field
             #
-            from sqlalchemy import orm, schema
+            from sqlalchemy import orm
             from sqlalchemy.exc import InvalidRequestError
-            from camelot.view.field_attributes import _sqlalchemy_to_python_type_
 
             try:
                 property = self.mapper.get_property(

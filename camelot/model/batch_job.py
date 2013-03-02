@@ -121,7 +121,7 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         
         :return: :keyword:`True` or :keyword:`False`
         """
-        session = orm.object_session( self ).expire( self, ['status'] )
+        orm.object_session( self ).expire( self, ['status'] )
         return self.current_status == 'canceled'
         
     def add_exception_to_message( self, 

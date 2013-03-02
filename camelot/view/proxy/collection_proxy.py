@@ -31,7 +31,6 @@ returned and an update signal is emitted when the correct data is available.
 
 import collections
 import datetime
-import itertools
 import logging
 
 logger = logging.getLogger( 'camelot.view.proxy.collection_proxy' )
@@ -44,7 +43,6 @@ from camelot.core.utils import is_deleted, variant_to_pyobject
 from camelot.view.art import Icon
 from camelot.view.fifo import Fifo
 from camelot.view.controls import delegates
-from camelot.view.controls.exception import register_exception
 from camelot.view.remote_signals import get_signal_handler
 from camelot.view.model_thread import object_thread, \
                                       model_function, post
@@ -473,7 +471,7 @@ position in the query.
         self.logger.debug( 'received entity delete signal' )
         if sender != self:
             try:
-                row = self.display_cache.get_row_by_entity( obj )
+                self.display_cache.get_row_by_entity( obj )
             except KeyError:
                 self.logger.debug( 'entity not in cache' )
                 return
