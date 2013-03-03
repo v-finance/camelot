@@ -1,11 +1,31 @@
 Master
 ------
 
- * Add SessionTransaction context manager
+ * All default models migrated from Elixir to Declarative
+ 
+ * Replacements for most of the Elixir functions that are compatible with
+   Declarative
+   
+ * Search splits search strings between spaces and searches for a combination of the elements
+ 
+ * Russian translations
+ 
+ * The :class:`camelot.model.batch_job.BatchJob` is reworked to have more robust error handling, and
+   a batch job becomes useable as a context manager
+ 
+ * Decouple the :class:`camelot.core.memento.SqlMemento` from :class:`camelot.model.memento.Memento`,
+   so the change tracking system becomes customizable.
+   
+ * List of changes can be accessed from the form view
+ 
+ * Support for using an existing database through SQLAlchemy reflection
 
-Stable
-------
-
+ * Primary key columns are not editable by default
+ 
+ * Documents in print preview can be edited before printing
+ 
+ * Import and export have configurable columns
+ 
  * Add :class:`camelot.view.action_steps.print_preview.PrintChart` action step.
  
  * Adapt printing of charts to matplotlib 1.0
@@ -13,11 +33,15 @@ Stable
  * Fix `maximum` field attribute of rating fields in editor and delegate.
  
  * Workaround for form window hiding on Mac
+ 
+ * The frozen columns feature has been removed in favor of the column groups
+ 
+ * The embedded form has been removed in favour of :method:`camelot.admin.object_admin.ObjectAdmin.get_compounding_objects`
 
 Release 12.06.29
 ----------------
 
- * ``camelot_manage``has been removed, since it did not contain essential functions
+ * ``camelot_manage`` has been removed, since it did not contain essential functions
    for the development of Camelot applications.
 
  * Port the ``camelot_example`` application and :ref:`tutorial-videostore` to `Declarative`

@@ -27,7 +27,7 @@ The list of supported arguments are as follows:
 |                     | ``elixir.metadata``.                                  |
 |                     | This option can also be set for all entities of a     |
 |                     | module by setting the ``__metadata__`` attribute of   |
-|                     | that module.                                          | |
+|                     | that module.                                          |
 +---------------------+-------------------------------------------------------+
 | ``tablename``       | Specify a custom tablename. You can either provide a  |
 |                     | plain string or a callable. The callable will be      |
