@@ -145,7 +145,7 @@ maximum
 The maximum allowed value for :c:type:`Integer` and
 :c:type:`Float` delegates or their related delegates like the Star delegate.
 
-.. _field-attribute-precision
+.. _field-attribute-precision:
 
 precision
 ---------
@@ -188,6 +188,16 @@ prefix
 ------
 
 String to display before a number
+
+.. _field-attribute-remove_original:
+
+remove_original
+---------------
+
+:const:`True` or :const:`False`
+  
+Set to :const:`True` when a file should be deleted after it has been transfered
+to the storage.
 
 .. _field-attribute-single_step:
 

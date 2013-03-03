@@ -36,17 +36,17 @@ class SelectFile( ActionStep ):
     
     .. attribute:: single
     
-        defaults to :keyword:`True`, set to :keyword:`False` if selection
+        defaults to :const:`True`, set to :const:`False` if selection
         of multiple files is allowed
 
     .. attribute:: existing
     
-        defaults to :keyword:`True`, set to :keyword:`False` if non existing
+        defaults to :const:`True`, set to :const:`False` if non existing
         files are allowed (to save something)
         
     The :keyword:`yield` statement of :class:`SelectFile` returns a list
     of selected file names.  This list has only one element when single is
-    set to :keyword:`True`.  Raises a 
+    set to :const:`True`.  Raises a 
     :class:`camelot.core.exception.CancelRequest` when no file was selected.
     
     .. image:: /_static/actionsteps/select_file.png

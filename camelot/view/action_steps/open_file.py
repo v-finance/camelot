@@ -35,7 +35,7 @@ class OpenFile( ActionStep ):
     
     :param file_name: the absolute path to the file to open
     
-    The :keyword:`yield` statement will return :keyword:`True` if the file was
+    The :keyword:`yield` statement will return :const:`True` if the file was
     opend successfull.
     """
         

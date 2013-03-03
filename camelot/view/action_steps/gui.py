@@ -107,8 +107,8 @@ class CloseView( ActionStep ):
     Close the view that triggered the action, if such a view is available.
     
     :param accept: a boolean indicating if the view's widget should accept the
-        close event.  This defaults to :keyword:`True`, when this is set to 
-        :keyword:`False`, the view will trigger it's corresponding close action
+        close event.  This defaults to :const:`True`, when this is set to 
+        :const:`False`, the view will trigger it's corresponding close action
         instead of accepting the close event.  The close action might involve
         validating if the view can be closed, or requesting confirmation from
         the user.

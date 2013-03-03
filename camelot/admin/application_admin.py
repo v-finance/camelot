@@ -93,7 +93,7 @@ methods :
 .. attribute:: database_selection
 
     if this is set to True, present the user with a database selection
-    wizard prior to starting the application.  Defaults to :keyword:`False`.
+    wizard prior to starting the application.  Defaults to :const:`False`.
     
 When the same action is returned in the :meth:`get_toolbar_actions` and 
 :meth:`get_main_menu` method, it should be exactly the same object, to avoid

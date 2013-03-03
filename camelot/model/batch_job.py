@@ -113,13 +113,13 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         return batch_session_batch_job
 
     def is_canceled( self ):
-        """Verifies if this Batch Job is canceled.  Returns :keyword:`True` if 
+        """Verifies if this Batch Job is canceled.  Returns :const:`True` if 
         it is.  This method is thus suiteable to call inside a running batch job 
         to verifiy if another user has canceled the running job.  Create a
         batch job object through the :meth:`create` method to make sure
         requesting the status does not interfer with the normal session.
         
-        :return: :keyword:`True` or :keyword:`False`
+        :return: :const:`True` or :const:`False`
         """
         orm.object_session( self ).expire( self, ['status'] )
         return self.current_status == 'canceled'

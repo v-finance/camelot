@@ -33,7 +33,7 @@ logger = logging.getLogger('camelot.core.utils')
 def is_deleted_pyqt( qobj ):
     """
     :param qobj: a :class:`QtCore.QObject`
-    :return: :keyword:`True` if the qobj was deleted, :keyword:`False`
+    :return: :const:`True` if the qobj was deleted, :const:`False`
         otherwise
     """
     import sip
@@ -43,7 +43,7 @@ def is_deleted_pyqt( qobj ):
 def is_deleted_pyside( qobj ):
     """
     :param qobj: a :class:`QtCore.QObject`
-    :return: :keyword:`True` if the qobj was deleted, :keyword:`False`
+    :return: :const:`True` if the qobj was deleted, :const:`False`
         otherwise
     """
     return False

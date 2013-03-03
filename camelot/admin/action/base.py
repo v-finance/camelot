@@ -119,18 +119,18 @@ updated state for the widget.
 
 .. attribute:: enabled
 
-    :keyword:`True` if the widget should be enabled (the default), 
-    :keyword:`False` otherwise
+    :const:`True` if the widget should be enabled (the default), 
+    :const:`False` otherwise
     
 .. attribute:: visible
 
-    :keyword:`True` if the widget should be visible (the default), 
-    :keyword:`False` otherwise
+    :const:`True` if the widget should be visible (the default), 
+    :const:`False` otherwise
 
 .. attribute:: notification
 
-    :keyword:`True` if the buttons should attract the attention of the user, 
-    defaults to :keyword:`False`.
+    :const:`True` if the buttons should attract the attention of the user, 
+    defaults to :const:`False`.
 
 .. attribute:: modes
 
@@ -207,7 +207,7 @@ return immediately and the :meth:`model_run` will not be blocked.
 .. attribute:: blocking
 
     a :keyword:`boolean` indicating if the ActionStep is blocking, defaults
-    to :keyword:`True`
+    to :const:`True`
     """
 
     blocking = True
