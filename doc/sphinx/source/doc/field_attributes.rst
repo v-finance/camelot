@@ -4,9 +4,6 @@
   Field Attributes
 ##################
 
-:Release: |version|
-:Date: |today|
-
   .. image:: ../_static/field_attributes.png
 
 Field attributes are the most convenient way to customize
@@ -110,6 +107,21 @@ editable
   
 Indicates whether the user can edit the field.
 
+.. _field-attribute-field_name:
+
+field_name
+----------
+
+This is the object name of the :class:`QtGui.QWidget` that will be used
+as an editor for this field.
+
+.. _field-attribute-file_filter:
+
+file_filter
+-----------
+
+When the user is able to select a file or filename, use this filter to limit the available files.
+
 .. _field-attribute-length:
 
 length
@@ -132,6 +144,14 @@ maximum
 
 The maximum allowed value for :c:type:`Integer` and
 :c:type:`Float` delegates or their related delegates like the Star delegate.
+
+.. _field-attribute-precision
+
+precision
+---------
+
+The numerical precision that will be used to display :c:type:`Float` values,
+this is unrelated to the precision in which they are stored.
 
 .. _field-attribute-choices:
 

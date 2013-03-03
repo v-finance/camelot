@@ -4,9 +4,6 @@
   Delegates
 #############
 
-:Release: |version|
-:Date: |today|
-
 `Delegates` are a cornerstone of the Qt model/delegate/view framework.  A delegate is
 used to display and edit data from a `model`.
 
