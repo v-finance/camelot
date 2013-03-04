@@ -41,14 +41,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Camelot'
-copyright = u'2009 - 2012, Conceptive Engineering'
+copyright = u'2009 - 2013, Conceptive Engineering'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = 'master'
+version = 'default'
 # The full version, including alpha/beta/rc tags.
 release = ''
 
@@ -199,7 +199,7 @@ latex_documents = [
 # If false, no module index is generated.
 #latex_use_modindex = True
 
-intersphinx_mapping = { 'python': ('http://docs.python.org/', None),
-                        'sqlalchemy': ('http://www.sqlalchemy.org/docs/', None),
+intersphinx_mapping = { 'http://docs.python.org/dev': 'python-inv.txt'
+                        'sqlalchemy': ('http://docs.sqlalchemy.org/en/rel_0_8/', None),
 }
 
