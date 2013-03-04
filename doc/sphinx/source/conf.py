@@ -199,7 +199,7 @@ latex_documents = [
 # If false, no module index is generated.
 #latex_use_modindex = True
 
-intersphinx_mapping = { 'http://docs.python.org/dev': 'python-inv.txt'
+intersphinx_mapping = { 'python':( 'http://docs.python.org/dev': 'python-inv.txt'),
                         'sqlalchemy': ('http://docs.sqlalchemy.org/en/rel_0_8/', None),
 }
 
