@@ -51,12 +51,9 @@ class StatusType( object ):
     def __unicode__( self ):
 	return self.code or ''
 
-    class Admin( EntityAdmin ):
-	list_display = ['code', 'description']
-	form_display = ['code', 'description']
-	#verbose_name = statusable_entity + ' Status Type'
-	#if verbose_entity_name is not None:
-	    #verbose_name = verbose_entity_name + ' Status Type'	
+class StatusTypeAdmin( EntityAdmin ):
+    list_display = ['code', 'description']
+    form_display = ['code', 'description']
 	
 class StatusHistory( object ):
     """Mixin class to track the history of the status an object
@@ -73,16 +70,11 @@ class StatusHistory( object ):
     from_date = schema.Column( types.Date, nullable = False, default = datetime.date.today )
     thru_date = schema.Column( types.Date, nullable = False, default = end_of_times )
 
-    class Admin( EntityAdmin ):
-	#verbose_name = statusable_entity + ' Status'
-	#verbose_name_plural = statusable_entity + ' Statuses'
-	list_display = ['status_from_date', 'status_thru_date', 'classified_by']
-	#verbose_name = statusable_entity + ' Status'
-	#if verbose_entity_name is not None:
-	    #verbose_name = verbose_entity_name + ' Status'
+class StatusHistoryAdmin( EntityAdmin ):
+    list_display = ['status_from_date', 'status_thru_date', 'classified_by']
 
     def __unicode__( self ):
-	return u'Status'
+	return unicode(self.classified_by or u'')
 
 class Status( Property ):
     """Property that adds a related status table(s) to an `Entity`.
@@ -115,6 +107,11 @@ class Status( Property ):
 	status_name = entity.__name__.lower() + '_status'
 	status_type_name = entity.__name__.lower() + '_status_type'
 	
+	status_history_admin = type( entity.__name__ + 'StatusHistoryAdmin',
+                                     ( StatusHistoryAdmin, ),
+                                     { 'verbose_name':_(entity.__name__ + ' Status'),
+                                       'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )	
+
 	# use `type` instead of `class`, to give status type and history
 	# classes a specific name, so these classes can be used whithin the
 	# memento and the fixture module
@@ -127,13 +124,20 @@ class Status( Property ):
 	    foreign_key = schema.ForeignKey( status_type.id,
 	                                     ondelete = 'cascade', 
 	                                     onupdate = 'cascade')
+	    
+	    status_type_admin = type( entity.__name__ + 'StatusType',
+	                              ( StatusTypeAdmin, ),
+	                              { 'verbose_name':_(entity.__name__ + ' Status'),
+	                                'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )
+	                              
 	    status_history = type( entity.__name__ + 'StatusHistory',
 	                           ( StatusHistory, entity._descriptor.entity_base, ),
 	                           {'__tablename__':status_name,
 	                            'classified_by_id':schema.Column( types.Integer(), 
 				                                      foreign_key, 
 				                                      nullable = False ),
-				    'classified_by':orm.relationship( status_type ) } )
+				    'classified_by':orm.relationship( status_type ),
+	                            'Admin':status_history_admin, } )
 	    
 	    self.status_type = status_type
 	    setattr( entity, '_%s_type'%name, self.status_type )
@@ -144,7 +148,8 @@ class Status( Property ):
 	                           ( StatusHistory, entity._descriptor.entity_base, ),
 	                           {'__tablename__':status_name,
 	                            'classified_by':schema.Column( Enumeration( self.enumeration ), 
-	                                                              nullable=False, index=True ) } )
+	                                                              nullable=False, index=True ),
+	                            'Admin':status_history_admin,} )
 	    
 	self.status_history = status_history
 	setattr( entity, '_%s_history'%name, self.status_history )
